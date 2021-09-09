@@ -311,7 +311,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	__SSE_DATATYPE h2;
 
-	__SSE_DATATYPE q1 = _SSE_LOAD(0, q);
+	__SSE_DATATYPE q1 = _SSE_LOAD(0, &q[0]);
 	__SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	__SSE_DATATYPE q2 = _SSE_LOAD(0, &q[offset]);
 	__SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
@@ -448,24 +448,24 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	y4 = _SSE_ADD(_SSE_MUL(y4,h1), _SSE_MUL(x4,h2));
 	y5 = _SSE_ADD(_SSE_MUL(y5,h1), _SSE_MUL(x5,h2));
 	y6 = _SSE_ADD(_SSE_MUL(y6,h1), _SSE_MUL(x6,h2));
-	q1 = _SSE_LOAD(0, q);
+	q1 = _SSE_LOAD(0, &q[0]);
 	q1 = _SSE_ADD(q1, y1);
-	_SSE_STORE(q1, 0, q);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[0]);
 	q2 = _SSE_LOAD(0,&q[offset]);
 	q2 = _SSE_ADD(q2, y2);
-	_SSE_STORE(q2, 0,&q[offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[offset]);
 	q3 = _SSE_LOAD(0, &q[2*offset]);
 	q3 = _SSE_ADD(q3, y3);
-	_SSE_STORE(q3, 0, &q[2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[2*offset]);
 	q4 = _SSE_LOAD(0, &q[3*offset]);
 	q4 = _SSE_ADD(q4, y4);
-	_SSE_STORE(q4, 0, &q[3*offset]);
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[3*offset]);
 	q5 = _SSE_LOAD(0, &q[4*offset]);
 	q5 = _SSE_ADD(q5, y5);
-	_SSE_STORE(q5, 0, &q[4*offset]);
+	_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q[4*offset]);
 	q6 = _SSE_LOAD(0, &q[5*offset]);
 	q6 = _SSE_ADD(q6, y6);
-	_SSE_STORE(q6, 0, &q[5*offset]);
+	_SSE_STORE((__vector unsigned int) q6, 0, (unsigned int *) &q[5*offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -487,22 +487,22 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	q1 = _SSE_LOAD(0, &q[ldq]);
 	q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-	_SSE_STORE(q1, 0, &q[ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[ldq]);
 	q2 = _SSE_LOAD(0, &q[ldq+offset]);
 	q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-	_SSE_STORE(q2, 0, &q[ldq+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[ldq+offset]);
 	q3 = _SSE_LOAD(0, &q[ldq+2*offset]);
 	q3 = _SSE_ADD(q3, _SSE_ADD(x3, _SSE_MUL(y3, h2)));
-	_SSE_STORE(q3, 0, &q[ldq+2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[ldq+2*offset]);
 	q4 = _SSE_LOAD(0, &q[ldq+3*offset]);
 	q4 = _SSE_ADD(q4, _SSE_ADD(x4, _SSE_MUL(y4, h2)));
-	_SSE_STORE(q4, 0, &q[ldq+3*offset]);
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[ldq+3*offset]);
 	q5 = _SSE_LOAD(0, &q[ldq+4*offset]);
 	q5 = _SSE_ADD(q5, _SSE_ADD(x5, _SSE_MUL(y5, h2)));
-	_SSE_STORE(q5, 0, &q[ldq+4*offset]);
+	_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q[ldq+4*offset]);
 	q6 = _SSE_LOAD(0, &q[ldq+5*offset]);
 	q6 = _SSE_ADD(q6, _SSE_ADD(x6, _SSE_MUL(y6, h2)));
-	_SSE_STORE(q6, 0, &q[ldq+5*offset]);
+	_SSE_STORE((__vector unsigned int) q6, 0, (unsigned int *) &q[ldq+5*offset]);
 
 	for (i = 2; i < nb; i++)
 	{
@@ -529,22 +529,22 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 		q1 = _SSE_LOAD(0, &q[i*ldq]);
 		q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-		_SSE_STORE(q1, &q[i*ldq]);
+		_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[i*ldq]);
 		q2 = _SSE_LOAD(0, &q[(i*ldq)+offset]);
 		q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
-		_SSE_STORE(q2, 0, &q[(i*ldq)+offset]);
+		_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(i*ldq)+offset]);
 		q3 = _SSE_LOAD(0, &q[(i*ldq)+2*offset]);
 		q3 = _SSE_ADD(q3, _SSE_ADD(_SSE_MUL(x3,h1), _SSE_MUL(y3, h2)));
-		_SSE_STORE(q3, 0, &q[(i*ldq)+2*offset]);
+		_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[(i*ldq)+2*offset]);
 		q4 = _SSE_LOAD(0, &q[(i*ldq)+3*offset]);
 		q4 = _SSE_ADD(q4, _SSE_ADD(_SSE_MUL(x4,h1), _SSE_MUL(y4, h2)));
-		_SSE_STORE(q4, 0, &q[(i*ldq)+3*offset]);
+		_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[(i*ldq)+3*offset]);
 		q5 = _SSE_LOAD(0, &q[(i*ldq)+4*offset]);
 		q5 = _SSE_ADD(q5, _SSE_ADD(_SSE_MUL(x5,h1), _SSE_MUL(y5, h2)));
-		_SSE_STORE(q5, 0, &q[(i*ldq)+4*offset]);
+		_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q[(i*ldq)+4*offset]);
 		q6 = _SSE_LOAD(0, &q[(i*ldq)+5*offset]);
 		q6 = _SSE_ADD(q6, _SSE_ADD(_SSE_MUL(x6,h1), _SSE_MUL(y6, h2)));
-		_SSE_STORE(q6, 0, &q[(i*ldq)+5*offset]);
+		_SSE_STORE((__vector unsigned int) q6, 0, (unsigned int *) &q[(i*ldq)+5*offset]);
 	}
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -566,22 +566,22 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	q1 = _SSE_LOAD(0, &q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-	_SSE_STORE(q1, 0, &q[nb*ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[nb*ldq]);
 	q2 = _SSE_LOAD(0, &q[(nb*ldq)+offset]);
 	q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-	_SSE_STORE(q2, 0, &q[(nb*ldq)+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(nb*ldq)+offset]);
 	q3 = _SSE_LOAD(0, &q[(nb*ldq)+2*offset]);
 	q3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-	_SSE_STORE(q3, 0, &q[(nb*ldq)+2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[(nb*ldq)+2*offset]);
 	q4 = _SSE_LOAD(0, &q[(nb*ldq)+3*offset]);
 	q4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
-	_SSE_STORE(q4, 0, &q[(nb*ldq)+3*offset]);
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[(nb*ldq)+3*offset]);
 	q5 = _SSE_LOAD(0, &q[(nb*ldq)+4*offset]);
 	q5 = _SSE_ADD(q5, _SSE_MUL(x5, h1));
-	_SSE_STORE(q5, 0, &q[(nb*ldq)+4*offset]);
+	_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q[(nb*ldq)+4*offset]);
 	q6 = _SSE_LOAD(0, &q[(nb*ldq)+5*offset]);
 	q6 = _SSE_ADD(q6, _SSE_MUL(x6, h1));
-	_SSE_STORE(q6, 0, &q[(nb*ldq)+5*offset]);
+	_SSE_STORE((__vector unsigned int) q6, 0, (unsigned int *) &q[(nb*ldq)+5*offset]);
 }
 
 
@@ -644,7 +644,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	__SSE_DATATYPE h2;
 
-	__SSE_DATATYPE q1 = _SSE_LOAD(0, q);
+	__SSE_DATATYPE q1 = _SSE_LOAD(0, &q[0]);
 	__SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	__SSE_DATATYPE q2 = _SSE_LOAD(0, &q[offset]);
 	__SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
@@ -776,21 +776,21 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	y3 = _SSE_ADD(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
 	y4 = _SSE_ADD(_SSE_MUL(y4,h1), _SSE_MUL(x4,h2));
 	y5 = _SSE_ADD(_SSE_MUL(y5,h1), _SSE_MUL(x5,h2));
-	q1 = _SSE_LOAD(0, q);
+	q1 = _SSE_LOAD(0, &q[0]);
 	q1 = _SSE_ADD(q1, y1);
-	_SSE_STORE(q1, 0, q);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[0]);
 	q2 = _SSE_LOAD(0, &q[offset]);
 	q2 = _SSE_ADD(q2, y2);
-	_SSE_STORE(q2, 0, &q[offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[offset]);
 	q3 = _SSE_LOAD(0,&q[2*offset]);
 	q3 = _SSE_ADD(q3, y3);
-	_SSE_STORE(q3,0,&q[2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[2*offset]);
 	q4 = _SSE_LOAD(0, &q[3*offset]);
 	q4 = _SSE_ADD(q4, y4);
-	_SSE_STORE(q4, 0, &q[3*offset]);
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[3*offset]);
 	q5 = _SSE_LOAD(0, &q[4*offset]);
 	q5 = _SSE_ADD(q5, y5);
-	_SSE_STORE(q5, 0, &q[4*offset]);
+	_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q[4*offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -811,19 +811,19 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	q1 = _SSE_LOAD(0, &q[ldq]);
 	q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-	_SSE_STORE(q1, 0, &q[ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[ldq]);
 	q2 = _SSE_LOAD(0, &q[ldq+offset]);
 	q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-	_SSE_STORE(q2, 0, &q[ldq+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[ldq+offset]);
 	q3 = _SSE_LOAD(0, &q[ldq+2*offset]);
 	q3 = _SSE_ADD(q3, _SSE_ADD(x3, _SSE_MUL(y3, h2)));
-	_SSE_STORE(q3, 0, &q[ldq+2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[ldq+2*offset]);
 	q4 = _SSE_LOAD(0, &q[ldq+3*offset]);
 	q4 = _SSE_ADD(q4, _SSE_ADD(x4, _SSE_MUL(y4, h2)));
-	_SSE_STORE(q4, 0, &q[ldq+3*offset]);
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[ldq+3*offset]);
 	q5 = _SSE_LOAD(0, &q[ldq+4*offset]);
 	q5 = _SSE_ADD(q5, _SSE_ADD(x5, _SSE_MUL(y5, h2)));
-	_SSE_STORE(q5, 0, &q[ldq+4*offset]);
+	_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q[ldq+4*offset]);
 
 	for (i = 2; i < nb; i++)
 	{
@@ -850,19 +850,19 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 		q1 = _SSE_LOAD(0, &q[i*ldq]);
 		q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-		_SSE_STORE(q1, 0, &q[i*ldq]);
+		_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[i*ldq]);
 		q2 = _SSE_LOAD(0, &q[(i*ldq)+offset]);
 		q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
-		_SSE_STORE(q2, 0, &q[(i*ldq)+offset]);
+		_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(i*ldq)+offset]);
 		q3 = _SSE_LOAD(0, &q[(i*ldq)+2*offset]);
 		q3 = _SSE_ADD(q3, _SSE_ADD(_SSE_MUL(x3,h1), _SSE_MUL(y3, h2)));
-		_SSE_STORE(q3, 0, &q[(i*ldq)+2*offset]);
+		_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[(i*ldq)+2*offset]);
 		q4 = _SSE_LOAD(0, &q[(i*ldq)+3*offset]);
 		q4 = _SSE_ADD(q4, _SSE_ADD(_SSE_MUL(x4,h1), _SSE_MUL(y4, h2)));
-		_SSE_STORE(q4, 0, &q[(i*ldq)+3*offset]);
+		_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[(i*ldq)+3*offset]);
 		q5 = _SSE_LOAD(0, &q[(i*ldq)+4*offset]);
 		q5 = _SSE_ADD(q5, _SSE_ADD(_SSE_MUL(x5,h1), _SSE_MUL(y5, h2)));
-		_SSE_STORE(q5, 0, &q[(i*ldq)+4*offset]);
+		_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q[(i*ldq)+4*offset]);
 	}
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -883,19 +883,19 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	q1 = _SSE_LOAD(0, &q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-	_SSE_STORE(q1, 0, &q[nb*ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[nb*ldq]);
 	q2 = _SSE_LOAD(0, &q[(nb*ldq)+offset]);
 	q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-	_SSE_STORE(q2, 0, &q[(nb*ldq)+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(nb*ldq)+offset]);
 	q3 = _SSE_LOAD(0, &q[(nb*ldq)+2*offset]);
 	q3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-	_SSE_STORE(q3, 0, &q[(nb*ldq)+2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[(nb*ldq)+2*offset]);
 	q4 = _SSE_LOAD(0, &q[(nb*ldq)+3*offset]);
 	q4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
-	_SSE_STORE(q4, 0, &q[(nb*ldq)+3*offset]);
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[(nb*ldq)+3*offset]);
 	q5 = _SSE_LOAD(0, &q[(nb*ldq)+4*offset]);
 	q5 = _SSE_ADD(q5, _SSE_MUL(x5, h1));
-	_SSE_STORE(q5, 0, &q[(nb*ldq)+4*offset]);
+	_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q[(nb*ldq)+4*offset]);
 }
 
 /**
@@ -955,7 +955,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	__SSE_DATATYPE h2;
 
-	__SSE_DATATYPE q1 = _SSE_LOAD(0, q);
+	__SSE_DATATYPE q1 = _SSE_LOAD(0, &q[0]);
 	__SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	__SSE_DATATYPE q2 = _SSE_LOAD(0, &q[offset]);
 	__SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
@@ -1076,18 +1076,18 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	y2 = _SSE_ADD(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
 	y3 = _SSE_ADD(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
 	y4 = _SSE_ADD(_SSE_MUL(y4,h1), _SSE_MUL(x4,h2));
-	q1 = _SSE_LOAD(0, q);
+	q1 = _SSE_LOAD(0, &q[0]);
 	q1 = _SSE_ADD(q1, y1);
-	_SSE_STORE(q1, 0, q);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[0]);
 	q2 = _SSE_LOAD(0, &q[offset]);
 	q2 = _SSE_ADD(q2, y2);
-	_SSE_STORE(q2, 0, &q[offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[offset]);
 	q3 = _SSE_LOAD(0, &q[2*offset]);
 	q3 = _SSE_ADD(q3, y3);
-	_SSE_STORE(q3, 0, &q[2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[2*offset]);
 	q4 = _SSE_LOAD(&q[3*offset]);
 	q4 = _SSE_ADD(q4, y4);
-	_SSE_STORE(q4, 0, &q[3*offset]);
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[3*offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -1108,16 +1108,16 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	q1 = _SSE_LOAD(0, &q[ldq]);
 	q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-	_SSE_STORE(q1, 0, &q[ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[ldq]);
 	q2 = _SSE_LOAD(0, &q[ldq+offset]);
 	q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-	_SSE_STORE(q2, 0, &q[ldq+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[ldq+offset]);
 	q3 = _SSE_LOAD(0, &q[ldq+2*offset]);
 	q3 = _SSE_ADD(q3, _SSE_ADD(x3, _SSE_MUL(y3, h2)));
-	_SSE_STORE(q3, 0, &q[ldq+2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[ldq+2*offset]);
 	q4 = _SSE_LOAD(0, &q[ldq+3*offset]);
 	q4 = _SSE_ADD(q4, _SSE_ADD(x4, _SSE_MUL(y4, h2)));
-	_SSE_STORE(q4, 0, &q[ldq+3*offset]);
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[ldq+3*offset]);
 
 	for (i = 2; i < nb; i++)
 	{
@@ -1145,16 +1145,16 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 		q1 = _SSE_LOAD(0, &q[i*ldq]);
 		q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-		_SSE_STORE(q1, 0, &q[i*ldq]);
+		_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[i*ldq]);
 		q2 = _SSE_LOAD(0, &q[(i*ldq)+offset]);
 		q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
-		_SSE_STORE(q2, 0, &q[(i*ldq)+offset]);
+		_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(i*ldq)+offset]);
 		q3 = _SSE_LOAD(0, &q[(i*ldq)+2*offset]);
 		q3 = _SSE_ADD(q3, _SSE_ADD(_SSE_MUL(x3,h1), _SSE_MUL(y3, h2)));
-		_SSE_STORE(q3, 0, &q[(i*ldq)+2*offset]);
+		_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[(i*ldq)+2*offset]);
 		q4 = _SSE_LOAD(0, &q[(i*ldq)+3*offset]);
 		q4 = _SSE_ADD(q4, _SSE_ADD(_SSE_MUL(x4,h1), _SSE_MUL(y4, h2)));
-		_SSE_STORE(q4, 0, &q[(i*ldq)+3*offset]);
+		_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[(i*ldq)+3*offset]);
 	}
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -1175,16 +1175,16 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	q1 = _SSE_LOAD(0, &q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-	_SSE_STORE(q1, 0, &q[nb*ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[nb*ldq]);
 	q2 = _SSE_LOAD(0, &q[(nb*ldq)+offset]);
 	q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-	_SSE_STORE(q2, 0, &q[(nb*ldq)+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(nb*ldq)+offset]);
 	q3 = _SSE_LOAD(0, &q[(nb*ldq)+2*offset]);
 	q3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-	_SSE_STORE(q3, 0, &q[(nb*ldq)+2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[(nb*ldq)+2*offset]);
 	q4 = _SSE_LOAD(0, &q[(nb*ldq)+3*offset]);
 	q4 = _SSE_ADD(q4, _SSE_MUL(x4, h1));
-	_SSE_STORE(q4, 0, &q[(nb*ldq)+3*offset]);
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q[(nb*ldq)+3*offset]);
 }
 
 /**
@@ -1242,7 +1242,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 #endif
 	__SSE_DATATYPE h2;
 
-	__SSE_DATATYPE q1 = _SSE_LOAD(0, q);
+	__SSE_DATATYPE q1 = _SSE_LOAD(0, &q[0]);
 	__SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	__SSE_DATATYPE q2 = _SSE_LOAD(0, &q[offset]);
 	__SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
@@ -1356,15 +1356,15 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
 	y2 = _SSE_ADD(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
 	y3 = _SSE_ADD(_SSE_MUL(y3,h1), _SSE_MUL(x3,h2));
-	q1 = _SSE_LOAD(0, q);
+	q1 = _SSE_LOAD(0, &q[0]);
 	q1 = _SSE_ADD(q1, y1);
-	_SSE_STORE(q1, 0, q);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[0]);
 	q2 = _SSE_LOAD(0, &q[offset]);
 	q2 = _SSE_ADD(q2, y2);
-	_SSE_STORE(q2, &q[offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[offset]);
 	q3 = _SSE_LOAD(0, &q[2*offset]);
 	q3 = _SSE_ADD(q3, y3);
-	_SSE_STORE(q3, 0, &q[2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[2*offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -1387,13 +1387,13 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	q1 = _SSE_LOAD(0, &q[ldq]);
 	q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-	_SSE_STORE(q1, 0, &q[ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[ldq]);
 	q2 = _SSE_LOAD(0, &q[ldq+offset]);
 	q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-	_SSE_STORE(q2, 0, &q[ldq+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[ldq+offset]);
 	q3 = _SSE_LOAD(0, &q[ldq+2*offset]);
 	q3 = _SSE_ADD(q3, _SSE_ADD(x3, _SSE_MUL(y3, h2)));
-	_SSE_STORE(q3, 0, &q[ldq+2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[ldq+2*offset]);
 
 	for (i = 2; i < nb; i++)
 	{
@@ -1420,13 +1420,13 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 		q1 = _SSE_LOAD(0, &q[i*ldq]);
 		q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-		_SSE_STORE(q1, 0, &q[i*ldq]);
+		_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[i*ldq]);
 		q2 = _SSE_LOAD(0, &q[(i*ldq)+offset]);
 		q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
-		_SSE_STORE(q2, 0, &q[(i*ldq)+offset]);
+		_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(i*ldq)+offset]);
 		q3 = _SSE_LOAD(0, &q[(i*ldq)+2*offset]);
 		q3 = _SSE_ADD(q3, _SSE_ADD(_SSE_MUL(x3,h1), _SSE_MUL(y3, h2)));
-		_SSE_STORE(q3, 0, &q[(i*ldq)+2*offset]);
+		_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[(i*ldq)+2*offset]);
 	}
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -1446,13 +1446,13 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 #endif
 	q1 = _SSE_LOAD(0, &q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-	_SSE_STORE(q1, 0, &q[nb*ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[nb*ldq]);
 	q2 = _SSE_LOAD(0, &q[(nb*ldq)+offset]);
 	q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-	_SSE_STORE(q2, 0, &q[(nb*ldq)+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(nb*ldq)+offset]);
 	q3 = _SSE_LOAD(0, &q[(nb*ldq)+2*offset]);
 	q3 = _SSE_ADD(q3, _SSE_MUL(x3, h1));
-	_SSE_STORE(q3, 0, &q[(nb*ldq)+2*offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q[(nb*ldq)+2*offset]);
 }
 
 
@@ -1510,7 +1510,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 #endif
 	__SSE_DATATYPE h2;
 
-	__SSE_DATATYPE q1 = _SSE_LOAD(0, q);
+	__SSE_DATATYPE q1 = _SSE_LOAD(0, &q[0]);
 	__SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	__SSE_DATATYPE q2 = _SSE_LOAD(0, &q[offset]);
 	__SSE_DATATYPE y2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
@@ -1614,12 +1614,12 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
 	y2 = _SSE_ADD(_SSE_MUL(y2,h1), _SSE_MUL(x2,h2));
-	q1 = _SSE_LOAD(0, q);
+	q1 = _SSE_LOAD(0, &q[0]);
 	q1 = _SSE_ADD(q1, y1);
-	_SSE_STORE(q1, 0, q);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[0]);
 	q2 = _SSE_LOAD(0, &q[offset]);
 	q2 = _SSE_ADD(q2, y2);
-	_SSE_STORE(q2, 0, &q[offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[offset]);
 
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -1640,10 +1640,10 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	q1 = _SSE_LOAD(0, &q[ldq]);
 	q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-	_SSE_STORE(q1, 0, &q[ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[ldq]);
 	q2 = _SSE_LOAD(&q[ldq+offset]);
 	q2 = _SSE_ADD(q2, _SSE_ADD(x2, _SSE_MUL(y2, h2)));
-	_SSE_STORE(q2, 0, &q[ldq+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[ldq+offset]);
 
 	for (i = 2; i < nb; i++)
 	{
@@ -1670,10 +1670,10 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 		q1 = _SSE_LOAD(0, &q[i*ldq]);
 		q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-		_SSE_STORE(q1, &q[i*ldq]);
+		_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[i*ldq]);
 		q2 = _SSE_LOAD(0, &q[(i*ldq)+offset]);
 		q2 = _SSE_ADD(q2, _SSE_ADD(_SSE_MUL(x2,h1), _SSE_MUL(y2, h2)));
-		_SSE_STORE(q2, 0, &q[(i*ldq)+offset]);
+		_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(i*ldq)+offset]);
 	}
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -1693,10 +1693,10 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 #endif
 	q1 = _SSE_LOAD(0, &q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-	_SSE_STORE(q1, 0, &q[nb*ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[nb*ldq]);
 	q2 = _SSE_LOAD(0, &q[(nb*ldq)+offset]);
 	q2 = _SSE_ADD(q2, _SSE_MUL(x2, h1));
-	_SSE_STORE(q2, 0, &q[(nb*ldq)+offset]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q[(nb*ldq)+offset]);
 }
 
 
@@ -1753,7 +1753,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 #endif
 	__SSE_DATATYPE h2;
 
-	__SSE_DATATYPE q1 = _SSE_LOAD(0, q);
+	__SSE_DATATYPE q1 = _SSE_LOAD(0, &q[0]);
 	__SSE_DATATYPE y1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
 	for(i = 2; i < nb; i++)
 	{
@@ -1849,9 +1849,9 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 	h2 = _SSE_MUL(h1, vs);
 
 	y1 = _SSE_ADD(_SSE_MUL(y1,h1), _SSE_MUL(x1,h2));
-	q1 = _SSE_LOAD(0, q);
+	q1 = _SSE_LOAD(0, &q[0]);
 	q1 = _SSE_ADD(q1, y1);
-	_SSE_STORE(q1, 0, q);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[0]);
 
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -1872,7 +1872,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 	q1 = _SSE_LOAD(0, &q[ldq]);
 	q1 = _SSE_ADD(q1, _SSE_ADD(x1, _SSE_MUL(y1, h2)));
-	_SSE_STORE(q1, 0, &q[ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[ldq]);
 
 	for (i = 2; i < nb; i++)
 	{
@@ -1899,7 +1899,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 
 		q1 = _SSE_LOAD(0, &q[i*ldq]);
 		q1 = _SSE_ADD(q1, _SSE_ADD(_SSE_MUL(x1,h1), _SSE_MUL(y1, h2)));
-		_SSE_STORE(q1, 0, &q[i*ldq]);
+		_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[i*ldq]);
 	}
 #ifdef HAVE_SSE_INTRINSICS
 #ifdef DOUBLE_PRECISION_REAL
@@ -1919,7 +1919,7 @@ void double_hh_trafo_real_vsx_2hv_single(float* q, float* hh, int* pnb, int* pnq
 #endif
 	q1 = _SSE_LOAD(0, &q[nb*ldq]);
 	q1 = _SSE_ADD(q1, _SSE_MUL(x1, h1));
-	_SSE_STORE(q1, 0, &q[nb*ldq]);
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q[nb*ldq]);
 }
 #undef REALCASE
 #undef SINGLE_PRECISION
