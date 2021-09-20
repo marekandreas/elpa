@@ -225,13 +225,13 @@ max_threads, isSkewsymmetric)
   PRECISION_SUFFIX // &
   gpuString )
 
-  call obj%get("nbc_row_elpa2_bandred", non_blocking_collectives_rows, error)
+  call obj%get("nbc_row_elpa2_full_to_band", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem setting option for non blocking collectives for rows in elpa2_bandred. Aborting..."
     stop
   endif
 
-  call obj%get("nbc_col_elpa2_bandred", non_blocking_collectives_cols, error)
+  call obj%get("nbc_col_elpa2_full_to_band", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem setting option for non blocking collectives for cols in elpa2_bandred. Aborting..."
     stop

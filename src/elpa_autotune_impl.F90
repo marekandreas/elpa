@@ -55,12 +55,19 @@ module elpa_autotune_impl
 #ifdef ENABLE_AUTOTUNING
   type, extends(elpa_autotune_t) :: elpa_autotune_impl_t
     class(elpa_abstract_impl_t), pointer :: parent => NULL()
+    integer :: new_stepping
     integer :: current = 0
     real(kind=C_DOUBLE) :: min_val = 0.0_C_DOUBLE
     integer :: min_loc = 0
     integer :: cardinality = 0
     integer :: level = 0
     integer :: domain = 0
+    !todo take a parameter for the upper bound
+    integer :: sublevel_cardinality(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    real(kind=C_DOUBLE) :: sublevel_min_val(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: sublevel_min_loc(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: sublevel_current(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: sublevel_part(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
     contains
       procedure, public :: print => elpa_autotune_print
       procedure, public :: destroy => elpa_autotune_destroy

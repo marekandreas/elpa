@@ -82,15 +82,15 @@ subroutine ssymm_matrix_allreduce_&
 
   call obj%timer%start("symm_matrix_allreduce" // PRECISION_SUFFIX)
 
-  call obj%get("nbc_row_ssym_allreduce", non_blocking_collectives_rows, error)
+  call obj%get("nbc_row_sym_allreduce", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for rows in elpa_ssym_allreduce. Aborting..."
+    print *,"Problem setting option for non blocking collectives for rows in elpa_sym_allreduce. Aborting..."
     stop
   endif
 
-  call obj%get("nbc_col_ssym_allreduce", non_blocking_collectives_cols, error)
+  call obj%get("nbc_col_sym_allreduce", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for cols in elpa_ssym_allreduce. Aborting..."
+    print *,"Problem setting option for non blocking collectives for cols in elpa_sym_allreduce. Aborting..."
     stop
   endif
 

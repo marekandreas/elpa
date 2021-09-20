@@ -101,6 +101,7 @@ typedef struct {
         int default_value;
         int autotune_level;
         int autotune_domain;
+	int autotune_part;
         elpa_index_valid_int_t valid;
         elpa_index_cardinality_t cardinality;
         elpa_index_enumerate_int_option_t enumerate;
@@ -478,6 +479,25 @@ int elpa_index_autotune_cardinality(elpa_index_t index, int autotune_level, int 
 
 /*
  !f> interface
+ !f>   function elpa_index_autotune_cardinality_new_stepping_c(index, &
+ !f>            autotune_level, &
+ !f>       autotune_domain, autotune_part) result(n) &
+ !f>       bind(C, name="elpa_index_autotune_cardinality_new_stepping")
+ !f>     import c_int, c_ptr, c_char
+ !f>     type(c_ptr), intent(in), value :: index
+ !f>     integer(kind=c_int), intent(in), value :: autotune_level, &
+ !f>                                               autotune_domain
+ !f>     integer(kind=c_int), intent(in), value :: autotune_part
+ !f>     integer(kind=c_int) :: n
+ !f>   end function
+ !f> end interface
+ !f>
+ */
+int elpa_index_autotune_cardinality_new_stepping(elpa_index_t index, int autotune_level, int autotune_domain, int autotune_part);
+
+
+/*
+ !f> interface
  !f>   function elpa_index_set_autotune_parameters_c(index, autotune_level, autotune_domain, n) result(success) &
  !f>       bind(C, name="elpa_index_set_autotune_parameters")
  !f>     import c_int, c_ptr, c_char
@@ -489,6 +509,26 @@ int elpa_index_autotune_cardinality(elpa_index_t index, int autotune_level, int 
  !f>
  */
 int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain, int n);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_set_autotune_parameters_new_stepping_c(index, &
+ !f>            autotune_level, autotune_domain, autotune_part, n) &
+ !f>       result(success) &
+ !f>       bind(C, name="elpa_index_set_autotune_parameters_new_stepping")
+ !f>     import c_int, c_ptr, c_char
+ !f>     type(c_ptr), intent(in), value :: index
+ !f>     integer(kind=c_int), intent(in), value :: autotune_level, &
+ !f>                                               autotune_domain, n
+ !f>     integer(kind=c_int), intent(in), value :: autotune_part
+ !f>     integer(kind=c_int) :: success
+ !f>   end function
+ !f> end interface
+ !f>
+ */
+int elpa_index_set_autotune_parameters_new_stepping(elpa_index_t index, int autotune_level, int autotune_domain, int autotune_part, int n);
+
 
 /*
  !f> interface
@@ -503,6 +543,24 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level, i
  !f>
  */
 int elpa_index_print_autotune_parameters(elpa_index_t index, int autotune_level, int autotune_domain);
+
+/*
+ !f> interface
+ !f>   function elpa_index_print_autotune_parameters_new_stepping_c(index, &
+ !f>       autotune_level, autotune_domain, autotune_part) result(success) &
+ !f>       bind(C, name="elpa_index_print_autotune_parameters_new_stepping")
+ !f>     import c_int, c_ptr, c_char
+ !f>     type(c_ptr), intent(in), value :: index
+ !f>     integer(kind=c_int), intent(in), value :: autotune_level, &
+ !f>                                               autotune_domain
+ !f>     integer(kind=c_int), intent(in), value :: autotune_part
+ !f>     integer(kind=c_int) :: success
+ !f>   end function
+ !f> end interface
+ !f>
+ */
+int elpa_index_print_autotune_parameters_new_stepping(elpa_index_t index, int autotune_level, int autotune_domain, int autotune_part);
+
 
 /*
  !f> interface
@@ -548,6 +606,30 @@ int elpa_index_load_settings(elpa_index_t index, char* filename);
  !f>
  */
 int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int autotune_domain, int min_loc,
+                                    double min_val, int current, int cardinality, char* filename);
+
+
+/*
+ !f> interface
+ !f>   function elpa_index_print_autotune_state_new_stepping_c(index, &
+ !f>            autotune_level, autotune_domain, autotune_part, min_loc, &
+ !f>            min_val, current, cardinality, file_name) result(success) &
+ !f>       bind(C, name="elpa_index_print_autotune_state_new_stepping")
+ !f>     import c_int, c_ptr, c_char, c_double
+ !f>     type(c_ptr), intent(in), value :: index
+ !f>     integer(kind=c_int), intent(in), value :: autotune_level, &
+ !f>                                               autotune_domain, &
+ !f>                                               min_loc, current, &
+ !f>                                               cardinality
+ !f>     integer(kind=c_int), intent(in), value :: autotune_part
+ !f>     real(kind=c_double), intent(in), value :: min_val
+ !f>     character(kind=c_char), intent(in)     :: file_name(*)
+ !f>     integer(kind=c_int) :: success
+ !f>   end function
+ !f> end interface
+ !f>
+ */
+int elpa_index_print_autotune_state_new_stepping(elpa_index_t index, int autotune_level, int autotune_domain, int autotune_part, int min_loc,
                                     double min_val, int current, int cardinality, char* filename);
 
 /*

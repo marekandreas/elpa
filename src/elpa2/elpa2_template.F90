@@ -288,20 +288,6 @@
     &PRECISION&
     &")
 
-#ifdef ACTIVATE_SKEW
-   call obj%set("isSkew", 1, error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
-     stop
-   endif
-#else
-   call obj%set("isSkew", 0, error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem setting option. Aborting..."
-     stop
-   endif
-#endif
-
     useNonBlockingCollectivesAll = .true.
 
     call obj%get("mpi_comm_rows",mpi_comm_rows,error)
@@ -974,9 +960,10 @@ print *,"Device pointer + REDIST"
 
     ! start the computations in 5 steps
     if (do_bandred) then
-      call obj%timer%start("bandred")
+      call obj%autotune_timer%start("full_to_band")
+      call obj%timer%start("full_to_band")
 #ifdef HAVE_LIKWID
-      call likwid_markerStartRegion("bandred")
+      call likwid_markerStartRegion("full_to_band")
 #endif
 
       ! Reduction full -> band
@@ -993,21 +980,22 @@ print *,"Device pointer + REDIST"
        nrThreads, isSkewsymmetric)
 
 #ifdef HAVE_LIKWID
-      call likwid_markerStopRegion("bandred")
+      call likwid_markerStopRegion("full_to_band")
 #endif
-      call obj%timer%stop("bandred")
+      call obj%timer%stop("full_to_band")
+      call obj%autotune_timer%stop("full_to_band")
       if (.not.(success)) return
     endif
-
 
      ! Reduction band -> tridiagonal
      if (do_tridiag) then
        allocate(e(na), stat=istat, errmsg=errorMessage)
        check_allocate("elpa2_template: e", istat, errorMessage)
 
-       call obj%timer%start("tridiag")
+       call obj%autotune_timer%start("band_to_tridi")
+       call obj%timer%start("band_to_tridi")
 #ifdef HAVE_LIKWID
-       call likwid_markerStartRegion("tridiag")
+       call likwid_markerStartRegion("band_to_tridi")
 #endif
 
        call tridiag_band_&
@@ -1033,9 +1021,10 @@ print *,"Device pointer + REDIST"
 #endif /* WITH_MPI */
 
 #ifdef HAVE_LIKWID
-       call likwid_markerStopRegion("tridiag")
+       call likwid_markerStopRegion("band_to_tridi")
 #endif
-       call obj%timer%stop("tridiag")
+       call obj%timer%stop("band_to_tridi")
+       call obj%autotune_timer%stop("band_to_tridi")
      endif ! do_tridiag
 
 #if COMPLEXCASE == 1
@@ -1050,6 +1039,7 @@ print *,"Device pointer + REDIST"
      ! Solve tridiagonal system
      if (do_solve_tridi) then
 !        print *, 'do_useGPU_solve_tridi=', do_useGPU_solve_tridi
+       call obj%autotune_timer%start("solve")
        call obj%timer%start("solve")
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("solve")
@@ -1071,6 +1061,7 @@ print *,"Device pointer + REDIST"
        call likwid_markerStopRegion("solve")
 #endif
        call obj%timer%stop("solve")
+       call obj%autotune_timer%stop("solve")
        if (.not.(success)) return
      endif ! do_solve_tridi
 
@@ -1153,9 +1144,10 @@ print *,"Device pointer + REDIST"
        endif
        ! Backtransform stage 1
      if (do_trans_to_band) then
-       call obj%timer%start("trans_ev_to_band")
+       call obj%autotune_timer%start("tridi_to_band")
+       call obj%timer%start("tridi_to_band")
 #ifdef HAVE_LIKWID
-       call likwid_markerStartRegion("trans_ev_to_band")
+       call likwid_markerStartRegion("tridi_to_band")
 #endif
        ! In the skew-symmetric case this transforms the real part
        call trans_ev_tridi_to_band_&
@@ -1166,9 +1158,10 @@ print *,"Device pointer + REDIST"
        matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
 #ifdef HAVE_LIKWID
-       call likwid_markerStopRegion("trans_ev_to_band")
+       call likwid_markerStopRegion("tridi_to_band")
 #endif
-       call obj%timer%stop("trans_ev_to_band")
+       call obj%timer%stop("tridi_to_band")
+       call obj%autotune_timer%stop("tridi_to_band")
 
        if (.not.(success)) return
 
@@ -1177,9 +1170,10 @@ print *,"Device pointer + REDIST"
      ! the array q (currently) always resides on host even when using GPU
 
      if (do_trans_to_full) then
-       call obj%timer%start("trans_ev_to_full")
+       call obj%autotune_timer%start("band_to_full")
+       call obj%timer%start("band_to_full")
 #ifdef HAVE_LIKWID
-       call likwid_markerStartRegion("trans_ev_to_full")
+       call likwid_markerStartRegion("band_to_full")
 #endif
 
        ! Backtransform stage 2
@@ -1195,14 +1189,18 @@ print *,"Device pointer + REDIST"
        , useQRActual  &
 #endif
        )
-       call obj%timer%stop("trans_ev_to_full")
+       call obj%timer%stop("band_to_full")
+       call obj%autotune_timer%stop("band_to_full")
      endif ! do_trans_to_full
 ! #ifdef DOUBLE_PRECISION_REAL
 !        call prmat(na,useGPU,q(1:matrixRows, 1:matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
 ! #endif
-!        New position:
+
+
      if (do_trans_to_band) then
        if (isSkewsymmetric) then
+         call obj%autotune_timer%start("tridi_to_band")
+         call obj%timer%start("skew_tridi_to_band")
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
            call trans_ev_tridi_to_band_&
@@ -1212,14 +1210,17 @@ print *,"Device pointer + REDIST"
            (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
            matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
-         endif
+         call obj%timer%stop("skew_tridi_to_band")
+         call obj%autotune_timer%stop("tridi_to_band")
+       endif
               ! We can now deallocate the stored householder vectors
        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
        check_deallocate("elpa2_template: hh_trans", istat, errorMessage)
      endif
 
      if (do_trans_to_full) then
-       call obj%timer%start("trans_ev_to_full")
+       call obj%autotune_timer%start("band_to_full")
+       call obj%timer%start("band_to_full")
        if (isSkewsymmetric) then
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
@@ -1237,9 +1238,10 @@ print *,"Device pointer + REDIST"
        endif
 
 #ifdef HAVE_LIKWID
-       call likwid_markerStopRegion("trans_ev_to_full")
+       call likwid_markerStopRegion("band_to_full")
 #endif
-       call obj%timer%stop("trans_ev_to_full")
+       call obj%timer%stop("band_to_full")
+       call obj%autotune_timer%stop("band_to_full")
      endif ! do_trans_to_full
 
      ! make sure tmat is deallocated when using check_pd

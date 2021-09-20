@@ -255,11 +255,13 @@ program test
 
    !call e%set("max_stored_rows", 15, error_elpa)
 
+   call e%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
+
    assert_elpa_ok(e%setup())
 
    if (myid == 0) print *, ""
 
-   tune_state => e%autotune_setup(ELPA_AUTOTUNE_MPI, AUTOTUNE_DOMAIN, error_elpa)
+   tune_state => e%autotune_setup(ELPA1_AUTOTUNE_TRIDI_TO_FULL, AUTOTUNE_DOMAIN, error_elpa)
    assert_elpa_ok(error_elpa)
 
    iter=0
@@ -282,9 +284,10 @@ program test
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                          .true., .true., print_times=.false.)
      a(:,:) = as(:,:)
-     !call e%autotune_print_state(tune_state)
-     !call e%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
+     call e%autotune_print_state(tune_state)
+     call e%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
    end do
+
 
    ! set and print the autotuned-settings
    call e%autotune_set_best(tune_state, error_elpa)

@@ -216,13 +216,13 @@ subroutine tridiag_&
     endif
   endif
 
-  call obj%get("nbc_row_elpa1_tridiag", non_blocking_collectives_rows, error)
+  call obj%get("nbc_row_elpa1_full_to_tridi", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem setting option for non blocking collectives for rows in elpa1_tridiag. Aborting..."
     stop
   endif
 
-  call obj%get("nbc_col_elpa1_tridiag", non_blocking_collectives_cols, error)
+  call obj%get("nbc_col_elpa1_full_to_tridi", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem setting option for non blocking collectives for cols in elpa1_tridiag. Aborting..."
     stop
