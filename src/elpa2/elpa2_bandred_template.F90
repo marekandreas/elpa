@@ -1438,7 +1438,7 @@ max_threads, isSkewsymmetric)
             call mpi_allreduce(umcGPU, tmpGPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
             umcGPU(1 : l_cols * n_cols) = tmpGPU(1 : l_cols * n_cols)
-            if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
+            if (wantDebug) call obj%timer%stop("mpi_communication")
           endif
 #endif /* WITH_MPI */
 
