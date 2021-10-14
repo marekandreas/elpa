@@ -24,14 +24,14 @@ cdef import from "<elpa/elpa.h>":
     void elpa_get_integer(elpa_t handle, const char *name, int *value, int *error)
     void elpa_set_double(elpa_t handle, const char *name, double value, int *error)
     void elpa_get_double(elpa_t handle, const char *name, double *value, int *error)
-    void elpa_eigenvectors_d(elpa_t handle, double *a, double *ev, double *q, int *error)
-    void elpa_eigenvectors_f(elpa_t handle, float *a, float *ev, float *q, int *error)
-    void elpa_eigenvectors_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error)
-    void elpa_eigenvectors_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error)
-    void elpa_eigenvalues_d(elpa_t handle, double *a, double *ev, int *error)
-    void elpa_eigenvalues_f(elpa_t handle, float *a, float *ev, int *error)
-    void elpa_eigenvalues_dc(elpa_t handle, double complex *a, double *ev, int *error)
-    void elpa_eigenvalues_fc(elpa_t handle, float complex *a, float *ev, int *error)
+    void elpa_eigenvectors_all_host_arrays_d(elpa_t handle, double *a, double *ev, double *q, int *error)
+    void elpa_eigenvectors_all_host_arrays_f(elpa_t handle, float *a, float *ev, float *q, int *error)
+    void elpa_eigenvectors_all_host_arrays_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error)
+    void elpa_eigenvectors_all_host_arrays_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error)
+    void elpa_eigenvalues_all_host_arrays_d(elpa_t handle, double *a, double *ev, int *error)
+    void elpa_eigenvalues_all_host_arrays_f(elpa_t handle, float *a, float *ev, int *error)
+    void elpa_eigenvalues_all_host_arrays_dc(elpa_t handle, double complex *a, double *ev, int *error)
+    void elpa_eigenvalues_all_host_arrays_fc(elpa_t handle, float complex *a, float *ev, int *error)
     int ELPA_OK
     int ELPA_SOLVER_2STAGE
 
@@ -109,7 +109,7 @@ cdef class Elpa:
                        np.ndarray[np.float64_t, ndim=1] ev,
                        np.ndarray[np.float64_t, ndim=2] q):
         cdef int error
-        elpa_eigenvectors_d(<elpa_t>self.handle, <np.float64_t *>a.data,
+        elpa_eigenvectors_all_host_arrays_d(<elpa_t>self.handle, <np.float64_t *>a.data,
                             <np.float64_t *>ev.data, <np.float64_t *>q.data,
                             <int*>&error)
         if error != ELPA_OK:
@@ -120,7 +120,7 @@ cdef class Elpa:
                        np.ndarray[np.float32_t, ndim=1] ev,
                        np.ndarray[np.float32_t, ndim=2] q):
         cdef int error
-        elpa_eigenvectors_f(<elpa_t>self.handle, <np.float32_t *>a.data,
+        elpa_eigenvectors_all_host_arrays_f(<elpa_t>self.handle, <np.float32_t *>a.data,
                             <np.float32_t *>ev.data, <np.float32_t *>q.data,
                             <int*>&error)
         if error != ELPA_OK:
@@ -131,7 +131,7 @@ cdef class Elpa:
                         np.ndarray[np.float64_t, ndim=1] ev,
                         np.ndarray[np.complex128_t, ndim=2] q):
         cdef int error
-        elpa_eigenvectors_dc(<elpa_t>self.handle, <np.complex128_t *>a.data,
+        elpa_eigenvectors_all_host_arrays_dc(<elpa_t>self.handle, <np.complex128_t *>a.data,
                              <np.float64_t *>ev.data, <np.complex128_t *>q.data,
                              <int*>&error)
         if error != ELPA_OK:
@@ -142,7 +142,7 @@ cdef class Elpa:
                         np.ndarray[np.float32_t, ndim=1] ev,
                         np.ndarray[np.complex64_t, ndim=2] q):
         cdef int error
-        elpa_eigenvectors_fc(<elpa_t>self.handle, <np.complex64_t *>a.data,
+        elpa_eigenvectors_all_host_arrays_fc(<elpa_t>self.handle, <np.complex64_t *>a.data,
                              <np.float32_t *>ev.data, <np.complex64_t *>q.data,
                              <int*>&error)
         if error != ELPA_OK:
@@ -173,7 +173,7 @@ cdef class Elpa:
                        np.ndarray[np.float64_t, ndim=2] a,
                        np.ndarray[np.float64_t, ndim=1] ev):
         cdef int error
-        elpa_eigenvalues_d(<elpa_t>self.handle, <np.float64_t *>a.data,
+        elpa_eigenvalues_all_host_arrays_d(<elpa_t>self.handle, <np.float64_t *>a.data,
                            <np.float64_t *>ev.data, <int*>&error)
         if error != ELPA_OK:
             raise RuntimeError("ELPA returned error value {:d}.".format(error))
@@ -182,7 +182,7 @@ cdef class Elpa:
                        np.ndarray[np.float32_t, ndim=2] a,
                        np.ndarray[np.float32_t, ndim=1] ev):
         cdef int error
-        elpa_eigenvalues_f(<elpa_t>self.handle, <np.float32_t *>a.data,
+        elpa_eigenvalues_all_host_arrays_f(<elpa_t>self.handle, <np.float32_t *>a.data,
                            <np.float32_t *>ev.data, <int*>&error)
         if error != ELPA_OK:
             raise RuntimeError("ELPA returned error value {:d}.".format(error))
@@ -191,7 +191,7 @@ cdef class Elpa:
                         np.ndarray[np.complex128_t, ndim=2] a,
                         np.ndarray[np.float64_t, ndim=1] ev):
         cdef int error
-        elpa_eigenvalues_dc(<elpa_t>self.handle, <np.complex128_t *>a.data,
+        elpa_eigenvalues_all_host_arrays_dc(<elpa_t>self.handle, <np.complex128_t *>a.data,
                             <np.float64_t *>ev.data, <int*>&error)
         if error != ELPA_OK:
             raise RuntimeError("ELPA returned error value {:d}.".format(error))
@@ -200,7 +200,7 @@ cdef class Elpa:
                         np.ndarray[np.complex64_t, ndim=2] a,
                         np.ndarray[np.float32_t, ndim=1] ev):
         cdef int error
-        elpa_eigenvalues_fc(<elpa_t>self.handle, <np.complex64_t *>a.data,
+        elpa_eigenvalues_all_host_arrays_fc(<elpa_t>self.handle, <np.complex64_t *>a.data,
                             <np.float32_t *>ev.data, <int*>&error)
         if error != ELPA_OK:
             raise RuntimeError("ELPA returned error value {:d}.".format(error))

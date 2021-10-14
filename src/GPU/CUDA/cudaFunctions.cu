@@ -218,7 +218,7 @@ extern "C" {
   }
 
   int cudaMemcpy2dFromC(intptr_t *dest, size_t dpitch, intptr_t *src, size_t spitch, size_t width, size_t height, int dir) {
-
+  
     cudaError_t cuerr = cudaMemcpy2D( dest, dpitch, src, spitch, width, height, (cudaMemcpyKind)dir);
     if (cuerr != cudaSuccess) {
       errormessage("Error in cudaMemcpy2d: %s\n",cudaGetErrorString(cuerr));
@@ -434,6 +434,32 @@ extern "C" {
   // todo: new CUBLAS API diverged from standard BLAS api for these functions
   // todo: it provides out-of-place (and apparently more efficient) implementation
   // todo: by passing B twice (in place of C as well), we should fall back to in-place algorithm
+
+
+  void cublasDcopy_elpa_wrapper (intptr_t handle, int n, double *x, int incx, double *y, int incy){
+
+    cublasDcopy(*((cublasHandle_t*)handle), n, x, incx, y, incy);
+  }
+
+  void cublasScopy_elpa_wrapper (intptr_t handle, int n, float *x, int incx, float *y, int incy){
+
+    cublasScopy(*((cublasHandle_t*)handle), n, x, incx, y, incy);
+  }
+
+  void cublasZcopy_elpa_wrapper (intptr_t handle, int n, double _Complex *x, int incx, double _Complex *y, int incy){
+    const cuDoubleComplex* X_casted = (const cuDoubleComplex*) x;
+          cuDoubleComplex* Y_casted = (      cuDoubleComplex*) y;
+
+    cublasZcopy(*((cublasHandle_t*)handle), n, X_casted, incx, Y_casted, incy);
+  }
+
+  void cublasCcopy_elpa_wrapper (intptr_t handle, int n, float _Complex *x, int incx, float _Complex *y, int incy){
+    const cuFloatComplex* X_casted = (const cuFloatComplex*) x;
+          cuFloatComplex* Y_casted = (      cuFloatComplex*) y;
+
+    cublasCcopy(*((cublasHandle_t*)handle), n, X_casted, incx, Y_casted, incy);
+  }
+
 
   void cublasDtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, const double *A,

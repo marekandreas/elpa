@@ -182,7 +182,7 @@ module cuda_functions
   end interface
 
   interface
-    function cuda_memcpy_c(dst, src, size, dir) result(istat) &
+    function cuda_memcpy_intptr_c(dst, src, size, dir) result(istat) &
              bind(C, name="cudaMemcpyFromC")
 
       use, intrinsic :: iso_c_binding
@@ -194,11 +194,43 @@ module cuda_functions
       integer(kind=C_INT), intent(in), value       :: dir
       integer(kind=C_INT)                          :: istat
 
-    end function cuda_memcpy_c
+    end function cuda_memcpy_intptr_c
   end interface
 
   interface
-    function cuda_memcpy2d_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
+    function cuda_memcpy_cptr_c(dst, src, size, dir) result(istat) &
+             bind(C, name="cudaMemcpyFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr), value                           :: dst
+      type(c_ptr), value                           :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=C_INT)                          :: istat
+
+    end function cuda_memcpy_cptr_c
+  end interface
+
+  interface
+    function cuda_memcpy_mixed_c(dst, src, size, dir) result(istat) &
+             bind(C, name="cudaMemcpyFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr), value                           :: dst
+      integer(kind=C_intptr_t), value              :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=C_INT)                          :: istat
+
+    end function cuda_memcpy_mixed_c
+  end interface
+
+  interface
+    function cuda_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
              bind(C, name="cudaMemcpy2dFromC")
 
       use, intrinsic :: iso_c_binding
@@ -214,7 +246,27 @@ module cuda_functions
       integer(kind=C_INT), intent(in), value         :: dir
       integer(kind=C_INT)                            :: istat
 
-    end function cuda_memcpy2d_c
+    end function cuda_memcpy2d_intptr_c
+  end interface
+
+  interface
+    function cuda_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
+             bind(C, name="cudaMemcpy2dFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+
+      type(c_ptr), value                :: dst
+      integer(kind=c_intptr_t), intent(in), value    :: dpitch
+      type(c_ptr), value                :: src
+      integer(kind=c_intptr_t), intent(in), value    :: spitch
+      integer(kind=c_intptr_t), intent(in), value    :: width
+      integer(kind=c_intptr_t), intent(in), value    :: height
+      integer(kind=C_INT), intent(in), value         :: dir
+      integer(kind=C_INT)                            :: istat
+
+    end function cuda_memcpy2d_cptr_c
   end interface
 
   interface
@@ -258,6 +310,12 @@ module cuda_functions
       integer(kind=C_INT)              :: istat
 
     end function cuda_free_c
+  end interface
+
+  interface cuda_memcpy
+    module procedure cuda_memcpy_intptr
+    module procedure cuda_memcpy_cptr
+    module procedure cuda_memcpy_mixed
   end interface
 
   interface
@@ -352,8 +410,84 @@ module cuda_functions
     end subroutine cublas_sgemm_c
   end interface
 
+  interface cublas_dcopy
+    module procedure cublas_dcopy_intptr
+    module procedure cublas_dcopy_cptr
+  end interface
+
   interface
-    subroutine cublas_dtrmm_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+    subroutine cublas_dcopy_intptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='cublasDcopy_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_dcopy_intptr_c
+  end interface
+
+  interface
+    subroutine cublas_dcopy_cptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='cublasDcopy_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_dcopy_cptr_c
+  end interface
+
+  interface cublas_scopy
+    module procedure cublas_scopy_intptr
+    module procedure cublas_scopy_cptr
+  end interface
+
+  interface
+    subroutine cublas_scopy_intptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='cublasScopy_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_scopy_intptr_c
+  end interface
+
+  interface
+    subroutine cublas_scopy_cptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='cublasScopy_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_scopy_cptr_c
+  end interface
+
+
+  interface cublas_dtrmm
+    module procedure cublas_dtrmm_intptr
+    module procedure cublas_dtrmm_cptr
+  end interface
+
+  interface
+    subroutine cublas_dtrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
                               bind(C,name='cublasDtrmm_elpa_wrapper')
 
       use, intrinsic :: iso_c_binding
@@ -366,11 +500,34 @@ module cuda_functions
       integer(kind=C_intptr_T), value         :: a, b
       integer(kind=C_intptr_T), value         :: handle
 
-    end subroutine cublas_dtrmm_c
+    end subroutine cublas_dtrmm_intptr_c
   end interface
 
   interface
-    subroutine cublas_strmm_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+    subroutine cublas_dtrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='cublasDtrmm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE), value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_dtrmm_cptr_c
+  end interface
+
+
+  interface cublas_strmm
+    module procedure cublas_strmm_intptr
+    module procedure cublas_strmm_cptr
+  end interface
+
+  interface
+    subroutine cublas_strmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
                               bind(C,name='cublasStrmm_elpa_wrapper')
 
       use, intrinsic :: iso_c_binding
@@ -383,8 +540,26 @@ module cuda_functions
       integer(kind=C_intptr_T), value         :: a, b
       integer(kind=C_intptr_T), value         :: handle
 
-    end subroutine cublas_strmm_c
+    end subroutine cublas_strmm_intptr_c
   end interface
+
+  interface
+    subroutine cublas_strmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='cublasStrmm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_FLOAT), value               :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_strmm_cptr_c
+  end interface
+
 
   interface
     subroutine cublas_zgemm_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
@@ -420,8 +595,85 @@ module cuda_functions
     end subroutine cublas_cgemm_c
   end interface
 
+
+  interface cublas_zcopy
+    module procedure cublas_zcopy_intptr
+    module procedure cublas_zcopy_cptr
+  end interface
+
   interface
-    subroutine cublas_ztrmm_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+    subroutine cublas_zcopy_intptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='cublasZcopy_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_zcopy_intptr_c
+  end interface
+
+  interface
+    subroutine cublas_zcopy_cptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='cublasZcopy_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_zcopy_cptr_c
+  end interface
+
+
+  interface cublas_ccopy
+    module procedure cublas_ccopy_intptr
+    module procedure cublas_ccopy_cptr
+  end interface
+
+  interface
+    subroutine cublas_ccopy_intptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='cublasCcopy_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_ccopy_intptr_c
+  end interface
+
+  interface
+    subroutine cublas_ccopy_cptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='cublasCcopy_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine cublas_ccopy_cptr_c
+  end interface
+
+  interface cublas_ztrmm
+    module procedure cublas_ztrmm_intptr
+    module procedure cublas_ztrmm_cptr
+  end interface
+
+  interface
+    subroutine cublas_ztrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
                               bind(C,name='cublasZtrmm_elpa_wrapper')
 
       use, intrinsic :: iso_c_binding
@@ -434,11 +686,33 @@ module cuda_functions
       integer(kind=C_intptr_T), value        :: a, b
       integer(kind=C_intptr_T), value         :: handle
 
-    end subroutine cublas_ztrmm_c
+    end subroutine cublas_ztrmm_intptr_c
   end interface
 
   interface
-    subroutine cublas_ctrmm_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+    subroutine cublas_ztrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='cublasZtrmm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value              :: side, uplo, trans, diag
+      integer(kind=C_INT),value              :: m,n
+      integer(kind=C_INT), intent(in), value :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX), value  :: alpha
+      type(c_ptr), value                     :: a, b
+      integer(kind=C_intptr_T), value        :: handle
+
+    end subroutine cublas_ztrmm_cptr_c
+  end interface
+
+  interface cublas_ctrmm
+    module procedure cublas_ctrmm_intptr
+    module procedure cublas_ctrmm_cptr
+  end interface
+
+  interface
+    subroutine cublas_ctrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
                               bind(C,name='cublasCtrmm_elpa_wrapper')
 
       use, intrinsic :: iso_c_binding
@@ -447,12 +721,30 @@ module cuda_functions
       character(1,C_CHAR),value              :: side, uplo, trans, diag
       integer(kind=C_INT),value              :: m,n
       integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX), value           :: alpha
+      complex(kind=C_FLOAT_COMPLEX), value   :: alpha
       integer(kind=C_intptr_T), value        :: a, b
-      integer(kind=C_intptr_T), value         :: handle
+      integer(kind=C_intptr_T), value        :: handle
 
-    end subroutine cublas_ctrmm_c
+    end subroutine cublas_ctrmm_intptr_c
   end interface
+
+  interface
+    subroutine cublas_ctrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='cublasCtrmm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value              :: side, uplo, trans, diag
+      integer(kind=C_INT),value              :: m,n
+      integer(kind=C_INT), intent(in), value :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX), value   :: alpha
+      type(c_ptr), value                     :: a, b
+      integer(kind=C_intptr_T), value        :: handle
+
+    end subroutine cublas_ctrmm_cptr_c
+  end interface
+
 
   interface
     subroutine cublas_dgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
@@ -780,25 +1072,61 @@ module cuda_functions
 #endif
  end function
 
- function cuda_memcpy(dst, src, size, dir) result(success)
+ function cuda_memcpy_intptr(dst, src, size, dir) result(success)
 
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_intptr_t)              :: dst
       integer(kind=C_intptr_t)              :: src
-      integer(kind=c_intptr_t), intent(in)    :: size
+      integer(kind=c_intptr_t), intent(in)  :: size
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-        success = cuda_memcpy_c(dst, src, size, dir) /= 0
+        success = cuda_memcpy_intptr_c(dst, src, size, dir) /= 0
 #else
         success = .true.
 #endif
     end function
 
-    function cuda_memcpy2d(dst, dpitch, src, spitch, width, height , dir) result(success)
+ function cuda_memcpy_cptr(dst, src, size, dir) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr)                           :: dst
+      type(c_ptr)                           :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        success = cuda_memcpy_cptr_c(dst, src, size, dir) /= 0
+#else
+        success = .true.
+#endif
+    end function
+
+ function cuda_memcpy_mixed(dst, src, size, dir) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr)                           :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        success = cuda_memcpy_mixed_c(dst, src, size, dir) /= 0
+#else
+        success = .true.
+#endif
+    end function
+
+    function cuda_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir) result(success)
 
       use, intrinsic :: iso_c_binding
 
@@ -813,11 +1141,32 @@ module cuda_functions
       integer(kind=C_INT), intent(in)    :: dir
       logical                            :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
-      success = cuda_memcpy2d_c(dst, dpitch, src, spitch, width, height , dir) /= 0
+      success = cuda_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
 #else
       success = .true.
 #endif
-    end function cuda_memcpy2d
+    end function cuda_memcpy2d_intptr
+
+    function cuda_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+
+      type(c_ptr)           :: dst
+      integer(kind=c_intptr_t), intent(in) :: dpitch
+      type(c_ptr)           :: src
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
+      integer(kind=C_INT), intent(in)    :: dir
+      logical                            :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
+#else
+      success = .true.
+#endif
+    end function cuda_memcpy2d_cptr
 
  function cuda_host_register(a, size, flag) result(success)
 
@@ -880,7 +1229,59 @@ module cuda_functions
 #endif
     end subroutine cublas_sgemm
 
-    subroutine cublas_dtrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+    subroutine cublas_dcopy_intptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dcopy_intptr_c(cublasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine cublas_dcopy_intptr
+
+    subroutine cublas_dcopy_cptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)        :: x, y
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dcopy_cptr_c(cublasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine cublas_dcopy_cptr
+
+    subroutine cublas_scopy_intptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_scopy_intptr_c(cublasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine cublas_scopy_intptr
+
+    subroutine cublas_scopy_cptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)        :: x, y
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_scopy_cptr_c(cublasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine cublas_scopy_cptr
+
+    subroutine cublas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
       use, intrinsic :: iso_c_binding
 
@@ -891,11 +1292,27 @@ module cuda_functions
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_dtrmm_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call cublas_dtrmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
-    end subroutine cublas_dtrmm
+    end subroutine cublas_dtrmm_intptr
 
-    subroutine cublas_strmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+    subroutine cublas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE)             :: alpha
+      type(c_ptr)                     :: a, b
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dtrmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine cublas_dtrmm_cptr
+
+
+    subroutine cublas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
       use, intrinsic :: iso_c_binding
 
@@ -906,9 +1323,24 @@ module cuda_functions
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_strmm_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call cublas_strmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
-    end subroutine cublas_strmm
+    end subroutine cublas_strmm_intptr
+
+    subroutine cublas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_FLOAT)              :: alpha
+      type(c_ptr)                     :: a, b
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_strmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine cublas_strmm_cptr
 
     subroutine cublas_zgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 
@@ -940,7 +1372,60 @@ module cuda_functions
 #endif
     end subroutine cublas_cgemm
 
-    subroutine cublas_ztrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+    subroutine cublas_zcopy_intptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_zcopy_intptr_c(cublasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine cublas_zcopy_intptr
+
+    subroutine cublas_zcopy_cptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)        :: x, y
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_zcopy_cptr_c(cublasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine cublas_zcopy_cptr
+
+    subroutine cublas_ccopy_intptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ccopy_intptr_c(cublasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine cublas_ccopy_intptr
+
+    subroutine cublas_ccopy_cptr(n, x, incx, y, incy)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)        :: x, y
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ccopy_cptr_c(cublasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine cublas_ccopy_cptr
+
+
+    subroutine cublas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
       use, intrinsic :: iso_c_binding
 
@@ -951,11 +1436,11 @@ module cuda_functions
       complex(kind=C_DOUBLE_COMPLEX)          :: alpha
       integer(kind=C_intptr_T)        :: a, b
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_ztrmm_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call cublas_ztrmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
-    end subroutine cublas_ztrmm
+    end subroutine cublas_ztrmm_intptr
 
-    subroutine cublas_ctrmm(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+    subroutine cublas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 
       use, intrinsic :: iso_c_binding
 
@@ -963,12 +1448,44 @@ module cuda_functions
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX)           :: alpha
+      complex(kind=C_DOUBLE_COMPLEX)  :: alpha
+      type(c_ptr)                     :: a, b
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ztrmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine cublas_ztrmm_cptr
+
+
+    subroutine cublas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX)   :: alpha
       integer(kind=C_intptr_T)        :: a, b
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_ctrmm_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call cublas_ctrmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
-    end subroutine cublas_ctrmm
+    end subroutine cublas_ctrmm_intptr
+
+    subroutine cublas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX)   :: alpha
+      type(c_ptr)                     :: a, b
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ctrmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine cublas_ctrmm_cptr
+
 
     subroutine cublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
       use, intrinsic :: iso_c_binding

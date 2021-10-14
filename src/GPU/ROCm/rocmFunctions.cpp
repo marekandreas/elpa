@@ -436,6 +436,32 @@ extern "C" {
   // todo: it provides out-of-place (and apparently more efficient) implementation
   // todo: by passing B twice (in place of C as well), we should fall back to in-place algorithm
 
+
+  void rocblasDcopy_elpa_wrapper (intptr_t handle, int n, double *x, int incx, double *y, int incy){
+
+    rocblas_dcopy(*((rocblas_handle*)handle), n, x, incx, y, incy);
+  }
+
+  void rocblasScopy_elpa_wrapper (intptr_t handle, int n, float *x, int incx, float *y, int incy){
+
+    rocblas_scopy(*((rocblas_handle*)handle), n, x, incx, y, incy);
+  }
+
+  void rocblasZcopy_elpa_wrapper (intptr_t handle, int n, double _Complex *x, int incx, double _Complex *y, int incy){
+    const rocblas_double_complex* X_casted = (const rocblas_double_complex*) x;
+          rocblas_double_complex* Y_casted = (rocblas_double_complex*) y;
+
+    rocblas_zcopy(*((rocblas_handle*)handle), n, X_casted, incx, Y_casted, incy);
+  }
+
+  void rocblasCcopy_elpa_wrapper (intptr_t handle, int n, float _Complex *x, int incx, float _Complex *y, int incy){
+    const rocblas_float_complex* X_casted = (const rocblas_float_complex*) x;
+          rocblas_float_complex* Y_casted = (      rocblas_float_complex*) y;
+
+    rocblas_ccopy(*((rocblas_handle*)handle), n, X_casted, incx, Y_casted, incy);
+  }
+
+
   void rocblas_dtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, const double *A,
                                int lda, double *B, int ldb){

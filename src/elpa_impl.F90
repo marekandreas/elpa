@@ -105,26 +105,41 @@ module elpa_impl
 
      !> \brief the implemenation methods
 
-     procedure, public :: elpa_eigenvectors_d                  !< public methods to implement the solve step for real/complex
-                                                               !< double/single matrices
-     procedure, public :: elpa_eigenvectors_f
-     procedure, public :: elpa_eigenvectors_dc
-     procedure, public :: elpa_eigenvectors_fc
+     procedure, public :: elpa_eigenvectors_all_host_arrays_d                  !< public methods to implement the solve step for real/complex
+                                                                               !< double/single matrices
+     procedure, public :: elpa_eigenvectors_all_host_arrays_f
+     procedure, public :: elpa_eigenvectors_all_host_arrays_dc
+     procedure, public :: elpa_eigenvectors_all_host_arrays_fc
 
-     procedure, public :: elpa_eigenvalues_d                   !< public methods to implement the solve step for real/complex
-                                                               !< double/single matrices; only the eigenvalues are computed
-     procedure, public :: elpa_eigenvalues_f
-     procedure, public :: elpa_eigenvalues_dc
-     procedure, public :: elpa_eigenvalues_fc
+     procedure, public :: elpa_eigenvectors_device_pointer_d 
+     procedure, public :: elpa_eigenvectors_device_pointer_f
+     procedure, public :: elpa_eigenvectors_device_pointer_dc
+     procedure, public :: elpa_eigenvectors_device_pointer_fc
+
+     procedure, public :: elpa_eigenvalues_all_host_arrays_d                   !< public methods to implement the solve step for real/complex
+                                                                               !< double/single matrices; only the eigenvalues are computed
+     procedure, public :: elpa_eigenvalues_all_host_arrays_f
+     procedure, public :: elpa_eigenvalues_all_host_arrays_dc
+     procedure, public :: elpa_eigenvalues_all_host_arrays_fc
+
+     procedure, public :: elpa_eigenvalues_device_pointer_d 
+     procedure, public :: elpa_eigenvalues_device_pointer_f
+     procedure, public :: elpa_eigenvalues_device_pointer_dc
+     procedure, public :: elpa_eigenvalues_device_pointer_fc
 
 #ifdef HAVE_SKEWSYMMETRIC
-     procedure, public :: elpa_skew_eigenvectors_d             !< public methods to implement the solve step for real skew-symmetric
-                                                               !< double/single matrices
-     procedure, public :: elpa_skew_eigenvectors_f
+     procedure, public :: elpa_skew_eigenvectors_all_host_arrays_d             !< public methods to implement the solve step for real skew-symmetric
+                                                                               !< double/single matrices
+     procedure, public :: elpa_skew_eigenvectors_all_host_arrays_f
 
-     procedure, public :: elpa_skew_eigenvalues_d              !< public methods to implement the solve step for real skew-symmetric
-                                                               !< double/single matrices; only the eigenvalues are computed
-     procedure, public :: elpa_skew_eigenvalues_f
+     procedure, public :: elpa_skew_eigenvalues_all_host_arrays_d              !< public methods to implement the solve step for real skew-symmetric
+                                                                               !< double/single matrices; only the eigenvalues are computed
+     procedure, public :: elpa_skew_eigenvalues_all_host_arrays_f
+
+     procedure, public :: elpa_skew_eigenvectors_device_pointer_d 
+     procedure, public :: elpa_skew_eigenvectors_device_pointer_f
+     procedure, public :: elpa_skew_eigenvalues_device_pointer_d 
+     procedure, public :: elpa_skew_eigenvalues_device_pointer_f
 #endif
 
      procedure, public :: elpa_generalized_eigenvectors_d      !< public methods to implement the solve step for generalized
@@ -637,7 +652,7 @@ module elpa_impl
 #if defined(WITH_OPENMP_TRADITIONAL) && defined(THREADING_SUPPORT_CHECK) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
       ! check the threading level supported by the MPI library
       call mpi_query_thread(providedMPI, mpierr)
-      if ((providedMPI .ne. MPI_THREAD_SERIALIZED) .or. (providedMPI .ne. MPI_THREAD_MULTIPLE)) then
+      if ((providedMPI .ne. MPI_THREAD_SERIALIZED) .and. (providedMPI .ne. MPI_THREAD_MULTIPLE)) then
 #if defined(ALLOW_THREAD_LIMITING)
         write(error_unit,*) "WARNING elpa_setup: MPI threading level MPI_THREAD_SERALIZED or MPI_THREAD_MULTIPLE required but &
                             &your implementation does not support this! The number of OpenMP threads within ELPA will be &

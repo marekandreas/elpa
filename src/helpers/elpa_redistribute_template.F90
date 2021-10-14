@@ -217,9 +217,11 @@
 
      
      call obj%timer%stop("redistribute")
-   else
-     a => aExtern(1:matrixRows,1:matrixCols)
-     q => qExtern(1:matrixRows,1:matrixCols)
+   !else
+   !  print *,"not redistributing"
+   !  a => aExtern(1:matrixRows,1:matrixCols)
+   !  q => qExtern(1:matrixRows,1:matrixCols)
+   !  print *,"in redistribute", associated(a), associated(q)
    endif
 
 #endif /* REDISTRIBUTE_MATRIX */

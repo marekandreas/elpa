@@ -125,23 +125,23 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    na_rows = numroc_(&na, &nblk, &my_prow, &zero, &np_rows);
    na_cols = numroc_(&na, &nblk, &my_pcol, &zero, &np_cols); 
    
-   if(ToStore > (np_rows -1))
-      if((my_prow == 0)&&(my_pcol == 0))
-         printf("Buffering level is larger than (np_rows-1) !!!\n");
-   if((my_prow == 0)&&(my_pcol == 0))
-         printf("Buffering level = %d\n", ToStore); 
+   //if(ToStore > (np_rows -1))
+   //   if((my_prow == 0)&&(my_pcol == 0))
+   //      printf("Buffering level is larger than (np_rows-1) !!!\n");
+   //if((my_prow == 0)&&(my_pcol == 0))
+   //      printf("Buffering level = %d\n", ToStore); 
    
 //////////////////////////////////////////// Start of algorithm //////////////////////////////////////////////////////////////////////////////
    if (np_cols%np_rows != 0)
    {
-      if((my_prow == 0)&& (my_pcol ==0))
-         printf("!!!!! np_cols must be a multiple of np_rows!!!!! I do nothing! \n");
+      //if((my_prow == 0)&& (my_pcol ==0))
+      //   printf("!!!!! np_cols must be a multiple of np_rows!!!!! I do nothing! \n");
       return;
    }
    if (np_cols < np_rows != 0)
    {
-      if((my_prow == 0)&& (my_pcol ==0))
-         printf("np_cols < np_rows \n");
+      //if((my_prow == 0)&& (my_pcol ==0))
+      //   printf("np_cols < np_rows \n");
       return;
    }
    

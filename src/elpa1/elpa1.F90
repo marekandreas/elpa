@@ -94,25 +94,46 @@ module elpa1_impl
   ! The following routines are public:
   private
 
-  public :: elpa_solve_evp_real_1stage_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
+  public :: elpa_solve_evp_real_1stage_all_host_arrays_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_evp_real_1stage_single_impl    !< Driver routine for real single-precision 1-stage eigenvalue problem
+  public :: elpa_solve_evp_real_1stage_all_host_arrays_single_impl    !< Driver routine for real single-precision 1-stage eigenvalue problem
 
 #endif
-  public :: elpa_solve_evp_complex_1stage_double_impl !< Driver routine for complex 1-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_1stage_all_host_arrays_double_impl !< Driver routine for complex 1-stage eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_solve_evp_complex_1stage_single_impl !< Driver routine for complex 1-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_1stage_all_host_arrays_single_impl !< Driver routine for complex 1-stage eigenvalue problem
 #endif
 
 #ifdef HAVE_SKEWSYMMETRIC
-  public :: elpa_solve_skew_evp_real_1stage_double_impl    !< Driver routine for real double-precision 1-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_1stage_all_host_arrays_double_impl    !< Driver routine for real double-precision 1-stage skew-symmetric eigenvalue problem
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_skew_evp_real_1stage_single_impl    !< Driver routine for real single-precision 1-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_1stage_all_host_arrays_single_impl    !< Driver routine for real single-precision 1-stage skew-symmetric eigenvalue problem
 
 #endif
 #endif /* HAVE_SKEWSYMMETRIC */
+
+  public :: elpa_solve_evp_real_1stage_device_pointer_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  public :: elpa_solve_evp_real_1stage_device_pointer_single_impl    !< Driver routine for real single-precision 1-stage eigenvalue problem
+
+#endif
+  public :: elpa_solve_evp_complex_1stage_device_pointer_double_impl !< Driver routine for complex 1-stage eigenvalue problem
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  public :: elpa_solve_evp_complex_1stage_device_pointer_single_impl !< Driver routine for complex 1-stage eigenvalue problem
+#endif
+
+#ifdef HAVE_SKEWSYMMETRIC
+  public :: elpa_solve_skew_evp_real_1stage_device_pointer_double_impl    !< Driver routine for real double-precision 1-stage skew-symmetric eigenvalue problem
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  public :: elpa_solve_skew_evp_real_1stage_device_pointer_single_impl    !< Driver routine for real single-precision 1-stage skew-symmetric eigenvalue problem
+
+#endif
+#endif /* HAVE_SKEWSYMMETRIC */
+
 
 
   ! imported from elpa1_auxilliary
@@ -147,7 +168,7 @@ module elpa1_impl
 contains
 
 
-!> \brief elpa_solve_evp_real_1stage_double_impl: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_real_1stage_host_arrays_double_impl: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
 !>
 !> \details
 !> \param  obj                      elpa_t object contains:
@@ -179,13 +200,55 @@ contains
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #undef ACTIVATE_SKEW
+#undef DEVICE_POINTER
 #include "../general/precision_macros.h"
 #include "elpa1_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
+
+!> \brief elpa_solve_evp_real_1stage_device_pointer_double_impl: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
+!>
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
+!>
+!> \param  a                        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
+!>
+!>  \param ev                       On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q                        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
+!>
+!>
+!>  \result                       success
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#undef ACTIVATE_SKEW
+#define DEVICE_POINTER
+#include "../general/precision_macros.h"
+#include "elpa1_template.F90"
+#undef DEVICE_POINTER
+#undef REALCASE
+#undef DOUBLE_PRECISION
+
+
 #ifdef WANT_SINGLE_PRECISION_REAL
-!> \brief elpa_solve_evp_real_1stage_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_real_1stage_host_arrays_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
 !> \details
 !> \param  obj                      elpa_t object contains:
 !> \param     - obj%na              Order of matrix
@@ -217,13 +280,54 @@ contains
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #undef ACTIVATE_SKEW
+#undef DEVICE_POINTER
 #include "../general/precision_macros.h"
 #include "elpa1_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
+
+!> \brief elpa_solve_evp_real_1stage_device_pointer_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
+!>
+!> \param  a                        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
+!>
+!>  \param ev                       On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q                        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
+!>
+!>
+!>  \result                       success
+
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#undef ACTIVATE_SKEW
+#define DEVICE_POINTER
+#include "../general/precision_macros.h"
+#include "elpa1_template.F90"
+#undef DEVICE_POINTER
+#undef REALCASE
+#undef SINGLE_PRECISION
+
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
-!> \brief elpa_solve_evp_complex_1stage_double_impl: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_complex_1stage_host_arrays_double_impl: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
 !> \details
 !> \param  obj                      elpa_t object contains:
 !> \param     - obj%na              Order of matrix
@@ -254,15 +358,54 @@ contains
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #undef ACTIVATE_SKEW
+#undef DEVICE_POINTER
 #include "../general/precision_macros.h"
 #include "elpa1_template.F90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
+
+!> \brief elpa_solve_evp_complex_1stage_device_pointer_double_impl: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
+!>
+!> \param  a                        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
+!>
+!>  \param ev                       On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q                        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
+!>
+!>
+!>  \result                       success
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#undef ACTIVATE_SKEW
+#define DEVICE_POINTER
+#include "../general/precision_macros.h"
+#include "elpa1_template.F90"
+#undef DEVICE_POINTER
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
-!> \brief elpa_solve_evp_complex_1stage_single_impl: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_complex_1stage_host_arrays_single_impl: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
 !> \details
 !> \param  obj                      elpa_t object contains:
 !> \param     - obj%na              Order of matrix
@@ -294,15 +437,55 @@ contains
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION
 #undef ACTIVATE_SKEW
+#undef DEVICE_POINTER
 #include "../general/precision_macros.h"
 #include "elpa1_template.F90"
+#undef COMPLEXCASE
+#undef SINGLE_PRECISION
+
+!> \brief elpa_solve_evp_complex_1stage_device_pointer_single_impl: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
+!>
+!> \param  a                        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
+!>
+!>  \param ev                       On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q                        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
+!>
+!>
+!>  \result                       success
+
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION
+#undef ACTIVATE_SKEW
+#define DEVICE_POINTER
+#include "../general/precision_macros.h"
+#include "elpa1_template.F90"
+#undef DEVICE_POINTER
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 
 #ifdef HAVE_SKEWSYMMETRIC
-!> \brief elpa_solve_skew_evp_real_1stage_double_impl: Fortran function to solve the real double-precision skew-symmetric eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_skew_evp_real_1stage_host_arrays_double_impl: Fortran function to solve the real double-precision skew-symmetric eigenvalue problem with 1-stage solver
 !>
 !> \details
 !> \param  obj                      elpa_t object contains:
@@ -334,14 +517,55 @@ contains
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #define ACTIVATE_SKEW
+#undef DEVICE_POINTER
 #include "../general/precision_macros.h"
 #include "elpa1_template.F90"
 #undef ACTIVATE_SKEW
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
+!> \brief elpa_solve_skew_evp_real_1stage_device_pointer_double_impl: Fortran function to solve the real double-precision skew-symmetric eigenvalue problem with 1-stage solver
+!>
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
+!>
+!> \param  a                        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
+!>
+!>  \param ev                       On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q                        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
+!>
+!>
+!>  \result                       success
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#define ACTIVATE_SKEW
+#define DEVICE_POINTER
+#include "../general/precision_macros.h"
+#include "elpa1_template.F90"
+#undef ACTIVATE_SKEW
+#undef DEVICE_POINTER
+#undef REALCASE
+#undef DOUBLE_PRECISION
+
 #ifdef WANT_SINGLE_PRECISION_REAL
-!> \brief elpa_solve_evp_real_1stage_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_real_1stage_host_arrays_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
 !> \details
 !> \param  obj                      elpa_t object contains:
 !> \param     - obj%na              Order of matrix
@@ -373,9 +597,50 @@ contains
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #define ACTIVATE_SKEW
+#undef DEVICE_POINTER
 #include "../general/precision_macros.h"
 #include "elpa1_template.F90"
 #undef REALCASE
+#undef ACTIVATE_SKEW
+#undef SINGLE_PRECISION
+
+!> \brief elpa_solve_evp_real_1stage_device_pointer_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!> \details
+!> \param  obj                      elpa_t object contains:
+!> \param     - obj%na              Order of matrix
+!> \param     - obj%nev             number of eigenvalues/vectors to be computed
+!>                                  The smallest nev eigenvalues/eigenvectors are calculated.
+!> \param     - obj%local_nrows     Leading dimension of a
+!> \param     - obj%local_ncols     local columns of matrix q
+!> \param     - obj%nblk            blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows   MPI communicator for rows
+!> \param     - obj%mpi_comm_cols   MPI communicator for columns
+!> \param     - obj%mpi_comm_parent MPI communicator for columns
+!> \param     - obj%gpu             use GPU version (1 or 0)
+!>
+!> \param  a                        Distributed matrix for which eigenvalues are to be computed.
+!>                                  Distribution is like in Scalapack.
+!>                                  The full matrix must be set (not only one half like in scalapack).
+!>                                  Destroyed on exit (upper and lower half).
+!>
+!>  \param ev                       On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param q                        On output: Eigenvectors of a
+!>                                  Distribution is like in Scalapack.
+!>                                  Must be always dimensioned to the full size (corresponding to (na,na))
+!>                                  even if only a part of the eigenvalues is needed.
+!>
+!>
+!>  \result                       success
+
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#define ACTIVATE_SKEW
+#define DEVICE_POINTER
+#include "../general/precision_macros.h"
+#include "elpa1_template.F90"
+#undef REALCASE
+#undef DEVICE_POINTER
 #undef ACTIVATE_SKEW
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */

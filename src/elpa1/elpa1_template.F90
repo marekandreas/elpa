@@ -55,30 +55,44 @@
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
 
+#ifdef DEVICE_POINTER
 #ifdef ACTIVATE_SKEW
 function elpa_solve_skew_evp_&
          &MATH_DATATYPE&
-   &_1stage_&
+   &_1stage_device_pointer_&
    &PRECISION&
    &_impl (obj, &
-#else
+#else /* ACTIVATE_SKEW */
 function elpa_solve_evp_&
          &MATH_DATATYPE&
-   &_1stage_&
+   &_1stage_device_pointer_&
    &PRECISION&
    &_impl (obj, &
-#endif
-#ifdef REDISTRIBUTE_MATRIX
+#endif /* ACTIVATE_SKEW */
    aExtern, &
-#else
-   a, &
-#endif
-   ev, &
-#ifdef REDISTRIBUTE_MATRIX
+   evExtern, &
    qExtern) result(success)
-#else
-   q) result(success)
-#endif
+#else /* DEVICE_POINTER */
+
+#ifdef ACTIVATE_SKEW
+function elpa_solve_skew_evp_&
+         &MATH_DATATYPE&
+   &_1stage_all_host_arrays_&
+   &PRECISION&
+   &_impl (obj, &
+#else /* ACTIVATE_SKEW */
+function elpa_solve_evp_&
+         &MATH_DATATYPE&
+   &_1stage_all_host_arrays_&
+   &PRECISION&
+   &_impl (obj, &
+#endif /* ACTIVATE_SKEW */
+   aExtern, &
+   evExtern, &
+   qExtern) result(success)
+
+#endif /* DEVICE_POINTER */
+
    use precision
    use cuda_functions
    use hip_functions
@@ -97,42 +111,59 @@ function elpa_solve_evp_&
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
-   real(kind=REAL_DATATYPE), intent(out)                              :: ev(obj%na)
+#ifdef DEVICE_POINTER
+   type(c_ptr)                                                        :: evExtern
+#else
+   real(kind=REAL_DATATYPE), target, intent(out)                      :: evExtern(obj%na)
+#endif
 
-#ifdef REDISTRIBUTE_MATRIX
+   real(kind=REAL_DATATYPE), pointer                                  :: ev(:)
+
+#ifdef DEVICE_POINTER
+
+!#ifdef REDISTRIBUTE_MATRIX
+   type(c_ptr)                                                         :: aExtern
+   type(c_ptr), optional                                             :: qExtern
+!#else /* REDISTRIBUTE_MATRIX */
+!   type(c_ptr)                                                        :: a, q
+!#endif /* REDISTRIBUTE_MATRIX */
+
+#else /* DEVICE_POINTER */
+
+!#ifdef REDISTRIBUTE_MATRIX
 
 #ifdef USE_ASSUMED_SIZE
    MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,*)
    MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: qExtern(obj%local_nrows,*)
 #else
-   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=rck), intent(inout), target                     :: aExtern(1:obj%local_nrows,1:obj%local_ncols)
 #ifdef ACTIVATE_SKEW
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,2*obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(1:obj%local_nrows,1:2*obj%local_ncols)
 #else
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(obj%local_nrows,obj%local_ncols)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: qExtern(1:obj%local_nrows,1:obj%local_ncols)
 #endif
 #endif /* USE_ASSUMED_SIZE */
 
-#else /* REDISTRIBUTE_MATRIX */
+!#else /* REDISTRIBUTE_MATRIX */
+!
+!#ifdef USE_ASSUMED_SIZE
+!   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,*)
+!   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: q(obj%local_nrows,*)
+!#else
+!   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,obj%local_ncols)
+!#ifdef ACTIVATE_SKEW
+!   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
+!#else
+!   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
+!#endif
+!#endif /* USE_ASSUMED_SIZE */
 
-#ifdef USE_ASSUMED_SIZE
-   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,*)
-   MATH_DATATYPE(kind=rck), optional,target,intent(out)               :: q(obj%local_nrows,*)
-#else
-   MATH_DATATYPE(kind=rck), intent(inout), target                     :: a(obj%local_nrows,obj%local_ncols)
-#ifdef ACTIVATE_SKEW
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,2*obj%local_ncols)
-#else
-   MATH_DATATYPE(kind=C_DATATYPE_KIND), optional, target, intent(out) :: q(obj%local_nrows,obj%local_ncols)
-#endif
-#endif /* USE_ASSUMED_SIZE */
+!#endif /* REDISTRIBUTE_MATRIX */
 
-#endif /* REDISTRIBUTE_MATRIX */
+#endif /* DEVICE_POINTER */
 
-#ifdef REDISTRIBUTE_MATRIX
-    MATH_DATATYPE(kind=rck), pointer                                  :: a(:,:)
-    MATH_DATATYPE(kind=rck), pointer                                  :: q(:,:)
-#endif
+  MATH_DATATYPE(kind=rck), pointer                                   :: a(:,:)
+  MATH_DATATYPE(kind=rck), pointer                                   :: q(:,:)
 
 #if REALCASE == 1
    real(kind=C_DATATYPE_KIND), allocatable           :: tau(:)
@@ -186,6 +217,11 @@ function elpa_solve_evp_&
 
    MATH_DATATYPE(kind=rck), allocatable, target               :: aIntern(:,:)
    MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable, target   :: qIntern(:,:)
+   real(kind=REAL_DATATYPE), pointer                          :: evIntern(:)
+#else
+   MATH_DATATYPE(kind=rck), pointer                           :: aIntern(:,:)
+   MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer               :: qIntern(:,:)
+   real(kind=REAL_DATATYPE), pointer                          :: evIntern(:)
 #endif
    integer(kind=c_int)                             :: pinningInfo
 
@@ -194,6 +230,12 @@ function elpa_solve_evp_&
    integer(kind=ik)                                :: global_index
 
    logical                                         :: reDistributeMatrix, doRedistributeMatrix
+
+   logical                                       :: successGPU
+   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
+                                                                      &PRECISION&
+                                                                      &_&
+                                                                      &MATH_DATATYPE
 
 #ifdef ACTIVATE_SKEW
    call obj%timer%start("elpa_solve_skew_evp_&
@@ -204,11 +246,6 @@ function elpa_solve_evp_&
    &_1stage_&
    &PRECISION&
    &")
-
-   reDistributeMatrix = .false.
-
-   matrixRows = obj%local_nrows
-   matrixCols = obj%local_ncols
 
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
    if (error .ne. ELPA_OK) then
@@ -239,88 +276,7 @@ function elpa_solve_evp_&
 #endif
 #else
    nrThreads = 1
-#endif
-#ifdef WITH_NVTX
-   call nvtxRangePush("elpa1")
-#endif
-   call obj%get("output_pinning_information", pinningInfo, error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem setting option for debug. Aborting..."
-     stop
-   endif
-   
-   if (pinningInfo .eq. 1) then
-     call init_thread_affinity(nrThreads)
-
-     call check_thread_affinity()
-     if (my_pe .eq. 0) call print_thread_affinity(my_pe)
-     call cleanup_thread_affinity()
-   endif
-   success = .true.
-
-#ifdef REDISTRIBUTE_MATRIX
-   if (present(qExtern)) then
-#else
-   if (present(q)) then
-#endif
-     obj%eigenvalues_only = .false.
-   else
-     obj%eigenvalues_only = .true.
-   endif
-
-   na         = obj%na
-   nev        = obj%nev
-   matrixRows = obj%local_nrows
-   nblk       = obj%nblk
-   matrixCols = obj%local_ncols
-
-   call obj%get("mpi_comm_rows",mpi_comm_rows,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
-     stop
-   endif
-   call obj%get("mpi_comm_cols",mpi_comm_cols,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
-     stop
-   endif
-
-#ifdef REDISTRIBUTE_MATRIX
-#include "../helpers/elpa_redistribute_template.F90"
-#endif /* REDISTRIBUTE_MATRIX */
-
-   ! special case na = 1
-   if (na .eq. 1) then
-#if REALCASE == 1
-     ev(1) = a(1,1)
-#endif
-#if COMPLEXCASE == 1
-     ev(1) = real(a(1,1))
-#endif
-     if (.not.(obj%eigenvalues_only)) then
-       q(1,1) = ONE
-     endif
-
-     ! restore original OpenMP settings
-#ifdef WITH_OPENMP_TRADITIONAL
-     call omp_set_num_threads(omp_threads_caller)
-#endif
-#ifdef ACTIVATE_SKEW
-     call obj%timer%stop("elpa_solve_skew_evp_&
-#else
-     call obj%timer%stop("elpa_solve_evp_&
-#endif
-     &MATH_DATATYPE&
-     &_1stage_&
-     &PRECISION&
-     &")
-     return
-   endif
-
-   if (nev == 0) then
-     nev = 1
-     obj%eigenvalues_only = .true.
-   endif
+#endif /* WITH_OPENMP_TRADITIONAL */
 
    if (gpu_vendor() == NVIDIA_GPU) then
      call obj%get("gpu",gpu,error)
@@ -361,43 +317,13 @@ function elpa_solve_evp_&
    if (gpu .eq. 1) then
      useGPU =.true.
    else
+#ifdef DEVICE_POINTER
+     print *,"You used the interface for device pointers but did not specify GPU usage!. Aborting..."
+     stop
+#endif
      useGPU = .false.
    endif
 
-#ifdef ACTIVATE_SKEW
-   !call obj%get("is_skewsymmetric",skewsymmetric,error)
-   !if (error .ne. ELPA_OK) then
-   !  print *,"Problem getting option for skewsymmetric. Aborting..."
-   !  stop
-   !endif
-   !isSkewsymmetric = (skewsymmetric == 1)
-   isSkewsymmetric = .true.
-#else
-   isSkewsymmetric = .false.
-#endif
-
-   call obj%timer%start("mpi_communication")
-
-   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
-   call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
-
-   my_prow = int(my_prowMPI,kind=c_int)
-   my_pcol = int(my_pcolMPI,kind=c_int)
-
-   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
-   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
-
-   np_rows = int(np_rowsMPI,kind=c_int)
-   np_cols = int(np_colsMPI,kind=c_int)
-
-   call obj%timer%stop("mpi_communication")
-
-   call obj%get("debug", debug,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem setting option for debug. Aborting..."
-     stop
-   endif
-   wantDebug = debug == 1
    do_useGPU = .false.
 
 
@@ -461,6 +387,273 @@ function elpa_solve_evp_&
    ! for elpa1 the easy thing is, that the individual phases of the algorithm
    ! do not share any data on the GPU.
 
+   reDistributeMatrix = .false.
+
+   na         = obj%na
+   nev        = obj%nev
+   matrixRows = obj%local_nrows
+   nblk       = obj%nblk
+   matrixCols = obj%local_ncols
+
+   call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem getting option. Aborting..."
+     stop
+   endif
+   call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem getting option. Aborting..."
+     stop
+   endif
+
+#ifdef REDISTRIBUTE_MATRIX
+#ifndef DEVICE_POINTER
+   ! if a matrix redistribution is done then
+   ! - aIntern, qIntern are getting allocated for the new distribution
+   ! - nblk, matrixCols, matrixRows, mpi_comm_cols, mpi_comm_rows are getting updated
+   ! TODO: make sure that nowhere in ELPA the communicators are getting "getted",
+   ! and the variables obj%local_nrows,1:obj%local_ncols are being used
+   ! - a points then to aIntern, q points to qIntern
+#include "../helpers/elpa_redistribute_template.F90"
+   ! ev still has to be assigned
+#else
+print *,"Device pointer + REDIST"
+#endif 
+#endif /* REDISTRIBUTE_MATRIX */
+
+#ifdef DEVICE_POINTER
+
+#ifdef REDISTRIBUTE_MATRIX
+  ! this case is not yet implemeted
+#else
+   allocate(aIntern(1:matrixRows,1:matrixCols))
+   a       => aIntern(1:matrixRows,1:matrixCols)
+
+   allocate(evIntern(1:obj%na))
+   ev      => evIntern(1:obj%na)
+
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     allocate(qIntern(1:matrixRows,1:2*matrixCols))
+#else
+     allocate(qIntern(1:matrixRows,1:matrixCols))
+#endif
+   endif
+#endif /* REDISTRIBUTE_MATRIX */
+   !TODO: intel gpu
+   ! in case of devcice pointer _AND_ redistribute
+   ! 1. copy aExtern to aIntern_dummy
+   ! 2. redistribute aIntern_dummy to aIntern
+
+   successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &
+                             gpuMemcpyDeviceToHost)
+   check_memcpy_gpu("elpa1: aExtern -> aIntern", successGPU)
+
+#else /* DEVICE_POINTER */
+
+#ifdef REDISTRIBUTE_MATRIX
+  ! a and q point already to the allocated arrays aIntern, qIntern
+  if (.not.(doRedistributeMatrix)) then
+    ! no redistribution happend
+    a => aExtern(1:matrixRows,1:matrixCols)
+    if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+      q => qExtern(1:matrixRows,1:2*matrixCols)
+#else
+      q => qExtern(1:matrixRows,1:matrixCols)
+#endif
+    endif
+  endif
+#else /* REDISTRIBUTE_MATRIX */
+   ! aIntern, qIntern, are normally pointers since no matrix redistribution is used
+   ! point them to  the external arrays
+   aIntern => aExtern(1:matrixRows,1:matrixCols)
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     qIntern => qExtern(1:matrixRows,1:2*matrixCols)
+#else
+     qIntern => qExtern(1:matrixRows,1:matrixCols)
+#endif
+   endif
+#endif /* REDISTRIBUTE_MATRIX */
+
+  ! whether a matrix redistribution or not is happening we still
+  ! have to point ev
+   evIntern => evExtern(1:obj%na)
+
+#endif /* DEVICE_POINTER */
+
+#ifdef REDISTRIBUTE_MATRIX
+   if (doRedistributeMatrix) then
+#endif
+     a       => aIntern(1:matrixRows,1:matrixCols)
+     if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+       q       => qIntern(1:matrixRows,1:2*matrixCols)
+#else
+       q       => qIntern(1:matrixRows,1:matrixCols)
+#endif
+     endif
+#ifdef REDISTRIBUTE_MATRIX
+   endif
+#endif
+
+   ev      => evIntern(1:obj%na)
+
+!#ifdef DEVICE_POINTER
+!#ifndef REDISTRIBUTE_MATRIX
+!   ! in case that aExtern, qExtern, and evExtern are device pointers
+!   ! we have to allocate aIntern, qIntern, evIntern and 
+!   ! point a,q, ev to this
+!
+!   allocate(aIntern(1:matrixRows,1:matrixCols))
+!   a       => aIntern(1:matrixRows,1:matrixCols)
+!
+!   allocate(evIntern(1:obj%na))
+!   ev      => evIntern(1:obj%na)
+!  
+!   if (present(qExtern)) then
+!#ifdef ACTIVATE_SKEW
+!     allocate(qIntern(1:matrixRows,1:2*matrixCols))
+!     q       => qIntern(1:matrixRows,1:2*matrixCols)
+!#else
+!     allocate(qIntern(1:matrixRows,1:matrixCols))
+!     q       => qIntern(1:matrixRows,1:matrixCols)
+!#endif
+!   endif
+!
+!#endif /* REDISTRIBUTE_MATRIX */
+!    
+!   ! and copy aExtern to aIntern
+!
+!   !TODO: intel gpu
+!   successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &
+!                             gpuMemcpyDeviceToHost)
+!   check_memcpy_gpu("elpa1: aExtern -> aIntern", successGPU)
+!
+!#else /* DEVICE_POINTER */
+!
+!   ! aIntern, qIntern, are normally pointers,
+!   ! in case of redistribute aIntern, qIntern, are arrays storing the internally
+!   ! redistributed matrix
+!
+!   ! in case of redistribute matrix the pointers will be reassigned
+!
+!   ! ev is always a pointer
+!#ifndef REDISTRIBUTE_MATRIX
+!   aIntern => aExtern(1:matrixRows,1:matrixCols)
+!   a       => aIntern(1:matrixRows,1:matrixCols)
+!
+!   evIntern => evExtern(1:obj%na)
+!   ev       => evIntern(1:obj%na)
+!
+!   if (present(qExtern)) then
+!#ifdef ACTIVATE_SKEW
+!     qIntern => qExtern(1:matrixRows,1:2*matrixCols)
+!     q       => qIntern(1:matrixRows,1:2*matrixCols)
+!#else
+!     qIntern => qExtern(1:matrixRows,1:matrixCols)
+!     q       => qIntern(1:matrixRows,1:matrixCols)
+!#endif
+!   endif
+!#else  /* REDISTRIBUTE_MATRIX */
+!   ! currently we do not redistribute ev
+!   evIntern => evExtern(1:obj%na)
+!   ev       => evIntern(1:obj%na)
+!#endif /* REDISTRIBUTE_MATRIX */
+!#endif /* DEVICE_POINTER */
+
+#ifdef WITH_NVTX
+   call nvtxRangePush("elpa1")
+#endif
+   call obj%get("output_pinning_information", pinningInfo, error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option for debug. Aborting..."
+     stop
+   endif
+   
+   if (pinningInfo .eq. 1) then
+     call init_thread_affinity(nrThreads)
+
+     call check_thread_affinity()
+     if (my_pe .eq. 0) call print_thread_affinity(my_pe)
+     call cleanup_thread_affinity()
+   endif
+   success = .true.
+
+   if (present(qExtern)) then
+     obj%eigenvalues_only = .false.
+   else
+     obj%eigenvalues_only = .true.
+   endif
+
+   ! special case na = 1
+   if (na .eq. 1) then
+#if REALCASE == 1
+     ev(1) = a(1,1)
+#endif
+#if COMPLEXCASE == 1
+     ev(1) = real(a(1,1))
+#endif
+     if (.not.(obj%eigenvalues_only)) then
+       q(1,1) = ONE
+     endif
+
+     ! restore original OpenMP settings
+#ifdef WITH_OPENMP_TRADITIONAL
+     call omp_set_num_threads(omp_threads_caller)
+#endif
+#ifdef ACTIVATE_SKEW
+     call obj%timer%stop("elpa_solve_skew_evp_&
+#else
+     call obj%timer%stop("elpa_solve_evp_&
+#endif
+     &MATH_DATATYPE&
+     &_1stage_&
+     &PRECISION&
+     &")
+     return
+   endif
+
+   if (nev == 0) then
+     nev = 1
+     obj%eigenvalues_only = .true.
+   endif
+
+#ifdef ACTIVATE_SKEW
+   !call obj%get("is_skewsymmetric",skewsymmetric,error)
+   !if (error .ne. ELPA_OK) then
+   !  print *,"Problem getting option for skewsymmetric. Aborting..."
+   !  stop
+   !endif
+   !isSkewsymmetric = (skewsymmetric == 1)
+   isSkewsymmetric = .true.
+#else
+   isSkewsymmetric = .false.
+#endif
+
+   call obj%timer%start("mpi_communication")
+
+   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+   call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
+
+   my_prow = int(my_prowMPI,kind=c_int)
+   my_pcol = int(my_pcolMPI,kind=c_int)
+
+   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+   np_rows = int(np_rowsMPI,kind=c_int)
+   np_cols = int(np_colsMPI,kind=c_int)
+
+   call obj%timer%stop("mpi_communication")
+
+   call obj%get("debug", debug,error)
+   if (error .ne. ELPA_OK) then
+     print *,"Problem setting option for debug. Aborting..."
+     stop
+   endif
+   wantDebug = debug == 1
 
    ! allocate a dummy q_intern, if eigenvectors should not be commputed and thus q is NOT present
    if (.not.(obj%eigenvalues_only)) then
@@ -497,6 +690,7 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("tridi")
 #endif
+
      call tridiag_&
      &MATH_DATATYPE&
      &_&
@@ -614,6 +808,7 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("trans_ev")
 #endif
+
      ! In the skew-symmetric case this transforms the real part
      call trans_ev_&
      &MATH_DATATYPE&
@@ -700,6 +895,48 @@ function elpa_solve_evp_&
      call blacs_gridexit(blacs_ctxt_)
    endif
 #endif /* REDISTRIBUTE_MATRIX */
+
+#if defined(DEVICE_POINTER) || defined(REDISTRIBUTE_MATRIX)
+
+#ifdef DEVICE_POINTER
+   !copy qIntern and ev to provided device pointers
+   successGPU = gpu_memcpy(qExtern, c_loc(qIntern(1,1)), matrixRows*matrixCols*size_of_datatype, &
+                             gpuMemcpyHostToDevice)
+   check_memcpy_gpu("elpa1: qIntern -> qExtern", successGPU)
+   successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_datatype, &
+                             gpuMemcpyHostToDevice)
+   check_memcpy_gpu("elpa1: ev -> evExtern", successGPU)
+#endif
+
+#if defined(REDISTRIBUTE_MATRIX)
+   if (doRedistributeMatrix) then
+#endif
+     deallocate(aIntern)
+     !deallocate(evIntern)
+     nullify(evIntern)
+     if (present(qExtern)) then
+       deallocate(qIntern)
+     endif
+#if defined(REDISTRIBUTE_MATRIX)
+   endif
+#endif
+
+#endif /* defined(DEVICE_POINTER) || defined(REDISTRIBUTE_MATRIX) */
+
+#if !defined(DEVICE_POINTER) && !defined(REDISTRIBUTE_MATRIX)
+   nullify(aIntern)
+   nullify(evIntern)
+   if (present(qExtern)) then
+     nullify(qIntern)
+   endif
+#endif
+   
+   nullify(ev)
+   nullify(a)
+   nullify(q)
+
+  nullify(q_actual)
+
 #ifdef ACTIVATE_SKEW
    call obj%timer%stop("elpa_solve_skew_evp_&
 #else
