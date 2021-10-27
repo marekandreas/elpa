@@ -82,6 +82,8 @@ module elpa_api
     integer(kind=c_int), public, pointer :: local_ncols => NULL()
     integer(kind=c_int), public, pointer :: nblk => NULL()
 
+    integer(kind=c_int), public          :: myGlobalId
+
     contains
       ! general
       procedure(elpa_setup_i),   deferred, public :: setup          !< method to setup an ELPA object
@@ -222,6 +224,7 @@ module elpa_api
       procedure(load_settings_i), deferred, public :: load_settings !< method to save all parameters
 #ifdef ENABLE_AUTOTUNING
       ! Auto-tune
+      procedure(elpa_autotune_set_api_version_i), deferred, public :: autotune_set_api_version       !< method to prepare the ELPA autotuning
       procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
       procedure(elpa_autotune_step_i), deferred, public :: autotune_step         !< method to do an autotuning step
       procedure(elpa_autotune_set_best_i), deferred, public :: autotune_set_best !< method to set the best options
@@ -404,6 +407,25 @@ module elpa_api
   end interface
 
 #ifdef ENABLE_AUTOTUNING
+  !> \brief abstract definition of the autotune set_api_verion method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   api_version integer: the api_version that should be used
+  abstract interface
+    subroutine elpa_autotune_set_api_version_i(self, api_version, error)
+      import elpa_t
+      implicit none
+      class(elpa_t), intent(inout), target :: self
+      integer, intent(in)                  :: api_version
+#ifdef USE_FORTRAN2008
+      integer , optional                   :: error
+#else
+      integer                              :: error
+#endif
+    end subroutine
+  end interface
+
   !> \brief abstract definition of the autotune setup method
   !> Parameters
   !> \details

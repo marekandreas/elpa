@@ -1668,11 +1668,11 @@ subroutine trans_ev_tridi_to_band_&
       endif
 
       if (useNonBlockingCollectivesCols) then
-        if (wantDebug) call obj%timer%start("cuda_mpi_communication")
+        if (wantDebug) call obj%timer%start("cuda_mpi_nbc_communication")
         call mpi_ibcast(bcast_buffer_mpi_fortran_ptr, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                        int(mod(sweep,np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), bcast_request1, mpierr)
         call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
-        if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
+        if (wantDebug) call obj%timer%stop("cuda_mpi_nbc_communication")
       else
         if (wantDebug) call obj%timer%start("cuda_mpi_communication")
         call mpi_bcast(bcast_buffer_mpi_fortran_ptr, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
@@ -1681,11 +1681,11 @@ subroutine trans_ev_tridi_to_band_&
       endif
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
       if (useNonBlockingCollectivesCols) then
-        if (wantDebug) call obj%timer%start("mpi_communication")
+        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
         call mpi_ibcast(bcast_buffer, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                      int(mod(sweep,np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), bcast_request1, mpierr)
         call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
-        if (wantDebug) call obj%timer%stop("mpi_communication")
+        if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
       else
         if (wantDebug) call obj%timer%start("mpi_communication")
         call mpi_bcast(bcast_buffer, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &

@@ -121,11 +121,11 @@ subroutine herm_matrix_allreduce_&
   enddo
 #ifdef WITH_MPI
   if (useNonBlockingCollectives) then
-    call obj%timer%start("mpi_communication_non_blocking")
+    call obj%timer%start("mpi_nbc_communication")
     call mpi_iallreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &
                      int(comm,kind=MPI_KIND), allreduce_request1, mpierr)
     call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
-    call obj%timer%stop("mpi_communication_non_blocking")
+    call obj%timer%stop("mpi_nbc_communication")
   else
     call obj%timer%start("mpi_communication")
     call mpi_allreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &

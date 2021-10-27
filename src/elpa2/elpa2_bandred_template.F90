@@ -640,14 +640,14 @@ max_threads, isSkewsymmetric)
 
 #ifdef WITH_MPI
           if (useNonBlockingCollectivesRows) then
-            if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
+            if (wantDebug) call obj%timer%start("mpi_nbc_communication")
             call mpi_iallreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
                              MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                              allreduce_request1, mpierr)
 
             call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
 
-            if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
+            if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
           else
             if (wantDebug) call obj%timer%start("mpi_communication")
             call mpi_allreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
@@ -693,14 +693,14 @@ max_threads, isSkewsymmetric)
         vr(lr+1) = tau
 #ifdef WITH_MPI
         if (useNonBlockingCollectivesCols) then
-          if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
+          if (wantDebug) call obj%timer%start("mpi_nbc_communication")
           call mpi_ibcast(vr, int(lr+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                         int(cur_pcol,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
                         bcast_request, mpierr)
 
 
           call mpi_wait(bcast_request, MPI_STATUS_IGNORE, mpierr)
-          if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
+          if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
         else
           if (wantDebug) call obj%timer%start("mpi_communication")
           call mpi_bcast(vr, int(lr+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
@@ -825,14 +825,14 @@ max_threads, isSkewsymmetric)
         !$omp single
 #ifdef WITH_MPI
         if (useNonBlockingCollectivesRows) then
-          if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
+          if (wantDebug) call obj%timer%start("mpi_nbc_communication")
           if (mynlc>0) then
             call mpi_iallreduce(aux1, aux2, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                                         MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                                         allreduce_request2, mpierr)
             call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
           endif
-          if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
+          if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
         else
           if (wantDebug) call obj%timer%start("mpi_communication")
           if (mynlc>0) then
@@ -886,14 +886,14 @@ max_threads, isSkewsymmetric)
         ! Get global dot products
 #ifdef WITH_MPI
         if (useNonBlockingCollectivesRows) then
-          if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
+          if (wantDebug) call obj%timer%start("mpi_nbc_communication")
           if (nlc>0) then
             call mpi_iallreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                                       MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                                       allreduce_request3, mpierr)
             call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
           endif
-          if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
+          if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
         else
           if (wantDebug) call obj%timer%start("mpi_communication")
           if (nlc>0) then
@@ -1400,13 +1400,13 @@ max_threads, isSkewsymmetric)
 
 #ifdef WITH_MPI
           if (useNonBlockingCollectivesRows) then
-            if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
+            if (wantDebug) call obj%timer%start("mpi_nbc_communication")
             call mpi_iallreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                            allreduce_request4, mpierr)
             call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
             umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-            if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
+            if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
           else
             if (wantDebug) call obj%timer%start("mpi_communication")
             call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
@@ -1424,14 +1424,14 @@ max_threads, isSkewsymmetric)
           allocate(tmpGPU(l_cols * n_cols), stat=istat, errmsg=errorMessage)
           check_allocate("bandred: tmpGPU", istat, errorMessage)
           if (useNonBlockingCollectivesRows) then
-            if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
+            if (wantDebug) call obj%timer%start("mpi_nbc_communication")
 
             call mpi_iallreduce(umcGPU, tmpGPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request5, mpierr)
             call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
 
             umcGPU(1 : l_cols * n_cols) = tmpGPU(1 : l_cols * n_cols)
-            if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
+            if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
           else
             if (wantDebug) call obj%timer%start("mpi_communication")
 
@@ -1455,12 +1455,12 @@ max_threads, isSkewsymmetric)
 
 #ifdef WITH_MPI
         if (useNonBlockingCollectivesRows) then
-          if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
+          if (wantDebug) call obj%timer%start("mpi_nbc_communication")
           call mpi_iallreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6, mpierr)
           call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
           umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-          if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
+          if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
         else
           if (wantDebug) call obj%timer%start("mpi_communication")
           call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &

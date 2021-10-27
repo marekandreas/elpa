@@ -516,7 +516,7 @@ subroutine solve_tridi_&
           nlen = limits(np+1)-noff
 #ifdef WITH_MPI
           if (useNonBlockingCollectivesRows) then
-            call obj%timer%start("mpi_communication_non_blocking")
+            call obj%timer%start("mpi_nbc_communication")
             call mpi_ibcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
                          int(mpi_comm_rows,kind=MPI_KIND), bcast_request1, mpierr)
             call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
@@ -525,7 +525,7 @@ subroutine solve_tridi_&
             call mpi_ibcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
                          int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
             call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
-            call obj%timer%stop("mpi_communication_non_blocking")
+            call obj%timer%stop("mpi_nbc_communication")
           else
             call obj%timer%start("mpi_communication")
             call mpi_bcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &

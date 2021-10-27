@@ -99,6 +99,7 @@ typedef struct {
 typedef struct {
         elpa_index_entry_t base;
         int default_value;
+        int autotune_level_old;
         int autotune_level;
         int autotune_domain;
 	int autotune_part;
@@ -613,7 +614,7 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
  !f> interface
  !f>   function elpa_index_print_autotune_state_new_stepping_c(index, &
  !f>            autotune_level, autotune_domain, autotune_part, min_loc, &
- !f>            min_val, current, cardinality, file_name) result(success) &
+ !f>            min_val, current, cardinality, solver, file_name) result(success) &
  !f>       bind(C, name="elpa_index_print_autotune_state_new_stepping")
  !f>     import c_int, c_ptr, c_char, c_double
  !f>     type(c_ptr), intent(in), value :: index
@@ -621,7 +622,7 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
  !f>                                               autotune_domain, &
  !f>                                               min_loc, current, &
  !f>                                               cardinality
- !f>     integer(kind=c_int), intent(in), value :: autotune_part
+ !f>     integer(kind=c_int), intent(in), value :: autotune_part, solver
  !f>     real(kind=c_double), intent(in), value :: min_val
  !f>     character(kind=c_char), intent(in)     :: file_name(*)
  !f>     integer(kind=c_int) :: success
@@ -630,7 +631,7 @@ int elpa_index_print_autotune_state(elpa_index_t index, int autotune_level, int 
  !f>
  */
 int elpa_index_print_autotune_state_new_stepping(elpa_index_t index, int autotune_level, int autotune_domain, int autotune_part, int min_loc,
-                                    double min_val, int current, int cardinality, char* filename);
+                                    double min_val, int current, int cardinality, int solver, char* filename);
 
 /*
  !f> interface

@@ -139,31 +139,37 @@ subroutine redist_band_&
   global_id(:,:) = 0
   global_id(my_prow, my_pcol) = my_pe
 #ifdef WITH_MPI
-  call obj%timer%start("mpi_communication")
 #ifdef WITH_OPENMP_TRADITIONAL
   global_id_tmp(:,:) = global_id(:,:)
   if (useNonBlockingCollectivesAll) then
+    call obj%timer%start("mpi_nbc_communication")
     call mpi_iallreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
                      int(mpi_comm_all,kind=MPI_KIND), allreduce_request1, mpierr)
     call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+    call obj%timer%stop("mpi_nbc_communication")
   else
+    call obj%timer%start("mpi_communication")
     call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
                      int(mpi_comm_all,kind=MPI_KIND), mpierr)
+    call obj%timer%stop("mpi_communication")
   endif
 
   deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
   check_deallocate("redist_band: global_id_tmp", istat, errorMessage)
 #else
   if (useNonBlockingCollectivesAll) then
+    call obj%timer%start("mpi_nbc_communication")
     call mpi_iallreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
                      int(mpi_comm_all,kind=MPI_KIND), allreduce_request2, mpierr)
     call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+    call obj%timer%stop("mpi_nbc_communication")
   else
+    call obj%timer%start("mpi_communication")
     call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, mpi_sum, &
                      int(mpi_comm_all,kind=MPI_KIND), mpierr)
+    call obj%timer%stop("mpi_communication")
   endif
 #endif
-  call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
   ! Set work distribution
 

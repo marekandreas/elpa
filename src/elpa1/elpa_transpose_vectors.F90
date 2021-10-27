@@ -229,8 +229,8 @@ subroutine ROUTINE_NAME&
 #endif
 
 #ifdef WITH_MPI
-        call obj%timer%start("mpi_communication")
         if (useNonBlockingCollectives) then
+          call obj%timer%start("mpi_nbc_communication")
           call mpi_ibcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
 #if REALCASE == 1
                       MPI_REAL_PRECISION,    &
@@ -240,7 +240,9 @@ subroutine ROUTINE_NAME&
 #endif
                       int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND), bcast_request1, mpierr)
           call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+          call obj%timer%stop("mpi_nbc_communication")
         else
+          call obj%timer%start("mpi_communication")
           call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
 #if REALCASE == 1
                       MPI_REAL_PRECISION,    &
@@ -249,8 +251,8 @@ subroutine ROUTINE_NAME&
                       MPI_COMPLEX_PRECISION, &
 #endif
                       int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND),  mpierr)
+          call obj%timer%stop("mpi_communication")
         endif
-        call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP_TRADITIONAL

@@ -119,14 +119,16 @@ subroutine ssymm_matrix_allreduce_&
   enddo
 
 #ifdef WITH_MPI
-  call obj%timer%start("mpi_communication")
   if (useNonBlockingCollective) then
+    call obj%timer%start("mpi_nbc_communication")
     call mpi_iallreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, allreduce_request, mpierr)
     call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+    call obj%timer%stop("mpi_nbc_communication")
   else
+    call obj%timer%start("mpi_communication")
     call mpi_allreduce(h1, h2, nc, MPI_REAL_PRECISION, MPI_SUM, comm, mpierr)
+    call obj%timer%stop("mpi_communication")
   endif
-  call obj%timer%stop("mpi_communication")
   nc = 0
   do i=1,n
     a(1:i,i) = h2(nc+1:nc+i)
