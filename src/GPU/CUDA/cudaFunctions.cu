@@ -49,6 +49,7 @@
 // --------------------------------------------------------------------------------------------------
 //
 // This file was written by A. Marek, MPCDF
+#include "config-f90.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -64,7 +65,6 @@
 #include <cublas_v2.h>
 
 
-#include "config-f90.h"
 #ifdef WITH_NVIDIA_CUSOLVER
 #include <cusolverDn.h>
 #endif

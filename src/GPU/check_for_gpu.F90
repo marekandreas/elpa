@@ -149,13 +149,11 @@ module mod_check_for_gpu
         endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-#ifdef WITH_NVIDIA_CUSOLVER
         success = cusolver_create(cusolverHandle)
         if (.not.(success)) then
           print *,"Cannot create cusolver handle"
           stop 1
         endif
-#endif
 #endif
 
       else ! useGPUid
@@ -269,13 +267,11 @@ module mod_check_for_gpu
           endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-#ifdef WITH_NVIDIA_CUSOLVER
           success = cusolver_create(cusolverHandle)
           if (.not.(success)) then
             print *,"Cannot create cusolver handle"
             stop 1
           endif
-#endif
 #endif
 
         endif
