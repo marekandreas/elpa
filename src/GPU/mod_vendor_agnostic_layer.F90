@@ -455,6 +455,82 @@ module elpa_gpu
       endif
     end function
 
+    subroutine gpusolver_dtrtri(uplo, diag, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cusolver_dtrtri(uplo, diag, n, a, lda, info)
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        !call hipsolver_dtrtri(uplo, diag, n, a, lda, info)
+      endif
+    end subroutine
+
+    subroutine gpusolver_strtri(uplo, diag, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cusolver_strtri(uplo, diag, n, a, lda, info)
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        !call hipsolver_strtri(uplo, diag, n, a, lda, info)
+      endif
+    end subroutine
+
+    subroutine gpusolver_ztrtri(uplo, diag, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cusolver_ztrtri(uplo, diag, n, a, lda, info)
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        !call hipsolver_ztrtri(uplo, diag, n, a, lda, info)
+      endif
+    end subroutine
+
+    subroutine gpusolver_ctrtri(uplo, diag, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cusolver_ctrtri(uplo, diag, n, a, lda, info)
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        !call hipsolver_ctrtri(uplo, diag, n, a, lda, info)
+      endif
+    end subroutine
+
     subroutine gpublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
       use, intrinsic :: iso_c_binding
       use cuda_functions
