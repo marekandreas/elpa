@@ -126,6 +126,7 @@ module mod_check_for_gpu
 #endif
           stop 1
         endif
+
         if (wantDebugMessage) then
           print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', use_gpu_id
         endif
@@ -147,7 +148,17 @@ module mod_check_for_gpu
           stop 1
         endif
 
-      else
+#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_CUSOLVER
+        success = cusolver_create(cusolverHandle)
+        if (.not.(success)) then
+          print *,"Cannot create cusolver handle"
+          stop 1
+        endif
+#endif
+#endif
+
+      else ! useGPUid
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || !defined(WITH_AMD_GPU_VERSION)
         if (cublasHandle .ne. -1) then
@@ -256,7 +267,17 @@ module mod_check_for_gpu
 #endif
             stop 1
           endif
-          
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_CUSOLVER
+          success = cusolver_create(cusolverHandle)
+          if (.not.(success)) then
+            print *,"Cannot create cusolver handle"
+            stop 1
+          endif
+#endif
+#endif
+
         endif
       endif
     end function

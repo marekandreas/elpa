@@ -1666,6 +1666,21 @@ if test x"${use_nvidia_gpu}" = x"yes" ; then
   use_nvidia_complex_gpu=yes
 fi
 
+AC_MSG_CHECKING(whether NVIDIA cusolver library should be used)
+AC_ARG_WITH([cusolver],
+            [AS_HELP_STRING([--with-cusolver],
+                            [Use Nvidia cusolver library, disabled by default])],
+            [
+               if test x"$withval" = x"yes"; then
+                 with_cusolver=yes
+               else
+                 with_cusolver=no
+               fi
+	     ],
+            [with_cusolver="no"])
+AC_MSG_RESULT([${with_cusolver}])
+
+
 #AC_MSG_CHECKING(whether INTEL GPU version should be used)
 #AC_ARG_ENABLE([intel-gpu],
 #                AS_HELP_STRING([--enable-intel-gpu],
@@ -1725,8 +1740,17 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   if test x"${have_cudart}" = x"no"; then
     AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   fi
+
+  if test x"${with_cusolver}" = x"yes"; then
+    AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
+    if test x"${have_cusolver}" = x"no"; then
+      AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+    fi
+    AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
+  fi
   AC_LANG_POP([C])
 fi
+
 
 
 if test x"${need_amd_gpu}" = x"yes" ; then

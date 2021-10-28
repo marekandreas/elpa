@@ -60,6 +60,7 @@ module cuda_functions
 
   ! TODO global variable, has to be changed
   integer(kind=C_intptr_T) :: cublasHandle = -1
+  integer(kind=C_intptr_T) :: cusolverHandle = -1
 
 !  integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
 !#ifdef WANT_SINGLE_PRECISION_REAL
@@ -91,6 +92,28 @@ module cuda_functions
       integer(kind=C_INT)  :: istat
     end function cublas_destroy_c
   end interface
+
+#ifdef WITH_NVIDIA_CUSOLVER
+  interface
+    function cusolver_create_c(handle) result(istat) &
+             bind(C, name="cusolverCreateFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_INT)  :: istat
+    end function cusolver_create_c
+  end interface
+
+  interface
+    function cusolver_destroy_c(handle) result(istat) &
+             bind(C, name="cusolverDestroyFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_INT)  :: istat
+    end function cusolver_destroy_c
+  end interface
+#endif /* WITH_NVIDIA_CUSOLVER */
 
   interface
     function cuda_setdevice_c(n) result(istat) &
@@ -374,6 +397,73 @@ module cuda_functions
 
     end function cuda_memset_c
   end interface
+
+#ifdef WITH_NVIDIA_CUSOLVER
+  ! cuSOLVER
+  interface
+    subroutine cusolver_dtrtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='cusolverDtrtri_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine cusolver_dtrtri_c
+  end interface
+
+  interface
+    subroutine cusolver_strtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='cusolverStrtri_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine cusolver_strtri_c
+  end interface
+
+  interface
+    subroutine cusolver_ztrtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='cusolverZtrtri_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine cusolver_ztrtri_c
+  end interface
+
+  interface
+    subroutine cusolver_ctrtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='cusolverCtrtri_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine cusolver_ctrtri_c
+  end interface
+
+#endif /* WITH_NVIDIA_CUSOLVER  */
 
   ! cuBLAS
   interface
@@ -878,6 +968,34 @@ module cuda_functions
 #endif
    end function
 
+#ifdef WITH_NVIDIA_CUSOLVER
+   function cusolver_create(handle) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: handle
+     logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+     success = cusolver_create_c(handle) /= 0
+#else
+     success = .true.
+#endif
+   end function
+
+   function cusolver_destroy(handle) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: handle
+     logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+     success = cusolver_destroy_c(handle) /= 0
+#else
+     success = .true.
+#endif
+   end function
+#endif /* WITH_NVIDIA_CUSOLVER */
+
     function cuda_setdevice(n) result(success)
       use, intrinsic :: iso_c_binding
 
@@ -1199,6 +1317,64 @@ module cuda_functions
         success = .true.
 #endif
     end function
+
+#ifdef WITH_NIVIDA_CUSOLVER
+    subroutine cusolver_dtrtri(uplo, diag, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_dtrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine cusolver_strtri(uplo, diag, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_strtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine cusolver_ztrtri(uplo, diag, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_ztrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine cusolver_ctrtri(uplo, diag, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_ctrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+#endif /* NVIDIA_CUSOLVER */
 
     ! cuBLAS
     subroutine cublas_dgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
