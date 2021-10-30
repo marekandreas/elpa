@@ -290,8 +290,12 @@
           call obj%timer%start("gpublas")
 
           a_off = ((l_row1-1) + (l_col1-1)*matrixRows) * size_of_datatype
-          call gpublas_PRECISION_TRTRI('U', 'N', int(nb,kind=c_int64_t), a_dev+a_off, int(matrixRows,c_int64_t), &
+          call gpusolver_PRECISION_TRTRI('U', 'N', int(nb,kind=c_int64_t), a_dev+a_off, int(matrixRows,c_int64_t), &
                              info)
+          if (info .ne. 0) then
+            write(error_unit,*) "elpa_invert_trm: error in gpusolver_TRTRI"
+            stop
+          endif
           call obj%timer%stop("gpublas")
          
 #else /* WITH_NVIDIA_CUSOLVER */
