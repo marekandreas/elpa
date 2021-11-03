@@ -71,7 +71,7 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  `--with-mpi=[yes|no]`                         | compile with MPI. Default: yes                        |
 |  `--with-cuda-path=PATH`                       | prefix where CUDA is installed [default=auto]         |
 |  `--with-cuda-sdk-path=PATH`                   | prefix where CUDA SDK is installed [default=auto]     |
-|  `--with-GPU-compute-capability=VALUE`         | use compute capability VALUE for GPU version, <br> default: "sm_35" |
+|  `--with-NVIDIA-GPU-compute-capability=VALUE`  | use compute capability VALUE for GPU version, <br> default: "sm_35" |
 |  `--with-fixed-real-kernel=KERNEL`             | compile with only a single specific real kernel.      |
 |  `--with-fixed-complex-kernel=KERNEL`          | compile with only a single specific complex kernel.   |
 |  `--with-nvidia-gpu-support-only`              | Compile and always use the NVIDIA GPU version         |
