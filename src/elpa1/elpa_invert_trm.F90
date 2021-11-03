@@ -102,7 +102,7 @@
   if (gpu_vendor() == NVIDIA_GPU) then
     call obj%get("gpu",gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for GPU. Aborting..."
+      print *,"ELPA_INVERT_TRM: Problem getting option for GPU. Aborting..."
       stop
     endif
     if (gpu .eq. 1) then
@@ -110,20 +110,20 @@
               & keyword 'nvidia-gpu'"
       call obj%set("nvidia-gpu",gpu,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem setting option for NVIDIA GPU. Aborting..."
+        print *,"ELPA_INVERT_TRM: Problem setting option for NVIDIA GPU. Aborting..."
         stop
       endif
     endif
 
     call obj%get("nvidia-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for NVIDIA GPU. Aborting..."
+      print *,"ELPA_INVERT_TRM: Problem getting option for NVIDIA GPU. Aborting..."
       stop
     endif
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for AMD GPU. Aborting..."
+      print *,"ELPA_INVERT_TRM: Problem getting option for AMD GPU. Aborting..."
       stop
     endif
   else
@@ -150,25 +150,25 @@
   nblk       = obj%nblk
   matrixCols = obj%local_ncols
 
-  call obj%get("mpi_comm_all",mpi_comm_all,error)
+  call obj%get("mpi_comm_parent", mpi_comm_all, error)
   if (error .ne. ELPA_OK) then
-    print *,"Error getting option for mpi_comm_all. Aborting..."
+    print *,"ELPA_INVERT_TRM: Error getting option for mpi_comm_all. Aborting..."
     stop
   endif
-  call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+  call obj%get("mpi_comm_rows", mpi_comm_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Error getting option for mpi_comm_rows. Aborting..."
+    print *,"ELPA_INVERT_TRM: Error getting option for mpi_comm_rows. Aborting..."
     stop
   endif
-  call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+  call obj%get("mpi_comm_cols", mpi_comm_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Error getting option for mpi_comm_cols. Aborting..."
+    print *,"ELPA_INVERT_TRM: Error getting option for mpi_comm_cols. Aborting..."
     stop
   endif
 
-  call obj%get("debug", debug,error)
+  call obj%get("debug", debug, error)
   if (error .ne. ELPA_OK) then
-    print *,"Error getting option for debug. Aborting..."
+    print *,"ELPA_INVERT_TRM: Error getting option for debug. Aborting..."
     stop
   endif
   if (debug == 1) then
@@ -202,7 +202,7 @@
       ! set the neccessary parameters
       call set_gpu_parameters()
     else
-      print *,"GPUs are requested but not detected! Aborting..."
+      print *,"ELPA_INVERT_TRM: GPUs are requested but not detected! Aborting..."
       success = .false.
       return
     endif
@@ -216,28 +216,25 @@
     check_alloc_gpu("elpa_invert_trm: tmp1_dev", successGPU)
 
     successGPU = gpu_memset(tmp1_dev, 0, nblk*nblk*size_of_datatype)
-    check_memcpy_gpu("trans_ev", successGPU)
+    check_memcpy_gpu("elpa_invert_trm: memset tmp1_dev", successGPU)
 
     successGPU = gpu_malloc(tmp2_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmp2_dev", successGPU)
 
-    successGPU = gpu_memset(tmp1_dev, 0, nblk*nblk*size_of_datatype)
-    check_memcpy_gpu("trans_ev", successGPU)
-
     successGPU = gpu_memset(tmp2_dev, 0, nblk*nblk*size_of_datatype)
-    check_memcpy_gpu("trans_ev", successGPU)
+    check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
 
     successGPU = gpu_malloc(tmat1_dev, l_rows*nblk*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
 
     successGPU = gpu_memset(tmat1_dev, 0, l_rows*nblk*size_of_datatype)
-    check_memcpy_gpu("trans_ev", successGPU)
+    check_memcpy_gpu("elpa_invert_trm: memset tmat1_dev", successGPU)
 
     successGPU = gpu_malloc(tmat2_dev, nblk*l_cols*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
 
     successGPU = gpu_memset(tmat2_dev, 0, nblk*l_cols*size_of_datatype)
-    check_memcpy_gpu("trans_ev", successGPU)
+    check_memcpy_gpu("elpa_invert_trm: memset tmat2_dev", successGPU)
 
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
@@ -263,9 +260,9 @@
   tmat2 = 0
 
   if (useGPU) then
-    successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
+    successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t),  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
-    check_memcpy_gpu("trans_ev", successGPU)
+    check_memcpy_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
   endif
 
 
@@ -303,14 +300,14 @@
           ! still have to use cpu blas -> a generic GPU implementation would be needed
 
           call obj%timer%start("blas")
-          successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t), &
+          successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev, &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("trans_ev", successGPU)
 
           call PRECISION_TRTRI('U', 'N', int(nb,kind=BLAS_KIND), a(l_row1,l_col1), int(matrixRows,kind=BLAS_KIND), &
                              infoBLAS)
           info = int(infoBLAS,kind=ik)
-          successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
+          successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t),  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("trans_ev", successGPU)
           call obj%timer%stop("blas")
@@ -381,7 +378,7 @@
 
         num = nblk*nblk*size_of_datatype
         successGPU = gpu_memcpy(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
-                              gpuMemcpyDeviceToHost)
+                              gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
 
       endif
