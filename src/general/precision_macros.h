@@ -100,6 +100,7 @@
 #undef  gpublas_PRECISION_GEMV
 #undef  gpublas_PRECISION_SYMV
 #undef  gpublas_PRECISION_COPY
+#undef  gpusolver_PRECISION_TRTRI
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
@@ -179,6 +180,7 @@
 #define  gpublas_PRECISION_GEMV gpublas_DGEMV
 #define  gpublas_PRECISION_SYMV gpublas_DSYMV
 #define  gpublas_PRECISION_COPY gpublas_DCOPY
+#define  gpusolver_PRECISION_TRTRI gpusolver_DTRTRI
 #define  cublas_PRECISION_GEMM cublas_DGEMM
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
@@ -255,6 +257,7 @@
 #define  gpublas_PRECISION_GEMV gpublas_SGEMV
 #define  gpublas_PRECISION_SYMV gpublas_SSYMV
 #define  gpublas_PRECISION_COPY gpublas_SCOPY
+#define  gpusolver_PRECISION_TRTRI gpusolver_STRTRI
 #define  cublas_PRECISION_GEMM cublas_SGEMM
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
@@ -349,6 +352,7 @@
 #undef  cublas_PRECISION_GEMV
 #undef  cublas_PRECISION_SYMV
 #undef  cublas_PRECISION_COPY
+#undef  gpusolver_PRECISION_TRTRI
 #undef  mkl_offload_PRECISION_GEMM 
 #undef  mkl_offload_PRECISION_GEMV 
 #undef  mkl_offload_PRECISION_TRMM 
@@ -433,6 +437,7 @@
 #define  gpublas_PRECISION_GEMV gpublas_ZGEMV
 #define  gpublas_PRECISION_SYMV gpublas_ZSYMV
 #define  gpublas_PRECISION_COPY gpublas_ZCOPY
+#define  gpusolver_PRECISION_TRTRI gpusolver_ZTRTRI
 #define  cublas_PRECISION_GEMM cublas_ZGEMM
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
@@ -513,6 +518,7 @@
 #define  gpublas_PRECISION_GEMV gpublas_CGEMV
 #define  gpublas_PRECISION_SYMV gpublas_CSYMV
 #define  gpublas_PRECISION_COPY gpublas_CCOPY
+#define  gpusolver_PRECISION_TRTRI gpusolver_CTRTRI
 #define  cublas_PRECISION_GEMM cublas_CGEMM
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV
