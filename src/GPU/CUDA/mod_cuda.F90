@@ -970,7 +970,7 @@ module cuda_functions
 
      integer(kind=C_intptr_t)                  :: handle
      logical                                   :: success
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_CUSOLVER)
+#ifdef WITH_NVIDIA_CUSOLVER
      success = cusolver_create_c(handle) /= 0
 #else
      success = .true.
@@ -983,7 +983,7 @@ module cuda_functions
 
      integer(kind=C_intptr_t)                  :: handle
      logical                                   :: success
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_CUSOLVER)
+#ifdef WITH_NVIDIA_CUSOLVER
      success = cusolver_destroy_c(handle) /= 0
 #else
      success = .true.
@@ -1320,7 +1320,7 @@ module cuda_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NIVIDA_CUSOLVER)
+#ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_dtrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -1334,7 +1334,7 @@ module cuda_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NIVIDA_CUSOLVER)
+#ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_strtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -1348,7 +1348,7 @@ module cuda_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NIVIDA_CUSOLVER)
+#ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_ztrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -1362,7 +1362,7 @@ module cuda_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NIVIDA_CUSOLVER)
+#ifdef WITH_NIVIDA_CUSOLVER
       call cusolver_ctrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine

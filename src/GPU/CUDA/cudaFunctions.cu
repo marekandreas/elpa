@@ -387,17 +387,16 @@ extern "C" {
 
     int *devInfo = NULL; 
     cudaError_t cuerr = cudaMalloc((void**)&devInfo, sizeof(int));
-#ifdef DEBUG_CUDA
-    printf("CUDA Malloc,  pointer address: %p, size: %d \n", &devInfo);
-#endif
     if (cuerr != cudaSuccess) {
       errormessage("Error in cusolver_Dtrtri devInfo: %s\n",cudaGetErrorString(cuerr));
     }
+#ifdef DEBUG_CUDA
+    printf("CUDA Malloc,  pointer address: %p, size: %d \n", &devInfo);
+#endif
 
     double *d_work = NULL, *h_work=NULL;
     size_t d_lwork = 0;
     size_t h_lwork = 0;
-
     status = cusolverDnXtrtri_bufferSize(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_R_64F, A, lda, &d_lwork, &h_lwork);
     if (status != CUSOLVER_STATUS_SUCCESS) {
       errormessage("Error in cusolverDnDtrtri_buffer_size %s \n","aborting");
@@ -408,18 +407,16 @@ extern "C" {
     }
 
     cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
-#ifdef DEBUG_CUDA
-    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
-#endif
     if (cuerr != cudaSuccess) {
       errormessage("Error in cusolver_Dtrtri d_work: %s\n",cudaGetErrorString(cuerr));
     }
+#ifdef DEBUG_CUDA
+    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
+#endif
 
     status = cusolverDnXtrtri(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_R_64F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
 
     if (status == CUSOLVER_STATUS_SUCCESS) {
-      printf("status = CUSOLVER_STATUS_SUCCESS\n");
-      printf("status = %s \n",status);
     } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
       printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
     } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
@@ -492,8 +489,6 @@ extern "C" {
     status = cusolverDnXtrtri(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_R_32F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
 
     if (status == CUSOLVER_STATUS_SUCCESS) {
-      printf("status = CUSOLVER_STATUS_SUCCESS\n");
-      printf("status = %s \n",status);
     } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
       printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
     } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
@@ -567,8 +562,6 @@ extern "C" {
     status = cusolverDnXtrtri(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_C_64F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
 
     if (status == CUSOLVER_STATUS_SUCCESS) {
-      printf("status = CUSOLVER_STATUS_SUCCESS\n");
-      printf("status = %s \n",status);
     } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
       printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
     } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
@@ -642,8 +635,6 @@ extern "C" {
     status = cusolverDnXtrtri(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_C_32F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
 
     if (status == CUSOLVER_STATUS_SUCCESS) {
-      printf("status = CUSOLVER_STATUS_SUCCESS\n");
-      printf("status = %s \n",status);
     } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
       printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
     } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
@@ -683,16 +674,23 @@ extern "C" {
                                const double *A, int lda,  const double *x, int incx,
                                double beta, double *y, int incy) {
 
-    cublasDgemv(*((cublasHandle_t*)handle), operation_new_api(trans),
-                m, n, &alpha, A, lda, x, incx, &beta, y, incy);
+    cublasStatus_t status = cublasDgemv(*((cublasHandle_t*)handle), operation_new_api(trans),
+                                        m, n, &alpha, A, lda, x, incx, &beta, y, incy);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDgemv\n");
+    }
+
   }
 
   void cublasSgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, float alpha,
                                const float *A, int lda,  const float *x, int incx,
                                float beta, float *y, int incy) {
 
-    cublasSgemv(*((cublasHandle_t*)handle), operation_new_api(trans),
+    cublasStatus_t status = cublasSgemv(*((cublasHandle_t*)handle), operation_new_api(trans),
                 m, n, &alpha, A, lda, x, incx, &beta, y, incy);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasSgemv\n");
+    }
   }
 
   void cublasZgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, double _Complex alpha,
@@ -706,8 +704,11 @@ extern "C" {
     const cuDoubleComplex* x_casted = (const cuDoubleComplex*) x;
     cuDoubleComplex* y_casted = (cuDoubleComplex*) y;
 
-    cublasZgemv(*((cublasHandle_t*)handle), operation_new_api(trans),
+    cublasStatus_t status = cublasZgemv(*((cublasHandle_t*)handle), operation_new_api(trans),
                 m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZgemv\n");
+    }
   }
 
   void cublasCgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, float _Complex alpha,
@@ -721,8 +722,11 @@ extern "C" {
     const cuFloatComplex* x_casted = (const cuFloatComplex*) x;
     cuFloatComplex* y_casted = (cuFloatComplex*) y;
 
-    cublasCgemv(*((cublasHandle_t*)handle), operation_new_api(trans),
+    cublasStatus_t status = cublasCgemv(*((cublasHandle_t*)handle), operation_new_api(trans),
                 m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCgemv\n");
+    }
   }
 
 
@@ -731,8 +735,11 @@ extern "C" {
                                const double *B, int ldb, double beta,
                                double *C, int ldc) {
 
-    cublasDgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb),
+    cublasStatus_t status = cublasDgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb),
                 m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDgemm\n");
+    }
   }
 
   void cublasSgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
@@ -740,8 +747,11 @@ extern "C" {
                                const float *B, int ldb, float beta,
                                float *C, int ldc) {
 
-    cublasSgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb),
+    cublasStatus_t status = cublasSgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb),
                 m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasSgemm\n");
+    }
   }
 
   void cublasZgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
@@ -756,8 +766,11 @@ extern "C" {
     const cuDoubleComplex* B_casted = (const cuDoubleComplex*) B;
     cuDoubleComplex* C_casted = (cuDoubleComplex*) C;
 
-    cublasZgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb),
+    cublasStatus_t status = cublasZgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb),
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZgemm\n");
+    }
   }
 
   void cublasCgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
@@ -772,8 +785,11 @@ extern "C" {
     const cuFloatComplex* B_casted = (const cuFloatComplex*) B;
     cuFloatComplex* C_casted = (cuFloatComplex*) C;
 
-    cublasCgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb),
+    cublasStatus_t status =  cublasCgemm(*((cublasHandle_t*)handle), operation_new_api(transa), operation_new_api(transb),
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCgemm\n");
+    }
   }
 
 
@@ -784,26 +800,38 @@ extern "C" {
 
   void cublasDcopy_elpa_wrapper (intptr_t handle, int n, double *x, int incx, double *y, int incy){
 
-    cublasDcopy(*((cublasHandle_t*)handle), n, x, incx, y, incy);
+    cublasStatus_t status = cublasDcopy(*((cublasHandle_t*)handle), n, x, incx, y, incy);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDcopy\n");
+    }
   }
 
   void cublasScopy_elpa_wrapper (intptr_t handle, int n, float *x, int incx, float *y, int incy){
 
-    cublasScopy(*((cublasHandle_t*)handle), n, x, incx, y, incy);
+    cublasStatus_t status = cublasScopy(*((cublasHandle_t*)handle), n, x, incx, y, incy);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasScopy\n");
+    }
   }
 
   void cublasZcopy_elpa_wrapper (intptr_t handle, int n, double _Complex *x, int incx, double _Complex *y, int incy){
     const cuDoubleComplex* X_casted = (const cuDoubleComplex*) x;
           cuDoubleComplex* Y_casted = (      cuDoubleComplex*) y;
 
-    cublasZcopy(*((cublasHandle_t*)handle), n, X_casted, incx, Y_casted, incy);
+    cublasStatus_t status = cublasZcopy(*((cublasHandle_t*)handle), n, X_casted, incx, Y_casted, incy);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZcopy\n");
+    }
   }
 
   void cublasCcopy_elpa_wrapper (intptr_t handle, int n, float _Complex *x, int incx, float _Complex *y, int incy){
     const cuFloatComplex* X_casted = (const cuFloatComplex*) x;
           cuFloatComplex* Y_casted = (      cuFloatComplex*) y;
 
-    cublasCcopy(*((cublasHandle_t*)handle), n, X_casted, incx, Y_casted, incy);
+    cublasStatus_t status = cublasCcopy(*((cublasHandle_t*)handle), n, X_casted, incx, Y_casted, incy);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCcopy\n");
+    }
   }
 
 
@@ -811,16 +839,22 @@ extern "C" {
                                int m, int n, double alpha, const double *A,
                                int lda, double *B, int ldb){
 
-    cublasDtrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa),
+    cublasStatus_t status = cublasDtrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa),
                 diag_type_new_api(diag), m, n, &alpha, A, lda, B, ldb, B, ldb);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDtrmm\n");
+    }
   }
 
   void cublasStrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
                                int m, int n, float alpha, const float *A,
                                int lda, float *B, int ldb){
 
-    cublasStrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa),
+    cublasStatus_t status = cublasStrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa),
                 diag_type_new_api(diag), m, n, &alpha, A, lda, B, ldb, B, ldb);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasStrmm\n");
+    }
   }
 
   void cublasZtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
@@ -832,8 +866,11 @@ extern "C" {
     const cuDoubleComplex* A_casted = (const cuDoubleComplex*) A;
     cuDoubleComplex* B_casted = (cuDoubleComplex*) B;
 
-    cublasZtrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa),
+    cublasStatus_t status = cublasZtrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa),
                 diag_type_new_api(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb, B_casted, ldb);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZtrmm\n");
+    }
   }
 
   void cublasCtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
@@ -845,8 +882,11 @@ extern "C" {
     const cuFloatComplex* A_casted = (const cuFloatComplex*) A;
     cuFloatComplex* B_casted = (cuFloatComplex*) B;
 
-    cublasCtrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa),
+    cublasStatus_t status = cublasCtrmm(*((cublasHandle_t*)handle), side_mode_new_api(side), fill_mode_new_api(uplo), operation_new_api(transa),
                 diag_type_new_api(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb, B_casted, ldb);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCtrmm\n");
+    }
   }
 
 

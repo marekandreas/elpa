@@ -604,6 +604,8 @@ module elpa_impl
       call likwid_markerStartRegion("TOTAL")
 #endif
 
+      print *,"In ELPA setup"
+
 #ifdef HAVE_DETAILED_TIMINGS
       call self%get("timings",timings, error)
       call self%get("measure_performance",performance, error)
@@ -629,6 +631,7 @@ module elpa_impl
 
 #ifdef WITH_MPI
       if (self%is_set("mpi_comm_parent") == 1) then
+        print *,"MPI_COMM_PARENT is set"
         call self%get("mpi_comm_parent", mpi_comm_parent, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
@@ -642,6 +645,8 @@ module elpa_impl
         call self%set("num_processes", np_total, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       else
+
+        print *,"MPI_COMM_PARENT is NOT set",self%from_legacy_api
         if (self%from_legacy_api .ne. 1) then
           write(error_unit,*) MPI_CONSISTENCY_MSG
           error = ELPA_ERROR

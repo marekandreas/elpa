@@ -112,12 +112,14 @@
      if(error .NE. ELPA_OK) return
 
      if (.not. is_already_decomposed) then
+       print *,"calling cholesky"
        ! B = U^T*U, B<-U
        call self%elpa_cholesky_&
            &ELPA_IMPL_SUFFIX&
            &(b, error)
        if(error .NE. ELPA_OK) return
        ! B <- inv(U)
+       print *,"calling invert_trm"
        call self%elpa_invert_trm_&
            &ELPA_IMPL_SUFFIX&
            &(b, error)

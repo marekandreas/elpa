@@ -71,6 +71,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/mod_merge_systems.F90 \
   src/solve_tridi/mod_merge_recursive.F90 \
   src/solve_tridi/mod_solve_tridi.F90 \
+  src/elpa_invert_trm/mod_invert_trm_cuda.F90 \
   src/elpa1/mod_distribute_global_column.F90 \
   src/elpa1/mod_v_add_s.F90 \
   src/elpa1/mod_solve_secular_equation.F90 \
@@ -117,7 +118,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/general/sanity.F90 \
   src/general/error_checking.inc \
   src/elpa1/elpa_cholesky_template.F90 \
-  src/elpa1/elpa_invert_trm.F90 \
+  src/elpa_invert_trm/elpa_invert_trm.F90 \
   src/elpa1/elpa_multiply_a_b.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/general/elpa_ssr2_template.F90 \
@@ -143,7 +144,7 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 if WITH_NVIDIA_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu src/elpa_invert_trm/elpa_invert_trm_cuda.cu
 endif
 
 if WITH_INTEL_GPU_VERSION
@@ -874,7 +875,8 @@ EXTRA_DIST = \
   src/elpa1/elpa1_trans_ev_template.F90 \
   src/elpa1/elpa1_tridiag_template.F90 \
   src/elpa1/elpa_cholesky_template.F90 \
-  src/elpa1/elpa_invert_trm.F90 \
+  src/elpa_invert_trm/mod_invert_trm_cuda.F90 \
+  src/elpa_invert_trm/elpa_invert_trm.F90 \
   src/elpa1/elpa_multiply_a_b.F90 \
   src/elpa1/elpa_reduce_add_vectors.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
