@@ -461,6 +461,67 @@ module cuda_functions
     end subroutine cusolver_ctrtri_c
   end interface
 
+  interface
+    subroutine cusolver_dpotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='cusolverDpotrf_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine cusolver_dpotrf_c
+  end interface
+
+  interface
+    subroutine cusolver_spotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='cusolverSpotrf_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine cusolver_spotrf_c
+  end interface
+
+  interface
+    subroutine cusolver_zpotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='cusolverZpotrf_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine cusolver_zpotrf_c
+  end interface
+
+  interface
+    subroutine cusolver_cpotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='cusolverCpotrf_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine cusolver_cpotrf_c
+  end interface
+
+
   ! cuBLAS
   interface
     subroutine cublas_dgemm_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
@@ -1364,6 +1425,62 @@ module cuda_functions
 
 #ifdef WITH_NIVIDA_CUSOLVER
       call cusolver_ctrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine cusolver_dpotrf(uplo, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+#ifdef WITH_NIVIDA_CUSOLVER
+      call cusolver_dpotrf_c(cusolverHandle, uplo, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine cusolver_spotrf(uplo, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+#ifdef WITH_NIVIDA_CUSOLVER
+      call cusolver_spotrf_c(cusolverHandle, uplo, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine cusolver_zpotrf(uplo, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+#ifdef WITH_NIVIDA_CUSOLVER
+      call cusolver_zpotrf_c(cusolverHandle, uplo, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine cusolver_cpotrf(uplo, n, a, lda, info)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+
+#ifdef WITH_NIVIDA_CUSOLVER
+      call cusolver_cpotrf_c(cusolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
