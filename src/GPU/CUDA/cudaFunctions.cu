@@ -737,7 +737,6 @@ extern "C" {
     }
   }
 
-
   void cusolverSpotrf_elpa_wrapper (intptr_t handle, char uplo, char diag, int n, float *A, int lda, int *info) {
     cusolverStatus_t status;
 
@@ -755,7 +754,7 @@ extern "C" {
     float *d_work = NULL;
     int d_lwork = 0;
 
-    status = cusolverDnDpotrf_bufferSize(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo),  n, A, lda, &d_lwork);
+    status = cusolverDnSpotrf_bufferSize(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo),  n, A, lda, &d_lwork);
     if (status != CUSOLVER_STATUS_SUCCESS) {
       errormessage("Error in cusolverDnSpotrf_buffer_size %s \n","aborting");
     }
@@ -805,7 +804,7 @@ extern "C" {
     }
   }
 
-  void cusolverZpotrf_elpa_wrapper (intptr_t handle, char uplo, char diag, int n, double _Comple *A, int lda, int *info) {
+  void cusolverZpotrf_elpa_wrapper (intptr_t handle, char uplo, char diag, int n, double _Complex *A, int lda, int *info) {
     cusolverStatus_t status;
 
     int info_gpu = 0;
@@ -873,6 +872,7 @@ extern "C" {
     }
   }
 
+#if 0
   void cusolverCpotrf_elpa_wrapper (intptr_t handle, char uplo, char diag, int n, float _Complex *A, int lda, int *info) {
     cusolverStatus_t status;
 
@@ -941,6 +941,7 @@ extern "C" {
       errormessage("Error in cusolver_Cpotrf cuda_free(devInfo): %s\n",cudaGetErrorString(cuerr));
     }
   }
+#endif
 
 #endif /* WITH_NVIDIA_CUSOLVER */
 
