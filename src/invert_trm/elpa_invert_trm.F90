@@ -402,7 +402,6 @@
       else ! useGPU
         nc = 0
         do i=1,nb
-          print *,"i=",i,"nc=",nc
           tmp2(1:i,i) = tmp1(nc+1:nc+i)
           nc = nc+i
         enddo
