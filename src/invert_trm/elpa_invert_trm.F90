@@ -213,7 +213,6 @@
       return
     endif
     call obj%timer%stop("check_for_gpu")
-    ! allocate here
   else ! useGPU
   endif ! useGPU
 
@@ -298,8 +297,7 @@
         if (useGPU) then
 
 #ifdef WITH_NVIDIA_CUSOLVER
-          print *,"trying to call cusolver"
-          call obj%timer%start("gpublas")
+          call obj%timer%start("gpusolver")
 
           a_off = ((l_row1-1) + (l_col1-1)*matrixRows) * size_of_datatype
           call gpusolver_PRECISION_TRTRI('U', 'N', int(nb,kind=c_int64_t), a_dev+a_off, int(matrixRows,c_int64_t), &
@@ -308,12 +306,8 @@
             write(error_unit,*) "elpa_invert_trm: error in gpusolver_TRTRI"
             stop
           endif
-          call obj%timer%stop("gpublas")
-!         
-!        ! debug copy a 
-!    successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev, &
-!                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
-!    check_memcpy_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
+          call obj%timer%stop("gpusolver")
+         
 #else /* WITH_NVIDIA_CUSOLVER */
          
           ! still have to use cpu blas -> a generic GPU implementation would be needed
@@ -422,7 +416,7 @@
           call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, ONE, tmp2_dev, nblk, &
                                       a_dev+a_off, matrixRows)
         
-          successGPU = gpu_devicesynchronize()
+          !successGPU = gpu_devicesynchronize()
         endif
         call obj%timer%stop("gpublas")
 
