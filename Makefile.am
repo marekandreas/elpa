@@ -73,6 +73,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/mod_solve_tridi.F90 \
   src/invert_trm/mod_invert_trm_cuda.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
+  src/invert_trm/mod_elpa_invert_trm.F90 \
   src/elpa1/mod_distribute_global_column.F90 \
   src/elpa1/mod_v_add_s.F90 \
   src/elpa1/mod_solve_secular_equation.F90 \
@@ -877,6 +878,7 @@ EXTRA_DIST = \
   src/elpa1/elpa1_tridiag_template.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/elpa_cholesky_template.F90 \
+  src/invert_trm/mod_elpa_invert_trm.F90 \
   src/invert_trm/mod_invert_trm_cuda.F90 \
   src/invert_trm/elpa_invert_trm.F90 \
   src/elpa1/elpa_multiply_a_b.F90 \
