@@ -203,9 +203,11 @@
   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
   if (useGPU) then
-    call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(obj, myid, numGPU)) then
-      ! set the neccessary parameters
+     call obj%timer%start("check_for_gpu")
+     !Soheil:
+     call obj%set("use_gpu_id", mod(myid,2), error)
+    if (check_for_gpu(obj, myid, numGPU, .TRUE.)) then
+       ! set the neccessary parameters       
       call set_gpu_parameters()
     else
       print *,"ELPA_INVERT_TRM: GPUs are requested but not detected! Aborting..."
@@ -364,7 +366,7 @@
             nc = nc+i
           enddo
         endif ! useGPU
-      endif ! my_pcol==pcol(n, nblk, np_cols)
+!      endif ! my_pcol==pcol(n, nblk, np_cols)
 
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
@@ -378,6 +380,7 @@
 #else
 #error "not yet implemented"
 #endif
+      endif ! my_pcol==pcol(n, nblk, np_cols)
 
       call obj%timer%start("mpi_communication")
       call MPI_Bcast(tmp1, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
@@ -385,7 +388,7 @@
       call obj%timer%stop("mpi_communication")
 
 #ifndef WITH_CUDA_AWARE_MPI
-      if (useGPU) then
+      if ((useGPU)) then  !.AND.(my_pcol/=pcol(n, nblk, np_cols))) then
         num = nblk*nblk*size_of_datatype
         successGPU = gpu_memcpy(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice)
@@ -412,19 +415,21 @@
         if (l_cols-l_colx+1 > 0) then
           a_off = (l_row1 -1 + (l_colx-1)*matrixRows) * size_of_datatype
 
-          call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, ONE, tmp2_dev, nblk, &
-                                      a_dev+a_off, matrixRows)
+          call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, ONE, tmp2_dev, &
+                                      nblk, a_dev+a_off, matrixRows)
         
           !successGPU = gpu_devicesynchronize()
         endif
         call obj%timer%stop("gpublas")
 
         if (l_colx <= l_cols) then
-          call copy_PRECISION_a_tmat2 (a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+          call copy_PRECISION_a_tmat2 (a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, & 
+                                       l_row1, nb)
         endif
 
         if (my_pcol==pcol(n, nblk, np_cols)) then
-          call copy_PRECISION_tmp2_tmat2 (tmp2_dev, tmat2_dev, nblk, l_col1, nb) ! tmp2 has the lower left triangle 0
+           ! tmp2 has the lower left triangle 0
+          call copy_PRECISION_tmp2_tmat2 (tmp2_dev, tmat2_dev, nblk, l_col1, nb) 
         endif
       else ! useGPU
         call obj%timer%start("blas")
@@ -448,7 +453,6 @@
         endif
       endif
 
-      do i=1,nb
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
         if (useGPU) then
@@ -461,9 +465,11 @@
 #error "not yet implemented"
 #endif
 
+      do i=1,nb
         call obj%timer%start("mpi_communication")
         call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
+                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
         call obj%timer%stop("mpi_communication")
 
