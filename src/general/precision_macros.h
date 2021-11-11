@@ -100,7 +100,9 @@
 #undef  gpublas_PRECISION_GEMV
 #undef  gpublas_PRECISION_SYMV
 #undef  gpublas_PRECISION_COPY
+#undef  gpublas_PRECISION_TRSM
 #undef  gpusolver_PRECISION_TRTRI
+#undef  gpusolver_PRECISION_POTRF
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
@@ -111,6 +113,7 @@
 #undef  copy_PRECISION_a_tmat2
 #undef  copy_PRECISION_tmp2_tmat2
 #undef  copy_PRECISION_a_tmat1
+#undef  copy_PRECISION_a_tmatc
 #undef  mkl_offload_PRECISION_GEMM
 #undef  mkl_offload_PRECISION_GEMV
 #undef  mkl_offload_PRECISION_TRMM
@@ -185,7 +188,9 @@
 #define  gpublas_PRECISION_GEMV gpublas_DGEMV
 #define  gpublas_PRECISION_SYMV gpublas_DSYMV
 #define  gpublas_PRECISION_COPY gpublas_DCOPY
+#define  gpublas_PRECISION_TRSM gpublas_DTRSM
 #define  gpusolver_PRECISION_TRTRI gpusolver_DTRTRI
+#define  gpusolver_PRECISION_POTRF gpusolver_DPOTRF
 #define  cublas_PRECISION_GEMM cublas_DGEMM
 #define  cublas_PRECISION_TRMM cublas_DTRMM
 #define  cublas_PRECISION_GEMV cublas_DGEMV
@@ -196,6 +201,7 @@
 #define  copy_PRECISION_a_tmat2 copy_double_a_tmat2
 #define  copy_PRECISION_tmp2_tmat2 copy_double_tmp2_tmat2
 #define  copy_PRECISION_a_tmat1 copy_double_a_tmat1
+#define  copy_PRECISION_a_tmatc copy_double_a_tmatc
 #define  mkl_offload_PRECISION_GEMM mkl_offload_DGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_DGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_DTRMM
@@ -267,7 +273,9 @@
 #define  gpublas_PRECISION_GEMV gpublas_SGEMV
 #define  gpublas_PRECISION_SYMV gpublas_SSYMV
 #define  gpublas_PRECISION_COPY gpublas_SCOPY
+#define  gpublas_PRECISION_TRSM gpublas_STRSM
 #define  gpusolver_PRECISION_TRTRI gpusolver_STRTRI
+#define  gpusolver_PRECISION_POTRF gpusolver_SPOTRF
 #define  cublas_PRECISION_GEMM cublas_SGEMM
 #define  cublas_PRECISION_TRMM cublas_STRMM
 #define  cublas_PRECISION_GEMV cublas_SGEMV
@@ -278,6 +286,7 @@
 #define  copy_PRECISION_a_tmat2 copy_float_a_tmat2
 #define  copy_PRECISION_tmp2_tmat2 copy_float_tmp2_tmat2
 #define  copy_PRECISION_a_tmat1 copy_float_a_tmat1
+#define  copy_PRECISION_a_tmatc copy_float_a_tmatc
 #define  mkl_offload_PRECISION_GEMM mkl_offload_SGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_SGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_STRMM
@@ -362,6 +371,7 @@
 #undef  gpublas_PRECISION_GEMV
 #undef  gpublas_PRECISION_SYMV
 #undef  gpublas_PRECISION_COPY
+#undef  gpublas_PRECISION_TRSM
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
@@ -372,7 +382,9 @@
 #undef  copy_PRECISION_a_tmat2
 #undef  copy_PRECISION_tmp2_tmat2
 #undef  copy_PRECISION_a_tmat1
+#undef  copy_PRECISION_a_tmatc
 #undef  gpusolver_PRECISION_TRTRI
+#undef  gpusolver_PRECISION_POTRF
 #undef  mkl_offload_PRECISION_GEMM 
 #undef  mkl_offload_PRECISION_GEMV 
 #undef  mkl_offload_PRECISION_TRMM 
@@ -457,7 +469,9 @@
 #define  gpublas_PRECISION_GEMV gpublas_ZGEMV
 #define  gpublas_PRECISION_SYMV gpublas_ZSYMV
 #define  gpublas_PRECISION_COPY gpublas_ZCOPY
+#define  gpublas_PRECISION_TRSM gpublas_ZTRSM
 #define  gpusolver_PRECISION_TRTRI gpusolver_ZTRTRI
+#define  gpusolver_PRECISION_POTRF gpusolver_ZPOTRF
 #define  cublas_PRECISION_GEMM cublas_ZGEMM
 #define  cublas_PRECISION_TRMM cublas_ZTRMM
 #define  cublas_PRECISION_GEMV cublas_ZGEMV
@@ -468,6 +482,7 @@
 #define  copy_PRECISION_a_tmat2 copy_double_complex_a_tmat2
 #define  copy_PRECISION_tmp2_tmat2 copy_double_complex_tmp2_tmat2
 #define  copy_PRECISION_a_tmat1 copy_double_complex_a_tmat1
+#define  copy_PRECISION_a_tmatc copy_double_complex_a_tmatc
 #define  mkl_offload_PRECISION_GEMM mkl_offload_ZGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_ZGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_ZTRMM
@@ -543,7 +558,9 @@
 #define  gpublas_PRECISION_GEMV gpublas_CGEMV
 #define  gpublas_PRECISION_SYMV gpublas_CSYMV
 #define  gpublas_PRECISION_COPY gpublas_CCOPY
+#define  gpublas_PRECISION_TRSM gpublas_CTRSM
 #define  gpusolver_PRECISION_TRTRI gpusolver_CTRTRI
+#define  gpusolver_PRECISION_POTRF gpusolver_CPOTRF
 #define  cublas_PRECISION_GEMM cublas_CGEMM
 #define  cublas_PRECISION_TRMM cublas_CTRMM
 #define  cublas_PRECISION_GEMV cublas_CGEMV
@@ -554,6 +571,7 @@
 #define  copy_PRECISION_a_tmat2 copy_float_complex_a_tmat2
 #define  copy_PRECISION_tmp2_tmat2 copy_float_complex_tmp2_tmat2
 #define  copy_PRECISION_a_tmat1 copy_float_complex_a_tmat1
+#define  copy_PRECISION_a_tmatc copy_float_complex_a_tmatc
 #define  mkl_offload_PRECISION_GEMM mkl_offload_CGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_CGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_CTRMM

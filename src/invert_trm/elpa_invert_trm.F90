@@ -204,8 +204,7 @@
 
   if (useGPU) then
      call obj%timer%start("check_for_gpu")
-     !Soheil:
-     call obj%set("use_gpu_id", mod(myid,2), error)
+     call obj%set("use_gpu_id", myid, error)
     if (check_for_gpu(obj, myid, numGPU, .TRUE.)) then
        ! set the neccessary parameters       
       call set_gpu_parameters()
@@ -366,7 +365,7 @@
             nc = nc+i
           enddo
         endif ! useGPU
-!      endif ! my_pcol==pcol(n, nblk, np_cols)
+      endif ! my_pcol==pcol(n, nblk, np_cols)
 
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
@@ -380,7 +379,6 @@
 #else
 #error "not yet implemented"
 #endif
-      endif ! my_pcol==pcol(n, nblk, np_cols)
 
       call obj%timer%start("mpi_communication")
       call MPI_Bcast(tmp1, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
@@ -455,12 +453,12 @@
 
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
-        if (useGPU) then
-          num = l_rows*nblk*size_of_datatype
-          successGPU = gpu_memcpy(int(loc(tmat1),kind=c_intptr_t), tmat1_dev, num, &
+      if (useGPU) then
+        num = l_rows*nblk*size_of_datatype
+        successGPU = gpu_memcpy(int(loc(tmat1),kind=c_intptr_t), tmat1_dev, num, &
                               gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
-        endif
+        check_memcpy_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
+      endif
 #else
 #error "not yet implemented"
 #endif
@@ -473,21 +471,21 @@
 
         call obj%timer%stop("mpi_communication")
       enddo
-    endif
 
 #ifndef WITH_CUDA_AWARE_MPI
-        if (useGPU) then
-          ! cuda aware MPI here
-          num = l_rows*nblk*size_of_datatype
-          successGPU = gpu_memcpy(tmat1_dev, int(loc(tmat1),kind=c_intptr_t), num, &
+      if (useGPU) then
+        ! cuda aware MPI here
+        num = l_rows*nblk*size_of_datatype
+        successGPU = gpu_memcpy(tmat1_dev, int(loc(tmat1),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice)
-          check_memcpy_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
+        check_memcpy_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
 
-        endif
+      endif
 #else
 #error "not yet implemented"
 #endif
 #endif /* WITH_MPI */
+    endif ! (l_row1>1)
 
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI

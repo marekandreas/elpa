@@ -364,18 +364,16 @@ extern "C" void copy_double_complex_a_tmat1_FromC(double _Complex *a_dev, double
 }
 
 
-__global__ void copy_float_complex_a_tmat1_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1){
+__global__ void copy_float_complex_a_tmat1_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, cuFloatComplex *zero_dev){
 
   int nb_index    = threadIdx.x +1;  // range 1..nb
   int l_row1_index = blockIdx.x + 1; // we need l_row1-1 blocks
 
   tmat1_dev[l_row1_index-1 + (nb_index-1)*l_rows] = a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1 ) * matrixRows];
-#if 0
-  a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = (cuFloatComplex)0;
-#endif
+  a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = zero_dev[0];
 }
 
-extern "C" void copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, float _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in){
+extern "C" void copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, float _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, float _Complex *ZERO){
   int l_rows = *l_rows_in;   
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
@@ -384,11 +382,12 @@ extern "C" void copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, float _C
 
   cuFloatComplex* a_casted = (cuFloatComplex*) a_dev;
   cuFloatComplex* tmat1_casted = (cuFloatComplex*) tmat1_dev;
+  cuFloatComplex* zero_casted = (cuFloatComplex*)ZERO;
 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
-  copy_float_complex_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1);
+  copy_float_complex_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing copy_float_complex_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));
