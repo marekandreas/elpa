@@ -472,6 +472,8 @@
                        int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
         call obj%timer%stop("mpi_communication")
+      enddo
+    endif
 
 #ifndef WITH_CUDA_AWARE_MPI
         if (useGPU) then
@@ -486,8 +488,6 @@
 #error "not yet implemented"
 #endif
 #endif /* WITH_MPI */
-      enddo
-    endif
 
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
