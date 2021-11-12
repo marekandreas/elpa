@@ -372,7 +372,7 @@ integer ::  ii, jj
         endif
       endif ! useGPU
       exit ! Loop
-    endif
+    endif ! (n+nblk > na) 
 
     if (my_prow==prow(n, nblk, np_rows)) then
 
@@ -452,7 +452,8 @@ integer ::  ii, jj
             nc = nc+i
           enddo
         endif ! useGPU
-      endif
+      endif ! (my_pcol==pcol(n, nblk, np_cols))
+
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
       if (useGPU) then
@@ -524,121 +525,83 @@ integer ::  ii, jj
     endif ! (my_prow==prow(n, nblk, np_rows))
 
 
-    !! debug
-    !    num = l_cols*nblk*size_of_datatype
-    !    successGPU = gpu_memcpy(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
-    !                          gpuMemcpyDeviceToHost)
-    !    check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
-    !    num = matrixRows*matrixCols*size_of_datatype
-    !    successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev, num, &
-    !                          gpuMemcpyDeviceToHost)
-    !    check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
-
-      if (useGPU) then
-        if (my_prow==prow(n, nblk, np_rows)) then
-          call copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
-        endif
-
-    !    successGPU = gpu_memcpy(int(loc(tmatc_debug),kind=c_intptr_t), tmatc_dev, num, &
-    !                          gpuMemcpyDeviceToHost)
-    !    check_memcpy_gpu("elpa_cholesky: tmatc_dev 44 to tmatc", successGPU)
-
-
-
-        !num = matrixRows*matrixCols*size_of_datatype
-        !successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev, num, &
-        !                      gpuMemcpyDeviceToHost)
-        !check_memcpy_gpu("elpa_cholesky: tmp1 to tmp1_dev", successGPU)
-        !num = l_cols*nblk*size_of_datatype
-        !successGPU = gpu_memcpy(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
-        !                      gpuMemcpyDeviceToHost)
-        !check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
-
-        do i=1,nblk
+    if (useGPU) then
+      if (my_prow==prow(n, nblk, np_rows)) then
+        call copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      endif
+    else ! useGPU
+      do i=1,nblk
 #if REALCASE == 1
-          if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) =  a(l_row1+i-1,l_colx:l_cols)
+        if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = a(l_row1+i-1,l_colx:l_cols)
 #endif
 #if COMPLEXCASE == 1
-          if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = conjg(a(l_row1+i-1,l_colx:l_cols))
+        if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = conjg(a(l_row1+i-1,l_colx:l_cols))
 #endif
-        enddo
-       ! do ii=1,l_cols
-       !   do jj=1,nblk
-       !      if (tmatc(ii,jj) .ne. tmatc_debug(ii,jj)) then
-       !        print *,ii,jj,l_cols,nblk,tmatc(ii,jj), tmatc_debug(ii,jj)
-       !        stop
-       !      endif
-       !   enddo
-       !enddo
+      enddo
+    endif ! useGPU
 
-
-        !num = l_cols*nblk*size_of_datatype
-        !successGPU = gpu_memcpy(tmatc_dev, int(loc(tmatc),kind=c_intptr_t), num, &
-        !                      gpuMemcpyHostToDevice)
-        !check_memcpy_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
-      else ! useGPU
-        do i=1,nblk
-#if REALCASE == 1
-          if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = a(l_row1+i-1,l_colx:l_cols)
-#endif
-#if COMPLEXCASE == 1
-          if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:l_cols,i) = conjg(a(l_row1+i-1,l_colx:l_cols))
-#endif
-        enddo
-      endif ! useGPU
-
-    do i=1,nblk
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
-      if (useGPU) then
-        if (l_cols-l_colx+1 > 0) then
-          num = l_cols*nblk*size_of_datatype
-          successGPU = gpu_memcpy(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
+    if (useGPU) then
+      if (l_cols-l_colx+1 > 0) then
+        num = l_cols*nblk*size_of_datatype
+        successGPU = gpu_memcpy(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
                               gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
-        endif
+        check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
       endif
+    endif
 #else
 #error "not yet implemented"
 #endif
+#endif /* WITH_MPI */
 
-
+#ifdef WITH_MPI
+    do i=1,nblk
       call obj%timer%start("mpi_communication")
       if (l_cols-l_colx+1>0) &
       call MPI_Bcast(tmatc(l_colx,i), int(l_cols-l_colx+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                      int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 
       call obj%timer%stop("mpi_communication")
+    enddo
+#endif /* WITH_MPI */
 
+#ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
-      if (useGPU) then
-        if (l_cols-l_colx+1 > 0) then
-          num = l_cols*nblk*size_of_datatype
-          successGPU = gpu_memcpy(tmatc_dev, int(loc(tmatc),kind=c_intptr_t), num, &
+    if (useGPU) then
+      !if (l_cols-l_colx+1 > 0) then
+        num = l_cols*nblk*size_of_datatype
+        successGPU = gpu_memcpy(tmatc_dev, int(loc(tmatc),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice)
-          check_memcpy_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
-        endif
-      endif
+        check_memcpy_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
+      !endif
+    endif
 #else
 #error "not yet implemented"
 #endif
-
 #endif /* WITH_MPI */
-    enddo
+
     if (useGPU) then
       ! can optimize memcpy here with previous ones
 
       ! a gpu version of elpa_transpose_vectors is needed
+
+#if !defined(WITH_MPII) || (defined(WITH_MPI) && defined(WITH_CUDA_AWARE_MPI))
+      ! this memcopy is only needed if
+      ! - not mpi case
+      ! - or mpi and cuda_aware_mpi
       num = l_cols*nblk*size_of_datatype
       successGPU = gpu_memcpy(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
                               gpuMemcpyDeviceToHost)
       check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
+#endif
 
       num = l_rows*nblk*size_of_datatype
       successGPU = gpu_memcpy(int(loc(tmatr),kind=c_intptr_t), tmatr_dev, num, &
                               gpuMemcpyDeviceToHost)
       check_memcpy_gpu("elpa_cholesky: tmatr_dev to tmatr", successGPU)
     endif
+
     call elpa_transpose_vectors_&
     &MATH_DATATYPE&
     &_&
@@ -685,11 +648,10 @@ integer ::  ii, jj
                             int(ubound(tmatc,dim=1),kind=BLAS_KIND), &
                             ONE, a(lrs,lcs), int(matrixRows,kind=BLAS_KIND))
         call obj%timer%stop("blas")
-
       enddo
     endif ! useGPU
 
-  enddo
+  enddo ! n = 1, na, nblk
 
   if (useGPU) then
     successGPU = gpu_free(tmp1_dev)
@@ -710,9 +672,9 @@ integer ::  ii, jj
 
 
   if (useGPU) then
-  successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
+    successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
                      matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
-  check_memcpy_gpu("elpa_cholesky: memcpy 2 a-> a_dev", successGPU)
+    check_memcpy_gpu("elpa_cholesky: memcpy 2 a-> a_dev", successGPU)
   endif
   ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)
 
