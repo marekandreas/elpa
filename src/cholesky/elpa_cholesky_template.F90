@@ -86,7 +86,12 @@
   integer(kind=c_int)           :: gpu, numGPU
   integer(kind=c_intptr_t)      :: num
   integer(kind=c_intptr_t)      :: tmp1_dev, tmatc_dev, tmatr_dev, a_dev, tmp2_dev
+  type(c_ptr)                      :: tmp1_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer :: tmp1_mpi_fortran_ptr(:,:)
   integer(kind=c_intptr_t)      :: a_off, tmatc_off, tmatr_off
+  type(c_ptr)                      :: tmatc_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer :: tmatc_mpi_fortran_ptr(:,:)
+
   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
@@ -463,10 +468,9 @@ integer ::  ii, jj
         check_memcpy_gpu("elpa_cholesky: tmp1_dev to tmp1", successGPU)
 
       endif
-#else
-#error "not yet implemented"
 #endif
 
+#ifndef WITH_CUDA_AWARE_MPI
       call obj%timer%start("mpi_communication")
 
       call MPI_Bcast(tmp1, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
@@ -479,6 +483,24 @@ integer ::  ii, jj
                     int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
       call obj%timer%stop("mpi_communication")
+#else
+      tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
+      ! and associate a fortran pointer
+      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk*nblk])
+
+      call obj%timer%start("mpi_cuda_communication")
+
+      call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
+#if REALCASE == 1
+                    MPI_REAL_PRECISION,         &
+#endif
+#if COMPLEXCASE == 1
+                    MPI_COMPLEX_PRECISION,      &
+#endif
+                    int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+
+      call obj%timer%stop("mpi_cuda_communication")
+#endif
 
 #ifndef WITH_CUDA_AWARE_MPI
       if (useGPU) then
@@ -488,8 +510,6 @@ integer ::  ii, jj
         check_memcpy_gpu("elpa_cholesky: tmp1 to tmp1_dev", successGPU)
 
       endif
-#else
-#error "not yet implemented"
 #endif
 
 #endif /* WITH_MPI */
@@ -550,12 +570,12 @@ integer ::  ii, jj
         check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
       endif
     endif
-#else
-#error "not yet implemented"
 #endif
+
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
+#ifndef WITH_CUDA_AWARE_MPI
     do i=1,nblk
       call obj%timer%start("mpi_communication")
       if (l_cols-l_colx+1>0) &
@@ -564,6 +584,21 @@ integer ::  ii, jj
 
       call obj%timer%stop("mpi_communication")
     enddo
+#else
+    tmatc_mpi_dev = transfer(tmatc_dev, tmatc_mpi_dev)
+    ! and associate a fortran pointer
+    call c_f_pointer(tmatc_mpi_dev, tmatc_mpi_fortran_ptr, [l_cols,nblk])
+
+    do i=1,nblk
+      call obj%timer%start("mpi_cuda_communication")
+      if (l_cols-l_colx+1>0) &
+      call MPI_Bcast(tmatc_mpi_fortran_ptr(l_colx,i), int(l_cols-l_colx+1,kind=MPI_KIND), &
+                     MPI_MATH_DATATYPE_PRECISION, &
+                     int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+
+      call obj%timer%stop("mpi_cuda_communication")
+    enddo
+#endif
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
@@ -576,8 +611,6 @@ integer ::  ii, jj
         check_memcpy_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
       !endif
     endif
-#else
-#error "not yet implemented"
 #endif
 #endif /* WITH_MPI */
 
@@ -586,7 +619,7 @@ integer ::  ii, jj
 
       ! a gpu version of elpa_transpose_vectors is needed
 
-#if !defined(WITH_MPII) || (defined(WITH_MPI) && defined(WITH_CUDA_AWARE_MPI))
+#if !defined(WITH_MPI) || (defined(WITH_MPI) && defined(WITH_CUDA_AWARE_MPI))
       ! this memcopy is only needed if
       ! - not mpi case
       ! - or mpi and cuda_aware_mpi

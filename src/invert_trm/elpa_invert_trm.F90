@@ -93,6 +93,11 @@
   logical                       :: useGPU
   integer(kind=c_int)           :: gpu, numGPU
   integer(kind=c_intptr_t)      :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev, zero_dev
+  type(c_ptr)                      :: tmp1_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer :: tmp1_mpi_fortran_ptr(:,:)
+  type(c_ptr)                      :: tmat1_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer :: tmat1_mpi_fortran_ptr(:,:)
+
   type(c_ptr)                   :: tmp2_mpi_dev, a_mpi_dev
   integer(kind=c_intptr_t)      :: a_off, tmat2_off, tmp1_off, tmp2_off
    MATH_DATATYPE(kind=rck), pointer :: a_mpi_deviceptr(:,:)
@@ -376,14 +381,22 @@
         check_memcpy_gpu("elpa_invert_trm: tmp1_dev to tmp1", successGPU)
 
       endif
-#else
-#error "not yet implemented"
 #endif
 
+#ifndef WITH_CUDA_AWARE_MPI
       call obj%timer%start("mpi_communication")
       call MPI_Bcast(tmp1, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
                      int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
       call obj%timer%stop("mpi_communication")
+#else
+      tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
+      ! and associate a fortran pointer
+      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk*nblk])
+      if (wantDebug) call obj%timer%start("cuda_mpi_communication")
+      call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
+                     int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+      if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
+#endif
 
 #ifndef WITH_CUDA_AWARE_MPI
       if ((useGPU)) then  
@@ -393,8 +406,6 @@
         check_memcpy_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
 
       endif
-#else
-#error "not yet implemented"
 #endif
 #endif /* WITH_MPI */
       
@@ -459,12 +470,11 @@
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
       endif
-#else
-#error "not yet implemented"
 #endif
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
+#ifndef WITH_CUDA_AWARE_MPI
       do i=1,nb
         call obj%timer%start("mpi_communication")
         call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
@@ -473,6 +483,20 @@
 
         call obj%timer%stop("mpi_communication")
       enddo
+#else
+      tmat1_mpi_dev = transfer(tmat1_dev, tmat1_mpi_dev)
+      ! and associate a fortran pointer
+      call c_f_pointer(tmat1_mpi_dev, tmat1_mpi_fortran_ptr, [l_rows,nblk])
+      
+      call obj%timer%start("mpi_cuda_communication")
+      do i=1,nb
+        call MPI_Bcast(tmat1_mpi_fortran_ptr(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
+                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+
+      enddo
+      call obj%timer%stop("mpi_cuda_communication")
+#endif
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
@@ -485,8 +509,6 @@
         check_memcpy_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
 
       endif
-#else
-#error "not yet implemented"
 #endif
 #endif /* WITH_MPI */
     endif ! (l_row1>1)
