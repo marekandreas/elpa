@@ -48,6 +48,13 @@ module mod_check_for_gpu
 
   contains
 
+
+    ! check_for_gpu could be called at several places during a run of ELPA
+    ! for example in cholesky, invert_trm, multiply and of course the solvers
+    ! Thus the following logic is implemented
+    ! if use_gpu_id is set -> do according to this settings
+    ! if NOT the first call to check_for_gpu will set the MPI GPU relation and then
+    ! _SET_ use_gpu_id such that subsequent calls abide this setting
     function check_for_gpu(obj, myid, numberOfDevices, wantDebug) result(gpuAvailable)
       use cuda_functions
       use hip_functions
@@ -64,6 +71,7 @@ module mod_check_for_gpu
       integer(kind=ik)              :: deviceNumber, mpierr, maxNumberOfDevices
       logical                       :: gpuAvailable
       integer(kind=ik)              :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
+      logical, save                 :: allreadySET=.false.
       !character(len=1024)           :: envname
 
       if (.not.(present(wantDebug))) then
@@ -111,50 +119,52 @@ module mod_check_for_gpu
         !endif
 
         success = .true.
+        if (.not.(allreadySet)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        success = cuda_setdevice(use_gpu_id)
+          success = cuda_setdevice(use_gpu_id)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        success = hip_setdevice(use_gpu_id)
+          success = hip_setdevice(use_gpu_id)
 #endif
-        if (.not.(success)) then
+          if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-          print *,"Cannot set CudaDevice"
+            print *,"Cannot set CudaDevice"
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-          print *,"Cannot set HIPDevice"
+            print *,"Cannot set HIPDevice"
 #endif
-          stop 1
-        endif
+            stop 1
+          endif
 
-        if (wantDebugMessage) then
-          print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', use_gpu_id
-        endif
+          if (wantDebugMessage) then
+            print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', use_gpu_id
+          endif
  
-        success = .true.        
+          success = .true.        
 #ifdef WITH_NVIDIA_GPU_VERSION
-        success = cublas_create(cublasHandle)
+          success = cublas_create(cublasHandle)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        success = rocblas_create(rocblasHandle)
+          success = rocblas_create(rocblasHandle)
 #endif
-        if (.not.(success)) then
+          if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-          print *,"Cannot create cublas handle"
+            print *,"Cannot create cublas handle"
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-          print *,"Cannot create rocblas handle"
+            print *,"Cannot create rocblas handle"
 #endif
-          stop 1
-        endif
+            stop 1
+          endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-        success = cusolver_create(cusolverHandle)
-        if (.not.(success)) then
-          print *,"Cannot create cusolver handle"
-          stop 1
-        endif
+          success = cusolver_create(cusolverHandle)
+          if (.not.(success)) then
+            print *,"Cannot create cusolver handle"
+            stop 1
+         endif
 #endif
+        endif ! alreadySET
 
       else ! useGPUid
 
@@ -249,6 +259,9 @@ module mod_check_for_gpu
           if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
           endif
+
+          call obj%set("use_gpu_id",deviceNumber)
+          allreadySET = .true.
 
 #ifdef WITH_NVIDIA_GPU_VERSION
           success = cublas_create(cublasHandle)
