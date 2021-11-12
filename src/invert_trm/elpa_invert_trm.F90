@@ -386,7 +386,7 @@
       call obj%timer%stop("mpi_communication")
 
 #ifndef WITH_CUDA_AWARE_MPI
-      if ((useGPU)) then  !.AND.(my_pcol/=pcol(n, nblk, np_cols))) then
+      if ((useGPU)) then  
         num = nblk*nblk*size_of_datatype
         successGPU = gpu_memcpy(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice)
@@ -462,7 +462,9 @@
 #else
 #error "not yet implemented"
 #endif
+#endif /* WITH_MPI */
 
+#ifdef WITH_MPI
       do i=1,nb
         call obj%timer%start("mpi_communication")
         call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
@@ -471,7 +473,9 @@
 
         call obj%timer%stop("mpi_communication")
       enddo
+#endif /* WITH_MPI */
 
+#ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
       if (useGPU) then
         ! cuda aware MPI here
