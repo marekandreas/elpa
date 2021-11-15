@@ -208,10 +208,26 @@ module elpa_api
           elpa_cholesky_fc
 
       generic, public :: invert_triangular => &                     !< method to invert a upper triangular matrix a
-          elpa_invert_trm_d, &
-          elpa_invert_trm_f, &
-          elpa_invert_trm_dc, &
-          elpa_invert_trm_fc
+          elpa_invert_trm_all_host_arrays_d, &
+          elpa_invert_trm_all_host_arrays_f, &
+          elpa_invert_trm_all_host_arrays_dc, &
+          elpa_invert_trm_all_host_arrays_fc
+
+      generic, public :: invert_triangular_double => &              !< method eigenvectors for solving the full eigenvalue problem
+              elpa_invert_trm_all_host_arrays_d, &                  !< for (real) double data, can be used with host arrays or
+              elpa_invert_trm_device_pointer_d                      !< GPU device pointers in the GPU version   
+
+      generic, public :: invert_triangular_float => &               !< method eigenvectors for solving the full eigenvalue problem
+              elpa_invert_trm_all_host_arrays_f, &                  !< for (real) double data, can be used with host arrays or
+              elpa_invert_trm_device_pointer_f                      !< GPU device pointers in the GPU version   
+
+      generic, public :: invert_triangular_double_complex => &      !< method eigenvectors for solving the full eigenvalue problem
+              elpa_invert_trm_all_host_arrays_dc, &                 !< for (real) double data, can be used with host arrays or
+              elpa_invert_trm_device_pointer_dc                     !< GPU device pointers in the GPU version   
+
+      generic, public :: invert_triangular_float_complex => &       !< method eigenvectors for solving the full eigenvalue problem
+              elpa_invert_trm_all_host_arrays_fc, &                 !< for (real) double data, can be used with host arrays or
+              elpa_invert_trm_device_pointer_fc                     !< GPU device pointers in the GPU version   
 
       generic, public :: solve_tridiagonal => &                      !< method to solve the eigenvalue problem for a tridiagonal
           elpa_solve_tridiagonal_d, &                                !< matrix
@@ -294,10 +310,15 @@ module elpa_api
       procedure(elpa_cholesky_dc_i), deferred, public :: elpa_cholesky_dc
       procedure(elpa_cholesky_fc_i), deferred, public :: elpa_cholesky_fc
 
-      procedure(elpa_invert_trm_d_i),    deferred, public :: elpa_invert_trm_d
-      procedure(elpa_invert_trm_f_i),    deferred, public :: elpa_invert_trm_f
-      procedure(elpa_invert_trm_dc_i), deferred, public :: elpa_invert_trm_dc
-      procedure(elpa_invert_trm_fc_i), deferred, public :: elpa_invert_trm_fc
+      procedure(elpa_invert_trm_all_host_arrays_d_i),    deferred, public :: elpa_invert_trm_all_host_arrays_d
+      procedure(elpa_invert_trm_all_host_arrays_f_i),    deferred, public :: elpa_invert_trm_all_host_arrays_f
+      procedure(elpa_invert_trm_all_host_arrays_dc_i), deferred, public :: elpa_invert_trm_all_host_arrays_dc
+      procedure(elpa_invert_trm_all_host_arrays_fc_i), deferred, public :: elpa_invert_trm_all_host_arrays_fc
+
+      procedure(elpa_invert_trm_device_pointer_d_i),    deferred, public :: elpa_invert_trm_device_pointer_d
+      procedure(elpa_invert_trm_device_pointer_f_i),    deferred, public :: elpa_invert_trm_device_pointer_f
+      procedure(elpa_invert_trm_device_pointer_dc_i), deferred, public :: elpa_invert_trm_device_pointer_dc
+      procedure(elpa_invert_trm_device_pointer_fc_i), deferred, public :: elpa_invert_trm_device_pointer_fc
 
       procedure(elpa_solve_tridiagonal_d_i), deferred, public :: elpa_solve_tridiagonal_d
       procedure(elpa_solve_tridiagonal_f_i), deferred, public :: elpa_solve_tridiagonal_f

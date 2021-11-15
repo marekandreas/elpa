@@ -165,11 +165,17 @@ module elpa_impl
      procedure, public :: elpa_cholesky_dc
      procedure, public :: elpa_cholesky_fc
 
-     procedure, public :: elpa_invert_trm_d                    !< public methods to implement the inversion of a triangular
+     procedure, public :: elpa_invert_trm_all_host_arrays_d    !< public methods to implement the inversion of a triangular
                                                                !< real/complex double/single matrix
-     procedure, public :: elpa_invert_trm_f
-     procedure, public :: elpa_invert_trm_dc
-     procedure, public :: elpa_invert_trm_fc
+     procedure, public :: elpa_invert_trm_all_host_arrays_f
+     procedure, public :: elpa_invert_trm_all_host_arrays_dc
+     procedure, public :: elpa_invert_trm_all_host_arrays_fc
+
+     procedure, public :: elpa_invert_trm_device_pointer_d     !< public methods to implement the inversion of a triangular
+                                                               !< real/complex double/single matrix
+     procedure, public :: elpa_invert_trm_device_pointer_f
+     procedure, public :: elpa_invert_trm_device_pointer_dc
+     procedure, public :: elpa_invert_trm_device_pointer_fc
 
      procedure, public :: elpa_solve_tridiagonal_d             !< public methods to implement the solve step for a real valued
      procedure, public :: elpa_solve_tridiagonal_f             !< double/single tridiagonal matrix

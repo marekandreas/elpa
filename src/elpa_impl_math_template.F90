@@ -357,7 +357,7 @@
       !real(kind=C_REAL_DATATYPE), pointer          :: ev(:)
       type(elpa_impl_t), pointer                   :: self
 
-      !call c_f_pointer(handle, self)
+      call c_f_pointer(handle, self)
       !call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
       !call c_f_pointer(ev_p, ev, [self%na])
       !call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
@@ -653,7 +653,7 @@
       !real(kind=C_REAL_DATATYPE), pointer          :: ev(:)
       type(elpa_impl_t), pointer                   :: self
 
-      !call c_f_pointer(handle, self)
+      call c_f_pointer(handle, self)
       !call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
       !call c_f_pointer(ev_p, ev, [self%na])
       !call c_f_pointer(q_p, q, [self%local_nrows, self%local_ncols])
@@ -956,7 +956,7 @@
       !real(kind=C_REAL_DATATYPE), pointer :: ev(:)
       type(elpa_impl_t), pointer  :: self
 
-      !call c_f_pointer(handle, self)
+      call c_f_pointer(handle, self)
       !call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
       !call c_f_pointer(ev_p, ev, [self%na])
 
@@ -1224,7 +1224,7 @@
       !real(kind=C_REAL_DATATYPE), pointer :: ev(:)
       type(elpa_impl_t), pointer  :: self
 
-      !call c_f_pointer(handle, self)
+      call c_f_pointer(handle, self)
       !call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
       !call c_f_pointer(ev_p, ev, [self%na])
 
@@ -1849,7 +1849,7 @@
     end subroutine      
 
 
-    !>  \brief elpa_invert_trm_d: class method to invert a triangular
+    !>  \brief elpa_invert_trm_all_host_arrays_d: class method to invert a triangular
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
     !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
@@ -1866,7 +1866,7 @@
     !>                                              Destroyed on exit (upper and lower half).
     !>
     !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_invert_trm_&
+    subroutine elpa_invert_trm_all_host_arrays_&
                    &ELPA_IMPL_SUFFIX&
                   & (self, a, error)
       class(elpa_impl_t)              :: self
@@ -1886,7 +1886,7 @@
 #if defined(INCLUDE_ROUTINES)
       success_l = elpa_invert_trm_&
               &MATH_DATATYPE&
-              &_&
+              &_all_host_arrays_&
               &PRECISION&
               &_impl (self, a)
 #endif
@@ -1914,37 +1914,37 @@
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL      
-    !c> void elpa_invert_trm_d(elpa_t handle, double *a, int *error);
+    !c> void elpa_invert_trm_all_host_arrays_d(elpa_t handle, double *a, int *error);
 #endif
 #ifdef SINGLE_PRECISION_REAL      
-    !c> void elpa_invert_trm_f(elpa_t handle, float *a, int *error);
+    !c> void elpa_invert_trm_all_host_arrays_f(elpa_t handle, float *a, int *error);
 #endif
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX     
-    !c> void elpa_invert_trm_dc(elpa_t handle, double complex *a, int *error);
+    !c> void elpa_invert_trm_all_host_arrays_dc(elpa_t handle, double complex *a, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX      
-    !c> void elpa_invert_trm_fc(elpa_t handle, float complex *a, int *error);
+    !c> void elpa_invert_trm_all_host_arrays_fc(elpa_t handle, float complex *a, int *error);
 #endif
 #endif
-    subroutine elpa_invert_trm_&
+    subroutine elpa_invert_trm_all_host_arrays_&
                     &ELPA_IMPL_SUFFIX&
                     &_c(handle, a_p, error) &
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
-                    bind(C, name="elpa_invert_trm_d")
+                    bind(C, name="elpa_invert_trm_all_host_arrays_d")
 #endif
 #ifdef SINGLE_PRECISION_REAL
-                    bind(C, name="elpa_invert_trm_f")
+                    bind(C, name="elpa_invert_trm_all_host_arrays_f")
 #endif
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-                    bind(C, name="elpa_invert_trm_dc")
+                    bind(C, name="elpa_invert_trm_all_host_arrays_dc")
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-                    bind(C, name="elpa_invert_trm_fc")
+                    bind(C, name="elpa_invert_trm_all_host_arrays_fc")
 #endif
 #endif
 
@@ -1960,9 +1960,121 @@
       call c_f_pointer(handle, self)
       call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
 
-      call elpa_invert_trm_&
+      call elpa_invert_trm_all_host_arrays_&
               &ELPA_IMPL_SUFFIX&
               & (self, a, error)
+    end subroutine
+
+
+    !>  \brief elpa_invert_trm_device_pointer_d: class method to invert a triangular
+    !>
+    !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+    !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+    !>  with the class method "setup"
+    !>
+    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+    !>  class method "set"
+    !>
+    !>  Parameters
+    !>
+    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed as device pointer
+    !>                                              Distribution is like in Scalapack.
+    !>                                              The full matrix must be set (not only one half like in scalapack).
+    !>                                              Destroyed on exit (upper and lower half).
+    !>
+    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
+    subroutine elpa_invert_trm_device_pointer_&
+                   &ELPA_IMPL_SUFFIX&
+                  & (self, a, error)
+      use iso_c_binding
+      class(elpa_impl_t)              :: self
+      type(c_ptr)                     :: a
+#ifdef USE_FORTRAN2008
+      integer, optional               :: error
+#else
+      integer                         :: error
+#endif
+      logical                         :: success_l
+
+      success_l = .false.
+#if defined(INCLUDE_ROUTINES)
+      success_l = elpa_invert_trm_&
+              &MATH_DATATYPE&
+              &_device_pointer_&
+              &PRECISION&
+              &_impl (self, a)
+#endif
+
+#ifdef USE_FORTRAN2008
+      if (present(error)) then
+        if (success_l) then
+          error = ELPA_OK
+        else
+          error = ELPA_ERROR
+        endif
+      else if (.not. success_l) then
+        write(error_unit,'(a)') "ELPA: Error in invert_trm() and you did not check for errors!"
+      endif
+#else
+      if (success_l) then
+        error = ELPA_OK
+      else
+        error = ELPA_ERROR
+      endif
+#endif
+    end subroutine   
+
+
+
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL      
+    !c> void elpa_invert_trm_device_pointer_d(elpa_t handle, double *a, int *error);
+#endif
+#ifdef SINGLE_PRECISION_REAL      
+    !c> void elpa_invert_trm_device_pointer_f(elpa_t handle, float *a, int *error);
+#endif
+#endif
+#ifdef COMPLEXCASE
+#ifdef DOUBLE_PRECISION_COMPLEX     
+    !c> void elpa_invert_trm_device_pointer_dc(elpa_t handle, double complex *a, int *error);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX      
+    !c> void elpa_invert_trm_device_pointer_fc(elpa_t handle, float complex *a, int *error);
+#endif
+#endif
+    subroutine elpa_invert_trm_device_pointer_&
+                    &ELPA_IMPL_SUFFIX&
+                    &_c(handle, a_p, error) &
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL
+                    bind(C, name="elpa_invert_trm_device_pointer_d")
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                    bind(C, name="elpa_invert_trm_device_pointer_f")
+#endif
+#endif
+#ifdef COMPLEXCASE
+#ifdef DOUBLE_PRECISION_COMPLEX
+                    bind(C, name="elpa_invert_trm_device_pointer_dc")
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+                    bind(C, name="elpa_invert_trm_device_pointer_fc")
+#endif
+#endif
+
+      type(c_ptr), intent(in), value            :: handle, a_p
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(in) :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      type(elpa_impl_t), pointer                :: self
+
+      call c_f_pointer(handle, self)
+
+      call elpa_invert_trm_device_pointer_&
+              &ELPA_IMPL_SUFFIX&
+              & (self, a_p, error)
     end subroutine
 
 

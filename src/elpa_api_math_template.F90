@@ -679,7 +679,7 @@
 
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_invert_trm_&
+    subroutine elpa_invert_trm_all_host_arrays_&
         &ELPA_IMPL_SUFFIX&
         &_i (self, a, error)
       use, intrinsic :: iso_c_binding
@@ -691,6 +691,46 @@
 #else
       MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows,self%local_ncols)
 #endif
+
+#ifdef USE_FORTRAN2008
+      integer, optional               :: error
+#else
+      integer                         :: error
+#endif
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of interface to invert a triangular matrix using device pointer
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+#if ELPA_IMPL_SUFFIX == d
+  !> \param   a           double real matrix: the matrix to be inverted as device pointer type(c_ptr)
+#endif
+#if ELPA_IMPL_SUFFIX == f
+  !> \param   a           single real matrix: the matrix to be inverted as device pointer type(c_ptr)
+#endif
+#if ELPA_IMPL_SUFFIX == dc
+  !> \param   a           double complex matrix: the matrix to be inverted as device pointer type(c_ptr)
+#endif
+#if ELPA_IMPL_SUFFIX == fc
+  !> \param   a           single complex matrix: the matrix to be inverted as device pointer type(c_ptr)
+#endif
+
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_invert_trm_device_pointer_&
+        &ELPA_IMPL_SUFFIX&
+        &_i (self, a, error)
+      use, intrinsic :: iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)                   :: self
+      type(c_ptr)                     :: a
 
 #ifdef USE_FORTRAN2008
       integer, optional               :: error

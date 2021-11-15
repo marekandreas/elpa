@@ -1,8 +1,13 @@
-.TH "elpa_invert_triangular" 3 "Sat Jul 15 2017" "ELPA" \" -*- nroff -*-
+.TH "elpa_invert_triangular" 3 "Mon Nov 15 2021" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 elpa_invert_triangular \- Invert an upper triangular matrix
+this routine also exists with explicit names
+elpa_invert_triangular_double
+elpa_invert_triangular_float
+elpa_invert_triangular_double_complex
+elpa_invert_triangular_float_complex
 .br
 
 .SH SYNOPSIS
@@ -18,7 +23,7 @@ class(elpa_t), pointer :: elpa
 .RI " "
 .br
 .RI "With the definitions of the input and output variables:"
-
+.RI "datatype :: \fBa\fP" can be device pointer of type(c_ptr)
 .br
 .TP
 .RI "datatype :: \fBa\fP"
@@ -45,7 +50,7 @@ elpa_t handle;
 .RI "elpa_t \fBhandle\fP;"
 The handle to the ELPA object
 .TP
-.RI "datatype *\fBa\fP;"
+.RI "datatype *\fBa\fP;" can be a device pointer
 The matrix which should be inverted. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex".
 .RI "int *\fBerror\fP;"
 The error code of the function. Should be "ELPA_OK". The error codes can be querried with \fBelpa_strerr\fP(3)

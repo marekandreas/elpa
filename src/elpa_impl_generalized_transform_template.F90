@@ -118,7 +118,7 @@
            &(b, error)
        if(error .NE. ELPA_OK) return
        ! B <- inv(U)
-       call self%elpa_invert_trm_&
+       call self%elpa_invert_trm_all_host_arrays_&
            &ELPA_IMPL_SUFFIX&
            &(b, error)
        if(error .NE. ELPA_OK) return
