@@ -114,73 +114,73 @@ module elpa_api
 
       ! Actual math routines
       generic, public :: eigenvectors => &                          !< method eigenvectors for solving the full eigenvalue problem
-          elpa_eigenvectors_all_host_arrays_d, &                    !< the eigenvalues and (parts of) the eigenvectors are computed
-          elpa_eigenvectors_all_host_arrays_f, &                    !< for symmetric real valued / hermitian complex valued matrices
-          elpa_eigenvectors_all_host_arrays_dc, &
-          elpa_eigenvectors_all_host_arrays_fc
+          elpa_eigenvectors_a_h_a_d, &                    !< the eigenvalues and (parts of) the eigenvectors are computed
+          elpa_eigenvectors_a_h_a_f, &                    !< for symmetric real valued / hermitian complex valued matrices
+          elpa_eigenvectors_a_h_a_dc, &
+          elpa_eigenvectors_a_h_a_fc
 
       generic, public :: eigenvectors_double => &                   !< method eigenvectors for solving the full eigenvalue problem
-              elpa_eigenvectors_all_host_arrays_d, &                !< for (real) double data, can be used with host arrays or
-              elpa_eigenvectors_device_pointer_d                    !< GPU device pointers in the GPU version   
+              elpa_eigenvectors_a_h_a_d, &                !< for (real) double data, can be used with host arrays or
+              elpa_eigenvectors_d_ptr_d                    !< GPU device pointers in the GPU version   
 
       generic, public :: eigenvectors_float => &                    !< method eigenvectors for solving the full eigenvalue problem
-          elpa_eigenvectors_all_host_arrays_f, &                    !< for (real) float data, can be used with host arrays or
-          elpa_eigenvectors_device_pointer_f                        !< GPU device pointers in the GPU version
+          elpa_eigenvectors_a_h_a_f, &                    !< for (real) float data, can be used with host arrays or
+          elpa_eigenvectors_d_ptr_f                        !< GPU device pointers in the GPU version
 
       generic, public :: eigenvectors_double_complex => &           !< method eigenvectors for solving the full eigenvalue problem
-          elpa_eigenvectors_all_host_arrays_dc, &                   !< for complex_double data, can be used with host arrays or
-           elpa_eigenvectors_device_pointer_dc                      !< GPU device pointers in the GPU version
+          elpa_eigenvectors_a_h_a_dc, &                   !< for complex_double data, can be used with host arrays or
+           elpa_eigenvectors_d_ptr_dc                      !< GPU device pointers in the GPU version
 
       generic, public :: eigenvectors_float_complex => &            !< method eigenvectors for solving the full eigenvalue problem
-          elpa_eigenvectors_all_host_arrays_fc, &                   !< for float_double data, can be used with host arrays or
-          elpa_eigenvectors_device_pointer_fc                       !< GPU device pointers in the GPU version
+          elpa_eigenvectors_a_h_a_fc, &                   !< for float_double data, can be used with host arrays or
+          elpa_eigenvectors_d_ptr_fc                       !< GPU device pointers in the GPU version
 
       generic, public :: eigenvalues => &                           !< method eigenvalues for solving the eigenvalue problem
-          elpa_eigenvalues_all_host_arrays_d, &                     !< only the eigenvalues are computed
-          elpa_eigenvalues_all_host_arrays_f, &                     !< for symmetric real valued / hermitian complex valued matrices
-          elpa_eigenvalues_all_host_arrays_dc, &
-          elpa_eigenvalues_all_host_arrays_fc
+          elpa_eigenvalues_a_h_a_d, &                     !< only the eigenvalues are computed
+          elpa_eigenvalues_a_h_a_f, &                     !< for symmetric real valued / hermitian complex valued matrices
+          elpa_eigenvalues_a_h_a_dc, &
+          elpa_eigenvalues_a_h_a_fc
 
       generic, public :: eigenvalues_double => &                    !< method eigenvalues for solving the eigenvalue problem
-          elpa_eigenvalues_all_host_arrays_d, &                     !< for (real) double data, can be used with host arrays or
-          elpa_eigenvalues_device_pointer_d                         !< GPU device pointers in the GPU version
+          elpa_eigenvalues_a_h_a_d, &                     !< for (real) double data, can be used with host arrays or
+          elpa_eigenvalues_d_ptr_d                         !< GPU device pointers in the GPU version
 
       generic, public :: eigenvalues_float => &                     !< method eigenvalues for solving the eigenvalue problem
-          elpa_eigenvalues_all_host_arrays_f, &                     !< for (real) float data, can be used with host arrays or
-          elpa_eigenvalues_device_pointer_f                         !< GPU device pointers in the GPU version
+          elpa_eigenvalues_a_h_a_f, &                     !< for (real) float data, can be used with host arrays or
+          elpa_eigenvalues_d_ptr_f                         !< GPU device pointers in the GPU version
 
       generic, public :: eigenvalues_double_complex => &            !< method eigenvalues for solving the eigenvalue problem
-          elpa_eigenvalues_all_host_arrays_dc, &                    !< for complex_double data, can be used with host arrays or
-          elpa_eigenvalues_device_pointer_dc                        !< GPU device pointers in the GPU version
+          elpa_eigenvalues_a_h_a_dc, &                    !< for complex_double data, can be used with host arrays or
+          elpa_eigenvalues_d_ptr_dc                        !< GPU device pointers in the GPU version
 
       generic, public :: eigenvalues_float_complex => &             !< method eigenvalues for solving the eigenvalue problem
-          elpa_eigenvalues_all_host_arrays_fc, &                    !< for float_double data, can be used with host arrays or
-          elpa_eigenvalues_device_pointer_fc                        !< GPU device pointers in the GPU version
+          elpa_eigenvalues_a_h_a_fc, &                    !< for float_double data, can be used with host arrays or
+          elpa_eigenvalues_d_ptr_fc                        !< GPU device pointers in the GPU version
 
 #ifdef HAVE_SKEWSYMMETRIC
       generic, public :: skew_eigenvectors => &                     !< method skew_eigenvectors for solving the full skew-symmetric eigenvalue problem
-          elpa_skew_eigenvectors_all_host_arrays_d, &               !< the eigenvalues and (parts of) the eigenvectors are computed
-          elpa_skew_eigenvectors_all_host_arrays_f                  !< for symmetric real valued skew-symmetric matrices
+          elpa_skew_eigenvectors_a_h_a_d, &               !< the eigenvalues and (parts of) the eigenvectors are computed
+          elpa_skew_eigenvectors_a_h_a_f                  !< for symmetric real valued skew-symmetric matrices
 
       generic, public :: skew_eigenvectors_double => &              !< method skew_eigenvectors for solving the full skew-symmetric eigenvalue problem
-          elpa_skew_eigenvectors_all_host_arrays_d, &               !< for (real) double data, can be used with host arrays or
-          elpa_skew_eigenvectors_device_pointer_d                   !< GPU device pointers in the GPU version
+          elpa_skew_eigenvectors_a_h_a_d, &               !< for (real) double data, can be used with host arrays or
+          elpa_skew_eigenvectors_d_ptr_d                   !< GPU device pointers in the GPU version
 
       generic, public :: skew_eigenvectors_float => &               !< method skew_eigenvectors for solving the full skew-symmetric eigenvalue problem
-          elpa_skew_eigenvectors_all_host_arrays_f, &               !< for (real) float data, can be used with host arrays or
-          elpa_skew_eigenvectors_device_pointer_f                   !< GPU device pointers in the GPU version
+          elpa_skew_eigenvectors_a_h_a_f, &               !< for (real) float data, can be used with host arrays or
+          elpa_skew_eigenvectors_d_ptr_f                   !< GPU device pointers in the GPU version
 
       generic, public :: skew_eigenvalues => &                      !< method skew_eigenvalues for solving the skew-symmetric eigenvalue problem
-          elpa_skew_eigenvalues_all_host_arrays_d, &                !< only the eigenvalues are computed
-          elpa_skew_eigenvalues_all_host_arrays_f                   !< for symmetric real valued skew-symmetric matrices
+          elpa_skew_eigenvalues_a_h_a_d, &                !< only the eigenvalues are computed
+          elpa_skew_eigenvalues_a_h_a_f                   !< for symmetric real valued skew-symmetric matrices
 
       generic, public :: skew_eigenvalues_double => &               !< method skew_eigenvalues for solving the skew-symmetric eigenvalue problem
-          elpa_skew_eigenvalues_all_host_arrays_d, &                !< for (real) double data, can be used with host arrays or
-          elpa_skew_eigenvalues_device_pointer_d                    !< GPU device pointers in the GPU version
+          elpa_skew_eigenvalues_a_h_a_d, &                !< for (real) double data, can be used with host arrays or
+          elpa_skew_eigenvalues_d_ptr_d                    !< GPU device pointers in the GPU version
 
       generic, public :: skew_eigenvalues_float => &                !< method skew_eigenvalues for solving the skew-symmetric eigenvalue problem
-          elpa_skew_eigenvalues_all_host_arrays_f, &                !< for (real) float data, can be used with host arrays or
-          elpa_skew_eigenvalues_device_pointer_f                    !< GPU device pointers in the GPU version
+          elpa_skew_eigenvalues_a_h_a_f, &                !< for (real) float data, can be used with host arrays or
+          elpa_skew_eigenvalues_d_ptr_f                    !< GPU device pointers in the GPU version
 #endif
 
       generic, public :: generalized_eigenvectors => &              !< method eigenvectors for solving the full generalized eigenvalue problem
@@ -202,32 +202,48 @@ module elpa_api
           elpa_hermitian_multiply_fc
 
       generic, public :: cholesky => &                              !< method for the cholesky factorisation of matrix a
-          elpa_cholesky_d, &
-          elpa_cholesky_f, &
-          elpa_cholesky_dc, &
-          elpa_cholesky_fc
+          elpa_cholesky_a_h_a_d, &
+          elpa_cholesky_a_h_a_f, &
+          elpa_cholesky_a_h_a_dc, &
+          elpa_cholesky_a_h_a_fc
+ 
+      generic, public :: cholesky_double => &                       !< method for the cholesky factorisation of matrix a
+          elpa_cholesky_a_h_a_d, &
+          elpa_cholesky_d_ptr_d
+ 
+      generic, public :: cholesky_float => &                        !< method for the cholesky factorisation of matrix a
+          elpa_cholesky_a_h_a_f, &
+          elpa_cholesky_d_ptr_f
+ 
+      generic, public :: cholesky_double_complex => &               !< method for the cholesky factorisation of matrix a
+          elpa_cholesky_a_h_a_dc, &
+          elpa_cholesky_d_ptr_dc
+ 
+      generic, public :: cholesky_float_complex => &                !< method for the cholesky factorisation of matrix a
+          elpa_cholesky_a_h_a_fc, &
+          elpa_cholesky_d_ptr_fc
 
       generic, public :: invert_triangular => &                     !< method to invert a upper triangular matrix a
-          elpa_invert_trm_all_host_arrays_d, &
-          elpa_invert_trm_all_host_arrays_f, &
-          elpa_invert_trm_all_host_arrays_dc, &
-          elpa_invert_trm_all_host_arrays_fc
+          elpa_invert_trm_a_h_a_d, &
+          elpa_invert_trm_a_h_a_f, &
+          elpa_invert_trm_a_h_a_dc, &
+          elpa_invert_trm_a_h_a_fc
 
       generic, public :: invert_triangular_double => &              !< method eigenvectors for solving the full eigenvalue problem
-              elpa_invert_trm_all_host_arrays_d, &                  !< for (real) double data, can be used with host arrays or
-              elpa_invert_trm_device_pointer_d                      !< GPU device pointers in the GPU version   
+              elpa_invert_trm_a_h_a_d, &                  !< for (real) double data, can be used with host arrays or
+              elpa_invert_trm_d_ptr_d                      !< GPU device pointers in the GPU version   
 
       generic, public :: invert_triangular_float => &               !< method eigenvectors for solving the full eigenvalue problem
-              elpa_invert_trm_all_host_arrays_f, &                  !< for (real) double data, can be used with host arrays or
-              elpa_invert_trm_device_pointer_f                      !< GPU device pointers in the GPU version   
+              elpa_invert_trm_a_h_a_f, &                  !< for (real) double data, can be used with host arrays or
+              elpa_invert_trm_d_ptr_f                      !< GPU device pointers in the GPU version   
 
       generic, public :: invert_triangular_double_complex => &      !< method eigenvectors for solving the full eigenvalue problem
-              elpa_invert_trm_all_host_arrays_dc, &                 !< for (real) double data, can be used with host arrays or
-              elpa_invert_trm_device_pointer_dc                     !< GPU device pointers in the GPU version   
+              elpa_invert_trm_a_h_a_dc, &                 !< for (real) double data, can be used with host arrays or
+              elpa_invert_trm_d_ptr_dc                     !< GPU device pointers in the GPU version   
 
       generic, public :: invert_triangular_float_complex => &       !< method eigenvectors for solving the full eigenvalue problem
-              elpa_invert_trm_all_host_arrays_fc, &                 !< for (real) double data, can be used with host arrays or
-              elpa_invert_trm_device_pointer_fc                     !< GPU device pointers in the GPU version   
+              elpa_invert_trm_a_h_a_fc, &                 !< for (real) double data, can be used with host arrays or
+              elpa_invert_trm_d_ptr_fc                     !< GPU device pointers in the GPU version   
 
       generic, public :: solve_tridiagonal => &                      !< method to solve the eigenvalue problem for a tridiagonal
           elpa_solve_tridiagonal_d, &                                !< matrix
@@ -256,38 +272,38 @@ module elpa_api
       procedure(elpa_get_float_i),  deferred, public :: elpa_get_float
       procedure(elpa_get_double_i),  deferred, public :: elpa_get_double
 
-      procedure(elpa_eigenvectors_all_host_arrays_d_i),    deferred, public :: elpa_eigenvectors_all_host_arrays_d
-      procedure(elpa_eigenvectors_all_host_arrays_f_i),    deferred, public :: elpa_eigenvectors_all_host_arrays_f
-      procedure(elpa_eigenvectors_all_host_arrays_dc_i), deferred, public :: elpa_eigenvectors_all_host_arrays_dc
-      procedure(elpa_eigenvectors_all_host_arrays_fc_i), deferred, public :: elpa_eigenvectors_all_host_arrays_fc
+      procedure(elpa_eigenvectors_a_h_a_d_i),    deferred, public :: elpa_eigenvectors_a_h_a_d
+      procedure(elpa_eigenvectors_a_h_a_f_i),    deferred, public :: elpa_eigenvectors_a_h_a_f
+      procedure(elpa_eigenvectors_a_h_a_dc_i), deferred, public :: elpa_eigenvectors_a_h_a_dc
+      procedure(elpa_eigenvectors_a_h_a_fc_i), deferred, public :: elpa_eigenvectors_a_h_a_fc
 
-      procedure(elpa_eigenvectors_device_pointer_d_i),    deferred, public :: elpa_eigenvectors_device_pointer_d
-      procedure(elpa_eigenvectors_device_pointer_f_i),    deferred, public :: elpa_eigenvectors_device_pointer_f
-      procedure(elpa_eigenvectors_device_pointer_dc_i), deferred, public :: elpa_eigenvectors_device_pointer_dc
-      procedure(elpa_eigenvectors_device_pointer_fc_i), deferred, public :: elpa_eigenvectors_device_pointer_fc
+      procedure(elpa_eigenvectors_d_ptr_d_i),    deferred, public :: elpa_eigenvectors_d_ptr_d
+      procedure(elpa_eigenvectors_d_ptr_f_i),    deferred, public :: elpa_eigenvectors_d_ptr_f
+      procedure(elpa_eigenvectors_d_ptr_dc_i), deferred, public :: elpa_eigenvectors_d_ptr_dc
+      procedure(elpa_eigenvectors_d_ptr_fc_i), deferred, public :: elpa_eigenvectors_d_ptr_fc
 
-      procedure(elpa_eigenvalues_all_host_arrays_d_i),    deferred, public :: elpa_eigenvalues_all_host_arrays_d
-      procedure(elpa_eigenvalues_all_host_arrays_f_i),    deferred, public :: elpa_eigenvalues_all_host_arrays_f
-      procedure(elpa_eigenvalues_all_host_arrays_dc_i), deferred, public :: elpa_eigenvalues_all_host_arrays_dc
-      procedure(elpa_eigenvalues_all_host_arrays_fc_i), deferred, public :: elpa_eigenvalues_all_host_arrays_fc
+      procedure(elpa_eigenvalues_a_h_a_d_i),    deferred, public :: elpa_eigenvalues_a_h_a_d
+      procedure(elpa_eigenvalues_a_h_a_f_i),    deferred, public :: elpa_eigenvalues_a_h_a_f
+      procedure(elpa_eigenvalues_a_h_a_dc_i), deferred, public :: elpa_eigenvalues_a_h_a_dc
+      procedure(elpa_eigenvalues_a_h_a_fc_i), deferred, public :: elpa_eigenvalues_a_h_a_fc
 
-      procedure(elpa_eigenvalues_device_pointer_d_i),    deferred, public :: elpa_eigenvalues_device_pointer_d
-      procedure(elpa_eigenvalues_device_pointer_f_i),    deferred, public :: elpa_eigenvalues_device_pointer_f
-      procedure(elpa_eigenvalues_device_pointer_dc_i), deferred, public :: elpa_eigenvalues_device_pointer_dc
-      procedure(elpa_eigenvalues_device_pointer_fc_i), deferred, public :: elpa_eigenvalues_device_pointer_fc
+      procedure(elpa_eigenvalues_d_ptr_d_i),    deferred, public :: elpa_eigenvalues_d_ptr_d
+      procedure(elpa_eigenvalues_d_ptr_f_i),    deferred, public :: elpa_eigenvalues_d_ptr_f
+      procedure(elpa_eigenvalues_d_ptr_dc_i), deferred, public :: elpa_eigenvalues_d_ptr_dc
+      procedure(elpa_eigenvalues_d_ptr_fc_i), deferred, public :: elpa_eigenvalues_d_ptr_fc
 
 #ifdef HAVE_SKEWSYMMETRIC
-      procedure(elpa_skew_eigenvectors_all_host_arrays_d_i),    deferred, public :: elpa_skew_eigenvectors_all_host_arrays_d
-      procedure(elpa_skew_eigenvectors_all_host_arrays_f_i),    deferred, public :: elpa_skew_eigenvectors_all_host_arrays_f
+      procedure(elpa_skew_eigenvectors_a_h_a_d_i),    deferred, public :: elpa_skew_eigenvectors_a_h_a_d
+      procedure(elpa_skew_eigenvectors_a_h_a_f_i),    deferred, public :: elpa_skew_eigenvectors_a_h_a_f
 
-      procedure(elpa_skew_eigenvectors_device_pointer_d_i),    deferred, public :: elpa_skew_eigenvectors_device_pointer_d
-      procedure(elpa_skew_eigenvectors_device_pointer_f_i),    deferred, public :: elpa_skew_eigenvectors_device_pointer_f
+      procedure(elpa_skew_eigenvectors_d_ptr_d_i),    deferred, public :: elpa_skew_eigenvectors_d_ptr_d
+      procedure(elpa_skew_eigenvectors_d_ptr_f_i),    deferred, public :: elpa_skew_eigenvectors_d_ptr_f
 
-      procedure(elpa_skew_eigenvalues_all_host_arrays_d_i),    deferred, public :: elpa_skew_eigenvalues_all_host_arrays_d
-      procedure(elpa_skew_eigenvalues_all_host_arrays_f_i),    deferred, public :: elpa_skew_eigenvalues_all_host_arrays_f
+      procedure(elpa_skew_eigenvalues_a_h_a_d_i),    deferred, public :: elpa_skew_eigenvalues_a_h_a_d
+      procedure(elpa_skew_eigenvalues_a_h_a_f_i),    deferred, public :: elpa_skew_eigenvalues_a_h_a_f
 
-      procedure(elpa_skew_eigenvalues_device_pointer_d_i),    deferred, public :: elpa_skew_eigenvalues_device_pointer_d
-      procedure(elpa_skew_eigenvalues_device_pointer_f_i),    deferred, public :: elpa_skew_eigenvalues_device_pointer_f
+      procedure(elpa_skew_eigenvalues_d_ptr_d_i),    deferred, public :: elpa_skew_eigenvalues_d_ptr_d
+      procedure(elpa_skew_eigenvalues_d_ptr_f_i),    deferred, public :: elpa_skew_eigenvalues_d_ptr_f
 #endif
 
       procedure(elpa_generalized_eigenvectors_d_i),    deferred, public :: elpa_generalized_eigenvectors_d
@@ -305,20 +321,25 @@ module elpa_api
       procedure(elpa_hermitian_multiply_dc_i), deferred, public :: elpa_hermitian_multiply_dc
       procedure(elpa_hermitian_multiply_fc_i), deferred, public :: elpa_hermitian_multiply_fc
 
-      procedure(elpa_cholesky_d_i),    deferred, public :: elpa_cholesky_d
-      procedure(elpa_cholesky_f_i),    deferred, public :: elpa_cholesky_f
-      procedure(elpa_cholesky_dc_i), deferred, public :: elpa_cholesky_dc
-      procedure(elpa_cholesky_fc_i), deferred, public :: elpa_cholesky_fc
+      procedure(elpa_cholesky_a_h_a_d_i),    deferred, public :: elpa_cholesky_a_h_a_d
+      procedure(elpa_cholesky_a_h_a_f_i),    deferred, public :: elpa_cholesky_a_h_a_f
+      procedure(elpa_cholesky_a_h_a_dc_i), deferred, public :: elpa_cholesky_a_h_a_dc
+      procedure(elpa_cholesky_a_h_a_fc_i), deferred, public :: elpa_cholesky_a_h_a_fc
 
-      procedure(elpa_invert_trm_all_host_arrays_d_i),    deferred, public :: elpa_invert_trm_all_host_arrays_d
-      procedure(elpa_invert_trm_all_host_arrays_f_i),    deferred, public :: elpa_invert_trm_all_host_arrays_f
-      procedure(elpa_invert_trm_all_host_arrays_dc_i), deferred, public :: elpa_invert_trm_all_host_arrays_dc
-      procedure(elpa_invert_trm_all_host_arrays_fc_i), deferred, public :: elpa_invert_trm_all_host_arrays_fc
+      procedure(elpa_cholesky_d_ptr_d_i),    deferred, public :: elpa_cholesky_d_ptr_d
+      procedure(elpa_cholesky_d_ptr_f_i),    deferred, public :: elpa_cholesky_d_ptr_f
+      procedure(elpa_cholesky_d_ptr_dc_i), deferred, public :: elpa_cholesky_d_ptr_dc
+      procedure(elpa_cholesky_d_ptr_fc_i), deferred, public :: elpa_cholesky_d_ptr_fc
 
-      procedure(elpa_invert_trm_device_pointer_d_i),    deferred, public :: elpa_invert_trm_device_pointer_d
-      procedure(elpa_invert_trm_device_pointer_f_i),    deferred, public :: elpa_invert_trm_device_pointer_f
-      procedure(elpa_invert_trm_device_pointer_dc_i), deferred, public :: elpa_invert_trm_device_pointer_dc
-      procedure(elpa_invert_trm_device_pointer_fc_i), deferred, public :: elpa_invert_trm_device_pointer_fc
+      procedure(elpa_invert_trm_a_h_a_d_i),    deferred, public :: elpa_invert_trm_a_h_a_d
+      procedure(elpa_invert_trm_a_h_a_f_i),    deferred, public :: elpa_invert_trm_a_h_a_f
+      procedure(elpa_invert_trm_a_h_a_dc_i), deferred, public :: elpa_invert_trm_a_h_a_dc
+      procedure(elpa_invert_trm_a_h_a_fc_i), deferred, public :: elpa_invert_trm_a_h_a_fc
+
+      procedure(elpa_invert_trm_d_ptr_d_i),    deferred, public :: elpa_invert_trm_d_ptr_d
+      procedure(elpa_invert_trm_d_ptr_f_i),    deferred, public :: elpa_invert_trm_d_ptr_f
+      procedure(elpa_invert_trm_d_ptr_dc_i), deferred, public :: elpa_invert_trm_d_ptr_dc
+      procedure(elpa_invert_trm_d_ptr_fc_i), deferred, public :: elpa_invert_trm_d_ptr_fc
 
       procedure(elpa_solve_tridiagonal_d_i), deferred, public :: elpa_solve_tridiagonal_d
       procedure(elpa_solve_tridiagonal_f_i), deferred, public :: elpa_solve_tridiagonal_f

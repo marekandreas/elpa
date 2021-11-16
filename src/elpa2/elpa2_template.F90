@@ -63,7 +63,7 @@
 #endif /* ACTIVATE_SKEW */
   &MATH_DATATYPE&
   &_&
-  &2stage_device_pointer_&
+  &2stage_d_ptr_&
   &PRECISION&
   &_impl (obj, &
    aExtern, &
@@ -77,7 +77,7 @@
 #endif /* ACTIVATE_SKEW */
   &MATH_DATATYPE&
   &_&
-  &2stage_all_host_arrays_&
+  &2stage_a_h_a_&
   &PRECISION&
   &_impl (obj, &
    aExtern, &

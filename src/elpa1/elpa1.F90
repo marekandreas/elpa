@@ -94,42 +94,42 @@ module elpa1_impl
   ! The following routines are public:
   private
 
-  public :: elpa_solve_evp_real_1stage_all_host_arrays_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
+  public :: elpa_solve_evp_real_1stage_a_h_a_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_evp_real_1stage_all_host_arrays_single_impl    !< Driver routine for real single-precision 1-stage eigenvalue problem
+  public :: elpa_solve_evp_real_1stage_a_h_a_single_impl    !< Driver routine for real single-precision 1-stage eigenvalue problem
 
 #endif
-  public :: elpa_solve_evp_complex_1stage_all_host_arrays_double_impl !< Driver routine for complex 1-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_1stage_a_h_a_double_impl !< Driver routine for complex 1-stage eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_solve_evp_complex_1stage_all_host_arrays_single_impl !< Driver routine for complex 1-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_1stage_a_h_a_single_impl !< Driver routine for complex 1-stage eigenvalue problem
 #endif
 
 #ifdef HAVE_SKEWSYMMETRIC
-  public :: elpa_solve_skew_evp_real_1stage_all_host_arrays_double_impl    !< Driver routine for real double-precision 1-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_1stage_a_h_a_double_impl    !< Driver routine for real double-precision 1-stage skew-symmetric eigenvalue problem
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_skew_evp_real_1stage_all_host_arrays_single_impl    !< Driver routine for real single-precision 1-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_1stage_a_h_a_single_impl    !< Driver routine for real single-precision 1-stage skew-symmetric eigenvalue problem
 
 #endif
 #endif /* HAVE_SKEWSYMMETRIC */
 
-  public :: elpa_solve_evp_real_1stage_device_pointer_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
+  public :: elpa_solve_evp_real_1stage_d_ptr_double_impl    !< Driver routine for real double-precision 1-stage eigenvalue problem
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_evp_real_1stage_device_pointer_single_impl    !< Driver routine for real single-precision 1-stage eigenvalue problem
+  public :: elpa_solve_evp_real_1stage_d_ptr_single_impl    !< Driver routine for real single-precision 1-stage eigenvalue problem
 
 #endif
-  public :: elpa_solve_evp_complex_1stage_device_pointer_double_impl !< Driver routine for complex 1-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_1stage_d_ptr_double_impl !< Driver routine for complex 1-stage eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_solve_evp_complex_1stage_device_pointer_single_impl !< Driver routine for complex 1-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_1stage_d_ptr_single_impl !< Driver routine for complex 1-stage eigenvalue problem
 #endif
 
 #ifdef HAVE_SKEWSYMMETRIC
-  public :: elpa_solve_skew_evp_real_1stage_device_pointer_double_impl    !< Driver routine for real double-precision 1-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_1stage_d_ptr_double_impl    !< Driver routine for real double-precision 1-stage skew-symmetric eigenvalue problem
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_skew_evp_real_1stage_device_pointer_single_impl    !< Driver routine for real single-precision 1-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_1stage_d_ptr_single_impl    !< Driver routine for real single-precision 1-stage skew-symmetric eigenvalue problem
 
 #endif
 #endif /* HAVE_SKEWSYMMETRIC */
@@ -146,23 +146,23 @@ module elpa1_impl
 
   !public :: elpa_invert_trm_complex_double_impl   !< Invert double-precision complex triangular matrix
 
-  public :: elpa_cholesky_real_double_impl        !< Cholesky factorization of a double-precision real matrix
+  !public :: elpa_cholesky_real_double_impl        !< Cholesky factorization of a double-precision real matrix
 
-  public :: elpa_cholesky_complex_double_impl     !< Cholesky factorization of a double-precision complex matrix
+  !public :: elpa_cholesky_complex_double_impl     !< Cholesky factorization of a double-precision complex matrix
 
   public :: elpa_solve_tridi_double_impl          !< Solve a double-precision tridiagonal eigensystem with divide and conquer method
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: elpa_mult_at_b_real_single_impl       !< Multiply single-precision real matrices A**T * B
   !public :: elpa_invert_trm_real_single_impl      !< Invert single-precision real triangular matrix
-  public :: elpa_cholesky_real_single_impl        !< Cholesky factorization of a single-precision real matrix
+  !public :: elpa_cholesky_real_single_impl        !< Cholesky factorization of a single-precision real matrix
   public :: elpa_solve_tridi_single_impl          !< Solve a single-precision tridiagonal eigensystem with divide and conquer method
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   public :: elpa_mult_ah_b_complex_single_impl    !< Multiply single-precision complex matrices A**H * B
   !public :: elpa_invert_trm_complex_single_impl   !< Invert single-precision complex triangular matrix
-  public :: elpa_cholesky_complex_single_impl     !< Cholesky factorization of a single-precision complex matrix
+  !public :: elpa_cholesky_complex_single_impl     !< Cholesky factorization of a single-precision complex matrix
 #endif
 
 contains
@@ -207,7 +207,7 @@ contains
 #undef DOUBLE_PRECISION
 
 
-!> \brief elpa_solve_evp_real_1stage_device_pointer_double_impl: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_real_1stage_d_ptr_double_impl: Fortran function to solve the real double-precision eigenvalue problem with 1-stage solver
 !>
 !> \details
 !> \param  obj                      elpa_t object contains:
@@ -286,7 +286,7 @@ contains
 #undef REALCASE
 #undef SINGLE_PRECISION
 
-!> \brief elpa_solve_evp_real_1stage_device_pointer_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_real_1stage_d_ptr_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
 !> \details
 !> \param  obj                      elpa_t object contains:
 !> \param     - obj%na              Order of matrix
@@ -364,7 +364,7 @@ contains
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
-!> \brief elpa_solve_evp_complex_1stage_device_pointer_double_impl: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_complex_1stage_d_ptr_double_impl: Fortran function to solve the complex double-precision eigenvalue problem with 1-stage solver
 !> \details
 !> \param  obj                      elpa_t object contains:
 !> \param     - obj%na              Order of matrix
@@ -443,7 +443,7 @@ contains
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 
-!> \brief elpa_solve_evp_complex_1stage_device_pointer_single_impl: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_complex_1stage_d_ptr_single_impl: Fortran function to solve the complex single-precision eigenvalue problem with 1-stage solver
 !> \details
 !> \param  obj                      elpa_t object contains:
 !> \param     - obj%na              Order of matrix
@@ -524,7 +524,7 @@ contains
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
-!> \brief elpa_solve_skew_evp_real_1stage_device_pointer_double_impl: Fortran function to solve the real double-precision skew-symmetric eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_skew_evp_real_1stage_d_ptr_double_impl: Fortran function to solve the real double-precision skew-symmetric eigenvalue problem with 1-stage solver
 !>
 !> \details
 !> \param  obj                      elpa_t object contains:
@@ -604,7 +604,7 @@ contains
 #undef ACTIVATE_SKEW
 #undef SINGLE_PRECISION
 
-!> \brief elpa_solve_evp_real_1stage_device_pointer_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
+!> \brief elpa_solve_evp_real_1stage_d_ptr_single_impl: Fortran function to solve the real single-precision eigenvalue problem with 1-stage solver
 !> \details
 !> \param  obj                      elpa_t object contains:
 !> \param     - obj%na              Order of matrix

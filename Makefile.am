@@ -93,6 +93,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa_transpose_vectors.F90 \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
+  src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
@@ -858,6 +859,8 @@ EXTRA_DIST = \
   src/GPU/ROCm/hipUtils_template.cpp \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
+  src/elpa_impl_math_solvers_template.F90 \
+  src/elpa_impl_math_generalized_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \

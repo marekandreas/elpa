@@ -522,7 +522,6 @@ api = {
 
 compiler = {
              "gnu" : "gnu",
-             "intel" : "intel"
 }
 for comp, s, a in product(
                              sorted(compiler.keys()),
