@@ -91,13 +91,14 @@
   integer(kind=c_intptr_t)      :: a_off, tmatc_off, tmatr_off
   type(c_ptr)                      :: tmatc_mpi_dev
   MATH_DATATYPE(kind=rck), pointer :: tmatc_mpi_fortran_ptr(:,:)
+  integer(kind=c_int)              :: gpu_cholesky
 
   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
                                                             &MATH_DATATYPE
 
-integer ::  ii, jj
+  gpu_cholesky = 0
   ! GPU settings
   if (gpu_vendor() == NVIDIA_GPU) then
     call obj%get("gpu",gpu,error)
@@ -120,6 +121,13 @@ integer ::  ii, jj
       print *,"ELPA_CHOLESKY: Problem getting option for NVIDIA GPU. Aborting..."
       stop
     endif
+
+    call obj%get("gpu_cholesky",gpu_cholesky, error)
+    if (error .ne. ELPA_OK) then
+      print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
+      stop
+    endif
+
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
@@ -130,7 +138,11 @@ integer ::  ii, jj
     gpu = 0
   endif
 
-  useGPU = (gpu == 1)
+  if (gpu_cholesky .eq. 1) then
+    useGPU = (gpu == 1)
+  else
+    useGPU = .false.
+  endif
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -641,7 +653,7 @@ integer ::  ii, jj
     &PRECISION &
     (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
     tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
-    n, na, nblk, nblk, nrThreads)
+    n, na, nblk, nblk, nrThreads, .false.)
 
     if (useGPU) then
       num = l_rows*nblk*size_of_datatype
