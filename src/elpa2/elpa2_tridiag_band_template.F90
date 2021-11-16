@@ -56,7 +56,7 @@ subroutine tridiag_band_&
   &_&
   &PRECISION &
   (obj, na, nb, nblk, a_mat, lda, d, e, matrixCols, &
-  hh_trans, mpi_comm_rows, mpi_comm_cols, communicator, useGPU, wantDebug, nrThreads, isSkewsymmetric)
+  hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU, wantDebug, nrThreads, isSkewsymmetric)
   !-------------------------------------------------------------------------------
   ! tridiag_band_real/complex:
   ! Reduces a real symmetric band matrix to tridiagonal form
@@ -81,7 +81,7 @@ subroutine tridiag_band_&
   !  mpi_comm_rows
   !  mpi_comm_cols
   !              MPI-Communicators for rows/columns
-  !  communicator
+  !  mpi_comm_all
   !              MPI-Communicator for the total processor set
   !-------------------------------------------------------------------------------
   use elpa_abstract_impl
@@ -100,7 +100,7 @@ subroutine tridiag_band_&
   class(elpa_abstract_impl_t), intent(inout)   :: obj
   logical, intent(in)                          :: useGPU, wantDebug
   logical, intent(in)                          :: isSkewsymmetric
-  integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator
+  integer(kind=ik), intent(in)                 :: na, nb, nblk, lda, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 #ifdef USE_ASSUMED_SIZE
   MATH_DATATYPE(kind=rck), intent(in)         :: a_mat(lda,*)
 #else
@@ -144,17 +144,14 @@ subroutine tridiag_band_&
 #endif
   logical                                      :: useIntelGPU
 
+   integer(kind=MPI_KIND)                      :: allreduce_request1, allreduce_request2
+   logical                                     :: useNonBlockingCollectivesAll
+   integer(kind=c_int)                         :: non_blocking_collectives, error
+
   if(useGPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
-  endif
-
-  useIntelGPU = .false.
-  if (useGPU) then
-    if (gpu_vendor() == INTEL_GPU) then
-      useIntelGPU = .true.
-    endif
   endif
 
   call obj%timer%start("tridiag_band_&
@@ -163,9 +160,28 @@ subroutine tridiag_band_&
   &PRECISION_SUFFIX //&
   gpuString)
 
+  useIntelGPU = .false.
+  if (useGPU) then
+    if (gpu_vendor() == INTEL_GPU) then
+      useIntelGPU = .true.
+    endif
+  endif
+
+  call obj%get("nbc_all_elpa2_band_to_tridi", non_blocking_collectives, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives in elpa2_band_to_tridi. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives .eq. 1) then
+    useNonBlockingCollectivesAll = .true.
+  else
+    useNonBlockingCollectivesAll = .false.
+  endif
+
   if (wantDebug) call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(communicator,kind=MPI_KIND) ,my_peMPI ,mpierr)
-  call mpi_comm_size(int(communicator,kind=MPI_KIND) ,n_pesMPI ,mpierr)
+  call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND) ,my_peMPI ,mpierr)
+  call mpi_comm_size(int(mpi_comm_all,kind=MPI_KIND) ,n_pesMPI ,mpierr)
 
   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND),my_prowMPI ,mpierr)
   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND),np_rowsMPI ,mpierr)
@@ -196,12 +212,24 @@ subroutine tridiag_band_&
 #ifdef WITH_MPI
   if (wantDebug) call obj%timer%start("mpi_communication")
 #ifndef WITH_OPENMP_TRADITIONAL
-  call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
-                         mpi_sum, int(communicator,kind=MPI_KIND), mpierr)
+  if (useNonBlockingCollectivesAll) then
+    call mpi_iallreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
+                         mpi_sum, int(mpi_comm_all,kind=MPI_KIND), allreduce_request1, mpierr)
+    call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+  else
+    call mpi_allreduce(mpi_in_place, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
+                         mpi_sum, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+  endif
 #else
   global_id_tmp(:,:) = global_id(:,:)
-  call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
-                     mpi_sum, int(communicator,kind=MPI_KIND), mpierr)
+  if (useNonBlockingCollectivesAll) then
+    call mpi_iallreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
+                     mpi_sum, int(mpi_comm_all,kind=MPI_KIND), allreduce_request2, mpierr)
+    call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+  else
+    call mpi_allreduce(global_id_tmp, global_id, int(np_rows*np_cols,kind=MPI_KIND), mpi_integer, &
+                     mpi_sum, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+  endif
   deallocate(global_id_tmp, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag_band: global_id_tmp", istat, errorMessage)
 #endif /* WITH_OPENMP_TRADITIONAL */
@@ -237,7 +265,7 @@ subroutine tridiag_band_&
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, communicator, ab)
+  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, ab)
 
   ! Calculate the workload for each sweep in the back transformation
   ! and the space requirements to hold the HH vectors
@@ -289,7 +317,7 @@ subroutine tridiag_band_&
       if (wantDebug) call obj%timer%start("mpi_communication")
       call mpi_irecv(hh_trans(1,num_hh_vecs+1), int(nb*local_size,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION_EXPL,     &
                     int(nt,kind=MPI_KIND), int(10+n-block_limits(nt),kind=MPI_KIND), &
-                    int(communicator,kind=MPI_KIND), ireq_hhr(num_chunks), mpierr)
+                    int(mpi_comm_all,kind=MPI_KIND), ireq_hhr(num_chunks), mpierr)
       if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -373,7 +401,7 @@ subroutine tridiag_band_&
 #ifdef WITH_MPI
     if (wantDebug) call obj%timer%start("mpi_communication")
     call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                   int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
+                   int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), ireq_ab, mpierr)
     if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
   endif
@@ -466,7 +494,7 @@ subroutine tridiag_band_&
 #ifdef WITH_MPI
          if (wantDebug) call obj%timer%start("mpi_communication")
          call mpi_recv(hv, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                       int(my_pe-1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                       int(my_pe-1,kind=MPI_KIND), 2_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), &
                        MPI_STATUS_IGNORE, mpierr)
          if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -482,7 +510,7 @@ subroutine tridiag_band_&
          if (wantDebug) call obj%timer%start("mpi_communication")
 
          call mpi_recv(hv, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                       int(my_pe-1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                       int(my_pe-1,kind=MPI_KIND), 2_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), &
                        MPI_STATUS_IGNORE, mpierr)
          if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -767,7 +795,7 @@ subroutine tridiag_band_&
             if (wantDebug) call obj%timer%start("mpi_communication")
             call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                            int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, &
-                           int(communicator,kind=MPI_KIND), ireq_ab, mpierr)
+                           int(mpi_comm_all,kind=MPI_KIND), ireq_ab, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #endif /* WITH_MPI */
@@ -780,7 +808,7 @@ subroutine tridiag_band_&
 
           if (istep>=max_threads .and. ne <= na) then
             call mpi_recv(ab(1,ne-n_off), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
-                          int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                          int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), &
                           MPI_STATUS_IGNORE, mpierr)
           endif
           if (wantDebug) call obj%timer%stop("mpi_communication")
@@ -806,7 +834,7 @@ subroutine tridiag_band_&
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
             call mpi_isend(hv_s, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                           int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                           int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), &
                            ireq_hv, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -864,7 +892,7 @@ subroutine tridiag_band_&
           if (wantDebug) call obj%timer%start("mpi_communication")
           call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                          global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                         int(10+iblk,kind=MPI_KIND), int(communicator,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
+                         int(10+iblk,kind=MPI_KIND), int(mpi_comm_all,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           ! do the post-poned irecv here
@@ -947,11 +975,11 @@ subroutine tridiag_band_&
           if (wantDebug) call obj%timer%start("mpi_communication")
 #ifdef WITH_OPENMP_TRADITIONAL
           call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
-                       int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                       int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), &
                        MPI_STATUS_IGNORE, mpierr)
 #else /* WITH_OPENMP_TRADITIONAL */
           call mpi_recv(ab(1,ne), int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL,  &
-                       int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                       int(my_pe+1,kind=MPI_KIND), 1_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), &
                        MPI_STATUS_IGNORE, mpierr)
 #endif /* WITH_OPENMP_TRADITIONAL */
           if (wantDebug) call obj%timer%stop("mpi_communication")
@@ -1063,7 +1091,7 @@ subroutine tridiag_band_&
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
             call mpi_isend(hv_s, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                           int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                           int(my_pe+1,kind=MPI_KIND), 2_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), &
                            ireq_hv, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -1116,7 +1144,7 @@ subroutine tridiag_band_&
           if (wantDebug) call obj%timer%start("mpi_communication")
 
           call mpi_isend(ab_s, int(nb+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                         int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, int(communicator,kind=MPI_KIND), &
+                         int(my_pe-1,kind=MPI_KIND), 1_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), &
                          ireq_ab, mpierr)
           if (wantDebug) call obj%timer%stop("mpi_communication")
 
@@ -1270,7 +1298,7 @@ subroutine tridiag_band_&
         call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), &
                        MPI_MATH_DATATYPE_PRECISION_EXPL, &
                        global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
-                       int(10+iblk,kind=MPI_KIND), int(communicator,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
+                       int(10+iblk,kind=MPI_KIND), int(mpi_comm_all,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
         ! do the post-poned irecv here
@@ -1328,7 +1356,7 @@ subroutine tridiag_band_&
 
 #ifdef  WITH_MPI
   if (wantDebug) call obj%timer%start("mpi_communication")
-  call mpi_barrier(int(communicator,kind=MPI_KIND),mpierr)
+  call mpi_barrier(int(mpi_comm_all,kind=MPI_KIND),mpierr)
   if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
   deallocate(ab, stat=istat, errmsg=errorMessage)

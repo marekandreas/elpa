@@ -55,16 +55,42 @@ module elpa_autotune_impl
 #ifdef ENABLE_AUTOTUNING
   type, extends(elpa_autotune_t) :: elpa_autotune_impl_t
     class(elpa_abstract_impl_t), pointer :: parent => NULL()
+    integer :: new_stepping
     integer :: current = 0
     real(kind=C_DOUBLE) :: min_val = 0.0_C_DOUBLE
     integer :: min_loc = 0
     integer :: cardinality = 0
     integer :: level = 0
     integer :: domain = 0
+    integer :: current1satge = 0
+    real(kind=C_DOUBLE) :: min_val1stage = 0.0_C_DOUBLE
+    integer :: min_loc1stage = 0
+    integer :: cardinality1stage = 0
+    integer :: current2stage = 0
+    real(kind=C_DOUBLE) :: min_val2stage = 0.0_C_DOUBLE
+    integer :: min_loc2satge = 0
+    integer :: cardinality2stage = 0
+
+    integer :: sublevel_cardinality1stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    real(kind=C_DOUBLE) :: sublevel_min_val1stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: sublevel_min_loc1stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: total_current_1stage 
+    integer :: sublevel_current1stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: sublevel_part1stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: sublevel_cardinality2stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    real(kind=C_DOUBLE) :: sublevel_min_val2stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: sublevel_min_loc2stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: sublevel_current2stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+    integer :: total_current_2stage
+    integer :: sublevel_part2stage(0:ELPA_NUMBER_OF_AUTOTUNE_LEVELS-1)
+
+    integer :: best_solver = -99
+    real(kind=C_DOUBLE) :: best_val1stage, best_val2stage = 1e6_C_DOUBLE
     contains
       procedure, public :: print => elpa_autotune_print
       procedure, public :: destroy => elpa_autotune_destroy
   end type
+
 
   contains
 
