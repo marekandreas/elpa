@@ -101,9 +101,8 @@
   type(c_ptr)                   :: tmp2_mpi_dev, a_mpi_dev
   integer(kind=c_intptr_t)      :: a_off, tmat2_off, tmp1_off, tmp2_off
    MATH_DATATYPE(kind=rck), pointer :: a_mpi_deviceptr(:,:)
-  !type(c_ptr)                   :: aux_host, tmp1_host
   integer(kind=c_intptr_t)      :: num
-  !integer(kind=c_intptr_t)      :: aux_off, b_off
+  integer(kind=c_int)           :: gpu_invert_trm
   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
@@ -111,6 +110,7 @@
 
 
   ! GPU settings
+  gpu_invert_trm = 0
   if (gpu_vendor() == NVIDIA_GPU) then
     call obj%get("gpu",gpu,error)
     if (error .ne. ELPA_OK) then
@@ -132,6 +132,12 @@
       print *,"ELPA_INVERT_TRM: Problem getting option for NVIDIA GPU. Aborting..."
       stop
     endif
+    call obj%get("gpu_invert_trm",gpu_invert_trm,error)
+    if (error .ne. ELPA_OK) then
+      print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
+      stop
+    endif
+
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
@@ -142,7 +148,11 @@
     gpu = 0
   endif
 
-  useGPU = (gpu == 1)
+  if (gpu_invert_trm .eq. 1) then
+    useGPU = (gpu == 1)
+  else
+    useGPU = .false.
+  endif
 
   if(useGPU) then
     gpuString = "_gpu"
