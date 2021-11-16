@@ -22,6 +22,37 @@ subroutine global_gather_&
   real(kind=REAL_DATATYPE)                   :: z(n)
   real(kind=REAL_DATATYPE)                   :: tmp(n)
   integer(kind=ik)                           :: np
+  integer(kind=MPI_KIND)                     :: allreduce_request1, allreduce_request2
+  logical                                    :: useNonBlockingCollectivesCols
+  logical                                    :: useNonBlockingCollectivesRows
+  integer(kind=c_int)                        :: non_blocking_collectives_rows, error, &
+                                                non_blocking_collectives_cols
+
+  call obj%get("nbc_row_global_gather", non_blocking_collectives_rows, error)
+  if (error .ne. ELPA_OK) then
+    print *, error, ELPA_OK
+    print *,"Problem getting option for non blocking collectives for rows in global_gather. Aborting..."
+    stop
+  endif
+
+  call obj%get("nbc_col_global_gather", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem getting option for non blocking collectives for cols in global_gather. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives_rows .eq. 1) then
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+  endif
+
 #ifdef WITH_MPI
   call obj%timer%start("mpi_communication")
   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
@@ -38,9 +69,18 @@ subroutine global_gather_&
 
   ! Do an mpi_allreduce over processor rows
 #ifdef WITH_MPI
-  call obj%timer%start("mpi_communication")
-  call mpi_allreduce(z, tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-  call obj%timer%stop("mpi_communication")
+  if (useNonBlockingCollectivesRows) then
+    call obj%timer%start("mpi_nbc_communication")
+    call mpi_iallreduce(z, tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                      allreduce_request1, mpierr)
+    call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+    call obj%timer%stop("mpi_nbc_communication")
+  else
+    call obj%timer%start("mpi_communication")
+    call mpi_allreduce(z, tmp, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                      mpierr)
+    call obj%timer%stop("mpi_communication")
+  endif
 #else /* WITH_MPI */
   tmp = z
 #endif /* WITH_MPI */
@@ -53,9 +93,18 @@ subroutine global_gather_&
   ! If all processor columns are involved, we can use mpi_allreduce
   if (npc_n==np_cols) then
 #ifdef WITH_MPI
-    call obj%timer%start("mpi_communication")
-    call mpi_allreduce(tmp, z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-    call obj%timer%stop("mpi_communication")
+    if (useNonBlockingCollectivesCols) then
+      call obj%timer%start("mpi_nbc_communication")
+      call mpi_iallreduce(tmp, z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
+              allreduce_request2, mpierr)
+      call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+      call obj%timer%stop("mpi_nbc_communication")
+    else
+      call obj%timer%start("mpi_communication")
+      call mpi_allreduce(tmp, z, int(n,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
+              mpierr)
+      call obj%timer%stop("mpi_communication")
+    endif
 #else /* WITH_MPI */
     tmp = z
 #endif /* WITH_MPI */

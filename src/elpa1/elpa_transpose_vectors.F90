@@ -63,7 +63,7 @@ subroutine ROUTINE_NAME&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads)
+(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows)
 
 !-------------------------------------------------------------------------------
 ! This routine transposes an array of vectors which are distributed in
@@ -109,12 +109,50 @@ subroutine ROUTINE_NAME&
   integer(kind=ik)                                  :: istat
   character(200)                                    :: errorMessage
 
+  integer(kind=MPI_KIND)                            :: bcast_request1
+  logical                                           :: useNonBlockingCollectives
+  logical                                           :: useNonBlockingCollectivesRows
+  logical                                           :: useNonBlockingCollectivesCols
+  logical, intent(in)                               :: comm_s_isRows
+  integer(kind=c_int)                               :: non_blocking_collectives_rows, error, &
+                                                       non_blocking_collectives_cols
+
   call obj%timer%start("&
           &ROUTINE_NAME&
   &MATH_DATATYPE&
   &" // &
   &PRECISION_SUFFIX &
   )
+
+  call obj%get("nbc_row_transpose_vectors", non_blocking_collectives_rows, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for_rows in transpose_vectors. Aborting..."
+    stop
+  endif
+
+  call obj%get("nbc_col_transpose_vectors", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for_cols in transpose_vectors. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives_rows .eq. 1) then
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+  endif
+
+  if (comm_s_isRows) then
+    useNonBlockingCollectives = useNonBlockingCollectivesRows
+  else
+    useNonBlockingCollectives = useNonBlockingCollectivesCols
+  endif
 
   call obj%timer%start("mpi_communication")
   call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
@@ -150,9 +188,13 @@ subroutine ROUTINE_NAME&
 #ifdef WITH_OPENMP_TRADITIONAL
   !$omp parallel &
   !$omp default(none) &
-  !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n) &
+  !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
-  !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr)
+  !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
+#ifdef WITH_MPI
+  !$omp&       MPI_STATUS_IGNORE, &
+#endif
+  !$omp&       useNonBlockingCollectives)
 #endif
   do n = 0, lcm_s_t-1
 
@@ -187,19 +229,30 @@ subroutine ROUTINE_NAME&
 #endif
 
 #ifdef WITH_MPI
-        call obj%timer%start("mpi_communication")
-
-        call MPI_Bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
+        if (useNonBlockingCollectives) then
+          call obj%timer%start("mpi_nbc_communication")
+          call mpi_ibcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
 #if REALCASE == 1
                       MPI_REAL_PRECISION,    &
 #endif
 #if COMPLEXCASE == 1
                       MPI_COMPLEX_PRECISION, &
 #endif
-                      int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND), mpierr)
-
-
-        call obj%timer%stop("mpi_communication")
+                      int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND), bcast_request1, mpierr)
+          call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+          call obj%timer%stop("mpi_nbc_communication")
+        else
+          call obj%timer%start("mpi_communication")
+          call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
+#if REALCASE == 1
+                      MPI_REAL_PRECISION,    &
+#endif
+#if COMPLEXCASE == 1
+                      MPI_COMPLEX_PRECISION, &
+#endif
+                      int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND),  mpierr)
+          call obj%timer%stop("mpi_communication")
+        endif
 #endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP_TRADITIONAL

@@ -204,10 +204,49 @@ max_threads, isSkewsymmetric)
   integer(kind=ik)                            :: i_blk,blk_off, blk_end
   logical                                     :: useIntelGPU
 
+
+  integer(kind=MPI_KIND)                      :: bcast_request, allreduce_request1, allreduce_request2, &
+                                                 allreduce_request3, allreduce_request4, allreduce_request5, &
+                                                 allreduce_request6
+
+  logical                                     :: useNonBlockingCollectivesCols
+  logical                                     :: useNonBlockingCollectivesRows
+  integer(kind=c_int)                         :: non_blocking_collectives_rows, non_blocking_collectives_cols
+
   if(useGPU) then
     gpuString = "_gpu"
   else
     gpuString = ""
+  endif
+
+  call obj%timer%start("bandred_&
+  &MATH_DATATYPE&
+  &" // &
+  PRECISION_SUFFIX // &
+  gpuString )
+
+  call obj%get("nbc_row_elpa2_full_to_band", non_blocking_collectives_rows, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for rows in elpa2_bandred. Aborting..."
+    stop
+  endif
+
+  call obj%get("nbc_col_elpa2_full_to_band", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for cols in elpa2_bandred. Aborting..."
+    stop
+  endif
+ 
+  if (non_blocking_collectives_rows .eq. 1) then
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesRows = .false.
+  endif
+ 
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
   endif
 
   useIntelGPU = .false.
@@ -216,12 +255,6 @@ max_threads, isSkewsymmetric)
       useIntelGPU = .true.
     endif
   endif
-
-  call obj%timer%start("bandred_&
-  &MATH_DATATYPE&
-  &" // &
-  PRECISION_SUFFIX // &
-  gpuString )
 
   useGPU_reduction_lower_block_to_tridiagonal = .false.
 
@@ -606,10 +639,23 @@ max_threads, isSkewsymmetric)
           endif
 
 #ifdef WITH_MPI
-          if (wantDebug) call obj%timer%start("mpi_communication")
-          call mpi_allreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
-                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          if (wantDebug) call obj%timer%stop("mpi_communication")
+          if (useNonBlockingCollectivesRows) then
+            if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+            call mpi_iallreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                             allreduce_request1, mpierr)
+
+            call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+
+            if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+          else
+            if (wantDebug) call obj%timer%start("mpi_communication")
+            call mpi_allreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                             mpierr)
+
+            if (wantDebug) call obj%timer%stop("mpi_communication")
+          endif
 
 #else /* WITH_MPI */
           aux2 = aux1 ! this should be optimized
@@ -646,11 +692,22 @@ max_threads, isSkewsymmetric)
 
         vr(lr+1) = tau
 #ifdef WITH_MPI
-        if (wantDebug) call obj%timer%start("mpi_communication")
-        call MPI_Bcast(vr, int(lr+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                      int(cur_pcol,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-        if (wantDebug) call obj%timer%stop("mpi_communication")
+        if (useNonBlockingCollectivesCols) then
+          if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+          call mpi_ibcast(vr, int(lr+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                        int(cur_pcol,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
+                        bcast_request, mpierr)
 
+
+          call mpi_wait(bcast_request, MPI_STATUS_IGNORE, mpierr)
+          if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+        else
+          if (wantDebug) call obj%timer%start("mpi_communication")
+          call mpi_bcast(vr, int(lr+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                        int(cur_pcol,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
+                        mpierr)
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+        endif
 #endif /* WITH_MPI */
 
         if (useGPU_reduction_lower_block_to_tridiagonal .and. .not.(useIntelGPU)) then
@@ -739,8 +796,12 @@ max_threads, isSkewsymmetric)
         !$omp  parallel &
         !$omp  default(none) &
         !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
-        !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj) &
-        !$omp private(mynlc, j, lcx, ii, pp, mpierr )        
+        !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj, &
+#ifdef WITH_MPI
+        !$omp&  MPI_STATUS_IGNORE, &
+#endif
+        !$omp&  useNonBlockingCollectivesRows, useNonBlockingCollectivesCols) &
+        !$omp private(mynlc, j, lcx, ii, pp, mpierr, allreduce_request2)        
         mynlc = 0 ! number of local columns
 
         !This loop does not have independent iterations,
@@ -763,10 +824,24 @@ max_threads, isSkewsymmetric)
         !$omp barrier
         !$omp single
 #ifdef WITH_MPI
-        if (wantDebug) call obj%timer%start("mpi_communication")
-        if (mynlc>0) call mpi_allreduce(aux1, aux2, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                                        MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-        if (wantDebug) call obj%timer%stop("mpi_communication")
+        if (useNonBlockingCollectivesRows) then
+          if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+          if (mynlc>0) then
+            call mpi_iallreduce(aux1, aux2, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                                        MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                                        allreduce_request2, mpierr)
+            call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+          endif
+          if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+        else
+          if (wantDebug) call obj%timer%start("mpi_communication")
+          if (mynlc>0) then
+            call mpi_allreduce(aux1, aux2, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                                        MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                                        mpierr)
+          endif
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+        endif
 #else /* WITH_MPI */
         if (mynlc>0) aux2 = aux1
 #endif /* WITH_MPI */
@@ -810,10 +885,24 @@ max_threads, isSkewsymmetric)
 
         ! Get global dot products
 #ifdef WITH_MPI
-        if (wantDebug) call obj%timer%start("mpi_communication")
-        if (nlc>0) call mpi_allreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                                      MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-        if (wantDebug) call obj%timer%stop("mpi_communication")
+        if (useNonBlockingCollectivesRows) then
+          if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+          if (nlc>0) then
+            call mpi_iallreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                                      MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                                      allreduce_request3, mpierr)
+            call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
+          endif
+          if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+        else
+          if (wantDebug) call obj%timer%start("mpi_communication")
+          if (nlc>0) then
+            call mpi_allreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                                      MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                                      mpierr)
+          endif
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+        endif
 #else /* WITH_MPI */
         if (nlc>0) aux2=aux1
 #endif /* WITH_MPI */
@@ -889,7 +978,7 @@ max_threads, isSkewsymmetric)
       call herm_matrix_allreduce_&
 #endif
          &PRECISION &
-                         (obj, n_cols,vav, nbw, nbw,mpi_comm_rows)
+                         (obj, n_cols,vav, nbw, nbw,mpi_comm_rows, .true.)
          ! Calculate triangular matrix T for block Householder Transformation
       call obj%timer%start("blas")
       do lc=n_cols,1,-1
@@ -945,7 +1034,7 @@ max_threads, isSkewsymmetric)
              &PRECISION &
                                           (obj, vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                            umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                           1, istep*nbw, n_cols, nblk, max_threads)
+                                           1, istep*nbw, n_cols, nblk, max_threads, .true.)
 
       else
         call elpa_transpose_vectors_&
@@ -954,7 +1043,7 @@ max_threads, isSkewsymmetric)
              &PRECISION &
                           (obj, vmrGPU(:), cur_l_rows, mpi_comm_rows, &
                            umcGPU(cur_l_cols * n_cols + 1:), cur_l_cols, &
-                           mpi_comm_cols, 1, istep*nbw, n_cols, nblk, max_threads)
+                           mpi_comm_cols, 1, istep*nbw, n_cols, nblk, max_threads, .true.)
       endif
     else ! useGPU
       call elpa_transpose_vectors_&
@@ -963,7 +1052,7 @@ max_threads, isSkewsymmetric)
            &PRECISION &
                                         (obj, vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                          umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
-                                         1, istep*nbw, n_cols, nblk, max_threads)
+                                         1, istep*nbw, n_cols, nblk, max_threads, .true.)
     endif
 
     ! Calculate umc = A**T * vmr
@@ -1310,11 +1399,22 @@ max_threads, isSkewsymmetric)
           check_allocate("bandred: tmpCPU", istat, errorMessage)
 
 #ifdef WITH_MPI
-          if (wantDebug) call obj%timer%start("mpi_communication")
-          call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-          if (wantDebug) call obj%timer%stop("mpi_communication")
+          if (useNonBlockingCollectivesRows) then
+            if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+            call mpi_iallreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                           allreduce_request4, mpierr)
+            call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
+            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+            if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+          else
+            if (wantDebug) call obj%timer%start("mpi_communication")
+            call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+                           mpierr)
+            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+            if (wantDebug) call obj%timer%stop("mpi_communication")
+          endif
 #endif /* WITH_MPI */
 
           deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
@@ -1323,14 +1423,23 @@ max_threads, isSkewsymmetric)
 #ifdef WITH_MPI
           allocate(tmpGPU(l_cols * n_cols), stat=istat, errmsg=errorMessage)
           check_allocate("bandred: tmpGPU", istat, errorMessage)
+          if (useNonBlockingCollectivesRows) then
+            if (wantDebug) call obj%timer%start("mpi_nbc_communication")
 
-          if (wantDebug) call obj%timer%start("mpi_communication")
+            call mpi_iallreduce(umcGPU, tmpGPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request5, mpierr)
+            call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
 
-          call mpi_allreduce(umcGPU, tmpGPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), ierr)
+            umcGPU(1 : l_cols * n_cols) = tmpGPU(1 : l_cols * n_cols)
+            if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+          else
+            if (wantDebug) call obj%timer%start("mpi_communication")
 
-          umcGPU(1 : l_cols * n_cols) = tmpGPU(1 : l_cols * n_cols)
-          if (wantDebug) call obj%timer%stop("mpi_communication")
+            call mpi_allreduce(umcGPU, tmpGPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+            umcGPU(1 : l_cols * n_cols) = tmpGPU(1 : l_cols * n_cols)
+            if (wantDebug) call obj%timer%stop("mpi_communication")
+          endif
 #endif /* WITH_MPI */
 
           if (allocated(tmpGPU)) then
@@ -1345,11 +1454,20 @@ max_threads, isSkewsymmetric)
         check_allocate("bandred: tmpCPU", istat, errorMessage)
 
 #ifdef WITH_MPI
-        if (wantDebug) call obj%timer%start("mpi_communication")
-        call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+        if (useNonBlockingCollectivesRows) then
+          if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+          call mpi_iallreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6, mpierr)
+          call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
+          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+          if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+        else
+          if (wantDebug) call obj%timer%start("mpi_communication")
+          call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-        umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-        if (wantDebug) call obj%timer%stop("mpi_communication")
+          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+        endif
 #endif /* WITH_MPI */
 
         deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
@@ -1459,12 +1577,12 @@ max_threads, isSkewsymmetric)
     if (isSkewsymmetric) then
       call ssymm_matrix_allreduce_&
       &PRECISION &
-      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
+      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols, .false.)
     else
 !#endif
       call symm_matrix_allreduce_&
       &PRECISION &
-      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
+      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols, .false.)
 !#ifdef HAVE_SKEWSYMMETRIC
     endif
 !#endif
@@ -1472,7 +1590,7 @@ max_threads, isSkewsymmetric)
 #if COMPLEXCASE == 1
     call herm_matrix_allreduce_&
          &PRECISION &
-         (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols)
+         (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols, .false.)
 #endif
 
     if (useGPU .and. .not.(useIntelGPU)) then
@@ -1518,7 +1636,7 @@ max_threads, isSkewsymmetric)
         &PRECISION &
                                  (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                         vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
-                                        1, istep*nbw, n_cols, nblk, max_threads)
+                                        1, istep*nbw, n_cols, nblk, max_threads, .false.)
       else
        call elpa_transpose_vectors_&
        &MATH_DATATYPE&
@@ -1526,7 +1644,7 @@ max_threads, isSkewsymmetric)
        &PRECISION &
                                 (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                           vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
-                                          1, istep*nbw, n_cols, nblk, max_threads)
+                                          1, istep*nbw, n_cols, nblk, max_threads, .false.)
       endif
 
       else
@@ -1570,7 +1688,7 @@ max_threads, isSkewsymmetric)
              &PRECISION &
                          (obj, umcGPU(:), cur_l_cols, mpi_comm_cols, &
                           vmrGPU(cur_l_rows * n_cols + 1:), cur_l_rows, mpi_comm_rows, &
-                          1, istep*nbw, n_cols, nblk, max_threads)
+                          1, istep*nbw, n_cols, nblk, max_threads, .false.)
         else
           call elpa_transpose_vectors_&
              &MATH_DATATYPE&
@@ -1578,7 +1696,7 @@ max_threads, isSkewsymmetric)
              &PRECISION &
                          (obj, umcGPU, cur_l_cols, mpi_comm_cols, &
                           vmrGPU(cur_l_rows * n_cols + 1:), cur_l_rows, mpi_comm_rows, &
-                          1, istep*nbw, n_cols, nblk, max_threads)
+                          1, istep*nbw, n_cols, nblk, max_threads, .false.)
         endif
 
         successGPU = gpu_memcpy(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
@@ -1617,7 +1735,7 @@ max_threads, isSkewsymmetric)
         &PRECISION &
                                  (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                         vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
-                                        1, istep*nbw, n_cols, nblk, max_threads)
+                                        1, istep*nbw, n_cols, nblk, max_threads, .false.)
       else
        call elpa_transpose_vectors_&
        &MATH_DATATYPE&
@@ -1625,7 +1743,7 @@ max_threads, isSkewsymmetric)
        &PRECISION &
                                 (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                           vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
-                                          1, istep*nbw, n_cols, nblk, max_threads)
+                                          1, istep*nbw, n_cols, nblk, max_threads, .false.)
       endif
     endif  ! useGPU
 

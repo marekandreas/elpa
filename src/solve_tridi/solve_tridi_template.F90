@@ -396,7 +396,24 @@ subroutine solve_tridi_&
 
       integer(kind=ik), intent(in)  :: max_threads
 
+      integer(kind=MPI_KIND)        :: bcast_request1, bcast_request2
+      logical                       :: useNonBlockingCollectivesRows
+      integer(kind=c_int)           :: non_blocking_collectives, error
+
       call obj%timer%start("solve_tridi_col" // PRECISION_SUFFIX)
+
+      call obj%get("nbc_row_solve_tridi", non_blocking_collectives, error)
+      if (error .ne. ELPA_OK) then
+        print *,"Problem setting option for non blocking collectives for rows in solve_tridi. Aborting..."
+        stop
+      endif
+
+      if (non_blocking_collectives .eq. 1) then
+        useNonBlockingCollectivesRows = .true.
+      else
+        useNonBlockingCollectivesRows = .false.
+      endif
+
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
       call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
@@ -498,13 +515,27 @@ subroutine solve_tridi_&
           noff = limits(np)
           nlen = limits(np+1)-noff
 #ifdef WITH_MPI
-          call obj%timer%start("mpi_communication")
-          call MPI_Bcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+          if (useNonBlockingCollectivesRows) then
+            call obj%timer%start("mpi_nbc_communication")
+            call mpi_ibcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+                         int(mpi_comm_rows,kind=MPI_KIND), bcast_request1, mpierr)
+            call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+
+            qmat2 = qmat1
+            call mpi_ibcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+                         int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
+            call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
+            call obj%timer%stop("mpi_nbc_communication")
+          else
+            call obj%timer%start("mpi_communication")
+            call mpi_bcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          qmat2 = qmat1
-          call MPI_Bcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
+
+            qmat2 = qmat1
+            call mpi_bcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          call obj%timer%stop("mpi_communication")
+            call obj%timer%stop("mpi_communication")
+          endif
 #else /* WITH_MPI */
 !          qmat2 = qmat1 ! is this correct
 #endif /* WITH_MPI */

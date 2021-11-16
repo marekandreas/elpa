@@ -37,6 +37,11 @@ subroutine resort_ev_&
 
     if (l_rows==0) return ! My processor column has no work to do
 
+#ifdef WITH_MPI
+    call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+    my_pcol = int(my_pcolMPI,kind=c_int)
+#endif
+
     ! Resorts eigenvectors so that q_new(:,i) = q_old(:,idx_ev(i))
 
     l_cols_out = COUNT(p_col_out(1:na)==my_pcol)
