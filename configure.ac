@@ -764,7 +764,7 @@ if test x"$cuda_compute_capability" = x"sm_80" ; then
   nvidia_a100_support=yes
   AC_DEFINE([WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY],[1],[the NVIDIA GPU kernels for A100 can be used])
 fi
-AM_CONDITIONAL([WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY],[test x"${nvidia_a100_support" = x"yes"])
+AM_CONDITIONAL([WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY],[test x"${nvidia_a100_support}" = x"yes"])
 
 AC_LANG_PUSH([Fortran])
 dnl Test possibility of 'use mpi', if requested
@@ -1039,6 +1039,7 @@ m4_define(elpa_m4_intel_gpu_kernels, [
         complex_intel_gpu
 ])
 
+#m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu nvidia_sm80_gpu])
 m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu nvidia_sm80_gpu])
 
 m4_define(elpa_m4_all_kernels,
@@ -1671,10 +1672,11 @@ if test x"${use_gpu}" = x"yes" ; then
   need_nvidia_gpu=yes
   use_real_nvidia_gpu=yes
   use_complex_nvidia_gpu=yes
-  if test x"${nvidia_a100_support}" = x"yes" ; then
-    use_real_nvidia_sm80_gpu=yes
-    use_complex_nvidia_sm80_gpu=yes
-  fi
+  # not supported with old flag
+  #if test x"${nvidia_a100_support}" = x"yes" ; then
+  #  use_real_nvidia_sm80_gpu=yes
+  #  use_complex_nvidia_sm80_gpu=yes
+  #fi
 fi
 
 AC_MSG_CHECKING(whether NVIDIA-GPU version should be used)
@@ -1890,7 +1892,8 @@ if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" 
 
   if test x"${nvidia_a100_support}" = x"yes" ; then
     AC_DEFINE([WITH_NVIDIA_SM80_GPU_KERNEL],[1],[Nvidia sm_80 GPU kernel should be build])
-    ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU_COMPILED=1
+    # currently no complex kernel
+    ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU_COMPILED=0
     ELPA_2STAGE_REAL_NVIDIA_SM80_GPU_COMPILED=1
   else
     ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU_COMPILED=0
