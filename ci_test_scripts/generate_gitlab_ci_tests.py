@@ -786,9 +786,9 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
     # kicking out gpu is not good, but at the momemt we have a real problem with gpu runners
     # should be returned when solved
     if (g == "with-gpu"):
-        MasterOnly=False
+        MasterOnly=True
     if (g == "with-sm80-gpu"):
-        MasterOnly=False
+        MasterOnly=True
     if (a == "no-assumed-size"):
         MasterOnly=True
     if (instr == "avx2" or instr == "avx512"):
@@ -796,9 +796,9 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     print("# " + cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" + a + "-" + b + "-" +g + "-" + cov + "-" + instr + "-" + addr)
     print(cc + "-" + fc + "-" + m + "-" + o + "-" + p + "-" +a + "-" +b + "-" +g + "-" + cov + "-" + instr + "-" + addr + "-jobs:")
-    if (MasterOnly):
-        print("  only:")
-        print("    - /.*master.*/")
+    #if (MasterOnly):
+    #    print("  only:")
+    #    print("    - /.*master.*/")
     if (instr == "power8"):
         print("  allow_failure: true")
     print("  tags:")
