@@ -52,6 +52,9 @@
 
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
+#include "config-f90.h"
+#include "../general/precision_macros.h"
+
 
   use precision
   use elpa1_compute
@@ -61,6 +64,7 @@
   use elpa_gpu
   use mod_check_for_gpu
   use elpa_blas_interfaces
+  use invert_trm_cuda
 
   implicit none
 #include "../general/precision_kinds.F90"
@@ -72,6 +76,7 @@
 #else
   MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,obj%local_ncols)
 #endif
+  integer :: ii, jj
 
   integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, myid
   integer(kind=MPI_KIND)       :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, myidMPI
@@ -87,11 +92,17 @@
   logical                       :: successGPU
   logical                       :: useGPU
   integer(kind=c_int)           :: gpu, numGPU
-  integer(kind=c_intptr_t)      :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev
-  integer(kind=c_intptr_t)      :: a_off, tmat2_off
-  !type(c_ptr)                   :: aux_host, tmp1_host
+  integer(kind=c_intptr_t)      :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev, zero_dev
+  type(c_ptr)                      :: tmp1_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer :: tmp1_mpi_fortran_ptr(:,:)
+  type(c_ptr)                      :: tmat1_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer :: tmat1_mpi_fortran_ptr(:,:)
+
+  type(c_ptr)                   :: tmp2_mpi_dev, a_mpi_dev
+  integer(kind=c_intptr_t)      :: a_off, tmat2_off, tmp1_off, tmp2_off
+   MATH_DATATYPE(kind=rck), pointer :: a_mpi_deviceptr(:,:)
   integer(kind=c_intptr_t)      :: num
-  !integer(kind=c_intptr_t)      :: aux_off, b_off
+  integer(kind=c_int)           :: gpu_invert_trm
   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
@@ -99,6 +110,7 @@
 
 
   ! GPU settings
+  gpu_invert_trm = 0
   if (gpu_vendor() == NVIDIA_GPU) then
     call obj%get("gpu",gpu,error)
     if (error .ne. ELPA_OK) then
@@ -120,6 +132,12 @@
       print *,"ELPA_INVERT_TRM: Problem getting option for NVIDIA GPU. Aborting..."
       stop
     endif
+    call obj%get("gpu_invert_trm",gpu_invert_trm,error)
+    if (error .ne. ELPA_OK) then
+      print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
+      stop
+    endif
+
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
@@ -130,8 +148,11 @@
     gpu = 0
   endif
 
-
-  useGPU = (gpu == 1)
+  if (gpu_invert_trm .eq. 1) then
+    useGPU = (gpu == 1)
+  else
+    useGPU = .false.
+  endif
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -197,9 +218,10 @@
   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
   if (useGPU) then
-    call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(obj, myid, numGPU)) then
-      ! set the neccessary parameters
+     call obj%timer%start("check_for_gpu")
+     call obj%set("use_gpu_id", myid, error)
+    if (check_for_gpu(obj, myid, numGPU, .TRUE.)) then
+       ! set the neccessary parameters       
       call set_gpu_parameters()
     else
       print *,"ELPA_INVERT_TRM: GPUs are requested but not detected! Aborting..."
@@ -207,7 +229,6 @@
       return
     endif
     call obj%timer%stop("check_for_gpu")
-    ! allocate here
   else ! useGPU
   endif ! useGPU
 
@@ -237,7 +258,13 @@
     check_memcpy_gpu("elpa_invert_trm: memset tmat2_dev", successGPU)
 
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols*size_of_datatype)
-    check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
+    check_alloc_gpu("elpa_invert_trm: a_dev", successGPU)
+
+    successGPU = gpu_malloc(zero_dev, 1*size_of_datatype)
+    check_alloc_gpu("elpa_invert_trm: zero_dev", successGPU)
+
+    successGPU = gpu_memset(zero_dev, 0, 1*size_of_datatype)
+    check_memcpy_gpu("elpa_invert_trm: memset zero_dev", successGPU)
   endif ! useGPU
 
 
@@ -254,6 +281,7 @@
   check_allocate("elpa_invert_trm: tmat1", istat, errorMessage)
 
   allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
+  check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
   check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
 
   tmat1 = 0
@@ -283,8 +311,9 @@
 
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
+
 #ifdef WITH_NVIDIA_CUSOLVER
-          call obj%timer%start("gpublas")
+          call obj%timer%start("gpusolver")
 
           a_off = ((l_row1-1) + (l_col1-1)*matrixRows) * size_of_datatype
           call gpusolver_PRECISION_TRTRI('U', 'N', int(nb,kind=c_int64_t), a_dev+a_off, int(matrixRows,c_int64_t), &
@@ -293,7 +322,7 @@
             write(error_unit,*) "elpa_invert_trm: error in gpusolver_TRTRI"
             stop
           endif
-          call obj%timer%stop("gpublas")
+          call obj%timer%stop("gpusolver")
          
 #else /* WITH_NVIDIA_CUSOLVER */
          
@@ -302,14 +331,15 @@
           call obj%timer%start("blas")
           successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev, &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("trans_ev", successGPU)
+          check_memcpy_gpu("invert_trm: memcpy a_dev -> a", successGPU)
 
           call PRECISION_TRTRI('U', 'N', int(nb,kind=BLAS_KIND), a(l_row1,l_col1), int(matrixRows,kind=BLAS_KIND), &
                              infoBLAS)
           info = int(infoBLAS,kind=ik)
+
           successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t),  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("trans_ev", successGPU)
+          check_memcpy_gpu("invert_trm: memcpy a -> a_dev", successGPU)
           call obj%timer%stop("blas")
 #endif /* WITH_NVIDIA_CUSOLVER */
 
@@ -342,15 +372,14 @@
         endif
 
         if (useGPU) then
-          ! need a copy from a to tmp1
-          stop "aaaa"
-        else
+          call copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+        else ! useGPU
           nc = 0
           do i=1,nb
             tmp1(nc+1:nc+i) = a(l_row1:l_row1+i-1,l_col1+i-1)
             nc = nc+i
           enddo
-        endif 
+        endif ! useGPU
       endif ! my_pcol==pcol(n, nblk, np_cols)
 
 #ifdef WITH_MPI
@@ -362,59 +391,67 @@
         check_memcpy_gpu("elpa_invert_trm: tmp1_dev to tmp1", successGPU)
 
       endif
-#else
-#error "not yet implemented"
 #endif
 
+#ifndef WITH_CUDA_AWARE_MPI
       call obj%timer%start("mpi_communication")
       call MPI_Bcast(tmp1, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
                      int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
       call obj%timer%stop("mpi_communication")
+#else
+      tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
+      ! and associate a fortran pointer
+      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk*nblk])
+      if (wantDebug) call obj%timer%start("cuda_mpi_communication")
+      call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
+                     int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+      if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
+#endif
 
 #ifndef WITH_CUDA_AWARE_MPI
-      if (useGPU) then
-        ! cuda aware MPI here
-
-
+      if ((useGPU)) then  
         num = nblk*nblk*size_of_datatype
         successGPU = gpu_memcpy(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
 
       endif
-#else
-#error "not yet implemented"
 #endif
 #endif /* WITH_MPI */
-
+      
       if (useGPU) then
-        ! need a copy from tmp1_dev -> tmp2_dev
-        stop 'nnnnn'
-      else
+        call copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nb)
+      else ! useGPU
         nc = 0
         do i=1,nb
           tmp2(1:i,i) = tmp1(nc+1:nc+i)
           nc = nc+i
         enddo
-      endif
+      endif ! useGPU
 
       if (useGPU) then
         call obj%timer%start("gpublas")
         if (l_cols-l_colx+1 > 0) then
           a_off = (l_row1 -1 + (l_colx-1)*matrixRows) * size_of_datatype
-         call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, ONE, tmp2_dev, nblk, &
-                                     a_dev+a_off, matrixRows)
 
+          call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, ONE, tmp2_dev, &
+                                      nblk, a_dev+a_off, matrixRows)
+        
+          !successGPU = gpu_devicesynchronize()
         endif
         call obj%timer%stop("gpublas")
-        ! need a copy form a_dev -> tmat2_dev
-        ! tmp2_dev -> tmat2_dev
-        stop "ddddddddddddd"
-        if (l_colx <= l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
-        if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 
+        if (l_colx <= l_cols) then
+          call copy_PRECISION_a_tmat2 (a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, & 
+                                       l_row1, nb)
+        endif
+
+        if (my_pcol==pcol(n, nblk, np_cols)) then
+           ! tmp2 has the lower left triangle 0
+          call copy_PRECISION_tmp2_tmat2 (tmp2_dev, tmat2_dev, nblk, l_col1, nb) 
+        endif
       else ! useGPU
-        call obj%timer%start("gpublas")
+        call obj%timer%start("blas")
         if (l_cols-l_colx+1>0) &
         call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
                               tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND))
@@ -428,49 +465,63 @@
     if (l_row1>1) then
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
-          ! need acopy a_dev -> tmat1_dev
-          ! correct 0 of a_dev
-          stop "llllllllllllll"
+          call copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
         else
           tmat1(1:l_row1-1,1:nb) = a(1:l_row1-1,l_col1:l_col1+nb-1)
           a(1:l_row1-1,l_col1:l_col1+nb-1) = 0
         endif
       endif
 
-      do i=1,nb
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
-        if (useGPU) then
-          num = l_rows*nblk*size_of_datatype
-          successGPU = gpu_memcpy(int(loc(tmat1),kind=c_intptr_t), tmat1_dev, num, &
+      if (useGPU) then
+        num = l_rows*nblk*size_of_datatype
+        successGPU = gpu_memcpy(int(loc(tmat1),kind=c_intptr_t), tmat1_dev, num, &
                               gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
-        endif
-#else
-#error "not yet implemented"
-#endif
-
-        call obj%timer%start("mpi_communication")
-        call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-
-        call obj%timer%stop("mpi_communication")
-
-#ifndef WITH_CUDA_AWARE_MPI
-        if (useGPU) then
-          ! cuda aware MPI here
-          num = l_rows*nblk*size_of_datatype
-          successGPU = gpu_memcpy(tmat1_dev, int(loc(tmat1),kind=c_intptr_t), num, &
-                              gpuMemcpyHostToDevice)
-          check_memcpy_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
-
-        endif
-#else
-#error "not yet implemented"
+        check_memcpy_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
+      endif
 #endif
 #endif /* WITH_MPI */
+
+#ifdef WITH_MPI
+#ifndef WITH_CUDA_AWARE_MPI
+      do i=1,nb
+        call obj%timer%start("mpi_communication")
+        call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
+                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+
+        call obj%timer%stop("mpi_communication")
       enddo
-    endif
+#else
+      tmat1_mpi_dev = transfer(tmat1_dev, tmat1_mpi_dev)
+      ! and associate a fortran pointer
+      call c_f_pointer(tmat1_mpi_dev, tmat1_mpi_fortran_ptr, [l_rows,nblk])
+      
+      call obj%timer%start("mpi_cuda_communication")
+      do i=1,nb
+        call MPI_Bcast(tmat1_mpi_fortran_ptr(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
+                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+
+      enddo
+      call obj%timer%stop("mpi_cuda_communication")
+#endif
+#endif /* WITH_MPI */
+
+#ifdef WITH_MPI
+#ifndef WITH_CUDA_AWARE_MPI
+      if (useGPU) then
+        ! cuda aware MPI here
+        num = l_rows*nblk*size_of_datatype
+        successGPU = gpu_memcpy(tmat1_dev, int(loc(tmat1),kind=c_intptr_t), num, &
+                              gpuMemcpyHostToDevice)
+        check_memcpy_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
+
+      endif
+#endif
+#endif /* WITH_MPI */
+    endif ! (l_row1>1)
 
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI
@@ -511,7 +562,7 @@
 
     if (useGPU) then
       call obj%timer%start("gpublas")
-!
+
       tmat2_off = (1 - 1 + (l_col1-1) * nblk) * size_of_datatype      
       a_off = (1 - 1 + (l_col1-1) * matrixRows) * size_of_datatype
       if (l_row1>1 .and. l_cols-l_col1+1>0) &
@@ -520,6 +571,7 @@
                                     nblk, ONE, a_dev+a_off, matrixRows)
 
       call obj%timer%stop("gpublas")
+
     else ! useGPU
       call obj%timer%start("blas")
       if (l_row1>1 .and. l_cols-l_col1+1>0) &
@@ -532,6 +584,14 @@
       call obj%timer%stop("blas")
     endif ! useGPU
   enddo
+
+  if (useGPU) then
+  ! copy results back
+    successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
+    check_memcpy_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
+
+  endif
 
   if (useGPU) then
     successGPU = gpu_free(tmp1_dev)
@@ -548,6 +608,9 @@
 
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("elpa_invert_trm: a_dev", successGPU)
+
+    successGPU = gpu_free(zero_dev)
+    check_dealloc_gpu("elpa_invert_trm: zero_dev", successGPU)
 
     !successGPU = gpu_host_unregister(int(loc(b),kind=c_intptr_t))
     !check_host_unregister_gpu("elpa_multiply_a_b: b", successGPU)

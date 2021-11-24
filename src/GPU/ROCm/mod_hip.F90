@@ -559,6 +559,84 @@ module hip_functions
     end subroutine rocblas_strmm_cptr_c
   end interface
 
+  interface rocblas_dtrsm
+    module procedure rocblas_dtrsm_intptr
+    module procedure rocblas_dtrsm_cptr
+  end interface
+
+  interface
+    subroutine rocblas_dtrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='rocblas_dtrsm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE), value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine rocblas_dtrsm_intptr_c
+  end interface
+
+  interface
+    subroutine rocblas_dtrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='rocblas_dtrsm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE), value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine rocblas_dtrsm_cptr_c
+  end interface
+
+  interface rocblas_strsm
+    module procedure rocblas_strsm_intptr
+    module procedure rocblas_strsm_cptr
+  end interface
+
+  interface
+    subroutine rocblas_strsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='rocblas_strsm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_FLOAT), value               :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine rocblas_strsm_intptr_c
+  end interface
+
+  interface
+    subroutine rocblas_strsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='rocblas_strsm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_FLOAT), value               :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine rocblas_strsm_cptr_c
+  end interface
+
   interface
     subroutine rocblas_zgemm_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
                               bind(C,name='rocblas_zgemm_elpa_wrapper')
@@ -739,6 +817,84 @@ module hip_functions
       integer(kind=C_intptr_T), value        :: handle
 
     end subroutine rocblas_ctrmm_cptr_c
+  end interface
+
+  interface rocblas_ztrsm
+    module procedure rocblas_ztrsm_intptr
+    module procedure rocblas_ztrsm_cptr
+  end interface
+
+  interface
+    subroutine rocblas_ztrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='rocblas_ztrsm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value              :: side, uplo, trans, diag
+      integer(kind=C_INT),value              :: m,n
+      integer(kind=C_INT), intent(in), value :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX), value          :: alpha
+      integer(kind=C_intptr_T), value        :: a, b
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine rocblas_ztrsm_intptr_c
+  end interface
+
+  interface
+    subroutine rocblas_ztrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='rocblas_ztrsm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value              :: side, uplo, trans, diag
+      integer(kind=C_INT),value              :: m,n
+      integer(kind=C_INT), intent(in), value :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX), value  :: alpha
+      type(c_ptr), value                     :: a, b
+      integer(kind=C_intptr_T), value        :: handle
+
+    end subroutine rocblas_ztrsm_cptr_c
+  end interface
+
+  interface rocblas_ctrsm
+    module procedure rocblas_ctrsm_intptr
+    module procedure rocblas_ctrsm_cptr
+  end interface
+
+  interface
+    subroutine rocblas_ctrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='rocblas_ctrsm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value              :: side, uplo, trans, diag
+      integer(kind=C_INT),value              :: m,n
+      integer(kind=C_INT), intent(in), value :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX), value           :: alpha
+      integer(kind=C_intptr_T), value        :: a, b
+      integer(kind=C_intptr_T), value         :: handle
+
+    end subroutine rocblas_ctrsm_intptr_c
+  end interface
+
+  interface
+    subroutine rocblas_ctrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='rocblas_ctrsm_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value              :: side, uplo, trans, diag
+      integer(kind=C_INT),value              :: m,n
+      integer(kind=C_INT), intent(in), value :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX), value   :: alpha
+      type(c_ptr), value                     :: a, b
+      integer(kind=C_intptr_T), value        :: handle
+
+    end subroutine rocblas_ctrsm_cptr_c
   end interface
 
   interface
@@ -1337,6 +1493,67 @@ module hip_functions
 #endif
     end subroutine rocblas_strmm_cptr
 
+
+    subroutine rocblas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE)             :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_dtrsm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine rocblas_dtrsm_intptr
+
+    subroutine rocblas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE)             :: alpha
+      type(c_ptr)                     :: a, b
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_dtrsm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine rocblas_dtrsm_cptr
+
+    subroutine rocblas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_FLOAT)              :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_strsm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine rocblas_strsm_intptr
+
+    subroutine rocblas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_FLOAT)              :: alpha
+      type(c_ptr)                     :: a, b
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_strsm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine rocblas_strsm_cptr
+
     subroutine rocblas_zgemm(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 
       use, intrinsic :: iso_c_binding
@@ -1478,6 +1695,66 @@ module hip_functions
       call rocblas_ctrmm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_ctrmm_cptr
+
+    subroutine rocblas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX)          :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_ztrsm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine rocblas_ztrsm_intptr
+
+    subroutine rocblas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX)  :: alpha
+      type(c_ptr)                     :: a, b
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_ztrsm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine rocblas_ztrsm_cptr
+
+    subroutine rocblas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX)           :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_ctrsm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine rocblas_ctrsm_intptr
+
+    subroutine rocblas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX)   :: alpha
+      type(c_ptr)                     :: a, b
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_ctrsm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine rocblas_ctrsm_cptr
 
     subroutine rocblas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
       use, intrinsic :: iso_c_binding

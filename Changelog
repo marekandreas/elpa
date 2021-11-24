@@ -6,6 +6,12 @@ pointers for the input matrix, the vectors of eigenvalues and the output
 matrix for the eigenvectors
 - BUGFIX: error in resort_ev
 
+Changelog for upcoming ELPA 2021.11.001.rc1
+- support of Nvidia cusolver library to accelerate some routines (needs CUDA >= 11.4)
+- experimental Nvidia GPU versions for "elpa_invert_trm" and "elpa_cholesky"
+  can be tested by setting elpa_set("gpu_invert_trm",1) and
+  elpa_set("gpu_cholesky",1). Is not used otherwise
+
 Changelog for ELPA 2021.05.002
 - no feature changes
 - correct the SO version which was wrong in ELPA 2021.05.001
