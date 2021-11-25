@@ -95,7 +95,7 @@ def set_scalapack_flags(instr, fc, g, m, o):
                     scalapackfcflags="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP "
 
         if (g == "with-gpu"):
-            scalapackldflags += " -L\\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\\$CUDA_HOME/include"
+            scalapackldflags += " -L\\$CUDA_HOME/lib64 -Wl,-rpath,\\$CUDA_HOME/lib64 -lcublas -I\\$CUDA_HOME/include"
             scalapackfcflags += " -I\\$CUDA_HOME/include"
 
         if (instr == "sse" or (instr == "avx" and g != "with-gpu")):

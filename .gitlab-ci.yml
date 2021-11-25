@@ -284,7 +284,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-gp
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -369,7 +369,7 @@ gnu-gnu-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-with
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -454,7 +454,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-with
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -539,7 +539,7 @@ gnu-gnu-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking-w
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -624,7 +624,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-gp
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -709,7 +709,7 @@ gnu-gnu-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-with
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -794,7 +794,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-with
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -879,7 +879,7 @@ gnu-gnu-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking-w
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpif90\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -1508,7 +1508,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -1593,7 +1593,7 @@ gnu-gnu-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-wi
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -1678,7 +1678,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-wi
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -1763,7 +1763,7 @@ gnu-gnu-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -1848,7 +1848,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -1933,7 +1933,7 @@ gnu-gnu-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-wi
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -2018,7 +2018,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-wi
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -2103,7 +2103,7 @@ gnu-gnu-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"gfortran\" FCFLAGS=\"-O3 -march=skylake-avx512\"    SCALAPACK_LDFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -2732,7 +2732,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-band-to-full-blocking-with-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -2817,7 +2817,7 @@ gnu-intel-mpi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-wi
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -2902,7 +2902,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-wi
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -2987,7 +2987,7 @@ gnu-intel-mpi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -3072,7 +3072,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-band-to-full-blocking-with-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -3157,7 +3157,7 @@ gnu-intel-mpi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-wi
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -3242,7 +3242,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-wi
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -3327,7 +3327,7 @@ gnu-intel-mpi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocking
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"mpicc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -3956,7 +3956,7 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-band-to-full-blocking-wit
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -4041,7 +4041,7 @@ gnu-intel-nompi-noopenmp-double-precision-assumed-size-no-band-to-full-blocking-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -4126,7 +4126,7 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-band-to-full-blocking-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -4211,7 +4211,7 @@ gnu-intel-nompi-noopenmp-double-precision-no-assumed-size-no-band-to-full-blocki
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --disable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -4296,7 +4296,7 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-band-to-full-blocking-wit
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -4381,7 +4381,7 @@ gnu-intel-nompi-noopenmp-single-precision-assumed-size-no-band-to-full-blocking-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --enable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -4466,7 +4466,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-band-to-full-blocking-
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --enable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
@@ -4551,7 +4551,7 @@ gnu-intel-nompi-noopenmp-single-precision-no-assumed-size-no-band-to-full-blocki
     - export REQUESTED_MEMORY=2Gb
 
 
-    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -lcublas -lcublasLt -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
+    - ./ci_test_scripts/run_ci_tests.sh -c " CC=\"gcc\" CFLAGS=\"-O3 -march=skylake-avx512\" FC=\"ifort\" FCFLAGS=\"-O3 -xCORE-AVX512\"    SCALAPACK_LDFLAGS=\"\$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP  -L\$CUDA_HOME/lib64 -Wl,-rpath,\$CUDA_HOME/lib64 -lcublas -I\$CUDA_HOME/include\"  SCALAPACK_FCFLAGS=\"\$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP  -I\$CUDA_HOME/include\" --enable-option-checking=fatal --with-mpi=no --disable-mpi-module --disable-openmp --enable-single-precision --disable-assumed-size --disable-band-to-full-blocking --enable-nvidia-gpu --with-cuda-path=\$CUDA_HOME/ --with-NVIDIA-GPU-compute-capability=sm_70 --enable-avx512" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -q "srun" -i $INTERACTIVE_RUN -S $SLURM -g yes
 
 
 
