@@ -338,6 +338,9 @@ last_stripe_width, kernel)
 #endif
 
 #if REALCASE == 1
+#if SINGLE_PRECISION == 1
+   stop "This is sm70 real single kernel is not yet implemented"
+#else
 ! currently only real case
       call launch_compute_hh_trafo_sm80_gpu_kernel_&
            &MATH_DATATYPE&
@@ -345,6 +348,7 @@ last_stripe_width, kernel)
            &PRECISION&
            &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+#endif
 #endif
     endif
 
