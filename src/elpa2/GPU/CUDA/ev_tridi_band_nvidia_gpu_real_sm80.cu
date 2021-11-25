@@ -188,20 +188,10 @@ extern "C" void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(double *q
 
 {
 
-    cudaEvent_t new_start;
-    cudaEvent_t new_stop;
-
-    cudaEvent_t old_start;
-    cudaEvent_t old_stop;
-
-    cudaEventCreate(&new_start);
-    cudaEventCreate(&new_stop);
 
 #if 0
 #endif
     // Run the new kernel
-    cudaEventRecord(new_start);
-
     switch (nb) {
       case 1024: launch_NVIDIA_sm80_kernel<1024>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
       case  512: launch_NVIDIA_sm80_kernel< 512>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
@@ -217,35 +207,29 @@ extern "C" void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(double *q
       default: printf("Unsupported nb = %d for new kernel \n", nb);
     }
 
-    err = cudaGetLastError();
+    cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess)
     {
         printf("\n compute_hh_trafo sm80 CUDA kernel failed: %s \n",cudaGetErrorString(err));
     }
 
-    cudaEventRecord(new_stop);
-    cudaEventSynchronize(new_stop);
-
     // Collect time and perf
-    float old_time;
-    float new_time;
-    cudaEventElapsedTime(&new_time, new_start, new_stop);
 #if 0
     cudaEventElapsedTime(&old_time, old_start, old_stop);
 #endif
-    double ops = nev * nb * (2.0 + 3.0) * ncols;
-    double bytes = ((nb * ncols) + (nb + ncols - 1) * nev * 2.0) * sizeof(double);
+    //double ops = nev * nb * (2.0 + 3.0) * ncols;
+    //double bytes = ((nb * ncols) + (nb + ncols - 1) * nev * 2.0) * sizeof(double);
 #if 0
     printf("Old kernel took %8.4f ms, GFLOPS = %6.1f, GBS = %6.1f\n", old_time, ops / (old_time * 1e-3) / 1e+9, bytes / (old_time * 1e-3) / 1e+9);
 
 #endif
-    printf("New kernel took %8.4f ms, GFLOPS = %6.1f, GBS = %6.1f\n", new_time, ops / (new_time * 1e-3) / 1e+9, bytes / (new_time * 1e-3) / 1e+9);
+    //printf("New kernel took %8.4f ms, GFLOPS = %6.1f, GBS = %6.1f\n", new_time, ops / (new_time * 1e-3) / 1e+9, bytes / (new_time * 1e-3) / 1e+9);
 
-    cudaError_t err = cudaGetLastError();
+    // cudaError_t cudaError_t err = cudaGetLastError();
 
-    if (err != cudaSuccess)
-    {
-        printf("\n compute_hh_trafo CUDA kernel failed: %s \n", cudaGetErrorString(err));
-        exit(1);
-    }
+    //if (err != cudaSuccess)
+    //{
+    //    printf("\n compute_hh_trafo CUDA kernel failed: %s \n", cudaGetErrorString(err));
+    //    exit(1);
+    //}
 }
