@@ -2,7 +2,7 @@
 
 ## Current Release ##
 
-The current release is ELPA 2021.05.002 The current supported API version
+The current release is ELPA 2021.11.001.rc1 The current supported API version
 is 20210430. This release supports the earliest API version 20170403.
 
 The release ELPA 2018.11.001 was the last release, where the legacy API has been
