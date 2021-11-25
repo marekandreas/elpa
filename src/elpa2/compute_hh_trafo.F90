@@ -334,14 +334,20 @@ last_stripe_width, kernel)
 #endif
 #if COMPLEXCASE == 1
     if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU ) then
+      stop "This is sm80 complex kernel is not yet implemented"
 #endif
+
+#if REALCASE == 1
+! currently only real case
       call launch_compute_hh_trafo_sm80_gpu_kernel_&
            &MATH_DATATYPE&
            &_&
            &PRECISION&
            &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+#endif
     endif
+
 #endif /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
 
 
