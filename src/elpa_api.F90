@@ -986,15 +986,15 @@ module elpa_api
        api_version = api_version_set
     end function
 
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #define elpa_uninit(...) CONC(elpa_uninit, NARGS(__VA_ARGS__))(__VA_ARGS__)
     !c_o> #endif
 #endif
     !> \brief subroutine to uninit the ELPA library. Does nothing at the moment. Might do sth. later
     !
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> void elpa_uninit1(int *error);
     !c_o> void elpa_uninit0();
     !c_o> #endif
@@ -1007,7 +1007,7 @@ module elpa_api
       call elpa_uninit()
     end subroutine
 #else
-    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> #if OPTIONAL_C_ERROR_ARGUMENT != 1
     !c_no> void elpa_uninit(int *error);
     !c_no> #endif
     subroutine elpa_uninit_c(error) bind(C, name="elpa_uninit")

@@ -243,7 +243,7 @@ int main(int argc, char** argv) {
      MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
    elpa_handle_2 = elpa_allocate();
 #else
    elpa_handle_2 = elpa_allocate(&error_elpa);
@@ -361,7 +361,7 @@ int main(int argc, char** argv) {
 
    elpa_autotune_deallocate(autotune_handle, &error_elpa);
    elpa_deallocate(elpa_handle_1, &error_elpa);
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
    elpa_deallocate(elpa_handle_2);
 #else
    elpa_deallocate(elpa_handle_2, &error_elpa);

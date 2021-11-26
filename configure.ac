@@ -57,7 +57,6 @@ if test x$_cv_gnu_make_command = x ; then
         AC_MSG_ERROR([Need GNU Make])
 fi
 
-enable_legacy=no
 AC_MSG_CHECKING(whether in C interface the error argument should be optional)
 AC_ARG_ENABLE([optional-argument-in-C-API],
               AS_HELP_STRING([--enable-optional-argument-in-C-API],
@@ -2499,7 +2498,7 @@ if test x"$enable_kcomputer" = x"yes" ; then
   echo "BEFORE triggering the build with make!"
 else
   if test x"$optional_c_error_argument" = x"yes" ; then
-    echo "#define OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
+    echo "#define OPTIONAL_C_ERROR_ARGUMENT 1" > elpa/elpa_generated_c_api.h
   else
     echo "#undef OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
   fi

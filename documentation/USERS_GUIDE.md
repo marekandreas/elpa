@@ -1,8 +1,6 @@
 ## Users guide for the *ELPA* library ##
 
 This document provides the guide for using the *ELPA* library with the new API (API version 20170403 or higher).
-If you want to use the deprecated legacy API (we strongly recommend against this), please use the ELPA release
-2019.05.002 or older.
 
 If you need instructions on how to build *ELPA*, please look at [INSTALL.md] (INSTALL.md).
 
