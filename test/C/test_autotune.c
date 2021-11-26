@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
      exit(1);
    }
 
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
    handle = elpa_allocate();
 #else
    handle = elpa_allocate(&error_elpa);
@@ -304,7 +304,7 @@ int main(int argc, char** argv) {
      elpa_autotune_print_best(handle, autotune_handle, &error_elpa);
    }
 
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
    elpa_autotune_deallocate(autotune_handle);
    elpa_deallocate(handle);
 #else

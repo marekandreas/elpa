@@ -2498,7 +2498,7 @@ if test x"$enable_kcomputer" = x"yes" ; then
   echo "BEFORE triggering the build with make!"
 else
   if test x"$optional_c_error_argument" = x"yes" ; then
-    echo "#define OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
+    echo "#define OPTIONAL_C_ERROR_ARGUMENT 1" > elpa/elpa_generated_c_api.h
   else
     echo "#undef OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
   fi
