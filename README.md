@@ -3,7 +3,10 @@
 ## Current Release ##
 
 The current release is ELPA 2021.11.001.rc1 The current supported API version
-is 20210430. This release supports the earliest API version 20170403.
+is 20211125. This release supports the earliest API version 20170403.
+The current version for autotuning is also 20211125 and down to version 20170403 ist supported
+for autotuning. When the autotune version is set to a value **below** 20211125 the old autotunig
+implentation is used, and for 20211125 the new implentation is used.
 
 The release ELPA 2018.11.001 was the last release, where the legacy API has been
 enabled by default (and can be disabled at build time).

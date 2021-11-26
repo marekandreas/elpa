@@ -1468,7 +1468,7 @@ module elpa_impl
 
       autotune_api_set = .true.
 
-      if (api_version .ge. 20210430) then
+      if (api_version .ge. 20211125) then
         new_autotune = .true.
       else
         new_autotune = .false.
