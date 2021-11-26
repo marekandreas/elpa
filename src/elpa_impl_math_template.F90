@@ -1734,7 +1734,7 @@
     end subroutine
 
 
-    !>  \brief elpa_choleksy_d: class method to do a cholesky factorization
+    !>  \brief elpa_cholesky_d: class method to do a cholesky factorization
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
     !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE

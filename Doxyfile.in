@@ -878,9 +878,6 @@ RECURSIVE              = YES
 EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/fortran_constants.h \
 			@top_srcdir@/src/elpa_index.c \
-			@top_srcdir@/src/elpa_driver/legacy_interface/elpa_driver_c_interface_template.F90 \
-			@top_srcdir@/src/elpa_driver/legacy_interface/elpa.F90 \
-			@top_srcdir@/src/elpa_driver/legacy_interface/elpa_driver_c_interface.F90 \
 			@top_srcdir@/src/elpa_constants.F90 \
 			@top_srcdir@/src/elpa_c_interface.c \
 			@top_srcdir@/src/elpa2/mod_pack_unpack_cpu.F90 \
@@ -953,10 +950,6 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/src/elpa2/elpa2_bandred_template.F90 \
 			@top_srcdir@/src/elpa2/pack_unpack_gpu.F90 \
 			@top_srcdir@/src/elpa2/mod_pack_unpack_gpu.F90 \
-			@top_srcdir@/src/elpa2/legacy_interface/elpa_2stage_c_interface.F90 \
-			@top_srcdir@/src/elpa2/legacy_interface/elpa2_c_interface_template.F90 \
-			@top_srcdir@/src/elpa2/legacy_interface/elpa2_template.F90 \
-			@top_srcdir@/src/elpa2/legacy_interface/elpa2_utilities.F90 \
 			@top_srcdir@/src/elpa2/GPU/ev_tridi_band_gpu_c_v2.cu \
 			@top_srcdir@/src/elpa2/GPU/ev_tridi_band_gpu_c_v2_real_template.cu \
 			@top_srcdir@/src/elpa2/GPU/interface_c_kernel.F90 \
@@ -981,19 +974,6 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/src/elpa1/elpa1_solve_tridi_real_template.F90 \
 			@top_srcdir@/src/elpa1/elpa_multiply_a_b.F90 \
 			@top_srcdir@/src/elpa1/elpa_cholesky_template.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_mult_at_b_c_interface_template.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_multiply_a_b.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_invert_trm_c_interface_template.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_cholesky_template.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa1_c_interface_template.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_cholesky_c_interface_template.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_solve_tridi_c_interface_template.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa1_template.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa1_auxiliary.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_1stage_c_interface.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_mult_ah_b_c_interface_template.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_invert_trm.F90 \
-			@top_srcdir@/src/elpa1/legacy_interface/elpa_solve_tridi.F90 \
 			@top_srcdir@/src/elpa1/elpa1_compute_template.F90 \
 			@top_srcdir@/src/elpa1/elpa_reduce_add_vectors.F90 \
 			@top_srcdir@/src/elpa1/elpa1_merge_systems_real_template.F90 \

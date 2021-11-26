@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [16:2:1])
+AC_SUBST([ELPA_SO_VERSION], [17:0:0])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -40,24 +40,23 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20210430, "Current ELPA API version")
-print_current_api_version=20210430
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20211125, "Current ELPA API version")
+print_current_api_version=20211125
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20210430], [Current ELPA autotune version])
-print_current_autotune_version=20210430
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20210430], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20210430, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20211125], [Current ELPA autotune version])
+print_current_autotune_version=20211125
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20211125], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20211125, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1623715200],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1651423146],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
         AC_MSG_ERROR([Need GNU Make])
 fi
 
-enable_legacy=no
 AC_MSG_CHECKING(whether in C interface the error argument should be optional)
 AC_ARG_ENABLE([optional-argument-in-C-API],
               AS_HELP_STRING([--enable-optional-argument-in-C-API],
@@ -1666,6 +1665,21 @@ if test x"${use_nvidia_gpu}" = x"yes" ; then
   use_nvidia_complex_gpu=yes
 fi
 
+AC_MSG_CHECKING(whether NVIDIA cusolver library should be used)
+AC_ARG_WITH([cusolver],
+            [AS_HELP_STRING([--with-cusolver],
+                            [Use Nvidia cusolver library, disabled by default])],
+            [
+               if test x"$withval" = x"yes"; then
+                 with_cusolver=yes
+               else
+                 with_cusolver=no
+               fi
+	     ],
+            [with_cusolver="no"])
+AC_MSG_RESULT([${with_cusolver}])
+
+
 #AC_MSG_CHECKING(whether INTEL GPU version should be used)
 #AC_ARG_ENABLE([intel-gpu],
 #                AS_HELP_STRING([--enable-intel-gpu],
@@ -1725,8 +1739,17 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   if test x"${have_cudart}" = x"no"; then
     AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   fi
+
+  if test x"${with_cusolver}" = x"yes"; then
+    AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
+    if test x"${have_cusolver}" = x"no"; then
+      AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+    fi
+    AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
+  fi
   AC_LANG_POP([C])
 fi
+
 
 
 if test x"${need_amd_gpu}" = x"yes" ; then
@@ -2458,13 +2481,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2021.05.002.rc2        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2021.05.002                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2021.11.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2021.11.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
@@ -2475,7 +2498,7 @@ if test x"$enable_kcomputer" = x"yes" ; then
   echo "BEFORE triggering the build with make!"
 else
   if test x"$optional_c_error_argument" = x"yes" ; then
-    echo "#define OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
+    echo "#define OPTIONAL_C_ERROR_ARGUMENT 1" > elpa/elpa_generated_c_api.h
   else
     echo "#undef OPTIONAL_C_ERROR_ARGUMENT" > elpa/elpa_generated_c_api.h
   fi

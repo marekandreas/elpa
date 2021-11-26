@@ -56,6 +56,8 @@
 !> \brief Fortran module which provides helper routines for matrix calculations
 module elpa1_auxiliary_impl
   use elpa_utilities
+  use elpa_cholesky
+  use elpa_invert_trm
 
   implicit none
 
@@ -63,219 +65,18 @@ module elpa1_auxiliary_impl
 
   public :: elpa_mult_ah_b_complex_double_impl   !< Multiply double-precision complex matrices A**H * B
 
-  public :: elpa_invert_trm_real_double_impl    !< Invert double-precision real triangular matrix
-
-  public :: elpa_invert_trm_complex_double_impl  !< Invert double-precision complex triangular matrix
-
-  public :: elpa_cholesky_real_double_impl       !< Cholesky factorization of a double-precision real matrix
-
-  public :: elpa_cholesky_complex_double_impl    !< Cholesky factorization of a double-precision complex matrix
-
   public :: elpa_solve_tridi_double_impl         !< Solve tridiagonal eigensystem for a double-precision matrix with divide and conquer method
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_cholesky_real_single_impl       !< Cholesky factorization of a single-precision real matrix
-  public :: elpa_invert_trm_real_single_impl     !< Invert single-precision real triangular matrix
   public :: elpa_mult_at_b_real_single_impl      !< Multiply single-precision real matrices A**T * B
   public :: elpa_solve_tridi_single_impl         !< Solve tridiagonal eigensystem for a single-precision matrix with divide and conquer method
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_cholesky_complex_single_impl    !< Cholesky factorization of a single-precision complex matrix
-  public :: elpa_invert_trm_complex_single_impl  !< Invert single-precision complex triangular matrix
   public :: elpa_mult_ah_b_complex_single_impl   !< Multiply single-precision complex matrices A**H * B
 #endif
 
   contains
-
-#define REALCASE 1
-#define DOUBLE_PRECISION
-#include "../general/precision_macros.h"
-
-   function elpa_cholesky_real_double_impl (obj, a) result(success)
-#include "elpa_cholesky_template.F90"
-
-    end function elpa_cholesky_real_double_impl
-#undef DOUBLE_PRECISION
-#undef REALCASE
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-#define REALCASE 1
-#define SINGLE_PRECISION
-#include "../general/precision_macros.h"
-
-   function elpa_cholesky_real_single_impl(obj, a) result(success)
-#include "elpa_cholesky_template.F90"
-
-    end function elpa_cholesky_real_single_impl
-#undef SINGLE_PRECISION
-#undef REALCASE
-
-#endif /* WANT_SINGLE_PRECSION_REAL */
-
-#define REALCASE 1
-#define DOUBLE_PRECISION
-#include "../general/precision_macros.h"
-!> \brief  elpa_invert_trm_real_double: Inverts a double-precision real upper triangular matrix
-!> \details
-!> \param  obj                    elpa_t object contains:
-!> \param     - obj%na            Order of matrix
-!> \param     - obj%local_nrows   Leading dimension of a
-!> \param     - obj%local_ncols   local columns of matrix a
-!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
-!> \param     - obj%mpi_comm_rows MPI communicator for rows
-!> \param     - obj%mpi_comm_cols MPI communicator for columns
-!> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
-!>                                Distribution is like in Scalapack.
-!>                                Only upper triangle needs to be set.
-!>                                The lower triangle is not referenced.
-!> \result succes                 logical, reports success or failure
-    function elpa_invert_trm_real_double_impl(obj, a) result(success)
-#include "elpa_invert_trm.F90"
-     end function elpa_invert_trm_real_double_impl
-#undef DOUBLE_PRECISION
-#undef REALCASE
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-#define REALCASE 1
-#define SINGLE_PRECISION
-#include "../general/precision_macros.h"
-
-!> \brief  elpa_invert_trm_real_single_impl: Inverts a single-precision real upper triangular matrix
-!> \details
-!> \param  obj                    elpa_t object contains:
-!> \param     - obj%na            Order of matrix
-!> \param     - obj%local_nrows   Leading dimension of a
-!> \param     - obj%local_ncols   local columns of matrix a
-!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
-!> \param     - obj%mpi_comm_rows MPI communicator for rows
-!> \param     - obj%mpi_comm_cols MPI communicator for columns
-!> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
-!>                                Distribution is like in Scalapack.
-!>                                Only upper triangle needs to be set.
-!>                                The lower triangle is not referenced.
-!> \result succes                 logical, reports success or failure
-
-    function elpa_invert_trm_real_single_impl(obj, a) result(success)
-#include "elpa_invert_trm.F90"
-    end function elpa_invert_trm_real_single_impl
-#undef SINGLE_PRECISION
-#undef REALCASE
-
-#endif /* WANT_SINGLE_PRECISION_REAL */
-
-
-#define COMPLEXCASE 1
-#define DOUBLE_PRECISION
-#include "../general/precision_macros.h"
-
-!> \brief  elpa_cholesky_complex_double_impl: Cholesky factorization of a double-precision complex hermitian matrix
-!> \details
-!> \param  obj                    elpa_t object contains:
-!> \param     - obj%na            Order of matrix
-!> \param     - obj%local_nrows   Leading dimension of a
-!> \param     - obj%local_ncols   local columns of matrix a
-!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
-!> \param     - obj%mpi_comm_rows MPI communicator for rows
-!> \param     - obj%mpi_comm_cols MPI communicator for columns
-!> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
-!>                                Distribution is like in Scalapack.
-!>                                Only upper triangle needs to be set.
-!>                                The lower triangle is not referenced.
-!> \result succes                 logical, reports success or failure
-    function elpa_cholesky_complex_double_impl(obj, a) result(success)
-
-#include "elpa_cholesky_template.F90"
-
-    end function elpa_cholesky_complex_double_impl
-#undef DOUBLE_PRECISION
-#undef COMPLEXCASE
-
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-#define COMPLEXCASE 1
-#define SINGLE_PRECISION
-#include "../general/precision_macros.h"
-
-!> \brief  elpa_cholesky_complex_single_impl: Cholesky factorization of a single-precision complex hermitian matrix
-!> \details
-!> \param  obj                    elpa_t object contains:
-!> \param     - obj%na            Order of matrix
-!> \param     - obj%local_nrows   Leading dimension of a
-!> \param     - obj%local_ncols   local columns of matrix a
-!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
-!> \param     - obj%mpi_comm_rows MPI communicator for rows
-!> \param     - obj%mpi_comm_cols MPI communicator for columns
-!> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
-!>                                Distribution is like in Scalapack.
-!>                                Only upper triangle needs to be set.
-!>                                The lower triangle is not referenced.
-!> \result succes                 logical, reports success or failure
-    function elpa_cholesky_complex_single_impl(obj, a) result(success)
-
-#include "elpa_cholesky_template.F90"
-
-    end function elpa_cholesky_complex_single_impl
-#undef SINGLE_PRECISION
-#undef COMPLEXCASE
-
-#endif /* WANT_SINGLE_PRECISION_COMPLEX */
-
-#define COMPLEXCASE 1
-#define DOUBLE_PRECISION
-#include "../general/precision_macros.h"
-
-!> \brief  elpa_invert_trm_complex_double_impl: Inverts a double-precision complex upper triangular matrix
-!> \details
-!> \param  obj                    elpa_t object contains:
-!> \param     - obj%na            Order of matrix
-!> \param     - obj%local_nrows   Leading dimension of a
-!> \param     - obj%local_ncols   local columns of matrix a
-!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
-!> \param     - obj%mpi_comm_rows MPI communicator for rows
-!> \param     - obj%mpi_comm_cols MPI communicator for columns
-!> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
-!>                                Distribution is like in Scalapack.
-!>                                Only upper triangle needs to be set.
-!>                                The lower triangle is not referenced.
-!> \result succes                 logical, reports success or failure
-     function elpa_invert_trm_complex_double_impl(obj, a) result(success)
-#include "elpa_invert_trm.F90"
-    end function elpa_invert_trm_complex_double_impl
-#undef DOUBLE_PRECISION
-#undef COMPLEXCASE
-
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-#define COMPLEXCASE 1
-#define SINGLE_PRECISION
-#include "../general/precision_macros.h"
-
-!> \brief  elpa_invert_trm_complex_single_impl: Inverts a single-precision complex upper triangular matrix
-!> \details
-!> \param  obj                    elpa_t object contains:
-!> \param     - obj%na            Order of matrix
-!> \param     - obj%local_nrows   Leading dimension of a
-!> \param     - obj%local_ncols   local columns of matrix a
-!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
-!> \param     - obj%mpi_comm_rows MPI communicator for rows
-!> \param     - obj%mpi_comm_cols MPI communicator for columns
-!> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
-!>                                Distribution is like in Scalapack.
-!>                                Only upper triangle needs to be set.
-!>                                The lower triangle is not referenced.
-!> \result succes                 logical, reports success or failure
-    function elpa_invert_trm_complex_single_impl(obj, a) result(success)
-#include "elpa_invert_trm.F90"
-    end function elpa_invert_trm_complex_single_impl
-#undef SINGLE_PRECISION
-#undef COMPLEXCASE
-
-#endif /* WANT_SINGE_PRECISION_COMPLEX */
 
 #define REALCASE 1
 #define DOUBLE_PRECISION

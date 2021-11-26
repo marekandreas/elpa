@@ -113,6 +113,10 @@ then
   # default exit code
   exitCode=1
   CLUSTER=""
+  if [[ "$HOST" =~ "raven" ]]
+  then
+    CLUSTER="raven"
+  fi
   if [[ "$HOST" =~ "cobra" ]]
   then
     CLUSTER="cobra"
