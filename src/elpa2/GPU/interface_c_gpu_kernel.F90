@@ -71,7 +71,7 @@ module gpu_c_kernel
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(c_intptr_t) :: hh_tau ,hh
-#ifdef WITH_NVIDIA_GPU_VERSION
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
       call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
@@ -101,7 +101,7 @@ module gpu_c_kernel
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(c_intptr_t) :: hh_tau ,hh
-#ifdef WITH_NVIDIA_GPU_VERSION
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
       !call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
@@ -131,7 +131,7 @@ module gpu_c_kernel
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
-#ifdef WITH_NVIDIA_GPU_VERSION
+#if defined(WITH_NVIDIA_GPU_VERSION)  && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
       !call launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
@@ -160,7 +160,7 @@ module gpu_c_kernel
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
-#ifdef WITH_NVIDIA_GPU_VERSION
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
       !call launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
