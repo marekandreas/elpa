@@ -973,7 +973,10 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/elpa/elpa_index.h \
 			@top_srcdir@/src/elpa1/elpa1_solve_tridi_real_template.F90 \
 			@top_srcdir@/src/elpa1/elpa_multiply_a_b.F90 \
-			@top_srcdir@/src/elpa1/elpa_cholesky_template.F90 \
+			@top_srcdir@/src/cholesky/elpa_cholesky_template.F90 \
+			@top_srcdir@/src/cholesky/mod_elpa_cholesky.F90 \
+			@top_srcdir@/src/cholesky/mod_cholesky_cuda.F90 \
+			@top_srcdir@/src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu \
 			@top_srcdir@/src/elpa1/elpa1_compute_template.F90 \
 			@top_srcdir@/src/elpa1/elpa_reduce_add_vectors.F90 \
 			@top_srcdir@/src/elpa1/elpa1_merge_systems_real_template.F90 \
@@ -986,7 +989,10 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/src/elpa1/elpa1_auxiliary.F90 \
 			@top_srcdir@/src/elpa1/elpa1_tridiag_template.F90 \
 			@top_srcdir@/src/elpa1/elpa1_tools_template.F90 \
-			@top_srcdir@/src/elpa1/elpa_invert_trm.F90 \
+			@top_srcdir@/src/invert_trm/elpa_invert_trm_template.F90 \
+			@top_srcdir@/src/invert_trm/mod_elpa_invert_trm.F90 \
+			@top_srcdir@/src/invert_trm/mod_elpa_invert_trm_cuda.F90 \
+			@top_srcdir@/src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu \
 			@top_srcdir@/src/elpa1/elpa1_utilities.F90
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
