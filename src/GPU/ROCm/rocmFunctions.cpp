@@ -338,7 +338,7 @@ extern "C" {
                                const double *A, int lda,  const double *x, int incx,
                                double beta, double *y, int incy) {
 
-    rocblas_dgemv(*((rocblas_handle*)handle), hip_operation(trans),
+    rocblas_status status = rocblas_dgemv(*((rocblas_handle*)handle), hip_operation(trans),
                 m, n, &alpha, A, lda, x, incx, &beta, y, incy);
   }
 
@@ -346,7 +346,7 @@ extern "C" {
                                const float *A, int lda,  const float *x, int incx,
                                float beta, float *y, int incy) {
 
-    rocblas_sgemv(*((rocblas_handle*)handle), hip_operation(trans),
+    rocblas_status status = rocblas_sgemv(*((rocblas_handle*)handle), hip_operation(trans),
                 m, n, &alpha, A, lda, x, incx, &beta, y, incy);
   }
 
@@ -361,7 +361,7 @@ extern "C" {
     const rocblas_double_complex* x_casted = (const rocblas_double_complex*) x;
     rocblas_double_complex* y_casted = (rocblas_double_complex*) y;
 
-    rocblas_zgemv(*((rocblas_handle*)handle), hip_operation(trans),
+    rocblas_status status = rocblas_zgemv(*((rocblas_handle*)handle), hip_operation(trans),
                 m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);
   }
 
@@ -376,7 +376,7 @@ extern "C" {
     const rocblas_float_complex* x_casted = (const rocblas_float_complex*) x;
     rocblas_float_complex* y_casted = (rocblas_float_complex*) y;
 
-    rocblas_cgemv(*((rocblas_handle*)handle), hip_operation(trans),
+    rocblas_status status = rocblas_cgemv(*((rocblas_handle*)handle), hip_operation(trans),
                 m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);
   }
 
@@ -386,7 +386,7 @@ extern "C" {
                                const double *B, int ldb, double beta,
                                double *C, int ldc) {
 
-    rocblas_dgemm(*((rocblas_handle*)handle), hip_operation(transa), hip_operation(transb),
+    rocblas_status status = rocblas_dgemm(*((rocblas_handle*)handle), hip_operation(transa), hip_operation(transb),
                 m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
   }
 
@@ -395,7 +395,7 @@ extern "C" {
                                const float *B, int ldb, float beta,
                                float *C, int ldc) {
 
-    rocblas_sgemm(*((rocblas_handle*)handle), hip_operation(transa), hip_operation(transb),
+    rocblas_status status = rocblas_sgemm(*((rocblas_handle*)handle), hip_operation(transa), hip_operation(transb),
                 m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
   }
 
@@ -411,7 +411,7 @@ extern "C" {
     const rocblas_double_complex* B_casted = (const rocblas_double_complex*) B;
     rocblas_double_complex* C_casted = (rocblas_double_complex*) C;
 
-    rocblas_zgemm(*((rocblas_handle*)handle), hip_operation(transa), hip_operation(transb),
+    rocblas_status status = rocblas_zgemm(*((rocblas_handle*)handle), hip_operation(transa), hip_operation(transb),
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
@@ -427,7 +427,7 @@ extern "C" {
     const rocblas_float_complex* B_casted = (const rocblas_float_complex*) B;
     rocblas_float_complex* C_casted = (rocblas_float_complex*) C;
 
-    rocblas_cgemm(*((rocblas_handle*)handle), hip_operation(transa), hip_operation(transb),
+    rocblas_status status = rocblas_cgemm(*((rocblas_handle*)handle), hip_operation(transa), hip_operation(transb),
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
@@ -439,26 +439,26 @@ extern "C" {
 
   void rocblasDcopy_elpa_wrapper (intptr_t handle, int n, double *x, int incx, double *y, int incy){
 
-    rocblas_dcopy(*((rocblas_handle*)handle), n, x, incx, y, incy);
+    rocblas_status status = rocblas_dcopy(*((rocblas_handle*)handle), n, x, incx, y, incy);
   }
 
   void rocblasScopy_elpa_wrapper (intptr_t handle, int n, float *x, int incx, float *y, int incy){
 
-    rocblas_scopy(*((rocblas_handle*)handle), n, x, incx, y, incy);
+    rocblas_status status = rocblas_scopy(*((rocblas_handle*)handle), n, x, incx, y, incy);
   }
 
   void rocblasZcopy_elpa_wrapper (intptr_t handle, int n, double _Complex *x, int incx, double _Complex *y, int incy){
     const rocblas_double_complex* X_casted = (const rocblas_double_complex*) x;
           rocblas_double_complex* Y_casted = (rocblas_double_complex*) y;
 
-    rocblas_zcopy(*((rocblas_handle*)handle), n, X_casted, incx, Y_casted, incy);
+    rocblas_status status = rocblas_zcopy(*((rocblas_handle*)handle), n, X_casted, incx, Y_casted, incy);
   }
 
   void rocblasCcopy_elpa_wrapper (intptr_t handle, int n, float _Complex *x, int incx, float _Complex *y, int incy){
     const rocblas_float_complex* X_casted = (const rocblas_float_complex*) x;
           rocblas_float_complex* Y_casted = (      rocblas_float_complex*) y;
 
-    rocblas_ccopy(*((rocblas_handle*)handle), n, X_casted, incx, Y_casted, incy);
+    rocblas_status status = rocblas_ccopy(*((rocblas_handle*)handle), n, X_casted, incx, Y_casted, incy);
   }
 
 
@@ -466,14 +466,14 @@ extern "C" {
                                int m, int n, double alpha, const double *A,
                                int lda, double *B, int ldb){
 
-    rocblas_dtrmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    rocblas_status status = rocblas_dtrmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
   void rocblas_strmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
                                int m, int n, float alpha, const float *A,
                                int lda, float *B, int ldb){
-    rocblas_strmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    rocblas_status status = rocblas_strmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
@@ -485,7 +485,7 @@ extern "C" {
 
     const rocblas_double_complex* A_casted = (const rocblas_double_complex*) A;
     rocblas_double_complex* B_casted = (rocblas_double_complex*) B;
-    rocblas_ztrmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    rocblas_status status = rocblas_ztrmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
@@ -497,7 +497,47 @@ extern "C" {
 
     const rocblas_float_complex* A_casted = (const rocblas_float_complex*) A;
     rocblas_float_complex* B_casted = (rocblas_float_complex*) B;
-    rocblas_ctrmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    rocblas_status status = rocblas_ctrmm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
+  }
+
+
+  void rocblas_dtrsm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+                               int m, int n, double alpha, const double *A,
+                               int lda, double *B, int ldb){
+
+    rocblas_status status = rocblas_dtrsm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
+  }
+
+  void rocblas_strsm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+                               int m, int n, float alpha, const float *A,
+                               int lda, float *B, int ldb){
+    rocblas_status status = rocblas_strsm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
+  }
+
+  void rocblas_ztrsm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+                               int m, int n, double _Complex alpha, const double _Complex *A,
+                               int lda, double _Complex *B, int ldb){
+
+    rocblas_double_complex alpha_casted = *((rocblas_double_complex*)(&alpha));
+
+    const rocblas_double_complex* A_casted = (const rocblas_double_complex*) A;
+    rocblas_double_complex* B_casted = (rocblas_double_complex*) B;
+    rocblas_status status = rocblas_ztrsm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
+  }
+
+  void rocblas_ctrsm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+                               int m, int n, float _Complex alpha, const float _Complex *A,
+                               int lda, float _Complex *B, int ldb){
+
+    rocblas_float_complex alpha_casted = *((rocblas_float_complex*)(&alpha));
+
+    const rocblas_float_complex* A_casted = (const rocblas_float_complex*) A;
+    rocblas_float_complex* B_casted = (rocblas_float_complex*) B;
+    rocblas_status status = rocblas_ctrsm(*((rocblas_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 

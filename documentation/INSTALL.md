@@ -2,16 +2,13 @@
 
 ## 0. Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2021.05.002**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2021.11.001.rc1**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
-The release ELPA 2018.11.001 was the last release, where the legacy API has been
-enabled by default (and can be disabled at build time).
-With the release ELPA 2019.11.001, the legacy API has been deprecated and the support has been closed.
+As anounced, with the the release 2021.11.001.rc the **legacy interface has been removed**.
 
-The release of ELPA 2021.05.002 does change the API and ABI compared to the release 2019.11.001, since
-the legacy API has been dropped.
+The release of ELPA 2021.11.001.rc1 does change the API and ABI compared to the release 2020.05.002.
 
 ## 1. How to install *ELPA* ##
 
@@ -44,7 +41,6 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 
 | configure option                     | description                                           |
 |:------------------------------------ |:----------------------------------------------------- |
-|  `--enable-legacy-interface`                   | build legacy API, will not be build as default        |
 |  `--enable-optional-argument-in-C-API`         | treat error arguments in C-API as optional            |
 |  `--enable-openmp`                             | use OpenMP threading, default no.                     |
 |  `--enable-redirect`                           | for ELPA test programs, allow redirection of <br> stdout/stderr per MPI taks in a file <br> (useful for timing), default no. |
@@ -71,7 +67,7 @@ An excerpt of the most important (*ELPA* specific) options reads as follows:
 |  `--with-mpi=[yes|no]`                         | compile with MPI. Default: yes                        |
 |  `--with-cuda-path=PATH`                       | prefix where CUDA is installed [default=auto]         |
 |  `--with-cuda-sdk-path=PATH`                   | prefix where CUDA SDK is installed [default=auto]     |
-|  `--with-GPU-compute-capability=VALUE`         | use compute capability VALUE for GPU version, <br> default: "sm_35" |
+|  `--with-NVIDIA-GPU-compute-capability=VALUE`  | use compute capability VALUE for GPU version, <br> default: "sm_35" |
 |  `--with-fixed-real-kernel=KERNEL`             | compile with only a single specific real kernel.      |
 |  `--with-fixed-complex-kernel=KERNEL`          | compile with only a single specific complex kernel.   |
 |  `--with-nvidia-gpu-support-only`              | Compile and always use the NVIDIA GPU version         |
@@ -212,7 +208,7 @@ It might be necessary to also set the options (please see configure --help)
 --with-GPU-compute-capability
 ```
 
-Please note that with release 2021.05.002 also GPU support of AMD and Intel GPUS has been introduced.
+Please note that with release 2021.11.001.rc1 also GPU support of AMD and Intel GPUS has been introduced.
 However, this is still considered experimental. Especially the following features do not yet work, or have not
 been tested.
 

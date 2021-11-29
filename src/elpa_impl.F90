@@ -270,8 +270,8 @@ module elpa_impl
 #endif
     end function
 
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #define elpa_allocate(...) CONC(elpa_allocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
     !c_o> #endif
 #endif
@@ -280,8 +280,8 @@ module elpa_impl
     !c> *  \param  none
     !c> *  \result elpa_t handle
     !c> */
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> elpa_t elpa_allocate2(int *error);
     !c_o> elpa_t elpa_allocate1();
     !c_o> #endif
@@ -302,7 +302,7 @@ module elpa_impl
       ptr = c_loc(obj)
     end function
 #else
-    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> #if OPTIONAL_C_ERROR_ARGUMENT != 1
     !c_no> elpa_t elpa_allocate(int *error);
     !c_no> #endif
     function elpa_impl_allocate_c(error) result(ptr) bind(C, name="elpa_allocate")
@@ -315,8 +315,8 @@ module elpa_impl
     end function
 #endif
 
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #define NARGS(...) NARGS_(__VA_ARGS__, 5, 4, 3, 2, 1, 0)
     !c_o> #define NARGS_(_5, _4, _3, _2, _1, N, ...) N
     !c_o> #define CONC(A, B) CONC_(A, B)
@@ -330,8 +330,8 @@ module elpa_impl
     !c> *  \param  int*    error code
     !c> *  \result void
     !c> */
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> void elpa_deallocate2(elpa_t handle, int *error);
     !c_o> void elpa_deallocate1(elpa_t handle);
     !c_o> #endif
@@ -354,7 +354,7 @@ module elpa_impl
       deallocate(self)
     end subroutine
 #else
-    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> #if OPTIONAL_C_ERROR_ARGUMENT != 1
     !c_no> void elpa_deallocate(elpa_t handle, int *error);
     !c_no> #endif
     subroutine elpa_impl_deallocate_c(handle, error) bind(C, name="elpa_deallocate")
@@ -532,8 +532,8 @@ module elpa_impl
 
 
 #ifdef ENABLE_AUTOTUNING
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #define elpa_autotune_deallocate(...) CONC(elpa_autotune_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
     !c_o> #endif
 #endif
@@ -542,8 +542,8 @@ module elpa_impl
     !c> *  \param  elpa_autotune_impl_t  handle of ELPA autotune object to be deallocated
     !c> *  \result void
     !c> */
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> void elpa_autotune_deallocate2(elpa_autotune_t handle, int *error);
     !c_o> void elpa_autotune_deallocate1(elpa_autotune_t handle);
     !c_o> #endif
@@ -568,7 +568,7 @@ module elpa_impl
       deallocate(self)
     end subroutine
 #else
-    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> #if OPTIONAL_C_ERROR_ARGUMENT != 1
     !c_no> void elpa_autotune_deallocate(elpa_autotune_t handle, int *error);
     !c_no> #endif
     subroutine elpa_autotune_impl_deallocate( autotune_handle, error) bind(C, name="elpa_autotune_deallocate")
@@ -615,6 +615,8 @@ module elpa_impl
       call likwid_markerStartRegion("TOTAL")
 #endif
 
+      print *,"In ELPA setup"
+
 #ifdef HAVE_DETAILED_TIMINGS
       call self%get("timings",timings, error)
       call self%get("measure_performance",performance, error)
@@ -640,6 +642,7 @@ module elpa_impl
 
 #ifdef WITH_MPI
       if (self%is_set("mpi_comm_parent") == 1) then
+        print *,"MPI_COMM_PARENT is set"
         call self%get("mpi_comm_parent", mpi_comm_parent, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
@@ -653,6 +656,8 @@ module elpa_impl
         call self%set("num_processes", np_total, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       else
+
+        print *,"MPI_COMM_PARENT is NOT set",self%from_legacy_api
         if (self%from_legacy_api .ne. 1) then
           write(error_unit,*) MPI_CONSISTENCY_MSG
           error = ELPA_ERROR
@@ -1463,7 +1468,7 @@ module elpa_impl
 
       autotune_api_set = .true.
 
-      if (api_version .ge. 20210430) then
+      if (api_version .ge. 20211125) then
         new_autotune = .true.
       else
         new_autotune = .false.

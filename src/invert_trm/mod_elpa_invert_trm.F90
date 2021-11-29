@@ -1,0 +1,167 @@
+!    Copyright 2021, A. Marek
+!
+!    This file is part of ELPA.
+!
+!    The ELPA library was originally created by the ELPA consortium,
+!    consisting of the following organizations:
+!
+!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+!      Informatik,
+!    - Technische Universität München, Lehrstuhl für Informatik mit
+!      Schwerpunkt Wissenschaftliches Rechnen ,
+!    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+!    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+!      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+!      and
+!    - IBM Deutschland GmbH
+!
+!
+!    More information can be found here:
+!    http://elpa.mpcdf.mpg.de/
+! 
+!    ELPA is free software: you can redistribute it and/or modify
+!    it under the terms of the version 3 of the license of the
+!    GNU Lesser General Public License as published by the Free
+!    Software Foundation.
+!
+!    ELPA is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU Lesser General Public License for more details.
+!
+!    You should have received a copy of the GNU Lesser General Public License
+!    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+!
+!    ELPA reflects a substantial effort on the part of the original
+!    ELPA consortium, and we ask you to respect the spirit of the
+!    license that we chose: i.e., please contribute any changes you
+!    may have back to the original ELPA library distribution, and keep
+!    any derivatives of ELPA under the same license that we chose for
+!    the original distribution, the GNU Lesser General Public License.
+!
+! This file was written by A. Marek, MPCDF
+#include "config-f90.h"
+module elpa_invert_trm
+  use, intrinsic :: iso_c_binding
+  use precision
+  implicit none
+
+  public
+  public :: elpa_invert_trm_real_double_impl    !< Invert double-precision real triangular matrix
+  public :: elpa_invert_trm_complex_double_impl  !< Invert double-precision complex triangular matrix
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  public :: elpa_invert_trm_real_single_impl     !< Invert single-precision real triangular matrix
+#endif
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  public :: elpa_invert_trm_complex_single_impl  !< Invert single-precision complex triangular matrix
+#endif
+  contains
+
+#define REALCASE 1
+#define DOUBLE_PRECISION
+#include "../general/precision_macros.h"
+!> \brief  elpa_invert_trm_real_double: Inverts a double-precision real upper triangular matrix
+!> \details
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
+    function elpa_invert_trm_real_double_impl(obj, a) result(success)
+#include "./elpa_invert_trm_template.F90"
+     end function elpa_invert_trm_real_double_impl
+#undef DOUBLE_PRECISION
+#undef REALCASE
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#define SINGLE_PRECISION
+#include "../general/precision_macros.h"
+
+!> \brief  elpa_invert_trm_real_single_impl: Inverts a single-precision real upper triangular matrix
+!> \details
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
+
+    function elpa_invert_trm_real_single_impl(obj, a) result(success)
+#include "./elpa_invert_trm_template.F90"
+    end function elpa_invert_trm_real_single_impl
+#undef SINGLE_PRECISION
+#undef REALCASE
+#endif /* WANT_SINGLE_PRECISION_REAL */
+
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION
+#include "../general/precision_macros.h"
+
+!> \brief  elpa_invert_trm_complex_double_impl: Inverts a double-precision complex upper triangular matrix
+!> \details
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
+     function elpa_invert_trm_complex_double_impl(obj, a) result(success)
+#include "./elpa_invert_trm_template.F90"
+    end function elpa_invert_trm_complex_double_impl
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION
+#include "../general/precision_macros.h"
+
+!> \brief  elpa_invert_trm_complex_single_impl: Inverts a single-precision complex upper triangular matrix
+!> \details
+!> \param  obj                    elpa_t object contains:
+!> \param     - obj%na            Order of matrix
+!> \param     - obj%local_nrows   Leading dimension of a
+!> \param     - obj%local_ncols   local columns of matrix a
+!> \param     - obj%nblk          blocksize of cyclic distribution, must be the same in both directions!
+!> \param     - obj%mpi_comm_rows MPI communicator for rows
+!> \param     - obj%mpi_comm_cols MPI communicator for columns
+!> \param     - obj%wantDebug     logical, more debug information on failure
+!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted
+!>                                Distribution is like in Scalapack.
+!>                                Only upper triangle needs to be set.
+!>                                The lower triangle is not referenced.
+!> \result succes                 logical, reports success or failure
+    function elpa_invert_trm_complex_single_impl(obj, a) result(success)
+#include "./elpa_invert_trm_template.F90"
+    end function elpa_invert_trm_complex_single_impl
+#undef SINGLE_PRECISION
+#undef COMPLEXCASE
+#endif /* WANT_SINGE_PRECISION_COMPLEX */
+
+end module

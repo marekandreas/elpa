@@ -261,10 +261,11 @@ program test
 
    if (myid == 0) print *, ""
 
-   !call e%autotune_set_api_version(20210430, error_elpa)
+   ! if you want to use the new autotuning implentation
+   !call e%autotune_set_api_version(20211125, error_elpa)
    !assert_elpa_ok(error_elpa)
-   !tune_state => e%autotune_setup(ELPA2_AUTOTUNE_FULL_TO_BAND, AUTOTUNE_DOMAIN, error_elpa)
-   !tune_state => e%autotune_setup(ELPA_AUTOTUNE_EXTENSIVE, AUTOTUNE_DOMAIN, error_elpa)
+   ! if you want to use the old one, either do not set autotune_set_api_version
+   ! or set autotune_set_api_version to a supported api version < 20211125
    tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error_elpa)
    assert_elpa_ok(error_elpa)
 
