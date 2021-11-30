@@ -598,8 +598,8 @@ band_to_full_blocking = {
 
 gpu = {
         "no-gpu" : "--disable-nvidia-gpu",
-        "with-gpu" : "--enable-nvidia-gpu ---with-NVIDIA-GPU-compute-capability=sm_70 -with-cuda-path=\\$CUDA_HOME/",
-        "with-sm80-gpu" : "--enable-nvidia-gpu ---with-NVIDIA-GPU-compute-capability=sm_80 -with-cuda-path=\\$CUDA_HOME/" ,
+        "with-gpu" : "--enable-nvidia-gpu --with-NVIDIA-GPU-compute-capability=sm_70 -with-cuda-path=\\$CUDA_HOME/",
+        "with-sm80-gpu" : "--enable-nvidia-gpu --with-NVIDIA-GPU-compute-capability=sm_80 -with-cuda-path=\\$CUDA_HOME/" ,
 }
 
 
