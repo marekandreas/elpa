@@ -95,8 +95,8 @@
   integer(kind=c_intptr_t)      :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev, zero_dev
   type(c_ptr)                      :: tmp1_mpi_dev
   MATH_DATATYPE(kind=rck), pointer :: tmp1_mpi_fortran_ptr(:,:)
-  type(c_ptr)                      :: tmat1_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer :: tmat1_mpi_fortran_ptr(:,:)
+  type(c_ptr)                      :: tmat1_mpi_dev, tmat2_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer :: tmat1_mpi_fortran_ptr(:,:), tmat2_mpi_fortran_ptr(:,:)
 
   type(c_ptr)                   :: tmp2_mpi_dev, a_mpi_dev
   integer(kind=c_intptr_t)      :: a_off, tmat2_off, tmp1_off, tmp2_off
@@ -534,9 +534,6 @@
         check_memcpy_gpu("elpa_invert_trm: tmat2_dev to tmat2", successGPU)
       endif
     endif
-#else
-#error "not yet implemented"
-#endif
 
     call obj%timer%start("mpi_communication")
     if (l_cols-l_col1+1 > 0) &
@@ -544,6 +541,18 @@
                    int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 
     call obj%timer%stop("mpi_communication")
+#else
+      tmat2_mpi_dev = transfer(tmat2_dev, tmat2_mpi_dev)     
+      call c_f_pointer(tmat2_mpi_dev, tmat2_mpi_fortran_ptr, [???,???])
+      
+      call obj%timer%start("mpi_cuda_communication")
+    if (l_cols-l_col1+1 > 0) &
+        call MPI_Bcast(tmat2_mpi_fortran_ptr(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), & 
+                       MPI_MATH_DATATYPE_PRECISION, int(prow(n, nblk, np_rows),kind=MPI_KIND), & 
+                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+      call obj%timer%stop("mpi_cuda_communication")
+
+#endif
 
 #ifndef WITH_CUDA_AWARE_MPI
     if (useGPU) then
