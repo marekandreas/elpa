@@ -2336,7 +2336,7 @@ if test x"$have_loop_blocking" = x"yes"; then
 fi
 
 AC_SUBST([SUFFIX])
-AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
+AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}.pc])
 
 AC_CONFIG_FILES([
   Makefile
