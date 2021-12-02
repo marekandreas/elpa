@@ -184,52 +184,43 @@ nev       : N_C
 nb        : nbw (==b)
 ncols     : N_R (==n+b-1)
 */
-extern "C" void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+extern "C" {
+  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+  
+  {
+  
+      switch (nb) {
+        case 1024: launch_NVIDIA_sm80_kernel<1024>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        case  512: launch_NVIDIA_sm80_kernel< 512>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        case  256: launch_NVIDIA_sm80_kernel< 256>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        case  128: launch_NVIDIA_sm80_kernel< 128>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        case   64: launch_NVIDIA_sm80_kernel<  64>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        case   32: launch_NVIDIA_sm80_kernel<  32>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        case   16: launch_NVIDIA_sm80_kernel<  16>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        case    8: launch_NVIDIA_sm80_kernel<   8>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        case    4: launch_NVIDIA_sm80_kernel<   4>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        //case    2: launch_new_kernel<   2>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        //case    1: launch_new_kernel<   1>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        default: printf("Unsupported nb = %d for new kernel \n", nb);
+      }
+  
+      cudaError_t err = cudaGetLastError();
+      if (err != cudaSuccess)
+      {
+          printf("\n compute_hh_trafo sm80 CUDA kernel failed: %s \n",cudaGetErrorString(err));
+      }
+  }
 
-{
+  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_float(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
+  double *q_casted, *hh_casted, *hh_tau_casted;
 
+  q_casted = (double*) q;
+  hh_casted = (double*) hh;
+  hh_tau_casted = (double*) hh_tau;
 
-#if 0
-#endif
-    // Run the new kernel
-    switch (nb) {
-      case 1024: launch_NVIDIA_sm80_kernel<1024>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      case  512: launch_NVIDIA_sm80_kernel< 512>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      case  256: launch_NVIDIA_sm80_kernel< 256>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      case  128: launch_NVIDIA_sm80_kernel< 128>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      case   64: launch_NVIDIA_sm80_kernel<  64>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      case   32: launch_NVIDIA_sm80_kernel<  32>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      case   16: launch_NVIDIA_sm80_kernel<  16>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      case    8: launch_NVIDIA_sm80_kernel<   8>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      case    4: launch_NVIDIA_sm80_kernel<   4>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      //case    2: launch_new_kernel<   2>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      //case    1: launch_new_kernel<   1>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-      default: printf("Unsupported nb = %d for new kernel \n", nb);
-    }
+  launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q_casted, hh_casted, hh_tau_casted, nev, nb, ldq, ncols);
 
-    cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess)
-    {
-        printf("\n compute_hh_trafo sm80 CUDA kernel failed: %s \n",cudaGetErrorString(err));
-    }
+  q = (float*) q_casted;
 
-    // Collect time and perf
-#if 0
-    cudaEventElapsedTime(&old_time, old_start, old_stop);
-#endif
-    //double ops = nev * nb * (2.0 + 3.0) * ncols;
-    //double bytes = ((nb * ncols) + (nb + ncols - 1) * nev * 2.0) * sizeof(double);
-#if 0
-    printf("Old kernel took %8.4f ms, GFLOPS = %6.1f, GBS = %6.1f\n", old_time, ops / (old_time * 1e-3) / 1e+9, bytes / (old_time * 1e-3) / 1e+9);
-
-#endif
-    //printf("New kernel took %8.4f ms, GFLOPS = %6.1f, GBS = %6.1f\n", new_time, ops / (new_time * 1e-3) / 1e+9, bytes / (new_time * 1e-3) / 1e+9);
-
-    // cudaError_t cudaError_t err = cudaGetLastError();
-
-    //if (err != cudaSuccess)
-    //{
-    //    printf("\n compute_hh_trafo CUDA kernel failed: %s \n", cudaGetErrorString(err));
-    //    exit(1);
-    //}
+ }
 }
