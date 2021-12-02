@@ -498,7 +498,7 @@
 #else
       tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
       ! and associate a fortran pointer
-      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk*nblk])
+      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk,nblk])
 
       call obj%timer%start("mpi_cuda_communication")
 
