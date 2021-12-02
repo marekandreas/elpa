@@ -247,20 +247,32 @@
 
 #if REALCASE == 1
 #undef GPU_KERNEL
+#undef GPU_KERNEL2
 #define GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+#define GPU_KERNEL2 ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
+#endif
+
 #undef DEFAULT_KERNEL
 #undef KERNEL_STRING
+
+#define KERNEL_STRING "real_kernel"
+
 #ifdef WITH_NVIDIA_GPU_VERSION
 #undef GPU_KERNEL
+#undef GPU_KERNEL2
 #define GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+#define GPU_KERNEL2 ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
 #endif
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
 #ifdef WITH_AMD_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_REAL_AMD_GPU
 #endif
 #define DEFAULT_KERNEL ELPA_2STAGE_REAL_DEFAULT
-#define KERNEL_STRING "real_kernel"
-#endif
+#endif /* WITH_AMD_GPU_VERSION */
 ! intel missing
 
 
@@ -269,17 +281,20 @@
 #define GPU_KERNEL ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #undef DEFAULT_KERNEL
 #undef KERNEL_STRING
+
+#define KERNEL_STRING "complex_kernel"
+
 #ifdef WITH_NVIDIA_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_COMPLEX_NVIDIA_GPU
-#endif
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
 #ifdef WITH_AMD_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_COMPLEX_AMD_GPU
 #endif
 #define DEFAULT_KERNEL ELPA_2STAGE_COMPLEX_DEFAULT
-#define KERNEL_STRING "complex_kernel"
-#endif
+#endif /* WITH_AMD_GPU_VERSION */
 
 #ifdef ACTIVATE_SKEW
     call obj%timer%start("elpa_solve_skew_evp_&
@@ -516,7 +531,15 @@
         endif
 
         do_useGPU = .false.
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+        if (kernel == GPU_KERNEL .or. kernel == GPU_KERNEL2) then
+#else
         if (kernel == GPU_KERNEL) then
+#endif
+#else /* REALCASE == 1 */
+        if (kernel == GPU_KERNEL) then
+#endif /* REALCASE == 1 */
           if (userHasSetKernel) then
             ! user fixed inconsistent input.
             ! sadly, we do have to abort
@@ -768,7 +791,15 @@ print *,"Device pointer + REDIST"
       ! if the user has set explicitely a kernel before than honour this
       ! otherwise set GPU kernel
       if (userHasSetKernel) then
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+        if (kernel == GPU_KERNEL .or. kernel == GPU_KERNEL2) then
+#else
+        if (kernel == GPU_KERNEL) then
+#endif
+#else /* REALCASE == 1 */
         if (kernel .ne. GPU_KERNEL) then
+#endif /* REALCASE == 1 */
           write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is set by the user as non-GPU!"
           write(error_unit,*) "The compute kernel will be executed on CPUs!"
           do_useGPU_trans_ev_tridi_to_band = .false.
@@ -782,7 +813,15 @@ print *,"Device pointer + REDIST"
         !  write(error_unit,*) "Cannot set kernel to GPU kernel"
         !  stop
         !endif
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+        kernel = GPU_KERNEL2
+#else
         kernel = GPU_KERNEL
+#endif
+#else /* REALCASE == 1 */
+        kernel = GPU_KERNEL
+#endif /* REALCASE == 1 */
         if (my_pe .eq. 0) write(error_unit,*) "You requested the GPU version, thus the GPU kernel is activated"
         good_nblk_gpu = .false.
       endif ! userHasSetKernel
@@ -813,13 +852,29 @@ print *,"Device pointer + REDIST"
       !  write(error_unit,*) "Cannot get kernel to GPU kernel"
       !  stop
       !endif
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+      if (kernel .ne. GPU_KERNEL .or. kernel .ne. GPU_KERNEL2) then
+#else
       if (kernel .ne. GPU_KERNEL) then
+#endif
+#else /* REALCASE == 1 */
+      if (kernel .ne. GPU_KERNEL) then
+#endif /* REALCASE == 1 */
         ! this should never happen, checking as an assert
         write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
         stop
       endif
     else
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+      if (kernel .eq. GPU_KERNEL .or. kernel .eq. GPU_KERNEL2) then
+#else
       if (kernel .eq. GPU_KERNEL) then
+#endif
+#else /* REALCASE == 1 */
+      if (kernel .eq. GPU_KERNEL) then
+#endif /* REALCASE == 1 */
         ! combination not allowed
         write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
                             &is defined as the GPU kernel!  Setting default kernel"
