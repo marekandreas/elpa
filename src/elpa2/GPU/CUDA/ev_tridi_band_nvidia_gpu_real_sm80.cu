@@ -211,7 +211,7 @@ extern "C" {
       }
   }
 
-  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_float(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
+  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
   double *q_casted, *hh_casted, *hh_tau_casted;
 
   q_casted = (double*) q;
