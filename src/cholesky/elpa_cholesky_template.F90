@@ -559,7 +559,9 @@
 
     if (useGPU) then
       if (my_prow==prow(n, nblk, np_rows)) then
-        call copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+        ! if l_cols-l_colx+1 == 0 kernel launch with 0 blocks => raises error
+        if (l_cols-l_colx+1>0) &
+           call copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
       endif
     else ! useGPU
       do i=1,nblk

@@ -62,7 +62,7 @@
 __global__ void copy_double_a_tmatc_kernel(double *a_dev, double *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1, const int nblk){
 
   int ii_index    = threadIdx.x +1; // range 1..nblk
-  int jj_index = blockIdx.x + 1; // range 1..l_colx-l_cols-1
+  int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
 }
 
@@ -86,7 +86,7 @@ extern "C" void copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int 
 __global__ void copy_float_a_tmatc_kernel(float *a_dev, float *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1, const int nblk){
 
   int ii_index    = threadIdx.x +1; // range 1..nblk
-  int jj_index = blockIdx.x + 1; // range 1..l_colx-l_cols-1
+  int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
 }
 
@@ -110,7 +110,7 @@ extern "C" void copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nb
 __global__ void copy_double_complex_a_tmatc_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1){
 
   int ii_index    = threadIdx.x +1; // range 1..nblk
-  int jj_index = blockIdx.x + 1; // range 1..l_colx-l_cols-1
+  int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = cuConj(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
 }
 
@@ -137,7 +137,7 @@ extern "C" void copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, double
 __global__ void copy_float_complex_a_tmatc_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1){
 
   int ii_index    = threadIdx.x +1; // range 1..nblk
-  int jj_index = blockIdx.x + 1; // range 1..l_colx-l_cols-1
+  int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = cuConjf(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
 }
 
