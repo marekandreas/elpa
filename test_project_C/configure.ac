@@ -68,9 +68,9 @@ AC_ARG_WITH([openmp],
   if test x"${with_openmp}" = x"yes"; then
 	AC_DEFINE([WITH_OPENMP_TRADITIONAL], [1], [use OpenMP threading])
         AX_ELPA_OPENMP
-	elpa="elpa_openmp-$elpaversion"
+	elpa="elpa_openmp"
   else
-	elpa="elpa-$elpaversion"
+	elpa="elpa"
   fi
 
 # Here comes the ELPA specific part
