@@ -94,13 +94,13 @@
   integer(kind=c_int)           :: gpu, numGPU
   integer(kind=c_intptr_t)      :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev, zero_dev
   type(c_ptr)                      :: tmp1_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer :: tmp1_mpi_fortran_ptr(:,:)
+  MATH_DATATYPE(kind=rck), pointer :: tmp1_mpi_fortran_ptr(:)
   type(c_ptr)                      :: tmat1_mpi_dev, tmat2_mpi_dev
   MATH_DATATYPE(kind=rck), pointer :: tmat1_mpi_fortran_ptr(:,:), tmat2_mpi_fortran_ptr(:,:)
 
   type(c_ptr)                   :: tmp2_mpi_dev, a_mpi_dev
   integer(kind=c_intptr_t)      :: a_off, tmat2_off, tmp1_off, tmp2_off
-   MATH_DATATYPE(kind=rck), pointer :: a_mpi_deviceptr(:,:)
+   MATH_DATATYPE(kind=rck), pointer :: a_mpi_deviceptr(:,:), initializer_ptr(:) !DEB
   integer(kind=c_intptr_t)      :: num
   integer(kind=c_int)           :: gpu_invert_trm
   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
@@ -399,9 +399,11 @@
                      int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
       call obj%timer%stop("mpi_communication")
 #else
-      tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
+      tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev) 
       ! and associate a fortran pointer
-      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk,nblk])
+      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk*nblk])
+      call device_synchronize()
+
       if (wantDebug) call obj%timer%start("cuda_mpi_communication")
       call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
                      int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
@@ -497,7 +499,7 @@
       tmat1_mpi_dev = transfer(tmat1_dev, tmat1_mpi_dev)
       ! and associate a fortran pointer
       call c_f_pointer(tmat1_mpi_dev, tmat1_mpi_fortran_ptr, [l_rows,nblk])
-      
+      call device_synchronize()  
       call obj%timer%start("mpi_cuda_communication")
       do i=1,nb
         call MPI_Bcast(tmat1_mpi_fortran_ptr(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
@@ -554,6 +556,7 @@
       tmat2_mpi_dev = transfer(tmat2_dev, tmat2_mpi_dev)     
       call c_f_pointer(tmat2_mpi_dev, tmat2_mpi_fortran_ptr, [nblk,l_cols])
       
+      call device_synchronize()  
       call obj%timer%start("mpi_cuda_communication")
     if (l_cols-l_col1+1 > 0) &
         call MPI_Bcast(tmat2_mpi_fortran_ptr(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), & 
