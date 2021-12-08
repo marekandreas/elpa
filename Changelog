@@ -12,13 +12,16 @@ Changelog for upcoming ELPA 2021.11.001.rc1
 - allow to call ELPA eigenvectors and eigenvalues also with GPU device
   pointers for the input matrix, the vectors of eigenvalues and the output 
   matrix for the eigenvectors
+- BUGFIX: error in resort_ev
+- EXPERIMENTAL feature:g new real GPU kernel for Nvidia A100 (provided by Nvidia): can show a
+  performance boost if number of vectors per MPI task is > 20000. Most likely
+  most benifit in non-MPI version
 - as anounced, droping the legacy interface
 - more autotuning features, for example using non blocking MPI collectives
 - new version of autotunig avoiding a combinatorial grow of possibilities
   (the old autotune version can be still used if
   elpa%autotune_set_api_version(API_VERSION, error) is set to API_VERSION <
   20211125)
-
 
 Changelog for ELPA 2021.05.002
 - no feature changes

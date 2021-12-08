@@ -281,7 +281,7 @@ int main(int argc, char** argv) {
 #endif
    assert_elpa_ok(error_elpa);
 
-#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0)   
+#if TEST_NVIDIA_GPU == 1
    elpa_set(handle, "nvidia-gpu", TEST_GPU, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
