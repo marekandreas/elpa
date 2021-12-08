@@ -614,3 +614,7 @@ extern "C" void copy_float_complex_a_tmp1_FromC(float _Complex *a_dev, float _Co
     printf("Error in executing copy_float_complex_a_tmp1_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
+
+extern "C" void device_synchronizeFromC() {
+   cudaDeviceSynchronize();
+} 

@@ -51,6 +51,12 @@ module invert_trm_cuda
 
   public
   interface
+     subroutine device_synchronize_c()  &
+              bind(C, name="device_synchronizeFromC")
+     end subroutine
+  end interface
+
+  interface
     subroutine copy_double_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)&
              bind(C, name="copy_double_a_tmat2_FromC")
       use, intrinsic :: iso_c_binding
@@ -492,6 +498,9 @@ module invert_trm_cuda
 #endif
 
     end subroutine
-
+  
+    subroutine device_synchronize() 
+       call device_synchronize_c()
+    end subroutine device_synchronize
 end module
 
