@@ -55,7 +55,6 @@
   use mod_check_for_gpu
   use invert_trm_cuda, only : copy_PRECISION_tmp1_tmp2, &
                               copy_PRECISION_a_tmp1
-
   use cholesky_cuda
   implicit none
 #include "../general/precision_kinds.F90"
@@ -498,8 +497,11 @@
 #else
       tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
       ! and associate a fortran pointer
-      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk*nblk])
-
+      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk,nblk])
+      if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
+      successGPU = gpu_devicesynchronize()
+      check_memcpy_gpu("cholesky: device_synchronize", successGPU)
+      if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
       call obj%timer%start("mpi_cuda_communication")
 
       call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
@@ -559,7 +561,9 @@
 
     if (useGPU) then
       if (my_prow==prow(n, nblk, np_rows)) then
-        call copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+        ! if l_cols-l_colx+1 == 0 kernel launch with 0 blocks => raises error
+        if (l_cols-l_colx+1>0) &
+           call copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
       endif
     else ! useGPU
       do i=1,nblk
@@ -600,6 +604,11 @@
     tmatc_mpi_dev = transfer(tmatc_dev, tmatc_mpi_dev)
     ! and associate a fortran pointer
     call c_f_pointer(tmatc_mpi_dev, tmatc_mpi_fortran_ptr, [l_cols,nblk])
+    
+    if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
+    successGPU = gpu_devicesynchronize()
+    check_memcpy_gpu("cholesky: device_synchronize", successGPU)
+    if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
 
     do i=1,nblk
       call obj%timer%start("mpi_cuda_communication")
