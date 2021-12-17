@@ -492,6 +492,5 @@ module invert_trm_cuda
 #endif
 
     end subroutine
-
 end module
 

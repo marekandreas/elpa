@@ -55,7 +55,6 @@
   use mod_check_for_gpu
   use invert_trm_cuda, only : copy_PRECISION_tmp1_tmp2, &
                               copy_PRECISION_a_tmp1
-
   use cholesky_cuda
   implicit none
 #include "../general/precision_kinds.F90"
@@ -472,7 +471,7 @@
       endif ! (my_pcol==pcol(n, nblk, np_cols))
 
 #ifdef WITH_MPI
-#ifndef WITH_CUDA_AWARE_MPI
+!#ifndef WITH_CUDA_AWARE_MPI
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
         successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), tmp1_dev, num, &
@@ -480,9 +479,9 @@
         check_memcpy_gpu("elpa_cholesky: tmp1_dev to tmp1", successGPU)
 
       endif
-#endif
+!#endif
 
-#ifndef WITH_CUDA_AWARE_MPI
+!#ifndef WITH_CUDA_AWARE_MPI
       call obj%timer%start("mpi_communication")
 
       call MPI_Bcast(tmp1, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
@@ -495,26 +494,29 @@
                     int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
       call obj%timer%stop("mpi_communication")
-#else
-      tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
-      ! and associate a fortran pointer
-      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk*nblk])
+!#else
+!      tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
+!      ! and associate a fortran pointer
+!      call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk,nblk])
+!      if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
+!      successGPU = gpu_devicesynchronize()
+!      check_memcpy_gpu("cholesky: device_synchronize", successGPU)
+!      if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
+!      call obj%timer%start("mpi_cuda_communication")
+!
+!      call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
+!#if REALCASE == 1
+!                    MPI_REAL_PRECISION,         &
+!#endif
+!#if COMPLEXCASE == 1
+!                    MPI_COMPLEX_PRECISION,      &
+!#endif
+!                    int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+!
+!      call obj%timer%stop("mpi_cuda_communication")
+!#endif
 
-      call obj%timer%start("mpi_cuda_communication")
-
-      call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
-#if REALCASE == 1
-                    MPI_REAL_PRECISION,         &
-#endif
-#if COMPLEXCASE == 1
-                    MPI_COMPLEX_PRECISION,      &
-#endif
-                    int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-
-      call obj%timer%stop("mpi_cuda_communication")
-#endif
-
-#ifndef WITH_CUDA_AWARE_MPI
+!#ifndef WITH_CUDA_AWARE_MPI
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
         successGPU = gpu_memcpy(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
@@ -522,7 +524,7 @@
         check_memcpy_gpu("elpa_cholesky: tmp1 to tmp1_dev", successGPU)
 
       endif
-#endif
+!#endif
 
 #endif /* WITH_MPI */
 
@@ -559,7 +561,9 @@
 
     if (useGPU) then
       if (my_prow==prow(n, nblk, np_rows)) then
-        call copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+        ! if l_cols-l_colx+1 == 0 kernel launch with 0 blocks => raises error
+        if (l_cols-l_colx+1>0) &
+           call copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
       endif
     else ! useGPU
       do i=1,nblk
@@ -573,7 +577,7 @@
     endif ! useGPU
 
 #ifdef WITH_MPI
-#ifndef WITH_CUDA_AWARE_MPI
+!#ifndef WITH_CUDA_AWARE_MPI
     if (useGPU) then
       if (l_cols-l_colx+1 > 0) then
         num = l_cols*nblk*size_of_datatype
@@ -582,12 +586,12 @@
         check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
       endif
     endif
-#endif
+!#endif
 
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
-#ifndef WITH_CUDA_AWARE_MPI
+!#ifndef WITH_CUDA_AWARE_MPI
     do i=1,nblk
       call obj%timer%start("mpi_communication")
       if (l_cols-l_colx+1>0) &
@@ -596,25 +600,30 @@
 
       call obj%timer%stop("mpi_communication")
     enddo
-#else
-    tmatc_mpi_dev = transfer(tmatc_dev, tmatc_mpi_dev)
-    ! and associate a fortran pointer
-    call c_f_pointer(tmatc_mpi_dev, tmatc_mpi_fortran_ptr, [l_cols,nblk])
-
-    do i=1,nblk
-      call obj%timer%start("mpi_cuda_communication")
-      if (l_cols-l_colx+1>0) &
-      call MPI_Bcast(tmatc_mpi_fortran_ptr(l_colx,i), int(l_cols-l_colx+1,kind=MPI_KIND), &
-                     MPI_MATH_DATATYPE_PRECISION, &
-                     int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-
-      call obj%timer%stop("mpi_cuda_communication")
-    enddo
-#endif
+!#else
+!    tmatc_mpi_dev = transfer(tmatc_dev, tmatc_mpi_dev)
+!    ! and associate a fortran pointer
+!    call c_f_pointer(tmatc_mpi_dev, tmatc_mpi_fortran_ptr, [l_cols,nblk])
+!    
+!    if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
+!    successGPU = gpu_devicesynchronize()
+!    check_memcpy_gpu("cholesky: device_synchronize", successGPU)
+!    if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
+!
+!    do i=1,nblk
+!      call obj%timer%start("mpi_cuda_communication")
+!      if (l_cols-l_colx+1>0) &
+!      call MPI_Bcast(tmatc_mpi_fortran_ptr(l_colx,i), int(l_cols-l_colx+1,kind=MPI_KIND), &
+!                     MPI_MATH_DATATYPE_PRECISION, &
+!                     int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+!
+!      call obj%timer%stop("mpi_cuda_communication")
+!    enddo
+!#endif
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
-#ifndef WITH_CUDA_AWARE_MPI
+!#ifndef WITH_CUDA_AWARE_MPI
     if (useGPU) then
       !if (l_cols-l_colx+1 > 0) then
         num = l_cols*nblk*size_of_datatype
@@ -623,7 +632,7 @@
         check_memcpy_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
       !endif
     endif
-#endif
+!#endif
 #endif /* WITH_MPI */
 
     if (useGPU) then
@@ -631,7 +640,8 @@
 
       ! a gpu version of elpa_transpose_vectors is needed
 
-#if !defined(WITH_MPI) || (defined(WITH_MPI) && defined(WITH_CUDA_AWARE_MPI))
+!#if !defined(WITH_MPI) || (defined(WITH_MPI) && defined(WITH_CUDA_AWARE_MPI))
+#if !defined(WITH_MPI)
       ! this memcopy is only needed if
       ! - not mpi case
       ! - or mpi and cuda_aware_mpi

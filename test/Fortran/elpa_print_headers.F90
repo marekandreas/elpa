@@ -168,6 +168,9 @@
 #ifdef WITH_NVIDIA_GPU_KERNEL
         print *,"CUDA GPU support"
 #endif
+#ifdef WITH_NVIDIA_SM80_GPU_KERNEL
+        print *,"CUDA sm_80 GPU support"
+#endif
 #ifdef WITH_INTEL_GPU_KERNEL
         print *,"INTEL GPU support"
 #endif

@@ -65,6 +65,21 @@ module gpu_c_kernel
 #endif
     end subroutine
 
+    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_intptr_t) :: q
+      integer(c_intptr_t) :: hh_tau ,hh
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
+      call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      ! not yet implemented
+      !call launch_compute_hh_trafo_c_hip_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+    end subroutine
+
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine launch_compute_hh_trafo_gpu_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
       use, intrinsic :: iso_c_binding
@@ -79,7 +94,23 @@ module gpu_c_kernel
       call launch_compute_hh_trafo_c_hip_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
+
+    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_intptr_t) :: q
+      integer(c_intptr_t) :: hh_tau ,hh
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
+      call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
+#ifdef WITH_AMD_GPU_VERSION
+      ! not yet implemented
+      !call launch_compute_hh_trafo_c_hip_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+    end subroutine
+
+#endif /* WANT_SINGLE_PRECISION_REAL */
 
     subroutine launch_compute_hh_trafo_gpu_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
       use, intrinsic :: iso_c_binding
@@ -92,6 +123,20 @@ module gpu_c_kernel
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_compute_hh_trafo_c_hip_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+    end subroutine
+
+    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh
+#if defined(WITH_NVIDIA_GPU_VERSION)  && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
+      !call launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      !call launch_compute_hh_trafo_c_hip_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 
@@ -109,7 +154,22 @@ module gpu_c_kernel
       call launch_compute_hh_trafo_c_hip_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
+
+    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
+      !call launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
+#ifdef WITH_AMD_GPU_VERSION
+      !call launch_compute_hh_trafo_c_hip_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+    end subroutine
+
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
     subroutine launch_my_unpack_gpu_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
                l_nev,row_group_dev, a_dev)

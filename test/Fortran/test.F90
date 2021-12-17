@@ -709,7 +709,7 @@ program test
 #endif
    assert_elpa_ok(error_elpa)
 
-#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
+#if TEST_NVIDIA_GPU == 1
    call e%set("nvidia-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
@@ -822,8 +822,12 @@ program test
 #if TEST_NVIDIA_GPU == 1
 #if defined TEST_REAL
 #if (TEST_NVIDIA_GPU == 1)
+#if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY == 1
+     kernel = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
+#else
      kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
 #endif
+#endif /* TEST_NVIDIA_GPU */
 #if (TEST_AMD_GPU == 1)
      kernel = ELPA_2STAGE_REAL_AMD_GPU
 #endif

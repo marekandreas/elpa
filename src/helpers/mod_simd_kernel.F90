@@ -91,6 +91,7 @@ module simd_kernel
     realKernels_to_simdTable(ELPA_2STAGE_REAL_SVE512_BLOCK4)         = SVE512_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_SVE512_BLOCK6)         = SVE512_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_NVIDIA_GPU)            = NVIDIA_INSTR
+    realKernels_to_simdTable(ELPA_2STAGE_REAL_SM80_NVIDIA_GPU)       = NVIDIA_SM80_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_AMD_GPU)               = AMD_GPU_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_INTEL_GPU)             = INTEL_GPU_INSTR
     realKernels_to_simdTable(ELPA_2STAGE_REAL_SPARC64_BLOCK2)        = SPARC_INSTR
@@ -119,21 +120,22 @@ module simd_kernel
     integer(kind=c_int)                        :: kernel
     integer(kind=c_int), intent(in)            :: simd_set_index
 
-    simdTable_to_realKernels(GENERIC_INSTR)   = ELPA_2STAGE_REAL_GENERIC
-    simdTable_to_realKernels(BLUEGENE_INSTR)  = ELPA_2STAGE_REAL_BGP
-    simdTable_to_realKernels(SSE_INSTR)       = ELPA_2STAGE_REAL_SSE_BLOCK2
-    simdTable_to_realKernels(AVX_INSTR)       = ELPA_2STAGE_REAL_AVX_BLOCK2
-    simdTable_to_realKernels(AVX2_INSTR)      = ELPA_2STAGE_REAL_AVX2_BLOCK2
-    simdTable_to_realKernels(AVX512_INSTR)    = ELPA_2STAGE_REAL_AVX512_BLOCK2
-    simdTable_to_realKernels(NVIDIA_INSTR)    = ELPA_2STAGE_REAL_NVIDIA_GPU
-    simdTable_to_realKernels(AMD_GPU_INSTR)   = ELPA_2STAGE_REAL_AMD_GPU
-    simdTable_to_realKernels(INTEL_GPU_INSTR) = ELPA_2STAGE_REAL_INTEL_GPU
-    simdTable_to_realKernels(SPARC_INSTR)     = ELPA_2STAGE_REAL_SPARC64_BLOCK2
-    simdTable_to_realKernels(ARCH64_INSTR)    = ELPA_2STAGE_REAL_NEON_ARCH64_BLOCK2
-    simdTable_to_realKernels(VSX_INSTR)       = ELPA_2STAGE_REAL_VSX_BLOCK2
-    simdTable_to_realKernels(SVE128_INSTR)    = ELPA_2STAGE_REAL_SVE128_BLOCK2
-    simdTable_to_realKernels(SVE256_INSTR)    = ELPA_2STAGE_REAL_SVE256_BLOCK2
-    simdTable_to_realKernels(SVE512_INSTR)    = ELPA_2STAGE_REAL_SVE512_BLOCK2
+    simdTable_to_realKernels(GENERIC_INSTR)     = ELPA_2STAGE_REAL_GENERIC
+    simdTable_to_realKernels(BLUEGENE_INSTR)    = ELPA_2STAGE_REAL_BGP
+    simdTable_to_realKernels(SSE_INSTR)         = ELPA_2STAGE_REAL_SSE_BLOCK2
+    simdTable_to_realKernels(AVX_INSTR)         = ELPA_2STAGE_REAL_AVX_BLOCK2
+    simdTable_to_realKernels(AVX2_INSTR)        = ELPA_2STAGE_REAL_AVX2_BLOCK2
+    simdTable_to_realKernels(AVX512_INSTR)      = ELPA_2STAGE_REAL_AVX512_BLOCK2
+    simdTable_to_realKernels(NVIDIA_INSTR)      = ELPA_2STAGE_REAL_NVIDIA_GPU
+    simdTable_to_realKernels(NVIDIA_SM80_INSTR) = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
+    simdTable_to_realKernels(AMD_GPU_INSTR)     = ELPA_2STAGE_REAL_AMD_GPU
+    simdTable_to_realKernels(INTEL_GPU_INSTR)   = ELPA_2STAGE_REAL_INTEL_GPU
+    simdTable_to_realKernels(SPARC_INSTR)       = ELPA_2STAGE_REAL_SPARC64_BLOCK2
+    simdTable_to_realKernels(ARCH64_INSTR)      = ELPA_2STAGE_REAL_NEON_ARCH64_BLOCK2
+    simdTable_to_realKernels(VSX_INSTR)         = ELPA_2STAGE_REAL_VSX_BLOCK2
+    simdTable_to_realKernels(SVE128_INSTR)      = ELPA_2STAGE_REAL_SVE128_BLOCK2
+    simdTable_to_realKernels(SVE256_INSTR)      = ELPA_2STAGE_REAL_SVE256_BLOCK2
+    simdTable_to_realKernels(SVE512_INSTR)      = ELPA_2STAGE_REAL_SVE512_BLOCK2
 
     kernel = simdTable_to_realKernels(simd_set_index)
 

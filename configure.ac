@@ -758,6 +758,12 @@ if test x"${user_sets_nvidia_gpu_compute_capability}" = x"yes" ; then
     AC_MSG_ERROR([Unknown Nvidia GPU compute capability set: ${withval}])
   fi
 fi
+nvidia_a100_support=no
+if test x"$cuda_compute_capability" = x"sm_80" ; then
+  nvidia_a100_support=yes
+  AC_DEFINE([WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY],[1],[the NVIDIA GPU kernels for A100 can be used])
+fi
+AM_CONDITIONAL([WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY],[test x"${nvidia_a100_support}" = x"yes"])
 
 AC_LANG_PUSH([Fortran])
 dnl Test possibility of 'use mpi', if requested
@@ -1016,6 +1022,12 @@ m4_define(elpa_m4_nvidia_gpu_kernels, [
         complex_nvidia_gpu
 ])
 
+m4_define(elpa_m4_nvidia_sm80_gpu_kernels, [
+        real_nvidia_sm80_gpu
+        complex_nvidia_sm80_gpu
+])
+
+
 m4_define(elpa_m4_amd_gpu_kernels, [
         real_amd_gpu
         complex_amd_gpu
@@ -1026,7 +1038,8 @@ m4_define(elpa_m4_intel_gpu_kernels, [
         complex_intel_gpu
 ])
 
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu])
+#m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu nvidia_sm80_gpu])
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu nvidia_sm80_gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -1071,6 +1084,7 @@ ELPA_SELECT_KERNELS([sve128],[disable])
 ELPA_SELECT_KERNELS([sve256],[disable])
 ELPA_SELECT_KERNELS([sve512],[disable])
 ELPA_SELECT_KERNELS([nvidia_gpu],[disable])
+ELPA_SELECT_KERNELS([nvidia_sm80_gpu],[disable])
 ELPA_SELECT_KERNELS([amd_gpu],[disable])
 ELPA_SELECT_KERNELS([intel_gpu],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
@@ -1123,6 +1137,17 @@ if test x"$with_nvidia_gpu_support_only" = x"yes" ; then
         ])
         use_real_nvidia_gpu=yes
         use_complex_nvidia_gpu=yes
+fi
+
+AC_ARG_WITH(NVIDIA-sm_80_gpu-support-only, [AS_HELP_STRING([--with-NVIDIA-sm_80-gpu-support-only],
+            [Compile and always use the NVIDIA GPU version for compute capability >= sm_80])],
+            [],[with_nvidia_sm80_gpu_support_only=no])
+if test x"$with_nvidia_sm80_gpu_support_only" = x"yes" ; then
+        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
+                      use_[]elpa_m4_kernel[]=no
+        ])
+        use_real_nvidia_sm80_gpu=yes
+        use_complex_nvidia_sm80_gpu=yes
 fi
 
 AC_ARG_WITH(AMD-gpu-support-only, [AS_HELP_STRING([--with-AMD-gpu-support-only],
@@ -1221,7 +1246,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels elpa_m4_intel_gpu_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels elpa_m4_intel_gpu_kernels nvidia_sm80_gpu_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -1646,6 +1671,11 @@ if test x"${use_gpu}" = x"yes" ; then
   need_nvidia_gpu=yes
   use_real_nvidia_gpu=yes
   use_complex_nvidia_gpu=yes
+  # not supported with old flag
+  #if test x"${nvidia_a100_support}" = x"yes" ; then
+  #  use_real_nvidia_sm80_gpu=yes
+  #  use_complex_nvidia_sm80_gpu=yes
+  #fi
 fi
 
 AC_MSG_CHECKING(whether NVIDIA-GPU version should be used)
@@ -1663,6 +1693,10 @@ if test x"${use_nvidia_gpu}" = x"yes" ; then
   need_nvidia_gpu=yes
   use_nvidia_real_gpu=yes
   use_nvidia_complex_gpu=yes
+  if test x"${nvidia_a100_support}" = x"yes" ; then
+    use_real_nvidia_sm80_gpu=yes
+    use_complex_nvidia_sm80_gpu=yes
+  fi
 fi
 
 AC_MSG_CHECKING(whether NVIDIA cusolver library should be used)
@@ -1879,6 +1913,16 @@ if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" 
   ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=1
   ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=1
 
+  if test x"${nvidia_a100_support}" = x"yes" ; then
+    AC_DEFINE([WITH_NVIDIA_SM80_GPU_KERNEL],[1],[Nvidia sm_80 GPU kernel should be build])
+    # currently no complex kernel
+    ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU_COMPILED=0
+    ELPA_2STAGE_REAL_NVIDIA_SM80_GPU_COMPILED=1
+  else
+    ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU_COMPILED=0
+    ELPA_2STAGE_REAL_NVIDIA_SM80_GPU_COMPILED=0
+  fi
+
   AC_MSG_CHECKING(whether --enable-nvtx is specified)
   AC_ARG_ENABLE([nvtx],
                 AS_HELP_STRING([--enable-nvtx],
@@ -1907,6 +1951,8 @@ else
 fi
 AC_SUBST([ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_NVIDIA_SM80_GPU_COMPILED])
 
 AM_CONDITIONAL([WITH_AMD_GPU_VERSION],[test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes"])
 if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
@@ -2290,7 +2336,7 @@ if test x"$have_loop_blocking" = x"yes"; then
 fi
 
 AC_SUBST([SUFFIX])
-AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}-${PACKAGE_VERSION}.pc])
+AC_SUBST([PKG_CONFIG_FILE],[elpa${SUFFIX}.pc])
 
 AC_CONFIG_FILES([
   Makefile
@@ -2481,13 +2527,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-echo " "
-echo "***********************************************************************"
-echo "*  This is the first release candidate of ELPA 2021.11.001.rc1        *"
-echo "*  There might be still some changes until the final release of       *"
-echo "*  ELPA 2021.11.001                                                   *"
-echo "***********************************************************************"
-echo " "
+#echo " "
+#echo "***********************************************************************"
+#echo "*  This is the first release candidate of ELPA 2021.11.001.rc1        *"
+#echo "*  There might be still some changes until the final release of       *"
+#echo "*  ELPA 2021.11.001                                                   *"
+#echo "***********************************************************************"
+#echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
