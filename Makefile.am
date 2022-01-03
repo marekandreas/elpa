@@ -929,6 +929,15 @@ EXTRA_DIST = \
   src/general/error_checking.inc \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/.gitignore \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/CMakeLists.txt \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/LICENSE \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/README.md \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/compute_hh.cu \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/compute_hh_wrapper.f90 \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/cuda_c_interface.cu \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/cuda_f_interface.f90 \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/hh_test.f90 \
   test/Fortran/assert.h \
   test/Fortran/elpa_print_headers.F90 \
   test/shared/test_check_correctness_template.F90 \
