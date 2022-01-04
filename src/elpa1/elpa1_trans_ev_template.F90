@@ -371,7 +371,7 @@ subroutine trans_ev_&
     enddo
 
 #ifdef WITH_MPI
-    if (nb>0) then
+    if (nb > 0) then
       if (useNonBlockingCollectivesCols) then
         call obj%timer%start("mpi_nbc_communication")
         call mpi_ibcast(hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
@@ -422,7 +422,7 @@ subroutine trans_ev_&
         nc = nc+n
       enddo
 #ifdef WITH_MPI
-      if (nc>0) then
+      if (nc > 0) then
         if (useNonBlockingCollectivesRows) then
           call obj%timer%start("mpi_nbc_communication")
           call mpi_iallreduce( h1, h2, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
@@ -487,7 +487,7 @@ subroutine trans_ev_&
 
       ! Q = Q - V * T * V**T * Q
 
-      if (l_rows>0) then
+      if (l_rows > 0) then
         if (useGPU) then
           if (useIntelGPU) then
             call obj%timer%start("mkl_offload")
@@ -605,7 +605,7 @@ subroutine trans_ev_&
 !     tmp2 = tmp1
 #endif /* WITH_MPI */
 
-      if (l_rows>0) then
+      if (l_rows > 0) then
         if (useGPU) then
           if (useIntelGPU) then
 #ifdef WITH_MPI
@@ -764,3 +764,4 @@ end subroutine trans_ev_&
 &MATH_DATATYPE&
 &_&
 &PRECISION
+

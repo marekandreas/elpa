@@ -766,7 +766,7 @@ subroutine tridiag_&
                                      ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
                endif
              endif
-           endif
+           endif ! .not. useGPU
            if (wantDebug) call obj%timer%stop("blas")
          endif
          n_iter = n_iter+1
@@ -823,7 +823,7 @@ subroutine tridiag_&
 
                 if (wantDebug) call obj%timer%stop("mkl_offload")
 
-              else
+              else ! useIntelGPU
                 ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
                 ! this requires altering of the algorithm when later explicitly updating the matrix
                 ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
@@ -843,52 +843,52 @@ subroutine tridiag_&
 !                                             size_of_datatype, 1)
 !                 endif
                 if (wantDebug) call obj%timer%stop("gpublas")
-              endif
+              endif ! useIntelGPU
             else  ! mat_vec_as_one_block
               !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
               !larger matrices. In general, however, this algorithm is very simmilar to the one with CPU
               do i=0,(istep-2)/tile_size
-                  l_col_beg = i*l_cols_per_tile+1
-                  l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-                  if(l_col_end<l_col_beg) cycle
+                l_col_beg = i*l_cols_per_tile+1
+                l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+                if (l_col_end<l_col_beg) cycle
 
-                  l_row_beg = 1
-                  l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
+                l_row_beg = 1
+                l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
                   
-                  if (useIntelGPU) then
-                    if (wantDebug) call obj%timer%start("mkl_offload")
+                if (useIntelGPU) then
+                  if (wantDebug) call obj%timer%start("mkl_offload")
 #if 0
-                    call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                  call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                               int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                               ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),  &
                               v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,  &
                               ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
 #endif
 #ifdef WITH_INTEL_GPU_VERSION
-                    call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                  call mkl_offload_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                               int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                               ONE, a_mat(l_row_beg:matrixRows,l_col_beg:matrixCols), int(matrixRows,kind=BLAS_KIND),  &
                               v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,  &
                               ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
 #endif
-                    if (wantDebug) call obj%timer%stop("mkl_offload")
+                  if (wantDebug) call obj%timer%stop("mkl_offload")
 
-                  else
-                    a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
+                else ! useIntelGPU
+                  a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                             size_of_datatype
 
-                    call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                  call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                                 l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                 ONE, a_dev + a_offset, matrixRows,  &
                                 v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
                                 ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
-                endif
+                endif ! useIntelGPU
               enddo
 
               do i=0,(istep-2)/tile_size
                   l_col_beg = i*l_cols_per_tile+1
                   l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-                  if(l_col_end<l_col_beg) cycle
+                  if (l_col_end<l_col_beg) cycle
 
                   l_row_beg = 1
                   l_row_end = min(l_rows,i*l_rows_per_tile)
@@ -930,7 +930,7 @@ subroutine tridiag_&
                     if (wantDebug) call obj%timer%stop("mkl_offload")
 
 
-                  else
+                  else ! useIntelGPU
                     a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                             size_of_datatype
                     if (isSkewsymmetric) then
@@ -944,7 +944,7 @@ subroutine tridiag_&
                                    v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                                    ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
                    endif
-                endif
+                endif ! useIntelGPU
               enddo
             end if !multiplication as one block / per stripes
 
