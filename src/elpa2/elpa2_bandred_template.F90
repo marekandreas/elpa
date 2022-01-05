@@ -729,66 +729,6 @@ max_threads, isSkewsymmetric)
         aux1 = 0.0_rck
 
 #ifdef WITH_OPENMP_TRADITIONAL
-!#if 0
-! ! original complex implementation without openmp. check performance
-!        nlc = 0 ! number of local columns
-!        do j=1,lc-1
-!          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-!          if (lcx>0) then
-!            nlc = nlc+1
-!            aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
-!          endif
-!        enddo
-!
-!        ! Get global dot products
-!#ifdef WITH_MPI
-!        if (wantDebug) call obj%timer%start("mpi_communication")
-!        if (nlc>0) call mpi_allreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_COMPLEX_PRECISION, MPI_SUM, &
-!                                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-!
-!        ! Transform
-!
-!        nlc = 0
-!        do j=1,lc-1
-!          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-!          if (lcx>0) then
-!            nlc = nlc+1
-!            a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
-!
-!          endif
-!        enddo
-!
-!
-!        if (wantDebug) call obj%timer%stop("mpi_communication")
-!
-!#else /* WITH_MPI */
-!
-!        ! Transform
-!
-!        nlc = 0
-!        do j=1,lc-1
-!          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-!          if (lcx>0) then
-!            nlc = nlc+1
-!            a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
-!          endif
-!        enddo
-!
-!#endif /* WITH_MPI */
-!!
-!!       ! Transform
-!!
-!!       nlc = 0
-!!       do j=1,lc-1
-!!         lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-!!         if (lcx>0) then
-!!           nlc = nlc+1
-!!           a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
-!
-!!         endif
-!!       enddo
-!#endif /* if 0 */
-
         !Open up one omp region to avoid paying openmp overhead.
         !This does not help performance due to the addition of two openmp barriers around the MPI call,
         !But in the future this may be beneficial if these barriers are replaced with a faster implementation
@@ -826,7 +766,7 @@ max_threads, isSkewsymmetric)
 #ifdef WITH_MPI
         if (useNonBlockingCollectivesRows) then
           if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-          if (mynlc>0) then
+          if (mynlc > 0) then
             call mpi_iallreduce(aux1, aux2, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                                         MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                                         allreduce_request2, mpierr)
@@ -843,7 +783,7 @@ max_threads, isSkewsymmetric)
           if (wantDebug) call obj%timer%stop("mpi_communication")
         endif
 #else /* WITH_MPI */
-        if (mynlc>0) aux2 = aux1
+        if (mynlc > 0) aux2 = aux1
 #endif /* WITH_MPI */
         !$omp end single
         !$omp barrier
@@ -853,7 +793,7 @@ max_threads, isSkewsymmetric)
         mynlc = 0
         do j=1,lc-1
           lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-          if (lcx>0) then
+          if (lcx > 0) then
             mynlc = mynlc+1
             !This loop could be parallelized with an openmp pragma with static scheduling and chunk size 32
             !However, for some reason this is slower than doing it manually, so it is parallelized as below.
@@ -887,7 +827,7 @@ max_threads, isSkewsymmetric)
 #ifdef WITH_MPI
         if (useNonBlockingCollectivesRows) then
           if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-          if (nlc>0) then
+          if (nlc > 0) then
             call mpi_iallreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                                       MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                                       allreduce_request3, mpierr)
@@ -904,7 +844,7 @@ max_threads, isSkewsymmetric)
           if (wantDebug) call obj%timer%stop("mpi_communication")
         endif
 #else /* WITH_MPI */
-        if (nlc>0) aux2=aux1
+        if (nlc > 0) aux2=aux1
 #endif /* WITH_MPI */
         ! Transform
 
@@ -1053,7 +993,7 @@ max_threads, isSkewsymmetric)
                                         (obj, vmrCPU, ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                          umcCPU(1,n_cols+1), ubound(umcCPU,dim=1), mpi_comm_cols, &
                                          1, istep*nbw, n_cols, nblk, max_threads, .true.)
-    endif
+    endif ! useGPU
 
     ! Calculate umc = A**T * vmr
     ! Note that the distributed A has to be transposed
@@ -1115,7 +1055,7 @@ max_threads, isSkewsymmetric)
         vmrCPU(i,n_cols+1:2*n_cols) = 0.0_rck
       enddo
 
-      if (l_cols>0 .and. l_rows>0) then
+      if (l_cols > 0 .and. l_rows > 0) then
 
         !SYMM variant 4
         !Partitioned Matrix Expression:
@@ -1185,7 +1125,7 @@ max_threads, isSkewsymmetric)
         vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0.0_rck
       endif ! useGPU
 
-      if (l_cols>0 .and. l_rows>0) then
+      if (l_cols > 0 .and. l_rows > 0) then
 
         if (useGPU .and. .not.(useIntelGPU)) then
           successGPU = gpu_memset(vmr_dev+cur_l_rows*n_cols*size_of_datatype, &
@@ -1231,7 +1171,7 @@ max_threads, isSkewsymmetric)
                                   int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
 #endif
               call obj%timer%stop("mkl_offload")
-              if (i==0) cycle
+              if (i == 0) cycle
               lre = min(l_rows,i*l_rows_tile)
               call obj%timer%start("mkl_offload")
 
@@ -1267,7 +1207,7 @@ max_threads, isSkewsymmetric)
               endif
               call obj%timer%stop("mkl_offload")
 
-            else
+            else ! useIntelGPU
               call obj%timer%start("gpublas")
               call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
                                          lce-lcs+1, n_cols, lre,     &
@@ -1280,7 +1220,7 @@ max_threads, isSkewsymmetric)
 
               call obj%timer%stop("gpublas")
 
-              if(i==0) cycle
+              if(i == 0) cycle
               call obj%timer%start("gpublas")
 
               lre = min(l_rows,i*l_rows_tile)
@@ -1304,7 +1244,7 @@ max_threads, isSkewsymmetric)
                                               cur_l_rows)
               endif
               call obj%timer%stop("gpublas")
-            endif
+            endif ! useIntelGPU
           else ! useGPU
 
             call obj%timer%start("blas")
@@ -1314,7 +1254,7 @@ max_threads, isSkewsymmetric)
                                 vmrCPU, int(ubound(vmrCPU,dim=1),kind=BLAS_KIND), ONE, umcCPU(lcs,1), &
                                 int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
             call obj%timer%stop("blas")
-            if (i==0) cycle
+            if (i == 0) cycle
             lre = min(l_rows,i*l_rows_tile)
             call obj%timer%start("blas")
 
@@ -1369,7 +1309,7 @@ max_threads, isSkewsymmetric)
                                        umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                       istep*nbw, n_cols, nblk, max_threads)
 
-        else
+        else ! useIntelGPU
 
           call elpa_reduce_add_vectors_&
                &MATH_DATATYPE&
@@ -1378,7 +1318,7 @@ max_threads, isSkewsymmetric)
                                (obj, vmrGPU(cur_l_rows * n_cols + 1:),cur_l_rows,  &
                                 mpi_comm_rows, umcGPU,                            &
                                 cur_l_cols, mpi_comm_cols, istep*nbw, n_cols, nblk, max_threads)
-        endif
+        endif ! useIntelGPU
       else ! useGPU
 
         call elpa_reduce_add_vectors_&
@@ -1391,7 +1331,7 @@ max_threads, isSkewsymmetric)
       endif ! useGPU
     endif ! tile_size < istep*nbw .or. n_way > 1
 
-    if (l_cols>0) then
+    if (l_cols > 0) then
 
       if (useGPU) then
         if (useIntelGPU) then
@@ -1419,7 +1359,7 @@ max_threads, isSkewsymmetric)
 
           deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
           check_deallocate("bandred: tmpCPU", istat, errorMessage)
-        else
+        else ! useIntelGPU
 #ifdef WITH_MPI
           allocate(tmpGPU(l_cols * n_cols), stat=istat, errmsg=errorMessage)
           check_allocate("bandred: tmpGPU", istat, errorMessage)
@@ -1446,7 +1386,7 @@ max_threads, isSkewsymmetric)
             deallocate(tmpGPU, stat=istat, errmsg=errorMessage)
             check_deallocate("bandred: tmpGPU", istat, errorMessage)
           endif
-        endif
+        endif ! useIntelGPU
 
       else ! useGPU
 
@@ -1520,7 +1460,7 @@ max_threads, isSkewsymmetric)
 #endif
 #endif
 
-      else
+      else ! useIntelGPU
         successGPU = gpu_memcpy(umc_dev, int(loc(umcGPU(1)),kind=c_intptr_t), &
                       l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("bandred: umcGPU -> umc_dev ", successGPU)
@@ -1548,7 +1488,7 @@ max_threads, isSkewsymmetric)
         successGPU = gpu_memcpy(int(loc(vav),kind=c_intptr_t), &
                     vav_dev, nbw*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("bandred: vav_dev -> vav ", successGPU)
-      endif
+      endif ! useIntelGPU
     else ! useGPU
 
       call obj%timer%start("blas")
@@ -1607,47 +1547,47 @@ max_threads, isSkewsymmetric)
 
     if (useGPU) then
       if (useIntelGPU) then
-      call obj%timer%start("mkl_offload")
+        call obj%timer%start("mkl_offload")
 #if REALCASE == 1
-      if (isSkewsymmetric) then
-        call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
+        if (isSkewsymmetric) then
+          call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
                             0.5_rk, umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav,                        &
                             int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
-      else
-        call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
+        else
+          call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
                             -0.5_rk, umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav,                       &
                             int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND) )
-      endif
+        endif
 #endif
 #if COMPLEXCASE == 1
-      call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
+        call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
                          (-0.5_rk, 0.0_rk),     &
                          umcCPU(1,n_cols+1), int(ubound(umcCPU,dim=1),kind=BLAS_KIND), vav, &
                          int(ubound(vav,dim=1),kind=BLAS_KIND), ONE, umcCPU, int(ubound(umcCPU,dim=1),kind=BLAS_KIND))
 #endif
 
-      call obj%timer%stop("mkl_offload")
+        call obj%timer%stop("mkl_offload")
 
-      ! Transpose umc -> umr (stored in vmr, second half)
-      if (isSkewsymmetric) then
-        call elpa_transpose_vectors_ss_&
+        ! Transpose umc -> umr (stored in vmr, second half)
+        if (isSkewsymmetric) then
+          call elpa_transpose_vectors_ss_&
           &MATH_DATATYPE&
-        &_&
-        &PRECISION &
+          &_&
+          &PRECISION &
                                  (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                         vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                         1, istep*nbw, n_cols, nblk, max_threads, .false.)
-      else
-       call elpa_transpose_vectors_&
-       &MATH_DATATYPE&
-       &_&
-       &PRECISION &
+        else
+         call elpa_transpose_vectors_&
+         &MATH_DATATYPE&
+         &_&
+         &PRECISION &
                                 (obj, umcCPU, ubound(umcCPU,dim=1), mpi_comm_cols, &
                                           vmrCPU(1,n_cols+1), ubound(vmrCPU,dim=1), mpi_comm_rows, &
                                           1, istep*nbw, n_cols, nblk, max_threads, .false.)
-      endif
+        endif
 
-      else
+      else ! useIntelGPU
         call obj%timer%start("gpublas")
         if (isSkewsymmetric) then
           call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
@@ -1703,7 +1643,7 @@ max_threads, isSkewsymmetric)
                     int(loc(vmrGPU(1+cur_l_rows*n_cols)),kind=c_intptr_t), &
                     (vmr_size-cur_l_rows*n_cols)*size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("bandred: vmr -> vmrGPU ", successGPU)
-      endif
+      endif ! useIntelGPU
 
     else ! useGPU
       call obj%timer%start("blas")
@@ -1793,7 +1733,7 @@ max_threads, isSkewsymmetric)
 
           call obj%timer%stop("mkl_offload")
 
-        else
+        else ! useIntelGPU
           if (n_way .gt. 1) then
             print *,"error more than 1 openmp thread used in GPU part of elpa2_bandred"
             print *,"this should never happen"
@@ -1808,8 +1748,8 @@ max_threads, isSkewsymmetric)
                                    cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
                                    size_of_datatype), lda)
           call obj%timer%stop("gpublas")
-        endif
-      else
+        endif ! useIntelGPU
+      else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(myend-mystart+1,kind=BLAS_KIND), &
                             int(lce-lcs+1,kind=BLAS_KIND), int(2*n_cols,kind=BLAS_KIND), -ONE, &
@@ -1817,7 +1757,7 @@ max_threads, isSkewsymmetric)
                             umcCPU(lcs,1), int(ubound(umcCPU,1),kind=BLAS_KIND), &
                             ONE, a_mat(mystart,lcs), int(ubound(a_mat,1),kind=BLAS_KIND) )
         call obj%timer%stop("blas")
-      endif
+      endif ! useGPU
     enddo
     !$omp end parallel
 
@@ -1840,7 +1780,7 @@ max_threads, isSkewsymmetric)
                               ONE, a_mat(1,lcs), int(lda,kind=BLAS_KIND))
           call obj%timer%stop("mkl_offload")
 
-        else
+        else ! useIntelGPU
           call obj%timer%start("gpublas")
 
           call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
@@ -1850,7 +1790,7 @@ max_threads, isSkewsymmetric)
                                      cur_l_cols, ONE, (a_dev+(lcs-1)*lda* &
                                      size_of_datatype), lda)
           call obj%timer%stop("gpublas")
-        endif
+        endif ! useIntelGPU
       else ! useGPU
 
         call obj%timer%start("blas")
