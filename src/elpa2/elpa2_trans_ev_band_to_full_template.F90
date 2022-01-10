@@ -547,7 +547,7 @@ subroutine trans_ev_band_to_full_&
 #endif
             !call obj%timer%stop("mkl_offload")
             tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
-          else
+          else ! useIntelGPU
 #ifdef WITH_CUDA_AWARE_MPI
             successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                             cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
@@ -592,7 +592,7 @@ subroutine trans_ev_band_to_full_&
             tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
             
 #endif /* WITH_CUDA_AWARE_MPI */
-          endif
+          endif ! useIntelGPU
 
         else ! useGPU
           call obj%timer%start("blas")
@@ -688,7 +688,7 @@ subroutine trans_ev_band_to_full_&
 
     ! Q = Q - V * T**T * V**T * Q
 
-    if (l_rows>0) then
+    if (l_rows > 0) then
       if (useGPU) then
         if (useIntelGPU) then
           !call obj%timer%start("mkl_offload")
@@ -845,7 +845,7 @@ subroutine trans_ev_band_to_full_&
 
     endif
 #else /* WITH_MPI */
-    if (l_rows>0) then
+    if (l_rows > 0) then
       if (useGPU) then
         if (useIntelGPU) then
 #if 0
