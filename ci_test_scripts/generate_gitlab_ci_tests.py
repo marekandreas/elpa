@@ -26,24 +26,24 @@ def set_compiler_wrappers(mpi, fc, cc, instr, fortran_compiler, c_compiler):
     fortran_compiler_wrapper="undefined"
     c_compiler_wrapper = "undefined"
     if (instr != "power8"):
-        if (m == "mpi" and fc == "intel"):
+        if (m == "mpi" and fc == "intel2"):
             fortran_compiler_wrapper="mpiifort -fc=ifx"
         #if (m == "mpi" and fc == "intel2"):
         #    fortran_compiler_wrapper="mpiifort"
         if (m == "mpi" and fc == "gnu"):
             fortran_compiler_wrapper="mpif90"
-        if (m == "mpi" and cc == "intel"):
+        if (m == "mpi" and cc == "intel2"):
             c_compiler_wrapper="mpiicc -cc=icx"
         #if (m == "mpi" and cc == "intel2"):
         #    c_compiler_wrapper="mpiicc"
         if (m == "mpi" and cc == "gnu"):
             c_compiler_wrapper="mpicc"
 
-        if (m == "nompi" and fc == "intel"):
+        if (m == "nompi" and fc == "intel2"):
             fortran_compiler_wrapper=fortran_compiler[fc]
         if (m == "nompi" and fc == "gnu"):
             fortran_compiler_wrapper=fortran_compiler[fc]
-        if (m == "nompi" and cc == "intel"):
+        if (m == "nompi" and cc == "intel2"):
             c_compiler_wrapper=c_compiler[cc]
         if (m == "nompi" and cc == "gnu"):
             c_compiler_wrapper=c_compiler[cc]
@@ -66,7 +66,7 @@ def set_scalapack_flags(instr, fc, g, m, o):
     ldflags="undefined"
 
     if (instr != "power8"):
-        if (fc == "intel"):
+        if (fc == "intel2"):
             if (m == "mpi"):
                 if (o == "openmp"):
                     scalapackldflags="$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_OMP "
@@ -568,13 +568,13 @@ print("#The tests follow here")
 
 c_compiler = {
         "gnu"   : "gcc",
-        "intel" : "icx",
+        "intel2" : "icx",
 }
 # "oneapi" : "icx",
 # "intel" : "icc",
 fortran_compiler = {
         "gnu" : "gfortran",
-        "intel" : "ifx",
+        "intel2" : "ifx",
 }
 # "oneapi" : "ifx",
 # "intel" : "ifort",
@@ -677,13 +677,13 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
     #            - on KNL only use intel, do not test openmp
     if (instr == "power8" and (fc !="pgi" and fc !="gnu")):
         continue
-    if (instr == "knl" and (fc !="intel" and cc !="intel")):
+    if (instr == "knl" and (fc !="intel2" and cc !="intel2")):
         continue
     if (instr == "knl" and o == "openmp"):
         continue
     if (fc == "pgi" and instr !="power8"):
         continue
-    if ( cc == "intel" and fc == "gnu"):
+    if ( cc == "intel2" and fc == "gnu"):
         continue
     if (fc == "pgi" and g !="with-gpu"):
         continue
@@ -758,9 +758,9 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         continue
 
     #no gpu testing with intel C compiler (gcc needed)
-    if (g == "with-gpu" and cc == "intel"):
+    if (g == "with-gpu" and cc == "intel2"):
         continue
-    if (g == "with-sm80-gpu" and cc == "intel"):
+    if (g == "with-sm80-gpu" and cc == "intel2"):
         continue
 
     #at the moment gpu testing only on AVX machines or minskys
