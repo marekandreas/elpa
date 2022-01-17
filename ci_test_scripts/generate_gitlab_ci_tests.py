@@ -27,13 +27,13 @@ def set_compiler_wrappers(mpi, fc, cc, instr, fortran_compiler, c_compiler):
     c_compiler_wrapper = "undefined"
     if (instr != "power8"):
         if (m == "mpi" and fc == "intel"):
-            fortran_compiler_wrapper="mpiifort"
+            fortran_compiler_wrapper="mpiifort -fc=ifx"
         #if (m == "mpi" and fc == "intel2"):
         #    fortran_compiler_wrapper="mpiifort"
         if (m == "mpi" and fc == "gnu"):
             fortran_compiler_wrapper="mpif90"
         if (m == "mpi" and cc == "intel"):
-            c_compiler_wrapper="mpiicc"
+            c_compiler_wrapper="mpiicc -cc=icx"
         #if (m == "mpi" and cc == "intel2"):
         #    c_compiler_wrapper="mpiicc"
         if (m == "mpi" and cc == "gnu"):
@@ -568,13 +568,13 @@ print("#The tests follow here")
 
 c_compiler = {
         "gnu"   : "gcc",
-        "intel" : "icc",
+        "intel" : "icx",
 }
 # "oneapi" : "icx",
 # "intel" : "icc",
 fortran_compiler = {
         "gnu" : "gfortran",
-        "intel" : "ifort",
+        "intel" : "ifx",
 }
 # "oneapi" : "ifx",
 # "intel" : "ifort",
