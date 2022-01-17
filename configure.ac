@@ -2176,6 +2176,22 @@ if test x"${enable_c_tests}" = x"yes"; then
  AC_DEFINE([ENABLE_C_TESTS], [1], [enable C tests])
 fi
 
+AC_MSG_CHECKING(make compilable with Intel ifx)
+AC_ARG_ENABLE([ifx-compiler],
+              AS_HELP_STRING([--enable-ifx-compiler],
+                             [enable builds with ifx, default no.]),
+			     [if test x"$enableval" = x"yes"; then
+			        enable_ifx_compiler=yes
+		              else
+				enable_ifx_compiler=no
+			      fi],
+              [enable_ifx_compiler=no])
+AC_MSG_RESULT([${enable_ifx_compiler}])
+if test x"${enable_ifx_compiler}" = x"yes"; then
+ AC_DEFINE([ENABLE_IFX_COMPILER], [1], [enable ifx compiler builds])
+fi
+
+
 AC_MSG_CHECKING(whether we build for K-computer)
 AC_ARG_ENABLE([K-computer],
               AS_HELP_STRING([--enable-K-computer],
