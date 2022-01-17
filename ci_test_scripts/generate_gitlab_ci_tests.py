@@ -28,10 +28,14 @@ def set_compiler_wrappers(mpi, fc, cc, instr, fortran_compiler, c_compiler):
     if (instr != "power8"):
         if (m == "mpi" and fc == "intel"):
             fortran_compiler_wrapper="mpiifort"
+        if (m == "mpi" and fc == "oneapi"):
+            fortran_compiler_wrapper="mpiifort -fc=ifx"
         if (m == "mpi" and fc == "gnu"):
             fortran_compiler_wrapper="mpif90"
         if (m == "mpi" and cc == "intel"):
             c_compiler_wrapper="mpiicc"
+        if (m == "mpi" and cc == "oneapi"):
+            c_compiler_wrapper="mpiicc -cc=icx"
         if (m == "mpi" and cc == "gnu"):
             c_compiler_wrapper="mpicc"
 
@@ -566,11 +570,13 @@ c_compiler = {
         "gnu"   : "gcc",
         "intel" : "icc",
 }
+# "oneapi" : "icx",
 fortran_compiler = {
         "gnu" : "gfortran",
         "intel" : "ifort",
         "pgi"   : "pgfortran",
 }
+# "oneapi" : "ifx",
 mpi = {
         "mpi"   : "--with-mpi=yes",
         "nompi" : "--with-mpi=no --disable-mpi-module",
