@@ -418,7 +418,7 @@ subroutine qr_pdlarft_tree_merge_1dcomm_&
     end if
 #else
     if (localsize .gt. 0) then
-        call dsyrk("Upper", "Trans", int(n,kind=BLAS_KIND), int(localsize,kind=BLAS_KIND), &
+        call ssyrk("Upper", "Trans", int(n,kind=BLAS_KIND), int(localsize,kind=BLAS_KIND), &
                    1.0_rk4, v(baseoffset,1), int(ldv,kind=BLAS_KIND), 0.0_rk4, work(1,1), int(n,kind=BLAS_KIND))
     else
         work(1:n,1:n) = 0.0_rk4
