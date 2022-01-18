@@ -107,11 +107,11 @@ subroutine qr_pdlarfb_1dcomm_&
     ! Z' = Y' * A
     if (localsize .gt. 0) then
 #ifdef DOUBLE_PRECISION_REAL
-        call dgemm("Trans", "Notrans",int(k,kind=BLAS_KIND), int(n,kind=BLAS_KIND), localsize, &
+        call dgemm("Trans", "Notrans",int(k,kind=BLAS_KIND), int(n,kind=BLAS_KIND), int(localsize,kind=BLAS_KIND), &
                    1.0_rk8, v(baseoffset,1), int(ldv,kind=BLAS_KIND), &
                    a(offset,1), int(lda, kind=BLAS_KIND), 0.0_rk8, work(1,1), int(k,kind=BLAS_KIND))
 #else
-        call sgemm("Trans", "Notrans",int(k,kind=BLAS_KIND), int(n,kind=BLAS_KIND), localsize, &
+        call sgemm("Trans", "Notrans",int(k,kind=BLAS_KIND), int(n,kind=BLAS_KIND), int(localsize,kind=BLAS_KIND), &
                    1.0_rk4, v(baseoffset,1), int(ldv,kind=BLAS_KIND), &
                    a(offset,1), int(lda, kind=BLAS_KIND), 0.0_rk4, work(1,1), int(k,kind=BLAS_KIND))
 #endif
@@ -200,7 +200,7 @@ subroutine qr_pdlarft_pdlarfb_1dcomm_&
 
             ! calculate matrix matrix product of householder vectors and target matrix
             ! Z' = Y' * A
-            call dgemm("Trans", "Notrans", int(k,kind=BLAS_KIND), int(n,kind=BLAS_KIND), localsize, &
+            call dgemm("Trans", "Notrans", int(k,kind=BLAS_KIND), int(n,kind=BLAS_KIND), int(localsize,kind=BLAS_KIND), &
                        1.0_rk8, v(baseoffset,1), int(ldv,kind=BLAS_KIND), a(offset,1), &
                        int(lda,kind=BLAS_KIND), 0.0_rk8, work(1,k+1), int(k,kind=BLAS_KIND))
 
