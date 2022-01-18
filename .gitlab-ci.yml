@@ -9,8 +9,8 @@ include:
   remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/special_tests.inc.yml'
 include:
   remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/project_tests.inc.yml'
-include:
-  remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/generated_tests.inc.yml'
+    #include:
+    #remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/generated_tests.inc.yml'
 
 
 
