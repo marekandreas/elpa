@@ -1,0 +1,36 @@
+# test_project_1stage_gnu
+test_project_1stage_gnu:
+  tags:
+    - project_test
+  script:
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                       SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                       SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                       --enable-option-checking=fatal  --disable-avx2 --disable-avx512 --prefix=$PWD/installdest --disable-avx2 --disable-avx512 || { cat config.log; exit 1; } "                       -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage -e test_real                       -C " FC=mpif90 PKG_CONFIG_PATH=$PWD/installdest/lib/pkgconfig                        --enable-option-checking=fatal || { cat config.log; exit 1; } " 
+
+
+
+# test_project_2stage_gnu
+test_project_2stage_gnu:
+  tags:
+    - project_test
+  script:
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpif90 FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                       SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                       SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                       --enable-option-checking=fatal  --disable-avx2 --disable-avx512 --prefix=$PWD/installdest --disable-avx2 --disable-avx512 || { cat config.log; exit 1; } "                       -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage -e test_real2                       -C " FC=mpif90 PKG_CONFIG_PATH=$PWD/installdest/lib/pkgconfig                        --enable-option-checking=fatal || { cat config.log; exit 1; } " 
+
+
+
+# test_project_1stage_intel
+test_project_1stage_intel:
+  tags:
+    - project_test
+  script:
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                       SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                       SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                       --enable-option-checking=fatal  --disable-avx2  --disable-avx512 --prefix=$PWD/installdest --disable-avx2 --disable-avx512 || { cat config.log; exit 1; } "                       -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM -p test_project_1stage -e test_real                       -C " FC=mpiifort PKG_CONFIG_PATH=$PWD/installdest/lib/pkgconfig                         --enable-option-checking=fatal || { cat config.log; exit 1; } " 
+
+
+
+# test_project_2stage_intel
+test_project_2stage_intel:
+  tags:
+    - project_test
+  script:
+    - ./ci_test_scripts/run_project_tests.sh -c " FC=mpiifort FCFLAGS=\"-march=native \" CFLAGS=\"-march=native\"                       SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"                       SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\"                       --enable-option-checking=fatal  --disable-avx2  --disable-avx512 --prefix=$PWD/installdest --disable-avx2 --disable-avx512 || { cat config.log; exit 1; } "                       -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM -p test_project_2stage -e test_real2                       -C " FC=mpiifort PKG_CONFIG_PATH=$PWD/installdest/lib/pkgconfig                         --enable-option-checking=fatal || { cat config.log; exit 1; } " 
+
+
+

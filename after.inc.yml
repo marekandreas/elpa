@@ -1,0 +1,8 @@
+# For some reason sometimes not-writable files remain, which cause trouble the
+# next time a runner tries to clean-up
+after_script:
+  - chmod u+w -R .
+  - if [ ! -f ./debug.keep ]; then find . -exec chmod a+rxw {} \; && rm -rf * ; fi
+
+
+
