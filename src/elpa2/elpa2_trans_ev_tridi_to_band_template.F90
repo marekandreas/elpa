@@ -3224,14 +3224,28 @@ subroutine trans_ev_tridi_to_band_&
           else ! useGPU
 
             do i = 1, min(na - num_blk*nblk, nblk)
+
+
+
+
 #ifdef WITH_OPENMP_TRADITIONAL
-              call pack_row_&
+              call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+              !$omp parallel do &
+              !$omp default(none) &
+              !$omp private(my_thread) &
+              !$omp shared(max_threads, obj, aIntern, row, i, limits, ip, stripe_count, thread_width, &
+              !$omp&       stripe_width, l_nev, j, nblk, a_off) &
+              !$omp schedule(static, 1)
+              do my_thread = 1, max_threads
+                call pack_row_&
                    &MATH_DATATYPE&
                    &_cpu_openmp_&
                    &PRECISION&
-                   &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, max_threads, thread_width, l_nev)
+                   &(obj, aIntern, row, j*nblk+i+a_off, stripe_width, stripe_count, my_thread, thread_width, l_nev)
+              enddo
+              !$omp end parallel do
+              call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 #else /* WITH_OPENMP_TRADITIONAL */
-
               call pack_row_&
                    &MATH_DATATYPE&
                    &_cpu_&
@@ -3258,12 +3272,23 @@ subroutine trans_ev_tridi_to_band_&
           else  ! useGPU
             do i = 1, nblk
 #ifdef WITH_OPENMP_TRADITIONAL
-              call pack_row_&
+              call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+              !$omp parallel do &
+              !$omp default(none) &
+              !$omp private(my_thread) &
+              !$omp shared(max_threads, obj, aIntern, result_buffer, i, limits, ip, stripe_count, thread_width, &
+              !$omp&       stripe_width, l_nev, j, nblk, a_off, nbuf) &
+              !$omp schedule(static, 1)
+              do my_thread = 1, max_threads
+                call pack_row_&
                    &MATH_DATATYPE&
                    &_cpu_openmp_&
                    &PRECISION&
-                   &(obj,aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, stripe_width, stripe_count, &
-                   max_threads, thread_width, l_nev)
+                   &(obj, aIntern, result_buffer(:,i,nbuf), j*nblk+i+a_off, stripe_width, stripe_count, &
+                     my_thread, thread_width, l_nev)
+              enddo
+              !$omp end parallel do
+              call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 #else /* WITH_OPENMP_TRADITIONAL */
               call pack_row_&
                    &MATH_DATATYPE&

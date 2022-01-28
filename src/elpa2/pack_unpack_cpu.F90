@@ -53,7 +53,7 @@ subroutine pack_row_&
 &PRECISION &
 (obj, a, row, n, stripe_width,  &
 #ifdef WITH_OPENMP_TRADITIONAL
-stripe_count, max_threads, thread_width, l_nev)
+stripe_count, my_thread, thread_width, l_nev)
 #else
 last_stripe_width, stripe_count)
 #endif
@@ -64,7 +64,7 @@ last_stripe_width, stripe_count)
 
   integer(kind=ik), intent(in)               :: n, stripe_count, stripe_width
 #ifdef WITH_OPENMP_TRADITIONAL
-  integer(kind=ik), intent(in)               :: max_threads, thread_width, l_nev
+  integer(kind=ik), intent(in)               :: my_thread, thread_width, l_nev
   logical                                    :: useOPENMP
 
 #if REALCASE == 1
@@ -107,22 +107,24 @@ last_stripe_width, stripe_count)
   &PRECISION_SUFFIX &
   )
 
+  do i = 1, stripe_count
 #ifdef WITH_OPENMP_TRADITIONAL
-  do nt = 1, max_threads
-    do i = 1, stripe_count
-      noff = (nt-1)*thread_width + (i-1)*stripe_width
-      nl   = min(stripe_width, nt*thread_width-noff, l_nev-noff)
-      if (nl<=0) exit
-      row(noff+1:noff+nl) = a(1:nl,n,i,nt)
-    enddo
-  enddo
+  !do nt = 1, max_threads
+  !do i = 1, stripe_count
+    noff = (my_thread-1)*thread_width + (i-1)*stripe_width
+    nl   = min(stripe_width, my_thread*thread_width-noff, l_nev-noff)
+    if (nl<=0) exit
+    row(noff+1:noff+nl) = a(1:nl,n,i,my_thread)
+  ! enddo
+  !enddo
 #else
-  do i=1,stripe_count
+  !do i=1,stripe_count
     nl = merge(stripe_width, last_stripe_width, i<stripe_count)
     noff = (i-1)*stripe_width
     row(noff+1:noff+nl) = a(1:nl,n,i)
-  enddo
+  !enddo
 #endif
+  enddo
 
   call obj%timer%stop("pack_row_&
   &MATH_DATATYPE&
