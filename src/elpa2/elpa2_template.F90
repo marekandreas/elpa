@@ -533,12 +533,12 @@
         do_useGPU = .false.
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
-        if (kernel == GPU_KERNEL .or. kernel == GPU_KERNEL2) then
+        if (kernel .ne. GPU_KERNEL .and. kernel .ne. GPU_KERNEL2) then
 #else
-        if (kernel == GPU_KERNEL) then
+        if (kernel .ne. GPU_KERNEL) then
 #endif
 #else /* REALCASE == 1 */
-        if (kernel == GPU_KERNEL) then
+        if (kernel .ne. GPU_KERNEL) then
 #endif /* REALCASE == 1 */
           if (userHasSetKernel) then
             ! user fixed inconsistent input.
