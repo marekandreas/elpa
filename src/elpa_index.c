@@ -58,7 +58,9 @@
 #endif
 
 int max_threads_glob;
+int max_threads_glob_1;
 int set_max_threads_glob=0;
+int set_max_threads_glob_1=0;
 int const default_max_stored_rows = 256;   
 
 static int enumerate_identity(elpa_index_t index, int i);
@@ -1206,15 +1208,15 @@ static int omp_threads_enumerate(elpa_index_t index, int i) {
 static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
         int max_threads;
 #ifdef WITH_OPENMP_TRADITIONAL
-	if (set_max_threads_glob == 0) {
-		max_threads_glob = omp_get_max_threads();
-		set_max_threads_glob = 1;
+	if (set_max_threads_glob_1 == 0) {
+		max_threads_glob_1 = omp_get_max_threads();
+		set_max_threads_glob_1 = 1;
 	}
 #else
-	max_threads_glob = 1;
-	set_max_threads_glob = 1;
+	max_threads_glob_1 = 1;
+	set_max_threads_glob_1 = 1;
 #endif
-	max_threads = max_threads_glob;
+	max_threads = max_threads_glob_1;
         return (1 <= new_value) && (new_value <= max_threads);
 }
 
