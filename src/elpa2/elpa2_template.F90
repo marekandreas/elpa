@@ -803,6 +803,7 @@ print *,"Device pointer + REDIST"
           write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is set by the user as non-GPU!"
           write(error_unit,*) "The compute kernel will be executed on CPUs!"
           do_useGPU_trans_ev_tridi_to_band = .false.
+          stop
           kernel = DEFAULT_KERNEL
         else
           good_nblk_gpu = .false.
@@ -878,6 +879,7 @@ print *,"Device pointer + REDIST"
         ! combination not allowed
         write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
                             &is defined as the GPU kernel!  Setting default kernel"
+                    stop
         kernel = DEFAULT_KERNEL
         !TODO do error handling properly
       endif
@@ -1522,5 +1524,4 @@ print *,"Device pointer + REDIST"
 
    end function
 
-    print *,"ELPA will use ", nrThreads
 ! vim: syntax=fortran
