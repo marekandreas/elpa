@@ -647,7 +647,7 @@ subroutine trans_ev_tridi_to_band_&
 #else
     num = (stripe_width*a_dim2*stripe_count)* size_of_datatype
 #endif
-    successGPU = gpu_malloc(aIntern_dev, num* size_of_datatype)
+    successGPU = gpu_malloc(aIntern_dev, num)
     check_alloc_gpu("trans_ev_tridi_to_band: aIntern_dev", successGPU)
 
     ! openmp loop here
