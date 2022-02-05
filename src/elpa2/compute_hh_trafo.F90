@@ -338,13 +338,23 @@ last_stripe_width, kernel)
 #endif
 
 #if REALCASE == 1
-! currently only real case
-      call launch_compute_hh_trafo_sm80_gpu_kernel_&
+      if (size_of_datatype .eq. 8) then
+        ! currently only real double precision case
+        call launch_compute_hh_trafo_sm80_gpu_kernel_&
+            &MATH_DATATYPE&
+            &_&
+            &PRECISION&
+            &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
+            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+      else
+        call launch_compute_hh_trafo_gpu_kernel_&
            &MATH_DATATYPE&
            &_&
            &PRECISION&
            &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+
+      endif
 #endif
     endif
 

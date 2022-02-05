@@ -824,6 +824,12 @@ program test
 #if (TEST_NVIDIA_GPU == 1)
 #if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY == 1
      kernel = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
+#if defined(TEST_SINGLE)
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
 #else
      kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
 #endif
