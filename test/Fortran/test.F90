@@ -753,7 +753,7 @@ program test
    success = cuda_setdevice(gpuID)
 #endif
 #if TEST_AMD_GPU == 1
-   success = cuda_setdevice(gpuID)
+   success = hip_setdevice(gpuID)
 #endif
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."
