@@ -861,7 +861,7 @@ subroutine trans_ev_tridi_to_band_&
                    &MATH_DATATYPE&
                    &_cpu_openmp_&
                    &PRECISION &
-                                (obj,aIntern, row, i-limits(ip), my_thread, stripe_count, &
+                                (obj, aIntern, row, i-limits(ip), my_thread, stripe_count, &
                                  thread_width, stripe_width, l_nev)
 
             enddo
@@ -929,7 +929,7 @@ subroutine trans_ev_tridi_to_band_&
                 &MATH_DATATYPE&
                 &_cpu_&
                 &PRECISION &
-                (obj,aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
+                (obj, aIntern, row,i-limits(ip), stripe_count, stripe_width, last_stripe_width)
           endif ! useGPU
 #endif /* WITH_OPENMP_TRADITIONAL */
 
@@ -980,7 +980,7 @@ subroutine trans_ev_tridi_to_band_&
                    &MATH_DATATYPE&
                    &_cpu_openmp_&
                    &PRECISION &
-                                 (obj,aIntern, row, i-limits(ip), my_thread, stripe_count, thread_width, stripe_width, l_nev)
+                                 (obj, aIntern, row, i-limits(ip), my_thread, stripe_count, thread_width, stripe_width, l_nev)
 
             enddo
             !$omp end parallel do
@@ -996,7 +996,7 @@ subroutine trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
                  &_cpu_&
                  &PRECISION &
-                            (obj,aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
+                            (obj, aIntern, row,i-limits(ip),  stripe_count, stripe_width, last_stripe_width)
           endif
 
 #endif /* WITH_OPENMP_TRADITIONAL */
@@ -1247,7 +1247,7 @@ subroutine trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
                  &_cpu_&
                  &PRECISION &
-                 (obj,aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
+                 (obj, aIntern, row,i-limits(my_prow), stripe_count, stripe_width, last_stripe_width)
           endif ! useGPU
 
 #endif /* WITH_OPENMP_TRADITIONAL */
@@ -1588,14 +1588,14 @@ subroutine trans_ev_tridi_to_band_&
         if (useGPU) then
 #ifdef WITH_MPI
 #ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
-          !call MPI_Irecv(bottom_border_recv_buffer_mpi_fortran_ptr(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
-          call MPI_Irecv(bottom_border_recv_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND), &
+          call MPI_Irecv(bottom_border_recv_buffer_mpi_fortran_ptr(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
+          !call MPI_Irecv(bottom_border_recv_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND), &
                          MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
                          int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
                          bottom_recv_request(i), mpierr)
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
-          !call MPI_Irecv(bottom_border_recv_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
-          call MPI_Irecv(bottom_border_recv_buffer(1,i), int(b_len,kind=MPI_KIND), &
+          call MPI_Irecv(bottom_border_recv_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
+          !call MPI_Irecv(bottom_border_recv_buffer(1,i), int(b_len,kind=MPI_KIND), &
                          MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
                          int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
                          bottom_recv_request(i), mpierr)
@@ -1893,16 +1893,16 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef WITH_MPI
 #ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
               if (wantDebug) call obj%timer%start("cuda_mpi_communication")
-              !call MPI_Irecv(bottom_border_recv_buffer_mpi_fortran_ptr(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
-              call MPI_Irecv(bottom_border_recv_buffer_mpi_fortran_ptr(1,i), int(csw*nbw*max_threads,kind=MPI_KIND), &
+              call MPI_Irecv(bottom_border_recv_buffer_mpi_fortran_ptr(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
+              !call MPI_Irecv(bottom_border_recv_buffer_mpi_fortran_ptr(1,i), int(csw*nbw*max_threads,kind=MPI_KIND), &
                            MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
                            int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
                            bottom_recv_request(i), mpierr)
               if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
               if (wantDebug) call obj%timer%start("host_mpi_communication")
-              !call MPI_Irecv(bottom_border_recv_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
-              call MPI_Irecv(bottom_border_recv_buffer(1,i), int(csw*nbw*max_threads,kind=MPI_KIND), &
+              call MPI_Irecv(bottom_border_recv_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
+              !call MPI_Irecv(bottom_border_recv_buffer(1,i), int(csw*nbw*max_threads,kind=MPI_KIND), &
                            MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), &
                            int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
                            bottom_recv_request(i), mpierr)
@@ -2176,15 +2176,15 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
                 if (wantDebug) call obj%timer%start("host_mpi_communication")
-                !call MPI_Isend(bottom_border_send_buffer(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
-                call MPI_Isend(bottom_border_send_buffer(1,i), int(b_len,kind=MPI_KIND),  &
+                call MPI_Isend(bottom_border_send_buffer(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
+                !call MPI_Isend(bottom_border_send_buffer(1,i), int(b_len,kind=MPI_KIND),  &
                      MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                      int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
                 if (wantDebug) call obj%timer%stop("host_mpi_communication")
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
                 if (wantDebug) call obj%timer%start("cuda_mpi_communication")
-                !call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
-                call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND),  &
+                call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND), &
+                !call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND),  &
                     MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                     int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
                 if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
@@ -2276,7 +2276,7 @@ subroutine trans_ev_tridi_to_band_&
                 if (wantDebug) call obj%timer%stop("host_mpi_communication")
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
                 if (wantDebug) call obj%timer%start("cuda_mpi_communication")
-                call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
+                call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND), &
                     MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                     int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
                 if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
@@ -2416,15 +2416,15 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef WITH_MPI
 #ifndef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
                 if (wantDebug) call obj%timer%start("host_mpi_communication")
-                !call MPI_Isend(bottom_border_send_buffer(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND), &
-                call MPI_Isend(bottom_border_send_buffer(1,i), int(b_len,kind=MPI_KIND), &
+                call MPI_Isend(bottom_border_send_buffer(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND), &
+                !call MPI_Isend(bottom_border_send_buffer(1,i), int(b_len,kind=MPI_KIND), &
                            MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                            int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
                 if (wantDebug) call obj%timer%stop("host_mpi_communication")
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
                 if (wantDebug) call obj%timer%start("cuda_mpi_communication")
-                !call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
-                call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND),  &
+                call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND), &
+                !call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND),  &
                     MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                     int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
                 if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
@@ -2539,7 +2539,7 @@ subroutine trans_ev_tridi_to_band_&
                 if (wantDebug) call obj%timer%stop("host_mpi_communication")
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
                 if (wantDebug) call obj%timer%start("cuda_mpi_communication")
-                call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND),  &
+                call MPI_Isend(bottom_border_send_buffer_mpi_fortran_ptr(1,i), int(bottom_msg_length*stripe_width,kind=MPI_KIND), &
                 MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow+1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                 int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
                 if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
@@ -2824,15 +2824,15 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef WITH_MPI
 #ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
              if (wantDebug) call obj%timer%start("cuda_mpi_communication")
-             !call MPI_Irecv(top_border_recv_buffer_mpi_fortran_ptr(1,i), int(next_top_msg_length*stripe_width,kind=MPI_KIND), &
-             call MPI_Irecv(top_border_recv_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND), &
+             call MPI_Irecv(top_border_recv_buffer_mpi_fortran_ptr(1,i), int(next_top_msg_length*stripe_width,kind=MPI_KIND), &
+             !call MPI_Irecv(top_border_recv_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND), &
                          MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow-1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                          int(mpi_comm_rows,kind=MPI_KIND), top_recv_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
              if (wantDebug) call obj%timer%start("host_mpi_communication")
-             !call MPI_Irecv(top_border_recv_buffer(1,i), int(next_top_msg_length*stripe_width,kind=MPI_KIND), &
-             call MPI_Irecv(top_border_recv_buffer(1,i), int(b_len,kind=MPI_KIND), &
+             call MPI_Irecv(top_border_recv_buffer(1,i), int(next_top_msg_length*stripe_width,kind=MPI_KIND), &
+             !call MPI_Irecv(top_border_recv_buffer(1,i), int(b_len,kind=MPI_KIND), &
                          MPI_MATH_DATATYPE_PRECISION_EXPL, int(my_prow-1,kind=MPI_KIND), int(top_recv_tag,kind=MPI_KIND), &
                          int(mpi_comm_rows,kind=MPI_KIND), top_recv_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("host_mpi_communication")
@@ -2933,16 +2933,16 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef WITH_MPI
 #ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
              if (wantDebug) call obj%timer%start("cuda_mpi_communication")
-             !call MPI_Isend(top_border_send_buffer_mpi_fortran_ptr(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
-             call MPI_Isend(top_border_send_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND), &
+             call MPI_Isend(top_border_send_buffer_mpi_fortran_ptr(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
+             !call MPI_Isend(top_border_send_buffer_mpi_fortran_ptr(1,i), int(b_len,kind=MPI_KIND), &
                             MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),   &
+                            int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
                             top_send_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
              if (wantDebug) call obj%timer%start("host_mpi_communication")
-             !call MPI_Isend(top_border_send_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-             call MPI_Isend(top_border_send_buffer(1,i), int(b_len,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+             call MPI_Isend(top_border_send_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+             !call MPI_Isend(top_border_send_buffer(1,i), int(b_len,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                          int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),   &
                          top_send_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("host_mpi_communication")
@@ -2986,12 +2986,12 @@ subroutine trans_ev_tridi_to_band_&
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
              else ! allComputeOnGPU
                if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
-                 !bottom_border_recv_buffer(1:nbw*stripe_width,i) = top_border_send_buffer(1:nbw*stripe_width,i)
-                 bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+                 bottom_border_recv_buffer(1:nbw*stripe_width,i) = top_border_send_buffer(1:nbw*stripe_width,i)
+                 !bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
                endif
                if (next_n_end < next_n) then
-                 !bottom_border_recv_buffer(1:stripe_width*nbw,i) =  top_border_send_buffer(1:stripe_width*nbw,i)
-                 bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
+                 bottom_border_recv_buffer(1:stripe_width*nbw,i) =  top_border_send_buffer(1:stripe_width*nbw,i)
+                 !bottom_border_recv_buffer(1:csw*nbw*max_threads,i) = top_border_send_buffer(1:csw*nbw*max_threads,i)
                endif
              endif ! allComputeOnGPU
            else ! useGPU
@@ -3047,20 +3047,20 @@ subroutine trans_ev_tridi_to_band_&
              if (wantDebug) call obj%timer%start("cuda_mpi_communication")
              call MPI_Isend(top_border_send_buffer_mpi_fortran_ptr(1,i), int(nbw*stripe_width,kind=MPI_KIND), &
                             MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),   &
+                            int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),  &
                             top_send_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
              if (wantDebug) call obj%timer%start("host_mpi_communication")
              call MPI_Isend(top_border_send_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),   &
+                            int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
                             top_send_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("host_mpi_communication")
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
            else ! useGPU
              if (wantDebug) call obj%timer%start("mpi_communication")
              call MPI_Isend(top_border_send_buffer(1,i), int(nbw*stripe_width,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                            int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),   &
+                            int(my_prow-1,kind=MPI_KIND), int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
                             top_send_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("mpi_communication")
            endif ! useGPU
@@ -3247,7 +3247,7 @@ subroutine trans_ev_tridi_to_band_&
                    &MATH_DATATYPE&
                    &_cpu_&
                    &PRECISION&
-                   &(obj,aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
+                   &(obj, aIntern, row, j*nblk+i+a_off, stripe_width, last_stripe_width, stripe_count)
 #endif /* WITH_OPENMP_TRADITIONAL */
               q((num_blk/np_rows)*nblk+i,1:l_nev) = row(:)
             enddo
