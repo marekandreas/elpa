@@ -52,7 +52,7 @@ module elpa_impl
   use precision
   use elpa2_impl
   use elpa1_impl
-  use elpa1_auxiliary_impl
+  !use elpa1_auxiliary_impl
   use elpa_mpi
   use elpa_generated_fortran_interfaces
   use elpa_utilities, only : error_unit
@@ -64,6 +64,7 @@ module elpa_impl
 #ifdef ENABLE_AUTOTUNING
   use elpa_autotune_impl
 #endif
+  use elpa1_auxiliary_impl
   use, intrinsic :: iso_c_binding
   use iso_fortran_env
   implicit none
