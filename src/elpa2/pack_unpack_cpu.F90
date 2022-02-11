@@ -107,6 +107,7 @@ last_stripe_width, stripe_count)
   &PRECISION_SUFFIX &
   )
 
+  do i = 1, stripe_count
 #ifdef WITH_OPENMP_TRADITIONAL
   !do nt = 1, max_threads
     do i = 1, stripe_count
@@ -117,12 +118,13 @@ last_stripe_width, stripe_count)
     enddo
   !enddo
 #else
-  do i=1,stripe_count
+  !do i=1,stripe_count
     nl = merge(stripe_width, last_stripe_width, i<stripe_count)
     noff = (i-1)*stripe_width
     row(noff+1:noff+nl) = a(1:nl,n,i)
-  enddo
+  !enddo
 #endif
+  enddo
 
   call obj%timer%stop("pack_row_&
   &MATH_DATATYPE&
