@@ -509,18 +509,18 @@
         success = .false.
         return
       endif
-#ifdef WITH_OPENMP_TRADITIONAL
-      ! check the number of threads that ELPA should use internally
-      ! in the GPU case at the moment only _1_ thread internally is allowed
-      call obj%get("omp_threads", nrThreads, error)
-      if (nrThreads .ne. 1) then
-        write(error_unit,*) "Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
-        write(error_unit,*) "setting 1 openmp thread now"
-        call obj%set("omp_threads",1, error)
-        nrThreads=1
-        call omp_set_num_threads(nrThreads)
-      endif
-#endif
+!#ifdef WITH_OPENMP_TRADITIONAL
+!      ! check the number of threads that ELPA should use internally
+!      ! in the GPU case at the moment only _1_ thread internally is allowed
+!      call obj%get("omp_threads", nrThreads, error)
+!      if (nrThreads .ne. 1) then
+!        write(error_unit,*) "Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
+!        write(error_unit,*) "setting 1 openmp thread now"
+!        call obj%set("omp_threads",1, error)
+!        nrThreads=1
+!        call omp_set_num_threads(nrThreads)
+!      endif
+!#endif
       call obj%timer%stop("check_for_gpu")
 
       if (nblk*(max(np_rows,np_cols)-1) >= na) then
@@ -533,12 +533,12 @@
         do_useGPU = .false.
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
-        if (kernel == GPU_KERNEL .or. kernel == GPU_KERNEL2) then
+        if (kernel .eq. GPU_KERNEL .or. kernel .eq. GPU_KERNEL2) then
 #else
-        if (kernel == GPU_KERNEL) then
+        if (kernel .eq. GPU_KERNEL) then
 #endif
 #else /* REALCASE == 1 */
-        if (kernel == GPU_KERNEL) then
+        if (kernel .eq. GPU_KERNEL) then
 #endif /* REALCASE == 1 */
           if (userHasSetKernel) then
             ! user fixed inconsistent input.
@@ -793,9 +793,9 @@ print *,"Device pointer + REDIST"
       if (userHasSetKernel) then
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
-        if (kernel == GPU_KERNEL .or. kernel == GPU_KERNEL2) then
+        if (kernel .ne. GPU_KERNEL .and. kernel .ne. GPU_KERNEL2) then
 #else
-        if (kernel == GPU_KERNEL) then
+        if (kernel .ne. GPU_KERNEL) then
 #endif
 #else /* REALCASE == 1 */
         if (kernel .ne. GPU_KERNEL) then
@@ -803,6 +803,7 @@ print *,"Device pointer + REDIST"
           write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is set by the user as non-GPU!"
           write(error_unit,*) "The compute kernel will be executed on CPUs!"
           do_useGPU_trans_ev_tridi_to_band = .false.
+          stop
           kernel = DEFAULT_KERNEL
         else
           good_nblk_gpu = .false.
@@ -854,7 +855,7 @@ print *,"Device pointer + REDIST"
       !endif
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
-      if (kernel .ne. GPU_KERNEL .or. kernel .ne. GPU_KERNEL2) then
+      if (kernel .ne. GPU_KERNEL .and. kernel .ne. GPU_KERNEL2) then
 #else
       if (kernel .ne. GPU_KERNEL) then
 #endif
@@ -865,7 +866,7 @@ print *,"Device pointer + REDIST"
         write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
         stop
       endif
-    else
+    else ! do not use GPU
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
       if (kernel .eq. GPU_KERNEL .or. kernel .eq. GPU_KERNEL2) then
@@ -878,6 +879,7 @@ print *,"Device pointer + REDIST"
         ! combination not allowed
         write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
                             &is defined as the GPU kernel!  Setting default kernel"
+                    stop
         kernel = DEFAULT_KERNEL
         !TODO do error handling properly
       endif

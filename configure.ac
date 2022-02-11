@@ -1751,7 +1751,7 @@ fi
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include --default-stream per-thread"
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
   NVCC="nvcc"

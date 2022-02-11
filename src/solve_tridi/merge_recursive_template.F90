@@ -9,9 +9,9 @@ recursive subroutine merge_recursive_&
 
    use precision
    use elpa_abstract_impl
-#ifdef WITH_OPENMP_TRADITIONAL
-   use elpa_omp
-#endif
+!#ifdef WITH_OPENMP_TRADITIONAL
+!   use elpa_omp
+!#endif
    use elpa_mpi
    use merge_systems
    use ELPA_utilities
