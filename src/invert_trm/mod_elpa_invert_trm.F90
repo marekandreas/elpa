@@ -84,7 +84,7 @@ module elpa_invert_trm
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
     function elpa_invert_trm_a_h_a_real_double_impl(obj, a) result(success)
-#include "./elpa_invert_trm.F90"
+#include "./elpa_invert_trm_template.F90"
      end function elpa_invert_trm_a_h_a_real_double_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -109,7 +109,7 @@ module elpa_invert_trm
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
     function elpa_invert_trm_d_ptr_real_double_impl(obj, a) result(success)
-#include "./elpa_invert_trm.F90"
+#include "./elpa_invert_trm_template.F90"
      end function elpa_invert_trm_d_ptr_real_double_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -139,7 +139,7 @@ module elpa_invert_trm
 !> \result succes                 logical, reports success or failure
 
     function elpa_invert_trm_a_h_a_real_single_impl(obj, a) result(success)
-#include "./elpa_invert_trm.F90"
+#include "./elpa_invert_trm_template.F90"
     end function elpa_invert_trm_a_h_a_real_single_impl
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -169,7 +169,7 @@ module elpa_invert_trm
 !> \result succes                 logical, reports success or failure
 
     function elpa_invert_trm_d_ptr_real_single_impl(obj, a) result(success)
-#include "./elpa_invert_trm.F90"
+#include "./elpa_invert_trm_template.F90"
     end function elpa_invert_trm_d_ptr_real_single_impl
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -197,7 +197,7 @@ module elpa_invert_trm
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
      function elpa_invert_trm_a_h_a_complex_double_impl(obj, a) result(success)
-#include "./elpa_invert_trm.F90"
+#include "./elpa_invert_trm_template.F90"
     end function elpa_invert_trm_a_h_a_complex_double_impl
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -224,7 +224,7 @@ module elpa_invert_trm
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
      function elpa_invert_trm_d_ptr_complex_double_impl(obj, a) result(success)
-#include "./elpa_invert_trm.F90"
+#include "./elpa_invert_trm_template.F90"
     end function elpa_invert_trm_d_ptr_complex_double_impl
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -253,7 +253,7 @@ module elpa_invert_trm
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
     function elpa_invert_trm_a_h_a_complex_single_impl(obj, a) result(success)
-#include "./elpa_invert_trm.F90"
+#include "./elpa_invert_trm_template.F90"
     end function elpa_invert_trm_a_h_a_complex_single_impl
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
@@ -281,7 +281,7 @@ module elpa_invert_trm
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
     function elpa_invert_trm_d_ptr_complex_single_impl(obj, a) result(success)
-#include "./elpa_invert_trm.F90"
+#include "./elpa_invert_trm_template.F90"
     end function elpa_invert_trm_d_ptr_complex_single_impl
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE

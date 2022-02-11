@@ -241,8 +241,8 @@ program test
    call e%set("debug",1, error_elpa)
    assert_elpa_ok(error_elpa)
 #if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
-   call e%set("nvidia-gpu", 0, error_elpa)
-   assert_elpa_ok(error_elpa)
+   !call e%set("nvidia-gpu", 0, error_elpa)
+   !assert_elpa_ok(error_elpa)
 #endif
 #if TEST_AMD_GPU == 1
    call e%set("amd-gpu", 0, error_elpa)
@@ -255,11 +255,18 @@ program test
 
    !call e%set("max_stored_rows", 15, error_elpa)
 
+   !call e%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
+
    assert_elpa_ok(e%setup())
 
    if (myid == 0) print *, ""
 
-   tune_state => e%autotune_setup(ELPA_AUTOTUNE_FAST, AUTOTUNE_DOMAIN, error_elpa)
+   ! if you want to use the new autotuning implentation
+   !call e%autotune_set_api_version(20211125, error_elpa)
+   !assert_elpa_ok(error_elpa)
+   ! if you want to use the old one, either do not set autotune_set_api_version
+   ! or set autotune_set_api_version to a supported api version < 20211125
+   tune_state => e%autotune_setup(ELPA_AUTOTUNE_MEDIUM, AUTOTUNE_DOMAIN, error_elpa)
    assert_elpa_ok(error_elpa)
 
    iter=0
@@ -282,16 +289,16 @@ program test
      status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &
                                          .true., .true., print_times=.false.)
      a(:,:) = as(:,:)
-     !call e%autotune_print_state(tune_state)
-     !call e%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
+     call e%autotune_print_state(tune_state)
+     call e%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
    end do
 
-   ! set and print the autotuned-settings
+   !! set and print the autotuned-settings
    call e%autotune_set_best(tune_state, error_elpa)
    assert_elpa_ok(error_elpa)
    if (myid .eq. 0) then
-     print *, "The best combination found by the autotuning:"
      flush(output_unit)
+     print *, "The best combination found by the autotuning:"
      call e%autotune_print_best(tune_state, error_elpa)
      assert_elpa_ok(error_elpa)
    endif
@@ -308,7 +315,7 @@ program test
    call e%timer_stop("eigenvectors: best setting")
    assert_elpa_ok(error_elpa)
    if (myid .eq. 0) then
-     print *, ""
+   !  print *, ""
      call e%print_times("eigenvectors: best setting")
    endif
    status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, &

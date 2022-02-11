@@ -1,0 +1,120 @@
+static-build:
+  tags:
+    - avx
+  script:
+    - ./ci_test_scripts/run_ci_tests.sh -c " CFLAGS=\"-O3 -mavx\" FCFLAGS=\"-O3 -axAVX\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\"            SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\" --with-mpi=no FC=ifort --enable-shared=no --enable-static=yes --disable-avx2  --disable-avx512 --enable-optional-argument-in-C-API || { cat config.log; exit 1; } " -j 8           -t $MPI_TASKS -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM 
+
+
+
+# test distcheck
+distcheck:
+  tags:
+    - distcheck
+  script:
+    - ./ci_test_scripts/run_distcheck_tests.sh  -c "  CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\"            SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly           --disable-sse --disable-avx --disable-avx2 --disable-avx512 " -d "  CC=gcc FC=gfortran SCALAPACK_LDFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP\\\"            SCALAPACK_FCFLAGS=\\\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP\\\" --enable-option-checking=fatal --with-mpi=no --disable-sse-assembly           --disable-sse --disable-avx --disable-avx2 --disable-avx512 " -t $MPI_TASKS -m 150 -n 50 -b 16 -S$SLURM 
+
+
+
+distcheck-mpi:
+  tags:
+    - distcheck
+  script:
+    - ./ci_test_scripts/run_distcheck_tests.sh  -c " FC=mpiifort FCFLAGS=\"-xHost\"    CFLAGS=\"-march=native\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"     SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\" --enable-option-checking=fatal    --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-avx512 " -d " FC=mpiifort FCFLAGS=\\\"-xHost\\\"    CFLAGS=\\\"-march=native\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\"     SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" --enable-option-checking=fatal    --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-avx512 " -t $MPI_TASKS -m 150 -n 50 -b 16 -S$SLURM 
+
+
+
+distcheck-no-autotune:
+  tags:
+    - distcheck
+  script:
+    - ./ci_test_scripts/run_distcheck_tests.sh  -c " FC=mpiifort FCFLAGS=\"-xHost\"    CFLAGS=\"-march=native\" SCALAPACK_LDFLAGS=\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\"     SCALAPACK_FCFLAGS=\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\" --enable-option-checking=fatal    --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-avx512 --disable-autotuning " -d " FC=mpiifort FCFLAGS=\\\"-xHost\\\"    CFLAGS=\\\"-march=native\\\" SCALAPACK_LDFLAGS=\\\"$MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP\\\"     SCALAPACK_FCFLAGS=\\\"$MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP\\\" --enable-option-checking=fatal    --with-mpi=yes --disable-sse-assembly --disable-sse --disable-avx --disable-avx2 --disable-avx512 --disable-autotuning " -t $MPI_TASKS -m 150 -n 50 -b 16 -S$SLURM 
+
+
+
+# gnu-gnu-ilp64-nompi-noomp
+gnu-gnu-nompi-noopenmp-ilp64:
+  tags:
+    - avx
+  artifacts:
+    when: on_success
+    expire_in: 2 month
+  script:
+   - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"gcc\" CFLAGS=\"-O3 -mavx\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NOMPI_NOOMP_ILP64 \" SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NOMPI_NOOMP_ILP64 \" --enable-option-checking=fatal --with-mpi=no --disable-openmp --disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+
+
+# gnu-gnu-ilp64-nompi-openmp
+gnu-gnu-nompi-openmp-ilp64:
+  tags:
+    - avx
+  artifacts:
+    when: on_success
+    expire_in: 2 month
+  script:
+   - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"gcc\" CFLAGS=\"-O3 -mavx\" FC=\"gfortran\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NOMPI_OMP_ILP64 \" SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NOMPI_OMP_ILP64 \" --enable-option-checking=fatal --with-mpi=no --enable-openmp --disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+
+
+# gnu-gnu-ilp64-mpi-noomp
+gnu-gnu-mpi-noopenmp-ilp64:
+  tags:
+    - avx
+  artifacts:
+    when: on_success
+    expire_in: 2 month
+  script:
+   - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NOOMP_ILP64 \" SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_NOOMP_ILP64 \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+
+
+# gnu-gnu-ilp64-mpi-openmp
+gnu-gnu-mpi-openmp-ilp64:
+  tags:
+    - avx
+  artifacts:
+    when: on_success
+    expire_in: 2 month
+  script:
+   - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP_ILP64 \" SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP_ILP64 \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-64bit-integer-math-support || { cat config.log; exit 1; }" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+
+
+# gnu-gnu-matrix-redistribute-mpi-noomp
+gnu-gnu-mpi-noopenmp-matrix-redistribute:
+  tags:
+    - avx
+  artifacts:
+    when: on_success
+    expire_in: 2 month
+  script:
+   - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \" SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_NO_OMP \" --enable-option-checking=fatal --with-mpi=yes --disable-openmp --disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+
+
+# gnu-gnu-matrix-redistribute-mpi-openmp
+gnu-gnu-mpi-openmp-matrix-redistribute:
+  tags:
+    - avx
+  artifacts:
+    when: on_success
+    expire_in: 2 month
+  script:
+   - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"mpicc\" CFLAGS=\"-O3 -mavx\" FC=\"mpif90\" FCFLAGS=\"-O3 -mavx\" SCALAPACK_LDFLAGS=\"$MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP \" SCALAPACK_FCFLAGS=\"$MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-nvidia-gpu --enable-avx --disable-avx2 --disable-avx512 --enable-scalapack-tests --enable-autotune-redistribute-matrix || { cat config.log; exit 1; }" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+
+
+# python tests
+python-intel-intel-mpi-openmp:
+  tags:
+    - python
+  artifacts:
+    when: on_success
+    expire_in: 2 month
+  script:
+   - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX\" SCALAPACK_LDFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \" SCALAPACK_FCFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+
+
+python-distcheck:
+  tags:
+    - python-distcheck
+  script:
+#    - ./ci_test_scripts/run_ci_tests.sh -c "CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX\" FC="mpiifort" FCFLAGS=\"-O3 -xAVX\" SCALAPACK_LDFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP\" SCALAPACK_FCFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP\" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests || { cat config.log; exit 1; }" -j 8 -t $MPI_TASKS -m 150 -n 50 -b 16 -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM
+
+
+    - ./ci_test_scripts/run_distcheck_tests.sh -c "CC=\"mpiicc\" CFLAGS=\"-O3 -xAVX\" FC=\"mpiifort\" FCFLAGS=\"-O3 -xAVX\" SCALAPACK_LDFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \" SCALAPACK_FCFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests "-d " CC=\\\"mpiicc\\\" CFLAGS=\\\"-O3 -xAVX\\\" FC=\\\"mpiifort\\\" FCFLAGS=\\\"-O3 -xAVX\\\" SCALAPACK_LDFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_LDFLAGS_MPI_OMP \" SCALAPACK_FCFLAGS=\"$MKL_ANACONDA_INTEL_SCALAPACK_FCFLAGS_MPI_OMP \" --enable-option-checking=fatal --with-mpi=yes --enable-openmp --disable-nvidia-gpu --enable-avx --enable-python --enable-python-tests" -t $MPI_TASKS -m 150 -n 50 -b 16 -S $SLURM  || { chmod u+rwX -R . ; exit 1 ; }
+
+

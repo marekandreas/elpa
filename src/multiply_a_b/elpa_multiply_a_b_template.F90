@@ -62,6 +62,10 @@
   use elpa_gpu
   use mod_check_for_gpu
   use elpa_blas_interfaces
+  use ELPA_utilities, only : local_index, check_deallocate_f, check_dealloc_gpu_f, &
+                             check_host_dealloc_gpu_f, check_alloc_gpu_f, check_host_alloc_gpu_f, &
+                             check_host_unregister_gpu_f, check_memcpy_gpu_f, check_allocate_f, &
+                             check_host_register_gpu_f, check_alloc
   implicit none
 
 #include "../../src/general/precision_kinds.F90"

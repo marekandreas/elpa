@@ -188,10 +188,10 @@ last_stripe_width, kernel)
 #ifdef WITH_NVIDIA_GPU_VERSION
     if (useGPU .and. &
 #if REALCASE == 1
-      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU .or. kernel .ne. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU)) then
 #endif
 #if COMPLEXCASE == 1
-      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU)) then
 #endif
       print *,"ERROR: useGPU is set in compute_hh_trafo but not a NVIDIA GPU kernel!"
       stop
@@ -213,10 +213,18 @@ last_stripe_width, kernel)
 
   ! intel missing
 #if REALCASE == 1
-  if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
+  if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. &
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+      kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU .or. &
+#endif
+      kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
 #endif
 #if COMPLEXCASE == 1
-  if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
+  if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. &
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+      kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU .or. &
+#endif
+      kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
 #endif
     ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
     if (ncols < 1) then
@@ -278,11 +286,19 @@ last_stripe_width, kernel)
 
 #if REALCASE == 1
 ! GPU kernel real
-  if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
+  if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. &
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+      kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU .or. &
+#endif
+      kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
 #endif
 #if COMPLEXCASE == 1
 ! GPU kernel complex
-  if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
+  if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. &
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+      kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU .or. &
+#endif
+      kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
 #endif
     if (wantDebug) then
       call obj%timer%start("compute_hh_trafo: GPU")
@@ -294,12 +310,46 @@ last_stripe_width, kernel)
 
     dev_offset_2 = off*size_of_datatype
 
-    call launch_compute_hh_trafo_gpu_kernel_&
-         &MATH_DATATYPE&
-         &_&
-         &PRECISION&
-         &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
-         hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+#if REALCASE == 1
+    if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. &
+        kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
+#endif
+#if COMPLEXCASE == 1
+  if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. &
+      kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
+#endif
+#endif /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
+      call launch_compute_hh_trafo_gpu_kernel_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION&
+           &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
+           hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+    endif
+
+#if REALCASE == 1
+    if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU ) then
+#endif
+#if COMPLEXCASE == 1
+    if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU ) then
+      stop "This is sm80 complex kernel is not yet implemented"
+#endif
+
+#if REALCASE == 1
+! currently only real case
+      call launch_compute_hh_trafo_sm80_gpu_kernel_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION&
+           &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
+           hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+#endif
+    endif
+
+#endif /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
+
 
     if (wantDebug) then
       call obj%timer%stop("compute_hh_trafo: GPU")

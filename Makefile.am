@@ -75,6 +75,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/mod_cholesky_cuda.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
+  src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/elpa1/mod_distribute_global_column.F90 \
   src/elpa1/mod_v_add_s.F90 \
   src/elpa1/mod_solve_secular_equation.F90 \
@@ -122,8 +123,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/general/sanity.F90 \
   src/general/error_checking.inc \
   src/cholesky/elpa_cholesky_template.F90 \
-  src/invert_trm/elpa_invert_trm.F90 \
-  src/elpa1/elpa_multiply_a_b.F90 \
+  src/invert_trm/elpa_invert_trm_template.F90 \
+  src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
@@ -149,6 +150,10 @@ endif
 
 if WITH_NVIDIA_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu
+
+if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+  libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real_sm80.cu src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh
+endif
 endif
 
 if WITH_INTEL_GPU_VERSION
@@ -641,8 +646,8 @@ dist_man_MANS = \
   man/elpa_uninit.3
 
 dist_doc_DATA = README.md CONTRIBUTING.md LICENSE Changelog COPYING/COPYING COPYING/gpl.txt COPYING/lgpl.txt documentation/INSTALL.md \
-	       documentation/PERFORMANCE_TUNING.md  documentation/SWITCHING_TO_NEW_INTERFACE.md  documentation/USERS_GUIDE.md  \
-	       documentation/USERS_GUIDE_DEPRECATED_LEGACY_API.md documentation/plots/mpi_elpa1.png  documentation/plots/mpi_elpa2.png
+	       documentation/PERFORMANCE_TUNING.md documentation/USERS_GUIDE.md  \
+	       documentation/plots/mpi_elpa1.png documentation/plots/mpi_elpa2.png
 
 # pkg-config stuff
 pkgconfigdir = $(libdir)/pkgconfig
@@ -885,8 +890,9 @@ EXTRA_DIST = \
   src/cholesky/mod_cholesky_cuda.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/invert_trm/mod_invert_trm_cuda.F90 \
-  src/invert_trm/elpa_invert_trm.F90 \
-  src/elpa1/elpa_multiply_a_b.F90 \
+  src/multiply_a_b/elpa_multiply_a_b_template.F90 \
+  src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
+  src/invert_trm/elpa_invert_trm_template.F90 \
   src/elpa1/elpa_reduce_add_vectors.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/elpa1/elpa_transpose_vectors.F90 \
@@ -928,6 +934,15 @@ EXTRA_DIST = \
   src/general/error_checking.inc \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/.gitignore \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/CMakeLists.txt \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/LICENSE \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/README.md \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/compute_hh.cu \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/compute_hh_wrapper.f90 \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/cuda_c_interface.cu \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/cuda_f_interface.f90 \
+  src/shipped_srcs/NVIDIA_A100_kernel/hh_test/src/hh_test.f90 \
   test/Fortran/assert.h \
   test/Fortran/elpa_print_headers.F90 \
   test/shared/test_check_correctness_template.F90 \

@@ -82,6 +82,8 @@ module elpa_api
     integer(kind=c_int), public, pointer :: local_ncols => NULL()
     integer(kind=c_int), public, pointer :: nblk => NULL()
 
+    integer(kind=c_int), public          :: myGlobalId
+
     contains
       ! general
       procedure(elpa_setup_i),   deferred, public :: setup          !< method to setup an ELPA object
@@ -254,6 +256,7 @@ module elpa_api
       procedure(load_settings_i), deferred, public :: load_settings !< method to save all parameters
 #ifdef ENABLE_AUTOTUNING
       ! Auto-tune
+      procedure(elpa_autotune_set_api_version_i), deferred, public :: autotune_set_api_version       !< method to prepare the ELPA autotuning
       procedure(elpa_autotune_setup_i), deferred, public :: autotune_setup       !< method to prepare the ELPA autotuning
       procedure(elpa_autotune_step_i), deferred, public :: autotune_step         !< method to do an autotuning step
       procedure(elpa_autotune_set_best_i), deferred, public :: autotune_set_best !< method to set the best options
@@ -446,6 +449,25 @@ module elpa_api
   end interface
 
 #ifdef ENABLE_AUTOTUNING
+  !> \brief abstract definition of the autotune set_api_verion method
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object, which should be tuned
+  !> \param   api_version integer: the api_version that should be used
+  abstract interface
+    subroutine elpa_autotune_set_api_version_i(self, api_version, error)
+      import elpa_t
+      implicit none
+      class(elpa_t), intent(inout), target :: self
+      integer, intent(in)                  :: api_version
+#ifdef USE_FORTRAN2008
+      integer , optional                   :: error
+#else
+      integer                              :: error
+#endif
+    end subroutine
+  end interface
+
   !> \brief abstract definition of the autotune setup method
   !> Parameters
   !> \details
@@ -1006,15 +1028,15 @@ module elpa_api
        api_version = api_version_set
     end function
 
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #define elpa_uninit(...) CONC(elpa_uninit, NARGS(__VA_ARGS__))(__VA_ARGS__)
     !c_o> #endif
 #endif
     !> \brief subroutine to uninit the ELPA library. Does nothing at the moment. Might do sth. later
     !
-#ifdef OPTIONAL_C_ERROR_ARGUMENT
-    !c_o> #ifdef OPTIONAL_C_ERROR_ARGUMENT
+#if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> void elpa_uninit1(int *error);
     !c_o> void elpa_uninit0();
     !c_o> #endif
@@ -1027,7 +1049,7 @@ module elpa_api
       call elpa_uninit()
     end subroutine
 #else
-    !c_no> #ifndef OPTIONAL_C_ERROR_ARGUMENT
+    !c_no> #if OPTIONAL_C_ERROR_ARGUMENT != 1
     !c_no> void elpa_uninit(int *error);
     !c_no> #endif
     subroutine elpa_uninit_c(error) bind(C, name="elpa_uninit")

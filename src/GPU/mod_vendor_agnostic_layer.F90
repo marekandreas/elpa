@@ -212,6 +212,8 @@ module elpa_gpu
       implicit none
       logical                              :: success
 
+      success = .false.
+
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_devicesynchronize()
       endif
@@ -230,6 +232,8 @@ module elpa_gpu
       type(c_ptr)                          :: array
       integer(kind=c_intptr_t), intent(in) :: elements
       logical                              :: success
+
+      success = .false.
 
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_malloc_host(array, elements)
@@ -250,6 +254,8 @@ module elpa_gpu
       integer(kind=c_intptr_t), intent(in) :: elements
       logical                              :: success
 
+      success = .false.
+
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_malloc(array, elements)
       endif
@@ -269,6 +275,8 @@ module elpa_gpu
       integer(kind=c_intptr_t), intent(in)  :: elements
       integer(kind=C_INT), intent(in)       :: flag
       logical :: success
+
+      success = .false.
 
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_host_register(array, elements, flag)
@@ -291,6 +299,8 @@ module elpa_gpu
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
 
+      success = .false.
+
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_memcpy_intptr(dst, src, size, dir)
       endif
@@ -312,6 +322,8 @@ module elpa_gpu
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
 
+      success = .false.
+
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_memcpy_cptr(dst, src, size, dir)
       endif
@@ -332,6 +344,8 @@ module elpa_gpu
       integer(kind=c_intptr_t), intent(in)  :: size
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
+
+      success = .false.
 
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_memcpy_mixed(dst, src, size, dir)
@@ -356,6 +370,8 @@ module elpa_gpu
 
       logical :: success
 
+      success = .false.
+
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_memset(a, val, size)
       endif
@@ -374,6 +390,8 @@ module elpa_gpu
       integer(kind=c_intptr_t)                :: a
 
       logical :: success
+
+      success = .false.
 
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_free(a)
@@ -394,6 +412,8 @@ module elpa_gpu
 
       logical :: success
 
+      success = .false.
+
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_free_host(a)
       endif
@@ -412,6 +432,8 @@ module elpa_gpu
       integer(kind=c_intptr_t)                :: a
 
       logical :: success
+
+      success = .false.
 
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_host_unregister(a)
@@ -441,6 +463,8 @@ module elpa_gpu
       integer(kind=C_INT), intent(in)    :: dir
       logical                            :: success
 
+      success = .false.
+
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
       endif
@@ -466,6 +490,8 @@ module elpa_gpu
       integer(kind=c_intptr_t), intent(in) :: height
       integer(kind=C_INT), intent(in)    :: dir
       logical                            :: success
+
+      success = .false.
 
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)

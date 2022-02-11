@@ -258,6 +258,12 @@ subroutine trans_ev_tridi_to_band_&
 #endif
 #endif /* WITH_MPI */
 
+  integer(kind=MPI_KIND)                     :: bcast_request1, allreduce_request1, allreduce_request2, &
+                                                allreduce_request3, allreduce_request4
+  logical                                    :: useNonBlockingCollectivesCols
+  logical                                    :: useNonBlockingCollectivesRows
+  integer(kind=c_int)                        :: non_blocking_collectives_rows, non_blocking_collectives_cols
+
   if(useGPU) then
     gpuString = "_gpu"
   else
@@ -269,6 +275,30 @@ subroutine trans_ev_tridi_to_band_&
   &" // &
   &PRECISION_SUFFIX //&
   gpuString)
+
+  call obj%get("nbc_row_elpa2_tridi_to_band", non_blocking_collectives_rows, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for rows in elpa2_tridi_to_band. Aborting..."
+    stop
+  endif
+
+  call obj%get("nbc_col_elpa2_tridi_to_band", non_blocking_collectives_cols, error)
+  if (error .ne. ELPA_OK) then
+    print *,"Problem setting option for non blocking collectives for cols in elpa2_tridi_to_band. Aborting..."
+    stop
+  endif
+
+  if (non_blocking_collectives_rows .eq. 1) then
+    useNonBlockingCollectivesRows = .true.
+  else
+    useNonBlockingCollectivesRows = .false.
+  endif
+
+  if (non_blocking_collectives_cols .eq. 1) then
+    useNonBlockingCollectivesCols = .true.
+  else
+    useNonBlockingCollectivesCols = .false.
+  endif
 
   n_times = 0
   if (useGPU) then
@@ -1637,16 +1667,32 @@ subroutine trans_ev_tridi_to_band_&
         if (wantDebug) call obj%timer%stop("cuda_memcpy")
       endif
 
-      if (wantDebug) call obj%timer%start("cuda_mpi_communication")
-      call mpi_bcast(bcast_buffer_mpi_fortran_ptr, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                     int(mod(sweep,np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-      if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
+      if (useNonBlockingCollectivesCols) then
+        if (wantDebug) call obj%timer%start("cuda_mpi_nbc_communication")
+        call mpi_ibcast(bcast_buffer_mpi_fortran_ptr, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       int(mod(sweep,np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), bcast_request1, mpierr)
+        call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+        if (wantDebug) call obj%timer%stop("cuda_mpi_nbc_communication")
+      else
+        if (wantDebug) call obj%timer%start("cuda_mpi_communication")
+        call mpi_bcast(bcast_buffer_mpi_fortran_ptr, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       int(mod(sweep,np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+        if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
+      endif
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_bcast(bcast_buffer, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+      if (useNonBlockingCollectivesCols) then
+        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+        call mpi_ibcast(bcast_buffer, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                     int(mod(sweep,np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), bcast_request1, mpierr)
+        call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+      else
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_bcast(bcast_buffer, int(nbw*current_local_n,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                      int(mod(sweep,np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
-
+        if (wantDebug) call obj%timer%stop("mpi_communication")
+      endif
+ 
       if (useGPU .and. .not.(allComputeOnGPU)) then
         if (wantDebug) call obj%timer%start("memcpy")
         successGPU =  gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer(1,1)),kind=c_intptr_t),  &
@@ -3530,15 +3576,50 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef WITH_MPI
 #ifdef HAVE_DETAILED_TIMINGS
   if (print_flops == 1) then
-    call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, mpierr)
-    kernel_flops = kernel_flops_recv
-    call MPI_ALLREDUCE(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_COLS, mpierr)
-    kernel_flops = kernel_flops_recv
 
-    call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_ROWS, mpierr)
-    kernel_time_recv = kernel_time
-    call MPI_ALLREDUCE(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_COLS, mpierr)
-    kernel_time_recv = kernel_time
+    if (useNonBlockingCollectivesRows) then
+      call mpi_iallreduce(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, &
+                          allreduce_request1, mpierr)
+
+      call mpi_iallreduce(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_ROWS, &
+                          allreduce_request3, mpierr)
+
+      call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+      kernel_flops = kernel_flops_recv
+
+      call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
+      kernel_time_recv = kernel_time
+    else
+      call mpi_allreduce(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_ROWS, &
+                          mpierr)
+      kernel_flops = kernel_flops_recv
+
+      call mpi_allreduce(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_ROWS, &
+                          mpierr)
+      kernel_time_recv = kernel_time
+    endif
+
+    if (useNonBlockingCollectivesCols) then
+      call mpi_iallreduce(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_COLS, &
+                          allreduce_request2, mpierr)
+
+      call mpi_iallreduce(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_COLS, &
+                          allreduce_request4, mpierr)
+
+      call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+      kernel_flops = kernel_flops_recv
+
+      call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
+      kernel_time_recv = kernel_time
+    else
+      call mpi_allreduce(kernel_flops, kernel_flops_recv, 1, MPI_INTEGER8, MPI_SUM, MPI_COMM_COLS, &
+                         mpierr)
+      kernel_flops = kernel_flops_recv
+
+      call mpi_allreduce(kernel_time, kernel_time_recv, 1, MPI_REAL8, MPI_MAX, MPI_COMM_COLS, &
+                          mpierr)
+      kernel_time_recv = kernel_time
+    endif
   endif
 #endif
 #endif /* WITH_MPI */

@@ -115,6 +115,7 @@
    logical                                                            :: useQRActual
 #endif
    integer(kind=c_int)                                                :: kernel, kernelByUser
+   logical                                                            :: userHasSetKernel
 
 #ifdef DEVICE_POINTER
 
@@ -239,42 +240,61 @@
    logical                                                            :: reDistributeMatrix, doRedistributeMatrix
    integer(kind=ik)                                                   :: pinningInfo
 
+   integer(kind=MPI_KIND)                                             :: bcast_request1, bcast_request2, allreduce_request1
+   logical                                                            :: useNonBlockingCollectivesAll
+   integer(kind=ik)                                                   :: gpu_old, gpu_new
+   integer(kind=ik)                                                   :: non_blocking_collectives_all
 
 #if REALCASE == 1
 #undef GPU_KERNEL
+#undef GPU_KERNEL2
 #define GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
-#undef GENERIC_KERNEL
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+#define GPU_KERNEL2 ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
+#endif
+
+#undef DEFAULT_KERNEL
 #undef KERNEL_STRING
+
+#define KERNEL_STRING "real_kernel"
+
 #ifdef WITH_NVIDIA_GPU_VERSION
 #undef GPU_KERNEL
+#undef GPU_KERNEL2
 #define GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+#define GPU_KERNEL2 ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
 #endif
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
 #ifdef WITH_AMD_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_REAL_AMD_GPU
 #endif
-#define GENERIC_KERNEL ELPA_2STAGE_REAL_GENERIC
-#define KERNEL_STRING "real_kernel"
-#endif
+#define DEFAULT_KERNEL ELPA_2STAGE_REAL_DEFAULT
+#endif /* WITH_AMD_GPU_VERSION */
 ! intel missing
 
 
 #if COMPLEXCASE == 1
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_COMPLEX_NVIDIA_GPU
-#undef GENERIC_KERNEL
+#undef DEFAULT_KERNEL
 #undef KERNEL_STRING
+
+#define KERNEL_STRING "complex_kernel"
+
 #ifdef WITH_NVIDIA_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_COMPLEX_NVIDIA_GPU
-#endif
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
 #ifdef WITH_AMD_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_COMPLEX_AMD_GPU
 #endif
-#define GENERIC_KERNEL ELPA_2STAGE_COMPLEX_GENERIC
-#define KERNEL_STRING "complex_kernel"
-#endif
+#define DEFAULT_KERNEL ELPA_2STAGE_COMPLEX_DEFAULT
+#endif /* WITH_AMD_GPU_VERSION */
 
 #ifdef ACTIVATE_SKEW
     call obj%timer%start("elpa_solve_skew_evp_&
@@ -286,19 +306,93 @@
     &PRECISION&
     &")
 
-    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+    ! check legacy GPU setings
+    if (obj%is_set("gpu") == 1) then
+      call obj%get("gpu", gpu_old, error)     
+      if (error .ne. ELPA_OK) then
+        write(error_unit,*) "Problem getting option for gpu. Aborting..."
+        stop
+      endif
+      if (obj%is_set("nvidia-gpu") == 0) then
+        ! set gpu and nvidia-gpu consistent
+        call obj%set("nvidia-gpu", gpu_old, error)
+        if (error .ne. ELPA_OK) then
+          write(error_unit,*) "Problem setting option for nvidia-gpu. Aborting..."
+          stop
+        endif
+      else ! nvidia-gpu
+        call obj%get("nvidia-gpu", gpu_new, error)     
+        if (error .ne. ELPA_OK) then
+          write(error_unit,*) "Problem getting option for nvidia-gpu. Aborting..."
+          stop
+        endif
+        if (gpu_old .ne. gpu_new) then
+          write(error_unit,*) "You cannot set gpu = ",gpu_old," and nvidia-gpu=",gpu_new,". Aborting..."
+          stop
+        endif
+      endif ! nvidia-gpu
+      if (obj%is_set("amd-gpu") == 0) then
+        ! ok
+      else ! amd-gpu
+        call obj%get("amd-gpu", gpu_new, error)     
+        if (error .ne. ELPA_OK) then
+          write(error_unit,*) "Problem getting option for amd-gpu. Aborting..."
+          stop
+        endif
+        if (gpu_old .eq. 1 .and. gpu_new .eq. 1) then
+          write(error_unit,*) "You cannot set gpu = 1 and amd-gpu = 1. Aborting..."
+          stop
+        endif
+      endif ! amd-gpu
+    else ! gpu not set
+      ! nothing to do
+
+      !if (obj%is_set("nvidia-gpu") == 1) then
+      !call obj%get("nvidia-gpu", gpu_new, error)     
+      !if (error .ne. ELPA_OK) then
+      !  print *,"Problem getting option for nvidia-gpu. Aborting..."
+      !  stop
+      !endif
+      !! set gpu and nvidia-gpu consistent
+      !call obj%set("gpu", gpu_new, error)
+      !if (error .ne. ELPA_OK) then
+      !  print *,"Problem setting option for gpu. Aborting..."
+      !  stop
+      !endif
+    endif ! gpu is set
+
+    ! get the kernel and check whether it has been set by the user
+    if (obj%is_set(KERNEL_STRING) == 1) then
+      userHasSetKernel = .true.
+    else
+      userHasSetKernel = .false.
+    endif
+
+    ! after this point you may _never_ call get for the kernel again, or set the
+    ! kernel !! The reason is that we might have to adjust the kernel, which is
+    ! passed as a variable
+    call obj%get(KERNEL_STRING, kernel, error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for mpi_comm_rows. Aborting..."
+      write(error_unit,*) "Problem getting option for kernel settings. Aborting..."
+      stop
+    endif
+
+    ! to implement a possibiltiy to set this
+    useNonBlockingCollectivesAll = .false.
+
+    call obj%get("mpi_comm_rows",mpi_comm_rows, error)
+    if (error .ne. ELPA_OK) then
+      write(error_unit,*) "Problem getting option for mpi_comm_rows. Aborting..."
       stop
     endif
     call obj%get("mpi_comm_cols",mpi_comm_cols,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for mpi_comm_cols. Aborting..."
+      write(error_unit,*) "Problem getting option for mpi_comm_cols. Aborting..."
       stop
     endif
     call obj%get("mpi_comm_parent",mpi_comm_all,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for mpi_comm_parent. Aborting..."
+      write(error_unit,*) "Problem getting option for mpi_comm_parent. Aborting..."
       stop
     endif
 
@@ -326,6 +420,19 @@
     matrixCols = obj%local_ncols
     matrixRows = obj%local_nrows
 
+    call obj%get("nbc_all_elpa2_main", non_blocking_collectives_all, error)
+    if (error .ne. ELPA_OK) then
+      write(error_unit,*) "ELPA2: Problem getting option for non blocking collectives. Aborting..."
+      stop
+    endif
+
+    if (non_blocking_collectives_all .eq. 1) then
+      useNonBlockingCollectivesAll = .true.
+    else
+      useNonBlockingCollectivesAll = .false.
+    endif
+
+
 #ifdef WITH_OPENMP_TRADITIONAL
     ! store the number of OpenMP threads used in the calling function
     ! restore this at the end of ELPA 2
@@ -351,39 +458,31 @@
 
     ! GPU settings
     if (gpu_vendor() == NVIDIA_GPU) then
-      call obj%get("gpu",gpu,error)
-      if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for GPU. Aborting..."
-        stop
-      endif
-      if (gpu .eq. 1) then
-        print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new keyword &
-               & 'nvidia-gpu' now"
-        call obj%set("nvidia-gpu",gpu,error)
-        if (error .ne. ELPA_OK) then
-          print *,"Problem setting option for NVIDIA GPU. Aborting..."
-          stop
+      if (obj%is_set("gpu") == 1) then
+        if (my_pe .eq. 0) then
+          write(error_unit,*) "You still use the deprecated option 'gpu' with the set-method, consider switching to 'nvidia-gpu'"
         endif
+        ! at this point we ensured already that gpu and nvidia-gpu have identical values
       endif
 
-      call obj%get("nvidia-gpu",gpu,error)
+      call obj%get("nvidia-gpu", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for NVIDIA GPU. Aborting..."
+        write(error_unit,*) "Problem getting option for NVIDIA GPU. Aborting..."
         stop
       endif
     else if (gpu_vendor() == AMD_GPU) then
-      call obj%get("amd-gpu",gpu,error)
+      call obj%get("amd-gpu", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for AMD GPU. Aborting..."
+        write(error_unit,*) "Problem getting option for AMD GPU. Aborting..."
         stop
       endif
     else if (gpu_vendor() == INTEL_GPU) then
-      call obj%get("intel-gpu",gpu,error)
+      call obj%get("intel-gpu", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for INTEL GPU. Aborting..."
+        write(error_unit,*) "Problem getting option for INTEL GPU. Aborting..."
         stop
       endif
-    else
+    else ! no supported gpu
       gpu = 0
     endif
 
@@ -391,13 +490,11 @@
      useGPU =.true.
    else
 #ifdef DEVICE_POINTER
-     print *,"You used the interface for device pointers but did not specify GPU usage!. Aborting..."
+     write(error_unit,*) "You used the interface for device pointers but did not specify GPU usage!. Aborting..."
      stop
 #endif
      useGPU = .false.
    endif
-
-    useGPU = (gpu == 1)
 
     do_useGPU = .false.
     if (useGPU) then
@@ -408,7 +505,7 @@
         call set_gpu_parameters()
 
       else
-        print *,"GPUs are requested but not detected! Aborting..."
+        write(error_unit,*) "GPUs are requested but not detected! Aborting..."
         success = .false.
         return
       endif
@@ -417,26 +514,48 @@
       ! in the GPU case at the moment only _1_ thread internally is allowed
       call obj%get("omp_threads", nrThreads, error)
       if (nrThreads .ne. 1) then
-        print *,"Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
-        print *,"setting 1 openmp thread now"
+        write(error_unit,*) "Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
+        write(error_unit,*) "setting 1 openmp thread now"
         call obj%set("omp_threads",1, error)
         nrThreads=1
         call omp_set_num_threads(nrThreads)
       endif
 #endif
       call obj%timer%stop("check_for_gpu")
-    endif
 
-    if (nblk*(max(np_rows,np_cols)-1) >= na) then
-      write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
-      write(error_unit,*) "Choose a smaller block size if possible.",nblk*(max(np_rows,np_cols)-1),na
+      if (nblk*(max(np_rows,np_cols)-1) >= na) then
+        if (my_pe .eq. 0) then
+          write(error_unit,*) "ELPA: Warning, block size too large for this matrix size and process grid!"
+          write(error_unit,*) "Choose a smaller block size if possible.",nblk*(max(np_rows,np_cols)-1),na
+          write(error_unit,*) "Disabling GPU usage! "
+        endif
 
-      do_useGPU = .false.
-
-      if (kernel == GPU_KERNEL) then
-        kernel = GENERIC_KERNEL
+        do_useGPU = .false.
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+        if (kernel == GPU_KERNEL .or. kernel == GPU_KERNEL2) then
+#else
+        if (kernel == GPU_KERNEL) then
+#endif
+#else /* REALCASE == 1 */
+        if (kernel == GPU_KERNEL) then
+#endif /* REALCASE == 1 */
+          if (userHasSetKernel) then
+            ! user fixed inconsistent input.
+            ! sadly, we do have to abort
+            if (my_pe .eq. 0) then
+              write(error_unit,*) "You set (fixed) the kernel to GPU, but GPUs cannot be used."
+              write(error_unit,*) "Either adapt the block size or the process grid, or do not set the GPU kernel! Aborting..."
+            endif
+            stop
+          else
+            ! here we should set the default kernel
+            kernel = DEFAULT_KERNEL
+          endif
+        endif
       endif
-    endif
+
+    endif ! useGPU
 
     do_useGPU_bandred = do_useGPU
     do_useGPU_tridiag_band = .false.  ! not yet ported
@@ -544,7 +663,7 @@ print *,"Device pointer + REDIST"
 
    call obj%get("output_pinning_information", pinningInfo, error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option for debug. Aborting..."
+     write(error_unit,*) "Problem setting option for debug. Aborting..."
      stop
    endif
 
@@ -600,11 +719,11 @@ print *,"Device pointer + REDIST"
      obj%eigenvalues_only = .true.
    endif
 
-    call obj%get(KERNEL_STRING,kernel,error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for kernel settings. Aborting..."
-      stop
-    endif
+    !call obj%get(KERNEL_STRING, kernel, error)
+    !if (error .ne. ELPA_OK) then
+    !  print *,"Problem getting option for kernel settings. Aborting..."
+    !  stop
+    !endif
 
 #ifdef ACTIVATE_SKEW
     !call obj%get("is_skewsymmetric",skewsymmetric,error)
@@ -620,19 +739,19 @@ print *,"Device pointer + REDIST"
 
     call obj%get("debug",debug,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for debug settings. Aborting..."
+      write(error_unit,*) "Problem getting option for debug settings. Aborting..."
       stop
     endif
     wantDebug = debug == 1
 
     ! only if we want (and can) use GPU in general, look what are the
     ! requirements for individual routines. Implicitly they are all set to 1, so
-    ! unles specified otherwise by the user, GPU versions of all individual
+    ! unless specified otherwise by the user, GPU versions of all individual
     ! routines should be used
-    if(do_useGPU) then
+    if (do_useGPU) then
       call obj%get("gpu_bandred", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option gpu_bandred settings. Aborting..."
+        write(error_unit,*) "Problem getting option gpu_bandred settings. Aborting..."
         stop
       endif
       do_useGPU_bandred = (gpu == 1)
@@ -647,21 +766,21 @@ print *,"Device pointer + REDIST"
 
       call obj%get("gpu_solve_tridi", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for gpu_solve_tridi settings. Aborting..."
+        write(error_unit,*) "Problem getting option for gpu_solve_tridi settings. Aborting..."
         stop
       endif
       do_useGPU_solve_tridi = (gpu == 1)
 
       call obj%get("gpu_trans_ev_tridi_to_band", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for gpu_trans_ev_tridi_to_band settings. Aborting..."
+        write(error_unit,*) "Problem getting option for gpu_trans_ev_tridi_to_band settings. Aborting..."
         stop
       endif
       do_useGPU_trans_ev_tridi_to_band = (gpu == 1)
 
       call obj%get("gpu_trans_ev_band_to_full", gpu, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem getting option for gpu_trans_ev_band_to_full settings. Aborting..."
+        write(error_unit,*) "Problem getting option for gpu_trans_ev_band_to_full settings. Aborting..."
         stop
       endif
       do_useGPU_trans_ev_band_to_full = (gpu == 1)
@@ -669,48 +788,100 @@ print *,"Device pointer + REDIST"
 
     ! check consistency between request for GPUs and defined kernel
     if (do_useGPU_trans_ev_tridi_to_band) then
-      if (kernel .ne. GPU_KERNEL) then
-        write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is defined as non-GPU!"
-        write(error_unit,*) "The compute kernel will be executed on CPUs!"
-        do_useGPU_trans_ev_tridi_to_band = .false.
-      else
-        good_nblk_gpu = .false.
-
-        ! Accepted values are 2,4,8,16,...,512
-        do i = 1,10
-           if (nblk == 2**i) then
-              good_nblk_gpu = .true.
-              exit
-           endif
-        enddo
-
-        if (.not. good_nblk_gpu) then
-           write(error_unit,*) "ELPA: Warning, CUDA kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
-           write(error_unit,*) "The compute kernel will be executed on CPUs!"
-           do_useGPU_trans_ev_tridi_to_band = .false.
-           kernel = GENERIC_KERNEL
+      ! if the user has set explicitely a kernel before than honour this
+      ! otherwise set GPU kernel
+      if (userHasSetKernel) then
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+        if (kernel == GPU_KERNEL .or. kernel == GPU_KERNEL2) then
+#else
+        if (kernel == GPU_KERNEL) then
+#endif
+#else /* REALCASE == 1 */
+        if (kernel .ne. GPU_KERNEL) then
+#endif /* REALCASE == 1 */
+          write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is set by the user as non-GPU!"
+          write(error_unit,*) "The compute kernel will be executed on CPUs!"
+          do_useGPU_trans_ev_tridi_to_band = .false.
+          kernel = DEFAULT_KERNEL
+        else
+          good_nblk_gpu = .false.
         endif
+      else ! userHasSetKernel
+        !call obj%set(KERNEL_STRING, GPU_KERNEL, error)
+        !if (error .ne. ELPA_OK) then
+        !  write(error_unit,*) "Cannot set kernel to GPU kernel"
+        !  stop
+        !endif
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+        kernel = GPU_KERNEL2
+#else
+        kernel = GPU_KERNEL
+#endif
+#else /* REALCASE == 1 */
+        kernel = GPU_KERNEL
+#endif /* REALCASE == 1 */
+        if (my_pe .eq. 0) write(error_unit,*) "You requested the GPU version, thus the GPU kernel is activated"
+        good_nblk_gpu = .false.
+      endif ! userHasSetKernel
+
+      ! Accepted values are 2,4,8,16,...,512
+      do i = 1,10
+        if (nblk == 2**i) then
+          good_nblk_gpu = .true.
+          exit
+        endif
+      enddo
+
+      if (.not. good_nblk_gpu .and. do_useGPU_trans_ev_tridi_to_band) then
+         write(error_unit,*) "ELPA: Warning, CUDA kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
+         write(error_unit,*) "The compute kernel will be executed on CPUs!"
+         write(error_unit,*) "We recommend changing the block size to 2^n"
+         do_useGPU_trans_ev_tridi_to_band = .false.
+         ! should be set
+         kernel = DEFAULT_KERNEL
       endif
     endif
 
-    ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band sould be
+    ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band should be
     ! finally consistent
     if (do_useGPU_trans_ev_tridi_to_band) then
+      !call obj%get(KERNEL_STRING, kernel, error)
+      !if (error .ne. ELPA_OK) then
+      !  write(error_unit,*) "Cannot get kernel to GPU kernel"
+      !  stop
+      !endif
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+      if (kernel .ne. GPU_KERNEL .or. kernel .ne. GPU_KERNEL2) then
+#else
       if (kernel .ne. GPU_KERNEL) then
+#endif
+#else /* REALCASE == 1 */
+      if (kernel .ne. GPU_KERNEL) then
+#endif /* REALCASE == 1 */
         ! this should never happen, checking as an assert
         write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
         stop
       endif
     else
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+      if (kernel .eq. GPU_KERNEL .or. kernel .eq. GPU_KERNEL2) then
+#else
       if (kernel .eq. GPU_KERNEL) then
+#endif
+#else /* REALCASE == 1 */
+      if (kernel .eq. GPU_KERNEL) then
+#endif /* REALCASE == 1 */
         ! combination not allowed
         write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
-                            &is defined as the GPU kernel!  Aborting..."
-        stop
+                            &is defined as the GPU kernel!  Setting default kernel"
+        kernel = DEFAULT_KERNEL
         !TODO do error handling properly
       endif
     endif
-
 
 #if REALCASE == 1
 #ifdef SINGLE_PRECISION_REAL
@@ -734,21 +905,21 @@ print *,"Device pointer + REDIST"
 
 #endif /* REALCASE == 1 */
 
-     ! consistency check: is user set kernel still identical with "kernel" or did
-     ! we change it above? This is a mess and should be cleaned up
-     call obj%get(KERNEL_STRING,kernelByUser,error)
-     if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for user kernel settings. Aborting..."
-       stop
-     endif
+     !! consistency check: is user set kernel still identical with "kernel" or did
+     !! we change it above? This is a mess and should be cleaned up
+     !call obj%get(KERNEL_STRING,kernelByUser,error)
+     !if (error .ne. ELPA_OK) then
+     !  print *,"Problem getting option for user kernel settings. Aborting..."
+     !  stop
+     !endif
 
-     if (kernelByUser .ne. kernel) then
-       call obj%set(KERNEL_STRING, kernel, error)
-       if (error .ne. ELPA_OK) then
-         print *,"Problem setting kernel. Aborting..."
-         stop
-       endif
-     endif
+     !if (kernelByUser .ne. kernel) then
+     !  call obj%set(KERNEL_STRING, kernel, error)
+     !  if (error .ne. ELPA_OK) then
+     !    print *,"Problem setting kernel. Aborting..."
+     !    stop
+     !  endif
+     !endif
 
 #ifdef HAVE_HETEROGENOUS_CLUSTER_SUPPORT
      ! find a kernel which is supported on all used CPUs
@@ -756,23 +927,29 @@ print *,"Device pointer + REDIST"
      simdSetAvailable(:) = 0
      call get_cpuid_set(simdSetAvailable, NUMBER_OF_INSTR)
 #ifdef WITH_MPI
-     call MPI_ALLREDUCE(mpi_in_place, simdSetAvailable, NUMBER_OF_INSTR, MPI_INTEGER, MPI_BAND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+     if (useNonBlockingCollectivesAll) then
+       call mpi_iallreduce(mpi_in_place, simdSetAvailable, NUMBER_OF_INSTR, MPI_INTEGER, MPI_BAND, int(mpi_comm_all,kind=MPI_KIND), &
+       allreduce_request1, mpierr)
+       call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+     else
+       call mpi_allreduce(mpi_in_place, simdSetAvailable, NUMBER_OF_INSTR, MPI_INTEGER, MPI_BAND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+     endif
 #endif
 
-     ! compare user chosen kernel with possible kernels
-     call obj%get(KERNEL_STRING,kernelByUser,error)
-     if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for user kernel settings. Aborting..."
-       stop
-     endif
+     !! compare user chosen kernel with possible kernels
+     !call obj%get(KERNEL_STRING,kernelByUser,error)
+     !if (error .ne. ELPA_OK) then
+     !  print *,"Problem getting option for user kernel settings. Aborting..."
+     !  stop
+     !endif
 
      ! map kernel to SIMD Set, and check whether this is set is available on all cores
 
 #if REALCASE == 1
-    if (simdSetAvailable(map_real_kernel_to_simd_instruction(kernelByUser)) /= 1) then
+    if (simdSetAvailable(map_real_kernel_to_simd_instruction(kernel)) /= 1) then
 #endif
 #if COMPLEXCASE == 1
-    if (simdSetAvailable(map_complex_kernel_to_simd_instruction(kernelByUser)) /=1) then
+    if (simdSetAvailable(map_complex_kernel_to_simd_instruction(kernel)) /=1) then
 #endif
 
       ! if we are not purely running on Intel CPUs, this feature does not work at the moment
@@ -802,12 +979,12 @@ print *,"Device pointer + REDIST"
             kernel = map_simd_instruction_to_complex_kernel(i)
 #endif
             if (obj%can_set(KERNEL_STRING, kernel) == ELPA_OK) then
-              call obj%set(KERNEL_STRING, kernel, error)
-              if (error .ne. ELPA_OK) then
-                print *,"Problem setting kernel. Aborting..."
-                stop
-              endif
-              if (my_pe == 0 ) write(error_unit,*) "ELPA decided to use ",elpa_int_value_to_string(KERNEL_STRING, kernel)
+            !  call obj%set(KERNEL_STRING, kernel, error)
+            !  if (error .ne. ELPA_OK) then
+            !    print *,"Problem setting kernel. Aborting..."
+            !    stop
+            !  endif
+            if (my_pe == 0 ) write(error_unit,*) "ELPA decided to use ",elpa_int_value_to_string(KERNEL_STRING, kernel)
               exit
             endif
           endif
@@ -950,9 +1127,10 @@ print *,"Device pointer + REDIST"
 
     ! start the computations in 5 steps
     if (do_bandred) then
-      call obj%timer%start("bandred")
+      call obj%autotune_timer%start("full_to_band")
+      call obj%timer%start("full_to_band")
 #ifdef HAVE_LIKWID
-      call likwid_markerStartRegion("bandred")
+      call likwid_markerStartRegion("full_to_band")
 #endif
 
       ! Reduction full -> band
@@ -969,21 +1147,22 @@ print *,"Device pointer + REDIST"
        nrThreads, isSkewsymmetric)
 
 #ifdef HAVE_LIKWID
-      call likwid_markerStopRegion("bandred")
+      call likwid_markerStopRegion("full_to_band")
 #endif
-      call obj%timer%stop("bandred")
+      call obj%timer%stop("full_to_band")
+      call obj%autotune_timer%stop("full_to_band")
       if (.not.(success)) return
     endif
-
 
      ! Reduction band -> tridiagonal
      if (do_tridiag) then
        allocate(e(na), stat=istat, errmsg=errorMessage)
        check_allocate("elpa2_template: e", istat, errorMessage)
 
-       call obj%timer%start("tridiag")
+       call obj%autotune_timer%start("band_to_tridi")
+       call obj%timer%start("band_to_tridi")
 #ifdef HAVE_LIKWID
-       call likwid_markerStartRegion("tridiag")
+       call likwid_markerStartRegion("band_to_tridi")
 #endif
 
        call tridiag_band_&
@@ -995,15 +1174,24 @@ print *,"Device pointer + REDIST"
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
-       call mpi_bcast(ev, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
-       call mpi_bcast(e, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+       if (useNonBlockingCollectivesAll) then
+         call mpi_ibcast(ev, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), bcast_request1, mpierr)
+         call mpi_ibcast(e, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), bcast_request2, mpierr)
+
+         call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+         call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
+       else
+         call mpi_bcast(ev, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+         call mpi_bcast(e, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, 0_MPI_KIND, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+       endif
        call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 
 #ifdef HAVE_LIKWID
-       call likwid_markerStopRegion("tridiag")
+       call likwid_markerStopRegion("band_to_tridi")
 #endif
-       call obj%timer%stop("tridiag")
+       call obj%timer%stop("band_to_tridi")
+       call obj%autotune_timer%stop("band_to_tridi")
      endif ! do_tridiag
 
 #if COMPLEXCASE == 1
@@ -1018,6 +1206,7 @@ print *,"Device pointer + REDIST"
      ! Solve tridiagonal system
      if (do_solve_tridi) then
 !        print *, 'do_useGPU_solve_tridi=', do_useGPU_solve_tridi
+       call obj%autotune_timer%start("solve")
        call obj%timer%start("solve")
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("solve")
@@ -1039,6 +1228,7 @@ print *,"Device pointer + REDIST"
        call likwid_markerStopRegion("solve")
 #endif
        call obj%timer%stop("solve")
+       call obj%autotune_timer%stop("solve")
        if (.not.(success)) return
      endif ! do_solve_tridi
 
@@ -1121,9 +1311,10 @@ print *,"Device pointer + REDIST"
        endif
        ! Backtransform stage 1
      if (do_trans_to_band) then
-       call obj%timer%start("trans_ev_to_band")
+       call obj%autotune_timer%start("tridi_to_band")
+       call obj%timer%start("tridi_to_band")
 #ifdef HAVE_LIKWID
-       call likwid_markerStartRegion("trans_ev_to_band")
+       call likwid_markerStartRegion("tridi_to_band")
 #endif
        ! In the skew-symmetric case this transforms the real part
        call trans_ev_tridi_to_band_&
@@ -1134,9 +1325,10 @@ print *,"Device pointer + REDIST"
        matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
 #ifdef HAVE_LIKWID
-       call likwid_markerStopRegion("trans_ev_to_band")
+       call likwid_markerStopRegion("tridi_to_band")
 #endif
-       call obj%timer%stop("trans_ev_to_band")
+       call obj%timer%stop("tridi_to_band")
+       call obj%autotune_timer%stop("tridi_to_band")
 
        if (.not.(success)) return
 
@@ -1145,9 +1337,10 @@ print *,"Device pointer + REDIST"
      ! the array q (currently) always resides on host even when using GPU
 
      if (do_trans_to_full) then
-       call obj%timer%start("trans_ev_to_full")
+       call obj%autotune_timer%start("band_to_full")
+       call obj%timer%start("band_to_full")
 #ifdef HAVE_LIKWID
-       call likwid_markerStartRegion("trans_ev_to_full")
+       call likwid_markerStartRegion("band_to_full")
 #endif
 
        ! Backtransform stage 2
@@ -1163,14 +1356,18 @@ print *,"Device pointer + REDIST"
        , useQRActual  &
 #endif
        )
-       call obj%timer%stop("trans_ev_to_full")
+       call obj%timer%stop("band_to_full")
+       call obj%autotune_timer%stop("band_to_full")
      endif ! do_trans_to_full
 ! #ifdef DOUBLE_PRECISION_REAL
 !        call prmat(na,useGPU,q(1:matrixRows, 1:matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
 ! #endif
-!        New position:
+
+
      if (do_trans_to_band) then
        if (isSkewsymmetric) then
+         call obj%autotune_timer%start("tridi_to_band")
+         call obj%timer%start("skew_tridi_to_band")
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
            call trans_ev_tridi_to_band_&
@@ -1180,14 +1377,17 @@ print *,"Device pointer + REDIST"
            (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
            matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
            nrThreads, success=success, kernel=kernel)
-         endif
+         call obj%timer%stop("skew_tridi_to_band")
+         call obj%autotune_timer%stop("tridi_to_band")
+       endif
               ! We can now deallocate the stored householder vectors
        deallocate(hh_trans, stat=istat, errmsg=errorMessage)
        check_deallocate("elpa2_template: hh_trans", istat, errorMessage)
      endif
 
      if (do_trans_to_full) then
-       call obj%timer%start("trans_ev_to_full")
+       call obj%autotune_timer%start("band_to_full")
+       call obj%timer%start("band_to_full")
        if (isSkewsymmetric) then
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
@@ -1205,9 +1405,10 @@ print *,"Device pointer + REDIST"
        endif
 
 #ifdef HAVE_LIKWID
-       call likwid_markerStopRegion("trans_ev_to_full")
+       call likwid_markerStopRegion("band_to_full")
 #endif
-       call obj%timer%stop("trans_ev_to_full")
+       call obj%timer%stop("band_to_full")
+       call obj%autotune_timer%stop("band_to_full")
      endif ! do_trans_to_full
 
      ! make sure tmat is deallocated when using check_pd

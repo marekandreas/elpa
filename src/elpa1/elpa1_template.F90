@@ -249,7 +249,7 @@ function elpa_solve_evp_&
 
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
+     print *,"ELPA1: Problem getting mpi_comm_all. Aborting..."
      stop
    endif
 
@@ -397,12 +397,12 @@ function elpa_solve_evp_&
 
    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
+     print *,"ELPA1 Problem getting mpi_comm_rows. Aborting..."
      stop
    endif
    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem getting option. Aborting..."
+     print *,"ELPA1 Problem getting mpi_comm_cols. Aborting..."
      stop
    endif
 
@@ -683,6 +683,7 @@ print *,"Device pointer + REDIST"
    do_trans_ev = .true.
 
    if (do_tridiag) then
+     call obj%autotune_timer%start("full_to_tridi")
      call obj%timer%start("forward")
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("tridi")
@@ -705,9 +706,11 @@ print *,"Device pointer + REDIST"
      call likwid_markerStopRegion("tridi")
 #endif
      call obj%timer%stop("forward")
+     call obj%autotune_timer%stop("full_to_tridi")
     endif  !do_tridiag
 
     if (do_solve) then
+     call obj%autotune_timer%start("solve")
      call obj%timer%start("solve")
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("solve")
@@ -734,6 +737,7 @@ print *,"Device pointer + REDIST"
      call likwid_markerStopRegion("solve")
 #endif
      call obj%timer%stop("solve")
+     call obj%autotune_timer%stop("solve")
      if (.not.(success)) return
    endif !do_solve
 
@@ -801,6 +805,7 @@ print *,"Device pointer + REDIST"
        end do
      endif
 
+     call obj%autotune_timer%start("tridi_to_full")
      call obj%timer%start("back")
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("trans_ev")
@@ -833,6 +838,7 @@ print *,"Device pointer + REDIST"
      call likwid_markerStopRegion("trans_ev")
 #endif
      call obj%timer%stop("back")
+     call obj%autotune_timer%stop("tridi_to_full")
    endif ! do_trans_ev
 
 #if COMPLEXCASE == 1

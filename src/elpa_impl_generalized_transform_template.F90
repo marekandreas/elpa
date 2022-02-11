@@ -70,6 +70,7 @@
      integer(kind=MPI_KIND) :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
      integer(kind=ik)       :: BuffLevelInt, use_cannon
      integer(kind=MPI_KIND) :: mpierr
+     logical, save          :: firstCall = .true.
 
      MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
 
@@ -93,17 +94,19 @@
      call self%get("cannon_for_generalized",use_cannon,error)
 
 #if !defined(WITH_MPI)
-     if(my_p == 0) then
+     if ((my_p == 0) .and. firstCall) then
        write(*,*) "Cannons algorithm can only be used with MPI"
        write(*,*) "Switching to elpa Hermitian and scalapack"
+       firstCall = .false.
      end if
      use_cannon = 0
 #endif
 
      if (mod(np_cols, np_rows) /= 0) then
-       if(my_p == 0) then
+       if ((my_p == 0) .and. firstCall) then
          write(*,*) "To use Cannons algorithm, np_cols must be a multiple of np_rows."
          write(*,*) "Switching to elpa Hermitian and scalapack"
+         firstCall = .false.
        end if
        use_cannon = 0
      endif

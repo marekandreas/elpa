@@ -1,8 +1,6 @@
 ## Users guide for the *ELPA* library ##
 
 This document provides the guide for using the *ELPA* library with the new API (API version 20170403 or higher).
-If you want to use the deprecated legacy API (we strongly recommend against this), please use the ELPA release
-2019.05.002 or older.
 
 If you need instructions on how to build *ELPA*, please look at [INSTALL.md] (INSTALL.md).
 
@@ -13,7 +11,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example `man elpa2_print_kernels` should provide the documentation for the *ELPA* program, which prints all
 the available kernels.
 
-Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.002/html/index.html)
+Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.11.001/html/index.html)
 for each *ELPA* release is available.
 
 
@@ -180,7 +178,7 @@ The following table gives a list of all supported parameters which can be used t
 
 ## III) List of computational routines ##
 
-The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.05.002/html/index.html) for details.
+The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2021.11.001/html/index.html) for details.
 
 
 | Name         | Purpose                                                                 | since API version |

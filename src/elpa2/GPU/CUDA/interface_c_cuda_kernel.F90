@@ -59,6 +59,17 @@ module cuda_c_kernel
     end subroutine
   end interface
 
+  interface
+    subroutine launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols) &
+               bind(c)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int), value :: nev, nb, ldq, ncols
+      integer(kind=c_intptr_t), value :: q
+      integer(c_intptr_t), value :: hh_tau ,hh
+    end subroutine
+  end interface
+
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
     subroutine launch_compute_hh_trafo_c_cuda_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
@@ -70,7 +81,19 @@ module cuda_c_kernel
       integer(c_intptr_t), value :: hh_tau ,hh
     end subroutine
   end interface
-#endif
+
+  interface
+    subroutine launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
+               bind(c)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int), value :: nev, nb, ldq, ncols
+      integer(kind=c_intptr_t), value :: q
+      integer(c_intptr_t), value :: hh_tau ,hh
+    end subroutine
+  end interface
+
+#endif /* WANT_SINGLE_PRECISION_REAL */
 
   interface
     subroutine launch_compute_hh_trafo_c_cuda_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols) &
@@ -83,6 +106,17 @@ module cuda_c_kernel
     end subroutine
   end interface
 
+  !interface
+  !  subroutine launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols) &
+  !             bind(c)
+  !    use, intrinsic :: iso_c_binding
+  !    implicit none
+  !    integer(kind=c_int), value :: nev, nb, ldq, ncols
+  !    integer(kind=c_intptr_t), value :: q
+  !    integer(kind=c_intptr_t), value :: hh_tau ,hh
+  !  end subroutine
+  !end interface
+
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
     subroutine launch_compute_hh_trafo_c_cuda_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
@@ -94,7 +128,19 @@ module cuda_c_kernel
       integer(kind=c_intptr_t), value :: hh_tau ,hh
     end subroutine
   end interface
-#endif
+
+  !interface
+  !  subroutine launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
+  !             bind(c)
+  !    use, intrinsic :: iso_c_binding
+  !    implicit none
+  !    integer(kind=c_int), value :: nev, nb, ldq, ncols
+  !    integer(kind=c_intptr_t), value :: q
+  !    integer(kind=c_intptr_t), value :: hh_tau ,hh
+  !  end subroutine
+  !end interface
+
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
   interface
     subroutine launch_my_unpack_c_cuda_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
