@@ -160,9 +160,9 @@
     useGPU = .false.
   endif
 
-  if (useGPU) then
+  if (.not.(useGPU)) then
 #ifdef DEVICE_POINTER
-    print *,"You used the interface for device pointers but did not specify GPU usage!. Aborting..."
+    print *,"You used the interface for device pointers for elpa_invert_trm but did not specify GPU usage!. Aborting..."
     stop
 #endif
   endif
@@ -277,7 +277,8 @@
     ! associate with a_dev
     a_dev = transfer(a, a_dev)
     ! allocate a_tmp
-    allocate(a_tmp(obj%local_nrows,obj%local_ncols))
+    allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_invert_trm: a_tmp", istat, errorMessage)
 #endif
 
     successGPU = gpu_malloc(zero_dev, 1*size_of_datatype)
@@ -301,7 +302,6 @@
   check_allocate("elpa_invert_trm: tmat1", istat, errorMessage)
 
   allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
   check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
 
   tmat1 = 0
@@ -698,7 +698,8 @@
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("elpa_invert_trm: a_dev", successGPU)
 #else
-    deallocate(a_tmp)
+    deallocate(a_tmp, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_invert_trm: a_tmp", istat, errorMessage)
 #endif
 
     successGPU = gpu_free(zero_dev)

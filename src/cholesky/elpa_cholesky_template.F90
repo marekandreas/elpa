@@ -148,9 +148,9 @@
     useGPU = .false.
   endif
 
-  if (useGPU) then
+  if (.not.(useGPU)) then
 #ifdef DEVICE_POINTER
-    print *,"You used the interface for device pointers but did not specify GPU usage!. Aborting..."
+    print *,"You used the interface for device pointers for elpa_cholesky but did not specify GPU usage!. Aborting..."
     stop
 #endif
   endif
@@ -294,7 +294,8 @@
     check_alloc_gpu("elpa_cholesky: a_dev", successGPU)
 #else
     a_dev = transfer(a, a_dev)
-    allocate(a_tmp(obj%local_nrows,obj%local_ncols))
+    allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
+  check_allocate("elpa_cholesky: a_tmp", istat, errorMessage)
 #endif
 
   endif
@@ -346,7 +347,6 @@
 
           a_off = (l_row1-1 + (l_col1-1)*matrixRows) * size_of_datatype
           call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info)
-
           if (info .ne. 0) then
             write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF 1"
             stop
@@ -385,14 +385,14 @@
           call obj%timer%start("blas")
           successGPU = gpu_memcpy(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev,  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
 
           call PRECISION_POTRF('U', int(na-n+1,kind=BLAS_KIND), a_tmp(l_row1,l_col1), &
                              int(matrixRows,kind=BLAS_KIND), infoBLAS )
           info = int(infoBLAS,kind=ik)
           successGPU = gpu_memcpy(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t), &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
           call obj%timer%stop("blas")
 
           if (info/=0) then
@@ -491,14 +491,14 @@
           call obj%timer%start("blas")
           successGPU = gpu_memcpy(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev,  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
 
           call PRECISION_POTRF('U', int(nblk,kind=BLAS_KIND), a_tmp(l_row1,l_col1), &
                                int(matrixRows,kind=BLAS_KIND) , infoBLAS )
           info = int(infoBLAS,kind=ik)
           successGPU = gpu_memcpy(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t), &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
           call obj%timer%stop("blas")
 
           if (info/=0) then
@@ -889,7 +889,8 @@
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
 
-    deallocate(a_tmp)
+    deallocate(a_tmp, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
 
 #endif
 

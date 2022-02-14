@@ -786,6 +786,24 @@ program test
 #endif
 
 #if defined(TEST_CHOLESKY)
+#if TEST_NVIDIA_GPU == 1
+   call e%set("nvidia-gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
+#if TEST_AMD_GPU == 1
+   call e%set("amd-gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
+#if TEST_INTEL_GPU == 1
+   call e%set("intel-gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
+   call e%set("gpu_cholesky",1, error_elpa)
+   assert_elpa_ok(error_elpa)
+
    successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix a on GPU! Aborting..."
@@ -801,6 +819,24 @@ program test
 #endif /* TEST_CHOLESKY */
 
 #if defined(TEST_HERMITIAN_MULTIPLY)
+#if TEST_NVIDIA_GPU == 1
+   call e%set("nvidia-gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
+#if TEST_AMD_GPU == 1
+   call e%set("amd-gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
+#if TEST_INTEL_GPU == 1
+   call e%set("intel-gpu", TEST_GPU, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
+   call e%set("gpu_hermitian_multiply",1, error_elpa)
+   assert_elpa_ok(error_elpa)
+
    successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix a on GPU! Aborting..."
@@ -1032,27 +1068,66 @@ program test
      call e%timer_start("e%cholesky()")
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
-     call e%cholesky(a_dev, error_elpa)
-#else
-     call e%cholesky(a, error_elpa)
+
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+     call e%cholesky_double(a_dev, error_elpa)
 #endif
+#if defined(TEST_SINGLE)
+     call e%cholesky_float(a_dev, error_elpa)
+#endif
+#endif /* TEST_REAL */
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+     call e%cholesky_double_complex(a_dev, error_elpa)
+#endif
+#if defined(TEST_SINGLE)
+     call e%cholesky_float_complex(a_dev, error_elpa)
+#endif
+#endif /* TEST_REAL */
+
+
+#else /* TEST_GPU_DEVICE_POINTER_API */
+     call e%cholesky(a, error_elpa)
+#endif /* TEST_GPU_DEVICE_POINTER_API */
      assert_elpa_ok(error_elpa)
      call e%timer_stop("e%cholesky()")
-#endif
+#endif /* TEST_CHOLESKY */
 
 #if defined(TEST_HERMITIAN_MULTIPLY)
      call e%timer_start("e%hermitian_multiply()")
 #if TEST_GPU_DEVICE_POINTER_API == 1
-     call e%hermitian_multiply('F','F', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+     call e%hermitian_multiply_double('F','F', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                                int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
                                int(na_cols,kind=c_int), error_elpa)
-#else
+#endif
+#if defined(TEST_SINGLE)
+     call e%hermitian_multiply_float('F','F', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+#endif
+#endif /* TEST_REAL */
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+     call e%hermitian_multiply_double_complex('F','F', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+#endif
+#if defined(TEST_SINGLE)
+     call e%hermitian_multiply_float_complex('F','F', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+#endif
+#endif /* TEST_COMPLEX */
+#else /* TEST_GPU_DEVICE_POINTER_API */
      call e%hermitian_multiply('F','F', int(na,kind=c_int), a, b, int(na_rows,kind=c_int), &
                                int(na_cols,kind=c_int), c, int(na_rows,kind=c_int),        &
                                int(na_cols,kind=c_int), error_elpa)
-#endif
+#endif /* TEST_GPU_DEVICE_POINTER_API */
      call e%timer_stop("e%hermitian_multiply()")
-#endif
+#endif /* TEST_HERMITIAN_MULTIPLY */
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
      call e%timer_start("e%generalized_eigenvectors()")
@@ -1151,7 +1226,7 @@ program test
 #endif /* defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM) */
 
 #if defined(TEST_CHOLESKY)
-   successGPU = gpu_memcpy(c_loc(as), a_dev, na_rows*na_cols*size_of_datatype, &
+   successGPU = gpu_memcpy(c_loc(a), a_dev, na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"cannot copy matrix of eigenvectors from GPU to host! Aborting..."
@@ -1180,9 +1255,9 @@ program test
    endif
 
    successGPU = gpu_memcpy(c_loc(c), c_dev, na_rows*na_cols*size_of_datatype, &
-                           gpuMemcpyHostToDevice)
+                           gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
-     print *,"Cannot copy matrix c_dev -> c to GPU! Aborting..."
+     print *,"Cannot copy matrix c_dev -> c ! Aborting..."
      stop
    endif
 

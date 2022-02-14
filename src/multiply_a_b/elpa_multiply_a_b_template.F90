@@ -153,7 +153,7 @@
     gpu = 0
   endif
 
-  call obj%get("gpu_multiply_a_b",gpu_multiply_a_b, error)
+  call obj%get("gpu_hermitian_multiply",gpu_multiply_a_b, error)
   if (error .ne. ELPA_OK) then
     print *,"ELPA_MULITPLY_AB: Problem getting option for gpu_cholesky. Aborting..."
     stop
@@ -165,9 +165,9 @@
     useGPU = .false.
   endif
 
-  if (useGPU) then
+  if (.not.(useGPU)) then
 #ifdef DEVICE_POINTER
-    print *,"You used the interface for device pointers but did not specify GPU usage!. Aborting..."
+    print *,"You used the interface for device pointers for hermitian_multiply but did not specify GPU usage!. Aborting..."
     stop
 #endif
   endif
@@ -258,13 +258,16 @@
 #else
     b_dev = transfer(b, b_dev)
 
-    allocate(a_tmp(obj%local_nrows,obj%local_ncols))
+    allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_mult_at_b: a_tmp", istat, errorMessage)
+
     num = obj%local_nrows*obj%local_ncols*size_of_datatype
     successGPU = gpu_memcpy(int(loc(a_tmp),kind=c_intptr_t), a, num,&
                   gpuMemcpyDeviceToHost)
     check_memcpy_gpu("elpa_mult_at_b: a_dev -> a_tmp", successGPU)
 
-    allocate(c_tmp(ldc,ldcCols))
+    allocate(c_tmp(ldc,ldcCols), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_mult_at_b: c_tmp", istat, errorMessage)
 #endif
 
     num = l_rows*nblk_mult*size_of_datatype
@@ -488,14 +491,16 @@
     successGPU = gpu_host_unregister(int(loc(b),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_multiply_a_b: b", successGPU)
 #else
-    deallocate(a_tmp)
+    deallocate(a_tmp, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_mult_at_b: a_tmp", istat, errorMessage)
 
     num = ldc*ldcCols*size_of_datatype
     successGPU = gpu_memcpy(c,int(loc(c_tmp),kind=c_intptr_t),num,&
                   gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_mult_at_b: c_tmp -> c", successGPU)
 
-    allocate(c_tmp(ldc,ldcCols))
+    deallocate(c_tmp, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_mult_at_b: c_tmp", istat, errorMessage)
 #endif
     nullify(aux_mat)
     nullify(tmp1)

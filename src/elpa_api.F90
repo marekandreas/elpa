@@ -203,19 +203,19 @@ module elpa_api
           elpa_hermitian_multiply_a_h_a_f, &
           elpa_hermitian_multiply_a_h_a_fc
 
-      generic, public:: hermitian_double => &
+      generic, public:: hermitian_multiply_double => &
               elpa_hermitian_multiply_a_h_a_d, &
               elpa_hermitian_multiply_d_ptr_d
 
-      generic, public:: hermitian_float => &
+      generic, public:: hermitian_multiply_float => &
               elpa_hermitian_multiply_a_h_a_f, &
               elpa_hermitian_multiply_d_ptr_f
 
-      generic, public:: hermitian_double_complex => &
+      generic, public:: hermitian_multiply_double_complex => &
               elpa_hermitian_multiply_a_h_a_dc, &
               elpa_hermitian_multiply_d_ptr_dc
 
-      generic, public:: hermitian_float_complex => &
+      generic, public:: hermitian_multiply_float_complex => &
               elpa_hermitian_multiply_a_h_a_fc, &
               elpa_hermitian_multiply_d_ptr_fc
 
