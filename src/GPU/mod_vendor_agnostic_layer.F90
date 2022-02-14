@@ -84,7 +84,8 @@ module elpa_gpu
   interface gpu_memcpy
     module procedure gpu_memcpy_intptr
     module procedure gpu_memcpy_cptr
-    module procedure gpu_memcpy_mixed
+    module procedure gpu_memcpy_mixed_to_device
+    module procedure gpu_memcpy_mixed_to_host
   end interface
 
   interface gpu_memcpy2d
@@ -377,7 +378,7 @@ module elpa_gpu
     
     end function
     
-    function gpu_memcpy_mixed(dst, src, size, dir) result(success)
+    function gpu_memcpy_mixed_to_device(dst, src, size, dir) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
@@ -391,11 +392,34 @@ module elpa_gpu
       success = .false.
 
       if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy_mixed(dst, src, size, dir)
+        success = cuda_memcpy_mixed_to_device(dst, src, size, dir)
       endif
 
       if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy_mixed(dst, src, size, dir)
+        success = hip_memcpy_mixed_to_device(dst, src, size, dir)
+      endif
+    
+    end function
+    
+    function gpu_memcpy_mixed_to_host(dst, src, size, dir) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+      implicit none
+      type(c_ptr)                           :: src
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+
+      success = .false.
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memcpy_mixed_to_host(dst, src, size, dir)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_memcpy_mixed_to_host(dst, src, size, dir)
       endif
     
     end function
