@@ -138,9 +138,9 @@ module elpa1_impl
 
   ! imported from elpa1_auxilliary
 
-  public :: elpa_mult_at_b_real_double_impl       !< Multiply double-precision real matrices A**T * B
+  !public :: elpa_mult_at_b_real_double_impl       !< Multiply double-precision real matrices A**T * B
 
-  public :: elpa_mult_ah_b_complex_double_impl    !< Multiply double-precision complex matrices A**H * B
+  !public :: elpa_mult_ah_b_complex_double_impl    !< Multiply double-precision complex matrices A**H * B
 
   !public :: elpa_invert_trm_real_double_impl      !< Invert double-precision real triangular matrix
 
@@ -153,14 +153,14 @@ module elpa1_impl
   public :: elpa_solve_tridi_double_impl          !< Solve a double-precision tridiagonal eigensystem with divide and conquer method
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_mult_at_b_real_single_impl       !< Multiply single-precision real matrices A**T * B
+  !public :: elpa_mult_at_b_real_single_impl       !< Multiply single-precision real matrices A**T * B
   !public :: elpa_invert_trm_real_single_impl      !< Invert single-precision real triangular matrix
   !public :: elpa_cholesky_real_single_impl        !< Cholesky factorization of a single-precision real matrix
   public :: elpa_solve_tridi_single_impl          !< Solve a single-precision tridiagonal eigensystem with divide and conquer method
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_mult_ah_b_complex_single_impl    !< Multiply single-precision complex matrices A**H * B
+  !public :: elpa_mult_ah_b_complex_single_impl    !< Multiply single-precision complex matrices A**H * B
   !public :: elpa_invert_trm_complex_single_impl   !< Invert single-precision complex triangular matrix
   !public :: elpa_cholesky_complex_single_impl     !< Cholesky factorization of a single-precision complex matrix
 #endif

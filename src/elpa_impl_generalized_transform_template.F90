@@ -145,7 +145,7 @@
 
      else  ! do not use cannon algorithm, use elpa hermitian multiply and scalapack instead
        ! tmp <- inv(U^T) * A (we have to use temporary variable)
-       call self%elpa_hermitian_multiply_&
+       call self%elpa_hermitian_multiply_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
                                  self%local_nrows, self%local_ncols, error)

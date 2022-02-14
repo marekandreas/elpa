@@ -198,10 +198,26 @@ module elpa_api
           elpa_generalized_eigenvalues_fc
 
       generic, public :: hermitian_multiply => &                    !< method for a "hermitian" multiplication of matrices a and b
-          elpa_hermitian_multiply_d, &                              !< for real valued matrices:   a**T * b
-          elpa_hermitian_multiply_dc, &                             !< for complex valued matrices a**H * b
-          elpa_hermitian_multiply_f, &
-          elpa_hermitian_multiply_fc
+          elpa_hermitian_multiply_a_h_a_d, &                        !< for real valued matrices:   a**T * b
+          elpa_hermitian_multiply_a_h_a_dc, &                       !< for complex valued matrices a**H * b
+          elpa_hermitian_multiply_a_h_a_f, &
+          elpa_hermitian_multiply_a_h_a_fc
+
+      generic, public:: hermitian_double => &
+              elpa_hermitian_multiply_a_h_a_d, &
+              elpa_hermitian_multiply_d_ptr_d
+
+      generic, public:: hermitian_float => &
+              elpa_hermitian_multiply_a_h_a_f, &
+              elpa_hermitian_multiply_d_ptr_f
+
+      generic, public:: hermitian_double_complex => &
+              elpa_hermitian_multiply_a_h_a_dc, &
+              elpa_hermitian_multiply_d_ptr_dc
+
+      generic, public:: hermitian_float_complex => &
+              elpa_hermitian_multiply_a_h_a_fc, &
+              elpa_hermitian_multiply_d_ptr_fc
 
       generic, public :: cholesky => &                              !< method for the cholesky factorisation of matrix a
           elpa_cholesky_a_h_a_d, &
@@ -319,10 +335,15 @@ module elpa_api
       procedure(elpa_generalized_eigenvalues_dc_i), deferred, public :: elpa_generalized_eigenvalues_dc
       procedure(elpa_generalized_eigenvalues_fc_i), deferred, public :: elpa_generalized_eigenvalues_fc
 
-      procedure(elpa_hermitian_multiply_d_i),  deferred, public :: elpa_hermitian_multiply_d
-      procedure(elpa_hermitian_multiply_f_i),  deferred, public :: elpa_hermitian_multiply_f
-      procedure(elpa_hermitian_multiply_dc_i), deferred, public :: elpa_hermitian_multiply_dc
-      procedure(elpa_hermitian_multiply_fc_i), deferred, public :: elpa_hermitian_multiply_fc
+      procedure(elpa_hermitian_multiply_a_h_a_d_i),  deferred, public :: elpa_hermitian_multiply_a_h_a_d
+      procedure(elpa_hermitian_multiply_a_h_a_f_i),  deferred, public :: elpa_hermitian_multiply_a_h_a_f
+      procedure(elpa_hermitian_multiply_a_h_a_dc_i), deferred, public :: elpa_hermitian_multiply_a_h_a_dc
+      procedure(elpa_hermitian_multiply_a_h_a_fc_i), deferred, public :: elpa_hermitian_multiply_a_h_a_fc
+
+      procedure(elpa_hermitian_multiply_d_ptr_d_i),  deferred, public :: elpa_hermitian_multiply_d_ptr_d
+      procedure(elpa_hermitian_multiply_d_ptr_f_i),  deferred, public :: elpa_hermitian_multiply_d_ptr_f
+      procedure(elpa_hermitian_multiply_d_ptr_dc_i), deferred, public :: elpa_hermitian_multiply_d_ptr_dc
+      procedure(elpa_hermitian_multiply_d_ptr_fc_i), deferred, public :: elpa_hermitian_multiply_d_ptr_fc
 
       procedure(elpa_cholesky_a_h_a_d_i),    deferred, public :: elpa_cholesky_a_h_a_d
       procedure(elpa_cholesky_a_h_a_f_i),    deferred, public :: elpa_cholesky_a_h_a_f
