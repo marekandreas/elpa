@@ -59,45 +59,45 @@
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
-  integer(kind=ik)              :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=ik)                           :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
 #ifndef DEVICE_POINTER
 #ifdef USE_ASSUMED_SIZE
-  MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,*)
+  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,*)
 #else
-  MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,obj%local_ncols)
+  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,obj%local_ncols)
 #endif
 #else /* DEVICE_POINTER */
-  type(c_ptr)                   :: a
-  MATH_DATATYPE(kind=rck), allocatable :: a_tmp(:,:)
+  type(c_ptr)                                :: a
+  MATH_DATATYPE(kind=rck), allocatable       :: a_tmp(:,:)
 #endif /* DEVICE_POINTER */
-  integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, myid
-  integer(kind=MPI_KIND)        :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, myidMPI
-  integer(kind=ik)              :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-  integer(kind=ik)              :: n, nc, i, info
-  integer(kind=BLAS_KIND)       :: infoBLAS
-  integer(kind=ik)              :: lcs, lce, lrs, lre
-  integer(kind=ik)              :: tile_size, l_rows_tile, l_cols_tile
+  integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols, myid
+  integer(kind=MPI_KIND)                     :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, myidMPI
+  integer(kind=ik)                           :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+  integer(kind=ik)                           :: n, nc, i, info
+  integer(kind=BLAS_KIND)                    :: infoBLAS
+  integer(kind=ik)                           :: lcs, lce, lrs, lre
+  integer(kind=ik)                           :: tile_size, l_rows_tile, l_cols_tile
 
-  MATH_DATATYPE(kind=rck), allocatable    :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
-  logical                       :: wantDebug
-  logical                       :: success
-  integer(kind=ik)              :: istat, debug, error
-  character(200)                :: errorMessage
-  integer(kind=ik)              :: nrThreads, limitThreads
-  character(20)                 :: gpuString
-  logical                       :: successGPU
-  logical                       :: useGPU
-  integer(kind=c_int)           :: gpu, numGPU
-  integer(kind=c_intptr_t)      :: num
-  integer(kind=c_intptr_t)      :: tmp1_dev, tmatc_dev, tmatr_dev, a_dev, tmp2_dev
-  type(c_ptr)                      :: tmp1_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer :: tmp1_mpi_fortran_ptr(:,:)
-  integer(kind=c_intptr_t)      :: a_off, tmatc_off, tmatr_off
-  type(c_ptr)                      :: tmatc_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer :: tmatc_mpi_fortran_ptr(:,:)
-  integer(kind=c_int)              :: gpu_cholesky
+  MATH_DATATYPE(kind=rck), allocatable       :: tmp1(:), tmp2(:,:), tmatr(:,:), tmatc(:,:)
+  logical                                    :: wantDebug
+  logical                                    :: success
+  integer(kind=ik)                           :: istat, debug, error
+  character(200)                             :: errorMessage
+  integer(kind=ik)                           :: nrThreads, limitThreads
+  character(20)                              :: gpuString
+  logical                                    :: successGPU
+  logical                                    :: useGPU
+  integer(kind=c_int)                        :: gpu, numGPU
+  integer(kind=c_intptr_t)                   :: num
+  integer(kind=c_intptr_t)                   :: tmp1_dev, tmatc_dev, tmatr_dev, a_dev, tmp2_dev
+  type(c_ptr)                                :: tmp1_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer           :: tmp1_mpi_fortran_ptr(:,:)
+  integer(kind=c_intptr_t)                   :: a_off, tmatc_off, tmatr_off
+  type(c_ptr)                                :: tmatc_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer           :: tmatc_mpi_fortran_ptr(:,:)
+  integer(kind=c_int)                        :: gpu_cholesky
 
-  integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
+  integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
                                                             &MATH_DATATYPE

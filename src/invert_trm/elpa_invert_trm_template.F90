@@ -69,46 +69,46 @@
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
-  integer(kind=ik)             :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-  integer(kind=ik)             :: mpi_comm_all
+  integer(kind=ik)                           :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+  integer(kind=ik)                           :: mpi_comm_all
 #ifdef DEVICE_POINTER
-  type(c_ptr)                  :: a
-  MATH_DATATYPE(kind=rck), allocatable :: a_tmp(:,:)
+  type(c_ptr)                                :: a
+  MATH_DATATYPE(kind=rck), allocatable       :: a_tmp(:,:)
 #else /* DEVICE_POINTER */
 #ifdef USE_ASSUMED_SIZE
-  MATH_DATATYPE(kind=rck)     :: a(obj%local_nrows,*)
+  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,*)
 #else
-  MATH_DATATYPE(kind=rck)     :: a(obj%local_nrows,obj%local_ncols)
+  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,obj%local_ncols)
 #endif
 #endif /* DEVICE_POINTER */
   integer :: ii, jj
 
-  integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, myid
-  integer(kind=MPI_KIND)       :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, myidMPI
-  integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-  integer(kind=ik)             :: n, nc, i, info, ns, nb
-  integer(kind=BLAS_KIND)      :: infoBLAS
-  MATH_DATATYPE(kind=rck), allocatable   :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
-  logical                      :: wantDebug
-  logical                      :: success
-  integer(kind=ik)             :: istat, debug, error
-  character(200)               :: errorMessage
-  character(20)                 :: gpuString
-  logical                       :: successGPU
-  logical                       :: useGPU
-  integer(kind=c_int)           :: gpu, numGPU
-  integer(kind=c_intptr_t)      :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev, zero_dev
-  type(c_ptr)                      :: tmp1_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer :: tmp1_mpi_fortran_ptr(:)
-  type(c_ptr)                      :: tmat1_mpi_dev, tmat2_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer :: tmat1_mpi_fortran_ptr(:,:), tmat2_mpi_fortran_ptr(:,:)
+  integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols, myid
+  integer(kind=MPI_KIND)                     :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, myidMPI
+  integer(kind=ik)                           :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+  integer(kind=ik)                           :: n, nc, i, info, ns, nb
+  integer(kind=BLAS_KIND)                    :: infoBLAS
+  MATH_DATATYPE(kind=rck), allocatable       :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
+  logical                                    :: wantDebug
+  logical                                    :: success
+  integer(kind=ik)                           :: istat, debug, error
+  character(200)                             :: errorMessage
+  character(20)                              :: gpuString
+  logical                                    :: successGPU
+  logical                                    :: useGPU
+  integer(kind=c_int)                        :: gpu, numGPU
+  integer(kind=c_intptr_t)                   :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev, zero_dev
+  type(c_ptr)                                :: tmp1_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer           :: tmp1_mpi_fortran_ptr(:)
+  type(c_ptr)                                :: tmat1_mpi_dev, tmat2_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer           :: tmat1_mpi_fortran_ptr(:,:), tmat2_mpi_fortran_ptr(:,:)
 
-  type(c_ptr)                   :: tmp2_mpi_dev, a_mpi_dev
-  integer(kind=c_intptr_t)      :: a_off, tmat2_off, tmp1_off, tmp2_off
-   MATH_DATATYPE(kind=rck), pointer :: a_mpi_deviceptr(:,:), initializer_ptr(:) !DEB
-  integer(kind=c_intptr_t)      :: num
-  integer(kind=c_int)           :: gpu_invert_trm
-  integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
+  type(c_ptr)                                :: tmp2_mpi_dev, a_mpi_dev
+  integer(kind=c_intptr_t)                   :: a_off, tmat2_off, tmp1_off, tmp2_off
+   MATH_DATATYPE(kind=rck), pointer          :: a_mpi_deviceptr(:,:), initializer_ptr(:) !DEB
+  integer(kind=c_intptr_t)                   :: num
+  integer(kind=c_int)                        :: gpu_invert_trm
+  integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
                                                             &MATH_DATATYPE
