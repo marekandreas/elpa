@@ -73,7 +73,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/mod_solve_tridi.F90 \
   src/invert_trm/mod_invert_trm_cuda.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
-  src/cholesky/mod_cholesky_cuda.F90 \
+  src/cholesky/GPU/CUDA/mod_cholesky_cuda.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/elpa1/mod_distribute_global_column.F90 \
