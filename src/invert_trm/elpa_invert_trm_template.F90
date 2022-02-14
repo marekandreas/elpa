@@ -137,11 +137,6 @@
       print *,"ELPA_INVERT_TRM: Problem getting option for NVIDIA GPU. Aborting..."
       stop
     endif
-    call obj%get("gpu_invert_trm",gpu_invert_trm,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
-      stop
-    endif
 
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
@@ -151,6 +146,12 @@
     endif
   else
     gpu = 0
+  endif
+
+  call obj%get("gpu_invert_trm",gpu_invert_trm,error)
+  if (error .ne. ELPA_OK) then
+    print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
+    stop
   endif
 
   if (gpu_invert_trm .eq. 1) then
