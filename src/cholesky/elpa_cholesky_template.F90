@@ -128,7 +128,7 @@
 
     call obj%get("gpu_cholesky",gpu_cholesky, error)
     if (error .ne. ELPA_OK) then
-      print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
+      print *,"ELPA_CHOLESKY: Problem getting option for gpu_cholesky. Aborting..."
       stop
     endif
 
