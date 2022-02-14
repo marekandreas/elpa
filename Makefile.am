@@ -889,7 +889,7 @@ EXTRA_DIST = \
   src/cholesky/elpa_cholesky_template.F90 \
   src/cholesky/mod_cholesky_cuda.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
-  src/invert_trm/mod_invert_trm_cuda.F90 \
+  src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
   src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/invert_trm/elpa_invert_trm_template.F90 \
