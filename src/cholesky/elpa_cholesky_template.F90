@@ -126,12 +126,6 @@
       stop
     endif
 
-    call obj%get("gpu_cholesky",gpu_cholesky, error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_CHOLESKY: Problem getting option for gpu_cholesky. Aborting..."
-      stop
-    endif
-
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
@@ -140,6 +134,12 @@
     endif
   else
     gpu = 0
+  endif
+
+  call obj%get("gpu_cholesky",gpu_cholesky, error)
+  if (error .ne. ELPA_OK) then
+    print *,"ELPA_CHOLESKY: Problem getting option for gpu_cholesky. Aborting..."
+    stop
   endif
 
   if (gpu_cholesky .eq. 1) then
