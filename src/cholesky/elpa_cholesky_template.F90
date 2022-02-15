@@ -53,9 +53,13 @@
   use elpa_blas_interfaces
   use elpa_gpu
   use mod_check_for_gpu
-  use invert_trm_cuda, only : copy_PRECISION_tmp1_tmp2, &
-                              copy_PRECISION_a_tmp1
-  use cholesky_cuda
+  use invert_trm_gpu !, only : gpu_copy_&
+                     !        &PRECISION&
+                     !        &_tmp1_tmp2, &
+                     !        gpu_copy_&
+                     !        &PRECISION&
+                     !        &_a_tmp1
+  use cholesky_gpu
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -549,7 +553,7 @@
         endif
  
         if (useGPU) then
-          call copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nblk)
+          call gpu_copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nblk)
         else ! useGPU
           nc = 0
           do i=1,nblk
@@ -622,7 +626,7 @@
 #endif /* WITH_MPI */
 
       if (useGPU) then
-        call copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nblk)
+        call gpu_copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nblk)
       else ! useGPU
         nc = 0
         do i=1,nblk
@@ -663,7 +667,7 @@
       if (my_prow==prow(n, nblk, np_rows)) then
         ! if l_cols-l_colx+1 == 0 kernel launch with 0 blocks => raises error
         if (l_cols-l_colx+1>0) &
-           call copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+           call gpu_copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
       endif
     else ! useGPU
       do i=1,nblk

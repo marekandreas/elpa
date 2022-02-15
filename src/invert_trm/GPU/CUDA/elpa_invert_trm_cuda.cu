@@ -59,7 +59,7 @@
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
-__global__ void copy_double_a_tmat2_kernel(double *a_dev, double *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1){
+__global__ void cuda_copy_double_a_tmat2_kernel(double *a_dev, double *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1){
 
   int nb_index    = threadIdx.x +1; // range 1..nb
   int l_col_index = blockIdx.x + 1; // range 1..l_colx-l_cols-1
@@ -68,7 +68,7 @@ __global__ void copy_double_a_tmat2_kernel(double *a_dev, double *tmat2_dev, con
 
 }
 
-extern "C" void copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in){
+extern "C" void cuda_copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
@@ -79,14 +79,14 @@ extern "C" void copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev, int 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
-  copy_double_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_double_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_a_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_a_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_float_a_tmat2_kernel(float *a_dev, float *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1){
+__global__ void cuda_copy_float_a_tmat2_kernel(float *a_dev, float *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1){
 
   int nb_index    = threadIdx.x +1; // range 1..nb
   int l_col_index = blockIdx.x + 1; // range 1..l_colx-l_cols-1
@@ -94,7 +94,7 @@ __global__ void copy_float_a_tmat2_kernel(float *a_dev, float *tmat2_dev, const 
   tmat2_dev[nb_index-1 + (l_colx-1 + l_col_index -1) * nblk] = a_dev[l_row1-1 + nb_index-1 + (l_colx-1 + l_col_index -1)  * matrixRows];
 }
 
-extern "C" void copy_float_a_tmat2_FromC(float *a_dev, float *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in){
+extern "C" void cuda_copy_float_a_tmat2_FromC(float *a_dev, float *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
@@ -105,14 +105,14 @@ extern "C" void copy_float_a_tmat2_FromC(float *a_dev, float *tmat2_dev, int *nb
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
-  copy_float_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_float_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_a_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_a_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_double_complex_a_tmat2_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1){
+__global__ void cuda_copy_double_complex_a_tmat2_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1){
 
   int nb_index    = threadIdx.x +1; // range 1..nb
   int l_col_index = blockIdx.x + 1; // range 1..l_colx-l_cols-1
@@ -121,7 +121,7 @@ __global__ void copy_double_complex_a_tmat2_kernel(cuDoubleComplex *a_dev, cuDou
 
 }
 
-extern "C" void copy_double_complex_a_tmat2_FromC(double _Complex *a_dev, double _Complex *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in){
+extern "C" void cuda_copy_double_complex_a_tmat2_FromC(double _Complex *a_dev, double _Complex *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
@@ -135,14 +135,14 @@ extern "C" void copy_double_complex_a_tmat2_FromC(double _Complex *a_dev, double
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
-  copy_double_complex_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_double_complex_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_complex_a_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_complex_a_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_float_complex_a_tmat2_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1){
+__global__ void cuda_copy_float_complex_a_tmat2_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1){
 
   int nb_index    = threadIdx.x +1; // range 1..nb
   int l_col_index = blockIdx.x + 1; // range 1..l_colx-l_cols-1
@@ -151,7 +151,7 @@ __global__ void copy_float_complex_a_tmat2_kernel(cuFloatComplex *a_dev, cuFloat
 
 }
 
-extern "C" void copy_float_complex_a_tmat2_FromC(float _Complex *a_dev, float _Complex *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in){
+extern "C" void cuda_copy_float_complex_a_tmat2_FromC(float _Complex *a_dev, float _Complex *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
@@ -165,14 +165,14 @@ extern "C" void copy_float_complex_a_tmat2_FromC(float _Complex *a_dev, float _C
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
-  copy_float_complex_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_float_complex_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_complex_a_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_complex_a_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_double_tmp2_tmat2_kernel(double *tmp2_dev, double *tmat2_dev, const int nblk, const int l_col1){
+__global__ void cuda_copy_double_tmp2_tmat2_kernel(double *tmp2_dev, double *tmat2_dev, const int nblk, const int l_col1){
 
   int nb_index    = threadIdx.x +1;  // range 1..nb
   int l_col_index = blockIdx.x + 1;  // range 1..nb
@@ -181,7 +181,7 @@ __global__ void copy_double_tmp2_tmat2_kernel(double *tmp2_dev, double *tmat2_de
 
 }
 
-extern "C" void copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in){
+extern "C" void cuda_copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in){
   int nblk   = *nblk_in;   
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
@@ -189,15 +189,15 @@ extern "C" void copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat2_dev
   dim3 blocks = dim3(nb,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
-  copy_double_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_dev, tmat2_dev, nblk, l_col1);
+  cuda_copy_double_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_dev, tmat2_dev, nblk, l_col1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_tmp2_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_tmp2_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
 
-__global__ void copy_float_tmp2_tmat2_kernel(float *tmp2_dev, float *tmat2_dev, const int nblk, const int l_col1){
+__global__ void cuda_copy_float_tmp2_tmat2_kernel(float *tmp2_dev, float *tmat2_dev, const int nblk, const int l_col1){
 
   int nb_index    = threadIdx.x +1;  // range 1..nb
   int l_col_index = blockIdx.x + 1;  // range 1..nb
@@ -206,7 +206,7 @@ __global__ void copy_float_tmp2_tmat2_kernel(float *tmp2_dev, float *tmat2_dev, 
 
 }
 
-extern "C" void copy_float_tmp2_tmat2_FromC(float *tmp2_dev, float *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in){
+extern "C" void cuda_copy_float_tmp2_tmat2_FromC(float *tmp2_dev, float *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in){
   int nblk   = *nblk_in;   
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
@@ -214,14 +214,14 @@ extern "C" void copy_float_tmp2_tmat2_FromC(float *tmp2_dev, float *tmat2_dev, i
   dim3 blocks = dim3(nb,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
-  copy_float_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_dev, tmat2_dev, nblk, l_col1);
+  cuda_copy_float_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_dev, tmat2_dev, nblk, l_col1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_tmp2_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_tmp2_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_double_complex_tmp2_tmat2_kernel(cuDoubleComplex *tmp2_dev, cuDoubleComplex *tmat2_dev, const int nblk, const int l_col1){
+__global__ void cuda_copy_double_complex_tmp2_tmat2_kernel(cuDoubleComplex *tmp2_dev, cuDoubleComplex *tmat2_dev, const int nblk, const int l_col1){
 
   int nb_index    = threadIdx.x +1;  // range 1..nb
   int l_col_index = blockIdx.x + 1;  // range 1..nb
@@ -230,7 +230,7 @@ __global__ void copy_double_complex_tmp2_tmat2_kernel(cuDoubleComplex *tmp2_dev,
 
 }
 
-extern "C" void copy_double_complex_tmp2_tmat2_FromC(double _Complex *tmp2_dev, double _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in){
+extern "C" void cuda_copy_double_complex_tmp2_tmat2_FromC(double _Complex *tmp2_dev, double _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in){
   int nblk   = *nblk_in;   
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
@@ -242,14 +242,14 @@ extern "C" void copy_double_complex_tmp2_tmat2_FromC(double _Complex *tmp2_dev, 
   dim3 blocks = dim3(nb,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
-  copy_double_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_casted, tmat2_casted, nblk, l_col1);
+  cuda_copy_double_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_casted, tmat2_casted, nblk, l_col1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_complex_tmp2_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_complex_tmp2_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_float_complex_tmp2_tmat2_kernel(cuFloatComplex *tmp2_dev, cuFloatComplex *tmat2_dev, const int nblk, const int l_col1){
+__global__ void cuda_copy_float_complex_tmp2_tmat2_kernel(cuFloatComplex *tmp2_dev, cuFloatComplex *tmat2_dev, const int nblk, const int l_col1){
 
   int nb_index    = threadIdx.x +1;  // range 1..nb
   int l_col_index = blockIdx.x + 1;  // range 1..nb
@@ -258,7 +258,7 @@ __global__ void copy_float_complex_tmp2_tmat2_kernel(cuFloatComplex *tmp2_dev, c
 
 }
 
-extern "C" void copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev, float _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in){
+extern "C" void cuda_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev, float _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in){
   int nblk   = *nblk_in;   
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
@@ -270,14 +270,14 @@ extern "C" void copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev, fl
   dim3 blocks = dim3(nb,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
-  copy_float_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_casted, tmat2_casted, nblk, l_col1);
+  cuda_copy_float_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_casted, tmat2_casted, nblk, l_col1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_complex_tmp2_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_complex_tmp2_tmat2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_double_a_tmat1_kernel(double *a_dev, double *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1){
+__global__ void cuda_copy_double_a_tmat1_kernel(double *a_dev, double *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1){
 
   int nb_index    = threadIdx.x +1;  // range 1..nb
   int l_row1_index = blockIdx.x + 1; // we need l_row1-1 blocks
@@ -287,7 +287,7 @@ __global__ void copy_double_a_tmat1_kernel(double *a_dev, double *tmat1_dev, con
 
 }
 
-extern "C" void copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in){
+extern "C" void cuda_copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in){
   int l_rows = *l_rows_in;   
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
@@ -297,14 +297,14 @@ extern "C" void copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev, int 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
-  copy_double_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+  cuda_copy_double_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_float_a_tmat1_kernel(float *a_dev, float *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1){
+__global__ void cuda_copy_float_a_tmat1_kernel(float *a_dev, float *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1){
 
   int nb_index    = threadIdx.x +1;  // range 1..nb
   int l_row1_index = blockIdx.x + 1; // we need l_row1-1 blocks
@@ -313,7 +313,7 @@ __global__ void copy_float_a_tmat1_kernel(float *a_dev, float *tmat1_dev, const 
   a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = 0;
 }
 
-extern "C" void copy_float_a_tmat1_FromC(float *a_dev, float *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in){
+extern "C" void cuda_copy_float_a_tmat1_FromC(float *a_dev, float *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in){
   int l_rows = *l_rows_in;   
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
@@ -325,14 +325,14 @@ extern "C" void copy_float_a_tmat1_FromC(float *a_dev, float *tmat1_dev, int *l_
   //dim3 threadsPerBlock = dim3(1, 1, 1);
   //dim3 blocks = dim3(1,1,1);
 
-  copy_float_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+  cuda_copy_float_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_double_complex_a_tmat1_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, cuDoubleComplex *zero_dev){
+__global__ void cuda_copy_double_complex_a_tmat1_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, cuDoubleComplex *zero_dev){
 
   int nb_index    = threadIdx.x +1;  // range 1..nb
   int l_row1_index = blockIdx.x + 1; // we need l_row1-1 blocks
@@ -341,7 +341,7 @@ __global__ void copy_double_complex_a_tmat1_kernel(cuDoubleComplex *a_dev, cuDou
   a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = zero_dev[0];
 }
 
-extern "C" void copy_double_complex_a_tmat1_FromC(double _Complex *a_dev, double _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, double _Complex *ZERO){
+extern "C" void cuda_copy_double_complex_a_tmat1_FromC(double _Complex *a_dev, double _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, double _Complex *ZERO){
   int l_rows = *l_rows_in;   
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
@@ -356,15 +356,15 @@ extern "C" void copy_double_complex_a_tmat1_FromC(double _Complex *a_dev, double
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
-  copy_double_complex_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+  cuda_copy_double_complex_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_complex_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_complex_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
 
-__global__ void copy_float_complex_a_tmat1_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, cuFloatComplex *zero_dev){
+__global__ void cuda_copy_float_complex_a_tmat1_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, cuFloatComplex *zero_dev){
 
   int nb_index    = threadIdx.x +1;  // range 1..nb
   int l_row1_index = blockIdx.x + 1; // we need l_row1-1 blocks
@@ -373,7 +373,7 @@ __global__ void copy_float_complex_a_tmat1_kernel(cuFloatComplex *a_dev, cuFloat
   a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = zero_dev[0];
 }
 
-extern "C" void copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, float _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, float _Complex *ZERO){
+extern "C" void cuda_copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, float _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, float _Complex *ZERO){
   int l_rows = *l_rows_in;   
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
@@ -387,14 +387,14 @@ extern "C" void copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, float _C
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
-  copy_float_complex_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+  cuda_copy_float_complex_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_complex_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_complex_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_double_tmp1_tmp2_kernel(double *tmp1_dev, double *tmp2_dev, const int nblk, const int nb){
+__global__ void cuda_copy_double_tmp1_tmp2_kernel(double *tmp1_dev, double *tmp2_dev, const int nblk, const int nb){
 
   int i_index    = threadIdx.x +1;  // range 1..nb
   int j_index    = blockIdx.x +1;  // range 1..nb (should be 1..i)
@@ -405,21 +405,21 @@ __global__ void copy_double_tmp1_tmp2_kernel(double *tmp1_dev, double *tmp2_dev,
 }
 
 
-extern "C" void copy_double_tmp1_tmp2_FromC(double *tmp1_dev, double *tmp2_dev, int *nblk_in, int *nb_in){
+extern "C" void cuda_copy_double_tmp1_tmp2_FromC(double *tmp1_dev, double *tmp2_dev, int *nblk_in, int *nb_in){
   int nblk = *nblk_in;
   int nb = *nb_in;
 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
-  copy_double_tmp1_tmp2_kernel<<<blocks,threadsPerBlock>>>(tmp1_dev, tmp2_dev, nblk, nb);
+  cuda_copy_double_tmp1_tmp2_kernel<<<blocks,threadsPerBlock>>>(tmp1_dev, tmp2_dev, nblk, nb);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_tmp1_tmp2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_tmp1_tmp2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_float_tmp1_tmp2_kernel(float *tmp1_dev, float *tmp2_dev, const int nblk, const int nb){
+__global__ void cuda_copy_float_tmp1_tmp2_kernel(float *tmp1_dev, float *tmp2_dev, const int nblk, const int nb){
 
   int i_index    = threadIdx.x +1;  // range 1..nb
   int j_index    = blockIdx.x +1;  // range 1..nb (should be 1..i)
@@ -430,21 +430,21 @@ __global__ void copy_float_tmp1_tmp2_kernel(float *tmp1_dev, float *tmp2_dev, co
 }
 
 
-extern "C" void copy_float_tmp1_tmp2_FromC(float *tmp1_dev, float *tmp2_dev, int *nblk_in, int *nb_in){
+extern "C" void cuda_copy_float_tmp1_tmp2_FromC(float *tmp1_dev, float *tmp2_dev, int *nblk_in, int *nb_in){
   int nblk = *nblk_in;
   int nb = *nb_in;
 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
-  copy_float_tmp1_tmp2_kernel<<<blocks,threadsPerBlock>>>(tmp1_dev, tmp2_dev, nblk, nb);
+  cuda_copy_float_tmp1_tmp2_kernel<<<blocks,threadsPerBlock>>>(tmp1_dev, tmp2_dev, nblk, nb);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_tmp1_tmp2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_tmp1_tmp2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_double_complex_tmp1_tmp2_kernel(cuDoubleComplex *tmp1_dev, cuDoubleComplex *tmp2_dev, const int nblk, const int nb){
+__global__ void cuda_copy_double_complex_tmp1_tmp2_kernel(cuDoubleComplex *tmp1_dev, cuDoubleComplex *tmp2_dev, const int nblk, const int nb){
 
   int i_index    = threadIdx.x +1;  // range 1..nb
   int j_index    = blockIdx.x +1;  // range 1..nb (should be 1..i)
@@ -455,7 +455,7 @@ __global__ void copy_double_complex_tmp1_tmp2_kernel(cuDoubleComplex *tmp1_dev, 
 }
 
 
-extern "C" void copy_double_complex_tmp1_tmp2_FromC(double _Complex *tmp1_dev, double _Complex *tmp2_dev, int *nblk_in, int *nb_in){
+extern "C" void cuda_copy_double_complex_tmp1_tmp2_FromC(double _Complex *tmp1_dev, double _Complex *tmp2_dev, int *nblk_in, int *nb_in){
   int nblk = *nblk_in;
   int nb = *nb_in;
 
@@ -466,14 +466,14 @@ extern "C" void copy_double_complex_tmp1_tmp2_FromC(double _Complex *tmp1_dev, d
   cuDoubleComplex* tmp2_casted = (cuDoubleComplex*) tmp2_dev;
 
 
-  copy_double_complex_tmp1_tmp2_kernel<<<blocks,threadsPerBlock>>>(tmp1_casted, tmp2_casted, nblk, nb);
+  cuda_copy_double_complex_tmp1_tmp2_kernel<<<blocks,threadsPerBlock>>>(tmp1_casted, tmp2_casted, nblk, nb);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_complex_tmp1_tmp2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_complex_tmp1_tmp2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_float_complex_tmp1_tmp2_kernel(cuFloatComplex *tmp1_dev, cuFloatComplex *tmp2_dev, const int nblk, const int nb){
+__global__ void cuda_copy_float_complex_tmp1_tmp2_kernel(cuFloatComplex *tmp1_dev, cuFloatComplex *tmp2_dev, const int nblk, const int nb){
 
   int i_index    = threadIdx.x +1;  // range 1..nb
   int j_index    = blockIdx.x +1;  // range 1..nb (should be 1..i)
@@ -484,7 +484,7 @@ __global__ void copy_float_complex_tmp1_tmp2_kernel(cuFloatComplex *tmp1_dev, cu
 }
 
 
-extern "C" void copy_float_complex_tmp1_tmp2_FromC(float _Complex *tmp1_dev, float _Complex *tmp2_dev, int *nblk_in, int *nb_in){
+extern "C" void cuda_copy_float_complex_tmp1_tmp2_FromC(float _Complex *tmp1_dev, float _Complex *tmp2_dev, int *nblk_in, int *nb_in){
   int nblk = *nblk_in;
   int nb = *nb_in;
 
@@ -495,14 +495,14 @@ extern "C" void copy_float_complex_tmp1_tmp2_FromC(float _Complex *tmp1_dev, flo
   cuFloatComplex* tmp2_casted = (cuFloatComplex*) tmp2_dev;
 
 
-  copy_float_complex_tmp1_tmp2_kernel<<<blocks,threadsPerBlock>>>(tmp1_casted, tmp2_casted, nblk, nb);
+  cuda_copy_float_complex_tmp1_tmp2_kernel<<<blocks,threadsPerBlock>>>(tmp1_casted, tmp2_casted, nblk, nb);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_complex_tmp1_tmp2_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_complex_tmp1_tmp2_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_double_a_tmp1_kernel(double *a_dev, double *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb){
+__global__ void cuda_copy_double_a_tmp1_kernel(double *a_dev, double *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb){
 
   int i_index    = threadIdx.x +1;  // range 1..nb
   int j_index    = blockIdx.x +1;  // range 1..nb (should be 1..i)
@@ -512,7 +512,7 @@ __global__ void copy_double_a_tmp1_kernel(double *a_dev, double *tmp1_dev, const
   }
 }
 
-extern "C" void copy_double_a_tmp1_FromC(double *a_dev, double *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in){
+extern "C" void cuda_copy_double_a_tmp1_FromC(double *a_dev, double *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in){
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
   int matrixRows = *matrixRows_in;
@@ -521,14 +521,14 @@ extern "C" void copy_double_a_tmp1_FromC(double *a_dev, double *tmp1_dev, int *l
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
-  copy_double_a_tmp1_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
+  cuda_copy_double_a_tmp1_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_a_tmp1_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_a_tmp1_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_float_a_tmp1_kernel(float *a_dev, float *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb){
+__global__ void cuda_copy_float_a_tmp1_kernel(float *a_dev, float *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb){
 
   int i_index    = threadIdx.x +1;  // range 1..nb
   int j_index    = blockIdx.x +1;  // range 1..nb (should be 1..i)
@@ -539,7 +539,7 @@ __global__ void copy_float_a_tmp1_kernel(float *a_dev, float *tmp1_dev, const in
 
 }
 
-extern "C" void copy_float_a_tmp1_FromC(float *a_dev, float *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in){
+extern "C" void cuda_copy_float_a_tmp1_FromC(float *a_dev, float *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in){
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
   int matrixRows = *matrixRows_in;
@@ -548,14 +548,14 @@ extern "C" void copy_float_a_tmp1_FromC(float *a_dev, float *tmp1_dev, int *l_ro
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
-  copy_float_a_tmp1_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
+  cuda_copy_float_a_tmp1_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_a_tmp1_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_a_tmp1_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_double_complex_a_tmp1_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb){
+__global__ void cuda_copy_double_complex_a_tmp1_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb){
 
   int i_index    = threadIdx.x +1;  // range 1..nb
   int j_index    = blockIdx.x +1;  // range 1..nb (should be 1..i)
@@ -565,7 +565,7 @@ __global__ void copy_double_complex_a_tmp1_kernel(cuDoubleComplex *a_dev, cuDoub
   }
 }
 
-extern "C" void copy_double_complex_a_tmp1_FromC(double _Complex *a_dev, double _Complex *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in){
+extern "C" void cuda_copy_double_complex_a_tmp1_FromC(double _Complex *a_dev, double _Complex *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in){
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
   int matrixRows = *matrixRows_in;
@@ -578,14 +578,14 @@ extern "C" void copy_double_complex_a_tmp1_FromC(double _Complex *a_dev, double 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
-  copy_double_complex_a_tmp1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
+  cuda_copy_double_complex_a_tmp1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_complex_a_tmp1_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_double_complex_a_tmp1_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
-__global__ void copy_float_complex_a_tmp1_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb){
+__global__ void cuda_copy_float_complex_a_tmp1_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb){
 
   int i_index    = threadIdx.x +1;  // range 1..nb
   int j_index    = blockIdx.x +1;  // range 1..nb (should be 1..i)
@@ -595,7 +595,7 @@ __global__ void copy_float_complex_a_tmp1_kernel(cuFloatComplex *a_dev, cuFloatC
   }
 }
 
-extern "C" void copy_float_complex_a_tmp1_FromC(float _Complex *a_dev, float _Complex *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in){
+extern "C" void cuda_copy_float_complex_a_tmp1_FromC(float _Complex *a_dev, float _Complex *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in){
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
   int matrixRows = *matrixRows_in;
@@ -608,10 +608,10 @@ extern "C" void copy_float_complex_a_tmp1_FromC(float _Complex *a_dev, float _Co
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
-  copy_float_complex_a_tmp1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
+  cuda_copy_float_complex_a_tmp1_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_complex_a_tmp1_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_copy_float_complex_a_tmp1_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 

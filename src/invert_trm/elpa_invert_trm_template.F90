@@ -64,7 +64,7 @@
   use elpa_gpu
   use mod_check_for_gpu
   use elpa_blas_interfaces
-  use invert_trm_cuda
+  use invert_trm_gpu
 
   implicit none
 #include "../general/precision_kinds.F90"
@@ -414,7 +414,7 @@
         endif
 
         if (useGPU) then
-          call copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+          call gpu_copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
         else ! useGPU
           nc = 0
           do i=1,nb
@@ -473,7 +473,7 @@
 #endif /* WITH_MPI */
       
       if (useGPU) then
-        call copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nb)
+        call gpu_copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nb)
       else ! useGPU
         nc = 0
         do i=1,nb
@@ -494,13 +494,13 @@
         call obj%timer%stop("gpublas")
 
         if (l_colx <= l_cols) then
-          call copy_PRECISION_a_tmat2 (a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, & 
+          call gpu_copy_PRECISION_a_tmat2 (a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, & 
                                        l_row1, nb)
         endif
 
         if (my_pcol==pcol(n, nblk, np_cols)) then
            ! tmp2 has the lower left triangle 0
-          call copy_PRECISION_tmp2_tmat2 (tmp2_dev, tmat2_dev, nblk, l_col1, nb) 
+          call gpu_copy_PRECISION_tmp2_tmat2 (tmp2_dev, tmat2_dev, nblk, l_col1, nb) 
         endif
       else ! useGPU
         call obj%timer%start("blas")
@@ -526,7 +526,7 @@
     if (l_row1>1) then
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
-          call copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+          call gpu_copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
         else
 #ifndef DEVICE_POINTER
           tmat1(1:l_row1-1,1:nb) = a(1:l_row1-1,l_col1:l_col1+nb-1)
