@@ -7225,7 +7225,13 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
         h1_real = (__SIMD_DATATYPE) _XOR_EPI((__m512i) h1_real, (__m512i) sign);
         h1_imag = (__SIMD_DATATYPE) _XOR_EPI((__m512i) h1_imag, (__m512i) sign);
 #endif
-#endif /* HAVE_AVX512_XEON_PHI */
+#endif
+#ifdef HAVE_AVX512_XEON
+#if defined(DOUBLE_PRECISION_COMPLEX) || defined(SINGLE_PRECISION_COMPLEX)
+        h1_real = _XOR(h1_real, sign);
+        h1_imag = _XOR(h1_imag, sign);
+#endif
+#endif
 
 #endif /* VEC_SET == AVX_512 */
 
@@ -7894,7 +7900,7 @@ static __forceinline void CONCAT_8ARGS(hh_trafo_complex_kernel_,ROW_LENGTH,_,SIM
 #ifdef __ELPA_USE_FMA__
      q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _SIMD_FMADDSUB(h1_real, x1, _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
 #else
-     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
+     q1 = _SIMD_ADD( ADDITIONAL_ARGUMENT q1, _ADDSUB( _SIMD_MUL( ADDITIONAL_ARGUMENT h1_real, x1), _SIMD_SHUFFLE(tmp1, tmp1, _SHUFFLE_VAL)));
 #endif
 #endif /* VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 || VEC_SET == NEON_ARCH64_128 */
      tmp2 = _SIMD_MUL( ADDITIONAL_ARGUMENT h1_imag, x2);
