@@ -179,7 +179,7 @@ program test
    MATRIX_TYPE, allocatable, target    :: a(:,:)
    MATRIX_TYPE, allocatable           :: as(:,:)
 #if defined(TEST_HERMITIAN_MULTIPLY)
-   MATRIX_TYPE, allocatable    :: b(:,:), c(:,:)
+   MATRIX_TYPE, allocatable, target    :: b(:,:), c(:,:)
 #endif
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
    MATRIX_TYPE, allocatable    :: b(:,:), bs(:,:)
