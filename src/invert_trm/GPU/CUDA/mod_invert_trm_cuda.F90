@@ -121,8 +121,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
-             bind(C, name="copy_float_complex_tmp2_tmat2_FromC")
+    subroutine cuda_copy_float_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
+             bind(C, name="cuda_copy_float_complex_tmp2_tmat2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: tmp2_dev, tmat2_dev
