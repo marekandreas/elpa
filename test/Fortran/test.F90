@@ -337,6 +337,16 @@ program test
      print *,''
    endif
 
+#ifdef TEST_ALL_KERNELS
+   !  discard for the moment until allocates and memcpy are in the correct loop
+#if TEST_GPU_DEVICE_POINTER_API == 1
+   stop 77
+   call mpi_finalize(mpierr)
+#endif
+#endif
+
+
+
 #if TEST_QR_DECOMPOSITION == 1
 
 #if (TEST_NVIDIA_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_AMD_GPU == 1)

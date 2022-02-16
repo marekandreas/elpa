@@ -154,6 +154,7 @@ int main(int argc, char** argv) {
    C_INT_TYPE i, unfinished;
 
    C_INT_TYPE value;
+
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -161,6 +162,13 @@ int main(int argc, char** argv) {
 #else
    nprocs = 1;
    myid = 0;
+#endif
+
+#if defined(HAVE_64BIT_INTEGER_MPI_SUPPORT) || defined(HAVE_64BIT_INTEGER_MATH_SUPPORT) || defined(HAVE_64BIT_INTEGER_SUPPORT)
+#ifdef WITH_MPI
+   MPI_Finalize();
+#endif
+   return 77;
 #endif
 
    if (argc == 4) {
@@ -389,5 +397,5 @@ int main(int argc, char** argv) {
    MPI_Finalize();
 #endif
 
-   return !!status;
+   return status;
 }

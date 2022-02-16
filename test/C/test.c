@@ -163,6 +163,7 @@ int main(int argc, char** argv) {
    elpa_t handle;
 
    int  value;
+
 #ifdef WITH_MPI
 #ifndef WITH_OPENMP_TRADITIONAL
    MPI_Init(&argc, &argv);
@@ -185,6 +186,14 @@ int main(int argc, char** argv) {
    nprocs = 1;
    myid = 0;
 #endif
+
+#if defined(HAVE_64BIT_INTEGER_MPI_SUPPORT) || defined(HAVE_64BIT_INTEGER_MATH_SUPPORT) || defined(HAVE_64BIT_INTEGER_SUPPORT)
+#ifdef WITH_MPI
+   MPI_Finalize();
+#endif
+   return 77;
+#endif
+
 
    if (argc == 4) {
      na = atoi(argv[1]);
@@ -355,5 +364,5 @@ int main(int argc, char** argv) {
    MPI_Finalize();
 #endif
 
-   return !!status;
+   return status;
 }
