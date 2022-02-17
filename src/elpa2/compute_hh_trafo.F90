@@ -187,12 +187,22 @@ last_stripe_width, kernel)
   if (wantDebug) then
 #ifdef WITH_NVIDIA_GPU_VERSION
     if (useGPU .and. &
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
 #if REALCASE == 1
-      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU .or. kernel .ne. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU .and. kernel .ne. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU)) then
 #endif
 #if COMPLEXCASE == 1
-      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .and. kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU)) then
 #endif
+
+#else /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
+#if REALCASE == 1
+      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU)) then
+#endif
+#if COMPLEXCASE == 1
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
+#endif
+#endif  /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
       print *,"ERROR: useGPU is set in compute_hh_trafo but not a NVIDIA GPU kernel!"
       stop
     endif
