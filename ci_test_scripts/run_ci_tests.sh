@@ -219,7 +219,7 @@ then
       echo "do" >> ./run_${CLUSTER}_1node.sh
       echo "echo \" \" > /dev/null" >> ./run_${CLUSTER}_1node.sh
       echo "done" >> ./run_${CLUSTER}_1node.sh
-      echo "CHECK_LEVEL=extended make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  " >> ./run_${CLUSTER}_1node.sh
+      echo "CHECK_LEVEL=extended make -j 10 check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  " >> ./run_${CLUSTER}_1node.sh
       echo " " >> ./run_${CLUSTER}_1node.sh
       echo "exitCode=\$?" >> ./run_${CLUSTER}_1node.sh
       echo " " >> ./run_${CLUSTER}_1node.sh
