@@ -305,8 +305,10 @@ program test
 
    call elpa_uninit(error_elpa)
 
+#ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
+#endif
 
 #endif
    call exit(status)
