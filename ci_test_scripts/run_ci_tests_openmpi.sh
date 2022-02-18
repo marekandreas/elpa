@@ -188,9 +188,6 @@ then
     #then
       cat ./ELPA_CI_2gpu.err.*
     #fi
-    
-  else
-
   fi
   if [ -f ./test-suite.log ]
   then
