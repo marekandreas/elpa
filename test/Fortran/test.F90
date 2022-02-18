@@ -340,10 +340,10 @@ program test
 #ifdef TEST_ALL_KERNELS
    !  discard for the moment until allocates and memcpy are in the correct loop
 #if TEST_GPU_DEVICE_POINTER_API == 1
-   stop 77
 #ifdef WITH_MPI
    call mpi_finalize(mpierr)
 #endif
+   stop 77
 #endif
 #endif
 
