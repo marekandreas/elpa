@@ -1,7 +1,6 @@
 stages:
   - test
 
-
 include:
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/before.inc.yml'
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/after.inc.yml'
