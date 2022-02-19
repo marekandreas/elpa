@@ -380,6 +380,12 @@ program test
 #endif
      stop 77
 #endif
+#ifdef TEST_COMPLEX
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
 #endif
 
    call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, &

@@ -222,6 +222,12 @@ program test
 #endif
      stop 77
 #endif
+#ifdef TEST_COMPLEX
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
 #endif
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
