@@ -373,6 +373,15 @@ program test
 #endif /* TEST_QR_DECOMPOSITION */
 
 
+#ifdef WITH_CUDA_AWARE_MPI
+#if TEST_NVIDIA_GPU != 1
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+#endif
+
    call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, &
                          np_cols, layout, my_blacs_ctxt, my_prow, &
                          my_pcol)

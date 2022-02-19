@@ -140,6 +140,16 @@ int main(int argc, char** argv) {
    return 77;
 #endif
 
+#ifdef WITH_CUDA_AWARE_MPI
+#if TEST_NVIDIA_GPU != 1
+#ifdef WITH_MPI
+   MPI_Finalize();
+#endif
+   return 77;
+#endif
+#endif
+
+
    if (argc == 4) {
      na = atoi(argv[1]);
      nev = atoi(argv[2]);
