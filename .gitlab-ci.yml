@@ -5,7 +5,9 @@ stages:
 include:
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/before.inc.yml'
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/after.inc.yml'
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/cuda_aware.inc.yml'
+
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/generated_tests.inc.yml'
+
 
 
 
