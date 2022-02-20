@@ -380,13 +380,22 @@ program test
 #endif
      stop 77
 #endif
+
 #ifdef TEST_COMPLEX
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
      stop 77
 #endif
+
+#ifdef TEST_ALL_KERNELS
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
 #endif
+     stop 77
+#endif
+
+#endif /* WITH_CUDA_AWARE_MPI */
 
    call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, &
                          np_cols, layout, my_blacs_ctxt, my_prow, &

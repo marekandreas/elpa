@@ -166,18 +166,10 @@ program test
 #endif
 
 #ifdef WITH_CUDA_AWARE_MPI
-#if TEST_NVIDIA_GPU != 1
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
      stop 77
-#endif
-#ifdef TEST_COMPLEX
-#ifdef WITH_MPI
-     call mpi_finalize(mpierr)
-#endif
-     stop 77
-#endif
 #endif
 
 
