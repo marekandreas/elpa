@@ -533,12 +533,12 @@
         do_useGPU = .false.
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
-        if (kernel == GPU_KERNEL .or. kernel == GPU_KERNEL2) then
+        if (kernel .eq. GPU_KERNEL .or. kernel .eq. GPU_KERNEL2) then
 #else
-        if (kernel == GPU_KERNEL) then
+        if (kernel .eq. GPU_KERNEL) then
 #endif
 #else /* REALCASE == 1 */
-        if (kernel == GPU_KERNEL) then
+        if (kernel .eq. GPU_KERNEL) then
 #endif /* REALCASE == 1 */
           if (userHasSetKernel) then
             ! user fixed inconsistent input.
@@ -793,9 +793,9 @@ print *,"Device pointer + REDIST"
       if (userHasSetKernel) then
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
-        if (kernel == GPU_KERNEL .or. kernel == GPU_KERNEL2) then
+        if (kernel .ne. GPU_KERNEL .and. kernel .ne. GPU_KERNEL2) then
 #else
-        if (kernel == GPU_KERNEL) then
+        if (kernel .ne. GPU_KERNEL) then
 #endif
 #else /* REALCASE == 1 */
         if (kernel .ne. GPU_KERNEL) then
@@ -854,7 +854,7 @@ print *,"Device pointer + REDIST"
       !endif
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
-      if (kernel .ne. GPU_KERNEL .or. kernel .ne. GPU_KERNEL2) then
+      if (kernel .ne. GPU_KERNEL .and. kernel .ne. GPU_KERNEL2) then
 #else
       if (kernel .ne. GPU_KERNEL) then
 #endif
@@ -865,7 +865,7 @@ print *,"Device pointer + REDIST"
         write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
         stop
       endif
-    else
+    else ! do not use GPU
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
       if (kernel .eq. GPU_KERNEL .or. kernel .eq. GPU_KERNEL2) then
@@ -878,6 +878,7 @@ print *,"Device pointer + REDIST"
         ! combination not allowed
         write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
                             &is defined as the GPU kernel!  Setting default kernel"
+                    stop
         kernel = DEFAULT_KERNEL
         !TODO do error handling properly
       endif
