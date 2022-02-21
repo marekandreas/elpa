@@ -803,7 +803,6 @@ print *,"Device pointer + REDIST"
           write(error_unit,*) "ELPA: Warning, GPU usage has been requested but compute kernel is set by the user as non-GPU!"
           write(error_unit,*) "The compute kernel will be executed on CPUs!"
           do_useGPU_trans_ev_tridi_to_band = .false.
-          stop
           kernel = DEFAULT_KERNEL
         else
           good_nblk_gpu = .false.
