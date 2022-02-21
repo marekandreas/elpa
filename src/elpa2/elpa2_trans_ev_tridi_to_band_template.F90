@@ -2644,17 +2644,10 @@ subroutine trans_ev_tridi_to_band_&
               endif ! useGPU
 #endif /* WITH_MPI */
 
-#if REALCASE == 1
             endif ! (bottom_msg_length > 0)
-#endif
 
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-#ifndef WITH_OPENMP_TRADITIONAL
-#if COMPLEXCASE == 1
-            endif ! (bottom_msg_length > 0)
-#endif
-#endif /* WITH_OPENMP_TRADITIONAL */
             !compute
 #ifdef WITH_OPENMP_TRADITIONAL
 
