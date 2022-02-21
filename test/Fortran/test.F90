@@ -381,13 +381,6 @@ program test
      stop 77
 #endif
 
-#ifdef TEST_COMPLEX
-#ifdef WITH_MPI
-     call mpi_finalize(mpierr)
-#endif
-     stop 77
-#endif
-
 #ifdef TEST_ALL_KERNELS
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
