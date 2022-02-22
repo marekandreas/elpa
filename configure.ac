@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [17:0:0])
+AC_SUBST([ELPA_SO_VERSION], [17:1:0])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -2529,9 +2529,9 @@ fi
 
 #echo " "
 #echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2021.11.001.rc1        *"
+#echo "*  This is the first release candidate of ELPA 2021.11.002.rc1        *"
 #echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2021.11.001                                                   *"
+#echo "*  ELPA 2021.11.002                                                   *"
 #echo "***********************************************************************"
 #echo " "
 
