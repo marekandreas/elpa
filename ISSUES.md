@@ -3,8 +3,11 @@
 For more details and recent updates please visit the online [issue system](https://gitlab.mpcdf.mpg.de/elpa/elpa/issues)
 Issues which are not mentioned in a newer release are (considered as) solved.
 
+### ELPA 2021.11.002 release ###
+Fix the error when choosing the Nvidia GPU kernels
+
 ### ELPA 2021.11.001 release ###
-Currently no issues are known
+Error with the activation of the Nvidia GPU kernel, _if_ the standard and the new SM80_kernel have been configured
 
 ### ELPA 2021.05.002 release ###
 Correct the SO version which wrongly in

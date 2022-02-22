@@ -2,13 +2,13 @@
 
 ## 0. Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2021.11.001**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2021.11.002**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
-As anounced, with the the release 2021.11.001.rc the **legacy interface has been removed**.
+As anounced, with the the release 2021.11.001 the **legacy interface has been removed**.
 
-The release of ELPA 2021.11.001 does change the API and ABI compared to the release 2020.05.002.
+The release of ELPA 2021.11.002 does change the API and ABI compared to the release 2020.05.002.
 
 ## 1. How to install *ELPA* ##
 
