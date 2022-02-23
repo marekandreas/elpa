@@ -158,6 +158,14 @@ program test_real2_double_banded
 
    STATUS = 0
 
+#ifdef WITH_CUDA_AWARE_MPI
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+
+
 #define REALCASE
 
    !-------------------------------------------------------------------------------

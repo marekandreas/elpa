@@ -119,6 +119,14 @@ program test_interface
    my_prow = mod(myid, np_cols)
    my_pcol = myid / np_cols
 
+#ifdef WITH_CUDA_AWARE_MPI
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+
+
    call set_up_blacsgrid(int(mpi_comm_world,kind=BLAS_KIND), np_rows, np_cols, 'C', &
                          my_blacs_ctxt, my_prow, my_pcol)
 

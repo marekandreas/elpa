@@ -115,41 +115,41 @@ module elpa_impl
 
      !> \brief the implemenation methods
 
-     procedure, public :: elpa_eigenvectors_all_host_arrays_d                  !< public methods to implement the solve step for real/complex
+     procedure, public :: elpa_eigenvectors_a_h_a_d                  !< public methods to implement the solve step for real/complex
                                                                                !< double/single matrices
-     procedure, public :: elpa_eigenvectors_all_host_arrays_f
-     procedure, public :: elpa_eigenvectors_all_host_arrays_dc
-     procedure, public :: elpa_eigenvectors_all_host_arrays_fc
+     procedure, public :: elpa_eigenvectors_a_h_a_f
+     procedure, public :: elpa_eigenvectors_a_h_a_dc
+     procedure, public :: elpa_eigenvectors_a_h_a_fc
 
-     procedure, public :: elpa_eigenvectors_device_pointer_d 
-     procedure, public :: elpa_eigenvectors_device_pointer_f
-     procedure, public :: elpa_eigenvectors_device_pointer_dc
-     procedure, public :: elpa_eigenvectors_device_pointer_fc
+     procedure, public :: elpa_eigenvectors_d_ptr_d 
+     procedure, public :: elpa_eigenvectors_d_ptr_f
+     procedure, public :: elpa_eigenvectors_d_ptr_dc
+     procedure, public :: elpa_eigenvectors_d_ptr_fc
 
-     procedure, public :: elpa_eigenvalues_all_host_arrays_d                   !< public methods to implement the solve step for real/complex
+     procedure, public :: elpa_eigenvalues_a_h_a_d                   !< public methods to implement the solve step for real/complex
                                                                                !< double/single matrices; only the eigenvalues are computed
-     procedure, public :: elpa_eigenvalues_all_host_arrays_f
-     procedure, public :: elpa_eigenvalues_all_host_arrays_dc
-     procedure, public :: elpa_eigenvalues_all_host_arrays_fc
+     procedure, public :: elpa_eigenvalues_a_h_a_f
+     procedure, public :: elpa_eigenvalues_a_h_a_dc
+     procedure, public :: elpa_eigenvalues_a_h_a_fc
 
-     procedure, public :: elpa_eigenvalues_device_pointer_d 
-     procedure, public :: elpa_eigenvalues_device_pointer_f
-     procedure, public :: elpa_eigenvalues_device_pointer_dc
-     procedure, public :: elpa_eigenvalues_device_pointer_fc
+     procedure, public :: elpa_eigenvalues_d_ptr_d 
+     procedure, public :: elpa_eigenvalues_d_ptr_f
+     procedure, public :: elpa_eigenvalues_d_ptr_dc
+     procedure, public :: elpa_eigenvalues_d_ptr_fc
 
 #ifdef HAVE_SKEWSYMMETRIC
-     procedure, public :: elpa_skew_eigenvectors_all_host_arrays_d             !< public methods to implement the solve step for real skew-symmetric
+     procedure, public :: elpa_skew_eigenvectors_a_h_a_d             !< public methods to implement the solve step for real skew-symmetric
                                                                                !< double/single matrices
-     procedure, public :: elpa_skew_eigenvectors_all_host_arrays_f
+     procedure, public :: elpa_skew_eigenvectors_a_h_a_f
 
-     procedure, public :: elpa_skew_eigenvalues_all_host_arrays_d              !< public methods to implement the solve step for real skew-symmetric
+     procedure, public :: elpa_skew_eigenvalues_a_h_a_d              !< public methods to implement the solve step for real skew-symmetric
                                                                                !< double/single matrices; only the eigenvalues are computed
-     procedure, public :: elpa_skew_eigenvalues_all_host_arrays_f
+     procedure, public :: elpa_skew_eigenvalues_a_h_a_f
 
-     procedure, public :: elpa_skew_eigenvectors_device_pointer_d 
-     procedure, public :: elpa_skew_eigenvectors_device_pointer_f
-     procedure, public :: elpa_skew_eigenvalues_device_pointer_d 
-     procedure, public :: elpa_skew_eigenvalues_device_pointer_f
+     procedure, public :: elpa_skew_eigenvectors_d_ptr_d 
+     procedure, public :: elpa_skew_eigenvectors_d_ptr_f
+     procedure, public :: elpa_skew_eigenvalues_d_ptr_d 
+     procedure, public :: elpa_skew_eigenvalues_d_ptr_f
 #endif
 
      procedure, public :: elpa_generalized_eigenvectors_d      !< public methods to implement the solve step for generalized
@@ -164,22 +164,39 @@ module elpa_impl
      procedure, public :: elpa_generalized_eigenvalues_dc
      procedure, public :: elpa_generalized_eigenvalues_fc
 
-     procedure, public :: elpa_hermitian_multiply_d      !< public methods to implement a "hermitian" multiplication of matrices a and b
-     procedure, public :: elpa_hermitian_multiply_f            !< for real valued matrices:   a**T * b
-     procedure, public :: elpa_hermitian_multiply_dc           !< for complex valued matrices:   a**H * b
-     procedure, public :: elpa_hermitian_multiply_fc
+     procedure, public :: elpa_hermitian_multiply_a_h_a_d      !< public methods to implement a "hermitian" multiplication of matrices a and b
+     procedure, public :: elpa_hermitian_multiply_a_h_a_f            !< for real valued matrices:   a**T * b
+     procedure, public :: elpa_hermitian_multiply_a_h_a_dc           !< for complex valued matrices:   a**H * b
+     procedure, public :: elpa_hermitian_multiply_a_h_a_fc
 
-     procedure, public :: elpa_cholesky_d                      !< public methods to implement the cholesky factorisation of
+     procedure, public :: elpa_hermitian_multiply_d_ptr_d      !< public methods to implement a "hermitian" multiplication of matrices a and b
+     procedure, public :: elpa_hermitian_multiply_d_ptr_f            !< for real valued matrices:   a**T * b
+     procedure, public :: elpa_hermitian_multiply_d_ptr_dc           !< for complex valued matrices:   a**H * b
+     procedure, public :: elpa_hermitian_multiply_d_ptr_fc
+
+     procedure, public :: elpa_cholesky_a_h_a_d      !< public methods to implement the cholesky factorisation of
                                                                !< real/complex double/single matrices
-     procedure, public :: elpa_cholesky_f
-     procedure, public :: elpa_cholesky_dc
-     procedure, public :: elpa_cholesky_fc
+     procedure, public :: elpa_cholesky_a_h_a_f
+     procedure, public :: elpa_cholesky_a_h_a_dc
+     procedure, public :: elpa_cholesky_a_h_a_fc
 
-     procedure, public :: elpa_invert_trm_d                    !< public methods to implement the inversion of a triangular
+     procedure, public :: elpa_cholesky_d_ptr_d       !< public methods to implement the cholesky factorisation of
+                                                               !< real/complex double/single matrices
+     procedure, public :: elpa_cholesky_d_ptr_f
+     procedure, public :: elpa_cholesky_d_ptr_dc
+     procedure, public :: elpa_cholesky_d_ptr_fc
+
+     procedure, public :: elpa_invert_trm_a_h_a_d    !< public methods to implement the inversion of a triangular
                                                                !< real/complex double/single matrix
-     procedure, public :: elpa_invert_trm_f
-     procedure, public :: elpa_invert_trm_dc
-     procedure, public :: elpa_invert_trm_fc
+     procedure, public :: elpa_invert_trm_a_h_a_f
+     procedure, public :: elpa_invert_trm_a_h_a_dc
+     procedure, public :: elpa_invert_trm_a_h_a_fc
+
+     procedure, public :: elpa_invert_trm_d_ptr_d     !< public methods to implement the inversion of a triangular
+                                                               !< real/complex double/single matrix
+     procedure, public :: elpa_invert_trm_d_ptr_f
+     procedure, public :: elpa_invert_trm_d_ptr_dc
+     procedure, public :: elpa_invert_trm_d_ptr_fc
 
      procedure, public :: elpa_solve_tridiagonal_d             !< public methods to implement the solve step for a real valued
      procedure, public :: elpa_solve_tridiagonal_f             !< double/single tridiagonal matrix
@@ -1369,6 +1386,8 @@ module elpa_impl
 #define INCLUDE_ROUTINES 1
 #include "general/precision_macros.h"
 #include "elpa_impl_math_template.F90"
+#include "elpa_impl_math_solvers_template.F90"
+#include "elpa_impl_math_generalized_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 #undef INCLUDE_ROUTINES
@@ -1380,6 +1399,8 @@ module elpa_impl
 #define SINGLE_PRECISION 1
 #include "general/precision_macros.h"
 #include "elpa_impl_math_template.F90"
+#include "elpa_impl_math_solvers_template.F90"
+#include "elpa_impl_math_generalized_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #undef INCLUDE_ROUTINES
@@ -1389,6 +1410,8 @@ module elpa_impl
 #define INCLUDE_ROUTINES 1
 #include "general/precision_macros.h"
 #include "elpa_impl_math_template.F90"
+#include "elpa_impl_math_solvers_template.F90"
+#include "elpa_impl_math_generalized_template.F90"
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 #undef INCLUDE_ROUTINES
@@ -1400,6 +1423,8 @@ module elpa_impl
 #define SINGLE_PRECISION
 #include "general/precision_macros.h"
 #include "elpa_impl_math_template.F90"
+#include "elpa_impl_math_solvers_template.F90"
+#include "elpa_impl_math_generalized_template.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #undef INCLUDE_ROUTINES

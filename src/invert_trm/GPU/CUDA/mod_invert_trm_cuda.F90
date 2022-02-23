@@ -51,8 +51,8 @@ module invert_trm_cuda
 
   public
   interface
-    subroutine copy_double_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)&
-             bind(C, name="copy_double_a_tmat2_FromC")
+    subroutine cuda_copy_double_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)&
+             bind(C, name="cuda_copy_double_a_tmat2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmat2_dev
@@ -61,8 +61,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)&
-             bind(C, name="copy_float_a_tmat2_FromC")
+    subroutine cuda_copy_float_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)&
+             bind(C, name="cuda_copy_float_a_tmat2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmat2_dev
@@ -71,8 +71,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_double_complex_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)&
-             bind(C, name="copy_double_complex_a_tmat2_FromC")
+    subroutine cuda_copy_double_complex_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)&
+             bind(C, name="cuda_copy_double_complex_a_tmat2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmat2_dev
@@ -81,8 +81,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_complex_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)&
-             bind(C, name="copy_float_complex_a_tmat2_FromC")
+    subroutine cuda_copy_float_complex_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)&
+             bind(C, name="cuda_copy_float_complex_a_tmat2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmat2_dev
@@ -91,8 +91,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_double_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
-             bind(C, name="copy_double_tmp2_tmat2_FromC")
+    subroutine cuda_copy_double_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
+             bind(C, name="cuda_copy_double_tmp2_tmat2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: tmp2_dev, tmat2_dev
@@ -101,8 +101,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
-             bind(C, name="copy_float_tmp2_tmat2_FromC")
+    subroutine cuda_copy_float_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
+             bind(C, name="cuda_copy_float_tmp2_tmat2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: tmp2_dev, tmat2_dev
@@ -111,8 +111,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_double_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
-             bind(C, name="copy_double_complex_tmp2_tmat2_FromC")
+    subroutine cuda_copy_double_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
+             bind(C, name="cuda_copy_double_complex_tmp2_tmat2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: tmp2_dev, tmat2_dev
@@ -121,8 +121,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
-             bind(C, name="copy_float_complex_tmp2_tmat2_FromC")
+    subroutine cuda_copy_float_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)&
+             bind(C, name="cuda_copy_float_complex_tmp2_tmat2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: tmp2_dev, tmat2_dev
@@ -131,8 +131,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_double_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)&
-             bind(C, name="copy_double_a_tmat1_FromC")
+    subroutine cuda_copy_double_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)&
+             bind(C, name="cuda_copy_double_a_tmat1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev, zero_dev
@@ -141,8 +141,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)&
-             bind(C, name="copy_float_a_tmat1_FromC")
+    subroutine cuda_copy_float_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)&
+             bind(C, name="cuda_copy_float_a_tmat1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev, zero_dev
@@ -151,8 +151,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_double_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)&
-             bind(C, name="copy_double_complex_a_tmat1_FromC")
+    subroutine cuda_copy_double_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)&
+             bind(C, name="cuda_copy_double_complex_a_tmat1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev, zero_dev
@@ -161,8 +161,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)&
-             bind(C, name="copy_float_complex_a_tmat1_FromC")
+    subroutine cuda_copy_float_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)&
+             bind(C, name="cuda_copy_float_complex_a_tmat1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev, zero_dev
@@ -171,8 +171,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_double_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)&
-             bind(C, name="copy_double_tmp1_tmp2_FromC")
+    subroutine cuda_copy_double_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)&
+             bind(C, name="cuda_copy_double_tmp1_tmp2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: tmp1_dev, tmp2_dev
@@ -181,8 +181,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)&
-             bind(C, name="copy_float_tmp1_tmp2_FromC")
+    subroutine cuda_copy_float_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)&
+             bind(C, name="cuda_copy_float_tmp1_tmp2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: tmp1_dev, tmp2_dev
@@ -191,8 +191,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_double_complex_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)&
-             bind(C, name="copy_double_complex_tmp1_tmp2_FromC")
+    subroutine cuda_copy_double_complex_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)&
+             bind(C, name="cuda_copy_double_complex_tmp1_tmp2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: tmp1_dev, tmp2_dev
@@ -201,8 +201,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_complex_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)&
-             bind(C, name="copy_float_complex_tmp1_tmp2_FromC")
+    subroutine cuda_copy_float_complex_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)&
+             bind(C, name="cuda_copy_float_complex_tmp1_tmp2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: tmp1_dev, tmp2_dev
@@ -211,8 +211,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_double_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)&
-             bind(C, name="copy_double_a_tmp1_FromC")
+    subroutine cuda_copy_double_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)&
+             bind(C, name="cuda_copy_double_a_tmp1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmp1_dev
@@ -221,8 +221,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)&
-             bind(C, name="copy_float_a_tmp1_FromC")
+    subroutine cuda_copy_float_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)&
+             bind(C, name="cuda_copy_float_a_tmp1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmp1_dev
@@ -231,8 +231,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_double_complex_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)&
-             bind(C, name="copy_double_complex_a_tmp1_FromC")
+    subroutine cuda_copy_double_complex_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)&
+             bind(C, name="cuda_copy_double_complex_a_tmp1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmp1_dev
@@ -241,8 +241,8 @@ module invert_trm_cuda
   end interface
 
   interface
-    subroutine copy_float_complex_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)&
-             bind(C, name="copy_float_complex_a_tmp1_FromC")
+    subroutine cuda_copy_float_complex_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)&
+             bind(C, name="cuda_copy_float_complex_a_tmp1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmp1_dev
@@ -252,127 +252,127 @@ module invert_trm_cuda
 
   contains
 
-    subroutine copy_double_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+    subroutine cuda_copy_double_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1, nb
       integer(kind=C_intptr_T)        :: a_dev, tmat2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call cuda_copy_double_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_float_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+    subroutine cuda_copy_float_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1, nb
       integer(kind=C_intptr_T)        :: a_dev, tmat2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call cuda_copy_float_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_double_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+    subroutine cuda_copy_double_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1, nb
       integer(kind=C_intptr_T)        :: a_dev, tmat2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_complex_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call cuda_copy_double_complex_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_float_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+    subroutine cuda_copy_float_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1, nb
       integer(kind=C_intptr_T)        :: a_dev, tmat2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_complex_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call cuda_copy_float_complex_a_tmat2_c(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_double_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+    subroutine cuda_copy_double_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, l_col1, nb
       integer(kind=C_intptr_T)        :: tmp2_dev, tmat2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call cuda_copy_double_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_float_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+    subroutine cuda_copy_float_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, l_col1, nb
       integer(kind=C_intptr_T)        :: tmp2_dev, tmat2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call cuda_copy_float_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_double_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+    subroutine cuda_copy_double_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, l_col1, nb
       integer(kind=C_intptr_T)        :: tmp2_dev, tmat2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call cuda_copy_double_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_float_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+    subroutine cuda_copy_float_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, l_col1, nb
       integer(kind=C_intptr_T)        :: tmp2_dev, tmat2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call cuda_copy_float_complex_tmp2_tmat2_c(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+    subroutine cuda_copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call cuda_copy_double_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
 #endif
 
     end subroutine
 
-    subroutine copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+    subroutine cuda_copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call cuda_copy_float_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
 #endif
 
     end subroutine
 
-    subroutine copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+    subroutine cuda_copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -380,115 +380,115 @@ module invert_trm_cuda
       integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call cuda_copy_double_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
 #endif
 
     end subroutine
 
-    subroutine copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+    subroutine cuda_copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call cuda_copy_float_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
 #endif
 
     end subroutine
 
-    subroutine copy_double_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+    subroutine cuda_copy_double_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, nb
       integer(kind=C_intptr_T)        :: tmp1_dev, tmp2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)
+      call cuda_copy_double_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_float_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+    subroutine cuda_copy_float_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, nb
       integer(kind=C_intptr_T)        :: tmp1_dev, tmp2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)
+      call cuda_copy_float_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_double_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+    subroutine cuda_copy_double_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, nb
       integer(kind=C_intptr_T)        :: tmp1_dev, tmp2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_complex_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)
+      call cuda_copy_double_complex_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_float_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+    subroutine cuda_copy_float_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, nb
       integer(kind=C_intptr_T)        :: tmp1_dev, tmp2_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_complex_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)
+      call cuda_copy_float_complex_tmp1_tmp2_c(tmp1_dev, tmp2_dev, nblk, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+    subroutine cuda_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_row1, l_col1, matrixRows, nb
       integer(kind=C_intptr_T)        :: a_dev, tmp1_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call cuda_copy_double_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_float_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+    subroutine cuda_copy_float_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_row1, l_col1, matrixRows, nb
       integer(kind=C_intptr_T)        :: a_dev, tmp1_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call cuda_copy_float_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_double_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+    subroutine cuda_copy_double_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_row1, l_col1, matrixRows, nb
       integer(kind=C_intptr_T)        :: a_dev, tmp1_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_double_complex_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call cuda_copy_double_complex_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
 #endif
 
     end subroutine
 
-    subroutine copy_float_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+    subroutine cuda_copy_float_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_row1, l_col1, matrixRows, nb
       integer(kind=C_intptr_T)        :: a_dev, tmp1_dev
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call copy_float_complex_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call cuda_copy_float_complex_a_tmp1_c(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
 #endif
 
     end subroutine

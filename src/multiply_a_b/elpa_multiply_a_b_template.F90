@@ -69,48 +69,56 @@
   implicit none
 
 #include "../../src/general/precision_kinds.F90"
-  class(elpa_abstract_impl_t), intent(inout) :: obj
+  class(elpa_abstract_impl_t), intent(inout)   :: obj
 
-  character*1                   :: uplo_a, uplo_c
+  character*1                                  :: uplo_a, uplo_c
 
-  integer(kind=ik), intent(in)  :: ldb, ldbCols, ldc, ldcCols
-  integer(kind=ik)              :: na, ncb
+  integer(kind=ik), intent(in)                 :: ldb, ldbCols, ldc, ldcCols
+  integer(kind=ik)                             :: na, ncb
+#ifndef DEVICE_POINTER
 #ifdef USE_ASSUMED_SIZE
-  MATH_DATATYPE(kind=rck)       :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
+  MATH_DATATYPE(kind=rck)                      :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
 #else
-  MATH_DATATYPE(kind=rck)       :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
+  MATH_DATATYPE(kind=rck)                      :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-  integer(kind=ik)              :: my_prow, my_pcol, np_rows, np_cols, myid
-  integer(kind=MPI_KIND)        :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
-  integer(kind=MPI_KIND)        :: mpierr, myidMPI
-  integer(kind=ik)              :: l_cols, l_rows, l_rows_np
-  integer(kind=ik)              :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
-  integer(kind=ik)              :: gcol_min, gcol, goff
-  integer(kind=ik)              :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
-  integer(kind=ik), allocatable :: lrs_save(:), lre_save(:)
+#else /* DEVICE_POINTER */
+  type(c_ptr)                                  :: a, b, c
+  MATH_DATATYPE(kind=rck), allocatable         :: a_tmp(:,:), c_tmp(:,:)
+#endif /* DEVICE_POINTER */
 
-  logical                       :: a_lower, a_upper, c_lower, c_upper
+  integer(kind=ik)                             :: my_prow, my_pcol, np_rows, np_cols, myid
+  integer(kind=MPI_KIND)                       :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
+  integer(kind=MPI_KIND)                       :: mpierr, myidMPI
+  integer(kind=ik)                             :: l_cols, l_rows, l_rows_np
+  integer(kind=ik)                             :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
+  integer(kind=ik)                             :: gcol_min, gcol, goff
+  integer(kind=ik)                             :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
+  integer(kind=ik), allocatable                :: lrs_save(:), lre_save(:)
+
+  logical                                      :: a_lower, a_upper, c_lower, c_upper
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_mat(:,:), tmp1(:,:)
-  MATH_DATATYPE(kind=rck), allocatable :: aux_bc(:), tmp2(:,:)
-  integer(kind=ik)              :: istat
-  character(200)                :: errorMessage
-  character(20)                 :: gpuString
-  logical                       :: success
-  logical                       :: successGPU
-  logical                       :: useGPU
-  integer(kind=c_int)           :: gpu, numGPU
-  integer(kind=ik)              :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-  integer(kind=ik)              :: nblk, matrixRows, matrixCols, error
-  integer(kind=c_intptr_t)      :: aux_dev, b_dev, tmp1_dev
-  type(c_ptr)                   :: aux_host, tmp1_host
-  integer(kind=c_intptr_t)      :: num
-  integer(kind=c_intptr_t)      :: aux_off, b_off
-  integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
+  MATH_DATATYPE(kind=rck), allocatable         :: aux_bc(:), tmp2(:,:)
+  integer(kind=ik)                             :: istat
+  character(200)                               :: errorMessage
+  character(20)                                :: gpuString
+  logical                                      :: success
+  logical                                      :: successGPU
+  logical                                      :: useGPU
+  integer(kind=c_int)                          :: gpu, numGPU
+  integer(kind=ik)                             :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=ik)                             :: nblk, matrixRows, matrixCols, error
+  integer(kind=c_intptr_t)                     :: aux_dev, b_dev, tmp1_dev
+  type(c_ptr)                                  :: aux_host, tmp1_host
+  integer(kind=c_intptr_t)                     :: num
+  integer(kind=c_intptr_t)                     :: aux_off, b_off
+  integer(kind=c_int)                          :: gpu_multiply_a_b
+  integer(kind=c_intptr_t), parameter          :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
                                                             &MATH_DATATYPE
 
   success = .true.
+  gpu_multiply_a_b = 0
 
   ! GPU settings
   if (gpu_vendor() == NVIDIA_GPU) then
@@ -134,6 +142,7 @@
       print *,"Problem getting option for NVIDIA GPU. Aborting..."
       stop
     endif
+
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
@@ -144,8 +153,24 @@
     gpu = 0
   endif
 
+  call obj%get("gpu_hermitian_multiply",gpu_multiply_a_b, error)
+  if (error .ne. ELPA_OK) then
+    print *,"ELPA_MULITPLY_AB: Problem getting option for gpu_cholesky. Aborting..."
+    stop
+  endif
 
-  useGPU = (gpu == 1)
+  if (gpu_multiply_a_b .eq. 1) then
+    useGPU = (gpu == 1)
+  else
+    useGPU = .false.
+  endif
+
+  if (.not.(useGPU)) then
+#ifdef DEVICE_POINTER
+    print *,"You used the interface for device pointers for hermitian_multiply but did not specify GPU usage!. Aborting..."
+    stop
+#endif
+  endif
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -217,6 +242,7 @@
     call obj%timer%stop("check_for_gpu")
 
     ! copy b to b_dev
+#ifndef DEVICE_POINTER
     num = ldb*ldbCols*size_of_datatype
     successGPU = gpu_malloc(b_dev,num)
     check_alloc_gpu("elpa_mult_at_b: b_dev", successGPU)
@@ -229,6 +255,20 @@
     successGPU = gpu_memcpy(b_dev,int(loc(b),kind=c_intptr_t),num,&
                   gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_mult_at_b: b to b_dev", successGPU)
+#else
+    b_dev = transfer(b, b_dev)
+
+    allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_mult_at_b: a_tmp", istat, errorMessage)
+
+    num = obj%local_nrows*obj%local_ncols*size_of_datatype
+    successGPU = gpu_memcpy(int(loc(a_tmp),kind=c_intptr_t), a, num,&
+                  gpuMemcpyDeviceToHost)
+    check_memcpy_gpu("elpa_mult_at_b: a_dev -> a_tmp", successGPU)
+
+    allocate(c_tmp(ldc,ldcCols), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_mult_at_b: c_tmp", istat, errorMessage)
+#endif
 
     num = l_rows*nblk_mult*size_of_datatype
     successGPU = gpu_malloc_host(aux_host,num)
@@ -311,7 +351,11 @@
 
         if (lrs<=lre) then
           nvals = lre-lrs+1
+#ifndef DEVICE_POINTER
           if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
+#else
+          if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a_tmp(lrs:lre,noff*nblk+n)
+#endif
           n_aux_bc = n_aux_bc + nvals
         endif
 
@@ -390,6 +434,7 @@
                             tmp1_dev, num, gpuMemcpyDeviceToHost)
               check_memcpy_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
             else ! useGPU
+#ifndef DEVICE_POINTER
               call obj%timer%start("blas")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
                                 int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), &
@@ -397,6 +442,7 @@
                                 b(lrs,lcs), int(ldb,kind=BLAS_KIND), ZERO, tmp1, &
                                 int(nstor,kind=BLAS_KIND))
               call obj%timer%stop("blas")
+#endif
             endif ! useGPU
           else
             tmp1 = 0
@@ -409,12 +455,20 @@
                           MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
           ! Put the result into C
+#ifndef DEVICE_POINTER
           if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
+#else
+          if (my_prow==np) c_tmp(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,lcs:lce)
+#endif
 
 #else /* WITH_MPI */
 !          tmp2 = tmp1
           ! Put the result into C
+#ifndef DEVICE_POINTER
           if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp1(1:nstor,lcs:lce)
+#else
+          if (my_prow==np) c_tmp(nr_done+1:nr_done+nstor,lcs:lce) = tmp1(1:nstor,lcs:lce)
+#endif
 
 #endif /* WITH_MPI */
 
@@ -430,12 +484,24 @@
   enddo
 
   if (useGPU) then
+#ifndef DEVICE_POINTER
     successGPU = gpu_free(b_dev)
     check_dealloc_gpu("elpa_multiply_a_b: b_dev", successGPU)
 
     successGPU = gpu_host_unregister(int(loc(b),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_multiply_a_b: b", successGPU)
+#else
+    deallocate(a_tmp, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_mult_at_b: a_tmp", istat, errorMessage)
 
+    num = ldc*ldcCols*size_of_datatype
+    successGPU = gpu_memcpy(c,int(loc(c_tmp),kind=c_intptr_t),num,&
+                  gpuMemcpyHostToDevice)
+    check_memcpy_gpu("elpa_mult_at_b: c_tmp -> c", successGPU)
+
+    deallocate(c_tmp, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_mult_at_b: c_tmp", istat, errorMessage)
+#endif
     nullify(aux_mat)
     nullify(tmp1)
 

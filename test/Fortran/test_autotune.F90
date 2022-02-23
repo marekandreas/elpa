@@ -165,6 +165,14 @@ program test
 #endif
 #endif
 
+#ifdef WITH_CUDA_AWARE_MPI
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+
+
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
      stop 1

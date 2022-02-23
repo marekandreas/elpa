@@ -215,6 +215,21 @@ program test
    call redirect_stdout(myid)
 #endif
 
+#ifdef WITH_CUDA_AWARE_MPI
+#if TEST_NVIDIA_GPU != 1
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+#ifdef TEST_COMPLEX
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+#endif
+
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
      stop 1
@@ -305,8 +320,10 @@ program test
 
    call elpa_uninit(error_elpa)
 
+#ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
+#endif
 
 #endif
    call exit(status)

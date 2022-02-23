@@ -52,9 +52,16 @@
 
 #include "../general/sanity.F90"
 
+
+#if REALCASE == 1
 #ifdef WITH_CUDA_AWARE_MPI
 #define WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
 #else
+#undef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
+#endif
+#endif
+
+#if COMPLEXCASE == 1
 #undef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
 #endif
 
@@ -2644,17 +2651,10 @@ subroutine trans_ev_tridi_to_band_&
               endif ! useGPU
 #endif /* WITH_MPI */
 
-#if REALCASE == 1
             endif ! (bottom_msg_length > 0)
-#endif
 
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-#ifndef WITH_OPENMP_TRADITIONAL
-#if COMPLEXCASE == 1
-            endif ! (bottom_msg_length > 0)
-#endif
-#endif /* WITH_OPENMP_TRADITIONAL */
             !compute
 #ifdef WITH_OPENMP_TRADITIONAL
 

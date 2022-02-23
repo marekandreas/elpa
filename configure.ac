@@ -354,6 +354,22 @@ if test x"${FC_does_infer_interfaces}" = x"yes"; then
       [MPImodule_has_interfaces=no]
     )
     AC_MSG_RESULT([${MPImodule_has_interfaces}])
+
+   AC_ARG_ENABLE([mpi-module],
+             AS_HELP_STRING([--disable-mpi-module],
+                            [do not use the Fortran MPI module, get interfaces by 'include "mpif.h']),
+             [
+              if test x"$enableval" = x"yes"; then
+                enable_mpi_module_tmp=yes
+              else
+                enable_mpi_module_tmp=no
+              fi
+     	 ],
+             [enable_mpi_module_tmp=yes])
+
+    if test x"${enable_mpi_module_tmp}" = x"no"; then
+      MPImodule_has_interfaces=no
+    fi
     if test x"${MPImodule_has_interfaces}" = x"no"; then
       AC_MSG_CHECKING(whether we can cure missing interfaces by allowing argument mismatch )
       #check whether we can cure this by disabling argument checking

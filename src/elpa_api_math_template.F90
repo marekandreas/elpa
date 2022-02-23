@@ -81,7 +81,7 @@
 #endif
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_eigenvectors_all_host_arrays_&
+    subroutine elpa_eigenvectors_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
       use, intrinsic :: iso_c_binding
@@ -138,7 +138,7 @@
 #endif
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_eigenvectors_device_pointer_&
+    subroutine elpa_eigenvectors_d_ptr_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
       use, intrinsic :: iso_c_binding
@@ -181,7 +181,7 @@
 #endif  
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_skew_eigenvectors_all_host_arrays_&
+    subroutine elpa_skew_eigenvectors_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
       use, intrinsic :: iso_c_binding
@@ -228,7 +228,7 @@
 #endif  
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_skew_eigenvectors_device_pointer_&
+    subroutine elpa_skew_eigenvectors_d_ptr_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, ev, q, error)
       use, intrinsic :: iso_c_binding
@@ -278,7 +278,7 @@
 #endif  
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_eigenvalues_all_host_arrays_&
+    subroutine elpa_eigenvalues_a_h_a_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
       use, intrinsic :: iso_c_binding
@@ -330,7 +330,7 @@
 #endif  
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_eigenvalues_device_pointer_&
+    subroutine elpa_eigenvalues_d_ptr_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
       use, intrinsic :: iso_c_binding
@@ -370,7 +370,7 @@
 #endif
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_skew_eigenvalues_all_host_arrays_&
+    subroutine elpa_skew_eigenvalues_a_h_a_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
       use, intrinsic :: iso_c_binding
@@ -414,7 +414,7 @@
 #endif
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_skew_eigenvalues_device_pointer_&
+    subroutine elpa_skew_eigenvalues_d_ptr_&
         &ELPA_IMPL_SUFFIX&
         &_i(self, a, ev, error)
       use, intrinsic :: iso_c_binding
@@ -586,7 +586,7 @@
   !> \param ncols_c               number of columns of local (sub) matrix c
   !> \param error                 optional argument, error code which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_hermitian_multiply_&
+    subroutine elpa_hermitian_multiply_a_h_a_&
         &ELPA_IMPL_SUFFIX&
         &_i (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
@@ -601,6 +601,68 @@
 #else
       MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
 #endif
+
+#ifdef USE_FORTRAN2008
+      integer, optional               :: error
+#else
+      integer                         :: error
+#endif
+    end subroutine
+  end interface
+
+
+  !> \brief abstract definition of interface to compute C : = A**T * B
+  !>         where   A is a square matrix (self%a,self%na) which is optionally upper or lower triangular
+  !>                 B is a (self%na,ncb) matrix
+  !>                 C is a (self%na,ncb) matrix where optionally only the upper or lower
+  !>                   triangle may be computed
+  !>
+  !> the MPI commicators are already known to the type. Thus the class method "setup" must be called
+  !> BEFORE this method is used
+  !> \details
+  !>
+  !> \param   self                class(elpa_t), the ELPA object
+  !> \param  uplo_a               'U' if A is upper triangular
+  !>                              'L' if A is lower triangular
+  !>                              anything else if A is a full matrix
+  !>                              Please note: This pertains to the original A (as set in the calling program)
+  !>                                           whereas the transpose of A is used for calculations
+  !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
+  !>                              i.e. it may contain arbitrary numbers
+  !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+  !>                              'L' if only the upper diagonal part of C is needed
+  !>                              anything else if the full matrix C is needed
+  !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
+  !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
+  !> \param ncb                   Number of columns  of global matrices B and C
+  !> \param a                     matrix a, as device pointer of type(c_ptr)
+  !> \param self%local_nrows      number of rows of local (sub) matrix a, set with method set("local_nrows,value")
+  !> \param self%local_ncols      number of columns of local (sub) matrix a, set with method set("local_ncols,value")
+  !> \param b                     matrix b, as device pointer of type(c_ptr)
+  !> \param nrows_b               number of rows of local (sub) matrix b
+  !> \param ncols_b               number of columns of local (sub) matrix b
+  !> \param nblk                  blocksize of cyclic distribution, must be the same in both directions!
+  !> \param c                     matrix c, as device pointer of type(c_ptr)
+  !> \param nrows_c               number of rows of local (sub) matrix c
+  !> \param ncols_c               number of columns of local (sub) matrix c
+  !> \param error                 optional argument, error code which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_hermitian_multiply_d_ptr_&
+        &ELPA_IMPL_SUFFIX&
+        &_i (self,uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+                                          c, nrows_c, ncols_c, error)
+      use, intrinsic :: iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)                   :: self
+      character*1                     :: uplo_a, uplo_c
+      integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
+      type(c_ptr)                     :: a, b, c
+!#ifdef USE_ASSUMED_SIZE
+!      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
+!#else
+!      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows,self%local_ncols), b(nrows_b,ncols_b), c(nrows_c,ncols_c)
+!#endif
 
 #ifdef USE_FORTRAN2008
       integer, optional               :: error
@@ -633,7 +695,7 @@
 #endif
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_cholesky_&
+    subroutine elpa_cholesky_a_h_a_&
           &ELPA_IMPL_SUFFIX&
           &_i (self, a, error)
       use, intrinsic :: iso_c_binding
@@ -645,6 +707,46 @@
 #else
       MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows,self%local_ncols)
 #endif
+
+#ifdef USE_FORTRAN2008
+      integer, optional               :: error
+#else
+      integer                         :: error
+#endif
+    end subroutine
+  end interface
+
+
+  !> \brief abstract definition of interface to do a cholesky decomposition of a matrix
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+#if ELPA_IMPL_SUFFIX == d
+  !> \param   a           double real matrix: the matrix to be decomposed as type(c_ptr) device pointer
+#endif
+#if ELPA_IMPL_SUFFIX == f
+  !> \param   a           single real matrix: the matrix to be decomposed as type(c_ptr) device pointer
+#endif
+#if ELPA_IMPL_SUFFIX == dc
+  !> \param   a           double complex matrix: the matrix to be decomposed as type(c_ptr) device pointer
+#endif
+#if ELPA_IMPL_SUFFIX == fc
+  !> \param   a           single complex matrix: the matrix to be decomposed as type(c_ptr) device pointer
+#endif
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_cholesky_d_ptr_&
+          &ELPA_IMPL_SUFFIX&
+          &_i (self, a, error)
+      use, intrinsic :: iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)                   :: self
+      type(c_ptr)                     :: a
 
 #ifdef USE_FORTRAN2008
       integer, optional               :: error
@@ -679,7 +781,7 @@
 
   !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_invert_trm_&
+    subroutine elpa_invert_trm_a_h_a_&
         &ELPA_IMPL_SUFFIX&
         &_i (self, a, error)
       use, intrinsic :: iso_c_binding
@@ -691,6 +793,46 @@
 #else
       MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows,self%local_ncols)
 #endif
+
+#ifdef USE_FORTRAN2008
+      integer, optional               :: error
+#else
+      integer                         :: error
+#endif
+    end subroutine
+  end interface
+
+  !> \brief abstract definition of interface to invert a triangular matrix using device pointer
+  !>
+  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !> Parameters
+  !> \param   self        class(elpa_t), the ELPA object
+#if ELPA_IMPL_SUFFIX == d
+  !> \param   a           double real matrix: the matrix to be inverted as device pointer type(c_ptr)
+#endif
+#if ELPA_IMPL_SUFFIX == f
+  !> \param   a           single real matrix: the matrix to be inverted as device pointer type(c_ptr)
+#endif
+#if ELPA_IMPL_SUFFIX == dc
+  !> \param   a           double complex matrix: the matrix to be inverted as device pointer type(c_ptr)
+#endif
+#if ELPA_IMPL_SUFFIX == fc
+  !> \param   a           single complex matrix: the matrix to be inverted as device pointer type(c_ptr)
+#endif
+
+  !> \param   error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_invert_trm_d_ptr_&
+        &ELPA_IMPL_SUFFIX&
+        &_i (self, a, error)
+      use, intrinsic :: iso_c_binding
+      import elpa_t
+      implicit none
+      class(elpa_t)                   :: self
+      type(c_ptr)                     :: a
 
 #ifdef USE_FORTRAN2008
       integer, optional               :: error

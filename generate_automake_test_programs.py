@@ -116,7 +116,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if lang == "C" and (api_name == "explicit"):
         continue
 
-    if api_name == "explicit" and (t != "eigenvectors"):
+    if api_name == "explicit" and ((t != "eigenvectors") and (t != "cholesky") and (t != "hermitian_multiply")):
         continue
 
 
@@ -246,9 +246,14 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
         else:
           combined_suffix=""
 
-        name = "validate{langsuffix}_{d}_{p}_{t}_{s}{kernelsuffix}_{appended_suffix}{qrsuffix}{m}{layoutsuffix}{spl}{api_name}".format(
+        if (s == "1stage" or s == "2stage" or s == "scalapack_all" or s == "scalapack_part"):
+          solver = s
+        else:
+          solver =""
+
+        name = "validate{langsuffix}_{d}_{p}_{t}_{solver}{kernelsuffix}_{appended_suffix}{qrsuffix}{m}{layoutsuffix}{spl}{api_name}".format(
             langsuffix=language_flag[lang],
-            d=d, p=p, t=t, s=s,
+            d=d, p=p, t=t, solver=solver,
             kernelsuffix="" if kernel == "nokernel" else "_" + kernel,
             appended_suffix=combined_suffix,
             qrsuffix="qr_" if q else "",

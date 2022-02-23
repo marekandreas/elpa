@@ -64,46 +64,51 @@
   use elpa_gpu
   use mod_check_for_gpu
   use elpa_blas_interfaces
-  use invert_trm_cuda
+  use invert_trm_gpu
 
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
-  integer(kind=ik)             :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-  integer(kind=ik)             :: mpi_comm_all
+  integer(kind=ik)                           :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
+  integer(kind=ik)                           :: mpi_comm_all
+#ifdef DEVICE_POINTER
+  type(c_ptr)                                :: a
+  MATH_DATATYPE(kind=rck), allocatable       :: a_tmp(:,:)
+#else /* DEVICE_POINTER */
 #ifdef USE_ASSUMED_SIZE
-  MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,*)
+  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,*)
 #else
-  MATH_DATATYPE(kind=rck)      :: a(obj%local_nrows,obj%local_ncols)
+  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,obj%local_ncols)
 #endif
+#endif /* DEVICE_POINTER */
   integer :: ii, jj
 
-  integer(kind=ik)             :: my_prow, my_pcol, np_rows, np_cols, myid
-  integer(kind=MPI_KIND)       :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, myidMPI
-  integer(kind=ik)             :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
-  integer(kind=ik)             :: n, nc, i, info, ns, nb
-  integer(kind=BLAS_KIND)      :: infoBLAS
-  MATH_DATATYPE(kind=rck), allocatable   :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
-  logical                      :: wantDebug
-  logical                      :: success
-  integer(kind=ik)             :: istat, debug, error
-  character(200)               :: errorMessage
-  character(20)                 :: gpuString
-  logical                       :: successGPU
-  logical                       :: useGPU
-  integer(kind=c_int)           :: gpu, numGPU
-  integer(kind=c_intptr_t)      :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev, zero_dev
-  type(c_ptr)                      :: tmp1_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer :: tmp1_mpi_fortran_ptr(:)
-  type(c_ptr)                      :: tmat1_mpi_dev, tmat2_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer :: tmat1_mpi_fortran_ptr(:,:), tmat2_mpi_fortran_ptr(:,:)
+  integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols, myid
+  integer(kind=MPI_KIND)                     :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, myidMPI
+  integer(kind=ik)                           :: l_cols, l_rows, l_col1, l_row1, l_colx, l_rowx
+  integer(kind=ik)                           :: n, nc, i, info, ns, nb
+  integer(kind=BLAS_KIND)                    :: infoBLAS
+  MATH_DATATYPE(kind=rck), allocatable       :: tmp1(:), tmp2(:,:), tmat1(:,:), tmat2(:,:)
+  logical                                    :: wantDebug
+  logical                                    :: success
+  integer(kind=ik)                           :: istat, debug, error
+  character(200)                             :: errorMessage
+  character(20)                              :: gpuString
+  logical                                    :: successGPU
+  logical                                    :: useGPU
+  integer(kind=c_int)                        :: gpu, numGPU
+  integer(kind=c_intptr_t)                   :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev, zero_dev
+  type(c_ptr)                                :: tmp1_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer           :: tmp1_mpi_fortran_ptr(:)
+  type(c_ptr)                                :: tmat1_mpi_dev, tmat2_mpi_dev
+  MATH_DATATYPE(kind=rck), pointer           :: tmat1_mpi_fortran_ptr(:,:), tmat2_mpi_fortran_ptr(:,:)
 
-  type(c_ptr)                   :: tmp2_mpi_dev, a_mpi_dev
-  integer(kind=c_intptr_t)      :: a_off, tmat2_off, tmp1_off, tmp2_off
-   MATH_DATATYPE(kind=rck), pointer :: a_mpi_deviceptr(:,:), initializer_ptr(:) !DEB
-  integer(kind=c_intptr_t)      :: num
-  integer(kind=c_int)           :: gpu_invert_trm
-  integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_&
+  type(c_ptr)                                :: tmp2_mpi_dev, a_mpi_dev
+  integer(kind=c_intptr_t)                   :: a_off, tmat2_off, tmp1_off, tmp2_off
+   MATH_DATATYPE(kind=rck), pointer          :: a_mpi_deviceptr(:,:), initializer_ptr(:) !DEB
+  integer(kind=c_intptr_t)                   :: num
+  integer(kind=c_int)                        :: gpu_invert_trm
+  integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
                                                             &MATH_DATATYPE
@@ -132,11 +137,6 @@
       print *,"ELPA_INVERT_TRM: Problem getting option for NVIDIA GPU. Aborting..."
       stop
     endif
-    call obj%get("gpu_invert_trm",gpu_invert_trm,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
-      stop
-    endif
 
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
@@ -148,10 +148,23 @@
     gpu = 0
   endif
 
+  call obj%get("gpu_invert_trm",gpu_invert_trm,error)
+  if (error .ne. ELPA_OK) then
+    print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
+    stop
+  endif
+
   if (gpu_invert_trm .eq. 1) then
     useGPU = (gpu == 1)
   else
     useGPU = .false.
+  endif
+
+  if (.not.(useGPU)) then
+#ifdef DEVICE_POINTER
+    print *,"You used the interface for device pointers for elpa_invert_trm but did not specify GPU usage!. Aborting..."
+    stop
+#endif
   endif
 
   if(useGPU) then
@@ -257,8 +270,16 @@
     successGPU = gpu_memset(tmat2_dev, 0, nblk*l_cols*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset tmat2_dev", successGPU)
 
+#ifndef DEVICE_POINTER
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: a_dev", successGPU)
+#else
+    ! associate with a_dev
+    a_dev = transfer(a, a_dev)
+    ! allocate a_tmp
+    allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_invert_trm: a_tmp", istat, errorMessage)
+#endif
 
     successGPU = gpu_malloc(zero_dev, 1*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: zero_dev", successGPU)
@@ -282,16 +303,17 @@
 
   allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
-  check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
 
   tmat1 = 0
   tmat2 = 0
 
+#ifndef DEVICE_POINTER
   if (useGPU) then
     successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t),  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
   endif
+#endif
 
 
   ns = ((na-1)/nblk)*nblk + 1
@@ -327,7 +349,7 @@
 #else /* WITH_NVIDIA_CUSOLVER */
          
           ! still have to use cpu blas -> a generic GPU implementation would be needed
-
+#ifndef DEVICE_POINTER
           call obj%timer%start("blas")
           successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev, &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
@@ -341,13 +363,33 @@
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("invert_trm: memcpy a -> a_dev", successGPU)
           call obj%timer%stop("blas")
+#else /* DEVICE_POINTER */
+          call obj%timer%start("blas")
+          successGPU = gpu_memcpy(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev, &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("invert_trm: memcpy a_dev -> a", successGPU)
+
+          call PRECISION_TRTRI('U', 'N', int(nb,kind=BLAS_KIND), a_tmp(l_row1,l_col1), int(matrixRows,kind=BLAS_KIND), &
+                             infoBLAS)
+          info = int(infoBLAS,kind=ik)
+
+          successGPU = gpu_memcpy(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t),  &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("invert_trm: memcpy a -> a_dev", successGPU)
+          call obj%timer%stop("blas")
+#endif /* DEVICE_POINTER */
 #endif /* WITH_NVIDIA_CUSOLVER */
 
         else ! useGPU
           call obj%timer%start("blas")
 
+#ifdef DEVICE_POINTER
+          call PRECISION_TRTRI('U', 'N', int(nb,kind=BLAS_KIND), a_tmp(l_row1,l_col1), int(matrixRows,kind=BLAS_KIND), &
+                             infoBLAS)
+#else
           call PRECISION_TRTRI('U', 'N', int(nb,kind=BLAS_KIND), a(l_row1,l_col1), int(matrixRows,kind=BLAS_KIND), &
                              infoBLAS)
+#endif
           info = int(infoBLAS,kind=ik)
           call obj%timer%stop("blas")
         endif ! useGPU
@@ -372,11 +414,15 @@
         endif
 
         if (useGPU) then
-          call copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+          call gpu_copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
         else ! useGPU
           nc = 0
           do i=1,nb
+#ifndef DEVICE_POINTER
             tmp1(nc+1:nc+i) = a(l_row1:l_row1+i-1,l_col1+i-1)
+#else
+            tmp1(nc+1:nc+i) = a_tmp(l_row1:l_row1+i-1,l_col1+i-1)
+#endif
             nc = nc+i
           enddo
         endif ! useGPU
@@ -427,7 +473,7 @@
 #endif /* WITH_MPI */
       
       if (useGPU) then
-        call copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nb)
+        call gpu_copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nb)
       else ! useGPU
         nc = 0
         do i=1,nb
@@ -448,22 +494,31 @@
         call obj%timer%stop("gpublas")
 
         if (l_colx <= l_cols) then
-          call copy_PRECISION_a_tmat2 (a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, & 
+          call gpu_copy_PRECISION_a_tmat2 (a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, & 
                                        l_row1, nb)
         endif
 
         if (my_pcol==pcol(n, nblk, np_cols)) then
            ! tmp2 has the lower left triangle 0
-          call copy_PRECISION_tmp2_tmat2 (tmp2_dev, tmat2_dev, nblk, l_col1, nb) 
+          call gpu_copy_PRECISION_tmp2_tmat2 (tmp2_dev, tmat2_dev, nblk, l_col1, nb) 
         endif
       else ! useGPU
         call obj%timer%start("blas")
+#ifndef DEVICE_POINTER
         if (l_cols-l_colx+1>0) &
         call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
                               tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND))
         call obj%timer%stop("blas")
         if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
         if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
+#else
+        if (l_cols-l_colx+1>0) &
+        call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
+                              tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a_tmp(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND))
+        call obj%timer%stop("blas")
+        if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a_tmp(l_row1:l_row1+nb-1,l_colx:l_cols)
+        if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
+#endif
       endif ! useGPU
 
     endif ! (my_prow==prow(n, nblk, np_rows)
@@ -471,10 +526,15 @@
     if (l_row1>1) then
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
-          call copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+          call gpu_copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
         else
+#ifndef DEVICE_POINTER
           tmat1(1:l_row1-1,1:nb) = a(1:l_row1-1,l_col1:l_col1+nb-1)
           a(1:l_row1-1,l_col1:l_col1+nb-1) = 0
+#else
+          tmat1(1:l_row1-1,1:nb) = a_tmp(1:l_row1-1,l_col1:l_col1+nb-1)
+          a_tmp(1:l_row1-1,l_col1:l_col1+nb-1) = 0
+#endif
         endif
       endif
 
@@ -591,17 +651,27 @@
 
     else ! useGPU
       call obj%timer%start("blas")
+#ifndef DEVICE_POINTER
       if (l_row1>1 .and. l_cols-l_col1+1>0) &
         call PRECISION_GEMM('N', 'N', int(l_row1-1,kind=BLAS_KIND), int(l_cols-l_col1+1,kind=BLAS_KIND), &
                             int(nb,kind=BLAS_KIND), -ONE, &
                              tmat1, int(ubound(tmat1,dim=1),kind=BLAS_KIND), tmat2(1,l_col1), &
                              int(ubound(tmat2,dim=1),kind=BLAS_KIND), ONE, &
                               a(1,l_col1), int(matrixRows,kind=BLAS_KIND) )
+#else
+      if (l_row1>1 .and. l_cols-l_col1+1>0) &
+        call PRECISION_GEMM('N', 'N', int(l_row1-1,kind=BLAS_KIND), int(l_cols-l_col1+1,kind=BLAS_KIND), &
+                            int(nb,kind=BLAS_KIND), -ONE, &
+                             tmat1, int(ubound(tmat1,dim=1),kind=BLAS_KIND), tmat2(1,l_col1), &
+                             int(ubound(tmat2,dim=1),kind=BLAS_KIND), ONE, &
+                              a_tmp(1,l_col1), int(matrixRows,kind=BLAS_KIND) )
+#endif
 
       call obj%timer%stop("blas")
     endif ! useGPU
   enddo
 
+#ifndef DEVICE_POINTER
   if (useGPU) then
   ! copy results back
     successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
@@ -609,6 +679,7 @@
     check_memcpy_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
 
   endif
+#endif
 
   if (useGPU) then
     successGPU = gpu_free(tmp1_dev)
@@ -623,8 +694,13 @@
     successGPU = gpu_free(tmat2_dev)
     check_dealloc_gpu("elpa_invert_trm: tmat2_dev", successGPU)
 
+#ifndef DEVICE_POINTER
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("elpa_invert_trm: a_dev", successGPU)
+#else
+    deallocate(a_tmp, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_invert_trm: a_tmp", istat, errorMessage)
+#endif
 
     successGPU = gpu_free(zero_dev)
     check_dealloc_gpu("elpa_invert_trm: zero_dev", successGPU)

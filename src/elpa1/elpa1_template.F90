@@ -59,13 +59,13 @@
 #ifdef ACTIVATE_SKEW
 function elpa_solve_skew_evp_&
          &MATH_DATATYPE&
-   &_1stage_device_pointer_&
+   &_1stage_d_ptr_&
    &PRECISION&
    &_impl (obj, &
 #else /* ACTIVATE_SKEW */
 function elpa_solve_evp_&
          &MATH_DATATYPE&
-   &_1stage_device_pointer_&
+   &_1stage_d_ptr_&
    &PRECISION&
    &_impl (obj, &
 #endif /* ACTIVATE_SKEW */
@@ -77,13 +77,13 @@ function elpa_solve_evp_&
 #ifdef ACTIVATE_SKEW
 function elpa_solve_skew_evp_&
          &MATH_DATATYPE&
-   &_1stage_all_host_arrays_&
+   &_1stage_a_h_a_&
    &PRECISION&
    &_impl (obj, &
 #else /* ACTIVATE_SKEW */
 function elpa_solve_evp_&
          &MATH_DATATYPE&
-   &_1stage_all_host_arrays_&
+   &_1stage_a_h_a_&
    &PRECISION&
    &_impl (obj, &
 #endif /* ACTIVATE_SKEW */

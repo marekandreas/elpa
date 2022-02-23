@@ -162,6 +162,14 @@ program test_complex2_single_banded
 
    STATUS = 0
 
+#ifdef WITH_CUDA_AWARE_MPI
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+
+
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
    ! We try to set up the grid square-like, i.e. start the search for possible

@@ -163,7 +163,7 @@ then
     #echo "do" >> ./run_${CLUSTER}_1node_2GPU.sh
     #echo "echo \""\ > /dev/null" >> ./run_${CLUSTER}_1node_2GPU.sh
     #echo "done" >> ./run_${CLUSTER}_1node_2GPU.sh
-    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
+    echo "CHECK_LEVEL=extended make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "exitCode=\$?" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
@@ -219,7 +219,7 @@ then
       echo "do" >> ./run_${CLUSTER}_1node.sh
       echo "echo \" \" > /dev/null" >> ./run_${CLUSTER}_1node.sh
       echo "done" >> ./run_${CLUSTER}_1node.sh
-      echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  " >> ./run_${CLUSTER}_1node.sh
+      echo "CHECK_LEVEL=extended make -j 10 check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \"  " >> ./run_${CLUSTER}_1node.sh
       echo " " >> ./run_${CLUSTER}_1node.sh
       echo "exitCode=\$?" >> ./run_${CLUSTER}_1node.sh
       echo " " >> ./run_${CLUSTER}_1node.sh
@@ -300,7 +300,7 @@ then
       make -j $makeTasks
       if [ $? -ne 0 ]; then exit 1; fi
     
-      OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite.log; exit 1; }
+      OMP_NUM_THREADS=$ompThreads CHECK_LEVEL=extended make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite.log; exit 1; }
       if [ $? -ne 0 ]; then exit 1; fi
      
       grep -i "Expected %stop" test-suite.log && exit 1 || true ;
@@ -319,7 +319,7 @@ then
     make -j $makeTasks
     if [ $? -ne 0 ]; then exit 1; fi
     
-    OMP_NUM_THREADS=$ompThreads make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite.log; exit 1; }
+    OMP_NUM_THREADS=$ompThreads CHECK_LEVEL=extended make check TASKS=$mpiTasks TEST_FLAGS="$matrixSize $nrEV $blockSize" || { cat test-suite.log; exit 1; }
     if [ $? -ne 0 ]; then exit 1; fi
      
     grep -i "Expected %stop" test-suite.log && exit 1 || true ;

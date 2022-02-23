@@ -215,7 +215,7 @@ module hip_functions
   end interface
 
   interface
-    function hip_memcpy_mixed_c(dst, src, size, dir) result(istat) &
+    function hip_memcpy_mixed_to_device_c(dst, src, size, dir) result(istat) &
              bind(C, name="hipMemcpyFromC")
 
       use, intrinsic :: iso_c_binding
@@ -227,7 +227,23 @@ module hip_functions
       integer(kind=C_INT), intent(in), value       :: dir
       integer(kind=C_INT)                          :: istat
 
-    end function hip_memcpy_mixed_c
+    end function hip_memcpy_mixed_to_device_c
+  end interface
+
+  interface
+    function hip_memcpy_mixed_to_host_c(dst, src, size, dir) result(istat) &
+             bind(C, name="hipMemcpyFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr), value                           :: src
+      integer(kind=c_intptr_t), value              :: dst
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=C_INT)                          :: istat
+
+    end function hip_memcpy_mixed_to_host_c
   end interface
 
   interface
@@ -316,7 +332,8 @@ module hip_functions
   interface hip_memcpy
     module procedure hip_memcpy_intptr
     module procedure hip_memcpy_cptr
-    module procedure hip_memcpy_mixed
+    module procedure hip_memcpy_mixed_to_device
+    module procedure hip_memcpy_mixed_to_host
   end interface
 
   interface
@@ -1356,7 +1373,7 @@ module hip_functions
 #endif
     end function
 
- function hip_memcpy_mixed(dst, src, size, dir) result(success)
+ function hip_memcpy_mixed_to_device(dst, src, size, dir) result(success)
 
       use, intrinsic :: iso_c_binding
 
@@ -1368,7 +1385,25 @@ module hip_functions
       logical :: success
 
 #ifdef WITH_AMD_GPU_VERSION
-        success = hip_memcpy_mixed_c(dst, src, size, dir) /= 0
+        success = hip_memcpy_mixed_to_device_c(dst, src, size, dir) /= 0
+#else
+        success = .true.
+#endif
+    end function
+
+ function hip_memcpy_mixed_to_host(dst, src, size, dir) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr)                           :: src
+      integer(kind=c_intptr_t)              :: dst
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+
+#ifdef WITH_AMD_GPU_VERSION
+        success = hip_memcpy_mixed_to_host_c(dst, src, size, dir) /= 0
 #else
         success = .true.
 #endif

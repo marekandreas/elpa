@@ -71,9 +71,11 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/mod_merge_systems.F90 \
   src/solve_tridi/mod_merge_recursive.F90 \
   src/solve_tridi/mod_solve_tridi.F90 \
-  src/invert_trm/mod_invert_trm_cuda.F90 \
+  src/invert_trm/GPU/mod_invert_trm_gpu.F90 \
+  src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
-  src/cholesky/mod_cholesky_cuda.F90 \
+  src/cholesky/GPU/mod_cholesky_gpu.F90 \
+  src/cholesky/GPU/CUDA/mod_cholesky_cuda.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/elpa1/mod_distribute_global_column.F90 \
@@ -94,6 +96,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa_transpose_vectors.F90 \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
+  src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
@@ -863,6 +866,8 @@ EXTRA_DIST = \
   src/GPU/ROCm/hipUtils_template.cpp \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
+  src/elpa_impl_math_solvers_template.F90 \
+  src/elpa_impl_math_generalized_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
@@ -884,9 +889,11 @@ EXTRA_DIST = \
   src/elpa1/elpa1_tridiag_template.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/elpa_cholesky_template.F90 \
-  src/cholesky/mod_cholesky_cuda.F90 \
+  src/cholesky/GPU/mod_cholesky_gpu.F90 \
+  src/cholesky/GPU/CUDA/mod_cholesky_cuda.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
-  src/invert_trm/mod_invert_trm_cuda.F90 \
+  src/invert_trm/GPU/mod_invert_trm_gpu.F90 \
+  src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
   src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/invert_trm/elpa_invert_trm_template.F90 \

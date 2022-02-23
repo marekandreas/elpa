@@ -237,7 +237,7 @@ module cuda_functions
   end interface
 
   interface
-    function cuda_memcpy_mixed_c(dst, src, size, dir) result(istat) &
+    function cuda_memcpy_mixed_to_device_c(dst, src, size, dir) result(istat) &
              bind(C, name="cudaMemcpyFromC")
 
       use, intrinsic :: iso_c_binding
@@ -249,7 +249,23 @@ module cuda_functions
       integer(kind=C_INT), intent(in), value       :: dir
       integer(kind=C_INT)                          :: istat
 
-    end function cuda_memcpy_mixed_c
+    end function cuda_memcpy_mixed_to_device_c
+  end interface
+
+  interface
+    function cuda_memcpy_mixed_to_host_c(dst, src, size, dir) result(istat) &
+             bind(C, name="cudaMemcpyFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr), value                           :: src
+      integer(kind=C_intptr_t), value              :: dst
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=C_INT)                          :: istat
+
+    end function cuda_memcpy_mixed_to_host_c
   end interface
 
   interface
@@ -338,7 +354,8 @@ module cuda_functions
   interface cuda_memcpy
     module procedure cuda_memcpy_intptr
     module procedure cuda_memcpy_cptr
-    module procedure cuda_memcpy_mixed
+    module procedure cuda_memcpy_mixed_to_device
+    module procedure cuda_memcpy_mixed_to_host
   end interface
 
   interface
@@ -1529,7 +1546,7 @@ module cuda_functions
 #endif
     end function
 
- function cuda_memcpy_mixed(dst, src, size, dir) result(success)
+ function cuda_memcpy_mixed_to_device(dst, src, size, dir) result(success)
 
       use, intrinsic :: iso_c_binding
 
@@ -1541,11 +1558,30 @@ module cuda_functions
       logical :: success
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-        success = cuda_memcpy_mixed_c(dst, src, size, dir) /= 0
+        success = cuda_memcpy_mixed_to_device_c(dst, src, size, dir) /= 0
 #else
         success = .true.
 #endif
     end function
+
+ function cuda_memcpy_mixed_to_host(dst, src, size, dir) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr)                           :: src
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        success = cuda_memcpy_mixed_to_host_c(dst, src, size, dir) /= 0
+#else
+        success = .true.
+#endif
+    end function
+
 
     function cuda_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir) result(success)
 

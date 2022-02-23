@@ -1,8 +1,9 @@
-.TH "elpa_cholesky" 3 "Sat Jul 15 2017" "ELPA" \" -*- nroff -*-
+.TH "elpa_cholesky" 3 "Mon Nov 15 2021" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 elpa_cholesky \- do a Cholesky factorization of a real symmetric or complex hermitian matrix
+also exists in explicit form elpa_cholesky_double, elpa_cholesky_float, elpa_cholesky_double_complex, elpa_cholesky_float_complex
 .br
 
 .SH SYNOPSIS
@@ -21,7 +22,7 @@ class(elpa_t), pointer :: elpa
 
 .br
 .TP
-.RI "datatype :: \fBa\fP"
+.RI "datatype :: \fBa\fP" : can also be a device pointer of type(c_ptr)
 The matrix a which should be decomposed. The dimensions of matrix a must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The datatype of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)"
 .TP
 .RI "integer, optional :: \fBerror\fP"
@@ -45,7 +46,7 @@ elpa_t handle;
 .RI "elpa_t \fBhandle\fP;"
 The handle to the ELPA object
 .TP
-.RI "datatype *\fBa\fP;"
+.RI "datatype *\fBa\fP;" can also be a device pointer
 The matrix which should be decomposed. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex".
 .RI "int *\fBerror\fP;"
 The error code of the function. Should be "ELPA_OK". The error codes can be querried with \fBelpa_strerr\fP(3)
