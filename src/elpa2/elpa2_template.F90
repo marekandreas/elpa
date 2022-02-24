@@ -306,6 +306,14 @@
     &PRECISION&
     &")
 
+    call obj%get("debug",debug,error)
+    if (error .ne. ELPA_OK) then
+      write(error_unit,*) "Problem getting option for debug settings. Aborting..."
+      stop
+    endif
+
+    wantDebug = debug == 1
+
     ! check legacy GPU setings
     if (obj%is_set("gpu") == 1) then
       call obj%get("gpu", gpu_old, error)     
@@ -736,13 +744,6 @@ print *,"Device pointer + REDIST"
 #else
     isSkewsymmetric = .false.
 #endif
-
-    call obj%get("debug",debug,error)
-    if (error .ne. ELPA_OK) then
-      write(error_unit,*) "Problem getting option for debug settings. Aborting..."
-      stop
-    endif
-    wantDebug = debug == 1
 
     ! only if we want (and can) use GPU in general, look what are the
     ! requirements for individual routines. Implicitly they are all set to 1, so
