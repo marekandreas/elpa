@@ -351,7 +351,7 @@ module mod_check_for_gpu
           ! handle creation
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
-            print *,"Creating handle for thread:",thread
+            !print *,"Creating handle for thread:",thread
             success = cublas_create(handle_tmp)
             cublasHandleArray(thread) = handle_tmp
             gpublasHandleArray(thread) = handle_tmp
