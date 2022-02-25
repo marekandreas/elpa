@@ -53,17 +53,17 @@
 #include "../general/sanity.F90"
 
 
-#if REALCASE == 1
+!#if REALCASE == 1
 #ifdef WITH_CUDA_AWARE_MPI
 #define WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
 #else
 #undef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
 #endif
-#endif
+!#endif
 
-#if COMPLEXCASE == 1
-#undef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
-#endif
+!#if COMPLEXCASE == 1
+!#undef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
+!#endif
 
 subroutine trans_ev_tridi_to_band_&
 &MATH_DATATYPE&
@@ -3196,8 +3196,7 @@ subroutine trans_ev_tridi_to_band_&
 
          ! Care that there are not too many outstanding top_recv_request's
          if (stripe_count > 1) then
-           if (i>1) then
-
+           if (i > 1) then
 #ifdef WITH_MPI
 #ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
              if (wantDebug) call obj%timer%start("cuda_mpi_wait_top_recv")
@@ -3212,7 +3211,6 @@ subroutine trans_ev_tridi_to_band_&
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
 #endif /* WITH_MPI */
            else ! i > 1
-
 #ifdef WITH_MPI
 #ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
              if (wantDebug) call obj%timer%start("cuda_mpi_wait_top_recv")
@@ -3226,7 +3224,6 @@ subroutine trans_ev_tridi_to_band_&
              if (wantDebug) call obj%timer%stop("host_mpi_wait_top_recv")
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
 #endif /* WITH_MPI */
-
           endif ! i > 1
         endif ! stripe_count > 1
       enddo ! i = 1, stripe_count
@@ -3308,10 +3305,6 @@ subroutine trans_ev_tridi_to_band_&
           else ! useGPU
 
             do i = 1, min(na - num_blk*nblk, nblk)
-
-
-
-
 #ifdef WITH_OPENMP_TRADITIONAL
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
               !$omp parallel do num_threads(max_threads) if (max_threads>1) &
@@ -3382,8 +3375,8 @@ subroutine trans_ev_tridi_to_band_&
 #endif /* WITH_OPENMP_TRADITIONAL */
             enddo
           endif ! useGPU
+
 #ifdef WITH_MPI
-         
           if (useGPU) then
 #ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
             if (wantDebug) call obj%timer%start("cuda_mpi_communication")
@@ -3577,7 +3570,7 @@ subroutine trans_ev_tridi_to_band_&
           !$omp end parallel do
           if (wantDebug) call obj%timer%stop("normal_memcpy")
         end do
-      else
+      else ! useGPU
         call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
         !$omp parallel do num_threads(max_threads) if(max_threads > 1) &
         !$omp default(none) &
@@ -3594,7 +3587,7 @@ subroutine trans_ev_tridi_to_band_&
         enddo
         !$omp end parallel do
         call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
-      endif
+      endif ! useGPU
 #else /* WITH_OPENMP_TRADITIONAL */
       do i = 1, stripe_count
         if (useGPU) then

@@ -44,15 +44,15 @@
 
 ! Pack a filled row group (i.e. an array of consecutive rows)
 
-#if REALCASE == 1
+!#if REALCASE == 1
 #ifdef WITH_CUDA_AWARE_MPI
 #define WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
 #endif
-#endif
+!#endif
 
-#if COMPLEXCASE == 1
-#undef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
-#endif
+!#if COMPLEXCASE == 1
+!#undef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
+!#endif
 
 subroutine pack_row_group_&
 &MATH_DATATYPE&
