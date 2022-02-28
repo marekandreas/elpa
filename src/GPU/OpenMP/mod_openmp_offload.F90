@@ -1518,7 +1518,7 @@ module openmp_offload_functions
       logical                                  :: success
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = oneapi_omp_memcpy_mixed_c(dst, src, elems, direction) /= 0
+      success = openmp_offload_memcpy_mixed_c(dst, src, elems, direction) /= 0
 #else
       success = .true.
 #endif
@@ -1534,7 +1534,7 @@ module openmp_offload_functions
       logical                                  :: success
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = oneapi_omp_memcpy_mixed_c(dst, src, elems, direction) /= 0
+      success = openmp_offload_memcpy_mixed_c(dst, src, elems, direction) /= 0
 #else
       success = .true.
 #endif
