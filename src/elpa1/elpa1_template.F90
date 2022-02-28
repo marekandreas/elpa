@@ -304,6 +304,12 @@ function elpa_solve_evp_&
        print *,"Problem getting option for AMD GPU. Aborting..."
        stop
      endif
+   else if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
+     call obj%get("intel-gpu",gpu,error)
+     if (error .ne. ELPA_OK) then
+       print *,"Problem getting option for AMD GPU. Aborting..."
+       stop
+     endif
    else if (gpu_vendor() == INTEL_GPU) then
      call obj%get("intel-gpu",gpu,error)
      if (error .ne. ELPA_OK) then

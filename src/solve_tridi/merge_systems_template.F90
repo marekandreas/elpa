@@ -141,11 +141,12 @@
       check_allocate("merge_systems: z_p",istat, errorMessage)
 #endif
       useIntelGPU = .false.
-      if (useGPU) then
-        if (gpu_vendor() == INTEL_GPU) then
-          useIntelGPU = .true.
-        endif
-      endif
+      !disable for the moment
+      !if (useGPU) then
+      !  if (gpu_vendor() == INTEL_GPU) then
+      !    useIntelGPU = .true.
+      !  endif
+      !endif
 
       call obj%timer%start("merge_systems" // PRECISION_SUFFIX)
       success = .true.

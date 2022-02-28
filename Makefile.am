@@ -49,6 +49,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/CUDA/mod_cuda.F90 \
   src/GPU/INTEL/mod_mkl_offload.F90 \
   src/GPU/ROCm/mod_hip.F90 \
+  src/GPU/OpenMP/mod_openmp_offload.F90 \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
   src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
   src/elpa2/GPU/ROCm/interface_c_hip_kernel.F90 \
@@ -160,6 +161,10 @@ endif
 
 if WITH_INTEL_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mkl_offload.cpp
+endif
+
+if WITH_OPENMP_OFFLOAD_GPU_VERSION
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/OpenMP/openmpOffloadFunctions.cpp
 endif
 
 if WITH_AMD_GPU_VERSION

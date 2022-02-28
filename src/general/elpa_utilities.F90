@@ -184,6 +184,9 @@ module ELPA_utilities
       if (use_gpu_vendor == amd_gpu) then
         print *, file_name, ":", line,  " error in hip_malloc when allocating "
       endif
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *, file_name, ":", line,  " error in openmp_offload_malloc when allocating "
+      endif
       stop 1
     endif
  end subroutine
@@ -202,6 +205,9 @@ module ELPA_utilities
       endif
       if (use_gpu_vendor == amd_gpu) then
         print *, file_name, ":", line,  " error in hip_free when deallocating "
+      endif
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *, file_name, ":", line,  " error in openmp_offload_free when deallocating "
       endif
       stop 1
     endif
@@ -222,6 +228,9 @@ module ELPA_utilities
       if (use_gpu_vendor == amd_gpu) then
         print *, file_name, ":", line,  " error in hip_memcpy when copying "
       endif
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *, file_name, ":", line,  " error in openmp_offload_memcpy when copying "
+      endif
       stop 1
     endif
  end subroutine
@@ -240,6 +249,9 @@ module ELPA_utilities
       endif
       if (use_gpu_vendor == amd_gpu) then
         print *, file_name, ":", line,  " error in hip_alloc_host when allocating "
+      endif
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *, file_name, ":", line,  " error in openmp_offload_alloc_host when allocating "
       endif
       stop 1
     endif
@@ -260,6 +272,9 @@ module ELPA_utilities
       if (use_gpu_vendor == amd_gpu) then
         print *, file_name, ":", line,  " error in hip_free_host when deallocating "
       endif
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *, file_name, ":", line,  " error in openmp_offload_free_host when deallocating "
+      endif
       stop 1
     endif
  end subroutine
@@ -278,6 +293,9 @@ module ELPA_utilities
       endif
       if (use_gpu_vendor == amd_gpu) then
         print *, file_name, ":", line,  " error in hip_host_register when registering "
+      endif
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *, file_name, ":", line,  " error in openmp_offload_host_register when registering "
       endif
       stop 1
     endif
@@ -298,6 +316,9 @@ module ELPA_utilities
       if (use_gpu_vendor == amd_gpu) then
         print *, file_name, ":", line,  " error in hip_host_unregister when unregistering "
       endif
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *, file_name, ":", line,  " error in openmp_offload_host_unregister when unregistering "
+      endif
       stop 1
     endif
  end subroutine
@@ -316,6 +337,9 @@ module ELPA_utilities
       endif
       if (use_gpu_vendor == amd_gpu) then
         print *, file_name, ":", line,  " error in hip_memset "
+      endif
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *, file_name, ":", line,  " error in openmp_offload_memset "
       endif
       stop 1
     endif
