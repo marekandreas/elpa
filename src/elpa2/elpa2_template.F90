@@ -551,10 +551,24 @@
           if (userHasSetKernel) then
             ! user fixed inconsistent input.
             ! sadly, we do have to abort
+#if COMPLECASE == 1
+#ifdef WITH_AMD_GPU_VERSION
+            if (my_pe .eq. 0) then
+              write(error_unit,*) "Currently the AMD GPU port does not support ELPA_2STAGE_COMPLEX_AMD_GPU ."
+              write(error_unit,*) "Please set another complex kernel. Aborting..."
+            endif
+#else
             if (my_pe .eq. 0) then
               write(error_unit,*) "You set (fixed) the kernel to GPU, but GPUs cannot be used."
               write(error_unit,*) "Either adapt the block size or the process grid, or do not set the GPU kernel! Aborting..."
             endif
+#endif
+#else
+            if (my_pe .eq. 0) then
+              write(error_unit,*) "You set (fixed) the kernel to GPU, but GPUs cannot be used."
+              write(error_unit,*) "Either adapt the block size or the process grid, or do not set the GPU kernel! Aborting..."
+            endif
+#endif
             stop
           else
             ! here we should set the default kernel
@@ -814,6 +828,10 @@ print *,"Device pointer + REDIST"
         !  write(error_unit,*) "Cannot set kernel to GPU kernel"
         !  stop
         !endif
+
+        if (my_pe .eq. 0) write(error_unit,*) "You requested the GPU version, thus the GPU kernel is activated"
+        good_nblk_gpu = .false.
+
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
         kernel = GPU_KERNEL2
@@ -821,10 +839,18 @@ print *,"Device pointer + REDIST"
         kernel = GPU_KERNEL
 #endif
 #else /* REALCASE == 1 */
+
+#if WITH_AMD_GPU_VERSION
+        ! special case as long as AMD COMPLEX kernel does not work
+        kernel = DEFAULT_KERNEL
+        do_useGPU_trans_ev_tridi_to_band = .false.
+        if (my_pe .eq. 0) then
+           write(error_unit,*) "Currently the AMD complex GPU kernel is not working. Running this part of ELPA2 on CPU"
+        endif
+#else
         kernel = GPU_KERNEL
+#endif
 #endif /* REALCASE == 1 */
-        if (my_pe .eq. 0) write(error_unit,*) "You requested the GPU version, thus the GPU kernel is activated"
-        good_nblk_gpu = .false.
       endif ! userHasSetKernel
 
       ! Accepted values are 2,4,8,16,...,512
@@ -836,7 +862,7 @@ print *,"Device pointer + REDIST"
       enddo
 
       if (.not. good_nblk_gpu .and. do_useGPU_trans_ev_tridi_to_band) then
-         write(error_unit,*) "ELPA: Warning, CUDA kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
+         write(error_unit,*) "ELPA: Warning, GPU kernel only works with block size 2^n (n = 1, 2, ..., 10)!"
          write(error_unit,*) "The compute kernel will be executed on CPUs!"
          write(error_unit,*) "We recommend changing the block size to 2^n"
          do_useGPU_trans_ev_tridi_to_band = .false.

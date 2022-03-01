@@ -74,9 +74,11 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/mod_solve_tridi.F90 \
   src/invert_trm/GPU/mod_invert_trm_gpu.F90 \
   src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
+  src/invert_trm/GPU/ROCm/mod_invert_trm_hip.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/GPU/mod_cholesky_gpu.F90 \
   src/cholesky/GPU/CUDA/mod_cholesky_cuda.F90 \
+  src/cholesky/GPU/ROCm/mod_cholesky_hip.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/elpa1/mod_distribute_global_column.F90 \
@@ -168,7 +170,7 @@ if WITH_OPENMP_OFFLOAD_GPU_VERSION
 endif
 
 if WITH_AMD_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
 endif
 
 if !WITH_MPI
@@ -899,6 +901,7 @@ EXTRA_DIST = \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/invert_trm/GPU/mod_invert_trm_gpu.F90 \
   src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
+  src/invert_trm/GPU/ROCm/mod_invert_trm_hip.F90 \
   src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/invert_trm/elpa_invert_trm_template.F90 \

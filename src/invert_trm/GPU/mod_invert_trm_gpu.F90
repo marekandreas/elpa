@@ -309,7 +309,7 @@ module invert_trm_gpu
       call cuda_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call gpu_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call hip_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
 #endif
 
     end subroutine

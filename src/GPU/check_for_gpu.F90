@@ -130,7 +130,7 @@ module mod_check_for_gpu
         allocate(rocblasHandleArray(0:maxThreads-1))
         allocate(gpublasHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          roclasHandleArray(thread) = -1
+          rocblasHandleArray(thread) = -1
           gpublasHandleArray(thread) = -1
         enddo
       endif
@@ -220,7 +220,7 @@ module mod_check_for_gpu
           if (.not.(allocated(openmpOffloadDeviceArray))) then
             allocate(openmpOffloadDeviceArray(0:maxThreads-1))
             allocate(gpuDeviceArray(0:maxThreads-1))
-            success = openmp_offload_setdevice(use_gpu_id)
+            success = opemmp_offload_setdevice(use_gpu_id)
             do thread=0,maxThreads-1
               openmpOffloadDeviceArray(thread) = use_gpu_id
               gpuDeviceArray(thread) = use_gpu_id
@@ -262,7 +262,7 @@ module mod_check_for_gpu
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
             handle_tmp = 0
             ! not needed dummy call
-            success = openmp_offload_blas_create(handle_tmp)
+            success = opemmp_offload_blas_create(handle_tmp)
             openmpOffloadHandleArray(thread) = handle_tmp
             gpublasHandleArray(thread) = handle_tmp
 #endif
