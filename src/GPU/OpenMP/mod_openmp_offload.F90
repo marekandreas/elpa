@@ -120,12 +120,11 @@ module openmp_offload_functions
   end interface
 
   interface
-    function openmp_offload_getdevicecount_c(n) result(istat) &
+    function openmp_offload_getdevicecount_c() result(n) &
              bind(C, name="openmpOffloadGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT), intent(out) :: n
-      integer(kind=C_INT)              :: istat
+      integer(kind=C_INT) :: n
     end function openmp_offload_getdevicecount_c
   end interface
 
@@ -531,7 +530,7 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dgemm_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+    subroutine mkl_openmp_offload_dgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
                            bind (C, name="mklOpenmpOffloadDgemmFromC")
       use, intrinsic :: iso_c_binding
 
@@ -654,7 +653,7 @@ module openmp_offload_functions
 
   interface
     subroutine mkl_openmp_offload_scopy_cptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='openmpOpenmpOffloadScopyFromC')
+                              bind(C,name='mklOpenmpOffloadScopyFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -723,7 +722,7 @@ module openmp_offload_functions
       character(1,C_CHAR),value               :: side, uplo, trans, diag
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE), value              :: alpha
+      real(kind=C_FLOAT), value               :: alpha
       integer(kind=C_intptr_T), value         :: a, b
       integer(kind=C_intptr_T), value         :: handle
 
@@ -740,7 +739,7 @@ module openmp_offload_functions
       character(1,C_CHAR),value               :: side, uplo, trans, diag
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE), value              :: alpha
+      real(kind=C_FLOAT), value               :: alpha
       type(c_ptr), value                      :: a, b
       integer(kind=C_intptr_T), value         :: handle
 
@@ -755,7 +754,7 @@ module openmp_offload_functions
 
   interface
     subroutine mkl_openmp_offload_dtrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadDtrsm_elpa_wrapper')
+                              bind(C,name='mklOpenmpOffloadDtrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -772,7 +771,7 @@ module openmp_offload_functions
 
   interface
     subroutine mkl_openmp_offload_dtrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadDtrsm_elpa_wrapper')
+                              bind(C,name='mklOpenmpOffloadDtrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -795,7 +794,7 @@ module openmp_offload_functions
 
   interface
     subroutine mkl_openmp_offload_strsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadStrsm_elpa_wrapper')
+                              bind(C,name='mklOpenmpOffloadStrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -812,7 +811,7 @@ module openmp_offload_functions
 
   interface
     subroutine mkl_openmp_offload_strsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadStrsm_elpa_wrapper')
+                              bind(C,name='mklOpenmpOffloadStrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -830,7 +829,7 @@ module openmp_offload_functions
 
   interface
     subroutine mkl_openmp_offload_zgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mkl_openmp_offload_ZgemmFromC')
+                              bind(C,name='mklOpenmpOffloadZgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -847,7 +846,7 @@ module openmp_offload_functions
 
   interface
     subroutine mkl_openmp_offload_zgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mkl_openmpOffloadZgemmFromC')
+                              bind(C,name='mklOpenmpOffloadZgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -864,7 +863,7 @@ module openmp_offload_functions
 
   interface
     subroutine mkl_openmp_offload_cgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mkl_openmpOffloadCgemmFromC')
+                              bind(C,name='mklOpenmpOffloadCgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -881,7 +880,7 @@ module openmp_offload_functions
 
   interface
     subroutine mkl_openmp_offload_cgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mkl_openmpOffloadCgemmFromC')
+                              bind(C,name='mklOpenmpOffloadCgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -939,7 +938,7 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmmp_offload_ccopy_intptr_c(handle, n, x, incx, y, incy) &
+    subroutine mkl_openmp_offload_ccopy_intptr_c(handle, n, x, incx, y, incy) &
                               bind(C,name='mklOpenmpOffloadCcopyFromC')
 
       use, intrinsic :: iso_c_binding
@@ -1298,18 +1297,18 @@ module openmp_offload_functions
     end function 
 
 
-    function openmp_offload_getdevicecount(n) result(success)
+    function openmp_offload_getdevicecount() result(n)
       use, intrinsic :: iso_c_binding
       implicit none
 
       integer(kind=ik)     :: n
-      integer(kind=c_int)  :: nCasted
-      logical              :: success
+      !integer(kind=c_int)  :: nCasted
+      !logical              :: success
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_getdevicecount_c(nCasted) /=0
-      n = int(nCasted)
+      n = openmp_offload_getdevicecount_c()
+      !n = int(nCasted)
 #else
-      success = .true.
+      !success = .true.
       n = 0
 #endif
     end function openmp_offload_getdevicecount
@@ -1518,7 +1517,7 @@ module openmp_offload_functions
       logical                                  :: success
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_memcpy_mixed_c(dst, src, elems, direction) /= 0
+      success = openmp_offload_memcpy_mixed_to_device_c(dst, src, elems, direction) /= 0
 #else
       success = .true.
 #endif
@@ -1534,7 +1533,7 @@ module openmp_offload_functions
       logical                                  :: success
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_memcpy_mixed_c(dst, src, elems, direction) /= 0
+      success = openmp_offload_memcpy_mixed_to_host_c(dst, src, elems, direction) /= 0
 #else
       success = .true.
 #endif

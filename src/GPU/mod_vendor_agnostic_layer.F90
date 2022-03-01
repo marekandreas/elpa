@@ -391,7 +391,7 @@ module elpa_gpu
       integer(kind=C_intptr_t)              :: src
       integer(kind=c_intptr_t), intent(in)  :: size
       integer(kind=C_INT), intent(in)       :: dir
-      logical :: success
+      logical                               :: success
 
       success = .false.
 
@@ -406,6 +406,7 @@ module elpa_gpu
       if (use_gpu_vendor == openmp_offload_gpu) then
         success = openmp_offload_memcpy_intptr(dst, src, size, dir)
       endif
+      return
     
     end function
     
@@ -420,7 +421,7 @@ module elpa_gpu
       type(c_ptr)                           :: src
       integer(kind=c_intptr_t), intent(in)  :: size
       integer(kind=C_INT), intent(in)       :: dir
-      logical :: success
+      logical                               :: success
 
       success = .false.
 
@@ -435,6 +436,7 @@ module elpa_gpu
       if (use_gpu_vendor == openmp_offload_gpu) then
         success = openmp_offload_memcpy_cptr(dst, src, size, dir)
       endif
+      return
     
     end function
     

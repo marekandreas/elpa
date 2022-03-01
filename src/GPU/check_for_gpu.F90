@@ -150,7 +150,7 @@ module mod_check_for_gpu
         allocate(openmpOffloadHandleArray(0:maxThreads-1))
         allocate(gpublasHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          roclasHandleArray(thread) = -1
+          openmpOffloadHandleArray(thread) = -1
           gpublasHandleArray(thread) = -1
         enddo
       endif
@@ -220,7 +220,7 @@ module mod_check_for_gpu
           if (.not.(allocated(openmpOffloadDeviceArray))) then
             allocate(openmpOffloadDeviceArray(0:maxThreads-1))
             allocate(gpuDeviceArray(0:maxThreads-1))
-            success = opemmp_offload_setdevice(use_gpu_id)
+            success = openmp_offload_setdevice(use_gpu_id)
             do thread=0,maxThreads-1
               openmpOffloadDeviceArray(thread) = use_gpu_id
               gpuDeviceArray(thread) = use_gpu_id
@@ -262,7 +262,7 @@ module mod_check_for_gpu
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
             handle_tmp = 0
             ! not needed dummy call
-            success = opemmp_offload_blas_create(handle_tmp)
+            success = openmp_offload_blas_create(handle_tmp)
             openmpOffloadHandleArray(thread) = handle_tmp
             gpublasHandleArray(thread) = handle_tmp
 #endif
@@ -345,7 +345,8 @@ module mod_check_for_gpu
         success = hip_getdevicecount(numberOfDevices)
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        success = openmp_offload_getdevicecount(numberOfDevices)
+        numberOfDevices = openmp_offload_getdevicecount()
+        success = .true.
 #endif
         if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
