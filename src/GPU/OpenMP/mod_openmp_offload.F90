@@ -381,8 +381,7 @@ module openmp_offload_functions
 
       integer (kind=c_intptr_t), intent(in), value :: array
       integer (kind=c_intptr_t), intent(in), value :: elems
-      ! changed compared to demo
-      integer (kind=c_int), intent(in), value      :: val
+      integer (kind=c_int32_t), intent(in), value  :: val
       integer (kind=c_int)                         :: istat
     end function
   end interface
@@ -1391,8 +1390,7 @@ module openmp_offload_functions
 
       integer (kind=c_intptr_t), intent(in)        :: array
       integer (kind=c_intptr_t), intent(in)        :: elems
-      ! changed compared to demo
-      integer (kind=c_int), intent(in), value      :: val
+      integer (kind=c_int32_t), intent(in), value  :: val
       logical                                      :: success
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION

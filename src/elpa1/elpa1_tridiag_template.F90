@@ -159,6 +159,8 @@ subroutine tridiag_&
   MATH_DATATYPE(kind=rck), allocatable          :: tmp(:)
   MATH_DATATYPE(kind=rck), pointer              :: v_row(:), & ! used to store calculated Householder Vector
                                                    v_col(:)   ! the same Vector, but transposed 
+  MATH_DATATYPE(kind=rck), pointer              :: u_row_debug(:), & ! used to store calculated Householder Vector
+                                                   u_col_debug(:)   ! the same Vector, but transposed 
   MATH_DATATYPE(kind=rck), pointer              :: u_col(:), u_row(:)
 
   ! the following two matrices store pairs of vectors v and u calculated in each step
@@ -549,7 +551,6 @@ subroutine tridiag_&
         aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
         if (useIntelGPU) then
-                !print *,"intel phase aaaaaaaaaaaaaaaaaaaaaaaaaa"
           if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
           aux(1:2*n_stored_vecs) = uv_stored_cols(l_cols+1,1:2*n_stored_vecs)
@@ -711,11 +712,27 @@ subroutine tridiag_&
     u_row(1:l_rows) = 0
     if (l_rows > 0 .and. l_cols> 0 ) then
      if (useGPU .and. .not.(useIntelGPU)) then
-       successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
-       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+         successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
+         check_memcpy_gpu("tridiag: u_col_dev", successGPU)
 
-       successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype)
-       check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+         successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype)
+         check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+       else
+         ! debug
+         allocate(u_col_debug(l_cols))
+         u_col_debug(:) = 0.
+         successGPU = gpu_memcpy(u_col_dev, int(loc(u_col_debug(1)),kind=c_intptr_t), &
+                     l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+
+         deallocate(u_col_debug)
+         allocate(u_row_debug(l_rows))
+         u_row_debug(:) = 0.
+         successGPU = gpu_memcpy(u_row_dev, int(loc(u_row_debug(1)),kind=c_intptr_t), &
+                     l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+
+         deallocate(u_row_debug)
+       endif
 
        successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
                      l_cols * size_of_datatype, gpuMemcpyHostToDevice)

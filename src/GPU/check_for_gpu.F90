@@ -130,7 +130,7 @@ module mod_check_for_gpu
         allocate(rocblasHandleArray(0:maxThreads-1))
         allocate(gpublasHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          rocblasHandleArray(thread) = -1
+          roclasHandleArray(thread) = -1
           gpublasHandleArray(thread) = -1
         enddo
       endif
@@ -168,6 +168,11 @@ module mod_check_for_gpu
 
       if (obj%is_set("use_gpu_id") == 1) then
         call obj%get("use_gpu_id", use_gpu_id, error)
+        if (error .ne. ELPA_OK) then
+          print *,"check_for_gpu: cannot querry use_gpu_id. Aborting..."
+          stop
+        endif
+
         if (use_gpu_id == -99) then
           print *,"Problem you did not set which gpu id this task should use"
         endif
@@ -220,7 +225,7 @@ module mod_check_for_gpu
           if (.not.(allocated(openmpOffloadDeviceArray))) then
             allocate(openmpOffloadDeviceArray(0:maxThreads-1))
             allocate(gpuDeviceArray(0:maxThreads-1))
-            success = opemmp_offload_setdevice(use_gpu_id)
+            success = openmp_offload_setdevice(use_gpu_id)
             do thread=0,maxThreads-1
               openmpOffloadDeviceArray(thread) = use_gpu_id
               gpuDeviceArray(thread) = use_gpu_id
@@ -262,7 +267,7 @@ module mod_check_for_gpu
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
             handle_tmp = 0
             ! not needed dummy call
-            success = opemmp_offload_blas_create(handle_tmp)
+            success = openmp_offload_blas_create(handle_tmp)
             openmpOffloadHandleArray(thread) = handle_tmp
             gpublasHandleArray(thread) = handle_tmp
 #endif
@@ -443,11 +448,15 @@ module mod_check_for_gpu
 #endif
             stop 1
           endif
-          if (wantDebugMessage) then
+          !if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
-          endif
+          !endif
 
-          call obj%set("use_gpu_id",deviceNumber)
+          call obj%set("use_gpu_id",deviceNumber, error)
+          if (error .ne. ELPA_OK) then
+            print *,"Cannot set use_gpu_id. Aborting..."
+            stop
+          endif
           allreadySET = .true.
 
 
