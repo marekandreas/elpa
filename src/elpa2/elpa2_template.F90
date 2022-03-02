@@ -354,19 +354,6 @@
       endif ! amd-gpu
     else ! gpu not set
       ! nothing to do
-
-      !if (obj%is_set("nvidia-gpu") == 1) then
-      !call obj%get("nvidia-gpu", gpu_new, error)     
-      !if (error .ne. ELPA_OK) then
-      !  print *,"Problem getting option for nvidia-gpu. Aborting..."
-      !  stop
-      !endif
-      !! set gpu and nvidia-gpu consistent
-      !call obj%set("gpu", gpu_new, error)
-      !if (error .ne. ELPA_OK) then
-      !  print *,"Problem setting option for gpu. Aborting..."
-      !  stop
-      !endif
     endif ! gpu is set
 
     ! get the kernel and check whether it has been set by the user
@@ -485,6 +472,12 @@
         stop
       endif
     else if (gpu_vendor() == INTEL_GPU) then
+      call obj%get("intel-gpu", gpu, error)
+      if (error .ne. ELPA_OK) then
+        write(error_unit,*) "Problem getting option for INTEL GPU. Aborting..."
+        stop
+      endif
+    else if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
       call obj%get("intel-gpu", gpu, error)
       if (error .ne. ELPA_OK) then
         write(error_unit,*) "Problem getting option for INTEL GPU. Aborting..."
@@ -1162,6 +1155,9 @@ print *,"Device pointer + REDIST"
 #endif
 
       ! Reduction full -> band
+      if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
+        do_useGPU_bandred = .false.
+      endif
       call bandred_&
       &MATH_DATATYPE&
       &_&
@@ -1339,6 +1335,15 @@ print *,"Device pointer + REDIST"
        endif
        ! Backtransform stage 1
      if (do_trans_to_band) then
+
+       !debug
+       if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
+         if (do_useGPU_trans_ev_tridi_to_band) then
+           do_useGPU_trans_ev_tridi_to_band = .false.
+           kernel = DEFAULT_KERNEL
+           print *,"Disabling GPU kernel for OPENMP_OFFLOAD_GPU"
+         endif
+       endif 
        call obj%autotune_timer%start("tridi_to_band")
        call obj%timer%start("tridi_to_band")
 #ifdef HAVE_LIKWID

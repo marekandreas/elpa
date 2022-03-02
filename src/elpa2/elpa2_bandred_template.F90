@@ -119,6 +119,8 @@ max_threads, isSkewsymmetric)
 #endif
   use elpa_abstract_impl
   use cuda_functions
+  use hip_functions
+  use openmp_offload_functions
 
   implicit none
 #include "../general/precision_kinds.F90"
@@ -174,6 +176,7 @@ max_threads, isSkewsymmetric)
   type(c_ptr)                                 :: a_dev_ptr, vmr_dev_ptr, umc_dev_ptr
   MATH_DATATYPE(kind=rck), pointer            :: vmr_dev_fortran_ptr, umc_dev_fortran_ptr, a_dev_fortran_ptr
   type(c_ptr)                                 :: vmr_host, umc_host
+  MATH_DATATYPE(kind=rck), pointer            :: vmr_debug(:), umc_debug(:)
 #ifdef WITH_MPI
   !integer(kind=ik), external                  :: numroc -> use elpa_scalapack
 #endif
@@ -226,7 +229,8 @@ max_threads, isSkewsymmetric)
   logical                                     :: useNonBlockingCollectivesCols
   logical                                     :: useNonBlockingCollectivesRows
   integer(kind=c_int)                         :: non_blocking_collectives_rows, non_blocking_collectives_cols
-  integer(kind=c_int)                         :: myThreadID,mimick
+  integer(kind=c_int)                         :: myThreadID, mimick
+  integer(kind=c_int)                         :: memcols
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -265,11 +269,11 @@ max_threads, isSkewsymmetric)
   endif
 
   useIntelGPU = .false.
-  if (useGPU) then
-    if (gpu_vendor() == INTEL_GPU) then
-      useIntelGPU = .true.
-    endif
-  endif
+  !if (useGPU) then
+  !  if (gpu_vendor() == INTEL_GPU) then
+  !    useIntelGPU = .true.
+  !  endif
+  !endif
 
   useGPU_reduction_lower_block_to_tridiagonal = .false.
 
@@ -334,10 +338,12 @@ max_threads, isSkewsymmetric)
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols* size_of_datatype)
     check_alloc_gpu("bandred: a_dev", successGPU)
 
-    successGPU = gpu_host_register(int(loc(vav),kind=c_intptr_t), &
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      successGPU = gpu_host_register(int(loc(vav),kind=c_intptr_t), &
                   nbw * nbw * size_of_datatype,&
                   gpuHostRegisterDefault)
-    check_host_register_gpu("bandred: vav", successGPU)
+      check_host_register_gpu("bandred: vav", successGPU)
+    endif
 
     successGPU = gpu_malloc(vav_dev, nbw*nbw* size_of_datatype)
     check_alloc_gpu("bandred: vav_dev", successGPU)
@@ -417,9 +423,11 @@ max_threads, isSkewsymmetric)
   blk_end = (na-1)/nbw
   if (useGPU .and. .not.(useIntelGPU)) then
 
-    successGPU = gpu_host_register(int(loc(a_mat),kind=c_intptr_t), &
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      successGPU = gpu_host_register(int(loc(a_mat),kind=c_intptr_t), &
                   matrixRows*matrixCols*size_of_datatype, gpuHostRegisterDefault)
-    check_host_register_gpu("bandred: a_mat", successGPU)
+      check_host_register_gpu("bandred: a_mat", successGPU)
+    endif
 
 #ifndef WITH_OPENMP_TRADITIONAL
     cur_l_rows = 0
@@ -460,17 +468,25 @@ max_threads, isSkewsymmetric)
     allocate(vr(l_rows + 1), stat=istat, errmsg=errorMessage)
     check_allocate("bandred: vr", istat, errorMessage)
 
-    successGPU = gpu_malloc_host(vmr_host,vmr_size*size_of_datatype)
-    check_host_alloc_gpu("bandred: vmr_host", successGPU)
-    call c_f_pointer(vmr_host, vmrGPU, (/vmr_size/))
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      successGPU = gpu_malloc_host(vmr_host,vmr_size*size_of_datatype)
+      check_host_alloc_gpu("bandred: vmr_host", successGPU)
+      call c_f_pointer(vmr_host, vmrGPU, (/vmr_size/))
+    else
+      allocate(vmrGPU(vmr_size)
+    endif
 
     successGPU = gpu_malloc(vmr_dev, vmr_size*size_of_datatype)
     check_alloc_gpu("bandred: vmr_dev", successGPU)
 
 
-    successGPU = gpu_malloc_host(umc_host,umc_size*size_of_datatype)
-    check_host_alloc_gpu("bandred: umc_host", successGPU)
-    call c_f_pointer(umc_host, umcGPU, (/umc_size/))
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      successGPU = gpu_malloc_host(umc_host,umc_size*size_of_datatype)
+      check_host_alloc_gpu("bandred: umc_host", successGPU)
+      call c_f_pointer(umc_host, umcGPU, (/umc_size/))
+    else
+      allocate(umcGPU(umc_size))
+    endif
 
     successGPU = gpu_malloc(umc_dev, umc_size*size_of_datatype)
     check_alloc_gpu("bandred: umc_dev", successGPU)
@@ -521,19 +537,29 @@ max_threads, isSkewsymmetric)
         allocate(vr(l_rows + 1), stat=istat, errmsg=errorMessage)
         check_allocate("bandred: vr", istat, errorMessage)
 
-        successGPU = gpu_malloc_host(vmr_host,max_l_rows*2*n_cols*size_of_datatype)
-        check_host_alloc_gpu("bandred: vmr_host", successGPU)
-        call c_f_pointer(vmr_host, vmrGPU, [max_l_rows*2*n_cols])
-        call c_f_pointer(vmr_host, vmrGPU_2d, [max_l_rows,2*n_cols])
+        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+          successGPU = gpu_malloc_host(vmr_host,max_l_rows*2*n_cols*size_of_datatype)
+          check_host_alloc_gpu("bandred: vmr_host", successGPU)
+          call c_f_pointer(vmr_host, vmrGPU, [max_l_rows*2*n_cols])
+          call c_f_pointer(vmr_host, vmrGPU_2d, [max_l_rows,2*n_cols])
+        else
+          allocate(vmrGPU(max_l_rows*2*n_cols))
+          allocate(vmrGPU_2d(max_l_rows,2*n_cols))
+        endif
 
         successGPU = gpu_malloc(vmr_dev, max_l_rows*2*n_cols*size_of_datatype)
         check_alloc_gpu("bandred: vmr_dev", successGPU)
 
 
-        successGPU = gpu_malloc_host(umc_host,max_l_cols*2*n_cols*size_of_datatype)
-        check_host_alloc_gpu("bandred: umc_host", successGPU)
-        call c_f_pointer(umc_host, umcGPU, [max_l_cols*2*n_cols])
-        call c_f_pointer(umc_host, umcGPU_2d, [max_l_cols,2*n_cols])
+        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+          successGPU = gpu_malloc_host(umc_host,max_l_cols*2*n_cols*size_of_datatype)
+          check_host_alloc_gpu("bandred: umc_host", successGPU)
+          call c_f_pointer(umc_host, umcGPU, [max_l_cols*2*n_cols])
+          call c_f_pointer(umc_host, umcGPU_2d, [max_l_cols,2*n_cols])
+        else
+          allocate(umcGPU(max_l_cols*2*n_cols))
+          allocate(umcGPU_2d(max_l_cols,2*n_cols))
+        endif
 
         successGPU = gpu_malloc(umc_dev, max_l_cols*2*n_cols*size_of_datatype)
         check_alloc_gpu("bandred: umc_dev", successGPU)
@@ -594,15 +620,26 @@ max_threads, isSkewsymmetric)
       enddo
 
       if (do_memcpy) then
-        successGPU = gpu_memcpy2d(int(loc(a_mat(1, lc_start)),kind=c_intptr_t), &
-                      int((matrixRows*size_of_datatype),kind=c_intptr_t), &
-                      (a_dev + int( ( (lc_start-1) * matrixRows*size_of_datatype),kind=c_intptr_t )), &
-                      int(matrixRows*size_of_datatype,kind=c_intptr_t), &
-                      int(lr_end*size_of_datatype,kind=c_intptr_t), &
-                      int((lc_end - lc_start+1),kind=c_intptr_t),int(gpuMemcpyDeviceToHost,kind=c_int))
-
-        check_memcpy_gpu("bandred: a_dev -> a_mat", successGPU)
-      endif
+        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+          successGPU = gpu_memcpy2d(int(loc(a_mat(1, lc_start)),kind=c_intptr_t), &
+                        int((matrixRows*size_of_datatype),kind=c_intptr_t), &
+                        (a_dev + int( ( (lc_start-1) * matrixRows*size_of_datatype),kind=c_intptr_t )), &
+                        int(matrixRows*size_of_datatype,kind=c_intptr_t), &
+                        int(lr_end*size_of_datatype,kind=c_intptr_t), &
+                        int((lc_end - lc_start+1),kind=c_intptr_t),int(gpuMemcpyDeviceToHost,kind=c_int))
+          check_memcpy_gpu("bandred: a_dev -> a_mat", successGPU)
+        else
+          !do memcols = lc_start, lc_end
+          !  successGPU = gpu_memcpy(int(loc(a_mat(1,memcols)),kind=c_intptr_t), &
+          !                          a_dev + int(((memcols-1) * matrixRows*size_of_datatype),kind=c_intptr_t), &
+          !                          int(lr_end*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
+          !  check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
+          !enddo
+          successGPU = gpu_memcpy(int(loc(a_mat),kind=c_intptr_t), a_dev, &
+                                    int(matrixRows*matrixCols*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
+        endif
+      endif ! do_memcpy
     endif ! useGPU
 
     !if (useIntelGPU) then
@@ -898,16 +935,28 @@ max_threads, isSkewsymmetric)
       if (useGPU_reduction_lower_block_to_tridiagonal .and. .not.(useIntelGPU)) then
         ! store column tiles back to GPU
         if (do_memcpy) then
-          successGPU = gpu_memcpy2d((a_dev+ &
-                        int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
-                        int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
-                        int(matrixRows*size_of_datatype,kind=c_intptr_t), &
-                        int(lr_end*size_of_datatype,kind=c_intptr_t), &
-                        int((lc_end - lc_start+1),kind=c_intptr_t), &
-                        int(gpuMemcpyHostToDevice,kind=c_int))
-          check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
-        endif
-      endif
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+            successGPU = gpu_memcpy2d((a_dev+ &
+                         int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
+                         int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
+                         int(matrixRows*size_of_datatype,kind=c_intptr_t), &
+                         int(lr_end*size_of_datatype,kind=c_intptr_t), &
+                         int((lc_end - lc_start+1),kind=c_intptr_t), &
+                         int(gpuMemcpyHostToDevice,kind=c_int))
+            check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
+          else
+            !do memcols = lc_start, lc_end
+            !  successGPU = gpu_memcpy(a_dev + int(((memcols-1) * matrixRows*size_of_datatype),kind=c_intptr_t), &
+            !                         int(loc(a_mat(1,memcols)),kind=c_intptr_t), &
+            !                         int(lr_end*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+            !  check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
+            !enddo
+            successGPU = gpu_memcpy(a_dev, int(loc(a_mat),kind=c_intptr_t), &
+                                    int(matrixRows*matrixCols*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+             check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
+          endif
+        endif ! do_memcopy
+      endif ! (useGPU_reduction_lower_block_to_tridiagonal .and. .not.(useIntelGPU)
 
       if (useGPU_reduction_lower_block_to_tridiagonal .and. useIntelGPU) then
         ! store column tiles back to GPU
@@ -983,17 +1032,29 @@ max_threads, isSkewsymmetric)
         ! qr worked on *CPU arrarys
         !vmrGPU(1:max_l_rows * n_cols) = vmrCPU(1:max_l_rows,1:n_cols)
         if (do_memcpy) then
-          successGPU = gpu_memcpy2d((a_dev+ &
-                        int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
-                        int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
-                        int(matrixRows*size_of_datatype,kind=c_intptr_t), &
-                        int(lr_end*size_of_datatype,kind=c_intptr_t), &
-                        int((lc_end - lc_start+1),kind=c_intptr_t), &
-                        int(gpuMemcpyHostToDevice,kind=c_int))
-          check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
-        endif
-      endif
-    endif
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+            successGPU = gpu_memcpy2d((a_dev+ &
+                         int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
+                         int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
+                         int(matrixRows*size_of_datatype,kind=c_intptr_t), &
+                         int(lr_end*size_of_datatype,kind=c_intptr_t), &
+                         int((lc_end - lc_start+1),kind=c_intptr_t), &
+                         int(gpuMemcpyHostToDevice,kind=c_int))
+            check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
+          else
+            !do memcols = lc_start, lc_end
+            !  successGPU = gpu_memcpy(a_dev + int(((memcols-1) * matrixRows*size_of_datatype),kind=c_intptr_t), &
+            !                         int(loc(a_mat(1,memcols)),kind=c_intptr_t), &
+            !                         int(lr_end*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+            !  check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
+            !enddo
+            successGPU = gpu_memcpy(a_dev, int(loc(a_mat),kind=c_intptr_t), &
+                                    int(matrixRows*matrixCols*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+             check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
+          endif
+        endif ! do_memcpy
+      endif ! useIntelGPU
+    endif ! useGPU .and. useQR
 #endif
 
     ! Transpose vmr -> vmc (stored in umc, second half)
@@ -1246,16 +1307,34 @@ max_threads, isSkewsymmetric)
       if (l_cols > 0 .and. l_rows > 0) then
 
         if (useGPU .and. .not.(useIntelGPU)) then
-          successGPU = gpu_memset(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+            successGPU = gpu_memset(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
                         0, max_l_rows*n_cols*size_of_datatype)
-          check_memset_gpu("bandred: vmr_dev", successGPU)
-
+            check_memset_gpu("bandred: vmr_dev", successGPU)
+          else
+            allocate(vmr_debug(max_l_rows*n_cols))
+            vmr_debug(:) = 0.
+            successGPU = gpu_memcpy(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
+                                    int(loc(vmr_debug),kind=c_intptr_t), &
+                                    max_l_rows*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
+            check_memcpy_gpu("bandred: vmr_debug -> vmr_dev", successGPU)
+            deallocate(vmr_debug)
+          endif
           successGPU = gpu_memcpy(vmr_dev, int(loc(vmrGPU(1)),kind=c_intptr_t), &
                         max_l_rows*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("bandred: vmrGPU -> vmr_dev", successGPU)
 
-          successGPU = gpu_memset(umc_dev, 0, l_cols*n_cols*size_of_datatype)
-          check_memset_gpu("bandred: umc_dev", successGPU)
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+            successGPU = gpu_memset(umc_dev, 0, l_cols*n_cols*size_of_datatype)
+            check_memset_gpu("bandred: umc_dev", successGPU)
+          else
+            allocate(umc_debug(l_cols*n_cols))
+            umc_debug(:) = 0.
+            successGPU = gpu_memcpy(umc_dev, int(loc(umc_debug),kind=c_intptr_t), &
+                                    l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
+            check_memcpy_gpu("bandred: umc_debug -> umc_dev", successGPU)
+            deallocate(umc_debug)
+          endif
 
           successGPU = gpu_memcpy(umc_dev+l_cols*n_cols*size_of_datatype, &
                         int(loc(umcGPU(1+l_cols*n_cols)),kind=c_intptr_t), &
@@ -1990,32 +2069,52 @@ max_threads, isSkewsymmetric)
     endif
     if (useGPU .and. .not.(useIntelGPU)) then
 
-      if (associated(umcGPU_2d)) then
-        nullify(umcGPU_2d)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        if (associated(umcGPU_2d)) then
+          nullify(umcGPU_2d)
+        endif
+
+        if (associated(vmrGPU_2d)) then
+          nullify(vmrGPU_2d)
+        endif
+      else
+        deallocate(umcGPU_2d)
+        deallocate(vmrGPU_2d)
       endif
 
-      if (associated(vmrGPU_2d)) then
-        nullify(vmrGPU_2d)
-      endif
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        if (associated(umcGPU)) then
+          nullify(umcGPU)
 
-      if (associated(umcGPU)) then
-        nullify(umcGPU)
+          successGPU = gpu_free_host(umc_host)
+          check_host_dealloc_gpu("bandred: umc_host ", successGPU)
 
-        successGPU = gpu_free_host(umc_host)
-        check_host_dealloc_gpu("bandred: umc_host ", successGPU)
+          successGPU = gpu_free(umc_dev)
+          check_dealloc_gpu("bandred: umc_dev ", successGPU)
+        endif
 
-        successGPU = gpu_free(umc_dev)
-        check_dealloc_gpu("bandred: umc_dev ", successGPU)
-      endif
+        if (associated(vmrGPU)) then
+          nullify(vmrGPU)
 
-      if (associated(vmrGPU)) then
-        nullify(vmrGPU)
+          successGPU = gpu_free_host(vmr_host)
+          check_host_dealloc_gpu("bandred: vmr_host ", successGPU)
 
-        successGPU = gpu_free_host(vmr_host)
-        check_host_dealloc_gpu("bandred: vmr_host ", successGPU)
+          successGPU = gpu_free(vmr_dev)
+          check_dealloc_gpu("bandred: vmr_dev ", successGPU)
+        endif
+      else 
+        if (associated(umcGPU)) then
+          deallocate(umcGPU)
 
-        successGPU = gpu_free(vmr_dev)
-        check_dealloc_gpu("bandred: vmr_dev ", successGPU)
+          successGPU = gpu_free(umc_dev)
+          check_dealloc_gpu("bandred: umc_dev ", successGPU)
+        endif
+        if (associated(vmrGPU)) then
+          deallocate(vmrGPU)
+
+          successGPU = gpu_free(vmr_dev)
+          check_dealloc_gpu("bandred: vmr_dev ", successGPU)
+        endif
       endif
 
     endif
@@ -2035,9 +2134,10 @@ max_threads, isSkewsymmetric)
                   gpuMemcpyDeviceToHost)
     check_memcpy_gpu("bandred: a_dev -> a_mat ", successGPU)
 
-    successGPU = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
-    check_host_unregister_gpu("bandred: a_mat ", successGPU)
-
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      successGPU = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
+      check_host_unregister_gpu("bandred: a_mat ", successGPU)
+    endif
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("bandred: a_dev ", successGPU)
 
@@ -2047,8 +2147,10 @@ max_threads, isSkewsymmetric)
     successGPU = gpu_free(tmat_dev)
     check_dealloc_gpu("bandred: tmat_dev ", successGPU)
 
-    successGPU = gpu_host_unregister(int(loc(vav),kind=c_intptr_t))
-    check_host_unregister_gpu("bandred: vav", successGPU)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      successGPU = gpu_host_unregister(int(loc(vav),kind=c_intptr_t))
+      check_host_unregister_gpu("bandred: vav", successGPU)
+    endif
 
 #ifndef WITH_OPENMP_TRADITIONAL
     if (associated(umcGPU)) then
