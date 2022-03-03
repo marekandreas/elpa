@@ -1510,12 +1510,10 @@ subroutine trans_ev_tridi_to_band_&
       else
         successGPU = gpu_memcpy(bottom_border_recv_buffer_dev, int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridi_to_band: bottom_border_recv_buffer -> bottom_border_recv_buffer_dev", &
-                successGPU)
+        check_memcpy_gpu("tridi_to_band: b_border_recv_buffer -> b_border_recv_buffer_dev", successGPU)
         successGPU = gpu_memcpy(bottom_border_send_buffer_dev, int(loc(bottom_border_send_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridi_to_band: bottom_border_send_buffer -> bottom_border_send_buffer_dev", &
-                successGPU)
+        check_memcpy_gpu("tridi_to_band: b_border_send_buffer -> b_border_send_buffer_dev", successGPU)
       endif
 
       ! associate with c_ptr
