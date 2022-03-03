@@ -473,7 +473,7 @@ max_threads, isSkewsymmetric)
       check_host_alloc_gpu("bandred: vmr_host", successGPU)
       call c_f_pointer(vmr_host, vmrGPU, (/vmr_size/))
     else
-      allocate(vmrGPU(vmr_size)
+      allocate(vmrGPU(vmr_size))
     endif
 
     successGPU = gpu_malloc(vmr_dev, vmr_size*size_of_datatype)
