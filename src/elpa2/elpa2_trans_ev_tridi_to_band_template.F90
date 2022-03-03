@@ -386,11 +386,11 @@ subroutine trans_ev_tridi_to_band_&
       stripe_width = 1024 ! Must be a multiple of 4
       stripe_count = (l_nev - 1) / stripe_width + 1
 
-#ifdef OPENMP_GPU_TRANS_EV_TRIDI
+!#ifdef OPENMP_GPU_TRANS_EV_TRIDI
       stripe_count = (thread_width-1)/stripe_width + 1
       ! Adapt stripe width so that last one doesn't get too small
       stripe_width = (thread_width-1)/stripe_count + 1
-#endif
+!#endif
 
     else ! useGPU
 
