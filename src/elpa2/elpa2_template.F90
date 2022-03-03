@@ -1155,9 +1155,6 @@ print *,"Device pointer + REDIST"
 #endif
 
       ! Reduction full -> band
-      if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
-        do_useGPU_bandred = .false.
-      endif
       call bandred_&
       &MATH_DATATYPE&
       &_&
