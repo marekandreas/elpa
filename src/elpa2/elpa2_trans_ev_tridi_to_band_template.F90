@@ -623,7 +623,7 @@ subroutine trans_ev_tridi_to_band_&
   ! Determine the matrix distribution at the beginning
 
   allocate(limits(0:np_rows), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: limits", istat, errorMessage)
+  check_allocate("tridi_to_band: limits", istat, errorMessage)
   call determine_workload(obj,na, nbw, np_rows, limits)
 
   max_blk_size = maxval(limits(1:np_rows) - limits(0:np_rows-1))
@@ -636,7 +636,7 @@ subroutine trans_ev_tridi_to_band_&
       if (wantDebug) call obj%timer%start("cuda_memcpy")
 
       successGPU = gpu_malloc(q_dev, ldq*matrixCols* size_of_datatype)
-      check_alloc_gpu("trans_ev_tridi_to_band: q_dev", successGPU)
+      check_alloc_gpu("tridi_to_band: q_dev", successGPU)
       successGPU =  gpu_memcpy(q_dev, int(loc(q(1,1)),kind=c_intptr_t),  &
                                ldq*matrixCols * size_of_datatype, &
                                gpuMemcpyHostToDevice)
@@ -650,7 +650,7 @@ subroutine trans_ev_tridi_to_band_&
       if (wantDebug) call obj%timer%stop("cuda_memcpy")
 
       successGPU = gpu_malloc(hh_trans_dev, size(hh_trans,dim=1)*size(hh_trans,dim=2)* size_of_datatype)
-      check_alloc_gpu("trans_ev_tridi_to_band: hh_trans_dev", successGPU)
+      check_alloc_gpu("tridi_to_band: hh_trans_dev", successGPU)
       ! associate with c_ptr
       hh_trans_mpi_dev = transfer(hh_trans_dev, hh_trans_mpi_dev)
       ! and associate a fortran pointer
@@ -660,7 +660,7 @@ subroutine trans_ev_tridi_to_band_&
                                c_loc(hh_trans(1,1)), &
                                size(hh_trans,dim=1)*size(hh_trans,dim=2) * size_of_datatype, &
                                gpuMemcpyHostToDevice)
-      check_memcpy_gpu("trans_ev_tridi_to_band: hh_trans -> hh_trans_dev", successGPU)
+      check_memcpy_gpu("tridi_to_band: hh_trans -> hh_trans_dev", successGPU)
 
     endif ! allComputeOnGPU
 
@@ -670,12 +670,12 @@ subroutine trans_ev_tridi_to_band_&
     num = (stripe_width*a_dim2*stripe_count)* size_of_datatype
 #endif
     successGPU = gpu_malloc(aIntern_dev, num)
-    check_alloc_gpu("trans_ev_tridi_to_band: aIntern_dev", successGPU)
+    check_alloc_gpu("tridi_to_band: aIntern_dev", successGPU)
 
     ! openmp loop here
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_memset(aIntern_dev , 0, num)
-      check_memset_gpu("trans_ev_tridi_to_band: aIntern_dev", successGPU)
+      check_memset_gpu("tridi_to_band: aIntern_dev", successGPU)
     else
 #ifdef WITH_OPENMP_TRADITIONAL
       allocate(aIntern(stripe_width,a_dim2,stripe_count,max_threads))
@@ -686,7 +686,7 @@ subroutine trans_ev_tridi_to_band_&
 #endif
       successGPU = gpu_memcpy(aIntern_dev, int(loc(aIntern),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("trans_ev_tridi_to_band: aIntern -> aInternd_dev", successGPU)
+      check_memcpy_gpu("tridi_to_band: aIntern -> aInternd_dev", successGPU)
       deallocate(aIntern)
     endif
 
@@ -706,7 +706,7 @@ subroutine trans_ev_tridi_to_band_&
     ! "row_group" and "row_group_dev" are needed for GPU optimizations
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_malloc_host(row_group_host,l_nev*nblk*size_of_datatype)
-      check_host_alloc_gpu("trans_ev_tridi_to_band: row_group_host", successGPU)
+      check_host_alloc_gpu("tridi_to_band: row_group_host", successGPU)
       call c_f_pointer(row_group_host, row_group, (/l_nev,nblk/))
     else
       allocate(row_group(l_nev,nblk))
@@ -715,15 +715,15 @@ subroutine trans_ev_tridi_to_band_&
     row_group(:, :) = 0.0_rck
     num =  (l_nev*nblk)* size_of_datatype
     successGPU = gpu_malloc(row_group_dev, num)
-    check_alloc_gpu("trans_ev_tridi_to_band: row_group_dev", successGPU)
+    check_alloc_gpu("tridi_to_band: row_group_dev", successGPU)
 
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_memset(row_group_dev , 0, num)
-      check_memset_gpu("trans_ev_tridi_to_band: row_group_dev", successGPU)
+      check_memset_gpu("tridi_to_band: row_group_dev", successGPU)
     else
       successGPU = gpu_memcpy(row_group_dev, int(loc(row_group),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("trans_ev_tridi_to_band: row_group -> row_group_dev", successGPU)
+      check_memcpy_gpu("tridi_to_band: row_group -> row_group_dev", successGPU)
     endif
     if (allComputeOnGPU) then
       ! associate with c_ptr
@@ -770,21 +770,21 @@ subroutine trans_ev_tridi_to_band_&
   endif !useGPU
 
   allocate(row(l_nev), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: row", istat, errorMessage)
+  check_allocate("tridi_to_band: row", istat, errorMessage)
 
   row(:) = 0.0_rck
 
   if (useGPU .and. allComputeOnGPU) then
     num =  (l_nev)* size_of_datatype
     successGPU = gpu_malloc(row_dev, num)
-    check_alloc_gpu("trans_ev_tridi_to_band: row_dev", successGPU)
+    check_alloc_gpu("tridi_to_band: row_dev", successGPU)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_memset(row_dev , 0, num)
-      check_memset_gpu("trans_ev_tridi_to_band: row_dev", successGPU)
+      check_memset_gpu("tridi_to_band: row_dev", successGPU)
     else
       successGPU = gpu_memcpy(row_dev, int(loc(row),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("trans_ev_tridi_to_band: row -> row_dev", successGPU)
+      check_memcpy_gpu("tridi_to_band: row -> row_dev", successGPU)
     endif
 
     ! associate with c_ptr
@@ -866,13 +866,13 @@ subroutine trans_ev_tridi_to_band_&
                                        c_loc(row_mpi_fortran_ptr(1)),  &
                                        l_nev* size_of_datatype,      &
                                        gpuMemcpyDeviceToDevice)
-              check_memcpy_gpu("trans_ev_tridi_to_band: row_dev -> row_group_dev", successGPU)
+              check_memcpy_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
 
 
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
             else ! allComputeOnGPU
               row_group(1:l_nev, row_group_size) = row(1:l_nev)
@@ -943,13 +943,13 @@ subroutine trans_ev_tridi_to_band_&
                                        c_loc(row_mpi_fortran_ptr(1)),  &
                                        l_nev* size_of_datatype,      &
                                        gpuMemcpyDeviceToDevice)
-              check_memcpy_gpu("trans_ev_tridi_to_band: row_dev -> row_group_dev", successGPU)
+              check_memcpy_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
 
 
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
             else
               row_group(1:l_nev, row_group_size) = row(1:l_nev)
@@ -1021,7 +1021,7 @@ subroutine trans_ev_tridi_to_band_&
                    &MATH_DATATYPE&
                    &_cpu_openmp_&
                    &PRECISION &
-                                 (obj, aIntern, row, i-limits(ip), my_thread, stripe_count, thread_width, stripe_width, l_nev)
+                   (obj, aIntern, row, i-limits(ip), my_thread, stripe_count, thread_width, stripe_width, l_nev)
 
             enddo
             !$omp end parallel do
@@ -1063,7 +1063,7 @@ subroutine trans_ev_tridi_to_band_&
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
 
 #ifdef WITH_MPI
@@ -1113,7 +1113,7 @@ subroutine trans_ev_tridi_to_band_&
             ! is there a way to avoid this device_synchronize ?
             if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
             successGPU = gpu_devicesynchronize()
-            check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+            check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
             if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
 
 #ifdef WITH_MPI
@@ -1173,7 +1173,7 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
             if (wantDebug) call obj%timer%start("host_mpi_communication")
             call MPI_Recv(row_group(:, row_group_size), int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                             int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+                          int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
             if (wantDebug) call obj%timer%stop("host_mpi_communication")
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
 #else /* WITH_MPI */
@@ -1183,14 +1183,14 @@ subroutine trans_ev_tridi_to_band_&
                                        c_loc(row_mpi_fortran_ptr(1)),  &
                                        l_nev* size_of_datatype,      &
                                        gpuMemcpyDeviceToDevice)
-              check_memcpy_gpu("trans_ev_tridi_to_band: row_dev -> row_group_dev", successGPU)
+              check_memcpy_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
 
 
 
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
             else ! allComputeOnGPU
               row_group(1:l_nev,row_group_size) = row(1:l_nev)
@@ -1260,7 +1260,7 @@ subroutine trans_ev_tridi_to_band_&
                                        c_loc(row_mpi_fortran_ptr(1)),  &
                                        l_nev* size_of_datatype,      &
                                        gpuMemcpyDeviceToDevice)
-              check_memcpy_gpu("trans_ev_tridi_to_band: row_dev -> row_group_dev", successGPU)
+              check_memcpy_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
 
 
 
@@ -1268,7 +1268,7 @@ subroutine trans_ev_tridi_to_band_&
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
             else
               row_group(1:l_nev,row_group_size) = row(1:l_nev)
@@ -1279,7 +1279,7 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef WITH_MPI
             if (wantDebug) call obj%timer%start("mpi_communication")
             call MPI_Recv(row, int(l_nev,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                             int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+                         int(src,kind=MPI_KIND), 0_MPI_KIND, int(mpi_comm_rows,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
             if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
 !           row(1:l_nev) = row(1:l_nev)
@@ -1323,19 +1323,19 @@ subroutine trans_ev_tridi_to_band_&
 
   num_result_buffers = 4*nfact
   allocate(result_buffer(l_nev,nblk,num_result_buffers), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: result_buffer", istat, errorMessage)
+  check_allocate("tridi_to_band: result_buffer", istat, errorMessage)
 
   allocate(result_send_request(num_result_buffers), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: result_send_request", istat, errorMessage)
+  check_allocate("tridi_to_band: result_send_request", istat, errorMessage)
 
   allocate(result_recv_request(num_result_buffers), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: result_recv_request", istat, errorMessage)
+  check_allocate("tridi_to_band: result_recv_request", istat, errorMessage)
 
   if (useGPU .and. allComputeOnGPU) then
     num_result_buffers = 4*nfact
     num =  (l_nev*nblk*num_result_buffers)* size_of_datatype
     successGPU = gpu_malloc(result_buffer_dev, num* size_of_datatype)
-    check_alloc_gpu("trans_ev_tridi_to_band: result_buffer_dev", successGPU)
+    check_alloc_gpu("tridi_to_band: result_buffer_dev", successGPU)
 
     ! associate with c_ptr
     result_buffer_mpi_dev = transfer(result_buffer_dev, result_buffer_mpi_dev)
@@ -1392,16 +1392,16 @@ subroutine trans_ev_tridi_to_band_&
   ! Initialize top/bottom requests
 
   allocate(top_send_request(stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: top_send_request", istat, errorMessage)
+  check_allocate("tridi_to_band: top_send_request", istat, errorMessage)
 
   allocate(top_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: top_recv_request", istat, errorMessage)
+  check_allocate("tridi_to_band: top_recv_request", istat, errorMessage)
 
   allocate(bottom_send_request(stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: bottom_send_request", istat, errorMessage)
+  check_allocate("tridi_to_band: bottom_send_request", istat, errorMessage)
 
   allocate(bottom_recv_request(stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: bottom_recv_request", istat, errorMessage)
+  check_allocate("tridi_to_band: bottom_recv_request", istat, errorMessage)
 
 #ifdef WITH_MPI
   top_send_request(:) = MPI_REQUEST_NULL
@@ -1412,16 +1412,16 @@ subroutine trans_ev_tridi_to_band_&
 
 #ifdef WITH_OPENMP_TRADITIONAL
   allocate(top_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
+  check_allocate("tridi_to_band: top_border_send_buffer", istat, errorMessage)
 
   allocate(top_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: top_border_recv_buffer", istat, errorMessage)
+  check_allocate("tridi_to_band: top_border_recv_buffer", istat, errorMessage)
 
   allocate(bottom_border_send_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
+  check_allocate("tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
 
   allocate(bottom_border_recv_buffer(stripe_width*nbw*max_threads, stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
+  check_allocate("tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
 
   top_border_send_buffer(:,:) = 0.0_rck
   top_border_recv_buffer(:,:) = 0.0_rck
@@ -1431,16 +1431,16 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_OPENMP_TRADITIONAL */
 
   allocate(top_border_send_buffer(stripe_width*nbw, stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
+  check_allocate("tridi_to_band: top_border_send_buffer", istat, errorMessage)
 
   allocate(top_border_recv_buffer(stripe_width*nbw, stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: top_border_recv_buffer", istat, errorMessage)
+  check_allocate("tridi_to_band: top_border_recv_buffer", istat, errorMessage)
 
   allocate(bottom_border_send_buffer(stripe_width*nbw, stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
+  check_allocate("tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
 
   allocate(bottom_border_recv_buffer(stripe_width*nbw, stripe_count), stat=istat, errmsg=errorMessage)
-  check_allocate("trans_ev_tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
+  check_allocate("tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
 
   top_border_send_buffer(:,:) = 0.0_rck
   top_border_recv_buffer(:,:) = 0.0_rck
@@ -1458,23 +1458,23 @@ subroutine trans_ev_tridi_to_band_&
       num =  ( stripe_width*nbw*stripe_count) * size_of_datatype
 #endif /* WITH_OPENMP_TRADITIONAL */
       successGPU = gpu_malloc(top_border_recv_buffer_dev, num)
-      check_alloc_gpu("trans_ev_tridi_to_band: top_border_recv_buffer_dev", successGPU)
+      check_alloc_gpu("tridi_to_band: top_border_recv_buffer_dev", successGPU)
 
       successGPU = gpu_malloc(top_border_send_buffer_dev, num)
-      check_alloc_gpu("trans_ev_tridi_to_band: top_border_send_buffer_dev", successGPU)
+      check_alloc_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
         successGPU = gpu_memset(top_border_recv_buffer_dev, 0, num)
-        check_memset_gpu("trans_ev_tridi_to_band: top_border_recv_buffer_dev", successGPU)
+        check_memset_gpu("tridi_to_band: top_border_recv_buffer_dev", successGPU)
         successGPU = gpu_memset(top_border_send_buffer_dev, 0, num)
-        check_memset_gpu("trans_ev_tridi_to_band: top_border_send_buffer_dev", successGPU)
+        check_memset_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
 
       else
         successGPU = gpu_memcpy(top_border_recv_buffer_dev, int(loc(top_border_recv_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> top_border_recv_buffer_dev", successGPU)
+        check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> top_border_recv_buffer_dev", successGPU)
         successGPU = gpu_memcpy(top_border_send_buffer_dev, int(loc(top_border_send_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev_tridi_to_band: top_border_send_buffer -> top_border_send_buffer_dev", successGPU)
+        check_memcpy_gpu("tridi_to_band: top_border_send_buffer -> top_border_send_buffer_dev", successGPU)
       endif
 
       ! associate with c_ptr
@@ -1498,22 +1498,24 @@ subroutine trans_ev_tridi_to_band_&
       num =  ( stripe_width*nbw*stripe_count) * size_of_datatype
 #endif /* WITH_OPENMP_TRADITIONAL */
       successGPU = gpu_malloc(bottom_border_send_buffer_dev, num)
-      check_alloc_gpu("trans_ev_tridi_to_band: bottom_border_send_buffer_dev", successGPU)
+      check_alloc_gpu("tridi_to_band: bottom_border_send_buffer_dev", successGPU)
       successGPU = gpu_malloc(bottom_border_recv_buffer_dev, num)
-      check_alloc_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
+      check_alloc_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
 
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
         successGPU = gpu_memset(bottom_border_send_buffer_dev, 0, num)
-        check_memset_gpu("trans_ev_tridi_to_band: bottom_border_send_buffer_dev", successGPU)
+        check_memset_gpu("tridi_to_band: bottom_border_send_buffer_dev", successGPU)
         successGPU = gpu_memset(bottom_border_recv_buffer_dev, 0, num)
-        check_memset_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
+        check_memset_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
       else
         successGPU = gpu_memcpy(bottom_border_recv_buffer_dev, int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer -> bottom_border_recv_buffer_dev", successGPU)
+        check_memcpy_gpu("tridi_to_band: bottom_border_recv_buffer -> bottom_border_recv_buffer_dev", &
+                successGPU)
         successGPU = gpu_memcpy(bottom_border_send_buffer_dev, int(loc(bottom_border_send_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev_tridi_to_band: bottom_border_send_buffer -> bottom_border_send_buffer_dev", successGPU)
+        check_memcpy_gpu("tridi_to_band: bottom_border_send_buffer -> bottom_border_send_buffer_dev", &
+                successGPU)
       endif
 
       ! associate with c_ptr
@@ -1537,22 +1539,22 @@ subroutine trans_ev_tridi_to_band_&
       successGPU = gpu_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
                     stripe_width*nbw* stripe_count * size_of_datatype,&
                     gpuHostRegisterDefault)
-      check_host_register_gpu("trans_ev_tridi_to_band: top_border_send_buffer", successGPU)
+      check_host_register_gpu("tridi_to_band: top_border_send_buffer", successGPU)
 
       successGPU = gpu_host_register(int(loc(top_border_recv_buffer),kind=c_intptr_t), &
                     stripe_width*nbw* stripe_count * size_of_datatype,&
                     gpuHostRegisterDefault)
-      check_host_register_gpu("trans_ev_tridi_to_band: top_border_recv_buffer", successGPU)
+      check_host_register_gpu("tridi_to_band: top_border_recv_buffer", successGPU)
 
       successGPU = gpu_host_register(int(loc(bottom_border_send_buffer),kind=c_intptr_t), &
                     stripe_width*nbw* stripe_count * size_of_datatype,&
                     gpuHostRegisterDefault)
-      check_host_register_gpu("trans_ev_tridi_to_band: bottom_border_send_buffer", successGPU)
+      check_host_register_gpu("tridi_to_band: bottom_border_send_buffer", successGPU)
 
       successGPU = gpu_host_register(int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
                     stripe_width*nbw* stripe_count * size_of_datatype,&
                     gpuHostRegisterDefault)
-      check_host_register_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer", successGPU)
+      check_host_register_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
     endif
   endif ! useGPU
 
@@ -1562,14 +1564,14 @@ subroutine trans_ev_tridi_to_band_&
   if (useGPU) then
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_malloc_host(bcast_buffer_host,nbw*max_blk_size*size_of_datatype)
-      check_host_alloc_gpu("trans_ev_tridi_to_band: bcast_buffer_host", successGPU)
+      check_host_alloc_gpu("tridi_to_band: bcast_buffer_host", successGPU)
       call c_f_pointer(bcast_buffer_host, bcast_buffer, (/nbw,max_blk_size/))
     else
       allocate(bcast_buffer(nbw,max_blk_size))
     endif
   else
     allocate(bcast_buffer(nbw, max_blk_size), stat=istat, errmsg=errorMessage)
-    check_allocate("trans_ev_tridi_to_band: bcast_buffer", istat, errorMessage)
+    check_allocate("tridi_to_band: bcast_buffer", istat, errorMessage)
   endif
 
   bcast_buffer = 0.0_rck
@@ -1577,7 +1579,7 @@ subroutine trans_ev_tridi_to_band_&
   if (useGPU) then
     num =  ( nbw * max_blk_size) * size_of_datatype
     successGPU = gpu_malloc(bcast_buffer_dev, num)
-    check_alloc_gpu("trans_ev_tridi_to_band: bcast_buffer_dev", successGPU)
+    check_alloc_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
 
     if (allComputeOnGPU) then
       ! associate with c_ptr
@@ -1588,26 +1590,26 @@ subroutine trans_ev_tridi_to_band_&
 
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_memset( bcast_buffer_dev, 0, num)
-      check_memset_gpu("trans_ev_tridi_to_band: bcast_buffer_dev", successGPU)
+      check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
     else
       successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer_dev),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("trans_ev_tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
+      check_memcpy_gpu("tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
     endif
 
     num =  (max_blk_size)* size_of_datatype
     successGPU = gpu_malloc( hh_tau_dev, num)
-    check_alloc_gpu("trans_ev_tridi_to_band: hh_tau_dev", successGPU)
+    check_alloc_gpu("tridi_to_band: hh_tau_dev", successGPU)
 
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_memset( hh_tau_dev, 0, num)
-      check_memset_gpu("trans_ev_tridi_to_band: hh_tau_dev", successGPU)
+      check_memset_gpu("tridi_to_band: hh_tau_dev", successGPU)
     else
       allocate(hh_tau_debug(max_blk_size))
       hh_tau_debug(:) = 0.
       successGPU = gpu_memcpy(hh_tau_dev, int(loc(hh_tau_debug),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("trans_ev_tridi_to_band: hh_tau_debug -> hh_tau_dev", successGPU)
+      check_memcpy_gpu("tridi_to_band: hh_tau_debug -> hh_tau_dev", successGPU)
       deallocate(hh_tau_debug)
     endif
   endif ! useGPU
@@ -1743,7 +1745,7 @@ subroutine trans_ev_tridi_to_band_&
                                      size(hh_trans,dim=1) * (current_tv_off+current_local_n-(current_tv_off+1)+1) * &   
                                      size_of_datatype, &
                                      gpuMemcpyDeviceToDevice)
-          check_memcpy_gpu("trans_ev_tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
+          check_memcpy_gpu("tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
           if (wantDebug) call obj%timer%stop("cuda_memcpy")
           current_tv_off = current_tv_off + current_local_n
         endif
@@ -1763,7 +1765,7 @@ subroutine trans_ev_tridi_to_band_&
                                    nbw * current_local_n *    &
                                    size_of_datatype, &
                                    gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev_tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
+        check_memcpy_gpu("tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
         if (wantDebug) call obj%timer%stop("cuda_memcpy")
       endif
 
@@ -1799,7 +1801,7 @@ subroutine trans_ev_tridi_to_band_&
                                  nbw * current_local_n *    &
                                  size_of_datatype, &
                                  gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev_tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
+        check_memcpy_gpu("tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
         if (wantDebug) call obj%timer%stop("memcpy")
       endif ! useGPU
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
@@ -1810,7 +1812,7 @@ subroutine trans_ev_tridi_to_band_&
                                  nbw * current_local_n *    &
                                  size_of_datatype, &
                                  gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev_tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
+        check_memcpy_gpu("tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
         if (wantDebug) call obj%timer%stop("memcpy")
       endif ! useGPU
 #endif /* WITH_MPI */
@@ -1833,11 +1835,11 @@ subroutine trans_ev_tridi_to_band_&
       if (useGPU) then
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
           successGPU = gpu_memset(bcast_buffer_dev, 0, nbw * size_of_datatype)
-          check_memset_gpu("trans_ev_tridi_to_band: bcast_buffer_dev", successGPU)
+          check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
         else
           successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer(1,1)),kind=c_intptr_t), &
                               nbw*size_of_datatype, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("trans_ev_tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
+          check_memcpy_gpu("tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
         endif
 
         if (wantDebug) call obj%timer%start("extract_hh")
@@ -1909,7 +1911,7 @@ subroutine trans_ev_tridi_to_band_&
                                        c_loc(bottom_border_recv_buffer_mpi_fortran_ptr(b_off+1,i)),  &
                                        csw*nbw* size_of_datatype,      &
                                        gpuMemcpyDeviceToDevice)
-                check_memcpy_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successGPU)
+                check_memcpy_gpu("tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successGPU)
               enddo
               !$omp end parallel do
               if (wantDebug) call obj%timer%stop("cuda_memcpy")
@@ -1933,7 +1935,7 @@ subroutine trans_ev_tridi_to_band_&
                                        int(loc(bottom_border_recv_buffer(b_off+1,i)),kind=c_intptr_t), &
                                        csw*nbw*  size_of_datatype,    &
                                        gpuMemcpyHostToDevice)
-                check_memcpy_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successGPU)
+                check_memcpy_gpu("tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successGPU)
               enddo
               !$omp end parallel do
               if (wantDebug) call obj%timer%stop("memcpy")
@@ -1981,7 +1983,7 @@ subroutine trans_ev_tridi_to_band_&
                                        c_loc(bottom_border_recv_buffer_mpi_fortran_ptr(1,i)),  &
                                        stripe_width*nbw* size_of_datatype,      &
                                        gpuMemcpyDeviceToDevice)
-              check_memcpy_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successGPU)
+              check_memcpy_gpu("tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_memcpy")
             else ! allComputeOnGPU
               if (wantDebug) call obj%timer%start("memcpy")
@@ -1990,7 +1992,7 @@ subroutine trans_ev_tridi_to_band_&
                                       int(loc(bottom_border_recv_buffer(1,i)),kind=c_intptr_t), &
                                        stripe_width*nbw*  size_of_datatype,    &
                                        gpuMemcpyHostToDevice)
-              check_memcpy_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successGPU)
+              check_memcpy_gpu("tridi_to_band: bottom_border_recv_buffer -> aIntern_dev", successGPU)
               if (wantDebug) call obj%timer%stop("memcpy")
             endif ! allComputeOnGPU
           else ! useGPU
@@ -2116,7 +2118,7 @@ subroutine trans_ev_tridi_to_band_&
                                            c_loc(top_border_recv_buffer_mpi_fortran_ptr(b_off+1,i)),  &
                                            csw*top_msg_length* size_of_datatype,      &
                                            gpuMemcpyDeviceToDevice)
-                    check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+                    check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                   enddo
                   !$omp end parallel do
                   if (wantDebug) call obj%timer%stop("cuda_memcpy")
@@ -2140,7 +2142,7 @@ subroutine trans_ev_tridi_to_band_&
                                   kind=c_intptr_t),  &
                                                csw*top_msg_length* size_of_datatype,      &
                                                gpuMemcpyHostToDevice)
-                    check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+                    check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                   enddo
                   !$omp end parallel do
                   if (wantDebug) call obj%timer%stop("memcpy")
@@ -2192,7 +2194,7 @@ subroutine trans_ev_tridi_to_band_&
                                           c_loc(top_border_recv_buffer_mpi_fortran_ptr(1,i)),  &
                                           stripe_width*top_msg_length* size_of_datatype,      &
                                           gpuMemcpyDeviceToDevice)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+                  check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                   if (wantDebug) call obj%timer%stop("cuda_memcpy")
                 else ! allComputeOnGPU
                   if (wantDebug) call obj%timer%start("memcpy")
@@ -2201,7 +2203,7 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU =  gpu_memcpy( aIntern_dev+dev_offset , int(loc(top_border_recv_buffer(1,i)),kind=c_intptr_t),  &
                                              stripe_width*top_msg_length* size_of_datatype,      &
                                              gpuMemcpyHostToDevice)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+                  check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                   if (wantDebug) call obj%timer%stop("memcpy")
                 endif ! allComputeOnGPU
               else ! useGPU
@@ -2298,7 +2300,7 @@ subroutine trans_ev_tridi_to_band_&
                                            c_loc(aIntern_mpi_fortran_ptr(1,n_off+1,i,1)), &
                                             stripe_width * bottom_msg_length * size_of_datatype,      &
                                             gpuMemcpyDeviceToDevice)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer_dev", successGPU)
+                  check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer_dev", successGPU)
                   if (wantDebug) call obj%timer%stop("cuda_memcpy")
                 else ! allComputeOnGPU
                   if (wantDebug) call obj%timer%start("memcpy")
@@ -2306,7 +2308,7 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU =  gpu_memcpy( int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                             stripe_width * bottom_msg_length * size_of_datatype,      &
                                             gpuMemcpyDeviceToHost)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
+                  check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
                   if (wantDebug) call obj%timer%stop("memcpy")
                 endif ! allComputeOnGPU
 
@@ -2354,7 +2356,7 @@ subroutine trans_ev_tridi_to_band_&
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
                   endif
                 else ! allComputeOnGPU
@@ -2384,14 +2386,14 @@ subroutine trans_ev_tridi_to_band_&
                                            c_loc(aIntern_mpi_fortran_ptr(1,n_off+1,i)), &
                                             stripe_width * bottom_msg_length * size_of_datatype,      &
                                             gpuMemcpyDeviceToDevice)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer_dev", successGPU)
+                  check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer_dev", successGPU)
                   if (wantDebug) call obj%timer%stop("cuda_memcpy")
 
 
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
                 else ! allComputeOnGPU
                   if (wantDebug) call obj%timer%start("memcpy")
@@ -2399,7 +2401,7 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU =  gpu_memcpy( int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                             stripe_width * bottom_msg_length * size_of_datatype,      &
                                             gpuMemcpyDeviceToHost)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
+                  check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
                   if (wantDebug) call obj%timer%stop("memcpy")
                 endif ! allComputeOnGPU
 
@@ -2444,7 +2446,7 @@ subroutine trans_ev_tridi_to_band_&
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
                 else ! allComputeOnGPU
                   if (next_top_msg_length > 0) then
@@ -2537,7 +2539,7 @@ subroutine trans_ev_tridi_to_band_&
                                             c_loc(aIntern_mpi_fortran_ptr(1,n_off+1,i,1)), &
                                              stripe_width * bottom_msg_length * size_of_datatype,      &
                                              gpuMemcpyDeviceToDevice)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer_dev", successGPU)
+                  check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer_dev", successGPU)
                   if (wantDebug) call obj%timer%stop("cuda_memcpy")
                 else ! allComputeOnGPU
                   if (wantDebug) call obj%timer%start("memcpy")
@@ -2545,7 +2547,7 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU =  gpu_memcpy(int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
                                                stripe_width*bottom_msg_length* size_of_datatype,  &
                                                gpuMemcpyDeviceToHost)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
+                  check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
                   if (wantDebug) call obj%timer%stop("memcpy")
                 endif ! allComputeOnGPU
 
@@ -2593,7 +2595,7 @@ subroutine trans_ev_tridi_to_band_&
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
                 else ! allComputeOnGPU
                   if (next_top_msg_length > 0) then
@@ -2653,7 +2655,7 @@ subroutine trans_ev_tridi_to_band_&
                                             c_loc(aIntern_mpi_fortran_ptr(1,n_off+1,i)), &
                                              stripe_width * bottom_msg_length * size_of_datatype,      &
                                              gpuMemcpyDeviceToDevice)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer_dev", successGPU)
+                  check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer_dev", successGPU)
                   if (wantDebug) call obj%timer%stop("cuda_memcpy")
                 else ! allComputeOnGPU
                   if (wantDebug) call obj%timer%start("memcpy")
@@ -2661,7 +2663,7 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU =  gpu_memcpy(int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
                                            stripe_width*bottom_msg_length* size_of_datatype,  &
                                            gpuMemcpyDeviceToHost)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
+                  check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
                   if (wantDebug) call obj%timer%stop("memcpy")
                 endif ! allComputeOnGPU
 
@@ -2708,7 +2710,7 @@ subroutine trans_ev_tridi_to_band_&
 
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
                 else ! allComputeOnGPU
                   if (next_top_msg_length > 0) then
@@ -2825,7 +2827,7 @@ subroutine trans_ev_tridi_to_band_&
                                            gpuMemcpyDeviceToDevice)
                   enddo
                   !$omp end parallel do
-                  check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+                  check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                   if (wantDebug) call obj%timer%stop("cuda_memcpy")
                 else ! allComputeOnGPU
                   if (wantDebug) call obj%timer%start("memcpy")
@@ -2846,7 +2848,7 @@ subroutine trans_ev_tridi_to_band_&
                                   kind=c_intptr_t),  &
                                           csw * top_msg_length * size_of_datatype,   &
                                           gpuMemcpyHostToDevice)
-                    check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+                    check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                   enddo
                   !$omp end parallel do
                   if (wantDebug) call obj%timer%stop("memcpy")
@@ -2896,7 +2898,7 @@ subroutine trans_ev_tridi_to_band_&
                                            c_loc(top_border_recv_buffer_mpi_fortran_ptr(1,i)),  &
                                            stripe_width* top_msg_length* size_of_datatype,      &
                                            gpuMemcpyDeviceToDevice)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+                  check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                   if (wantDebug) call obj%timer%stop("cuda_memcpy")
                 else ! allComputeOnGPU
                   if (wantDebug) call obj%timer%start("memcpy")
@@ -2905,7 +2907,7 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU =  gpu_memcpy(aIntern_dev + dev_offset ,int(loc( top_border_recv_buffer(:,i)),kind=c_intptr_t),  &
                                         stripe_width * top_msg_length * size_of_datatype,   &
                                         gpuMemcpyHostToDevice)
-                  check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+                  check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                   if (wantDebug) call obj%timer%stop("memcpy")
                 endif ! allComputeOnGPU
               else ! useGPU
@@ -3070,7 +3072,7 @@ subroutine trans_ev_tridi_to_band_&
                                         c_loc(aIntern_mpi_fortran_ptr(1,a_off+1,i,my_thread)), &
                                         stripe_width* nbw* size_of_datatype,      &
                                         gpuMemcpyDeviceToDevice)
-               check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+               check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                if (wantDebug) call obj%timer%stop("cuda_memcpy")
              else ! allComputeOnGPU
                if (wantDebug) call obj%timer%start("memcpy")
@@ -3078,7 +3080,7 @@ subroutine trans_ev_tridi_to_band_&
                successGPU =  gpu_memcpy(int(loc(top_border_send_buffer(:,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                       stripe_width*nbw * size_of_datatype, &
                                       gpuMemcpyDeviceToHost)
-               check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> top_border_send_buffer", successGPU)
+               check_memcpy_gpu("tridi_to_band: aIntern_dev -> top_border_send_buffer", successGPU)
                if (wantDebug) call obj%timer%stop("memcpy")
              endif ! allComputeOnGPU
            else ! useGPU
@@ -3124,22 +3126,22 @@ subroutine trans_ev_tridi_to_band_&
                                           c_loc(top_border_send_buffer_mpi_fortran_ptr(1,i)),  &
                                           nbw*stripe_width* size_of_datatype,      &
                                            gpuMemcpyDeviceToDevice)
-                 check_memcpy_gpu("trans_ev_tridi_to_band: top_border_send_dev -> bottom_border_recv_dev", successGPU)
+                 check_memcpy_gpu("tridi_to_band: top_border_send_dev -> bottom_border_recv_dev", successGPU)
                endif
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
                if (next_n_end < next_n) then
                  successGPU =  gpu_memcpy(c_loc(bottom_border_recv_buffer_mpi_fortran_ptr(1,i)), &
                                           c_loc(top_border_send_buffer_mpi_fortran_ptr(1,i)),  &
                                           nbw*stripe_width* size_of_datatype,      &
                                            gpuMemcpyDeviceToDevice)
-                 check_memcpy_gpu("trans_ev_tridi_to_band: top_border_send_dev -> bottom_border_recv_dev", successGPU)
+                 check_memcpy_gpu("tridi_to_band: top_border_send_dev -> bottom_border_recv_dev", successGPU)
                endif
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
              else ! allComputeOnGPU
                if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
@@ -3184,7 +3186,7 @@ subroutine trans_ev_tridi_to_band_&
                                         c_loc(aIntern_mpi_fortran_ptr(1,a_off+1,i)), &
                                         stripe_width* nbw* size_of_datatype,      &
                                         gpuMemcpyDeviceToDevice)
-               check_memcpy_gpu("trans_ev_tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+               check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
                if (wantDebug) call obj%timer%stop("cuda_memcpy")
              else ! allComputeOnGPU
                if (wantDebug) call obj%timer%start("memcpy")
@@ -3192,7 +3194,7 @@ subroutine trans_ev_tridi_to_band_&
                successGPU =  gpu_memcpy(int(loc(top_border_send_buffer(:,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                          stripe_width*nbw * size_of_datatype, &
                                          gpuMemcpyDeviceToHost)
-               check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> top_border_send_buffer", successGPU)
+               check_memcpy_gpu("tridi_to_band: aIntern_dev -> top_border_send_buffer", successGPU)
                if (wantDebug) call obj%timer%stop("memcpy")
              endif ! allComputeOnGPU
            else ! useGPU
@@ -3229,22 +3231,22 @@ subroutine trans_ev_tridi_to_band_&
                                           c_loc(top_border_send_buffer_mpi_fortran_ptr(1,i)),  &
                                           nbw*stripe_width* size_of_datatype,      &
                                            gpuMemcpyDeviceToDevice)
-                 check_memcpy_gpu("trans_ev_tridi_to_band: top_border_send_dev -> bottom_border_recv_dev", successGPU)
+                 check_memcpy_gpu("tridi_to_band: top_border_send_dev -> bottom_border_recv_dev", successGPU)
                endif
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
                if (next_n_end < next_n) then
                  successGPU =  gpu_memcpy(c_loc(bottom_border_recv_buffer_mpi_fortran_ptr(1,i)), &
                                           c_loc(top_border_send_buffer_mpi_fortran_ptr(1,i)),  &
                                           nbw*stripe_width* size_of_datatype,      &
                                            gpuMemcpyDeviceToDevice)
-                 check_memcpy_gpu("trans_ev_tridi_to_band: top_border_send_dev -> bottom_border_recv_dev", successGPU)
+                 check_memcpy_gpu("tridi_to_band: top_border_send_dev -> bottom_border_recv_dev", successGPU)
                endif
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
-              check_memcpy_gpu("trans_ev_tridi_to_band: device_synchronize", successGPU)
+              check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
               if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
              else ! allComputeOnGPU
                if (sweep==0 .and. current_n_end < current_n .and. l_nev > 0) then
@@ -3637,7 +3639,7 @@ subroutine trans_ev_tridi_to_band_&
                               (my_thread-1)*stripe_width*a_dim2*stripe_count)*size_of_datatype
               num = stripe_width*this_chunk*size_of_datatype
               successGPU = gpu_memcpy(aIntern_dev+dev_offset, aIntern_dev+dev_offset_1, num, gpuMemcpyDeviceToDevice)
-              check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> aIntern_dev", successGPU)
+              check_memcpy_gpu("tridi_to_band: aIntern_dev -> aIntern_dev", successGPU)
             enddo
           enddo
           !$omp end parallel do
@@ -3676,7 +3678,7 @@ subroutine trans_ev_tridi_to_band_&
             num = stripe_width*this_chunk*size_of_datatype
             successGPU = gpu_memcpy(aIntern_dev+dev_offset, aIntern_dev+dev_offset_1, num, gpuMemcpyDeviceToDevice)
 
-            check_memcpy_gpu("trans_ev_tridi_to_band: aIntern_dev -> aIntern_dev", successGPU)
+            check_memcpy_gpu("tridi_to_band: aIntern_dev -> aIntern_dev", successGPU)
           end do
           if (wantDebug) call obj%timer%stop("normal_memcpy")
         else ! not useGPU
@@ -3798,24 +3800,24 @@ subroutine trans_ev_tridi_to_band_&
   endif
 
   deallocate(row, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: row", istat, errorMessage)
+  check_deallocate("tridi_to_band: row", istat, errorMessage)
 
   deallocate(limits, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: limits", istat, errorMessage)
+  check_deallocate("tridi_to_band: limits", istat, errorMessage)
 
   deallocate(result_send_request, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: result_send_request", istat, errorMessage)
+  check_deallocate("tridi_to_band: result_send_request", istat, errorMessage)
 
   deallocate(result_recv_request, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: result_recv_request", istat, errorMessage)
+  check_deallocate("tridi_to_band: result_recv_request", istat, errorMessage)
 
   deallocate(result_buffer, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: result_buffer", istat, errorMessage)
+  check_deallocate("tridi_to_band: result_buffer", istat, errorMessage)
 
   if (useGPU) then
     if (allComputeOnGPU) then
       successGPU = gpu_free(result_buffer_dev)
-      check_dealloc_gpu("trans_ev_tridi_to_band: result_buffer_dev", successGPU)
+      check_dealloc_gpu("tridi_to_band: result_buffer_dev", successGPU)
       nullify(result_buffer_mpi_fortran_ptr)
     endif
 
@@ -3823,73 +3825,73 @@ subroutine trans_ev_tridi_to_band_&
       nullify(bcast_buffer)
     
       successGPU = gpu_free_host(bcast_buffer_host)
-      check_host_dealloc_gpu("trans_ev_tridi_to_band: bcast_buffer_host", successGPU)
+      check_host_dealloc_gpu("tridi_to_band: bcast_buffer_host", successGPU)
     else
       deallocate(bcast_buffer)
     endif
   else
     deallocate(bcast_buffer, stat=istat, errmsg=errorMessage)
-    check_deallocate("trans_ev_tridi_to_band: bcast_buffer", istat, errorMessage)
+    check_deallocate("tridi_to_band: bcast_buffer", istat, errorMessage)
   endif
 
 
   if (useGPU) then
     successGPU = gpu_free(aIntern_dev)
-    check_dealloc_gpu("trans_ev_tridi_to_band: aIntern_dev", successGPU)
+    check_dealloc_gpu("tridi_to_band: aIntern_dev", successGPU)
 
     if (allComputeOnGPU) then
       successGPU = gpu_free(q_dev)
-      check_dealloc_gpu("trans_ev_tridi_to_band: q_dev", successGPU)
+      check_dealloc_gpu("tridi_to_band: q_dev", successGPU)
       nullify(q_mpi_fortran_ptr)
 
       successGPU = gpu_free(hh_trans_dev)
-      check_dealloc_gpu("trans_ev_tridi_to_band: hh_trans_dev", successGPU)
+      check_dealloc_gpu("tridi_to_band: hh_trans_dev", successGPU)
       nullify(hh_trans_mpi_fortran_ptr)
 
       successGPU = gpu_free(top_border_recv_buffer_dev)
-      check_dealloc_gpu("trans_ev_tridi_to_band: top_border_recv_buffer_dev", successGPU)
+      check_dealloc_gpu("tridi_to_band: top_border_recv_buffer_dev", successGPU)
       nullify(top_border_recv_buffer_mpi_fortran_ptr)
 
       successGPU = gpu_free(top_border_send_buffer_dev)
-      check_dealloc_gpu("trans_ev_tridi_to_band: top_border_send_buffer_dev", successGPU)
+      check_dealloc_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
       nullify(top_border_send_buffer_mpi_fortran_ptr)
 
       successGPU = gpu_free(bottom_border_send_buffer_dev)
-      check_dealloc_gpu("trans_ev_tridi_to_band: bottom_border_send_buffer_dev", successGPU)
+      check_dealloc_gpu("tridi_to_band: bottom_border_send_buffer_dev", successGPU)
       nullify(bottom_border_send_buffer_mpi_fortran_ptr)
 
       successGPU = gpu_free(bottom_border_recv_buffer_dev)
-      check_dealloc_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
+      check_dealloc_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
       nullify(bottom_border_recv_buffer_mpi_fortran_ptr)
 
       nullify(aIntern_mpi_fortran_ptr)
     endif ! allComputeOnGPU
 
     successGPU = gpu_free(hh_tau_dev)
-    check_dealloc_gpu("trans_ev_tridi_to_band: hh_tau_dev", successGPU)
+    check_dealloc_gpu("tridi_to_band: hh_tau_dev", successGPU)
 
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       nullify(row_group)
 
       successGPU = gpu_free_host(row_group_host)
-      check_host_dealloc_gpu("trans_ev_tridi_to_band: row_group_host", successGPU)
+      check_host_dealloc_gpu("tridi_to_band: row_group_host", successGPU)
     else
       deallocate(row_group)
     endif
 
     successGPU = gpu_free(row_group_dev)
-    check_dealloc_gpu("trans_ev_tridi_to_band: row_group_dev", successGPU)
+    check_dealloc_gpu("tridi_to_band: row_group_dev", successGPU)
 
     if (allComputeOnGPU) then
       nullify(row_group_mpi_fortran_ptr)
 
       successGPU = gpu_free(row_dev)
-      check_dealloc_gpu("trans_ev_tridi_to_band: row_dev", successGPU)
+      check_dealloc_gpu("tridi_to_band: row_dev", successGPU)
       nullify(row_mpi_fortran_ptr)
     endif ! allComputeOnGPU
 
     successGPU =  gpu_free(bcast_buffer_dev)
-    check_dealloc_gpu("trans_ev_tridi_to_band: bcast_buffer_dev", successGPU)
+    check_dealloc_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
 
     if (allComputeOnGPU) then
       nullify(bcast_buffer_mpi_fortran_ptr)
@@ -3897,42 +3899,42 @@ subroutine trans_ev_tridi_to_band_&
 
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_host_unregister(int(loc(top_border_send_buffer),kind=c_intptr_t))
-      check_host_unregister_gpu("trans_ev_tridi_to_band: top_border_send_buffer", successGPU)
+      check_host_unregister_gpu("tridi_to_band: top_border_send_buffer", successGPU)
 
       successGPU = gpu_host_unregister(int(loc(top_border_recv_buffer),kind=c_intptr_t))
-      check_host_unregister_gpu("trans_ev_tridi_to_band: top_border_recv_buffer", successGPU)
+      check_host_unregister_gpu("tridi_to_band: top_border_recv_buffer", successGPU)
 
       successGPU = gpu_host_unregister(int(loc(bottom_border_send_buffer),kind=c_intptr_t))
-      check_host_unregister_gpu("trans_ev_tridi_to_band: bottom_border_send_buffer", successGPU)
+      check_host_unregister_gpu("tridi_to_band: bottom_border_send_buffer", successGPU)
 
       successGPU = gpu_host_unregister(int(loc(bottom_border_recv_buffer),kind=c_intptr_t))
-      check_host_unregister_gpu("trans_ev_tridi_to_band: bottom_border_recv_buffer", successGPU)
+      check_host_unregister_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
     endif
   endif ! useGPU
 
   deallocate(top_border_send_buffer, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: top_border_send_buffer", istat, errorMessage)
+  check_deallocate("tridi_to_band: top_border_send_buffer", istat, errorMessage)
 
   deallocate(top_border_recv_buffer, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: top_border_recv_buffer", istat, errorMessage)
+  check_deallocate("tridi_to_band: top_border_recv_buffer", istat, errorMessage)
 
   deallocate(bottom_border_send_buffer, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
+  check_deallocate("tridi_to_band: bottom_border_send_buffer", istat, errorMessage)
 
   deallocate(bottom_border_recv_buffer, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
+  check_deallocate("tridi_to_band: bottom_border_recv_buffer", istat, errorMessage)
 
   deallocate(top_send_request, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: top_send_request", istat, errorMessage)
+  check_deallocate("tridi_to_band: top_send_request", istat, errorMessage)
 
   deallocate(top_recv_request, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: top_recv_request", istat, errorMessage)
+  check_deallocate("tridi_to_band: top_recv_request", istat, errorMessage)
 
   deallocate(bottom_send_request, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: bottom_send_request", istat, errorMessage)
+  check_deallocate("tridi_to_band: bottom_send_request", istat, errorMessage)
 
   deallocate(bottom_recv_request, stat=istat, errmsg=errorMessage)
-  check_deallocate("trans_ev_tridi_to_band: bottom_recv_request", istat, errorMessage)
+  check_deallocate("tridi_to_band: bottom_recv_request", istat, errorMessage)
 
 #ifdef WITH_OPENMP_TRADITIONAL
   if (useGPU) then
