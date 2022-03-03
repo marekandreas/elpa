@@ -644,9 +644,6 @@ max_threads, isSkewsymmetric)
                                     int(lr_end*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
             check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
           enddo
-          !successGPU = gpu_memcpy(int(loc(a_mat),kind=c_intptr_t), a_dev, &
-          !                          int(matrixRows*matrixCols*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
-          !check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
         endif
       endif ! do_memcpy
     endif ! useGPU
@@ -960,9 +957,6 @@ max_threads, isSkewsymmetric)
                                      int(lr_end*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
               check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
             enddo
-            !successGPU = gpu_memcpy(a_dev, int(loc(a_mat),kind=c_intptr_t), &
-            !                        int(matrixRows*matrixCols*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
-            ! check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
           endif
         endif ! do_memcopy
       endif ! (useGPU_reduction_lower_block_to_tridiagonal .and. .not.(useIntelGPU)
@@ -1057,9 +1051,6 @@ max_threads, isSkewsymmetric)
                                      int(lr_end*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
               check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
             enddo
-            !successGPU = gpu_memcpy(a_dev, int(loc(a_mat),kind=c_intptr_t), &
-            !                        int(matrixRows*matrixCols*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
-            ! check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
           endif
         endif ! do_memcpy
       endif ! useIntelGPU
