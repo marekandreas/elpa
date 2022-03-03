@@ -756,8 +756,8 @@ program test
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0)
    ! simple test
    ! Can (and should) fail often
-   !gpuID = mod(myid,2)
-   gpuID = mod(myid,1)
+   gpuID = mod(myid,2)
+   !gpuID = mod(myid,1)
    call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
