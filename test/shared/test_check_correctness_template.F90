@@ -98,9 +98,9 @@
       integer :: mpierr
 
       ! tolerance for the residual test for different math type/precision setups
-      real(kind=rk), parameter       :: tol_res_real_double      = 5e-4_rk
+      real(kind=rk), parameter       :: tol_res_real_double      = 9e-10_rk
       real(kind=rk), parameter       :: tol_res_real_single      = 3e-2_rk
-      real(kind=rk), parameter       :: tol_res_complex_double   = 5e-12_rk
+      real(kind=rk), parameter       :: tol_res_complex_double   = 9e-10_rk
       real(kind=rk), parameter       :: tol_res_complex_single   = 3e-2_rk
       real(kind=rk)                  :: tol_res                  = tol_res_&
                                                                           &MATH_DATATYPE&
@@ -111,9 +111,9 @@
 
       ! tolerance for the orthogonality test for different math type/precision setups
 !       real(kind=rk), parameter       :: tol_orth_real_double     = 5e-11_rk
-      real(kind=rk), parameter       :: tol_orth_real_double     = 5e-4_rk
+      real(kind=rk), parameter       :: tol_orth_real_double     = 9e-10_rk
       real(kind=rk), parameter       :: tol_orth_real_single     = 9e-2_rk
-      real(kind=rk), parameter       :: tol_orth_complex_double  = 5e-11_rk
+      real(kind=rk), parameter       :: tol_orth_complex_double  = 9e-10_rk
       real(kind=rk), parameter       :: tol_orth_complex_single  = 9e-3_rk
       real(kind=rk), parameter       :: tol_orth                 = tol_orth_&
                                                                           &MATH_DATATYPE&
@@ -388,9 +388,9 @@ function check_correctness_evp_numeric_residuals_&
       TEST_INT_MPI_TYPE             :: mpierr
 
 ! tolerance for the residual test for different math type/precision setups
-      real(kind=rk), parameter       :: tol_res_real_double      = 5e-12_rk
+      real(kind=rk), parameter       :: tol_res_real_double      = 9e-10_rk
       real(kind=rk), parameter       :: tol_res_real_single      = 3e-2_rk
-      real(kind=rk), parameter       :: tol_res_complex_double   = 5e-12_rk
+      real(kind=rk), parameter       :: tol_res_complex_double   = 9e-10_rk
       real(kind=rk), parameter       :: tol_res_complex_single   = 3e-2_rk
       real(kind=rk)                  :: tol_res                  = tol_res_&
                                                                           &MATH_DATATYPE&
@@ -400,9 +400,9 @@ function check_correctness_evp_numeric_residuals_&
       real(kind=rk), parameter       :: generalized_penalty = 10.0_rk
 
       ! tolerance for the orthogonality test for different math type/precision setups
-      real(kind=rk), parameter       :: tol_orth_real_double     = 5e-11_rk
+      real(kind=rk), parameter       :: tol_orth_real_double     = 9e-10_rk
       real(kind=rk), parameter       :: tol_orth_real_single     = 9e-2_rk
-      real(kind=rk), parameter       :: tol_orth_complex_double  = 5e-11_rk
+      real(kind=rk), parameter       :: tol_orth_complex_double  = 9e-10_rk
       real(kind=rk), parameter       :: tol_orth_complex_single  = 9e-3_rk
       real(kind=rk), parameter       :: tol_orth                 = tol_orth_&
                                                                           &MATH_DATATYPE&
@@ -790,7 +790,7 @@ function check_correctness_evp_gen_numeric_residuals_&
      maxerr = maxval( (ev(:) - ev_analytic(:))/ev_analytic(:) , 1)
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
-     if (abs(maxerr) .gt. 8.e-13_c_double) then
+     if (abs(maxerr) .gt. 9.e-10_c_double) then
 #else
      if (abs(maxerr) .gt. 8.e-4_c_float) then
 #endif
@@ -924,7 +924,7 @@ function check_correctness_evp_gen_numeric_residuals_&
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 !      if (normmax .gt. 5e-11_rk8 .or. normmax .eq. 0.0_rk8) then
-      if (normmax .gt. 5e-11_rk8 ) then
+      if (normmax .gt. 9e-10_rk8 ) then
         status = 1
       endif
 #else
@@ -1034,7 +1034,7 @@ function check_correctness_evp_gen_numeric_residuals_&
       endif
 
 #ifdef DOUBLE_PRECISION_REAL
-      if (normmax .gt. 5e-11_rk8 ) then
+      if (normmax .gt. 9e-10_rk8 ) then
         status = 1
       endif
 #else
@@ -1044,7 +1044,7 @@ function check_correctness_evp_gen_numeric_residuals_&
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-      if (normmax .gt. 5e-11_rk8 ) then
+      if (normmax .gt. 9e-10_rk8 ) then
         status = 1
       endif
 #else
