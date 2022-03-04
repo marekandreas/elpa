@@ -868,8 +868,6 @@ subroutine trans_ev_tridi_to_band_&
                                        gpuMemcpyDeviceToDevice)
               check_memcpy_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
 
-
-
               if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
               successGPU = gpu_devicesynchronize()
               check_memcpy_gpu("tridi_to_band: device_synchronize", successGPU)
