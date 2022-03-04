@@ -545,17 +545,10 @@
             ! user fixed inconsistent input.
             ! sadly, we do have to abort
 #if COMPLECASE == 1
-#ifdef WITH_AMD_GPU_VERSION
-            if (my_pe .eq. 0) then
-              write(error_unit,*) "Currently the AMD GPU port does not support ELPA_2STAGE_COMPLEX_AMD_GPU ."
-              write(error_unit,*) "Please set another complex kernel. Aborting..."
-            endif
-#else
             if (my_pe .eq. 0) then
               write(error_unit,*) "You set (fixed) the kernel to GPU, but GPUs cannot be used."
               write(error_unit,*) "Either adapt the block size or the process grid, or do not set the GPU kernel! Aborting..."
             endif
-#endif
 #else
             if (my_pe .eq. 0) then
               write(error_unit,*) "You set (fixed) the kernel to GPU, but GPUs cannot be used."
@@ -832,17 +825,7 @@ print *,"Device pointer + REDIST"
         kernel = GPU_KERNEL
 #endif
 #else /* REALCASE == 1 */
-
-#if WITH_AMD_GPU_VERSION
-        ! special case as long as AMD COMPLEX kernel does not work
-        kernel = DEFAULT_KERNEL
-        do_useGPU_trans_ev_tridi_to_band = .false.
-        if (my_pe .eq. 0) then
-           write(error_unit,*) "Currently the AMD complex GPU kernel is not working. Running this part of ELPA2 on CPU"
-        endif
-#else
         kernel = GPU_KERNEL
-#endif
 #endif /* REALCASE == 1 */
       endif ! userHasSetKernel
 

@@ -258,7 +258,11 @@ subroutine trans_ev_tridi_to_band_&
                                                                  &_&
                                                                  &MATH_DATATYPE
 #ifndef WITH_MPI
+#ifdef WITH_AMD_GPU_VERSION
+  logical, parameter                           :: allComputeOnGPU = .false.
+#else
   logical, parameter                           :: allComputeOnGPU = .true.
+#endif
 #else /* WITH_MPI */
 #ifdef WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND
   logical, parameter                           :: allComputeOnGPU = .true.
