@@ -910,12 +910,12 @@ function check_correctness_evp_gen_numeric_residuals_&
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
 !      if (normmax .gt. 5e-12_rk8 .or. normmax .eq. 0.0_rk8) then
-      if (normmax .gt. 5e-12_rk8) then
+      if (normmax .gt. 9e-10_rk8) then
         status = 1
       endif
 #else
 !      if (normmax .gt. 5e-4_rk4 .or. normmax .eq. 0.0_rk4) then
-      if (normmax .gt. 5e-4_rk4 ) then
+      if (normmax .gt. 9e-3_rk4 ) then
         status = 1
       endif
 #endif
@@ -929,7 +929,7 @@ function check_correctness_evp_gen_numeric_residuals_&
       endif
 #else
 !      if (normmax .gt. 5e-3_rk4 .or. normmax .eq. 0.0_rk4) then
-      if (normmax .gt. 5e-3_rk4) then
+      if (normmax .gt. 9e-2_rk4) then
         status = 1
       endif
 #endif
