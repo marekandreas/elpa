@@ -155,7 +155,7 @@ then
     echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "make -j 16" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "touch build_done" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "fi" >> ./run_${CLUSTER}_1node_openmpi_2GPU.large_sh
+    echo "fi" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "module purge" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "module load git autoconf automake libtool  cuda/11.4 gcc/11 openmpi_gpu/4 mkl/2021.3" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
