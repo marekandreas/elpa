@@ -185,10 +185,10 @@ then
 
     echo " "
     echo "Job script for the run"
-    cat ./run_${CLUSTER}_1node_openmpi_2GPU.sh
+    cat ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo " "
     echo "Submitting to SLURM"
-    if sbatch -W ./run_${CLUSTER}_1node_openmpi_2GPU.sh; then
+    if sbatch -W ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh; then
       exitCode=$?
     else
       exitCode=$?
