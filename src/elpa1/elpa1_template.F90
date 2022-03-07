@@ -342,6 +342,16 @@ function elpa_solve_evp_&
        call set_gpu_parameters()
      else
        print *,"GPUs are requested but not detected! Aborting..."
+       call obj%timer%stop("check_for_gpu")
+#ifdef ACTIVATE_SKEW
+       call obj%timer%start("elpa_solve_skew_evp_&
+#else
+       call obj%timer%start("elpa_solve_evp_&
+#endif
+       &MATH_DATATYPE&
+       &_1stage_&
+       &PRECISION&
+       &")
        success = .false.
        return
      endif
@@ -744,7 +754,18 @@ print *,"Device pointer + REDIST"
 #endif
      call obj%timer%stop("solve")
      call obj%autotune_timer%stop("solve")
-     if (.not.(success)) return
+     if (.not.(success)) then
+#ifdef ACTIVATE_SKEW
+       call obj%timer%stop("elpa_solve_skew_evp_&
+#else
+       call obj%timer%stop("elpa_solve_evp_&
+#endif
+       &MATH_DATATYPE&
+       &_1stage_&
+       &PRECISION&
+       &")
+       return
+     endif
    endif !do_solve
 
    if (obj%eigenvalues_only) then
@@ -947,7 +968,7 @@ print *,"Device pointer + REDIST"
    nullify(a)
    nullify(q)
 
-  nullify(q_actual)
+   nullify(q_actual)
 
 #ifdef ACTIVATE_SKEW
    call obj%timer%stop("elpa_solve_skew_evp_&
