@@ -1048,7 +1048,7 @@ function check_correctness_evp_gen_numeric_residuals_&
         status = 1
       endif
 #else
-      if (normmax .gt. 5e-3_rk4 ) then
+      if (normmax .gt. 9e-2_rk4 ) then
         status = 1
       endif
 #endif
