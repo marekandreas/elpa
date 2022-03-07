@@ -784,9 +784,13 @@ else
   wrapper=
 endif
 TESTS = $(check_SCRIPTS)
+%_autotune.sh: %
+	@echo "#!/bin/bash" > $@
+	@echo 'if [ "$$CHECK_LEVEL" = "autotune" ] ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
+	@chmod +x $@
 %_extended.sh: %
 	@echo "#!/bin/bash" > $@
-	@echo 'if [ "$$CHECK_LEVEL" = "extended" ] ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
+	@echo 'if [ "$$CHECK_LEVEL" = "extended" ] || [ "$$CHECK_LEVEL" = "autotune" ]  ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
 	@chmod +x $@
 
 %_default.sh: %

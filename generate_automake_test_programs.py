@@ -390,7 +390,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
     print("if ENABLE_AUTOTUNING")
     if lang == "C":
         print("if ENABLE_C_TESTS")
-    print("check_SCRIPTS += " + name + "_extended.sh")
+    print("check_SCRIPTS += " + name + "_autotune.sh")
     print("noinst_PROGRAMS += " + name)
     if lang == "Fortran":
         print(name + "_SOURCES = test/Fortran/test_autotune.F90")
