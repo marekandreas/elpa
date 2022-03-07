@@ -133,28 +133,28 @@ program test
    TEST_INT_TYPE                     :: na_cols, na_rows  ! local matrix size
    TEST_INT_TYPE                     :: np_cols, np_rows  ! number of MPI processes per column/row
    TEST_INT_TYPE                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   TEST_INT_MPI_TYPE                 :: mpierr
+   TEST_INT_MPI_TYPE                 :: mpierr, blacs_ok_mpi
 
    ! blacs
-   character(len=1)            :: layout
-   TEST_INT_TYPE                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   character(len=1)                  :: layout
+   TEST_INT_TYPE                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
 
    ! The Matrix
-   MATRIX_TYPE, allocatable    :: a(:,:), as(:,:)
+   MATRIX_TYPE, allocatable          :: a(:,:), as(:,:)
    ! eigenvectors
-   MATRIX_TYPE, allocatable    :: z(:,:)
+   MATRIX_TYPE, allocatable          :: z(:,:)
    ! eigenvalues
-   EV_TYPE, allocatable        :: ev(:)
+   EV_TYPE, allocatable              :: ev(:)
 
-   TEST_INT_TYPE               :: status
-   integer(kind=c_int)         :: error_elpa
+   TEST_INT_TYPE                     :: status
+   integer(kind=c_int)               :: error_elpa
 
-   type(output_t)              :: write_to_file
-   class(elpa_t), pointer      :: e
-   class(elpa_autotune_t), pointer :: tune_state
+   type(output_t)                    :: write_to_file
+   class(elpa_t), pointer            :: e
+   class(elpa_autotune_t), pointer   :: tune_state
 
    TEST_INT_TYPE                     :: iter
-   character(len=5)            :: iter_string
+   character(len=5)                  :: iter_string
 
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -201,8 +201,23 @@ program test
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
-                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
+#ifdef WITH_MPI
+   call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+   blacs_ok = int(blacs_ok_mpi, kind=c_int64_t)
+#else
+   blacs_ok = int(blacs_ok_mpi, kind=c_int32_t)
+#endif
+#endif
 
+    if (blacs_ok .eq. 0) then
+     if (myid .eq. 0) then
+       print *," Ecountered critical error when setting up blacs. Aborting..."
+     endif
+     call mpi_finalize(mpierr)
+     stop
+   endif
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
    allocate(z (na_rows,na_cols))
@@ -231,8 +246,10 @@ program test
 
    if (layout .eq. 'C') then
      call e%set("matrix_order",COLUMN_MAJOR_ORDER,error_elpa)
+     assert_elpa_ok(error_elpa)
    else
      call e%set("matrix_order",ROW_MAJOR_ORDER,error_elpa)
+     assert_elpa_ok(error_elpa)
    endif
 
 #ifdef WITH_MPI
@@ -289,7 +306,6 @@ program test
      assert_elpa_ok(error_elpa)
      call e%timer_stop("eigenvectors: iteration "//trim(iter_string))
 
-     assert_elpa_ok(error_elpa)
      if (myid .eq. 0) then
        print *, ""
        call e%print_times("eigenvectors: iteration "//trim(iter_string))

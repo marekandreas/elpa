@@ -131,26 +131,26 @@ program test
    TEST_INT_TYPE                          :: na_cols, na_rows  ! local matrix size
    TEST_INT_TYPE                          :: np_cols, np_rows  ! number of MPI processes per column/row
    TEST_INT_TYPE                          :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   TEST_INT_MPI_TYPE                      :: mpierr
+   TEST_INT_MPI_TYPE                      :: mpierr, blacs_ok_mpi
 
    ! blacs
-   character(len=1)                 :: layout
-   TEST_INT_TYPE                          :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   character(len=1)                       :: layout
+   TEST_INT_TYPE                          :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
 
    ! The Matrix
-   MATRIX_TYPE, allocatable         :: a_skewsymmetric(:,:), as_skewsymmetric(:,:)
-   MATRIX_TYPE_COMPLEX, allocatable :: a_complex(:,:), as_complex(:,:)
+   MATRIX_TYPE, allocatable               :: a_skewsymmetric(:,:), as_skewsymmetric(:,:)
+   MATRIX_TYPE_COMPLEX, allocatable       :: a_complex(:,:), as_complex(:,:)
    ! eigenvectors
-   MATRIX_TYPE, allocatable         :: z_skewsymmetric(:,:)
-   MATRIX_TYPE_COMPLEX, allocatable :: z_complex(:,:)
+   MATRIX_TYPE, allocatable               :: z_skewsymmetric(:,:)
+   MATRIX_TYPE_COMPLEX, allocatable       :: z_complex(:,:)
    ! eigenvalues
-   EV_TYPE, allocatable             :: ev_skewsymmetric(:), ev_complex(:)
+   EV_TYPE, allocatable                   :: ev_skewsymmetric(:), ev_complex(:)
 
-   TEST_INT_TYPE                    :: status, i, j
-   integer(kind=c_int)              :: error_elpa
+   TEST_INT_TYPE                          :: status, i, j
+   integer(kind=c_int)                    :: error_elpa
 
-   type(output_t)                   :: write_to_file
-   class(elpa_t), pointer           :: e_complex, e_skewsymmetric
+   type(output_t)                         :: write_to_file
+   class(elpa_t), pointer                 :: e_complex, e_skewsymmetric
            
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -206,7 +206,24 @@ program test
                              my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
-                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
+#ifdef WITH_MPI
+   call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+   blacs_ok = int(blacs_ok_mpi, kind=c_int64_t)
+#else
+   blacs_ok = int(blacs_ok_mpi, kind=c_int32_t)
+#endif
+#endif
+
+   if (blacs_ok .eq. 0) then
+     if (myid .eq. 0) then
+       print *," Ecountered critical error when setting up blacs. Aborting..."
+     endif
+     call mpi_finalize(mpierr)
+     stop
+   endif
+
 
    allocate(a_skewsymmetric (na_rows,na_cols))
    allocate(as_skewsymmetric(na_rows,na_cols))
@@ -256,26 +273,34 @@ program test
    call set_basic_params(e_complex, na, nev, na_rows, na_cols, my_prow, my_pcol)
 
    call e_complex%set("timings",1, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    call e_complex%set("debug",1,error_elpa)
+   assert_elpa_ok(error_elpa)
 
 #if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)  
    call e_complex%set("nvidia-gpu", TEST_GPU,error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 #if TEST_AMD_GPU == 1
    call e_complex%set("amd-gpu", TEST_GPU,error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 #if TEST_INTEL_GPU == 1
    call e_complex%set("intel-gpu", TEST_GPU,error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 
    call e_complex%set("omp_threads", 8, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    assert_elpa_ok(e_complex%setup())
    call e_complex%set("solver", elpa_solver_2stage, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    call e_complex%timer_start("eigenvectors: brute force as complex matrix")
    call e_complex%eigenvectors(a_complex, ev_complex, z_complex, error_elpa)
+   assert_elpa_ok(error_elpa)
    call e_complex%timer_stop("eigenvectors: brute force as complex matrix")
 
    if (myid .eq. 0) then
@@ -301,29 +326,38 @@ program test
 #endif
    ! now run the skewsymmetric case
    e_skewsymmetric => elpa_allocate(error_elpa)
+   assert_elpa_ok(error_elpa)
    call set_basic_params(e_skewsymmetric, na, nev, na_rows, na_cols, my_prow, my_pcol)
 
    call e_skewsymmetric%set("timings",1, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    call e_skewsymmetric%set("debug",1,error_elpa)
+   assert_elpa_ok(error_elpa)
 
 #if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
    call e_skewsymmetric%set("nvidia-gpu", TEST_GPU,error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 #if TEST_AMD_GPU == 1
    call e_skewsymmetric%set("amd-gpu", TEST_GPU,error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 #if TEST_INTEL_GPU == 1
    call e_skewsymmetric%set("intel-gpu", TEST_GPU,error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
    call e_skewsymmetric%set("omp_threads",8, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    assert_elpa_ok(e_skewsymmetric%setup())
    
    call e_skewsymmetric%set("solver", elpa_solver_2stage, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    call e_skewsymmetric%timer_start("eigenvectors: skewsymmetric ")
    call e_skewsymmetric%skew_eigenvectors(a_skewsymmetric, ev_skewsymmetric, z_skewsymmetric, error_elpa)
+   assert_elpa_ok(error_elpa)
    call e_skewsymmetric%timer_stop("eigenvectors: skewsymmetric ")
 
    if (myid .eq. 0) then

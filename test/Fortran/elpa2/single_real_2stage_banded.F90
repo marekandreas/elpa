@@ -117,28 +117,28 @@ program test_real2_single_banded
    ! nblk: Blocking factor in block cyclic distribution
    !-------------------------------------------------------------------------------
 
-   TEST_INT_TYPE           :: nblk
-   TEST_INT_TYPE           :: na, nev
+   TEST_INT_TYPE               :: nblk
+   TEST_INT_TYPE               :: na, nev
 
-   TEST_INT_TYPE           :: np_rows, np_cols, na_rows, na_cols
+   TEST_INT_TYPE               :: np_rows, np_cols, na_rows, na_cols
 
-   TEST_INT_TYPE           :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   TEST_INT_TYPE           :: i, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
-   TEST_INT_MPI_TYPE       :: mpierr
+   TEST_INT_TYPE               :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
+   TEST_INT_TYPE               :: i, my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
+   TEST_INT_MPI_TYPE           :: mpierr, blacs_ok_mpi
 
    real(kind=rk4), allocatable :: a(:,:), z(:,:), as(:,:), ev(:)
 
-   TEST_INT_TYPE           :: STATUS
+   TEST_INT_TYPE               :: STATUS
 #ifdef WITH_OPENMP_TRADITIONAL
-   TEST_INT_TYPE           :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
+   TEST_INT_TYPE               :: omp_get_max_threads,  required_mpi_thread_level, provided_mpi_thread_level
 #endif
-   integer(kind=c_int)     :: error_elpa
-   type(output_t)          :: write_to_file
-   character(len=8)        :: task_suffix
-   TEST_INT_TYPE           :: j
-   TEST_INT_TYPE           :: global_row, global_col, local_row, local_col
-   TEST_INT_TYPE           :: bandwidth
-   class(elpa_t), pointer  :: e
+   integer(kind=c_int)         :: error_elpa
+   type(output_t)              :: write_to_file
+   character(len=8)            :: task_suffix
+   TEST_INT_TYPE               :: j
+   TEST_INT_TYPE               :: global_row, global_col, local_row, local_col
+   TEST_INT_TYPE               :: bandwidth
+   class(elpa_t), pointer      :: e
 #define DOUBLE_PRECISION_REAL 1
 
    call read_input_parameters(na, nev, nblk, write_to_file)
@@ -204,7 +204,23 @@ program test_real2_single_banded
    end if
 
    call set_up_blacs_descriptor(na ,nblk, my_prow, my_pcol, np_rows, np_cols, &
-                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
+#ifdef WITH_MPI
+   call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+   blacs_ok = int(blacs_ok_mpi, kind=c_int64_t)
+#else
+   blacs_ok = int(blacs_ok_mpi, kind=c_int32_t)
+#endif
+#endif
+
+   if (blacs_ok .eq. 0) then
+     if (myid .eq. 0) then
+       print *," Ecountered critical error when setting up blacs. Aborting..."
+     endif
+     call mpi_finalize(mpierr)
+     stop
+   endif
 
    if (myid==0) then
      print '(a)','| Past scalapack descriptor setup.'
