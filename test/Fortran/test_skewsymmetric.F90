@@ -220,7 +220,9 @@ program test
      if (myid .eq. 0) then
        print *," Ecountered critical error when setting up blacs. Aborting..."
      endif
+#ifdef WITH_MPI
      call mpi_finalize(mpierr)
+#endif
      stop
    endif
 
@@ -291,8 +293,13 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
+#ifdef WITH_OPENMP_TRADITIONAL
    call e_complex%set("omp_threads", 8, error_elpa)
    assert_elpa_ok(error_elpa)
+#else
+   call e_complex%set("omp_threads", 1, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
 
    assert_elpa_ok(e_complex%setup())
    call e_complex%set("solver", elpa_solver_2stage, error_elpa)
@@ -347,9 +354,13 @@ program test
    call e_skewsymmetric%set("intel-gpu", TEST_GPU,error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
+#ifdef WITH_OPENMP_TRADITIONAL
    call e_skewsymmetric%set("omp_threads",8, error_elpa)
    assert_elpa_ok(error_elpa)
-
+#else
+   call e_skewsymmetric%set("omp_threads",1, error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
    assert_elpa_ok(e_skewsymmetric%setup())
    
    call e_skewsymmetric%set("solver", elpa_solver_2stage, error_elpa)

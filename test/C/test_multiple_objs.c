@@ -219,7 +219,9 @@ int main(int argc, char** argv) {
      if (myid == 0) {
        printf("Setting up the blacsgrid failed. Aborting...");
      }
+#ifdef WITH_MPI
      MPI_Finalize();
+#endif
      abort();
    }
 

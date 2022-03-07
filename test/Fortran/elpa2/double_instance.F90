@@ -144,7 +144,9 @@ program test_interface
      if (myid .eq. 0) then
        print *," Ecountered critical error when setting up blacs. Aborting..."
      endif
+#ifdef WITH_MPI
      call mpi_finalize(mpierr)
+#endif
      stop
    endif
 

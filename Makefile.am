@@ -81,9 +81,9 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/cholesky/GPU/ROCm/mod_cholesky_hip.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
-  src/elpa1/mod_distribute_global_column.F90 \
-  src/elpa1/mod_v_add_s.F90 \
-  src/elpa1/mod_solve_secular_equation.F90 \
+  src/solve_tridi/mod_distribute_global_column.F90 \
+  src/solve_tridi/mod_v_add_s.F90 \
+  src/solve_tridi/mod_solve_secular_equation.F90 \
   src/helpers/mod_thread_affinity.F90 \
   src/helpers/check_thread_affinity.c \
   src/elpa_index.c
@@ -888,9 +888,9 @@ EXTRA_DIST = \
   src/solve_tridi/transform_columns_template.F90 \
   src/solve_tridi/check_monotony_template.F90 \
   src/solve_tridi/add_tmp_template.F90 \
-  src/elpa1/v_add_s_template.F90 \
-  src/elpa1/solve_secular_equation_template.F90 \
-  src/elpa1/distribute_global_column_template.F90 \
+  src/solve_tridi/v_add_s_template.F90 \
+  src/solve_tridi/solve_secular_equation_template.F90 \
+  src/solve_tridi/distribute_global_column_template.F90 \
   src/solve_tridi/merge_systems_template.F90 \
   src/solve_tridi/merge_recursive_template.F90 \
   src/solve_tridi/solve_tridi_template.F90 \
