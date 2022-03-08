@@ -881,6 +881,7 @@ EXTRA_DIST = \
   src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_math_generalized_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \
+  src/helpers/elpa_openmp_settings_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/solve_tridi/global_product_template.F90 \
