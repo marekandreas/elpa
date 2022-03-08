@@ -315,45 +315,10 @@
     wantDebug = debug == 1
 
     ! check legacy GPU setings
-    if (obj%is_set("gpu") == 1) then
-      call obj%get("gpu", gpu_old, error)     
-      if (error .ne. ELPA_OK) then
-        write(error_unit,*) "ELPA2: Problem getting option for gpu. Aborting..."
-#include "./elpa2_aborting_template.F90"
-      endif
-      if (obj%is_set("nvidia-gpu") == 0) then
-        ! set gpu and nvidia-gpu consistent
-        call obj%set("nvidia-gpu", gpu_old, error)
-        if (error .ne. ELPA_OK) then
-          write(error_unit,*) "ELPA2: Problem setting option for nvidia-gpu. Aborting..."
-#include "./elpa2_aborting_template.F90"
-        endif
-      else ! nvidia-gpu
-        call obj%get("nvidia-gpu", gpu_new, error)     
-        if (error .ne. ELPA_OK) then
-          write(error_unit,*) "ELPA2: Problem getting option for nvidia-gpu. Aborting..."
-        endif
-        if (gpu_old .ne. gpu_new) then
-          write(error_unit,*) "You cannot set gpu = ",gpu_old," and nvidia-gpu=",gpu_new,". Aborting..."
-#include "./elpa2_aborting_template.F90"
-        endif
-      endif ! nvidia-gpu
-      if (obj%is_set("amd-gpu") == 0) then
-        ! ok
-      else ! amd-gpu
-        call obj%get("amd-gpu", gpu_new, error)     
-        if (error .ne. ELPA_OK) then
-          write(error_unit,*) "ELPA2: Problem getting option for amd-gpu. Aborting..."
-#include "./elpa2_aborting_template.F90"
-        endif
-        if (gpu_old .eq. 1 .and. gpu_new .eq. 1) then
-          write(error_unit,*) "ELPA2: You cannot set gpu = 1 and amd-gpu = 1. Aborting..."
-#include "./elpa2_aborting_template.F90"
-        endif
-      endif ! amd-gpu
-    else ! gpu not set
-      ! nothing to do
-    endif ! gpu is set
+#define GPU_SOLVER ELPA2
+#include "../GPU/check_legacy_gpu_setting_template.F90"
+#undef GPU_SOLVER
+    do_useGPU = .false.
 
     ! get the kernel and check whether it has been set by the user
     if (obj%is_set(KERNEL_STRING) == 1) then
@@ -450,53 +415,6 @@
     nrThreads = 1
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-    ! GPU settings
-    if (gpu_vendor() == NVIDIA_GPU) then
-      if (obj%is_set("gpu") == 1) then
-        if (my_pe .eq. 0) then
-          write(error_unit,*) "You still use the deprecated option 'gpu' with the set-method, consider switching to 'nvidia-gpu'"
-        endif
-        ! at this point we ensured already that gpu and nvidia-gpu have identical values
-      endif
-
-      call obj%get("nvidia-gpu", gpu, error)
-      if (error .ne. ELPA_OK) then
-        write(error_unit,*) "ELPA2: Problem getting option for NVIDIA GPU. Aborting..."
-#include "./elpa2_aborting_template.F90"
-      endif
-    else if (gpu_vendor() == AMD_GPU) then
-      call obj%get("amd-gpu", gpu, error)
-      if (error .ne. ELPA_OK) then
-        write(error_unit,*) "ELPA2: Problem getting option for AMD GPU. Aborting..."
-#include "./elpa2_aborting_template.F90"
-      endif
-    else if (gpu_vendor() == INTEL_GPU) then
-      call obj%get("intel-gpu", gpu, error)
-      if (error .ne. ELPA_OK) then
-        write(error_unit,*) "ELPA2: Problem getting option for INTEL GPU. Aborting..."
-#include "./elpa2_aborting_template.F90"
-      endif
-    else if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
-      call obj%get("intel-gpu", gpu, error)
-      if (error .ne. ELPA_OK) then
-        write(error_unit,*) "ELPA2: Problem getting option for INTEL GPU. Aborting..."
-#include "./elpa2_aborting_template.F90"
-      endif
-    else ! no supported gpu
-      gpu = 0
-    endif
-
-   if (gpu .eq. 1) then
-     useGPU =.true.
-   else
-#ifdef DEVICE_POINTER
-     write(error_unit,*) "ELPA2: You used the interface for device pointers but did not specify GPU usage!. Aborting..."
-#include "./elpa2_aborting_template.F90"
-#endif
-     useGPU = .false.
-   endif
-
-    do_useGPU = .false.
     if (useGPU) then
       call obj%timer%start("check_for_gpu")
       if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then

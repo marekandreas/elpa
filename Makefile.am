@@ -873,6 +873,7 @@ EXTRA_DIST = \
   remove_xcompiler \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
+  src/GPU/check_legacy_gpu_setting_template.F90 \
   src/GPU/CUDA/cuUtils_template.cu \
   src/GPU/ROCm/hipUtils_template.cpp \
   src/elpa_api_math_template.F90 \

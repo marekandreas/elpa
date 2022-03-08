@@ -231,9 +231,10 @@ function elpa_solve_evp_&
    integer(kind=ik)                                :: global_index
 
    logical                                         :: reDistributeMatrix, doRedistributeMatrix
+   integer(kind=ik)                                :: gpu_old, gpu_new
 
-   logical                                       :: successGPU
-   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
+   logical                                         :: successGPU
+   integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
                                                                       &PRECISION&
                                                                       &_&
                                                                       &MATH_DATATYPE
@@ -247,6 +248,20 @@ function elpa_solve_evp_&
    &_1stage_&
    &PRECISION&
    &")
+
+   call obj%get("debug",debug, error)
+   if (error .ne. ELPA_OK) then
+     write(error_unit,*) "ELPA1: Problem getting option for debug settings. Aborting..."
+#include "./elpa1_aborting_template.F90"
+   endif
+
+   wantDebug = debug == 1
+
+    ! check legacy GPU setings
+#define GPU_SOLVER ELPA1
+#include "../GPU/check_legacy_gpu_setting_template.F90"
+#undef GPU_SOLVER
+    do_useGPU = .false.     
 
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
    if (error .ne. ELPA_OK) then
@@ -278,63 +293,6 @@ function elpa_solve_evp_&
 #else
    nrThreads = 1
 #endif /* WITH_OPENMP_TRADITIONAL */
-
-   if (gpu_vendor() == NVIDIA_GPU) then
-     call obj%get("gpu",gpu,error)
-     if (error .ne. ELPA_OK) then
-       write(error_unit, *) "ELPA1: Problem getting option for GPU. Aborting..."
-#include "./elpa1_aborting_template.F90"
-     endif
-
-     if (gpu .eq. 1) then
-       print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new keyword &
-              & 'nvidia-gpu' now"
-       call obj%set("nvidia-gpu",gpu,error)
-       if (error .ne. ELPA_OK) then
-         write(error_unit, *) "ELPA1: Problem setting option for NVIDIA GPU. Aborting..."
-#include "./elpa1_aborting_template.F90"
-       endif
-     endif
-
-     call obj%get("nvidia-gpu",gpu,error)
-     if (error .ne. ELPA_OK) then
-       write(error_unit, *) "ELPA1: Problem getting option for NVIDIA GPU. Aborting..."
-#include "./elpa1_aborting_template.F90"
-     endif
-   else if (gpu_vendor() == AMD_GPU) then
-     call obj%get("amd-gpu",gpu,error)
-     if (error .ne. ELPA_OK) then
-       write(error_unit, *) "ELPA1: Problem getting option for AMD GPU. Aborting..."
-#include "./elpa1_aborting_template.F90"
-     endif
-   else if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
-     call obj%get("intel-gpu",gpu,error)
-     if (error .ne. ELPA_OK) then
-       write(error_unit, *) "ELPA1: Problem getting option for OPENMP OFFLOAD GPU. Aborting..."
-#include "./elpa1_aborting_template.F90"
-     endif
-   else if (gpu_vendor() == INTEL_GPU) then
-     call obj%get("intel-gpu",gpu,error)
-     if (error .ne. ELPA_OK) then
-       write(error_unit, *) "ELPA1: Problem getting option for INTEL GPU. Aborting..."
-#include "./elpa1_aborting_template.F90"
-     endif
-   else
-     gpu = 0
-   endif
-
-   if (gpu .eq. 1) then
-     useGPU =.true.
-   else
-#ifdef DEVICE_POINTER
-     write(error_unit, *) "You used the interface for device pointers but did not specify GPU usage!. Aborting..."
-#include "./elpa1_aborting_template.F90"
-#endif
-     useGPU = .false.
-   endif
-
-   do_useGPU = .false.
-
 
    if (useGPU) then
      call obj%timer%start("check_for_gpu")
@@ -657,13 +615,6 @@ print *,"Device pointer + REDIST"
    np_cols = int(np_colsMPI,kind=c_int)
 
    call obj%timer%stop("mpi_communication")
-
-   call obj%get("debug", debug,error)
-   if (error .ne. ELPA_OK) then
-     write(error_unit, *) "ELPA1 Problem getting option for debug. Aborting..."
-#include "./elpa1_aborting_template.F90"
-   endif
-   wantDebug = debug == 1
 
    ! allocate a dummy q_intern, if eigenvectors should not be commputed and thus q is NOT present
    if (.not.(obj%eigenvalues_only)) then
