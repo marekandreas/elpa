@@ -117,6 +117,9 @@ program test
    use test_check_correctness
    use precision_for_tests
    use iso_fortran_env
+#ifdef WITH_OPENMP_TRADITIONAL
+   use omp_lib
+#endif
 
 #ifdef HAVE_REDIRECT
    use test_redirect
@@ -148,6 +151,9 @@ program test
 
    TEST_INT_TYPE                          :: status, i, j
    integer(kind=c_int)                    :: error_elpa
+#ifdef WITH_OPENMP_TRADITIONAL
+   TEST_INT_TYPE                          :: max_threads
+#endif
 
    type(output_t)                         :: write_to_file
    class(elpa_t), pointer                 :: e_complex, e_skewsymmetric
@@ -294,7 +300,8 @@ program test
 #endif
 
 #ifdef WITH_OPENMP_TRADITIONAL
-   call e_complex%set("omp_threads", 8, error_elpa)
+   max_threads=omp_get_max_threads()
+   call e_complex%set("omp_threads", int(max_threads,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 #else
    call e_complex%set("omp_threads", 1, error_elpa)
@@ -355,7 +362,8 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 #ifdef WITH_OPENMP_TRADITIONAL
-   call e_skewsymmetric%set("omp_threads",8, error_elpa)
+   max_threads=omp_get_max_threads()
+   call e_skewsymmetric%set("omp_threads", int(max_threads,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 #else
    call e_skewsymmetric%set("omp_threads",1, error_elpa)
