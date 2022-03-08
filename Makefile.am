@@ -895,6 +895,7 @@ EXTRA_DIST = \
   src/solve_tridi/merge_recursive_template.F90 \
   src/solve_tridi/solve_tridi_template.F90 \
   src/elpa1/elpa1_template.F90 \
+  src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
   src/elpa1/elpa1_trans_ev_template.F90 \
   src/elpa1/elpa1_tridiag_template.F90 \

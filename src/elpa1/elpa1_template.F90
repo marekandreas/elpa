@@ -108,6 +108,7 @@ function elpa_solve_evp_&
 #endif
    use solve_tridi
    use thread_affinity
+   use elpa_utilities, only : error_unit
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
@@ -249,8 +250,8 @@ function elpa_solve_evp_&
 
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
    if (error .ne. ELPA_OK) then
-     print *,"ELPA1: Problem getting mpi_comm_all. Aborting..."
-     stop
+     write(error_unit, *) "ELPA1: Problem getting mpi_comm_all. Aborting..."
+#include "./elpa1_aborting_template.F90"
    endif
 
    call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
@@ -281,40 +282,42 @@ function elpa_solve_evp_&
    if (gpu_vendor() == NVIDIA_GPU) then
      call obj%get("gpu",gpu,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for GPU. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for GPU. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
+
      if (gpu .eq. 1) then
        print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new keyword &
               & 'nvidia-gpu' now"
        call obj%set("nvidia-gpu",gpu,error)
        if (error .ne. ELPA_OK) then
-         print *,"Problem setting option for NVIDIA GPU. Aborting..."
-         stop
+         write(error_unit, *) "ELPA1: Problem setting option for NVIDIA GPU. Aborting..."
+#include "./elpa1_aborting_template.F90"
        endif
      endif
+
      call obj%get("nvidia-gpu",gpu,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for NVIDIA GPU. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for NVIDIA GPU. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
    else if (gpu_vendor() == AMD_GPU) then
      call obj%get("amd-gpu",gpu,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for AMD GPU. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for AMD GPU. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
    else if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
      call obj%get("intel-gpu",gpu,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for OPENMP OFFLOAD GPU. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for OPENMP OFFLOAD GPU. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
    else if (gpu_vendor() == INTEL_GPU) then
      call obj%get("intel-gpu",gpu,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for INTEL GPU. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for INTEL GPU. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
    else
      gpu = 0
@@ -324,8 +327,8 @@ function elpa_solve_evp_&
      useGPU =.true.
    else
 #ifdef DEVICE_POINTER
-     print *,"You used the interface for device pointers but did not specify GPU usage!. Aborting..."
-     stop
+     write(error_unit, *) "You used the interface for device pointers but did not specify GPU usage!. Aborting..."
+#include "./elpa1_aborting_template.F90"
 #endif
      useGPU = .false.
    endif
@@ -341,27 +344,17 @@ function elpa_solve_evp_&
        ! set the neccessary parameters
        call set_gpu_parameters()
      else
-       print *,"GPUs are requested but not detected! Aborting..."
+       write(error_unit, *) "GPUs are requested but not detected! Aborting..."
        call obj%timer%stop("check_for_gpu")
-#ifdef ACTIVATE_SKEW
-       call obj%timer%start("elpa_solve_skew_evp_&
-#else
-       call obj%timer%start("elpa_solve_evp_&
-#endif
-       &MATH_DATATYPE&
-       &_1stage_&
-       &PRECISION&
-       &")
-       success = .false.
-       return
+#include "./elpa1_aborting_template.F90"
      endif
 #ifdef WITH_OPENMP_TRADITIONAL
      ! check the number of threads that ELPA should use internally
      ! in the GPU case at the moment only _1_ thread internally is allowed
      call obj%get("omp_threads", nrThreads, error)
      if (nrThreads .ne. 1) then
-       print *,"Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
-       print *,"setting 1 openmp thread now"
+       write(error_unit, *) "ELPA1: Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
+       write(error_unit, *) "setting 1 openmp thread now"
        call obj%set("omp_threads",1, error)
        nrThreads=1
        call omp_set_num_threads(nrThreads)
@@ -381,22 +374,22 @@ function elpa_solve_evp_&
    if(do_useGPU) then
      call obj%get("gpu_tridiag", gpu, error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for gpu_tridiag. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for gpu_tridiag. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
      do_useGPU_tridiag = (gpu == 1)
 
      call obj%get("gpu_solve_tridi", gpu, error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for gpu_solve_tridi. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for gpu_solve_tridi. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
      do_useGPU_solve_tridi = (gpu == 1)
 
      call obj%get("gpu_trans_ev", gpu, error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for gpu_trans_ev. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for gpu_trans_ev. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
      do_useGPU_trans_ev = (gpu == 1)
    endif
@@ -413,13 +406,13 @@ function elpa_solve_evp_&
 
    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
    if (error .ne. ELPA_OK) then
-     print *,"ELPA1 Problem getting mpi_comm_rows. Aborting..."
-     stop
+     write(error_unit, *) "ELPA1: Problem getting mpi_comm_rows. Aborting..."
+#include "./elpa1_aborting_template.F90"
    endif
    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
    if (error .ne. ELPA_OK) then
-     print *,"ELPA1 Problem getting mpi_comm_cols. Aborting..."
-     stop
+     write(error_unit, *) "ELPA1 Problem getting mpi_comm_cols. Aborting..."
+#include "./elpa1_aborting_template.F90"
    endif
 
 #ifdef REDISTRIBUTE_MATRIX
@@ -584,8 +577,8 @@ print *,"Device pointer + REDIST"
 #endif
    call obj%get("output_pinning_information", pinningInfo, error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option for debug. Aborting..."
-     stop
+     write(error_unit, *) "ELPA1 Problem setting option for output_pinning_information. Aborting..."
+#include "./elpa1_aborting_template.F90"
    endif
    
    if (pinningInfo .eq. 1) then
@@ -628,6 +621,7 @@ print *,"Device pointer + REDIST"
      &_1stage_&
      &PRECISION&
      &")
+     success = .true.
      return
    endif
 
@@ -666,8 +660,8 @@ print *,"Device pointer + REDIST"
 
    call obj%get("debug", debug,error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option for debug. Aborting..."
-     stop
+     write(error_unit, *) "ELPA1 Problem getting option for debug. Aborting..."
+#include "./elpa1_aborting_template.F90"
    endif
    wantDebug = debug == 1
 
@@ -755,16 +749,8 @@ print *,"Device pointer + REDIST"
      call obj%timer%stop("solve")
      call obj%autotune_timer%stop("solve")
      if (.not.(success)) then
-#ifdef ACTIVATE_SKEW
-       call obj%timer%stop("elpa_solve_skew_evp_&
-#else
-       call obj%timer%stop("elpa_solve_evp_&
-#endif
-       &MATH_DATATYPE&
-       &_1stage_&
-       &PRECISION&
-       &")
-       return
+       write(error_unit, *) "ELPA1: solve step encountered an error. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
    endif !do_solve
 
@@ -773,18 +759,17 @@ print *,"Device pointer + REDIST"
    else
      call obj%get("check_pd",check_pd,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem setting option for check_pd. Aborting..."
-       stop
+#include "./elpa1_aborting_template.F90"
      endif
      if (check_pd .eq. 1) then
        call obj%get("thres_pd_&
        &PRECISION&
        &",thres_pd,error)
        if (error .ne. ELPA_OK) then
-          print *,"Problem getting option for thres_pd_&
-          &PRECISION&
-          &. Aborting..."
-          stop
+         write(error_unit, *) "ELPA1 Problem setting option for thres_pd_&
+         &PRECISION&
+         &. Aborting..."
+#include "./elpa1_aborting_template.F90"
        endif
 
        check_pd = 0
