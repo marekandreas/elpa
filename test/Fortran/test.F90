@@ -315,6 +315,13 @@ program test
        if (mod(nprocs,np_cols) /= 0 ) then
          cycle
        endif
+       
+       if (nprocs .gt. 20) then
+         np_rows = nprocs/np_cols
+         if (np_rows .eq. 1 .or. np_cols .eq. 1) then
+           cycle
+         endif
+       endif
 #else
    layout = 'C'
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
