@@ -170,18 +170,11 @@ then
     echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    #echo "while ! \[ -f ./build_done \];" >> ./run_${CLUSTER}_1node_2GPU.sh
-    #echo "do" >> ./run_${CLUSTER}_1node_2GPU.sh
-    #echo "echo \""\ > /dev/null" >> ./run_${CLUSTER}_1node_2GPU.sh
-    #echo "done" >> ./run_${CLUSTER}_1node_2GPU.sh
     echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "exitCode=\$?" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "##copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "#cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "#cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "#exit \$exitCode" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
+    echo "exit \$exitCode" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
 
     echo " "
     echo "Job script for the run"
