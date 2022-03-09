@@ -1,7 +1,8 @@
 Changelog for next release
 
 - not yet decided
-- implement OpenMP offloading to GPU for Intel GPU for ELPA 1 and 2 stage
+- implement OpenMP offloading to GPU for Intel GPU for ELPA 1 and 2 stage (
+  except for step tridi_to_band)
 
 Changelog for ELPA 2021.11.002
 - fix an error when choosing the Nvidia GPU kernel (fallback to CPU might have
