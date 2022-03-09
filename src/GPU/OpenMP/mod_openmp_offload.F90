@@ -1,4 +1,4 @@
-!    Copyright 2014, A. Marek
+!    Copyright 2022, A. Marek
 !
 !    This file is part of ELPA.
 !
@@ -41,7 +41,8 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! This file was written by A. Marek, MPCDF (2022)
-! it is based on a proto type implementation by A. Poeppl, Intel (2022)
+! it is based on a prototype implementation developed for MPCDF
+! by A. Poeppl, Intel (2022)
 
 
 #include "config-f90.h"
