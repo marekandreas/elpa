@@ -139,49 +139,49 @@ then
   # GPU runners
   if [ "$gpuJob" == "yes" ]
   then
-    cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_openmpi_large_2GPU.sh .
-    echo "if \[ \$SLURM_PROCID -eq 0 \]" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "then" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "echo \"process \$SLURM_PROCID running configure\"" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "#decouple from SLURM (maybe this could be removed)" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "export _save_SLURM_MPI_TYPE=\$SLURM_MPI_TYPE" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "export _save_I_MPI_SLURM_EXT=\$I_MPI_SLURM_EXT"  >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "export _save_I_MPI_PMI_LIBRARY=\$I_MPI_PMI_LIBRARY" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "export _save_I_MPI_PMI2=\$I_MPI_PMI2" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "export _save_I_MPI_HYDRA_BOOTSTRAP=\$I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "unset SLURM_MPI_TYPE I_MPI_SLURM_EXT I_MPI_PMI_LIBRARY I_MPI_PMI2 I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "make -j 16" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "touch build_done" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "fi" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "module purge" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "module load git autoconf automake libtool  cuda/11.4 gcc/11 openmpi_gpu/4 mkl/2021.3" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "module load anaconda/3/2021.05 mpi4py/3.0.3" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "export LD_LIBRARY_PATH=\$MKL_HOME/lib/intel64:\$LD_LIBRARY_PATH" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "export OMPI_MCA_coll=^hcoll" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "unset SLURM_MPI_TYPE I_MPI_SLURM_EXT I_MPI_PMI_LIBRARY I_MPI_PMI2 I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "while [ ! -f ./build_done ]" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "do" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "sleep 0.1" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "done" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "exitCode=\$?" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "exit \$exitCode" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
+    cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh .
+    echo "if \[ \$SLURM_PROCID -eq 0 \]" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "then" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "echo \"process \$SLURM_PROCID running configure\"" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "#decouple from SLURM (maybe this could be removed)" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "export _save_SLURM_MPI_TYPE=\$SLURM_MPI_TYPE" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "export _save_I_MPI_SLURM_EXT=\$I_MPI_SLURM_EXT"  >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "export _save_I_MPI_PMI_LIBRARY=\$I_MPI_PMI_LIBRARY" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "export _save_I_MPI_PMI2=\$I_MPI_PMI2" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "export _save_I_MPI_HYDRA_BOOTSTRAP=\$I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "unset SLURM_MPI_TYPE I_MPI_SLURM_EXT I_MPI_PMI_LIBRARY I_MPI_PMI2 I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "make -j 16" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "touch build_done" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "fi" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "module purge" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "module load git autoconf automake libtool  cuda/11.4 gcc/11 openmpi_gpu/4 mkl/2021.3" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "module load anaconda/3/2021.05 mpi4py/3.0.3" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "export LD_LIBRARY_PATH=\$MKL_HOME/lib/intel64:\$LD_LIBRARY_PATH" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "export OMPI_MCA_coll=^hcoll" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "unset SLURM_MPI_TYPE I_MPI_SLURM_EXT I_MPI_PMI_LIBRARY I_MPI_PMI2 I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "while [ ! -f ./build_done ]" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "do" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "sleep 0.1" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "done" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "make check TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "exitCode=\$?" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "exit \$exitCode" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
 
     echo " "
     echo "Job script for the run"
-    cat ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
+    cat ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo " "
     echo "Submitting to SLURM"
-    if sbatch -W ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh; then
+    if sbatch -W ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh; then
       exitCode=$?
     else
       exitCode=$?
