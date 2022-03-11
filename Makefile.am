@@ -49,6 +49,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/CUDA/mod_cuda.F90 \
   src/GPU/INTEL/mod_mkl_offload.F90 \
   src/GPU/ROCm/mod_hip.F90 \
+  src/GPU/OpenMP/mod_openmp_offload.F90 \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
   src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
   src/elpa2/GPU/ROCm/interface_c_hip_kernel.F90 \
@@ -73,14 +74,16 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/mod_solve_tridi.F90 \
   src/invert_trm/GPU/mod_invert_trm_gpu.F90 \
   src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
+  src/invert_trm/GPU/ROCm/mod_invert_trm_hip.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/GPU/mod_cholesky_gpu.F90 \
   src/cholesky/GPU/CUDA/mod_cholesky_cuda.F90 \
+  src/cholesky/GPU/ROCm/mod_cholesky_hip.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
-  src/elpa1/mod_distribute_global_column.F90 \
-  src/elpa1/mod_v_add_s.F90 \
-  src/elpa1/mod_solve_secular_equation.F90 \
+  src/solve_tridi/mod_distribute_global_column.F90 \
+  src/solve_tridi/mod_v_add_s.F90 \
+  src/solve_tridi/mod_solve_secular_equation.F90 \
   src/helpers/mod_thread_affinity.F90 \
   src/helpers/check_thread_affinity.c \
   src/elpa_index.c
@@ -162,8 +165,12 @@ if WITH_INTEL_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mkl_offload.cpp
 endif
 
+if WITH_OPENMP_OFFLOAD_GPU_VERSION
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/OpenMP/openmpOffloadFunctions.cpp
+endif
+
 if WITH_AMD_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
 endif
 
 if !WITH_MPI
@@ -777,9 +784,13 @@ else
   wrapper=
 endif
 TESTS = $(check_SCRIPTS)
+%_autotune.sh: %
+	@echo "#!/bin/bash" > $@
+	@echo 'if [ "$$CHECK_LEVEL" = "autotune" ] ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
+	@chmod +x $@
 %_extended.sh: %
 	@echo "#!/bin/bash" > $@
-	@echo 'if [ "$$CHECK_LEVEL" = "extended" ] ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
+	@echo 'if [ "$$CHECK_LEVEL" = "extended" ] || [ "$$CHECK_LEVEL" = "autotune" ]  ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
 	@chmod +x $@
 
 %_default.sh: %
@@ -862,6 +873,7 @@ EXTRA_DIST = \
   remove_xcompiler \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
+  src/GPU/check_legacy_gpu_setting_template.F90 \
   src/GPU/CUDA/cuUtils_template.cu \
   src/GPU/ROCm/hipUtils_template.cpp \
   src/elpa_api_math_template.F90 \
@@ -869,6 +881,7 @@ EXTRA_DIST = \
   src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_math_generalized_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \
+  src/helpers/elpa_openmp_settings_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/solve_tridi/global_product_template.F90 \
@@ -877,13 +890,14 @@ EXTRA_DIST = \
   src/solve_tridi/transform_columns_template.F90 \
   src/solve_tridi/check_monotony_template.F90 \
   src/solve_tridi/add_tmp_template.F90 \
-  src/elpa1/v_add_s_template.F90 \
-  src/elpa1/solve_secular_equation_template.F90 \
-  src/elpa1/distribute_global_column_template.F90 \
+  src/solve_tridi/v_add_s_template.F90 \
+  src/solve_tridi/solve_secular_equation_template.F90 \
+  src/solve_tridi/distribute_global_column_template.F90 \
   src/solve_tridi/merge_systems_template.F90 \
   src/solve_tridi/merge_recursive_template.F90 \
   src/solve_tridi/solve_tridi_template.F90 \
   src/elpa1/elpa1_template.F90 \
+  src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
   src/elpa1/elpa1_trans_ev_template.F90 \
   src/elpa1/elpa1_tridiag_template.F90 \
@@ -894,6 +908,7 @@ EXTRA_DIST = \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/invert_trm/GPU/mod_invert_trm_gpu.F90 \
   src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
+  src/invert_trm/GPU/ROCm/mod_invert_trm_hip.F90 \
   src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/invert_trm/elpa_invert_trm_template.F90 \
@@ -907,6 +922,7 @@ EXTRA_DIST = \
   src/elpa2/elpa2_herm_matrix_allreduce_complex_template.F90 \
   src/elpa2/elpa2_symm_matrix_allreduce_real_template.F90 \
   src/elpa2/elpa2_template.F90 \
+  src/elpa2/elpa2_aborting_template.F90 \
   src/elpa2/elpa2_trans_ev_band_to_full_template.F90 \
   src/elpa2/elpa2_trans_ev_tridi_to_band_template.F90 \
   src/elpa2/elpa2_tridiag_band_template.F90 \

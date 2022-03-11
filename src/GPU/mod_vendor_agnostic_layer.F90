@@ -57,6 +57,7 @@ module elpa_gpu
   integer(kind=c_int), parameter :: nvidia_gpu = 1
   integer(kind=c_int), parameter :: amd_gpu = 2
   integer(kind=c_int), parameter :: intel_gpu = 3
+  integer(kind=c_int), parameter :: openmp_offload_gpu = 4
   integer(kind=c_int), parameter :: no_gpu = -1
   integer(kind=c_int)            :: use_gpu_vendor
   integer(kind=c_int)            :: gpuHostRegisterDefault    
@@ -189,6 +190,9 @@ module elpa_gpu
 #ifdef WITH_INTEL_GPU_VERSION
       vendor = intel_gpu
 #endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      vendor = openmp_offload_gpu
+#endif
       use_gpu_vendor = vendor
       return
     end function
@@ -196,6 +200,7 @@ module elpa_gpu
     subroutine set_gpu_parameters
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
       implicit none
 
       if (use_gpu_vendor == nvidia_gpu) then
@@ -228,12 +233,31 @@ module elpa_gpu
         gpuHostRegisterDefault  = hipHostRegisterDefault
       endif
 
+      !if (use_gpu_vendor == amd_gpu) then
+      !endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        openmpOffloadMemcpyHostToDevice   = openmp_offload_memcpyHostToDevice()
+        gpuMemcpyHostToDevice             = openmpOffloadMemcpyHostToDevice
+        openmpOffloadMemcpyDeviceToHost   = openmp_offload_memcpyDeviceToHost()
+        gpuMemcpyDeviceToHost             = openmpOffloadMemcpyDeviceToHost
+        openmpOffloadMemcpyDeviceToDevice = openmp_offload_memcpyDeviceToDevice()
+        gpuMemcpyDeviceToDevice           = openmpOffloadMemcpyDeviceToDevice
+        !openmpOffloadHostRegisterPortable = openmp_offload_hostRegisterPortable()
+        !gpuHostRegisterPortable           = openmpOffloadHostRegisterPortable
+        !openmpOffloadHostRegisterMapped   = openmp_offload_hostRegisterMapped()
+        !gpuHostRegisterMapped             = openmpOffloadHostRegisterMapped
+        !openmpOffloadHostRegisterDefault  = openmp_offload_hostRegisterDefault()
+        !gpuHostRegisterDefault            = openmpOffloadHostRegisterDefault
+      endif
+
     end subroutine
 
     function gpu_setdevice(n) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
 
@@ -246,6 +270,10 @@ module elpa_gpu
 
       if (use_gpu_vendor == amd_gpu) then
         success = hip_setdevice(n)
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        success = openmp_offload_setdevice(n)
       endif
     end function
 
@@ -264,6 +292,11 @@ module elpa_gpu
 
       if (use_gpu_vendor == amd_gpu) then
         success = hip_devicesynchronize()
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"not yet implemented: device synchronize"
+        stop
       endif
     end function
 
@@ -287,12 +320,18 @@ module elpa_gpu
         success = hip_host_malloc(array, elements)
       endif
 
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"not yet implemented: malloc_host"
+        stop
+      endif
+
     end function
 
     function gpu_malloc(array, elements) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
       implicit none
       integer(kind=C_intptr_T)             :: array
       integer(kind=c_intptr_t), intent(in) :: elements
@@ -306,6 +345,10 @@ module elpa_gpu
 
       if (use_gpu_vendor == amd_gpu) then
         success = hip_malloc(array, elements)
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        success = openmp_offload_malloc(array, elements)
       endif
 
     end function
@@ -330,18 +373,25 @@ module elpa_gpu
         success = hip_host_register(array, elements, flag)
       endif
 
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"not yet implemented: host_register"
+        stop
+      endif
+
     end function
     
     function gpu_memcpy_intptr(dst, src, size, dir) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
+
       implicit none
       integer(kind=C_intptr_t)              :: dst
       integer(kind=C_intptr_t)              :: src
       integer(kind=c_intptr_t), intent(in)  :: size
       integer(kind=C_INT), intent(in)       :: dir
-      logical :: success
+      logical                               :: success
 
       success = .false.
 
@@ -352,6 +402,11 @@ module elpa_gpu
       if (use_gpu_vendor == amd_gpu) then
         success = hip_memcpy_intptr(dst, src, size, dir)
       endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        success = openmp_offload_memcpy_intptr(dst, src, size, dir)
+      endif
+      return
     
     end function
     
@@ -359,12 +414,14 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
+
       implicit none
       type(c_ptr)                           :: dst
       type(c_ptr)                           :: src
       integer(kind=c_intptr_t), intent(in)  :: size
       integer(kind=C_INT), intent(in)       :: dir
-      logical :: success
+      logical                               :: success
 
       success = .false.
 
@@ -375,6 +432,11 @@ module elpa_gpu
       if (use_gpu_vendor == amd_gpu) then
         success = hip_memcpy_cptr(dst, src, size, dir)
       endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        success = openmp_offload_memcpy_cptr(dst, src, size, dir)
+      endif
+      return
     
     end function
     
@@ -382,6 +444,8 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
+
       implicit none
       type(c_ptr)                           :: dst
       integer(kind=C_intptr_t)              :: src
@@ -398,6 +462,10 @@ module elpa_gpu
       if (use_gpu_vendor == amd_gpu) then
         success = hip_memcpy_mixed_to_device(dst, src, size, dir)
       endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        success = openmp_offload_memcpy_mixed_to_device(dst, src, size, dir)
+      endif
     
     end function
     
@@ -405,6 +473,8 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
+
       implicit none
       type(c_ptr)                           :: src
       integer(kind=C_intptr_t)              :: dst
@@ -421,6 +491,10 @@ module elpa_gpu
       if (use_gpu_vendor == amd_gpu) then
         success = hip_memcpy_mixed_to_host(dst, src, size, dir)
       endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        success = openmp_offload_memcpy_mixed_to_host(dst, src, size, dir)
+      endif
     
     end function
 
@@ -429,11 +503,13 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
+
       implicit none
-      integer(kind=c_intptr_t)                :: a
-      integer(kind=ik)                        :: val
-      integer(kind=c_intptr_t), intent(in)      :: size
-      integer(kind=C_INT)                     :: istat
+      integer(kind=c_intptr_t)             :: a
+      integer(kind=ik)                     :: val
+      integer(kind=c_intptr_t), intent(in) :: size
+      integer(kind=C_INT)                  :: istat
 
       logical :: success
 
@@ -447,12 +523,18 @@ module elpa_gpu
         success = hip_memset(a, val, size)
       endif
 
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        success = openmp_offload_memset(a, int(val,kind=c_int32_t), size)
+      endif
+
     end function
 
     function gpu_free(a) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
+
       implicit none
       integer(kind=c_intptr_t)                :: a
 
@@ -468,12 +550,18 @@ module elpa_gpu
         success = hip_free(a)
       endif
 
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        success = openmp_offload_free(a)
+      endif
+
     end function
 
     function gpu_free_host(a) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
+
       implicit none
       type(c_ptr), value          :: a
 
@@ -489,12 +577,19 @@ module elpa_gpu
         success = hip_host_free(a)
       endif
 
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"not yet implemented: host_free"
+        stop
+      endif
+
     end function
 
     function gpu_host_unregister(a) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
+
       implicit none
       integer(kind=c_intptr_t)                :: a
 
@@ -510,6 +605,11 @@ module elpa_gpu
         success = hip_host_unregister(a)
       endif
 
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"not yet implemented: host_unregister"
+        stop
+      endif
+
     end function
 
 
@@ -518,6 +618,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
 
@@ -539,6 +640,11 @@ module elpa_gpu
       if (use_gpu_vendor == amd_gpu) then
         success = hip_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
       endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"not yet implemented: memcpy2d_intptr"
+        stop
+      endif
     end function
 
     function gpu_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir) result(success)
@@ -546,6 +652,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
 
@@ -567,12 +674,18 @@ module elpa_gpu
       if (use_gpu_vendor == amd_gpu) then
         success = hip_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)
       endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"not yet implemented: memcpy2d_cptr"
+        stop
+      endif
     end function
 
     subroutine gpusolver_dtrtri(uplo, diag, n, a, lda, info)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: uplo, diag
@@ -585,6 +698,12 @@ module elpa_gpu
       endif
       if (use_gpu_vendor == amd_gpu) then
         !call hipsolver_dtrtri(uplo, diag, n, a, lda, info)
+        print *,"not yet implemented"
+        stop
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        call mkl_openmp_offload_dtrtri(uplo, diag, n, a, lda, info)
       endif
     end subroutine
 
@@ -592,6 +711,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: uplo, diag
@@ -604,6 +724,12 @@ module elpa_gpu
       endif
       if (use_gpu_vendor == amd_gpu) then
         !call hipsolver_strtri(uplo, diag, n, a, lda, info)
+        print *,"not yet implemented"
+        stop
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        call mkl_openmp_offload_strtri(uplo, diag, n, a, lda, info)
       endif
     end subroutine
 
@@ -611,6 +737,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: uplo, diag
@@ -623,6 +750,12 @@ module elpa_gpu
       endif
       if (use_gpu_vendor == amd_gpu) then
         !call hipsolver_ztrtri(uplo, diag, n, a, lda, info)
+        print *,"not yet implemented"
+        stop
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        call mkl_openmp_offload_ztrtri(uplo, diag, n, a, lda, info)
       endif
     end subroutine
 
@@ -630,6 +763,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: uplo, diag
@@ -642,6 +776,12 @@ module elpa_gpu
       endif
       if (use_gpu_vendor == amd_gpu) then
         !call hipsolver_ctrtri(uplo, diag, n, a, lda, info)
+        print *,"not yet implemented"
+        stop
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        call mkl_openmp_offload_ctrtri(uplo, diag, n, a, lda, info)
       endif
     end subroutine
 
@@ -649,6 +789,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: uplo
@@ -661,6 +802,12 @@ module elpa_gpu
       endif
       if (use_gpu_vendor == amd_gpu) then
         !call cusolver_dpotrf(uplo, n, a, lda, info)
+        print *,"not yet implemented"
+        stop
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        call mkl_openmp_offload_dpotrf(uplo, n, a, lda, info)
       endif
     end subroutine
 
@@ -668,6 +815,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: uplo
@@ -680,6 +828,12 @@ module elpa_gpu
       endif
       if (use_gpu_vendor == amd_gpu) then
         !call cusolver_spotrf(uplo, n, a, lda, info)
+        print *,"not yet implemented"
+        stop
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        call mkl_openmp_offload_spotrf(uplo, n, a, lda, info)
       endif
     end subroutine
 
@@ -687,6 +841,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: uplo
@@ -699,6 +854,12 @@ module elpa_gpu
       endif
       if (use_gpu_vendor == amd_gpu) then
         !call cusolver_zpotrf(uplo, n, a, lda, info)
+        print *,"not yet implemented"
+        stop
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        call mkl_openmp_offload_zpotrf(uplo, n, a, lda, info)
       endif
     end subroutine
 
@@ -706,6 +867,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: uplo
@@ -718,6 +880,12 @@ module elpa_gpu
       endif
       if (use_gpu_vendor == amd_gpu) then
         !call cusolver_cpotrf(uplo, n, a, lda, info)
+        print *,"not yet implemented"
+        stop
+      endif
+
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        call mkl_openmp_offload_cpotrf(uplo, n, a, lda, info)
       endif
     end subroutine
 
@@ -725,6 +893,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta
@@ -742,6 +911,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -750,6 +923,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
         endif
+
+         if (use_gpu_vendor == openmp_offload_gpu) then
+           call mkl_openmp_offload_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+         endif
       endif
     end subroutine
 
@@ -757,6 +934,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta
@@ -774,6 +952,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -781,6 +963,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
         endif
       endif
 
@@ -790,6 +976,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta
@@ -808,6 +995,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -815,6 +1006,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
         endif
       endif
 
@@ -824,6 +1019,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta
@@ -842,6 +1038,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -849,6 +1049,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
         endif
       endif
 
@@ -858,6 +1062,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
@@ -876,6 +1081,9 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -884,6 +1092,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+
       endif
 
     end subroutine 
@@ -892,6 +1105,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
@@ -910,6 +1124,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -918,8 +1136,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
-      endif
 
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+      endif
     end subroutine 
 
 
@@ -929,6 +1150,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
@@ -947,6 +1169,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
      else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -955,15 +1181,18 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
      endif
-
-
     end subroutine
 
     subroutine gpublas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
@@ -982,6 +1211,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
      else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -990,9 +1223,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
      endif
-
-
     end subroutine
 
     subroutine gpublas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
@@ -1000,6 +1235,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
@@ -1017,6 +1253,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -1025,8 +1265,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
-      endif
 
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+      endif
     end subroutine
 
     subroutine gpublas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
@@ -1034,6 +1277,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
@@ -1051,6 +1295,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -1059,8 +1307,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
-      endif
 
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+      endif
     end subroutine
 
     subroutine gpublas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
@@ -1068,6 +1319,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
@@ -1086,6 +1338,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
       else
 
         if (use_gpu_vendor == nvidia_gpu) then
@@ -1095,6 +1351,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
       endif
     end subroutine
 
@@ -1103,6 +1363,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
@@ -1121,6 +1382,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
       else
 
         if (use_gpu_vendor == nvidia_gpu) then
@@ -1130,6 +1395,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
       endif
     end subroutine
 
@@ -1138,6 +1407,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       integer(kind=C_INT)             :: n
@@ -1154,6 +1424,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dcopy_intptr(n, x, incx, y, incy, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dcopy_intptr(n, x, incx, y, incy, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dcopy_intptr(n, x, incx, y, incy)
@@ -1161,6 +1435,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dcopy_intptr(n, x, incx, y, incy)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dcopy_intptr(n, x, incx, y, incy)
         endif
       endif
     end subroutine
@@ -1170,6 +1448,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       integer(kind=C_INT)             :: n
@@ -1186,6 +1465,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dcopy_cptr(n, x, incx, y, incy, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dcopy_cptr(n, x, incx, y, incy, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dcopy_cptr(n, x, incx, y, incy)
@@ -1193,6 +1476,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dcopy_cptr(n, x, incx, y, incy)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dcopy_cptr(n, x, incx, y, incy)
         endif
       endif
     end subroutine
@@ -1202,6 +1489,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       integer(kind=C_INT)             :: n
@@ -1216,7 +1504,11 @@ module elpa_gpu
         endif
 
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dcopy_intptr(n, x, incx, y, incy, threadID=threadID)
+          call rocblas_scopy_intptr(n, x, incx, y, incy, threadID=threadID)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_scopy_intptr(n, x, incx, y, incy, threadID=threadID)
         endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
@@ -1224,7 +1516,11 @@ module elpa_gpu
         endif
 
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dcopy_intptr(n, x, incx, y, incy)
+          call rocblas_scopy_intptr(n, x, incx, y, incy)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_scopy_intptr(n, x, incx, y, incy)
         endif
       endif
     end subroutine
@@ -1234,6 +1530,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       integer(kind=C_INT)             :: n
@@ -1250,6 +1547,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_scopy_cptr(n, x, incx, y, incy)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_scopy_cptr(n, x, incx, y, incy)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_scopy_cptr(n, x, incx, y, incy)
@@ -1258,8 +1559,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_scopy_cptr(n, x, incx, y, incy)
         endif
-      endif
 
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_scopy_cptr(n, x, incx, y, incy)
+        endif
+      endif
     end subroutine
 
 
@@ -1268,6 +1572,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       integer(kind=C_INT)             :: n
@@ -1284,6 +1589,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_zcopy_intptr(n, x, incx, y, incy, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zcopy_intptr(n, x, incx, y, incy, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_zcopy_intptr(n, x, incx, y, incy)
@@ -1292,8 +1601,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_zcopy_intptr(n, x, incx, y, incy)
         endif
-      endif
 
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zcopy_intptr(n, x, incx, y, incy)
+        endif
+      endif
     end subroutine
 
     subroutine gpublas_zcopy_cptr(n, x, incx, y, incy, threadID)
@@ -1301,6 +1613,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       integer(kind=C_INT)             :: n
@@ -1315,7 +1628,11 @@ module elpa_gpu
         endif
 
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dcopy_cptr(n, x, incx, y, incy, threadID=threadID)
+          call rocblas_zcopy_cptr(n, x, incx, y, incy, threadID=threadID)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zcopy_cptr(n, x, incx, y, incy, threadID=threadID)
         endif
       else
 
@@ -1324,7 +1641,11 @@ module elpa_gpu
         endif
 
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dcopy_cptr(n, x, incx, y, incy)
+          call rocblas_zcopy_cptr(n, x, incx, y, incy)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_zcopy_cptr(n, x, incx, y, incy)
         endif
       endif
 
@@ -1335,6 +1656,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       integer(kind=C_INT)             :: n
@@ -1351,6 +1673,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ccopy_intptr(n, x, incx, y, incy, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ccopy_intptr(n, x, incx, y, incy, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ccopy_intptr(n, x, incx, y, incy)
@@ -1358,6 +1684,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ccopy_intptr(n, x, incx, y, incy)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ccopy_intptr(n, x, incx, y, incy)
         endif
       endif
     end subroutine
@@ -1367,6 +1697,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       integer(kind=C_INT)             :: n
@@ -1383,6 +1714,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ccopy_cptr(n, x, incx, y, incy, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ccopy_cptr(n, x, incx, y, incy, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ccopy_cptr(n, x, incx, y, incy)
@@ -1391,8 +1726,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ccopy_cptr(n, x, incx, y, incy)
         endif
-      endif
 
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ccopy_cptr(n, x, incx, y, incy)
+        endif
+      endif
     end subroutine
 
 
@@ -1401,6 +1739,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1419,6 +1758,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1426,6 +1769,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
 
@@ -1437,6 +1784,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1455,6 +1803,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1462,6 +1814,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1472,6 +1828,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1490,6 +1847,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1497,6 +1858,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1507,6 +1872,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1525,6 +1891,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1532,6 +1902,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1542,6 +1916,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1560,6 +1935,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1567,6 +1946,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1578,6 +1961,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1596,6 +1980,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1603,6 +1991,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1613,6 +2005,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1631,6 +2024,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1638,6 +2035,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1649,6 +2050,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1667,6 +2069,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1674,6 +2080,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1684,6 +2094,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1702,6 +2113,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1710,8 +2125,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
-      endif
 
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+      endif
     end subroutine
 
 
@@ -1720,6 +2138,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1738,6 +2157,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1745,6 +2168,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1755,6 +2182,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1773,6 +2201,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1781,8 +2213,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
-      endif
 
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+      endif
     end subroutine
 
 
@@ -1791,6 +2226,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1809,6 +2245,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1817,8 +2257,11 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
-      endif
 
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+      endif
     end subroutine
 
 
@@ -1827,6 +2270,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1845,6 +2289,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1852,6 +2300,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1863,6 +2315,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1881,6 +2334,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1888,6 +2345,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1898,6 +2359,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1916,6 +2378,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1923,6 +2389,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine
@@ -1934,6 +2404,7 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
 
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
@@ -1952,6 +2423,10 @@ module elpa_gpu
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -1959,6 +2434,10 @@ module elpa_gpu
 
         if (use_gpu_vendor == amd_gpu) then
           call rocblas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
       endif
     end subroutine

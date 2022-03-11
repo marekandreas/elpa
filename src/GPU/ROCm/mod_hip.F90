@@ -738,8 +738,8 @@ module hip_functions
       character(1,C_CHAR),value              :: cta, ctb
       integer(kind=C_INT),value              :: m,n,k
       integer(kind=C_INT), intent(in), value :: lda,ldb,ldc
-      type(c_ptr),value                      :: alpha,beta
-      integer(kind=C_intptr_T), value        :: a, b, c
+      complex(kind=C_DOUBLE_COMPLEX),value   :: alpha,beta
+      type(c_ptr), value                     :: a, b, c
       integer(kind=C_intptr_T), value        :: handle
 
     end subroutine rocblas_zgemm_cptr_c
@@ -1883,7 +1883,7 @@ module hip_functions
         rocblasHandle = rocblasHandleArray(0)
       endif   
 #ifdef WITH_AMD_GPU_VERSION
-      call rocblas_zgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      call rocblas_zgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine rocblas_zgemm_cptr
 

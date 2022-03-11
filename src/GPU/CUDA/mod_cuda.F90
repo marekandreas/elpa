@@ -60,6 +60,7 @@ module cuda_functions
   integer(kind=ik) :: cudaHostRegisterMapped
 
   ! TODO global variable, has to be changed
+  ! especially to have multiply elpa objects 
   integer(kind=C_intptr_T), allocatable :: cublasHandleArray(:)
   integer(kind=C_intptr_T), allocatable :: cusolverHandleArray(:)
   integer(kind=c_int), allocatable      :: cudaDeviceArray(:)

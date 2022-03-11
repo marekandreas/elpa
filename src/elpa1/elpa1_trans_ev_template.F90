@@ -191,11 +191,12 @@ subroutine trans_ev_&
   endif
 
   useIntelGPU = .false.
-  if (useGPU) then
-    if (gpu_vendor() == INTEL_GPU) then
-      useIntelGPU = .true.
-    endif
-  endif
+  !disable for the moment
+  !if (useGPU) then
+  !  if (gpu_vendor() == INTEL_GPU) then
+  !    useIntelGPU = .true.
+  !  endif
+  !endif
 
 
   call obj%timer%start("mpi_communication")
@@ -299,25 +300,41 @@ subroutine trans_ev_&
     !call check_alloc("trans_ev_&
     !&MATH_DATATYPE&
     !&", "hvm1", istat, errorMessage)
-    num = (max_local_rows*max_stored_rows) * size_of_datatype
-    successGPU = gpu_malloc_host(hvm1_host,num)
-    check_alloc_gpu("trans_ev: hvm1_host", successGPU)
-    call c_f_pointer(hvm1_host,hvm1,(/(max_local_rows*max_stored_rows)/))
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      num = (max_local_rows*max_stored_rows) * size_of_datatype
+      successGPU = gpu_malloc_host(hvm1_host,num)
+      check_alloc_gpu("trans_ev: hvm1_host", successGPU)
+      call c_f_pointer(hvm1_host,hvm1,(/(max_local_rows*max_stored_rows)/))
+    else
+      allocate(hvm1(max_local_rows*max_stored_rows))
+    endif
 
-    num = (max_stored_rows*max_stored_rows) * size_of_datatype
-    successGPU = gpu_malloc_host(tmat_host,num)
-    check_alloc_gpu("trans_ev: tmat_host", successGPU)
-    call c_f_pointer(tmat_host,tmat,(/max_stored_rows,max_stored_rows/))
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      num = (max_stored_rows*max_stored_rows) * size_of_datatype
+      successGPU = gpu_malloc_host(tmat_host,num)
+      check_alloc_gpu("trans_ev: tmat_host", successGPU)
+      call c_f_pointer(tmat_host,tmat,(/max_stored_rows,max_stored_rows/))
+    else
+      allocate(tmat(max_stored_rows,max_stored_rows))
+    endif
 
-    num = (max_local_cols*max_stored_rows) * size_of_datatype
-    successGPU = gpu_malloc_host(tmp1_host,num)
-    check_alloc_gpu("trans_ev: tmp1_host", successGPU)
-    call c_f_pointer(tmp1_host,tmp1,(/(max_local_cols*max_stored_rows)/))
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      num = (max_local_cols*max_stored_rows) * size_of_datatype
+      successGPU = gpu_malloc_host(tmp1_host,num)
+      check_alloc_gpu("trans_ev: tmp1_host", successGPU)
+      call c_f_pointer(tmp1_host,tmp1,(/(max_local_cols*max_stored_rows)/))
+    else
+      allocate(tmp1(max_local_cols*max_stored_rows))
+    endif
 
-    num = (max_local_cols*max_stored_rows) * size_of_datatype
-    successGPU = gpu_malloc_host(tmp2_host,num)
-    check_alloc_gpu("trans_ev: tmp2_host", successGPU)
-    call c_f_pointer(tmp2_host,tmp2,(/(max_local_cols*max_stored_rows)/))
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      num = (max_local_cols*max_stored_rows) * size_of_datatype
+      successGPU = gpu_malloc_host(tmp2_host,num)
+      check_alloc_gpu("trans_ev: tmp2_host", successGPU)
+      call c_f_pointer(tmp2_host,tmp2,(/(max_local_cols*max_stored_rows)/))
+    else
+      allocate(tmp2(max_local_cols*max_stored_rows))
+    endif
 
     successGPU = gpu_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_datatype)
     check_alloc_gpu("trans_ev", successGPU)
@@ -331,10 +348,12 @@ subroutine trans_ev_&
     num = ldq * matrixCols * size_of_datatype
     successGPU = gpu_malloc(q_dev, num)
     check_alloc_gpu("trans_ev", successGPU)
-
-    successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),num,&
+  
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
-    check_host_register_gpu("trans_ev: q_mat", successGPU)
+      check_host_register_gpu("trans_ev: q_mat", successGPU)
+    endif
 
     successGPU = gpu_memcpy(q_dev, int(loc(q_mat(1,1)),kind=c_intptr_t), &
                   num, gpuMemcpyHostToDevice)
@@ -706,24 +725,33 @@ subroutine trans_ev_&
                     q_dev, ldq * matrixCols * size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("trans_ev", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
-      check_host_unregister_gpu("trans_ev: q_mat", successGPU)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
+        check_host_unregister_gpu("trans_ev: q_mat", successGPU)
+      endif
 
-      successGPU = gpu_free_host(hvm1_host)
-      check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
-      nullify(hvm1)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        successGPU = gpu_free_host(hvm1_host)
+        check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
+        nullify(hvm1)
 
-      successGPU = gpu_free_host(tmat_host)
-      check_host_dealloc_gpu("trans_ev: tmat_host", successGPU)
-      nullify(tmat)
+        successGPU = gpu_free_host(tmat_host)
+        check_host_dealloc_gpu("trans_ev: tmat_host", successGPU)
+        nullify(tmat)
 
-      successGPU = gpu_free_host(tmp1_host)
-      check_host_dealloc_gpu("trans_ev: tmp1_host", successGPU)
-      nullify(tmp1)
+        successGPU = gpu_free_host(tmp1_host)
+        check_host_dealloc_gpu("trans_ev: tmp1_host", successGPU)
+        nullify(tmp1)
 
-      successGPU = gpu_free_host(tmp2_host)
-      check_host_dealloc_gpu("trans_ev: tmp2_host", successGPU)
-      nullify(tmp2)
+        successGPU = gpu_free_host(tmp2_host)
+        check_host_dealloc_gpu("trans_ev: tmp2_host", successGPU)
+        nullify(tmp2)
+      else
+        deallocate(hvm1)
+        deallocate(tmat)
+        deallocate(tmp1)
+        deallocate(tmp2)
+      endif
 
       !deallocate(hvm1, stat=istat, errmsg=errorMessage)
       !if (istat .ne. 0) then

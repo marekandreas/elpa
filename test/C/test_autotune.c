@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
    C_INT_TYPE mpi_comm;
 
    /* blacs */
-   C_INT_TYPE my_blacs_ctxt, sc_desc[9], info;
+   C_INT_TYPE my_blacs_ctxt, sc_desc[9], info, blacs_ok;
 
    /* The Matrix */
    MATRIX_TYPE *a, *as, *z;
@@ -174,7 +174,17 @@ int main(int argc, char** argv) {
    mpi_comm = 0;
 #endif
    set_up_blacsgrid_f(mpi_comm, np_rows, np_cols, 'C', &my_blacs_ctxt, &my_prow, &my_pcol);
-   set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info);
+   set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info, &blacs_ok);
+
+   if (blacs_ok == 0) {
+     if (myid == 0) {
+       printf("Setting up the blacsgrid failed. Aborting...");
+     }
+#ifdef WITH_MPI
+     MPI_Finalize();
+#endif
+     abort();
+   }
 
    /* allocate the matrices needed for elpa */
    a  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));

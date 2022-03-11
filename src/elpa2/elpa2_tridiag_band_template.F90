@@ -161,11 +161,11 @@ subroutine tridiag_band_&
   gpuString)
 
   useIntelGPU = .false.
-  if (useGPU) then
-    if (gpu_vendor() == INTEL_GPU) then
-      useIntelGPU = .true.
-    endif
-  endif
+  !if (useGPU) then
+  !  if (gpu_vendor() == INTEL_GPU) then
+  !    useIntelGPU = .true.
+  !  endif
+  !endif
 
   call obj%get("nbc_all_elpa2_band_to_tridi", non_blocking_collectives, error)
   if (error .ne. ELPA_OK) then
@@ -612,7 +612,7 @@ subroutine tridiag_band_&
                                     hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
                 if (wantDebug) call obj%timer%stop("mkl_offload")
-              else
+              else ! useIntelGPU
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
                 if (isSkewsymmetric) then
@@ -628,7 +628,7 @@ subroutine tridiag_band_&
                                     hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
                 if (wantDebug) call obj%timer%stop("blas")
-              endif
+              endif ! useIntelGPU
 
 #if REALCASE == 1
               if (.NOT. isSkewsymmetric) then
@@ -658,7 +658,7 @@ subroutine tridiag_band_&
                                   hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
 #endif
                 if (wantDebug) call obj%timer%stop("mkl_offload")
-              else
+              else ! useIntelGPU
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
                 if (isSkewsymmetric) then
@@ -675,7 +675,7 @@ subroutine tridiag_band_&
 #endif
               
                 if (wantDebug) call obj%timer%stop("blas")
-              endif
+              endif ! useIntelGPU
 
               hv_t(:,my_thread) = 0.0_rck
               tau_t(my_thread)  = 0.0_rck
@@ -688,13 +688,13 @@ subroutine tridiag_band_&
                                     ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
                                     ZERO, hs, 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("mkl_offload")
-              else
+              else ! useIntelGPU
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, &
                                     ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
                                     ZERO, hs, 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("blas")
-              endif
+              endif ! useIntelGPU
 
               if (nr>1) then
 
@@ -734,14 +734,14 @@ subroutine tridiag_band_&
                                     tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
                                     hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("mkl_offload")
-              else
+              else ! useIntelGPU
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
                                     int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
                                     tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
                                     hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("blas")
-              endif
+              endif ! useIntelGPU
 
               x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
               h(2:nb) = h(2:nb) - x*hv(2:nb)
@@ -947,7 +947,7 @@ subroutine tridiag_band_&
                                           ZERO, hs, 1_BLAS_KIND)
             if (wantDebug) call obj%timer%stop("mkl_offload")
 
-          else
+          else ! useIntelGPU
             if (wantDebug) call obj%timer%start("blas")
 
 #if REALCASE == 1
@@ -968,7 +968,7 @@ subroutine tridiag_band_&
                                           tau, ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
                                           ZERO, hs, 1_BLAS_KIND)
             if (wantDebug) call obj%timer%stop("blas")
-          endif
+          endif ! useIntelGPU
 
           ! ... then request last column ...
 #ifdef WITH_MPI
@@ -1018,7 +1018,7 @@ subroutine tridiag_band_&
                                         int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
 #endif
             if (wantDebug) call obj%timer%stop("mkl_offload")
-          else
+          else ! use INTELGPU
             if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
             if (isSkewsymmetric) then
@@ -1037,7 +1037,7 @@ subroutine tridiag_band_&
                                         int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
             if (wantDebug) call obj%timer%stop("blas")
           endif
-        endif
+        endif ! useIntelGPU
 
         ! Calculate first column of subdiagonal block and calculate new
         ! Householder transformation for this column
@@ -1165,7 +1165,7 @@ subroutine tridiag_band_&
                                          hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
 #endif
             if (wantDebug) call obj%timer%stop("mkl_offload")
-          else
+          else ! useIntelGPU
             if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
             if (isSkewsymmetric) then 
@@ -1180,9 +1180,9 @@ subroutine tridiag_band_&
                                        hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
 #endif
             if (wantDebug) call obj%timer%stop("blas")
-          endif
+          endif ! useIntelGPU
 
-        else
+        else ! (my_pe>0 .and. iblk==1)
           ! No need to  send, just a rank-2 update
           if (useIntelGPU) then
             if (wantDebug) call obj%timer%start("mkl_offload")
@@ -1200,7 +1200,7 @@ subroutine tridiag_band_&
 #endif
             if (wantDebug) call obj%timer%stop("mkl_offload")
 
-          else
+          else ! useIntelGPU
             if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
             if (isSkewsymmetric) then 
@@ -1215,13 +1215,13 @@ subroutine tridiag_band_&
                                 ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
 #endif
             if (wantDebug) call obj%timer%stop("blas")
-          endif
-        endif
+          endif !useIntelGPU
+        endif  ! (my_pe>0 .and. iblk==1)
 
         ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
-        if (nr>0) then
-          if (nr>1) then
+        if (nr > 0) then
+          if (nr > 1) then
             if (useIntelGPU) then
               if (wantDebug) call obj%timer%start("mkl_offload")
               call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
@@ -1235,13 +1235,13 @@ subroutine tridiag_band_&
 #endif
 #endif
               if (wantDebug) call obj%timer%stop("mkl_offload")
-            else
+            else ! useIntelGPU
               if (wantDebug) call obj%timer%start("blas")
               call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
                                   tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
                                   hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
               if (wantDebug) call obj%timer%stop("blas")
-            endif
+            endif ! useIntelGPU
             x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
             h(2:nb) = h(2:nb) - x*hv(2:nb)
             ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update
@@ -1253,7 +1253,7 @@ subroutine tridiag_band_&
               ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
 #endif
             enddo
-          else
+          else ! nr > 1
             ! No double Householder transformation for nr=1, just complete the row
             do i=2,nb
 #if REALCASE == 1
@@ -1263,8 +1263,8 @@ subroutine tridiag_band_&
               ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
 #endif
             enddo
-          endif
-        endif
+          endif ! nr > 1
+        endif ! nr > 0
 
         ! Use new HH Vector for the next block
         hv(:) = hv_new(:)

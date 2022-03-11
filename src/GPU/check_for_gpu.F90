@@ -47,17 +47,18 @@
 module mod_check_for_gpu
 
   contains
-
-
+    ! TODO: proper cleanup of handles and hanldeArrays
+ 
     ! check_for_gpu could be called at several places during a run of ELPA
     ! for example in cholesky, invert_trm, multiply and of course the solvers
     ! Thus the following logic is implemented
-    ! if use_gpu_id is set -> do according to this settings
+    ! if use_gpu_id is set -> do according to the user settings
     ! if NOT the first call to check_for_gpu will set the MPI GPU relation and then
     ! _SET_ use_gpu_id such that subsequent calls abide this setting
     function check_for_gpu(obj, myid, numberOfDevices, wantDebug) result(gpuAvailable)
       use cuda_functions
       use hip_functions
+      use openmp_offload_functions
       use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray
       use precision
       use elpa_mpi
@@ -65,18 +66,18 @@ module mod_check_for_gpu
       use elpa_abstract_impl
       implicit none
 
-      class(elpa_abstract_impl_t), intent(inout)                         :: obj
-      integer(kind=ik), intent(in)  :: myid
-      logical, optional, intent(in) :: wantDebug
-      logical                       :: success, wantDebugMessage
-      integer(kind=ik), intent(out) :: numberOfDevices
-      integer(kind=ik)              :: deviceNumber, mpierr, maxNumberOfDevices
-      logical                       :: gpuAvailable
-      integer(kind=ik)              :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
-      logical, save                 :: allreadySET=.false.
-      integer(kind=ik)              :: maxThreads, thread
-      integer(kind=c_intptr_t)      :: handle_tmp
-      logical                       :: gpuIsInitialized=.false.
+      class(elpa_abstract_impl_t), intent(inout) :: obj
+      integer(kind=ik), intent(in)               :: myid
+      logical, optional, intent(in)              :: wantDebug
+      logical                                    :: success, wantDebugMessage
+      integer(kind=ik), intent(out)              :: numberOfDevices
+      integer(kind=ik)                           :: deviceNumber, mpierr, maxNumberOfDevices
+      logical                                    :: gpuAvailable
+      integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
+      logical, save                              :: allreadySET=.false.
+      integer(kind=ik)                           :: maxThreads, thread
+      integer(kind=c_intptr_t)                   :: handle_tmp
+      logical                                    :: gpuIsInitialized=.false.
       !character(len=1024)           :: envname
 
       if (.not.(present(wantDebug))) then
@@ -114,16 +115,6 @@ module mod_check_for_gpu
         enddo
       endif
 #endif
-#ifdef WITH_AMD_GPU_VERSION
-      if (.not.(allocated(rocblasHandleArray))) then
-        allocate(rocblasHandleArray(0:maxThreads-1))
-        allocate(gpublasHandleArray(0:maxThreads-1))
-        do thread=0, maxThreads-1
-          roclasHandleArray(thread) = -1
-          gpublasHandleArray(thread) = -1
-        enddo
-      endif
-#endif
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_NVIDIA_CUSOLVER
       if (.not.(allocated(cusolverHandleArray))) then
@@ -134,9 +125,54 @@ module mod_check_for_gpu
       endif
 #endif
 #endif
+#ifdef WITH_AMD_GPU_VERSION
+      if (.not.(allocated(rocblasHandleArray))) then
+        allocate(rocblasHandleArray(0:maxThreads-1))
+        allocate(gpublasHandleArray(0:maxThreads-1))
+        do thread=0, maxThreads-1
+          roclasHandleArray(thread) = -1
+          gpublasHandleArray(thread) = -1
+        enddo
+      endif
+#endif
+!#ifdef WITH_AMD_GPU_VERSION
+!#ifdef WITH_AMD_CUSOLVER
+!      if (.not.(allocated(cusolverHandleArray))) then
+!        allocate(cusolverHandleArray(0:maxThreads-1))
+!        do thread=0, maxThreads-1
+!          cusolverHandleArray(thread) = -1
+!        enddo
+!      endif
+!#endif
+!#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (.not.(allocated(openmpOffloadHandleArray))) then
+        allocate(openmpOffloadHandleArray(0:maxThreads-1))
+        allocate(gpublasHandleArray(0:maxThreads-1))
+        do thread=0, maxThreads-1
+          openmpOffloadHandleArray(thread) = -1
+          gpublasHandleArray(thread) = -1
+        enddo
+      endif
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+      if (.not.(allocated(openmpOffloadsolverHandleArray))) then
+        allocate(openmpOffloadsolverHandleArray(0:maxThreads-1))
+        do thread=0, maxThreads-1
+          openmpOffloadsolverHandleArray(thread) = -1
+        enddo
+      endif
+#endif
+#endif
 
       if (obj%is_set("use_gpu_id") == 1) then
         call obj%get("use_gpu_id", use_gpu_id, error)
+        if (error .ne. ELPA_OK) then
+          print *,"check_for_gpu: cannot querry use_gpu_id. Aborting..."
+          stop
+        endif
+
         if (use_gpu_id == -99) then
           print *,"Problem you did not set which gpu id this task should use"
         endif
@@ -185,12 +221,28 @@ module mod_check_for_gpu
             enddo
           endif
 #endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+          if (.not.(allocated(openmpOffloadDeviceArray))) then
+            allocate(openmpOffloadDeviceArray(0:maxThreads-1))
+            allocate(gpuDeviceArray(0:maxThreads-1))
+            success = openmp_offload_setdevice(use_gpu_id)
+            do thread=0,maxThreads-1
+              openmpOffloadDeviceArray(thread) = use_gpu_id
+              gpuDeviceArray(thread) = use_gpu_id
+            enddo
+          endif
+#endif
+
+
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
             print *,"Cannot set CudaDevice"
 #endif
 #ifdef WITH_AMD_GPU_VERSION
             print *,"Cannot set HIPDevice"
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+            print *,"Cannot set openmpOffloadDevice"
 #endif
             stop 1
           endif
@@ -212,12 +264,22 @@ module mod_check_for_gpu
             rocblasHandleArray(thread) = handle_tmp
             gpublasHandleArray(thread) = handle_tmp
 #endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+            handle_tmp = 0
+            ! not needed dummy call
+            success = openmp_offload_blas_create(handle_tmp)
+            openmpOffloadHandleArray(thread) = handle_tmp
+            gpublasHandleArray(thread) = handle_tmp
+#endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
               print *,"Cannot create cublas handle"
 #endif
 #ifdef WITH_AMD_GPU_VERSION
               print *,"Cannot create rocblas handle"
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+              print *,"Cannot create openmpOffloadblas handle"
 #endif
               stop 1
             endif
@@ -235,6 +297,31 @@ module mod_check_for_gpu
           enddo
 #endif
 #endif
+!#ifdef WITH_AMD_GPU_VERSION
+!#ifdef WITH_AMD_CUSOLVER
+!          do thread=0, maxThreads-1
+!            success = cusolver_create(handle_tmp)
+!            cusolverHandleArray(thread) = handle_tmp
+!            if (.not.(success)) then
+!              print *,"Cannot create cusolver handle"
+!              stop 1
+!            endif
+!          enddo
+!#endif
+!#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+          do thread=0, maxThreads-1
+            success = openmp_offload_solver_create(handle_tmp)
+            openmpOffloadsolverHandleArray(thread) = handle_tmp
+            if (.not.(success)) then
+              print *,"Cannot create openmpOffloadsolver handle"
+              stop 1
+            endif
+          enddo
+#endif
+#endif
+
         endif ! alreadySET
         gpuIsInitialized = .true.
 
@@ -260,8 +347,11 @@ module mod_check_for_gpu
         success = cuda_getdevicecount(numberOfDevices)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
         success = hip_getdevicecount(numberOfDevices)
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        numberOfDevices = openmp_offload_getdevicecount()
+        success = .true.
 #endif
         if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -270,18 +360,22 @@ module mod_check_for_gpu
 #ifdef WITH_AMD_GPU_VERSION
           print *,"error in hip_getdevicecount"
 #endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+          print *,"error in openmp_offload_getdevicecount"
+#endif
           stop 1
         endif
-#ifdef  WITH_INTEL_GPU_VERSION
-        gpuAvailable = .false.
-        numberOfDevices = -1
 
-        numberOfDevices = 1
-        print *,"Manually setting",numberOfDevices," of GPUs"
-        if (numberOfDevices .ge. 1) then
-          gpuAvailable = .true.
-        endif
-#endif
+!#ifdef  WITH_INTEL_GPU_VERSION
+!        gpuAvailable = .false.
+!        numberOfDevices = -1
+!
+!        numberOfDevices = 1
+!        print *,"Manually setting",numberOfDevices," of GPUs"
+!        if (numberOfDevices .ge. 1) then
+!          gpuAvailable = .true.
+!        endif
+!#endif
 
 
         ! make sure that all nodes have the same number of GPU's, otherwise
@@ -330,6 +424,17 @@ module mod_check_for_gpu
             enddo
           endif
 #endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+          if (.not.(allocated(openmpOffloadDeviceArray))) then
+            allocate(openmpOffloadDeviceArray(0:maxThreads-1))
+            allocate(gpuDeviceArray(0:maxThreads-1))
+            success = openmp_offload_setdevice(deviceNumber)
+            do thread=0,maxThreads-1
+              openmpOffloadDeviceArray(thread) = deviceNumber
+              gpuDeviceArray(thread) = deviceNumber
+            enddo
+          endif
+#endif
 
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -338,20 +443,27 @@ module mod_check_for_gpu
 #ifdef WITH_AMD_GPU_VERSION
             print *,"Cannot set hipDevice"
 #endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+            print *,"Cannot set hipDevice"
+#endif
             stop 1
           endif
-          if (wantDebugMessage) then
+          !if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
-          endif
+          !endif
 
-          call obj%set("use_gpu_id",deviceNumber)
+          call obj%set("use_gpu_id",deviceNumber, error)
+          if (error .ne. ELPA_OK) then
+            print *,"Cannot set use_gpu_id. Aborting..."
+            stop
+          endif
           allreadySET = .true.
 
 
           ! handle creation
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
-            print *,"Creating handle for thread:",thread
+            !print *,"Creating handle for thread:",thread
             success = cublas_create(handle_tmp)
             cublasHandleArray(thread) = handle_tmp
             gpublasHandleArray(thread) = handle_tmp
@@ -361,12 +473,20 @@ module mod_check_for_gpu
             rocblasHandleArray(thread) = handle_tmp
             gpublasHandleArray(thread) = handle_tmp
 #endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+            success = openmp_offload_blas_create(handle_tmp)
+            openmpOffloadHandleArray(thread) = handle_tmp
+            gpublasHandleArray(thread) = handle_tmp
+#endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
               print *,"Cannot create cublas handle"
 #endif
 #ifdef WITH_AMD_GPU_VERSION
               print *,"Cannot create rocblas handle"
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+              print *,"Cannot create openmpOffloadblas handle"
 #endif
               stop 1
             endif
@@ -379,6 +499,30 @@ module mod_check_for_gpu
             cusolverHandleArray(thread) = handle_tmp
             if (.not.(success)) then
               print *,"Cannot create cusolver handle"
+              stop 1
+            endif
+          enddo
+#endif
+#endif
+!#ifdef WITH_AMD_GPU_VERSION
+!#ifdef WITH_AMD_CUSOLVER
+!          do thread=0, maxThreads-1
+!            success = cusolver_create(handle_tmp)
+!            cusolverHandleArray(thread) = handle_tmp
+!            if (.not.(success)) then
+!              print *,"Cannot create cusolver handle"
+!              stop 1
+!            endif
+!          enddo
+!#endif
+!#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+          do thread=0, maxThreads-1
+            success = openmp_offload_solver_create(handle_tmp)
+            openmpOffloadsolverHandleArray(thread) = handle_tmp
+            if (.not.(success)) then
+              print *,"Cannot create openmpOffloadsolver handle"
               stop 1
             endif
           enddo

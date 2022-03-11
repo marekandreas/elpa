@@ -124,6 +124,9 @@ int amd_gpu_count();
 #ifdef WITH_INTEL_GPU_VERSION
 //missing function for GPU count
 #endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+//missing function for GPU count
+#endif
 
 static int use_gpu_id_cardinality(elpa_index_t index);
 static int use_gpu_id_enumerate(elpa_index_t index, int i);
@@ -879,7 +882,10 @@ static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
 #ifdef WITH_INTEL_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
-#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION)
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION) && !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
 		// intel missing
@@ -936,7 +942,10 @@ static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
 #ifdef WITH_INTEL_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
-#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION)
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION) && !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
 		// intel missing
@@ -1016,7 +1025,7 @@ static int amd_gpu_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 static int intel_gpu_is_valid(elpa_index_t index, int n, int new_value) {
-#ifdef WITH_INTEL_GPU_VERSION
+#if defined(WITH_INTEL_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
         return new_value == 0 || new_value == 1;
 #else
         return new_value == 0;
@@ -1300,6 +1309,8 @@ static int use_gpu_id_cardinality(elpa_index_t index) {
 	return count;
 #elif WITH_INTEL_GPU_VERSION
 	return 0;
+#elif WITH_OPENMP_OFFLOAD_GPU_VERSION
+	return 0;
 #else
 	return 0;
 #endif
@@ -1331,7 +1342,9 @@ static int use_gpu_id_is_valid(elpa_index_t index, int n, int new_value) {
 	}
 
 #elif WITH_INTEL_GPU_VERSION
-	return 0 == 1;
+	return 0 == 0;
+#elif WITH_OPENMP_OFFLOAD_GPU_VERSION
+	return 0 == 0;
 #else
 	return 0 == 0;
 #endif

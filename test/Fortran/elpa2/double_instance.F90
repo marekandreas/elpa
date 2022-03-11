@@ -78,10 +78,10 @@ program test_interface
    TEST_INT_TYPE :: na_cols, na_rows  ! local matrix size
    TEST_INT_TYPE :: np_cols, np_rows  ! number of MPI processes per column/row
    TEST_INT_TYPE :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   TEST_INT_MPI_TYPE :: mpierr
+   TEST_INT_MPI_TYPE :: mpierr, blacs_ok_mpi
 
    ! blacs
-   TEST_INT_TYPE :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
 
    ! The Matrix
    real(kind=C_DOUBLE), allocatable :: a1(:,:), as1(:,:)
@@ -131,7 +131,24 @@ program test_interface
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
-                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
+#ifdef WITH_MPI
+   call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+   blacs_ok = int(blacs_ok_mpi, kind=c_int64_t)
+#else
+   blacs_ok = int(blacs_ok_mpi, kind=c_int32_t)
+#endif
+#endif
+   if (blacs_ok .eq. 0) then
+     if (myid .eq. 0) then
+       print *," Ecountered critical error when setting up blacs. Aborting..."
+     endif
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop
+   endif
 
    allocate(a1 (na_rows,na_cols), as1(na_rows,na_cols))
    allocate(z1 (na_rows,na_cols))

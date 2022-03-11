@@ -162,27 +162,27 @@ program test
    implicit none
 
    ! matrix dimensions
-   TEST_INT_TYPE     :: na, nev, nblk
+   TEST_INT_TYPE                       :: na, nev, nblk
 
    ! mpi
-   TEST_INT_TYPE     :: myid, nprocs
-   TEST_INT_MPI_TYPE :: myidMPI, nprocsMPI
-   TEST_INT_TYPE     :: na_cols, na_rows  ! local matrix size
-   TEST_INT_TYPE     :: np_cols, np_rows  ! number of MPI processes per column/row
-   TEST_INT_TYPE     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
-   TEST_INT_MPI_TYPE :: mpierr
+   TEST_INT_TYPE                       :: myid, nprocs
+   TEST_INT_MPI_TYPE                   :: myidMPI, nprocsMPI
+   TEST_INT_TYPE                       :: na_cols, na_rows  ! local matrix size
+   TEST_INT_TYPE                       :: np_cols, np_rows  ! number of MPI processes per column/row
+   TEST_INT_TYPE                       :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
+   TEST_INT_MPI_TYPE                   :: mpierr, blacs_ok_mpi
 
    ! blacs
-   TEST_INT_TYPE     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE                       :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
 
    ! The Matrix
    MATRIX_TYPE, allocatable, target    :: a(:,:)
-   MATRIX_TYPE, allocatable           :: as(:,:)
+   MATRIX_TYPE, allocatable            :: as(:,:)
 #if defined(TEST_HERMITIAN_MULTIPLY)
    MATRIX_TYPE, allocatable, target    :: b(:,:), c(:,:)
 #endif
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-   MATRIX_TYPE, allocatable    :: b(:,:), bs(:,:)
+   MATRIX_TYPE, allocatable            :: b(:,:), bs(:,:)
 #endif
    ! eigenvectors
    MATRIX_TYPE, allocatable, target    :: z(:,:)
@@ -190,50 +190,50 @@ program test
    EV_TYPE, allocatable, target        :: ev(:)
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
-   type(c_ptr)                :: a_dev, q_dev, ev_dev, b_dev, c_dev
+   type(c_ptr)                         :: a_dev, q_dev, ev_dev, b_dev, c_dev
 #endif
 
 
-   logical                     :: check_all_evals, skip_check_correctness
+   logical                             :: check_all_evals, skip_check_correctness
 
 #if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
-   EV_TYPE, allocatable        :: d(:), sd(:), ds(:), sds(:)
-   EV_TYPE                     :: diagonalELement, subdiagonalElement
+   EV_TYPE, allocatable                :: d(:), sd(:), ds(:), sds(:)
+   EV_TYPE                             :: diagonalELement, subdiagonalElement
 #endif
 
-   TEST_INT_TYPE               :: status
-   integer(kind=c_int)         :: error_elpa
+   TEST_INT_TYPE                       :: status
+   integer(kind=c_int)                 :: error_elpa
 
-   type(output_t)              :: write_to_file
-   class(elpa_t), pointer      :: e
+   type(output_t)                      :: write_to_file
+   class(elpa_t), pointer              :: e
 #ifdef TEST_ALL_KERNELS
-   TEST_INT_TYPE      :: i
+   TEST_INT_TYPE                       :: i
 #endif
 #ifdef TEST_ALL_LAYOUTS
-   TEST_INT_TYPE      :: i_layout
+   TEST_INT_TYPE                       :: i_layout
 #ifdef BUILD_FUGAKU
-   character(len=1) :: layouts(2)
+   character(len=1)                    :: layouts(2)
 #else
-   character(len=1), parameter :: layouts(2) = [ 'C', 'R' ]
+   character(len=1), parameter         :: layouts(2) = [ 'C', 'R' ]
 #endif
 #endif
-   integer(kind=c_int):: kernel
-   character(len=1)   :: layout
-   logical            :: do_test_numeric_residual, do_test_numeric_residual_generalized, &
-                         do_test_analytic_eigenvalues, &
-                         do_test_analytic_eigenvalues_eigenvectors,   &
-                         do_test_frank_eigenvalues,  &
-                         do_test_toeplitz_eigenvalues, do_test_cholesky,   &
-                         do_test_hermitian_multiply
-   logical            :: ignoreError, success, successGPU
+   integer(kind=c_int)                 :: kernel
+   character(len=1)                    :: layout
+   logical                             :: do_test_numeric_residual, do_test_numeric_residual_generalized, &
+                                          do_test_analytic_eigenvalues, &
+                                          do_test_analytic_eigenvalues_eigenvectors,   &
+                                          do_test_frank_eigenvalues,  &
+                                          do_test_toeplitz_eigenvalues, do_test_cholesky,   &
+                                          do_test_hermitian_multiply
+   logical                             :: ignoreError, success, successGPU
 #ifdef WITH_OPENMP_TRADITIONAL
-   TEST_INT_TYPE      :: max_threads, threads_caller
+   TEST_INT_TYPE                       :: max_threads, threads_caller
 #endif
 #if TEST_GPU_SET_ID == 1
-   TEST_INT_TYPE      :: gpuID
+   TEST_INT_TYPE                       :: gpuID
 #endif
 #ifdef SPLIT_COMM_MYSELF
-   TEST_INT_MPI_TYPE  :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
+   TEST_INT_MPI_TYPE                   :: mpi_comm_rows, mpi_comm_cols, mpi_string_length, mpierr2
    character(len=MPI_MAX_ERROR_STRING) :: mpierr_string
 #endif
 
@@ -241,19 +241,19 @@ program test
 #if TEST_GPU_DEVICE_POINTER_API == 1
 #if TEST_REAL == 1
 #if TEST_DOUBLE
-   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_double_real
+   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_double_real
 #endif
 #if TEST_SINGLE
-   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_single_real
+   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_single_real
 #endif
 #endif /* TEST_REAL == 1 */
 
 #if TEST_COMPLEX == 1
 #if TEST_DOUBLE
-   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_double_complex
+   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_double_complex
 #endif
 #if TEST_SINGLE
-   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_single_complex
+   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_single_complex
 #endif
 #endif
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
@@ -314,6 +314,13 @@ program test
      do np_cols = 1, nprocs                     ! factors
        if (mod(nprocs,np_cols) /= 0 ) then
          cycle
+       endif
+       
+       if (nprocs .gt. 20) then
+         np_rows = nprocs/np_cols
+         if (np_rows .eq. 1 .or. np_cols .eq. 1) then
+           cycle
+         endif
        endif
 #else
    layout = 'C'
@@ -405,7 +412,32 @@ program test
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
                                 np_rows, np_cols, &
-                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
+#ifdef WITH_MPI
+   call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+   blacs_ok = int(blacs_ok_mpi, kind=c_int64_t)
+#else
+   blacs_ok = int(blacs_ok_mpi, kind=c_int32_t)
+#endif
+#endif
+
+   if (blacs_ok .eq. 0) then
+#ifdef TEST_ALL_LAYOUTS
+     if (myid .eq. 0) then
+       print *," Current layout not supported by the blacsgrid. Skipping..."
+     endif
+     continue
+#else
+     if (myid .eq. 0) then
+       print *," Ecountered critical error when setting up blacs. Aborting..."
+     endif
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop
+#endif
+   endif
 
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -684,8 +716,10 @@ program test
 
    if (layout .eq. 'C') then
      call e%set("matrix_order",COLUMN_MAJOR_ORDER,error_elpa)
+     assert_elpa_ok(error_elpa)
    else
      call e%set("matrix_order",ROW_MAJOR_ORDER,error_elpa)
+     assert_elpa_ok(error_elpa)
    endif
 
 #ifdef WITH_MPI
@@ -733,10 +767,11 @@ program test
 
 #ifdef TEST_SOLVER_1STAGE
    call e%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
+   assert_elpa_ok(error_elpa)
 #else
    call e%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
-#endif
    assert_elpa_ok(error_elpa)
+#endif
 
 #if TEST_NVIDIA_GPU == 1
    call e%set("nvidia-gpu", TEST_GPU, error_elpa)
@@ -756,8 +791,8 @@ program test
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0)
    ! simple test
    ! Can (and should) fail often
-   !gpuID = mod(myid,2)
-   gpuID = mod(myid,1)
+   gpuID = mod(myid,2)
+   !gpuID = mod(myid,1)
    call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
@@ -1017,20 +1052,25 @@ program test
      call solve_scalapack_part(na, a, sc_desc, nev, ev, z)
      check_all_evals = .false. ! scalapack does not compute all eigenvectors
 #else /* TEST_SCALAPACK_PART */
+
 #ifdef TEST_EXPLICIT_NAME
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
 #if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
      call e%eigenvectors_double(a_dev, ev_dev, q_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #else
      call e%eigenvectors_double(a, ev, z, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
      call e%eigenvectors_float(a_dev, ev_dev, q_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #else
      call e%eigenvectors_float(a, ev, z, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_REAL */
@@ -1038,20 +1078,25 @@ program test
 #if defined(TEST_DOUBLE)
 #if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
      call e%eigenvectors_double_complex(a_dev, ev_dev, q_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #else
      call e%eigenvectors_double_complex(a, ev, z, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
      call e%eigenvectors_float_complex(a_dev, ev_dev, q_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #else
      call e%eigenvectors_float_complex(a, ev, z, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_COMPLEX */
 #else /* TEST_EXPLICIT_NAME */
      call e%eigenvectors(a, ev, z, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif /* TEST_EXPLICIT_NAME */
 #endif /* TEST_SCALAPACK_PART */
 #if TEST_QR_DECOMPOSITION == 1
@@ -1067,28 +1112,34 @@ program test
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
      call e%eigenvalues_double(a, ev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #if defined(TEST_SINGLE)
      call e%eigenvalues_float(a, ev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_REAL */
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
      call e%eigenvalues_double_complex(a, ev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #if defined(TEST_SINGLE)
      call e%eigenvalues_float_complex(a, ev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif
 #else /* TEST_EXPLICIT_NAME */
      call e%eigenvalues(a, ev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif /* TEST_EXPLICIT_NAME */
      call e%timer_stop("e%eigenvalues()")
-#endif
+#endif /* TEST_EIGENVALUES */
 
 #if defined(TEST_SOLVE_TRIDIAGONAL)
      call e%timer_start("e%solve_tridiagonal()")
      call e%solve_tridiagonal(d, sd, z, error_elpa)
+     assert_elpa_ok(error_elpa)
      call e%timer_stop("e%solve_tridiagonal()")
      ev(:) = d(:)
 #endif
@@ -1101,25 +1152,29 @@ program test
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
      call e%cholesky_double(a_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #if defined(TEST_SINGLE)
      call e%cholesky_float(a_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_REAL */
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
      call e%cholesky_double_complex(a_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #if defined(TEST_SINGLE)
      call e%cholesky_float_complex(a_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_REAL */
 
 
 #else /* TEST_GPU_DEVICE_POINTER_API */
      call e%cholesky(a, error_elpa)
-#endif /* TEST_GPU_DEVICE_POINTER_API */
      assert_elpa_ok(error_elpa)
+#endif /* TEST_GPU_DEVICE_POINTER_API */
      call e%timer_stop("e%cholesky()")
 #endif /* TEST_CHOLESKY */
 
@@ -1131,11 +1186,13 @@ program test
      call e%hermitian_multiply_double('F','F', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                                int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
                                int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #if defined(TEST_SINGLE)
      call e%hermitian_multiply_float('F','F', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                                int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
                                int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_REAL */
 #if defined(TEST_COMPLEX)
@@ -1143,17 +1200,20 @@ program test
      call e%hermitian_multiply_double_complex('F','F', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                                int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
                                int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #if defined(TEST_SINGLE)
      call e%hermitian_multiply_float_complex('F','F', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                                int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
                                int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_COMPLEX */
 #else /* TEST_GPU_DEVICE_POINTER_API */
      call e%hermitian_multiply('F','F', int(na,kind=c_int), a, b, int(na_rows,kind=c_int), &
                                int(na_cols,kind=c_int), c, int(na_rows,kind=c_int),        &
                                int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
 #endif /* TEST_GPU_DEVICE_POINTER_API */
      call e%timer_stop("e%hermitian_multiply()")
 #endif /* TEST_HERMITIAN_MULTIPLY */
@@ -1164,17 +1224,17 @@ program test
      call e%timer_start("is_already_decomposed=.false.")
 #endif
      call e%generalized_eigenvectors(a, b, ev, z, .false., error_elpa)
+     assert_elpa_ok(error_elpa)
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      call e%timer_stop("is_already_decomposed=.false.")
      a = as
      call e%timer_start("is_already_decomposed=.true.")
      call e%generalized_eigenvectors(a, b, ev, z, .true., error_elpa)
+     assert_elpa_ok(error_elpa)
      call e%timer_stop("is_already_decomposed=.true.")
 #endif
      call e%timer_stop("e%generalized_eigenvectors()")
 #endif
-
-     assert_elpa_ok(error_elpa)
 
 #ifdef TEST_ALL_KERNELS
      call e%timer_stop(elpa_int_value_to_string(KERNEL_KEY, kernel))
