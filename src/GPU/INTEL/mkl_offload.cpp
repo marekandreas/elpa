@@ -59,6 +59,7 @@
 //#include <omp.h>
 #endif
 
+#if 0
 //#define MKL_Complex16 std::complex<double>
 //#define MKL_Complex8 std::complex<float>
 
@@ -500,3 +501,4 @@ void mkl_offload_ctrmm_c(char side, char uplo, char trans, char diag, int m, int
 #endif /*  WANT_SINGLE_PRECISION_COMPLEX */
 
 }
+#endif

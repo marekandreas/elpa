@@ -46,6 +46,8 @@
 // by A. Poeppl, Intel (2022) 
 */
 
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+
 #include <mkl.h>
 #include <mkl_omp_offload.h>
 
@@ -356,3 +358,4 @@ extern "C" {
 
 
 }
+#endif /* WITH_OPENMP_OFFLOAD_GPU_VERSION */

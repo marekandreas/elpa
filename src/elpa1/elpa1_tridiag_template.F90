@@ -344,6 +344,7 @@ subroutine tridiag_&
       &MATH_DATATYPE ", "u_row", istat, errorMessage)
     else ! useIntelGPU
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
         num = (max_local_rows+1) * size_of_datatype
         successGPU = gpu_malloc_host(v_row_host, num)
@@ -410,6 +411,7 @@ subroutine tridiag_&
                         gpuHostRegisterDefault)
         check_host_register_gpu("tridiag: d_vec", successGPU)
       endif
+#endif
     endif ! useIntelGPU
   else ! useGPU
     allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
@@ -497,12 +499,13 @@ subroutine tridiag_&
     successGPU = gpu_malloc(a_dev, num)
     check_alloc_gpu("tridiag: a_dev", successGPU)
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_host_register(int(loc(a_mat),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: a_mat", successGPU)
     endif
-
+#endif
     successGPU = gpu_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
     check_memcpy_gpu("tridiag: a_dev", successGPU)
@@ -712,6 +715,7 @@ subroutine tridiag_&
     u_row(1:l_rows) = 0
     if (l_rows > 0 .and. l_cols> 0 ) then
      if (useGPU .and. .not.(useIntelGPU)) then
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
          successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
          check_memcpy_gpu("tridiag: u_col_dev", successGPU)
@@ -733,7 +737,7 @@ subroutine tridiag_&
 
          deallocate(u_row_debug)
        endif
-
+#endif
        successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
                      l_cols * size_of_datatype, gpuMemcpyHostToDevice)
 
@@ -1521,7 +1525,7 @@ subroutine tridiag_&
      check_deallocate("tridiag: v_row, v_col, u_row, u_col", istat, errorMessage)
     else ! useIntelGPU
 
-
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
         successGPU = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
         check_host_unregister_gpu("tridiag: a_mat", successGPU)
@@ -1563,6 +1567,7 @@ subroutine tridiag_&
         successGPU = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
         check_host_unregister_gpu("tridiag: d_vec", successGPU)
       endif
+#endif
     endif ! useIntelGPU
   else ! useGPU
     deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)

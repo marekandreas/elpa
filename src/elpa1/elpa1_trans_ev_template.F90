@@ -300,6 +300,7 @@ subroutine trans_ev_&
     !call check_alloc("trans_ev_&
     !&MATH_DATATYPE&
     !&", "hvm1", istat, errorMessage)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       num = (max_local_rows*max_stored_rows) * size_of_datatype
       successGPU = gpu_malloc_host(hvm1_host,num)
@@ -335,7 +336,7 @@ subroutine trans_ev_&
     else
       allocate(tmp2(max_local_cols*max_stored_rows))
     endif
-
+#endif
     successGPU = gpu_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_datatype)
     check_alloc_gpu("trans_ev", successGPU)
 
@@ -349,12 +350,13 @@ subroutine trans_ev_&
     successGPU = gpu_malloc(q_dev, num)
     check_alloc_gpu("trans_ev", successGPU)
   
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
       check_host_register_gpu("trans_ev: q_mat", successGPU)
     endif
-
+#endif
     successGPU = gpu_memcpy(q_dev, int(loc(q_mat(1,1)),kind=c_intptr_t), &
                   num, gpuMemcpyHostToDevice)
     check_memcpy_gpu("trans_ev", successGPU)
@@ -725,6 +727,7 @@ subroutine trans_ev_&
                     q_dev, ldq * matrixCols * size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("trans_ev", successGPU)
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
         successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
         check_host_unregister_gpu("trans_ev: q_mat", successGPU)
@@ -752,7 +755,7 @@ subroutine trans_ev_&
         deallocate(tmp1)
         deallocate(tmp2)
       endif
-
+#endif
       !deallocate(hvm1, stat=istat, errmsg=errorMessage)
       !if (istat .ne. 0) then
       !  print *,"trans_ev_&

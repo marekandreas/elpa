@@ -94,10 +94,19 @@ function elpa_solve_evp_&
 #endif /* DEVICE_POINTER */
 
    use precision
+#ifdef WITH_NVIDIA_GPU_VERSION
    use cuda_functions
+#endif
+#ifdef WITH_AMD_GPU_VERSION
    use hip_functions
+#endif
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+   use openmp_offload_functions
+#endif
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
    use elpa_gpu
    use mod_check_for_gpu
+#endif
    use, intrinsic :: iso_c_binding
    use elpa_abstract_impl
    use elpa_mpi
@@ -234,10 +243,13 @@ function elpa_solve_evp_&
    integer(kind=ik)                                :: gpu_old, gpu_new
 
    logical                                         :: successGPU
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
    integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
                                                                       &PRECISION&
                                                                       &_&
                                                                       &MATH_DATATYPE
+#endif
 
 #ifdef ACTIVATE_SKEW
    call obj%timer%start("elpa_solve_skew_evp_&
@@ -257,10 +269,12 @@ function elpa_solve_evp_&
 
    wantDebug = debug == 1
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     ! check legacy GPU setings
 #define GPU_SOLVER ELPA1
 #include "../GPU/check_legacy_gpu_setting_template.F90"
 #undef GPU_SOLVER
+#endif
     do_useGPU = .false.     
 
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
@@ -275,6 +289,8 @@ function elpa_solve_evp_&
     ! openmp setting
 #include "../helpers/elpa_openmp_settings_template.F90"
 
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
    if (useGPU) then
      call obj%timer%start("check_for_gpu")
 
@@ -300,7 +316,8 @@ function elpa_solve_evp_&
      endif
 #endif
      call obj%timer%stop("check_for_gpu")
-   endif
+   endif ! useGPU
+#endif
 
 
    do_useGPU_tridiag = do_useGPU
@@ -388,6 +405,9 @@ print *,"Device pointer + REDIST"
 #endif
    endif
 #endif /* REDISTRIBUTE_MATRIX */
+
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
    !TODO: intel gpu
    ! in case of devcice pointer _AND_ redistribute
    ! 1. copy aExtern to aIntern_dummy
@@ -396,6 +416,8 @@ print *,"Device pointer + REDIST"
    successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &
                              gpuMemcpyDeviceToHost)
    check_memcpy_gpu("elpa1: aExtern -> aIntern", successGPU)
+#endif
+
 
 #else /* DEVICE_POINTER */
 
@@ -849,6 +871,8 @@ print *,"Device pointer + REDIST"
 #if defined(DEVICE_POINTER) || defined(REDISTRIBUTE_MATRIX)
 
 #ifdef DEVICE_POINTER
+  
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
    !copy qIntern and ev to provided device pointers
    successGPU = gpu_memcpy(qExtern, c_loc(qIntern(1,1)), matrixRows*matrixCols*size_of_datatype, &
                              gpuMemcpyHostToDevice)
@@ -856,6 +880,7 @@ print *,"Device pointer + REDIST"
    successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_datatype, &
                              gpuMemcpyHostToDevice)
    check_memcpy_gpu("elpa1: ev -> evExtern", successGPU)
+#endif
 #endif
 
 #if defined(REDISTRIBUTE_MATRIX)

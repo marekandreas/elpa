@@ -648,35 +648,40 @@
 
         if (useGPU .and. .not.(useIntelGPU) ) then
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
             successGPU = gpu_host_register(int(loc(qtmp1),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
             check_host_register_gpu("merge_systems: qtmp1", successGPU)
           endif
+#endif
 
           successGPU = gpu_malloc(qtmp1_dev, num)
           check_alloc_gpu("merge_systems: qtmp1_dev", successGPU)
 
           num = (gemm_dim_l * gemm_dim_m) * size_of_datatype
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
             successGPU = gpu_host_register(int(loc(ev),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
             check_host_register_gpu("merge_systems: ev", successGPU)
           endif
-
+#endif
           successGPU = gpu_malloc(ev_dev, num)
           check_alloc_gpu("merge_systems: ev_dev", successGPU)
 
 
           num = (gemm_dim_k * gemm_dim_m) * size_of_datatype
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
             successGPU = gpu_host_register(int(loc(qtmp2),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
             check_host_register_gpu("merge_systems: qtmp2", successGPU)
           endif
+#endif
           successGPU = gpu_malloc(qtmp2_dev, num)
           check_alloc_gpu("merge_systems: qtmp2_dev", successGPU)
-        endif
+        endif !useGPU
 
         !if (useIntelGPU) then
         !  ! needed later
@@ -951,27 +956,33 @@
         enddo    !do np = 1, npc_n
 
         if (useGPU .and. .not.(useIntelGPU) ) then
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
             successGPU = gpu_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
             check_host_unregister_gpu("merge_systems: qtmp1", successGPU)
           endif
+#endif
           successGPU = gpu_free(qtmp1_dev)
           check_dealloc_gpu("merge_systems: qtmp1_dev", successGPU)
           
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
             successGPU = gpu_host_unregister(int(loc(qtmp2),kind=c_intptr_t))
             check_host_unregister_gpu("merge_systems: qtmp2", successGPU)
           endif
+#endif
           successGPU = gpu_free(qtmp2_dev)
           check_dealloc_gpu("merge_systems: qtmp2_dev", successGPU)
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
             successGPU = gpu_host_unregister(int(loc(ev),kind=c_intptr_t))
             check_host_unregister_gpu("merge_systems: ev", successGPU)
           endif
+#endif
           successGPU = gpu_free(ev_dev)
           check_dealloc_gpu("merge_systems: ev_dev", successGPU)
-        endif
+        endif ! useGPU
         !if (useIntelGPU) then
         !  ! needed later
         !endif
