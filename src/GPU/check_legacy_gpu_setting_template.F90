@@ -139,6 +139,7 @@
 #include "../elpa1/elpa1_aborting_template.F90"
 #endif
       endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
     else if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
       call obj%get("intel-gpu", gpu, error)
       if (error .ne. ELPA_OK) then
@@ -150,6 +151,7 @@
 #include "../elpa1/elpa1_aborting_template.F90"
 #endif
       endif
+#endif /* WITH_OPENMP_OFFLOAD_GPU_VERSION */
     else ! no supported gpu
       gpu = 0
     endif

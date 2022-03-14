@@ -1239,13 +1239,15 @@ print *,"Device pointer + REDIST"
      if (do_trans_to_band) then
 
        !debug
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
        if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
          if (do_useGPU_trans_ev_tridi_to_band) then
            do_useGPU_trans_ev_tridi_to_band = .false.
            kernel = DEFAULT_KERNEL
            write(error_unit,*) "Disabling GPU kernel for OPENMP_OFFLOAD_GPU"
          endif
-       endif 
+       endif
+#endif
        call obj%autotune_timer%start("tridi_to_band")
        call obj%timer%start("tridi_to_band")
 #ifdef HAVE_LIKWID

@@ -221,12 +221,15 @@ last_stripe_width, kernel)
 #endif
   endif
 
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
   if (useGPU) then
     if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
       print *, "no offlad kernels yet implemented"
      stop
    endif
   endif
+#endif
+
   ! intel missing
 #if REALCASE == 1
   if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. &
