@@ -798,7 +798,9 @@ print *,"Device pointer + REDIST"
              &_&
              &PRECISION&
              & (obj, na, nev, a, matrixRows, tau, q(1:matrixRows, matrixCols+1:2*matrixCols), matrixRows, nblk, matrixCols, &
-                mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+                mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev, success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in trans_ev. Aborting..."
        endif
 
 #ifdef WITH_NVTX
