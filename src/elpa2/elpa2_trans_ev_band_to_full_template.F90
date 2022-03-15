@@ -189,7 +189,9 @@ subroutine trans_ev_band_to_full_&
                                                                        &_&
                                                                        &MATH_DATATYPE
   integer(kind=ik)                               :: blocking_factor, error, blk_end
+#ifdef WITH_INTEL_GPU_VERSION
   logical                                        :: useIntelGPU
+#endif
   integer(kind=MPI_KIND)                         :: bcast_request1, allreduce_request1, allreduce_request2
   logical                                        :: useNonBlockingCollectivesCols
   logical                                        :: useNonBlockingCollectivesRows
@@ -208,12 +210,14 @@ subroutine trans_ev_band_to_full_&
   &PRECISION_SUFFIX //&
   gpuString)
 
+#ifdef WITH_INTEL_GPU_VERSION
   useIntelGPU = .false.
   !if (useGPU) then
   !  if (gpu_vendor() == INTEL_GPU) then
   !    useIntelGPU = .true.
   !  endif
   !endif
+#endif
 
   call obj%get("nbc_row_elpa2_band_to_full", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
@@ -271,6 +275,7 @@ subroutine trans_ev_band_to_full_&
   cwy_blocking = blocking_factor * nbw
 
   if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
     if (useIntelGPU) then
       allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
       check_allocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
@@ -282,6 +287,7 @@ subroutine trans_ev_band_to_full_&
       check_allocate("trans_ev_band_to_full: hvm", istat, errorMessage)
 
     else ! useIntelGPU
+#endif
       ! copy q_mat to q_dev
       successGPU = gpu_malloc(q_dev,ldq*matrixCols*size_of_datatype)
       check_alloc_gpu("trans_ev_band_to_full: q_dev", successGPU)
@@ -320,7 +326,9 @@ subroutine trans_ev_band_to_full_&
         allocate(hvm(max_local_rows,cwy_blocking))
       endif
 #endif
+#ifdef WITH_INTEL_GPU_VERSION
     endif ! useIntelGPU
+#endif
   else ! useGPU
     allocate(tmp1(max_local_cols*cwy_blocking), stat=istat, errmsg=errorMessage)
     check_allocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
@@ -338,7 +346,11 @@ subroutine trans_ev_band_to_full_&
   allocate(tmat_complete(cwy_blocking,cwy_blocking), stat=istat, errmsg=errorMessage)
   check_allocate("trans_ev_band_to_full: tmat_complete", istat, errorMessage)
 
+#ifdef WITH_INTEL_GPU_VERSION
   if (useGPU .and. .not.(useIntelGPU)) then
+#else
+  if (useGPU) then
+#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
@@ -350,14 +362,14 @@ subroutine trans_ev_band_to_full_&
     endif
 #endif
   endif
-  !if (useIntelGPU) then
-  !  ! needed later
-  !endif
-
 
 #ifdef MORE_GPUBLAS
   ! could be used alwasy if beneficial
+#ifdef WITH_INTEL_GPU_VERSION
   if (useGPU .and. .not.(useIntelGPU)) then
+#else
+  if (useGPU) then
+#endif
     if (blocking_factor > 1) then
       successGPU = gpu_malloc(t_tmp_dev,cwy_blocking*nbw*size_of_datatype)
       check_alloc_gpu("trans_ev_band_to_full: t_tmp_dev", successGPU)
@@ -379,7 +391,11 @@ subroutine trans_ev_band_to_full_&
     check_allocate("trans_ev_band_to_full: t_tmp2", istat, errorMessage)
   endif
 
+#ifdef WITH_INTEL_GPU_VERSION
   if (useGPU .and. .not.(useIntelGPU)) then
+#else
+  if (useGPU) then
+#endif
     successGPU = gpu_malloc(hvm_dev,max_local_rows*cwy_blocking*size_of_datatype)
     check_alloc_gpu("trans_ev_band_to_full: hvm_dev", successGPU)
 
@@ -424,10 +440,6 @@ subroutine trans_ev_band_to_full_&
     check_alloc_gpu("trans_ev_band_to_full: tmat_dev", successGPU)
   endif
 
-  !if (useIntelGPU) then
-  !  ! needed later
-  !endif
-
 
   hvm = 0.0_rck ! Must be set to 0 !!!
   hvb = 0.0_rck ! Safety only
@@ -440,7 +452,11 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef MORE_GPUBLAS
      ! could be used always if beneficial
+#ifdef WITH_INTEL_GPU_VERSION
      if (useGPU .and. .not.(useIntelGPU)) then
+#else
+     if (useGPU) then
+#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
@@ -548,6 +564,7 @@ subroutine trans_ev_band_to_full_&
 
       if (i > 1) then
         if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             !call obj%timer%start("mkl_offload")
 #if 0
@@ -564,6 +581,7 @@ subroutine trans_ev_band_to_full_&
 #endif
             !call obj%timer%stop("mkl_offload")
           else ! useIntelGPU
+#endif
 #ifdef MORE_GPUBLAS
 
             successGPU = gpu_memcpy(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
@@ -600,7 +618,9 @@ subroutine trans_ev_band_to_full_&
                             int(max_local_rows,kind=BLAS_KIND), ZERO, t_tmp, int(cwy_blocking, kind=BLAS_KIND))
           call obj%timer%stop("blas")
 #endif /* MORE_GPUBLAS */
+#ifdef WITH_INTEL_GPU_VERSION
           endif ! useIntelGPU
+#endif
         else ! useGPU
           call obj%timer%start("blas")
           call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
@@ -673,6 +693,7 @@ subroutine trans_ev_band_to_full_&
         endif ! useNonBlockingCollectivesRows
 
         if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             !call obj%timer%start("mkl_offload")
 #if 0
@@ -693,6 +714,7 @@ subroutine trans_ev_band_to_full_&
             !call obj%timer%stop("mkl_offload")
             tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
           else ! useIntelGPU
+#endif
 #ifdef MORE_GPUBLAS
             successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                             cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
@@ -728,7 +750,9 @@ subroutine trans_ev_band_to_full_&
             tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
             
 #endif /* MORE_GPUBLAS */
+#ifdef WITH_INTEL_GPU_VERSION
           endif ! useIntelGPU
+#endif
 
         else ! useGPU
           call obj%timer%start("blas")
@@ -743,6 +767,7 @@ subroutine trans_ev_band_to_full_&
 
 #else /* WITH_MPI */
         if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             !call obj%timer%start("mkl_offload")
 #if 0
@@ -763,6 +788,7 @@ subroutine trans_ev_band_to_full_&
             !call obj%timer%stop("mkl_offload")
             tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
           else ! useIntelGPU
+#endif
 
             ! remove cuda_aware section here, does not make sense without MPI add MORE_GPUBLAS instead
 #ifdef MORE_GPUBLAS
@@ -799,7 +825,9 @@ subroutine trans_ev_band_to_full_&
           call obj%timer%stop("blas")
           tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
 #endif /* MORE_GPUBLAS */
-          endif
+#ifdef WITH_INTEL_GPU_VERSION
+          endif ! useIntelGPU
+#endif
         else !useGPU
           call obj%timer%start("blas")
           call PRECISION_TRMM('L', 'U', 'N', 'N', int(t_rows,kind=BLAS_KIND), int(t_cols,kind=BLAS_KIND), ONE, tmat_complete, &
@@ -820,6 +848,7 @@ subroutine trans_ev_band_to_full_&
 
     if (l_rows > 0) then
       if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
         if (useIntelGPU) then
           !call obj%timer%start("mkl_offload")
 #if 0
@@ -837,6 +866,7 @@ subroutine trans_ev_band_to_full_&
           !call obj%timer%stop("mkl_offload")
 
         else ! useIntelGPU
+#endif
 #ifndef MORE_GPUBAS
           successGPU = gpu_memcpy(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
                           max_local_rows*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
@@ -860,7 +890,9 @@ subroutine trans_ev_band_to_full_&
 
 #endif
 #endif /* WITH_MPI */
+#ifdef WITH_INTEL_GPU_VERSION
         endif ! useIntelGPU
+#endif
       else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
@@ -872,9 +904,11 @@ subroutine trans_ev_band_to_full_&
     else ! l_rows>0
 #ifdef MORE_GPUBLAS
       if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
         if (useIntelGPU) then
           tmp1(1:l_cols*n_cols) = 0.0_rck
         else
+#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
@@ -890,7 +924,9 @@ subroutine trans_ev_band_to_full_&
             deallocate(tmp_debug)
          endif
 #endif
-        endif
+#ifdef WITH_INTEL_GPU_VERSION
+        endif ! useIntelGPU
+#endif
       else ! useGPU
 #endif
         tmp1(1:l_cols*n_cols) = 0.0_rck
@@ -900,7 +936,11 @@ subroutine trans_ev_band_to_full_&
     endif ! l_rows>0
 
 #ifdef WITH_MPI
+#ifdef WITH_INTEL_GPU_VERSION
     if (useGPU .and. .not.(useIntelGPU)) then
+#else
+    if (useGPU) then
+#endif
 #ifndef MORE_GPUBLAS
       successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), &
                    tmp_dev, l_cols*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
@@ -983,6 +1023,7 @@ subroutine trans_ev_band_to_full_&
 
     if (l_rows>0) then
       if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
         if (useIntelGPU) then
           !call obj%timer%start("mkl_offload")
           call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -995,6 +1036,7 @@ subroutine trans_ev_band_to_full_&
           !call obj%timer%stop("mkl_offload")
 
         else ! useIntelGPU
+#endif
 #ifndef MORE_GPUBLAS
           successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                         l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
@@ -1012,8 +1054,10 @@ subroutine trans_ev_band_to_full_&
           call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, tmp_dev, &
                                      n_cols, ONE, q_dev, ldq)
           call obj%timer%stop("gpublas")
+#ifdef WITH_INTEL_GPU_VERSION
         endif ! useIntelGPU
-      else
+#endif
+      else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                             int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
@@ -1029,6 +1073,7 @@ subroutine trans_ev_band_to_full_&
 #else /* WITH_MPI */
     if (l_rows > 0) then
       if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
         if (useIntelGPU) then
 #if 0
           !call obj%timer%start("mkl_offload")
@@ -1051,6 +1096,7 @@ subroutine trans_ev_band_to_full_&
 #endif
           !call obj%timer%stop("mkl_offload")
         else ! useIntelGPU
+#endif
           ! needed as long as not device to device copy
           successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                         cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
@@ -1063,7 +1109,9 @@ subroutine trans_ev_band_to_full_&
           call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &
                                       -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq)
           call obj%timer%stop("gpublas")
+#ifdef WITH_INTEL_GPU_VERSION
         endif ! useIntelGPU
+#endif
       else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -1084,6 +1132,7 @@ subroutine trans_ev_band_to_full_&
   check_deallocate("trans_ev_band_to_full: hvb", istat, errorMessage)
 
   if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
     if (useIntelGPU) then
       deallocate(tmp1, stat=istat, errmsg=errorMessage)
       check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
@@ -1095,6 +1144,7 @@ subroutine trans_ev_band_to_full_&
       check_deallocate("trans_ev_band_to_full: hvm", istat, errorMessage)
 
     else
+#endif
       successGPU = gpu_free(hvm_dev)
       check_dealloc_gpu("trans_ev_band_to_full: hvm_dev", successGPU)
 
@@ -1158,7 +1208,9 @@ subroutine trans_ev_band_to_full_&
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       endif
 #endif
-    endif
+#ifdef WITH_INTEL_GPU_VERSION
+    endif 
+#endif
   else ! useGPU
     deallocate(tmp1, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
@@ -1174,7 +1226,11 @@ subroutine trans_ev_band_to_full_&
   check_deallocate("trans_ev_band_to_full: tmat_complete", istat, errorMessage)
 
 #ifdef MORE_GPUBLAS
+#ifdef WITH_INTEL_GPU_VERSION
   if (useGPU .and. .not.(useIntelGPU)) then
+#else
+  if (useGPU) then
+#endif
     if (blocking_factor > 1) then
       successGPU = gpu_free(t_tmp_dev)
       check_dealloc_gpu("trans_ev_band_to_full: t_tmp_dev", successGPU)

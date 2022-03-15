@@ -148,7 +148,9 @@ subroutine trans_ev_&
                                                                       &_&
                                                                       &MATH_DATATYPE
   integer(kind=ik)                              :: error
+#ifdef WITH_INTEL_GPU_VERSION
   logical                                       :: useIntelGPU
+#endif
   integer(kind=MPI_KIND)                        :: bcast_request1, allreduce_request1, allreduce_request2
   logical                                       :: useNonBlockingCollectivesCols
   logical                                       :: useNonBlockingCollectivesRows
@@ -190,6 +192,7 @@ subroutine trans_ev_&
     useNonBlockingCollectivesCols = .false.
   endif
 
+#ifdef WITH_INTEL_GPU_VERSION
   useIntelGPU = .false.
   !disable for the moment
   !if (useGPU) then
@@ -197,6 +200,7 @@ subroutine trans_ev_&
   !    useIntelGPU = .true.
   !  endif
   !endif
+#endif
 
 
   call obj%timer%start("mpi_communication")
@@ -221,7 +225,8 @@ subroutine trans_ev_&
   max_local_cols = max_blocks_col*nblk
 
   max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
-
+ 
+#ifdef WITH_INTEL_GPU_VERSION
   if (useIntelGPU) then
     allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
     call check_alloc("trans_ev_&
@@ -238,6 +243,7 @@ subroutine trans_ev_&
     &MATH_DATATYPE&
     &", "tmp2", istat, errorMessage)
   endif
+#endif
 
   if (.not.(useGPU)) then
     allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
@@ -293,8 +299,12 @@ subroutine trans_ev_&
     q_mat(1,1:l_cols) = q_mat(1,1:l_cols)*(ONE-tau(2))
   endif
 #endif
-
+ 
+#ifdef WITH_INTEL_GPU_VERSION
   if (useGPU .and. .not.(useIntelGPU)) then
+#else
+  if (useGPU) then
+#endif
     ! todo: this is used only for copying hmv to device.. it should be possible to go without it
     !allocate(hvm1(max_local_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
     !call check_alloc("trans_ev_&
@@ -361,11 +371,6 @@ subroutine trans_ev_&
                   num, gpuMemcpyHostToDevice)
     check_memcpy_gpu("trans_ev", successGPU)
   endif  ! useGPU
-
-  !if (useIntelGPU) then
-  !  ! needed at a later time when we can do explicit copys
-  !endif
-
 
   do istep = 1, na, blockStep
     ics = MAX(istep,3)
@@ -485,7 +490,11 @@ subroutine trans_ev_&
         nc = nc+n
       enddo
 
+#ifdef WITH_INTEL_GPU_VERSION
       if (useGPU .and. .not.(useIntelGPU)) then
+#else
+      if (useGPU) then
+#endif
         ! todo: is this reshape really neccessary?
         hvm1(1:hvm_ubnd*nstor) = reshape(hvm(1:hvm_ubnd,1:nstor), (/ hvm_ubnd*nstor /))
 
@@ -501,15 +510,12 @@ subroutine trans_ev_&
         check_memcpy_gpu("trans_ev", successGPU)
       endif
 
-      !if (useIntelGPU) then
-      !  ! needed later when we can do explicit copys
-      !endif
-
 
       ! Q = Q - V * T * V**T * Q
 
       if (l_rows > 0) then
         if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             call obj%timer%start("mkl_offload")
 #if 0          
@@ -526,13 +532,16 @@ subroutine trans_ev_&
 #endif
             call obj%timer%stop("mkl_offload")
 
-          else
+          else ! useIntelGPU
+#endif
             call obj%timer%start("gpublas")
             call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',   &
                                      nstor, l_cols, l_rows, ONE, hvm_dev, hvm_ubnd,  &
                                      q_dev, ldq, ZERO, tmp_dev, nstor)
             call obj%timer%stop("gpublas")
-          endif
+#ifdef WITH_INTEL_GPU_VERSION
+          endif !useIntelGPU
+#endif
         else ! useGPU
 
           call obj%timer%start("blas")
@@ -546,12 +555,16 @@ subroutine trans_ev_&
       else !l_rows>0
 
         if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             tmp1(1:l_cols*nstor) = 0
           else
+#endif
             successGPU = gpu_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
             check_memcpy_gpu("trans_ev", successGPU)
+#ifdef WITH_INTEL_GPU_VERSION
           endif
+#endif
         else
           tmp1(1:l_cols*nstor) = 0
         endif
@@ -559,7 +572,11 @@ subroutine trans_ev_&
 
 #ifdef WITH_MPI
 
+#ifdef WITH_INTEL_GPU_VERSION
       if (useGPU .and. .not.(useIntelGPU)) then
+#else
+      if (useGPU) then
+#endif
 #ifndef WITH_CUDA_AWARE_MPI
         ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
         ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
@@ -576,9 +593,6 @@ subroutine trans_ev_&
 #endif
       endif
 
-      !if (useIntelGPU) then
-      !   ! needed later
-      !endif
 
       if (useNonBlockingCollectivesRows) then
         call obj%timer%start("mpi_nbc_communication")
@@ -603,7 +617,11 @@ subroutine trans_ev_&
         call obj%timer%stop("mpi_communication")
       endif
 
+#ifdef WITH_INTEL_GPU_VERSION
       if (useGPU .and. .not.(useIntelGPU)) then
+#else
+      if (useGPU) then
+#endif
 #ifndef WITH_CUDA_AWARE_MPI
         ! copy back tmp2 - after reduction...
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
@@ -617,17 +635,13 @@ subroutine trans_ev_&
 #endif
       endif ! useGPU
 
-
-      !if (useIntelGPU) then
-      !   ! needed later
-      !endif
-
 #else /* WITH_MPI */
 !     tmp2 = tmp1
 #endif /* WITH_MPI */
 
       if (l_rows > 0) then
         if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
 #ifdef WITH_MPI
             ! tmp2 = tmat * tmp2
@@ -669,7 +683,8 @@ subroutine trans_ev_&
 #endif
             call obj%timer%stop("mkl_offload")
 #endif /* WITH_MPI */
-          else
+          else ! useIntelGPU
+#endif
             call obj%timer%start("gpublas")
             call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
                                      nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
@@ -679,7 +694,9 @@ subroutine trans_ev_&
                                      -ONE, hvm_dev, hvm_ubnd, tmp_dev, nstor,   &
                                      ONE, q_dev, ldq)
             call obj%timer%stop("gpublas")
-          endif
+#ifdef WITH_INTEL_GPU_VERSION
+          endif ! useIntelGPU
+#endif
         else !useGPU
 #ifdef WITH_MPI
           ! tmp2 = tmat * tmp2
@@ -715,13 +732,14 @@ subroutine trans_ev_&
 
   if (useGPU) then
 
+#ifdef WITH_INTEL_GPU_VERSION
     if (useIntelGPU) then
       deallocate(tmat, tmp1, tmp2, stat=istat, errmsg=errorMessage)
       check_deallocate("trans_ev_&
       &MATH_DATATYPE&
       &: tmat, tmp1, tmp2", istat, errorMessage)
     else
-
+#endif
       !q_mat = q_dev
       successGPU = gpu_memcpy(int(loc(q_mat(1,1)),kind=c_intptr_t), &
                     q_dev, ldq * matrixCols * size_of_datatype, gpuMemcpyDeviceToHost)
@@ -776,13 +794,15 @@ subroutine trans_ev_&
 
       successGPU = gpu_free(tmat_dev)
       check_dealloc_gpu("trans_ev", successGPU)
+#ifdef WITH_INTEL_GPU_VERSION
     endif
-  else
+#endif
+  else ! useGPU
     deallocate(tmat, tmp1, tmp2, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_&
     &MATH_DATATYPE&
     &: tmat, tmp1, tmp2", istat, errorMessage)
-  endif
+  endif ! useGPU
 
 
   call obj%timer%stop("trans_ev_&
