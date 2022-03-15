@@ -63,7 +63,8 @@ subroutine ROUTINE_NAME&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows)
+(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, &
+ success)
 
 !-------------------------------------------------------------------------------
 ! This routine transposes an array of vectors which are distributed in
@@ -116,6 +117,9 @@ subroutine ROUTINE_NAME&
   logical, intent(in)                               :: comm_s_isRows
   integer(kind=c_int)                               :: non_blocking_collectives_rows, error, &
                                                        non_blocking_collectives_cols
+  logical                                           :: success
+
+  success = .true.
 
   call obj%timer%start("&
           &ROUTINE_NAME&
@@ -126,14 +130,28 @@ subroutine ROUTINE_NAME&
 
   call obj%get("nbc_row_transpose_vectors", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for_rows in transpose_vectors. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for_rows in transpose_vectors. Aborting..."
+    success = .false.
+     call obj%timer%stop("&
+          &ROUTINE_NAME&
+     &MATH_DATATYPE&
+     &" // &
+     &PRECISION_SUFFIX &
+    )
+    return
   endif
 
   call obj%get("nbc_col_transpose_vectors", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for_cols in transpose_vectors. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for_cols in transpose_vectors. Aborting..."
+    success = .false.
+     call obj%timer%stop("&
+          &ROUTINE_NAME&
+     &MATH_DATATYPE&
+     &" // &
+     &PRECISION_SUFFIX &
+    )
+    return
   endif
 
   if (non_blocking_collectives_rows .eq. 1) then

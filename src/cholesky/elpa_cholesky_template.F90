@@ -106,35 +106,41 @@
                                                             &_&
                                                             &MATH_DATATYPE
 
+  success = .true.
+
   gpu_cholesky = 0
   ! GPU settings
   if (gpu_vendor() == NVIDIA_GPU) then
     call obj%get("gpu",gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"ELPA_CHOLESKY: Problem getting option for GPU. Aborting..."
-      stop
+      write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for GPU. Aborting..."
+      success = .false.
+      return
     endif
     if (gpu .eq. 1) then
-      print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new &
+      write(error_unit,*) "You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new &
               & keyword 'nvidia-gpu'"
       call obj%set("nvidia-gpu",gpu,error)
       if (error .ne. ELPA_OK) then
-        print *,"ELPA_CHOLESKY: Problem setting option for NVIDIA GPU. Aborting..."
-        stop
+        write(error_unit,*) "ELPA_CHOLESKY: Problem setting option for NVIDIA GPU. Aborting..."
+        success = .false.
+        return
       endif
     endif
 
     call obj%get("nvidia-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"ELPA_CHOLESKY: Problem getting option for NVIDIA GPU. Aborting..."
-      stop
+      write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for NVIDIA GPU. Aborting..."
+      success = .false.
+      return
     endif
 
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"ELPA_CHOLESKY: Problem getting option for AMD GPU. Aborting..."
-      stop
+      write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for AMD GPU. Aborting..."
+      success = .false.
+      return
     endif
   else
     gpu = 0
@@ -142,8 +148,9 @@
 
   call obj%get("gpu_cholesky",gpu_cholesky, error)
   if (error .ne. ELPA_OK) then
-    print *,"ELPA_CHOLESKY: Problem getting option for gpu_cholesky. Aborting..."
-    stop
+    write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for gpu_cholesky. Aborting..."
+    success = .false.
+    return
   endif
 
   if (gpu_cholesky .eq. 1) then
@@ -154,8 +161,9 @@
 
   if (.not.(useGPU)) then
 #ifdef DEVICE_POINTER
-    print *,"You used the interface for device pointers for elpa_cholesky but did not specify GPU usage!. Aborting..."
-    stop
+    write(error_unit,*) "You used the interface for device pointers for elpa_cholesky but did not specify GPU usage!. Aborting..."
+    success = .false.
+    return
 #endif
   endif
 
@@ -201,24 +209,28 @@
 
   call obj%get("mpi_comm_parent", mpi_comm_all, error)
   if (error .ne. ELPA_OK) then
-    print *,"ELPA_CHOLESKY: Error getting option for mpi_comm_all. Aborting..."
-    stop
+    write(error_unit,*) "ELPA_CHOLESKY: Error getting option for mpi_comm_all. Aborting..."
+    success = .false.
+    return
   endif
   call obj%get("mpi_comm_rows",mpi_comm_rows,error )
   if (error .ne. ELPA_OK) then
-    print *,"ELPA_CHOLESKY: Problem getting option for mpi_comm_rows. Aborting..."
-    stop
+    write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for mpi_comm_rows. Aborting..."
+    success = .false.
+    return
   endif
   call obj%get("mpi_comm_cols",mpi_comm_cols,error)
   if (error .ne. ELPA_OK) then
-    print *,"ELPA_CHOLESKY: Problem getting option for mpi_comm_cols. Aborting..."
-    stop
+    write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for mpi_comm_cols. Aborting..."
+    success = .false.
+    return
   endif
 
   call obj%get("debug",debug,error)
   if (error .ne. ELPA_OK) then
-    print *,"ELPA_CHOLESKY: Problem getting option for debug settings. Aborting..."
-    stop
+    write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for debug settings. Aborting..."
+    success = .false.
+    return
   endif
   if (debug == 1) then
     wantDebug = .true.
@@ -353,7 +365,8 @@
           call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info)
           if (info .ne. 0) then
             write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF 1"
-            stop
+            success = .false.
+            return
           endif
           call obj%timer%stop("gpusolver")
 #else /* WITH_NVIDIA_CUSOLVER */
@@ -460,7 +473,8 @@
           call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info)
           if (info .ne. 0) then
             write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF 2"
-            stop
+            success = .false.
+            return
           endif
           call obj%timer%stop("gpusolver")
 #else /* WITH_NVIDIA_CUSOLVER */
@@ -776,7 +790,11 @@
     &PRECISION &
     (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
     tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
-    n, na, nblk, nblk, nrThreads, .false.)
+    n, na, nblk, nblk, nrThreads, .false., success)
+    if (.not.(success)) then
+      write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
+      return
+    endif
 
     if (useGPU) then
       num = l_rows*nblk*size_of_datatype

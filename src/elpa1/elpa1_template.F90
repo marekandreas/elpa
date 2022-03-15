@@ -661,7 +661,11 @@ print *,"Device pointer + REDIST"
      &_&
      &PRECISION&
      & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, &
-        nrThreads, isSkewsymmetric)
+        nrThreads, isSkewsymmetric, success)
+     if (.not.(success)) then
+       write(error_unit,*) "Error in tridiag. Aborting..."
+       return
+     endif
 
 #ifdef WITH_NVTX
      call nvtxRangePop()

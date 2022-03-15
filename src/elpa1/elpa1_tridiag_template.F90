@@ -97,7 +97,7 @@ subroutine tridiag_&
   &_&
   &PRECISION &
   (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, &
-   max_threads, isSkewsymmetric)
+   max_threads, isSkewsymmetric, success)
   use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
@@ -199,8 +199,10 @@ subroutine tridiag_&
   logical                                       :: useNonBlockingCollectivesCols
   logical                                       :: useNonBlockingCollectivesRows
   integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
+  logical                                       :: success
 
-
+  success = .true.
+ 
   if(useGPU) then
     gpuString = "_gpu"
   else
@@ -225,14 +227,26 @@ subroutine tridiag_&
 
   call obj%get("nbc_row_elpa1_full_to_tridi", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for rows in elpa1_tridiag. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for rows in elpa1_tridiag. Aborting..."
+    success = .false.
+    call obj%timer%stop("tridiag_&
+    &MATH_DATATYPE&
+    &" // &
+    PRECISION_SUFFIX // &
+    gpuString )
+    return
   endif
 
   call obj%get("nbc_col_elpa1_full_to_tridi", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for cols in elpa1_tridiag. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for cols in elpa1_tridiag. Aborting..."
+    success = .false.
+    call obj%timer%stop("tridiag_&
+    &MATH_DATATYPE&
+    &" // &
+    PRECISION_SUFFIX // &
+    gpuString )
+    return
   endif
 
   if (non_blocking_collectives_rows .eq. 1) then
@@ -289,8 +303,14 @@ subroutine tridiag_&
   ! it can, however, be set by the user
   call obj%get("min_tile_size", min_tile_size ,error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for min_tile_size. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for min_tile_size. Aborting..."
+    success = .false.
+    call obj%timer%stop("tridiag_&
+    &MATH_DATATYPE&
+    &" // &
+    PRECISION_SUFFIX // &
+    gpuString )
+    return
   endif
   if(min_tile_size == 0) then
     ! not set by the user, use the default value
@@ -720,7 +740,11 @@ subroutine tridiag_&
         &_&
         &PRECISION &
               (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
-               1, istep-1, 1, nblk, max_threads, .true.)
+               1, istep-1, 1, nblk, max_threads, .true., success)
+    if (.not.(success)) then
+      write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
+      return
+    endif
 
     ! Calculate u = (A + VU**T + UV**T)*v
 
@@ -1112,14 +1136,22 @@ subroutine tridiag_&
           &_&
           &PRECISION &
           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false.)
+           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
+         if (.not.(success)) then
+           write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting!"
+           return
+         endif
        else
           call elpa_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
           &PRECISION &
           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false.)
+           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
+          if (.not.(success)) then
+            write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
+            return
+          endif
        endif
 
        ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )

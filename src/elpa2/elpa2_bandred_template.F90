@@ -261,14 +261,16 @@ max_threads, isSkewsymmetric)
 
   call obj%get("nbc_row_elpa2_full_to_band", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for rows in elpa2_bandred. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for rows in elpa2_bandred. Aborting..."
+    success = .false.
+    return
   endif
 
   call obj%get("nbc_col_elpa2_full_to_band", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for cols in elpa2_bandred. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for cols in elpa2_bandred. Aborting..."
+    success = .false.
+    return
   endif
  
   if (non_blocking_collectives_rows .eq. 1) then
@@ -390,8 +392,9 @@ max_threads, isSkewsymmetric)
   ! it can, however, be set by the user
   call obj%get("min_tile_size", min_tile_size ,error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for min_tile_size. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for min_tile_size. Aborting..."
+    success = .false.
+    return
   endif
   if(min_tile_size == 0) then
     ! not set by the user, use the default value
@@ -1151,7 +1154,13 @@ max_threads, isSkewsymmetric)
              &PRECISION &
                           (obj, vmrGPU(:), max_l_rows, mpi_comm_rows, &
                            umcGPU(max_l_cols * n_cols + 1:), max_l_cols, &
-                           mpi_comm_cols, 1, istep*nbw, n_cols, nblk, max_threads_used, .true.)
+                           mpi_comm_cols, 1, istep*nbw, n_cols, nblk, max_threads_used, .true., &
+                           success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
+          return
+        endif
+
 #ifdef WITH_INTEL_GPU_VERSION
       endif
 #endif
@@ -1162,7 +1171,12 @@ max_threads, isSkewsymmetric)
            &PRECISION &
                                         (obj, vmrCPU, max_l_rows, mpi_comm_rows, &
                                          umcCPU(1,n_cols+1), max_l_cols, mpi_comm_cols, &
-                                         1, istep*nbw, n_cols, nblk, max_threads_used, .true.)
+                                         1, istep*nbw, n_cols, nblk, max_threads_used, .true., &
+      success)
+      if (.not.(success)) then
+        write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
+        return
+      endif
     endif ! useGPU
 
     ! Calculate umc = A**T * vmr
@@ -1988,7 +2002,12 @@ max_threads, isSkewsymmetric)
              &PRECISION &
                          (obj, umcGPU(:), max_l_cols, mpi_comm_cols, &
                           vmrGPU(max_l_rows * n_cols + 1:), max_l_rows, mpi_comm_rows, &
-                          1, istep*nbw, n_cols, nblk, max_threads_used, .false.)
+                          1, istep*nbw, n_cols, nblk, max_threads_used, .false., &
+                          success)
+          if (.not.(success)) then
+            write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting..."
+            return
+          endif
         else
           call elpa_transpose_vectors_&
              &MATH_DATATYPE&
@@ -1996,7 +2015,11 @@ max_threads, isSkewsymmetric)
              &PRECISION &
                          (obj, umcGPU, max_l_cols, mpi_comm_cols, &
                           vmrGPU(max_l_rows * n_cols + 1:), max_l_rows, mpi_comm_rows, &
-                          1, istep*nbw, n_cols, nblk, max_threads_used, .false.)
+                          1, istep*nbw, n_cols, nblk, max_threads_used, .false., success)
+          if (.not.(success)) then
+            write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
+            return
+          endif
         endif
 
         successGPU = gpu_memcpy(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
@@ -2041,7 +2064,12 @@ max_threads, isSkewsymmetric)
         &PRECISION &
                                  (obj, umcCPU, max_l_cols, mpi_comm_cols, &
                                         vmrCPU(1,n_cols+1), max_l_rows, mpi_comm_rows, &
-                                        1, istep*nbw, n_cols, nblk, max_threads_used, .false.)
+                                        1, istep*nbw, n_cols, nblk, max_threads_used, .false., &
+                                        success)
+          if (.not.(success)) then
+            write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting..."
+            return
+          endif
       else
        call elpa_transpose_vectors_&
        &MATH_DATATYPE&
@@ -2049,7 +2077,12 @@ max_threads, isSkewsymmetric)
        &PRECISION &
                                 (obj, umcCPU, max_l_cols, mpi_comm_cols, &
                                           vmrCPU(1,n_cols+1), max_l_rows, mpi_comm_rows, &
-                                          1, istep*nbw, n_cols, nblk, max_threads_used, .false.)
+                                          1, istep*nbw, n_cols, nblk, max_threads_used, .false., &
+                                          success)
+          if (.not.(success)) then
+            write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
+            return
+          endif
       endif
     endif  ! useGPU
 
