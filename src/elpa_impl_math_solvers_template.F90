@@ -128,8 +128,18 @@
         call self%autotune_timer%stop("accumulator")
 
       else
-        print *,"unknown solver"
-        stop
+        write(error_unit,'(a)') "Unknown solver: Aborting!"
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 
 #ifdef USE_FORTRAN2008
@@ -232,8 +242,17 @@
         call self%autotune_timer%stop("accumulator")
 
       else
-        print *,"unknown solver"
-        stop
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 
 #ifdef USE_FORTRAN2008
@@ -454,8 +473,17 @@
         call self%autotune_timer%stop("accumulator")
 
       else
-        print *,"unknown solver"
-        stop
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 
 #ifdef USE_FORTRAN2008
@@ -599,8 +627,17 @@
         call self%autotune_timer%stop("accumulator")
 
       else
-        print *,"unknown solver"
-        stop
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 
 #ifdef USE_FORTRAN2008
@@ -742,8 +779,17 @@
         call self%autotune_timer%stop("accumulator")
 
       else
-        print *,"unknown solver"
-        stop
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 #ifdef USE_FORTRAN2008
       if (present(error)) then
@@ -839,8 +885,17 @@
         call self%autotune_timer%stop("accumulator")
 
       else
-        print *,"unknown solver"
-        stop
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 #ifdef USE_FORTRAN2008
       if (present(error)) then
@@ -1044,8 +1099,17 @@
         call self%autotune_timer%stop("accumulator")
 
       else
-        print *,"unknown solver"
-        stop
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 #ifdef USE_FORTRAN2008
       if (present(error)) then
@@ -1140,8 +1204,17 @@
         call self%autotune_timer%stop("accumulator")
 
       else
-        print *,"unknown solver"
-        stop
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 #ifdef USE_FORTRAN2008
       if (present(error)) then
