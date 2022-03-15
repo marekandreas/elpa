@@ -1,6 +1,7 @@
 subroutine global_gather_&
 &PRECISION&
-&(obj, z, n, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
+&(obj, z, n, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, &
+  success)
   ! This routine sums up z over all processors.
   ! It should only be used for gathering distributed results,
   ! i.e. z(i) should be nonzero on exactly 1 processor column,
@@ -8,6 +9,7 @@ subroutine global_gather_&
   use precision
   use elpa_abstract_impl
   use elpa_mpi
+  use ELPA_utilities
 #ifdef WITH_OPENMP_TRADITIONAL
   use elpa_omp
 #endif
@@ -27,18 +29,22 @@ subroutine global_gather_&
   logical                                    :: useNonBlockingCollectivesRows
   integer(kind=c_int)                        :: non_blocking_collectives_rows, error, &
                                                 non_blocking_collectives_cols
+  logical                                    :: success
+
+  success = .true.
 
   call obj%get("nbc_row_global_gather", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *, error, ELPA_OK
-    print *,"Problem getting option for non blocking collectives for rows in global_gather. Aborting..."
-    stop
+    write(error_unit,*) "Problem getting option for non blocking collectives for rows in global_gather. Aborting..."
+    success = .false.
+    return
   endif
 
   call obj%get("nbc_col_global_gather", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem getting option for non blocking collectives for cols in global_gather. Aborting..."
-    stop
+    write(error_unit,*) "Problem getting option for non blocking collectives for cols in global_gather. Aborting..."
+    success = .false.
+    return
   endif
 
   if (non_blocking_collectives_rows .eq. 1) then

@@ -254,7 +254,12 @@
 
       call global_gather_&
       &PRECISION&
-      &(obj, z, na, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
+      &(obj, z, na, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, success)
+      if (.not.(success)) then
+        write(error_unit,*) "Error in global_gather. ABorting"
+        success = .false.
+        return
+      endif
       ! Normalize z so that norm(z) = 1.  Since z is the concatenation of
       ! two normalized vectors, norm2(z) = sqrt(2).
       z = z/sqrt(2.0_rk)
@@ -548,10 +553,18 @@
 
         call global_gather_&
         &PRECISION&
-        &(obj, dbase, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
+        &(obj, dbase, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in global_gather. Aborting..."
+          return
+        endif
         call global_gather_&
         &PRECISION&
-        &(obj, ddiff, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
+        &(obj, ddiff, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in global_gather. Aborting..."
+          return
+        endif
         d(1:na1) = dbase(1:na1) - ddiff(1:na1)
 
         ! Calculate scale factors for eigenvectors
@@ -590,7 +603,11 @@
 
         call global_gather_&
         &PRECISION&
-        &(obj, ev_scale, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next)
+        &(obj, ev_scale, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in global_gather. Aborting..."
+          return
+        endif
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
