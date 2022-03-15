@@ -978,8 +978,9 @@ module elpa_impl
 
 #ifdef WITH_MPI
       if (self%is_set("blacs_context") == 0) then
-        print *,"BLACS context has not been set beforehand. Aborting..."
-        stop
+        write(error_unit,*) "BLACS context has not been set beforehand. Aborting..."
+        error = ELPA_ERROR
+        return
       endif
       call self%get("blacs_context", blacs_ctx, error)
       if (check_elpa_get(error, ELPA_ERROR_CRITICAL)) return
@@ -1627,8 +1628,18 @@ module elpa_impl
             ts_impl%sublevel_part1stage(level) = ELPA_AUTOTUNE_PART_ELPA1
             ts_impl%sublevel_part2stage(level) = ELPA_AUTOTUNE_PART_ELPA2
           else
-            print *,"ELPA_AUTOTUNE_SETUP: Unknown solver"
-            stop
+            write(error_unit,*)  "ELPA_AUTOTUNE_SETUP: Unknown solver"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif        
         else ! no solver set, anyways ...
           ts_impl%sublevel_part1stage(level) = ELPA_AUTOTUNE_PART_ELPA1
@@ -1669,8 +1680,18 @@ module elpa_impl
               ts_impl%sublevel_part1stage(sublevel) = ELPA_AUTOTUNE_PART_ELPA1
               ts_impl%sublevel_part2stage(sublevel) = ELPA_AUTOTUNE_PART_ELPA2
             else
-              print *,"ELPA_AUTOTUNE_SETUP: Unknown solver"
-              stop
+              write(error_unit,*)  "ELPA_AUTOTUNE_SETUP: Unknown solver"
+#ifdef USE_FORTRAN2008
+              if (present(error)) then
+                error = ELPA_ERROR
+                return
+              else
+                return
+              endif
+#else
+              error = ELPA_ERROR
+              return
+#endif
             endif        
           else 
             ts_impl%sublevel_part1stage(sublevel) = ELPA_AUTOTUNE_PART_ELPA1
@@ -1713,24 +1734,64 @@ module elpa_impl
       if (self%is_set("gpu") == 1) then
         call self%get("gpu", gpu_old, error)
         if (error .ne. ELPA_OK) then
-          print *,"ELPA_AUTOTUNE_SETUP: cannot get gpu option. Aborting..."
-          stop
+          write(error_unit,*) "ELPA_AUTOTUNE_SETUP: cannot get gpu option. Aborting..."
+#ifdef USE_FORTRAN2008
+          if (present(error)) then
+            error = ELPA_ERROR
+            return
+          else
+            return
+          endif
+#else
+          error = ELPA_ERROR
+          return
+#endif
         endif
         if (self%is_set("nvidia-gpu") == 1) then
          call self%get("nvidia-gpu", gpu_new, error)
          if (error .ne. ELPA_OK) then
-           print *,"ELPA_AUTOTUNE_SETUP: cannot get nvidia-gpu option. Aborting..."
-           stop
+           write(error_unit,*) "ELPA_AUTOTUNE_SETUP: cannot get nvidia-gpu option. Aborting..."
+#ifdef USE_FORTRAN2008
+           if (present(error)) then
+             error = ELPA_ERROR
+             return
+           else
+             return
+           endif
+#else
+           error = ELPA_ERROR
+           return
+#endif
          endif
          if (gpu_old .ne. gpu_new) then
-           print *,"ELPA_AUTOTUNE_SETUP: you cannot set gpu =",gpu_old," and nvidia-gpu =",gpu_new," Aborting..."
-           stop
+           write(error_unit,*) "ELPA_AUTOTUNE_SETUP: you cannot set gpu =",gpu_old," and nvidia-gpu =",gpu_new," Aborting..."
+#ifdef USE_FORTRAN2008
+           if (present(error)) then
+             error = ELPA_ERROR
+             return
+           else
+             return
+           endif
+#else
+           error = ELPA_ERROR
+           return
+#endif
          endif
         else ! nvidia-gpu not set
           call self%set("nvidia-gpu", gpu_old, error)
           if (error .ne. ELPA_OK) then
-            print *,"ELPA_AUTOTUNE_SETUP: cannot set nvidia-gpu option. Aborting..."
-            stop
+            write(error_unit,*) "ELPA_AUTOTUNE_SETUP: cannot set nvidia-gpu option. Aborting..."
+#ifdef USE_FORTRAN2008
+           if (present(error)) then
+             error = ELPA_ERROR
+             return
+           else
+             return
+           endif
+#else
+           error = ELPA_ERROR
+           return
+#endif
           endif
         endif ! nvidia-gpu
       else ! gpu not set
@@ -1788,7 +1849,7 @@ module elpa_impl
       integer(kind=c_int), intent(in), value :: level
       integer(kind=c_int), intent(in), value :: domain
       type(c_ptr)                            :: ptr
-      integer(kind=c_int) , intent(in)       :: error
+      integer(kind=c_int) , intent(inout)    :: error
 
       call c_f_pointer(handle, self)
 
@@ -1797,8 +1858,9 @@ module elpa_impl
         type is (elpa_autotune_impl_t)
           obj => tune_state
         class default
-          print *, "ELPA_AUTOTUNE_SETUP_C ERROR: This should not happen"
-          stop
+        write(error_unit,*) "ELPA_AUTOTUNE_SETUP_C ERROR: This should not happen"
+        error = ELPA_ERROR_SETUP
+        return
       end select
       ptr = c_loc(obj)
 
@@ -1848,8 +1910,18 @@ module elpa_impl
       unfinished        = .false.
       call self%get("debug", debug, error)
       if (error .ne. ELPA_OK) then
-        print *,"ELPA_AUTOTUNE_STEP: cannot get debug option. Aborting..."
-        stop
+        write(error_unit,*) "ELPA_AUTOTUNE_STEP: cannot get debug option. Aborting..."
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR_SETUP
+        return
+#endif
       endif
 
       if (ts_impl%new_stepping == 1) then
@@ -1864,8 +1936,18 @@ module elpa_impl
           if (self%is_set("solver") == 1) then
             call self%get("solver", solver, error)
             if (error .ne. ELPA_OK) then
-              print *,"ELPA_AUTOTUNE_STEP: cannot get solver. Aborting..."
-              stop
+              write(error_unit,*)  "ELPA_AUTOTUNE_STEP: cannot get solver. Aborting..."
+#ifdef USE_FORTRAN2008
+              if (present(error)) then
+                error = ELPA_ERROR
+                return
+              else
+                return
+              endif
+#else
+              error = ELPA_ERROR_SETUP
+              return
+#endif
             endif
             if (solver == ELPA_SOLVER_2STAGE) then
               do_autotune_2stage = .true.
@@ -1876,8 +1958,18 @@ module elpa_impl
               do_autotune_1stage = .true.
               compare_solvers    = .false.
             else
-              print *,"ELPA_AUTOTUNE_STEP: Unknown solver"
-              stop
+              write(error_unit,*) "ELPA_AUTOTUNE_STEP: Unknown solver"
+#ifdef USE_FORTRAN2008
+              if (present(error)) then
+                error = ELPA_ERROR
+                return
+              else
+                return
+              endif
+#else
+              error = ELPA_ERROR_SETUP
+              return
+#endif
             endif        
           else 
             do_autotune_2stage = .true.
@@ -1891,8 +1983,8 @@ module elpa_impl
           consider_solver = ELPA_SOLVER_1STAGE
           call self%set("solver", ELPA_SOLVER_1STAGE, error)
           if (error .ne. ELPA_OK) then
-            !if (debug == 1) print *,"ELPA_AUTOTUNE_STEP: cannot set ELPA_SOLVER_1STAGE for tuning"
-            stop
+            write(error_unit,*) "ELPA_AUTOTUNE_STEP: cannot set ELPA_SOLVER_1STAGE for tuning"
+            return
           endif
           unfinished_1stage = self%autotune_step_worker(tune_state, ELPA_SOLVER_1STAGE, error)
           if (unfinished_1stage) then
@@ -1919,8 +2011,8 @@ module elpa_impl
           consider_solver = ELPA_SOLVER_2STAGE
           call self%set("solver", ELPA_SOLVER_2STAGE, error)
           if (error .ne. ELPA_OK) then
-            print *,"ELPA_AUTOTUNE_STEP: cannot set ELPA_SOLVER_2STAGE for tuning"
-            stop
+            write(error_unit,*) "ELPA_AUTOTUNE_STEP: cannot set ELPA_SOLVER_2STAGE for tuning"
+            return
           endif
           unfinished_2stage = self%autotune_step_worker(tune_state, ELPA_SOLVER_2STAGE, error)
           if (unfinished_2stage) then
@@ -1934,8 +2026,7 @@ module elpa_impl
             last_call_2stage = .true.
             if (do_autotune_1stage) then
               ! this case should never be possible
-              print *,"PANIC in elpa_autotune_step"
-              stop
+              write(error_unit,*) "PANIC in elpa_autotune_step. Aborting!"
               unfinished = .true.
               return
             else
@@ -2036,9 +2127,20 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_step"
-            stop 
-          endif
+            write(error_unit,'(a)') "Problem setting level in elpa_autotune_step"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
+
+           endif
         endif
         if (use2stage) then
           ! check on which sublevel we should currently work on
@@ -2052,8 +2154,18 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_step"
-            stop 
+            write(error_unit,'(a)') "Problem setting level in elpa_autotune_step"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif
         endif
       endif ! new_stepping
@@ -2085,8 +2197,19 @@ module elpa_impl
               else if (solver == ELPA_SOLVER_1STAGE) then
                 time_spent(1) = self%autotune_timer%get("accumulator","full_to_tridi")
               else
-                print *,"elpa_autotune_step: unknown solver"
-                stop
+                write(error_unit,'(a)') "Unknown solver: Aborting!"
+#ifdef USE_FORTRAN2008
+                if (present(error)) then
+                  error = ELPA_ERROR
+                  return
+                else
+                  return
+                endif
+#else
+                error = ELPA_ERROR
+                return
+#endif
+
               endif
             case (ELPA2_AUTOTUNE_FULL_TO_BAND)
               time_spent(1) = self%autotune_timer%get("accumulator","full_to_band")
@@ -2220,8 +2343,18 @@ module elpa_impl
             else if (sublevel .eq. autotune_level) then
               ! we are already at the last level
             else
-              print *,"Panic in autotune step"
-              stop
+              write(error_unit,*) "Panic in autotune step.Aborting!"
+#ifdef USE_FORTRAN2008
+                if (present(error)) then
+                  error = ELPA_ERROR
+                  return
+                else
+                  return
+                endif
+#else
+                error = ELPA_ERROR
+                return
+#endif
             endif
           endif
 
@@ -2249,8 +2382,18 @@ module elpa_impl
             else if (sublevel .eq. autotune_level) then
               ! we are already at the last level
             else
-              print *,"Panic in autotune step"
-              stop
+              write(error_unit,*) "Panic in autotune step.Aborting!"
+#ifdef USE_FORTRAN2008
+                if (present(error)) then
+                  error = ELPA_ERROR
+                  return
+                else
+                  return
+                endif
+#else
+                error = ELPA_ERROR
+                return
+#endif
             endif
           endif
 
@@ -2278,9 +2421,19 @@ module elpa_impl
           end do
 
           if (ts_impl%sublevel_current1stage(sublevel) .ne. ts_impl%sublevel_cardinality1stage(sublevel)-1 ) then
-             print *,"PANIC in autotune_step 1stage"
-             print *,ts_impl%sublevel_current1stage(sublevel),ts_impl%sublevel_cardinality1stage(sublevel) 
-             stop
+             write(error_unit,*) "PANIC in autotune_step 1stage"
+             write(error_unit,*) ts_impl%sublevel_current1stage(sublevel),ts_impl%sublevel_cardinality1stage(sublevel) 
+#ifdef USE_FORTRAN2008
+                if (present(error)) then
+                  error = ELPA_ERROR
+                  return
+                else
+                  return
+                endif
+#else
+                error = ELPA_ERROR
+                return
+#endif
           endif
         endif ! 1stage
         if (use2stage) then
@@ -2298,9 +2451,19 @@ module elpa_impl
           end do
 
           if (ts_impl%sublevel_current2stage(sublevel) .ne. ts_impl%sublevel_cardinality2stage(sublevel)-1 ) then
-             print *,"PANIC in autotune_step 2stage"
-             print *,ts_impl%sublevel_current2stage(sublevel),ts_impl%sublevel_cardinality2stage(sublevel) 
-             stop
+             write(error_unit,*) "PANIC in autotune_step 2stage"
+             write(error_unit,*) ts_impl%sublevel_current2stage(sublevel),ts_impl%sublevel_cardinality2stage(sublevel) 
+#ifdef USE_FORTRAN2008
+                if (present(error)) then
+                  error = ELPA_ERROR
+                  return
+                else
+                  return
+                endif
+#else
+                error = ELPA_ERROR
+                return
+#endif
           endif
         endif ! 2stage
       else ! new_stepping
@@ -2393,8 +2556,8 @@ module elpa_impl
 #ifdef WITH_MPI
         call self%get("mpi_comm_parent",mpi_comm_parent, error)
         if (error .ne. ELPA_OK) then
-          print *,"ELPA_AUTOTUNE_SET_BEST: cannot get mpi_comm_parent"
-          stop
+          write(error_unit,*) "ELPA_AUTOTUNE_SET_BEST: cannot get mpi_comm_parent"
+          return
         endif
         call mpi_comm_rank(int(mpi_comm_parent,kind=MPI_KIND) ,myidMPI ,mpierr)
         myid = int(myidMPI, kind=c_int)
@@ -2412,8 +2575,18 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_step"
-            stop 
+            write(error_unit,'(a)') "Problem setting level in elpa_autotune_step"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif
         endif
         if (ts_impl%best_solver == ELPA_SOLVER_2STAGE) then
@@ -2427,8 +2600,18 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_step"
-            stop 
+            write(error_unit,'(a)') "Problem setting level in elpa_autotune_step"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif
         endif
       endif
@@ -2453,8 +2636,8 @@ module elpa_impl
           if (myid .eq. 0) print *,"ELPA_SOLVER_1STAGE is the best solver: setting tuned values"
           call self%set("solver", ELPA_SOLVER_1STAGE, error)
           if (error .ne. ELPA_OK) then
-            print *,"ELPA_AUTOTUNE_SET_BEST: cannot set ELPA_SOLVER_1STAGE for tuning"
-            stop
+            write(error_unit,*) "ELPA_AUTOTUNE_SET_BEST: cannot set ELPA_SOLVER_1STAGE for tuning"
+            return
           endif
           do level=1, sublevel
             if (ts_impl%sublevel_cardinality1stage(level) .eq. 0) then
@@ -2479,8 +2662,8 @@ module elpa_impl
           if (myid .eq. 0) print *,"ELPA_SOLVER_2STAGE is the best solver: setting tuned values"
           call self%set("solver", ELPA_SOLVER_2STAGE, error)
           if (error .ne. ELPA_OK) then
-            print *,"ELPA_AUTOTUNE_SET_BEST: cannot set ELPA_SOLVER_2STAGE for tuning"
-            stop
+            write(error_unit,*) "ELPA_AUTOTUNE_SET_BEST: cannot set ELPA_SOLVER_2STAGE for tuning"
+            return
           endif
           do level=1, sublevel
             if (ts_impl%sublevel_cardinality2stage(level) .eq. 0) then
@@ -2568,8 +2751,18 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_print_best"
-            stop 
+            write(error_unit,'(a)') "Problem setting level in elpa_autotune_step"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif
         endif ! 1 stage
         if (consider_solver == ELPA_SOLVER_2STAGE) then
@@ -2584,8 +2777,18 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_print_best"
-            stop 
+            write(error_unit,'(a)') "Problem setting level in elpa_autotune_print_best"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif
         endif ! 2 stage
       endif ! new stepping
@@ -2712,8 +2915,18 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_print_state"
-            stop 
+            write(error_unit,'(a)') "Problem setting level in elpa_autotune_print_state"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif
 
           ! check
@@ -2723,12 +2936,22 @@ module elpa_impl
             !        ts_impl%sublevel_current1stage(sublevel)) then
             if (sum(ts_impl%sublevel_cardinality1stage(0:sublevel-1)) .gt. &
                     ts_impl%total_current_1stage+1) then
-              print *,"something wrong in print state for 1stage 1", &
+              write(error_unit,*) "something wrong in print state for 1stage 1", &
                       sublevel, autotune_substeps_done1stage(sublevel), &
                       sum(ts_impl%sublevel_cardinality1stage(0:sublevel-1)), &
                       ts_impl%total_current_1stage
                       !ts_impl%sublevel_current1stage(sublevel)
-              stop 
+#ifdef USE_FORTRAN2008
+              if (present(error)) then
+                error = ELPA_ERROR
+                return
+              else
+                return
+              endif
+#else
+              error = ELPA_ERROR
+              return
+#endif
             endif
           else
             !if (ts_impl%sublevel_cardinality1stage(sublevel) .lt. ts_impl%current) then
@@ -2736,8 +2959,18 @@ module elpa_impl
             !        ts_impl%sublevel_current1stage(sublevel)) then
             if (ts_impl%sublevel_cardinality1stage(sublevel) .lt. &
                     ts_impl%total_current_1stage) then
-              print *,"something wrong in print state 1stage 2"
-              stop 
+              write(error_unit,*) "something wrong in print state 1stage 2"
+#ifdef USE_FORTRAN2008
+              if (present(error)) then
+                error = ELPA_ERROR
+                return
+              else
+                return
+              endif
+#else
+              error = ELPA_ERROR
+              return
+#endif
             endif
           endif
 
@@ -2767,8 +3000,18 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_print_state"
-            stop 
+            write(error_unit,*) "Problem setting level in elpa_autotune_print_state"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif
 
           ! check
@@ -2778,10 +3021,20 @@ module elpa_impl
             !        ts_impl%sublevel_current2stage(sublevel)) then
             if (sum(ts_impl%sublevel_cardinality2stage(0:sublevel-1)) .gt. &
                     ts_impl%total_current_2stage) then
-              print *,"something wrong in print state 2stage 1", &
+              write(error_unit,*) "something wrong in print state 2stage 1", &
                       sum(ts_impl%sublevel_cardinality2stage(0:sublevel-1)), &
                       ts_impl%current
-              stop 
+#ifdef USE_FORTRAN2008
+              if (present(error)) then
+                error = ELPA_ERROR
+                return
+              else
+                return
+              endif
+#else
+              error = ELPA_ERROR
+              return
+#endif
             endif
           else
             !if (ts_impl%sublevel_cardinality2stage(sublevel) .lt. ts_impl%current) then
@@ -2789,10 +3042,20 @@ module elpa_impl
             !        ts_impl%sublevel_current2stage(sublevel)) then
             if (ts_impl%sublevel_cardinality2stage(sublevel) .lt. &
                     ts_impl%total_current_2stage) then
-              print *,"something wrong in print state 2stage 2", &
+              write(error_unit,*) "something wrong in print state 2stage 2", &
                       ts_impl%sublevel_cardinality2stage(sublevel),&
                        ts_impl%current
-              stop 
+#ifdef USE_FORTRAN2008
+              if (present(error)) then
+                error = ELPA_ERROR
+                return
+              else
+                return
+              endif
+#else
+              error = ELPA_ERROR
+              return
+#endif
             endif
           endif
 
@@ -2956,8 +3219,18 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_save_state"
-            stop 
+            write(error_unit,*) "Problem setting level in elpa_autotune_save_state"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif
         endif ! 1 stage
         if (consider_solver == ELPA_SOLVER_2STAGE) then
@@ -2971,8 +3244,18 @@ module elpa_impl
           else if (sublevel .eq. autotune_level +1) then
             sublevel = autotune_level
           else
-            print *,"Problem setting level in elpa_autotune_save_state"
-            stop 
+            write(error_unit,*) "Problem setting level in elpa_autotune_save_state"
+#ifdef USE_FORTRAN2008
+            if (present(error)) then
+              error = ELPA_ERROR
+              return
+            else
+              return
+            endif
+#else
+            error = ELPA_ERROR
+            return
+#endif
           endif
         endif ! 2 stage
       endif
@@ -3133,7 +3416,15 @@ module elpa_impl
       if (ts_impl%new_stepping == 1) then
         write(error_unit, *) "elpa_autotune_load_state currently ",&
                  "not implemented for new stepping"
-        stop
+#ifdef USE_FORTRAN2008
+           if (present(error)) then
+             error = ELPA_ERROR
+             return
+           endif
+#else
+           error = ELPA_ERROR
+           return
+#endif
         !if (elpa_index_load_autotune_state_new_stepping_c(self%index, ts_impl%level, ts_impl%domain, ts_impl%min_loc, &
         !          ts_impl%min_val, ts_impl%current, ts_impl%cardinality, file_name // c_null_char) /= 1) then
         !   write(error_unit, *) "This should not happen (in elpa_autotune_load_state())"
