@@ -1299,7 +1299,11 @@ print *,"Device pointer + REDIST"
 #if REALCASE == 1
        , useQRActual  &
 #endif
-       )
+       , success)
+       if (.not.(success)) then
+         write(error_unit,*) "Error in trans_ev_band_to_full. Aborting..."
+         return
+       endif
        call obj%timer%stop("band_to_full")
        call obj%autotune_timer%stop("band_to_full")
      endif ! do_trans_to_full
@@ -1341,11 +1345,11 @@ print *,"Device pointer + REDIST"
          &PRECISION &
          (obj, na, nev, nblk, nbw, a, &
          matrixRows, tmat, q(1:matrixRows, matrixCols+1:2*matrixCols),  &
-         matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full &
+         matrixRows, matrixCols, num_blocks, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev_band_to_full, &
 #if REALCASE == 1
-         , useQRActual  &
+         useQRActual, &
 #endif
-         )
+         success)
        endif
 
 #ifdef HAVE_LIKWID

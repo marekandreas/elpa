@@ -68,12 +68,12 @@ subroutine trans_ev_band_to_full_&
     &_&
     &PRECISION &
     (obj, na, nqc, nblk, nbw, a_mat, lda, tmat, q_mat, &
-     ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU &
+     ldq, matrixCols, numBlocks, mpi_comm_rows, mpi_comm_cols, useGPU, &
 #if REALCASE == 1
-     ,useQr)
+     useQr, success)
 #endif
 #if COMPLEXCASE == 1
-     )
+     success)
 #endif
 
 !-------------------------------------------------------------------------------
@@ -196,7 +196,9 @@ subroutine trans_ev_band_to_full_&
   logical                                        :: useNonBlockingCollectivesCols
   logical                                        :: useNonBlockingCollectivesRows
   integer(kind=c_int)                            :: non_blocking_collectives_rows, non_blocking_collectives_cols
+  logical                                        :: success
 
+  success = .true.
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -221,14 +223,26 @@ subroutine trans_ev_band_to_full_&
 
   call obj%get("nbc_row_elpa2_band_to_full", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for rows in elpa2_band_to_full. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for rows in elpa2_band_to_full. Aborting..."
+    call obj%timer%stop("trans_ev_band_to_full_&
+    &MATH_DATATYPE&
+    &" // &
+    &PRECISION_SUFFIX //&
+    gpuString)
+    success = .false.
+    return
   endif
 
   call obj%get("nbc_col_elpa2_band_to_full", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for cols in elpa2_band_to_full. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for cols in elpa2_band_to_full. Aborting..."
+    call obj%timer%stop("trans_ev_band_to_full_&
+    &MATH_DATATYPE&
+    &" // &
+    &PRECISION_SUFFIX //&
+    gpuString)
+    success = .false.
+    return
   endif
 
   if (non_blocking_collectives_rows .eq. 1) then
@@ -246,8 +260,14 @@ subroutine trans_ev_band_to_full_&
 #ifdef BAND_TO_FULL_BLOCKING
   call obj%get("blocking_in_band_to_full",blocking_factor,error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem getting option for blocking_in_band_to_full. Aborting..."
-    stop
+    write(error_unit,*),"Problem getting option for blocking_in_band_to_full. Aborting..."
+    call obj%timer%stop("trans_ev_band_to_full_&
+    &MATH_DATATYPE&
+    &" // &
+    &PRECISION_SUFFIX //&
+    gpuString)
+    success = .false.
+    return
   endif
 #else
   blocking_factor = 1
