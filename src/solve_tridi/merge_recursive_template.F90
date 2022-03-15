@@ -54,7 +54,6 @@ recursive subroutine merge_recursive_&
 
    if (nprocs<=1) then
      ! Safety check only
-     stop "solve_tridi 7"
      if (wantDebug) write(error_unit,*) "ELPA1_merge_recursive: INTERNAL error merge_recursive: nprocs=",nprocs
      success = .false.
      return
@@ -72,7 +71,7 @@ recursive subroutine merge_recursive_&
    mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
    useGPU, wantDebug, success, max_threads)
    if (.not.(success)) then
-     stop "merge_recursive_ ddfffff"
+     write(error_unit,*) "Error in merge_recursice. Aborting..."
      return
    endif
 
@@ -84,7 +83,7 @@ recursive subroutine merge_recursive_&
    mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
    useGPU, wantDebug, success, max_threads)
    if (.not.(success)) then
-     stop "merge_recursive_ ddffdddgffff"
+     write(error_unit,*) "Error in merge_recursice. Aborting..."
      return
    endif             
 
@@ -149,7 +148,7 @@ recursive subroutine merge_recursive_&
                          l_col, p_col, &
                          l_col_bc, p_col_bc, np_off, nprocs, useGPU, wantDebug, success, max_threads)
      if (.not.(success)) then
-       stop "solve_tridie gj"
+       write(error_unit,*) "Error in merge_systems: Aborting..."
        return
      endif
 
@@ -163,7 +162,7 @@ recursive subroutine merge_recursive_&
                          l_col(noff+1), p_col(noff+1), np_off, nprocs, useGPU, wantDebug, success, &
                          max_threads)
      if (.not.(success)) then
-       stop "solve_tridi errzz"
+       write(error_unit,*) "Error in merge_systems: Aborting..."
        return
      endif             
    endif
