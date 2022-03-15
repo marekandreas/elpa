@@ -127,7 +127,7 @@
 #endif
         call self%autotune_timer%stop("accumulator")
 
-      else
+      else ! solver
         write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
         if (present(error)) then
@@ -241,7 +241,8 @@
 #endif
         call self%autotune_timer%stop("accumulator")
 
-      else
+      else ! solver
+        write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR
@@ -472,7 +473,8 @@
 #endif
         call self%autotune_timer%stop("accumulator")
 
-      else
+      else ! solver
+        write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR
@@ -626,7 +628,8 @@
 #endif
         call self%autotune_timer%stop("accumulator")
 
-      else
+      else ! solver
+        write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR
@@ -778,7 +781,8 @@
 #endif
         call self%autotune_timer%stop("accumulator")
 
-      else
+      else ! solver
+        write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR
@@ -884,7 +888,8 @@
 #endif
         call self%autotune_timer%stop("accumulator")
 
-      else
+      else ! solver
+        write(error_unit,*) "Unkown solver. Aborting!"
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR
@@ -1098,7 +1103,8 @@
 #endif
         call self%autotune_timer%stop("accumulator")
 
-      else
+      else ! solver
+        write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR
@@ -1203,7 +1209,8 @@
 #endif
         call self%autotune_timer%stop("accumulator")
 
-      else
+      else ! solver
+        write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
         if (present(error)) then
           error = ELPA_ERROR

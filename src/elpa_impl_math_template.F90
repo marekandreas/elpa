@@ -834,8 +834,18 @@
               &PRECISION&
               &_impl(self, d, e, q)
 #else
-     print *,"ELPA is not compiled with single-precision support"
-     stop
+     write(error_unit,*) "ELPA is not compiled with single-precision support"
+#ifdef USE_FORTRAN2008
+     if (present(error)) then
+       error = ELPA_ERROR
+       return
+     else
+       return
+     endif
+#else
+     error = ELPA_ERROR
+     return
+#endif
 #endif
 #ifdef USE_FORTRAN2008
       if (present(error)) then
