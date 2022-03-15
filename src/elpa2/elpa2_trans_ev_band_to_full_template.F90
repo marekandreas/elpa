@@ -260,7 +260,7 @@ subroutine trans_ev_band_to_full_&
 #ifdef BAND_TO_FULL_BLOCKING
   call obj%get("blocking_in_band_to_full",blocking_factor,error)
   if (error .ne. ELPA_OK) then
-    write(error_unit,*),"Problem getting option for blocking_in_band_to_full. Aborting..."
+    write(error_unit,*) "Problem getting option for blocking_in_band_to_full. Aborting..."
     call obj%timer%stop("trans_ev_band_to_full_&
     &MATH_DATATYPE&
     &" // &

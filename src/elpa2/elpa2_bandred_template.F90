@@ -1070,7 +1070,12 @@ max_threads, isSkewsymmetric)
       call herm_matrix_allreduce_&
 #endif
          &PRECISION &
-                         (obj, n_cols,vav, nbw, nbw,mpi_comm_rows, .true.)
+                         (obj, n_cols,vav, nbw, nbw,mpi_comm_rows, .true., success)
+      if (.not.(success)) then
+        write(error_unit,*) "Error when calling symm/herm_allreduce. Aborting..."
+        return
+      endif
+
          ! Calculate triangular matrix T for block Householder Transformation
       call obj%timer%start("blas")
       do lc=n_cols,1,-1
@@ -1880,24 +1885,32 @@ max_threads, isSkewsymmetric)
     endif ! useGPU
 
 #if REALCASE == 1
-!#ifdef HAVE_SKEWSYMMETRIC
     if (isSkewsymmetric) then
       call ssymm_matrix_allreduce_&
       &PRECISION &
-      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols, .false.)
+      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols, .false., success)
+      if (.not.(success)) then
+        write(error_unit,*) "Error when calling ssymm_matrix_allreduce"
+        return
+      endif
     else
-!#endif
       call symm_matrix_allreduce_&
       &PRECISION &
-      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols, .false.)
-!#ifdef HAVE_SKEWSYMMETRIC
+      (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols, .false., success)
+      if (.not.(success)) then
+        write(error_unit,*) "Error when calling symm_matrix_allreduce"
+        return
+      endif
     endif
-!#endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
     call herm_matrix_allreduce_&
          &PRECISION &
-         (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols, .false.)
+         (obj, n_cols,vav, nbw, nbw ,mpi_comm_cols, .false., success)
+    if (.not.(success)) then
+      write(error_unit,*) "Error when calling symm/herm_allreduce. Aborting..."
+      return
+    endif
 #endif
 
 #ifdef WITH_INTEL_GPU_VERSION
