@@ -400,12 +400,15 @@ subroutine solve_tridi_&
       logical                       :: useNonBlockingCollectivesRows
       integer(kind=c_int)           :: non_blocking_collectives, error
 
+      success = .true.
+
       call obj%timer%start("solve_tridi_col" // PRECISION_SUFFIX)
 
       call obj%get("nbc_row_solve_tridi", non_blocking_collectives, error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem setting option for non blocking collectives for rows in solve_tridi. Aborting..."
-        stop
+        write(error_unit,*) "Problem setting option for non blocking collectives for rows in solve_tridi. Aborting..."
+        success = .false.
+        return
       endif
 
       if (non_blocking_collectives .eq. 1) then
