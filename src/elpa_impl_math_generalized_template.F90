@@ -133,8 +133,18 @@
                 &_impl(self, a, ev, q)
 #endif
       else
-        print *,"unknown solver"
-        stop
+        write(error_unit,'(a)') "Unknown solver: Aborting!"
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 
       if (present(error)) then
@@ -310,8 +320,18 @@
                 &_impl(self, a, ev)
 #endif
       else
-        print *,"unknown solver"
-        stop
+        write(error_unit,'(a)') "Unknown solver: Aborting!"
+#ifdef USE_FORTRAN2008
+        if (present(error)) then
+          error = ELPA_ERROR
+          return
+        else
+          return
+        endif
+#else
+        error = ELPA_ERROR
+        return
+#endif
       endif
 
       if (present(error)) then
