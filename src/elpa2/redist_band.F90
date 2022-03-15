@@ -52,7 +52,8 @@ subroutine redist_band_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-(obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, ab)
+(obj, a_mat, lda, na, nblk, nbw, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
+ ab, success)
 
   use elpa_abstract_impl
   use elpa2_workload
@@ -60,6 +61,7 @@ subroutine redist_band_&
   use, intrinsic :: iso_c_binding
   use elpa_utilities, only : local_index, check_allocate_f, check_deallocate_f
   use elpa_mpi
+  use ELPA_utilities
   implicit none
 
   class(elpa_abstract_impl_t), intent(inout)       :: obj
@@ -90,7 +92,9 @@ subroutine redist_band_&
   integer(kind=MPI_KIND)                           :: allreduce_request1, allreduce_request2
   logical                                          :: useNonBlockingCollectivesAll
   integer(kind=c_int)                              :: non_blocking_collectives, error
+  logical                                          :: success
 
+  success = .true.
 
   call obj%timer%start("redist_band_&
   &MATH_DATATYPE&
@@ -100,8 +104,14 @@ subroutine redist_band_&
 
   call obj%get("nbc_all_elpa2_redist_band", non_blocking_collectives, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives in elpa2_redist_band. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives in elpa2_redist_band. Aborting..."
+    call obj%timer%stop("redist_band_&
+    &MATH_DATATYPE&
+    &" // &
+    &PRECISION_SUFFIX &
+    )
+    success = .false.
+    return
   endif
 
   if (non_blocking_collectives .eq. 1) then

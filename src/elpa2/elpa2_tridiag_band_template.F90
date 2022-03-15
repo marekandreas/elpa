@@ -56,7 +56,8 @@ subroutine tridiag_band_&
   &_&
   &PRECISION &
   (obj, na, nb, nblk, a_mat, lda, d, e, matrixCols, &
-  hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU, wantDebug, nrThreads, isSkewsymmetric)
+  hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU, wantDebug, nrThreads, isSkewsymmetric, &
+  success)
   !-------------------------------------------------------------------------------
   ! tridiag_band_real/complex:
   ! Reduces a real symmetric band matrix to tridiagonal form
@@ -149,7 +150,9 @@ subroutine tridiag_band_&
    integer(kind=MPI_KIND)                      :: allreduce_request1, allreduce_request2
    logical                                     :: useNonBlockingCollectivesAll
    integer(kind=c_int)                         :: non_blocking_collectives, error
+   logical                                     :: success
 
+   success = .true.
   if(useGPU) then
     gpuString = "_gpu"
   else
@@ -173,8 +176,14 @@ subroutine tridiag_band_&
 
   call obj%get("nbc_all_elpa2_band_to_tridi", non_blocking_collectives, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives in elpa2_band_to_tridi. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives in elpa2_band_to_tridi. Aborting..."
+    call obj%timer%stop("tridiag_band_&
+    &MATH_DATATYPE&
+    &" // &
+    &PRECISION_SUFFIX //&
+    gpuString)
+    success = .false.
+    return
   endif
 
   if (non_blocking_collectives .eq. 1) then
@@ -269,7 +278,12 @@ subroutine tridiag_band_&
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, ab)
+  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, ab, &
+   success)
+  if (.not.(success)) then
+    write(error_unit,*) "Error in redist_band. Aborting..."
+    return
+  endif
 
   ! Calculate the workload for each sweep in the back transformation
   ! and the space requirements to hold the HH vectors

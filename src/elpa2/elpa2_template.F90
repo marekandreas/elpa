@@ -1093,7 +1093,11 @@ print *,"Device pointer + REDIST"
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
-       do_useGPU_tridiag_band, wantDebug, nrThreads, isSkewsymmetric)
+       do_useGPU_tridiag_band, wantDebug, nrThreads, isSkewsymmetric, success)
+       if (.not.(success)) then
+         write(error_unit,*) "Error in tridiag_band. Aborting..."
+         return
+       endif
 
 #ifdef WITH_MPI
        call obj%timer%start("mpi_communication")
