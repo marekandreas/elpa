@@ -1,10 +1,11 @@
 subroutine global_product_&
 &PRECISION&
-&(obj, z, n, mpi_comm_rows, mpi_comm_cols, npc_0, npc_n)
+&(obj, z, n, mpi_comm_rows, mpi_comm_cols, npc_0, npc_n, success)
   ! This routine calculates the global product of z.
   use precision
   use elpa_abstract_impl
   use elpa_mpi
+  use ELPA_utilities
 #ifdef WITH_OPENMP_TRADITIONAL
   !use elpa_omp
 #endif          
@@ -25,17 +26,22 @@ subroutine global_product_&
   logical                                    :: useNonBlockingCollectivesRows
   integer(kind=c_int)                        :: non_blocking_collectives_rows, error, &
                                                 non_blocking_collectives_cols
+  logical                                    :: success
+
+  success = .true.
 
  call obj%get("nbc_row_global_product", non_blocking_collectives_rows, error)
  if (error .ne. ELPA_OK) then
-   print *,"Problem setting option for non blocking collectives for rows in global_product. Aborting..."
-   stop
+   write(error_unit,*) "Problem setting option for non blocking collectives for rows in global_product. Aborting..."
+   success = .false.
+   return
  endif
 
  call obj%get("nbc_col_global_product", non_blocking_collectives_cols, error)
  if (error .ne. ELPA_OK) then
-   print *,"Problem setting option for non blocking collectives for cols in global_product. Aborting..."
-   stop
+   write(error_unit,*) "Problem setting option for non blocking collectives for cols in global_product. Aborting..."
+   success = .false.
+   return
  endif
 
  if (non_blocking_collectives_rows .eq. 1) then

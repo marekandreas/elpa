@@ -548,7 +548,11 @@
 
         call global_product_&
         &PRECISION&
-        (obj, z, na1, mpi_comm_rows, mpi_comm_cols, npc_0, npc_n)
+        (obj, z, na1, mpi_comm_rows, mpi_comm_cols, npc_0, npc_n, success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in global_product. Aborting..."
+          return
+        endif
         z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
 
         call global_gather_&
