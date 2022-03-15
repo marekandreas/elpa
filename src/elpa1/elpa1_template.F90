@@ -789,7 +789,11 @@ print *,"Device pointer + REDIST"
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev, success)
+     if (.not.(success)) then
+       write(error_unit,*) "Error in trans_ev. Aborting..."
+       return
+     endif
      if (isSkewsymmetric) then
        ! Transform imaginary part
        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
@@ -801,6 +805,8 @@ print *,"Device pointer + REDIST"
                 mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev, success)
         if (.not.(success)) then
           write(error_unit,*) "Error in trans_ev. Aborting..."
+          return
+        endif
        endif
 
 #ifdef WITH_NVTX

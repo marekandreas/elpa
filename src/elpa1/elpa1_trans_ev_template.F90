@@ -92,7 +92,7 @@ subroutine trans_ev_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-(obj, na, nqc, a_mat, lda, tau, q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
+(obj, na, nqc, a_mat, lda, tau, q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU, success)
   use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
