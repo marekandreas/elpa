@@ -2182,7 +2182,9 @@ max_threads, isSkewsymmetric)
                                    size_of_datatype, matrixRows, threadID=myThreadID)
 
           call obj%timer%stop("gpublas")
+#ifdef WITH_INTEL_GPU_VERSION
         endif ! useIntelGPU
+#endif
       else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(myend-mystart+1,kind=BLAS_KIND), &
@@ -2191,9 +2193,7 @@ max_threads, isSkewsymmetric)
                             umcCPU(lcs,1), int(max_l_cols,kind=BLAS_KIND), &
                             ONE, a_mat(mystart,lcs), int(matrixRows,kind=BLAS_KIND) )
         call obj%timer%stop("blas")
-#ifdef WITH_INTEL_GPU_VERSION
       endif ! useGPU
-#endif
     enddo
     !$omp end parallel
 #else /* WITH_OPENMP_TRADITIONAL */
