@@ -308,11 +308,11 @@ function elpa_solve_evp_&
      ! in the GPU case at the moment only _1_ thread internally is allowed
      call obj%get("omp_threads", nrThreads, error)
      if (nrThreads .ne. 1) then
-       write(error_unit, *) "ELPA1: Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
-       write(error_unit, *) "setting 1 openmp thread now"
-       call obj%set("omp_threads",1, error)
-       nrThreads=1
-       call omp_set_num_threads(nrThreads)
+     write(error_unit, *) "ELPA1: Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
+     write(error_unit, *) "setting 1 openmp thread now"
+     call obj%set("omp_threads",1, error)
+     nrThreads=1
+     call omp_set_num_threads(nrThreads)
      endif
 #endif
      call obj%timer%stop("check_for_gpu")
@@ -789,7 +789,8 @@ print *,"Device pointer + REDIST"
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev, success)
+     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev, &
+        success)
      if (.not.(success)) then
        write(error_unit,*) "Error in trans_ev. Aborting..."
        return
