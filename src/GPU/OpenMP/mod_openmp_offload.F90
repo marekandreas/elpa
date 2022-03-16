@@ -535,9 +535,9 @@ module openmp_offload_functions
       use, intrinsic :: iso_c_binding
 
       character (1, c_char), intent(in), value     :: cta, ctb
-      integer (kind=c_int), intent(inout)          :: m, n, k
-      integer (kind=c_int), intent(in)             :: lda, ldb, ldc
-      real (kind=c_double)                         :: alpha, beta
+      integer (kind=c_int), intent(in), value      :: m, n, k
+      integer (kind=c_int), intent(in), value      :: lda, ldb, ldc
+      real (kind=c_double), value                  :: alpha, beta
       integer (kind=c_intptr_t), intent(in), value :: a, b, c
       integer(kind=C_intptr_T), value              :: handle
     end subroutine
