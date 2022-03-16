@@ -535,9 +535,9 @@ module openmp_offload_functions
       use, intrinsic :: iso_c_binding
 
       character (1, c_char), intent(in), value     :: cta, ctb
-      integer (kind=c_int), intent(inout)          :: m, n, k
-      integer (kind=c_int), intent(in)             :: lda, ldb, ldc
-      real (kind=c_double)                         :: alpha, beta
+      integer (kind=c_int), intent(in), value      :: m, n, k
+      integer (kind=c_int), intent(in), value      :: lda, ldb, ldc
+      real (kind=c_double), value                  :: alpha, beta
       integer (kind=c_intptr_t), intent(in), value :: a, b, c
       integer(kind=C_intptr_T), value              :: handle
     end subroutine
@@ -1060,9 +1060,9 @@ module openmp_offload_functions
       character(1,C_CHAR),value              :: side, uplo, trans, diag
       integer(kind=C_INT),value              :: m,n
       integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX), value          :: alpha
+      complex(kind=C_DOUBLE_COMPLEX), value  :: alpha
       integer(kind=C_intptr_T), value        :: a, b
-      integer(kind=C_intptr_T), value         :: handle
+      integer(kind=C_intptr_T), value        :: handle
 
     end subroutine
   end interface
@@ -1168,7 +1168,7 @@ module openmp_offload_functions
       character(1,C_CHAR),value               :: cta
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_DOUBLE_COMPLEX),value               :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX),value    :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: handle
 
@@ -1185,7 +1185,7 @@ module openmp_offload_functions
       character(1,C_CHAR),value               :: cta
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_FLOAT_COMPLEX),value                :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX),value     :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: handle
 
