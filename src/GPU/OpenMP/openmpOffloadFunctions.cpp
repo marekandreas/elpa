@@ -99,10 +99,14 @@ extern "C" {
       int device = openmpOffloadChosenGpu;
       *a = (intptr_t) omp_target_alloc(elems, device);
       if (*a) {
+#ifdef OPENMP_OFFLOAD_DEBUG
           std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
+#endif
           return 1;
       } else {
+#ifdef OPENMP_OFFLOAD_DEBUG
           std::cout << "Allocation failed!" << std::endl;
+#endif
           return 0;
       }
   }
@@ -165,116 +169,150 @@ extern "C" {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       dgemm(&cta, &ctb, &m, &n, &k, &alpha, reinterpret_cast<double *>(a), &lda, reinterpret_cast<double *>(b), &ldb, &beta, reinterpret_cast<double *>(c), &ldc);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "DGEMM" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadSgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, float alpha, void *a, int lda, void *b, int ldb, float beta, void *c, int ldc) {
       //handle not needed
+#ifdef OPENMP_OFFLOAD_DEBUG
 	  std::cout << "Calling sgemm" << std::endl;
 	  std::cout << "m=" << m << std::endl;
 	  std::cout << "n=" << n << std::endl;
 	  std::cout << "k=" << k << std::endl;
+#endif
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       sgemm(&cta, &ctb, &m, &n, &k, &alpha, reinterpret_cast<float *>(a), &lda, reinterpret_cast<float *>(b), &ldb, &beta, reinterpret_cast<float *>(c), &ldc);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "SGEMM" << std::endl;
+#endif
   }
 
   void mklOpenmpOffloadZgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, MKL_Complex16 alpha, void *a, int lda, void *b, int ldb, MKL_Complex16 beta, void *c, int ldc) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       zgemm(&cta, &ctb, &m, &n, &k, &alpha, reinterpret_cast<MKL_Complex16 *>(a), &lda, reinterpret_cast<MKL_Complex16 *>(b), &ldb, &beta, reinterpret_cast<MKL_Complex16 *>(c), &ldc);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "ZGEMM" << std::endl;
+#endif
   }
 
   void mklOpenmpOffloadCgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, MKL_Complex8 alpha, void *a, int lda, void *b, int ldb, MKL_Complex8 beta, void *c, int ldc) {
       //handle not needed
     #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
     cgemm(&cta, &ctb, &m, &n, &k, &alpha, reinterpret_cast<MKL_Complex8 *>(a), &lda, reinterpret_cast<MKL_Complex8 *>(b), &ldb, &beta, reinterpret_cast<MKL_Complex8 *>(c), &ldc);
+#ifdef OPENMP_OFFLOAD_DEBUG
     std::cout << "CGEMM" << std::endl;
+#endif
   }
 
   void mklOpenmpOffloadDtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       dtrtri(&uplo, &diag, &n, reinterpret_cast<double *>(a), &lda, &info);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "DTRTRI" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadStrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       strtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "STRTRI" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadZtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       ztrtri(&uplo, &diag, &n, reinterpret_cast<MKL_Complex16 *>(a), &lda, &info);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "ZTRTRI" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadCtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       ctrtri(&uplo, &diag, &n, reinterpret_cast<MKL_Complex8 *>(a), &lda, &info);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "CTRTRI" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadDpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       dpotrf(&uplo, &n, reinterpret_cast<double *>(a), &lda, &info);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "DPOTRF" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadSpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       spotrf(&uplo, &n, reinterpret_cast<float *>(a), &lda, &info);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "SPOTRF" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadZpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       zpotrf(&uplo, &n, reinterpret_cast<MKL_Complex16 *>(a), &lda, &info);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "ZPOTRF" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadCpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       cpotrf(&uplo, &n, reinterpret_cast<MKL_Complex8 *>(a), &lda, &info);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "CPOTRF" << std::endl;
+#endif
   }
 
   void mklOpenmpOffloadDcopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       dcopy(&n, reinterpret_cast<double *>(x), &incx, reinterpret_cast<double *>(y), &incy);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "DCOPY" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadScopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       scopy(&n, reinterpret_cast<float *>(x), &incx, reinterpret_cast<float *>(y), &incy);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "SCOPY" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadZcopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       zcopy(&n, reinterpret_cast<MKL_Complex16 *>(x), &incx, reinterpret_cast<MKL_Complex16 *>(y), &incy);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "ZCOPY" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadCcopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       ccopy(&n, reinterpret_cast<MKL_Complex8 *>(x), &incx, reinterpret_cast<MKL_Complex8 *>(y), &incy);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "CCOPY" << std::endl;
+#endif
   }  
 
 
@@ -282,28 +320,36 @@ extern "C" {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       dtrmm(&side, &uplo, &trans, &diag, &m, &n, &alpha, reinterpret_cast<double *>(a), &lda, reinterpret_cast<double *>(b), &ldb);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "DTRMM" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadStrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       strmm(&side, &uplo, &trans, &diag, &m, &n, &alpha, reinterpret_cast<float *>(a), &lda, reinterpret_cast<float *>(b), &ldb);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "STRMM" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadZtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, MKL_Complex16 alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       ztrmm(&side, &uplo, &trans, &diag, &m, &n, &alpha, reinterpret_cast<MKL_Complex16 *>(a), &lda, reinterpret_cast<MKL_Complex16 *>(b), &ldb);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "ZTRMM" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadCtrmmFromC(intptr_t *handle, char side, char uplo, char trans,  char diag, int m, int n, MKL_Complex8 alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       ctrmm(&side, &uplo, &trans, &diag, &m, &n, &alpha, reinterpret_cast<MKL_Complex8 *>(a), &lda, reinterpret_cast<MKL_Complex8 *>(b), &ldb);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "CTRMM" << std::endl;
+#endif
   }  
 
 
@@ -311,56 +357,72 @@ extern "C" {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       dtrsm(&side, &uplo, &trans, &diag, &m, &n, &alpha, reinterpret_cast<double *>(a), &lda, reinterpret_cast<double *>(b), &ldb);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "DTRSM" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadStrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       strsm(&side, &uplo, &trans, &diag, &m, &n, &alpha, reinterpret_cast<float *>(a), &lda, reinterpret_cast<float *>(b), &ldb);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "STRSM" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadZtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, MKL_Complex16 alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       ztrsm(&side, &uplo, &trans, &diag, &m, &n, &alpha, reinterpret_cast<MKL_Complex16 *>(a), &lda, reinterpret_cast<MKL_Complex16 *>(b), &ldb);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "ZTRSM" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadCtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, MKL_Complex8 alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       ctrsm(&side, &uplo, &trans, &diag, &m, &n, &alpha, reinterpret_cast<MKL_Complex8 *>(a), &lda, reinterpret_cast<MKL_Complex8 *>(b), &ldb);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "CTRSM" << std::endl;
+#endif
   }
 
   void mklOpenmpOffloadDgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       dgemv(&cta, &m, &n, &alpha, reinterpret_cast<double *>(a), &lda, reinterpret_cast<double *>(x), &incx, &beta, reinterpret_cast<double *>(y), &incy);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "DGEMV" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadSgemvFromC(intptr_t *handle, char cta, int m, int n, float alpha, void *a, int lda, void *x, int incx, float beta, void *y, int incy) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       sgemv(&cta, &m, &n, &alpha, reinterpret_cast<float *>(a), &lda, reinterpret_cast<float *>(x), &incx, &beta, reinterpret_cast<float *>(y), &incy);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "SGEMV" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadZgemvFromC(intptr_t *handle, char cta, int m, int n, MKL_Complex16 alpha, void *a, int lda, void *x, int incx, MKL_Complex16 beta, void *y, int incy) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       zgemv(&cta, &m, &n, &alpha, reinterpret_cast<MKL_Complex16 *>(a), &lda, reinterpret_cast<MKL_Complex16 *>(x), &incx, &beta, reinterpret_cast<MKL_Complex16 *>(y), &incy);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "ZGEMV" << std::endl;
+#endif
   }  
 
   void mklOpenmpOffloadCgemvFromC(intptr_t *handle, char cta, int m, int n, MKL_Complex8 alpha, void *a, int lda, void *x, int incx, MKL_Complex8 beta, void *y, int incy) {
       //handle not needed
       #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
       cgemv(&cta, &m, &n, &alpha, reinterpret_cast<MKL_Complex8 *>(a), &lda, reinterpret_cast<MKL_Complex8 *>(x), &incx, &beta, reinterpret_cast<MKL_Complex8 *>(y), &incy);
+#ifdef OPENMP_OFFLOAD_DEBUG
       std::cout << "CGEMV" << std::endl;
+#endif
   }  
 
 
