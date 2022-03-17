@@ -45,6 +45,7 @@
 // it is based on a prototype implementation developed for MPCDF 
 // by A. Poeppl, Intel (2022) 
 */
+#include "config-f90.h"
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 
@@ -117,10 +118,13 @@ extern "C" {
       // FIXME: Do not use the default device, but some other device that has been specified.
       // TODO:  Find out how this is done in ELPA.
       int hostDevice = omp_get_initial_device();
-      int gpuDevice = omp_get_default_device();
+      //int gpuDevice = omp_get_default_device();
+      int gpuDevice = openmpOffloadChosenGpu;
       int dstDevice;
       int srcDevice;
+#ifdef OPENMP_OFFLOAD_DEBUG
       printf("Direction %d %d\n",direction,openmpOffloadMemcpyHostToDevice);
+#endif
       if (direction == openmpOffloadMemcpyDeviceToDevice) {
           dstDevice = gpuDevice;
           srcDevice = gpuDevice;
@@ -135,11 +139,15 @@ extern "C" {
           return 0;
       }
       int retVal = omp_target_memcpy(dst, src, size, 0, 0, dstDevice, srcDevice);
+#ifdef OPENMP_OFFLOAD_DEBUG
       printf("Return val o fmemcpy %d\n",retVal);
+#endif
       if (retVal != 0){
 	return 0;
       } else {
+#ifdef OPENMP_OFFLOAD_DEBUG
         std::cout << "Copied " << size << "B successfully from " << reinterpret_cast<intptr_t>(src) << " to " << reinterpret_cast<intptr_t>(dst) << "." << std::endl;
+#endif
 	return 1;
       }
   }
