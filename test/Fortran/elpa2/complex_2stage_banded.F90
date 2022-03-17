@@ -217,12 +217,9 @@ program test_complex2_double_banded
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
 
 #ifdef WITH_MPI
+   blacs_ok_mpi = int(blacs_ok, kind=INT_MPI_TYPE)
    call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
-#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
-   blacs_ok = int(blacs_ok_mpi, kind=c_int64_t)
-#else
-   blacs_ok = int(blacs_ok_mpi, kind=c_int32_t)
-#endif
+   blacs_ok = int(blacs_ok_mpi, kind=INT_TYPE)
 #endif
 
    if (blacs_ok .eq. 0) then
