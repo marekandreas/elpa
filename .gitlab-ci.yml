@@ -6,11 +6,11 @@ include:
   #set environment variables
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/before.inc.yml'
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/after.inc.yml'
-    # python tests 
+    ## python tests 
     #- remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/special_tests.inc.yml'
-    # linking against ELPA tests
+    ## linking against ELPA tests
     #- remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/project_tests.inc.yml'
-    # ELPA tests
+    ## ELPA tests
     #- remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/generated_tests.inc.yml'
   # layout tests
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/layout_tests.inc.yml'
