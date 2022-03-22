@@ -312,7 +312,7 @@ subroutine trans_ev_band_to_full_&
       successGPU = gpu_malloc(q_dev,ldq*matrixCols*size_of_datatype)
       check_alloc_gpu("trans_ev_band_to_full: q_dev", successGPU)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),&
                       ldq*matrixCols*size_of_datatype, gpuHostRegisterDefault)
@@ -326,7 +326,7 @@ subroutine trans_ev_band_to_full_&
       check_memcpy_gpu("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         successGPU = gpu_malloc_host(tmp1_host,max_local_cols*cwy_blocking*size_of_datatype)
         check_host_alloc_gpu("trans_ev_band_to_full: tmp1_host", successGPU)
@@ -372,7 +372,7 @@ subroutine trans_ev_band_to_full_&
   if (useGPU) then
 #endif
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_host_register(int(loc(tmat_complete),kind=c_intptr_t), &
                     cwy_blocking * cwy_blocking * size_of_datatype,&
@@ -423,7 +423,7 @@ subroutine trans_ev_band_to_full_&
     check_alloc_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_memset(tmp_dev, 0, max_local_cols*cwy_blocking*size_of_datatype)
       check_memset_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
@@ -441,7 +441,7 @@ subroutine trans_ev_band_to_full_&
     successGPU = gpu_malloc(tmp2_dev,max_local_cols*cwy_blocking*size_of_datatype)
     check_alloc_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_memset(tmp2_dev, 0, max_local_cols*cwy_blocking*size_of_datatype)
       check_memset_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
@@ -478,7 +478,7 @@ subroutine trans_ev_band_to_full_&
      if (useGPU) then
 #endif
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
          successGPU = gpu_memset(t_tmp_dev, 0, cwy_blocking*nbw*size_of_datatype)
          check_memset_gpu("trans_ev_band_to_full: t_tmp_dev", successGPU)
@@ -930,7 +930,7 @@ subroutine trans_ev_band_to_full_&
         else
 #endif
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
             successGPU = gpu_memset(tmp_dev, 0, l_cols*n_cols*size_of_datatype)
             check_memset_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
@@ -1187,7 +1187,7 @@ subroutine trans_ev_band_to_full_&
       check_dealloc_gpu("trans_ev_band_to_full: q_dev", successGPU)
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
         check_host_unregister_gpu("trans_ev_band_to_full: q_mat", successGPU)
@@ -1212,7 +1212,7 @@ subroutine trans_ev_band_to_full_&
 
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         successGPU = gpu_free_host(tmp1_host)
         check_host_dealloc_gpu("trans_ev_band_to_full: tmp1_host", successGPU)

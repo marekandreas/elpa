@@ -371,7 +371,7 @@ subroutine tridiag_&
 #endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         num = (max_local_rows+1) * size_of_datatype
         successGPU = gpu_malloc_host(v_row_host, num)
         check_host_alloc_gpu("tridiag: v_row_host", successGPU)
@@ -380,7 +380,7 @@ subroutine tridiag_&
         allocate(v_row(max_local_rows+1))
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         num = (max_local_cols) * size_of_datatype
         successGPU = gpu_malloc_host(v_col_host,num)
         check_host_alloc_gpu("tridiag: v_col_host", successGPU)
@@ -389,7 +389,7 @@ subroutine tridiag_&
         allocate(v_col(max_local_cols))
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         num = (max_local_cols) * size_of_datatype
         successGPU = gpu_malloc_host(u_col_host,num)
         check_host_alloc_gpu("tridiag: u_col_host", successGPU)
@@ -398,7 +398,7 @@ subroutine tridiag_&
         allocate(u_col(max_local_cols))
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         num = (max_local_rows) * size_of_datatype
         successGPU = gpu_malloc_host(u_row_host,num)
         check_host_alloc_gpu("tridiag: u_row_host", successGPU)
@@ -408,7 +408,7 @@ subroutine tridiag_&
       endif
 
       
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
         successGPU = gpu_host_register(int(loc(vu_stored_rows),kind=c_intptr_t),num,&
                     gpuHostRegisterDefault)
@@ -531,7 +531,7 @@ subroutine tridiag_&
     check_alloc_gpu("tridiag: a_dev", successGPU)
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       successGPU = gpu_host_register(int(loc(a_mat),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: a_mat", successGPU)
@@ -760,7 +760,7 @@ subroutine tridiag_&
      if (useGPU) then
 #endif
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
          successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
          check_memcpy_gpu("tridiag: u_col_dev", successGPU)
 
@@ -1625,12 +1625,12 @@ subroutine tridiag_&
 #endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         successGPU = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
         check_host_unregister_gpu("tridiag: a_mat", successGPU)
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         successGPU = gpu_free_host(v_row_host)
         check_host_dealloc_gpu("tridiag: v_row_host", successGPU)
         nullify(v_row)
@@ -1653,7 +1653,7 @@ subroutine tridiag_&
         deallocate(u_col)
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         successGPU = gpu_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
         check_host_unregister_gpu("tridiag: uv_stored_cols", successGPU)
 
