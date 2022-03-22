@@ -51,9 +51,9 @@
 module elpa_gpu
   use precision
   use iso_c_binding
-#ifdef WITH_INTEL_GPU_VERSION
-  use mkl_offload
-#endif
+!#ifdef WITH_INTEL_GPU_VERSION
+!  use mkl_offload
+!#endif
   integer(kind=c_int), parameter :: nvidia_gpu = 1
   integer(kind=c_int), parameter :: amd_gpu = 2
   integer(kind=c_int), parameter :: intel_gpu = 3
@@ -193,6 +193,9 @@ module elpa_gpu
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       vendor = openmp_offload_gpu
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      vendor = sycl_gpu
+#endif
       use_gpu_vendor = vendor
       return
     end function
@@ -206,6 +209,9 @@ module elpa_gpu
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
       implicit none
 
@@ -258,6 +264,23 @@ module elpa_gpu
         !gpuHostRegisterDefault            = openmpOffloadHostRegisterDefault
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        syclMemcpyHostToDevice   = sycl_memcpyHostToDevice()
+        gpuMemcpyHostToDevice    = syclMemcpyHostToDevice
+        syclMemcpyDeviceToHost   = syclmemcpyDeviceToHost()
+        gpuMemcpyDeviceToHost    = syclMemcpyDeviceToHost
+        syclMemcpyDeviceToDevice = sycl_memcpyDeviceToDevice()
+        gpuMemcpyDeviceToDevice  = syclMemcpyDeviceToDevice
+        !openmpOffloadHostRegisterPortable = openmp_offload_hostRegisterPortable()
+        !gpuHostRegisterPortable           = openmpOffloadHostRegisterPortable
+        !openmpOffloadHostRegisterMapped   = openmp_offload_hostRegisterMapped()
+        !gpuHostRegisterMapped             = openmpOffloadHostRegisterMapped
+        !openmpOffloadHostRegisterDefault  = openmp_offload_hostRegisterDefault()
+        !gpuHostRegisterDefault            = openmpOffloadHostRegisterDefault
+      endif
+#endif
     end subroutine
 
     function gpu_setdevice(n) result(success)
@@ -270,6 +293,9 @@ module elpa_gpu
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -290,6 +316,11 @@ module elpa_gpu
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         success = openmp_offload_setdevice(n)
+      endif
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_setdevice(n)
       endif
 #endif
     end function
@@ -323,6 +354,12 @@ module elpa_gpu
         stop
       endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"not yet implemented: device synchronize"
+        stop
+      endif
+#endif
     end function
 
 
@@ -330,6 +367,13 @@ module elpa_gpu
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
       implicit none
       type(c_ptr)                          :: array
       integer(kind=c_intptr_t), intent(in) :: elements
@@ -352,13 +396,25 @@ module elpa_gpu
       endif
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"not yet implemented: malloc_host"
+        stop
+      endif
+#endif
+
     end function
 
     function gpu_malloc(array, elements) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
       implicit none
       integer(kind=C_intptr_T)             :: array
       integer(kind=c_intptr_t), intent(in) :: elements
@@ -380,12 +436,24 @@ module elpa_gpu
       endif
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_malloc(array, elements)
+      endif
+#endif
+
     end function
 
     function gpu_host_register(array, elements, flag) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
       use hip_functions
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
       implicit none
       integer(kind=C_intptr_t)              :: array
       integer(kind=c_intptr_t), intent(in)  :: elements
@@ -409,6 +477,13 @@ module elpa_gpu
       endif
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"not yet implemented: host_register"
+        stop
+      endif
+#endif
+
     end function
     
     function gpu_memcpy_intptr(dst, src, size, dir) result(success)
@@ -417,6 +492,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -441,6 +519,12 @@ module elpa_gpu
         success = openmp_offload_memcpy_intptr(dst, src, size, dir)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_memcpy_intptr(dst, src, size, dir)
+      endif
+#endif
       return
     
     end function
@@ -451,6 +535,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
       implicit none
       type(c_ptr)                           :: dst
@@ -474,6 +561,12 @@ module elpa_gpu
         success = openmp_offload_memcpy_cptr(dst, src, size, dir)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_memcpy_cptr(dst, src, size, dir)
+      endif
+#endif
       return
     
     end function
@@ -484,6 +577,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -508,6 +604,12 @@ module elpa_gpu
         success = openmp_offload_memcpy_mixed_to_device(dst, src, size, dir)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_memcpy_mixed_to_device(dst, src, size, dir)
+      endif
+#endif
     
     end function
     
@@ -517,6 +619,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -541,6 +646,12 @@ module elpa_gpu
         success = openmp_offload_memcpy_mixed_to_host(dst, src, size, dir)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_memcpy_mixed_to_host(dst, src, size, dir)
+      endif
+#endif
     
     end function
 
@@ -551,6 +662,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -577,6 +691,12 @@ module elpa_gpu
       endif
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_memset(a, int(val,kind=c_int32_t), size)
+      endif
+#endif
+
     end function
 
     function gpu_free(a) result(success)
@@ -585,6 +705,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -608,6 +731,12 @@ module elpa_gpu
       endif
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_free(a)
+      endif
+#endif
+
     end function
 
     function gpu_free_host(a) result(success)
@@ -616,6 +745,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -640,6 +772,14 @@ module elpa_gpu
       endif
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"not yet implemented: host_free"
+        stop
+      endif
+#endif
+
+
     end function
 
     function gpu_host_unregister(a) result(success)
@@ -648,6 +788,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -672,6 +815,13 @@ module elpa_gpu
       endif
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"not yet implemented: host_unregister"
+        stop
+      endif
+#endif
+
     end function
 
 
@@ -682,6 +832,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -711,6 +864,13 @@ module elpa_gpu
         stop
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"not yet implemented: memcpy2d_intptr"
+        stop
+      endif
+#endif
     end function
 
     function gpu_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir) result(success)
@@ -720,6 +880,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -749,6 +912,13 @@ module elpa_gpu
         stop
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"not yet implemented: memcpy2d_cptr"
+        stop
+      endif
+#endif
     end function
 
     subroutine gpusolver_dtrtri(uplo, diag, n, a, lda, info)
@@ -757,6 +927,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -779,6 +952,12 @@ module elpa_gpu
         call mkl_openmp_offload_dtrtri(uplo, diag, n, a, lda, info)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        call mkl_sycl_dtrtri(uplo, diag, n, a, lda, info)
+      endif
+#endif
     end subroutine
 
     subroutine gpusolver_strtri(uplo, diag, n, a, lda, info)
@@ -787,6 +966,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -809,6 +991,12 @@ module elpa_gpu
         call mkl_openmp_offload_strtri(uplo, diag, n, a, lda, info)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        call mkl_sycl_strtri(uplo, diag, n, a, lda, info)
+      endif
+#endif
     end subroutine
 
     subroutine gpusolver_ztrtri(uplo, diag, n, a, lda, info)
@@ -817,6 +1005,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -839,6 +1030,12 @@ module elpa_gpu
         call mkl_openmp_offload_ztrtri(uplo, diag, n, a, lda, info)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        call mkl_sycl_ztrtri(uplo, diag, n, a, lda, info)
+      endif
+#endif
     end subroutine
 
     subroutine gpusolver_ctrtri(uplo, diag, n, a, lda, info)
@@ -847,6 +1044,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -869,6 +1069,12 @@ module elpa_gpu
         call mkl_openmp_offload_ctrtri(uplo, diag, n, a, lda, info)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        call mkl_sycl_ctrtri(uplo, diag, n, a, lda, info)
+      endif
+#endif
     end subroutine
 
     subroutine gpusolver_dpotrf(uplo, n, a, lda, info)
@@ -877,6 +1083,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -899,6 +1108,12 @@ module elpa_gpu
         call mkl_openmp_offload_dpotrf(uplo, n, a, lda, info)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        call mkl_sycl_dpotrf(uplo, n, a, lda, info)
+      endif
+#endif
     end subroutine
 
     subroutine gpusolver_spotrf(uplo, n, a, lda, info)
@@ -907,6 +1122,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -929,6 +1147,12 @@ module elpa_gpu
         call mkl_openmp_offload_spotrf(uplo, n, a, lda, info)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        call mkl_sycl_spotrf(uplo, n, a, lda, info)
+      endif
+#endif
     end subroutine
 
     subroutine gpusolver_zpotrf(uplo, n, a, lda, info)
@@ -937,6 +1161,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -959,6 +1186,12 @@ module elpa_gpu
         call mkl_openmp_offload_zpotrf(uplo, n, a, lda, info)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        call mkl_sycl_zpotrf(uplo, n, a, lda, info)
+      endif
+#endif
     end subroutine
 
     subroutine gpusolver_cpotrf(uplo, n, a, lda, info)
@@ -967,6 +1200,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -989,6 +1225,12 @@ module elpa_gpu
         call mkl_openmp_offload_cpotrf(uplo, n, a, lda, info)
       endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        call mkl_sycl_cpotrf(uplo, n, a, lda, info)
+      endif
+#endif
     end subroutine
 
     subroutine gpublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
@@ -997,6 +1239,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1021,6 +1266,12 @@ module elpa_gpu
           call mkl_openmp_offload_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -1035,6 +1286,12 @@ module elpa_gpu
            call mkl_openmp_offload_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
          endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+         if (use_gpu_vendor == sycl_gpu) then
+           call mkl_scyl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+         endif
+#endif
       endif
     end subroutine
 
@@ -1044,6 +1301,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1068,6 +1328,12 @@ module elpa_gpu
           call mkl_openmp_offload_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -1082,6 +1348,12 @@ module elpa_gpu
           call mkl_openmp_offload_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+        endif
+#endif
       endif
 
     end subroutine
@@ -1092,6 +1364,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1117,6 +1392,12 @@ module elpa_gpu
           call mkl_openmp_offload_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -1131,6 +1412,12 @@ module elpa_gpu
           call mkl_openmp_offload_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+        endif
+#endif
       endif
 
     end subroutine
@@ -1141,6 +1428,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1166,6 +1456,12 @@ module elpa_gpu
           call mkl_openmp_offload_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
@@ -1180,6 +1476,12 @@ module elpa_gpu
           call mkl_openmp_offload_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+        endif
+#endif
       endif
 
     end subroutine
@@ -1190,6 +1492,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1214,6 +1519,11 @@ module elpa_gpu
           call mkl_openmp_offload_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -1229,6 +1539,12 @@ module elpa_gpu
         endif
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+#endif
+
       endif
 
     end subroutine 
@@ -1239,6 +1555,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1264,6 +1583,12 @@ module elpa_gpu
           call mkl_openmp_offload_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -1278,6 +1603,12 @@ module elpa_gpu
           call mkl_openmp_offload_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_sycl_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+#endif
       endif
     end subroutine 
 
@@ -1290,6 +1621,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1315,6 +1649,12 @@ module elpa_gpu
           call mkl_openmp_offload_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
+#endif
      else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -1329,6 +1669,12 @@ module elpa_gpu
           call mkl_openmp_offload_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+#endif
      endif
     end subroutine
 
@@ -1338,6 +1684,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1363,6 +1712,12 @@ module elpa_gpu
           call mkl_openmp_offload_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
+#endif
      else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -1377,6 +1732,12 @@ module elpa_gpu
           call mkl_openmp_offload_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+#endif
      endif
     end subroutine
 
@@ -1387,6 +1748,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1411,6 +1775,12 @@ module elpa_gpu
           call mkl_openmp_offload_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -1425,6 +1795,12 @@ module elpa_gpu
           call mkl_openmp_offload_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1435,6 +1811,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1459,6 +1838,12 @@ module elpa_gpu
           call mkl_openmp_offload_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
@@ -1473,6 +1858,12 @@ module elpa_gpu
           call mkl_openmp_offload_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1483,6 +1874,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1508,6 +1902,12 @@ module elpa_gpu
           call mkl_openmp_offload_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
+#endif
       else
 
         if (use_gpu_vendor == nvidia_gpu) then
@@ -1523,6 +1923,12 @@ module elpa_gpu
           call mkl_openmp_offload_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1533,6 +1939,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1558,6 +1967,12 @@ module elpa_gpu
           call mkl_openmp_offload_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID=threadID)
+        endif
+#endif
       else
 
         if (use_gpu_vendor == nvidia_gpu) then
@@ -1573,6 +1988,12 @@ module elpa_gpu
           call mkl_openmp_offload_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1583,6 +2004,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1606,6 +2030,12 @@ module elpa_gpu
           call mkl_openmp_offload_dcopy_intptr(n, x, incx, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dcopy_intptr(n, x, incx, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dcopy_intptr(n, x, incx, y, incy)
@@ -1620,6 +2050,12 @@ module elpa_gpu
           call mkl_openmp_offload_dcopy_intptr(n, x, incx, y, incy)
         endif
 #endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dcopy_intptr(n, x, incx, y, incy)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1630,6 +2066,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1653,6 +2092,12 @@ module elpa_gpu
           call mkl_openmp_offload_dcopy_cptr(n, x, incx, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dcopy_cptr(n, x, incx, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dcopy_cptr(n, x, incx, y, incy)
@@ -1667,6 +2112,12 @@ module elpa_gpu
           call mkl_openmp_offload_dcopy_cptr(n, x, incx, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dcopy_cptr(n, x, incx, y, incy)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1677,6 +2128,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1700,6 +2154,12 @@ module elpa_gpu
           call mkl_openmp_offload_scopy_intptr(n, x, incx, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_scopy_intptr(n, x, incx, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_scopy_intptr(n, x, incx, y, incy)
@@ -1714,6 +2174,12 @@ module elpa_gpu
           call mkl_openmp_offload_scopy_intptr(n, x, incx, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_scopy_intptr(n, x, incx, y, incy)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1724,6 +2190,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1747,6 +2216,12 @@ module elpa_gpu
           call mkl_openmp_offload_scopy_cptr(n, x, incx, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_scopy_cptr(n, x, incx, y, incy)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_scopy_cptr(n, x, incx, y, incy)
@@ -1761,6 +2236,12 @@ module elpa_gpu
           call mkl_openmp_offload_scopy_cptr(n, x, incx, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_scopy_cptr(n, x, incx, y, incy)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1772,6 +2253,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1795,6 +2279,12 @@ module elpa_gpu
           call mkl_openmp_offload_zcopy_intptr(n, x, incx, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zcopy_intptr(n, x, incx, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_zcopy_intptr(n, x, incx, y, incy)
@@ -1809,6 +2299,12 @@ module elpa_gpu
           call mkl_openmp_offload_zcopy_intptr(n, x, incx, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zcopy_intptr(n, x, incx, y, incy)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1819,6 +2315,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1842,6 +2341,12 @@ module elpa_gpu
           call mkl_openmp_offload_zcopy_cptr(n, x, incx, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zcopy_cptr(n, x, incx, y, incy, threadID=threadID)
+        endif
+#endif
       else
 
         if (use_gpu_vendor == nvidia_gpu) then
@@ -1857,6 +2362,12 @@ module elpa_gpu
           call mkl_openmp_offload_zcopy_cptr(n, x, incx, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_zcopy_cptr(n, x, incx, y, incy)
+        endif
+#endif
       endif
 
     end subroutine
@@ -1868,6 +2379,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1891,6 +2405,12 @@ module elpa_gpu
           call mkl_openmp_offload_ccopy_intptr(n, x, incx, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ccopy_intptr(n, x, incx, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ccopy_intptr(n, x, incx, y, incy)
@@ -1905,6 +2425,12 @@ module elpa_gpu
           call mkl_openmp_offload_ccopy_intptr(n, x, incx, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ccopy_intptr(n, x, incx, y, incy)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1915,6 +2441,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1938,6 +2467,12 @@ module elpa_gpu
           call mkl_openmp_offload_ccopy_cptr(n, x, incx, y, incy, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ccopy_cptr(n, x, incx, y, incy, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ccopy_cptr(n, x, incx, y, incy)
@@ -1952,6 +2487,12 @@ module elpa_gpu
           call mkl_openmp_offload_ccopy_cptr(n, x, incx, y, incy)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ccopy_cptr(n, x, incx, y, incy)
+        endif
+#endif
       endif
     end subroutine
 
@@ -1963,6 +2504,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -1988,6 +2532,12 @@ module elpa_gpu
           call mkl_openmp_offload_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2002,6 +2552,12 @@ module elpa_gpu
           call mkl_openmp_offload_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
 
     end subroutine
@@ -2014,6 +2570,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2039,6 +2598,12 @@ module elpa_gpu
           call mkl_openmp_offload_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2053,6 +2618,12 @@ module elpa_gpu
           call mkl_openmp_offload_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2064,6 +2635,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2089,6 +2663,12 @@ module elpa_gpu
           call mkl_openmp_offload_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2103,6 +2683,12 @@ module elpa_gpu
           call mkl_openmp_offload_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2114,6 +2700,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2139,6 +2728,12 @@ module elpa_gpu
           call mkl_openmp_offload_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2153,6 +2748,12 @@ module elpa_gpu
           call mkl_openmp_offload_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2164,6 +2765,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2189,6 +2793,12 @@ module elpa_gpu
           call mkl_openmp_offload_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2203,6 +2813,12 @@ module elpa_gpu
           call mkl_openmp_offload_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2215,6 +2831,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2240,6 +2859,12 @@ module elpa_gpu
           call mkl_openmp_offload_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2254,6 +2879,12 @@ module elpa_gpu
           call mkl_openmp_offload_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2265,6 +2896,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2290,6 +2924,12 @@ module elpa_gpu
           call mkl_openmp_offload_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2304,6 +2944,12 @@ module elpa_gpu
           call mkl_openmp_offload_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2316,6 +2962,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2341,6 +2990,12 @@ module elpa_gpu
           call mkl_openmp_offload_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2355,6 +3010,12 @@ module elpa_gpu
           call mkl_openmp_offload_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2366,6 +3027,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2391,6 +3055,12 @@ module elpa_gpu
           call mkl_openmp_offload_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2405,6 +3075,12 @@ module elpa_gpu
           call mkl_openmp_offload_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2416,6 +3092,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2441,6 +3120,12 @@ module elpa_gpu
           call mkl_openmp_offload_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2455,6 +3140,12 @@ module elpa_gpu
           call mkl_openmp_offload_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2466,6 +3157,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2491,6 +3185,12 @@ module elpa_gpu
           call mkl_openmp_offload_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2505,6 +3205,12 @@ module elpa_gpu
           call mkl_openmp_offload_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2516,6 +3222,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2541,6 +3250,12 @@ module elpa_gpu
           call mkl_openmp_offload_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2555,6 +3270,12 @@ module elpa_gpu
           call mkl_openmp_offload_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_openmp_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2566,6 +3287,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2591,6 +3315,12 @@ module elpa_gpu
           call mkl_openmp_offload_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2605,6 +3335,12 @@ module elpa_gpu
           call mkl_openmp_offload_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2617,6 +3353,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2642,6 +3381,12 @@ module elpa_gpu
           call mkl_openmp_offload_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2656,6 +3401,12 @@ module elpa_gpu
           call mkl_openmp_offload_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2667,6 +3418,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2692,6 +3446,12 @@ module elpa_gpu
           call mkl_openmp_offload_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2706,6 +3466,12 @@ module elpa_gpu
           call mkl_openmp_offload_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
       endif
     end subroutine
 
@@ -2718,6 +3484,9 @@ module elpa_gpu
       use hip_functions
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
 #endif
 
       implicit none
@@ -2743,6 +3512,12 @@ module elpa_gpu
           call mkl_openmp_offload_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
         endif
 #endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID=threadID)
+        endif
+#endif
       else
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
@@ -2755,6 +3530,12 @@ module elpa_gpu
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
         if (use_gpu_vendor == openmp_offload_gpu) then
           call mkl_openmp_offload_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call mkl_sycl_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
       endif

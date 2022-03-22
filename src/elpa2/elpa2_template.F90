@@ -1243,7 +1243,7 @@ print *,"Device pointer + REDIST"
      if (do_trans_to_band) then
 
        !debug
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
        if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
          if (do_useGPU_trans_ev_tridi_to_band) then
            do_useGPU_trans_ev_tridi_to_band = .false.

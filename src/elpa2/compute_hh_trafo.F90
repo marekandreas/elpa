@@ -221,7 +221,7 @@ last_stripe_width, kernel)
 #endif
   endif
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (useGPU) then
     if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
       print *, "no offlad kernels yet implemented"

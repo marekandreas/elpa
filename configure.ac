@@ -1730,17 +1730,35 @@ AC_ARG_WITH([cusolver],
 AC_MSG_RESULT([${with_cusolver}])
 
 
+use_openmp_gpu_backend=no
+use_sycl_gpu_backend=no
+use_intel_gpu=no
 AC_MSG_CHECKING(whether INTEL GPU version should be used)
 AC_ARG_ENABLE([intel-gpu],
-                AS_HELP_STRING([--enable-intel-gpu],
-                               [do use INTEL GPU version]),
-                               [if test x"$enableval" = x"yes"; then
+                AS_HELP_STRING([--enable-intel-gpu=(openmp|sycl)],
+                               [do use INTEL GPU version with either OpenMP or SYCL backend]),
+                               [if test x"$enableval" = x"openmp"; then
+				  use_openmp_gpu_backend=yes
                                   use_intel_gpu=yes
-                                else
-                                  use_intel_gpu=no
+				fi
+				if test x"$enableval" = x"sycl"; then
+				  use_sycl_gpu_backend=yes
+                                  use_intel_gpu=yes
+				fi
+				if test x"$enableval" = x"yes"; then
+                                  use_intel_gpu=yes
                                 fi],
               [use_intel_gpu=no])
 AC_MSG_RESULT([${use_intel_gpu}])
+
+if test x"${use_intel_gpu}" = x"yes"; then
+  if test x"${use_openmp_gpu_backend}" = x"no"; then
+    if test x"${use_sycl_gpu_backend}" = x"no"; then
+      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=(openmp|sycl)])
+    fi
+  fi
+fi
+
 if test x"${use_intel_gpu}" = x"yes" ; then
   need_intel_gpu=yes
   use_real_intel_gpu=yes
@@ -1804,13 +1822,6 @@ fi
 
 if test x"${need_amd_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  #CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
-  #LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
-  #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
-  #NVCC="nvcc"
-  #AC_SUBST(NVCC)
-  #AC_SUBST(NVCCFLAGS)
-
   dnl check whether hipcc compiler is found
   AC_CHECK_PROG(hipcc_found,hipcc,yes,no)
   if test x"${hipcc_found}" = x"no" ; then
@@ -1826,34 +1837,17 @@ if test x"${need_amd_gpu}" = x"yes" ; then
   #if test x"${have_cudart}" = x"no"; then
   #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   #fi
-  #AC_LANG_POP([C])
+  AC_LANG_POP([C])
 fi
 
 if test x"${need_intel_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  #CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
-  #LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
-  #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
-  #NVCC="nvcc"
-  #AC_SUBST(NVCC)
-  #AC_SUBST(NVCCFLAGS)
-
-  dnl check whether hipcc compiler is found
+  dnl check whether icx compiler is found
   AC_CHECK_PROG(icx_found,icx,yes,no)
   if test x"${icx_found}" = x"no" ; then
     AC_MSG_ERROR([icx not found; try to set the oneapi-path or disable INTEL GPU support])
   fi
-
-  ##dnl check whether we find rocblas
-  #AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
-  #if test x"${have_rocblas}" = x"no"; then
-  #  AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
-  #fi
-  #AC_SEARCH_LIBS([hipMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
-  #if test x"${have_cudart}" = x"no"; then
-  #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
-  #fi
-  #AC_LANG_POP([C])
+  AC_LANG_POP([C])
 fi
 
 AC_MSG_CHECKING(whether NVIDIA GPU memory debugging should be enabled)
@@ -2019,16 +2013,26 @@ AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu2" = x"yes" -
 #AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED])
 #AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
 
-AM_CONDITIONAL([WITH_OPENMP_OFFLOAD_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
-if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
-  AC_DEFINE([WITH_OPENMP_OFFLOAD_GPU_VERSION],[1],[enable INTEL GPU support])
+
+ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=0
+ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=0
+#AM_CONDITIONAL([WITH_OPENMP_OFFLOAD_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
+AM_CONDITIONAL([WITH_OPENMP_OFFLOAD_GPU_VERSION],[test x"$use_openmp_gpu_backend" = x"yes"])
+#if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
+if test x"$use_openmp_gpu_backend"  = x"yes" ; then
+  AC_DEFINE([WITH_OPENMP_OFFLOAD_GPU_VERSION],[1],[enable INTEL GPU support via OpenMP backend])
   AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
   ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
   ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
-else
-  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=0
-  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=0
 fi
+AM_CONDITIONAL([WITH_SYCL_GPU_VERSION],[test x"$use_sycl_gpu_backend" = x"yes"])
+if test x"$use_sycl_gpu_backend"  = x"yes" ; then
+  AC_DEFINE([WITH_SYCL_GPU_VERSION],[1],[enable INTEL GPU support via SYCL backend])
+  AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
+  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
+fi
+
 AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
 

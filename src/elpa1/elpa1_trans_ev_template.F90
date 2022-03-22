@@ -325,8 +325,8 @@ subroutine trans_ev_&
     !call check_alloc("trans_ev_&
     !&MATH_DATATYPE&
     !&", "hvm1", istat, errorMessage)
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       num = (max_local_rows*max_stored_rows) * size_of_datatype
       successGPU = gpu_malloc_host(hvm1_host,num)
       check_alloc_gpu("trans_ev: hvm1_host", successGPU)
@@ -335,7 +335,7 @@ subroutine trans_ev_&
       allocate(hvm1(max_local_rows*max_stored_rows))
     endif
 
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+    if gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       num = (max_stored_rows*max_stored_rows) * size_of_datatype
       successGPU = gpu_malloc_host(tmat_host,num)
       check_alloc_gpu("trans_ev: tmat_host", successGPU)
@@ -344,7 +344,7 @@ subroutine trans_ev_&
       allocate(tmat(max_stored_rows,max_stored_rows))
     endif
 
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+    if gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       num = (max_local_cols*max_stored_rows) * size_of_datatype
       successGPU = gpu_malloc_host(tmp1_host,num)
       check_alloc_gpu("trans_ev: tmp1_host", successGPU)
@@ -353,7 +353,7 @@ subroutine trans_ev_&
       allocate(tmp1(max_local_cols*max_stored_rows))
     endif
 
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+    if gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       num = (max_local_cols*max_stored_rows) * size_of_datatype
       successGPU = gpu_malloc_host(tmp2_host,num)
       check_alloc_gpu("trans_ev: tmp2_host", successGPU)
@@ -375,8 +375,9 @@ subroutine trans_ev_&
     successGPU = gpu_malloc(q_dev, num)
     check_alloc_gpu("trans_ev", successGPU)
   
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+
+    if gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
       check_host_register_gpu("trans_ev: q_mat", successGPU)
@@ -598,6 +599,7 @@ subroutine trans_ev_&
         successGPU = gpu_memcpy(int(loc(tmp1(1)),kind=c_intptr_t), tmp_dev,  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("trans_ev", successGPU)
+
 #else
         ! in case of CUDA_AWARE MPI
         ! associate devicePointer with a fortran pointer
@@ -760,13 +762,13 @@ subroutine trans_ev_&
                     q_dev, ldq * matrixCols * size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("trans_ev", successGPU)
 
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      if gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
         check_host_unregister_gpu("trans_ev: q_mat", successGPU)
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      if gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         successGPU = gpu_free_host(hvm1_host)
         check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
         nullify(hvm1)
