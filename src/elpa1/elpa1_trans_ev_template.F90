@@ -92,7 +92,7 @@ subroutine trans_ev_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-(obj, na, nqc, a_mat, lda, tau, q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU)
+(obj, na, nqc, a_mat, lda, tau, q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, useGPU, success)
   use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
@@ -148,11 +148,16 @@ subroutine trans_ev_&
                                                                       &_&
                                                                       &MATH_DATATYPE
   integer(kind=ik)                              :: error
+#ifdef WITH_INTEL_GPU_VERSION
   logical                                       :: useIntelGPU
+#endif
   integer(kind=MPI_KIND)                        :: bcast_request1, allreduce_request1, allreduce_request2
   logical                                       :: useNonBlockingCollectivesCols
   logical                                       :: useNonBlockingCollectivesRows
   integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
+  logical                                       :: success
+
+  success = .true.
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -168,14 +173,26 @@ subroutine trans_ev_&
 
   call obj%get("nbc_row_elpa1_tridi_to_full", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for rows in elpa1_tridi_to_full. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for rows in elpa1_tridi_to_full. Aborting..."
+    call obj%timer%stop("trans_ev_&
+    &MATH_DATATYPE&
+    &" // &
+    &PRECISION_SUFFIX //&
+    gpuString)
+    success = .false.
+    return
   endif
 
   call obj%get("nbc_col_elpa1_tridi_to_full", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for cols in elpa1_tridi_to_full. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for cols in elpa1_tridi_to_full. Aborting..."
+    call obj%timer%stop("trans_ev_&
+    &MATH_DATATYPE&
+    &" // &
+    &PRECISION_SUFFIX //&
+    gpuString)
+    success = .false.
+    return
   endif
 
   if (non_blocking_collectives_rows .eq. 1) then
@@ -190,12 +207,15 @@ subroutine trans_ev_&
     useNonBlockingCollectivesCols = .false.
   endif
 
+#ifdef WITH_INTEL_GPU_VERSION
   useIntelGPU = .false.
-  if (useGPU) then
-    if (gpu_vendor() == INTEL_GPU) then
-      useIntelGPU = .true.
-    endif
-  endif
+  !disable for the moment
+  !if (useGPU) then
+  !  if (gpu_vendor() == INTEL_GPU) then
+  !    useIntelGPU = .true.
+  !  endif
+  !endif
+#endif
 
 
   call obj%timer%start("mpi_communication")
@@ -220,7 +240,8 @@ subroutine trans_ev_&
   max_local_cols = max_blocks_col*nblk
 
   max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
-
+ 
+#ifdef WITH_INTEL_GPU_VERSION
   if (useIntelGPU) then
     allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
     call check_alloc("trans_ev_&
@@ -237,6 +258,7 @@ subroutine trans_ev_&
     &MATH_DATATYPE&
     &", "tmp2", istat, errorMessage)
   endif
+#endif
 
   if (.not.(useGPU)) then
     allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
@@ -292,33 +314,54 @@ subroutine trans_ev_&
     q_mat(1,1:l_cols) = q_mat(1,1:l_cols)*(ONE-tau(2))
   endif
 #endif
-
+ 
+#ifdef WITH_INTEL_GPU_VERSION
   if (useGPU .and. .not.(useIntelGPU)) then
+#else
+  if (useGPU) then
+#endif
     ! todo: this is used only for copying hmv to device.. it should be possible to go without it
     !allocate(hvm1(max_local_rows*max_stored_rows), stat=istat, errmsg=errorMessage)
     !call check_alloc("trans_ev_&
     !&MATH_DATATYPE&
     !&", "hvm1", istat, errorMessage)
-    num = (max_local_rows*max_stored_rows) * size_of_datatype
-    successGPU = gpu_malloc_host(hvm1_host,num)
-    check_alloc_gpu("trans_ev: hvm1_host", successGPU)
-    call c_f_pointer(hvm1_host,hvm1,(/(max_local_rows*max_stored_rows)/))
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      num = (max_local_rows*max_stored_rows) * size_of_datatype
+      successGPU = gpu_malloc_host(hvm1_host,num)
+      check_alloc_gpu("trans_ev: hvm1_host", successGPU)
+      call c_f_pointer(hvm1_host,hvm1,(/(max_local_rows*max_stored_rows)/))
+    else
+      allocate(hvm1(max_local_rows*max_stored_rows))
+    endif
 
-    num = (max_stored_rows*max_stored_rows) * size_of_datatype
-    successGPU = gpu_malloc_host(tmat_host,num)
-    check_alloc_gpu("trans_ev: tmat_host", successGPU)
-    call c_f_pointer(tmat_host,tmat,(/max_stored_rows,max_stored_rows/))
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      num = (max_stored_rows*max_stored_rows) * size_of_datatype
+      successGPU = gpu_malloc_host(tmat_host,num)
+      check_alloc_gpu("trans_ev: tmat_host", successGPU)
+      call c_f_pointer(tmat_host,tmat,(/max_stored_rows,max_stored_rows/))
+    else
+      allocate(tmat(max_stored_rows,max_stored_rows))
+    endif
 
-    num = (max_local_cols*max_stored_rows) * size_of_datatype
-    successGPU = gpu_malloc_host(tmp1_host,num)
-    check_alloc_gpu("trans_ev: tmp1_host", successGPU)
-    call c_f_pointer(tmp1_host,tmp1,(/(max_local_cols*max_stored_rows)/))
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      num = (max_local_cols*max_stored_rows) * size_of_datatype
+      successGPU = gpu_malloc_host(tmp1_host,num)
+      check_alloc_gpu("trans_ev: tmp1_host", successGPU)
+      call c_f_pointer(tmp1_host,tmp1,(/(max_local_cols*max_stored_rows)/))
+    else
+      allocate(tmp1(max_local_cols*max_stored_rows))
+    endif
 
-    num = (max_local_cols*max_stored_rows) * size_of_datatype
-    successGPU = gpu_malloc_host(tmp2_host,num)
-    check_alloc_gpu("trans_ev: tmp2_host", successGPU)
-    call c_f_pointer(tmp2_host,tmp2,(/(max_local_cols*max_stored_rows)/))
-
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      num = (max_local_cols*max_stored_rows) * size_of_datatype
+      successGPU = gpu_malloc_host(tmp2_host,num)
+      check_alloc_gpu("trans_ev: tmp2_host", successGPU)
+      call c_f_pointer(tmp2_host,tmp2,(/(max_local_cols*max_stored_rows)/))
+    else
+      allocate(tmp2(max_local_cols*max_stored_rows))
+    endif
+#endif
     successGPU = gpu_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_datatype)
     check_alloc_gpu("trans_ev", successGPU)
 
@@ -331,20 +374,18 @@ subroutine trans_ev_&
     num = ldq * matrixCols * size_of_datatype
     successGPU = gpu_malloc(q_dev, num)
     check_alloc_gpu("trans_ev", successGPU)
-
-    successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),num,&
+  
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      successGPU = gpu_host_register(int(loc(q_mat),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
-    check_host_register_gpu("trans_ev: q_mat", successGPU)
-
+      check_host_register_gpu("trans_ev: q_mat", successGPU)
+    endif
+#endif
     successGPU = gpu_memcpy(q_dev, int(loc(q_mat(1,1)),kind=c_intptr_t), &
                   num, gpuMemcpyHostToDevice)
     check_memcpy_gpu("trans_ev", successGPU)
   endif  ! useGPU
-
-  !if (useIntelGPU) then
-  !  ! needed at a later time when we can do explicit copys
-  !endif
-
 
   do istep = 1, na, blockStep
     ics = MAX(istep,3)
@@ -464,7 +505,11 @@ subroutine trans_ev_&
         nc = nc+n
       enddo
 
+#ifdef WITH_INTEL_GPU_VERSION
       if (useGPU .and. .not.(useIntelGPU)) then
+#else
+      if (useGPU) then
+#endif
         ! todo: is this reshape really neccessary?
         hvm1(1:hvm_ubnd*nstor) = reshape(hvm(1:hvm_ubnd,1:nstor), (/ hvm_ubnd*nstor /))
 
@@ -480,15 +525,12 @@ subroutine trans_ev_&
         check_memcpy_gpu("trans_ev", successGPU)
       endif
 
-      !if (useIntelGPU) then
-      !  ! needed later when we can do explicit copys
-      !endif
-
 
       ! Q = Q - V * T * V**T * Q
 
       if (l_rows > 0) then
         if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             call obj%timer%start("mkl_offload")
 #if 0          
@@ -505,13 +547,16 @@ subroutine trans_ev_&
 #endif
             call obj%timer%stop("mkl_offload")
 
-          else
+          else ! useIntelGPU
+#endif
             call obj%timer%start("gpublas")
             call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',   &
                                      nstor, l_cols, l_rows, ONE, hvm_dev, hvm_ubnd,  &
                                      q_dev, ldq, ZERO, tmp_dev, nstor)
             call obj%timer%stop("gpublas")
-          endif
+#ifdef WITH_INTEL_GPU_VERSION
+          endif !useIntelGPU
+#endif
         else ! useGPU
 
           call obj%timer%start("blas")
@@ -525,12 +570,16 @@ subroutine trans_ev_&
       else !l_rows>0
 
         if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             tmp1(1:l_cols*nstor) = 0
           else
+#endif
             successGPU = gpu_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
             check_memcpy_gpu("trans_ev", successGPU)
+#ifdef WITH_INTEL_GPU_VERSION
           endif
+#endif
         else
           tmp1(1:l_cols*nstor) = 0
         endif
@@ -538,7 +587,11 @@ subroutine trans_ev_&
 
 #ifdef WITH_MPI
 
+#ifdef WITH_INTEL_GPU_VERSION
       if (useGPU .and. .not.(useIntelGPU)) then
+#else
+      if (useGPU) then
+#endif
 #ifndef WITH_CUDA_AWARE_MPI
         ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
         ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
@@ -555,9 +608,6 @@ subroutine trans_ev_&
 #endif
       endif
 
-      !if (useIntelGPU) then
-      !   ! needed later
-      !endif
 
       if (useNonBlockingCollectivesRows) then
         call obj%timer%start("mpi_nbc_communication")
@@ -582,7 +632,11 @@ subroutine trans_ev_&
         call obj%timer%stop("mpi_communication")
       endif
 
+#ifdef WITH_INTEL_GPU_VERSION
       if (useGPU .and. .not.(useIntelGPU)) then
+#else
+      if (useGPU) then
+#endif
 #ifndef WITH_CUDA_AWARE_MPI
         ! copy back tmp2 - after reduction...
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
@@ -596,17 +650,13 @@ subroutine trans_ev_&
 #endif
       endif ! useGPU
 
-
-      !if (useIntelGPU) then
-      !   ! needed later
-      !endif
-
 #else /* WITH_MPI */
 !     tmp2 = tmp1
 #endif /* WITH_MPI */
 
       if (l_rows > 0) then
         if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
 #ifdef WITH_MPI
             ! tmp2 = tmat * tmp2
@@ -648,7 +698,8 @@ subroutine trans_ev_&
 #endif
             call obj%timer%stop("mkl_offload")
 #endif /* WITH_MPI */
-          else
+          else ! useIntelGPU
+#endif
             call obj%timer%start("gpublas")
             call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
                                      nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
@@ -658,7 +709,9 @@ subroutine trans_ev_&
                                      -ONE, hvm_dev, hvm_ubnd, tmp_dev, nstor,   &
                                      ONE, q_dev, ldq)
             call obj%timer%stop("gpublas")
-          endif
+#ifdef WITH_INTEL_GPU_VERSION
+          endif ! useIntelGPU
+#endif
         else !useGPU
 #ifdef WITH_MPI
           ! tmp2 = tmat * tmp2
@@ -694,37 +747,48 @@ subroutine trans_ev_&
 
   if (useGPU) then
 
+#ifdef WITH_INTEL_GPU_VERSION
     if (useIntelGPU) then
       deallocate(tmat, tmp1, tmp2, stat=istat, errmsg=errorMessage)
       check_deallocate("trans_ev_&
       &MATH_DATATYPE&
       &: tmat, tmp1, tmp2", istat, errorMessage)
     else
-
+#endif
       !q_mat = q_dev
       successGPU = gpu_memcpy(int(loc(q_mat(1,1)),kind=c_intptr_t), &
                     q_dev, ldq * matrixCols * size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("trans_ev", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
-      check_host_unregister_gpu("trans_ev: q_mat", successGPU)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        successGPU = gpu_host_unregister(int(loc(q_mat),kind=c_intptr_t))
+        check_host_unregister_gpu("trans_ev: q_mat", successGPU)
+      endif
 
-      successGPU = gpu_free_host(hvm1_host)
-      check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
-      nullify(hvm1)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        successGPU = gpu_free_host(hvm1_host)
+        check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
+        nullify(hvm1)
 
-      successGPU = gpu_free_host(tmat_host)
-      check_host_dealloc_gpu("trans_ev: tmat_host", successGPU)
-      nullify(tmat)
+        successGPU = gpu_free_host(tmat_host)
+        check_host_dealloc_gpu("trans_ev: tmat_host", successGPU)
+        nullify(tmat)
 
-      successGPU = gpu_free_host(tmp1_host)
-      check_host_dealloc_gpu("trans_ev: tmp1_host", successGPU)
-      nullify(tmp1)
+        successGPU = gpu_free_host(tmp1_host)
+        check_host_dealloc_gpu("trans_ev: tmp1_host", successGPU)
+        nullify(tmp1)
 
-      successGPU = gpu_free_host(tmp2_host)
-      check_host_dealloc_gpu("trans_ev: tmp2_host", successGPU)
-      nullify(tmp2)
-
+        successGPU = gpu_free_host(tmp2_host)
+        check_host_dealloc_gpu("trans_ev: tmp2_host", successGPU)
+        nullify(tmp2)
+      else
+        deallocate(hvm1)
+        deallocate(tmat)
+        deallocate(tmp1)
+        deallocate(tmp2)
+      endif
+#endif
       !deallocate(hvm1, stat=istat, errmsg=errorMessage)
       !if (istat .ne. 0) then
       !  print *,"trans_ev_&
@@ -745,13 +809,15 @@ subroutine trans_ev_&
 
       successGPU = gpu_free(tmat_dev)
       check_dealloc_gpu("trans_ev", successGPU)
+#ifdef WITH_INTEL_GPU_VERSION
     endif
-  else
+#endif
+  else ! useGPU
     deallocate(tmat, tmp1, tmp2, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_&
     &MATH_DATATYPE&
     &: tmat, tmp1, tmp2", istat, errorMessage)
-  endif
+  endif ! useGPU
 
 
   call obj%timer%stop("trans_ev_&

@@ -54,7 +54,7 @@
 
 subroutine herm_matrix_allreduce_&
 &PRECISION &
-                               (obj, n, a, lda, ldb, comm, isRows)
+                               (obj, n, a, lda, ldb, comm, isRows, success)
 !-------------------------------------------------------------------------------
 !  herm_matrix_allreduce: Does an mpi_allreduce for a hermitian matrix A.
 !  On entry, only the upper half of A needs to be set
@@ -76,18 +76,25 @@ subroutine herm_matrix_allreduce_&
   logical, intent(in)            :: isRows
   integer(kind=c_int)            :: non_blocking_collectives_rows, error, &
                                     non_blocking_collectives_cols
+  logical                        :: success
+
+  success = .true.
 
   call obj%timer%start("herm_matrix_allreduce" // PRECISION_SUFFIX)
 
   call obj%get("nbc_row_herm_allreduce", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for rows in elpa_herm_allreduce. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for rows in elpa_herm_allreduce. Aborting..."
+    call obj%timer%stop("herm_matrix_allreduce" // PRECISION_SUFFIX)
+    success = .false.
+    return
   endif
   call obj%get("nbc_col_herm_allreduce", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for cols in elpa_herm_allreduce. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for cols in elpa_herm_allreduce. Aborting..."
+    call obj%timer%stop("herm_matrix_allreduce" // PRECISION_SUFFIX)
+    success = .false.
+    return
   endif
 
   if (non_blocking_collectives_rows .eq. 1) then

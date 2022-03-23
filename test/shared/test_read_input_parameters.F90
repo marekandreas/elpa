@@ -138,8 +138,10 @@ module test_read_input_parameters
           print *, "Invalid argument for --real-kernel"
           stop 1
         endif
+#ifndef ENABLE_IFX_COMPILER
         print *,"Setting ELPA2 real kernel to ", elpa_int_value_to_string("real_kernel", &
                                                                         int(input_options%this_real_kernel,kind=c_int))
+#endif
         input_options%realKernelIsSet = .true.
       endif
 
@@ -150,8 +152,10 @@ module test_read_input_parameters
           print *, "Invalid argument for --complex-kernel"
           stop 1
         endif
+#ifndef ENABLE_IFX_COMPILER
         print *,"Setting ELPA2 complex kernel to ", elpa_int_value_to_string("complex_kernel", &
                                                                           int(input_options%this_complex_kernel,kind=c_int))
+#endif
         input_options%complexKernelIsSet = .true.
       endif
 

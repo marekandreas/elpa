@@ -171,8 +171,8 @@
 #ifdef SINGLE_PRECISION
     ! tolerance needs to be very high due to qr tests
     ! it should be distinguished somehow!
-    real(kind=rk), parameter               :: tol_eigenvalues = 7e-6_rk4
-    real(kind=rk), parameter               :: tol_eigenvectors = 4e-3_rk4
+    real(kind=rk), parameter               :: tol_eigenvalues = 9e-5_rk4
+    real(kind=rk), parameter               :: tol_eigenvectors = 9e-2_rk4
 #endif
     real(kind=rk)                          :: computed_ev, expected_ev
     MATH_DATATYPE(kind=rck)                :: computed_z,  expected_z

@@ -187,12 +187,22 @@ last_stripe_width, kernel)
   if (wantDebug) then
 #ifdef WITH_NVIDIA_GPU_VERSION
     if (useGPU .and. &
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
 #if REALCASE == 1
-      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU .or. kernel .ne. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU .and. kernel .ne. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU)) then
 #endif
 #if COMPLEXCASE == 1
-      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU)) then
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .and. kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU)) then
 #endif
+
+#else /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
+#if REALCASE == 1
+      ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU)) then
+#endif
+#if COMPLEXCASE == 1
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
+#endif
+#endif  /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
       print *,"ERROR: useGPU is set in compute_hh_trafo but not a NVIDIA GPU kernel!"
       stop
     endif
@@ -210,6 +220,15 @@ last_stripe_width, kernel)
     endif
 #endif
   endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+  if (useGPU) then
+    if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
+      print *, "no offlad kernels yet implemented"
+     stop
+   endif
+  endif
+#endif
 
   ! intel missing
 #if REALCASE == 1
@@ -338,13 +357,23 @@ last_stripe_width, kernel)
 #endif
 
 #if REALCASE == 1
-! currently only real case
-      call launch_compute_hh_trafo_sm80_gpu_kernel_&
+      if (size_of_datatype .eq. 8) then
+        ! currently only real double precision case
+        call launch_compute_hh_trafo_sm80_gpu_kernel_&
+            &MATH_DATATYPE&
+            &_&
+            &PRECISION&
+            &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
+            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+      else
+        call launch_compute_hh_trafo_gpu_kernel_&
            &MATH_DATATYPE&
            &_&
            &PRECISION&
            &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+
+      endif
 #endif
     endif
 

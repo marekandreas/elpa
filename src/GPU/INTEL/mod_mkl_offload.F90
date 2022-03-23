@@ -41,7 +41,7 @@
 ! This file was written by A. Marek, MPCDF
 
 #include "config-f90.h"
-
+#if 0
 module mkl_offload
 
   interface
@@ -245,3 +245,4 @@ module mkl_offload
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 end module
+#endif

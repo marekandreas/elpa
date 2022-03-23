@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [17:0:0])
+AC_SUBST([ELPA_SO_VERSION], [17:1:0])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -354,6 +354,22 @@ if test x"${FC_does_infer_interfaces}" = x"yes"; then
       [MPImodule_has_interfaces=no]
     )
     AC_MSG_RESULT([${MPImodule_has_interfaces}])
+
+   AC_ARG_ENABLE([mpi-module],
+             AS_HELP_STRING([--disable-mpi-module],
+                            [do not use the Fortran MPI module, get interfaces by 'include "mpif.h']),
+             [
+              if test x"$enableval" = x"yes"; then
+                enable_mpi_module_tmp=yes
+              else
+                enable_mpi_module_tmp=no
+              fi
+     	 ],
+             [enable_mpi_module_tmp=yes])
+
+    if test x"${enable_mpi_module_tmp}" = x"no"; then
+      MPImodule_has_interfaces=no
+    fi
     if test x"${MPImodule_has_interfaces}" = x"no"; then
       AC_MSG_CHECKING(whether we can cure missing interfaces by allowing argument mismatch )
       #check whether we can cure this by disabling argument checking
@@ -1714,22 +1730,22 @@ AC_ARG_WITH([cusolver],
 AC_MSG_RESULT([${with_cusolver}])
 
 
-#AC_MSG_CHECKING(whether INTEL GPU version should be used)
-#AC_ARG_ENABLE([intel-gpu],
-#                AS_HELP_STRING([--enable-intel-gpu],
-#                               [do use INTEL GPU version]),
-#                               [if test x"$enableval" = x"yes"; then
-#                                  use_intel_gpu=yes
-#                                else
-#                                  use_intel_gpu=no
-#                                fi],
-#              [use_intel_gpu=no])
-#AC_MSG_RESULT([${use_intel_gpu}])
-#if test x"${use_intel_gpu}" = x"yes" ; then
-#  need_intel_gpu=yes
-#  use_real_intel_gpu=yes
-#  use_complex_intel_gpu=yes
-#fi
+AC_MSG_CHECKING(whether INTEL GPU version should be used)
+AC_ARG_ENABLE([intel-gpu],
+                AS_HELP_STRING([--enable-intel-gpu],
+                               [do use INTEL GPU version]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_intel_gpu=yes
+                                else
+                                  use_intel_gpu=no
+                                fi],
+              [use_intel_gpu=no])
+AC_MSG_RESULT([${use_intel_gpu}])
+if test x"${use_intel_gpu}" = x"yes" ; then
+  need_intel_gpu=yes
+  use_real_intel_gpu=yes
+  use_complex_intel_gpu=yes
+fi
 
 AC_MSG_CHECKING(whether AMD-GPU version should be used)
 AC_ARG_ENABLE([amd-gpu],
@@ -1751,7 +1767,7 @@ fi
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include --default-stream per-thread"
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
   NVCC="nvcc"
@@ -1990,9 +2006,22 @@ fi
 AC_SUBST([ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_AMD_GPU_COMPILED])
 
-AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
+AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu2" = x"yes" -o x"$use_complex_intel_gpu2" = x"yes"])
+#if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
+#  AC_DEFINE([WITH_INTEL_GPU_VERSION],[1],[enable INTEL GPU support])
+#  AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+#  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
+#  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
+#else
+#  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=0
+#  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=0
+#fi
+#AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED])
+#AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
+
+AM_CONDITIONAL([WITH_OPENMP_OFFLOAD_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
 if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
-  AC_DEFINE([WITH_INTEL_GPU_VERSION],[1],[enable INTEL GPU support])
+  AC_DEFINE([WITH_OPENMP_OFFLOAD_GPU_VERSION],[1],[enable INTEL GPU support])
   AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
   ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
   ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
@@ -2175,6 +2204,22 @@ AM_CONDITIONAL([ENABLE_C_TESTS],[test x"$enable_c_tests" = x"yes"])
 if test x"${enable_c_tests}" = x"yes"; then
  AC_DEFINE([ENABLE_C_TESTS], [1], [enable C tests])
 fi
+
+AC_MSG_CHECKING(make compilable with Intel ifx)
+AC_ARG_ENABLE([ifx-compiler],
+              AS_HELP_STRING([--enable-ifx-compiler],
+                             [enable builds with ifx, default no.]),
+			     [if test x"$enableval" = x"yes"; then
+			        enable_ifx_compiler=yes
+		              else
+				enable_ifx_compiler=no
+			      fi],
+              [enable_ifx_compiler=no])
+AC_MSG_RESULT([${enable_ifx_compiler}])
+if test x"${enable_ifx_compiler}" = x"yes"; then
+ AC_DEFINE([ENABLE_IFX_COMPILER], [1], [enable ifx compiler builds])
+fi
+
 
 AC_MSG_CHECKING(whether we build for K-computer)
 AC_ARG_ENABLE([K-computer],
@@ -2529,9 +2574,9 @@ fi
 
 #echo " "
 #echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2021.11.001.rc1        *"
+#echo "*  This is the first release candidate of ELPA 2021.11.002.rc1        *"
 #echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2021.11.001                                                   *"
+#echo "*  ELPA 2021.11.002                                                   *"
 #echo "***********************************************************************"
 #echo " "
 

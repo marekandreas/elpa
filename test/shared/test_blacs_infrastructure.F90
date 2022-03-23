@@ -118,7 +118,8 @@ module test_blacs_infrastructure
 
     subroutine set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
                                        np_rows, np_cols, na_rows,  &
-                                       na_cols, sc_desc, my_blacs_ctxt, info)
+                                       na_cols, sc_desc, my_blacs_ctxt, info, &
+                                       blacs_ok)
 
       use elpa_utilities, only : error_unit
       use test_util
@@ -130,12 +131,13 @@ module test_blacs_infrastructure
                                        np_cols, &
                                        my_blacs_ctxt
       TEST_INT_TYPE, intent(inout) :: info
-      TEST_INT_TYPE, intent(out)   :: na_rows, na_cols, sc_desc(1:9)
+      TEST_INT_TYPE, intent(out)   :: na_rows, na_cols, sc_desc(1:9), blacs_ok
 
 #ifdef WITH_MPI
       TEST_INT_MPI_TYPE            :: mpierr
 
       sc_desc(:) = 0
+      blacs_ok = 0
       ! determine the neccessary size of the distributed matrices,
       ! we use the scalapack tools routine NUMROC
 
@@ -151,6 +153,7 @@ module test_blacs_infrastructure
       call descinit(sc_desc, na, na, nblk, nblk, 0_BLAS_KIND, 0_BLAS_KIND, &
                     my_blacs_ctxt, na_rows, info)
 
+      blacs_ok = 1
       if (info .ne. 0) then
         write(error_unit,*) 'Error in BLACS descinit! info=',info
         write(error_unit,*) 'Most likely this happend since you want to use'
@@ -158,11 +161,17 @@ module test_blacs_infrastructure
         write(error_unit,*) 'problem size (matrix size and blocksize)!'
         write(error_unit,*) 'The blacsgrid can not be set up properly'
         write(error_unit,*) 'Try reducing the number of MPI tasks...'
-        call MPI_ABORT(int(mpi_comm_world,kind=MPI_KIND), 1_MPI_KIND, mpierr)
+        write(error_unit,*) 'For ELPA it is mandatory that the first row/col'
+        write(error_unit,*) 'of the distributed matrix must be on 0/0'
+        write(error_unit,*) 'arguments 6 & 7 of descinit'
+        !call MPI_ABORT(int(mpi_comm_world,kind=MPI_KIND), 1_MPI_KIND, mpierr)
+        blacs_ok = 0
+        return
       endif
 #else /* WITH_MPI */
       na_rows = na
       na_cols = na
+      blacs_ok = 1
 #endif /* WITH_MPI */
 
     end subroutine
@@ -173,11 +182,11 @@ module test_blacs_infrastructure
     !c>                                TEST_C_INT_TYPE_PTR na_rows, TEST_C_INT_TYPE_PTR na_cols,
     !c>                                TEST_C_INT_TYPE sc_desc[9],
     !c>                                TEST_C_INT_TYPE my_blacs_ctxt,
-    !c>                                TEST_C_INT_TYPE_PTR info);
+    !c>                                TEST_C_INT_TYPE_PTR info, TEST_C_INT_TYPE_PTR blacs_ok);
     subroutine set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, &
                                          np_rows, np_cols, na_rows,  &
                                          na_cols, sc_desc,           &
-                                         my_blacs_ctxt, info)        &
+                                         my_blacs_ctxt, info, blacs_ok)        &
                                          bind(C, name="set_up_blacs_descriptor_f")
 
       use iso_c_binding
@@ -186,11 +195,11 @@ module test_blacs_infrastructure
 
       TEST_INT_TYPE, value :: na, nblk, my_prow, my_pcol, np_rows, &
                                     np_cols, my_blacs_ctxt
-      TEST_INT_TYPE        :: na_rows, na_cols, info, sc_desc(1:9)
+      TEST_INT_TYPE        :: na_rows, na_cols, info, sc_desc(1:9), blacs_ok
 
       call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
                                    np_rows, np_cols, na_rows,  &
-                                   na_cols, sc_desc, my_blacs_ctxt, info)
+                                   na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
 
 
     end subroutine

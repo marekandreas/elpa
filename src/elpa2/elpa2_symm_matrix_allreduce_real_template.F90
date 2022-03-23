@@ -66,7 +66,7 @@ subroutine ssymm_matrix_allreduce_&
 subroutine symm_matrix_allreduce_&
 #endif
 &PRECISION &
-                    (obj, n, a, lda, ldb, comm, isRows)
+                    (obj, n, a, lda, ldb, comm, isRows, success)
 !-------------------------------------------------------------------------------
 !  symm_matrix_allreduce: Does an mpi_allreduce for a symmetric matrix A.
 !  On entry, only the upper half of A needs to be set
@@ -92,6 +92,9 @@ subroutine symm_matrix_allreduce_&
   logical, intent(in)          :: isRows
   integer(kind=c_int)          :: non_blocking_collectives_rows, error, &
                                   non_blocking_collectives_cols
+  logical                      :: success
+
+  success = .true.
 
   call obj%timer%start("&
           &ROUTINE_NAME&
@@ -101,14 +104,26 @@ subroutine symm_matrix_allreduce_&
 
   call obj%get("nbc_row_sym_allreduce", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for rows in elpa_sym_allreduce. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for rows in elpa_sym_allreduce. Aborting..."
+    call obj%timer%stop("&
+          &ROUTINE_NAME&
+          &" // &
+          &PRECISION_SUFFIX&
+          )
+    success = .false.
+    return
   endif
 
   call obj%get("nbc_col_sym_allreduce", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for cols in elpa_sym_allreduce. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for cols in elpa_sym_allreduce. Aborting..."
+    call obj%timer%stop("&
+          &ROUTINE_NAME&
+          &" // &
+          &PRECISION_SUFFIX&
+          )
+    success = .false.
+    return
   endif
 
   if (non_blocking_collectives_rows .eq. 1) then

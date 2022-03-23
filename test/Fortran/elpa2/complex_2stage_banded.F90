@@ -123,8 +123,8 @@ program test_complex2_double_banded
    TEST_INT_TYPE              :: np_rows, np_cols, na_rows, na_cols
 
    TEST_INT_TYPE              :: myid, nprocs, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols
-   TEST_INT_TYPE              :: i, my_blacs_ctxt, sc_desc(9), info, nprow, npcol
-   TEST_INT_MPI_TYPE          :: mpierr
+   TEST_INT_TYPE              :: i, my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
+   TEST_INT_MPI_TYPE          :: mpierr, blacs_ok_mpi
 #ifdef WITH_MPI
    !TEST_INT_TYPE, external    :: numroc
 #endif
@@ -162,6 +162,14 @@ program test_complex2_double_banded
    call setup_mpi(myid, nprocs)
 
    STATUS = 0
+
+#ifdef WITH_CUDA_AWARE_MPI
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+
 
    !-------------------------------------------------------------------------------
    ! Selection of number of processor rows/columns
@@ -206,7 +214,24 @@ program test_complex2_double_banded
    ! we use the Scalapack tools routine NUMROC for that.
 
    call set_up_blacs_descriptor(na ,nblk, my_prow, my_pcol, np_rows, np_cols, &
-                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
+
+#ifdef WITH_MPI
+   blacs_ok_mpi = int(blacs_ok, kind=INT_MPI_TYPE)
+   call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+   blacs_ok = int(blacs_ok_mpi, kind=INT_TYPE)
+#endif
+
+   if (blacs_ok .eq. 0) then
+     if (myid .eq. 0) then
+       print *," Ecountered critical error when setting up blacs. Aborting..."
+     endif
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop
+   endif
+
 
    if (myid==0) then
      print '(a)','| Past scalapack descriptor setup.'

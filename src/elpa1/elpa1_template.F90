@@ -59,13 +59,13 @@
 #ifdef ACTIVATE_SKEW
 function elpa_solve_skew_evp_&
          &MATH_DATATYPE&
-   &_1stage_device_pointer_&
+   &_1stage_d_ptr_&
    &PRECISION&
    &_impl (obj, &
 #else /* ACTIVATE_SKEW */
 function elpa_solve_evp_&
          &MATH_DATATYPE&
-   &_1stage_device_pointer_&
+   &_1stage_d_ptr_&
    &PRECISION&
    &_impl (obj, &
 #endif /* ACTIVATE_SKEW */
@@ -77,13 +77,13 @@ function elpa_solve_evp_&
 #ifdef ACTIVATE_SKEW
 function elpa_solve_skew_evp_&
          &MATH_DATATYPE&
-   &_1stage_all_host_arrays_&
+   &_1stage_a_h_a_&
    &PRECISION&
    &_impl (obj, &
 #else /* ACTIVATE_SKEW */
 function elpa_solve_evp_&
          &MATH_DATATYPE&
-   &_1stage_all_host_arrays_&
+   &_1stage_a_h_a_&
    &PRECISION&
    &_impl (obj, &
 #endif /* ACTIVATE_SKEW */
@@ -94,10 +94,19 @@ function elpa_solve_evp_&
 #endif /* DEVICE_POINTER */
 
    use precision
+#ifdef WITH_NVIDIA_GPU_VERSION
    use cuda_functions
+#endif
+#ifdef WITH_AMD_GPU_VERSION
    use hip_functions
+#endif
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+   use openmp_offload_functions
+#endif
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
    use elpa_gpu
    use mod_check_for_gpu
+#endif
    use, intrinsic :: iso_c_binding
    use elpa_abstract_impl
    use elpa_mpi
@@ -108,6 +117,7 @@ function elpa_solve_evp_&
 #endif
    use solve_tridi
    use thread_affinity
+   use elpa_utilities, only : error_unit
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
@@ -230,12 +240,16 @@ function elpa_solve_evp_&
    integer(kind=ik)                                :: global_index
 
    logical                                         :: reDistributeMatrix, doRedistributeMatrix
+   integer(kind=ik)                                :: gpu_old, gpu_new
 
-   logical                                       :: successGPU
-   integer(kind=c_intptr_t), parameter           :: size_of_datatype = size_of_&
+   logical                                         :: successGPU
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+   integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
                                                                       &PRECISION&
                                                                       &_&
                                                                       &MATH_DATATYPE
+#endif
 
 #ifdef ACTIVATE_SKEW
    call obj%timer%start("elpa_solve_skew_evp_&
@@ -247,86 +261,36 @@ function elpa_solve_evp_&
    &PRECISION&
    &")
 
+   call obj%get("debug",debug, error)
+   if (error .ne. ELPA_OK) then
+     write(error_unit,*) "ELPA1: Problem getting option for debug settings. Aborting..."
+#include "./elpa1_aborting_template.F90"
+   endif
+
+   wantDebug = debug == 1
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    ! check legacy GPU setings
+#define GPU_SOLVER ELPA1
+#include "../GPU/check_legacy_gpu_setting_template.F90"
+#undef GPU_SOLVER
+#endif
+    do_useGPU = .false.     
+
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
    if (error .ne. ELPA_OK) then
-     print *,"ELPA1: Problem getting mpi_comm_all. Aborting..."
-     stop
+     write(error_unit, *) "ELPA1: Problem getting mpi_comm_all. Aborting..."
+#include "./elpa1_aborting_template.F90"
    endif
 
    call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
    my_pe = int(my_peMPI,kind=c_int)
 
-#ifdef WITH_OPENMP_TRADITIONAL
-   ! store the number of OpenMP threads used in the calling function
-   ! restore this at the end of ELPA 2
-   omp_threads_caller = omp_get_max_threads()
-
-   ! check the number of threads that ELPA should use internally
-#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
-   call obj%get("limit_openmp_threads",limitThreads,error)
-   if (limitThreads .eq. 0) then
-#endif
-     call obj%get("omp_threads",nrThreads,error)
-     call omp_set_num_threads(nrThreads)
-#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
-   else
-     nrThreads = 1
-     call omp_set_num_threads(nrThreads)
-   endif
-#endif
-#else
-   nrThreads = 1
-#endif /* WITH_OPENMP_TRADITIONAL */
-
-   if (gpu_vendor() == NVIDIA_GPU) then
-     call obj%get("gpu",gpu,error)
-     if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for GPU. Aborting..."
-       stop
-     endif
-     if (gpu .eq. 1) then
-       print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new keyword &
-              & 'nvidia-gpu' now"
-       call obj%set("nvidia-gpu",gpu,error)
-       if (error .ne. ELPA_OK) then
-         print *,"Problem setting option for NVIDIA GPU. Aborting..."
-         stop
-       endif
-     endif
-     call obj%get("nvidia-gpu",gpu,error)
-     if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for NVIDIA GPU. Aborting..."
-       stop
-     endif
-   else if (gpu_vendor() == AMD_GPU) then
-     call obj%get("amd-gpu",gpu,error)
-     if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for AMD GPU. Aborting..."
-       stop
-     endif
-   else if (gpu_vendor() == INTEL_GPU) then
-     call obj%get("intel-gpu",gpu,error)
-     if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for INTEL GPU. Aborting..."
-       stop
-     endif
-   else
-     gpu = 0
-   endif
-
-   if (gpu .eq. 1) then
-     useGPU =.true.
-   else
-#ifdef DEVICE_POINTER
-     print *,"You used the interface for device pointers but did not specify GPU usage!. Aborting..."
-     stop
-#endif
-     useGPU = .false.
-   endif
-
-   do_useGPU = .false.
+    ! openmp setting
+#include "../helpers/elpa_openmp_settings_template.F90"
 
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
    if (useGPU) then
      call obj%timer%start("check_for_gpu")
 
@@ -335,24 +299,25 @@ function elpa_solve_evp_&
        ! set the neccessary parameters
        call set_gpu_parameters()
      else
-       print *,"GPUs are requested but not detected! Aborting..."
-       success = .false.
-       return
+       write(error_unit, *) "GPUs are requested but not detected! Aborting..."
+       call obj%timer%stop("check_for_gpu")
+#include "./elpa1_aborting_template.F90"
      endif
 #ifdef WITH_OPENMP_TRADITIONAL
      ! check the number of threads that ELPA should use internally
      ! in the GPU case at the moment only _1_ thread internally is allowed
      call obj%get("omp_threads", nrThreads, error)
      if (nrThreads .ne. 1) then
-       print *,"Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
-       print *,"setting 1 openmp thread now"
-       call obj%set("omp_threads",1, error)
-       nrThreads=1
-       call omp_set_num_threads(nrThreads)
+     write(error_unit, *) "ELPA1: Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
+     write(error_unit, *) "setting 1 openmp thread now"
+     call obj%set("omp_threads",1, error)
+     nrThreads=1
+     call omp_set_num_threads(nrThreads)
      endif
 #endif
      call obj%timer%stop("check_for_gpu")
-   endif
+   endif ! useGPU
+#endif
 
 
    do_useGPU_tridiag = do_useGPU
@@ -365,22 +330,22 @@ function elpa_solve_evp_&
    if(do_useGPU) then
      call obj%get("gpu_tridiag", gpu, error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for gpu_tridiag. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for gpu_tridiag. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
      do_useGPU_tridiag = (gpu == 1)
 
      call obj%get("gpu_solve_tridi", gpu, error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for gpu_solve_tridi. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for gpu_solve_tridi. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
      do_useGPU_solve_tridi = (gpu == 1)
 
      call obj%get("gpu_trans_ev", gpu, error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem getting option for gpu_trans_ev. Aborting..."
-       stop
+       write(error_unit, *) "ELPA1: Problem getting option for gpu_trans_ev. Aborting..."
+#include "./elpa1_aborting_template.F90"
      endif
      do_useGPU_trans_ev = (gpu == 1)
    endif
@@ -397,13 +362,13 @@ function elpa_solve_evp_&
 
    call obj%get("mpi_comm_rows",mpi_comm_rows,error)
    if (error .ne. ELPA_OK) then
-     print *,"ELPA1 Problem getting mpi_comm_rows. Aborting..."
-     stop
+     write(error_unit, *) "ELPA1: Problem getting mpi_comm_rows. Aborting..."
+#include "./elpa1_aborting_template.F90"
    endif
    call obj%get("mpi_comm_cols",mpi_comm_cols,error)
    if (error .ne. ELPA_OK) then
-     print *,"ELPA1 Problem getting mpi_comm_cols. Aborting..."
-     stop
+     write(error_unit, *) "ELPA1 Problem getting mpi_comm_cols. Aborting..."
+#include "./elpa1_aborting_template.F90"
    endif
 
 #ifdef REDISTRIBUTE_MATRIX
@@ -440,6 +405,9 @@ print *,"Device pointer + REDIST"
 #endif
    endif
 #endif /* REDISTRIBUTE_MATRIX */
+
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
    !TODO: intel gpu
    ! in case of devcice pointer _AND_ redistribute
    ! 1. copy aExtern to aIntern_dummy
@@ -448,6 +416,8 @@ print *,"Device pointer + REDIST"
    successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &
                              gpuMemcpyDeviceToHost)
    check_memcpy_gpu("elpa1: aExtern -> aIntern", successGPU)
+#endif
+
 
 #else /* DEVICE_POINTER */
 
@@ -568,8 +538,8 @@ print *,"Device pointer + REDIST"
 #endif
    call obj%get("output_pinning_information", pinningInfo, error)
    if (error .ne. ELPA_OK) then
-     print *,"Problem setting option for debug. Aborting..."
-     stop
+     write(error_unit, *) "ELPA1 Problem setting option for output_pinning_information. Aborting..."
+#include "./elpa1_aborting_template.F90"
    endif
    
    if (pinningInfo .eq. 1) then
@@ -612,6 +582,7 @@ print *,"Device pointer + REDIST"
      &_1stage_&
      &PRECISION&
      &")
+     success = .true.
      return
    endif
 
@@ -647,13 +618,6 @@ print *,"Device pointer + REDIST"
    np_cols = int(np_colsMPI,kind=c_int)
 
    call obj%timer%stop("mpi_communication")
-
-   call obj%get("debug", debug,error)
-   if (error .ne. ELPA_OK) then
-     print *,"Problem setting option for debug. Aborting..."
-     stop
-   endif
-   wantDebug = debug == 1
 
    ! allocate a dummy q_intern, if eigenvectors should not be commputed and thus q is NOT present
    if (.not.(obj%eigenvalues_only)) then
@@ -697,7 +661,11 @@ print *,"Device pointer + REDIST"
      &_&
      &PRECISION&
      & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, do_useGPU_tridiag, wantDebug, &
-        nrThreads, isSkewsymmetric)
+        nrThreads, isSkewsymmetric, success)
+     if (.not.(success)) then
+       write(error_unit,*) "Error in tridiag. Aborting..."
+       return
+     endif
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -738,7 +706,10 @@ print *,"Device pointer + REDIST"
 #endif
      call obj%timer%stop("solve")
      call obj%autotune_timer%stop("solve")
-     if (.not.(success)) return
+     if (.not.(success)) then
+       write(error_unit, *) "ELPA1: solve step encountered an error. Aborting..."
+#include "./elpa1_aborting_template.F90"
+     endif
    endif !do_solve
 
    if (obj%eigenvalues_only) then
@@ -746,18 +717,17 @@ print *,"Device pointer + REDIST"
    else
      call obj%get("check_pd",check_pd,error)
      if (error .ne. ELPA_OK) then
-       print *,"Problem setting option for check_pd. Aborting..."
-       stop
+#include "./elpa1_aborting_template.F90"
      endif
      if (check_pd .eq. 1) then
        call obj%get("thres_pd_&
        &PRECISION&
        &",thres_pd,error)
        if (error .ne. ELPA_OK) then
-          print *,"Problem getting option for thres_pd_&
-          &PRECISION&
-          &. Aborting..."
-          stop
+         write(error_unit, *) "ELPA1 Problem setting option for thres_pd_&
+         &PRECISION&
+         &. Aborting..."
+#include "./elpa1_aborting_template.F90"
        endif
 
        check_pd = 0
@@ -819,7 +789,12 @@ print *,"Device pointer + REDIST"
      &MATH_DATATYPE&
      &_&
      &PRECISION&
-     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+     & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev, &
+        success)
+     if (.not.(success)) then
+       write(error_unit,*) "Error in trans_ev. Aborting..."
+       return
+     endif
      if (isSkewsymmetric) then
        ! Transform imaginary part
        ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
@@ -828,7 +803,11 @@ print *,"Device pointer + REDIST"
              &_&
              &PRECISION&
              & (obj, na, nev, a, matrixRows, tau, q(1:matrixRows, matrixCols+1:2*matrixCols), matrixRows, nblk, matrixCols, &
-                mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev)
+                mpi_comm_rows, mpi_comm_cols, do_useGPU_trans_ev, success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in trans_ev. Aborting..."
+          return
+        endif
        endif
 
 #ifdef WITH_NVTX
@@ -905,6 +884,8 @@ print *,"Device pointer + REDIST"
 #if defined(DEVICE_POINTER) || defined(REDISTRIBUTE_MATRIX)
 
 #ifdef DEVICE_POINTER
+  
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
    !copy qIntern and ev to provided device pointers
    successGPU = gpu_memcpy(qExtern, c_loc(qIntern(1,1)), matrixRows*matrixCols*size_of_datatype, &
                              gpuMemcpyHostToDevice)
@@ -912,6 +893,7 @@ print *,"Device pointer + REDIST"
    successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_datatype, &
                              gpuMemcpyHostToDevice)
    check_memcpy_gpu("elpa1: ev -> evExtern", successGPU)
+#endif
 #endif
 
 #if defined(REDISTRIBUTE_MATRIX)
@@ -941,7 +923,7 @@ print *,"Device pointer + REDIST"
    nullify(a)
    nullify(q)
 
-  nullify(q_actual)
+   nullify(q_actual)
 
 #ifdef ACTIVATE_SKEW
    call obj%timer%stop("elpa_solve_skew_evp_&

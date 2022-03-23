@@ -56,7 +56,8 @@ subroutine tridiag_band_&
   &_&
   &PRECISION &
   (obj, na, nb, nblk, a_mat, lda, d, e, matrixCols, &
-  hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU, wantDebug, nrThreads, isSkewsymmetric)
+  hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, useGPU, wantDebug, nrThreads, isSkewsymmetric, &
+  success)
   !-------------------------------------------------------------------------------
   ! tridiag_band_real/complex:
   ! Reduces a real symmetric band matrix to tridiagonal form
@@ -142,12 +143,16 @@ subroutine tridiag_band_&
 #ifndef WITH_MPI
   integer(kind=ik)                             :: startAddr
 #endif
+#ifdef WITH_INTEL_GPU_VERSION
   logical                                      :: useIntelGPU
+#endif
 
    integer(kind=MPI_KIND)                      :: allreduce_request1, allreduce_request2
    logical                                     :: useNonBlockingCollectivesAll
    integer(kind=c_int)                         :: non_blocking_collectives, error
+   logical                                     :: success
 
+   success = .true.
   if(useGPU) then
     gpuString = "_gpu"
   else
@@ -160,17 +165,25 @@ subroutine tridiag_band_&
   &PRECISION_SUFFIX //&
   gpuString)
 
+#ifdef WITH_INTEL_GPU_VERSION
   useIntelGPU = .false.
-  if (useGPU) then
-    if (gpu_vendor() == INTEL_GPU) then
-      useIntelGPU = .true.
-    endif
-  endif
+  !if (useGPU) then
+  !  if (gpu_vendor() == INTEL_GPU) then
+  !    useIntelGPU = .true.
+  !  endif
+  !endif
+#endif
 
   call obj%get("nbc_all_elpa2_band_to_tridi", non_blocking_collectives, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives in elpa2_band_to_tridi. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives in elpa2_band_to_tridi. Aborting..."
+    call obj%timer%stop("tridiag_band_&
+    &MATH_DATATYPE&
+    &" // &
+    &PRECISION_SUFFIX //&
+    gpuString)
+    success = .false.
+    return
   endif
 
   if (non_blocking_collectives .eq. 1) then
@@ -265,7 +278,12 @@ subroutine tridiag_band_&
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, ab)
+  &(obj,a_mat, lda, na, nblk, nb, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, ab, &
+   success)
+  if (.not.(success)) then
+    write(error_unit,*) "Error in redist_band. Aborting..."
+    return
+  endif
 
   ! Calculate the workload for each sweep in the back transformation
   ! and the space requirements to hold the HH vectors
@@ -561,7 +579,10 @@ subroutine tridiag_band_&
 !$omp default(none) &
 !$omp private(my_thread, my_block_s, my_block_e, iblk, ns, ne, hv, tau, &
 !$omp&        nc, nr, hs, hd, vnorm2, hf, x, h, i) &
-!$omp shared(max_threads, obj, ab, isSkewsymmetric, wantDebug, hh_gath, useIntelGPU, &
+!$omp shared(max_threads, obj, ab, isSkewsymmetric, wantDebug, hh_gath, &
+#ifdef WITH_INTEL_GPU_VERSION
+!$omp&       useIntelGPU, &
+#endif
 !$omp        hh_cnt, tau_t, hv_t, na, istep, n_off, na_s, nb, omp_block_limits, iter) &
 !$omp         schedule(static,1), num_threads(max_threads)
           do my_thread = 1, max_threads
@@ -596,6 +617,7 @@ subroutine tridiag_band_&
                                         ! Note that nr>=0 implies that diagonal block is full (nc==nb)!
 
               ! Transform diagonal block
+#ifdef WITH_INTEL_GPU_VERSION
               if (useIntelGPU) then
                 if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
@@ -612,7 +634,8 @@ subroutine tridiag_band_&
                                     hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
                 if (wantDebug) call obj%timer%stop("mkl_offload")
-              else
+              else ! useIntelGPU
+#endif
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
                 if (isSkewsymmetric) then
@@ -628,7 +651,9 @@ subroutine tridiag_band_&
                                     hv, 1_BLAS_KIND, ZERO, hd, 1_BLAS_KIND)
 #endif
                 if (wantDebug) call obj%timer%stop("blas")
-              endif
+#ifdef WITH_INTEL_GPU_VERSION
+              endif ! useIntelGPU
+#endif
 
 #if REALCASE == 1
               if (.NOT. isSkewsymmetric) then
@@ -642,6 +667,7 @@ subroutine tridiag_band_&
                 hd(1:nc) = hd(1:nc) - 0.5_rk*x*hv(1:nc)
               endif
 
+#ifdef WITH_INTEL_GPU_VERSION
               if (useIntelGPU) then
                 if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
@@ -658,7 +684,8 @@ subroutine tridiag_band_&
                                   hv, 1_BLAS_KIND, ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
 #endif
                 if (wantDebug) call obj%timer%stop("mkl_offload")
-              else
+              else ! useIntelGPU
+#endif
                 if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
                 if (isSkewsymmetric) then
@@ -675,26 +702,32 @@ subroutine tridiag_band_&
 #endif
               
                 if (wantDebug) call obj%timer%stop("blas")
-              endif
+#ifdef WITH_INTEL_GPU_VERSION
+              endif ! useIntelGPU
+#endif
 
               hv_t(:,my_thread) = 0.0_rck
               tau_t(my_thread)  = 0.0_rck
               if (nr<=0) cycle ! No subdiagonal block present any more
 
               ! Transform subdiagonal block
+#ifdef WITH_INTEL_GPU_VERSION
               if (useIntelGPU) then
                 if (wantDebug) call obj%timer%start("mkl_offload")
                 call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, &
                                     ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
                                     ZERO, hs, 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("mkl_offload")
-              else
+              else ! useIntelGPU
+#endif
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV('N', int(nr,kind=BLAS_KIND), int(nb,kind=BLAS_KIND), tau, &
                                     ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
                                     ZERO, hs, 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("blas")
-              endif
+#ifdef WITH_INTEL_GPU_VERSION
+              endif ! useIntelGPU
+#endif
 
               if (nr>1) then
 
@@ -727,6 +760,7 @@ subroutine tridiag_band_&
               ab(nb+2:,ns) = 0.0_rck
               ! update subdiagonal block for old and new Householder transformation
               ! This way we can use a nonsymmetric rank 2 update which is (hopefully) faster
+#ifdef WITH_INTEL_GPU_VERSION
               if (useIntelGPU) then
                 if (wantDebug) call obj%timer%start("mkl_offload")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
@@ -734,14 +768,17 @@ subroutine tridiag_band_&
                                     tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
                                     hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("mkl_offload")
-              else
+              else ! useIntelGPU
+#endif
                 if (wantDebug) call obj%timer%start("blas")
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,            &
                                     int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
                                     tau_t(my_thread), ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
                                     hv_t(1,my_thread), 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
                 if (wantDebug) call obj%timer%stop("blas")
-              endif
+#ifdef WITH_INTEL_GPU_VERSION
+              endif ! useIntelGPU
+#endif
 
               x = dot_product(hs(1:nr),hv_t(1:nr,my_thread))*tau_t(my_thread)
               h(2:nb) = h(2:nb) - x*hv(2:nb)
@@ -925,6 +962,7 @@ subroutine tridiag_band_&
           ! Diagonal block, the contribution of the last element is added below!
           ab(1,ne) = 0.0_rck
 
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             if (wantDebug) call obj%timer%start("mkl_offload")
 
@@ -947,7 +985,8 @@ subroutine tridiag_band_&
                                           ZERO, hs, 1_BLAS_KIND)
             if (wantDebug) call obj%timer%stop("mkl_offload")
 
-          else
+          else ! useIntelGPU
+#endif
             if (wantDebug) call obj%timer%start("blas")
 
 #if REALCASE == 1
@@ -968,7 +1007,9 @@ subroutine tridiag_band_&
                                           tau, ab(nb+1,ns), int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, &
                                           ZERO, hs, 1_BLAS_KIND)
             if (wantDebug) call obj%timer%stop("blas")
-          endif
+#ifdef WITH_INTEL_GPU_VERSION
+          endif ! useIntelGPU
+#endif
 
           ! ... then request last column ...
 #ifdef WITH_MPI
@@ -996,6 +1037,7 @@ subroutine tridiag_band_&
         else
 
           ! Normal matrix multiply
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
@@ -1018,7 +1060,8 @@ subroutine tridiag_band_&
                                         int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
 #endif
             if (wantDebug) call obj%timer%stop("mkl_offload")
-          else
+          else ! use INTELGPU
+#endif
             if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
             if (isSkewsymmetric) then
@@ -1037,7 +1080,9 @@ subroutine tridiag_band_&
                                         int(2*nb-1,kind=BLAS_KIND), hv, 1_BLAS_KIND, ZERO, hs, 1_BLAS_KIND)
             if (wantDebug) call obj%timer%stop("blas")
           endif
-        endif
+#ifdef WITH_INTEL_GPU_VERSION
+        endif ! useIntelGPU
+#endif
 
         ! Calculate first column of subdiagonal block and calculate new
         ! Householder transformation for this column
@@ -1150,6 +1195,7 @@ subroutine tridiag_band_&
 
 #endif /* WITH_MPI */
           ! ... and calculate remaining columns with rank-2 update
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
@@ -1165,7 +1211,8 @@ subroutine tridiag_band_&
                                          hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
 #endif
             if (wantDebug) call obj%timer%stop("mkl_offload")
-          else
+          else ! useIntelGPU
+#endif
             if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
             if (isSkewsymmetric) then 
@@ -1180,10 +1227,13 @@ subroutine tridiag_band_&
                                        hv(2), 1_BLAS_KIND, ab(1,ns+1), int(2*nb-1,kind=BLAS_KIND) )
 #endif
             if (wantDebug) call obj%timer%stop("blas")
-          endif
+#ifdef WITH_INTEL_GPU_VERSION
+          endif ! useIntelGPU
+#endif
 
-        else
+        else ! (my_pe>0 .and. iblk==1)
           ! No need to  send, just a rank-2 update
+#ifdef WITH_INTEL_GPU_VERSION
           if (useIntelGPU) then
             if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
@@ -1200,7 +1250,8 @@ subroutine tridiag_band_&
 #endif
             if (wantDebug) call obj%timer%stop("mkl_offload")
 
-          else
+          else ! useIntelGPU
+#endif
             if (wantDebug) call obj%timer%start("blas")
 #if REALCASE == 1
             if (isSkewsymmetric) then 
@@ -1215,13 +1266,16 @@ subroutine tridiag_band_&
                                 ab(1,ns), int(2*nb-1,kind=BLAS_KIND))
 #endif
             if (wantDebug) call obj%timer%stop("blas")
-          endif
-        endif
+#ifdef WITH_INTEL_GPU_VERSION
+          endif !useIntelGPU
+#endif
+        endif  ! (my_pe>0 .and. iblk==1)
 
         ! Do the remaining double Householder transformation on the subdiagonal block cols 2 ... nb
 
-        if (nr>0) then
-          if (nr>1) then
+        if (nr > 0) then
+          if (nr > 1) then
+#ifdef WITH_INTEL_GPU_VERSION
             if (useIntelGPU) then
               if (wantDebug) call obj%timer%start("mkl_offload")
               call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
@@ -1235,13 +1289,16 @@ subroutine tridiag_band_&
 #endif
 #endif
               if (wantDebug) call obj%timer%stop("mkl_offload")
-            else
+            else ! useIntelGPU
+#endif
               if (wantDebug) call obj%timer%start("blas")
               call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, int(nr,kind=BLAS_KIND), int(nb-1,kind=BLAS_KIND), &
                                   tau_new, ab(nb,ns+1), int(2*nb-1,kind=BLAS_KIND), &
                                   hv_new, 1_BLAS_KIND, ZERO, h(2), 1_BLAS_KIND)
               if (wantDebug) call obj%timer%stop("blas")
-            endif
+#ifdef WITH_INTEL_GPU_VERSION
+            endif ! useIntelGPU
+#endif
             x = dot_product(hs(1:nr),hv_new(1:nr))*tau_new
             h(2:nb) = h(2:nb) - x*hv(2:nb)
             ! Unfortunately there is no BLAS routine like DSYR2 for a nonsymmetric rank 2 update
@@ -1253,7 +1310,7 @@ subroutine tridiag_band_&
               ab(2+nb-i:1+nb+nr-i,i+ns-1) = ab(2+nb-i:1+nb+nr-i,i+ns-1) - hv_new(1:nr)*conjg(h(i)) - hs(1:nr)*conjg(hv(i))
 #endif
             enddo
-          else
+          else ! nr > 1
             ! No double Householder transformation for nr=1, just complete the row
             do i=2,nb
 #if REALCASE == 1
@@ -1263,8 +1320,8 @@ subroutine tridiag_band_&
               ab(2+nb-i,i+ns-1) = ab(2+nb-i,i+ns-1) - hs(1)*conjg(hv(i))
 #endif
             enddo
-          endif
-        endif
+          endif ! nr > 1
+        endif ! nr > 0
 
         ! Use new HH Vector for the next block
         hv(:) = hv_new(:)

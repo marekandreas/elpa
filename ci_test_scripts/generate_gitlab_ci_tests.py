@@ -94,15 +94,15 @@ def set_scalapack_flags(instr, fc, g, m, o):
                     scalapackldflags="$MKL_GFORTRAN_SCALAPACK_LDFLAGS_NO_MPI_NO_OMP "
                     scalapackfcflags="$MKL_GFORTRAN_SCALAPACK_FCFLAGS_NO_MPI_NO_OMP "
 
-        if (g == "with-gpu" or g == "with-sm80-gpu"):
-            scalapackldflags += " -L\\$CUDA_HOME/lib64 -Wl,-rpath,\\$CUDA_HOME/lib64 -lcublas -I\\$CUDA_HOME/include"
+        if (g == "with-gpu"):
+            scalapackldflags += " -L\\$CUDA_HOME/lib64 -lcublas -I\\$CUDA_HOME/include"
             scalapackfcflags += " -I\\$CUDA_HOME/include"
 
-        if (instr == "sse" or (instr == "avx" and g != "with-gpu" and g != "with-sm80-gpu")):
+        if (instr == "sse" or (instr == "avx" and g != "with-gpu")):
             scalapackldflags = " SCALAPACK_LDFLAGS=\\\""+scalapackldflags+"\\\""
             scalapackfcflags = " SCALAPACK_FCFLAGS=\\\""+scalapackfcflags+"\\\""
 
-        if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu" or g == "with-sm80-gpu"):
+        if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
             scalapackldflags = " SCALAPACK_LDFLAGS=\\\""+"\\"+scalapackldflags+"\\\""
             scalapackfcflags = " SCALAPACK_FCFLAGS=\\\""+"\\"+scalapackfcflags+"\\\""
 
@@ -522,7 +522,6 @@ api = {
 
 compiler = {
              "gnu" : "gnu",
-             "intel" : "intel"
 }
 for comp, s, a in product(
                              sorted(compiler.keys()),
@@ -598,8 +597,7 @@ band_to_full_blocking = {
 
 gpu = {
         "no-gpu" : "--disable-nvidia-gpu",
-        "with-gpu" : "--enable-nvidia-gpu --with-NVIDIA-GPU-compute-capability=sm_70 -with-cuda-path=\\$CUDA_HOME/",
-        "with-sm80-gpu" : "--enable-nvidia-gpu --with-NVIDIA-GPU-compute-capability=sm_80 -with-cuda-path=\\$CUDA_HOME/" ,
+        "with-gpu" : "--enable-nvidia-gpu --with-cuda-path=\\$CUDA_HOME/",
 }
 
 
@@ -679,8 +677,6 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         continue
     if (fc == "pgi" and g !="with-gpu"):
         continue
-    if (fc == "pgi" and g !="with-sm80-gpu"):
-        continue
     mpi_configure_flag = mpi[m]
     if (fc == "gnu" and  m == "mpi"):
         mpi_configure_flag += " --disable-mpi-module"
@@ -704,8 +700,6 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
         continue
     if (cov == "coverage" and g == "with-gpu"):
         continue
-    if (cov == "coverage" and g == "with-sm80-gpu"):
-        continue
     if (cov == "coverage"):
         CFLAGS +=" --coverage -O0"
         FCFLAGS +=" --coverage -O0"
@@ -723,8 +717,6 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
     if (instr == "power8" and addr == "address-sanitize"):
         continue
     if (g == "with-gpu" and addr == "address-sanitize"):
-        continue
-    if (g == "with-sm80-gpu" and addr == "address-sanitize"):
         continue
     if (instr == "knl" and addr == "address-sanitize"):
         continue
@@ -746,19 +738,13 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
     #no gpu testing with openmp
     if (g == "with-gpu" and o == "openmp"):
         continue
-    if (g == "with-sm80-gpu" and o == "openmp"):
-        continue
 
     #no gpu testing with intel C compiler (gcc needed)
     if (g == "with-gpu" and cc == "intel"):
         continue
-    if (g == "with-sm80-gpu" and cc == "intel"):
-        continue
 
     #at the moment gpu testing only on AVX machines or minskys
     if (g == "with-gpu" and (instr !="avx512" and instr !="power8")):
-        continue
-    if (g == "with-sm80-gpu" and (instr !="avx512" and instr !="power8")):
         continue
 
 #    #on KNL do only intel tests
@@ -786,8 +772,6 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
     # kicking out gpu is not good, but at the momemt we have a real problem with gpu runners
     # should be returned when solved
     if (g == "with-gpu"):
-        MasterOnly=True
-    if (g == "with-sm80-gpu"):
         MasterOnly=True
     if (a == "no-assumed-size"):
         MasterOnly=True
@@ -818,10 +802,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
             else:
                print("    - gpu")
         else:
-            if (g == "with-sm80-gpu"):
-               print("    - gpu_sm80")
-            else:
-               print("    - " + instr)
+            print("    - " + instr)
     print("  artifacts:")
     print("    when: on_success")
     print("    expire_in: 2 month")
@@ -833,13 +814,13 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     memory = set_requested_memory(matrix_size[na])
 
-    if (g != "with-gpu" and g != "with-sm80-gpu"):
+    if (g != "with-gpu"):
         gpuJob="no"
     else:
         gpuJob="yes"
 
     # do the configure
-    if ( instr == "sse" or (instr == "avx" and g != "with-gpu" and g != "with-sm80-gpu")):
+    if ( instr == "sse" or (instr == "avx" and g != "with-gpu")):
         if ( instr == "sse"):
             print("   - if [ $MATRIX_SIZE -gt 150 ]; then export SKIP_STEP=1 ; fi # our SSE test machines do not have a lot of memory")
         print("   - ./ci_test_scripts/run_ci_tests.sh -c \" CC=\\\""+c_compiler_wrapper+"\\\"" + " CFLAGS=\\\""+CFLAGS+"\\\"" + " FC=\\\""+fortran_compiler_wrapper+"\\\"" + " FCFLAGS=\\\""+FCFLAGS+"\\\"" \
@@ -848,7 +829,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 + " " + precision[p] + " " + assumed_size[a] + " " + band_to_full_blocking[b] \
 + " " +gpu[g] + INSTRUCTION_OPTIONS + "\" -j 8 -t $MPI_TASKS -m $MATRIX_SIZE -n $NUMBER_OF_EIGENVECTORS -b $BLOCK_SIZE -s $SKIP_STEP -i $INTERACTIVE_RUN -S $SLURM -g " +gpuJob)
 
-    if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu" or g == "with-sm80-gpu"):
+    if ( instr == "avx2" or instr == "avx512" or instr == "knl" or g == "with-gpu"):
         print("    - export REQUESTED_MEMORY="+memory)    
         print("\n")
 
@@ -869,7 +850,7 @@ for cc, fc, m, o, p, a, b, g, instr, addr, na in product(
 
     # do the test
 
-    if ( instr == "avx2" or instr == "avx512" or instr == "knl"  or g == "with-gpu" or g == "with-sm80-gpu"):
+    if ( instr == "avx2" or instr == "avx512" or instr == "knl"  or g == "with-gpu"):
         if (o == "openmp"):
             if (cov == "no-coverage"):
                 openmp_threads=" 2 "

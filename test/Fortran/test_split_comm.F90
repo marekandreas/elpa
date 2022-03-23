@@ -125,13 +125,13 @@ program test
    TEST_INT_TYPE                     :: np_cols, np_rows  ! number of MPI processes per column/row
    TEST_INT_TYPE                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
    TEST_INT_MPI_TYPE                 :: mpierr, ierr,mpi_sub_commMPI, myidMPI, nprocsMPI, colorMPI, keyMPI, &
-                                        myid_subMPI, nprocs_subMPI
+                                        myid_subMPI, nprocs_subMPI, blacs_ok_mpi
    TEST_INT_TYPE                     :: mpi_sub_comm
    TEST_INT_TYPE                     :: myid_sub, nprocs_sub
 
    ! blacs
    character(len=1)            :: layout
-   TEST_INT_TYPE                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
 
    ! The Matrix
    MATRIX_TYPE, allocatable    :: a(:,:), as(:,:)
@@ -215,6 +215,21 @@ program test
    call redirect_stdout(myid)
 #endif
 
+#ifdef WITH_CUDA_AWARE_MPI
+#if TEST_NVIDIA_GPU != 1
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+#ifdef TEST_COMPLEX
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+#endif
+
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
      stop 1
@@ -244,7 +259,23 @@ program test
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
-                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
+
+#ifdef WITH_MPI
+   blacs_ok_mpi = int(blacs_ok, kind=INT_MPI_TYPE)
+   call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+   blacs_ok = int(blacs_ok_mpi, kind=INT_TYPE)
+#endif
+
+   if (blacs_ok .eq. 0) then
+     if (myid .eq. 0) then
+       print *," Ecountered critical error when setting up blacs. Aborting..."
+     endif
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop
+   endif
 
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -263,10 +294,14 @@ program test
    call set_basic_params(e, na, nev, na_rows, na_cols, mpi_sub_comm, my_prow, my_pcol)
 
    call e%set("timings",1, error_elpa)
+   assert_elpa_ok(error_elpa)
 
    call e%set("debug",1, error_elpa)
+   assert_elpa_ok(error_elpa)
    call e%set("nvidia-gpu", 0, error_elpa)
+   assert_elpa_ok(error_elpa)
    call e%set("intel-gpu", 0, error_elpa)
+   assert_elpa_ok(error_elpa)
    !call e%set("max_stored_rows", 15, error_elpa)
 
    assert_elpa_ok(e%setup())
@@ -280,9 +315,9 @@ program test
 
    call e%timer_start("eigenvectors")
    call e%eigenvectors(a, ev, z, error_elpa)
+   assert_elpa_ok(error_elpa)
    call e%timer_stop("eigenvectors")
 
-   assert_elpa_ok(error_elpa)
 
    !status = check_correctness_analytic(na, nev, ev, z, nblk, myid_sub, np_rows, np_cols, my_prow, my_pcol, &
     !                   .true., .true., print_times=.false.)
@@ -305,8 +340,10 @@ program test
 
    call elpa_uninit(error_elpa)
 
+#ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
+#endif
 
 #endif
    call exit(status)

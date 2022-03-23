@@ -97,7 +97,7 @@ subroutine tridiag_&
   &_&
   &PRECISION &
   (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, &
-   max_threads, isSkewsymmetric)
+   max_threads, isSkewsymmetric, success)
   use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
@@ -159,6 +159,8 @@ subroutine tridiag_&
   MATH_DATATYPE(kind=rck), allocatable          :: tmp(:)
   MATH_DATATYPE(kind=rck), pointer              :: v_row(:), & ! used to store calculated Householder Vector
                                                    v_col(:)   ! the same Vector, but transposed 
+  MATH_DATATYPE(kind=rck), pointer              :: u_row_debug(:), & ! used to store calculated Householder Vector
+                                                   u_col_debug(:)   ! the same Vector, but transposed 
   MATH_DATATYPE(kind=rck), pointer              :: u_col(:), u_row(:)
 
   ! the following two matrices store pairs of vectors v and u calculated in each step
@@ -187,7 +189,9 @@ subroutine tridiag_&
                                                                       &PRECISION&
                                                                       &_&
                                                                       &MATH_DATATYPE
+#ifdef WITH_INTEL_GPU_VERSION
   logical                                       :: useIntelGPU
+#endif
   integer(kind=MPI_KIND)                        :: bcast_request1, bcast_request2, bcast_request3
   integer(kind=MPI_KIND)                        :: allreduce_request1, allreduce_request2, allreduce_request3
   integer(kind=MPI_KIND)                        :: allreduce_request4, allreduce_request5, allreduce_request6, &
@@ -195,8 +199,10 @@ subroutine tridiag_&
   logical                                       :: useNonBlockingCollectivesCols
   logical                                       :: useNonBlockingCollectivesRows
   integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
+  logical                                       :: success
 
-
+  success = .true.
+ 
   if(useGPU) then
     gpuString = "_gpu"
   else
@@ -209,23 +215,38 @@ subroutine tridiag_&
   PRECISION_SUFFIX // &
   gpuString )
 
+#ifdef WITH_INTEL_GPU_VERSION
   useIntelGPU = .false.
-  if (useGPU) then
-    if (gpu_vendor() == INTEL_GPU) then
-      useIntelGPU = .true.
-    endif
-  endif
+  !disable for the moment
+  !if (useGPU) then
+  !  if (gpu_vendor() == INTEL_GPU) then
+  !    useIntelGPU = .true.
+  !  endif
+  !endif
+#endif
 
   call obj%get("nbc_row_elpa1_full_to_tridi", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for rows in elpa1_tridiag. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for rows in elpa1_tridiag. Aborting..."
+    success = .false.
+    call obj%timer%stop("tridiag_&
+    &MATH_DATATYPE&
+    &" // &
+    PRECISION_SUFFIX // &
+    gpuString )
+    return
   endif
 
   call obj%get("nbc_col_elpa1_full_to_tridi", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for non blocking collectives for cols in elpa1_tridiag. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for non blocking collectives for cols in elpa1_tridiag. Aborting..."
+    success = .false.
+    call obj%timer%stop("tridiag_&
+    &MATH_DATATYPE&
+    &" // &
+    PRECISION_SUFFIX // &
+    gpuString )
+    return
   endif
 
   if (non_blocking_collectives_rows .eq. 1) then
@@ -282,8 +303,14 @@ subroutine tridiag_&
   ! it can, however, be set by the user
   call obj%get("min_tile_size", min_tile_size ,error)
   if (error .ne. ELPA_OK) then
-    print *,"Problem setting option for min_tile_size. Aborting..."
-    stop
+    write(error_unit,*) "Problem setting option for min_tile_size. Aborting..."
+    success = .false.
+    call obj%timer%stop("tridiag_&
+    &MATH_DATATYPE&
+    &" // &
+    PRECISION_SUFFIX // &
+    gpuString )
+    return
   endif
   if(min_tile_size == 0) then
     ! not set by the user, use the default value
@@ -323,6 +350,7 @@ subroutine tridiag_&
        &MATH_DATATYPE ", "vu_stored_rows", istat, errorMessage)
 
   if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
     if (useIntelGPU) then
       allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
       call check_alloc("tridiag_&
@@ -339,57 +367,81 @@ subroutine tridiag_&
       allocate(u_row(max_local_rows), stat=istat, errmsg=errorMessage)
       call check_alloc("tridiag_&
       &MATH_DATATYPE ", "u_row", istat, errorMessage)
-    else
+    else ! useIntelGPU
+#endif
 
-      num = (max_local_rows+1) * size_of_datatype
-      successGPU = gpu_malloc_host(v_row_host, num)
-      check_host_alloc_gpu("tridiag: v_row_host", successGPU)
-      call c_f_pointer(v_row_host,v_row,(/(max_local_rows+1)/))
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        num = (max_local_rows+1) * size_of_datatype
+        successGPU = gpu_malloc_host(v_row_host, num)
+        check_host_alloc_gpu("tridiag: v_row_host", successGPU)
+        call c_f_pointer(v_row_host,v_row,(/(max_local_rows+1)/))
+      else
+        allocate(v_row(max_local_rows+1))
+      endif
 
-      num = (max_local_cols) * size_of_datatype
-      successGPU = gpu_malloc_host(v_col_host,num)
-      check_host_alloc_gpu("tridiag: v_col_host", successGPU)
-      call c_f_pointer(v_col_host,v_col,(/(max_local_cols)/))
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        num = (max_local_cols) * size_of_datatype
+        successGPU = gpu_malloc_host(v_col_host,num)
+        check_host_alloc_gpu("tridiag: v_col_host", successGPU)
+        call c_f_pointer(v_col_host,v_col,(/(max_local_cols)/))
+      else
+        allocate(v_col(max_local_cols))
+      endif
 
-      num = (max_local_cols) * size_of_datatype
-      successGPU = gpu_malloc_host(u_col_host,num)
-      check_host_alloc_gpu("tridiag: u_col_host", successGPU)
-      call c_f_pointer(u_col_host,u_col,(/(max_local_cols)/))
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        num = (max_local_cols) * size_of_datatype
+        successGPU = gpu_malloc_host(u_col_host,num)
+        check_host_alloc_gpu("tridiag: u_col_host", successGPU)
+        call c_f_pointer(u_col_host,u_col,(/(max_local_cols)/))
+      else
+        allocate(u_col(max_local_cols))
+      endif
 
-      num = (max_local_rows) * size_of_datatype
-      successGPU = gpu_malloc_host(u_row_host,num)
-      check_host_alloc_gpu("tridiag: u_row_host", successGPU)
-      call c_f_pointer(u_row_host,u_row,(/(max_local_rows)/))
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        num = (max_local_rows) * size_of_datatype
+        successGPU = gpu_malloc_host(u_row_host,num)
+        check_host_alloc_gpu("tridiag: u_row_host", successGPU)
+        call c_f_pointer(u_row_host,u_row,(/(max_local_rows)/))
+      else
+        allocate(u_row(max_local_rows))
+      endif
 
-      num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
-      successGPU = gpu_host_register(int(loc(vu_stored_rows),kind=c_intptr_t),num,&
+      
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
+        successGPU = gpu_host_register(int(loc(vu_stored_rows),kind=c_intptr_t),num,&
                     gpuHostRegisterDefault)
-      check_host_register_gpu("tridiag: vu_stored_roes", successGPU)
+        check_host_register_gpu("tridiag: vu_stored_roes", successGPU)
 
-      num = (max_local_cols * 2*max_stored_uv) * size_of_datatype
-      successGPU = gpu_host_register(int(loc(uv_stored_cols),kind=c_intptr_t),num,&
+        num = (max_local_cols * 2*max_stored_uv) * size_of_datatype
+        successGPU = gpu_host_register(int(loc(uv_stored_cols),kind=c_intptr_t),num,&
                     gpuHostRegisterDefault)
-      check_host_register_gpu("tridiag: uv_stored_cols", successGPU)
+        check_host_register_gpu("tridiag: uv_stored_cols", successGPU)
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
-      num = na * 8
+        num = na * 8
 #else
-      num = na * 4
+        num = na * 4
 #endif
-      successGPU = gpu_host_register(int(loc(e_vec),kind=c_intptr_t),num,&
+        successGPU = gpu_host_register(int(loc(e_vec),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
-      check_host_register_gpu("tridiag: e_vec", successGPU)
+        check_host_register_gpu("tridiag: e_vec", successGPU)
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
-      num = na * 8
+        num = na * 8
 #else
-      num = na * 4
+        num = na * 4
 #endif
-      successGPU = gpu_host_register(int(loc(d_vec),kind=c_intptr_t),num,&
+        successGPU = gpu_host_register(int(loc(d_vec),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
-      check_host_register_gpu("tridiag: d_vec", successGPU)
-    endif
-  else
+        check_host_register_gpu("tridiag: d_vec", successGPU)
+      endif
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+    endif ! useIntelGPU
+#endif
+  else ! useGPU
     allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
     call check_alloc("tridiag_&
     &MATH_DATATYPE ", "v_row", istat, errorMessage)
@@ -406,7 +458,7 @@ subroutine tridiag_&
     call check_alloc("tridiag_&
     &MATH_DATATYPE ", "u_row", istat, errorMessage)
       
-  endif
+  endif ! useGPU
 
 #ifdef WITH_OPENMP_TRADITIONAL
   allocate(ur_p(max_local_rows,0:max_threads-1), stat=istat, errmsg=errorMessage)
@@ -424,7 +476,11 @@ subroutine tridiag_&
   v_col = 0
   u_col = 0
 
+#ifdef WITH_INTEL_GPU_VERSION
   if (useGPU .and. .not.(useIntelGPU) ) then
+#else
+  if (useGPU) then
+#endif
      successGPU = gpu_malloc(v_row_dev, max_local_rows * size_of_datatype)
      check_alloc_gpu("tridiag: v_row_dev", successGPU)
 
@@ -445,11 +501,6 @@ subroutine tridiag_&
      check_alloc_gpu("tridiag: vu_stored_rows_dev", successGPU)
   endif !useGPU
 
-  !if (useIntelGPU) then
-  !  ! needed later
-  !endif
-
-
   d_vec(:) = 0
   e_vec(:) = 0
   tau(:) = 0
@@ -467,7 +518,11 @@ subroutine tridiag_&
   d_vec(na) = a_mat(l_rows,l_cols)
 #endif
 
+#ifdef WITH_INTEL_GPU_VERSION
   if (useGPU .and. .not.(useIntelGPU)) then
+#else
+  if (useGPU) then
+#endif
     ! allocate memmory for matrix A on the device and than copy the matrix
 
     num = matrixRows * matrixCols * size_of_datatype
@@ -475,18 +530,17 @@ subroutine tridiag_&
     successGPU = gpu_malloc(a_dev, num)
     check_alloc_gpu("tridiag: a_dev", successGPU)
 
-    successGPU = gpu_host_register(int(loc(a_mat),kind=c_intptr_t),num,&
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      successGPU = gpu_host_register(int(loc(a_mat),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
-    check_host_register_gpu("tridiag: a_mat", successGPU)
-
+      check_host_register_gpu("tridiag: a_mat", successGPU)
+    endif
+#endif
     successGPU = gpu_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
     check_memcpy_gpu("tridiag: a_dev", successGPU)
-  endif
-
-  !if (useIntelGPU) then
-  !  ! needed later
-  !endif
+  endif ! useGPU
 
   ! main cycle of tridiagonalization
   ! in each step, 1 Householder Vector is calculated
@@ -507,9 +561,11 @@ subroutine tridiag_&
 
       ! copy l_cols + 1 column of A to v_row
       if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
         if (useIntelGPU) then
           v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
-        else
+        else ! useIntelGPU
+#endif
           a_offset = l_cols * matrixRows * size_of_datatype
           ! we use v_row on the host at the moment! successGPU = gpu_memcpy(v_row_dev, a_dev + a_offset, 
           ! (l_rows)*size_of_PRECISION_real, gpuMemcpyDeviceToDevice)
@@ -517,17 +573,20 @@ subroutine tridiag_&
           successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), &
                                     a_dev + a_offset, (l_rows)* size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("tridiag a_dev 1", successGPU)
-        endif
-      else
+#ifdef WITH_INTEL_GPU_VERSION
+        endif ! useIntelGPU
+#endif
+      else ! useGPU
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
-      endif
+      endif ! useGPU
 
       if (n_stored_vecs > 0 .and. l_rows > 0) then
 #if COMPLEXCASE == 1
         aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
+
+#ifdef WITH_INTEL_GPU_VERSION
         if (useIntelGPU) then
-                !print *,"intel phase aaaaaaaaaaaaaaaaaaaaaaaaaa"
           if (wantDebug) call obj%timer%start("mkl_offload")
 #if REALCASE == 1
           aux(1:2*n_stored_vecs) = uv_stored_cols(l_cols+1,1:2*n_stored_vecs)
@@ -568,7 +627,8 @@ subroutine tridiag_&
 #endif /* WITH_INTEL_GPU_VERSION */
 
           if (wantDebug) call obj%timer%stop("mkl_offload")
-        else
+        else ! useIntelGPU
+#endif /* WITH_INTEL_GPU_VERSION */
           if (wantDebug) call obj%timer%start("blas")
           call PRECISION_GEMV('N',   &
                             int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
@@ -582,8 +642,10 @@ subroutine tridiag_&
 #endif
                             ONE, v_row, 1_BLAS_KIND)
           if (wantDebug) call obj%timer%stop("blas")
-        endif
-      endif
+#ifdef WITH_INTEL_GPU_VERSION
+        endif ! useIntelGPU
+#endif
+      endif ! (n_stored_vecs > 0 .and. l_rows > 0)
 
       if (my_prow == prow(istep-1, nblk, np_rows)) then
         aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1))
@@ -678,7 +740,11 @@ subroutine tridiag_&
         &_&
         &PRECISION &
               (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
-               1, istep-1, 1, nblk, max_threads, .true.)
+               1, istep-1, 1, nblk, max_threads, .true., success)
+    if (.not.(success)) then
+      write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
+      return
+    endif
 
     ! Calculate u = (A + VU**T + UV**T)*v
 
@@ -688,13 +754,34 @@ subroutine tridiag_&
     u_col(1:l_cols) = 0
     u_row(1:l_rows) = 0
     if (l_rows > 0 .and. l_cols> 0 ) then
+#ifdef WITH_INTEL_GPU_VERSION
      if (useGPU .and. .not.(useIntelGPU)) then
-       successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
-       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+#else
+     if (useGPU) then
+#endif
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+         successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
+         check_memcpy_gpu("tridiag: u_col_dev", successGPU)
 
-       successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype)
-       check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+         successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype)
+         check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+       else
+         ! debug
+         allocate(u_col_debug(l_cols))
+         u_col_debug(:) = 0.
+         successGPU = gpu_memcpy(u_col_dev, int(loc(u_col_debug(1)),kind=c_intptr_t), &
+                     l_cols * size_of_datatype, gpuMemcpyHostToDevice)
 
+         deallocate(u_col_debug)
+         allocate(u_row_debug(l_rows))
+         u_row_debug(:) = 0.
+         successGPU = gpu_memcpy(u_row_dev, int(loc(u_row_debug(1)),kind=c_intptr_t), &
+                     l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+
+         deallocate(u_row_debug)
+       endif
+#endif
        successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
                      l_cols * size_of_datatype, gpuMemcpyHostToDevice)
 
@@ -704,10 +791,6 @@ subroutine tridiag_&
                                  l_rows * size_of_datatype, gpuMemcpyHostToDevice)
        check_memcpy_gpu("tridiag: v_row_dev", successGPU)
      endif ! useGPU
-
-     !if (useIntelGPU) then
-     !  ! needed later when we can do explicit memcopy
-     !endif
 
 #ifdef WITH_OPENMP_TRADITIONAL
      call obj%timer%start("OpenMP parallel")
@@ -721,7 +804,10 @@ subroutine tridiag_&
 !$omp shared(useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, a_offset, &
 !$omp&       max_local_cols, max_local_rows, obj, wantDebug, l_rows_per_tile, l_cols_per_tile, &
-!$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat, useIntelGPU, &
+!$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat, &
+#ifdef WITH_INTEL_GPU_VERSION
+!$omp&       useIntelGPU, &
+#endif
 !$omp&       matrixCols)
      my_thread = omp_get_thread_num()
           
@@ -806,6 +892,7 @@ subroutine tridiag_&
 
           if (useGPU) then
             if (mat_vec_as_one_block) then
+#ifdef WITH_INTEL_GPU_VERSION
               if (useIntelGPU) then
                  if (wantDebug) call obj%timer%start("mkl_offload")
 #if 0
@@ -824,6 +911,7 @@ subroutine tridiag_&
                 if (wantDebug) call obj%timer%stop("mkl_offload")
 
               else ! useIntelGPU
+#endif /* WITH_INTEL_GPU_VERSION */
                 ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
                 ! this requires altering of the algorithm when later explicitly updating the matrix
                 ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
@@ -843,7 +931,9 @@ subroutine tridiag_&
 !                                             size_of_datatype, 1)
 !                 endif
                 if (wantDebug) call obj%timer%stop("gpublas")
+#ifdef WITH_INTEL_GPU_VERSION
               endif ! useIntelGPU
+#endif
             else  ! mat_vec_as_one_block
               !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
               !larger matrices. In general, however, this algorithm is very simmilar to the one with CPU
@@ -855,6 +945,7 @@ subroutine tridiag_&
                 l_row_beg = 1
                 l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
                   
+#ifdef WITH_INTEL_GPU_VERSION
                 if (useIntelGPU) then
                   if (wantDebug) call obj%timer%start("mkl_offload")
 #if 0
@@ -874,6 +965,7 @@ subroutine tridiag_&
                   if (wantDebug) call obj%timer%stop("mkl_offload")
 
                 else ! useIntelGPU
+#endif /* WITH_INTEL_GPU_VERSION */
                   a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                             size_of_datatype
 
@@ -882,8 +974,10 @@ subroutine tridiag_&
                                 ONE, a_dev + a_offset, matrixRows,  &
                                 v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
                                 ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
+#ifdef WITH_INTEL_GPU_VERSION
                 endif ! useIntelGPU
-              enddo
+#endif
+              enddo !i=0,(istep-2)/tile_size
 
               do i=0,(istep-2)/tile_size
                   l_col_beg = i*l_cols_per_tile+1
@@ -893,6 +987,7 @@ subroutine tridiag_&
                   l_row_beg = 1
                   l_row_end = min(l_rows,i*l_rows_per_tile)
                   
+#ifdef WITH_INTEL_GPU_VERSION
                   if (useIntelGPU) then
                     if (wantDebug) call obj%timer%start("mkl_offload")
 #if 0
@@ -931,6 +1026,7 @@ subroutine tridiag_&
 
 
                   else ! useIntelGPU
+#endif /* WITH_INTEL_GPU_VERSION */
                     a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                             size_of_datatype
                     if (isSkewsymmetric) then
@@ -943,12 +1039,16 @@ subroutine tridiag_&
                                    ONE, a_dev + a_offset, matrixRows, &
                                    v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                                    ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
-                   endif
-                endif ! useIntelGPU
-              enddo
+                    endif
+#ifdef WITH_INTEL_GPU_VERSION
+                  endif ! useIntelGPU
+#endif
+              enddo ! i=0,(istep-2)/tile_size
             end if !multiplication as one block / per stripes
 
+#ifdef WITH_INTEL_GPU_VERSION
             if (.not.(useIntelGPU)) then
+#endif
               successGPU = gpu_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
                           u_col_dev, l_cols * size_of_datatype, gpuMemcpyDeviceToHost)
               check_memcpy_gpu("tridiag: u_col_dev 1", successGPU)
@@ -956,11 +1056,9 @@ subroutine tridiag_&
               successGPU = gpu_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
                           u_row_dev, l_rows * size_of_datatype, gpuMemcpyDeviceToHost)
               check_memcpy_gpu("tridiag: u_row_dev 1", successGPU)
+#ifdef WITH_INTEL_GPU_VERSION
             endif
-            !if (useIntelGPU) then
-            !  
-            !endif
-
+#endif
           endif ! useGPU
 
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -1038,14 +1136,22 @@ subroutine tridiag_&
           &_&
           &PRECISION &
           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false.)
+           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
+         if (.not.(success)) then
+           write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting!"
+           return
+         endif
        else
           call elpa_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
           &PRECISION &
           (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false.)
+           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
+          if (.not.(success)) then
+            write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
+            return
+          endif
        endif
 
        ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
@@ -1102,7 +1208,11 @@ subroutine tridiag_&
        ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
        if (n_stored_vecs == max_stored_uv .or. istep == 3) then
 
+#ifdef WITH_INTEL_GPU_VERSION
          if (useGPU .and. .not.(useIntelGPU)) then
+#else
+         if (useGPU) then
+#endif
            successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
                                      max_local_rows * 2 * max_stored_uv *          &
                                      size_of_datatype, gpuMemcpyHostToDevice)
@@ -1113,9 +1223,6 @@ subroutine tridiag_&
                                      size_of_datatype, gpuMemcpyHostToDevice)
            check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
          endif
-          !if (useIntelGPU) then
-          !  ! needed later when we can do explicit offloads
-          !endif
 
          do i = 0, (istep-2)/tile_size
            ! go over tiles above (or on) the diagonal
@@ -1129,6 +1236,7 @@ subroutine tridiag_&
 
            if (useGPU) then
              if (.not. mat_vec_as_one_block) then
+#ifdef WITH_INTEL_GPU_VERSION
                if (useIntelGPU) then
                   if (wantDebug) call obj%timer%start("mkl_offload")
 
@@ -1155,7 +1263,8 @@ subroutine tridiag_&
 #endif
                   if (wantDebug) call obj%timer%stop("mkl_offload")
 
-               else
+               else ! useIntelGPU
+#endif /* WITH_INTEL_GPU_VERSION */
                  ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                  ! we than use the same calls as for CPU version
                  if (wantDebug) call obj%timer%start("gpublas")
@@ -1168,8 +1277,10 @@ subroutine tridiag_&
                                          max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
                                          size_of_datatype , matrixRows)
                  if (wantDebug) call obj%timer%stop("gpublas")
-               endif
-             endif
+#ifdef WITH_INTEL_GPU_VERSION
+               endif ! useIntelGPU
+#endif
+             endif ! matBlockasOne
            else !useGPU
              if (wantDebug) call obj%timer%start("blas")
              call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
@@ -1186,6 +1297,7 @@ subroutine tridiag_&
 
          if (useGPU) then
            if (mat_vec_as_one_block) then
+#ifdef WITH_INTEL_GPU_VERSION
              if (useIntelGPU) then
                 if (wantDebug) call obj%timer%start("mkl_offload")
                 call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
@@ -1207,7 +1319,8 @@ subroutine tridiag_&
 #endif
 #endif
                 if (wantDebug) call obj%timer%stop("mkl_offload")
-             else
+             else ! useIntelGPU
+#endif /* WITH_INTEL_GPU_VERISON */
                !update whole (remaining) part of matrix, including tiles below diagonal
                !we can do that in one large cublas call
                if (wantDebug) call obj%timer%start("gpublas")
@@ -1216,8 +1329,10 @@ subroutine tridiag_&
                                          uv_stored_cols_dev, max_local_cols,  &
                                          ONE, a_dev, matrixRows)
                if (wantDebug) call obj%timer%stop("gpublas")
-             endif
-           endif
+#ifdef WITH_INTEL_GPU_VERSION
+             endif ! useIntelGPU
+#endif
+           endif ! mat_vec_as
          endif
 
          n_stored_vecs = 0
@@ -1225,20 +1340,25 @@ subroutine tridiag_&
 
        if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
          if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
            if (useIntelGPU) then
                        ! if (useIntelGPU) then
           ! needed at a later time when we can do explcit mem copys
           ! endif
 
            else
+#endif
              !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
               a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 
               successGPU = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
                                       1 *  size_of_datatype, gpuMemcpyDeviceToHost)
               check_memcpy_gpu("tridiag: a_dev 3", successGPU)
+#ifdef WITH_INTEL_GPU_VERSION
            endif
-         endif
+#endif
+         endif ! useGPU
+
          if (n_stored_vecs > 0) then
            a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
                        + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
@@ -1255,11 +1375,13 @@ subroutine tridiag_&
 #endif
 
          if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
            if (useIntelGPU) then
           ! if (useIntelGPU) then
           ! needed at a later time when we can expicit mem copy
           ! endif
            else
+#endif
              !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
              !successGPU = gpu_threadsynchronize()
              !check_memcpy_gpu("tridiag: a_dev 4a5a", successGPU)
@@ -1267,8 +1389,10 @@ subroutine tridiag_&
              successGPU = gpu_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
                                      int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice)
              check_memcpy_gpu("tridiag: a_dev 4", successGPU)
+#ifdef WITH_INTEL_GPU_VERSION
            endif
-         endif
+#endif
+         endif ! useGPU
        endif
 
      enddo ! main cycle over istep=na,3,-1
@@ -1280,14 +1404,18 @@ subroutine tridiag_&
       if (my_prow==prow(1, nblk, np_rows)) then
        ! We use last l_cols value of loop above
        if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
          if (useIntelGPU) then
             vrl = a_mat(1,l_cols)
          else
+#endif
            successGPU = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                    1 * size_of_datatype, gpuMemcpyDeviceToHost)
            check_memcpy_gpu("tridiag: a_dev 5", successGPU)
            vrl = aux3(1)
+#ifdef WITH_INTEL_GPU_VERSION
          endif
+#endif
        else !useGPU
          vrl = a_mat(1,l_cols)
        endif !useGPU
@@ -1336,14 +1464,18 @@ subroutine tridiag_&
 #endif /* WITH_MPI */
   if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
     if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
       if (useIntelGPU) then
         d_vec(1) = PRECISION_REAL(a_mat(1,1))
       else
+#endif
         successGPU = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
                                1 * size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("tridiag: a_dev 6", successGPU)
         d_vec(1) = PRECISION_REAL(aux3(1))
+#ifdef WITH_INTEL_GPU_VERSION
       endif
+#endif
     else !useGPU
       d_vec(1) = PRECISION_REAL(a_mat(1,1))
     endif !useGPU
@@ -1356,13 +1488,17 @@ subroutine tridiag_&
 
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
     if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
       if (useIntelGPU) then
         e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
       else
+#endif
         successGPU = gpu_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                 1 * size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("tridiag: a_dev 7", successGPU)
+#ifdef WITH_INTEL_GPU_VERSION
       endif
+#endif
     else !useGPU
       e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
     endif !useGPU
@@ -1371,6 +1507,7 @@ subroutine tridiag_&
   ! Store d_vec(1)
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
     if(useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
       if (useIntelGPU) then
         if (isSkewsymmetric) then
           d_vec(1) = 0.0_rk
@@ -1378,9 +1515,12 @@ subroutine tridiag_&
           d_vec(1) = a_mat(1,1)
         endif
       else
+#endif
         successGPU = gpu_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("tridiag: a_dev 8", successGPU)
+#ifdef WITH_INTEL_GPU_VERSION
       endif
+#endif
     else !useGPU
       if (isSkewsymmetric) then
         d_vec(1) = 0.0_rk
@@ -1394,7 +1534,11 @@ subroutine tridiag_&
   deallocate(tmp, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: tmp", istat, errorMessage)
 
+#ifdef WITH_INTEL_GPU_VERSION
   if (useGPU .and. .not.(useIntelGPU)) then
+#else
+  if (useGPU) then
+#endif
     ! todo: should we leave a_mat on the device for further use?
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("tridiag: a_dev 9", successGPU)
@@ -1416,11 +1560,7 @@ subroutine tridiag_&
 
     successGPU = gpu_free(uv_stored_cols_dev)
     check_dealloc_gpu("tridiag:uv_stored_cols_dev ", successGPU)
-  endif
-  ! if (useIntelGPU) then
-  ! needed at a later time when we can do explicit frees
-  ! endif
-
+  endif ! useGPU
 
   ! distribute the arrays d_vec and e_vec to all processors
 
@@ -1477,45 +1617,63 @@ subroutine tridiag_&
   check_deallocate("tridiag: tmp_real", istat, errorMessage)
 
   if (useGPU) then
+#ifdef WITH_INTEL_GPU_VERSION
     if (useIntelGPU) then
            deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)
      check_deallocate("tridiag: v_row, v_col, u_row, u_col", istat, errorMessage)
-    else
-      successGPU = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
-      check_host_unregister_gpu("tridiag: a_mat", successGPU)
+    else ! useIntelGPU
+#endif
 
-      successGPU = gpu_free_host(v_row_host)
-      check_host_dealloc_gpu("tridiag: v_row_host", successGPU)
-      nullify(v_row)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        successGPU = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
+        check_host_unregister_gpu("tridiag: a_mat", successGPU)
+      endif
 
-      successGPU = gpu_free_host(v_col_host)
-      check_host_dealloc_gpu("tridiag: v_col_host", successGPU)
-      nullify(v_col)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        successGPU = gpu_free_host(v_row_host)
+        check_host_dealloc_gpu("tridiag: v_row_host", successGPU)
+        nullify(v_row)
 
-      successGPU = gpu_free_host(u_col_host)
-      check_host_dealloc_gpu("tridiag: u_col_host", successGPU)
-      nullify(u_col)
+        successGPU = gpu_free_host(v_col_host)
+        check_host_dealloc_gpu("tridiag: v_col_host", successGPU)
+        nullify(v_col)
 
-      successGPU = gpu_free_host(u_row_host)
-      check_host_dealloc_gpu("tridiag: u_row_host", successGPU)
-      nullify(u_row)
+        successGPU = gpu_free_host(u_col_host)
+        check_host_dealloc_gpu("tridiag: u_col_host", successGPU)
+        nullify(u_col)
 
-      successGPU = gpu_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
-      check_host_unregister_gpu("tridiag: uv_stored_cols", successGPU)
+        successGPU = gpu_free_host(u_row_host)
+        check_host_dealloc_gpu("tridiag: u_row_host", successGPU)
+        nullify(u_row)
+      else
+        deallocate(v_row)
+        deallocate(v_col)
+        deallocate(u_row)
+        deallocate(u_col)
+      endif
 
-      successGPU = gpu_host_unregister(int(loc(vu_stored_rows),kind=c_intptr_t))
-      check_host_unregister_gpu("tridiag: vu_stored_rows", successGPU)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        successGPU = gpu_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
+        check_host_unregister_gpu("tridiag: uv_stored_cols", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(e_vec),kind=c_intptr_t))
-      check_host_unregister_gpu("tridiag: e_vec", successGPU)
+        successGPU = gpu_host_unregister(int(loc(vu_stored_rows),kind=c_intptr_t))
+        check_host_unregister_gpu("tridiag: vu_stored_rows", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
-      check_host_unregister_gpu("tridiag: d_vec", successGPU)
-    endif
-  else
+        successGPU = gpu_host_unregister(int(loc(e_vec),kind=c_intptr_t))
+        check_host_unregister_gpu("tridiag: e_vec", successGPU)
+
+        successGPU = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
+        check_host_unregister_gpu("tridiag: d_vec", successGPU)
+      endif
+#endif
+#ifdef WITH_INTEL_GPU_VERSION
+    endif ! useIntelGPU
+#endif
+  else ! useGPU
     deallocate(v_row, v_col, u_row, u_col, stat=istat, errmsg=errorMessage)
     check_deallocate("tridiag: v_row, v_col, u_row, u_col", istat, errorMessage)
-  endif
+  endif ! useGPU
 
   deallocate(vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: vu_stored_rows, uv_stored_cols", istat, errorMessage)

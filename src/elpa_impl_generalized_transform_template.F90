@@ -116,12 +116,12 @@
 
      if (.not. is_already_decomposed) then
        ! B = U^T*U, B<-U
-       call self%elpa_cholesky_&
+       call self%elpa_cholesky_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &(b, error)
        if(error .NE. ELPA_OK) return
        ! B <- inv(U)
-       call self%elpa_invert_trm_&
+       call self%elpa_invert_trm_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &(b, error)
        if(error .NE. ELPA_OK) return
@@ -145,7 +145,7 @@
 
      else  ! do not use cannon algorithm, use elpa hermitian multiply and scalapack instead
        ! tmp <- inv(U^T) * A (we have to use temporary variable)
-       call self%elpa_hermitian_multiply_&
+       call self%elpa_hermitian_multiply_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
                                  self%local_nrows, self%local_ncols, error)

@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
    C_INT_MPI_TYPE provided_mpi_thread_level;
 
    /* blacs */
-   C_INT_TYPE my_blacs_ctxt, sc_desc[9], info;
+   C_INT_TYPE my_blacs_ctxt, sc_desc[9], info, blacs_ok;
 
    /* The Matrix */
    MATRIX_TYPE *a, *as, *z, *b, *bs;
@@ -163,6 +163,7 @@ int main(int argc, char** argv) {
    elpa_t handle;
 
    int  value;
+
 #ifdef WITH_MPI
 #ifndef WITH_OPENMP_TRADITIONAL
    MPI_Init(&argc, &argv);
@@ -185,6 +186,30 @@ int main(int argc, char** argv) {
    nprocs = 1;
    myid = 0;
 #endif
+
+#if defined(HAVE_64BIT_INTEGER_MPI_SUPPORT) || defined(HAVE_64BIT_INTEGER_MATH_SUPPORT) || defined(HAVE_64BIT_INTEGER_SUPPORT)
+#ifdef WITH_MPI
+   MPI_Finalize();
+#endif
+   return 77;
+#endif
+
+#ifdef WITH_CUDA_AWARE_MPI
+#if TEST_NVIDIA_GPU != 1
+#ifdef WITH_MPI
+   MPI_Finalize();
+#endif
+   return 77;
+#endif
+#ifdef TEST_COMPLEX
+#ifdef WITH_MPI
+   MPI_Finalize();
+#endif
+   return 77;
+#endif
+#endif
+
+
 
    if (argc == 4) {
      na = atoi(argv[1]);
@@ -212,7 +237,18 @@ int main(int argc, char** argv) {
    mpi_comm = 0;
 #endif
    set_up_blacsgrid_f(mpi_comm, np_rows, np_cols, 'C', &my_blacs_ctxt, &my_prow, &my_pcol);
-   set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info);
+   set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info, &blacs_ok);
+
+   if (blacs_ok == 0) {
+     if (myid == 0) {
+       printf("Setting up the blacsgrid failed. Aborting...");
+     }
+#ifdef WITH_MPI
+     MPI_Finalize();
+#endif
+     abort();
+   }
+
 
    /* allocate the matrices needed for elpa */
    a  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
@@ -355,5 +391,5 @@ int main(int argc, char** argv) {
    MPI_Finalize();
 #endif
 
-   return !!status;
+   return status;
 }

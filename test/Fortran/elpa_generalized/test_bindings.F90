@@ -31,7 +31,7 @@ program test_bindings
    type(output_t)              :: write_to_file
 
    ! blacs
-   integer                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, i, j
+   integer                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, i, j, blacs_ok
    character(len=1)            :: layout
 
 
@@ -81,7 +81,14 @@ program test_bindings
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
-                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
+   if (blacs_ok .eq. 0) then
+     if (myid .eq. 0) then
+       print *," Ecountered critical error when setting up blacs. Aborting..."
+     endif
+     call mpi_finalize(mpierr)
+     stop
+   endif
 
    allocate(a (na_rows,na_cols))
    allocate(res(na_rows,na_cols))   

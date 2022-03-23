@@ -64,37 +64,37 @@ module elpa2_impl
 
   private
 
-  public :: elpa_solve_evp_real_2stage_all_host_arrays_double_impl          !< Driver routine for real double-precision 2-stage eigenvalue problem
-  public :: elpa_solve_evp_complex_2stage_all_host_arrays_double_impl       !< Driver routine for complex double-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_real_2stage_a_h_a_double_impl          !< Driver routine for real double-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_2stage_a_h_a_double_impl       !< Driver routine for complex double-precision 2-stage eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_evp_real_2stage_all_host_arrays_single_impl          !< Driver routine for real single-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_real_2stage_a_h_a_single_impl          !< Driver routine for real single-precision 2-stage eigenvalue problem
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_solve_evp_complex_2stage_all_host_arrays_single_impl       !< Driver routine for complex single-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_2stage_a_h_a_single_impl       !< Driver routine for complex single-precision 2-stage eigenvalue problem
 #endif
 
 #ifdef HAVE_SKEWSYMMETRIC
-  public :: elpa_solve_skew_evp_real_2stage_all_host_arrays_double_impl          !< Driver routine for real double-precision 2-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_2stage_a_h_a_double_impl          !< Driver routine for real double-precision 2-stage skew-symmetric eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_skew_evp_real_2stage_all_host_arrays_single_impl          !< Driver routine for real single-precision 2-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_2stage_a_h_a_single_impl          !< Driver routine for real single-precision 2-stage skew-symmetric eigenvalue problem
 #endif
 #endif /* HAVE_SKEWSYMMETRIC */
 
-  public :: elpa_solve_evp_real_2stage_device_pointer_double_impl          !< Driver routine for real double-precision 2-stage eigenvalue problem
-  public :: elpa_solve_evp_complex_2stage_device_pointer_double_impl       !< Driver routine for complex double-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_real_2stage_d_ptr_double_impl          !< Driver routine for real double-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_2stage_d_ptr_double_impl       !< Driver routine for complex double-precision 2-stage eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_evp_real_2stage_device_pointer_single_impl          !< Driver routine for real single-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_real_2stage_d_ptr_single_impl          !< Driver routine for real single-precision 2-stage eigenvalue problem
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_solve_evp_complex_2stage_device_pointer_single_impl       !< Driver routine for complex single-precision 2-stage eigenvalue problem
+  public :: elpa_solve_evp_complex_2stage_d_ptr_single_impl       !< Driver routine for complex single-precision 2-stage eigenvalue problem
 #endif
 
 #ifdef HAVE_SKEWSYMMETRIC
-  public :: elpa_solve_skew_evp_real_2stage_device_pointer_double_impl          !< Driver routine for real double-precision 2-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_2stage_d_ptr_double_impl          !< Driver routine for real double-precision 2-stage skew-symmetric eigenvalue problem
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_solve_skew_evp_real_2stage_device_pointer_single_impl          !< Driver routine for real single-precision 2-stage skew-symmetric eigenvalue problem
+  public :: elpa_solve_skew_evp_real_2stage_d_ptr_single_impl          !< Driver routine for real single-precision 2-stage skew-symmetric eigenvalue problem
 #endif
 #endif /* HAVE_SKEWSYMMETRIC */
 
@@ -157,7 +157,7 @@ module elpa2_impl
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
 !-------------------------------------------------------------------------------
-!>  \brief elpa_solve_evp_real_2stage_device_pointer_double_impl: Fortran function to solve the double-precision real eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_evp_real_2stage_d_ptr_double_impl: Fortran function to solve the double-precision real eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
@@ -257,7 +257,7 @@ module elpa2_impl
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
 !-------------------------------------------------------------------------------
-!>  \brief elpa_solve_evp_real_2stage_device_pointer_single_impl: Fortran function to solve the single-precision real eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_evp_real_2stage_d_ptr_single_impl: Fortran function to solve the single-precision real eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
@@ -354,7 +354,7 @@ module elpa2_impl
 #undef ACTIVATE_SKEW
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
-!>  \brief elpa_solve_evp_complex_2stage_device_pointer_double_impl: Fortran function to solve the double-precision complex eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_evp_complex_2stage_d_ptr_double_impl: Fortran function to solve the double-precision complex eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
@@ -451,7 +451,7 @@ module elpa2_impl
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
 
-!>  \brief elpa_solve_evp_complex_2stage_device_pointer_single_impl: Fortran function to solve the single-precision complex eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_evp_complex_2stage_d_ptr_single_impl: Fortran function to solve the single-precision complex eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
@@ -552,7 +552,7 @@ module elpa2_impl
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
 !-------------------------------------------------------------------------------
-!>  \brief elpa_solve_skew_evp_real_2stage_device_pointer_double_impl: Fortran function to solve the double-precision real skew-symmetric eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_skew_evp_real_2stage_d_ptr_double_impl: Fortran function to solve the double-precision real skew-symmetric eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>
@@ -654,7 +654,7 @@ module elpa2_impl
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
 !-------------------------------------------------------------------------------
-!>  \brief elpa_solve_skew_evp_real_2stage_device_pointer_single_impl: Fortran function to solve the single-precision real skew-symmetric eigenvalue problem with a 2 stage approach
+!>  \brief elpa_solve_skew_evp_real_2stage_d_ptr_single_impl: Fortran function to solve the single-precision real skew-symmetric eigenvalue problem with a 2 stage approach
 !>
 !>  Parameters
 !>

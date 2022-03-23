@@ -131,28 +131,28 @@ program test
    TEST_INT_TYPE                     :: np_cols, np_rows  ! number of MPI processes per column/row
    TEST_INT_TYPE                     :: my_prow, my_pcol  ! local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
    TEST_INT_TYPE                     :: ierr
-   TEST_INT_MPI_TYPE                 :: mpierr
+   TEST_INT_MPI_TYPE                 :: mpierr, blacs_ok_mpi
    ! blacs
    character(len=1)                  :: layout
-   TEST_INT_TYPE                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol
+   TEST_INT_TYPE                     :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
 
    ! The Matrix
-   MATRIX_TYPE, allocatable    :: a(:,:), as(:,:)
+   MATRIX_TYPE, allocatable          :: a(:,:), as(:,:)
    ! eigenvectors
-   MATRIX_TYPE, allocatable    :: z(:,:)
+   MATRIX_TYPE, allocatable          :: z(:,:)
    ! eigenvalues
-   EV_TYPE, allocatable        :: ev(:)
+   EV_TYPE, allocatable              :: ev(:)
 
-   TEST_INT_TYPE               :: status
-   integer(kind=c_int)         :: error_elpa
+   TEST_INT_TYPE                     :: status
+   integer(kind=c_int)               :: error_elpa
 
-   type(output_t)              :: write_to_file
-   class(elpa_t), pointer      :: e1, e2, e_ptr
-   class(elpa_autotune_t), pointer :: tune_state
+   type(output_t)                    :: write_to_file
+   class(elpa_t), pointer            :: e1, e2, e_ptr
+   class(elpa_autotune_t), pointer   :: tune_state
 
    TEST_INT_TYPE                     :: iter
-   character(len=5)            :: iter_string
-   integer(kind=c_int)         :: timings, debug, gpu
+   character(len=5)                  :: iter_string
+   integer(kind=c_int)               :: timings, debug, gpu
 
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -162,6 +162,22 @@ program test
    call redirect_stdout(myid)
 #endif
 #endif
+
+#ifdef WITH_CUDA_AWARE_MPI
+#if TEST_NVIDIA_GPU != 1
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+#ifdef TEST_COMPLEX
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+#endif
+
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
@@ -191,7 +207,22 @@ program test
                          my_blacs_ctxt, my_prow, my_pcol)
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
-                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info)
+                                na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
+#ifdef WITH_MPI
+   blacs_ok_mpi = int(blacs_ok, kind=INT_MPI_TYPE)
+   call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
+   blacs_ok = int(blacs_ok_mpi, kind=INT_TYPE)
+#endif
+
+   if (blacs_ok .eq. 0) then
+     if (myid .eq. 0) then
+       print *," Ecountered critical error when setting up blacs. Aborting..."
+     endif
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop
+   endif
 
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -206,7 +237,7 @@ program test
    as(:,:) = a(:,:)
 
    e1 => elpa_allocate(error_elpa)
-   !assert_elpa_ok(error_elpa)
+   assert_elpa_ok(error_elpa)
 
    call set_basic_params(e1, na, nev, na_rows, na_cols, my_prow, my_pcol)
 

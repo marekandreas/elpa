@@ -58,7 +58,9 @@
 #endif
 
 int max_threads_glob;
+int max_threads_glob_1;
 int set_max_threads_glob=0;
+int set_max_threads_glob_1=0;
 int const default_max_stored_rows = 256;   
 
 static int enumerate_identity(elpa_index_t index, int i);
@@ -120,6 +122,9 @@ int nvidia_gpu_count();
 int amd_gpu_count();
 #endif
 #ifdef WITH_INTEL_GPU_VERSION
+//missing function for GPU count
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 //missing function for GPU count
 #endif
 
@@ -315,6 +320,8 @@ static const elpa_index_int_entry_t int_entries[] = {
                         cardinality_bool, enumerate_identity, amd_gpu_is_valid, NULL, PRINT_YES),
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
+        INT_ENTRY("gpu_hermitian_multiply", "Use GPU acceleration for elpa_hermitian_multiply", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_invert_trm", "Use GPU acceleration for elpa_triangular", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_cholesky", "Use GPU acceleration for elpa_cholesky", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
@@ -875,7 +882,10 @@ static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
 #ifdef WITH_INTEL_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
-#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION)
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION) && !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
 		// intel missing
@@ -932,7 +942,10 @@ static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
 #ifdef WITH_INTEL_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
-#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION)
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+#endif
+#if !defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_AMD_GPU_VERSION) && !defined(WITH_INTEL_GPU_VERSION) && !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_NVIDIA_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
 		// intel missing
@@ -1012,7 +1025,7 @@ static int amd_gpu_is_valid(elpa_index_t index, int n, int new_value) {
 }
 
 static int intel_gpu_is_valid(elpa_index_t index, int n, int new_value) {
-#ifdef WITH_INTEL_GPU_VERSION
+#if defined(WITH_INTEL_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
         return new_value == 0 || new_value == 1;
 #else
         return new_value == 0;
@@ -1206,15 +1219,15 @@ static int omp_threads_enumerate(elpa_index_t index, int i) {
 static int omp_threads_is_valid(elpa_index_t index, int n, int new_value) {
         int max_threads;
 #ifdef WITH_OPENMP_TRADITIONAL
-	if (set_max_threads_glob == 0) {
-		max_threads_glob = omp_get_max_threads();
-		set_max_threads_glob = 1;
+	if (set_max_threads_glob_1 == 0) {
+		max_threads_glob_1 = omp_get_max_threads();
+		set_max_threads_glob_1 = 1;
 	}
 #else
-	max_threads_glob = 1;
-	set_max_threads_glob = 1;
+	max_threads_glob_1 = 1;
+	set_max_threads_glob_1 = 1;
 #endif
-	max_threads = max_threads_glob;
+	max_threads = max_threads_glob_1;
         return (1 <= new_value) && (new_value <= max_threads);
 }
 
@@ -1296,6 +1309,8 @@ static int use_gpu_id_cardinality(elpa_index_t index) {
 	return count;
 #elif WITH_INTEL_GPU_VERSION
 	return 0;
+#elif WITH_OPENMP_OFFLOAD_GPU_VERSION
+	return 0;
 #else
 	return 0;
 #endif
@@ -1327,7 +1342,9 @@ static int use_gpu_id_is_valid(elpa_index_t index, int n, int new_value) {
 	}
 
 #elif WITH_INTEL_GPU_VERSION
-	return 0 == 1;
+	return 0 == 0;
+#elif WITH_OPENMP_OFFLOAD_GPU_VERSION
+	return 0 == 0;
 #else
 	return 0 == 0;
 #endif
