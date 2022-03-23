@@ -59,6 +59,7 @@ module mod_check_for_gpu
       use cuda_functions
       use hip_functions
       use openmp_offload_functions
+      use sycl_functions
       use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray
       use precision
       use elpa_mpi

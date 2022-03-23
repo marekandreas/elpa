@@ -58,6 +58,7 @@ module elpa_gpu
   integer(kind=c_int), parameter :: amd_gpu = 2
   integer(kind=c_int), parameter :: intel_gpu = 3
   integer(kind=c_int), parameter :: openmp_offload_gpu = 4
+  integer(kind=c_int), parameter :: sycl_gpu = 5
   integer(kind=c_int), parameter :: no_gpu = -1
   integer(kind=c_int)            :: use_gpu_vendor
   integer(kind=c_int)            :: gpuHostRegisterDefault    
@@ -267,11 +268,11 @@ module elpa_gpu
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        syclMemcpyHostToDevice   = sycl_memcpyHostToDevice()
+        syclMemcpyHostToDevice   = sycl_MemcpyHostToDevice()
         gpuMemcpyHostToDevice    = syclMemcpyHostToDevice
-        syclMemcpyDeviceToHost   = syclmemcpyDeviceToHost()
+        syclMemcpyDeviceToHost   = sycl_MemcpyDeviceToHost()
         gpuMemcpyDeviceToHost    = syclMemcpyDeviceToHost
-        syclMemcpyDeviceToDevice = sycl_memcpyDeviceToDevice()
+        syclMemcpyDeviceToDevice = sycl_MemcpyDeviceToDevice()
         gpuMemcpyDeviceToDevice  = syclMemcpyDeviceToDevice
         !openmpOffloadHostRegisterPortable = openmp_offload_hostRegisterPortable()
         !gpuHostRegisterPortable           = openmpOffloadHostRegisterPortable

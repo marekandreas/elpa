@@ -112,10 +112,10 @@ static oneapi::mkl::uplo uploFromChar(char c) {
 static oneapi::mkl::diag diagFromChar(char c) {
   switch (c) {
     case 'n': [[fallthrough]];
-    case 'N': return oneapi::mkl::diag::nounit;
+    case 'N': return oneapi::mkl::diag::nonunit;
     case 'U': [[fallthrough]];
     case 'u': [[fallthrough]];
-    default: oneapi::mkl::uplo::unit;
+    default: oneapi::mkl::diag::unit;
 
   }
 }
@@ -246,7 +246,7 @@ extern "C" {
       abort();
     }
     syclChosenGpu = targetGpuDeviceId;
-    chosenDeviceQueue = std::make_optional<sycl::queue>(devices[oneapiOmpChosenGpu]);
+    chosenDeviceQueue = std::make_optional<sycl::queue>(devices[syclChosenGpu]);
   }
 
   void syclSetGpuParamsFromC() {
@@ -350,13 +350,20 @@ extern "C" {
     }
   }
 
-  void mklSyclDgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, double alpha, void *a, int lda, void *b, int ldb, double beta, void *c, int *ldc) {
+  void mklSyclDgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, double alpha, void *a, int lda, void *b, int ldb, double beta, void *c, int ldc) {
     //handle not needed
     if (chosenDeviceQueue) {
+      std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
+      m_ = (std::int64_t) m;
+      n_ = (std::int64_t) n;
+      k_ = (std::int64_t) k;
+      lda_ = (std::int64_t) lda;
+      ldb_ = (std::int64_t) ldb;
+      ldc_ = (std::int64_t) ldc;
       using oneapi::mkl::blas::column_major::gemm;
       auto ta = transposeFromChar(cta);
       auto tb = transposeFromChar(ctb);
-      gemm(*chosenDeviceQueue, ta, tb, &m, &n, &k, &alpha, reinterpret_cast<double *>(a), &lda, reinterpret_cast<double *>(b), &ldb, &beta, reinterpret_cast<double *>(c), &ldc);
+      gemm(*chosenDeviceQueue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(b), ldb_, beta, reinterpret_cast<double *>(c), ldc_);
     } else {
       std::cerr << "No device selected for DGEMM operation." << std::endl;
     }
@@ -365,10 +372,17 @@ extern "C" {
   void mklSyclSgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, float alpha, void *a, int lda, void *b, int ldb, float beta, void *c, int ldc) {
     // handle not needed
     if (chosenDeviceQueue) {
+      std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
+      m_ = (std::int64_t) m;
+      n_ = (std::int64_t) n;
+      k_ = (std::int64_t) k;
+      lda_ = (std::int64_t) lda;
+      ldb_ = (std::int64_t) ldb;
+      ldc_ = (std::int64_t) ldc;
       using oneapi::mkl::blas::column_major::gemm;
       auto ta = transposeFromChar(cta);
       auto tb = transposeFromChar(ctb);
-      gemm(*chosenDeviceQueue, ta, tb, &m, &n, &k, &alpha, reinterpret_cast<float *>(a), &lda, reinterpret_cast<float *>(b), &ldb, &beta, reinterpret_cast<float *>(c), &ldc);
+      gemm(*chosenDeviceQueue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(b), ldb_, beta, reinterpret_cast<float *>(c), ldc_);
     } else {
       std::cerr << "No device selected for SGEMM operation." << std::endl;
     }
@@ -377,22 +391,36 @@ extern "C" {
   void mklSyclZgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, std::complex<double> alpha, void *a, int lda, void *b, int ldb, std::complex<double> beta, void *c, int ldc) {
     // handle not needed
     if (chosenDeviceQueue) {
+      std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
+      m_ = (std::int64_t) m;
+      n_ = (std::int64_t) n;
+      k_ = (std::int64_t) k;
+      lda_ = (std::int64_t) lda;
+      ldb_ = (std::int64_t) ldb;
+      ldc_ = (std::int64_t) ldc;
       using oneapi::mkl::blas::column_major::gemm;
       auto ta = transposeFromChar(cta);
       auto tb = transposeFromChar(ctb);
-      gemm(*chosenDeviceQueue, ta, tb, &m, &n, &k, &alpha, reinterpret_cast<std::complex<double> *>(a), &lda, reinterpret_cast<std::complex<double> *>(b), &ldb, &beta, reinterpret_cast<std::complex<double> *>(c), &ldc);
+      gemm(*chosenDeviceQueue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_, beta, reinterpret_cast<std::complex<double> *>(c), ldc_);
     } else {
       std::cerr << "No device selected for ZGEMM operation." << std::endl;
     }
   }
 
-  void mklSyclCgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, std::complex<float> alpha, void *a, int lda, void *b, int ldb, std::complex<float> beta, void *c, int *ldc) {
+  void mklSyclCgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, std::complex<float> alpha, void *a, int lda, void *b, int ldb, std::complex<float> beta, void *c, int ldc) {
     // handle not needed
     if (chosenDeviceQueue) {
+      std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
+      m_ = (std::int64_t) m;
+      n_ = (std::int64_t) n;
+      k_ = (std::int64_t) k;
+      lda_ = (std::int64_t) lda;
+      ldb_ = (std::int64_t) ldb;
+      ldc_ = (std::int64_t) ldc;
       using oneapi::mkl::blas::column_major::gemm;
       auto ta = transposeFromChar(cta);
       auto tb = transposeFromChar(ctb);
-      gemm(*chosenDeviceQueue, ta, tb, &m, &n, &k, &alpha, reinterpret_cast<std::complex<float> *>(a), &lda, reinterpret_cast<std::complex<float> *>(b), &ldb, &beta, reinterpret_cast<std::complex<float> *>(c), &ldc);
+      gemm(*chosenDeviceQueue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_, beta, reinterpret_cast<std::complex<float> *>(c), ldc_);
     } else {
       std::cerr << "No device selected for CGEMM operation." << std::endl;
     }
@@ -496,8 +524,12 @@ extern "C" {
   void mklSyclDcopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
+	std::int64_t n_, incx_, incy_;
+        n_ = (std::int64_t) n;
+        incx_ = (std::int64_t) incx;
+        incy_ = (std::int64_t) incy;
         using oneapi::mkl::blas::column_major::copy;
-        copy(*chosenDeviceQueue, &n, reinterpret_cast<double *>(x), &incx, reinterpret_cast<double *>(y), &incy);
+        copy(*chosenDeviceQueue, n_, reinterpret_cast<double *>(x), incx_, reinterpret_cast<double *>(y), incy_);
       } else {
         std::cerr << "No device selected for DCOPY operation." << std::endl;
       }
@@ -506,8 +538,12 @@ extern "C" {
   void mklSyclScopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
+	std::int64_t n_, incx_, incy_;
+        n_ = (std::int64_t) n;
+        incx_ = (std::int64_t) incx;
+        incy_ = (std::int64_t) incy;
         using oneapi::mkl::blas::column_major::copy;
-        copy(*chosenDeviceQueue, &n, reinterpret_cast<float *>(x), &incx, reinterpret_cast<float *>(y), &incy);
+        copy(*chosenDeviceQueue, n_, reinterpret_cast<float *>(x), incx_, reinterpret_cast<float *>(y), incy_);
       } else {
         std::cerr << "No device selected for SCOPY operation." << std::endl;
       }
@@ -516,8 +552,12 @@ extern "C" {
   void mklSyclZcopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
+	std::int64_t n_, incx_, incy_;
+        n_ = (std::int64_t) n;
+        incx_ = (std::int64_t) incx;
+        incy_ = (std::int64_t) incy;
         using oneapi::mkl::blas::column_major::copy;
-        copy(*chosenDeviceQueue, &n, reinterpret_cast<std::complex<double> *>(x), &incx, reinterpret_cast<std::complex<double> *>(y), &incy);
+        copy(*chosenDeviceQueue, n_, reinterpret_cast<std::complex<double> *>(x), incx_, reinterpret_cast<std::complex<double> *>(y), incy_);
       } else {
         std::cerr << "No device selected for ZCOPY operation." << std::endl;
       }
@@ -526,8 +566,12 @@ extern "C" {
   void mklSyclCcopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
+	std::int64_t n_, incx_, incy_;
+        n_ = (std::int64_t) n;
+        incx_ = (std::int64_t) incx;
+        incy_ = (std::int64_t) incy;
         using oneapi::mkl::blas::column_major::copy;
-        copy(*chosenDeviceQueue, &n, reinterpret_cast<std::complex<float> *>(x), &incx, reinterpret_cast<std::complex<float> *>(y), &incy);
+        copy(*chosenDeviceQueue, n_, reinterpret_cast<std::complex<float> *>(x), incx_, reinterpret_cast<std::complex<float> *>(y), incy_);
       } else {
         std::cerr << "No device selected for CCOPY operation." << std::endl;
       }
@@ -536,12 +580,17 @@ extern "C" {
   void mklSyclDtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
-	using oneapi::mkl::blas::column_major::trmm
-	auto sd = sideFromChar(side)
+	std::int64_t m_, n_, lda_, ldb_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        ldb_ = (std::int64_t) ldb;
+	using oneapi::mkl::blas::column_major::trmm;
+	auto sd = sideFromChar(side);
         auto up = uploFromChar(uplo);
         auto ta = transposeFromChar(trans);
         auto di = diagFromChar(diag);
-        trmm(*chosenDeviceQueue, sd, up, ta, di, &m, &n, &alpha, reinterpret_cast<double *>(a), &lda, reinterpret_cast<double *>(b), &ldb);
+        trmm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(b), ldb_);
       } else {
         std::cerr << "No device selected for DTRMM operation." << std::endl;
       }
@@ -550,12 +599,17 @@ extern "C" {
   void mklSyclStrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
-	using oneapi::mkl::blas::column_major::trmm
-	auto sd = sideFromChar(side)
+	std::int64_t m_, n_, lda_, ldb_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        ldb_ = (std::int64_t) ldb;
+	using oneapi::mkl::blas::column_major::trmm;
+	auto sd = sideFromChar(side);
         auto up = uploFromChar(uplo);
         auto ta = transposeFromChar(trans);
         auto di = diagFromChar(diag);
-        trmm(*chosenDeviceQueue, sd, up, ta, di, &m, &n, &alpha, reinterpret_cast<float *>(a), &lda, reinterpret_cast<float *>(b), &ldb);
+        trmm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(b), ldb_);
       } else {
         std::cerr << "No device selected for STRMM operation." << std::endl;
       }
@@ -564,12 +618,17 @@ extern "C" {
   void mklSyclZtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
-	using oneapi::mkl::blas::column_major::trmm
-	auto sd = sideFromChar(side)
+	std::int64_t m_, n_, lda_, ldb_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        ldb_ = (std::int64_t) ldb;
+	using oneapi::mkl::blas::column_major::trmm;
+	auto sd = sideFromChar(side);
         auto up = uploFromChar(uplo);
         auto ta = transposeFromChar(trans);
         auto di = diagFromChar(diag);
-        trmm(*chosenDeviceQueue, sd, up, ta, di, &m, &n, &alpha, reinterpret_cast<std::complex<double> *>(a), &lda, reinterpret_cast<std::complex<double> *>(b), &ldb);
+        trmm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_);
       } else {
         std::cerr << "No device selected for ZTRMM operation." << std::endl;
       }
@@ -578,12 +637,17 @@ extern "C" {
   void mklSyclCtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
-	using oneapi::mkl::blas::column_major::trmm
-	auto sd = sideFromChar(side)
+	std::int64_t m_, n_, lda_, ldb_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        ldb_ = (std::int64_t) ldb;
+	using oneapi::mkl::blas::column_major::trmm;
+	auto sd = sideFromChar(side);
         auto up = uploFromChar(uplo);
         auto ta = transposeFromChar(trans);
         auto di = diagFromChar(diag);
-        trmm(*chosenDeviceQueue, sd, up, ta, di, &m, &n, &alpha, reinterpret_cast<std::complex<float> *>(a), &lda, reinterpret_cast<std::complex<float> *>(b), &ldb);
+        trmm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_);
       } else {
         std::cerr << "No device selected for CTRMM operation." << std::endl;
       }
@@ -592,14 +656,17 @@ extern "C" {
   void mklSyclDtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
+	std::int64_t m_, n_, lda_, ldb_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        ldb_ = (std::int64_t) ldb;
         using oneapi::mkl::blas::column_major::trsm;
-	auto sd = sideFromChar(side)
+	auto sd = sideFromChar(side);
         auto up = uploFromChar(uplo);
         auto ta = transposeFromChar(trans);
         auto di = diagFromChar(diag);
-
-      if (chosenDeviceQueue) {
-        trsm(*chosenDeviceQueue, sd, up, ta, di, &m, &n, &alpha, reinterpret_cast<double *>(a), &lda, reinterpret_cast<double *>(b), &ldb);
+        trsm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(b), ldb_);
       } else {
         std::cerr << "No device selected for DTRSM operation." << std::endl;
       }
@@ -608,14 +675,17 @@ extern "C" {
   void mklSyclStrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
+	std::int64_t m_, n_, lda_, ldb_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        ldb_ = (std::int64_t) ldb;
         using oneapi::mkl::blas::column_major::trsm;
-	auto sd = sideFromChar(side)
+	auto sd = sideFromChar(side);
         auto up = uploFromChar(uplo);
         auto ta = transposeFromChar(trans);
         auto di = diagFromChar(diag);
-
-      if (chosenDeviceQueue) {
-        trsm(*chosenDeviceQueue, sd, up, ta, di, &m, &n, &alpha, reinterpret_cast<float *>(a), &lda, reinterpret_cast<float *>(b), &ldb);
+        trsm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(b), ldb_);
       } else {
         std::cerr << "No device selected for STRSM operation." << std::endl;
       }
@@ -624,14 +694,17 @@ extern "C" {
   void mklSyclZtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
+	std::int64_t m_, n_, lda_, ldb_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        ldb_ = (std::int64_t) ldb;
         using oneapi::mkl::blas::column_major::trsm;
-	auto sd = sideFromChar(side)
+	auto sd = sideFromChar(side);
         auto up = uploFromChar(uplo);
         auto ta = transposeFromChar(trans);
         auto di = diagFromChar(diag);
-
-      if (chosenDeviceQueue) {
-        trsm(*chosenDeviceQueue, sd, up, ta, di, &m, &n, &alpha, reinterpret_cast<std::complex<double> *>(a), &lda, reinterpret_cast<std::complex<double> *>(b), &ldb);
+        trsm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_);
       } else {
         std::cerr << "No device selected for ZTRSM operation." << std::endl;
       }
@@ -640,37 +713,55 @@ extern "C" {
   void mklSyclCtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
+	std::int64_t m_, n_, lda_, ldb_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        ldb_ = (std::int64_t) ldb;
         using oneapi::mkl::blas::column_major::trsm;
-	auto sd = sideFromChar(side)
+	auto sd = sideFromChar(side);
         auto up = uploFromChar(uplo);
         auto ta = transposeFromChar(trans);
         auto di = diagFromChar(diag);
 
-      if (chosenDeviceQueue) {
-        trsm(*chosenDeviceQueue, sd, up, ta, di, &m, &n, &alpha, reinterpret_cast<std::complex<float> *>(a), &lda, reinterpret_cast<std::complex<float> *>(b), &ldb);
+        trsm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_);
       } else {
         std::cerr << "No device selected for CTRSM operation." << std::endl;
       }
   }  
 
-
+#if 0
+  // compile error here; fix this
+  //
   void mklSyclDgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
-	oneapi::mkl::blas::column_major::gemv
-        auto ta = transposeFromChar(trans);
-        gemv(*chosenDeviceQueue, ta, &m, &n, &alpha, reinterpret_cast<double *>(a), &lda, reinterpret_cast<double *>(x), &incx, &beta, reinterpret_cast<double *>(y), &incy);
+	std::int64_t m_, n_, lda_, incx_, incy_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        incx_ = (std::int64_t) incx;
+        incy_ = (std::int64_t) incy;
+	oneapi::mkl::blas::column_major::gemv;
+        auto ta = transposeFromChar(cta);
+        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(x), incx_, beta, reinterpret_cast<double *>(y), incy_);
       } else {
         std::cerr << "No device selected for DGEMV operation." << std::endl;
       }
   }  
 
-  void mklSyclCgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
+  void mklSyclSgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
-	oneapi::mkl::blas::column_major::gemv
-        auto ta = transposeFromChar(trans);
-        gemv(*chosenDeviceQueue, ta, &m, &n, &alpha, reinterpret_cast<float *>(a), &lda, reinterpret_cast<float *>(x), &incx, &beta, reinterpret_cast<float *>(y), &incy);
+	std::int64_t m_, n_, lda_, incx_, incy_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        incx_ = (std::int64_t) incx;
+        incy_ = (std::int64_t) incy;
+	oneapi::mkl::blas::column_major::gemv;
+        auto ta = transposeFromChar(cta);
+        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(x), incx_, beta, reinterpret_cast<float *>(y), incy_);
       } else {
         std::cerr << "No device selected for SGEMV operation." << std::endl;
       }
@@ -679,9 +770,15 @@ extern "C" {
   void mklSyclZgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
-	oneapi::mkl::blas::column_major::gemv
-        auto ta = transposeFromChar(trans);
-        gemv(*chosenDeviceQueue, ta, &m, &n, &alpha, reinterpret_cast<std::complex<double> *>(a), &lda, reinterpret_cast<std::complex<double> *>(x), &incx, &beta, reinterpret_cast<std::complex<double> *>(y), &incy);
+	std::int64_t m_, n_, lda_, incx_, incy_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        incx_ = (std::int64_t) incx;
+        incy_ = (std::int64_t) incy;
+	oneapi::mkl::blas::column_major::gemv;
+        auto ta = transposeFromChar(cta);
+        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(x), incx_, beta, reinterpret_cast<std::complex<double> *>(y), incy_);
       } else {
         std::cerr << "No device selected for ZGEMV operation." << std::endl;
       }
@@ -690,13 +787,19 @@ extern "C" {
   void mklSyclCgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
-	oneapi::mkl::blas::column_major::gemv
-        auto ta = transposeFromChar(trans);
-        gemv(*chosenDeviceQueue, ta, &m, &n, &alpha, reinterpret_cast<std::complex<float> *>(a), &lda, reinterpret_cast<std::complex<float> *>(x), &incx, &beta, reinterpret_cast<std::complex<float> *>(y), &incy);
+	std::int64_t m_, n_, lda_, incx_, incy_;
+        m_ = (std::int64_t) m;
+        n_ = (std::int64_t) n;
+        lda_ = (std::int64_t) lda;
+        incx_ = (std::int64_t) incx;
+        incy_ = (std::int64_t) incy;
+	oneapi::mkl::blas::column_major::gemv;
+        auto ta = transposeFromChar(cta);
+        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(x), incx_, beta, reinterpret_cast<std::complex<float> *>(y), incy_);
       } else {
         std::cerr << "No device selected for ZGEMV operation." << std::endl;
       }
   }  
-
+#endif
 } // extern C
 #endif /* WITH_SYCL_GPU_VERSION */

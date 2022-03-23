@@ -1404,7 +1404,7 @@ module sycl_functions
 
     ! functions to memcopy memory
 
-    function sycl_memcpyDeviceToDevice() result(flag)
+    function sycl_MemcpyDeviceToDevice() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
@@ -1415,7 +1415,7 @@ module sycl_functions
 #endif
     end function
 
-    function sycl_memcpyHostToDevice() result(flag)
+    function sycl_MemcpyHostToDevice() result(flag)
       use, intrinsic :: iso_c_binding
       use precision
       implicit none
@@ -1427,7 +1427,7 @@ module sycl_functions
 #endif
     end function
 
-    function sycl_memcpyDeviceToHost() result(flag)
+    function sycl_MemcpyDeviceToHost() result(flag)
       use, intrinsic :: iso_c_binding
       use precision
       implicit none
