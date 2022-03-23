@@ -129,8 +129,9 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
 
     # exclude some test combinations
 
-    # analytic tests only for "eigenvectors" and not on GPU
-    if(m == "analytic" and ( g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON" or t != "eigenvectors")):
+    # analytic tests only for "eigenvectors"
+    #if(m == "analytic" and ( g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON" or t != "eigenvectors")):
+    if(m == "analytic" and t != "eigenvectors"):
         continue
 
     # Frank tests only for "eigenvectors" and eigenvalues and real double precision case
