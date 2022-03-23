@@ -21,11 +21,12 @@ solver_flag = {
     "scalapack_part": "-DTEST_SCALAPACK_PART",
 }
 gpu_flag = {
-    "GPU_OFF": "-DTEST_NVIDIA_GPU=0 -DTEST_INTEL_GPU=0 -DTEST_AMD_GPU=0 -DTEST_OPENMP_OFFLOAD_GPU=0",
+    "GPU_OFF": "-DTEST_NVIDIA_GPU=0 -DTEST_INTEL_GPU=0 -DTEST_AMD_GPU=0 -DTEST_OPENMP_OFFLOAD_GPU=0 -DTEST_INTEL_GPU_OPENMP=0 -DTEST_INTEL_GPU_SYCL=0",
     "NVIDIA_GPU_ON": "-DTEST_NVIDIA_GPU=1",
     "INTEL_GPU_ON": "-DTEST_INTEL_GPU=1",
     "AMD_GPU_ON": "-DTEST_AMD_GPU=1",
-    "OPENMP_OFFLOAD_GPU_ON": "-DTEST_INTEL_GPU=1",
+    "OPENMP_OFFLOAD_GPU_ON": "-DTEST_INTEL_GPU_OPENMP=1",
+    "SYCL_GPU_ON": "-DTEST_INTEL_GPU_SYCL=1",
 }
 gpu_id_flag = {
     0: "-DTEST_GPU_SET_ID=0",
@@ -129,14 +130,14 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     # exclude some test combinations
 
     # analytic tests only for "eigenvectors" and not on GPU
-    if(m == "analytic" and ( g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or t != "eigenvectors")):
+    if(m == "analytic" and ( g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON" or t != "eigenvectors")):
         continue
 
     # Frank tests only for "eigenvectors" and eigenvalues and real double precision case
     if(m == "frank" and ((t != "eigenvectors" or t != "eigenvalues") and (d != "real" or p != "double"))):
         continue
 
-    if(s in ["scalapack_all", "scalapack_part"] and (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or t != "eigenvectors" or m != "analytic")):
+    if(s in ["scalapack_all", "scalapack_part"] and (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON" or t != "eigenvectors" or m != "analytic")):
         continue
 
     # do not test single-precision scalapack
@@ -170,7 +171,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
         continue
 
     # qr only for 2stage real
-    if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == "NVIDIA_GPU_ON" or "INTEL_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "AMD_GPU_ON" or m != "random")):
+    if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == "NVIDIA_GPU_ON" or "INTEL_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON" or g == "AMD_GPU_ON" or m != "random")):
         continue
 
     if(spl == "myself" and (d != "real" or p != "double" or q != 0 or m != "random" or (t != "eigenvectors" and t != "cholesky")  or lang != "Fortran" or lay != "square")):
@@ -209,6 +210,10 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
             print("if WITH_OPENMP_OFFLOAD_GPU_VERSION")
             endifs += 1
 
+        if (g == "SYCL_GPU_ON"):
+            print("if WITH_SYCL_GPU_VERSION")
+            endifs += 1
+
         if (g == "AMD_GPU_ON"):
             print("if WITH_AMD_GPU_VERSION")
             endifs += 1
@@ -242,7 +247,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
             endifs += 1
 
 
-        if (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON"):
+        if (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON"):
           combined_suffix="gpu_"
           if (gid):
             combined_suffix="gpu_id_"

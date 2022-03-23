@@ -47,6 +47,8 @@
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
 ! Define TEST_NVIDIA_GPU \in [0, 1]
 ! Define TEST_INTEL_GPU \in [0, 1]
+! Define TEST_INTEL_GPU_OPENMP \in [0, 1]
+! Define TEST_INTEL_GPU_SYCL \in [0, 1]
 ! Define TEST_AMD_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
@@ -120,7 +122,7 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #endif
 
 #define TEST_GPU 0
-#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1)
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) | (TEST_INTEL_GPU_OPENMP == 1) | (TEST_INTEL_GPU_SYCL == 1)
 #undef TEST_GPU
 #define TEST_GPU 1
 #endif
@@ -352,7 +354,7 @@ program test
 
 #if TEST_QR_DECOMPOSITION == 1
 
-#if (TEST_NVIDIA_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_AMD_GPU == 1)
+#if (TEST_NVIDIA_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
@@ -774,12 +776,12 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
    call e%set("intel-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 
-#if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0)
+#if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    ! simple test
    ! Can (and should) fail often
    gpuID = mod(myid,2)
@@ -851,7 +853,7 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
    call e%set("intel-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
@@ -884,7 +886,7 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
    call e%set("intel-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
@@ -949,7 +951,7 @@ program test
 
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
-#if (TEST_NVIDIA_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_AMD_GPU == 0)
+#if (TEST_NVIDIA_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
      !if (TEST_GPU .eq. 0) then
        kernel = elpa_option_enumerate(KERNEL_KEY, int(i,kind=c_int))
        if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU) continue
@@ -985,7 +987,7 @@ program test
 #if (TEST_AMD_GPU == 1)
      kernel = ELPA_2STAGE_REAL_AMD_GPU
 #endif
-#if (TEST_INTEL_GPU == 1)
+#if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
      kernel = ELPA_2STAGE_REAL_INTEL_GPU
 #endif
 #endif /* TEST_REAL */
@@ -997,7 +999,7 @@ program test
 #if (TEST_AMD_GPU == 1)
      kernel = ELPA_2STAGE_COMPLEX_AMD_GPU
 #endif
-#if (TEST_INTEL_GPU == 1)
+#if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
      kernel = ELPA_2STAGE_COMPLEX_INTEL_GPU
 #endif
 #endif /* TEST_COMPLEX */
