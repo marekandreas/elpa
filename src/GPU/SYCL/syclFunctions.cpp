@@ -45,9 +45,7 @@
 // it is based on a prototype implementation developed for MPCDF 
 // by A. Poeppl, Intel (2022) 
 */
-#include "config-f90.h"
 
-#ifdef WITH_SYCL_GPU_VERSION
 #include <CL/sycl.hpp>
 
 #include <complex>
@@ -59,12 +57,17 @@
 #include <vector>
 #include <optional> 
      
+#include "config-f90.h"
+
+#ifdef WITH_SYCL_GPU_VERSION
 using namespace cl;
 
 static std::vector<sycl::device> devices;
 static std::optional<sycl::queue> chosenDeviceQueue{};
 
 bool deviceCollectionFlag = false;
+
+extern "C" {
 
 static void collectGpuDevices() {
   if (deviceCollectionFlag) {
@@ -131,13 +134,12 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 }
 
-extern "C" {
 
-  extern int syclChosenGpu;
+  int syclChosenGpu;
 
-  extern int syclMemcpyHostToDevice;
-  extern int syclMemcpyDeviceToHost;
-  extern int syclMemcpyDeviceToDevice;
+  int syclMemcpyHostToDevice;
+  int syclMemcpyDeviceToHost;
+  int syclMemcpyDeviceToDevice;
 
 
   void syclPrintGpuInfoFromC() {
@@ -238,8 +240,25 @@ extern "C" {
     }
   }
 
+  int syclMemcpyDeviceToDeviceFromC(){
+    return syclMemcpyDeviceToDevice;
+  }
 
-  void syclSetGpuFromC(int targetGpuDeviceId) {
+  int syclMemcpyHostToDeviceFromC(){
+    return syclMemcpyHostToDevice;
+  }
+  int syclMemcpyDeviceToHostFromC(){
+    return syclMemcpyDeviceToHost;
+  }
+
+  int syclGetDeviceCountFromC() {
+    collectGpuDevices();
+    return devices.size();
+  }
+
+
+
+  void syclSetDeviceFromC(int targetGpuDeviceId) {
     collectGpuDevices();
     if (targetGpuDeviceId >= devices.size()){
       std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
@@ -260,6 +279,17 @@ extern "C" {
     syclMemcpyDeviceToHost = 1;
     syclMemcpyDeviceToDevice = 2;
   }
+
+  int syclblasCreateFromC(intptr_t* handle){
+    //stub function
+    return 1;
+  }
+
+  int syclsolverCreateFromC(intptr_t* handle){
+    //stub function
+    return 1;
+  }
+
 
   int syclMallocFromC(intptr_t *a, size_t elems) {
     if (chosenDeviceQueue) {
@@ -426,51 +456,60 @@ extern "C" {
     }
   }
 
-#if 0
   // implemented in mkl???
   //
   void mklSyclDtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
     //handle not needed
     if (chosenDeviceQueue) {
-      using oneapi::mkl::blas::column_major::gemm;
-      auto ta = transposeFromChar(cta);
-      auto tb = transposeFromChar(ctb);
+      //using oneapi::mkl::blas::column_major::gemm;
+      auto up = uploFromChar(uplo);
+      auto di = diagFromChar(diag);
 
-      dtrtri(&uplo, &diag, &n, reinterpret_cast<double *>(a), &lda, &info);
-#ifdef OPENMP_OFFLOAD_DEBUG
-      std::cout << "DTRTRI" << std::endl;
-#endif
+//      dtrtri(&uplo, &diag, &n, reinterpret_cast<double *>(a), &lda, &info);
+    } else {
+      std::cerr << "No device selected for DTRTRI operation." << std::endl;
+    }
   }  
 
-  void mklOpenmpOffloadStrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
-      //handle not needed
-      #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
-      strtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
-#ifdef OPENMP_OFFLOAD_DEBUG
-      std::cout << "STRTRI" << std::endl;
-#endif
+  void mklSyclStrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
+    //handle not needed
+    if (chosenDeviceQueue) {
+      //using oneapi::mkl::blas::column_major::gemm;
+      auto up = uploFromChar(uplo);
+      auto di = diagFromChar(diag);
+
+//      dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
+    } else {
+      std::cerr << "No device selected for STRTRI operation." << std::endl;
+    }
+  }
+
+  void mklSyclZtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
+    //handle not needed
+    if (chosenDeviceQueue) {
+      //using oneapi::mkl::blas::column_major::gemm;
+      auto up = uploFromChar(uplo);
+      auto di = diagFromChar(diag);
+
+//      dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
+    } else {
+      std::cerr << "No device selected for ZTRTRI operation." << std::endl;
+    }
   }  
 
-  void mklOpenmpOffloadZtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
-      //handle not needed
-      #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
-      ztrtri(&uplo, &diag, &n, reinterpret_cast<MKL_Complex16 *>(a), &lda, &info);
-#ifdef OPENMP_OFFLOAD_DEBUG
-      std::cout << "ZTRTRI" << std::endl;
-#endif
+  void mklSyclCtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
+    //handle not needed
+    if (chosenDeviceQueue) {
+      //using oneapi::mkl::blas::column_major::gemm;
+      auto up = uploFromChar(uplo);
+      auto di = diagFromChar(diag);
+
+//      dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
+    } else {
+      std::cerr << "No device selected for CTRTRI operation." << std::endl;
+    }
   }  
 
-  void mklOpenmpOffloadCtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
-      //handle not needed
-      #pragma omp target variant dispatch device(openmpOffloadChosenGpu)
-      ctrtri(&uplo, &diag, &n, reinterpret_cast<MKL_Complex8 *>(a), &lda, &info);
-#ifdef OPENMP_OFFLOAD_DEBUG
-      std::cout << "CTRTRI" << std::endl;
-#endif
-  }  
-#endif
-
-#if 0
   // different API!!
   void mklSyclDpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
       //handle not needed
@@ -507,7 +546,6 @@ extern "C" {
         std::cerr << "No device selected for ZPOTRF operation." << std::endl;
       }
   }  
-#endif
 
   void mklSyclCpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
       //handle not needed
@@ -730,7 +768,6 @@ extern "C" {
       }
   }  
 
-#if 0
   // compile error here; fix this
   //
   void mklSyclDgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
@@ -742,9 +779,9 @@ extern "C" {
         lda_ = (std::int64_t) lda;
         incx_ = (std::int64_t) incx;
         incy_ = (std::int64_t) incy;
-	oneapi::mkl::blas::column_major::gemv;
+	//oneapi::mkl::blas::column_major::gemv;
         auto ta = transposeFromChar(cta);
-        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(x), incx_, beta, reinterpret_cast<double *>(y), incy_);
+//        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(x), incx_, beta, reinterpret_cast<double *>(y), incy_);
       } else {
         std::cerr << "No device selected for DGEMV operation." << std::endl;
       }
@@ -759,9 +796,9 @@ extern "C" {
         lda_ = (std::int64_t) lda;
         incx_ = (std::int64_t) incx;
         incy_ = (std::int64_t) incy;
-	oneapi::mkl::blas::column_major::gemv;
+	//oneapi::mkl::blas::column_major::gemv;
         auto ta = transposeFromChar(cta);
-        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(x), incx_, beta, reinterpret_cast<float *>(y), incy_);
+//        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(x), incx_, beta, reinterpret_cast<float *>(y), incy_);
       } else {
         std::cerr << "No device selected for SGEMV operation." << std::endl;
       }
@@ -776,9 +813,9 @@ extern "C" {
         lda_ = (std::int64_t) lda;
         incx_ = (std::int64_t) incx;
         incy_ = (std::int64_t) incy;
-	oneapi::mkl::blas::column_major::gemv;
+	//oneapi::mkl::blas::column_major::gemv;
         auto ta = transposeFromChar(cta);
-        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(x), incx_, beta, reinterpret_cast<std::complex<double> *>(y), incy_);
+//        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(x), incx_, beta, reinterpret_cast<std::complex<double> *>(y), incy_);
       } else {
         std::cerr << "No device selected for ZGEMV operation." << std::endl;
       }
@@ -793,13 +830,12 @@ extern "C" {
         lda_ = (std::int64_t) lda;
         incx_ = (std::int64_t) incx;
         incy_ = (std::int64_t) incy;
-	oneapi::mkl::blas::column_major::gemv;
+	//oneapi::mkl::blas::column_major::gemv;
         auto ta = transposeFromChar(cta);
-        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(x), incx_, beta, reinterpret_cast<std::complex<float> *>(y), incy_);
+//        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(x), incx_, beta, reinterpret_cast<std::complex<float> *>(y), incy_);
       } else {
         std::cerr << "No device selected for ZGEMV operation." << std::endl;
       }
   }  
-#endif
 } // extern C
 #endif /* WITH_SYCL_GPU_VERSION */

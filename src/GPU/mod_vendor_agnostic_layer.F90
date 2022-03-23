@@ -1290,7 +1290,7 @@ module elpa_gpu
 
 #ifdef WITH_SYCL_GPU_VERSION
          if (use_gpu_vendor == sycl_gpu) then
-           call mkl_scyl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+           call mkl_sycl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
          endif
 #endif
       endif
@@ -3274,7 +3274,7 @@ module elpa_gpu
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_openmp_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+          call mkl_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
         endif
 #endif
       endif
