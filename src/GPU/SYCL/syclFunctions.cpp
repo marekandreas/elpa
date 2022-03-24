@@ -137,9 +137,9 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   int syclChosenGpu;
 
-  int syclMemcpyHostToDevice;
-  int syclMemcpyDeviceToHost;
-  int syclMemcpyDeviceToDevice;
+  int syclMemcpyHostToDevice = 20;
+  int syclMemcpyDeviceToHost = 200;
+  int syclMemcpyDeviceToDevice = 2000;
 
 
   void syclPrintGpuInfoFromC() {
@@ -779,9 +779,9 @@ static oneapi::mkl::side sideFromChar(char c) {
         lda_ = (std::int64_t) lda;
         incx_ = (std::int64_t) incx;
         incy_ = (std::int64_t) incy;
-	//oneapi::mkl::blas::column_major::gemv;
+	using oneapi::mkl::blas::column_major::gemv;
         auto ta = transposeFromChar(cta);
-//        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(x), incx_, beta, reinterpret_cast<double *>(y), incy_);
+        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(x), incx_, beta, reinterpret_cast<double *>(y), incy_);
       } else {
         std::cerr << "No device selected for DGEMV operation." << std::endl;
       }
@@ -796,9 +796,9 @@ static oneapi::mkl::side sideFromChar(char c) {
         lda_ = (std::int64_t) lda;
         incx_ = (std::int64_t) incx;
         incy_ = (std::int64_t) incy;
-	//oneapi::mkl::blas::column_major::gemv;
+	using oneapi::mkl::blas::column_major::gemv;
         auto ta = transposeFromChar(cta);
-//        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(x), incx_, beta, reinterpret_cast<float *>(y), incy_);
+        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(x), incx_, beta, reinterpret_cast<float *>(y), incy_);
       } else {
         std::cerr << "No device selected for SGEMV operation." << std::endl;
       }
@@ -813,9 +813,9 @@ static oneapi::mkl::side sideFromChar(char c) {
         lda_ = (std::int64_t) lda;
         incx_ = (std::int64_t) incx;
         incy_ = (std::int64_t) incy;
-	//oneapi::mkl::blas::column_major::gemv;
+	using oneapi::mkl::blas::column_major::gemv;
         auto ta = transposeFromChar(cta);
-//        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(x), incx_, beta, reinterpret_cast<std::complex<double> *>(y), incy_);
+        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(x), incx_, beta, reinterpret_cast<std::complex<double> *>(y), incy_);
       } else {
         std::cerr << "No device selected for ZGEMV operation." << std::endl;
       }
@@ -830,9 +830,9 @@ static oneapi::mkl::side sideFromChar(char c) {
         lda_ = (std::int64_t) lda;
         incx_ = (std::int64_t) incx;
         incy_ = (std::int64_t) incy;
-	//oneapi::mkl::blas::column_major::gemv;
+	using oneapi::mkl::blas::column_major::gemv;
         auto ta = transposeFromChar(cta);
-//        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(x), incx_, beta, reinterpret_cast<std::complex<float> *>(y), incy_);
+        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(x), incx_, beta, reinterpret_cast<std::complex<float> *>(y), incy_);
       } else {
         std::cerr << "No device selected for ZGEMV operation." << std::endl;
       }
