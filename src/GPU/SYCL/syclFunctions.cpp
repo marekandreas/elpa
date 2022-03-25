@@ -787,7 +787,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
   }  
 
-  void mklSyclSgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
+  void mklSyclSgemvFromC(intptr_t *handle, char cta, int m, int n, float alpha, void *a, int lda, void *x, int incx, float beta, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
 	std::int64_t m_, n_, lda_, incx_, incy_;
@@ -804,7 +804,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
   }  
 
-  void mklSyclZgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
+  void mklSyclZgemvFromC(intptr_t *handle, char cta, int m, int n, std::complex<double> alpha, void *a, int lda, void *x, int incx, std::complex<double> beta, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
 	std::int64_t m_, n_, lda_, incx_, incy_;
@@ -821,7 +821,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
   }  
 
-  void mklSyclCgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
+  void mklSyclCgemvFromC(intptr_t *handle, char cta, int m, int n, std::complex<float> alpha, void *a, int lda, void *x, int incx, std::complex<float> beta, void *y, int incy) {
       //handle not needed
       if (chosenDeviceQueue) {
 	std::int64_t m_, n_, lda_, incx_, incy_;
