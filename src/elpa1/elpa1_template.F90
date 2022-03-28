@@ -653,10 +653,10 @@ print *,"Device pointer + REDIST"
    ! test basic GPU functions here
    if (do_useGPU_tridiag) then
      ! allocate, memcpy, sgemm test
-     allocate(mat1(500,500))
-     allocate(mat2(500,500))
-     allocate(mat3(500,500))
-     allocate(mat4(500,500))
+     allocate(mat1(150,150))
+     allocate(mat2(150,150))
+     allocate(mat3(150,150))
+     allocate(mat4(150,150))
      mat4(:,:) = -1.
      if (my_pe .eq. 0) then
        mat1(:,:) = 2.
@@ -667,55 +667,55 @@ print *,"Device pointer + REDIST"
        mat2(:,:) = 4.
        mat3(:,:) = 5.
      endif
+       mat4(:,:) = mat3(:,:)
+     call PRECISION_GEMM('N', 'N', 150_BLAS_KIND, 150_BLAS_KIND, 150_BLAS_KIND,                &
+                         ONE, mat1, 150_BLAS_KIND, mat2, 150_BLAS_KIND, &
+                                  ONE, mat3, 150_BLAS_KIND)
 
-     call PRECISION_GEMM('N', 'N', 500_BLAS_KIND, 500_BLAS_KIND, 500_BLAS_KIND,                &
-                         ONE, mat1, 500_BLAS_KIND, mat2, 500_BLAS_KIND, &
-                                  ONE, mat3, 500_BLAS_KIND)
-
-     successGPU = gpu_malloc(mat1_dev, int(500*500*size_of_datatype,kind=c_intptr_t))
+     successGPU = gpu_malloc(mat1_dev, int(150*150*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating mat1_dev"
        stop
      endif
-     successGPU = gpu_malloc(mat2_dev, int(500*500*size_of_datatype,kind=c_intptr_t))
+     successGPU = gpu_malloc(mat2_dev, int(150*150*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating mat2_dev"
        stop
      endif
-     successGPU = gpu_malloc(mat3_dev, int(500*500*size_of_datatype,kind=c_intptr_t))
+     successGPU = gpu_malloc(mat3_dev, int(150*150*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating mat3_dev"
        stop
      endif
 
      successGPU = gpu_memcpy(mat1_dev, int(loc(mat1(1,1)),kind=c_intptr_t), &
-                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+                             int(150*150*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying mat1_dev"
        stop
      endif
 
-     successGPU = gpu_memcpy(mat2_dev, int(loc(mat1(1,1)),kind=c_intptr_t), &
-                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+     successGPU = gpu_memcpy(mat2_dev, int(loc(mat2(1,1)),kind=c_intptr_t), &
+                             int(150*150*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying mat2_dev"
        stop
      endif
 
-     successGPU = gpu_memcpy(mat3_dev, int(loc(mat1(1,1)),kind=c_intptr_t), &
-                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+     successGPU = gpu_memcpy(mat3_dev, int(loc(mat4(1,1)),kind=c_intptr_t), &
+                             int(150*150*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying mat3_dev"
        stop
      endif
 
-     call gpublas_PRECISION_GEMM('N', 'N', 500, 500, 500,   &
-                                         ONE, mat1_dev, 500, &
-                                         mat2_dev, 500,  &
-                                         ONE, mat3_dev, 500)
+     call gpublas_PRECISION_GEMM('N', 'N', 150, 150, 150,   &
+                                         ONE, mat1_dev, 150, &
+                                         mat2_dev, 150,  &
+                                         ONE, mat3_dev, 150)
 
      successGPU = gpu_memcpy(int(loc(mat4(1,1)),kind=c_intptr_t),mat3_dev, &
-                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
+                             int(150*150*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
      if (.not.(successGPU)) then
        print *, "error copying mat4_dev"
        stop
@@ -752,10 +752,10 @@ print *,"Device pointer + REDIST"
      deallocate(mat4)
 
      !gemv
-     allocate(mat1(500,500))
-     allocate(vec1(500))
-     allocate(vec2(500))
-     allocate(vec3(500))
+     allocate(mat1(150,150))
+     allocate(vec1(150))
+     allocate(vec2(150))
+     allocate(vec3(150))
      vec3(:) = -1.
      if (my_pe .eq. 0) then
        mat1(:,:) = 2.
@@ -766,52 +766,53 @@ print *,"Device pointer + REDIST"
        vec1(:) = 4.
        vec2(:) = 5.
      endif
-     call PRECISION_GEMV('N', 500_BLAS_KIND, 500_BLAS_KIND, ONE, mat1, 500_BLAS_KIND, &
+     vec3(:) = vec2(:)
+     call PRECISION_GEMV('N', 150_BLAS_KIND, 150_BLAS_KIND, ONE, mat1, 150_BLAS_KIND, &
                         vec1, 1_BLAS_KIND, ONE, vec2, 1_BLAS_KIND)
 
 
 
 
-     successGPU = gpu_malloc(mat1_dev, int(500*500*size_of_datatype,kind=c_intptr_t))
+     successGPU = gpu_malloc(mat1_dev, int(150*150*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating mat1_dev"
        stop
      endif
-     successGPU = gpu_malloc(vec1_dev, int(500*size_of_datatype,kind=c_intptr_t))
+     successGPU = gpu_malloc(vec1_dev, int(150*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating vec1_dev"
        stop
      endif
-     successGPU = gpu_malloc(vec2_dev, int(500*size_of_datatype,kind=c_intptr_t))
+     successGPU = gpu_malloc(vec2_dev, int(150*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating vec2_dev"
        stop
      endif
 
      successGPU = gpu_memcpy(mat1_dev, int(loc(mat1(1,1)),kind=c_intptr_t), &
-                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+                             int(150*150*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying mat1_dev"
        stop
      endif
      successGPU = gpu_memcpy(vec1_dev, int(loc(vec1),kind=c_intptr_t), &
-                             int(500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+                             int(150*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying vec1_dev"
        stop
      endif
-     successGPU = gpu_memcpy(vec2_dev, int(loc(vec2),kind=c_intptr_t), &
-                             int(500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+     successGPU = gpu_memcpy(vec2_dev, int(loc(vec3),kind=c_intptr_t), &
+                             int(150*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying vec2_dev"
        stop
      endif
 
-    call gpublas_PRECISION_GEMV('N', 500, 500, ONE, mat1_dev, 500, &
+    call gpublas_PRECISION_GEMV('N', 150, 150, ONE, mat1_dev, 150, &
     vec1_dev, 1, ONE, vec2_dev, 1)
 
    successGPU = gpu_memcpy(int(loc(vec3),kind=c_intptr_t), vec2_dev,  &
-                           int(500*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
+                           int(150*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
      if (.not.(successGPU)) then
        print *, "error copying vec3_dev"
        stop
