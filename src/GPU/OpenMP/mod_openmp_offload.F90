@@ -1391,11 +1391,11 @@ module openmp_offload_functions
 
       integer (kind=c_intptr_t), intent(in)        :: array
       integer (kind=c_intptr_t), intent(in)        :: elems
-      integer (kind=c_int32_t), intent(in)         :: val
+      integer (kind=c_int), intent(in)             :: val
       logical                                      :: success
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_memset_c(array, val, elems) /= 0
+      success = openmp_offload_memset_c(array, int(val,kind=c_int32_t), int(elems,kind=c_size_t)) /= 0
 #else
       success = .true.
 #endif

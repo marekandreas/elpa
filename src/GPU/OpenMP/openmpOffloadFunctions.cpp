@@ -156,9 +156,10 @@ extern "C" {
       }
   }
 
-  int openmpOffloadMemsetFromC(void *mem, int32_t val, intptr_t size) {
+  int openmpOffloadMemsetFromC(void *mem, int32_t val, size_t size) {
     char *mem_bytes = reinterpret_cast<char *>(mem);
     char tVal = static_cast<char>(val);
+    //#pragma omp target teams loop is_device_ptr(mem, mem_bytes) device(openmpOffloadChosenGpu)
     #pragma omp target device(oneapiOmpChosenGpu) is_device_ptr(mem_bytes) teams distribute parallel for
     for (size_t i = 0; i < size; i++) {
       mem_bytes[i] = tVal;
