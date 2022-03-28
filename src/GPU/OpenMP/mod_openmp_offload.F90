@@ -324,8 +324,8 @@ module openmp_offload_functions
              bind (C, name="openmpOffloadFreeFromC")
       use, intrinsic :: iso_c_binding
 
-      integer (kind=c_intptr_t), intent(inout) :: a
-      integer (kind=c_int)                     :: istat
+      integer (kind=c_intptr_t), intent(inout), value :: a
+      integer (kind=c_int)                            :: istat
     end function
   end interface
 
@@ -342,9 +342,9 @@ module openmp_offload_functions
              bind (C, name="openmpOffloadMallocFromC")
       use, intrinsic :: iso_c_binding
 
-      integer (kind=c_intptr_t), intent(inout)     :: a
-      integer (kind=c_intptr_t), intent(in), value :: elems
-      integer (kind=c_int)                         :: istat
+      integer (kind=c_intptr_t), intent(inout), value :: a
+      integer (kind=c_intptr_t), intent(in), value    :: elems
+      integer (kind=c_int)                            :: istat
     end function
   end interface
 
@@ -1391,7 +1391,7 @@ module openmp_offload_functions
 
       integer (kind=c_intptr_t), intent(in)        :: array
       integer (kind=c_intptr_t), intent(in)        :: elems
-      integer (kind=c_int32_t), intent(in), value  :: val
+      integer (kind=c_int32_t), intent(in)         :: val
       logical                                      :: success
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
