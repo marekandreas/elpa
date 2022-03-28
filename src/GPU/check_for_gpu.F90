@@ -504,7 +504,8 @@ module mod_check_for_gpu
           if (.not.(allocated(syclDeviceArray))) then
             allocate(syclDeviceArray(0:maxThreads-1))
             allocate(gpuDeviceArray(0:maxThreads-1))
-            success = sycl_setdevice(deviceNumber)
+            !success = sycl_setdevice(deviceNumber)
+            success = sycl_setdevice(0)
             do thread=0,maxThreads-1
               syclDeviceArray(thread) = deviceNumber
               gpuDeviceArray(thread) = deviceNumber
