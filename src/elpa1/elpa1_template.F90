@@ -244,12 +244,12 @@ function elpa_solve_evp_&
 
    logical                                         :: successGPU
 
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+!#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
    integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
                                                                       &PRECISION&
                                                                       &_&
                                                                       &MATH_DATATYPE
-#endif
+!#endif
    integer(kind=C_intptr_T)                        :: mat1_dev, mat2_dev, mat3_dev, vec1_dev, vec2_dev
    MATH_DATATYPE(kind=rck), allocatable            :: mat1(:,:), mat2(:,:), mat3(:,:), mat4(:,:), vec1(:), vec2(:), vec3(:)
    MATH_DATATYPE(kind=rck) :: max_deviation
@@ -672,38 +672,38 @@ print *,"Device pointer + REDIST"
                          ONE, mat1, 500_BLAS_KIND, mat2, 500_BLAS_KIND, &
                                   ONE, mat3, 500_BLAS_KIND)
 
-     successGPU = gpu_malloc(mat1_dev, int(500*500*4,kind=c_intptr_t))
+     successGPU = gpu_malloc(mat1_dev, int(500*500*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating mat1_dev"
        stop
      endif
-     successGPU = gpu_malloc(mat2_dev, int(500*500*4,kind=c_intptr_t))
+     successGPU = gpu_malloc(mat2_dev, int(500*500*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating mat2_dev"
        stop
      endif
-     successGPU = gpu_malloc(mat3_dev, int(500*500*4,kind=c_intptr_t))
+     successGPU = gpu_malloc(mat3_dev, int(500*500*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating mat3_dev"
        stop
      endif
 
      successGPU = gpu_memcpy(mat1_dev, int(loc(mat1(1,1)),kind=c_intptr_t), &
-                             int(500*500*4,kind=c_intptr_t), gpuMemcpyHostToDevice)
+                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying mat1_dev"
        stop
      endif
 
      successGPU = gpu_memcpy(mat2_dev, int(loc(mat1(1,1)),kind=c_intptr_t), &
-                             int(500*500*4,kind=c_intptr_t), gpuMemcpyHostToDevice)
+                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying mat2_dev"
        stop
      endif
 
      successGPU = gpu_memcpy(mat3_dev, int(loc(mat1(1,1)),kind=c_intptr_t), &
-                             int(500*500*4,kind=c_intptr_t), gpuMemcpyHostToDevice)
+                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying mat3_dev"
        stop
@@ -715,7 +715,7 @@ print *,"Device pointer + REDIST"
                                          ONE, mat3_dev, 500)
 
      successGPU = gpu_memcpy(int(loc(mat4(1,1)),kind=c_intptr_t),mat3_dev, &
-                             int(500*500*4,kind=c_intptr_t), gpuMemcpyDeviceToHost)
+                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
      if (.not.(successGPU)) then
        print *, "error copying mat4_dev"
        stop
@@ -772,36 +772,36 @@ print *,"Device pointer + REDIST"
 
 
 
-     successGPU = gpu_malloc(mat1_dev, int(500*500*4,kind=c_intptr_t))
+     successGPU = gpu_malloc(mat1_dev, int(500*500*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating mat1_dev"
        stop
      endif
-     successGPU = gpu_malloc(vec1_dev, int(500*4,kind=c_intptr_t))
+     successGPU = gpu_malloc(vec1_dev, int(500*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating vec1_dev"
        stop
      endif
-     successGPU = gpu_malloc(vec2_dev, int(500*4,kind=c_intptr_t))
+     successGPU = gpu_malloc(vec2_dev, int(500*size_of_datatype,kind=c_intptr_t))
      if (.not.(successGPU)) then
        print *, "error allocating vec2_dev"
        stop
      endif
 
      successGPU = gpu_memcpy(mat1_dev, int(loc(mat1(1,1)),kind=c_intptr_t), &
-                             int(500*500*4,kind=c_intptr_t), gpuMemcpyHostToDevice)
+                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying mat1_dev"
        stop
      endif
      successGPU = gpu_memcpy(vec1_dev, int(loc(vec1),kind=c_intptr_t), &
-                             int(500*4,kind=c_intptr_t), gpuMemcpyHostToDevice)
+                             int(500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying vec1_dev"
        stop
      endif
      successGPU = gpu_memcpy(vec2_dev, int(loc(vec2),kind=c_intptr_t), &
-                             int(500*4,kind=c_intptr_t), gpuMemcpyHostToDevice)
+                             int(500*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
      if (.not.(successGPU)) then
        print *, "error copying vec2_dev"
        stop
@@ -811,7 +811,7 @@ print *,"Device pointer + REDIST"
     vec1_dev, 1, ONE, vec2_dev, 1)
 
    successGPU = gpu_memcpy(int(loc(vec3),kind=c_intptr_t), vec2_dev,  &
-                           int(500*4,kind=c_intptr_t), gpuMemcpyDeviceToHost)
+                           int(500*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
      if (.not.(successGPU)) then
        print *, "error copying vec3_dev"
        stop
