@@ -1395,7 +1395,7 @@ module sycl_functions
       logical                                      :: success
 
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_memset_c(array, val, elems) /= 0
+      success = sycl_memset_c(array, int(val,kind=c_size_t), elems) /= 0
 #else
       success = .true.
 #endif

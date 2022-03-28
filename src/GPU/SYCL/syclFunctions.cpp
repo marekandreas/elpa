@@ -366,7 +366,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     }
   }
 
-  int syclMemsetFromC(void *mem, size_t size, int32_t val) {
+  int syclMemsetFromC(void *mem, int32_t val, size_t size) {
     if (chosenDeviceQueue) {
       if (sycl::get_pointer_type(mem, chosenDeviceQueue->get_context()) != sycl::usm::alloc::device) {
         std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
