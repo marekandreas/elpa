@@ -103,10 +103,10 @@ function elpa_solve_evp_&
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
    use openmp_offload_functions
 #endif
-!#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
    use elpa_gpu
    use mod_check_for_gpu
-!#endif
+#endif
    use, intrinsic :: iso_c_binding
    use elpa_abstract_impl
    use elpa_mpi
@@ -253,6 +253,7 @@ function elpa_solve_evp_&
    integer(kind=C_intptr_T)                        :: mat1_dev, mat2_dev, mat3_dev, vec1_dev, vec2_dev
    MATH_DATATYPE(kind=rck), allocatable            :: mat1(:,:), mat2(:,:), mat3(:,:), mat4(:,:), vec1(:), vec2(:), vec3(:)
    MATH_DATATYPE(kind=rck) :: max_deviation
+   integer :: o,p
    
 #ifdef ACTIVATE_SKEW
    call obj%timer%start("elpa_solve_skew_evp_&
@@ -649,7 +650,7 @@ print *,"Device pointer + REDIST"
    do_solve    = .true.
    do_trans_ev = .true.
 
-#ifdef WITH_OPENMP_OFFLOAD_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
    ! test basic GPU functions here
    if (do_useGPU_tridiag) then
      ! allocate, memcpy, sgemm test
@@ -847,6 +848,132 @@ print *,"Device pointer + REDIST"
      deallocate(mat1)
      deallocate(vec1)
      deallocate(vec2)
+
+     ! test memset
+     allocate(mat1(500,500))
+     mat1(:,:) = 2.
+
+     successGPU = gpu_malloc(mat1_dev, int(500*500*size_of_datatype,kind=c_intptr_t))
+     if (.not.(successGPU)) then
+       print *, "error allocating mat1_dev"
+       stop
+     endif
+
+     successGPU = gpu_memset(mat1_dev, 0, int(500*500*size_of_datatype,kind=c_intptr_t))
+     if (.not.(successGPU)) then
+       print *, "error memsetting mat1_dev"
+       stop
+     endif
+
+     successGPU = gpu_memcpy(int(loc(mat1(1,1)),kind=c_intptr_t), mat1_dev, &
+                             int(500*500*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
+     if (.not.(successGPU)) then
+       print *, "error copying mat1_dev"
+       stop
+     endif
+
+     do o=1,500
+     do p=1,500
+     if (mat1(o,p) .ne. 0) then
+       print *,"OHOH: mat1(o,p)=",o,p,mat1(o,p)
+       stop
+     endif
+     enddo
+     enddo
+     call sleep(5)
+
+     successGPU = gpu_free(mat1_dev)
+     if (.not.(successGPU)) then
+       print *, "error freeing mat1_dev"
+       stop
+     endif
+
+     deallocate(mat1)
+
+     ! testing trmm
+     allocate(mat1(10,10))
+     allocate(mat2(10,10))
+     allocate(mat3(10,10))
+     if (my_pe .eq. 0) then
+       mat1(:,:) = 2.
+       mat2(:,:) = 3.
+     else
+       mat1(:,:) = 3.
+       mat2(:,:) = 4.
+     endif
+     mat3(:,:) = mat2(:,:)
+     successGPU = gpu_malloc(mat1_dev, int(10*10*size_of_datatype,kind=c_intptr_t))
+     if (.not.(successGPU)) then
+       print *, "error allocating mat1_dev"
+       stop
+     endif
+     successGPU = gpu_malloc(mat2_dev, int(10*10*size_of_datatype,kind=c_intptr_t))
+     if (.not.(successGPU)) then
+       print *, "error allocating mat2_dev"
+       stop
+     endif
+
+
+     successGPU = gpu_memcpy(mat1_dev, int(loc(mat1(1,1)),kind=c_intptr_t), &
+                             int(10*10*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+     if (.not.(successGPU)) then
+       print *, "error copying mat1_dev"
+       stop
+     endif
+     successGPU = gpu_memcpy(mat2_dev, int(loc(mat3(1,1)),kind=c_intptr_t), &
+                             int(10*10*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+     if (.not.(successGPU)) then
+       print *, "error copying mat2_dev"
+       stop
+     endif
+
+     call PRECISION_TRMM('L', 'L', 'N', 'N', 10_BLAS_KIND, 10_BLAS_KIND,   &
+                             ONE, mat1, 10_BLAS_KIND, mat2, 10_BLAS_KIND)
+
+
+     call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N', 10, 10, &
+                                 ONE, mat1_dev, 10,  mat2_dev, 10)
+
+     successGPU = gpu_memcpy(int(loc(mat3(1,1)),kind=c_intptr_t), mat2_dev, &
+                             int(10*10*size_of_datatype,kind=c_intptr_t), gpuMemcpyDeviceToHost)
+     if (.not.(successGPU)) then
+       print *, "error copying mat2_dev"
+       stop
+     endif
+
+     do o=1,10
+     do p=1,10
+     if (mat2(o,p) .ne. mat3(o,p)) then
+       print *,"TASK=",my_pe,o,p,mat2(o,p),mat3(o,p)
+     endif
+     enddo
+     enddo
+
+     max_deviation = maxval((abs(mat2(:,:)-mat3(:,:))))
+     print *,"TASK=",my_pe,"MAX DEVIATION TRMM",max_deviation
+#if REALCASE == 1
+     if (max_deviation .gt. 1e-7) then
+       print *,"TASK=",my_pe,"TRMM is wrong! CPU mat2(1,1)=",mat2(1,1)," GPU mat2(1,1)=",mat3(1,1)
+       stop
+     endif
+#endif
+     call sleep(5)
+
+     successGPU = gpu_free(mat1_dev)
+     if (.not.(successGPU)) then
+       print *, "error freeing mat1_dev"
+       stop
+     endif
+     successGPU = gpu_free(mat2_dev)
+     if (.not.(successGPU)) then
+       print *, "error freeing mat2_dev"
+       stop
+     endif
+
+     deallocate(mat1)
+     deallocate(mat2)
+     deallocate(mat3)
+
    endif
 #endif
 
