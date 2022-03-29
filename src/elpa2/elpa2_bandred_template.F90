@@ -1439,7 +1439,7 @@ max_threads, isSkewsymmetric)
         if (useGPU) then
 #endif
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
             successGPU = gpu_memset(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
                         0, max_l_rows*n_cols*size_of_datatype)
@@ -1460,7 +1460,7 @@ max_threads, isSkewsymmetric)
           check_memcpy_gpu("bandred: vmrGPU -> vmr_dev", successGPU)
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
             successGPU = gpu_memset(umc_dev, 0, l_cols*n_cols*size_of_datatype)
             check_memset_gpu("bandred: umc_dev", successGPU)
@@ -2382,25 +2382,43 @@ max_threads, isSkewsymmetric)
 #endif
 
 #ifndef WITH_OPENMP_TRADITIONAL
-    if (associated(umcGPU)) then
-      nullify(umcGPU)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#endif
+      if (associated(umcGPU)) then
+        nullify(umcGPU)
 
-      successGPU = gpu_free_host(umc_host)
-      check_host_dealloc_gpu("bandred: umc_host ", successGPU)
-      successGPU = gpu_free(umc_dev)
-      check_dealloc_gpu("bandred: umc_dev ", successGPU)
-    endif
+        successGPU = gpu_free_host(umc_host)
+        check_host_dealloc_gpu("bandred: umc_host ", successGPU)
+        successGPU = gpu_free(umc_dev)
+        check_dealloc_gpu("bandred: umc_dev ", successGPU)
+      endif
 
-    if (associated(vmrGPU)) then
-      nullify(vmrGPU)
+      if (associated(vmrGPU)) then
+        nullify(vmrGPU)
 
-      successGPU = gpu_free_host(vmr_host)
-      check_host_dealloc_gpu("bandred: vmr_host ", successGPU)
+        successGPU = gpu_free_host(vmr_host)
+        check_host_dealloc_gpu("bandred: vmr_host ", successGPU)
 
-      successGPU = gpu_free(vmr_dev)
-      check_dealloc_gpu("bandred: vmr_dev ", successGPU)
+        successGPU = gpu_free(vmr_dev)
+        check_dealloc_gpu("bandred: vmr_dev ", successGPU)
+      endif
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    else
+      if (associated(umcGPU)) then
+        deallocate(umcGPU)
+        successGPU = gpu_free(umc_dev)
+        check_dealloc_gpu("bandred: umc_dev ", successGPU)
+      endif
+      if (associated(vmrGPU)) then
+        deallocate(vmrGPU)
+        successGPU = gpu_free(vmr_dev)
+        check_dealloc_gpu("bandred: vmr_dev ", successGPU)
+      endif
     endif
 #endif
+
+#endif /* WITH_OPENMP_TRADITIONAL */
   endif ! useGPU
 
 #ifndef WITH_OPENMP_TRADITIONAL
