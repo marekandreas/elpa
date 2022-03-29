@@ -124,7 +124,7 @@ subroutine trans_ev_&
 
   MATH_DATATYPE(kind=rck), allocatable          :: hvb(:), hvm(:,:)
   MATH_DATATYPE(kind=rck), pointer              :: tmp1(:), tmp2(:)
-  MATH_DATATYPE(kind=rck), allocatable          :: h1(:), h2(:)
+  MATH_DATATYPE(kind=rck), allocatable          :: h1(:), h2(:), tmp_debug(:)
   MATH_DATATYPE(kind=rck), pointer              :: tmat(:,:)
   MATH_DATATYPE(kind=rck), pointer              :: hvm1(:)
   type(c_ptr)                                   :: tmp1_host, tmp2_host
@@ -576,8 +576,17 @@ subroutine trans_ev_&
             tmp1(1:l_cols*nstor) = 0
           else
 #endif
-            successGPU = gpu_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
-            check_memcpy_gpu("trans_ev", successGPU)
+            if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+              successGPU = gpu_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
+              check_memcpy_gpu("trans_ev", successGPU)
+            else
+              allocate(tmp_debug(l_cols * nstor))
+              tmp_debug(:) = 0.
+              successGPU = gpu_memcpy(tmp_dev, int(loc(tmp_debug),kind=c_intptr_t), &
+                                      l_cols*nstor*size_of_datatype, gpuMemcpyHostToDevice)
+              check_memcpy_gpu("trans_ev", successGPU)
+              deallocate(tmp_debug)
+            endif
 #ifdef WITH_INTEL_GPU_VERSION
           endif
 #endif
