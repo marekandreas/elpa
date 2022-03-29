@@ -649,7 +649,7 @@ print *,"Device pointer + REDIST"
    do_solve    = .true.
    do_trans_ev = .true.
 
-
+#ifdef WITH_OPENMP_OFFLOAD_VERSION
    ! test basic GPU functions here
    if (do_useGPU_tridiag) then
      ! allocate, memcpy, sgemm test
@@ -848,7 +848,7 @@ print *,"Device pointer + REDIST"
      deallocate(vec1)
      deallocate(vec2)
    endif
-
+#endif
 
 
 
@@ -862,7 +862,7 @@ print *,"Device pointer + REDIST"
 #ifdef WITH_NVTX
      call nvtxRangePush("tridi")
 #endif
-     do_useGPU_tridiag = .false.
+     !do_useGPU_tridiag = .false.
      call tridiag_&
      &MATH_DATATYPE&
      &_&
@@ -991,7 +991,7 @@ print *,"Device pointer + REDIST"
      call nvtxRangePush("trans_ev")
 #endif
 
-     do_useGPU_trans_ev = .false.
+     !do_useGPU_trans_ev = .false.
      ! In the skew-symmetric case this transforms the real part
      call trans_ev_&
      &MATH_DATATYPE&

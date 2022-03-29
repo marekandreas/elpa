@@ -324,8 +324,8 @@ module sycl_functions
              bind (C, name="syclFreeFromC")
       use, intrinsic :: iso_c_binding
 
-      integer (kind=c_intptr_t), intent(inout), value :: a
-      integer (kind=c_int)                            :: istat
+      integer (kind=c_intptr_t), value :: a
+      integer (kind=c_int)             :: istat
     end function
   end interface
 
@@ -342,7 +342,8 @@ module sycl_functions
              bind (C, name="syclMallocFromC")
       use, intrinsic :: iso_c_binding
 
-      integer (kind=c_intptr_t), intent(inout), value :: a
+
+      integer (kind=c_intptr_t), intent(inout)        :: a
       integer (kind=c_intptr_t), intent(in), value    :: elems
       integer (kind=c_int)                            :: istat
     end function
