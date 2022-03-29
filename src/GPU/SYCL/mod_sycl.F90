@@ -324,8 +324,8 @@ module sycl_functions
              bind (C, name="syclFreeFromC")
       use, intrinsic :: iso_c_binding
 
-      integer (kind=c_intptr_t), value :: a
-      integer (kind=c_int)             :: istat
+      integer (kind=c_intptr_t) :: a
+      integer (kind=c_int)      :: istat
     end function
   end interface
 
@@ -343,7 +343,7 @@ module sycl_functions
       use, intrinsic :: iso_c_binding
 
 
-      integer (kind=c_intptr_t), intent(inout)        :: a
+      integer (kind=c_intptr_t)                       :: a
       integer (kind=c_intptr_t), intent(in), value    :: elems
       integer (kind=c_int)                            :: istat
     end function
@@ -1390,13 +1390,13 @@ module sycl_functions
     function sycl_memset(array, val, elems) result(success)
       use, intrinsic :: iso_c_binding
 
-      integer (kind=c_intptr_t), intent(in)        :: array
-      integer (kind=c_intptr_t), intent(in)        :: elems
-      integer (kind=c_int32_t), intent(in)         :: val
-      logical                                      :: success
+      integer (kind=c_intptr_t), intent(in)    :: array
+      integer (kind=c_intptr_t), intent(in)    :: elems
+      integer (kind=c_int), intent(in)         :: val
+      logical                                  :: success
 
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_memset_c(array, int(val,kind=c_size_t), int(elems,kind=c_size_t)) /= 0
+      success = sycl_memset_c(array, int(val,kind=c_int32_t), int(elems,kind=c_size_t)) /= 0
 #else
       success = .true.
 #endif

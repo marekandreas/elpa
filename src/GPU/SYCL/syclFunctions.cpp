@@ -107,7 +107,7 @@ static oneapi::mkl::uplo uploFromChar(char c) {
     case 'u': return oneapi::mkl::uplo::upper;
     case 'L': [[fallthrough]];
     case 'l': [[fallthrough]];
-    default: oneapi::mkl::uplo::lower;
+    default: return oneapi::mkl::uplo::lower;
 
   }
 }
@@ -118,7 +118,7 @@ static oneapi::mkl::diag diagFromChar(char c) {
     case 'N': return oneapi::mkl::diag::nonunit;
     case 'U': [[fallthrough]];
     case 'u': [[fallthrough]];
-    default: oneapi::mkl::diag::unit;
+    default: return oneapi::mkl::diag::unit;
 
   }
 }
@@ -129,7 +129,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     case 'L': return oneapi::mkl::side::left;
     case 'r': [[fallthrough]];
     case 'R': [[fallthrough]];
-    default: oneapi::mkl::side::right;
+    default: return oneapi::mkl::side::right;
 
   }
 }
@@ -634,7 +634,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
   }  
 
-  void mklSyclStrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
+  void mklSyclStrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
 	std::int64_t m_, n_, lda_, ldb_;
@@ -653,7 +653,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
   }  
 
-  void mklSyclZtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
+  void mklSyclZtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<double> alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
 	std::int64_t m_, n_, lda_, ldb_;
@@ -672,7 +672,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
   }  
 
-  void mklSyclCtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
+  void mklSyclCtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<float> alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
 	std::int64_t m_, n_, lda_, ldb_;
@@ -710,7 +710,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
   }  
 
-  void mklSyclStrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
+  void mklSyclStrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
 	std::int64_t m_, n_, lda_, ldb_;
@@ -729,7 +729,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
   }  
 
-  void mklSyclZtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
+  void mklSyclZtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<double> alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
 	std::int64_t m_, n_, lda_, ldb_;
@@ -748,7 +748,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
   }  
 
-  void mklSyclCtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
+  void mklSyclCtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<float> alpha, void *a, int lda, void *b, int ldb) {
       //handle not needed
       if (chosenDeviceQueue) {
 	std::int64_t m_, n_, lda_, ldb_;
