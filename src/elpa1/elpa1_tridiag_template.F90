@@ -760,7 +760,7 @@ subroutine tridiag_&
      if (useGPU) then
 #endif
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU ) then
          successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
          check_memcpy_gpu("tridiag: u_col_dev", successGPU)
 
