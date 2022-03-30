@@ -149,19 +149,22 @@ extern "C" {
       if (retVal != 0){
 	return 0;
       } else {
-#ifdef OPENMP_OFFLOAD_DEBUG
+//#ifdef OPENMP_OFFLOAD_DEBUG
         std::cout << "Copied " << size << "B successfully from " << reinterpret_cast<intptr_t>(src) << " to " << reinterpret_cast<intptr_t>(dst) << "." << std::endl;
-#endif
+//#endif
 	return 1;
       }
   }
 
-  int openmpOffloadMemsetFromC(void *mem, int32_t val, size_t size) {
+  int openmpOffloadMemsetFromC(intptr_t *mem, int val, intptr_t size) {
+    //std::cout << "Memsetting 0 " << size << "Bytes" << std::endl;
+    //std::cout << "Memsetting 1 " << size << "B starting at address " << *mem <<  std::endl;
     char *mem_bytes = reinterpret_cast<char *>(mem);
     char tVal = static_cast<char>(val);
-    //#pragma omp target teams loop is_device_ptr(mem, mem_bytes) device(openmpOffloadChosenGpu)
-    #pragma omp target device(oneapiOmpChosenGpu) is_device_ptr(mem_bytes) teams distribute parallel for
-    for (size_t i = 0; i < size; i++) {
+    //std::cout << "Memsetting 2" << size << "B starting at address "  << *mem_bytes << std::endl;
+    #pragma omp target teams loop is_device_ptr(mem_bytes) device(openmpOffloadChosenGpu)
+    //#pragma omp target device(openmpOffloadChosenGpu) is_device_ptr(mem_bytes) teams distribute parallel for
+    for (intptr_t i = 0; i < size; i++) {
       mem_bytes[i] = tVal;
     }
     return 1;
