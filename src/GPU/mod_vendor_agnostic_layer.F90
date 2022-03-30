@@ -688,7 +688,7 @@ module elpa_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_memset(a, int(val,kind=c_int32_t), size)
+        success = openmp_offload_memset(a, val, size)
       endif
 #endif
 
@@ -2052,7 +2052,7 @@ module elpa_gpu
         endif
 #endif
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
           call mkl_sycl_dcopy_intptr(n, x, incx, y, incy)
         endif
