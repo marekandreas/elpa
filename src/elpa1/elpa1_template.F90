@@ -848,7 +848,6 @@ print *,"Device pointer + REDIST"
      deallocate(mat1)
      deallocate(vec1)
      deallocate(vec2)
-
      ! test memset
      allocate(mat1(500,500))
      mat1(:,:) = 2.
