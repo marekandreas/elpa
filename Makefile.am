@@ -167,11 +167,11 @@ if WITH_INTEL_GPU_VERSION
 endif
 
 if WITH_OPENMP_OFFLOAD_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/OpenMP/openmpOffloadFunctions.cpp
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/OpenMP/elpa_index_openmp_offload_gpu.cpp src/GPU/OpenMP/openmpOffloadFunctions.cpp
 endif
 
 if WITH_SYCL_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/syclFunctions.cpp
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclFunctions.cpp
 endif
 
 if WITH_AMD_GPU_VERSION

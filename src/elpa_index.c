@@ -121,11 +121,11 @@ int nvidia_gpu_count();
 #ifdef WITH_AMD_GPU_VERSION
 int amd_gpu_count();
 #endif
-#if defined(WITH_INTEL_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-//missing function for GPU count
+#ifdef WITH_SYCL_GPU_VERSION
+int sycl_gpu_count();
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-//missing function for GPU count
+int openmp_offload_gpu_count();
 #endif
 
 static int use_gpu_id_cardinality(elpa_index_t index);
@@ -1316,9 +1316,21 @@ static int use_gpu_id_cardinality(elpa_index_t index) {
 #elif WITH_INTEL_GPU_VERSION
 	return 0;
 #elif WITH_OPENMP_OFFLOAD_GPU_VERSION
+	int count;
+	count = openmp_offload_gpu_count();
+        if (count == -1000) {
+          fprintf(stderr, "Querrying GPUs failed! Set GPU count = 0\n");
 	return 0;
+        }
+	return count;
 #elif WITH_SYCL_GPU_VERSION
+	int count;
+	count = sycl_gpu_count();
+        if (count == -1000) {
+          fprintf(stderr, "Querrying GPUs failed! Set GPU count = 0\n");
 	return 0;
+        }
+	return count;
 #else
 	return 0;
 #endif
