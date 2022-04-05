@@ -244,12 +244,12 @@ function elpa_solve_evp_&
 
    logical                                         :: successGPU
 
-!#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
    integer(kind=c_intptr_t), parameter             :: size_of_datatype = size_of_&
                                                                       &PRECISION&
                                                                       &_&
                                                                       &MATH_DATATYPE
-!#endif
+#endif
    integer(kind=C_intptr_T)                        :: mat1_dev, mat2_dev, mat3_dev, vec1_dev, vec2_dev
    MATH_DATATYPE(kind=rck), allocatable            :: mat1(:,:), mat2(:,:), mat3(:,:), mat4(:,:), vec1(:), vec2(:), vec3(:)
    MATH_DATATYPE(kind=rck) :: max_deviation
@@ -311,13 +311,13 @@ function elpa_solve_evp_&
      ! check the number of threads that ELPA should use internally
      ! in the GPU case at the moment only _1_ thread internally is allowed
      call obj%get("omp_threads", nrThreads, error)
-     if (nrThreads .ne. 1) then
-     write(error_unit, *) "ELPA1: Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
-     write(error_unit, *) "setting 1 openmp thread now"
-     call obj%set("omp_threads",1, error)
-     nrThreads=1
-     call omp_set_num_threads(nrThreads)
-     endif
+     !if (nrThreads .ne. 1) then
+     !write(error_unit, *) "ELPA1: Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
+     !write(error_unit, *) "setting 1 openmp thread now"
+     !call obj%set("omp_threads",1, error)
+     !nrThreads=1
+     !call omp_set_num_threads(nrThreads)
+     !endif
 #endif
      call obj%timer%stop("check_for_gpu")
    endif ! useGPU
