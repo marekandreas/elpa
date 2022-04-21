@@ -47,7 +47,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/check_for_gpu.F90 \
   src/GPU/mod_vendor_agnostic_layer.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
-  src/GPU/INTEL/mod_mkl_offload.F90 \
   src/GPU/ROCm/mod_hip.F90 \
   src/GPU/OpenMP/mod_openmp_offload.F90 \
   src/GPU/SYCL/mod_sycl.F90 \
@@ -162,9 +161,9 @@ if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
 endif
 endif
 
-if WITH_INTEL_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mkl_offload.cpp
-endif
+#if WITH_INTEL_GPU_VERSION
+#  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mkl_offload.cpp
+#endif
 
 if WITH_OPENMP_OFFLOAD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/OpenMP/elpa_index_openmp_offload_gpu.cpp src/GPU/OpenMP/openmpOffloadFunctions.cpp
