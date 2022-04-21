@@ -90,9 +90,6 @@
       real(kind=REAL_DATATYPE), intent(inout)     :: q(ldq,matrixCols)
 #endif
       logical, intent(in)                         :: useGPU, wantDebug
-#ifdef WITH_INTEL_GPU_VERSION
-      logical                                     :: useIntelGPU
-#endif
 
       logical, intent(out)                        :: success
 
@@ -141,15 +138,6 @@
 
       allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
       check_allocate("merge_systems: z_p",istat, errorMessage)
-#endif
-#ifdef WITH_INTEL_GPU_VERSION
-      useIntelGPU = .false.
-      !disable for the moment
-      !if (useGPU) then
-      !  if (gpu_vendor() == INTEL_GPU) then
-      !    useIntelGPU = .true.
-      !  endif
-      !endif
 #endif
 
       call obj%timer%start("merge_systems" // PRECISION_SUFFIX)
@@ -671,11 +659,7 @@
         qtmp1 = 0 ! May contain empty (unset) parts
         qtmp2 = 0 ! Not really needed
 
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useGPU .and. .not.(useIntelGPU) ) then
-#else
         if (useGPU) then
-#endif
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
@@ -771,11 +755,7 @@
 #endif /* WITH_MPI */
           endif
 
-#ifdef WITH_INTEL_GPU_VERSION
-          if (useGPU .and. .not.(useIntelGPU)) then
-#else
           if (useGPU) then
-#endif
             ! copy back after sendrecv
             successGPU = gpu_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice)
@@ -840,11 +820,7 @@
               ev(1:nnzu,i) = zu(1:nnzu) / tmp(1:nnzu) * ev_scale(j)
             enddo
 
-#ifdef WITH_INTEL_GPU_VERSION
-            if(useGPU .and. .not.(useIntelGPU) ) then
-#else
             if (useGPU) then
-#endif
               !TODO: it should be enough to copy l_rows x ncnt
               ! copy to device
               successGPU = gpu_memcpy(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
@@ -862,28 +838,12 @@
 
             if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) then
               if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-                if (useIntelGPU) then
-                  call obj%timer%start("mkl_offload")
-#ifdef WITH_INTEL_GPU_VERSION
-                  call mkl_offload_PRECISION_GEMM('N', 'N', int(l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND), &
-                                    int(nnzu,kind=BLAS_KIND),   &
-                                    1.0_rk, qtmp1, int(ubound(qtmp1,dim=1),kind=BLAS_KIND),    &
-                                    ev, int(ubound(ev,dim=1),kind=BLAS_KIND), &
-                                    1.0_rk, qtmp2(1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
-#endif
-                  call obj%timer%stop("mkl_offload")
-                else ! useIntelGPU
-#endif
-                  call obj%timer%start("gpublas")
-                  call gpublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
-                                      1.0_rk, qtmp1_dev, ubound(qtmp1,dim=1),    &
-                                      ev_dev, ubound(ev,dim=1), &
-                                      1.0_rk, qtmp2_dev, ubound(qtmp2,dim=1))
-                  call obj%timer%stop("gpublas")
-#ifdef WITH_INTEL_GPU_VERSION
-                endif
-#endif
+                call obj%timer%start("gpublas")
+                call gpublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
+                                    1.0_rk, qtmp1_dev, ubound(qtmp1,dim=1),    &
+                                    ev_dev, ubound(ev,dim=1), &
+                                    1.0_rk, qtmp2_dev, ubound(qtmp2,dim=1))
+                call obj%timer%stop("gpublas")
               else ! useGPU
                 call obj%timer%start("blas")
                 call obj%timer%start("gemm")
@@ -911,11 +871,7 @@
               ev(1:nnzl,i) = zl(1:nnzl) / tmp(1:nnzl) * ev_scale(j)
             enddo
 
-#ifdef WITH_INTEL_GPU_VERSION
-            if (useGPU .and. .not.(useIntelGPU) ) then
-#else
             if (useGPU) then
-#endif
               !TODO the previous loop could be possible to do on device and thus
               !copy less
               successGPU = gpu_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
@@ -927,29 +883,12 @@
 
             if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) then
               if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-                if (useIntelGPU) then
-                  call obj%timer%start("mkl_offload")
-#ifdef WITH_INTEL_GPU_VERSION
-                  call mkl_offload_PRECISION_GEMM('N', 'N', int(l_rows-l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND),  &
-                                     int(nnzl,kind=BLAS_KIND),   &
-                                     1.0_rk, qtmp1(l_rnm+1,1), int(ubound(qtmp1,dim=1),kind=BLAS_KIND),    &
-                                     ev,  int(ubound(ev,dim=1),kind=BLAS_KIND),   &
-                                     1.0_rk, qtmp2(l_rnm+1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
-#endif
-                  call obj%timer%stop("mkl_offload")
-
-                else ! useIntelGPU
-#endif
-                  call obj%timer%start("gpublas")
-                  call gpublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
-                                      1.0_rk, qtmp1_dev + l_rnm * size_of_datatype, ubound(qtmp1,dim=1),    &
-                                      ev_dev, ubound(ev,dim=1), &
-                                      1.0_rk, qtmp2_dev + l_rnm * size_of_datatype, ubound(qtmp2,dim=1))
-                  call obj%timer%stop("gpublas")
-#ifdef WITH_INTEL_GPU_VERSION
-                endif
-#endif
+                call obj%timer%start("gpublas")
+                call gpublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
+                                    1.0_rk, qtmp1_dev + l_rnm * size_of_datatype, ubound(qtmp1,dim=1),    &
+                                    ev_dev, ubound(ev,dim=1), &
+                                    1.0_rk, qtmp2_dev + l_rnm * size_of_datatype, ubound(qtmp2,dim=1))
+                call obj%timer%stop("gpublas")
               else ! useGPU
                 call obj%timer%start("blas")
                 call obj%timer%start("gemm")
@@ -963,11 +902,7 @@
               endif ! useGPU
             endif
 
-#ifdef WITH_INTEL_GPU_VERSION
-            if (useGPU .and. .not.(useIntelGPU) ) then
-#else
             if (useGPU) then
-#endif
               !TODO either copy only half of the matrix here, and get rid of the
               !previous copy or copy whole array here
 
@@ -987,11 +922,7 @@
           enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
         enddo    !do np = 1, npc_n
 
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useGPU .and. .not.(useIntelGPU) ) then
-#else
         if (useGPU) then
-#endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
