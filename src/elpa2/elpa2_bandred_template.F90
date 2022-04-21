@@ -225,10 +225,6 @@ max_threads, isSkewsymmetric)
   integer(kind=ik)                            :: max_threads_used
   logical                                     :: do_memcpy
   integer(kind=ik)                            :: i_blk,blk_off, blk_end
-#ifdef WITH_INTEL_GPU_VERSION
-  logical                                     :: useIntelGPU
-#endif
-
 
   integer(kind=MPI_KIND)                      :: bcast_request, allreduce_request1, allreduce_request2, &
                                                  allreduce_request3, allreduce_request4, allreduce_request5, &
@@ -288,22 +284,9 @@ max_threads, isSkewsymmetric)
     useNonBlockingCollectivesCols = .false.
   endif
 
-#ifdef WITH_INTEL_GPU_VERSION
-  useIntelGPU = .false.
-  !if (useGPU) then
-  !  if (gpu_vendor() == INTEL_GPU) then
-  !    useIntelGPU = .true.
-  !  endif
-  !endif
-#endif
-
   useGPU_reduction_lower_block_to_tridiagonal = .false.
  
-#ifdef WITH_INTEL_GPU_VERSION
-  if (useGPU .and. .not.(useIntelGPU)) then
-#else
   if (useGPU) then
-#endif
     useGPU_reduction_lower_block_to_tridiagonal = .true.
 #if REALCASE == 1
     if (useQR) then
@@ -313,19 +296,6 @@ max_threads, isSkewsymmetric)
     endif
 #endif
   endif
-
-#ifdef WITH_INTEL_GPU_VERSION
-  if (useIntelGPU) then
-    useGPU_reduction_lower_block_to_tridiagonal = .true.
-#if REALCASE == 1
-    if (useQR) then
-      !in this case switch off GPU usage for step "reduce current block to lower triangular form"
-      ! since this is done by QR decomposition
-      useGPU_reduction_lower_block_to_tridiagonal = .false.
-    endif
-#endif
-  endif
-#endif
 
   if (wantDebug) call obj%timer%start("mpi_communication")
 
@@ -360,11 +330,7 @@ max_threads, isSkewsymmetric)
   endif
 
   ! na_rows in used nowhere; only na_cols
-#ifdef WITH_INTEL_GPU_VERSION
-  if (useGPU .and. .not.(useIntelGPU)) then
-#else
   if (useGPU) then
-#endif
 
     ! Here we convert the regular host array into a pinned host array
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols* size_of_datatype)
@@ -454,11 +420,7 @@ max_threads, isSkewsymmetric)
 #endif /* REALCASE */
 
   blk_end = (na-1)/nbw
-#ifdef WITH_INTEL_GPU_VERSION
-  if (useGPU .and. .not.(useIntelGPU)) then
-#else
   if (useGPU) then
-#endif
  
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
@@ -560,66 +522,47 @@ max_threads, isSkewsymmetric)
     ! Allocate vmr and umc to their exact sizes so that they can be used in bcasts and reduces
 
     if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useIntelGPU) then
-        ! unify the the name vmr and vmrCPU, as well as vmrGPU
-        ! the same for umcCPU and umcGPU
-        ! Allocate vmr and umcCPU to their exact sizes so that they can be used in bcasts and reduces
-
-        allocate(vmrCPU(max_l_rows,2*n_cols), stat=istat, errmsg=errorMessage)
-        check_allocate("bandred: vmrCPU", istat, errorMessage)
-
-        allocate(umcCPU(max_l_cols,2*n_cols), stat=istat, errmsg=errorMessage)
-        check_allocate("bandred: umcCPU", istat, errorMessage)
-
-        allocate(vr(l_rows+1), stat=istat, errmsg=errorMessage)
-        check_allocate("bandred: vr", istat, errorMessage)
-      else ! useIntelGPU
-#endif
 #ifndef WITH_OPENMP_TRADITIONAL
-        vmr_size = max_l_rows * 2 * n_cols
-        umc_size = max_l_cols * 2 * n_cols
+      vmr_size = max_l_rows * 2 * n_cols
+      umc_size = max_l_cols * 2 * n_cols
 #else
-        allocate(vr(l_rows + 1), stat=istat, errmsg=errorMessage)
-        check_allocate("bandred: vr", istat, errorMessage)
+      allocate(vr(l_rows + 1), stat=istat, errmsg=errorMessage)
+      check_allocate("bandred: vr", istat, errorMessage)
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
-          successGPU = gpu_malloc_host(vmr_host,max_l_rows*2*n_cols*size_of_datatype)
-          check_host_alloc_gpu("bandred: vmr_host", successGPU)
-          call c_f_pointer(vmr_host, vmrGPU, [max_l_rows*2*n_cols])
-          call c_f_pointer(vmr_host, vmrGPU_2d, [max_l_rows,2*n_cols])
+        successGPU = gpu_malloc_host(vmr_host,max_l_rows*2*n_cols*size_of_datatype)
+        check_host_alloc_gpu("bandred: vmr_host", successGPU)
+        call c_f_pointer(vmr_host, vmrGPU, [max_l_rows*2*n_cols])
+        call c_f_pointer(vmr_host, vmrGPU_2d, [max_l_rows,2*n_cols])
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-        else
-          allocate(vmrGPU(max_l_rows*2*n_cols))
-          allocate(vmrGPU_2d(max_l_rows,2*n_cols))
-        endif
+      else
+        allocate(vmrGPU(max_l_rows*2*n_cols))
+        allocate(vmrGPU_2d(max_l_rows,2*n_cols))
+      endif
 #endif
 
-        successGPU = gpu_malloc(vmr_dev, max_l_rows*2*n_cols*size_of_datatype)
-        check_alloc_gpu("bandred: vmr_dev", successGPU)
+      successGPU = gpu_malloc(vmr_dev, max_l_rows*2*n_cols*size_of_datatype)
+      check_alloc_gpu("bandred: vmr_dev", successGPU)
 
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
-          successGPU = gpu_malloc_host(umc_host,max_l_cols*2*n_cols*size_of_datatype)
-          check_host_alloc_gpu("bandred: umc_host", successGPU)
-          call c_f_pointer(umc_host, umcGPU, [max_l_cols*2*n_cols])
-          call c_f_pointer(umc_host, umcGPU_2d, [max_l_cols,2*n_cols])
+        successGPU = gpu_malloc_host(umc_host,max_l_cols*2*n_cols*size_of_datatype)
+        check_host_alloc_gpu("bandred: umc_host", successGPU)
+        call c_f_pointer(umc_host, umcGPU, [max_l_cols*2*n_cols])
+        call c_f_pointer(umc_host, umcGPU_2d, [max_l_cols,2*n_cols])
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-        else
-          allocate(umcGPU(max_l_cols*2*n_cols))
-          allocate(umcGPU_2d(max_l_cols,2*n_cols))
-        endif
+      else
+        allocate(umcGPU(max_l_cols*2*n_cols))
+        allocate(umcGPU_2d(max_l_cols,2*n_cols))
+      endif
 #endif
 
-        successGPU = gpu_malloc(umc_dev, max_l_cols*2*n_cols*size_of_datatype)
-        check_alloc_gpu("bandred: umc_dev", successGPU)
-#endif
-#ifdef WITH_INTEL_GPU_VERSION
-      endif ! useIntelGPU
+      successGPU = gpu_malloc(umc_dev, max_l_cols*2*n_cols*size_of_datatype)
+      check_alloc_gpu("bandred: umc_dev", successGPU)
 #endif
     else ! GPU not used
 
@@ -639,19 +582,11 @@ max_threads, isSkewsymmetric)
     endif ! use GPU
 
     if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useIntelGPU) then
-        vmrCPU(1:max_l_rows,1:n_cols) = 0.0_rck
-      else
-#endif
-        vmrGPU(1 : max_l_rows * n_cols) = 0.0_rck
+      vmrGPU(1 : max_l_rows * n_cols) = 0.0_rck
 #ifndef WITH_OPENMP_TRADITIONAL
-        umcGPU(1 : umc_size) = 0.0_rck
+      umcGPU(1 : umc_size) = 0.0_rck
 #else
-        umcGPU(1: max_l_cols*2*n_cols) = 0.0_rck
-#endif
-#ifdef WITH_INTEL_GPU_VERSION
-      endif
+      umcGPU(1: max_l_cols*2*n_cols) = 0.0_rck
 #endif
     else ! useGPU
       vmrCPU(1:l_rows,1:n_cols) = 0.0_rck
@@ -660,11 +595,7 @@ max_threads, isSkewsymmetric)
 
     vr(:) = 0.0_rck
     tmat(:,:,istep) = 0.0_rck
-#ifdef WITH_INTEL_GPU_VERSION
-    if (useGPU .and. .not.(useIntelGPU)) then
-#else
     if (useGPU) then
-#endif
       lc_start = local_index(istep*nbw+1, my_pcol, np_cols, nblk, -1)
       lc_end   = local_index(istep*nbw+n_cols, my_pcol, np_cols, nblk, -1)
       lr_end   = local_index((istep-1)*nbw + n_cols, my_prow, np_rows, nblk, -1)
@@ -838,11 +769,7 @@ max_threads, isSkewsymmetric)
         endif
 #endif /* WITH_MPI */
 
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useGPU_reduction_lower_block_to_tridiagonal .and. .not.(useIntelGPU)) then
-#else
         if (useGPU_reduction_lower_block_to_tridiagonal) then
-#endif
           vmrGPU(max_l_rows * (lc - 1) + 1 : max_l_rows * (lc - 1) + lr) = vr(1:lr)
         else
           vmrCPU(1:lr,lc) = vr(1:lr)
@@ -996,11 +923,7 @@ max_threads, isSkewsymmetric)
 #endif /* WITH_OPENMP_TRADITIONAL */
       enddo ! lc
 
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useGPU_reduction_lower_block_to_tridiagonal .and. .not.(useIntelGPU)) then
-#else
       if (useGPU_reduction_lower_block_to_tridiagonal) then
-#endif
         ! store column tiles back to GPU
         if (do_memcpy) then
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -1025,24 +948,14 @@ max_threads, isSkewsymmetric)
           endif
 #endif
         endif ! do_memcopy
-      endif ! (useGPU_reduction_lower_block_to_tridiagonal .and. .not.(useIntelGPU)
-
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useGPU_reduction_lower_block_to_tridiagonal .and. useIntelGPU) then
-        ! store column tiles back to GPU
-      endif
-#endif
+      endif ! (useGPU_reduction_lower_block_to_tridiagonal
 
       ! Calculate scalar products of stored Householder vectors.
       ! This can be done in different ways, we use dsyrk
 
       vav = 0
       call obj%timer%start("blas")
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useGPU_reduction_lower_block_to_tridiagonal .and. .not.(useIntelGPU)) then
-#else
       if (useGPU_reduction_lower_block_to_tridiagonal) then
-#endif
         if (l_rows > 0) &
 #if REALCASE == 1
         call PRECISION_SYRK('U', 'T',            &
@@ -1103,75 +1016,49 @@ max_threads, isSkewsymmetric)
 
 #if REALCASE == 1
     if (useGPU .and. useQR ) then
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useIntelGPU) then
-        ! copy the data for furhter usage
-        ! qr worked on *CPU arrarys
-        !vmrCUDA(1:max_l_rows * n_cols) = vmrCPU(1:max_l_rows,1:n_cols)
-      else
-#endif
-        ! copy the data for furhter usage
-        ! qr worked on *CPU arrarys
-        !vmrGPU(1:max_l_rows * n_cols) = vmrCPU(1:max_l_rows,1:n_cols)
-        if (do_memcpy) then
+      ! copy the data for furhter usage
+      ! qr worked on *CPU arrarys
+      !vmrGPU(1:max_l_rows * n_cols) = vmrCPU(1:max_l_rows,1:n_cols)
+      if (do_memcpy) then
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
-            successGPU = gpu_memcpy2d((a_dev+ &
-                         int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
-                         int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
-                         int(matrixRows*size_of_datatype,kind=c_intptr_t), &
-                         int(lr_end*size_of_datatype,kind=c_intptr_t), &
-                         int((lc_end - lc_start+1),kind=c_intptr_t), &
-                         int(gpuMemcpyHostToDevice,kind=c_int))
-            check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
+          successGPU = gpu_memcpy2d((a_dev+ &
+                       int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
+                       int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
+                       int(matrixRows*size_of_datatype,kind=c_intptr_t), &
+                       int(lr_end*size_of_datatype,kind=c_intptr_t), &
+                       int((lc_end - lc_start+1),kind=c_intptr_t), &
+                       int(gpuMemcpyHostToDevice,kind=c_int))
+          check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-          else
-            do memcols = lc_start, lc_end
-              successGPU = gpu_memcpy(a_dev + int(((memcols-1) * matrixRows*size_of_datatype),kind=c_intptr_t), &
-                                     int(loc(a_mat(1,memcols)),kind=c_intptr_t), &
-                                     int(lr_end*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
-              check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
-            enddo
-          endif
+        else
+          do memcols = lc_start, lc_end
+            successGPU = gpu_memcpy(a_dev + int(((memcols-1) * matrixRows*size_of_datatype),kind=c_intptr_t), &
+                                   int(loc(a_mat(1,memcols)),kind=c_intptr_t), &
+                                   int(lr_end*size_of_datatype,kind=c_intptr_t), gpuMemcpyHostToDevice)
+            check_memcpy_gpu("bandred: a_dev -> a_mat (loop)", successGPU)
+          enddo
+        endif
 #endif
-        endif ! do_memcpy
-#ifdef WITH_INTEL_GPU_VERSION
-      endif ! useIntelGPU
-#endif
+      endif ! do_memcpy
     endif ! useGPU .and. useQR
 #endif
 
     ! Transpose vmr -> vmc (stored in umc, second half)
     if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useIntelGPU) then
-        call elpa_transpose_vectors_&
-             &MATH_DATATYPE&
-             &_&
-             &PRECISION &
-                                          (obj, vmrCPU, max_l_rows, mpi_comm_rows, &
-                                           umcCPU(1,n_cols+1), max_l_cols, mpi_comm_cols, &
-                                           1, istep*nbw, n_cols, nblk, max_threads_used, .true.)
-
-      else
-#endif
-        call elpa_transpose_vectors_&
-             &MATH_DATATYPE&
-             &_&
-             &PRECISION &
-                          (obj, vmrGPU(:), max_l_rows, mpi_comm_rows, &
-                           umcGPU(max_l_cols * n_cols + 1:), max_l_cols, &
-                           mpi_comm_cols, 1, istep*nbw, n_cols, nblk, max_threads_used, .true., &
-                           success)
-        if (.not.(success)) then
-          write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
-          return
-        endif
-
-#ifdef WITH_INTEL_GPU_VERSION
+      call elpa_transpose_vectors_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION &
+                        (obj, vmrGPU(:), max_l_rows, mpi_comm_rows, &
+                         umcGPU(max_l_cols * n_cols + 1:), max_l_cols, &
+                         mpi_comm_cols, 1, istep*nbw, n_cols, nblk, max_threads_used, .true., &
+                         success)
+      if (.not.(success)) then
+        write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
+        return
       endif
-#endif
     else ! useGPU
       call elpa_transpose_vectors_&
            &MATH_DATATYPE&
@@ -1201,43 +1088,21 @@ max_threads, isSkewsymmetric)
     n_way = max_threads_used
     if (n_way > 1) then
       if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useIntelGPU) then
-          !$omp parallel do num_threads(max_threads_used) &
-          !$omp default(none) &
-          !$omp private(i) &
-          !$omp shared(l_cols_tile, l_cols, umcCPU, n_cols)
-          do i=1,min(l_cols_tile, l_cols)
-            umcCPU(i,1:n_cols) = 0.0_rck
-          enddo
-
-          !$omp parallel do num_threads(max_threads_used) &
-          !$omp default(none) &
-          !$omp private(i) &
-          !$omp shared(l_rows, vmrCPU, n_cols)
-          do i=1,l_rows
-            vmrCPU(i,n_cols+1:2*n_cols) = 0.0_rck
-          enddo
-        else ! useIntelGPU
-#endif
-                !$omp parallel do num_threads(max_threads_used) &
-          !$omp default(none) &
-          !$omp private(i) &
-          !$omp shared(l_cols_tile, l_cols, umcGPU_2d, n_cols)
-          do i=1,min(l_cols_tile, l_cols)
-            umcGPU_2d(i,1:n_cols) = 0.0_rck
-          enddo
+        !$omp parallel do num_threads(max_threads_used) &
+        !$omp default(none) &
+        !$omp private(i) &
+        !$omp shared(l_cols_tile, l_cols, umcGPU_2d, n_cols)
+        do i=1,min(l_cols_tile, l_cols)
+          umcGPU_2d(i,1:n_cols) = 0.0_rck
+        enddo
       
-          !$omp parallel do num_threads(max_threads_used) &
-          !$omp default(none) &
-          !$omp private(i) &
-          !$omp shared(l_rows, vmrGPU_2d, n_cols)
-          do i=1,l_rows
-            vmrGPU_2d(i,n_cols+1:2*n_cols) = 0.0_rck
-          enddo
-#ifdef WITH_INTEL_GPU_VERSION
-        endif ! useIntelGPU
-#endif
+        !$omp parallel do num_threads(max_threads_used) &
+        !$omp default(none) &
+        !$omp private(i) &
+        !$omp shared(l_rows, vmrGPU_2d, n_cols)
+        do i=1,l_rows
+          vmrGPU_2d(i,n_cols+1:2*n_cols) = 0.0_rck
+        enddo
       else ! useGPU
               !$omp parallel do num_threads(max_threads_used) &
         !$omp default(none) &
@@ -1256,11 +1121,7 @@ max_threads, isSkewsymmetric)
         enddo
       endif ! useGPU
 
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useGPU .and. .not.(useIntelGPU)) then
-#else
       if (useGPU) then
-#endif
         successGPU = gpu_memcpy(vmr_dev, int(loc(vmrGPU_2d(1,1)),kind=c_intptr_t), &
                      max_l_rows*2*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("bandred: vmrGPU_2d -> vmr_dev", successGPU)
@@ -1293,9 +1154,6 @@ max_threads, isSkewsymmetric)
         !$omp  private(i, lcs, lce, lrs, lre, myThreadID, successGPU) &
         !$omp  shared(istep, nbw, tile_size, obj, l_cols, l_cols_tile, l_rows, isSkewsymmetric, &
         !$omp&       n_cols, l_rows_tile, umcCPU, vmrCPU, a_mat, matrixRows, max_l_cols, max_l_rows, &
-#ifdef WITH_INTEL_GPU_VERSION
-        !$omp&       useIntelGPU, &
-#endif
         !$omp&       useGPU, a_dev, umc_dev, vmr_dev, gpuDeviceArray)
         do i=0,(istep*nbw-1)/tile_size
           myThreadID=omp_get_thread_num()
@@ -1312,42 +1170,19 @@ max_threads, isSkewsymmetric)
           !                 B2]
           if ( lre > lrs .and. l_cols > lcs ) then
             if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-              if (useIntelGPU) then
-                call obj%timer%start("blas")
-                if (isSkewsymmetric) then
-                  call PRECISION_GEMM('N', 'N', int(lre-lrs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
-                                      int(l_cols-lcs+1,kind=BLAS_KIND),                                    &
-                                      -ONE, a_mat(lrs,lcs), int(matrixRows,kind=BLAS_KIND),       &
-                                      umcCPU(lcs,n_cols+1), int(max_l_cols,kind=BLAS_KIND),      &
-                                      ZERO, vmrCPU(lrs,n_cols+1), int(max_l_rows,kind=BLAS_KIND) )
-                else
-                  call PRECISION_GEMM('N', 'N', int(lre-lrs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
-                                      int(l_cols-lcs+1,kind=BLAS_KIND),                                    &
-                                      ONE, a_mat(lrs,lcs), int(matrixRows,kind=BLAS_KIND),        &
-                                      umcCPU(lcs,n_cols+1), int(max_l_cols,kind=BLAS_KIND),      &
-                                      ZERO, vmrCPU(lrs,n_cols+1), int(max_l_rows,kind=BLAS_KIND) )
-
-                endif
-                call obj%timer%stop("blas")
-              else ! useIntelGPU
-#endif
-                call obj%timer%start("gpublas")
-                if (isSkewsymmetric) then
-                  call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
-                                      -ONE, a_dev + (lrs-1 + (lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
-                                      umc_dev + (lcs-1 + (n_cols+1+1)*max_l_cols)*size_of_datatype, max_l_cols, &
-                                      ZERO, vmr_dev + (lrs-1+(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows)
-                else
-                  call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
-                                      ONE, a_dev + (lrs-1 +(lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
-                                      umc_dev+(lcs-1+(n_cols+1-1)*max_l_cols)*size_of_datatype, max_l_cols,    &
-                                      ZERO, vmr_dev + (lrs-1 +(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows)
-                endif
-                call obj%timer%stop("gpublas")
-#ifdef WITH_INTEL_GPU_VERSION
-              endif ! useIntelGPU
-#endif
+              call obj%timer%start("gpublas")
+              if (isSkewsymmetric) then
+                call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
+                                    -ONE, a_dev + (lrs-1 + (lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
+                                    umc_dev + (lcs-1 + (n_cols+1+1)*max_l_cols)*size_of_datatype, max_l_cols, &
+                                    ZERO, vmr_dev + (lrs-1+(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows)
+              else
+                call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
+                                    ONE, a_dev + (lrs-1 +(lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
+                                    umc_dev+(lcs-1+(n_cols+1-1)*max_l_cols)*size_of_datatype, max_l_cols,    &
+                                    ZERO, vmr_dev + (lrs-1 +(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows)
+              endif
+              call obj%timer%stop("gpublas")
             else ! useGPU
               call obj%timer%start("blas")
               if (isSkewsymmetric) then
@@ -1371,26 +1206,12 @@ max_threads, isSkewsymmetric)
           ! C1 += A10' B0
           if ( lce > lcs .and. i > 0 ) then
             if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-              if (useIntelGPU) then
-                call obj%timer%start("blas")
-                call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',     &
-                                  int(lce-lcs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lrs-1,kind=BLAS_KIND), &
-                                  ONE, a_mat(1,lcs), int(matrixRows,kind=BLAS_KIND),      &
-                                  vmrCPU(1,1), int(max_l_rows,kind=BLAS_KIND),   &
-                                  ZERO, umcCPU(lcs,1), int(max_l_cols,kind=BLAS_KIND) )
-                call obj%timer%stop("blas")
-              else ! useIntelGPU
-#endif
-                call obj%timer%start("gpublas")
-                call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', lce-lcs+1, n_cols, lrs-1,    &
-                                     ONE, a_dev+(1-1+(lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
-                                     vmr_dev + (1-1 +(1-1)*max_l_rows)*size_of_datatype, max_l_rows, &
-                                     ZERO, umc_dev+(lcs-1 +(1-1)*max_l_cols)*size_of_datatype, max_l_cols)
-                call obj%timer%stop("gpublas")
-#ifdef WITH_INTEL_GPU_VERSION
-              endif ! useIntelGPU
-#endif
+              call obj%timer%start("gpublas")
+              call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', lce-lcs+1, n_cols, lrs-1,    &
+                                   ONE, a_dev+(1-1+(lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
+                                   vmr_dev + (1-1 +(1-1)*max_l_rows)*size_of_datatype, max_l_rows, &
+                                   ZERO, umc_dev+(lcs-1 +(1-1)*max_l_cols)*size_of_datatype, max_l_cols)
+              call obj%timer%stop("gpublas")
             else ! useGPU
               call obj%timer%start("blas")
               call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',     &
@@ -1404,11 +1225,7 @@ max_threads, isSkewsymmetric)
         enddo ! i=0,(istep*nbw-1)/tile_size
       endif ! l_cols>0 .and. l_rows>0
 
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useGPU .and. .not.(useIntelGPU)) then
-#else
       if (useGPU) then
-#endif
         successGPU = gpu_memcpy(int(loc(vmrGPU(1)),kind=c_intptr_t), vmr_dev, &
                      max_l_rows*2*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("bandred: vmr_dev -> vmrGPU", successGPU)
@@ -1422,22 +1239,14 @@ max_threads, isSkewsymmetric)
     else ! n_way > 1
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-#ifdef WITH_INTEL_GPU_VERSION
-      if (.not. useGPU .or. useIntelGPU) then
-#else
       if (.not.useGPU) then
-#endif
         umcCPU(1:l_cols,1:n_cols) = 0.0_rck
         vmrCPU(1:l_rows,n_cols+1:2*n_cols) = 0.0_rck
       endif ! useGPU
 
       if (l_cols > 0 .and. l_rows > 0) then
 
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useGPU .and. .not.(useIntelGPU)) then
-#else
         if (useGPU) then
-#endif
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
@@ -1494,112 +1303,53 @@ max_threads, isSkewsymmetric)
           lre = min(l_rows,(i+1)*l_rows_tile)
 
           if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-            if (useIntelGPU) then
-              call obj%timer%start("mkl_offload")
-#if 0
-              call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',       &
-                                  int(lce-lcs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lre,kind=BLAS_KIND), &
-                                  ONE, a_mat(1,lcs), matrixRows,kind=BLAS_KIND), &
-                                  vmrCPU, int(max_l_rows,kind=BLAS_KIND), ONE, umcCPU(lcs,1), &
-                                  int(max_l_cols,kind=BLAS_KIND) )
-#endif
-#ifdef WITH_INTEL_GPU_VERSION
-              call mkl_offload_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',       &
-                                  int(lce-lcs+1,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lre,kind=BLAS_KIND), &
-                                  ONE, a_mat(1,lcs), int(matrixRows,kind=BLAS_KIND), &
-                                  vmrCPU, int(max_l_rows,kind=BLAS_KIND), ONE, umcCPU(lcs,1), &
-                                  int(max_l_cols,kind=BLAS_KIND) )
-#endif
-              call obj%timer%stop("mkl_offload")
-              if (i == 0) cycle
-              lre = min(l_rows,i*l_rows_tile)
-              call obj%timer%start("mkl_offload")
-
-              if (isSkewsymmetric) then
-#if 0
-                call PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
-                                    -ONE, a_mat(1,lcs), int(matrixRows,kind=BLAS_KIND),                                           &
-                                    umcCPU(lcs,n_cols+1), int(max_l_cols,kind=BLAS_KIND), ONE,                          &
-                                    vmrCPU(1,n_cols+1), int(max_l_rows, kind=BLAS_KIND) )
-#endif
-#ifdef WITH_INTEL_GPU_VERSION
-                call mkl_offload_PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
-                        int(lce-lcs+1,kind=BLAS_KIND), &
-                                    -ONE, a_mat(1,lcs), int(matrixRows,kind=BLAS_KIND),                                          &
-                                    umcCPU(lcs,n_cols+1), int(max_l_cols,kind=BLAS_KIND), ONE,                          &
-                                    vmrCPU(1,n_cols+1), int(max_l_rows, kind=BLAS_KIND) )
-#endif
-
-              else
-#if 0
-                call PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
-                                    ONE, a_mat(1,lcs), int(matrixRows,kind=BLAS_KIND),                                            &
-                                    umcCPU(lcs,n_cols+1), int(max_l_cols,kind=BLAS_KIND), ONE,                          &
-                                    vmrCPU(1,n_cols+1), int(max_l_rows, kind=BLAS_KIND) )
-#endif
-#ifdef WITH_INTEL_GPU_VERSION
-                call mkl_offload_PRECISION_GEMM('N', 'N', int(lre,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
-                        int(lce-lcs+1,kind=BLAS_KIND), &
-                                    ONE, a_mat(1,lcs), int(matrixRows,kind=BLAS_KIND),                                  &
-                                    umcCPU(lcs,n_cols+1), int(max_l_cols,kind=BLAS_KIND), ONE,                          &
-                                    vmrCPU(1,n_cols+1), int(max_l_rows, kind=BLAS_KIND) )
-#endif
-              endif
-              call obj%timer%stop("mkl_offload")
-
-            else ! useIntelGPU
-#endif /* WITH_INTEL_GPU_VERSION */
-              call obj%timer%start("gpublas")
+            call obj%timer%start("gpublas")
 #ifndef WITH_OPENMP_TRADITIONAL
-              call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
-                                         lce-lcs+1, n_cols, lre,     &
-                                         ONE, (a_dev + ((lcs-1)*matrixRows* &
-                                         size_of_datatype)),         &
-                                         matrixRows, vmr_dev,max_l_rows,    &
-                                         ONE, (umc_dev+ (lcs-1)*     &
-                                             size_of_datatype),      &
-                                         max_l_cols)
+            call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
+                                       lce-lcs+1, n_cols, lre,     &
+                                       ONE, (a_dev + ((lcs-1)*matrixRows* &
+                                       size_of_datatype)),         &
+                                       matrixRows, vmr_dev,max_l_rows,    &
+                                       ONE, (umc_dev+ (lcs-1)*     &
+                                           size_of_datatype),      &
+                                       max_l_cols)
 #else
-              call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
-                                         lce-lcs+1, n_cols, lre,     &
-                                         ONE, (a_dev + (1-1+(lcs-1)*matrixRows* &
-                                         size_of_datatype)),         &
-                                         matrixRows, vmr_dev,max_l_rows,    &
-                                         ONE, (umc_dev+ (lcs-1)*     &
-                                             size_of_datatype),      &
-                                         max_l_cols)
+            call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
+                                       lce-lcs+1, n_cols, lre,     &
+                                       ONE, (a_dev + (1-1+(lcs-1)*matrixRows* &
+                                       size_of_datatype)),         &
+                                       matrixRows, vmr_dev,max_l_rows,    &
+                                       ONE, (umc_dev+ (lcs-1)*     &
+                                           size_of_datatype),      &
+                                       max_l_cols)
 #endif
 
-              call obj%timer%stop("gpublas")
+            call obj%timer%stop("gpublas")
 
-              if(i == 0) cycle
-              call obj%timer%start("gpublas")
+            if(i == 0) cycle
+            call obj%timer%start("gpublas")
 
-              lre = min(l_rows,i*l_rows_tile)
-              if (isSkewsymmetric) then
-                call gpublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, -ONE, &
-                              (a_dev+ ((lcs-1)*matrixRows*                 &
-                                    size_of_datatype)),             &
-                         matrixRows, (umc_dev+(max_l_cols * n_cols+lcs-1)* &
-                                size_of_datatype),              &
-                                max_l_cols, ONE, (vmr_dev+(max_l_rows * n_cols)* &
+            lre = min(l_rows,i*l_rows_tile)
+            if (isSkewsymmetric) then
+              call gpublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, -ONE, &
+                            (a_dev+ ((lcs-1)*matrixRows*                 &
+                                  size_of_datatype)),             &
+                       matrixRows, (umc_dev+(max_l_cols * n_cols+lcs-1)* &
                               size_of_datatype),              &
-                                max_l_rows)
-              else
-                call gpublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
-                                            (a_dev+ ((lcs-1)*matrixRows*                 &
-                                                  size_of_datatype)),             &
-                                       matrixRows, (umc_dev+(max_l_cols * n_cols+lcs-1)* &
-                                              size_of_datatype),              &
-                                              max_l_cols, ONE, (vmr_dev+(max_l_rows * n_cols)* &
+                              max_l_cols, ONE, (vmr_dev+(max_l_rows * n_cols)* &
+                            size_of_datatype),              &
+                              max_l_rows)
+            else
+              call gpublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
+                                          (a_dev+ ((lcs-1)*matrixRows*                 &
+                                                size_of_datatype)),             &
+                                     matrixRows, (umc_dev+(max_l_cols * n_cols+lcs-1)* &
                                             size_of_datatype),              &
-                                              max_l_rows)
-              endif
-              call obj%timer%stop("gpublas")
-#ifdef WITH_INTEL_GPU_VERSION
-            endif ! useIntelGPU
-#endif
+                                            max_l_cols, ONE, (vmr_dev+(max_l_rows * n_cols)* &
+                                          size_of_datatype),              &
+                                            max_l_rows)
+            endif
+            call obj%timer%stop("gpublas")
           else ! useGPU
 
             call obj%timer%start("blas")
@@ -1629,11 +1379,7 @@ max_threads, isSkewsymmetric)
           endif ! useGPU
         enddo ! i=0,(istep*nbw-1)/tile_size
 
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useGPU .and. .not.(useIntelGPU)) then
-#else
         if (useGPU) then
-#endif
           if (tile_size < istep*nbw .or. n_way > 1) then
             successGPU = gpu_memcpy(int(loc(vmrGPU(1+max_l_rows*n_cols)),kind=c_intptr_t), &
                           vmr_dev+max_l_rows*n_cols*size_of_datatype, &
@@ -1663,29 +1409,13 @@ max_threads, isSkewsymmetric)
     if (tile_size < istep*nbw .or. n_way > 1) then
 
       if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useIntelGPU) then
-          call elpa_reduce_add_vectors_&
-          &MATH_DATATYPE&
-          &_&
-          &PRECISION &
-                                      (obj, vmrCPU(1,n_cols+1),max_l_rows,mpi_comm_rows, &
-                                       umcCPU, max_l_cols, mpi_comm_cols, &
-                                      istep*nbw, n_cols, nblk, max_threads_used)
-
-        else ! useIntelGPU
-#endif
-
-          call elpa_reduce_add_vectors_&
-               &MATH_DATATYPE&
-               &_&
-               &PRECISION &
-                               (obj, vmrGPU(max_l_rows * n_cols + 1:),max_l_rows,  &
-                                mpi_comm_rows, umcGPU,                            &
-                                max_l_cols, mpi_comm_cols, istep*nbw, n_cols, nblk, max_threads_used)
-#ifdef WITH_INTEL_GPU_VERSION
-        endif ! useIntelGPU
-#endif
+        call elpa_reduce_add_vectors_&
+             &MATH_DATATYPE&
+             &_&
+             &PRECISION &
+                             (obj, vmrGPU(max_l_rows * n_cols + 1:),max_l_rows,  &
+                              mpi_comm_rows, umcGPU,                            &
+                              max_l_cols, mpi_comm_cols, istep*nbw, n_cols, nblk, max_threads_used)
       else ! useGPU
 
         call elpa_reduce_add_vectors_&
@@ -1701,63 +1431,32 @@ max_threads, isSkewsymmetric)
     if (l_cols > 0) then
 
       if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useIntelGPU) then
-          allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
-          check_allocate("bandred: tmpCPU", istat, errorMessage)
-
 #ifdef WITH_MPI
-          if (useNonBlockingCollectivesRows) then
-            if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-            call mpi_iallreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-                           allreduce_request4, mpierr)
-            call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
-            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-            if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-          else
-            if (wantDebug) call obj%timer%start("mpi_communication")
-            call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-                           mpierr)
-            umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
-            if (wantDebug) call obj%timer%stop("mpi_communication")
-          endif
+        allocate(tmpGPU(l_cols * n_cols), stat=istat, errmsg=errorMessage)
+        check_allocate("bandred: tmpGPU", istat, errorMessage)
+        if (useNonBlockingCollectivesRows) then
+          if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+
+          call mpi_iallreduce(umcGPU, tmpGPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                         MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request5, mpierr)
+          call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
+
+          umcGPU(1 : l_cols * n_cols) = tmpGPU(1 : l_cols * n_cols)
+          if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+        else
+          if (wantDebug) call obj%timer%start("mpi_communication")
+
+          call mpi_allreduce(umcGPU, tmpGPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                         MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+          umcGPU(1 : l_cols * n_cols) = tmpGPU(1 : l_cols * n_cols)
+          if (wantDebug) call obj%timer%stop("mpi_communication")
+        endif
 #endif /* WITH_MPI */
 
-          deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
-          check_deallocate("bandred: tmpCPU", istat, errorMessage)
-        else ! useIntelGPU
-#endif
-#ifdef WITH_MPI
-          allocate(tmpGPU(l_cols * n_cols), stat=istat, errmsg=errorMessage)
-          check_allocate("bandred: tmpGPU", istat, errorMessage)
-          if (useNonBlockingCollectivesRows) then
-            if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-
-            call mpi_iallreduce(umcGPU, tmpGPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request5, mpierr)
-            call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
-
-            umcGPU(1 : l_cols * n_cols) = tmpGPU(1 : l_cols * n_cols)
-            if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-          else
-            if (wantDebug) call obj%timer%start("mpi_communication")
-
-            call mpi_allreduce(umcGPU, tmpGPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-            umcGPU(1 : l_cols * n_cols) = tmpGPU(1 : l_cols * n_cols)
-            if (wantDebug) call obj%timer%stop("mpi_communication")
-          endif
-#endif /* WITH_MPI */
-
-          if (allocated(tmpGPU)) then
-            deallocate(tmpGPU, stat=istat, errmsg=errorMessage)
-            check_deallocate("bandred: tmpGPU", istat, errorMessage)
-          endif
-#ifdef WITH_INTEL_GPU_VERSION
-        endif ! useIntelGPU
-#endif
+        if (allocated(tmpGPU)) then
+          deallocate(tmpGPU, stat=istat, errmsg=errorMessage)
+          check_deallocate("bandred: tmpGPU", istat, errorMessage)
+        endif
 
       else ! useGPU
 
@@ -1789,81 +1488,33 @@ max_threads, isSkewsymmetric)
     ! U = U * Tmat**T
 
     if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useIntelGPU) then
-        call obj%timer%start("mkl_offload")
+      successGPU = gpu_memcpy(umc_dev, int(loc(umcGPU(1)),kind=c_intptr_t), &
+                    l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("bandred: umcGPU -> umc_dev ", successGPU)
 
-        call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',     &
-                          int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
-                          int(nbw,kind=BLAS_KIND), &
-                          umcCPU, int(max_l_cols,kind=BLAS_KIND))
+      successGPU = gpu_memcpy(tmat_dev,int(loc(tmat(1,1,istep)),kind=c_intptr_t), &
+                    nbw*nbw*size_of_datatype,gpuMemcpyHostToDevice)
+      check_memcpy_gpu("bandred: tmat -> tmat_dev ", successGPU)
 
-        ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+      call obj%timer%start("gpublas")
+      call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
+                          l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, max_l_cols)
+      call obj%timer%stop("gpublas")
 
-        call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',              &
-                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
-                          ONE, umcCPU, int(max_l_cols,kind=BLAS_KIND), umcCPU(1,n_cols+1), &
-                          int(max_l_cols,kind=BLAs_KIND), ZERO, vav, int(nbw,kind=BLAS_KIND))
+      ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
+      call obj%timer%start("gpublas")
+      call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',             &
+                               n_cols, n_cols, l_cols, ONE, umc_dev, max_l_cols, &
+                               (umc_dev+(max_l_cols * n_cols )*size_of_datatype),max_l_cols, &
+                               ZERO, vav_dev, nbw)
 
-        call PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
-                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep),    &
-                          int(nbw,kind=BLAS_KIND), vav, int(nbw,kind=BLAS_KIND) )
-        call obj%timer%stop("mkl_offload")
-#ifdef WITH_INTEL_GPU_VERSION
-#if 0
-        call obj%timer%start("mkl_offload")
+      call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
+         n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
+      call obj%timer%stop("gpublas")
 
-        call mkl_offload_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',     &
-                          int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep), &
-                          int(nbw,kind=BLAS_KIND), &
-                          umcCPU, int(max_l_cols,kind=BLAS_KIND))
-
-        ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-
-        call mkl_offload_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',              &
-                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
-                          ONE, umcCPU, int(max_l_cols,kind=BLAS_KIND), umcCPU(1,n_cols+1), &
-                          int(max_l_cols,kind=BLAs_KIND), ZERO, vav, int(nbw,kind=BLAS_KIND))
-
-        call mkl_offload_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
-                          int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), ONE, tmat(1,1,istep),    &
-                          int(nbw,kind=BLAS_KIND), vav, int(nbw,kind=BLAS_KIND) )
-         call obj%timer%stop("mkl_offload")
-#endif
-#endif
-
-      else ! useIntelGPU
-#endif
-        successGPU = gpu_memcpy(umc_dev, int(loc(umcGPU(1)),kind=c_intptr_t), &
-                      l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("bandred: umcGPU -> umc_dev ", successGPU)
-
-        successGPU = gpu_memcpy(tmat_dev,int(loc(tmat(1,1,istep)),kind=c_intptr_t), &
-                      nbw*nbw*size_of_datatype,gpuMemcpyHostToDevice)
-        check_memcpy_gpu("bandred: tmat -> tmat_dev ", successGPU)
-
-        call obj%timer%start("gpublas")
-        call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
-                            l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, max_l_cols)
-        call obj%timer%stop("gpublas")
-
-        ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
-        call obj%timer%start("gpublas")
-        call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',             &
-                                 n_cols, n_cols, l_cols, ONE, umc_dev, max_l_cols, &
-                                 (umc_dev+(max_l_cols * n_cols )*size_of_datatype),max_l_cols, &
-                                 ZERO, vav_dev, nbw)
-
-        call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
-           n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
-        call obj%timer%stop("gpublas")
-
-        successGPU = gpu_memcpy(int(loc(vav),kind=c_intptr_t), &
-                    vav_dev, nbw*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("bandred: vav_dev -> vav ", successGPU)
-#ifdef WITH_INTEL_GPU_VERSION
-      endif ! useIntelGPU
-#endif
+      successGPU = gpu_memcpy(int(loc(vav),kind=c_intptr_t), &
+                  vav_dev, nbw*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
+      check_memcpy_gpu("bandred: vav_dev -> vav ", successGPU)
     else ! useGPU
 
       call obj%timer%start("blas")
@@ -1916,11 +1567,7 @@ max_threads, isSkewsymmetric)
     endif
 #endif
 
-#ifdef WITH_INTEL_GPU_VERSION
-    if (useGPU .and. .not.(useIntelGPU)) then
-#else
     if (useGPU) then
-#endif
       successGPU = gpu_memcpy(vav_dev, int(loc(vav),kind=c_intptr_t), &
                        nbw*nbw*size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_gpu("bandred: vav -> vav_dev ", successGPU)
@@ -1930,125 +1577,78 @@ max_threads, isSkewsymmetric)
     ! U = U - 0.5 * V * VAV
 
     if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-      if (useIntelGPU) then
-        call obj%timer%start("mkl_offload")
+      call obj%timer%start("gpublas")
+      if (isSkewsymmetric) then
+        call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
-        if (isSkewsymmetric) then
-          call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
-                            0.5_rk, umcCPU(1,n_cols+1), int(max_l_cols,kind=BLAS_KIND), vav,                        &
-                            int(nbw,kind=BLAS_KIND), ONE, umcCPU, int(max_l_cols,kind=BLAS_KIND) )
-        else
-          call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
-                            -0.5_rk, umcCPU(1,n_cols+1), int(max_l_cols,kind=BLAS_KIND), vav,                       &
-                            int(nbw,kind=BLAS_KIND), ONE, umcCPU, int(max_l_cols,kind=BLAS_KIND) )
-        endif
+                                  0.5_rk,                      &
 #endif
 #if COMPLEXCASE == 1
-        call PRECISION_GEMM('N', 'N', int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND),     &
-                         (-0.5_rk, 0.0_rk),     &
-                         umcCPU(1,n_cols+1), int(max_l_cols,kind=BLAS_KIND), vav, &
-                         int(nbw,kind=BLAS_KIND), ONE, umcCPU, int(max_l_cols,kind=BLAS_KIND))
+                                  (0.5_rk, 0.0_rk), &
 #endif
-
-        call obj%timer%stop("mkl_offload")
-
-        ! Transpose umc -> umr (stored in vmr, second half)
-        if (isSkewsymmetric) then
-          call elpa_transpose_vectors_ss_&
-          &MATH_DATATYPE&
-          &_&
-          &PRECISION &
-                                 (obj, umcCPU, max_l_cols, mpi_comm_cols, &
-                                        vmrCPU(1,n_cols+1), max_l_rows, mpi_comm_rows, &
-                                        1, istep*nbw, n_cols, nblk, max_threads_used, .false.)
-        else
-         call elpa_transpose_vectors_&
-         &MATH_DATATYPE&
-         &_&
-         &PRECISION &
-                                (obj, umcCPU, max_l_cols, mpi_comm_cols, &
-                                          vmrCPU(1,n_cols+1), max_l_rows, mpi_comm_rows, &
-                                          1, istep*nbw, n_cols, nblk, max_threads_used, .false.)
-        endif
-
-      else ! useIntelGPU
-#endif
-        call obj%timer%start("gpublas")
-        if (isSkewsymmetric) then
-          call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
+                                  (umc_dev+(max_l_cols * n_cols )* &
+                                  size_of_datatype),   &
+                                  max_l_cols, vav_dev,nbw,        &
+                                  ONE, umc_dev, max_l_cols)
+      else
+        call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
-                                    0.5_rk,                      &
+                                 -0.5_rk,                      &
 #endif
 #if COMPLEXCASE == 1
-                                    (0.5_rk, 0.0_rk), &
+                                 (-0.5_rk, 0.0_rk), &
 #endif
-                                    (umc_dev+(max_l_cols * n_cols )* &
-                                    size_of_datatype),   &
-                                    max_l_cols, vav_dev,nbw,        &
-                                    ONE, umc_dev, max_l_cols)
-        else
-          call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
-#if REALCASE == 1
-                                   -0.5_rk,                      &
-#endif
-#if COMPLEXCASE == 1
-                                   (-0.5_rk, 0.0_rk), &
-#endif
-                                   (umc_dev+(max_l_cols * n_cols )* &
-                                   size_of_datatype),   &
-                                   max_l_cols, vav_dev,nbw,        &
-                                   ONE, umc_dev, max_l_cols)
-        endif
-        call obj%timer%stop("gpublas")
+                                 (umc_dev+(max_l_cols * n_cols )* &
+                                 size_of_datatype),   &
+                                 max_l_cols, vav_dev,nbw,        &
+                                 ONE, umc_dev, max_l_cols)
+      endif
+      call obj%timer%stop("gpublas")
 
-        successGPU = gpu_memcpy(int(loc(umcGPU(1)),kind=c_intptr_t), &
+      successGPU = gpu_memcpy(int(loc(umcGPU(1)),kind=c_intptr_t), &
 #ifndef WITH_OPENMP_TRADITIONAL
-                    umc_dev, umc_size*size_of_datatype, gpuMemcpyDeviceToHost)
+                  umc_dev, umc_size*size_of_datatype, gpuMemcpyDeviceToHost)
 #else
-                    umc_dev, max_l_cols*2*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
+                  umc_dev, max_l_cols*2*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
 #endif
-        check_memcpy_gpu("bandred: umc_dev -> umcGPU ", successGPU)
+      check_memcpy_gpu("bandred: umc_dev -> umcGPU ", successGPU)
 
-        ! Transpose umc -> umr (stored in vmr, second half)
-        if (isSkewsymmetric) then
-          call elpa_transpose_vectors_ss_&
-             &MATH_DATATYPE&
-             &_&
-             &PRECISION &
-                         (obj, umcGPU(:), max_l_cols, mpi_comm_cols, &
-                          vmrGPU(max_l_rows * n_cols + 1:), max_l_rows, mpi_comm_rows, &
-                          1, istep*nbw, n_cols, nblk, max_threads_used, .false., &
-                          success)
-          if (.not.(success)) then
-            write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting..."
-            return
-          endif
-        else
-          call elpa_transpose_vectors_&
-             &MATH_DATATYPE&
-             &_&
-             &PRECISION &
-                         (obj, umcGPU, max_l_cols, mpi_comm_cols, &
-                          vmrGPU(max_l_rows * n_cols + 1:), max_l_rows, mpi_comm_rows, &
-                          1, istep*nbw, n_cols, nblk, max_threads_used, .false., success)
-          if (.not.(success)) then
-            write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
-            return
-          endif
+      ! Transpose umc -> umr (stored in vmr, second half)
+      if (isSkewsymmetric) then
+        call elpa_transpose_vectors_ss_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION &
+                       (obj, umcGPU(:), max_l_cols, mpi_comm_cols, &
+                        vmrGPU(max_l_rows * n_cols + 1:), max_l_rows, mpi_comm_rows, &
+                        1, istep*nbw, n_cols, nblk, max_threads_used, .false., &
+                        success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting..."
+          return
         endif
+      else
+        call elpa_transpose_vectors_&
+           &MATH_DATATYPE&
+           &_&
+           &PRECISION &
+                       (obj, umcGPU, max_l_cols, mpi_comm_cols, &
+                        vmrGPU(max_l_rows * n_cols + 1:), max_l_rows, mpi_comm_rows, &
+                        1, istep*nbw, n_cols, nblk, max_threads_used, .false., success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
+          return
+        endif
+      endif
 
-        successGPU = gpu_memcpy(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
-                    int(loc(vmrGPU(1+max_l_rows*n_cols)),kind=c_intptr_t), &
+      successGPU = gpu_memcpy(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
+                  int(loc(vmrGPU(1+max_l_rows*n_cols)),kind=c_intptr_t), &
 #ifndef WITH_OPENMP_TRADITIONAL
-                    (vmr_size-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyHostToDevice)
+                  (vmr_size-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyHostToDevice)
 #else
-                    (max_l_rows*2*n_cols-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyHostToDevice)
+                  (max_l_rows*2*n_cols-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyHostToDevice)
 #endif
-        check_memcpy_gpu("bandred: vmr -> vmrGPU ", successGPU)
-#ifdef WITH_INTEL_GPU_VERSION
-      endif ! useIntelGPU
-#endif
+      check_memcpy_gpu("bandred: vmr -> vmrGPU ", successGPU)
 
     else ! useGPU
       call obj%timer%start("blas")
@@ -2116,9 +1716,6 @@ max_threads, isSkewsymmetric)
     !$omp&       umc_size, vmr_size, &
 #endif
     !$omp&       matrixCols, &
-#ifdef WITH_INTEL_GPU_VERSION
-    !$omp&       useIntelGPU, &
-#endif
     !$omp&       umccpu, l_cols, a_dev, vmr_dev, useGPU, max_l_rows, umc_dev, max_l_cols, matrixRows)
     n_threads  = omp_get_num_threads()
     myThreadID = omp_get_thread_num()
@@ -2153,41 +1750,25 @@ max_threads, isSkewsymmetric)
       if ( myend > lre ) myend = lre
       if ( myend-mystart+1 < 1) cycle
       if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useIntelGPU) then
-          call obj%timer%start("mkl_offload")
-          call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(myend-mystart+1,kind=BLAS_KIND), &
-                            int(lce-lcs+1,kind=BLAS_KIND), int(2*n_cols,kind=BLAS_KIND), -ONE, &
-                            vmrCPU(mystart, 1), int(max_l_rows,kind=BLAS_KIND), &
-                            umcCPU(lcs,1), int(max_l_cols,kind=BLAS_KIND), &
-                            ONE, a_mat(mystart,lcs), int(matrixRows,kind=BLAS_KIND) )
+        call obj%timer%start("gpublas")
+        ! original
+        !call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1,    &
+        !                         lce-lcs+1, 2*n_cols, -ONE, &
+        !                         vmr_dev, max_l_rows, (umc_dev +(lcs-1)*  &
+        !                         size_of_datatype), &
+        !                         max_l_cols, ONE, (a_dev+(lcs-1)*matrixRows* &
+        !                         size_of_datatype), matrixRows)
 
-          call obj%timer%stop("mkl_offload")
+        ! correct indices
 
-        else ! useIntelGPU
-#endif
-          call obj%timer%start("gpublas")
-          ! original
-          !call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1,    &
-          !                         lce-lcs+1, 2*n_cols, -ONE, &
-          !                         vmr_dev, max_l_rows, (umc_dev +(lcs-1)*  &
-          !                         size_of_datatype), &
-          !                         max_l_cols, ONE, (a_dev+(lcs-1)*matrixRows* &
-          !                         size_of_datatype), matrixRows)
+        call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1,    &
+                                 lce-lcs+1, 2*n_cols, -ONE, &
+                                 vmr_dev+(mystart-1+(1-1)*max_l_rows)*size_of_datatype, max_l_rows, umc_dev +(lcs-1+  &
+                                 (1-1)*max_l_cols)*size_of_datatype, &
+                                 max_l_cols, ONE, a_dev+(mystart-1+(lcs-1)*matrixRows)* &
+                                 size_of_datatype, matrixRows, threadID=myThreadID)
 
-          ! correct indices
-
-          call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1,    &
-                                   lce-lcs+1, 2*n_cols, -ONE, &
-                                   vmr_dev+(mystart-1+(1-1)*max_l_rows)*size_of_datatype, max_l_rows, umc_dev +(lcs-1+  &
-                                   (1-1)*max_l_cols)*size_of_datatype, &
-                                   max_l_cols, ONE, a_dev+(mystart-1+(lcs-1)*matrixRows)* &
-                                   size_of_datatype, matrixRows, threadID=myThreadID)
-
-          call obj%timer%stop("gpublas")
-#ifdef WITH_INTEL_GPU_VERSION
-        endif ! useIntelGPU
-#endif
+        call obj%timer%stop("gpublas")
       else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(myend-mystart+1,kind=BLAS_KIND), &
@@ -2208,31 +1789,15 @@ max_threads, isSkewsymmetric)
       if (lce<lcs .or. lre<1) cycle
 
       if (useGPU) then
-#ifdef WITH_INTEL_GPU_VERSION
-        if (useIntelGPU) then
-          call obj%timer%start("mkl_offload")
-          call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(lre,kind=BLAS_KIND),int(lce-lcs+1,kind=BLAS_KIND), &
-                              int(2*n_cols,kind=BLAS_KIND), &
-                              -ONE, &
-                              vmrCPU, int(max_l_rows,kind=BLAS_KIND), umcCPU(lcs,1), &
-                              int(max_l_cols,kind=BLAS_KIND), &
-                              ONE, a_mat(1,lcs), int(matrixRows,kind=BLAS_KIND))
-          call obj%timer%stop("mkl_offload")
+        call obj%timer%start("gpublas")
 
-        else ! useIntelGPU
-#endif
-          call obj%timer%start("gpublas")
-
-          call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
-                                     lre, lce-lcs+1, 2*n_cols, -ONE, &
-                                     vmr_dev, max_l_rows, (umc_dev +(lcs-1)*  &
-                                     size_of_datatype), &
-                                     max_l_cols, ONE, (a_dev+(lcs-1)*matrixRows* &
-                                     size_of_datatype), matrixRows)
-          call obj%timer%stop("gpublas")
-#ifdef WITH_INTEL_GPU_VERSION
-        endif ! useIntelGPU
-#endif
+        call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+                                   lre, lce-lcs+1, 2*n_cols, -ONE, &
+                                   vmr_dev, max_l_rows, (umc_dev +(lcs-1)*  &
+                                   size_of_datatype), &
+                                   max_l_cols, ONE, (a_dev+(lcs-1)*matrixRows* &
+                                   size_of_datatype), matrixRows)
+        call obj%timer%stop("gpublas")
       else ! useGPU
 
         call obj%timer%start("blas")
@@ -2247,11 +1812,7 @@ max_threads, isSkewsymmetric)
     enddo ! i=0,(istep*nbw-1)/tile_size
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-#ifdef WITH_INTEL_GPU_VERSION
-    if (.not.(useGPU) .or. useIntelGPU) then
-#else
     if (.not.(useGPU)) then
-#endif
       if (allocated(vr)) then
         deallocate(vr, stat=istat, errmsg=errorMessage)
         check_deallocate("bandred: vr", istat, errorMessage)
@@ -2274,11 +1835,7 @@ max_threads, isSkewsymmetric)
       check_deallocate("bandred: vr", istat, errorMessage)
     endif
 
-#ifdef WITH_INTEL_GPU_VERSION
-    if (useGPU .and. .not.(useIntelGPU)) then
-#else
     if (useGPU) then
-#endif
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
@@ -2339,11 +1896,7 @@ max_threads, isSkewsymmetric)
 
   enddo ! istep - loop
 
-#ifdef WITH_INTEL_GPU_VERSION
-  if (useGPU .and. .not.(useIntelGPU)) then
-#else
   if (useGPU) then
-#endif
     ! copy a_dev to a_mat
     ! we do it here, since a is needed on the host in the following routine
     ! (band to tridi). Previously, a has been kept on the device and then
