@@ -1691,14 +1691,15 @@ AC_ARG_ENABLE([gpu],
               [use_gpu=no])
 AC_MSG_RESULT([${use_gpu}])
 if test x"${use_gpu}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-gpu! Please switch to the specific option of either --enable-nvidia-gpu, --enable-amd-gpu or --enable-intel-gpu])
+  AC_MSG_WARN([The option --enable-gpu will be deprecated in one of the next releases.])
   need_nvidia_gpu=yes
   use_real_nvidia_gpu=yes
   use_complex_nvidia_gpu=yes
   # not supported with old flag
-  #if test x"${nvidia_a100_support}" = x"yes" ; then
-  #  use_real_nvidia_sm80_gpu=yes
-  #  use_complex_nvidia_sm80_gpu=yes
-  #fi
+  if test x"${nvidia_a100_support}" = x"yes" ; then
+	  AC_MSG_ERROR([You did still use the deprecated option --enable-gpu! This does not work with --with-NVIDIA-GPU-compute-capability=sm_80. Please specify --enable-nvidia-gpu])
+  fi
 fi
 
 AC_MSG_CHECKING(whether NVIDIA-GPU version should be used)
@@ -1717,8 +1718,14 @@ if test x"${use_nvidia_gpu}" = x"yes" ; then
   use_nvidia_real_gpu=yes
   use_nvidia_complex_gpu=yes
   if test x"${nvidia_a100_support}" = x"yes" ; then
-    use_real_nvidia_sm80_gpu=yes
-    use_complex_nvidia_sm80_gpu=yes
+    if test x"${need_nvidia_sm80_gpu}" = x"yes"; then
+      use_real_nvidia_sm80_gpu=yes
+      use_complex_nvidia_sm80_gpu=yes
+    else
+      AC_MSG_NOTICE([You specified --with-NVIDIA-GPU-compute-capability=sm_80, but you did not --enable-nvidia-sm80-gpu. I will thus use the standard Nvidia GPU kernels (which is of course ok, just a info...)])
+      use_real_nvidia_sm80_gpu=no
+      use_complex_nvidia_sm80_gpu=no
+    fi
   fi
 fi
 
