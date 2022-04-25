@@ -391,29 +391,8 @@
       useNonBlockingCollectivesAll = .false.
     endif
 
-
-#ifdef WITH_OPENMP_TRADITIONAL
-    ! store the number of OpenMP threads used in the calling function
-    ! restore this at the end of ELPA 2
-    omp_threads_caller = omp_get_max_threads()
-
-   ! check the number of threads that ELPA should use internally
-#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
-   call obj%get("limit_openmp_threads",limitThreads,error)
-   if (limitThreads .eq. 0) then
-#endif
-     call obj%get("omp_threads",nrThreads,error)
-     call omp_set_num_threads(nrThreads)
-#if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
-   else
-     nrThreads = 1
-     call omp_set_num_threads(nrThreads)
-   endif
-#endif
-
-#else /* WITH_OPENMP_TRADITIONAL */
-    nrThreads = 1
-#endif /* WITH_OPENMP_TRADITIONAL */
+    ! openmp setting
+#include "../helpers/elpa_openmp_settings_template.F90"
 
     if (useGPU) then
       call obj%timer%start("check_for_gpu")
@@ -1243,8 +1222,8 @@ print *,"Device pointer + REDIST"
      if (do_trans_to_band) then
 
        !debug
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-       if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+       if (gpu_vendor() == OPENMP_OFFLOAD_GPU .or. gpu_vendor() == SYCL_GPU) then
          if (do_useGPU_trans_ev_tridi_to_band) then
            do_useGPU_trans_ev_tridi_to_band = .false.
            kernel = DEFAULT_KERNEL

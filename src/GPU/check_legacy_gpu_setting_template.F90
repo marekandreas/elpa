@@ -152,6 +152,19 @@
 #endif
       endif
 #endif /* WITH_OPENMP_OFFLOAD_GPU_VERSION */
+#ifdef WITH_SYCL_GPU_VERSION
+    else if (gpu_vendor() == SYCL_GPU) then
+      call obj%get("intel-gpu", gpu, error)
+      if (error .ne. ELPA_OK) then
+        write(error_unit,*) "GPU_SOLVER : Problem getting option for INTEL GPU. Aborting..."
+#if GPU_SOLVER == ELPA2
+#include "../elpa2/elpa2_aborting_template.F90"
+#endif
+#if GPU_SOLVER == ELPA1
+#include "../elpa1/elpa1_aborting_template.F90"
+#endif
+      endif
+#endif /* WITH_SYCL_GPU_VERSION */
     else ! no supported gpu
       gpu = 0
     endif

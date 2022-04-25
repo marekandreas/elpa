@@ -264,7 +264,7 @@ program test
 
    call e%set("debug",1, error_elpa)
    assert_elpa_ok(error_elpa)
-#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0) 
    !call e%set("nvidia-gpu", 0, error_elpa)
    !assert_elpa_ok(error_elpa)
 #endif
@@ -272,7 +272,7 @@ program test
    call e%set("amd-gpu", 0, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1) 
    call e%set("intel-gpu", 0, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif

@@ -174,8 +174,8 @@ AX_EXT
 dnl heterogenous-cluster-support
 AC_MSG_CHECKING(whether heterogenous-cluster-support should be enabled)
 AC_ARG_ENABLE([heterogenous-cluster-support],
-              AS_HELP_STRING([--heterogenous-cluster-support],
-                             [allow ELPA to automatically switch to a kernel supported on all CPUs of a cluster (only works for Intel CPUs at the moment), default no. Activate only if necessary has a performance penalty! This feature is exerpimental!]),
+              AS_HELP_STRING([--enable-heterogenous-cluster-support],
+                             [allow ELPA to automatically switch to a kernel supported on all CPUs of a cluster (only works for Intel CPUs at the moment), default no. Activate only if necessary has a performance penalty! This feature is exerpimental! (default: disabled)]),
               [
 	       if test x"$enableval" = x"yes"; then
 	         enable_heterogenous_cluster_support=yes
@@ -198,8 +198,8 @@ size_of_long_int="${ac_cv_sizeof_long_int}"
 dnl then 64bit blas
 AC_MSG_CHECKING(whether 64bit integers should be used for math libraries (BLAS/LAPACK/SCALAPACK))
 AC_ARG_ENABLE([64bit-integer-math-support],
-              AS_HELP_STRING([--64bit-integer-math-support],
-                             [allows to link against the 64bit integer versions of the math libraries BLAS, LAPACK, and SCALAPACK]),
+              AS_HELP_STRING([--enable-64bit-integer-math-support],
+                             [allows to link against the 64bit integer versions of the math libraries BLAS, LAPACK, and SCALAPACK (default: no)]),
               [
 	       if test x"$enableval" = x"yes"; then
 	         enable_64bit_integer_math_support=yes
@@ -228,8 +228,8 @@ AM_CONDITIONAL([HAVE_64BIT_INTEGER_MATH_SUPPORT],[test x"$enable_64bit_integer_m
 dnl then 64bit blas
 AC_MSG_CHECKING(whether 64bit integers should be used for the MPI library)
 AC_ARG_ENABLE([64bit-integer-mpi-support],
-              AS_HELP_STRING([--64bit-integer-mpi-support],
-                             [allows to link against the 64bit integer versions of the MPI library]),
+              AS_HELP_STRING([--enable-64bit-integer-mpi-support],
+                             [allows to link against the 64bit integer versions of the MPI library (default: no)]),
               [
 	       if test x"$enableval" = x"yes"; then
 	         enable_64bit_integer_mpi_support=yes
@@ -357,7 +357,7 @@ if test x"${FC_does_infer_interfaces}" = x"yes"; then
 
    AC_ARG_ENABLE([mpi-module],
              AS_HELP_STRING([--disable-mpi-module],
-                            [do not use the Fortran MPI module, get interfaces by 'include "mpif.h']),
+                            [do not use the Fortran MPI module, but get instead interfaces by 'include "mpif.h' (default: --enable-mpi-module)]),
              [
               if test x"$enableval" = x"yes"; then
                 enable_mpi_module_tmp=yes
@@ -419,7 +419,7 @@ fi
 want_mpi_launcher="no"
 AC_MSG_CHECKING(whether mpi-launcher should be detected)
 AC_ARG_ENABLE(detect-mpi-launcher,
-              [AS_HELP_STRING([--enable-detect-mpi-launcher],
+              [AS_HELP_STRING([--enable-detect-mpi-launcher (default: enabled)],
                               [detect mpi launcher])],
               [want_mpi_launcher="$enableval"],
               [want_mpi_launcher="yes"])
@@ -839,7 +839,7 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
   AC_MSG_CHECKING(whether ELPA is allowed to limit the number of OpenMP threads at runtime)
   AC_ARG_ENABLE([allow-thread-limiting],
                   AS_HELP_STRING([--enable-allow-thread-limiting],
-  			       [do a runtime check whether threading support of the MPI library is sufficient. If not ELPA will limit the number of OpenMP threads to 1 during the run]),
+  			       [do a runtime check whether threading support of the MPI library is sufficient. If not ELPA will limit the number of OpenMP threads to 1 during the run (default: enabled)]),
                   [
                    if test x"$enableval" = x"yes"; then
                      enable_allow_thread_limiting=yes
@@ -1049,13 +1049,16 @@ m4_define(elpa_m4_amd_gpu_kernels, [
         complex_amd_gpu
 ])
 
-m4_define(elpa_m4_intel_gpu_kernels, [
+m4_define(elpa_m4_intel_gpu_sycl_kernels, [
         real_intel_gpu
         complex_intel_gpu
 ])
 
 #m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu nvidia_sm80_gpu])
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu nvidia_sm80_gpu])
+
+#to be done
+#m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu_sycl nvidia_sm80_gpu])
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu nvidia_sm80_gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -1102,7 +1105,8 @@ ELPA_SELECT_KERNELS([sve512],[disable])
 ELPA_SELECT_KERNELS([nvidia_gpu],[disable])
 ELPA_SELECT_KERNELS([nvidia_sm80_gpu],[disable])
 ELPA_SELECT_KERNELS([amd_gpu],[disable])
-ELPA_SELECT_KERNELS([intel_gpu],[disable])
+#to be done
+#ELPA_SELECT_KERNELS([intel_gpu_sycl],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
 
@@ -1177,16 +1181,17 @@ if test x"$with_amd_gpu_support_only" = x"yes" ; then
         use_complex_amd_gpu=yes
 fi
 
-AC_ARG_WITH(INTEL-gpu-support-only, [AS_HELP_STRING([--with-INTEL-gpu-support-only],
-            [Compile and always use the INTEL GPU version])],
-            [],[with_intel_gpu_support_only=no])
-if test x"$with_intel_gpu_support_only" = x"yes" ; then
-        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
-                      use_[]elpa_m4_kernel[]=no
-        ])
-        use_real_intel_gpu=yes
-        use_complex_intel_gpu=yes
-fi
+#to be done
+#AC_ARG_WITH(INTEL-gpu-support-only, [AS_HELP_STRING([--with-INTEL-gpu-support-only],
+#            [Compile and always use the INTEL GPU version])],
+#            [],[with_intel_gpu_support_only=no])
+#if test x"$with_intel_gpu_support_only" = x"yes" ; then
+#        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
+#                      use_[]elpa_m4_kernel[]=no
+#        ])
+#        use_real_intel_gpu=yes
+#        use_complex_intel_gpu=yes
+#fi
 
 
 dnl
@@ -1258,11 +1263,13 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 ])
 
 
-
+#to be done
+#                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels elpa_m4_intel_gpu_sycl_kernels nvidia_sm80_gpu_kernels,
+#                                  [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
 m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels elpa_m4_intel_gpu_kernels nvidia_sm80_gpu_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels nvidia_sm80_gpu_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -1730,40 +1737,58 @@ AC_ARG_WITH([cusolver],
 AC_MSG_RESULT([${with_cusolver}])
 
 
+use_openmp_gpu_backend=no
+use_sycl_gpu_backend=no
+use_intel_gpu=no
 AC_MSG_CHECKING(whether INTEL GPU version should be used)
 AC_ARG_ENABLE([intel-gpu],
-                AS_HELP_STRING([--enable-intel-gpu],
-                               [do use INTEL GPU version]),
-                               [if test x"$enableval" = x"yes"; then
+                AS_HELP_STRING([--enable-intel-gpu=(openmp|sycl)],
+                               [do use INTEL GPU version with either OpenMP or SYCL backend]),
+                               [if test x"$enableval" = x"openmp"; then
+				  use_openmp_gpu_backend=yes
                                   use_intel_gpu=yes
-                                else
-                                  use_intel_gpu=no
+				fi
+				if test x"$enableval" = x"sycl"; then
+				  use_sycl_gpu_backend=yes
+                                  use_intel_gpu=yes
+				fi
+				if test x"$enableval" = x"yes"; then
+                                  use_intel_gpu=yes
                                 fi],
               [use_intel_gpu=no])
 AC_MSG_RESULT([${use_intel_gpu}])
+
+if test x"${use_intel_gpu}" = x"yes"; then
+  if test x"${use_openmp_gpu_backend}" = x"no"; then
+    if test x"${use_sycl_gpu_backend}" = x"no"; then
+      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=(openmp|sycl)])
+    fi
+  fi
+fi
+
 if test x"${use_intel_gpu}" = x"yes" ; then
   need_intel_gpu=yes
   use_real_intel_gpu=yes
   use_complex_intel_gpu=yes
 fi
 
-AC_MSG_CHECKING(whether AMD-GPU version should be used)
-AC_ARG_ENABLE([amd-gpu],
-                AS_HELP_STRING([--enable-amd-gpu],
-                               [do use AMD GPU version]),
-                               [if test x"$enableval" = x"yes"; then
-                                  use_amd_gpu=yes
-                                else
-                                  use_amd_gpu=no
-                                fi],
-              [use_amd_gpu=no])
-AC_MSG_RESULT([${use_amd_gpu}])
-if test x"${use_amd_gpu}" = x"yes" ; then
-  need_amd_gpu=yes
-  use_real_amd_gpu=yes
-  use_complex_amd_gpu=yes
-fi
-
+#AC_MSG_CHECKING(whether AMD-GPU version should be used)
+#AC_ARG_ENABLE([amd-gpu],
+#                AS_HELP_STRING([--enable-amd-gpu],
+#                               [do use AMD GPU version]),
+#                               [if test x"$enableval" = x"yes"; then
+#                                  use_amd_gpu=yes
+#                                else
+#                                  use_amd_gpu=no
+#                                fi],
+#              [use_amd_gpu=no])
+#AC_MSG_RESULT([${use_amd_gpu}])
+#if test x"${use_amd_gpu}" = x"yes" ; then
+#  need_amd_gpu=yes
+#  use_real_amd_gpu=yes
+#  use_complex_amd_gpu=yes
+#fi
+#
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
@@ -1804,13 +1829,6 @@ fi
 
 if test x"${need_amd_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  #CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
-  #LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
-  #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
-  #NVCC="nvcc"
-  #AC_SUBST(NVCC)
-  #AC_SUBST(NVCCFLAGS)
-
   dnl check whether hipcc compiler is found
   AC_CHECK_PROG(hipcc_found,hipcc,yes,no)
   if test x"${hipcc_found}" = x"no" ; then
@@ -1826,34 +1844,17 @@ if test x"${need_amd_gpu}" = x"yes" ; then
   #if test x"${have_cudart}" = x"no"; then
   #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   #fi
-  #AC_LANG_POP([C])
+  AC_LANG_POP([C])
 fi
 
 if test x"${need_intel_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  #CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include"
-  #LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
-  #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
-  #NVCC="nvcc"
-  #AC_SUBST(NVCC)
-  #AC_SUBST(NVCCFLAGS)
-
-  dnl check whether hipcc compiler is found
+  dnl check whether icx compiler is found
   AC_CHECK_PROG(icx_found,icx,yes,no)
   if test x"${icx_found}" = x"no" ; then
     AC_MSG_ERROR([icx not found; try to set the oneapi-path or disable INTEL GPU support])
   fi
-
-  ##dnl check whether we find rocblas
-  #AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
-  #if test x"${have_rocblas}" = x"no"; then
-  #  AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
-  #fi
-  #AC_SEARCH_LIBS([hipMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
-  #if test x"${have_cudart}" = x"no"; then
-  #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
-  #fi
-  #AC_LANG_POP([C])
+  AC_LANG_POP([C])
 fi
 
 AC_MSG_CHECKING(whether NVIDIA GPU memory debugging should be enabled)
@@ -1877,7 +1878,7 @@ if test x"${need_nvidia_gpu}" = x"yes"; then
     AC_MSG_CHECKING(whether CUDA aware MPI should be used)
     AC_ARG_ENABLE([cuda-aware-mpi],
                 AS_HELP_STRING([--enable-cuda-aware-mpi],
-                               [do use CUDA-aware MPI]),
+                               [do use CUDA-aware MPI (default: no)]),
                                [if test x"$enableval" = x"yes"; then
                                   enable_cuda_aware_mpi=yes
                                 else
@@ -2006,6 +2007,7 @@ fi
 AC_SUBST([ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_AMD_GPU_COMPILED])
 
+#to be done
 AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu2" = x"yes" -o x"$use_complex_intel_gpu2" = x"yes"])
 #if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
 #  AC_DEFINE([WITH_INTEL_GPU_VERSION],[1],[enable INTEL GPU support])
@@ -2019,16 +2021,27 @@ AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu2" = x"yes" -
 #AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED])
 #AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
 
-AM_CONDITIONAL([WITH_OPENMP_OFFLOAD_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
-if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
-  AC_DEFINE([WITH_OPENMP_OFFLOAD_GPU_VERSION],[1],[enable INTEL GPU support])
+
+ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=0
+ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=0
+#to be done
+#AM_CONDITIONAL([WITH_OPENMP_OFFLOAD_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
+AM_CONDITIONAL([WITH_OPENMP_OFFLOAD_GPU_VERSION],[test x"$use_openmp_gpu_backend" = x"yes"])
+#if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
+if test x"$use_openmp_gpu_backend"  = x"yes" ; then
+  AC_DEFINE([WITH_OPENMP_OFFLOAD_GPU_VERSION],[1],[enable INTEL GPU support via OpenMP backend])
   AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
   ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
   ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
-else
-  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=0
-  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=0
 fi
+AM_CONDITIONAL([WITH_SYCL_GPU_VERSION],[test x"$use_sycl_gpu_backend" = x"yes"])
+if test x"$use_sycl_gpu_backend"  = x"yes" ; then
+  AC_DEFINE([WITH_SYCL_GPU_VERSION],[1],[enable INTEL GPU support via SYCL backend])
+  AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
+  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
+fi
+
 AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
 
@@ -2044,7 +2057,7 @@ DX_INIT_DOXYGEN([ELPA], [Doxyfile], [docs])
 AC_MSG_CHECKING(whether assumed size Fortran arrays should be used)
 AC_ARG_ENABLE([assumed-size],
                 AS_HELP_STRING([--disable-assumed-size],
-                               [do NOT use assumed-size Fortran arrays]),
+                               [do NOT use assumed-size Fortran arrays (default: enabled)]),
                                [if test x"$enableval" = x"yes"; then
                                   USE_ASSUMED_SIZE=yes
                                 else
@@ -2294,7 +2307,7 @@ AM_CONDITIONAL([WANT_SINGLE_PRECISION_COMPLEX],[test x"$want_single_precision" =
 AC_MSG_CHECKING(whether we should enable skew-symmetric support)
 AC_ARG_ENABLE([skew-symmetric-support],
               AS_HELP_STRING([--enable-skew-symmetric-support],
-                             [enable support for real valued skew-symmetric matrices]),
+                             [enable support for real valued skew-symmetric matrices (default: yes)]),
 			     [if test x"$enableval" = x"yes"; then
 			        enable_skewsymmetric=yes
 		              else

@@ -99,7 +99,7 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #endif
 
 #define TEST_GPU 0
-#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1)
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
 #undef TEST_GPU
 #define TEST_GPU 1
 #endif
@@ -283,7 +283,7 @@ program test
    call e_complex%set("debug",1,error_elpa)
    assert_elpa_ok(error_elpa)
 
-#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)  
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    call e_complex%set("nvidia-gpu", TEST_GPU,error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
@@ -291,7 +291,7 @@ program test
    call e_complex%set("amd-gpu", TEST_GPU,error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
    call e_complex%set("intel-gpu", TEST_GPU,error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
@@ -346,7 +346,7 @@ program test
    call e_skewsymmetric%set("debug",1,error_elpa)
    assert_elpa_ok(error_elpa)
 
-#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0)
+#if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    call e_skewsymmetric%set("nvidia-gpu", TEST_GPU,error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
@@ -354,7 +354,7 @@ program test
    call e_skewsymmetric%set("amd-gpu", TEST_GPU,error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
    call e_skewsymmetric%set("intel-gpu", TEST_GPU,error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
