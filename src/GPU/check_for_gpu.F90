@@ -528,9 +528,9 @@ module mod_check_for_gpu
 #endif
             stop 1
           endif
-          !if (wantDebugMessage) then
+          if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
-          !endif
+          endif
 
           call obj%set("use_gpu_id",deviceNumber, error)
           if (error .ne. ELPA_OK) then
