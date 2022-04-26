@@ -1729,6 +1729,12 @@ if test x"${use_nvidia_gpu}" = x"yes" ; then
   fi
 fi
 
+if test x"${need_nvidia_sm80_gpu}" = x"yes"; then
+  if test x"${nvidia_a100_support}" = x"no" ; then
+    AC_MSG_ERROR([You specified --enable-nvidia-sm80-gpu, but not --with-NVIDIA-GPU-compute-capability=sm_80 (or higher)Aborting...])
+  fi
+fi
+
 AC_MSG_CHECKING(whether NVIDIA cusolver library should be used)
 AC_ARG_WITH([cusolver],
             [AS_HELP_STRING([--with-cusolver],
@@ -1937,7 +1943,7 @@ if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" 
   ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=1
   ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=1
 
-  if test x"${nvidia_a100_support}" = x"yes" ; then
+  if test x"${need_nvidia_sm80_gpu}" = x"yes" ; then
     AC_DEFINE([WITH_NVIDIA_SM80_GPU_KERNEL],[1],[Nvidia sm_80 GPU kernel should be build])
     # currently no complex kernel
     ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU_COMPILED=0
