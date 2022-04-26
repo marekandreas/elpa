@@ -166,7 +166,8 @@ program print_available_elpa2_kernels
               elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_REAL_AMD_GPU" .or. &
               elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_COMPLEX_INTEL_GPU" .or. &
               elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_REAL_INTEL_GPU" ) then
-              print *,"  ",elpa_int_value_to_string(KERNEL_KEY, kernel), "  GPU kernel (might not be usable if no GPUs present on the host)"
+              print *,"  ",elpa_int_value_to_string(KERNEL_KEY, kernel), &
+                      "  GPU kernel (might not be usable if no GPUs present on the host)"
           else
             print *, "  ", elpa_int_value_to_string(KERNEL_KEY, kernel)
           endif
