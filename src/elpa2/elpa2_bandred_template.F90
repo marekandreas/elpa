@@ -1658,7 +1658,6 @@ myid=my_prow+my_pcol*np_rowsMPI
                               mpi_comm_rows, umcGPU,                            &
                               max_l_cols, mpi_comm_cols, istep*nbw, n_cols, nblk, max_threads_used)
       else ! useGPU
-!call mpi_barrier(mpi_comm_world,mpierr)
         call elpa_reduce_add_vectors_&
         &MATH_DATATYPE&
         &_&
@@ -1701,31 +1700,30 @@ myid=my_prow+my_pcol*np_rowsMPI
 
       else ! useGPU
 
-        allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
-        check_allocate("bandred: tmpCPU", istat, errorMessage)
+!        allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
+!        check_allocate("bandred: tmpCPU", istat, errorMessage)
 
 #ifdef WITH_MPI
         if (useNonBlockingCollectivesRows) then
           if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-          call mpi_iallreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+          call mpi_iallreduce(MPI_IN_PLACE, umcCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6, mpierr)
           call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
-          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+!          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
           if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
         else
           if (wantDebug) call obj%timer%start("mpi_communication")
-          call mpi_allreduce(umcCPU, tmpCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+          call mpi_allreduce(MPI_IN_PLACE, umcCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
+!          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
           if (wantDebug) call obj%timer%stop("mpi_communication")
         endif
 #endif /* WITH_MPI */
 
-        deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
-        check_deallocate("bandred: tmpCPU", istat, errorMessage)
+!        deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
+!        check_deallocate("bandred: tmpCPU", istat, errorMessage)
       endif ! useGPU
     endif ! l_cols > 0
-
     ! U = U * Tmat**T
 
     if (useGPU) then
@@ -2338,7 +2336,7 @@ contains
 #ifdef WITH_MPI
     if (useNonBlockingCollectivesRows) then
        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-       call mpi_iallreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+       call mpi_iallreduce(MPI_IN_PLACE, aux1, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
             allreduce_request1, mpierr)
        
@@ -2347,7 +2345,7 @@ contains
        if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
     else
        !             if (wantDebug)             call obj%timer%start("mpi_comm")
-       call mpi_allreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+       call mpi_allreduce(MPI_IN_PLACE, aux1, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
             mpierr)
        
@@ -2355,16 +2353,16 @@ contains
     endif
     
 #else /* WITH_MPI */
-    aux2 = aux1 ! this should be optimized
+!    aux2 = aux1 ! this should be optimized
 #endif
 
 #if REALCASE == 1
-    vnorm2 = aux2(1)
+    vnorm2 = aux1(1)
 #endif
 #if COMPLEXCASE == 1
-    vnorm2 = real(aux2(1),kind=rk)
+    vnorm2 = real(aux1(1),kind=rk)
 #endif
-    vrl    = aux2(2)
+    vrl    = aux1(2)
     
     ! Householder transformation
     call hh_transform_&
@@ -2428,7 +2426,7 @@ contains
     if (useNonBlockingCollectivesRows) then
        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
        if (mynlc > 0) then
-          call mpi_iallreduce(aux1, aux2, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                allreduce_request2, mpierr)
           call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
@@ -2437,14 +2435,14 @@ contains
     else
        if (wantDebug) call obj%timer%start("mpi_communication")
        if (mynlc>0) then
-          call mpi_allreduce(aux1, aux2, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+          call mpi_allreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                mpierr)
        endif
        if (wantDebug) call obj%timer%stop("mpi_communication")
     endif
 #else /* WITH_MPI */
-    if (mynlc > 0) aux2 = aux1
+!    if (mynlc > 0) aux2 = aux1
 #endif /* WITH_MPI */
     !$omp end single
     !$omp barrier
@@ -2462,10 +2460,10 @@ contains
              do pp = 1,transformChunkSize
                 if (pp + ii > lr) exit
 #if REALCASE == 1
-                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - tau*aux2(mynlc)*vr(ii+pp)
+                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - tau*aux1(mynlc)*vr(ii+pp)
 #endif
 #if COMPLEXCASE == 1
-                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - conjg(tau)*aux2(mynlc)*vr(ii+pp)
+                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - conjg(tau)*aux1(mynlc)*vr(ii+pp)
 #endif
              enddo
           enddo
@@ -2474,7 +2472,7 @@ contains
     !$omp end parallel
     
 #else /* WITH_OPENMP_TRADITIONAL */
-!        aux1 = 0.0_rck    
+
     nlc = 0 ! number of local columns
     do j=1,lc-1
        lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
@@ -2505,7 +2503,7 @@ contains
     if (useNonBlockingCollectivesRows) then
        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
        if (nlc > 0) then
-          call mpi_iallreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                allreduce_request3, mpierr)
           call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
@@ -2514,14 +2512,14 @@ contains
     else
        if (wantDebug) call obj%timer%start("mpi_communication")
        if (nlc>0) then
-          call mpi_allreduce(aux1, aux2, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+          call mpi_allreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                mpierr)
        endif
        if (wantDebug) call obj%timer%stop("mpi_communication")
     endif
 #else /* WITH_MPI */
-    if (nlc > 0) aux2=aux1
+!    if (nlc > 0) aux2=aux1
 #endif /* WITH_MPI */
     ! Transform
     nlc = 0
@@ -2530,10 +2528,10 @@ contains
        if (lcx>0) then
           nlc = nlc+1
 #if REALCASE == 1
-          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tau*aux2(nlc)*vr(1:lr)
+          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tau*aux1(nlc)*vr(1:lr)
 #endif
 #if COMPLEXCASE == 1
-          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux2(nlc)*vr(1:lr)
+          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
 #endif
        endif
     enddo
@@ -2544,10 +2542,10 @@ contains
        nlc = nlc+1
        ilc=ilc-1
 #if REALCASE == 1
-       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tau*aux2(nlc)*vr(1:lr)
+       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tau*aux1(nlc)*vr(1:lr)
 #endif
 #if COMPLEXCASE == 1
-       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - conjg(tau)*aux2(nlc)*vr(1:lr)
+       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - conjg(tau)*aux1(nlc)*vr(1:lr)
 #endif       
     end do
     
