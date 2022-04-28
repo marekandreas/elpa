@@ -460,6 +460,22 @@
 
     endif ! useGPU
 
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+#ifdef SINGLE_PRECISION_REAL
+    if (useGPU) then
+      if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU) then
+        if (my_pe .eq. 0) then
+          write(error_unit,*) "You set (fixed) the kernel to GPU, but GPUs cannot be used."
+        endif
+      endif
+    endif ! useGPU
+#endif
+#endif
+#endif
+
+
+
     do_useGPU_bandred = do_useGPU
     do_useGPU_tridiag_band = .false.  ! not yet ported
     do_useGPU_solve_tridi = do_useGPU
@@ -742,6 +758,36 @@ print *,"Device pointer + REDIST"
          kernel = DEFAULT_KERNEL
       endif
     endif
+
+
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+#ifdef SINGLE_PRECISION_REAL
+    if (useGPU) then
+      if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU) then
+        if (my_pe .eq. 0) then
+          write(error_unit,*) "Currently no MMA implementation for real single-precision Nvidia SM80 kernel."
+          write(error_unit,*) "Using without MMA."
+        endif
+      endif
+    endif ! useGPU
+#endif
+#endif
+#endif
+#if COMPLEXCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+    if (useGPU) then
+      if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU) then
+        kernel = GPU_KERNEL2
+        if (my_pe .eq. 0) then
+          write(error_unit,*) "Currently no complex Nvidia SM80 kernel. Using standard Nvidia GPU kernel"
+        endif
+      endif
+    endif ! useGPU
+#endif
+#endif
+
+
 
     ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band should be
     ! finally consistent
