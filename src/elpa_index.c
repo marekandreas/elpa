@@ -879,9 +879,9 @@ static int real_kernel_is_valid(elpa_index_t index, int n, int new_value) {
 #ifdef WITH_AMD_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
-#ifdef WITH_INTEL_GPU_VERSION
-                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
-#endif
+//#ifdef WITH_INTEL_GPU_VERSION
+//                ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+//#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_REAL_KERNELS(VALID_CASE_3, REAL_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
@@ -942,9 +942,9 @@ static int complex_kernel_is_valid(elpa_index_t index, int n, int new_value) {
 #ifdef WITH_AMD_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_AMD_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
-#ifdef WITH_INTEL_GPU_VERSION
-                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
-#endif
+//#ifdef WITH_INTEL_GPU_VERSION
+//                ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
+//#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
                 ELPA_FOR_ALL_2STAGE_COMPLEX_KERNELS(VALID_CASE_3, COMPLEX_INTEL_GPU_KERNEL_ONLY_WHEN_GPU_IS_ACTIVE)
 #endif
@@ -1313,8 +1313,8 @@ static int use_gpu_id_cardinality(elpa_index_t index) {
 	return 0;
         }
 	return count;
-#elif WITH_INTEL_GPU_VERSION
-	return 0;
+//#elif WITH_INTEL_GPU_VERSION
+//	return 0;
 #elif WITH_OPENMP_OFFLOAD_GPU_VERSION
 	int count;
 	count = openmp_offload_gpu_count();
@@ -1361,8 +1361,8 @@ static int use_gpu_id_is_valid(elpa_index_t index, int n, int new_value) {
           return (0 <= new_value) && (new_value <= count);
 	}
 
-#elif WITH_INTEL_GPU_VERSION
-	return 0 == 0;
+//#elif WITH_INTEL_GPU_VERSION
+//	return 0 == 0;
 #elif WITH_OPENMP_OFFLOAD_GPU_VERSION
 	return 0 == 0;
 #elif WITH_SYCL_GPU_VERSION
