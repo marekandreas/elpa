@@ -184,7 +184,7 @@ last_stripe_width, kernel)
 
   j = -99
 
-  if (wantDebug) then
+  !if (wantDebug) then
 #ifdef WITH_NVIDIA_GPU_VERSION
     if (useGPU .and. &
 #ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
@@ -203,10 +203,11 @@ last_stripe_width, kernel)
       ( kernel .ne. ELPA_2STAGE_COMPLEX_NVIDIA_GPU)) then
 #endif
 #endif  /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
-      print *,"ERROR: useGPU is set in compute_hh_trafo but not a NVIDIA GPU kernel!"
+      write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not a NVIDIA GPU kernel!"
       stop
     endif
-#endif
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
 #ifdef WITH_AMD_GPU_VERSION
     if (useGPU .and. &
 #if REALCASE == 1
@@ -215,40 +216,54 @@ last_stripe_width, kernel)
 #if COMPLEXCASE == 1
       ( kernel .ne. ELPA_2STAGE_COMPLEX_AMD_GPU)) then
 #endif
-      print *,"ERROR: useGPU is set in compute_hh_trafo but not a AMD GPU kernel!"
+      write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not an AMD GPU kernel!"
       stop
     endif
+#endif /* WITH_AMD_GPU_VERSION */
+
+#ifdef WITH_GPU_SYCL_VERSION
+    if (useGPU .and. &
+#if REALCASE == 1
+      ( kernel .ne. ELPA_2STAGE_REAL_INTEL_GPU_SYCL)) then
 #endif
-  endif
+#if COMPLEXCASE == 1
+      ( kernel .ne. ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL)) then
+#endif
+      write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not an INTEL GPU SYCL kernel!"
+      stop
+    endif
+#endif /* WITH_GPU_SYCL_VERSION */
+  !endif ! wantDebug
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (useGPU) then
     if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
-      print *, "no offlad kernels yet implemented"
-     stop
+      write(error_unit,'(a)') "no offlad kernels yet implemented"
+      stop
    endif
   endif
 #endif
 
-  ! intel missing
 #if REALCASE == 1
   if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. &
 #ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
       kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU .or. &
 #endif
-      kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
-#endif
+      kernel .eq. ELPA_2STAGE_REAL_AMD_GPU .or. &
+      kernel .eq. ELPA_2STAGE_REAL_INTEL_GPU_SYCL) then
+#endif /* REALCASE */
 #if COMPLEXCASE == 1
   if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. &
 #ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
       kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU .or. &
 #endif
-      kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
-#endif
+      kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU .or. &
+      kernel .eq. ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL) then
+#endif /* COMPLEXCASE */
     ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
     if (ncols < 1) then
       if (wantDebug) then
-        !print *, "Returning early from compute_hh_trafo"
+        print *, "Returning early from compute_hh_trafo"
       endif
       return
     endif
@@ -309,16 +324,18 @@ last_stripe_width, kernel)
 #ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
       kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU .or. &
 #endif
-      kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
-#endif
+      kernel .eq. ELPA_2STAGE_REAL_AMD_GPU .or. &
+      kernel .eq. ELPA_2STAGE_REAL_INTEL_GPU_SYCL) then
+#endif /* REALCASE */
 #if COMPLEXCASE == 1
 ! GPU kernel complex
   if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. &
 #ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
       kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU .or. &
 #endif
-      kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
-#endif
+      kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU .or. &
+      kernel .eq. ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL) then
+#endif /* COMPLEXCASE */
     if (wantDebug) then
       call obj%timer%start("compute_hh_trafo: GPU")
     endif
@@ -332,11 +349,13 @@ last_stripe_width, kernel)
 #ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
 #if REALCASE == 1
     if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU .or. &
-        kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) then
+        kernel .eq. ELPA_2STAGE_REAL_AMD_GPU .or. &
+        kernel .eq. ELPA_2STAGE_REAL_INTEL_GPU_SYCL) then
 #endif
 #if COMPLEXCASE == 1
   if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU .or. &
-      kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) then
+      kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU .or. &
+      kernel .eq. ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL) then
 #endif
 #endif /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
       call launch_compute_hh_trafo_gpu_kernel_&

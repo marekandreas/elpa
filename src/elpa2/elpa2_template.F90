@@ -249,6 +249,7 @@
 #undef GPU_KERNEL
 #undef GPU_KERNEL2
 #define GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
+
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
 #define GPU_KERNEL2 ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
 #endif
@@ -270,11 +271,16 @@
 #ifdef WITH_AMD_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_REAL_AMD_GPU
-#endif
-#define DEFAULT_KERNEL ELPA_2STAGE_REAL_DEFAULT
 #endif /* WITH_AMD_GPU_VERSION */
-! intel missing
 
+#ifdef WITH_SYCL_GPU_VERSION
+#undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_REAL_INTEL_GPU_SYCL
+#endif /* WITH_SYCL_GPU_VERSION */
+
+#define DEFAULT_KERNEL ELPA_2STAGE_REAL_DEFAULT
+
+#endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #undef GPU_KERNEL
@@ -292,9 +298,18 @@
 #ifdef WITH_AMD_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_COMPLEX_AMD_GPU
-#endif
-#define DEFAULT_KERNEL ELPA_2STAGE_COMPLEX_DEFAULT
 #endif /* WITH_AMD_GPU_VERSION */
+
+#ifdef WITH_SYCL_GPU_VERSION
+#undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL
+#endif /* WITH_SYCL_GPU_VERSION */
+
+#define DEFAULT_KERNEL ELPA_2STAGE_COMPLEX_DEFAULT
+
+#endif /* COMPLEXCASE */
+
+
 
 #ifdef ACTIVATE_SKEW
     call obj%timer%start("elpa_solve_skew_evp_&
@@ -1077,6 +1092,13 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
       call likwid_markerStartRegion("full_to_band")
 #endif
+      ! debug
+      !do_useGPU_bandred = .false.
+      print *,"debug",useGPU,kernel,GPU_KERNEL, &
+              WITH_REAL_INTEL_GPU_SYCL_KERNEL, &
+              WITH_REAL_GENERIC_KERNEL, &
+              WITH_REAL_GENERIC_SIMPLE_KERNEL
+
 
       ! Reduction full -> band
       call bandred_&
@@ -1112,6 +1134,9 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("band_to_tridi")
 #endif
+
+       !debug
+       !do_useGPU_tridiag_band = .false.
 
        call tridiag_band_&
        &MATH_DATATYPE&
@@ -1163,6 +1188,9 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("solve")
 #endif
+
+       !!debug
+       !do_useGPU_solve_tridi = .false.
 
        call solve_tridi_&
        &PRECISION &
@@ -1268,8 +1296,10 @@ print *,"Device pointer + REDIST"
      if (do_trans_to_band) then
 
        !debug
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-       if (gpu_vendor() == OPENMP_OFFLOAD_GPU .or. gpu_vendor() == SYCL_GPU) then
+!#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+       !if (gpu_vendor() == OPENMP_OFFLOAD_GPU .or. gpu_vendor() == SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+       if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
          if (do_useGPU_trans_ev_tridi_to_band) then
            do_useGPU_trans_ev_tridi_to_band = .false.
            kernel = DEFAULT_KERNEL
@@ -1282,6 +1312,9 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("tridi_to_band")
 #endif
+       ! debug
+       !do_useGPU_trans_ev_tridi_to_band = .false.
+
        ! In the skew-symmetric case this transforms the real part
        call trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
@@ -1311,6 +1344,8 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("band_to_full")
 #endif
+       !debug
+       !do_useGPU_trans_ev_band_to_full = .false.
 
        ! Backtransform stage 2
        ! In the skew-symemtric case this transforms the real part
@@ -1343,6 +1378,9 @@ print *,"Device pointer + REDIST"
          call obj%timer%start("skew_tridi_to_band")
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
+         !debug
+         !do_useGPU_trans_ev_tridi_to_band = .false.
+
            call trans_ev_tridi_to_band_&
            &MATH_DATATYPE&
            &_&
@@ -1364,6 +1402,9 @@ print *,"Device pointer + REDIST"
        if (isSkewsymmetric) then
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
+         !debug
+         !do_useGPU_trans_ev_band_to_full = .false.
+
          call trans_ev_band_to_full_&
          &MATH_DATATYPE&
          &_&

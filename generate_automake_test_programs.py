@@ -23,11 +23,11 @@ solver_flag = {
 gpu_flag = {
     "GPU_OFF": "-DTEST_NVIDIA_GPU=0 -DTEST_INTEL_GPU=0 -DTEST_AMD_GPU=0 -DTEST_OPENMP_OFFLOAD_GPU=0 -DTEST_INTEL_GPU_OPENMP=0 -DTEST_INTEL_GPU_SYCL=0",
     "NVIDIA_GPU_ON": "-DTEST_NVIDIA_GPU=1",
-    "INTEL_GPU_ON": "-DTEST_INTEL_GPU=1",
     "AMD_GPU_ON": "-DTEST_AMD_GPU=1",
     "OPENMP_OFFLOAD_GPU_ON": "-DTEST_INTEL_GPU_OPENMP=1",
     "SYCL_GPU_ON": "-DTEST_INTEL_GPU_SYCL=1",
 }
+#"INTEL_GPU_ON": "-DTEST_INTEL_GPU=1"
 gpu_id_flag = {
     0: "-DTEST_GPU_SET_ID=0",
     1: "-DTEST_GPU_SET_ID=1",
@@ -203,9 +203,9 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
             print("if WITH_NVIDIA_GPU_VERSION")
             endifs += 1
 
-        if (g == "INTEL_GPU_ON"):
-            print("if WITH_INTEL_GPU_VERSION")
-            endifs += 1
+        #if (g == "INTEL_GPU_ON"):
+        #    print("if WITH_INTEL_GPU_VERSION")
+        #    endifs += 1
 
         if (g == "OPENMP_OFFLOAD_GPU_ON"):
             print("if WITH_OPENMP_OFFLOAD_GPU_VERSION")

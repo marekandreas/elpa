@@ -63,6 +63,10 @@ module gpu_c_kernel
 #ifdef WITH_AMD_GPU_VERSION
       call launch_compute_hh_trafo_c_hip_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+print *,"no sycl double real gpu kernel yet implemented. Aborting..."
+      stop
+#endif
     end subroutine
 
     subroutine launch_compute_hh_trafo_sm80_gpu_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
@@ -92,6 +96,10 @@ module gpu_c_kernel
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_compute_hh_trafo_c_hip_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"no single real sycl gpu kernel yet implemented. Aborting..."
+      stop
 #endif
     end subroutine
 
@@ -124,6 +132,10 @@ module gpu_c_kernel
 #ifdef WITH_AMD_GPU_VERSION
       call launch_compute_hh_trafo_c_hip_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+print *,"no double complex sycl gpu kernel yet implemented. Aborting..."
+      stop
+#endif
     end subroutine
 
     subroutine launch_compute_hh_trafo_sm80_gpu_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
@@ -152,6 +164,10 @@ module gpu_c_kernel
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_compute_hh_trafo_c_hip_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
+      stop
 #endif
     end subroutine
 
