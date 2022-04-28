@@ -870,6 +870,7 @@ EXTRA_DIST = \
   elpa.spec \
   elpa/elpa.h \
   elpa/elpa_generic.h \
+  src/GPU/SYCL/collectGpuDevices.h \
   fdep/fortran_dependencies.mk \
   fdep/fortran_dependencies.pl \
   manual_cpp \
