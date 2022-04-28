@@ -160,9 +160,9 @@ max_threads, isSkewsymmetric)
   integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc
   integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
-  real(kind=rk)                               :: vnorm2, cs_old, cs_new
-  MATH_DATATYPE(kind=rck)                     :: xf, aux1(nbw+nblk), aux2(nbw+nblk), vrl, tau
-  MATH_DATATYPE(kind=rck)                     :: vav(nbw,nbw)
+  real(kind=rk)                              :: vnorm2, cs_old, cs_new
+  MATH_DATATYPE(kind=rck)                    :: xf, aux1(2*nbw+2*nblk), aux2(nbw), vrl, tau
+  MATH_DATATYPE(kind=rck)                    :: vav(nbw,nbw)
 
   MATH_DATATYPE(kind=rck), allocatable        :: tmpGPU(:)
   MATH_DATATYPE(kind=rck), pointer            :: vmrGPU(:), umcGPU(:)
@@ -707,6 +707,7 @@ myid=my_prow+my_pcol*np_rowsMPI
 !       if(.false.) then
        call obj%timer%start("hh_block")
        cs_new=0.
+       cs_old=0.
        oldpe=-1
        off=0
        lcstart=n_cols
@@ -725,6 +726,7 @@ myid=my_prow+my_pcol*np_rowsMPI
                   int(oldpe,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
                   mpierr)
              call obj%timer%stop("bcast_multi")
+
              !inner loop over block
              ioff=0
              do ilc=lcstart,lc+1,-1
@@ -736,9 +738,13 @@ myid=my_prow+my_pcol*np_rowsMPI
                 lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
                 ioff=ioff+1
                 call get_hh_vec(ex_buff2d(1:lr,ioff),vr)
+!                cs_old=cs_old+sum(abs(vr(1:lr)))
                 call apply_ht(vr,ilc,a_mat,ex_buff2d(:,ioff+1:off))
 
+!                call get_apply_ht(vr,ilc,a_mat,ex_buff2d(:,ioff:off))
+
 !                cs_new=cs_new+sum(abs(vr(1:lr)))
+
                 if (useGPU_reduction_lower_block_to_tridiagonal) then
                    vmrGPU(cur_l_rows * (ilc - 1) + 1 : cur_l_rows * (ilc - 1) + lr) = vr(1:lr)
                 else
@@ -759,7 +765,6 @@ myid=my_prow+my_pcol*np_rowsMPI
                    end if
                 end if
              end do
-
              !reset counters for next block
              off=0
              lcstart=lc
@@ -771,10 +776,9 @@ myid=my_prow+my_pcol*np_rowsMPI
              if (nrow == 1) cycle ! Nothing to do
              
              if(off.eq.0) then !reset buffer size to next batch
-                lrex  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
+                lrex  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length                
                 ex_buff2d(1:lrex,1:nblk) => ex_buff
              end if
-             
              !copy current a_mat entry to buffer
              off=off+1
              lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
@@ -2322,17 +2326,15 @@ contains
     MATH_DATATYPE(kind=rck):: vr(:), vec_in(:)
     ! Get Vector to be transformed; distribute last element and norm of
     ! remaining elements to all procs in current column
-
-    vr(1:lr) = vec_in(1:lr) ! Vector to be transformed
     
     if (my_prow==prow(nrow, nblk, np_rows)) then
-       aux1(1) = dot_product(vr(1:lr-1),vr(1:lr-1))
-       aux1(2) = vr(lr)
+       aux1(1) = dot_product(vec_in(1:lr-1),vec_in(1:lr-1))
+       aux1(2) = vec_in(lr)
     else
-       aux1(1) = dot_product(vr(1:lr),vr(1:lr))
+       aux1(1) = dot_product(vec_in(1:lr),vec_in(1:lr))
        aux1(2) = 0.0_rck
     endif
-    
+
 #ifdef WITH_MPI
     if (useNonBlockingCollectivesRows) then
        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
@@ -2363,7 +2365,7 @@ contains
     vnorm2 = real(aux1(1),kind=rk)
 #endif
     vrl    = aux1(2)
-    
+
     ! Householder transformation
     call hh_transform_&
          &MATH_DATATYPE&
@@ -2371,10 +2373,10 @@ contains
          &PRECISION &
          (obj, vrl, vnorm2, xf, tau, wantDebug)
     ! Scale vr and store Householder Vector for back transformation
-    
-    vr(1:lr) = vr(1:lr) * xf
+
+    vr(1:lr) = vec_in(1:lr) * xf
     if (my_prow==prow(nrow, nblk, np_rows)) vr(lr) = 1.0_rck
-    
+
   end subroutine get_hh_vec
   
   subroutine apply_ht(vr,lc,a_mat,ex_buff2d)
@@ -2385,7 +2387,7 @@ contains
 #endif
     integer:: lc
     MATH_DATATYPE(kind=rck):: vr(:), ex_buff2d(:,:)
-    integer:: nrow, ncol, ilc, iioff, lreff,mynlc
+    integer:: iioff, mynlc
     
 #ifdef WITH_OPENMP_TRADITIONAL
     !Open up one omp region to avoid paying openmp overhead.
@@ -2487,9 +2489,7 @@ contains
     enddo
 
     !we also need to transform the remaining ex_buff
-    ilc=lc
     do iioff=1,ubound(ex_buff2d,2)
-       ilc=ilc-1
        nlc = nlc+1
        if (lr>0) then
           aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,iioff))
@@ -2537,10 +2537,8 @@ contains
     enddo
 
     !we also need to transform the remaining ex_buff
-    ilc=lc
     do iioff=1,ubound(ex_buff2d,2)
        nlc = nlc+1
-       ilc=ilc-1
 #if REALCASE == 1
        ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tau*aux1(nlc)*vr(1:lr)
 #endif
@@ -2548,9 +2546,215 @@ contains
        ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - conjg(tau)*aux1(nlc)*vr(1:lr)
 #endif       
     end do
-    
 #endif /* WITH_OPENMP_TRADITIONAL */
   end subroutine apply_ht
+
+  subroutine get_apply_ht(vr,lc,a_mat,ex_buff2d)
+#ifdef USE_ASSUMED_SIZE
+    MATH_DATATYPE(kind=rck)                     :: a_mat(lda,*)
+#else
+    MATH_DATATYPE(kind=rck)                     :: a_mat(lda,matrixCols)
+#endif
+    integer:: lc
+    MATH_DATATYPE(kind=rck):: vr(:), ex_buff2d(:,:), d1,d2,d3,d4
+    integer:: iioff, mynlc
+
+#ifdef WITH_OPENMP_TRADITIONAL
+    !Open up one omp region to avoid paying openmp overhead.
+    !This does not help performance due to the addition of two openmp barriers around the MPI call,
+    !But in the future this may be beneficial if these barriers are replaced with a faster implementation
+    stop 'get_apply_ht with omp not implememted yet'
+    !$omp  parallel &
+    !$omp  default(none) &
+    !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
+    !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj, &
+#ifdef WITH_MPI
+    !$omp&  MPI_STATUS_IGNORE, &
+#endif
+    !$omp&  useNonBlockingCollectivesRows, useNonBlockingCollectivesCols) &
+    !$omp private(mynlc, j, lcx, ii, pp, mpierr, allreduce_request2)        
+    mynlc = 0 ! number of local columns
+    
+    !This loop does not have independent iterations,
+    !'mynlc' is incremented each iteration, and it is difficult to remove this dependency
+    !Thus each thread executes every iteration of the loop, except it only does the work if it 'owns' that iteration
+    !That is, a thread only executes the work associated with an iteration if its thread id is congruent to
+    !the iteration number modulo the number of threads
+    do j=1,lc-1
+       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+       if (lcx>0 ) then
+          mynlc = mynlc+1
+          if ( mod((j-1), omp_get_num_threads()) .eq. omp_get_thread_num() ) then
+             if (lr>0) aux1(mynlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
+          endif
+       endif
+    enddo
+    
+    ! Get global dot products
+    
+    !$omp barrier
+    !$omp single
+#ifdef WITH_MPI
+    if (useNonBlockingCollectivesRows) then
+       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+       if (mynlc > 0) then
+          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+               allreduce_request2, mpierr)
+          call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+       endif
+       if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+    else
+       if (wantDebug) call obj%timer%start("mpi_communication")
+       if (mynlc>0) then
+          call mpi_allreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+               mpierr)
+       endif
+       if (wantDebug) call obj%timer%stop("mpi_communication")
+    endif
+#else /* WITH_MPI */
+!    if (mynlc > 0) aux2 = aux1
+#endif /* WITH_MPI */
+    !$omp end single
+    !$omp barrier
+    
+    ! Transform
+    transformChunkSize=32
+    mynlc = 0
+    do j=1,lc-1
+       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+       if (lcx > 0) then
+          mynlc = mynlc+1
+          !This loop could be parallelized with an openmp pragma with static scheduling and chunk size 32
+          !However, for some reason this is slower than doing it manually, so it is parallelized as below.
+          do ii=omp_get_thread_num()*transformChunkSize,lr,omp_get_num_threads()*transformChunkSize
+             do pp = 1,transformChunkSize
+                if (pp + ii > lr) exit
+#if REALCASE == 1
+                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - tau*aux1(mynlc)*vr(ii+pp)
+#endif
+#if COMPLEXCASE == 1
+                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - conjg(tau)*aux1(mynlc)*vr(ii+pp)
+#endif
+             enddo
+          enddo
+       endif
+    enddo
+    !$omp end parallel
+    
+#else /* WITH_OPENMP_TRADITIONAL */
+!call obj%timer%start("dotprod")
+
+    !data to compute vr and to transform the remaining ex_buff
+    nlc = 0 ! number of local columns
+    do iioff=1,ubound(ex_buff2d,2)
+       nlc = nlc+2
+       if (lr>0) then
+          if (my_prow==prow(nrow, nblk, np_rows)) then
+             aux1(nlc-1) = dot_product(ex_buff2d(1:lr-1,1),ex_buff2d(1:lr-1,iioff))
+             aux1(nlc) = ex_buff2d(lr,iioff)
+          else
+             aux1(nlc-1) = dot_product(ex_buff2d(1:lr,1),ex_buff2d(1:lr,iioff))
+             aux1(nlc) = 0.0_rck
+          endif
+       else
+          aux1(nlc-1:nlc) = 0.
+       end if
+    end do
+
+    do j=1,lc-1
+       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+       if (lcx>0) then
+          nlc = nlc+2
+          if (lr>0) then
+             if (my_prow==prow(nrow, nblk, np_rows)) then
+                aux1(nlc-1) = dot_product(ex_buff2d(1:lr-1,1),a_mat(1:lr-1,lcx))
+                aux1(nlc) = a_mat(lr,lcx)
+             else
+                aux1(nlc-1) = dot_product(ex_buff2d(1:lr,1),a_mat(1:lr,lcx))
+                aux1(nlc) = 0.0_rck
+             endif
+          else
+             aux1(nlc-1:nlc) = 0.
+          end if
+       endif
+    enddo
+!    call obj%timer%stop("dotprod")
+
+    ! Get global dot products
+#ifdef WITH_MPI
+    if (useNonBlockingCollectivesRows) then
+       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+       if (nlc > 0) then
+          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+               allreduce_request3, mpierr)
+          call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
+       endif
+       if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+    else
+       if (wantDebug) call obj%timer%start("mpi_communication")
+       if (nlc>0) then
+          call mpi_allreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
+               mpierr)
+       endif
+       if (wantDebug) call obj%timer%stop("mpi_communication")
+    endif
+#endif /* WITH_MPI */
+
+    !get vr
+#if REALCASE == 1
+    vnorm2 = aux1(1)
+#endif
+#if COMPLEXCASE == 1
+    vnorm2 = real(aux1(1),kind=rk)
+#endif
+    vrl    = aux1(2)
+
+    ! Householder transformation
+    call hh_transform_&
+         &MATH_DATATYPE&
+         &_&
+         &PRECISION &
+         (obj, vrl, vnorm2, xf, tau, wantDebug)
+
+    ! Scale vr and store Householder Vector for back transformation
+    vr(1:lr) = ex_buff2d(1:lr,1) * xf
+    if (my_prow==prow(nrow, nblk, np_rows)) vr(lr) = 1.0_rck
+
+    !transform the remaining ex_buff
+!    call obj%timer%start("mtrans")
+    nlc = 2
+    do iioff=2,ubound(ex_buff2d,2)
+       nlc = nlc+2
+#if REALCASE == 1
+       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tau*(aux1(nlc-1)*xf+aux1(nlc))*vr(1:lr)
+#endif
+#if COMPLEXCASE == 1
+       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - conjg(tau)*(aux1(nlc-1)*xf+aux1(nlc))*vr(1:lr)
+#endif       
+    end do
+
+    !transform a_mat
+    do j=1,lc-1
+       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+       if (lcx>0) then
+          nlc = nlc+2
+#if REALCASE == 1
+          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tau*(aux1(nlc-1)*xf+aux1(nlc))*vr(1:lr)
+#endif
+#if COMPLEXCASE == 1
+          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*(aux1(nlc-1)*xf+aux1(nlc))*vr(1:lr)
+#endif
+       endif
+    enddo
+!    call obj%timer%stop("mtrans")    
+
+#endif /* WITH_OPENMP_TRADITIONAL */
+  end subroutine get_apply_ht
+
   
 end subroutine bandred_&
 &MATH_DATATYPE&
