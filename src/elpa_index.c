@@ -1048,7 +1048,7 @@ static int verbose_is_valid(elpa_index_t index, int n, int new_value) {
 
 static int nbc_elpa1_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        if ((solver == ELPA_SOLVER_1STAGE)) {
+        if (solver == ELPA_SOLVER_1STAGE) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
         else {
@@ -1058,7 +1058,7 @@ static int nbc_elpa1_is_valid(elpa_index_t index, int n, int new_value) {
 
 static int nbc_elpa2_is_valid(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
-        if ((solver == ELPA_SOLVER_2STAGE)) {
+        if (solver == ELPA_SOLVER_2STAGE) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
         else {
@@ -1251,7 +1251,7 @@ static int valid_with_gpu(elpa_index_t index, int n, int new_value) {
 static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
         int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
-        if ((solver == ELPA_SOLVER_1STAGE) && (gpu_is_active == 1)) {
+        if ( (solver == ELPA_SOLVER_1STAGE) && (gpu_is_active == 1) ) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
         else {
@@ -1262,7 +1262,7 @@ static int valid_with_gpu_elpa1(elpa_index_t index, int n, int new_value) {
 static int valid_with_gpu_elpa2(elpa_index_t index, int n, int new_value) {
         int solver = elpa_index_get_int_value(index, "solver", NULL);
         int gpu_is_active = (elpa_index_get_int_value(index, "nvidia-gpu", NULL) || elpa_index_get_int_value(index, "gpu", NULL) || elpa_index_get_int_value(index, "amd-gpu", NULL) || elpa_index_get_int_value(index, "intel-gpu", NULL));
-        if ((solver == ELPA_SOLVER_2STAGE) && (gpu_is_active == 1)) {
+        if ( (solver == ELPA_SOLVER_2STAGE) && (gpu_is_active == 1) ) {
                 return ((new_value == 0 ) || (new_value == 1));
         }
         else {
