@@ -541,7 +541,7 @@
           write(error_unit,*) "Error in global_product. Aborting..."
           return
         endif
-        z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
+        z(1:na1) = SIGN( SQRT( ABS( z(1:na1) ) ), z1(1:na1) )
 
         call global_gather_&
         &PRECISION&
