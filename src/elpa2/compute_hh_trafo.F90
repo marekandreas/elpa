@@ -51,18 +51,19 @@ subroutine compute_hh_trafo_&
 &_&
 #endif
 &PRECISION &
-(obj, useGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+(obj, my_pe, useGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, &
 #ifdef WITH_OPENMP_TRADITIONAL
 l_nev, &
 #endif
 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 hh_tau_dev, kernel_flops, kernel_time, n_times, off, ncols, istripe, &
 #ifdef WITH_OPENMP_TRADITIONAL
-my_thread, thread_width, kernel, last_stripe_width)
+my_thread, thread_width, kernel, last_stripe_width, success)
 #else
-last_stripe_width, kernel)
+last_stripe_width, kernel, success)
 #endif
 
+  use ELPA_utilities, only : error_unit
   use precision
   use elpa_abstract_impl
   use, intrinsic :: iso_c_binding
@@ -118,7 +119,7 @@ last_stripe_width, kernel)
   logical, intent(in)                        :: useGPU, wantDebug
   real(kind=c_double), intent(inout)         :: kernel_time  ! MPI_WTIME always needs double
   integer(kind=lik)                          :: kernel_flops
-  integer(kind=ik), intent(in)               :: nbw, max_blk_size
+  integer(kind=ik), intent(in)               :: nbw, max_blk_size, my_pe
 #if REALCASE == 1
   real(kind=C_DATATYPE_KIND)                 :: bcast_buffer(nbw,max_blk_size)
 #endif
@@ -176,12 +177,14 @@ last_stripe_width, kernel)
 #endif
   real(kind=c_double)                        :: ttt ! MPI_WTIME always needs double
 
+  logical, optional                          :: success
   integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                                  &PRECISION&
                                                                  &_&
                                                                  &MATH_DATATYPE
 
 
+  success = .true.
   j = -99
 
   !if (wantDebug) then
@@ -204,7 +207,8 @@ last_stripe_width, kernel)
 #endif
 #endif  /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
       write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not a NVIDIA GPU kernel!"
-      stop
+      success = .false.
+      return
     endif
 #endif /* WITH_NVIDIA_GPU_VERSION */
 
@@ -217,7 +221,8 @@ last_stripe_width, kernel)
       ( kernel .ne. ELPA_2STAGE_COMPLEX_AMD_GPU)) then
 #endif
       write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not an AMD GPU kernel!"
-      stop
+      success = .false.
+      return
     endif
 #endif /* WITH_AMD_GPU_VERSION */
 
@@ -231,6 +236,8 @@ last_stripe_width, kernel)
 #endif
       write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not an INTEL GPU SYCL kernel!"
       stop
+      success = .false.
+      return
     endif
 #endif /* WITH_GPU_SYCL_VERSION */
   !endif ! wantDebug
@@ -263,7 +270,9 @@ last_stripe_width, kernel)
     ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
     if (ncols < 1) then
       if (wantDebug) then
-        print *, "Returning early from compute_hh_trafo"
+        if (my_pe .eq. 0) then      
+          write(error_unit,'(a)') "Returning early from compute_hh_trafo (only task=0 prints this)"
+        endif
       endif
       return
     endif

@@ -1370,7 +1370,8 @@ print *,"Device pointer + REDIST"
        &_&
        &PRECISION &
        (obj, na, nev, nblk, nbw, q, &
-       matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+       matrixRows, matrixCols, hh_trans, my_pe, mpi_comm_rows, mpi_comm_cols, &
+       wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("tridi_to_band")
@@ -1468,7 +1469,8 @@ print *,"Device pointer + REDIST"
          &_&
          &PRECISION &
          (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
-         matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+         matrixRows, matrixCols, hh_trans, my_pe, mpi_comm_rows, mpi_comm_cols, &
+         wantDebug, do_useGPU_trans_ev_tridi_to_band, &
          nrThreads, success=success, kernel=kernel)
 
          call obj%timer%stop("skew_tridi_to_band")

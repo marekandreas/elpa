@@ -70,7 +70,7 @@ subroutine trans_ev_tridi_to_band_&
 &_&
 &PRECISION &
 (obj, na, nev, nblk, nbw, q, ldq, matrixCols,         &
- hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, max_threads_in, success, &
+ hh_trans, my_pe, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, max_threads_in, success, &
  kernel)
 
 !-------------------------------------------------------------------------------
@@ -99,6 +99,7 @@ subroutine trans_ev_tridi_to_band_&
 !              MPI-Communicators for rows/columns/both
 !
 !-------------------------------------------------------------------------------
+  use ELPA_utilities, only : error_unit
   use elpa_abstract_impl
   use elpa2_workload
   use pack_unpack_cpu
@@ -115,7 +116,7 @@ subroutine trans_ev_tridi_to_band_&
   class(elpa_abstract_impl_t), intent(inout)   :: obj
   logical, intent(in)                          :: useGPU
 
-  integer(kind=ik), intent(in)                 :: kernel
+  integer(kind=ik), intent(in)                 :: kernel, my_pe
   integer(kind=ik), intent(in)                 :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
 
 #ifdef USE_ASSUMED_SIZE
@@ -2266,18 +2267,24 @@ subroutine trans_ev_tridi_to_band_&
                 &MATH_DATATYPE&
                 &_openmp_&
                 &PRECISION&
-                &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                &(obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
+                max_threads, &
                 l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i, &
-                my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)
+                my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, &
+                success=success)
               if (wantDebug) call obj%timer%stop("compute_hh_trafo")
+              if (.not.success) then
+                success=.false.
+                return
+               endif      
             else ! useGPU
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
               !$omp parallel do num_threads(max_threads) if(max_threads > 1) &
               !$omp default(none) &
-              !$omp private(my_thread, n_off, b_len, b_off) &
-              !$omp shared(max_threads, csw, top_msg_length, aIntern, &
+              !$omp private(my_thread, n_off, b_len, b_off, success) &
+              !$omp shared(max_threads, csw, top_msg_length, aIntern, my_pe, &
               !$omp&       a_off, i, top_border_recv_buffer, obj, useGPU, wantDebug, aIntern_dev, &
               !$omp&       stripe_width, a_dim2, stripe_count, l_nev, nbw, max_blk_size, bcast_buffer, &
               !$omp&       bcast_buffer_dev, hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n, &
@@ -2288,10 +2295,11 @@ subroutine trans_ev_tridi_to_band_&
                       &MATH_DATATYPE&
                       &_openmp_&
                       &PRECISION&
-                      (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                      (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+                      stripe_count, max_threads, &
                       l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                       hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, &
-                      i, my_thread, thread_width, kernel)
+                      i, my_thread, thread_width, kernel, success=success)
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2305,10 +2313,15 @@ subroutine trans_ev_tridi_to_band_&
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION&
-                &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                &(obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
+                max_threads, &
                 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i, &
-                last_stripe_width, kernel)
+                last_stripe_width, kernel, success=success)
+            if (.not.success) then
+              success=.false.
+              return
+            endif
             if (wantDebug) call obj%timer%stop("compute_hh_trafo")
 #endif /* WITH_OPENMP_TRADITIONAL */
 
@@ -2519,19 +2532,24 @@ subroutine trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
                  &_openmp_&
                  &PRECISION&
-                 (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                 (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
+                 max_threads, &
                  l_nev, a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                  hh_tau_dev, kernel_flops, kernel_time, n_times, &
                  current_local_n - bottom_msg_length, bottom_msg_length, i, &
-                 my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)
+                 my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, success=success)
+              if (.not.success) then
+                success=.false.
+                return
+              endif
               if (wantDebug) call obj%timer%stop("compute_hh_trafo")
             else ! useGPU
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
               !$omp parallel do num_threads(max_threads) if(max_threads > 1) &
               !$omp default(none) &
-              !$omp private(my_thread, b_len, b_off) &
-              !$omp shared(max_threads, obj, useGPU, wantDebug, aIntern, aIntern_dev, &
+              !$omp private(my_thread, b_len, b_off, success) &
+              !$omp shared(max_threads, obj, useGPU, wantDebug, aIntern, aIntern_dev, my_pe, &
               !$omp&       stripe_width, a_dim2, stripe_count, l_nev, a_off, &
               !$omp&       nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_tau_dev, &
               !$omp&       kernel_flops, kernel_time, n_times, current_local_n, &
@@ -2543,11 +2561,11 @@ subroutine trans_ev_tridi_to_band_&
                      &MATH_DATATYPE&
                      &_openmp_&
                      &PRECISION&
-                     &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
+                     &(obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
                      max_threads, l_nev, a_off, &
                      nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                      hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
-                     bottom_msg_length, i, my_thread, thread_width, kernel)
+                     bottom_msg_length, i, my_thread, thread_width, kernel, success=success)
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2662,12 +2680,17 @@ subroutine trans_ev_tridi_to_band_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+             stripe_count, max_threads, &
              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, &
              current_local_n - bottom_msg_length, bottom_msg_length, i, &
-             last_stripe_width, kernel)
+             last_stripe_width, kernel, success=success)
             if (wantDebug) call obj%timer%stop("compute_hh_trafo")
+            if (.not.success) then
+              success=.false.
+              return
+            endif
 
             !send_b
 #ifdef WITH_MPI
@@ -2784,34 +2807,41 @@ subroutine trans_ev_tridi_to_band_&
                    &MATH_DATATYPE&
                    &_openmp_&
                    &PRECISION&
-                   (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                   (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+                   stripe_count, max_threads, &
                    l_nev, a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                    hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
                    current_local_n-top_msg_length-bottom_msg_length, i, &
-                   my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)
+                   my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, &
+                   success=success)
               if (wantDebug) call obj%timer%stop("compute_hh_trafo")
+              if (.not.success) then
+                success=.false.
+                return
+              endif
             else ! useGPU
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
               !$omp parallel do num_threads(max_threads) if(max_threads > 1) &
               !$omp default(none) &
               !$omp private(my_thread) &
-              !$omp shared(max_threads, obj, useGPU, wantDebug, aIntern, aIntern_dev, &
+              !$omp shared(max_threads, obj, useGPU, wantDebug, aIntern, aIntern_dev, my_pe, &
               !$omp&       stripe_width, a_dim2, stripe_count, l_nev, a_off, &
               !$omp&       nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_tau_dev, &
               !$omp&       kernel_flops, kernel_time, n_times, top_msg_length, current_local_n, &
-              !$omp&       bottom_msg_length, i, thread_width, kernel) &
+              !$omp&       bottom_msg_length, i, thread_width, kernel, success) &
               !$omp schedule(static, 1)
               do my_thread = 1, max_threads
                 call compute_hh_trafo_&
                 &MATH_DATATYPE&
                 &_openmp_&
                 &PRECISION&
-                (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
+                (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, &
+                max_threads, l_nev, a_off, &
                 nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
                 current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
-                kernel)
+                kernel, success=success)
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2824,13 +2854,17 @@ subroutine trans_ev_tridi_to_band_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+             stripe_count, max_threads, &
              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
              current_local_n-top_msg_length-bottom_msg_length, i, &
-             last_stripe_width, kernel)
+             last_stripe_width, kernel, success=success)
             if (wantDebug) call obj%timer%stop("compute_hh_trafo")
-
+            if (.not.success) then
+              success=.false.
+              return
+            endif
 #endif /* WITH_OPENMP_TRADITIONAL */
 
             !wait_t
@@ -2970,32 +3004,38 @@ subroutine trans_ev_tridi_to_band_&
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-               (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+               (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+               stripe_count, max_threads, &
                l_nev, a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
-               my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)          
+               my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, &
+               success=success)
              if (wantDebug) call obj%timer%stop("compute_hh_trafo")
-           
+             if (.not.success) then
+               success=.false.
+               return
+             endif
            else ! useGPU
              call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
              !$omp parallel do num_threads(max_threads) if(max_threads > 1) &
              !$omp default(none) &
              !$omp private(my_thread, b_len, b_off) &
-             !$omp shared(obj, max_threads, top_msg_length, csw, aIntern, a_off, &
+             !$omp shared(obj, max_threads, top_msg_length, csw, aIntern, a_off, my_pe, &
              !$omp&       top_border_recv_buffer, useGPU, wantDebug, aIntern_dev, stripe_width, &
              !$omp&       a_dim2, stripe_count, l_nev, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
-             !$omp&       hh_tau_dev, kernel_flops, kernel_time, n_times, i, thread_width, kernel) &
+             !$omp&       hh_tau_dev, kernel_flops, kernel_time, n_times, i, thread_width, kernel, success) &
              !$omp schedule(static, 1)
              do my_thread = 1, max_threads
                call compute_hh_trafo_&
                     &MATH_DATATYPE&
                     &_openmp_&
                     &PRECISION&
-                    (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+                    (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                    l_nev, a_off, &
                     nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                     hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, my_thread, &
-                    thread_width, kernel)
+                    thread_width, kernel, success=success)
              enddo
              !$omp end parallel do
              call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -3007,11 +3047,15 @@ subroutine trans_ev_tridi_to_band_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
              a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
-             last_stripe_width, kernel)
+             last_stripe_width, kernel, success=success)
            if (wantDebug) call obj%timer%stop("compute_hh_trafo")
+           if (.not.success) then
+             success=.false.
+             return
+           endif
 
 #endif /* WITH_OPENMP_TRADITIONAL */
          endif ! which if branch
