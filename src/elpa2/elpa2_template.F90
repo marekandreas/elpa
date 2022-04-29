@@ -1094,11 +1094,6 @@ print *,"Device pointer + REDIST"
 #endif
       ! debug
       !do_useGPU_bandred = .false.
-      print *,"debug",useGPU,kernel,GPU_KERNEL, &
-              WITH_REAL_INTEL_GPU_SYCL_KERNEL, &
-              WITH_REAL_GENERIC_KERNEL, &
-              WITH_REAL_GENERIC_SIMPLE_KERNEL
-
 
       ! Reduction full -> band
       call bandred_&
