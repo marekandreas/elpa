@@ -1,5 +1,3 @@
-// Copyright 2021, A. Marek MPCDF
-//
 //    This file is part of ELPA.
 //
 //    The ELPA library was originally created by the ELPA consortium,
@@ -16,7 +14,6 @@
 //      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 //      and
 //    - IBM Deutschland GmbH
-//
 //
 //    This particular source code file contains additions, changes and
 //    enhancements authored by Intel Corporation which is not part of
@@ -36,7 +33,7 @@
 //    GNU Lesser General Public License for more details.
 //
 //    You should have received a copy of the GNU Lesser General Public License
-//    along with ELPA. If not, see <http://www.gnu.org/licenses/>
+//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
 //
 //    ELPA reflects a substantial effort on the part of the original
 //    ELPA consortium, and we ask you to respect the spirit of the
@@ -45,17 +42,28 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
+// This file was written by A. Poeppl, Intel Corporation (2022) for MPCDF
+
+#ifndef SYCL_COMMON_HPP
+#define SYCL_COMMON_HPP
+
+#pragma once
+
 #include <CL/sycl.hpp>
 
-#include "syclCommon.hpp"
+namespace elpa {
+namespace gpu {
+namespace sycl {
 
-extern "C" {
-  int sycl_gpu_count() {
-    using namespace elpa::gpu::sycl;
-    int count = -1000;
-    collectGpuDevices();
-    count = getNumDevices();
-    return count;
-  }
+  void collectGpuDevices();
+  void printGpuInfo();
+  void selectGpuDevice(int deviceNum);
+  void selectDefaultGpuDevice();
+  size_t getNumDevices();
+  cl::sycl::device getDevice();
+  cl::sycl::queue & getQueue();
+
 }
-
+}
+}
+#endif

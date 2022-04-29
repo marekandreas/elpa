@@ -42,8 +42,8 @@
 //    the original distribution, the GNU Lesser General Public License.
 //
 // This file was written by A. Marek, MPCDF (2022)
-// it is based on a prototype implementation developed for MPCDF 
-// by A. Poeppl, Intel (2022) 
+// it is based on a prototype implementation developed for MPCDF
+// by A. Poeppl, Intel (2022)
 */
 
 #include <CL/sycl.hpp>
@@ -55,14 +55,20 @@
 #include <iostream>
 #include <cstdint>
 #include <vector>
-#include <optional> 
-     
+#include <optional>
+
 #include "config-f90.h"
 
+#include "syclCommon.hpp"
+
 #ifdef WITH_SYCL_GPU_VERSION
-#include "./collectGpuDevices.h"
+using namespace cl;
 
 extern "C" {
+
+static void collectGpuDevices() {
+  elpa::gpu::sycl::collectGpuDevices();
+}
 
 static oneapi::mkl::transpose transposeFromChar(char c) {
   switch (c) {
@@ -110,109 +116,13 @@ static oneapi::mkl::side sideFromChar(char c) {
 }
 
 
-  int syclChosenGpu;
-
   int syclMemcpyHostToDevice = 20;
   int syclMemcpyDeviceToHost = 200;
   int syclMemcpyDeviceToDevice = 2000;
 
 
   void syclPrintGpuInfoFromC() {
-    using namespace sycl::info;
-    collectGpuDevices();
-
-    std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA GPU Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
-    std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
-    std::cout << "# GPU devices:     " << devices.size() << std::endl;
-    std::cout << "Eligible devices: " << std::endl;
-    for (size_t i = 0; i < devices.size(); i++) {
-      bool hasDpSupport = devices[i].has(sycl::aspect::fp64);
-      std::cout << " - Device #" << i << ": "
-                << devices[i].get_info<device::name>() << " ("
-                << devices[i].get_info<device::max_compute_units>() << " EUs"
-                << (hasDpSupport ? "" : ", SP only") << ")" << std::endl;
-    }
-    std::cout << "~~~~~~~~~ Display Verbose SYCL Platform Info ~~~~~~~~~" << std::endl;
-    std::cout << std::endl;
-    for (auto const &platform : sycl::platform::get_platforms()) {
-      std::cout << " - Platform: " << platform.get_info<platform::name>() << std::endl;
-      std::cout << "   * Vendor:  " << platform.get_info<platform::vendor>() << std::endl;
-      std::cout << "   * Version: " << platform.get_info<platform::version>() << std::endl;
-      std::cout << "   * Profile: " << platform.get_info<platform::vendor>() << std::endl;
-      for (auto const &device : platform.get_devices()) {
-        std::cout << "    -- Device: " << device.get_info<device::name>() << std::endl;
-        std::cout << "       * Device Type:                             ";
-        auto deviceType = device.get_info<device::device_type>();
-        switch (deviceType) {
-          case device_type::cpu:
-            std::cout << "CPU" << std::endl;
-            break;
-          case device_type::gpu:
-            std::cout << "GPU" << std::endl;
-            break;
-          case device_type::accelerator:
-            std::cout << "Accelerator" << std::endl;
-            break;
-          case device_type::custom:
-            std::cout << "CUSTOM" << std::endl;
-            break;
-          case device_type::automatic:
-            std::cout << "AUTOMATIC" << std::endl;
-            break;
-          case device_type::host:
-            std::cout << "HOST" << std::endl;
-            break;
-          case device_type::all:
-            default:
-            std::cout << "UNKNOWN" << std::endl;
-            break;
-        }
-        std::cout << "       * Max Compute Units:                       " << device.get_info<device::max_compute_units>() << std::endl;
-        std::cout << "       * Double Precision Floating Point support: " << ((device.has(sycl::aspect::fp64)) ? "Yes" : "No") << std::endl;
-        std::cout << "       * Max Work Item Dimensions:                " << device.get_info<device::max_work_item_dimensions>() << std::endl;
-        auto maxWorkItemSize = device.get_info<device::max_work_item_sizes>();
-        std::cout << "       * Max Work Item Sizes:                     " << "{" << maxWorkItemSize[0] << ", " << maxWorkItemSize[1] << ", " << maxWorkItemSize[2] << "}" << std::endl;
-        std::cout << "       * Max Work Group Sizes:                    " << device.get_info<device::max_work_group_size>() << std::endl;
-        std::cout << "       * Max Memory Alloc size:                   " << device.get_info<device::max_mem_alloc_size>() << std::endl;
-        std::cout << "       * Max Parameter size:                      " << device.get_info<device::max_parameter_size>() << std::endl;
-        std::cout << "       * Global Mem Cache Type:                   ";
-        auto globalMemoryCacheType = device.get_info<device::global_mem_cache_type>();
-        switch (globalMemoryCacheType) {
-          case global_mem_cache_type::none:
-            std::cout << "None" << std::endl;
-            break;
-          case global_mem_cache_type::read_only:
-            std::cout << "Read-Only";
-            break;
-          case global_mem_cache_type::read_write:
-            std::cout << "Read-Write";
-            break;
-          default:
-            std::cout << "UNKNOWN ENTRY!";
-            break;
-          }
-          std::cout << std::endl;
-          std::cout << "       * Local Mem Type:                          ";
-          auto localMemType = device.get_info<device::local_mem_type>();
-          switch (localMemType) {
-            case local_mem_type::none:
-              std::cout << "None";
-              break;
-            case local_mem_type::local:
-              std::cout << "Local";
-              break;
-            case local_mem_type::global:
-              std::cout << "Global";
-              break;
-            default:
-              std::cout << "UNKNOWN ENTRY!";
-              break;
-          }
-          std::cout << std::endl;
-          std::cout << "       * Local Mem Size:                          " << device.get_info<device::local_mem_size>() << std::endl;
-          std::cout << "       * Host Unified Memory:                     " << device.get_info<device::host_unified_memory>() << std::endl;
-        }
-    }
+    elpa::gpu::sycl::printGpuInfo();
   }
 
   int syclMemcpyDeviceToDeviceFromC(){
@@ -228,19 +138,13 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   int syclGetDeviceCountFromC() {
     collectGpuDevices();
-    return devices.size();
+    return elpa::gpu::sycl::getNumDevices();
   }
 
 
 
   void syclSetDeviceFromC(int targetGpuDeviceId) {
-    collectGpuDevices();
-    if (targetGpuDeviceId >= devices.size()){
-      std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
-      abort();
-    }
-    syclChosenGpu = targetGpuDeviceId;
-    chosenDeviceQueue = std::make_optional<sycl::queue>(devices[syclChosenGpu]);
+    elpa::gpu::sycl::selectGpuDevice(targetGpuDeviceId);
   }
 
   void syclSetGpuParamsFromC() {
@@ -267,550 +171,453 @@ static oneapi::mkl::side sideFromChar(char c) {
 
 
   int syclMallocFromC(intptr_t *a, size_t elems) {
-    if (chosenDeviceQueue) {
-      *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, *chosenDeviceQueue));
-      if (*a) {
-        std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
-        return 1;
-      } else {
-        std::cout << "Allocation failed!" << std::endl;
-        return 0;
-      }
+    auto &queue = elpa::gpu::sycl::getQueue();
+    *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, queue));
+    if (*a) {
+      std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
+      return 1;
     } else {
-      std::cerr << "No device selected for allocation." << std::endl;
+      std::cout << "Allocation failed!" << std::endl;
       return 0;
     }
   }
 
   int syclFreeFromC(intptr_t *a) {
-    if (chosenDeviceQueue) {
-      void * ptr = reinterpret_cast<void *>(*a);
-      sycl::free(ptr, *chosenDeviceQueue);
-      return 1;
-    } else {
-      std::cerr << "No device selected for deallocation." << std::endl;
-      return 0;
-    }
+    auto &queue = elpa::gpu::sycl::getQueue();
+    void * ptr = reinterpret_cast<void *>(*a);
+    sycl::free(ptr, queue);
+    return 1;
   }
 
 
   int syclMemcpyFromC(void *dst, void *src, size_t size, int direction) {
+    auto &queue = elpa::gpu::sycl::getQueue();
     bool isFailed = false;
     using sycl::usm::alloc;
-    if (chosenDeviceQueue) {
-      if (direction == syclMemcpyDeviceToDevice) {
-        if (sycl::get_pointer_type(dst, chosenDeviceQueue->get_context()) != alloc::device) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-          isFailed = true;
-        }
-        if (sycl::get_pointer_type(src, chosenDeviceQueue->get_context()) != alloc::device) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen GPU queue." << std::endl;
-          isFailed = true;
-        }
-      } else if (direction == syclMemcpyDeviceToHost) {
-        if (sycl::get_pointer_type(dst, chosenDeviceQueue->get_context()) != alloc::unknown) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is likely not a host pointer!." << std::endl;
-          isFailed = true;
-        }
-        if (sycl::get_pointer_type(src, chosenDeviceQueue->get_context()) != alloc::device) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-          isFailed = true;
-        }
-      } else if (direction == syclMemcpyHostToDevice) {
-        if (sycl::get_pointer_type(dst, chosenDeviceQueue->get_context()) != alloc::device) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-          isFailed = true;
-        }
-        if (sycl::get_pointer_type(src, chosenDeviceQueue->get_context()) != alloc::unknown) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is likely not a host pointer!." << std::endl;
-          isFailed = true;
-        }
-      } else {
-        std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
+    if (direction == syclMemcpyDeviceToDevice) {
+      if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::device) {
+        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
         isFailed = true;
       }
-      if (!isFailed) {
-        chosenDeviceQueue->memcpy(dst, src, size).wait();
-        return 1;
-      } else {
-        return 0;
+      if (sycl::get_pointer_type(src, queue.get_context()) != alloc::device) {
+        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen GPU queue." << std::endl;
+        isFailed = true;
+      }
+    } else if (direction == syclMemcpyDeviceToHost) {
+      if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::unknown) {
+        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is likely not a host pointer!." << std::endl;
+        isFailed = true;
+      }
+      if (sycl::get_pointer_type(src, queue.get_context()) != alloc::device) {
+        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        isFailed = true;
+      }
+    } else if (direction == syclMemcpyHostToDevice) {
+      if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::device) {
+        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        isFailed = true;
+      }
+      if (sycl::get_pointer_type(src, queue.get_context()) != alloc::unknown) {
+        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is likely not a host pointer!." << std::endl;
+        isFailed = true;
       }
     } else {
-      std::cerr << "No device selected for memcopy operation." << std::endl;
+      std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
+      isFailed = true;
+    }
+    if (!isFailed) {
+      queue.memcpy(dst, src, size).wait();
+      return 1;
+    } else {
       return 0;
     }
   }
 
   int syclMemsetFromC(void *mem, int32_t val, size_t size) {
-    if (chosenDeviceQueue) {
-      if (sycl::get_pointer_type(mem, chosenDeviceQueue->get_context()) != sycl::usm::alloc::device) {
-        std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-        return 0;
-      }
-      chosenDeviceQueue->memset(mem, val, size).wait();
-      return 1;
-    } else {
-      std::cerr << "No device selected for memset operation." << std::endl;
+    auto &queue = elpa::gpu::sycl::getQueue();
+    if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::device) {
+      std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
       return 0;
     }
+    queue.memset(mem, val, size).wait();
+    return 1;
   }
 
   void mklSyclDgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, double alpha, void *a, int lda, void *b, int ldb, double beta, void *c, int ldc) {
     //handle not needed
-    if (chosenDeviceQueue) {
-      std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
-      m_ = (std::int64_t) m;
-      n_ = (std::int64_t) n;
-      k_ = (std::int64_t) k;
-      lda_ = (std::int64_t) lda;
-      ldb_ = (std::int64_t) ldb;
-      ldc_ = (std::int64_t) ldc;
-      using oneapi::mkl::blas::column_major::gemm;
-      auto ta = transposeFromChar(cta);
-      auto tb = transposeFromChar(ctb);
-      gemm(*chosenDeviceQueue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(b), ldb_, beta, reinterpret_cast<double *>(c), ldc_);
-    } else {
-      std::cerr << "No device selected for DGEMM operation." << std::endl;
-    }
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    k_ = (std::int64_t) k;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    ldc_ = (std::int64_t) ldc;
+    using oneapi::mkl::blas::column_major::gemm;
+    auto ta = transposeFromChar(cta);
+    auto tb = transposeFromChar(ctb);
+    gemm(queue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(b), ldb_, beta, reinterpret_cast<double *>(c), ldc_);
   }
 
   void mklSyclSgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, float alpha, void *a, int lda, void *b, int ldb, float beta, void *c, int ldc) {
     // handle not needed
-    if (chosenDeviceQueue) {
-      std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
-      m_ = (std::int64_t) m;
-      n_ = (std::int64_t) n;
-      k_ = (std::int64_t) k;
-      lda_ = (std::int64_t) lda;
-      ldb_ = (std::int64_t) ldb;
-      ldc_ = (std::int64_t) ldc;
-      using oneapi::mkl::blas::column_major::gemm;
-      auto ta = transposeFromChar(cta);
-      auto tb = transposeFromChar(ctb);
-      gemm(*chosenDeviceQueue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(b), ldb_, beta, reinterpret_cast<float *>(c), ldc_);
-    } else {
-      std::cerr << "No device selected for SGEMM operation." << std::endl;
-    }
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    k_ = (std::int64_t) k;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    ldc_ = (std::int64_t) ldc;
+    using oneapi::mkl::blas::column_major::gemm;
+    auto ta = transposeFromChar(cta);
+    auto tb = transposeFromChar(ctb);
+    gemm(queue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(b), ldb_, beta, reinterpret_cast<float *>(c), ldc_);
   }
 
   void mklSyclZgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, std::complex<double> alpha, void *a, int lda, void *b, int ldb, std::complex<double> beta, void *c, int ldc) {
     // handle not needed
-    if (chosenDeviceQueue) {
-      std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
-      m_ = (std::int64_t) m;
-      n_ = (std::int64_t) n;
-      k_ = (std::int64_t) k;
-      lda_ = (std::int64_t) lda;
-      ldb_ = (std::int64_t) ldb;
-      ldc_ = (std::int64_t) ldc;
-      using oneapi::mkl::blas::column_major::gemm;
-      auto ta = transposeFromChar(cta);
-      auto tb = transposeFromChar(ctb);
-      gemm(*chosenDeviceQueue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_, beta, reinterpret_cast<std::complex<double> *>(c), ldc_);
-    } else {
-      std::cerr << "No device selected for ZGEMM operation." << std::endl;
-    }
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    k_ = (std::int64_t) k;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    ldc_ = (std::int64_t) ldc;
+    using oneapi::mkl::blas::column_major::gemm;
+    auto ta = transposeFromChar(cta);
+    auto tb = transposeFromChar(ctb);
+    gemm(queue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_, beta, reinterpret_cast<std::complex<double> *>(c), ldc_);
   }
 
   void mklSyclCgemmFromC(intptr_t *handle, char cta, char ctb, int m, int n, int k, std::complex<float> alpha, void *a, int lda, void *b, int ldb, std::complex<float> beta, void *c, int ldc) {
     // handle not needed
-    if (chosenDeviceQueue) {
-      std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
-      m_ = (std::int64_t) m;
-      n_ = (std::int64_t) n;
-      k_ = (std::int64_t) k;
-      lda_ = (std::int64_t) lda;
-      ldb_ = (std::int64_t) ldb;
-      ldc_ = (std::int64_t) ldc;
-      using oneapi::mkl::blas::column_major::gemm;
-      auto ta = transposeFromChar(cta);
-      auto tb = transposeFromChar(ctb);
-      gemm(*chosenDeviceQueue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_, beta, reinterpret_cast<std::complex<float> *>(c), ldc_);
-    } else {
-      std::cerr << "No device selected for CGEMM operation." << std::endl;
-    }
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    k_ = (std::int64_t) k;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    ldc_ = (std::int64_t) ldc;
+    using oneapi::mkl::blas::column_major::gemm;
+    auto ta = transposeFromChar(cta);
+    auto tb = transposeFromChar(ctb);
+    gemm(queue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_, beta, reinterpret_cast<std::complex<float> *>(c), ldc_);
   }
 
   // implemented in mkl???
   //
   void mklSyclDtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
     //handle not needed
-    if (chosenDeviceQueue) {
-      //using oneapi::mkl::blas::column_major::gemm;
-      auto up = uploFromChar(uplo);
-      auto di = diagFromChar(diag);
+    auto &queue = elpa::gpu::sycl::getQueue();
+    //using oneapi::mkl::blas::column_major::gemm;
+    auto up = uploFromChar(uplo);
+    auto di = diagFromChar(diag);
 
-//      dtrtri(&uplo, &diag, &n, reinterpret_cast<double *>(a), &lda, &info);
-    } else {
-      std::cerr << "No device selected for DTRTRI operation." << std::endl;
-    }
-  }  
+    // FIXME trtri is currently unavailable on the GPU!
+    // dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
+  }
 
   void mklSyclStrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
     //handle not needed
-    if (chosenDeviceQueue) {
-      //using oneapi::mkl::blas::column_major::gemm;
-      auto up = uploFromChar(uplo);
-      auto di = diagFromChar(diag);
+    auto &queue = elpa::gpu::sycl::getQueue();
+    //using oneapi::mkl::blas::column_major::gemm;
+    auto up = uploFromChar(uplo);
+    auto di = diagFromChar(diag);
 
-//      dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
-    } else {
-      std::cerr << "No device selected for STRTRI operation." << std::endl;
-    }
+    // FIXME trtri is currently unavailable on the GPU!
+    // dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
   }
 
   void mklSyclZtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
     //handle not needed
-    if (chosenDeviceQueue) {
-      //using oneapi::mkl::blas::column_major::gemm;
-      auto up = uploFromChar(uplo);
-      auto di = diagFromChar(diag);
+    auto &queue = elpa::gpu::sycl::getQueue();
+    //using oneapi::mkl::blas::column_major::gemm;
+    auto up = uploFromChar(uplo);
+    auto di = diagFromChar(diag);
 
-//      dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
-    } else {
-      std::cerr << "No device selected for ZTRTRI operation." << std::endl;
-    }
-  }  
+    // FIXME trtri is currently unavailable on the GPU!
+    // dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
+  }
 
   void mklSyclCtrtriFromC(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
     //handle not needed
-    if (chosenDeviceQueue) {
-      //using oneapi::mkl::blas::column_major::gemm;
-      auto up = uploFromChar(uplo);
-      auto di = diagFromChar(diag);
+    auto &queue = elpa::gpu::sycl::getQueue();
+    //using oneapi::mkl::blas::column_major::gemm;
+    auto up = uploFromChar(uplo);
+    auto di = diagFromChar(diag);
 
-//      dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
-    } else {
-      std::cerr << "No device selected for CTRTRI operation." << std::endl;
-    }
-  }  
+    // FIXME trtri is currently unavailable on the GPU!
+    //dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
+  }
 
   // different API!!
   void mklSyclDpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-        using oneapi::mkl::lapack::potrf;
-        auto up = uploFromChar(uplo);
-	//void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
-        //potrf(*chosenDeviceQueue, up, &n, reinterpret_cast<double *>(a), &lda, &info);
-      } else {
-        std::cerr << "No device selected for DPOTRF operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    using oneapi::mkl::lapack::potrf;
+    auto up = uploFromChar(uplo);
+    //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
+    //potrf(queue, up, &n, reinterpret_cast<double *>(a), &lda, &info);
+  }
 
   void mklSyclSpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-        using oneapi::mkl::lapack::potrf;
-        auto up = uploFromChar(uplo);
-	//void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
-        //potrf(*chosenDeviceQueue, up, &n, reinterpret_cast<float *>(a), &lda, &info);
-      } else {
-        std::cerr << "No device selected for SPOTRF operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    using oneapi::mkl::lapack::potrf;
+    auto up = uploFromChar(uplo);
+    //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
+    //potrf(queue, up, &n, reinterpret_cast<float *>(a), &lda, &info);
+  }
 
   void mklSyclZpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-        using oneapi::mkl::lapack::potrf;
-        auto up = uploFromChar(uplo);
-	//void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
-        //potrf(*chosenDeviceQueue, up, &n, reinterpret_cast<std::complex<double> *>(c), &lda, &info);
-      } else {
-        std::cerr << "No device selected for ZPOTRF operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    using oneapi::mkl::lapack::potrf;
+    auto up = uploFromChar(uplo);
+    //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
+    //potrf(queue, up, &n, reinterpret_cast<std::complex<double> *>(c), &lda, &info);
+  }
 
   void mklSyclCpotrfFromC(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-        using oneapi::mkl::lapack::potrf;
-        auto up = uploFromChar(uplo);
-	//void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
-        //potrf(*chosenDeviceQueue, up, &n, reinterpret_cast<std::complex<float> *>(c), &lda, &info);
-      } else {
-        std::cerr << "No device selected for CPOTRF operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    using oneapi::mkl::lapack::potrf;
+    auto up = uploFromChar(uplo);
+    //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
+    //potrf(queue, up, &n, reinterpret_cast<std::complex<float> *>(c), &lda, &info);
+  }
 
   void mklSyclDcopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t n_, incx_, incy_;
-        n_ = (std::int64_t) n;
-        incx_ = (std::int64_t) incx;
-        incy_ = (std::int64_t) incy;
-        using oneapi::mkl::blas::column_major::copy;
-        copy(*chosenDeviceQueue, n_, reinterpret_cast<double *>(x), incx_, reinterpret_cast<double *>(y), incy_);
-      } else {
-        std::cerr << "No device selected for DCOPY operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t n_, incx_, incy_;
+    n_ = (std::int64_t) n;
+    incx_ = (std::int64_t) incx;
+    incy_ = (std::int64_t) incy;
+    using oneapi::mkl::blas::column_major::copy;
+    copy(queue, n_, reinterpret_cast<double *>(x), incx_, reinterpret_cast<double *>(y), incy_);
+  }
 
   void mklSyclScopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t n_, incx_, incy_;
-        n_ = (std::int64_t) n;
-        incx_ = (std::int64_t) incx;
-        incy_ = (std::int64_t) incy;
-        using oneapi::mkl::blas::column_major::copy;
-        copy(*chosenDeviceQueue, n_, reinterpret_cast<float *>(x), incx_, reinterpret_cast<float *>(y), incy_);
-      } else {
-        std::cerr << "No device selected for SCOPY operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t n_, incx_, incy_;
+    n_ = (std::int64_t) n;
+    incx_ = (std::int64_t) incx;
+    incy_ = (std::int64_t) incy;
+    using oneapi::mkl::blas::column_major::copy;
+    copy(queue, n_, reinterpret_cast<float *>(x), incx_, reinterpret_cast<float *>(y), incy_);
+  }
 
   void mklSyclZcopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t n_, incx_, incy_;
-        n_ = (std::int64_t) n;
-        incx_ = (std::int64_t) incx;
-        incy_ = (std::int64_t) incy;
-        using oneapi::mkl::blas::column_major::copy;
-        copy(*chosenDeviceQueue, n_, reinterpret_cast<std::complex<double> *>(x), incx_, reinterpret_cast<std::complex<double> *>(y), incy_);
-      } else {
-        std::cerr << "No device selected for ZCOPY operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t n_, incx_, incy_;
+    n_ = (std::int64_t) n;
+    incx_ = (std::int64_t) incx;
+    incy_ = (std::int64_t) incy;
+    using oneapi::mkl::blas::column_major::copy;
+    copy(queue, n_, reinterpret_cast<std::complex<double> *>(x), incx_, reinterpret_cast<std::complex<double> *>(y), incy_);
+  }
 
   void mklSyclCcopyFromC(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t n_, incx_, incy_;
-        n_ = (std::int64_t) n;
-        incx_ = (std::int64_t) incx;
-        incy_ = (std::int64_t) incy;
-        using oneapi::mkl::blas::column_major::copy;
-        copy(*chosenDeviceQueue, n_, reinterpret_cast<std::complex<float> *>(x), incx_, reinterpret_cast<std::complex<float> *>(y), incy_);
-      } else {
-        std::cerr << "No device selected for CCOPY operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t n_, incx_, incy_;
+    n_ = (std::int64_t) n;
+    incx_ = (std::int64_t) incx;
+    incy_ = (std::int64_t) incy;
+    using oneapi::mkl::blas::column_major::copy;
+    copy(queue, n_, reinterpret_cast<std::complex<float> *>(x), incx_, reinterpret_cast<std::complex<float> *>(y), incy_);
+  }
 
   void mklSyclDtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, ldb_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        ldb_ = (std::int64_t) ldb;
-	using oneapi::mkl::blas::column_major::trmm;
-	auto sd = sideFromChar(side);
-        auto up = uploFromChar(uplo);
-        auto ta = transposeFromChar(trans);
-        auto di = diagFromChar(diag);
-        trmm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(b), ldb_);
-      } else {
-        std::cerr << "No device selected for DTRMM operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, ldb_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    using oneapi::mkl::blas::column_major::trmm;
+    auto sd = sideFromChar(side);
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trmm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(b), ldb_);
+  }
 
   void mklSyclStrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, ldb_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        ldb_ = (std::int64_t) ldb;
-	using oneapi::mkl::blas::column_major::trmm;
-	auto sd = sideFromChar(side);
-        auto up = uploFromChar(uplo);
-        auto ta = transposeFromChar(trans);
-        auto di = diagFromChar(diag);
-        trmm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(b), ldb_);
-      } else {
-        std::cerr << "No device selected for STRMM operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, ldb_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    using oneapi::mkl::blas::column_major::trmm;
+    auto sd = sideFromChar(side);
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trmm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(b), ldb_);
+  }
 
   void mklSyclZtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<double> alpha, void *a, int lda, void *b, int ldb) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, ldb_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        ldb_ = (std::int64_t) ldb;
-	using oneapi::mkl::blas::column_major::trmm;
-	auto sd = sideFromChar(side);
-        auto up = uploFromChar(uplo);
-        auto ta = transposeFromChar(trans);
-        auto di = diagFromChar(diag);
-        trmm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_);
-      } else {
-        std::cerr << "No device selected for ZTRMM operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, ldb_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    using oneapi::mkl::blas::column_major::trmm;
+    auto sd = sideFromChar(side);
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trmm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_);
+  }
 
   void mklSyclCtrmmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<float> alpha, void *a, int lda, void *b, int ldb) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, ldb_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        ldb_ = (std::int64_t) ldb;
-	using oneapi::mkl::blas::column_major::trmm;
-	auto sd = sideFromChar(side);
-        auto up = uploFromChar(uplo);
-        auto ta = transposeFromChar(trans);
-        auto di = diagFromChar(diag);
-        trmm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_);
-      } else {
-        std::cerr << "No device selected for CTRMM operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, ldb_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    using oneapi::mkl::blas::column_major::trmm;
+    auto sd = sideFromChar(side);
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trmm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_);
+  }
 
   void mklSyclDtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, ldb_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        ldb_ = (std::int64_t) ldb;
-        using oneapi::mkl::blas::column_major::trsm;
-	auto sd = sideFromChar(side);
-        auto up = uploFromChar(uplo);
-        auto ta = transposeFromChar(trans);
-        auto di = diagFromChar(diag);
-        trsm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(b), ldb_);
-      } else {
-        std::cerr << "No device selected for DTRSM operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, ldb_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    using oneapi::mkl::blas::column_major::trsm;
+    auto sd = sideFromChar(side);
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trsm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(b), ldb_);
+  }
 
   void mklSyclStrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, ldb_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        ldb_ = (std::int64_t) ldb;
-        using oneapi::mkl::blas::column_major::trsm;
-	auto sd = sideFromChar(side);
-        auto up = uploFromChar(uplo);
-        auto ta = transposeFromChar(trans);
-        auto di = diagFromChar(diag);
-        trsm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(b), ldb_);
-      } else {
-        std::cerr << "No device selected for STRSM operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, ldb_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    using oneapi::mkl::blas::column_major::trsm;
+    auto sd = sideFromChar(side);
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trsm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(b), ldb_);
+  }
 
   void mklSyclZtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<double> alpha, void *a, int lda, void *b, int ldb) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, ldb_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        ldb_ = (std::int64_t) ldb;
-        using oneapi::mkl::blas::column_major::trsm;
-	auto sd = sideFromChar(side);
-        auto up = uploFromChar(uplo);
-        auto ta = transposeFromChar(trans);
-        auto di = diagFromChar(diag);
-        trsm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_);
-      } else {
-        std::cerr << "No device selected for ZTRSM operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, ldb_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    using oneapi::mkl::blas::column_major::trsm;
+    auto sd = sideFromChar(side);
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trsm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_);
+  }
 
   void mklSyclCtrsmFromC(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<float> alpha, void *a, int lda, void *b, int ldb) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, ldb_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        ldb_ = (std::int64_t) ldb;
-        using oneapi::mkl::blas::column_major::trsm;
-	auto sd = sideFromChar(side);
-        auto up = uploFromChar(uplo);
-        auto ta = transposeFromChar(trans);
-        auto di = diagFromChar(diag);
-
-        trsm(*chosenDeviceQueue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_);
-      } else {
-        std::cerr << "No device selected for CTRSM operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, ldb_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    ldb_ = (std::int64_t) ldb;
+    using oneapi::mkl::blas::column_major::trsm;
+    auto sd = sideFromChar(side);
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trsm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_);
+  }
 
   // compile error here; fix this
   //
   void mklSyclDgemvFromC(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, incx_, incy_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        incx_ = (std::int64_t) incx;
-        incy_ = (std::int64_t) incy;
-	using oneapi::mkl::blas::column_major::gemv;
-        auto ta = transposeFromChar(cta);
-        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(x), incx_, beta, reinterpret_cast<double *>(y), incy_);
-      } else {
-        std::cerr << "No device selected for DGEMV operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, incx_, incy_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    incx_ = (std::int64_t) incx;
+    incy_ = (std::int64_t) incy;
+    using oneapi::mkl::blas::column_major::gemv;
+    auto ta = transposeFromChar(cta);
+    gemv(queue, ta, m_, n_, alpha, reinterpret_cast<double *>(a), lda_, reinterpret_cast<double *>(x), incx_, beta, reinterpret_cast<double *>(y), incy_);
+  }
 
   void mklSyclSgemvFromC(intptr_t *handle, char cta, int m, int n, float alpha, void *a, int lda, void *x, int incx, float beta, void *y, int incy) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, incx_, incy_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        incx_ = (std::int64_t) incx;
-        incy_ = (std::int64_t) incy;
-	using oneapi::mkl::blas::column_major::gemv;
-        auto ta = transposeFromChar(cta);
-        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(x), incx_, beta, reinterpret_cast<float *>(y), incy_);
-      } else {
-        std::cerr << "No device selected for SGEMV operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, incx_, incy_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    incx_ = (std::int64_t) incx;
+    incy_ = (std::int64_t) incy;
+    using oneapi::mkl::blas::column_major::gemv;
+    auto ta = transposeFromChar(cta);
+    gemv(queue, ta, m_, n_, alpha, reinterpret_cast<float *>(a), lda_, reinterpret_cast<float *>(x), incx_, beta, reinterpret_cast<float *>(y), incy_);
+  }
 
   void mklSyclZgemvFromC(intptr_t *handle, char cta, int m, int n, std::complex<double> alpha, void *a, int lda, void *x, int incx, std::complex<double> beta, void *y, int incy) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, incx_, incy_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        incx_ = (std::int64_t) incx;
-        incy_ = (std::int64_t) incy;
-	using oneapi::mkl::blas::column_major::gemv;
-        auto ta = transposeFromChar(cta);
-        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(x), incx_, beta, reinterpret_cast<std::complex<double> *>(y), incy_);
-      } else {
-        std::cerr << "No device selected for ZGEMV operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, incx_, incy_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    incx_ = (std::int64_t) incx;
+    incy_ = (std::int64_t) incy;
+    using oneapi::mkl::blas::column_major::gemv;
+    auto ta = transposeFromChar(cta);
+    gemv(queue, ta, m_, n_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(x), incx_, beta, reinterpret_cast<std::complex<double> *>(y), incy_);
+  }
 
   void mklSyclCgemvFromC(intptr_t *handle, char cta, int m, int n, std::complex<float> alpha, void *a, int lda, void *x, int incx, std::complex<float> beta, void *y, int incy) {
-      //handle not needed
-      if (chosenDeviceQueue) {
-	std::int64_t m_, n_, lda_, incx_, incy_;
-        m_ = (std::int64_t) m;
-        n_ = (std::int64_t) n;
-        lda_ = (std::int64_t) lda;
-        incx_ = (std::int64_t) incx;
-        incy_ = (std::int64_t) incy;
-	using oneapi::mkl::blas::column_major::gemv;
-        auto ta = transposeFromChar(cta);
-        gemv(*chosenDeviceQueue, ta, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(x), incx_, beta, reinterpret_cast<std::complex<float> *>(y), incy_);
-      } else {
-        std::cerr << "No device selected for ZGEMV operation." << std::endl;
-      }
-  }  
+    //handle not needed
+    auto &queue = elpa::gpu::sycl::getQueue();
+    std::int64_t m_, n_, lda_, incx_, incy_;
+    m_ = (std::int64_t) m;
+    n_ = (std::int64_t) n;
+    lda_ = (std::int64_t) lda;
+    incx_ = (std::int64_t) incx;
+    incy_ = (std::int64_t) incy;
+    using oneapi::mkl::blas::column_major::gemv;
+    auto ta = transposeFromChar(cta);
+    gemv(queue, ta, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(x), incx_, beta, reinterpret_cast<std::complex<float> *>(y), incy_);
+  }
 } // extern C
 #endif /* WITH_SYCL_GPU_VERSION */

@@ -47,6 +47,7 @@
 module gpu_c_kernel
   use cuda_c_kernel
   use hip_c_kernel
+  use sycl_c_kernel
   implicit none
 
   contains
@@ -64,8 +65,7 @@ module gpu_c_kernel
       call launch_compute_hh_trafo_c_hip_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-print *,"no sycl double real gpu kernel yet implemented. Aborting..."
-      stop
+      call launch_compute_hh_trafo_c_sycl_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 
@@ -81,6 +81,10 @@ print *,"no sycl double real gpu kernel yet implemented. Aborting..."
 #ifdef WITH_AMD_GPU_VERSION
       ! not yet implemented
       !call launch_compute_hh_trafo_c_hip_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      ! shouldn't this kind of implementation details be abstracted away from
+      ! the agnostic interface?
 #endif
     end subroutine
 
@@ -98,8 +102,7 @@ print *,"no sycl double real gpu kernel yet implemented. Aborting..."
       call launch_compute_hh_trafo_c_hip_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-      print *,"no single real sycl gpu kernel yet implemented. Aborting..."
-      stop
+      call launch_compute_hh_trafo_c_sycl_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 
@@ -115,6 +118,10 @@ print *,"no sycl double real gpu kernel yet implemented. Aborting..."
 #ifdef WITH_AMD_GPU_VERSION
       ! not yet implemented
       !call launch_compute_hh_trafo_c_hip_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      ! shouldn't this kind of implementation details be abstracted away from
+      ! the agnostic interface?
 #endif
     end subroutine
 
@@ -133,8 +140,7 @@ print *,"no sycl double real gpu kernel yet implemented. Aborting..."
       call launch_compute_hh_trafo_c_hip_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-print *,"no double complex sycl gpu kernel yet implemented. Aborting..."
-      stop
+      call launch_compute_hh_trafo_c_sycl_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 
@@ -149,6 +155,10 @@ print *,"no double complex sycl gpu kernel yet implemented. Aborting..."
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       !call launch_compute_hh_trafo_c_hip_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      ! shouldn't this kind of implementation details be abstracted away from
+      ! the agnostic interface?
 #endif
     end subroutine
 
@@ -166,8 +176,7 @@ print *,"no double complex sycl gpu kernel yet implemented. Aborting..."
       call launch_compute_hh_trafo_c_hip_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
-      stop
+      call launch_compute_hh_trafo_c_sycl_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 
@@ -182,6 +191,9 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       !call launch_compute_hh_trafo_c_hip_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      !call launch_compute_hh_trafo_c_sycl_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
     end subroutine
 
@@ -202,6 +214,10 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
       call launch_my_unpack_c_hip_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
            l_nev,row_group_dev, a_dev)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_my_unpack_c_sycl_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+           l_nev,row_group_dev, a_dev)
+#endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -218,6 +234,10 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_unpack_c_hip_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
+           l_nev,row_group_dev, a_dev)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_my_unpack_c_sycl_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
            l_nev,row_group_dev, a_dev)
 #endif
     end subroutine
@@ -238,6 +258,10 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
       call launch_my_pack_c_hip_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
            row_group_dev)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_my_pack_c_sycl_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
+           row_group_dev)
+#endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -256,6 +280,10 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
       call launch_my_pack_c_hip_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
            row_group_dev)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_my_pack_c_sycl_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
+           row_group_dev)
+#endif
     end subroutine
 #endif
 
@@ -271,6 +299,9 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_extract_hh_tau_c_hip_kernel_real_double(hh, hh_tau, nb, n, is_zero)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_extract_hh_tau_c_sycl_kernel_real_double(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 
@@ -288,6 +319,9 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
 #ifdef WITH_AMD_GPU_VERSION
       call launch_extract_hh_tau_c_hip_kernel_real_single(hh, hh_tau, nb, n, is_zero)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_extract_hh_tau_c_sycl_kernel_real_single(hh, hh_tau, nb, n, is_zero)
+#endif
     end subroutine
 #endif
 
@@ -304,6 +338,10 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_unpack_c_hip_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+           row_group_dev, a_dev)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_my_unpack_c_sycl_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
            row_group_dev, a_dev)
 #endif
     end subroutine
@@ -324,6 +362,10 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
       call launch_my_unpack_c_hip_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
            row_group_dev, a_dev)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_my_unpack_c_sycl_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
+           row_group_dev, a_dev)
+#endif
     end subroutine
 #endif
 
@@ -340,6 +382,10 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_pack_c_hip_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
+              a_dev, row_group_dev)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_my_pack_c_sycl_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
               a_dev, row_group_dev)
 #endif
     end subroutine
@@ -360,6 +406,10 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
       call launch_my_pack_c_hip_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, &
                                                       l_nev, a_dev, row_group_dev)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_my_pack_c_sycl_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, &
+                                                       l_nev, a_dev, row_group_dev)
+#endif
     end subroutine
 #endif
 
@@ -376,6 +426,9 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
 #ifdef WITH_AMD_GPU_VERSION
       call launch_extract_hh_tau_c_hip_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_extract_hh_tau_c_sycl_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
+#endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
@@ -391,6 +444,9 @@ call launch_extract_hh_tau_c_cuda_kernel_complex_single(hh, hh_tau, nb, n, is_ze
 #endif
 #ifdef WITH_AMD_GPU_VERSION
 call launch_extract_hh_tau_c_hip_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call launch_extract_hh_tau_c_sycl_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
 #endif
     end subroutine
 #endif
