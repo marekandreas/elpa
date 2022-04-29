@@ -147,7 +147,7 @@
         if (success_l) then
           error = ELPA_OK
         else
-          error = ELPA_ERROR
+          error = ELPA_ERROR_DURING_COMPUTATION
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in eigenvectors() and you did not check for errors!"
@@ -156,7 +156,7 @@
       if (success_l) then
         error = ELPA_OK
       else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_DURING_COMPUTATION
       endif
 #endif
     end subroutine 
@@ -261,7 +261,7 @@
         if (success_l) then
           error = ELPA_OK
         else
-          error = ELPA_ERROR
+          error = ELPA_ERROR_DURING_COMPUTATION
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in eigenvectors() and you did not check for errors!"
@@ -270,7 +270,7 @@
       if (success_l) then
         error = ELPA_OK
       else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_DURING_COMPUTATION
       endif
 #endif
     end subroutine 
@@ -493,7 +493,7 @@
         if (success_l) then
           error = ELPA_OK
         else
-          error = ELPA_ERROR
+          error = ELPA_ERROR_DURING_COMPUTATION
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in skew_eigenvectors() and you did not check for errors!"
@@ -502,7 +502,7 @@
       if (success_l) then
         error = ELPA_OK
       else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_DURING_COMPUTATION
       endif
 #endif
     end subroutine
@@ -648,7 +648,7 @@
         if (success_l) then
           error = ELPA_OK
         else
-          error = ELPA_ERROR
+          error = ELPA_ERROR_DURING_COMPUTATION
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in skew_eigenvectors() and you did not check for errors!"
@@ -657,7 +657,7 @@
       if (success_l) then
         error = ELPA_OK
       else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_DURING_COMPUTATION
       endif
 #endif
     end subroutine
@@ -800,7 +800,7 @@
         if (success_l) then
           error = ELPA_OK
         else
-          error = ELPA_ERROR
+          error = ELPA_ERROR_DURING_COMPUTATION
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in eigenvalues() and you did not check for errors!"
@@ -809,7 +809,7 @@
       if (success_l) then
         error = ELPA_OK
       else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_DURING_COMPUTATION
       endif
 #endif
     end subroutine
@@ -907,7 +907,7 @@
         if (success_l) then
           error = ELPA_OK
         else
-          error = ELPA_ERROR
+          error = ELPA_ERROR_DURING_COMPUTATION
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in eigenvalues() and you did not check for errors!"
@@ -916,7 +916,7 @@
       if (success_l) then
         error = ELPA_OK
       else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_DURING_COMPUTATION
       endif
 #endif
     end subroutine
@@ -1122,7 +1122,7 @@
         if (success_l) then
           error = ELPA_OK
         else
-          error = ELPA_ERROR
+          error = ELPA_ERROR_DURING_COMPUTATION
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in skew_eigenvalues() and you did not check for errors!"
@@ -1131,7 +1131,7 @@
       if (success_l) then
         error = ELPA_OK
       else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_DURING_COMPUTATION
       endif
 #endif
     end subroutine
@@ -1228,7 +1228,7 @@
         if (success_l) then
           error = ELPA_OK
         else
-          error = ELPA_ERROR
+          error = ELPA_ERROR_DURING_COMPUTATION
         endif
       else if (.not. success_l) then
         write(error_unit,'(a)') "ELPA: Error in skew_eigenvalues() and you did not check for errors!"
@@ -1237,7 +1237,7 @@
       if (success_l) then
         error = ELPA_OK
       else
-        error = ELPA_ERROR
+        error = ELPA_ERROR_DURING_COMPUTATION
       endif
 #endif
     end subroutine
