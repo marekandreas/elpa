@@ -103,7 +103,28 @@ fi
 
 
 dnl mpi
-AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi=[[yes|no]]], [compile with MPI. Default: yes])],,[with_mpi=yes])
+correct_mpi_argument=no
+AC_ARG_WITH([mpi], 
+	    [AS_HELP_STRING([--with-mpi=[[yes|no]]], 
+	                    [compile with MPI. Default: yes])],
+	         	    [
+			     if test x"$withval" = x"auto"; then
+			       correct_mpi_argument=yes
+			     fi
+			     if test x"$withval" = x"yes"; then
+			       correct_mpi_argument=yes
+			     fi
+			     if test x"$withval" = x"no"; then
+                               correct_mpi_argument=yes
+                             fi],
+			     [with_mpi=yes])
+
+
+if test x"$correct_mpi_argument" = x"no"; then
+  AC_MSG_ERROR([if --with-mpi is specified, it must be either --with-mpi=yes, or --with-mpi=no])
+fi
+
+
 AM_CONDITIONAL([WITH_MPI],[test x"$with_mpi" = x"yes"])
 if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
@@ -1765,7 +1786,7 @@ use_sycl_gpu_backend=no
 use_intel_gpu=no
 AC_MSG_CHECKING(whether INTEL GPU version should be used)
 AC_ARG_ENABLE([intel-gpu],
-                AS_HELP_STRING([--enable-intel-gpu=(openmp|sycl)],
+                AS_HELP_STRING([--enable-intel-gpu=[[openmp|sycl]]],
                                [do use INTEL GPU version with either OpenMP or SYCL backend]),
                                [if test x"$enableval" = x"openmp"; then
 				  use_openmp_gpu_backend=yes
@@ -1784,7 +1805,7 @@ AC_MSG_RESULT([${use_intel_gpu}])
 if test x"${use_intel_gpu}" = x"yes"; then
   if test x"${use_openmp_gpu_backend}" = x"no"; then
     if test x"${use_sycl_gpu_backend}" = x"no"; then
-      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=(openmp|sycl)])
+      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=[[openmp|sycl]]])
     fi
   fi
 fi
@@ -2628,6 +2649,9 @@ else
   fi
 
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
+  if test x"$CPP" = x""; then
+    AC_MSG_ERROR([The variable \$CPP has not been set by configure. If you encounter an error, try specifying CPP])
+  fi
 fi
 if test x"$enable_threading_support_checks" = x"no" && test x"$with_mpi" = x"yes" && test x"${enable_openmp}" = x"yes"; then
   echo " "
