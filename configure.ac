@@ -104,10 +104,12 @@ fi
 
 dnl mpi
 correct_mpi_argument=no
+with_mpi_specified=no
 AC_ARG_WITH([mpi], 
 	    [AS_HELP_STRING([--with-mpi=[[yes|no]]], 
 	                    [compile with MPI. Default: yes])],
 	         	    [
+			     with_mpi_specified=yes
 			     if test x"$withval" = x"auto"; then
 			       correct_mpi_argument=yes
 			     fi
@@ -120,8 +122,10 @@ AC_ARG_WITH([mpi],
 			     [with_mpi=yes])
 
 
-if test x"$correct_mpi_argument" = x"no"; then
-  AC_MSG_ERROR([if --with-mpi is specified, it must be either --with-mpi=yes, or --with-mpi=no])
+if test x"$with_mpi_specified" = x"yes"; then
+  if test x"$correct_mpi_argument" = x"no"; then
+    AC_MSG_ERROR([if --with-mpi is specified, it must be either --with-mpi=yes, or --with-mpi=no])
+  fi
 fi
 
 
