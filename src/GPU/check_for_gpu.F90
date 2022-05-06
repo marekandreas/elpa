@@ -131,7 +131,7 @@ module mod_check_for_gpu
         allocate(rocblasHandleArray(0:maxThreads-1))
         allocate(gpublasHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          roclasHandleArray(thread) = -1
+          rocblasHandleArray(thread) = -1
           gpublasHandleArray(thread) = -1
         enddo
       endif

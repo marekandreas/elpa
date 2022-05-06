@@ -1,6 +1,7 @@
 
 #include "config-f90.h"
 module add_tmp
+!DIR$ OPTIMIZE:1
   use precision
   implicit none
   private
