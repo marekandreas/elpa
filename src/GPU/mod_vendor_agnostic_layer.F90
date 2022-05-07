@@ -188,9 +188,9 @@ module elpa_gpu
 #ifdef WITH_AMD_GPU_VERSION
       vendor = amd_gpu
 #endif
-#ifdef WITH_INTEL_GPU_VERSION
-      vendor = intel_gpu
-#endif
+!#ifdef WITH_INTEL_GPU_VERSION
+!      vendor = intel_gpu
+!#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       vendor = openmp_offload_gpu
 #endif

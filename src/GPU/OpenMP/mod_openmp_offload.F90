@@ -66,6 +66,8 @@ module openmp_offload_functions
   integer(kind=C_intptr_T), allocatable :: openmpOffloadsolverHandleArray(:)
   integer(kind=c_int), allocatable      :: openmpOffloadDeviceArray(:)
 
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+
   ! functions to set and query the GPU devices
   interface
     function openmp_offload_blas_create_c(handle) result(istat) &
@@ -2668,5 +2670,7 @@ module openmp_offload_functions
 ! !       call mkl_openmp_offload_csymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
 !     end subroutine mkl_openmp_offload_csymv
+
+#endif /* WITH_OPENMP_OFFLOAD_GPU_VERSION */
 
 end module openmp_offload_functions

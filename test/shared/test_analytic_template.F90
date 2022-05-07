@@ -166,7 +166,7 @@
                                               glob_max_z_diff, max_curr_z_diff
 #ifdef DOUBLE_PRECISION
     real(kind=rk), parameter               :: tol_eigenvalues = 5e-14_rk8
-    real(kind=rk), parameter               :: tol_eigenvectors = 6e-11_rk8
+    real(kind=rk), parameter               :: tol_eigenvectors = 6e-10_rk8
 #endif
 #ifdef SINGLE_PRECISION
     ! tolerance needs to be very high due to qr tests

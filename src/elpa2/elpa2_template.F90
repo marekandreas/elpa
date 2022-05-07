@@ -190,6 +190,7 @@
 
    integer(kind=c_int)                                                :: i
    logical                                                            :: success, successGPU
+   integer(kind=c_int)                                                :: success_int
    logical                                                            :: wantDebug
    integer(kind=c_int)                                                :: istat, gpu, skewsymmetric, debug, qr
    character(200)                                                     :: errorMessage
@@ -240,7 +241,11 @@
    logical                                                            :: reDistributeMatrix, doRedistributeMatrix
    integer(kind=ik)                                                   :: pinningInfo
 
-   integer(kind=MPI_KIND)                                             :: bcast_request1, bcast_request2, allreduce_request1
+   integer(kind=MPI_KIND)                                             :: bcast_request1, bcast_request2, allreduce_request1, &
+                                                                         allreduce_request2, allreduce_request3, &
+                                                                         allreduce_request4, allreduce_request5, &
+                                                                         allreduce_request6, allreduce_request7, &
+                                                                         allreduce_request8
    logical                                                            :: useNonBlockingCollectivesAll
    integer(kind=ik)                                                   :: gpu_old, gpu_new
    integer(kind=ik)                                                   :: non_blocking_collectives_all
@@ -249,6 +254,7 @@
 #undef GPU_KERNEL
 #undef GPU_KERNEL2
 #define GPU_KERNEL ELPA_2STAGE_REAL_NVIDIA_GPU
+
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
 #define GPU_KERNEL2 ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
 #endif
@@ -270,11 +276,16 @@
 #ifdef WITH_AMD_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_REAL_AMD_GPU
-#endif
-#define DEFAULT_KERNEL ELPA_2STAGE_REAL_DEFAULT
 #endif /* WITH_AMD_GPU_VERSION */
-! intel missing
 
+#ifdef WITH_SYCL_GPU_VERSION
+#undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_REAL_INTEL_GPU_SYCL
+#endif /* WITH_SYCL_GPU_VERSION */
+
+#define DEFAULT_KERNEL ELPA_2STAGE_REAL_DEFAULT
+
+#endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #undef GPU_KERNEL
@@ -292,9 +303,18 @@
 #ifdef WITH_AMD_GPU_VERSION
 #undef GPU_KERNEL
 #define GPU_KERNEL ELPA_2STAGE_COMPLEX_AMD_GPU
-#endif
-#define DEFAULT_KERNEL ELPA_2STAGE_COMPLEX_DEFAULT
 #endif /* WITH_AMD_GPU_VERSION */
+
+#ifdef WITH_SYCL_GPU_VERSION
+#undef GPU_KERNEL
+#define GPU_KERNEL ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL
+#endif /* WITH_SYCL_GPU_VERSION */
+
+#define DEFAULT_KERNEL ELPA_2STAGE_COMPLEX_DEFAULT
+
+#endif /* COMPLEXCASE */
+
+
 
 #ifdef ACTIVATE_SKEW
     call obj%timer%start("elpa_solve_skew_evp_&
@@ -459,6 +479,22 @@
       endif
 
     endif ! useGPU
+
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+#ifdef SINGLE_PRECISION_REAL
+    if (useGPU) then
+      if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU) then
+        if (my_pe .eq. 0) then
+          write(error_unit,*) "You set (fixed) the kernel to GPU, but GPUs cannot be used."
+        endif
+      endif
+    endif ! useGPU
+#endif
+#endif
+#endif
+
+
 
     do_useGPU_bandred = do_useGPU
     do_useGPU_tridiag_band = .false.  ! not yet ported
@@ -742,6 +778,36 @@ print *,"Device pointer + REDIST"
          kernel = DEFAULT_KERNEL
       endif
     endif
+
+
+#if REALCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+#ifdef SINGLE_PRECISION_REAL
+    if (useGPU) then
+      if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU) then
+        if (my_pe .eq. 0) then
+          write(error_unit,*) "Currently no MMA implementation for real single-precision Nvidia SM80 kernel."
+          write(error_unit,*) "Using without MMA."
+        endif
+      endif
+    endif ! useGPU
+#endif
+#endif
+#endif
+#if COMPLEXCASE == 1
+#ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
+    if (useGPU) then
+      if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU) then
+        kernel = GPU_KERNEL2
+        if (my_pe .eq. 0) then
+          write(error_unit,*) "Currently no complex Nvidia SM80 kernel. Using standard Nvidia GPU kernel"
+        endif
+      endif
+    endif ! useGPU
+#endif
+#endif
+
+
 
     ! check again, now kernel and do_useGPU_trans_ev_tridi_to_band should be
     ! finally consistent
@@ -1031,6 +1097,8 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
       call likwid_markerStartRegion("full_to_band")
 #endif
+      ! debug
+      !do_useGPU_bandred = .false.
 
       ! Reduction full -> band
       call bandred_&
@@ -1050,7 +1118,23 @@ print *,"Device pointer + REDIST"
 #endif
       call obj%timer%stop("full_to_band")
       call obj%autotune_timer%stop("full_to_band")
-      if (.not.(success)) then
+  
+      if (success) then
+        success_int = 0
+      else
+        success_int = 1
+      endif
+
+#ifdef WITH_MPI
+      if (useNonBlockingCollectivesAll) then
+        call mpi_iallreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), &
+        allreduce_request2, mpierr)
+        call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+      else
+        call mpi_allreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+      endif
+#endif
+      if (success_int .eq. 1) then
         write(error_unit,*) "ELPA2: bandred returned an error. Aborting..."
 #include "./elpa2_aborting_template.F90"
       endif
@@ -1067,13 +1151,32 @@ print *,"Device pointer + REDIST"
        call likwid_markerStartRegion("band_to_tridi")
 #endif
 
+       !debug
+       !do_useGPU_tridiag_band = .false.
+
        call tridiag_band_&
        &MATH_DATATYPE&
        &_&
        &PRECISION&
        (obj, na, nbw, nblk, a, matrixRows, ev, e, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, mpi_comm_all, &
        do_useGPU_tridiag_band, wantDebug, nrThreads, isSkewsymmetric, success)
-       if (.not.(success)) then
+  
+       if (success) then
+         success_int = 0
+       else
+         success_int = 1
+       endif
+
+#ifdef WITH_MPI
+       if (useNonBlockingCollectivesAll) then
+         call mpi_iallreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), &
+         allreduce_request3, mpierr)
+         call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
+       else
+         call mpi_allreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+       endif
+#endif
+       if (success_int .eq. 1) then
          write(error_unit,*) "Error in tridiag_band. Aborting..."
          return
        endif
@@ -1118,6 +1221,9 @@ print *,"Device pointer + REDIST"
        call likwid_markerStartRegion("solve")
 #endif
 
+       !!debug
+       !do_useGPU_solve_tridi = .false.
+
        call solve_tridi_&
        &PRECISION &
        (obj, na, nev, ev, e, &
@@ -1135,7 +1241,24 @@ print *,"Device pointer + REDIST"
 #endif
        call obj%timer%stop("solve")
        call obj%autotune_timer%stop("solve")
-       if (.not.(success)) then
+  
+       if (success) then
+         success_int = 0
+       else
+         success_int = 1
+       endif
+
+#ifdef WITH_MPI
+       if (useNonBlockingCollectivesAll) then
+         call mpi_iallreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), &
+         allreduce_request4, mpierr)
+         call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
+       else
+         call mpi_allreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+       endif
+#endif
+
+       if (success_int .eq. 1) then
          write(error_unit,*) "ELPA2: solve returned an error: Aborting..."
 #include "./elpa2_aborting_template.F90"
        endif
@@ -1222,8 +1345,10 @@ print *,"Device pointer + REDIST"
      if (do_trans_to_band) then
 
        !debug
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-       if (gpu_vendor() == OPENMP_OFFLOAD_GPU .or. gpu_vendor() == SYCL_GPU) then
+!#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+       !if (gpu_vendor() == OPENMP_OFFLOAD_GPU .or. gpu_vendor() == SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+       if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
          if (do_useGPU_trans_ev_tridi_to_band) then
            do_useGPU_trans_ev_tridi_to_band = .false.
            kernel = DEFAULT_KERNEL
@@ -1236,13 +1361,17 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("tridi_to_band")
 #endif
+       ! debug
+       !do_useGPU_trans_ev_tridi_to_band = .false.
+
        ! In the skew-symmetric case this transforms the real part
        call trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
        &_&
        &PRECISION &
        (obj, na, nev, nblk, nbw, q, &
-       matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+       matrixRows, matrixCols, hh_trans, my_pe, mpi_comm_rows, mpi_comm_cols, &
+       wantDebug, do_useGPU_trans_ev_tridi_to_band, &
        nrThreads, success=success, kernel=kernel)
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("tridi_to_band")
@@ -1250,7 +1379,23 @@ print *,"Device pointer + REDIST"
        call obj%timer%stop("tridi_to_band")
        call obj%autotune_timer%stop("tridi_to_band")
 
-       if (.not.(success)) then
+       if (success) then
+         success_int = 0
+       else
+         success_int = 1
+       endif
+
+#ifdef WITH_MPI
+       if (useNonBlockingCollectivesAll) then
+         call mpi_iallreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), &
+         allreduce_request5, mpierr)
+         call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
+       else
+         call mpi_allreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+       endif
+#endif
+
+       if (success_int .eq. 1) then
          write(error_unit,*) "ELPA2: trans_ev_tridi_to_band returned an error. Aborting..."
          return
        endif
@@ -1265,6 +1410,8 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("band_to_full")
 #endif
+       !debug
+       !do_useGPU_trans_ev_band_to_full = .false.
 
        ! Backtransform stage 2
        ! In the skew-symemtric case this transforms the real part
@@ -1279,45 +1426,85 @@ print *,"Device pointer + REDIST"
        , useQRActual  &
 #endif
        , success)
-       if (.not.(success)) then
+       call obj%timer%stop("band_to_full")
+       call obj%autotune_timer%stop("band_to_full")
+
+       if (success) then
+         success_int = 0
+       else
+         success_int = 1
+       endif
+
+#ifdef WITH_MPI
+       if (useNonBlockingCollectivesAll) then
+         call mpi_iallreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), &
+         allreduce_request6, mpierr)
+         call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
+       else
+         call mpi_allreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+       endif
+#endif
+       if (success_int .eq. 1) then
          write(error_unit,*) "Error in trans_ev_band_to_full. Aborting..."
          return
        endif
-       call obj%timer%stop("band_to_full")
-       call obj%autotune_timer%stop("band_to_full")
      endif ! do_trans_to_full
 ! #ifdef DOUBLE_PRECISION_REAL
 !        call prmat(na,useGPU,q(1:matrixRows, 1:matrixCols),q_dev,matrixRows,matrixCols,nblk,my_prow,my_pcol,np_rows,np_cols,'R',1)
 ! #endif
 
 
-     if (do_trans_to_band) then
-       if (isSkewsymmetric) then
+     !skew symmetric imaginary part for tridi_to_band and band_to_full
+     if (isSkewsymmetric) then
+       if (do_trans_to_band) then
          call obj%autotune_timer%start("tridi_to_band")
          call obj%timer%start("skew_tridi_to_band")
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
-           call trans_ev_tridi_to_band_&
-           &MATH_DATATYPE&
-           &_&
-           &PRECISION &
-           (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
-           matrixRows, matrixCols, hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, do_useGPU_trans_ev_tridi_to_band, &
-           nrThreads, success=success, kernel=kernel)
+         !debug
+         !do_useGPU_trans_ev_tridi_to_band = .false.
+
+         call trans_ev_tridi_to_band_&
+         &MATH_DATATYPE&
+         &_&
+         &PRECISION &
+         (obj, na, nev, nblk, nbw, q(1:matrixRows, matrixCols+1:2*matrixCols), &
+         matrixRows, matrixCols, hh_trans, my_pe, mpi_comm_rows, mpi_comm_cols, &
+         wantDebug, do_useGPU_trans_ev_tridi_to_band, &
+         nrThreads, success=success, kernel=kernel)
+
          call obj%timer%stop("skew_tridi_to_band")
          call obj%autotune_timer%stop("tridi_to_band")
-       endif
-              ! We can now deallocate the stored householder vectors
-       deallocate(hh_trans, stat=istat, errmsg=errorMessage)
-       check_deallocate("elpa2_template: hh_trans", istat, errorMessage)
-     endif
 
-     if (do_trans_to_full) then
+         if (success) then
+           success_int = 0
+         else
+           success_int = 1
+         endif
+
+#ifdef WITH_MPI
+         if (useNonBlockingCollectivesAll) then
+           call mpi_iallreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), &
+           allreduce_request7, mpierr)
+           call mpi_wait(allreduce_request7, MPI_STATUS_IGNORE, mpierr)
+         else
+           call mpi_allreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+         endif
+#endif
+         if (success_int .eq. 1) then
+          write(error_unit,*) "Error in trans_ev_tridi_to_band (imaginary part). Aborting..."
+          return
+         endif
+       endif ! do_trans_tridi_to_band
+
+       if (do_trans_to_full) then
        call obj%autotune_timer%start("band_to_full")
        call obj%timer%start("band_to_full")
-       if (isSkewsymmetric) then
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
+         !debug
+         !do_useGPU_trans_ev_band_to_full = .false.
+
          call trans_ev_band_to_full_&
          &MATH_DATATYPE&
          &_&
@@ -1329,14 +1516,39 @@ print *,"Device pointer + REDIST"
          useQRActual, &
 #endif
          success)
-       endif
 
 #ifdef HAVE_LIKWID
-       call likwid_markerStopRegion("band_to_full")
+         call likwid_markerStopRegion("band_to_full")
 #endif
-       call obj%timer%stop("band_to_full")
-       call obj%autotune_timer%stop("band_to_full")
-     endif ! do_trans_to_full
+         call obj%timer%stop("band_to_full")
+         call obj%autotune_timer%stop("band_to_full")
+
+         if (success) then
+           success_int = 0
+         else
+           success_int = 1
+         endif
+
+#ifdef WITH_MPI
+         if (useNonBlockingCollectivesAll) then
+           call mpi_iallreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), &
+           allreduce_request8, mpierr)
+           call mpi_wait(allreduce_request8, MPI_STATUS_IGNORE, mpierr)
+         else
+           call mpi_allreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+         endif
+#endif
+         if (success_int .eq. 1) then
+          write(error_unit,*) "Error in trans_ev_band_to_full (imaginary part). Aborting..."
+          return
+         endif
+       endif ! do_trans_to_full
+     endif ! isSkewSymmetric
+
+
+     ! We can now deallocate the stored householder vectors
+     deallocate(hh_trans, stat=istat, errmsg=errorMessage)
+     check_deallocate("elpa2_template: hh_trans", istat, errorMessage)
 
      ! make sure tmat is deallocated when using check_pd
      if (allocated(tmat)) then

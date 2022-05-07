@@ -103,7 +103,32 @@ fi
 
 
 dnl mpi
-AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi=[[yes|no]]], [compile with MPI. Default: yes])],,[with_mpi=yes])
+correct_mpi_argument=no
+with_mpi_specified=no
+AC_ARG_WITH([mpi], 
+	    [AS_HELP_STRING([--with-mpi=[[yes|no]]], 
+	                    [compile with MPI. Default: yes])],
+	         	    [
+			     with_mpi_specified=yes
+			     if test x"$withval" = x"auto"; then
+			       correct_mpi_argument=yes
+			     fi
+			     if test x"$withval" = x"yes"; then
+			       correct_mpi_argument=yes
+			     fi
+			     if test x"$withval" = x"no"; then
+                               correct_mpi_argument=yes
+                             fi],
+			     [with_mpi=yes])
+
+
+if test x"$with_mpi_specified" = x"yes"; then
+  if test x"$correct_mpi_argument" = x"no"; then
+    AC_MSG_ERROR([if --with-mpi is specified, it must be either --with-mpi=yes, or --with-mpi=no])
+  fi
+fi
+
+
 AM_CONDITIONAL([WITH_MPI],[test x"$with_mpi" = x"yes"])
 if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
@@ -1050,15 +1075,10 @@ m4_define(elpa_m4_amd_gpu_kernels, [
 ])
 
 m4_define(elpa_m4_intel_gpu_sycl_kernels, [
-        real_intel_gpu
-        complex_intel_gpu
+        real_intel_gpu_sycl
+        complex_intel_gpu_sycl
 ])
-
-#m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu nvidia_sm80_gpu])
-
-#to be done
-#m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu_sycl nvidia_sm80_gpu])
-m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu nvidia_sm80_gpu])
+m4_define(elpa_m4_kernel_types, [generic sparc64 neon_arch64 vsx sse sse_assembly sve128 avx avx2 sve256 avx512 sve512 bgp bgq nvidia_gpu amd_gpu intel_gpu_sycl nvidia_sm80_gpu])
 
 m4_define(elpa_m4_all_kernels,
           m4_foreach_w([elpa_m4_type],
@@ -1105,8 +1125,7 @@ ELPA_SELECT_KERNELS([sve512],[disable])
 ELPA_SELECT_KERNELS([nvidia_gpu],[disable])
 ELPA_SELECT_KERNELS([nvidia_sm80_gpu],[disable])
 ELPA_SELECT_KERNELS([amd_gpu],[disable])
-#to be done
-#ELPA_SELECT_KERNELS([intel_gpu_sycl],[disable])
+ELPA_SELECT_KERNELS([intel_gpu_sycl],[disable])
 ELPA_SELECT_KERNELS([bgp],[disable])
 ELPA_SELECT_KERNELS([bgq],[disable])
 
@@ -1181,17 +1200,16 @@ if test x"$with_amd_gpu_support_only" = x"yes" ; then
         use_complex_amd_gpu=yes
 fi
 
-#to be done
-#AC_ARG_WITH(INTEL-gpu-support-only, [AS_HELP_STRING([--with-INTEL-gpu-support-only],
-#            [Compile and always use the INTEL GPU version])],
-#            [],[with_intel_gpu_support_only=no])
-#if test x"$with_intel_gpu_support_only" = x"yes" ; then
-#        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
-#                      use_[]elpa_m4_kernel[]=no
-#        ])
-#        use_real_intel_gpu=yes
-#        use_complex_intel_gpu=yes
-#fi
+AC_ARG_WITH(INTEL-gpu-support-only, [AS_HELP_STRING([--with-INTEL-gpu-support-only],
+            [Compile and always use the INTEL GPU version])],
+            [],[with_intel_gpu_support_only=no])
+if test x"$with_intel_gpu_support_only" = x"yes" ; then
+        m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
+                      use_[]elpa_m4_kernel[]=no
+        ])
+        use_real_intel_gpu=yes
+        use_complex_intel_gpu=yes
+fi
 
 
 dnl
@@ -1263,13 +1281,10 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 ])
 
 
-#to be done
-#                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels elpa_m4_intel_gpu_sycl_kernels nvidia_sm80_gpu_kernels,
-#                                  [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
 m4_foreach_w([elpa_m4_kind],[real complex],[
         m4_foreach_w([elpa_m4_kernel],
                      m4_foreach_w([elpa_m4_cand_kernel],
-                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels nvidia_sm80_gpu_kernels,
+                                  elpa_m4_avx512_kernels elpa_m4_avx2_kernels elpa_m4_avx_kernels elpa_m4_sse_kernels elpa_m4_sse_assembly_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_generic_kernels elpa_m4_nvidia_gpu_kernels elpa_m4_amd_gpu_kernels elpa_m4_intel_gpu_sycl_kernels elpa_m4_nvidia_sm80_gpu_kernels,
                                   [m4_bmatch(elpa_m4_cand_kernel,elpa_m4_kind,elpa_m4_cand_kernel)] ),
                      [
                      if test -z "$default_[]elpa_m4_kind[]_kernel"; then
@@ -1691,34 +1706,62 @@ AC_ARG_ENABLE([gpu],
               [use_gpu=no])
 AC_MSG_RESULT([${use_gpu}])
 if test x"${use_gpu}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-gpu! Please switch to the specific option of either --enable-nvidia-gpu, --enable-amd-gpu or --enable-intel-gpu])
+  AC_MSG_WARN([The option --enable-gpu will be deprecated in one of the next releases.])
   need_nvidia_gpu=yes
   use_real_nvidia_gpu=yes
   use_complex_nvidia_gpu=yes
   # not supported with old flag
-  #if test x"${nvidia_a100_support}" = x"yes" ; then
-  #  use_real_nvidia_sm80_gpu=yes
-  #  use_complex_nvidia_sm80_gpu=yes
-  #fi
+  if test x"${nvidia_a100_support}" = x"yes" ; then
+	  AC_MSG_ERROR([You did still use the deprecated option --enable-gpu! This does not work with --with-NVIDIA-GPU-compute-capability=sm_80. Please specify --enable-nvidia-gpu])
+  fi
 fi
 
-AC_MSG_CHECKING(whether NVIDIA-GPU version should be used)
-AC_ARG_ENABLE([nvidia-gpu],
-                AS_HELP_STRING([--enable-nvidia-gpu],
-                               [do use NVIDIA GPU version]),
-                               [if test x"$enableval" = x"yes"; then
-                                  use_nvidia_gpu=yes
-                                else
-                                  use_nvidia_gpu=no
-                                fi],
-              [use_nvidia_gpu=no])
-AC_MSG_RESULT([${use_nvidia_gpu}])
-if test x"${use_nvidia_gpu}" = x"yes" ; then
-  need_nvidia_gpu=yes
-  use_nvidia_real_gpu=yes
-  use_nvidia_complex_gpu=yes
+#AC_MSG_CHECKING(whether NVIDIA-GPU version should be used)
+#AC_ARG_ENABLE([nvidia-gpu],
+#                AS_HELP_STRING([--enable-nvidia-gpu],
+#                               [do use NVIDIA GPU version]),
+#                               [if test x"$enableval" = x"yes"; then
+#                                  use_nvidia_gpu=yes
+#                                else
+#                                  use_nvidia_gpu=no
+#                                fi],
+#              [use_nvidia_gpu=no])
+#AC_MSG_RESULT([${use_nvidia_gpu}])
+#if test x"${use_nvidia_gpu}" = x"yes" ; then
+#  need_nvidia_gpu=yes
+#  use_real_nvidia_gpu=yes
+#  use_complex_nvidia_gpu=yes
+#  if test x"${nvidia_a100_support}" = x"yes" ; then
+#    if test x"${need_nvidia_sm80_gpu}" = x"yes"; then
+#      use_real_nvidia_sm80_gpu=yes
+#      use_complex_nvidia_sm80_gpu=yes
+#    else
+#      AC_MSG_NOTICE([You specified --with-NVIDIA-GPU-compute-capability=sm_80, but you did not --enable-nvidia-sm80-gpu. I will thus use the standard Nvidia GPU kernels (which is of course ok, just a info...)])
+#      use_real_nvidia_sm80_gpu=no
+#      use_complex_nvidia_sm80_gpu=no
+#    fi
+#  fi
+#fi
+
+if test x"${need_nvidia_gpu}" = x"yes"; then
+  use_real_nvidia_gpu=yes
+  use_complex_nvidia_gpu=yes
   if test x"${nvidia_a100_support}" = x"yes" ; then
-    use_real_nvidia_sm80_gpu=yes
-    use_complex_nvidia_sm80_gpu=yes
+    if test x"${need_nvidia_sm80_gpu}" = x"yes"; then
+      use_real_nvidia_sm80_gpu=yes
+      use_complex_nvidia_sm80_gpu=yes
+    else
+      AC_MSG_NOTICE([You specified --with-NVIDIA-GPU-compute-capability=sm_80, but you did not --enable-nvidia-sm80-gpu. I will thus use the standard Nvidia GPU kernels (which is of course ok, just a info...)])
+      use_real_nvidia_sm80_gpu=no
+      use_complex_nvidia_sm80_gpu=no
+    fi
+  fi
+fi
+
+if test x"${need_nvidia_sm80_gpu}" = x"yes"; then
+  if test x"${nvidia_a100_support}" = x"no" ; then
+    AC_MSG_ERROR([You specified --enable-nvidia-sm80-gpu, but not --with-NVIDIA-GPU-compute-capability=sm_80 (or higher)Aborting...])
   fi
 fi
 
@@ -1736,13 +1779,18 @@ AC_ARG_WITH([cusolver],
             [with_cusolver="no"])
 AC_MSG_RESULT([${with_cusolver}])
 
+#already done with kernel ?
+if test x"${need_amd_gpu}" = x"yes"; then
+  use_real_amd_gpu=yes
+  use_complex_amd_gpu=yes
+fi
 
 use_openmp_gpu_backend=no
 use_sycl_gpu_backend=no
 use_intel_gpu=no
 AC_MSG_CHECKING(whether INTEL GPU version should be used)
 AC_ARG_ENABLE([intel-gpu],
-                AS_HELP_STRING([--enable-intel-gpu=(openmp|sycl)],
+                AS_HELP_STRING([--enable-intel-gpu=[[openmp|sycl]]],
                                [do use INTEL GPU version with either OpenMP or SYCL backend]),
                                [if test x"$enableval" = x"openmp"; then
 				  use_openmp_gpu_backend=yes
@@ -1761,34 +1809,27 @@ AC_MSG_RESULT([${use_intel_gpu}])
 if test x"${use_intel_gpu}" = x"yes"; then
   if test x"${use_openmp_gpu_backend}" = x"no"; then
     if test x"${use_sycl_gpu_backend}" = x"no"; then
-      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=(openmp|sycl)])
+      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=[[openmp|sycl]]])
     fi
   fi
 fi
 
-if test x"${use_intel_gpu}" = x"yes" ; then
-  need_intel_gpu=yes
+#already done with kernel ?
+if test x"${need_intel_gpu}" = x"yes" ; then
   use_real_intel_gpu=yes
   use_complex_intel_gpu=yes
 fi
 
-#AC_MSG_CHECKING(whether AMD-GPU version should be used)
-#AC_ARG_ENABLE([amd-gpu],
-#                AS_HELP_STRING([--enable-amd-gpu],
-#                               [do use AMD GPU version]),
-#                               [if test x"$enableval" = x"yes"; then
-#                                  use_amd_gpu=yes
-#                                else
-#                                  use_amd_gpu=no
-#                                fi],
-#              [use_amd_gpu=no])
-#AC_MSG_RESULT([${use_amd_gpu}])
-#if test x"${use_amd_gpu}" = x"yes" ; then
-#  need_amd_gpu=yes
-#  use_real_amd_gpu=yes
-#  use_complex_amd_gpu=yes
-#fi
-#
+if test x"${need_intel_gpu_sycl}" = x"yes"; then
+    if test x"${use_sycl_gpu_backend}" = x"no"; then
+      AC_MSG_ERROR([You specified --enable-intel-gpu-sycl for the SYCL GPU kernel. You must also specify --enable-intel-gpu=sycl ])
+    fi
+fi
+if test x"${use_sycl_gpu_backend}" = x"yes"; then
+  if test x"${need_intel_gpu_sycl}" = x"no"; then
+    AC_MSG_NOTICE([You specified --enable-intel-gpu=sycl for a SYCL GPU backend. You might want to activate the SYCL GPU kernel by specifying  --enable-intel-gpu-sycl])
+  fi
+fi
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
@@ -1930,7 +1971,7 @@ if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" 
   ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=1
   ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=1
 
-  if test x"${nvidia_a100_support}" = x"yes" ; then
+  if test x"${need_nvidia_sm80_gpu}" = x"yes" ; then
     AC_DEFINE([WITH_NVIDIA_SM80_GPU_KERNEL],[1],[Nvidia sm_80 GPU kernel should be build])
     # currently no complex kernel
     ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU_COMPILED=0
@@ -2008,7 +2049,7 @@ AC_SUBST([ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_AMD_GPU_COMPILED])
 
 #to be done
-AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu2" = x"yes" -o x"$use_complex_intel_gpu2" = x"yes"])
+#AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu2" = x"yes" -o x"$use_complex_intel_gpu2" = x"yes"])
 #if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
 #  AC_DEFINE([WITH_INTEL_GPU_VERSION],[1],[enable INTEL GPU support])
 #  AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
@@ -2022,28 +2063,28 @@ AM_CONDITIONAL([WITH_INTEL_GPU_VERSION],[test x"$use_real_intel_gpu2" = x"yes" -
 #AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
 
 
-ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=0
-ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=0
+ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED=0
+ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED=0
 #to be done
 #AM_CONDITIONAL([WITH_OPENMP_OFFLOAD_GPU_VERSION],[test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes"])
 AM_CONDITIONAL([WITH_OPENMP_OFFLOAD_GPU_VERSION],[test x"$use_openmp_gpu_backend" = x"yes"])
 #if test x"$use_real_intel_gpu" = x"yes" -o x"$use_complex_intel_gpu" = x"yes" ; then
 if test x"$use_openmp_gpu_backend"  = x"yes" ; then
   AC_DEFINE([WITH_OPENMP_OFFLOAD_GPU_VERSION],[1],[enable INTEL GPU support via OpenMP backend])
-  AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
-  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
-  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
+  #AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED=1
+  ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED=1
 fi
 AM_CONDITIONAL([WITH_SYCL_GPU_VERSION],[test x"$use_sycl_gpu_backend" = x"yes"])
 if test x"$use_sycl_gpu_backend"  = x"yes" ; then
   AC_DEFINE([WITH_SYCL_GPU_VERSION],[1],[enable INTEL GPU support via SYCL backend])
-  AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
-  ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED=1
-  ELPA_2STAGE_REAL_INTEL_GPU_COMPILED=1
+  #AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED=1
+  ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED=1
 fi
 
-AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_COMPILED])
-AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_COMPILED])
+AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED])
+AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED])
 
 
 LT_INIT
@@ -2612,6 +2653,9 @@ else
   fi
 
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
+  if test x"$CPP" = x""; then
+    AC_MSG_ERROR([The variable \$CPP has not been set by configure. If you encounter an error, try specifying CPP])
+  fi
 fi
 if test x"$enable_threading_support_checks" = x"no" && test x"$with_mpi" = x"yes" && test x"${enable_openmp}" = x"yes"; then
   echo " "

@@ -1,6 +1,7 @@
 
 #include "config-f90.h"
 module merge_systems
+!DIR$ OPTIMIZE:1
   use precision
   implicit none
   private

@@ -541,7 +541,7 @@
           write(error_unit,*) "Error in global_product. Aborting..."
           return
         endif
-        z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
+        z(1:na1) = SIGN( SQRT( ABS( z(1:na1) ) ), z1(1:na1) )
 
         call global_gather_&
         &PRECISION&
@@ -661,7 +661,7 @@
 
         if (useGPU) then
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
             successGPU = gpu_host_register(int(loc(qtmp1),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
@@ -673,7 +673,7 @@
           check_alloc_gpu("merge_systems: qtmp1_dev", successGPU)
 
           num = (gemm_dim_l * gemm_dim_m) * size_of_datatype
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
             successGPU = gpu_host_register(int(loc(ev),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
@@ -685,7 +685,7 @@
 
 
           num = (gemm_dim_k * gemm_dim_m) * size_of_datatype
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
             successGPU = gpu_host_register(int(loc(qtmp2),kind=c_intptr_t),num,&
                         gpuHostRegisterDefault)
@@ -924,7 +924,7 @@
 
         if (useGPU) then
 
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
             successGPU = gpu_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
             check_host_unregister_gpu("merge_systems: qtmp1", successGPU)
@@ -933,7 +933,7 @@
           successGPU = gpu_free(qtmp1_dev)
           check_dealloc_gpu("merge_systems: qtmp1_dev", successGPU)
           
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
             successGPU = gpu_host_unregister(int(loc(qtmp2),kind=c_intptr_t))
             check_host_unregister_gpu("merge_systems: qtmp2", successGPU)
@@ -942,7 +942,7 @@
           successGPU = gpu_free(qtmp2_dev)
           check_dealloc_gpu("merge_systems: qtmp2_dev", successGPU)
 
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_INTEL_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
             successGPU = gpu_host_unregister(int(loc(ev),kind=c_intptr_t))
             check_host_unregister_gpu("merge_systems: ev", successGPU)
