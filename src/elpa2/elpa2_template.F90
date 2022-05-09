@@ -785,9 +785,12 @@ print *,"Device pointer + REDIST"
 #ifdef SINGLE_PRECISION_REAL
     if (useGPU) then
       if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU) then
+        kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
         if (my_pe .eq. 0) then
-          write(error_unit,*) "Currently no MMA implementation for real single-precision Nvidia SM80 kernel."
-          write(error_unit,*) "Using without MMA."
+          !write(error_unit,*) "Currently no MMA implementation for real single-precision Nvidia SM80 kernel."
+          !write(error_unit,*) "Using without MMA."
+          write(error_unit,*) "Currently no implementation of real single-precision Nvidia SM80 kernel."
+          write(error_unit,*) "Using the standard Nvidia GPU kernel instead."
         endif
       endif
     endif ! useGPU
@@ -798,9 +801,10 @@ print *,"Device pointer + REDIST"
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
     if (useGPU) then
       if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU) then
-        kernel = GPU_KERNEL2
+        kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
         if (my_pe .eq. 0) then
-          write(error_unit,*) "Currently no complex Nvidia SM80 kernel. Using standard Nvidia GPU kernel"
+          write(error_unit,*) "Currently no implementation of complex Nvidia SM80 kernel." 
+          write(error_unit,*) "Using the standard Nvidia GPU kernel instead."
         endif
       endif
     endif ! useGPU
