@@ -2387,7 +2387,7 @@ contains
 #endif
     integer:: lc
     MATH_DATATYPE(kind=rck):: vr(:), ex_buff2d(:,:)
-    integer:: iioff, mynlc
+    integer:: iioff, mynlc, imin, imax, icount, iblk, bingo
     
 #ifdef WITH_OPENMP_TRADITIONAL
     !Open up one omp region to avoid paying openmp overhead.
@@ -2475,28 +2475,78 @@ contains
     
 #else /* WITH_OPENMP_TRADITIONAL */
 
-    nlc = 0 ! number of local columns
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx>0) then
-          nlc = nlc+1
-          if (lr>0) then
-             aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
+    if(.false.) then
+   !if(.true.) then
+       nlc = 0 ! number of local columns
+       do j=1,lc-1
+          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+          if (lcx>0) then
+             nlc = nlc+1
+             if (lr>0) then
+                aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
+             else
+                aux1(nlc) = 0.
+             end if
+          endif
+       enddo
+    else
+       nlc=0
+!       bingo=0
+       do iblk=1,lc-1,nblk
+          imax=min(iblk+nblk-1,lc-1)
+          do j=iblk,imax
+             lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+             if(lcx.gt.0) exit
+          end do
+          imin=j       
+          icount=imax-imin+1
+!if(icount.eq.nblk) bingo=bingo+1
+          if(.false.) then
+             if (lr.gt.0) then             
+                do j=imin,imax
+                   lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+                   nlc = nlc+1
+                   aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
+                enddo
+             else
+                nlc=nlc+icount  
+             end if
           else
-             aux1(nlc) = 0.
+             if (lr.gt.0) then             
+                lcx = local_index(istep*nbw+imin, my_pcol, np_cols, nblk, 0)
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND), &
+                     ONE, a_mat(1,lcx), lda, vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), 1_BLAS_KIND)
+             end if
+             nlc=nlc+icount  
           end if
-       endif
-    enddo
 
-    !we also need to transform the remaining ex_buff
-    do iioff=1,ubound(ex_buff2d,2)
-       nlc = nlc+1
-       if (lr>0) then
-          aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,iioff))
-       else
-          aux1(nlc) = 0.
+       end do
+       if (lr.le.0) then
+          aux1(1:nlc)=0.
        end if
-    end do
+ !      print*,'guck',nlc,lr !,lc,(lc-1)/nblk,bingo
+    endif
+
+
+    
+    !we also need to transform the remaining ex_buff
+    if (lr>0) then
+       imax=ubound(ex_buff2d,2)
+       if(.false.) then
+       !       if(.true.) then
+          do iioff=1,imax
+             nlc = nlc+1       
+             aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,iioff))
+          end do
+       else
+          call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND), &
+               ONE, ex_buff2d, size(ex_buff2d,1), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), 1_BLAS_KIND)
+          nlc=nlc+imax
+       end if
+    else
+       aux1(nlc+1:nlc+ubound(ex_buff2d,2)) = 0.
+       nlc=nlc+ubound(ex_buff2d,2)
+    end if
 
     ! Get global dot products
 #ifdef WITH_MPI
@@ -2521,31 +2571,64 @@ contains
 #else /* WITH_MPI */
 !    if (nlc > 0) aux2=aux1
 #endif /* WITH_MPI */
+
+    if(lr.le.0) return !no data on this processor
+
     ! Transform
-    nlc = 0
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx>0) then
+    if(.false.) then
+       nlc = 0
+       do j=1,lc-1
+          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+          if (lcx>0) then
+             nlc = nlc+1
+#if REALCASE == 1
+             a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tau*aux1(nlc)*vr(1:lr)
+#endif
+#if COMPLEXCASE == 1
+             a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
+#endif
+          endif
+       enddo
+    else
+       nlc=0
+       do iblk=1,lc-1,nblk
+          imax=min(iblk+nblk-1,lc-1)
+          do j=iblk,imax
+             lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
+             if(lcx.gt.0) exit
+          end do
+          imin=j       
+          icount=imax-imin+1
+#if REALCASE == 1
+          call dger(lr,icount,-tau,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
+          nlc=nlc+icount
+#endif
+       end do
+    end if
+
+    
+    !we also need to transform the remaining ex_buff
+    if(.false.) then
+       do iioff=1,ubound(ex_buff2d,2)
           nlc = nlc+1
 #if REALCASE == 1
-          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tau*aux1(nlc)*vr(1:lr)
+          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tau*aux1(nlc)*vr(1:lr)
 #endif
 #if COMPLEXCASE == 1
-          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
-#endif
-       endif
-    enddo
-
-    !we also need to transform the remaining ex_buff
-    do iioff=1,ubound(ex_buff2d,2)
-       nlc = nlc+1
-#if REALCASE == 1
-       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tau*aux1(nlc)*vr(1:lr)
-#endif
-#if COMPLEXCASE == 1
-       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - conjg(tau)*aux1(nlc)*vr(1:lr)
+          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - conjg(tau)*aux1(nlc)*vr(1:lr)
 #endif       
-    end do
+       end do
+    else
+
+#if REALCASE == 1
+       call dger(lr,ubound(ex_buff2d,2),-tau,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
+#endif
+#if COMPLEXCASE == 1
+       !introduce PRECISION_GERC
+       stop 'PRECISION_GERC not implemented yet'
+#endif
+    end if
+    
 #endif /* WITH_OPENMP_TRADITIONAL */
   end subroutine apply_ht
 
