@@ -1,9 +1,23 @@
 Changelog for next release
 
 - not yet decided
+
+
+Changelog for ELPA 2022.05.001.rc1
 - implement OpenMP offloading to GPU for Intel GPU for ELPA 1 and 2 stage (
-  except for step tridi_to_band)
+  except for "step tridi_to_band")
+- implement SYCL offloading to Intel GPUs for ELPA 1 and 2 stage (except for
+  step "tridi_to_band")
 - AMD GPU offload has been tested on Mi200 (also with MPI)
+- allow steps "cholesky", "invert_trm", and "multiply_ab" to be called
+  directly with GPU device pointers
+- on error ELPA returns rather than aborting to give controll to calling
+  application and to allow for error recovery and/or graceful abort
+- allow ELPA to build with OpenMP and GPU
+- fix an FPE with the Intel compiler and AVX-512 instructions and optimization
+  level > -O2
+- better checking of user defined options in configure
+ 
 
 Changelog for ELPA 2021.11.002
 - fix an error when choosing the Nvidia GPU kernel (fallback to CPU might have
