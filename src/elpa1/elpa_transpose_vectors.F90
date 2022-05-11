@@ -204,7 +204,7 @@ subroutine ROUTINE_NAME&
   allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_transpose_vectors: aux", istat, errorMessage)
 #ifdef WITH_OPENMP_TRADITIONAL
-  !$omp parallel &
+  !$omp parallel num_threads(nrThreads) &
   !$omp default(none) &
   !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &

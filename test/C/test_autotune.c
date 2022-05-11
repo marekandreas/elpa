@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
    elpa_autotune_t autotune_handle;
    C_INT_TYPE i, unfinished;
 
-   C_INT_TYPE value;
+   //C_INT_TYPE value;
 
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);

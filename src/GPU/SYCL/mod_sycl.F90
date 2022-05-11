@@ -47,31 +47,29 @@
 
 #include "config-f90.h"
 
-module openmp_offload_functions
+module sycl_functions
   use, intrinsic :: iso_c_binding
   use precision
   implicit none
 
   public
 
-  integer(kind=ik) :: openmpOffloadMemcpyHostToDevice
-  integer(kind=ik) :: openmpOffloadMemcpyDeviceToHost
-  integer(kind=ik) :: openmpOffloadMemcpyDeviceToDevice
-  integer(kind=ik) :: openmpOffloadHostRegisterDefault
-  integer(kind=ik) :: openmpOffloadHostRegisterPortable
-  integer(kind=ik) :: openmpOffloadHostRegisterMapped
+  integer(kind=ik) :: syclMemcpyHostToDevice
+  integer(kind=ik) :: syclMemcpyDeviceToHost
+  integer(kind=ik) :: syclMemcpyDeviceToDevice
+  integer(kind=ik) :: syclHostRegisterDefault
+  integer(kind=ik) :: syclHostRegisterPortable
+  integer(kind=ik) :: syclHostRegisterMapped
 
   ! TODO global variable, has to be changed
-  integer(kind=C_intptr_T), allocatable :: openmpOffloadHandleArray(:)
-  integer(kind=C_intptr_T), allocatable :: openmpOffloadsolverHandleArray(:)
-  integer(kind=c_int), allocatable      :: openmpOffloadDeviceArray(:)
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+  integer(kind=C_intptr_T), allocatable :: syclHandleArray(:)
+  integer(kind=C_intptr_T), allocatable :: syclsolverHandleArray(:)
+  integer(kind=c_int), allocatable      :: syclDeviceArray(:)
 
   ! functions to set and query the GPU devices
   interface
-    function openmp_offload_blas_create_c(handle) result(istat) &
-             bind(C, name="openmpOffloadblasCreateFromC")
+    function sycl_blas_create_c(handle) result(istat) &
+             bind(C, name="syclblasCreateFromC")
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -91,8 +89,8 @@ module openmp_offload_functions
 !  end interface
 !
   interface
-    function openmp_offload_solver_create_c(handle) result(istat) &
-             bind(C, name="openmpOffloadsolverCreateFromC")
+    function sycl_solver_create_c(handle) result(istat) &
+             bind(C, name="syclsolverCreateFromC")
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -113,8 +111,8 @@ module openmp_offload_functions
 
 
   interface
-    function openmp_offload_setdevice_c(device_id) result(istat) &
-                     bind (C, name="openmpOffloadSetDeviceFromC")
+    function sycl_setdevice_c(device_id) result(istat) &
+                     bind (C, name="syclSetDeviceFromC")
       use, intrinsic :: iso_c_binding
 
       integer (kind=c_int), intent(in), value :: device_id
@@ -123,12 +121,12 @@ module openmp_offload_functions
   end interface
 
   interface
-    function openmp_offload_getdevicecount_c() result(n) &
-             bind(C, name="openmpOffloadGetDeviceCountFromC")
+    function sycl_getdevicecount_c() result(n) &
+             bind(C, name="syclGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT) :: n
-    end function openmp_offload_getdevicecount_c
+    end function sycl_getdevicecount_c
   end interface
 
   !interface
@@ -146,8 +144,8 @@ module openmp_offload_functions
 
   ! functions to copy memory
   interface
-    function openmp_offload_memcpyDeviceToDevice_c() result(flag) &
-             bind(C, name="openmpOffloadMemcpyDeviceToDeviceFromC")
+    function sycl_memcpyDeviceToDevice_c() result(flag) &
+             bind(C, name="syclMemcpyDeviceToDeviceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -155,8 +153,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    function openmp_offload_memcpyHostToDevice_c() result(flag) &
-             bind(C, name="openmpOffloadMemcpyHostToDeviceFromC")
+    function sycl_memcpyHostToDevice_c() result(flag) &
+             bind(C, name="syclMemcpyHostToDeviceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -164,8 +162,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    function openmp_offload_memcpyDeviceToHost_c() result(flag) &
-             bind(C, name="openmpOffloadMemcpyDeviceToHostFromC")
+    function sycl_memcpyDeviceToHost_c() result(flag) &
+             bind(C, name="syclMemcpyDeviceToHostFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -200,8 +198,8 @@ module openmp_offload_functions
 !  end interface
 
   interface
-    function openmp_offload_memcpy_intptr_c(dst, src, elems, direction) &
-             result (istat) bind (C, name="openmpOffloadMemcpyFromC")
+    function sycl_memcpy_intptr_c(dst, src, elems, direction) &
+             result (istat) bind (C, name="syclMemcpyFromC")
       use, intrinsic :: iso_c_binding
       integer (kind=c_intptr_t), intent(in), value :: dst
       integer (kind=c_intptr_t), intent(in), value :: src
@@ -212,8 +210,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    function openmp_offload_memcpy_cptr_c(dst, src, elems, direction) &
-                    result (istat) bind (C, name="openmpOffloadMemcpyFromC")
+    function sycl_memcpy_cptr_c(dst, src, elems, direction) &
+                    result (istat) bind (C, name="syclMemcpyFromC")
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(in), value               :: dst
       type(c_ptr), intent(in), value               :: src
@@ -225,8 +223,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    function openmp_offload_memcpy_mixed_to_device_c(dst, src, elems, direction) result (istat) &
-                    bind (C, name="openmpOffloadMemcpyFromC")
+    function sycl_memcpy_mixed_to_device_c(dst, src, elems, direction) result (istat) &
+                    bind (C, name="syclMemcpyFromC")
       use, intrinsic :: iso_c_binding
 
       type(c_ptr), intent(in), value               :: dst
@@ -238,8 +236,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    function openmp_offload_memcpy_mixed_to_host_c(dst, src, elems, direction) result (istat) &
-                    bind (C, name="openmpOffloadMemcpyFromC")
+    function sycl_memcpy_mixed_to_host_c(dst, src, elems, direction) result (istat) &
+                    bind (C, name="syclMemcpyFromC")
       use, intrinsic :: iso_c_binding
 
       type(c_ptr), intent(in), value               :: src
@@ -322,8 +320,8 @@ module openmp_offload_functions
 
   ! functions to allocate and free device memory
   interface
-    function openmp_offload_free_c(a) result (istat) &
-             bind (C, name="openmpOffloadFreeFromC")
+    function sycl_free_c(a) result (istat) &
+             bind (C, name="syclFreeFromC")
       use, intrinsic :: iso_c_binding
 
       integer (kind=c_intptr_t) :: a
@@ -331,20 +329,21 @@ module openmp_offload_functions
     end function
   end interface
 
-  interface openmp_offload_memcpy
-    module procedure openmp_offload_memcpy_intptr
-    module procedure openmp_offload_memcpy_cptr
-    module procedure openmp_offload_memcpy_mixed_to_device
-    module procedure openmp_offload_memcpy_mixed_to_host
+  interface sycl_memcpy
+    module procedure sycl_memcpy_intptr
+    module procedure sycl_memcpy_cptr
+    module procedure sycl_memcpy_mixed_to_device
+    module procedure sycl_memcpy_mixed_to_host
   end interface
 
 
   interface
-    function openmp_offload_malloc_c(a, elems) result (istat) &
-             bind (C, name="openmpOffloadMallocFromC")
+    function sycl_malloc_c(a, elems) result (istat) &
+             bind (C, name="syclMallocFromC")
       use, intrinsic :: iso_c_binding
 
-      integer (kind=c_intptr_t), intent(inout)        :: a
+
+      integer (kind=c_intptr_t)                       :: a
       integer (kind=c_intptr_t), intent(in), value    :: elems
       integer (kind=c_int)                            :: istat
     end function
@@ -378,21 +377,21 @@ module openmp_offload_functions
   !end interface
 
   interface
-    function openmp_offload_memset_c(array, val, elems) result (istat) &
-                    bind (C, name="openmpOffloadMemsetFromC")
+    function sycl_memset_c(array, val, elems) result (istat) &
+                    bind (C, name="syclMemsetFromC")
       use, intrinsic :: iso_c_binding
 
       integer (kind=c_intptr_t), intent(in), value :: array
       integer (kind=c_intptr_t), intent(in), value :: elems
-      integer (kind=c_int), intent(in), value      :: val
+      integer (kind=c_int32_t), intent(in), value  :: val
       integer (kind=c_int)                         :: istat
     end function
   end interface
 
   ! mkl lapack openmp offload
   interface
-    subroutine mkl_openmp_offload_dtrtri_c(handle, uplo, diag, n, a, lda, info) &
-                              bind(C,name='mklOpenmpOffloadDtrtriFromC')
+    subroutine mkl_sycl_dtrtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='mklSyclDtrtriFromC')
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -406,8 +405,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_strtri_c(handle, uplo, diag, n, a, lda, info) &
-                              bind(C,name='mklOpenmpOffloadStrtriFromC')
+    subroutine mkl_sycl_strtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='mklSyclStrtriFromC')
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -421,8 +420,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ztrtri_c(handle, uplo, diag, n, a, lda, info) &
-                              bind(C,name='mklOpenmpOffloadZtrtriFromC')
+    subroutine mkl_sycl_ztrtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='mklSyclZtrtriFromC')
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -436,8 +435,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ctrtri_c(handle, uplo, diag, n, a, lda, info) &
-                              bind(C,name='mklOpenmpOffloadCtrtriFromC')
+    subroutine mkl_sycl_ctrtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='mklSyclCtrtriFromC')
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -451,8 +450,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dpotrf_c(handle, uplo, n, a, lda, info) &
-                              bind(C,name='mklOpenmpOffloadDpotrfFromC')
+    subroutine mkl_sycl_dpotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='mklSyclDpotrfFromC')
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -466,8 +465,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_spotrf_c(handle, uplo, n, a, lda, info) &
-                              bind(C,name='mklOpenmpOffloadSpotrfFromC')
+    subroutine mkl_sycl_spotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='mklSyclSpotrfFromC')
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -481,8 +480,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_zpotrf_c(handle, uplo, n, a, lda, info) &
-                              bind(C,name='mklOpenmpOffloadZpotrfFromC')
+    subroutine mkl_sycl_zpotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='mklSyclZpotrfFromC')
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -496,8 +495,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_cpotrf_c(handle, uplo, n, a, lda, info) &
-                              bind(C,name='mklOpenmpOffloadCpotrfFromC')
+    subroutine mkl_sycl_cpotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='mklSyclCpotrfFromC')
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -512,28 +511,28 @@ module openmp_offload_functions
 
   ! mkl blas openmp offload
   interface mkl_opemmp_offload_dgemm
-    module procedure mkl_openmp_offload_dgemm_intptr
-    module procedure mkl_openmp_offload_dgemm_cptr
+    module procedure mkl_sycl_dgemm_intptr
+    module procedure mkl_sycl_dgemm_cptr
   end interface
 
-  interface mkl_openmp_offload_sgemm
-    module procedure mkl_openmp_offload_sgemm_intptr
-    module procedure mkl_openmp_offload_sgemm_cptr
+  interface mkl_sycl_sgemm
+    module procedure mkl_sycl_sgemm_intptr
+    module procedure mkl_sycl_sgemm_cptr
   end interface
 
-  interface mkl_openmp_offload_zgemm
-    module procedure mkl_openmp_offload_zgemm_intptr
-    module procedure mkl_openmp_offload_zgemm_cptr
+  interface mkl_sycl_zgemm
+    module procedure mkl_sycl_zgemm_intptr
+    module procedure mkl_sycl_zgemm_cptr
   end interface
 
-  interface mkl_openmp_offload_cgemm
-    module procedure mkl_openmp_offload_cgemm_intptr
-    module procedure mkl_openmp_offload_cgemm_cptr
+  interface mkl_sycl_cgemm
+    module procedure mkl_sycl_cgemm_intptr
+    module procedure mkl_sycl_cgemm_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                           bind (C, name="mklOpenmpOffloadDgemmFromC")
+    subroutine mkl_sycl_dgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                           bind (C, name="mklSyclDgemmFromC")
       use, intrinsic :: iso_c_binding
 
       character (1, c_char), intent(in), value     :: cta, ctb
@@ -546,8 +545,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name='mklOpenmpOffloadDgemmFromC')
+    subroutine mkl_sycl_dgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name='mklSyclDgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -563,8 +562,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_sgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name='mklOpenmpOffloadSgemmFromC')
+    subroutine mkl_sycl_sgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name='mklSyclSgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -580,8 +579,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_sgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name='mklOpenmpOffloadSgemmFromC')
+    subroutine mkl_sycl_sgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name='mklSyclSgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -598,14 +597,14 @@ module openmp_offload_functions
 
 
 
-  interface mkl_openmp_offload_dcopy
-    module procedure mkl_openmp_offload_dcopy_intptr
-    module procedure mkl_openmp_offload_dcopy_cptr
+  interface mkl_sycl_dcopy
+    module procedure mkl_sycl_dcopy_intptr
+    module procedure mkl_sycl_dcopy_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dcopy_intptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklOpenmpOffloadDcopyFromC')
+    subroutine mkl_sycl_dcopy_intptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='mklSyclDcopyFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -619,7 +618,7 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dcopy_cptr_c(handle, n, x, incx, y, incy) &
+    subroutine mkl_sycl_dcopy_cptr_c(handle, n, x, incx, y, incy) &
                               bind(C,name='openmpOpenmpOffloadDcopyFromC')
 
       use, intrinsic :: iso_c_binding
@@ -633,14 +632,14 @@ module openmp_offload_functions
     end subroutine
   end interface
 
-  interface mkl_openmp_offload_scopy
-    module procedure mkl_openmp_offload_scopy_intptr
-    module procedure mkl_openmp_offload_scopy_cptr
+  interface mkl_sycl_scopy
+    module procedure mkl_sycl_scopy_intptr
+    module procedure mkl_sycl_scopy_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_scopy_intptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklOpenmpOffloadScopyFromC')
+    subroutine mkl_sycl_scopy_intptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='mklSyclScopyFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -654,8 +653,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_scopy_cptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklOpenmpOffloadScopyFromC')
+    subroutine mkl_sycl_scopy_cptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='mklSyclScopyFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -668,14 +667,14 @@ module openmp_offload_functions
     end subroutine
   end interface
 
-  interface mkl_openmp_offload_dtrmm
-    module procedure mkl_openmp_offload_dtrmm_intptr
-    module procedure mkl_openmp_offload_dtrmm_cptr
+  interface mkl_sycl_dtrmm
+    module procedure mkl_sycl_dtrmm_intptr
+    module procedure mkl_sycl_dtrmm_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dtrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadDtrmmFromC')
+    subroutine mkl_sycl_dtrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclDtrmmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -691,8 +690,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dtrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadDtrmmFromC')
+    subroutine mkl_sycl_dtrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclDtrmmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -708,15 +707,15 @@ module openmp_offload_functions
   end interface
 
 
-  interface mkl_openmp_offload_strmm
-    module procedure mkl_openmp_offload_strmm_intptr
-    module procedure mkl_openmp_offload_strmm_cptr
+  interface mkl_sycl_strmm
+    module procedure mkl_sycl_strmm_intptr
+    module procedure mkl_sycl_strmm_cptr
   end interface
 
 
   interface
-    subroutine mkl_openmp_offload_strmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadStrmmFromC')
+    subroutine mkl_sycl_strmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclStrmmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -732,8 +731,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_strmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadStrmmFromC')
+    subroutine mkl_sycl_strmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclStrmmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -749,14 +748,14 @@ module openmp_offload_functions
   end interface
 
 
-  interface mkl_openmp_offload_dtrsm
-    module procedure mkl_openmp_offload_dtrsm_intptr
-    module procedure mkl_openmp_offload_dtrsm_cptr
+  interface mkl_sycl_dtrsm
+    module procedure mkl_sycl_dtrsm_intptr
+    module procedure mkl_sycl_dtrsm_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dtrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadDtrsmFromC')
+    subroutine mkl_sycl_dtrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclDtrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -772,8 +771,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_dtrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadDtrsmFromC')
+    subroutine mkl_sycl_dtrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclDtrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -789,14 +788,14 @@ module openmp_offload_functions
   end interface
 
 
-  interface mkl_openmp_offload_strsm
-    module procedure mkl_openmp_offload_strsm_intptr
-    module procedure mkl_openmp_offload_strsm_cptr
+  interface mkl_sycl_strsm
+    module procedure mkl_sycl_strsm_intptr
+    module procedure mkl_sycl_strsm_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_strsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadStrsmFromC')
+    subroutine mkl_sycl_strsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclStrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -812,8 +811,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_strsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadStrsmFromC')
+    subroutine mkl_sycl_strsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclStrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -830,8 +829,8 @@ module openmp_offload_functions
 
 
   interface
-    subroutine mkl_openmp_offload_zgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mklOpenmpOffloadZgemmFromC')
+    subroutine mkl_sycl_zgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
+                              bind(C,name='mklSyclZgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -847,8 +846,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_zgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mklOpenmpOffloadZgemmFromC')
+    subroutine mkl_sycl_zgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
+                              bind(C,name='mklSyclZgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -864,8 +863,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_cgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mklOpenmpOffloadCgemmFromC')
+    subroutine mkl_sycl_cgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
+                              bind(C,name='mklSyclCgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -881,8 +880,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_cgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mklOpenmpOffloadCgemmFromC')
+    subroutine mkl_sycl_cgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
+                              bind(C,name='mklSyclCgemmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -898,14 +897,14 @@ module openmp_offload_functions
   end interface
 
 
-  interface mkl_openmp_offload_zcopy
-    module procedure mkl_openmp_offload_zcopy_intptr
-    module procedure mkl_openmp_offload_zcopy_cptr
+  interface mkl_sycl_zcopy
+    module procedure mkl_sycl_zcopy_intptr
+    module procedure mkl_sycl_zcopy_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_zcopy_intptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklOpenmpOffloadZcopyFromC')
+    subroutine mkl_sycl_zcopy_intptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='mklSyclZcopyFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -919,8 +918,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_zcopy_cptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklOpenmpOffloadZcopyFromC')
+    subroutine mkl_sycl_zcopy_cptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='mklSyclZcopyFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -934,14 +933,14 @@ module openmp_offload_functions
   end interface
 
 
-  interface mkl_openmp_offload_ccopy
-    module procedure mkl_openmp_offload_ccopy_intptr
-    module procedure mkl_openmp_offload_ccopy_cptr
+  interface mkl_sycl_ccopy
+    module procedure mkl_sycl_ccopy_intptr
+    module procedure mkl_sycl_ccopy_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ccopy_intptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklOpenmpOffloadCcopyFromC')
+    subroutine mkl_sycl_ccopy_intptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='mklSyclCcopyFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -955,8 +954,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ccopy_cptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklOpenmpOffloadCcopyFromC')
+    subroutine mkl_sycl_ccopy_cptr_c(handle, n, x, incx, y, incy) &
+                              bind(C,name='mklSyclCcopyFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -969,14 +968,14 @@ module openmp_offload_functions
     end subroutine
   end interface
 
-  interface mkl_openmp_offload_ztrmm
-    module procedure mkl_openmp_offload_ztrmm_intptr
-    module procedure mkl_openmp_offload_ztrmm_cptr
+  interface mkl_sycl_ztrmm
+    module procedure mkl_sycl_ztrmm_intptr
+    module procedure mkl_sycl_ztrmm_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ztrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadZtrmmFromC')
+    subroutine mkl_sycl_ztrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclZtrmmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -992,8 +991,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ztrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadZtrmmFromC')
+    subroutine mkl_sycl_ztrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclZtrmmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1008,14 +1007,14 @@ module openmp_offload_functions
     end subroutine
   end interface
 
-  interface mkl_openmp_offload_ctrmm
-    module procedure mkl_openmp_offload_ctrmm_intptr
-    module procedure mkl_openmp_offload_ctrmm_cptr
+  interface mkl_sycl_ctrmm
+    module procedure mkl_sycl_ctrmm_intptr
+    module procedure mkl_sycl_ctrmm_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ctrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadCtrmmFromC')
+    subroutine mkl_sycl_ctrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclCtrmmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1031,8 +1030,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ctrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadCtrmmFromC')
+    subroutine mkl_sycl_ctrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclCtrmmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1044,17 +1043,17 @@ module openmp_offload_functions
       type(c_ptr), value                     :: a, b
       integer(kind=C_intptr_T), value        :: handle
 
-    end subroutine mkl_openmp_offload_ctrmm_cptr_c
+    end subroutine mkl_sycl_ctrmm_cptr_c
   end interface
 
-  interface mkl_openmp_offload_ztrsm
-    module procedure mkl_openmp_offload_ztrsm_intptr
-    module procedure mkl_openmp_offload_ztrsm_cptr
+  interface mkl_sycl_ztrsm
+    module procedure mkl_sycl_ztrsm_intptr
+    module procedure mkl_sycl_ztrsm_cptr
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ztrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadZtrsmFromC')
+    subroutine mkl_sycl_ztrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclZtrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1070,8 +1069,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ztrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadZtrsmFromC')
+    subroutine mkl_sycl_ztrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclZtrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1086,14 +1085,14 @@ module openmp_offload_functions
     end subroutine
   end interface
 
-  interface mkl_openmp_offload_ctrsm
-    module procedure mkl_openmp_offload_ctrsm_intptr
-    module procedure mkl_openmp_offload_ctrsm_cptr
+  interface mkl_sycl_ctrsm
+    module procedure mkl_sycl_ctrsm_intptr
+    module procedure mkl_sycl_ctrsm_cptr
   end interface
 
  interface
-    subroutine mkl_openmp_offload_ctrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadCtrsmFromC')
+    subroutine mkl_sycl_ctrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclCtrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1109,8 +1108,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_ctrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklOpenmpOffloadCtrsmFromC')
+    subroutine mkl_sycl_ctrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name='mklSyclCtrsmFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1127,8 +1126,8 @@ module openmp_offload_functions
 
 
   interface
-    subroutine mkl_openmp_offload_dgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name='mklOpenmpOffloadDgemvFromC')
+    subroutine mkl_sycl_dgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name='mklSyclDgemvFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1144,8 +1143,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_sgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name='mklOpenmpOffloadSgemvFromC')
+    subroutine mkl_sycl_sgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name='mklSyclSgemvFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1161,8 +1160,8 @@ module openmp_offload_functions
   end interface
 
  interface
-    subroutine mkl_openmp_offload_zgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name='mklOpenmpOffloadZgemvFromC')
+    subroutine mkl_sycl_zgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name='mklSyclZgemvFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1178,8 +1177,8 @@ module openmp_offload_functions
   end interface
 
   interface
-    subroutine mkl_openmp_offload_cgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name='mklOpenmpOffloadCgemvFromC')
+    subroutine mkl_sycl_cgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name='mklSyclCgemvFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -1232,14 +1231,14 @@ module openmp_offload_functions
 
     ! functions to set and query the GPU devices
 
-   function openmp_offload_blas_create(handle) result(success)
+   function sycl_blas_create(handle) result(success)
      use, intrinsic :: iso_c_binding
      implicit none
 
      integer(kind=C_intptr_t)                  :: handle
      logical                                   :: success
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-     success = openmp_offload_blas_create_c(handle) /= 0
+#ifdef WITH_SYCL_GPU_VERSION
+     success = sycl_blas_create_c(handle) /= 0
 #else
      success = .true.
 #endif
@@ -1258,14 +1257,14 @@ module openmp_offload_functions
 !#endif
 !   end function
 
-   function openmp_offload_solver_create(handle) result(success)
+   function sycl_solver_create(handle) result(success)
      use, intrinsic :: iso_c_binding
      implicit none
 
      integer(kind=C_intptr_t)                  :: handle
      logical                                   :: success
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-     success = openmp_offload_solver_create_c(handle) /= 0
+     success = sycl_solver_create_c(handle) /= 0
 #else
      success = .true.
 #endif
@@ -1284,36 +1283,36 @@ module openmp_offload_functions
 !#endif
 !   end function
 
-    function openmp_offload_setdevice(n) result(success)
+    function sycl_setdevice(n) result(success)
       use, intrinsic :: iso_c_binding
 
       implicit none
 
       integer(kind=ik), intent(in)  :: n
       logical                       :: success
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_setdevice_c(int(n,kind=c_int)) /= 0
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_setdevice_c(int(n,kind=c_int)) /= 0
 #else
       success = .true.
 #endif
     end function 
 
 
-    function openmp_offload_getdevicecount() result(n)
+    function sycl_getdevicecount() result(n)
       use, intrinsic :: iso_c_binding
       implicit none
 
       integer(kind=ik)     :: n
       !integer(kind=c_int)  :: nCasted
       !logical              :: success
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      n = openmp_offload_getdevicecount_c()
+#ifdef WITH_SYCL_GPU_VERSION
+      n = sycl_getdevicecount_c()
       !n = int(nCasted)
 #else
       !success = .true.
       n = 0
 #endif
-    end function openmp_offload_getdevicecount
+    end function sycl_getdevicecount
 
 !    function cuda_devicesynchronize()result(success)
 !
@@ -1331,28 +1330,28 @@ module openmp_offload_functions
 
     ! functions to allocate and free memory
 
-    function openmp_offload_malloc(array, elements) result(success)
+    function sycl_malloc(array, elements) result(success)
       use, intrinsic :: iso_c_binding
 
       integer (kind=c_intptr_t), intent(inout) :: array
       integer (kind=c_intptr_t), intent(in)    :: elements
       logical                                  :: success
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_malloc_c(array, elements) /= 0
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_malloc_c(array, elements) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function openmp_offload_free(array) result(success)
+    function sycl_free(array) result(success)
       use, intrinsic :: iso_c_binding
 
       integer (kind=c_intptr_t), intent(inout) :: array
       logical                                  :: success
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_free_c(array) /= 0
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_free_c(array) /= 0
 #else
       success = .true.
 #endif
@@ -1388,16 +1387,16 @@ module openmp_offload_functions
 !   end function cuda_free_host
 
 
-    function openmp_offload_memset(array, val, elems) result(success)
+    function sycl_memset(array, val, elems) result(success)
       use, intrinsic :: iso_c_binding
 
-      integer (kind=c_intptr_t), intent(in)        :: array
-      integer (kind=c_intptr_t), intent(in)        :: elems
-      integer (kind=c_int), intent(in), value      :: val
-      logical                                      :: success
+      integer (kind=c_intptr_t), intent(in)    :: array
+      integer (kind=c_intptr_t), intent(in)    :: elems
+      integer (kind=c_int), intent(in)         :: val
+      logical                                  :: success
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_memset_c(array, val, elems) /= 0
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memset_c(array, int(val,kind=c_int32_t), int(elems,kind=c_size_t)) /= 0
 #else
       success = .true.
 #endif
@@ -1406,36 +1405,36 @@ module openmp_offload_functions
 
     ! functions to memcopy memory
 
-    function openmp_offload_memcpyDeviceToDevice() result(flag)
+    function sycl_MemcpyDeviceToDevice() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      flag = int(openmp_offload_memcpyDeviceToDevice_c())
+#ifdef WITH_SYCL_GPU_VERSION
+      flag = int(sycl_memcpyDeviceToDevice_c())
 #else
       flag = 0
 #endif
     end function
 
-    function openmp_offload_memcpyHostToDevice() result(flag)
+    function sycl_MemcpyHostToDevice() result(flag)
       use, intrinsic :: iso_c_binding
       use precision
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      flag = int(openmp_offload_memcpyHostToDevice_c())
+#ifdef WITH_SYCL_GPU_VERSION
+      flag = int(sycl_memcpyHostToDevice_c())
 #else
       flag = 0
 #endif
     end function
 
-    function openmp_offload_memcpyDeviceToHost() result(flag)
+    function sycl_MemcpyDeviceToHost() result(flag)
       use, intrinsic :: iso_c_binding
       use precision
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      flag = int(openmp_offload_memcpyDeviceToHost_c())
+#ifdef WITH_SYCL_GPU_VERSION
+      flag = int(sycl_memcpyDeviceToHost_c())
 #else
       flag = 0
 #endif
@@ -1477,7 +1476,7 @@ module openmp_offload_functions
 !#endif
 !   end function
 
-    function openmp_offload_memcpy_intptr(dst, src, elems, direction) result(success)
+    function sycl_memcpy_intptr(dst, src, elems, direction) result(success)
       use, intrinsic :: iso_c_binding
 
       integer (kind=c_intptr_t), intent(inout) :: dst
@@ -1485,14 +1484,14 @@ module openmp_offload_functions
       integer (kind=c_intptr_t), intent(in)    :: elems
       integer (kind=c_int), intent(in)         :: direction
       logical                                  :: success
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_memcpy_intptr_c(dst, src, elems, direction) /= 0
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_intptr_c(dst, src, elems, direction) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function openmp_offload_memcpy_cptr(dst, src, elems, direction) result(success)
+    function sycl_memcpy_cptr(dst, src, elems, direction) result(success)
       use, intrinsic :: iso_c_binding
   
       type(c_ptr), intent(inout)            :: dst
@@ -1501,14 +1500,14 @@ module openmp_offload_functions
       integer (kind=c_int), intent(in)      :: direction
       logical                               :: success
   
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_memcpy_cptr_c(dst, src, elems, direction) /= 0
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_cptr_c(dst, src, elems, direction) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function openmp_offload_memcpy_mixed_to_device(dst, src, elems, direction) result(success)
+    function sycl_memcpy_mixed_to_device(dst, src, elems, direction) result(success)
       use, intrinsic :: iso_c_binding
 
       type(c_ptr), intent(inout)               :: dst
@@ -1517,14 +1516,14 @@ module openmp_offload_functions
       integer (kind=c_int), intent(in)         :: direction
       logical                                  :: success
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_memcpy_mixed_to_device_c(dst, src, elems, direction) /= 0
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_mixed_to_device_c(dst, src, elems, direction) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function openmp_offload_memcpy_mixed_to_host(dst, src, elems, direction) result(success)
+    function sycl_memcpy_mixed_to_host(dst, src, elems, direction) result(success)
       use, intrinsic :: iso_c_binding
 
       type(c_ptr), intent(inout)               :: src
@@ -1533,8 +1532,8 @@ module openmp_offload_functions
       integer (kind=c_int), intent(in)         :: direction
       logical                                  :: success
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_memcpy_mixed_to_host_c(dst, src, elems, direction) /= 0
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_mixed_to_host_c(dst, src, elems, direction) /= 0
 #else
       success = .true.
 #endif
@@ -1615,7 +1614,7 @@ module openmp_offload_functions
 !#endif
 !    end function
 
-    subroutine mkl_openmp_offload_dtrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine mkl_sycl_dtrtri(uplo, diag, n, a, lda, info, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1624,20 +1623,20 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadsolverHandle
+      integer(kind=C_intptr_T)        :: syclsolverHandle
 
       if (present(threadID)) then
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(threadID)
+        syclsolverHandle = syclsolverHandleArray(threadID)
       else
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(0)
+        syclsolverHandle = syclsolverHandleArray(0)
       endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_openmp_offload_dtrtri_c(openmpOffloadsolverHandle, uplo, diag, n, a, lda, info)
+      call mkl_sycl_dtrtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_strtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine mkl_sycl_strtri(uplo, diag, n, a, lda, info, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1646,20 +1645,20 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadsolverHandle
+      integer(kind=C_intptr_T)        :: syclsolverHandle
 
       if (present(threadID)) then
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(threadID)
+        syclsolverHandle = syclsolverHandleArray(threadID)
       else
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(0)
+        syclsolverHandle = syclsolverHandleArray(0)
       endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_openmp_offload_strtri_c(openmpOffloadsolverHandle, uplo, diag, n, a, lda, info)
+      call mkl_sycl_strtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_ztrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine mkl_sycl_ztrtri(uplo, diag, n, a, lda, info, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1668,20 +1667,20 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadsolverHandle
+      integer(kind=C_intptr_T)        :: syclsolverHandle
 
       if (present(threadID)) then
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(threadID)
+        syclsolverHandle = syclsolverHandleArray(threadID)
       else
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(0)
+        syclsolverHandle = syclsolverHandleArray(0)
       endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_openmp_offload_ztrtri_c(openmpOffloadsolverHandle, uplo, diag, n, a, lda, info)
+      call mkl_sycl_ztrtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_ctrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine mkl_sycl_ctrtri(uplo, diag, n, a, lda, info, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1690,20 +1689,20 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadsolverHandle
+      integer(kind=C_intptr_T)        :: syclsolverHandle
 
       if (present(threadID)) then
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(threadID)
+        syclsolverHandle = syclsolverHandleArray(threadID)
       else
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(0)
+        syclsolverHandle = syclsolverHandleArray(0)
       endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_openmp_offload_ctrtri_c(openmpOffloadsolverHandle, uplo, diag, n, a, lda, info)
+      call mkl_sycl_ctrtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_dpotrf(uplo, n, a, lda, info, threadID)
+    subroutine mkl_sycl_dpotrf(uplo, n, a, lda, info, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1712,20 +1711,20 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadsolverHandle
+      integer(kind=C_intptr_T)        :: syclsolverHandle
 
       if (present(threadID)) then
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(threadID)
+        syclsolverHandle = syclsolverHandleArray(threadID)
       else
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(0)
+        syclsolverHandle = syclsolverHandleArray(0)
       endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_openmp_offload_dpotrf_c(openmpOffloadsolverHandle, uplo, n, a, lda, info)
+      call mkl_sycl_dpotrf_c(syclsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_spotrf(uplo, n, a, lda, info, threadID)
+    subroutine mkl_sycl_spotrf(uplo, n, a, lda, info, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1734,20 +1733,20 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadsolverHandle
+      integer(kind=C_intptr_T)        :: syclsolverHandle
 
       if (present(threadID)) then
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(threadID)
+        syclsolverHandle = syclsolverHandleArray(threadID)
       else
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(0)
+        syclsolverHandle = syclsolverHandleArray(0)
       endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_openmp_offload_spotrf_c(openmpOffloadsolverHandle, uplo, n, a, lda, info)
+      call mkl_sycl_spotrf_c(syclsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_zpotrf(uplo, n, a, lda, info, threadID)
+    subroutine mkl_sycl_zpotrf(uplo, n, a, lda, info, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1756,20 +1755,20 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadsolverHandle
+      integer(kind=C_intptr_T)        :: syclsolverHandle
 
       if (present(threadID)) then
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(threadID)
+        syclsolverHandle = syclsolverHandleArray(threadID)
       else
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(0)
+        syclsolverHandle = syclsolverHandleArray(0)
       endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_openmp_offload_zpotrf_c(openmpOffloadsolverHandle, uplo, n, a, lda, info)
+      call mkl_sycl_zpotrf_c(syclsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_cpotrf(uplo, n, a, lda, info, threadID)
+    subroutine mkl_sycl_cpotrf(uplo, n, a, lda, info, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1778,21 +1777,21 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadsolverHandle
+      integer(kind=C_intptr_T)        :: syclsolverHandle
 
       if (present(threadID)) then
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(threadID)
+        syclsolverHandle = syclsolverHandleArray(threadID)
       else
-        openmpOffloadsolverHandle = openmpOffloadsolverHandleArray(0)
+        syclsolverHandle = syclsolverHandleArray(0)
       endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_openmp_offload_cpotrf_c(openmpOffloadsolverHandle, uplo, n, a, lda, info)
+      call mkl_sycl_cpotrf_c(syclsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
     ! mkl
-    subroutine mkl_openmp_offload_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1802,19 +1801,19 @@ module openmp_offload_functions
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_dgemm_intptr_c(openmpOffloadHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_dgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1824,21 +1823,21 @@ module openmp_offload_functions
       real(kind=C_DOUBLE)             :: alpha,beta
       type(c_ptr)                     :: a, b, c
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_dgemm_cptr_c(openmpOffloadHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_dgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine 
 
 
 
-    subroutine mkl_openmp_offload_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1848,20 +1847,20 @@ module openmp_offload_functions
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_sgemm_intptr_c(openmpOffloadHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_sgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine 
 
 
-    subroutine mkl_openmp_offload_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1871,21 +1870,21 @@ module openmp_offload_functions
       real(kind=C_FLOAT)              :: alpha,beta
       type(c_ptr)                     :: a, b, c
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_sgemm_cptr_c(openmpOffloadHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_sgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
 
 
-    subroutine mkl_openmp_offload_dcopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_dcopy_intptr(n, x, incx, y, incy, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -1894,19 +1893,19 @@ module openmp_offload_functions
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_dcopy_intptr_c(openmpOffloadHandle, n, x, incx, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_dcopy_intptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine 
 
-    subroutine mkl_openmp_offload_dcopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_dcopy_cptr(n, x, incx, y, incy, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -1915,19 +1914,19 @@ module openmp_offload_functions
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
 #ifdef WITH_OPENMP_OFFLOAD_VERSION
-      call mkl_openmp_offload_dcopy_cptr_c(openmpOffloadHandle, n, x, incx, y, incy)
+      call mkl_sycl_dcopy_cptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_scopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_scopy_intptr(n, x, incx, y, incy, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -1936,19 +1935,19 @@ module openmp_offload_functions
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
 #ifdef WITH_OPENMP_OFFLOAD_VERSION
-      call mkl_openmp_offload_scopy_intptr_c(openmpOffloadHandle, n, x, incx, y, incy)
+      call mkl_sycl_scopy_intptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_scopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_scopy_cptr(n, x, incx, y, incy, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -1957,20 +1956,20 @@ module openmp_offload_functions
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_scopy_cptr_c(openmpOffloadHandle, n, x, incx, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_scopy_cptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -1981,19 +1980,19 @@ module openmp_offload_functions
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_dtrmm_intptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_dtrmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2004,20 +2003,20 @@ module openmp_offload_functions
       real(kind=C_DOUBLE)             :: alpha
       type(c_ptr)                     :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_dtrmm_cptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_dtrmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-   subroutine mkl_openmp_offload_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+   subroutine mkl_sycl_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2028,19 +2027,19 @@ module openmp_offload_functions
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_strmm_intptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_strmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2051,19 +2050,19 @@ module openmp_offload_functions
       real(kind=C_FLOAT)              :: alpha
       type(c_ptr)                     :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_strmm_cptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_strmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2074,19 +2073,19 @@ module openmp_offload_functions
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_dtrsm_intptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_dtrsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2097,20 +2096,20 @@ module openmp_offload_functions
       real(kind=C_DOUBLE)             :: alpha
       type(c_ptr)                     :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_dtrsm_cptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_dtrsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_openmp_offload_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2121,19 +2120,19 @@ module openmp_offload_functions
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_strsm_intptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_strsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2144,20 +2143,20 @@ module openmp_offload_functions
       real(kind=C_FLOAT)              :: alpha
       type(c_ptr)                     :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_strsm_cptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_strsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_openmp_offload_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2168,20 +2167,20 @@ module openmp_offload_functions
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_zgemm_intptr_c(openmpOffloadHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_zgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine
 
 
-    subroutine mkl_openmp_offload_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2192,21 +2191,21 @@ module openmp_offload_functions
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       type(c_ptr)                     :: a, b, c
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_zgemm_cptr_c(openmpOffloadHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_zgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine
 
 
 
-    subroutine mkl_openmp_offload_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2217,19 +2216,19 @@ module openmp_offload_functions
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c  
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_cgemm_intptr_c(openmpOffloadHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_cgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2240,21 +2239,21 @@ module openmp_offload_functions
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       type(c_ptr)                     :: a, b, c  
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_cgemm_cptr_c(openmpOffloadHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_cgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine
 
 
 
-    subroutine mkl_openmp_offload_zcopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_zcopy_intptr(n, x, incx, y, incy, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2263,19 +2262,19 @@ module openmp_offload_functions
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_zcopy_intptr_c(openmpOffloadHandle, n, x, incx, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_zcopy_intptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_zcopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_zcopy_cptr(n, x, incx, y, incy, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2284,19 +2283,19 @@ module openmp_offload_functions
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_zcopy_cptr_c(openmpOffloadHandle, n, x, incx, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_zcopy_cptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_ccopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_ccopy_intptr(n, x, incx, y, incy, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2305,19 +2304,19 @@ module openmp_offload_functions
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ccopy_intptr_c(openmpOffloadHandle, n, x, incx, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ccopy_intptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_ccopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_ccopy_cptr(n, x, incx, y, incy, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2326,20 +2325,20 @@ module openmp_offload_functions
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ccopy_cptr_c(openmpOffloadHandle, n, x, incx, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ccopy_cptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
 
-    subroutine mkl_openmp_offload_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2350,19 +2349,19 @@ module openmp_offload_functions
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ztrmm_intptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ztrmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2373,20 +2372,20 @@ module openmp_offload_functions
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       type(c_ptr)                     :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ztrmm_cptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ztrmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_openmp_offload_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2397,19 +2396,19 @@ module openmp_offload_functions
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ctrmm_intptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ctrmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2420,19 +2419,19 @@ module openmp_offload_functions
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       type(c_ptr)                     :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ctrmm_cptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ctrmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2443,19 +2442,19 @@ module openmp_offload_functions
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ztrsm_intptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ztrsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2466,20 +2465,20 @@ module openmp_offload_functions
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       type(c_ptr)                     :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ztrsm_cptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ztrsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_openmp_offload_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2490,19 +2489,19 @@ module openmp_offload_functions
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ctrsm_intptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ctrsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
 
       use, intrinsic :: iso_c_binding
 
@@ -2513,20 +2512,20 @@ module openmp_offload_functions
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       type(c_ptr)                     :: a, b
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_ctrsm_cptr_c(openmpOffloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_ctrsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_openmp_offload_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine mkl_sycl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2536,19 +2535,19 @@ module openmp_offload_functions
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_dgemv_c(openmpOffloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_dgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine mkl_sycl_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2558,19 +2557,19 @@ module openmp_offload_functions
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_sgemv_c(openmpOffloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_sgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine mkl_sycl_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2580,19 +2579,19 @@ module openmp_offload_functions
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_zgemv_c(openmpOffloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_zgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine mkl_sycl_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2602,20 +2601,20 @@ module openmp_offload_functions
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
       integer(kind=c_int), optional   :: threadID
-      integer(kind=C_intptr_T)        :: openmpOffloadHandle
+      integer(kind=C_intptr_T)        :: syclHandle
 
       if (present(threadID)) then
-        openmpOffloadHandle = openmpOffloadHandleArray(threadID)
+        syclHandle = syclHandleArray(threadID)
       else
-        openmpOffloadHandle = openmpOffloadHandleArray(0)
+        syclHandle = syclHandleArray(0)
       endif      
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_cgemv_c(openmpOffloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_cgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
 
-!     subroutine mkl_openmp_offload_dsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+!     subroutine mkl_sycl_dsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 !       use, intrinsic :: iso_c_binding
 !
 !       implicit none
@@ -2624,12 +2623,12 @@ module openmp_offload_functions
 !       integer(kind=C_INT), intent(in) :: lda,incx,incy
 !       real(kind=C_DOUBLE)             :: alpha,beta
 !       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-!       call mkl_openmp_offload_dsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+! #ifdef WITH_SYCL_GPU_VERSION
+!       call mkl_sycl_dsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
-!     end subroutine mkl_openmp_offload_dsymv
+!     end subroutine mkl_sycl_dsymv
 !
-!     subroutine mkl_openmp_offload_ssymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+!     subroutine mkl_sycl_ssymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 !       use, intrinsic :: iso_c_binding
 !
 !       implicit none
@@ -2638,12 +2637,12 @@ module openmp_offload_functions
 !       integer(kind=C_INT), intent(in) :: lda,incx,incy
 !       real(kind=C_FLOAT)              :: alpha,beta
 !       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-!       call mkl_openmp_offload_ssymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+! #ifdef WITH_SYCL_GPU_VERSION
+!       call mkl_sycl_ssymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
-!     end subroutine mkl_openmp_offload_ssymv
+!     end subroutine mkl_sycl_ssymv
 !
-!     subroutine mkl_openmp_offload_zsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+!     subroutine mkl_sycl_zsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 !       use, intrinsic :: iso_c_binding
 !
 !       implicit none
@@ -2652,12 +2651,12 @@ module openmp_offload_functions
 !       integer(kind=C_INT), intent(in) :: lda,incx,incy
 !       complex(kind=C_DOUBLE_COMPLEX)             :: alpha,beta
 !       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-! !       call mkl_openmp_offload_zsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+! #ifdef WITH_SYCL_GPU_VERSION
+! !       call mkl_sycl_zsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
-!     end subroutine mkl_openmp_offload_zsymv
+!     end subroutine mkl_sycl_zsymv
 !
-!     subroutine mkl_openmp_offload_csymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+!     subroutine mkl_sycl_csymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 !       use, intrinsic :: iso_c_binding
 !
 !       implicit none
@@ -2666,11 +2665,9 @@ module openmp_offload_functions
 !       integer(kind=C_INT), intent(in) :: lda,incx,incy
 !       complex(kind=C_FLOAT_COMPLEX)              :: alpha,beta
 !       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-! !       call mkl_openmp_offload_csymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
+! #ifdef WITH_SYCL_GPU_VERSION
+! !       call mkl_sycl_csymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
-!     end subroutine mkl_openmp_offload_csymv
+!     end subroutine mkl_sycl_csymv
 
-#endif /* WITH_OPENMP_OFFLOAD_GPU_VERSION */
-
-end module openmp_offload_functions
+end module sycl_functions

@@ -59,6 +59,7 @@ module mod_check_for_gpu
       use cuda_functions
       use hip_functions
       use openmp_offload_functions
+      use sycl_functions
       use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray
       use precision
       use elpa_mpi
@@ -130,7 +131,7 @@ module mod_check_for_gpu
         allocate(rocblasHandleArray(0:maxThreads-1))
         allocate(gpublasHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          roclasHandleArray(thread) = -1
+          rocblasHandleArray(thread) = -1
           gpublasHandleArray(thread) = -1
         enddo
       endif
@@ -161,6 +162,27 @@ module mod_check_for_gpu
         allocate(openmpOffloadsolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
           openmpOffloadsolverHandleArray(thread) = -1
+        enddo
+      endif
+#endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (.not.(allocated(syclHandleArray))) then
+        allocate(syclHandleArray(0:maxThreads-1))
+        allocate(gpublasHandleArray(0:maxThreads-1))
+        do thread=0, maxThreads-1
+          syclHandleArray(thread) = -1
+          gpublasHandleArray(thread) = -1
+        enddo
+      endif
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_SYCL_SOLVER
+      if (.not.(allocated(syclsolverHandleArray))) then
+        allocate(syclsolverHandleArray(0:maxThreads-1))
+        do thread=0, maxThreads-1
+          syclsolverHandleArray(thread) = -1
         enddo
       endif
 #endif
@@ -232,6 +254,17 @@ module mod_check_for_gpu
             enddo
           endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+          if (.not.(allocated(syclDeviceArray))) then
+            allocate(syclDeviceArray(0:maxThreads-1))
+            allocate(gpuDeviceArray(0:maxThreads-1))
+            success = sycl_setdevice(use_gpu_id)
+            do thread=0,maxThreads-1
+              syclDeviceArray(thread) = use_gpu_id
+              gpuDeviceArray(thread) = use_gpu_id
+            enddo
+          endif
+#endif
 
 
           if (.not.(success)) then
@@ -243,6 +276,9 @@ module mod_check_for_gpu
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
             print *,"Cannot set openmpOffloadDevice"
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+            print *,"Cannot set syclDevice"
 #endif
             stop 1
           endif
@@ -271,6 +307,13 @@ module mod_check_for_gpu
             openmpOffloadHandleArray(thread) = handle_tmp
             gpublasHandleArray(thread) = handle_tmp
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+            handle_tmp = 0
+            ! not needed dummy call
+            success = sycl_blas_create(handle_tmp)
+            syclHandleArray(thread) = handle_tmp
+            gpublasHandleArray(thread) = handle_tmp
+#endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
               print *,"Cannot create cublas handle"
@@ -280,6 +323,9 @@ module mod_check_for_gpu
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
               print *,"Cannot create openmpOffloadblas handle"
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+              print *,"Cannot create syclblas handle"
 #endif
               stop 1
             endif
@@ -321,6 +367,18 @@ module mod_check_for_gpu
           enddo
 #endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_SYCL_SOLVER
+          do thread=0, maxThreads-1
+            success = sycl_solver_create(handle_tmp)
+            syclsolverHandleArray(thread) = handle_tmp
+            if (.not.(success)) then
+              print *,"Cannot create syclsolver handle"
+              stop 1
+            endif
+          enddo
+#endif
+#endif
 
         endif ! alreadySET
         gpuIsInitialized = .true.
@@ -353,6 +411,10 @@ module mod_check_for_gpu
         numberOfDevices = openmp_offload_getdevicecount()
         success = .true.
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+        numberOfDevices = sycl_getdevicecount()
+        success = .true.
+#endif
         if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
           print *,"error in cuda_getdevicecount"
@@ -362,6 +424,9 @@ module mod_check_for_gpu
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
           print *,"error in openmp_offload_getdevicecount"
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+          print *,"error in sycl_getdevicecount"
 #endif
           stop 1
         endif
@@ -435,6 +500,18 @@ module mod_check_for_gpu
             enddo
           endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+          if (.not.(allocated(syclDeviceArray))) then
+            allocate(syclDeviceArray(0:maxThreads-1))
+            allocate(gpuDeviceArray(0:maxThreads-1))
+            !success = sycl_setdevice(deviceNumber)
+            success = sycl_setdevice(0)
+            do thread=0,maxThreads-1
+              syclDeviceArray(thread) = deviceNumber
+              gpuDeviceArray(thread) = deviceNumber
+            enddo
+          endif
+#endif
 
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -444,13 +521,16 @@ module mod_check_for_gpu
             print *,"Cannot set hipDevice"
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-            print *,"Cannot set hipDevice"
+            print *,"Cannot set openmpOffloadDevice"
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+            print *,"Cannot set syclDevice"
 #endif
             stop 1
           endif
-          !if (wantDebugMessage) then
+          if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
-          !endif
+          endif
 
           call obj%set("use_gpu_id",deviceNumber, error)
           if (error .ne. ELPA_OK) then
@@ -478,6 +558,11 @@ module mod_check_for_gpu
             openmpOffloadHandleArray(thread) = handle_tmp
             gpublasHandleArray(thread) = handle_tmp
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+            success = sycl_blas_create(handle_tmp)
+            syclHandleArray(thread) = handle_tmp
+            gpublasHandleArray(thread) = handle_tmp
+#endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
               print *,"Cannot create cublas handle"
@@ -487,6 +572,9 @@ module mod_check_for_gpu
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
               print *,"Cannot create openmpOffloadblas handle"
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+              print *,"Cannot create syclblas handle"
 #endif
               stop 1
             endif
@@ -523,6 +611,18 @@ module mod_check_for_gpu
             openmpOffloadsolverHandleArray(thread) = handle_tmp
             if (.not.(success)) then
               print *,"Cannot create openmpOffloadsolver handle"
+              stop 1
+            endif
+          enddo
+#endif
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_SYCL_SOLVER
+          do thread=0, maxThreads-1
+            success = sycl_solver_create(handle_tmp)
+            syclsolverHandleArray(thread) = handle_tmp
+            if (.not.(success)) then
+              print *,"Cannot create syclsolver handle"
               stop 1
             endif
           enddo

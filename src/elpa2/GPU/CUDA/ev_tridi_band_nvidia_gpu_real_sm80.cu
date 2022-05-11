@@ -5,6 +5,7 @@
  * Nov 2021, A. Marek, MPCDF
  *
  */
+#include "config-f90.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,7 +13,11 @@
 #include <cub/cub.cuh>
 
 
+#ifdef WANT_SINGLE_PRECISION_REAL
+#undef USE_MMA // Currently no MMA implementation for float
+#else
 #define USE_MMA // On Ampere the double precision tensor cores (DMMA) are available
+#endif
 
 #ifdef USE_MMA
 #include "mma_m8n8k4_fp64_sm80.cuh"

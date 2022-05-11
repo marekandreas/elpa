@@ -81,6 +81,7 @@ module cuda_functions
              bind(C, name="cublasCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
+      ! no value here
       integer(kind=C_intptr_T) :: handle
       integer(kind=C_INT)  :: istat
     end function cublas_create_c
@@ -91,6 +92,7 @@ module cuda_functions
              bind(C, name="cublasDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
+      ! no value here
       integer(kind=C_intptr_T) :: handle
       integer(kind=C_INT)  :: istat
     end function cublas_destroy_c
@@ -101,6 +103,7 @@ module cuda_functions
              bind(C, name="cusolverCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
+      ! no value here
       integer(kind=C_intptr_T) :: handle
       integer(kind=C_INT)  :: istat
     end function cusolver_create_c
@@ -111,6 +114,7 @@ module cuda_functions
              bind(C, name="cusolverDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
+      ! no value here
       integer(kind=C_intptr_T) :: handle
       integer(kind=C_INT)  :: istat
     end function cusolver_destroy_c
@@ -366,6 +370,7 @@ module cuda_functions
       use, intrinsic :: iso_c_binding
       implicit none
 
+      ! no value since **pointer
       integer(kind=C_intptr_T)                    :: a
       integer(kind=c_intptr_t), intent(in), value :: width_height
       integer(kind=C_INT)                         :: istat
@@ -1410,7 +1415,8 @@ module cuda_functions
      use, intrinsic :: iso_c_binding
 
      implicit none
-      type(c_ptr), value                    :: a
+     ! type(c_ptr), value                    :: a
+     type(c_ptr)                   :: a
      logical                  :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
      success = cuda_free_host_c(a) /= 0

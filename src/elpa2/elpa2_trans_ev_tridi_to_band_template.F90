@@ -70,7 +70,7 @@ subroutine trans_ev_tridi_to_band_&
 &_&
 &PRECISION &
 (obj, na, nev, nblk, nbw, q, ldq, matrixCols,         &
- hh_trans, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, max_threads_in, success, &
+ hh_trans, my_pe, mpi_comm_rows, mpi_comm_cols, wantDebug, useGPU, max_threads_in, success, &
  kernel)
 
 !-------------------------------------------------------------------------------
@@ -99,6 +99,7 @@ subroutine trans_ev_tridi_to_band_&
 !              MPI-Communicators for rows/columns/both
 !
 !-------------------------------------------------------------------------------
+  use ELPA_utilities, only : error_unit
   use elpa_abstract_impl
   use elpa2_workload
   use pack_unpack_cpu
@@ -115,7 +116,7 @@ subroutine trans_ev_tridi_to_band_&
   class(elpa_abstract_impl_t), intent(inout)   :: obj
   logical, intent(in)                          :: useGPU
 
-  integer(kind=ik), intent(in)                 :: kernel
+  integer(kind=ik), intent(in)                 :: kernel, my_pe
   integer(kind=ik), intent(in)                 :: na, nev, nblk, nbw, ldq, matrixCols, mpi_comm_rows, mpi_comm_cols
 
 #ifdef USE_ASSUMED_SIZE
@@ -677,12 +678,12 @@ subroutine trans_ev_tridi_to_band_&
     check_alloc_gpu("tridi_to_band: aIntern_dev", successGPU)
 
     ! openmp loop here
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_memset(aIntern_dev , 0, num)
       check_memset_gpu("tridi_to_band: aIntern_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
 #ifdef WITH_OPENMP_TRADITIONAL
       allocate(aIntern(stripe_width,a_dim2,stripe_count,max_threads))
@@ -712,13 +713,13 @@ subroutine trans_ev_tridi_to_band_&
     endif ! allComputeOnGPU
 
     ! "row_group" and "row_group_dev" are needed for GPU optimizations
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_malloc_host(row_group_host,l_nev*nblk*size_of_datatype)
       check_host_alloc_gpu("tridi_to_band: row_group_host", successGPU)
       call c_f_pointer(row_group_host, row_group, (/l_nev,nblk/))
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       allocate(row_group(l_nev,nblk))
     endif
@@ -729,12 +730,12 @@ subroutine trans_ev_tridi_to_band_&
     successGPU = gpu_malloc(row_group_dev, num)
     check_alloc_gpu("tridi_to_band: row_group_dev", successGPU)
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_memset(row_group_dev , 0, num)
       check_memset_gpu("tridi_to_band: row_group_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       successGPU = gpu_memcpy(row_group_dev, int(loc(row_group),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -794,12 +795,12 @@ subroutine trans_ev_tridi_to_band_&
     num =  (l_nev)* size_of_datatype
     successGPU = gpu_malloc(row_dev, num)
     check_alloc_gpu("tridi_to_band: row_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_memset(row_dev , 0, num)
       check_memset_gpu("tridi_to_band: row_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       successGPU = gpu_memcpy(row_dev, int(loc(row),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -1480,14 +1481,14 @@ subroutine trans_ev_tridi_to_band_&
 
       successGPU = gpu_malloc(top_border_send_buffer_dev, num)
       check_alloc_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         successGPU = gpu_memset(top_border_recv_buffer_dev, 0, num)
         check_memset_gpu("tridi_to_band: top_border_recv_buffer_dev", successGPU)
         successGPU = gpu_memset(top_border_send_buffer_dev, 0, num)
         check_memset_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       else
         successGPU = gpu_memcpy(top_border_recv_buffer_dev, int(loc(top_border_recv_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -1523,14 +1524,14 @@ subroutine trans_ev_tridi_to_band_&
       successGPU = gpu_malloc(bottom_border_recv_buffer_dev, num)
       check_alloc_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
  
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         successGPU = gpu_memset(bottom_border_send_buffer_dev, 0, num)
         check_memset_gpu("tridi_to_band: bottom_border_send_buffer_dev", successGPU)
         successGPU = gpu_memset(bottom_border_recv_buffer_dev, 0, num)
         check_memset_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       else
         successGPU = gpu_memcpy(bottom_border_recv_buffer_dev, int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -1558,8 +1559,8 @@ subroutine trans_ev_tridi_to_band_&
 #endif /* WITH_OPENMP_TRADITIONAL */
     endif ! allComputeOnGPU
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
                     stripe_width*nbw* stripe_count * size_of_datatype,&
@@ -1580,7 +1581,7 @@ subroutine trans_ev_tridi_to_band_&
                     stripe_width*nbw* stripe_count * size_of_datatype,&
                     gpuHostRegisterDefault)
       check_host_register_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     endif
 #endif
   endif ! useGPU
@@ -1589,13 +1590,13 @@ subroutine trans_ev_tridi_to_band_&
   ! Initialize broadcast buffer
 
   if (useGPU) then
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_malloc_host(bcast_buffer_host,nbw*max_blk_size*size_of_datatype)
       check_host_alloc_gpu("tridi_to_band: bcast_buffer_host", successGPU)
       call c_f_pointer(bcast_buffer_host, bcast_buffer, (/nbw,max_blk_size/))
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       allocate(bcast_buffer(nbw,max_blk_size))
     endif
@@ -1619,12 +1620,12 @@ subroutine trans_ev_tridi_to_band_&
                       [nbw, max_blk_size])
     endif ! allComputeOnGPU
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_memset( bcast_buffer_dev, 0, num)
       check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer_dev),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -1636,12 +1637,12 @@ subroutine trans_ev_tridi_to_band_&
     successGPU = gpu_malloc( hh_tau_dev, num)
     check_alloc_gpu("tridi_to_band: hh_tau_dev", successGPU)
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_memset( hh_tau_dev, 0, num)
       check_memset_gpu("tridi_to_band: hh_tau_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       allocate(hh_tau_debug(max_blk_size))
       hh_tau_debug(:) = 0.
@@ -1872,12 +1873,12 @@ subroutine trans_ev_tridi_to_band_&
       ! for current_local_n == 1 the one and only HH Vector is 0 and not stored in hh_trans_real/complex
       bcast_buffer(:,1) = 0.0_rck
       if (useGPU) then
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
           successGPU = gpu_memset(bcast_buffer_dev, 0, nbw * size_of_datatype)
           check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
         else
           successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer(1,1)),kind=c_intptr_t), &
                               nbw*size_of_datatype, gpuMemcpyHostToDevice)
@@ -2266,18 +2267,24 @@ subroutine trans_ev_tridi_to_band_&
                 &MATH_DATATYPE&
                 &_openmp_&
                 &PRECISION&
-                &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                &(obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
+                max_threads, &
                 l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i, &
-                my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)
+                my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, &
+                success=success)
               if (wantDebug) call obj%timer%stop("compute_hh_trafo")
+              if (.not.success) then
+                success=.false.
+                return
+               endif      
             else ! useGPU
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
               !$omp parallel do num_threads(max_threads) if(max_threads > 1) &
               !$omp default(none) &
-              !$omp private(my_thread, n_off, b_len, b_off) &
-              !$omp shared(max_threads, csw, top_msg_length, aIntern, &
+              !$omp private(my_thread, n_off, b_len, b_off, success) &
+              !$omp shared(max_threads, csw, top_msg_length, aIntern, my_pe, &
               !$omp&       a_off, i, top_border_recv_buffer, obj, useGPU, wantDebug, aIntern_dev, &
               !$omp&       stripe_width, a_dim2, stripe_count, l_nev, nbw, max_blk_size, bcast_buffer, &
               !$omp&       bcast_buffer_dev, hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n, &
@@ -2288,10 +2295,11 @@ subroutine trans_ev_tridi_to_band_&
                       &MATH_DATATYPE&
                       &_openmp_&
                       &PRECISION&
-                      (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                      (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+                      stripe_count, max_threads, &
                       l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                       hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, &
-                      i, my_thread, thread_width, kernel)
+                      i, my_thread, thread_width, kernel, success=success)
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2305,10 +2313,15 @@ subroutine trans_ev_tridi_to_band_&
                 &MATH_DATATYPE&
                 &_&
                 &PRECISION&
-                &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                &(obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
+                max_threads, &
                 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i, &
-                last_stripe_width, kernel)
+                last_stripe_width, kernel, success=success)
+            if (.not.success) then
+              success=.false.
+              return
+            endif
             if (wantDebug) call obj%timer%stop("compute_hh_trafo")
 #endif /* WITH_OPENMP_TRADITIONAL */
 
@@ -2519,19 +2532,24 @@ subroutine trans_ev_tridi_to_band_&
                  &MATH_DATATYPE&
                  &_openmp_&
                  &PRECISION&
-                 (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                 (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
+                 max_threads, &
                  l_nev, a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                  hh_tau_dev, kernel_flops, kernel_time, n_times, &
                  current_local_n - bottom_msg_length, bottom_msg_length, i, &
-                 my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)
+                 my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, success=success)
+              if (.not.success) then
+                success=.false.
+                return
+              endif
               if (wantDebug) call obj%timer%stop("compute_hh_trafo")
             else ! useGPU
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
               !$omp parallel do num_threads(max_threads) if(max_threads > 1) &
               !$omp default(none) &
-              !$omp private(my_thread, b_len, b_off) &
-              !$omp shared(max_threads, obj, useGPU, wantDebug, aIntern, aIntern_dev, &
+              !$omp private(my_thread, b_len, b_off, success) &
+              !$omp shared(max_threads, obj, useGPU, wantDebug, aIntern, aIntern_dev, my_pe, &
               !$omp&       stripe_width, a_dim2, stripe_count, l_nev, a_off, &
               !$omp&       nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_tau_dev, &
               !$omp&       kernel_flops, kernel_time, n_times, current_local_n, &
@@ -2543,11 +2561,11 @@ subroutine trans_ev_tridi_to_band_&
                      &MATH_DATATYPE&
                      &_openmp_&
                      &PRECISION&
-                     &(obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
+                     &(obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, &
                      max_threads, l_nev, a_off, &
                      nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                      hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
-                     bottom_msg_length, i, my_thread, thread_width, kernel)
+                     bottom_msg_length, i, my_thread, thread_width, kernel, success=success)
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2662,12 +2680,17 @@ subroutine trans_ev_tridi_to_band_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+             stripe_count, max_threads, &
              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, &
              current_local_n - bottom_msg_length, bottom_msg_length, i, &
-             last_stripe_width, kernel)
+             last_stripe_width, kernel, success=success)
             if (wantDebug) call obj%timer%stop("compute_hh_trafo")
+            if (.not.success) then
+              success=.false.
+              return
+            endif
 
             !send_b
 #ifdef WITH_MPI
@@ -2784,34 +2807,41 @@ subroutine trans_ev_tridi_to_band_&
                    &MATH_DATATYPE&
                    &_openmp_&
                    &PRECISION&
-                   (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                   (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+                   stripe_count, max_threads, &
                    l_nev, a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                    hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
                    current_local_n-top_msg_length-bottom_msg_length, i, &
-                   my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)
+                   my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, &
+                   success=success)
               if (wantDebug) call obj%timer%stop("compute_hh_trafo")
+              if (.not.success) then
+                success=.false.
+                return
+              endif
             else ! useGPU
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
               !$omp parallel do num_threads(max_threads) if(max_threads > 1) &
               !$omp default(none) &
               !$omp private(my_thread) &
-              !$omp shared(max_threads, obj, useGPU, wantDebug, aIntern, aIntern_dev, &
+              !$omp shared(max_threads, obj, useGPU, wantDebug, aIntern, aIntern_dev, my_pe, &
               !$omp&       stripe_width, a_dim2, stripe_count, l_nev, a_off, &
               !$omp&       nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, hh_tau_dev, &
               !$omp&       kernel_flops, kernel_time, n_times, top_msg_length, current_local_n, &
-              !$omp&       bottom_msg_length, i, thread_width, kernel) &
+              !$omp&       bottom_msg_length, i, thread_width, kernel, success) &
               !$omp schedule(static, 1)
               do my_thread = 1, max_threads
                 call compute_hh_trafo_&
                 &MATH_DATATYPE&
                 &_openmp_&
                 &PRECISION&
-                (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, max_threads, l_nev, a_off, &
+                (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width ,a_dim2, stripe_count, &
+                max_threads, l_nev, a_off, &
                 nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
                 current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
-                kernel)
+                kernel, success=success)
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2824,13 +2854,17 @@ subroutine trans_ev_tridi_to_band_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+             stripe_count, max_threads, &
              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
              current_local_n-top_msg_length-bottom_msg_length, i, &
-             last_stripe_width, kernel)
+             last_stripe_width, kernel, success=success)
             if (wantDebug) call obj%timer%stop("compute_hh_trafo")
-
+            if (.not.success) then
+              success=.false.
+              return
+            endif
 #endif /* WITH_OPENMP_TRADITIONAL */
 
             !wait_t
@@ -2970,32 +3004,38 @@ subroutine trans_ev_tridi_to_band_&
                &MATH_DATATYPE&
                &_openmp_&
                &PRECISION&
-               (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+               (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, &
+               stripe_count, max_threads, &
                l_nev, a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
-               my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)          
+               my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, &
+               success=success)
              if (wantDebug) call obj%timer%stop("compute_hh_trafo")
-           
+             if (.not.success) then
+               success=.false.
+               return
+             endif
            else ! useGPU
              call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
              !$omp parallel do num_threads(max_threads) if(max_threads > 1) &
              !$omp default(none) &
              !$omp private(my_thread, b_len, b_off) &
-             !$omp shared(obj, max_threads, top_msg_length, csw, aIntern, a_off, &
+             !$omp shared(obj, max_threads, top_msg_length, csw, aIntern, a_off, my_pe, &
              !$omp&       top_border_recv_buffer, useGPU, wantDebug, aIntern_dev, stripe_width, &
              !$omp&       a_dim2, stripe_count, l_nev, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
-             !$omp&       hh_tau_dev, kernel_flops, kernel_time, n_times, i, thread_width, kernel) &
+             !$omp&       hh_tau_dev, kernel_flops, kernel_time, n_times, i, thread_width, kernel, success) &
              !$omp schedule(static, 1)
              do my_thread = 1, max_threads
                call compute_hh_trafo_&
                     &MATH_DATATYPE&
                     &_openmp_&
                     &PRECISION&
-                    (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, l_nev, a_off, &
+                    (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+                    l_nev, a_off, &
                     nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                     hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, my_thread, &
-                    thread_width, kernel)
+                    thread_width, kernel, success=success)
              enddo
              !$omp end parallel do
              call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -3007,11 +3047,15 @@ subroutine trans_ev_tridi_to_band_&
              &MATH_DATATYPE&
              &_&
              &PRECISION&
-             (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+             (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
              a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
-             last_stripe_width, kernel)
+             last_stripe_width, kernel, success=success)
            if (wantDebug) call obj%timer%stop("compute_hh_trafo")
+           if (.not.success) then
+             success=.false.
+             return
+           endif
 
 #endif /* WITH_OPENMP_TRADITIONAL */
          endif ! which if branch
@@ -3864,14 +3908,14 @@ subroutine trans_ev_tridi_to_band_&
       nullify(result_buffer_mpi_fortran_ptr)
     endif
  
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       nullify(bcast_buffer)
     
       successGPU = gpu_free_host(bcast_buffer_host)
       check_host_dealloc_gpu("tridi_to_band: bcast_buffer_host", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       deallocate(bcast_buffer)
     endif
@@ -3917,14 +3961,14 @@ subroutine trans_ev_tridi_to_band_&
     successGPU = gpu_free(hh_tau_dev)
     check_dealloc_gpu("tridi_to_band: hh_tau_dev", successGPU)
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       nullify(row_group)
 
       successGPU = gpu_free_host(row_group_host)
       check_host_dealloc_gpu("tridi_to_band: row_group_host", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       deallocate(row_group)
     endif
@@ -3948,8 +3992,8 @@ subroutine trans_ev_tridi_to_band_&
       nullify(bcast_buffer_mpi_fortran_ptr)
     endif
 
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_host_unregister(int(loc(top_border_send_buffer),kind=c_intptr_t))
       check_host_unregister_gpu("tridi_to_band: top_border_send_buffer", successGPU)
@@ -3962,7 +4006,7 @@ subroutine trans_ev_tridi_to_band_&
 
       successGPU = gpu_host_unregister(int(loc(bottom_border_recv_buffer),kind=c_intptr_t))
       check_host_unregister_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     endif
 #endif
   endif ! useGPU

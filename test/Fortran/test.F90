@@ -47,6 +47,8 @@
 ! Define one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE
 ! Define TEST_NVIDIA_GPU \in [0, 1]
 ! Define TEST_INTEL_GPU \in [0, 1]
+! Define TEST_INTEL_GPU_OPENMP \in [0, 1]
+! Define TEST_INTEL_GPU_SYCL \in [0, 1]
 ! Define TEST_AMD_GPU \in [0, 1]
 ! Define either TEST_ALL_KERNELS or a TEST_KERNEL \in [any valid kernel]
 
@@ -120,7 +122,7 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #endif
 
 #define TEST_GPU 0
-#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1)
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) | (TEST_INTEL_GPU_OPENMP == 1) | (TEST_INTEL_GPU_SYCL == 1)
 #undef TEST_GPU
 #define TEST_GPU 1
 #endif
@@ -352,7 +354,7 @@ program test
 
 #if TEST_QR_DECOMPOSITION == 1
 
-#if (TEST_NVIDIA_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_AMD_GPU == 1)
+#if (TEST_NVIDIA_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
@@ -774,12 +776,12 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
    call e%set("intel-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 
-#if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0)
+#if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    ! simple test
    ! Can (and should) fail often
    gpuID = mod(myid,2)
@@ -851,7 +853,7 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
    call e%set("intel-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
@@ -884,7 +886,7 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
    call e%set("intel-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
@@ -949,15 +951,15 @@ program test
 
 #ifdef TEST_ALL_KERNELS
    do i = 0, elpa_option_cardinality(KERNEL_KEY)  ! kernels
-#if (TEST_NVIDIA_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_AMD_GPU == 0)
+#if (TEST_NVIDIA_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
      !if (TEST_GPU .eq. 0) then
        kernel = elpa_option_enumerate(KERNEL_KEY, int(i,kind=c_int))
        if (kernel .eq. ELPA_2STAGE_REAL_NVIDIA_GPU) continue
        if (kernel .eq. ELPA_2STAGE_COMPLEX_NVIDIA_GPU) continue
        if (kernel .eq. ELPA_2STAGE_REAL_AMD_GPU) continue
        if (kernel .eq. ELPA_2STAGE_COMPLEX_AMD_GPU) continue
-       if (kernel .eq. ELPA_2STAGE_REAL_INTEL_GPU) continue
-       if (kernel .eq. ELPA_2STAGE_COMPLEX_INTEL_GPU) continue
+       if (kernel .eq. ELPA_2STAGE_REAL_INTEL_GPU_SYCL) continue
+       if (kernel .eq. ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL) continue
      !endif
 #endif
 #endif
@@ -967,42 +969,36 @@ program test
 #endif
 
 #ifdef TEST_SOLVER_2STAGE
-#if TEST_NVIDIA_GPU == 1
-#if defined TEST_REAL
+
+#ifdef TEST_REAL
 #if (TEST_NVIDIA_GPU == 1)
 #if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY == 1
      kernel = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
-#if defined(TEST_SINGLE)
-#ifdef WITH_MPI
-     call mpi_finalize(mpierr)
-#endif
-     stop 77
-#endif
 #else
      kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
 #endif
 #endif /* TEST_NVIDIA_GPU */
+
 #if (TEST_AMD_GPU == 1)
      kernel = ELPA_2STAGE_REAL_AMD_GPU
 #endif
-#if (TEST_INTEL_GPU == 1)
-     kernel = ELPA_2STAGE_REAL_INTEL_GPU
+
+#if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
+     kernel = ELPA_2STAGE_REAL_INTEL_GPU_SYCL
 #endif
 #endif /* TEST_REAL */
 
-#if defined TEST_COMPLEX
+#ifdef TEST_COMPLEX
 #if (TEST_NVIDIA_GPU == 1)
      kernel = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #endif
 #if (TEST_AMD_GPU == 1)
      kernel = ELPA_2STAGE_COMPLEX_AMD_GPU
 #endif
-#if (TEST_INTEL_GPU == 1)
-     kernel = ELPA_2STAGE_COMPLEX_INTEL_GPU
+#if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
+     kernel = ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL
 #endif
 #endif /* TEST_COMPLEX */
-#endif /* TEST_GPU == 1 */
-
 
      call e%set(KERNEL_KEY, kernel, error_elpa)
 #ifdef TEST_KERNEL
@@ -1018,7 +1014,7 @@ program test
      if (myid == 0) then
        print *, elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
      endif
-#endif
+#endif /* TEST_SOLVER_2STAGE */
 
 #if !defined(TEST_ALL_LAYOUTS)
 ! print all parameters
@@ -1065,6 +1061,7 @@ program test
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_REAL */
+
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
 #if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
@@ -1119,7 +1116,7 @@ program test
      call e%eigenvalues_float_complex(a, ev, error_elpa)
      assert_elpa_ok(error_elpa)
 #endif
-#endif
+#endif /* TEST_COMPLEX */
 #else /* TEST_EXPLICIT_NAME */
      call e%eigenvalues(a, ev, error_elpa)
      assert_elpa_ok(error_elpa)
@@ -1159,8 +1156,7 @@ program test
      call e%cholesky_float_complex(a_dev, error_elpa)
      assert_elpa_ok(error_elpa)
 #endif
-#endif /* TEST_REAL */
-
+#endif /* TEST_COMPLEX */
 
 #else /* TEST_GPU_DEVICE_POINTER_API */
      call e%cholesky(a, error_elpa)
@@ -1223,9 +1219,9 @@ program test
      call e%generalized_eigenvectors(a, b, ev, z, .true., error_elpa)
      assert_elpa_ok(error_elpa)
      call e%timer_stop("is_already_decomposed=.true.")
-#endif
+#endif /* TEST_GENERALIZED_DECOMP_EIGENPROBLEM */
      call e%timer_stop("e%generalized_eigenvectors()")
-#endif
+#endif /* TEST_GENERALIZED_EIGENPROBLEM */
 
 #ifdef TEST_ALL_KERNELS
      call e%timer_stop(elpa_int_value_to_string(KERNEL_KEY, kernel))
@@ -1242,7 +1238,7 @@ program test
 #else
        call e%print_times("e%eigenvectors()")
 #endif
-#endif
+#endif /* TEST_EIGENVECTORS */
 #ifdef TEST_EIGENVALUES
        call e%print_times("e%eigenvalues()")
 #endif
@@ -1265,6 +1261,7 @@ program test
 
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
+
 #if defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM)
    ! copy for testing
    successGPU = gpu_memcpy(c_loc(z), q_dev, na_rows*na_cols*size_of_datatype, &
@@ -1317,7 +1314,7 @@ program test
      print *,"cannot free memory of a_dev on GPU. Aborting..."
      stop
    endif
-#endif
+#endif /* TEST_CHOLESKY */
 
 #if defined(TEST_HERMITIAN_MULTIPLY)
    successGPU = gpu_memcpy(c_loc(a), a_dev, na_rows*na_cols*size_of_datatype, &
@@ -1360,9 +1357,7 @@ program test
    endif
 #endif /* TEST_HERMITIAN_MULTIPLY */
 
-
 #endif /* TEST_GPU_DEVICE_POINTER_API */
-
 
      if (do_test_analytic_eigenvalues) then
        status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, &
@@ -1436,7 +1431,7 @@ program test
      sd = sds
 #endif
    end do ! kernels
-#endif
+#endif /* TEST_ALL_KERNELS */
 
    call elpa_deallocate(e, error_elpa)
    assert_elpa_ok(error_elpa)

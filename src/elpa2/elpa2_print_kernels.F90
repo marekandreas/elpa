@@ -138,15 +138,39 @@ program print_available_elpa2_kernels
 
       do i = 0, elpa_option_cardinality(KERNEL_KEY)
         kernel = elpa_option_enumerate(KERNEL_KEY, i)
-        if (elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_COMPLEX_GPU" .or. &
-            elpa_int_value_to_string(KERNEL_KEY, i) .eq. "ELPA_2STAGE_REAL_GPU") then
+        if (elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_COMPLEX_GPU" .or. &
+            elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_REAL_GPU") then
           if (e%can_set("gpu",1) == ELPA_OK) then
             call e%set("gpu",1, error)
           endif
         endif 
+        if (elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_COMPLEX_NVIDIA_GPU" .or. &
+            elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_REAL_NVIDIA_GPU") then
+          if (e%can_set("nvidia-gpu",1) == ELPA_OK) then
+            call e%set("nvidia-gpu",1, error)
+          endif
+        endif 
+        if (elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_COMPLEX_AMD_GPU" .or. &
+            elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_REAL_AMD_GPU") then
+          if (e%can_set("amd-gpu",1) == ELPA_OK) then
+            call e%set("amd-gpu",1, error)
+          endif
+        endif 
 
         if (e%can_set(KERNEL_KEY, kernel) == ELPA_OK) then
-          print *, "  ", elpa_int_value_to_string(KERNEL_KEY, kernel)
+          if (elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_COMPLEX_GPU" .or. &
+              elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_REAL_GPU" .or. &
+              elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_COMPLEX_NVIDIA_GPU" .or. &
+              elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_REAL_NVIDIA_GPU" .or. &
+              elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_COMPLEX_AMD_GPU" .or. &
+              elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_REAL_AMD_GPU" .or. &
+              elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_COMPLEX_INTEL_GPU" .or. &
+              elpa_int_value_to_string(KERNEL_KEY, kernel) .eq. "ELPA_2STAGE_REAL_INTEL_GPU" ) then
+              print *,"  ",elpa_int_value_to_string(KERNEL_KEY, kernel), &
+                      "  GPU kernel (might not be usable if no GPUs present on the host)"
+          else
+            print *, "  ", elpa_int_value_to_string(KERNEL_KEY, kernel)
+          endif
         endif
       end do
     end subroutine
