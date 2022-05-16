@@ -342,7 +342,7 @@ int main(int argc, char** argv) {
 
 #ifdef TEST_REAL
 #if (TEST_NVIDIA_GPU == 1)
-#if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY == 1
+#if WITH_NVIDIA_SM80_GPU_KERNEL == 1
      kernel = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
 #else
      kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
