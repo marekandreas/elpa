@@ -2515,7 +2515,7 @@ contains
              if (lr.gt.0) then             
                 lcx = local_index(istep*nbw+imin, my_pcol, np_cols, nblk, 0)
                 call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND), &
-                     ONE, a_mat(1,lcx), lda, vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), 1_BLAS_KIND)
+                     ONE, a_mat(1,lcx), matrixRows, vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), 1_BLAS_KIND)
              end if
              nlc=nlc+icount  
           end if
@@ -2634,9 +2634,9 @@ contains
 
   subroutine get_apply_ht(vr,lc,a_mat,ex_buff2d)
 #ifdef USE_ASSUMED_SIZE
-    MATH_DATATYPE(kind=rck)                     :: a_mat(lda,*)
+    MATH_DATATYPE(kind=rck)                     :: a_mat(matrixRows,*)
 #else
-    MATH_DATATYPE(kind=rck)                     :: a_mat(lda,matrixCols)
+    MATH_DATATYPE(kind=rck)                     :: a_mat(matrixRows,matrixCols)
 #endif
     integer:: lc
     MATH_DATATYPE(kind=rck):: vr(:), ex_buff2d(:,:), d1,d2,d3,d4
