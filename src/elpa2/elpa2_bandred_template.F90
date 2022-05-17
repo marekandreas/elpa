@@ -2387,7 +2387,18 @@ contains
 #endif
     integer:: lc
     MATH_DATATYPE(kind=rck):: vr(:), ex_buff2d(:,:)
+    MATH_DATATYPE(kind=rck):: tauc
     integer:: iioff, mynlc, imin, imax, icount, iblk, bingo
+    logical:: use_gemv, use_gerc
+
+    use_gemv=.true.
+    use_gerc=.true.
+#if REALCASE == 1
+    tauc=tau
+#endif
+#if COMPLEXCASE == 1
+    tauc=conjg(tau)
+#endif    
     
 #ifdef WITH_OPENMP_TRADITIONAL
     !Open up one omp region to avoid paying openmp overhead.
@@ -2475,8 +2486,7 @@ contains
     
 #else /* WITH_OPENMP_TRADITIONAL */
 
-    if(.false.) then
-   !if(.true.) then
+    if(.not.use_gemv) then
        nlc = 0 ! number of local columns
        do j=1,lc-1
           lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
@@ -2491,7 +2501,6 @@ contains
        enddo
     else
        nlc=0
-!       bingo=0
        do iblk=1,lc-1,nblk
           imax=min(iblk+nblk-1,lc-1)
           do j=iblk,imax
@@ -2500,40 +2509,22 @@ contains
           end do
           imin=j       
           icount=imax-imin+1
-!if(icount.eq.nblk) bingo=bingo+1
-          if(.false.) then
-             if (lr.gt.0) then             
-                do j=imin,imax
-                   lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-                   nlc = nlc+1
-                   aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
-                enddo
-             else
-                nlc=nlc+icount  
-             end if
-          else
-             if (lr.gt.0) then             
-                lcx = local_index(istep*nbw+imin, my_pcol, np_cols, nblk, 0)
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND), &
-                     ONE, a_mat(1,lcx), matrixRows, vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), 1_BLAS_KIND)
-             end if
-             nlc=nlc+icount  
+          if (lr.gt.0) then             
+             lcx = local_index(istep*nbw+imin, my_pcol, np_cols, nblk, 0)
+             call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND), &
+                  ONE, a_mat(1,lcx), matrixRows, vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), 1_BLAS_KIND)
           end if
-
+          nlc=nlc+icount  
        end do
        if (lr.le.0) then
           aux1(1:nlc)=0.
        end if
- !      print*,'guck',nlc,lr !,lc,(lc-1)/nblk,bingo
     endif
-
-
     
     !we also need to transform the remaining ex_buff
     if (lr>0) then
        imax=ubound(ex_buff2d,2)
-       if(.false.) then
-       !       if(.true.) then
+       if(.not.use_gemv) then
           do iioff=1,imax
              nlc = nlc+1       
              aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,iioff))
@@ -2548,6 +2539,10 @@ contains
        nlc=nlc+ubound(ex_buff2d,2)
     end if
 
+#if COMPLEXCASE == 1
+    if(use_gemv.neqv.use_gerc) aux1(1:nlc)=conjg(aux1(1:nlc))
+#endif
+    
     ! Get global dot products
 #ifdef WITH_MPI
     if (useNonBlockingCollectivesRows) then
@@ -2574,19 +2569,15 @@ contains
 
     if(lr.le.0) return !no data on this processor
 
+    
     ! Transform
-    if(.false.) then
+    if(.not.use_gerc) then
        nlc = 0
        do j=1,lc-1
           lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
           if (lcx>0) then
              nlc = nlc+1
-#if REALCASE == 1
-             a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tau*aux1(nlc)*vr(1:lr)
-#endif
-#if COMPLEXCASE == 1
-             a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*aux1(nlc)*vr(1:lr)
-#endif
+             a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tauc*aux1(nlc)*vr(1:lr)
           endif
        enddo
     else
@@ -2599,34 +2590,35 @@ contains
           end do
           imin=j       
           icount=imax-imin+1
-#if REALCASE == 1
-          call dger(lr,icount,-tau,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
+!#if REALCASE == 1
+!          call dger(lr,icount,-tauc,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
+!#endif
+!#if COMPLEXCASE == 1
+!          call zgerc(lr,icount,-tauc,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
+!#endif
+          call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND),-tauc,vr,1_BLAS_KIND,&
+               aux1(nlc+1),1_BLAS_KIND,a_mat(1,lcx),ubound(a_mat,1))
           nlc=nlc+icount
-#endif
        end do
     end if
 
     
     !we also need to transform the remaining ex_buff
-    if(.false.) then
+    if(.not.use_gerc) then
        do iioff=1,ubound(ex_buff2d,2)
           nlc = nlc+1
-#if REALCASE == 1
-          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tau*aux1(nlc)*vr(1:lr)
-#endif
-#if COMPLEXCASE == 1
-          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - conjg(tau)*aux1(nlc)*vr(1:lr)
-#endif       
+          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tauc*aux1(nlc)*vr(1:lr)
        end do
     else
 
-#if REALCASE == 1
-       call dger(lr,ubound(ex_buff2d,2),-tau,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
-#endif
-#if COMPLEXCASE == 1
-       !introduce PRECISION_GERC
-       stop 'PRECISION_GERC not implemented yet'
-#endif
+!#if REALCASE == 1
+!       call dger(lr,ubound(ex_buff2d,2),-tauc,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
+!#endif
+!#if COMPLEXCASE == 1
+!       call zgerc(lr,ubound(ex_buff2d,2),-tauc,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
+!#endif
+       call PRECISION_GERC(int(lr,kind=BLAS_KIND),ubound(ex_buff2d,2),-tauc,vr,1_BLAS_KIND,&
+            aux1(nlc+1),1_BLAS_KIND,ex_buff2d,ubound(ex_buff2d,1))
     end if
     
 #endif /* WITH_OPENMP_TRADITIONAL */
