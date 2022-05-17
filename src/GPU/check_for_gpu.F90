@@ -80,7 +80,8 @@ module mod_check_for_gpu
       integer(kind=c_intptr_t)                   :: handle_tmp
       logical                                    :: gpuIsInitialized=.false.
       !character(len=1024)           :: envname
-
+      character(len=8)                           :: fmt 
+      character(len=12)                          :: gpu_string
       if (.not.(present(wantDebug))) then
         wantDebugMessage = .false.
       else
@@ -466,7 +467,13 @@ module mod_check_for_gpu
             endif
           endif
 
+          fmt = '(I5.5)'
+
+          write (gpu_string,fmt) numberOfDevices
+
+          call obj%timer%start("check_gpu_"//gpu_string)
           deviceNumber = mod(myid, numberOfDevices)
+          call obj%timer%start("set_device")
 #ifdef WITH_NVIDIA_GPU_VERSION
           if (.not.(allocated(cudaDeviceArray))) then
             allocate(cudaDeviceArray(0:maxThreads-1))
@@ -531,6 +538,7 @@ module mod_check_for_gpu
           if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
           endif
+          call obj%timer%stop("set_device")
 
           call obj%set("use_gpu_id",deviceNumber, error)
           if (error .ne. ELPA_OK) then
@@ -541,6 +549,7 @@ module mod_check_for_gpu
 
 
           ! handle creation
+          call obj%timer%start("create_handle")
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
             !print *,"Creating handle for thread:",thread
@@ -579,7 +588,9 @@ module mod_check_for_gpu
               stop 1
             endif
           enddo
+          call obj%timer%stop("create_handle")
 
+          call obj%timer%start("create_gpusolver")
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_NVIDIA_CUSOLVER
           do thread=0, maxThreads-1
@@ -628,7 +639,9 @@ module mod_check_for_gpu
           enddo
 #endif
 #endif
+          call obj%timer%stop("create_gpusolver")
 
+          call obj%timer%stop("check_gpu_"//gpu_string)
         endif
         gpuIsInitialized = .true.
       endif
