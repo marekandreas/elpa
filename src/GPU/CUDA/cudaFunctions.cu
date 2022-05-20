@@ -80,6 +80,45 @@
 
 #ifdef WITH_NVIDIA_GPU_VERSION
 extern "C" {
+  int cudaStreamCreateFromC(intptr_t *stream) {
+    cudaError_t status = cudaStreamCreate((cudaStream_t*) *stream);
+    if (status == cudaSuccess) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else{
+      errormessage("Error in cudaStreamCreate: %s\n", "unknown error");
+      return 0;
+    }
+
+  }
+
+  int cudaStreamDestroyFromC(intptr_t *stream){
+    cudaError_t status = cudaStreamDestroy((cudaStream_t*) *stream);
+    if (status == cudaSuccess) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else{
+      errormessage("Error in cudaStreamDestroy: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+  int cublasSetStreamFromC(intptr_t handle, intptr_t stream) {
+    cublasStatus_t status = cublasSetStream(*((cublasHandle_t*)handle), ((cudaStream_t)stream));
+    if (status == CUBLAS_STATUS_SUCCESS) {
+      return 1;
+    }
+    else if (status == CUBLAS_STATUS_NOT_INITIALIZED) {
+      errormessage("Error in cublasSetStream: %s\n", "the CUDA Runtime initialization failed");
+      return 0;
+    }
+    else{
+      errormessage("Error in cublasSetStream: %s\n", "unknown error");
+      return 0;
+    }
+  }
 
   int cublasCreateFromC(intptr_t *cublas_handle) {
     *cublas_handle = (intptr_t) malloc(sizeof(cublasHandle_t));
@@ -257,6 +296,16 @@ extern "C" {
     cudaError_t cuerr = cudaMemcpy( dest, src, count, (cudaMemcpyKind)dir);
     if (cuerr != cudaSuccess) {
       errormessage("Error in cudaMemcpy: %s\n",cudaGetErrorString(cuerr));
+      return 0;
+    }
+    return 1;
+  }
+
+  int cudaMemcpyAsyncFromC(intptr_t *dest, intptr_t *src, size_t count, int dir, int stream) {
+
+    cudaError_t cuerr = cudaMemcpyAsync( dest, src, count, (cudaMemcpyKind)dir, (cudaStream_t) stream);
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cudaMemcpyAsync: %s\n",cudaGetErrorString(cuerr));
       return 0;
     }
     return 1;

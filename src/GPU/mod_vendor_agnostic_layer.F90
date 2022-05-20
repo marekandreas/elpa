@@ -90,6 +90,13 @@ module elpa_gpu
     module procedure gpu_memcpy_mixed_to_host
   end interface
 
+  interface gpu_memcpy_async
+    module procedure gpu_memcpy_async_intptr
+    module procedure gpu_memcpy_async_cptr
+    module procedure gpu_memcpy_async_mixed_to_device
+    module procedure gpu_memcpy_async_mixed_to_host
+  end interface
+
   interface gpu_memcpy2d
     module procedure gpu_memcpy2d_intptr
     module procedure gpu_memcpy2d_cptr
@@ -283,6 +290,53 @@ module elpa_gpu
       endif
 #endif
     end subroutine
+
+    function gpublas_set_stream(handle, stream) result(success)
+      use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
+      use cuda_functions
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+
+      integer(kind=c_intptr_t), intent(in)  :: handle
+      integer(kind=c_intptr_t), intent(in)  :: stream
+      logical                               :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cublas_set_stream(handle, stream)
+      endif
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      if (use_gpu_vendor == amd_gpu) then
+        success = hipblas_set_stream(handle, stream)
+      endif
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"gpublasSetStream not implemented for openmp offload"
+        stop
+      endif
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"gpublasSetStream not implemented for sycl"
+        stop
+      endif
+#endif
+
+    end function
+
 
     function gpu_setdevice(n) result(success)
       use, intrinsic :: iso_c_binding
@@ -651,6 +705,194 @@ module elpa_gpu
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         success = sycl_memcpy_mixed_to_host(dst, src, size, dir)
+      endif
+#endif
+    
+    end function
+
+    function gpu_memcpy_async_intptr(dst, src, size, dir, stream) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: stream
+      logical                               :: success
+
+      success = .false.
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memcpy_async_intptr(dst, src, size, dir, stream)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_memcpy_async_intptr(dst, src, size, dir, stream)
+      endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"MemcpyAsync not implemented for openmp offload"
+        stop
+        !success = openmp_offload_memcpy_intptr(dst, src, size, dir)
+      endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"MemcpyAsync not implemented for sycl"
+        stop
+        !success = sycl_memcpy_intptr(dst, src, size, dir)
+      endif
+#endif
+      return
+    
+    end function
+    
+    function gpu_memcpy_async_cptr(dst, src, size, dir, stream) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+      implicit none
+      type(c_ptr)                           :: dst
+      type(c_ptr)                           :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: stream
+      logical                               :: success
+
+      success = .false.
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memcpy_async_cptr(dst, src, size, dir, stream)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_memcpy_async_cptr(dst, src, size, dir, stream)
+      endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"MemcpyAsync not implemented for openmp offload"
+        stop
+        !success = openmp_offload_memcpy_cptr(dst, src, size, dir)
+      endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"MemcpyAsync not implemented for sycl"
+        stop
+        !success = sycl_memcpy_cptr(dst, src, size, dir)
+      endif
+#endif
+      return
+    
+    end function
+    
+    function gpu_memcpy_async_mixed_to_device(dst, src, size, dir, stream) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      type(c_ptr)                           :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=c_intptr_t), intent(in)  :: stream
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+
+      success = .false.
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memcpy_async_mixed_to_device(dst, src, size, dir, stream)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_memcpy_async_mixed_to_device(dst, src, size, dir, stream)
+      endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"MemcpyAsync not implemented for openmp offload"
+        stop
+        !success = openmp_offload_memcpy_mixed_to_device(dst, src, size, dir)
+      endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"MemcpyAsync not implemented for sycl"
+        stop
+        !success = sycl_memcpy_mixed_to_device(dst, src, size, dir)
+      endif
+#endif
+    
+    end function
+    
+    function gpu_memcpy_async_mixed_to_host(dst, src, size, dir, stream) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      use hip_functions
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      type(c_ptr)                           :: src
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=c_intptr_t), intent(in)  :: stream
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+
+      success = .false.
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memcpy_async_mixed_to_host(dst, src, size, dir, stream)
+      endif
+
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_memcpy_async_mixed_to_host(dst, src, size, dir, stream)
+      endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"MemcpyAsync not implemented for openmp offload"
+        stop
+        !success = openmp_offload_memcpy_mixed_to_host(dst, src, size, dir)
+      endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"MemcpyAsync not implemented for sycl"
+        !success = sycl_memcpy_mixed_to_host(dst, src, size, dir)
       endif
 #endif
     

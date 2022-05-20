@@ -75,6 +75,39 @@ module cuda_functions
 !  integer(kind=c_intptr_t), parameter :: size_of_single_complex = 8_ck4
 !#endif
 
+  ! streams
+  interface
+    function cuda_stream_create_c(handle) result(istat) &
+             bind(C, name="cudaStreamCreateFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_INT)      :: istat
+    end function
+  end interface
+
+  interface
+    function cuda_stream_destroy_c(handle) result(istat) &
+             bind(C, name="cudaStreamDestroyFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_INT)      :: istat
+    end function
+  end interface
+
+  interface
+    function cublas_set_stream_c(handle, stream) result(istat) &
+             bind(C, name="cublasSetStreamFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value    :: handle
+      integer(kind=C_intptr_T), value    :: stream
+      integer(kind=C_INT)                :: istat
+    end function
+  end interface
+
   ! functions to set and query the CUDA devices
   interface
     function cublas_create_c(handle) result(istat) &
@@ -83,7 +116,7 @@ module cuda_functions
       implicit none
       ! no value here
       integer(kind=C_intptr_T) :: handle
-      integer(kind=C_INT)  :: istat
+      integer(kind=C_INT)      :: istat
     end function cublas_create_c
   end interface
 
@@ -94,7 +127,7 @@ module cuda_functions
       implicit none
       ! no value here
       integer(kind=C_intptr_T) :: handle
-      integer(kind=C_INT)  :: istat
+      integer(kind=C_INT)      :: istat
     end function cublas_destroy_c
   end interface
 
@@ -105,7 +138,7 @@ module cuda_functions
       implicit none
       ! no value here
       integer(kind=C_intptr_T) :: handle
-      integer(kind=C_INT)  :: istat
+      integer(kind=C_INT)      :: istat
     end function cusolver_create_c
   end interface
 
@@ -116,7 +149,7 @@ module cuda_functions
       implicit none
       ! no value here
       integer(kind=C_intptr_T) :: handle
-      integer(kind=C_INT)  :: istat
+      integer(kind=C_INT)      :: istat
     end function cusolver_destroy_c
   end interface
 
@@ -274,6 +307,74 @@ module cuda_functions
   end interface
 
   interface
+    function cuda_memcpy_async_intptr_c(dst, src, size, dir, stream) result(istat) &
+             bind(C, name="cudaMemcpyAsyncFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_t), value              :: dst
+      integer(kind=C_intptr_t), value              :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=c_intptr_t)                     :: stream
+      integer(kind=C_INT)                          :: istat
+
+    end function cuda_memcpy_async_intptr_c
+  end interface
+
+  interface
+    function cuda_memcpy_async_cptr_c(dst, src, size, dir, stream) result(istat) &
+             bind(C, name="cudaMemcpyAsyncFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr), value                           :: dst
+      type(c_ptr), value                           :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=c_intptr_t)                     :: stream
+      integer(kind=C_INT)                          :: istat
+
+    end function cuda_memcpy_async_cptr_c
+  end interface
+
+  interface
+    function cuda_memcpy_async_mixed_to_device_c(dst, src, size, dir, stream) result(istat) &
+             bind(C, name="cudaMemcpyAsyncFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr), value                           :: dst
+      integer(kind=C_intptr_t), value              :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=c_intptr_t)                     :: stream
+      integer(kind=C_INT)                          :: istat
+
+    end function cuda_memcpy_async_mixed_to_device_c
+  end interface
+
+  interface
+    function cuda_memcpy_async_mixed_to_host_c(dst, src, size, dir, stream) result(istat) &
+             bind(C, name="cudaMemcpyAsyncFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr), value                           :: src
+      integer(kind=C_intptr_t), value              :: dst
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=c_intptr_t)                     :: stream
+      integer(kind=C_INT)                          :: istat
+
+    end function cuda_memcpy_async_mixed_to_host_c
+  end interface
+
+  interface
     function cuda_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
              bind(C, name="cudaMemcpy2dFromC")
 
@@ -361,6 +462,13 @@ module cuda_functions
     module procedure cuda_memcpy_cptr
     module procedure cuda_memcpy_mixed_to_device
     module procedure cuda_memcpy_mixed_to_host
+  end interface
+
+  interface cuda_memcpy_async
+    module procedure cuda_memcpy_async_intptr
+    module procedure cuda_memcpy_async_cptr
+    module procedure cuda_memcpy_async_mixed_to_device
+    module procedure cuda_memcpy_async_mixed_to_host
   end interface
 
   interface
@@ -1249,6 +1357,47 @@ module cuda_functions
 #endif
 
   contains
+  ! streams
+   function cuda_stream_create(handle) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: handle
+     logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+     success = cuda_stream_create_c(handle) /= 0
+#else
+     success = .true.
+#endif
+   end function
+
+   function cuda_stream_destroy(handle) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: handle
+     logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+     success = cuda_stream_destroy_c(handle) /= 0
+#else
+     success = .true.
+#endif
+   end function
+
+   function cublas_set_stream(handle, stream) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: handle
+     integer(kind=C_intptr_t)                  :: stream
+     logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+     success = cublas_set_stream_c(handle, stream) /= 0
+#else
+     success = .true.
+#endif
+   end function
+
 
 #ifdef WITH_NVTX
    ! this wrapper is needed for the string conversion
@@ -1584,6 +1733,82 @@ module cuda_functions
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_memcpy_mixed_to_host_c(dst, src, size, dir) /= 0
+#else
+        success = .true.
+#endif
+    end function
+
+ function cuda_memcpy_async_intptr(dst, src, size, dir, stream) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: stream
+      logical :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        success = cuda_memcpy_async_intptr_c(dst, src, size, dir, stream) /= 0
+#else
+        success = .true.
+#endif
+    end function
+
+ function cuda_memcpy_async_cptr(dst, src, size, dir, stream) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr)                           :: dst
+      type(c_ptr)                           :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: stream
+      logical :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        success = cuda_memcpy_async_cptr_c(dst, src, size, dir, stream) /= 0
+#else
+        success = .true.
+#endif
+    end function
+
+ function cuda_memcpy_async_mixed_to_device(dst, src, size, dir, stream) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr)                           :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: stream
+      logical :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        success = cuda_memcpy_async_mixed_to_device_c(dst, src, size, dir, stream) /= 0
+#else
+        success = .true.
+#endif
+    end function
+
+ function cuda_memcpy_async_mixed_to_host(dst, src, size, dir, stream) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      type(c_ptr)                           :: src
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: stream
+      logical :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        success = cuda_memcpy_async_mixed_to_host_c(dst, src, size, dir, stream) /= 0
 #else
         success = .true.
 #endif

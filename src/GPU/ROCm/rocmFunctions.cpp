@@ -75,6 +75,46 @@
 
 #ifdef WITH_AMD_GPU_VERSION
 extern "C" {
+  int hipStreamCreateFromC(intptr_t *stream) {
+    hipError_t status = hipStreamCreate((hipStream_t*) *stream);
+    if (status == hipSuccess) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else{
+      errormessage("Error in hipStreamCreate: %s\n", "unknown error");
+      return 0;
+    }
+
+  }
+
+  int hipStreamDestroyFromC(intptr_t *stream){
+    hipError_t status = hipStreamDestroy((hipStream_t*) *stream);
+    if (status ==hipSuccess) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else{
+      errormessage("Error in hipStreamDestroy: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+  int rocblasSetStreamFromC(intptr_t handle, intptr_t stream) {
+    rocblasStatus_t status = rocblasSetStream(*((rocblasHandle_t*)handle), ((hipStream_t)stream));
+    if (status == rocblas_status_success ) {
+      return 1;
+    }
+    else if (status == rocblas_status_invalid_handle) {
+      errormessage("Error in rocblasSetStream: %s\n", "the HIP Runtime initialization failed");
+      return 0;
+    }
+    else{
+      errormessage("Error in rocblasSetStream: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
 
   int rocblasCreateFromC(intptr_t *handle) {
 //     printf("in c: %p\n", *cublas_handle);
@@ -213,6 +253,16 @@ extern "C" {
     hipError_t hiperr = hipMemcpy( dest, src, count, (hipMemcpyKind)dir);
     if (hiperr != hipSuccess) {
       errormessage("Error in hipMemcpy: %s\n",hipGetErrorString(hiperr));
+      return 0;
+    }
+    return 1;
+  }
+
+  int hipMemcpyAsyncFromC(intptr_t *dest, intptr_t *src, size_t count, int dir, int stream) {
+
+    hipError_t hiperr = hipMemcpyAsync( dest, src, count, (hipMemcpyKind)dir, (hipStream_t) stream);
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in hipMemcpyAsync: %s\n",hipGetErrorString(hiperr));
       return 0;
     }
     return 1;
