@@ -72,36 +72,51 @@ module hip_functions
 !  integer(kind=c_intptr_t), parameter :: size_of_single_complex = 8_ck4
 !#endif
   interface
-    function hip_stream_create_c(handle) result(istat) &
+    function hip_stream_create_c(stream) result(istat) &
              bind(C, name="hipStreamCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_intptr_T) :: stream
       integer(kind=C_INT)      :: istat
     end function
   end interface
 
   interface
-    function hip_stream_destroy_c(handle) result(istat) &
+    function hip_stream_destroy_c(stream) result(istat) &
              bind(C, name="hipStreamDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_intptr_T) :: stream
       integer(kind=C_INT)      :: istat
     end function
   end interface
 
+#ifdef WITH_AMD_GPU_VERSION
   interface
     function rocblas_set_stream_c(handle, stream) result(istat) &
              bind(C, name="rocblasSetStreamFromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=C_intptr_T), value         :: handle
-      integer(kind=C_intptr_T), value         :: stream
-      integer(kind=c_int)                     :: istat
+      integer(kind=C_intptr_T), value  :: handle
+      integer(kind=C_intptr_T), value  :: stream
+      integer(kind=c_int)              :: istat
     end function
   end interface
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+  interface
+    function hip_stream_synchronize_c(stream) result(istat) &
+             bind(C, name="hipStreamSynchronizeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value  :: stream
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+#endif
 
 
   ! functions to set and query the CUDA devices
@@ -111,7 +126,7 @@ module hip_functions
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: handle
-      integer(kind=C_INT)  :: istat
+      integer(kind=C_INT)      :: istat
     end function rocblas_create_c
   end interface
 
@@ -384,6 +399,48 @@ module hip_functions
       integer(kind=C_INT)                            :: istat
 
     end function hip_memcpy2d_cptr_c
+  end interface
+
+  interface
+    function hip_memcpy2d_async_intptr_c(dst, dpitch, src, spitch, width, height, dir, stream) result(istat) &
+             bind(C, name="hipMemcpy2dAsyncFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+
+      integer(kind=C_intptr_T), value                :: dst
+      integer(kind=c_intptr_t), intent(in), value    :: dpitch
+      integer(kind=C_intptr_T), value                :: src
+      integer(kind=c_intptr_t), intent(in), value    :: spitch
+      integer(kind=c_intptr_t), intent(in), value    :: width
+      integer(kind=c_intptr_t), intent(in), value    :: height
+      integer(kind=C_INT), intent(in), value         :: dir
+      integer(kind=c_intptr_t), value                :: stream
+      integer(kind=C_INT)                            :: istat
+
+    end function hip_memcpy2d_async_intptr_c
+  end interface
+
+  interface
+    function hip_memcpy2d_async_cptr_c(dst, dpitch, src, spitch, width, height, dir, stream) result(istat) &
+             bind(C, name="hipMemcpy2dAsyncFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+
+      type(c_ptr), value                :: dst
+      integer(kind=c_intptr_t), intent(in), value    :: dpitch
+      type(c_ptr), value                :: src
+      integer(kind=c_intptr_t), intent(in), value    :: spitch
+      integer(kind=c_intptr_t), intent(in), value    :: width
+      integer(kind=c_intptr_t), intent(in), value    :: height
+      integer(kind=C_INT), intent(in), value         :: dir
+      integer(kind=c_intptr_t), value                :: stream
+      integer(kind=C_INT)                            :: istat
+
+    end function hip_memcpy2d_async_cptr_c
   end interface
 
   interface
@@ -1205,14 +1262,14 @@ module hip_functions
   contains
 
     !streams
-    function hip_stream_create(handle) result(success)
+    function hip_stream_create(stream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=C_intptr_t)                  :: handle
+      integer(kind=C_intptr_t)                  :: stream
       logical                                   :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_stream_create_c(handle) /= 0
+      success = hip_stream_create_c(stream) /= 0
 #else
       success = .true.
 #endif
@@ -1238,8 +1295,21 @@ module hip_functions
      integer(kind=C_intptr_t)                  :: handle
      integer(kind=C_intptr_t)                  :: stream
      logical                                   :: success
-#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_AMD_GPU_VERSION
      success = rocblas_set_stream_c(handle, stream) /= 0
+#else
+     success = .true.
+#endif
+   end function
+
+   function hip_stream_synchronize(stream) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: stream
+     logical                                   :: success
+#ifdef WITH_AMOD_GPU_VERSION
+     success = hip_stream_synchronize_c(stream) /= 0
 #else
      success = .true.
 #endif
@@ -1678,7 +1748,52 @@ module hip_functions
 #endif
     end function hip_memcpy2d_cptr
 
- function hip_host_register(a, size, flag) result(success)
+    function hip_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, stream) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+
+      integer(kind=C_intptr_T)           :: dst
+      integer(kind=c_intptr_t), intent(in) :: dpitch
+      integer(kind=C_intptr_T)           :: src
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
+      integer(kind=C_INT), intent(in)    :: dir
+      integer(kind=c_intptr_t), intent(in) :: stream
+      logical                            :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_memcpy2d_async_intptr_c(dst, dpitch, src, spitch, width, height, dir, stream) /= 0
+#else
+      success = .true.
+#endif
+    end function hip_memcpy2d_async_intptr
+
+    function hip_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height, dir, stream) result(success)
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+
+      type(c_ptr)           :: dst
+      integer(kind=c_intptr_t), intent(in) :: dpitch
+      type(c_ptr)           :: src
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
+      integer(kind=C_INT), intent(in)    :: dir
+      integer(kind=c_intptr_t), intent(in) :: stream
+      logical                            :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_memcpy2d_async_cptr_c(dst, dpitch, src, spitch, width, height, dir, stream) /= 0
+#else
+      success = .true.
+#endif
+    end function hip_memcpy2d_async_cptr
+
+
+    function hip_host_register(a, size, flag) result(success)
 
       use, intrinsic :: iso_c_binding
 

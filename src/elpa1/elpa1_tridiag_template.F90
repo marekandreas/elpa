@@ -169,7 +169,8 @@ subroutine tridiag_&
   ! u and v are stored both in row and Vector forms
   ! pattern: v1,u1,v2,u2,v3,u3,....
   ! todo: It is little bit confusing, I think, that variables _row actually store columns and vice versa
-  MATH_DATATYPE(kind=rck), pointer             :: vu_stored_rows(:,:)
+  !MATH_DATATYPE(kind=rck), pointer             :: vu_stored_rows(:,:)
+  MATH_DATATYPE(kind=rck), allocatable         :: vu_stored_rows(:,:)
   ! pattern: u1,v1,u2,v2,u3,v3,....
   MATH_DATATYPE(kind=rck), allocatable         :: uv_stored_cols(:,:)
 
@@ -179,7 +180,7 @@ subroutine tridiag_&
 
   type(c_ptr)                                   :: v_row_host, v_col_host
   type(c_ptr)                                   :: u_row_host, u_col_host
-  type(c_ptr)                                   :: vu_stored_rows_host, uv_stored_cols_host
+  !type(c_ptr)                                   :: vu_stored_rows_host, uv_stored_cols_host
   real(kind=rk), allocatable                    :: tmp_real(:)
   integer(kind=ik)                              :: min_tile_size, error
   integer(kind=ik)                              :: istat
@@ -344,6 +345,15 @@ subroutine tridiag_&
        &MATH_DATATYPE ", "vu_stored_rows", istat, errorMessage)
 
   if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+#if COMPLEXCASE == 1
+    num = 1 * size_of_datatype
+    successGPU = gpu_host_register(int(loc(aux3),kind=c_intptr_t), num,&
+                  gpuHostRegisterDefault)
+    check_host_register_gpu("tridiag: aux3", successGPU)
+#endif
+#endif
+
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       num = (max_local_rows+1) * size_of_datatype
@@ -386,7 +396,7 @@ subroutine tridiag_&
       num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
       successGPU = gpu_host_register(int(loc(vu_stored_rows),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
-      check_host_register_gpu("tridiag: vu_stored_roes", successGPU)
+      check_host_register_gpu("tridiag: vu_stored_rows", successGPU)
 
       num = (max_local_cols * 2*max_stored_uv) * size_of_datatype
       successGPU = gpu_host_register(int(loc(uv_stored_cols),kind=c_intptr_t),num,&
@@ -500,9 +510,16 @@ subroutine tridiag_&
       check_host_register_gpu("tridiag: a_mat", successGPU)
     endif
 #endif
+
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
+                              num, gpuMemcpyHostToDevice, my_stream)
+#else
     successGPU = gpu_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
+#endif
     check_memcpy_gpu("tridiag: a_dev", successGPU)
+
   endif ! useGPU
 
   ! main cycle of tridiagonalization
@@ -528,9 +545,18 @@ subroutine tridiag_&
         ! we use v_row on the host at the moment! successGPU = gpu_memcpy(v_row_dev, a_dev + a_offset, 
         ! (l_rows)*size_of_PRECISION_real, gpuMemcpyDeviceToDevice)
 
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(int(loc(v_row),kind=c_intptr_t), &
+                                  a_dev + a_offset, (l_rows)* size_of_datatype, gpuMemcpyDeviceToHost, &
+                                  my_stream)
+        check_memcpy_gpu("tridiag a_dev 1", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("tridiag a_dev 1", successGPU)
+#else
         successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), &
                                   a_dev + a_offset, (l_rows)* size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("tridiag a_dev 1", successGPU)
+#endif
       else ! useGPU
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
       endif ! useGPU
@@ -686,13 +712,25 @@ subroutine tridiag_&
          deallocate(u_row_debug)
        endif
 #endif
+
+#ifdef WITH_GPU_STREAMS
+       successGPU = gpu_memcpy_async(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
+                     l_cols * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+#else
        successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
                      l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+#endif
 
        check_memcpy_gpu("tridiag: v_col_dev", successGPU)
 
+
+#ifdef WITH_GPU_STREAMS
+       successGPU = gpu_memcpy_async(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
+                                 l_rows * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+#else
        successGPU = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
                                  l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+#endif
        check_memcpy_gpu("tridiag: v_row_dev", successGPU)
      endif ! useGPU
 
@@ -857,13 +895,29 @@ subroutine tridiag_&
               enddo ! i=0,(istep-2)/tile_size
             end if !multiplication as one block / per stripes
 
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(int(loc(u_col(1)),kind=c_intptr_t), &
+                        u_col_dev, l_cols * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+            check_memcpy_gpu("tridiag: u_col_dev 1", successGPU)
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("tridiag: u_col_dev 1", successGPU)
+#else
             successGPU = gpu_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
                         u_col_dev, l_cols * size_of_datatype, gpuMemcpyDeviceToHost)
             check_memcpy_gpu("tridiag: u_col_dev 1", successGPU)
+#endif
 
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(int(loc(u_row(1)),kind=c_intptr_t), &
+                        u_row_dev, l_rows * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+            check_memcpy_gpu("tridiag: u_row_dev 1", successGPU)
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("tridiag: u_col_dev 1", successGPU)
+#else
             successGPU = gpu_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
                         u_row_dev, l_rows * size_of_datatype, gpuMemcpyDeviceToHost)
             check_memcpy_gpu("tridiag: u_row_dev 1", successGPU)
+#endif
           endif ! useGPU
 
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -1014,14 +1068,26 @@ subroutine tridiag_&
        if (n_stored_vecs == max_stored_uv .or. istep == 3) then
 
          if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+           successGPU = gpu_memcpy_async(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
+                                     max_local_rows * 2 * max_stored_uv *          &
+                                     size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+#else
            successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
                                      max_local_rows * 2 * max_stored_uv *          &
                                      size_of_datatype, gpuMemcpyHostToDevice)
+#endif
            check_memcpy_gpu("tridiag: uv_stored_rows_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+           successGPU = gpu_memcpy_async(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
+                                     max_local_cols * 2 * max_stored_uv *          &
+                                     size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+#else
            successGPU = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
                                      max_local_cols * 2 * max_stored_uv *          &
                                      size_of_datatype, gpuMemcpyHostToDevice)
+#endif
            check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
          endif
 
@@ -1084,10 +1150,17 @@ subroutine tridiag_&
          if (useGPU) then
            !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
             a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
-
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
+                                    1 *  size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+            check_memcpy_gpu("tridiag: a_dev 3", successGPU)
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("tridiag: a_dev 3", successGPU)
+#else
             successGPU = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
                                     1 *  size_of_datatype, gpuMemcpyDeviceToHost)
             check_memcpy_gpu("tridiag: a_dev 3", successGPU)
+#endif
          endif ! useGPU
 
          if (n_stored_vecs > 0) then
@@ -1109,9 +1182,13 @@ subroutine tridiag_&
            !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
            !successGPU = gpu_threadsynchronize()
            !check_memcpy_gpu("tridiag: a_dev 4a5a", successGPU)
-
+#ifdef WITH_GPU_STREAMS
+           successGPU = gpu_memcpy_async(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
+                                   int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice, my_stream)
+#else
            successGPU = gpu_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
                                    int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice)
+#endif
            check_memcpy_gpu("tridiag: a_dev 4", successGPU)
          endif ! useGPU
        endif
@@ -1125,9 +1202,17 @@ subroutine tridiag_&
       if (my_prow==prow(1, nblk, np_rows)) then
        ! We use last l_cols value of loop above
        if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+         successGPU = gpu_memcpy_async(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
+                                 1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+         check_memcpy_gpu("tridiag: a_dev 5", successGPU)
+         successGPU = gpu_stream_synchronize(my_stream)
+         check_stream_synchronize_gpu("tridiag: a_dev 5", successGPU)
+#else
          successGPU = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                                  1 * size_of_datatype, gpuMemcpyDeviceToHost)
          check_memcpy_gpu("tridiag: a_dev 5", successGPU)
+#endif
          vrl = aux3(1)
        else !useGPU
          vrl = a_mat(1,l_cols)
@@ -1177,9 +1262,17 @@ subroutine tridiag_&
 #endif /* WITH_MPI */
   if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
     if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
+                             1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+      check_memcpy_gpu("tridiag: a_dev 6", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("tridiag: a_dev 6", successGPU)
+#else
       successGPU = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev, &
                              1 * size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("tridiag: a_dev 6", successGPU)
+#endif
       d_vec(1) = PRECISION_REAL(aux3(1))
     else !useGPU
       d_vec(1) = PRECISION_REAL(a_mat(1,1))
@@ -1193,9 +1286,17 @@ subroutine tridiag_&
 
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
     if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
+                              1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+      check_memcpy_gpu("tridiag: a_dev 7", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("tridiag: a_dev 7", successGPU)
+#else
       successGPU = gpu_memcpy(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
                               1 * size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("tridiag: a_dev 7", successGPU)
+#endif
     else !useGPU
       e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
     endif !useGPU
@@ -1204,8 +1305,16 @@ subroutine tridiag_&
   ! Store d_vec(1)
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
     if(useGPU) then
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, &
+                   gpuMemcpyDeviceToHost, my_stream)
+      check_memcpy_gpu("tridiag: a_dev 8", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("tridiag: a_dev 8", successGPU)
+#else
       successGPU = gpu_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("tridiag: a_dev 8", successGPU)
+#endif
     else !useGPU
       if (isSkewsymmetric) then
         d_vec(1) = 0.0_rk
@@ -1298,6 +1407,13 @@ subroutine tridiag_&
   check_deallocate("tridiag: tmp_real", istat, errorMessage)
 
   if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+#if COMPLEXCASE == 1
+    successGPU = gpu_host_unregister(int(loc(aux3),kind=c_intptr_t))
+    check_host_unregister_gpu("tridiag: aux3", successGPU)
+#endif
+#endif
+
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       successGPU = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))

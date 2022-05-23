@@ -56,6 +56,7 @@
 #include <complex.h>
 #include <hip/hip_complex.h>
 #include "hip/hip_runtime.h"
+#include <stdint.h>
 #include "config-f90.h"
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
@@ -67,17 +68,24 @@ __global__ void hip_copy_double_a_tmatc_kernel(double *a_dev, double *tmatc_dev,
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
 }
 
-extern "C" void hip_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in){
+extern "C" void hip_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
+#ifdef WITH_GPU_STREAMS
+  hipStream_t streamId = *((hipStream_t*)my_stream);
+#endif
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nblk,1,1);
 
+#ifdef WITH_GPU_STREAMS
+  hipLaunchKernelGGL(hip_copy_double_a_tmatc_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+#else
   hipLaunchKernelGGL(hip_copy_double_a_tmatc_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+#endif
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing copy_double_a_tmatc_kernel: %s\n",hipGetErrorString(cuerr));
@@ -91,17 +99,25 @@ __global__ void hip_copy_float_a_tmatc_kernel(float *a_dev, float *tmatc_dev, co
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
 }
 
-extern "C" void hip_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in){
+extern "C" void hip_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
 
+#ifdef WITH_GPU_STREAMS
+  hipStream_t streamId = *((hipStream_t*)my_stream);
+#endif
+
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nblk,1,1);
 
+#ifdef WITH_GPU_STREAMS
+  hipLaunchKernelGGL(hip_copy_float_a_tmatc_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+#else
   hipLaunchKernelGGL(hip_copy_float_a_tmatc_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+#endif
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing copy_float_a_tmatc_kernel: %s\n",hipGetErrorString(cuerr));
@@ -115,12 +131,16 @@ __global__ void hip_copy_double_complex_a_tmatc_kernel(hipDoubleComplex *a_dev, 
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = hipConj(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
 }
 
-extern "C" void hip_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, double _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in){
+extern "C" void hip_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, double _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
+
+#ifdef WITH_GPU_STREAMS
+  hipStream_t streamId = *((hipStream_t*)my_stream);
+#endif
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nblk,1,1);
@@ -128,7 +148,11 @@ extern "C" void hip_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, do
   hipDoubleComplex* a_casted = (hipDoubleComplex*) a_dev;
   hipDoubleComplex* tmatc_casted = (hipDoubleComplex*) tmatc_dev;
 
+#ifdef WITH_GPU_STREAMS
+  hipLaunchKernelGGL(hip_copy_double_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+#else
   hipLaunchKernelGGL(hip_copy_double_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+#endif
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing copy_double_complex_a_tmatc_kernel: %s\n",hipGetErrorString(cuerr));
@@ -142,12 +166,16 @@ __global__ void hip_copy_float_complex_a_tmatc_kernel(hipFloatComplex *a_dev, hi
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = hipConjf(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
 }
 
-extern "C" void hip_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, float _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in){
+extern "C" void hip_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, float _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
+
+#ifdef WITH_GPU_STREAMS
+  hipStream_t streamId = *((hipStream_t*)my_stream);
+#endif
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nblk,1,1);
@@ -155,7 +183,11 @@ extern "C" void hip_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, floa
   hipFloatComplex* a_casted = (hipFloatComplex*) a_dev;
   hipFloatComplex* tmatc_casted = (hipFloatComplex*) tmatc_dev;
 
+#ifdef WITH_GPU_STREAMS
+  hipLaunchKernelGGL(hip_copy_float_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+#else
   hipLaunchKernelGGL(hip_copy_float_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+#endif
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing copy_float_complex_a_tmatc_kernel: %s\n",hipGetErrorString(cuerr));

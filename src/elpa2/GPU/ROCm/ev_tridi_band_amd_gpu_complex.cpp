@@ -46,8 +46,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <hip/hip_runtime.h>
 #include <hip/hip_complex.h>
+
+#include "config-f90.h"
 
 template <typename T, unsigned int blk> __device__ void warp_reduce_complex(volatile T *s_block)
 {
@@ -213,44 +216,91 @@ __global__ void compute_hh_trafo_hip_kernel_complex_double(hipDoubleComplex * __
     }
 }
 
-extern "C" void launch_compute_hh_trafo_c_hip_kernel_complex_double(hipDoubleComplex *q, const hipDoubleComplex *hh, const hipDoubleComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+extern "C" void launch_compute_hh_trafo_c_hip_kernel_complex_double(hipDoubleComplex *q, const hipDoubleComplex *hh, const hipDoubleComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_thread)
 {
     hipError_t err;
+#ifdef WITH_GPU_STREAMS
+    hipStream_t streamId = *((hipStream_t*)my_stream);
+#endif
 
     switch (nb)
     {
     case 1024:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<1024>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<1024>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 512:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<512>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<512>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 256:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<256>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<256>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 128:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<128>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<128>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 64:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<64>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<64>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 32:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<32>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<32>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 16:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<16>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<16>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 8:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<8>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<8>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 4:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<4>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<4>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 2:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<2>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<2>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 1:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<1>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_double<1>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     }
 
@@ -311,44 +361,91 @@ __global__ void compute_hh_trafo_hip_kernel_complex_single(hipFloatComplex * __r
     }
 }
 
-extern "C" void launch_compute_hh_trafo_c_hip_kernel_complex_single(hipFloatComplex *q, const hipFloatComplex *hh, const hipFloatComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+extern "C" void launch_compute_hh_trafo_c_hip_kernel_complex_single(hipFloatComplex *q, const hipFloatComplex *hh, const hipFloatComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
 {
     hipError_t err;
+#ifdef WITH_GPU_STREAMS
+    hipStream_t streamId = *((hipStream_t*)my_stream);
+#endif
 
     switch (nb)
     {
     case 1024:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<1024>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<1024>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 512:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<512>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<512>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 256:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<256>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<256>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 128:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<128>), dim3(nev), dim3(nb), 0, stream_id, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<128>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 64:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<64>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<64>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 32:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<32>), dim3(nev), dim3(nb), 0, streanId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<32>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 16:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<16>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<16>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 8:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<8>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<8>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 4:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<4>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<4>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 2:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<2>), dim3(nev), dim3(nb), 0, streamId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<2>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 1:
+#ifdef WITH_GPU_STREAMS
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<1>), dim3(nev), dim3(nb), 0, streanId, q, hh, hh_tau, nb, ldq, ncols);
+#else
         hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hh_trafo_hip_kernel_complex_single<1>), dim3(nev), dim3(nb), 0, 0, q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     }
 

@@ -346,9 +346,16 @@ subroutine trans_ev_&
       check_host_register_gpu("trans_ev: q_mat", successGPU)
     endif
 #endif
+
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(q_dev, int(loc(q_mat(1,1)),kind=c_intptr_t), &
+                  num, gpuMemcpyHostToDevice, my_stream)
+    check_memcpy_gpu("trans_ev", successGPU)
+#else
     successGPU = gpu_memcpy(q_dev, int(loc(q_mat(1,1)),kind=c_intptr_t), &
                   num, gpuMemcpyHostToDevice)
     check_memcpy_gpu("trans_ev", successGPU)
+#endif
   endif  ! useGPU
 
   do istep = 1, na, blockStep
@@ -474,6 +481,17 @@ subroutine trans_ev_&
         hvm1(1:hvm_ubnd*nstor) = reshape(hvm(1:hvm_ubnd,1:nstor), (/ hvm_ubnd*nstor /))
 
         !hvm_dev(1:hvm_ubnd*nstor) = hvm1(1:hvm_ubnd*nstor)
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(hvm_dev, int(loc(hvm1(1)),kind=c_intptr_t),   &
+                      hvm_ubnd * nstor * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+
+        check_memcpy_gpu("trans_ev", successGPU)
+
+        !tmat_dev = tmat
+        successGPU = gpu_memcpy_async(tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t),   &
+                      max_stored_rows * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+        check_memcpy_gpu("trans_ev", successGPU)
+#else
         successGPU = gpu_memcpy(hvm_dev, int(loc(hvm1(1)),kind=c_intptr_t),   &
                       hvm_ubnd * nstor * size_of_datatype, gpuMemcpyHostToDevice)
 
@@ -483,6 +501,7 @@ subroutine trans_ev_&
         successGPU = gpu_memcpy(tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t),   &
                       max_stored_rows * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("trans_ev", successGPU)
+#endif
       endif
 
 
@@ -530,11 +549,19 @@ subroutine trans_ev_&
 #ifndef WITH_CUDA_AWARE_MPI
         ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
         ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(int(loc(tmp1(1)),kind=c_intptr_t), tmp_dev,  &
+                      max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+        check_memcpy_gpu("trans_ev", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("trans_ev", successGPU)
+#else
         successGPU = gpu_memcpy(int(loc(tmp1(1)),kind=c_intptr_t), tmp_dev,  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("trans_ev", successGPU)
+#endif
 
-#else
+#else /* WITH_CUDA_AWARE_MPI */
         ! in case of CUDA_AWARE MPI
         ! associate devicePointer with a fortran pointer
         ! do MPI
@@ -571,15 +598,21 @@ subroutine trans_ev_&
       if (useGPU) then
 #ifndef WITH_CUDA_AWARE_MPI
         ! copy back tmp2 - after reduction...
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
+                      max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+        check_memcpy_gpu("trans_ev", successGPU)
+#else
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("trans_ev", successGPU)
-#else
+#endif
+#else /* WITH_CUDA_AWARE_MPI */
         
         tmp_dev = transfer(tmp_mpi_dev, tmp_dev)
         tmp_mpi_dev = C_NULL_PTR
         tmp_mpi => null()
-#endif
+#endif /* WITH_CUDA_AWARE_MPI */
       endif ! useGPU
 
 #else /* WITH_MPI */
@@ -633,9 +666,17 @@ subroutine trans_ev_&
   if (useGPU) then
 
     !q_mat = q_dev
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(int(loc(q_mat(1,1)),kind=c_intptr_t), &
+                  q_dev, ldq * matrixCols * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+    check_memcpy_gpu("trans_ev", successGPU)
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("trans_ev", successGPU)
+#else
     successGPU = gpu_memcpy(int(loc(q_mat(1,1)),kind=c_intptr_t), &
                   q_dev, ldq * matrixCols * size_of_datatype, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("trans_ev", successGPU)
+#endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then

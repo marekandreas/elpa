@@ -46,7 +46,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <cuda_runtime.h>
+
+#include "config-f90.h"
 
 #if (CUDART_VERSION >= 9000)
 template <typename T, unsigned int blk> __device__ void warp_shfl_reduce_real(volatile T *s_block)
@@ -244,44 +247,91 @@ __global__ void compute_hh_trafo_cuda_kernel_real(T * __restrict__ q, const T * 
     }
 }
 
-extern "C" void launch_compute_hh_trafo_c_cuda_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+extern "C" void launch_compute_hh_trafo_c_cuda_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
 {
     cudaError_t err;
+#ifdef WITH_GPU_STREAMS
+    cudaStream_t streamId = *((cudaStream_t*)my_stream);
+#endif
 
     switch (nb)
     {
     case 1024:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 1024><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 1024><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 512:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 512><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 512><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 256:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 256><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 256><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 128:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 128><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 128><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 64:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 64><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 64><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 32:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 32><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 32><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 16:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 16><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 8:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 8><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 8><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 4:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 4><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 4><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 2:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 2><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 2><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 1:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<double, 1><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<double, 1><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     }
 
@@ -292,44 +342,92 @@ extern "C" void launch_compute_hh_trafo_c_cuda_kernel_real_double(double *q, con
     }
 }
 
-extern "C" void launch_compute_hh_trafo_c_cuda_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+extern "C" void launch_compute_hh_trafo_c_cuda_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
+
 {
     cudaError_t err;
+#ifdef WITH_GPU_STREAMS
+    cudaStream_t streamId = *((cudaStream_t*)my_stream);
+#endif
 
     switch (nb)
     {
     case 1024:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 1024><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 1024><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 512:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 512><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 512><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 256:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 256><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 256><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 128:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 128><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 128><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 64:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 64><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 64><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 32:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 32><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 32><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 16:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 16><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 16><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 8:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 8><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 8><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 4:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 4><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 4><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 2:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 2><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 2><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     case 1:
+#ifdef WITH_GPU_STREAMS
+        compute_hh_trafo_cuda_kernel_real<float, 1><<<nev, nb, 0, streamId>>>(q, hh, hh_tau, nb, ldq, ncols);
+#else
         compute_hh_trafo_cuda_kernel_real<float, 1><<<nev, nb>>>(q, hh, hh_tau, nb, ldq, ncols);
+#endif
         break;
     }
 

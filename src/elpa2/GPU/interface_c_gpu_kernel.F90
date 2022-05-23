@@ -51,17 +51,19 @@ module gpu_c_kernel
 
   contains
 
-    subroutine launch_compute_hh_trafo_gpu_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
-      integer(c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call launch_compute_hh_trafo_c_cuda_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_cuda_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_compute_hh_trafo_c_hip_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_hip_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
 print *,"no sycl double real gpu kernel yet implemented. Aborting..."
@@ -69,14 +71,16 @@ print *,"no sycl double real gpu kernel yet implemented. Aborting..."
 #endif
     end subroutine
 
-    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
-      integer(c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
-      call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       ! not yet implemented
@@ -85,17 +89,19 @@ print *,"no sycl double real gpu kernel yet implemented. Aborting..."
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_compute_hh_trafo_gpu_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
-      integer(c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call launch_compute_hh_trafo_c_cuda_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_cuda_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_compute_hh_trafo_c_hip_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_hip_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"no single real sycl gpu kernel yet implemented. Aborting..."
@@ -103,14 +109,16 @@ print *,"no sycl double real gpu kernel yet implemented. Aborting..."
 #endif
     end subroutine
 
-    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
-      integer(c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
-      call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       ! not yet implemented
@@ -120,17 +128,19 @@ print *,"no sycl double real gpu kernel yet implemented. Aborting..."
 
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
-    subroutine launch_compute_hh_trafo_gpu_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call launch_compute_hh_trafo_c_cuda_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_cuda_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_compute_hh_trafo_c_hip_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_hip_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
 print *,"no double complex sycl gpu kernel yet implemented. Aborting..."
@@ -138,13 +148,17 @@ print *,"no double complex sycl gpu kernel yet implemented. Aborting..."
 #endif
     end subroutine
 
-    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
 #if defined(WITH_NVIDIA_GPU_VERSION)  && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
+      print *, "not yet implemented. ohoh"
+      stop
       !call launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
@@ -153,17 +167,19 @@ print *,"no double complex sycl gpu kernel yet implemented. Aborting..."
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_compute_hh_trafo_gpu_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_gpu_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call launch_compute_hh_trafo_c_cuda_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_cuda_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_compute_hh_trafo_c_hip_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_hip_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
 print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
@@ -171,13 +187,17 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
 #endif
     end subroutine
 
-    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_sm80_gpu_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: nev, nb, ldq, ncols
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
+      print *,"not yet implemented. oh no"
+      stop
       !call launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
@@ -188,209 +208,233 @@ print *,"no single complex sycl gpu kernel yet implemented. Aborting..."
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
     subroutine launch_my_unpack_gpu_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-               l_nev,row_group_dev, a_dev)
+               l_nev,row_group_dev, a_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: row_count
-      integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
+      integer(kind=c_int)      :: row_count
+      integer(kind=c_int)      :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call launch_my_unpack_c_cuda_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-           l_nev,row_group_dev, a_dev)
+           l_nev,row_group_dev, a_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_unpack_c_hip_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-           l_nev,row_group_dev, a_dev)
+           l_nev,row_group_dev, a_dev, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine launch_my_unpack_gpu_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-               l_nev,row_group_dev, a_dev)
+               l_nev,row_group_dev, a_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: row_count
-      integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
+      integer(kind=c_int)      :: row_count
+      integer(kind=c_int)      :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call launch_my_unpack_c_cuda_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-           l_nev,row_group_dev, a_dev)
+           l_nev,row_group_dev, a_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_unpack_c_hip_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-           l_nev,row_group_dev, a_dev)
+           l_nev,row_group_dev, a_dev, my_stream)
 #endif
     end subroutine
 #endif
 
     subroutine launch_my_pack_gpu_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
-               stripe_count, l_nev, a_dev, row_group_dev)
+               stripe_count, l_nev, a_dev, row_group_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
+      integer(kind=c_int)      :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call launch_my_pack_c_cuda_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+           row_group_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_pack_c_hip_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+           row_group_dev, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine launch_my_pack_gpu_kernel_real_single(row_count, n_offset, max_idx,stripe_width, &
-               a_dim2, stripe_count, l_nev, a_dev, row_group_dev)
+               a_dim2, stripe_count, l_nev, a_dev, row_group_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
+      integer(kind=c_int)      :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call launch_my_pack_c_cuda_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+           row_group_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_pack_c_hip_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+           row_group_dev, my_stream)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_extract_hh_tau_gpu_kernel_real_double(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_gpu_kernel_real_double(hh, hh_tau, nb, n, is_zero, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
-      integer(kind=c_int) :: nb, n
-      integer(kind=c_int) :: is_zero
+      integer(kind=c_int)      :: nb, n
+      integer(kind=c_int)      :: is_zero
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call launch_extract_hh_tau_c_cuda_kernel_real_double(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_cuda_kernel_real_double(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_extract_hh_tau_c_hip_kernel_real_double(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_hip_kernel_real_double(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_extract_hh_tau_gpu_kernel_real_single(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_gpu_kernel_real_single(hh, hh_tau, nb, n, is_zero, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
-      integer(kind=c_int) :: nb, n
-      integer(kind=c_int) :: is_zero
+      integer(kind=c_int)      :: nb, n
+      integer(kind=c_int)      :: is_zero
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call launch_extract_hh_tau_c_cuda_kernel_real_single(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_cuda_kernel_real_single(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_extract_hh_tau_c_hip_kernel_real_single(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_hip_kernel_real_single(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
     end subroutine
 #endif
 
     subroutine launch_my_unpack_gpu_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, &
-               a_dim2, stripe_count, l_nev, row_group_dev, a_dev)
+               a_dim2, stripe_count, l_nev, row_group_dev, a_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: row_count
-      integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
+      integer(kind=c_int)      :: row_count
+      integer(kind=c_int)      :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call launch_my_unpack_c_cuda_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-           row_group_dev, a_dev)
+           row_group_dev, a_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_unpack_c_hip_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-           row_group_dev, a_dev)
+           row_group_dev, a_dev, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     subroutine launch_my_unpack_gpu_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, &
-               a_dim2, stripe_count, l_nev, row_group_dev, a_dev)
+               a_dim2, stripe_count, l_nev, row_group_dev, a_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: row_count
-      integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
+      integer(kind=c_int)      :: row_count
+      integer(kind=c_int)      :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call launch_my_unpack_c_cuda_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-           row_group_dev, a_dev)
+           row_group_dev, a_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_unpack_c_hip_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-           row_group_dev, a_dev)
+           row_group_dev, a_dev, my_stream)
 #endif
     end subroutine
 #endif
 
     subroutine launch_my_pack_gpu_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
-               stripe_count, l_nev, a_dev, row_group_dev)
+               stripe_count, l_nev, a_dev, row_group_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
+      integer(kind=c_int)      :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call launch_my_pack_c_cuda_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
-              a_dev, row_group_dev)
+              a_dev, row_group_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_pack_c_hip_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
-              a_dev, row_group_dev)
+              a_dev, row_group_dev, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     subroutine launch_my_pack_gpu_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
-               stripe_count, l_nev, a_dev, row_group_dev)
+               stripe_count, l_nev, a_dev, row_group_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
+      integer(kind=c_int)      :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call launch_my_pack_c_cuda_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, &
-                                                       l_nev, a_dev, row_group_dev)
+                                                       l_nev, a_dev, row_group_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_pack_c_hip_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, &
-                                                      l_nev, a_dev, row_group_dev)
+                                                      l_nev, a_dev, row_group_dev, my_stream)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_extract_hh_tau_gpu_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_gpu_kernel_complex_double(hh, hh_tau, nb, n, is_zero, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
-      integer(kind=c_int) :: nb, n
-      integer(kind=c_int) :: is_zero
+      integer(kind=c_int)      :: nb, n
+      integer(kind=c_int)      :: is_zero
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call launch_extract_hh_tau_c_cuda_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_cuda_kernel_complex_double(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call launch_extract_hh_tau_c_hip_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_hip_kernel_complex_double(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_extract_hh_tau_gpu_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_gpu_kernel_complex_single(hh, hh_tau, nb, n, is_zero, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
-      integer(kind=c_int) :: nb, n
-      integer(kind=c_int) :: is_zero
+      integer(kind=c_int)      :: nb, n
+      integer(kind=c_int)      :: is_zero
+      integer(kind=c_intptr_t) :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-call launch_extract_hh_tau_c_cuda_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
+call launch_extract_hh_tau_c_cuda_kernel_complex_single(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-call launch_extract_hh_tau_c_hip_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
+call launch_extract_hh_tau_c_hip_kernel_complex_single(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
     end subroutine
 #endif

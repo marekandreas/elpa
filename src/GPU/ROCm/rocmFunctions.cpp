@@ -76,6 +76,7 @@
 #ifdef WITH_AMD_GPU_VERSION
 extern "C" {
   int hipStreamCreateFromC(intptr_t *stream) {
+    *stream = (intptr_t) malloc(sizeof(hipStream_t));
     hipError_t status = hipStreamCreate((hipStream_t*) *stream);
     if (status == hipSuccess) {
 //       printf("all OK\n");
@@ -90,6 +91,7 @@ extern "C" {
 
   int hipStreamDestroyFromC(intptr_t *stream){
     hipError_t status = hipStreamDestroy((hipStream_t*) *stream);
+    *stream = (intptr_t) NULL;
     if (status ==hipSuccess) {
 //       printf("all OK\n");
       return 1;
@@ -101,7 +103,7 @@ extern "C" {
   }
 
   int rocblasSetStreamFromC(intptr_t handle, intptr_t stream) {
-    rocblasStatus_t status = rocblasSetStream(*((rocblasHandle_t*)handle), ((hipStream_t)stream));
+    rocblasStatus_t status = rocblasSetStream(*((rocblasHandle_t*)handle), *((hipStream_t*)stream));
     if (status == rocblas_status_success ) {
       return 1;
     }
@@ -113,6 +115,27 @@ extern "C" {
       errormessage("Error in rocblasSetStream: %s\n", "unknown error");
       return 0;
     }
+  }
+
+  int hipStreamSynchronizeFromC(intptr_t stream) {
+    hipError_t status = hipStreamSynchronize(*((hipStream_t*)stream));
+    if (status == hipSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in hipStreamSynchronize: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+  int hipMemcpy2dAsyncFromC(intptr_t *dest, size_t dpitch, intptr_t *src, size_t spitch, size_t width, size_t height, int dir, intptr_t stream) {
+
+    hipError_t hiperr = hipMemcpy2DAsync( dest, dpitch, src, spitch, width, height, (hipMemcpyKind)dir, *((hipStream_t*)stream) );
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipMemcpy2dAsync: %s\n",hipGetErrorString(cuerr));
+      return 0;
+    }
+    return 1;
   }
 
 
@@ -258,10 +281,10 @@ extern "C" {
     return 1;
   }
 
-  int hipMemcpyAsyncFromC(intptr_t *dest, intptr_t *src, size_t count, int dir, int stream) {
+  int hipMemcpyAsyncFromC(intptr_t *dest, intptr_t *src, size_t count, int dir, intptr_t stream) {
 
-    hipError_t hiperr = hipMemcpyAsync( dest, src, count, (hipMemcpyKind)dir, (hipStream_t) stream);
-    if (cuerr != cudaSuccess) {
+    hipError_t hiperr = hipMemcpyAsync( dest, src, count, (hipMemcpyKind)dir, *((hipStream_t*)stream));
+    if (hiperr != hipSuccess) {
       errormessage("Error in hipMemcpyAsync: %s\n",hipGetErrorString(hiperr));
       return 0;
     }
