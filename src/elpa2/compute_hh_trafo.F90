@@ -189,7 +189,7 @@ last_stripe_width, kernel, my_stream, success)
                                                                  &PRECISION&
                                                                  &_&
                                                                  &MATH_DATATYPE
-  integer(kind=c_intptr_t)                   :: my_stream
+  integer(kind=c_intptr_t), optional         :: my_stream
 
 
   success = .true.

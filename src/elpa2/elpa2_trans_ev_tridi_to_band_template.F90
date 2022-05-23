@@ -2471,7 +2471,7 @@ subroutine trans_ev_tridi_to_band_&
                 l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i, &
                 my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, &
-                my_stream, success=success)
+                my_stream=my_stream, success=success)
               if (wantDebug) call obj%timer%stop("compute_hh_trafo")
               if (.not.success) then
                 success=.false.
@@ -2498,7 +2498,7 @@ subroutine trans_ev_tridi_to_band_&
                       stripe_count, max_threads, &
                       l_nev, a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                       hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, &
-                      i, my_thread, thread_width, kernel, my_stream, success=success)
+                      i, my_thread, thread_width, kernel, my_stream=my_stream, success=success)
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2516,7 +2516,7 @@ subroutine trans_ev_tridi_to_band_&
                 max_threads, &
                 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, 0, current_local_n, i, &
-                last_stripe_width, kernel, my_stream, success=success)
+                last_stripe_width, kernel, my_stream=my_stream, success=success)
             if (.not.success) then
               success=.false.
               return
@@ -2794,7 +2794,8 @@ subroutine trans_ev_tridi_to_band_&
                  l_nev, a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                  hh_tau_dev, kernel_flops, kernel_time, n_times, &
                  current_local_n - bottom_msg_length, bottom_msg_length, i, &
-                 my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, my_stream, success=success)
+                 my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, my_stream=my_stream, &
+                 success=success)
               if (.not.success) then
                 success=.false.
                 return
@@ -2822,7 +2823,7 @@ subroutine trans_ev_tridi_to_band_&
                      max_threads, l_nev, a_off, &
                      nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                      hh_tau_dev, kernel_flops, kernel_time, n_times, current_local_n - bottom_msg_length, &
-                     bottom_msg_length, i, my_thread, thread_width, kernel, my_stream, success=success)
+                     bottom_msg_length, i, my_thread, thread_width, kernel, my_stream=my_stream, success=success)
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -2972,7 +2973,7 @@ subroutine trans_ev_tridi_to_band_&
              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, &
              current_local_n - bottom_msg_length, bottom_msg_length, i, &
-             last_stripe_width, kernel, my_stream, success=success)
+             last_stripe_width, kernel, my_stream=my_stream, success=success)
             if (wantDebug) call obj%timer%stop("compute_hh_trafo")
             if (.not.success) then
               success=.false.
@@ -3127,7 +3128,7 @@ subroutine trans_ev_tridi_to_band_&
                    l_nev, a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                    hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
                    current_local_n-top_msg_length-bottom_msg_length, i, &
-                   my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, my_stream, &
+                   my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, my_stream=my_stream, &
                    success=success)
               if (wantDebug) call obj%timer%stop("compute_hh_trafo")
               if (.not.success) then
@@ -3156,7 +3157,7 @@ subroutine trans_ev_tridi_to_band_&
                 nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
                 hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
                 current_local_n-top_msg_length-bottom_msg_length, i, my_thread, thread_width, &
-                kernel, my_stream, success=success)
+                kernel, my_stream=my_stream, success=success)
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -3174,7 +3175,7 @@ subroutine trans_ev_tridi_to_band_&
              a_off,  nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, top_msg_length, &
              current_local_n-top_msg_length-bottom_msg_length, i, &
-             last_stripe_width, kernel, my_stream, success=success)
+             last_stripe_width, kernel, my_stream=my_stream, success=success)
             if (wantDebug) call obj%timer%stop("compute_hh_trafo")
             if (.not.success) then
               success=.false.
@@ -3361,7 +3362,7 @@ subroutine trans_ev_tridi_to_band_&
                l_nev, a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
                my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width, &
-               my_stream, success=success)
+               my_stream=my_stream, success=success)
              if (wantDebug) call obj%timer%stop("compute_hh_trafo")
              if (.not.success) then
                success=.false.
@@ -3387,7 +3388,7 @@ subroutine trans_ev_tridi_to_band_&
                     l_nev, a_off, &
                     nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                     hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, my_thread, &
-                    thread_width, kernel, my_stream, success=success)
+                    thread_width, kernel, my_stream=my_stream, success=success)
              enddo
              !$omp end parallel do
              call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
@@ -3402,7 +3403,7 @@ subroutine trans_ev_tridi_to_band_&
              (obj, my_pe, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
              a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
              hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
-             last_stripe_width, kernel, my_stream, success=success)
+             last_stripe_width, kernel, my_stream=my_stream, success=success)
            if (wantDebug) call obj%timer%stop("compute_hh_trafo")
            if (.not.success) then
              success=.false.
