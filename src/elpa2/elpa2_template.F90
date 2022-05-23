@@ -1101,9 +1101,6 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
       call likwid_markerStartRegion("full_to_band")
 #endif
-      ! debug
-      !do_useGPU_bandred = .false.
-
       ! Reduction full -> band
       call bandred_&
       &MATH_DATATYPE&
@@ -1154,10 +1151,6 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("band_to_tridi")
 #endif
-
-       !debug
-       !do_useGPU_tridiag_band = .false.
-
        call tridiag_band_&
        &MATH_DATATYPE&
        &_&
@@ -1218,15 +1211,11 @@ print *,"Device pointer + REDIST"
 
      ! Solve tridiagonal system
      if (do_solve_tridi) then
-!        print *, 'do_useGPU_solve_tridi=', do_useGPU_solve_tridi
        call obj%autotune_timer%start("solve")
        call obj%timer%start("solve")
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("solve")
 #endif
-
-       !!debug
-       !do_useGPU_solve_tridi = .false.
 
        call solve_tridi_&
        &PRECISION &
@@ -1365,9 +1354,6 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("tridi_to_band")
 #endif
-       ! debug
-       !do_useGPU_trans_ev_tridi_to_band = .false.
-
        ! In the skew-symmetric case this transforms the real part
        call trans_ev_tridi_to_band_&
        &MATH_DATATYPE&
@@ -1414,9 +1400,6 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("band_to_full")
 #endif
-       !debug
-       !do_useGPU_trans_ev_band_to_full = .false.
-
        ! Backtransform stage 2
        ! In the skew-symemtric case this transforms the real part
        call trans_ev_band_to_full_&
@@ -1465,9 +1448,6 @@ print *,"Device pointer + REDIST"
          call obj%timer%start("skew_tridi_to_band")
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_tridi acting on the n x 2n matrix.
-         !debug
-         !do_useGPU_trans_ev_tridi_to_band = .false.
-
          call trans_ev_tridi_to_band_&
          &MATH_DATATYPE&
          &_&
@@ -1506,9 +1486,6 @@ print *,"Device pointer + REDIST"
        call obj%timer%start("band_to_full")
          ! Transform imaginary part
          ! Transformation of real and imaginary part could also be one call of trans_ev_band_to_full_ acting on the n x 2n matrix.
-         !debug
-         !do_useGPU_trans_ev_band_to_full = .false.
-
          call trans_ev_band_to_full_&
          &MATH_DATATYPE&
          &_&

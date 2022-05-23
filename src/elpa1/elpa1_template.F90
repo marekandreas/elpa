@@ -655,7 +655,6 @@ print *,"Device pointer + REDIST"
 #ifdef WITH_NVTX
      call nvtxRangePush("tridi")
 #endif
-     !do_useGPU_tridiag = .false.
      call tridiag_&
      &MATH_DATATYPE&
      &_&
@@ -784,7 +783,6 @@ print *,"Device pointer + REDIST"
      call nvtxRangePush("trans_ev")
 #endif
 
-     !do_useGPU_trans_ev = .false.
      ! In the skew-symmetric case this transforms the real part
      call trans_ev_&
      &MATH_DATATYPE&
