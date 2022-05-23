@@ -58,7 +58,7 @@ l_nev, &
 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 hh_tau_dev, kernel_flops, kernel_time, n_times, off, ncols, istripe, &
 #ifdef WITH_OPENMP_TRADITIONAL
-my_thread, thread_width, kernel, last_stripe_width, success)
+my_thread, thread_width, kernel, last_stripe_width, my_stream, success)
 #else
 last_stripe_width, kernel, my_stream, success)
 #endif
