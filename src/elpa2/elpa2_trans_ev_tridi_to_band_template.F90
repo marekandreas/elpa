@@ -713,8 +713,17 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memset_async(aIntern_dev , 0, num, my_stream)
+      check_memset_gpu("tridi_to_band: aIntern_dev", successGPU)
+      !successGPU = gpu_stream_synchronize(my_stream)
+      !check_stream_synchronize_gpu("tridi_to_band: aIntern_dev", successGPU)
+#else
       successGPU = gpu_memset(aIntern_dev , 0, num)
       check_memset_gpu("tridi_to_band: aIntern_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -725,20 +734,9 @@ subroutine trans_ev_tridi_to_band_&
       aIntern(:,:,:) = 0.
 #endif
 
-!#ifdef WITH_GPU_STREAMS
-!
-!      !successGPU = gpu_host_register(int(loc(aInter),kind=c_intptr_t), &
-!      !              num, gpuHostRegisterDefault)
-!      !check_host_register_gpu("tridi_to_band: aIntern", successGPU)
-!
-!      successGPU = gpu_memcpy_async(aIntern_dev, int(loc(aIntern),kind=c_intptr_t), &
-!                              num, gpuMemcpyHostToDevice, my_stream)
-!      check_memcpy_gpu("tridi_to_band: aIntern -> aInternd_dev", successGPU)
-!#else
       successGPU = gpu_memcpy(aIntern_dev, int(loc(aIntern),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
       check_memcpy_gpu("tridi_to_band: aIntern -> aInternd_dev", successGPU)
-!#endif
       deallocate(aIntern)
     endif
 #endif /* WITH_OPENMP_OFFLOAD_GPU_VERSION */
@@ -777,8 +775,17 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memset_async(row_group_dev , 0, num, my_stream)
+      check_memset_gpu("tridi_to_band: row_group_dev", successGPU)
+      !successGPU = gpu_stream_synchronize(my_stream)
+      !check_stream_synchronize_gpu("tridi_to_band: row_group_dev", successGPU)
+#else
       successGPU = gpu_memset(row_group_dev , 0, num)
       check_memset_gpu("tridi_to_band: row_group_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       successGPU = gpu_memcpy(row_group_dev, int(loc(row_group),kind=c_intptr_t), &
@@ -842,8 +849,17 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memset_async(row_dev , 0, num, my_stream)
+      check_memset_gpu("tridi_to_band: row_dev", successGPU)
+      !successGPU = gpu_stream_synchronize(my_stream)
+      !check_stream_synchronize_gpu("tridi_to_band: row_dev", successGPU)
+#else
       successGPU = gpu_memset(row_dev , 0, num)
       check_memset_gpu("tridi_to_band: row_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       successGPU = gpu_memcpy(row_dev, int(loc(row),kind=c_intptr_t), &
@@ -1561,10 +1577,21 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memset_async(top_border_recv_buffer_dev, 0, num, my_stream)
+        check_memset_gpu("tridi_to_band: top_border_recv_buffer_dev", successGPU)
+        successGPU = gpu_memset_async(top_border_send_buffer_dev, 0, num, my_stream)
+        check_memset_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
+        !successGPU = gpu_stream_synchronize(my_stream)
+        !check_stream_synchronize_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
+#else
         successGPU = gpu_memset(top_border_recv_buffer_dev, 0, num)
         check_memset_gpu("tridi_to_band: top_border_recv_buffer_dev", successGPU)
         successGPU = gpu_memset(top_border_send_buffer_dev, 0, num)
         check_memset_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       else
         successGPU = gpu_memcpy(top_border_recv_buffer_dev, int(loc(top_border_recv_buffer),kind=c_intptr_t), &
@@ -1604,10 +1631,22 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memset_async(bottom_border_send_buffer_dev, 0, num, my_stream)
+        check_memset_gpu("tridi_to_band: bottom_border_send_buffer_dev", successGPU)
+        successGPU = gpu_memset_async(bottom_border_recv_buffer_dev, 0, num, my_stream)
+        check_memset_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
+        !successGPU = gpu_stream_synchronize(my_stream)
+        !check_stream_synchronize_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
+
+#else
         successGPU = gpu_memset(bottom_border_send_buffer_dev, 0, num)
         check_memset_gpu("tridi_to_band: bottom_border_send_buffer_dev", successGPU)
         successGPU = gpu_memset(bottom_border_recv_buffer_dev, 0, num)
         check_memset_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       else
         successGPU = gpu_memcpy(bottom_border_recv_buffer_dev, int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
@@ -1700,8 +1739,17 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memset_async( bcast_buffer_dev, 0, num, my_stream)
+      check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
+      !successGPU = gpu_stream_synchronize(my_stream)
+      !check_stream_synchronize_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
+#else
       successGPU = gpu_memset( bcast_buffer_dev, 0, num)
       check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer_dev),kind=c_intptr_t), &
@@ -1717,8 +1765,17 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memset_async( hh_tau_dev, 0, num, my_stream)
+      check_memset_gpu("tridi_to_band: hh_tau_dev", successGPU)
+      !successGPU = gpu_stream_synchronize(my_stream)
+      !check_stream_synchronize_gpu("tridi_to_band: hh_tau_dev", successGPU)
+#else
       successGPU = gpu_memset( hh_tau_dev, 0, num)
       check_memset_gpu("tridi_to_band: hh_tau_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       allocate(hh_tau_debug(max_blk_size))
@@ -1994,8 +2051,17 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memset_async(bcast_buffer_dev, 0, nbw * size_of_datatype, my_stream)
+          check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
+          !successGPU = gpu_stream_synchronize(my_stream)
+          !check_stream_synchronize_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
+#else
           successGPU = gpu_memset(bcast_buffer_dev, 0, nbw * size_of_datatype)
           check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
         else
           successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer(1,1)),kind=c_intptr_t), &
@@ -3334,6 +3400,8 @@ subroutine trans_ev_tridi_to_band_&
                                         stripe_width * top_msg_length * size_of_datatype,   &
                                         gpuMemcpyHostToDevice, my_stream)
                   check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
+                  successGPU = gpu_stream_synchronize(my_stream)
+                  check_stream_synchronize_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
 #else
                   successGPU =  gpu_memcpy(aIntern_dev + dev_offset ,int(loc( top_border_recv_buffer(:,i)),kind=c_intptr_t),  &
                                         stripe_width * top_msg_length * size_of_datatype,   &

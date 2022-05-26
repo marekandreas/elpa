@@ -198,7 +198,7 @@ last_stripe_width, kernel, my_stream, success)
   !if (wantDebug) then
 #ifdef WITH_NVIDIA_GPU_VERSION
     if (useGPU .and. &
-#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+#if defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
 #if REALCASE == 1
       ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU .and. kernel .ne. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU)) then
 #endif

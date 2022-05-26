@@ -249,26 +249,46 @@
     successGPU = gpu_malloc(tmp1_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmp1_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmp1_dev, 0, nblk*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_invert_trm: memset tmp1_dev", successGPU)
+#else
     successGPU = gpu_memset(tmp1_dev, 0, nblk*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset tmp1_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmp2_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmp2_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmp2_dev, 0, nblk*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
+#else
     successGPU = gpu_memset(tmp2_dev, 0, nblk*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmat1_dev, l_rows*nblk*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmat1_dev, 0, l_rows*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_invert_trm: memset tmat1_dev", successGPU)
+#else
     successGPU = gpu_memset(tmat1_dev, 0, l_rows*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset tmat1_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmat2_dev, nblk*l_cols*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmat2_dev, 0, nblk*l_cols*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_invert_trm: memset tmat2_dev", successGPU)
+#else
     successGPU = gpu_memset(tmat2_dev, 0, nblk*l_cols*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset tmat2_dev", successGPU)
+#endif
 
 #ifndef DEVICE_POINTER
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols*size_of_datatype)
@@ -295,9 +315,13 @@
 
     successGPU = gpu_malloc(zero_dev, 1*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: zero_dev", successGPU)
-
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(zero_dev, 0, 1*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_invert_trm: memset zero_dev", successGPU)
+#else
     successGPU = gpu_memset(zero_dev, 0, 1*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset zero_dev", successGPU)
+#endif
   endif ! useGPU
 
 

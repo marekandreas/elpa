@@ -556,6 +556,26 @@ module hip_functions
     end function hip_memset_c
   end interface
 
+#ifdef WITH_GPU_STREAMS
+  interface
+    function hip_memset_async_c(a, val, size, stream) result(istat) &
+             bind(C, name="hipMemsetAsyncFromC")
+  
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+
+      integer(kind=C_intptr_T), value            :: a
+      integer(kind=C_INT), value                 :: val
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT)                        :: istat
+      integer(kind=c_intptr_t), value            :: stream
+
+    end function hip_memset_async_c
+  end interface
+#endif
+
+
   ! cuBLAS
   interface rocblas_dgemm
     module procedure rocblas_dgemm_intptr
@@ -1485,6 +1505,28 @@ module hip_functions
    success = .true.
 #endif
  end function hip_memset
+
+#ifdef WITH_GPU_STREAMS
+  function hip_memset_async(a, val, size, stream) result(success)
+
+   use, intrinsic :: iso_c_binding
+
+   implicit none
+
+   integer(kind=c_intptr_t)                :: a
+   integer(kind=ik)                        :: val
+   integer(kind=c_intptr_t), intent(in)    :: size
+   integer(kind=C_INT)                     :: istat
+   integer(kind=c_intptr_t)                :: stream
+   logical :: success
+
+#ifdef WITH_AMD_GPU_VERSION
+   success= hip_memset_async_c(a, int(val,kind=c_int), int(size,kind=c_intptr_t), stream) /=0
+#else
+   success = .true.
+#endif
+  end function hip_memset_async
+#endif
 
  ! functions to memcopy CUDA memory
 

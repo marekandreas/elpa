@@ -273,6 +273,18 @@ extern "C" {
     return 1;
   }
 
+#ifdef WITH_GPU_STREAMS
+  int hipMemsetAsyncFromC(intptr_t *a, int value, size_t count, intptr_t stream) {
+
+    hipError_t hiperr = hipMemsetAsync( a, value, count, *((hipStream_t*)stream));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipMemsetAsync: %s\n",hipGetErrorString(hiperr));
+      return 0;
+    }
+    return 1;
+  }
+#endif
+
   int hipMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir) {
 
     hipError_t hiperr = hipMemcpy( dest, src, count, (hipMemcpyKind)dir);

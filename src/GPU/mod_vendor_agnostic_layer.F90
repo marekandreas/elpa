@@ -1048,6 +1048,61 @@ module elpa_gpu
 
     end function
 
+    function gpu_memset_async(a, val, size, stream) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      integer(kind=c_intptr_t)             :: a
+      integer(kind=ik)                     :: val
+      integer(kind=c_intptr_t), intent(in) :: size
+      integer(kind=C_INT)                  :: istat
+      integer(kind=c_intptr_t), intent(in) :: stream
+
+      logical :: success
+
+      success = .false.
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_memset_async(a, val, size, stream)
+      endif
+
+#ifdef WITH_AMD_GPU_VERSION
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_memset_async(a, val, size, stream)
+      endif
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        !success = openmp_offload_memset(a, val, size)
+        print *,"Openmp Offload memset_async not yet implemented"
+        stop
+      endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        !success = sycl_memset(a, int(val,kind=c_int32_t), size)
+        print *,"Sycl memset_async not yet implemented"
+        stop
+      endif
+#endif
+
+    end function
+
+
+
+
     function gpu_free(a) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -1290,7 +1345,6 @@ module elpa_gpu
 #endif
     end function
 
-!dddd
     function gpu_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, stream) result(success)
 
       use, intrinsic :: iso_c_binding

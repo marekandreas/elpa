@@ -325,6 +325,22 @@ module cuda_c_kernel
 #endif
     end subroutine
 
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+    subroutine launch_compute_hh_trafo_cuda_sm80_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
+#endif
+    end subroutine
+#endif /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
+
+
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine launch_compute_hh_trafo_cuda_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
@@ -338,7 +354,25 @@ module cuda_c_kernel
       call launch_compute_hh_trafo_c_cuda_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
     end subroutine
-#endif
+
+#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+    subroutine launch_compute_hh_trafo_cuda_sm80_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int)      :: nev, nb, ldq, ncols
+      integer(kind=c_intptr_t) :: q
+      integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
+
+!#ifdef WITH_NVIDIA_GPU_VERSION
+!      call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
+!#endif
+       print *,"the single precision kernel is not yet implemented"
+       stop
+    end subroutine
+#endif /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
+
+#endif /* WANT_SINGLE_PRECISION_REAL */
 
     subroutine launch_compute_hh_trafo_cuda_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding

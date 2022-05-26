@@ -300,8 +300,8 @@ subroutine trans_ev_band_to_full_&
     successGPU = gpu_memcpy_async(q_dev,int(loc(q_mat),kind=c_intptr_t),&
                   ldq*matrixCols*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
     check_memcpy_gpu("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
 #else
     successGPU = gpu_memcpy(q_dev,int(loc(q_mat),kind=c_intptr_t),&
                   ldq*matrixCols*size_of_datatype, gpuMemcpyHostToDevice)
@@ -405,8 +405,17 @@ subroutine trans_ev_band_to_full_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memset_async(tmp_dev, 0, max_local_cols*cwy_blocking*size_of_datatype, my_stream)
+      check_memset_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
+      !successGPU = gpu_stream_synchronize(my_stream)
+      !check_stream_synchronize_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
+#else
       successGPU = gpu_memset(tmp_dev, 0, max_local_cols*cwy_blocking*size_of_datatype)
       check_memset_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
       allocate(tmp_debug(max_local_cols*cwy_blocking))
@@ -423,8 +432,17 @@ subroutine trans_ev_band_to_full_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memset_async(tmp2_dev, 0, max_local_cols*cwy_blocking*size_of_datatype, my_stream)
+      check_memset_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
+      !successGPU = gpu_stream_synchronize(my_stream)
+      !check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
+#else
       successGPU = gpu_memset(tmp2_dev, 0, max_local_cols*cwy_blocking*size_of_datatype)
       check_memset_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
      allocate(tmp_debug(max_local_cols*cwy_blocking))
@@ -456,12 +474,29 @@ subroutine trans_ev_band_to_full_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+         successGPU = gpu_memset_async(t_tmp_dev, 0, cwy_blocking*nbw*size_of_datatype, my_stream)
+         check_memset_gpu("trans_ev_band_to_full: t_tmp_dev", successGPU)
+         !successGPU = gpu_stream_synchronize(my_stream)
+         !check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev", successGPU)
+#else
          successGPU = gpu_memset(t_tmp_dev, 0, cwy_blocking*nbw*size_of_datatype)
          check_memset_gpu("trans_ev_band_to_full: t_tmp_dev", successGPU)
+#endif
+
 #ifdef CUDA_AWARE_MPI_BAND_TO_FULL
+#ifdef WITH_GPU_STREAMS
+         successGPU = gpu_memset_async(t_tmp2_dev, 0, cwy_blocking*nbw*size_of_datatype, my_stream)
+         check_memset_gpu("trans_ev_band_to_full: t_tmp2_dev", successGPU)
+         !successGPU = gpu_stream_synchronize(my_stream)
+         !check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp2_dev", successGPU)
+#else
          successGPU = gpu_memset(t_tmp2_dev, 0, cwy_blocking*nbw*size_of_datatype)
          check_memset_gpu("trans_ev_band_to_full: t_tmp2_dev", successGPU)
+
 #endif
+#endif /* CUDA_AWARE_MPI_BAND_TO_FULL */
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
        else
          allocate(tmp_debug(nbw*cwy_blocking))
@@ -625,7 +660,6 @@ subroutine trans_ev_band_to_full_&
           check_memcpy_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp", successGPU)
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp", successGPU)
-
 #else
           successGPU = gpu_memcpy(int(loc(t_tmp),kind=c_intptr_t), &
                                   t_tmp_dev, cwy_blocking*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
@@ -664,7 +698,6 @@ subroutine trans_ev_band_to_full_&
           check_memcpy_gpu("trans_ev_band_to_full: t_tmp2_dev -> t_tmp_dev", successGPU)
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp2_dev -> t_tmp_dev", successGPU)
-
 #else
           successGPU = gpu_memcpy(t_tmp_dev, t_tmp2_dev, &
                                   cwy_blocking*nbw*size_of_datatype, gpuMemcpyDeviceToDevice)
@@ -681,7 +714,6 @@ subroutine trans_ev_band_to_full_&
           check_memcpy_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp", successGPU)
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp", successGPU)
-
 #else
           successGPU = gpu_memcpy(int(loc(t_tmp),kind=c_intptr_t), &
                                   t_tmp_dev, cwy_blocking*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
@@ -868,8 +900,8 @@ subroutine trans_ev_band_to_full_&
         successGPU = gpu_memcpy_async(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
                         max_local_rows*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("trans_ev_band_to_full: hvm -> hvm_dev", successGPU)
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: hvm -> hvm_dev", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("trans_ev_band_to_full: hvm -> hvm_dev", successGPU)
 #else
         successGPU = gpu_memcpy(hvm_dev, int(loc(hvm),kind=c_intptr_t), &
                         max_local_rows*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
@@ -917,8 +949,17 @@ subroutine trans_ev_band_to_full_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memset_async(tmp_dev, 0, l_cols*n_cols*size_of_datatype, my_stream)
+          check_memset_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
+          !successGPU = gpu_stream_synchronize(my_stream)
+          !check_stream_synchronize_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
+#else
           successGPU = gpu_memset(tmp_dev, 0, l_cols*n_cols*size_of_datatype)
           check_memset_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
         else
           allocate(tmp_debug(l_cols*n_cols))
@@ -992,8 +1033,8 @@ subroutine trans_ev_band_to_full_&
       successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                               l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
       check_memcpy_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
 #else
       successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                               l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
@@ -1048,8 +1089,8 @@ subroutine trans_ev_band_to_full_&
       successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                               l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
       check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
 #else
       successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                               l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
@@ -1083,8 +1124,8 @@ subroutine trans_ev_band_to_full_&
         successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                       l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
 #else
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                       l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
@@ -1097,8 +1138,8 @@ subroutine trans_ev_band_to_full_&
         successGPU = gpu_memcpy_async(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 #else
         successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
@@ -1132,8 +1173,8 @@ subroutine trans_ev_band_to_full_&
         successGPU = gpu_memcpy_async(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 #else
         successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)

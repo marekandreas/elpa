@@ -284,26 +284,46 @@
     successGPU = gpu_malloc(tmp1_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmp1_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmp1_dev, 0, nblk*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memset tmp1_dev", successGPU)
+#else
     successGPU = gpu_memset(tmp1_dev, 0, nblk*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_cholesky: memset tmp1_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmp2_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmp2_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmp2_dev, 0, nblk*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memset tmp2_dev", successGPU)
+#else
     successGPU = gpu_memset(tmp2_dev, 0, nblk*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_cholesky: memset tmp2_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmatc_dev, l_cols*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmatc_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmatc_dev, 0, l_cols*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memset tmatc_dev", successGPU)
+#else
     successGPU = gpu_memset(tmatc_dev, 0, l_cols*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_cholesky: memset tmatc_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmatr_dev, l_rows*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmatr_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmatr_dev, 0, l_rows*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memset tmatr_dev", successGPU)
+#else
     successGPU = gpu_memset(tmatr_dev, 0, l_rows*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_cholesky: memset tmatr_dev", successGPU)
+#endif
 
 #ifndef DEVICE_POINTER
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols*size_of_datatype)

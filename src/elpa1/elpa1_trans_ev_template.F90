@@ -528,7 +528,11 @@ subroutine trans_ev_&
 
         if (useGPU) then
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memset_async(tmp_dev, 0, l_cols * nstor * size_of_datatype, my_stream)
+#else
             successGPU = gpu_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
+#endif
             check_memcpy_gpu("trans_ev", successGPU)
           else
             allocate(tmp_debug(l_cols * nstor))

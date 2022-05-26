@@ -293,7 +293,6 @@ module mod_check_for_gpu
           ! cuda stream create
 #ifdef WITH_NVIDIA_GPU_VERSION
           success = cuda_stream_create(my_stream)
-          print *,"my_stream=",my_stream
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -596,7 +595,6 @@ module mod_check_for_gpu
           ! cuda stream create
 #ifdef WITH_NVIDIA_GPU_VERSION
           success = cuda_stream_create(my_stream)
-          print *,"my_stream=",my_stream
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION

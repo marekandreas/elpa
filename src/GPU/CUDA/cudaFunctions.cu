@@ -84,10 +84,7 @@ extern "C" {
   int cudaStreamCreateFromC(intptr_t *stream) {
     *stream = (intptr_t) malloc(sizeof(cudaStream_t));
 
-    //cudaStream_t stream2;
     cudaError_t status = cudaStreamCreate((cudaStream_t*) *stream);
-    //cudaError_t status = cudaStreamCreate(&stream2);
-    printf("Stream %d \n",stream);
 
     if (status == cudaSuccess) {
 //       printf("all OK\n");
@@ -336,6 +333,16 @@ extern "C" {
     cudaError_t cuerr = cudaMemset( a, value, count);
     if (cuerr != cudaSuccess) {
       errormessage("Error in cudaMemset: %s\n",cudaGetErrorString(cuerr));
+      return 0;
+    }
+    return 1;
+  }
+
+  int cudaMemsetAsyncFromC(intptr_t *a, int value, size_t count, intptr_t stream) {
+
+    cudaError_t cuerr = cudaMemsetAsync( a, value, count, *((cudaStream_t*)stream));
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cudaMemsetAsync: %s\n",cudaGetErrorString(cuerr));
       return 0;
     }
     return 1;

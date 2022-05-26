@@ -596,6 +596,23 @@ module cuda_functions
     end function cuda_memset_c
   end interface
 
+  interface
+    function cuda_memset_async_c(a, val, size, stream) result(istat) &
+             bind(C, name="cudaMemsetAsyncFromC")
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+
+      integer(kind=C_intptr_T), value            :: a
+      integer(kind=C_INT), value                 :: val
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT)                        :: istat
+      integer(kind=c_intptr_t), value            :: stream
+
+    end function cuda_memset_async_c
+  end interface
+
   ! cuSOLVER
   interface
     subroutine cusolver_dtrtri_c(handle, uplo, diag, n, a, lda, info) &
@@ -1674,7 +1691,7 @@ module cuda_functions
 #endif
    end function cuda_free_host
 
- function cuda_memset(a, val, size) result(success)
+  function cuda_memset(a, val, size) result(success)
 
    use, intrinsic :: iso_c_binding
 
@@ -1691,7 +1708,28 @@ module cuda_functions
 #else
    success = .true.
 #endif
- end function cuda_memset
+  end function cuda_memset
+
+  function cuda_memset_async(a, val, size, stream) result(success)
+
+   use, intrinsic :: iso_c_binding
+
+   implicit none
+
+   integer(kind=c_intptr_t)                :: a
+   integer(kind=ik)                        :: val
+   integer(kind=c_intptr_t), intent(in)    :: size
+   integer(kind=C_INT)                     :: istat
+   integer(kind=c_intptr_t)                :: stream
+   logical :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+   success= cuda_memset_async_c(a, int(val,kind=c_int), int(size,kind=c_intptr_t), stream) /=0
+#else
+   success = .true.
+#endif
+  end function cuda_memset_async
+
 
  ! functions to memcopy CUDA memory
 

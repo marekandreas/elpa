@@ -691,11 +691,19 @@ subroutine tridiag_&
      if (useGPU) then
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU ) then
+#ifdef WITH_GPU_STREAMS
+         successGPU = gpu_memset_async(u_col_dev, 0, l_cols * size_of_datatype, my_stream)
+         check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+
+         successGPU = gpu_memset_async(u_row_dev, 0, l_rows * size_of_datatype, my_stream)
+         check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+#else
          successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
          check_memcpy_gpu("tridiag: u_col_dev", successGPU)
 
          successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype)
          check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+#endif
        else
          ! debug
          allocate(u_col_debug(l_cols))
