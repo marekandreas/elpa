@@ -2512,7 +2512,8 @@ contains
           if (lr.gt.0) then             
              lcx = local_index(istep*nbw+imin, my_pcol, np_cols, nblk, 0)
              call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND), &
-                  ONE, a_mat(1,lcx), matrixRows, vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), 1_BLAS_KIND)
+                  ONE, a_mat(1,lcx), int(matrixRows,kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
+                  1_BLAS_KIND)
           end if
           nlc=nlc+icount  
        end do
@@ -2531,7 +2532,8 @@ contains
           end do
        else
           call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND), &
-               ONE, ex_buff2d, size(ex_buff2d,1), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), 1_BLAS_KIND)
+               ONE, ex_buff2d, int(size(ex_buff2d,1), kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, &
+               aux1(nlc+1), 1_BLAS_KIND)
           nlc=nlc+imax
        end if
     else
@@ -2596,8 +2598,9 @@ contains
 !#if COMPLEXCASE == 1
 !          call zgerc(lr,icount,-tauc,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
 !#endif
-          call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND),-tauc,vr,1_BLAS_KIND,&
-               aux1(nlc+1),1_BLAS_KIND,a_mat(1,lcx),ubound(a_mat,1))
+          call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND),tauc, &
+               vr,1_BLAS_KIND,&
+               aux1(nlc+1),1_BLAS_KIND,a_mat(1,lcx),int(ubound(a_mat,1),kind=BLAS_KIND))
           nlc=nlc+icount
        end do
     end if
@@ -2617,8 +2620,8 @@ contains
 !#if COMPLEXCASE == 1
 !       call zgerc(lr,ubound(ex_buff2d,2),-tauc,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
 !#endif
-       call PRECISION_GERC(int(lr,kind=BLAS_KIND),ubound(ex_buff2d,2),-tauc,vr,1_BLAS_KIND,&
-            aux1(nlc+1),1_BLAS_KIND,ex_buff2d,ubound(ex_buff2d,1))
+       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(ubound(ex_buff2d,2),kind=BLAS_KIND),-tauc,vr,1_BLAS_KIND,&
+            aux1(nlc+1),1_BLAS_KIND,ex_buff2d,int(ubound(ex_buff2d,1),kind=BLAS_KIND))
     end if
     
 #endif /* WITH_OPENMP_TRADITIONAL */
