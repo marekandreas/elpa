@@ -361,7 +361,7 @@ module hip_c_kernel
 
 #ifdef WITH_AMD_GPU_VERSION
       call launch_my_pack_c_hip_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, &
-              a_dev, row_group_dev, my_strea,)
+              a_dev, row_group_dev, my_stream)
 #endif
     end subroutine
 

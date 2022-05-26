@@ -71,6 +71,8 @@ module hip_functions
 !#ifdef WANT_SINGLE_PRECISION_COMPLEX
 !  integer(kind=c_intptr_t), parameter :: size_of_single_complex = 8_ck4
 !#endif
+
+#ifdef WITH_GPU_STREAMS
   interface
     function hip_stream_create_c(stream) result(istat) &
              bind(C, name="hipStreamCreateFromC")
@@ -91,7 +93,6 @@ module hip_functions
     end function
   end interface
 
-#ifdef WITH_AMD_GPU_VERSION
   interface
     function rocblas_set_stream_c(handle, stream) result(istat) &
              bind(C, name="rocblasSetStreamFromC")
@@ -103,9 +104,7 @@ module hip_functions
       integer(kind=c_int)              :: istat
     end function
   end interface
-#endif
 
-#ifdef WITH_AMD_GPU_VERSION
   interface
     function hip_stream_synchronize_c(stream) result(istat) &
              bind(C, name="hipStreamSynchronizeFromC")
@@ -116,7 +115,7 @@ module hip_functions
       integer(kind=C_INT)              :: istat
     end function
   end interface
-#endif
+#endif /* WITH_GPU_STREAMS */
 
 
   ! functions to set and query the CUDA devices
@@ -304,7 +303,7 @@ module hip_functions
       integer(kind=C_intptr_t), value              :: src
       integer(kind=c_intptr_t), intent(in), value  :: size
       integer(kind=C_INT), intent(in), value       :: dir
-      integer(kind=c_int)                          :: stream
+      integer(kind=c_intptr_t), value              :: stream
       integer(kind=C_INT)                          :: istat
 
     end function hip_memcpy_async_intptr_c
@@ -321,7 +320,7 @@ module hip_functions
       type(c_ptr), value                           :: src
       integer(kind=c_intptr_t), intent(in), value  :: size
       integer(kind=C_INT), intent(in), value       :: dir
-      integer(kind=c_int)                          :: stream
+      integer(kind=c_intptr_t), value              :: stream
       integer(kind=C_INT)                          :: istat
 
     end function hip_memcpy_async_cptr_c
@@ -338,7 +337,7 @@ module hip_functions
       integer(kind=c_intptr_t), value              :: src
       integer(kind=c_intptr_t), intent(in), value  :: size
       integer(kind=C_INT), intent(in), value       :: dir
-      integer(kind=c_intptr_t)                     :: stream
+      integer(kind=c_intptr_t), value              :: stream
       integer(kind=C_INT)                          :: istat
 
     end function hip_memcpy_async_mixed_to_device_c
@@ -355,7 +354,7 @@ module hip_functions
       integer(kind=c_intptr_t), value              :: dst
       integer(kind=c_intptr_t), intent(in), value  :: size
       integer(kind=C_INT), intent(in), value       :: dir
-      integer(kind=c_intptr_t)                     :: stream
+      integer(kind=c_intptr_t), value              :: stream
       integer(kind=C_INT)                          :: istat
 
     end function hip_memcpy_async_mixed_to_host_c
@@ -1262,6 +1261,8 @@ module hip_functions
   contains
 
     !streams
+#ifdef WITH_GPU_STREAMS
+
     function hip_stream_create(stream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -1315,6 +1316,7 @@ module hip_functions
 #endif
    end function
 
+#endif /* WITH_GPU_STREAMS */
 
 #if 0
 #ifdef WITH_NVTX

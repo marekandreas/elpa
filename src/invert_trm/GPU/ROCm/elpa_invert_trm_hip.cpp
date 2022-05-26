@@ -316,7 +316,7 @@ __global__ void hip_copy_float_complex_tmp2_tmat2_kernel(hipFloatComplex *tmp2_d
 
 }
 
-extern "C" void hip_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev, float _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t streamId){
+extern "C" void hip_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev, float _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
   int nblk   = *nblk_in;   
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;

@@ -325,9 +325,11 @@ module elpa_gpu
       endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
       if (use_gpu_vendor == amd_gpu) then
-        success = hipblas_set_stream(handle, stream)
+        success = rocblas_set_stream(handle, stream)
       endif
+#endif
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
@@ -370,9 +372,11 @@ module elpa_gpu
       endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
       if (use_gpu_vendor == amd_gpu) then
         success = hip_stream_synchronize(stream)
       endif
+#endif
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then

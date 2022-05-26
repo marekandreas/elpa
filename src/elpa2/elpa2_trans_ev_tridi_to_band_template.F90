@@ -2692,7 +2692,8 @@ subroutine trans_ev_tridi_to_band_&
                   if (wantDebug) call obj%timer%start("memcpy")
                   dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-                  successGPU =  gpu_memcpy_async( int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
+                  successGPU =  gpu_memcpy_async( int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), &
+                                            aIntern_dev + dev_offset, &
                                             stripe_width * bottom_msg_length * size_of_datatype,      &
                                             gpuMemcpyDeviceToHost, my_stream)
                   check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
@@ -3024,7 +3025,8 @@ subroutine trans_ev_tridi_to_band_&
                   if (wantDebug) call obj%timer%start("memcpy")
                   dev_offset = (0 + (n_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-                  successGPU =  gpu_memcpy_async(int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
+                  successGPU =  gpu_memcpy_async(int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), &
+                                           aIntern_dev + dev_offset,  &
                                            stripe_width*bottom_msg_length* size_of_datatype,  &
                                            gpuMemcpyDeviceToHost, my_stream)
                   check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
@@ -3328,7 +3330,7 @@ subroutine trans_ev_tridi_to_band_&
                   ! copy top_border_recv_buffer to aIntern_dev, maybe not necessary if CUDA_AWARE IRECV
                   dev_offset = (0 + (a_off * stripe_width) + ( (i-1) * stripe_width * a_dim2 )) * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-                  successGPU =  gpu_memcpy_async(aIntern_dev + dev_offset ,int(loc( top_border_recv_buffer(:,i)),kind=c_intptr_t),  &
+                  successGPU =  gpu_memcpy_async(aIntern_dev + dev_offset ,int(loc( top_border_recv_buffer(:,i)),kind=c_intptr_t), &
                                         stripe_width * top_msg_length * size_of_datatype,   &
                                         gpuMemcpyHostToDevice, my_stream)
                   check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
