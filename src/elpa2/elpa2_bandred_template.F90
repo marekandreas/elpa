@@ -720,12 +720,14 @@ myid=my_prow+my_pcol*np_rowsMPI
           end if
 
           if((mod(lc,nblk).eq.0).and.(oldpe.ne.-1)) then
+#ifdef WITH_MPI
              !broadcast data
              call obj%timer%start("bcast_multi")
              if(lrex.gt.0) call mpi_bcast(ex_buff, int(lrex*off,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                   int(oldpe,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
                   mpierr)
              call obj%timer%stop("bcast_multi")
+#endif
 
              !inner loop over block
              ioff=0
