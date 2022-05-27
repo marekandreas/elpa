@@ -1329,7 +1329,7 @@ module hip_functions
 
      integer(kind=C_intptr_t)                  :: stream
      logical                                   :: success
-#ifdef WITH_AMOD_GPU_VERSION
+#ifdef WITH_AMD_GPU_VERSION
      success = hip_stream_synchronize_c(stream) /= 0
 #else
      success = .true.

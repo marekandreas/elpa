@@ -290,13 +290,20 @@ module mod_check_for_gpu
           endif
       
 #ifdef WITH_GPU_STREAMS
-          ! cuda stream create
 #ifdef WITH_NVIDIA_GPU_VERSION
           success = cuda_stream_create(my_stream)
 #endif
+
+#ifdef WITH_AMD_GPU_VERSION
+          success = hip_stream_create(my_stream)
+#endif
+
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
             print *,"Cannot create cuda stream handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+            print *,"Cannot create hip stream handle"
 #endif
             stop 1
           endif
@@ -402,9 +409,15 @@ module mod_check_for_gpu
 #ifdef WITH_NVIDIA_GPU_VERSION
             success = cublas_set_stream(cublasHandleArray(thread), my_stream)
 #endif
+#ifdef WITH_AMD_GPU_VERSION
+            success = rocblas_set_stream(rocblasHandleArray(thread), my_stream)
+#endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-              print *,"Cannot create cuda stream handle"
+              print *,"Cannot create cublas stream handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+              print *,"Cannot create rocblas stream handle"
 #endif
               stop 1
             endif
@@ -592,13 +605,18 @@ module mod_check_for_gpu
           allreadySET = .true.
       
 #ifdef WITH_GPU_STREAMS
-          ! cuda stream create
 #ifdef WITH_NVIDIA_GPU_VERSION
           success = cuda_stream_create(my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+          success = hip_stream_create(my_stream)
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
             print *,"Cannot create cuda stream handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+            print *,"Cannot create hip stream handle"
 #endif
             stop 1
           endif
@@ -703,9 +721,15 @@ module mod_check_for_gpu
 #ifdef WITH_NVIDIA_GPU_VERSION
             success = cublas_set_stream(cublasHandleArray(thread), my_stream)
 #endif
+#ifdef WITH_AMD_GPU_VERSION
+            success = rocblas_set_stream(rocblasHandleArray(thread), my_stream)
+#endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-              print *,"Cannot create cuda stream handle"
+              print *,"Cannot create cublas stream handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+              print *,"Cannot create rocblas stream handle"
 #endif
               stop 1
             endif
