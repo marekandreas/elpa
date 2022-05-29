@@ -2396,10 +2396,10 @@ contains
     use_gemv=.true.
     use_gerc=.true.
 #if REALCASE == 1
-    tauc=tau
+    tauc=-tau
 #endif
 #if COMPLEXCASE == 1
-    tauc=conjg(tau)
+    tauc=-conjg(tau)
 #endif    
     
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -2581,7 +2581,7 @@ contains
           lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
           if (lcx>0) then
              nlc = nlc+1
-             a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tauc*aux1(nlc)*vr(1:lr)
+             a_mat(1:lr,lcx) = a_mat(1:lr,lcx) + tauc*aux1(nlc)*vr(1:lr)
           endif
        enddo
     else
@@ -2595,10 +2595,10 @@ contains
           imin=j       
           icount=imax-imin+1
 !#if REALCASE == 1
-!          call dger(lr,icount,-tauc,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
+!          call dger(lr,icount,tauc,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
 !#endif
 !#if COMPLEXCASE == 1
-!          call zgerc(lr,icount,-tauc,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
+!          call zgerc(lr,icount,tauc,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
 !#endif
           call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND),tauc, &
                vr,1_BLAS_KIND,&
@@ -2612,17 +2612,17 @@ contains
     if(.not.use_gerc) then
        do iioff=1,ubound(ex_buff2d,2)
           nlc = nlc+1
-          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tauc*aux1(nlc)*vr(1:lr)
+          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) + tauc*aux1(nlc)*vr(1:lr)
        end do
     else
 
 !#if REALCASE == 1
-!       call dger(lr,ubound(ex_buff2d,2),-tauc,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
+!       call dger(lr,ubound(ex_buff2d,2),tauc,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
 !#endif
 !#if COMPLEXCASE == 1
-!       call zgerc(lr,ubound(ex_buff2d,2),-tauc,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
+!       call zgerc(lr,ubound(ex_buff2d,2),tauc,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
 !#endif
-       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(ubound(ex_buff2d,2),kind=BLAS_KIND),-tauc,vr,1_BLAS_KIND,&
+       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(ubound(ex_buff2d,2),kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
             aux1(nlc+1),1_BLAS_KIND,ex_buff2d,int(ubound(ex_buff2d,1),kind=BLAS_KIND))
     end if
     
