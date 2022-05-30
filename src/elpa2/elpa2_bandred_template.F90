@@ -168,7 +168,7 @@ max_threads, isSkewsymmetric)
   MATH_DATATYPE(kind=rck), pointer            :: vmrGPU(:), umcGPU(:)
   MATH_DATATYPE(kind=rck), pointer            :: vmrGPU_2d(:,:), umcGPU_2d(:,:)
   MATH_DATATYPE(kind=rck), allocatable        :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:), vmrCPU_qr(:,:)
-  MATH_DATATYPE(kind=rck), allocatable        :: vr(:), taublock(:)
+  MATH_DATATYPE(kind=rck), allocatable        :: vr(:), taublock(:), vrlblock(:)
   MATH_DATATYPE(kind=rck), allocatable, target :: ex_buff(:)
   MATH_DATATYPE(kind=rck), pointer            :: ex_buff2d(:,:)
 
@@ -527,7 +527,7 @@ myid=my_prow+my_pcol*np_rowsMPI
 
   endif ! useGPU
 
-  allocate(taublock(nbw))
+  allocate(taublock(nbw),vrlblock(nbw))
 
   do istep = blk_end, 1, -1
 
@@ -756,21 +756,11 @@ myid=my_prow+my_pcol*np_rowsMPI
                    vmrCPU(1:lr,ilc) = vr(1:lr)
                 endif
 #if REALCASE == 1
-!                tmat(ilc,ilc,istep) = tau ! Store tau in diagonal of tmat
                 taublock(ilc) = tau
-#endif
-#if COMPLEXCASE == 1
-!                tmat(ilc,ilc,istep) = conjg(tau) ! Store tau in diagonal of tmat
+#else
                 taublock(ilc) = conjg(tau)
 #endif
-                if (my_pcol==oldpe) then
-                   if (my_prow==prow(nrow, nblk, np_rows)) then
-                      a_mat(1:lr-1,lch) = vr(1:lr-1)
-                      a_mat(lr,lch) = vrl
-                   else
-                      a_mat(1:lr,lch) = vr(1:lr)
-                   end if
-                end if
+                vrlblock(ilc)=vrl
              end do
              !reset counters for next block
              off=0
@@ -2116,6 +2106,24 @@ myid=my_prow+my_pcol*np_rowsMPI
     enddo ! i=0,(istep*nbw-1)/tile_size
 #endif /* WITH_OPENMP_TRADITIONAL */
 
+    !store Householder vectors for back transformation
+    do lc = n_cols, 1, -1
+       ncol = istep*nbw + lc ! absolute column number of householder Vector
+       nrow = ncol - nbw ! Absolute number of pivot row             
+       cur_pcol = pcol(ncol, nblk, np_cols) ! Processor column owning current block
+       if (nrow == 1) exit ! Nothing to do
+       lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
+       lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+       if (my_pcol==cur_pcol) then
+          if (useGPU_reduction_lower_block_to_tridiagonal) then
+             a_mat(1:lr,lch)=vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) 
+          else
+             a_mat(1:lr,lch)=vmrCPU(1:lr,lc)  
+          endif
+          if (my_prow==prow(nrow, nblk, np_rows)) a_mat(lr,lch) = vrlblock(lc)
+       end if
+    end do
+    
     if (.not.(useGPU)) then
       if (allocated(vr)) then
         deallocate(vr, stat=istat, errmsg=errorMessage)
@@ -2198,7 +2206,7 @@ myid=my_prow+my_pcol*np_rowsMPI
     endif
 #endif
 
-  enddo ! istep - loop
+ enddo ! istep - loop
 
   if (useGPU) then
 
@@ -2294,7 +2302,7 @@ myid=my_prow+my_pcol*np_rowsMPI
 
 #endif /* WITH_OPENMP_TRADITIONAL */
   endif ! useGPU
-
+  
 #ifndef WITH_OPENMP_TRADITIONAL
   if (allocated(vr)) then
     deallocate(vr, stat=istat, errmsg=errorMessage)
@@ -2324,6 +2332,7 @@ myid=my_prow+my_pcol*np_rowsMPI
   endif
 #endif
   deallocate(taublock, stat=istat, errmsg=errorMessage)
+  deallocate(vrlblock, stat=istat, errmsg=errorMessage)
   
   call obj%timer%stop("bandred_&
   &MATH_DATATYPE&
