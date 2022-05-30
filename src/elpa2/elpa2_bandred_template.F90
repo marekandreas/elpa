@@ -168,7 +168,7 @@ max_threads, isSkewsymmetric)
   MATH_DATATYPE(kind=rck), pointer            :: vmrGPU(:), umcGPU(:)
   MATH_DATATYPE(kind=rck), pointer            :: vmrGPU_2d(:,:), umcGPU_2d(:,:)
   MATH_DATATYPE(kind=rck), allocatable        :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:), vmrCPU_qr(:,:)
-  MATH_DATATYPE(kind=rck), allocatable        :: vr(:)
+  MATH_DATATYPE(kind=rck), allocatable        :: vr(:), taublock(:)
   MATH_DATATYPE(kind=rck), allocatable, target :: ex_buff(:)
   MATH_DATATYPE(kind=rck), pointer            :: ex_buff2d(:,:)
 
@@ -527,6 +527,8 @@ myid=my_prow+my_pcol*np_rowsMPI
 
   endif ! useGPU
 
+  allocate(taublock(nbw))
+
   do istep = blk_end, 1, -1
 
     n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
@@ -705,13 +707,15 @@ myid=my_prow+my_pcol*np_rowsMPI
 #endif /* REALCASE == 1 */
        if(.true.) then !blocked implementation
 !       if(.false.) then
-       call obj%timer%start("hh_block")
+          call obj%timer%start("hh_block")
+
        cs_new=0.
        cs_old=0.
        oldpe=-1
        off=0
        lcstart=n_cols
        allocate(ex_buff(l_rows*nblk))
+       taublock(1)=0. !first entry is not computed below
        do lc = n_cols, 0, -1
           if(lc.ne.0) then
              ncol = istep*nbw + lc ! absolute column number of householder Vector
@@ -720,15 +724,14 @@ myid=my_prow+my_pcol*np_rowsMPI
           end if
 
           if((mod(lc,nblk).eq.0).and.(oldpe.ne.-1)) then
-#ifdef WITH_MPI
              !broadcast data
+#ifdef WITH_MPI
              call obj%timer%start("bcast_multi")
              if(lrex.gt.0) call mpi_bcast(ex_buff, int(lrex*off,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                   int(oldpe,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
                   mpierr)
              call obj%timer%stop("bcast_multi")
 #endif
-
              !inner loop over block
              ioff=0
              do ilc=lcstart,lc+1,-1
@@ -753,10 +756,12 @@ myid=my_prow+my_pcol*np_rowsMPI
                    vmrCPU(1:lr,ilc) = vr(1:lr)
                 endif
 #if REALCASE == 1
-                tmat(ilc,ilc,istep) = tau ! Store tau in diagonal of tmat
+!                tmat(ilc,ilc,istep) = tau ! Store tau in diagonal of tmat
+                taublock(ilc) = tau
 #endif
 #if COMPLEXCASE == 1
-                tmat(ilc,ilc,istep) = conjg(tau) ! Store tau in diagonal of tmat
+!                tmat(ilc,ilc,istep) = conjg(tau) ! Store tau in diagonal of tmat
+                taublock(ilc) = conjg(tau)
 #endif
                 if (my_pcol==oldpe) then
                    if (my_prow==prow(nrow, nblk, np_rows)) then
@@ -1096,7 +1101,7 @@ myid=my_prow+my_pcol*np_rowsMPI
       ! This can be done in different ways, we use dsyrk
 
       vav = 0
-      call obj%timer%start("blas")
+      call obj%timer%start("blas0")
       if (useGPU_reduction_lower_block_to_tridiagonal) then
         if (l_rows > 0) &
 #if REALCASE == 1
@@ -1120,7 +1125,7 @@ myid=my_prow+my_pcol*np_rowsMPI
                             int(n_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, vmrCPU, &
                             int(max(l_rows, 1),kind=BLAS_KIND), ZERO, vav, int(nbw,kind=BLAS_KIND))
       endif
-      call obj%timer%stop("blas")
+      call obj%timer%stop("blas0")
 #if REALCASE == 1
       call symm_matrix_allreduce_&
 #endif
@@ -1135,23 +1140,25 @@ myid=my_prow+my_pcol*np_rowsMPI
       endif
 
          ! Calculate triangular matrix T for block Householder Transformation
-      call obj%timer%start("blas")
+      call obj%timer%start("blas1")
       do lc=n_cols,1,-1
-        tau = tmat(lc,lc,istep)
-        if (lc < n_cols) then
-          call PRECISION_TRMV('U', BLAS_TRANS_OR_CONJ, 'N',&
-                              int(n_cols-lc,kind=BLAS_KIND), tmat(lc+1,lc+1,istep), &
-                              int(nbw,kind=BLAS_KIND), vav(lc+1,lc), 1_BLAS_KIND)
-
+         tau = taublock(lc)
+         tmat(lc,lc,istep)=tau
+         if (lc < n_cols) then
+            call PRECISION_TRMV('U', BLAS_TRANS_OR_CONJ, 'N',&
+                 int(n_cols-lc,kind=BLAS_KIND), tmat(lc+1,lc+1,istep), &
+                 int(nbw,kind=BLAS_KIND), vav(lc+1,lc), 1_BLAS_KIND)
+            
 #if REALCASE == 1
-          tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
+            tmat(lc,lc+1:n_cols,istep) = -tau * vav(lc+1:n_cols,lc)
 #endif
 #if COMPLEXCASE == 1
-          tmat(lc,lc+1:n_cols,istep) = -tau * conjg(vav(lc+1:n_cols,lc))
+            tmat(lc,lc+1:n_cols,istep) = -tau * conjg(vav(lc+1:n_cols,lc))
 #endif
-        endif
+         endif
       enddo
-      call obj%timer%stop("blas")
+!      stop
+      call obj%timer%stop("blas1")
 #if REALCASE == 1
     endif !useQR
 #endif
@@ -2316,7 +2323,8 @@ myid=my_prow+my_pcol*np_rowsMPI
     endif
   endif
 #endif
-
+  deallocate(taublock, stat=istat, errmsg=errorMessage)
+  
   call obj%timer%stop("bandred_&
   &MATH_DATATYPE&
   &" // &
@@ -2534,8 +2542,8 @@ contains
           end do
        else
           call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND), &
-               ONE, ex_buff2d, int(size(ex_buff2d,1), kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, &
-               aux1(nlc+1), 1_BLAS_KIND)
+               ONE, ex_buff2d, int(size(ex_buff2d,1),kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
+               1_BLAS_KIND)
           nlc=nlc+imax
        end if
     else
@@ -2594,14 +2602,7 @@ contains
           end do
           imin=j       
           icount=imax-imin+1
-!#if REALCASE == 1
-!          call dger(lr,icount,tauc,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
-!#endif
-!#if COMPLEXCASE == 1
-!          call zgerc(lr,icount,tauc,vr,1,aux1(nlc+1),1,a_mat(1,lcx),ubound(a_mat,1))
-!#endif
-          call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND),tauc, &
-               vr,1_BLAS_KIND,&
+          call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
                aux1(nlc+1),1_BLAS_KIND,a_mat(1,lcx),int(ubound(a_mat,1),kind=BLAS_KIND))
           nlc=nlc+icount
        end do
@@ -2615,14 +2616,7 @@ contains
           ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) + tauc*aux1(nlc)*vr(1:lr)
        end do
     else
-
-!#if REALCASE == 1
-!       call dger(lr,ubound(ex_buff2d,2),tauc,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
-!#endif
-!#if COMPLEXCASE == 1
-!       call zgerc(lr,ubound(ex_buff2d,2),tauc,vr,1,aux1(nlc+1),1,ex_buff2d,ubound(ex_buff2d,1))
-!#endif
-       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(ubound(ex_buff2d,2),kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
+       call PRECISION_GERC(int(lr,kind=BLAS_KIND),ubound(ex_buff2d,2),tauc,vr,1_BLAS_KIND,&
             aux1(nlc+1),1_BLAS_KIND,ex_buff2d,int(ubound(ex_buff2d,1),kind=BLAS_KIND))
     end if
     
