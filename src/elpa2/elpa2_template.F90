@@ -1221,6 +1221,7 @@ print *,"Device pointer + REDIST"
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("solve")
 #endif
+
        call solve_tridi_&
        &PRECISION &
        (obj, na, nev, ev, e, &
