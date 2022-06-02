@@ -1,3 +1,7 @@
+#ifndef COLLECT_GPU_DEVICES_H
+#define COLLECT_GPU_DEVICES_H
+
+
 using namespace cl;
 
 static std::vector<sycl::device> devices;
@@ -27,3 +31,5 @@ extern "C" {
     }
   }
 }
+
+#endif

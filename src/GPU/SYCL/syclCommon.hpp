@@ -57,7 +57,7 @@ namespace sycl {
 
   void collectGpuDevices();
   void printGpuInfo();
-  void selectGpuDevice(int deviceNum);
+  int selectGpuDevice(int deviceNum);
   void selectDefaultGpuDevice();
   size_t getNumDevices();
   cl::sycl::device getDevice();

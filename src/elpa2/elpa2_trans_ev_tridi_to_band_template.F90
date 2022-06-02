@@ -156,7 +156,7 @@ subroutine trans_ev_tridi_to_band_&
   type(c_ptr)                                  :: aIntern_ptr
 
   MATH_DATATYPE(kind=rck), allocatable, target :: row(:)
-  
+
   integer(kind=c_intptr_t)                     :: row_dev
   type(c_ptr)                                  :: row_mpi_dev
   MATH_DATATYPE(kind=rck), pointer             :: row_mpi_fortran_ptr(:)
@@ -169,7 +169,7 @@ subroutine trans_ev_tridi_to_band_&
   MATH_DATATYPE(kind=rck), allocatable, target :: bottom_border_recv_buffer(:,:)
 
   integer(kind=c_intptr_t)                     :: top_border_recv_buffer_dev, top_border_send_buffer_dev
-  type(c_ptr)                                  :: top_border_recv_buffer_mpi_dev, top_border_send_buffer_mpi_dev 
+  type(c_ptr)                                  :: top_border_recv_buffer_mpi_dev, top_border_send_buffer_mpi_dev
   MATH_DATATYPE(kind=rck), pointer             :: top_border_recv_buffer_mpi_fortran_ptr(:,:), &
                                                   top_border_send_buffer_mpi_fortran_ptr(:,:)
   integer(kind=c_intptr_t)                     :: bottom_border_send_buffer_dev, bottom_border_recv_buffer_dev
@@ -1143,7 +1143,7 @@ subroutine trans_ev_tridi_to_band_&
 
           endif
         enddo
-      else ! allComputeOnGPU 
+      else ! allComputeOnGPU
         src_offset = local_index(limits(ip), my_prow, np_rows, nblk, -1)
         do i=limits(ip)+1,limits(ip+1)
           src = mod((i-1)/nblk, np_rows)
@@ -1167,7 +1167,7 @@ subroutine trans_ev_tridi_to_band_&
 #ifdef WITH_OPENMP_TRADITIONAL
           if (useGPU) then
             ! An unpacking of the current row group may occur before queuing the next row
-            
+
             call unpack_and_prepare_row_group_&
                  &MATH_DATATYPE&
                  &_gpu_&
@@ -1226,7 +1226,7 @@ subroutine trans_ev_tridi_to_band_&
 !            row(1:l_nev) = row(1:l_nev)
 
 #endif /* WITH_MPI */
-      
+
             call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
             !$omp parallel do  num_threads(max_threads) if(max_threads > 1) &
             !$omp default(none) &
@@ -1317,7 +1317,7 @@ subroutine trans_ev_tridi_to_band_&
   enddo ! ip = np_rows-1, 0, -1
 
   if (wantDebug) call obj%timer%stop("ip_loop")
- 
+
   if (wantDebug) call obj%timer%start("allocate")
 
   if (useGPU) then
@@ -1522,7 +1522,7 @@ subroutine trans_ev_tridi_to_band_&
       check_alloc_gpu("tridi_to_band: bottom_border_send_buffer_dev", successGPU)
       successGPU = gpu_malloc(bottom_border_recv_buffer_dev, num)
       check_alloc_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
- 
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
@@ -1626,8 +1626,11 @@ subroutine trans_ev_tridi_to_band_&
       check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     else
-      successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer_dev),kind=c_intptr_t), &
+      successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
+      ! looks like the original copied from an incorrect pointer there.
+      !successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer_dev),kind=c_intptr_t), &
+      !                        num, gpuMemcpyHostToDevice)
       check_memcpy_gpu("tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
     endif
 #endif
@@ -1720,7 +1723,7 @@ subroutine trans_ev_tridi_to_band_&
                          int(bottom_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND),      &
                          bottom_recv_request(i), mpierr)
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
-#endif /* WITH_MPI */              
+#endif /* WITH_MPI */
         else ! useGPU
 #ifdef WITH_MPI
           call MPI_Irecv(bottom_border_recv_buffer(1,i), int(b_len,kind=MPI_KIND), &
@@ -1773,7 +1776,7 @@ subroutine trans_ev_tridi_to_band_&
       if (wantDebug) call obj%timer%stop("host_mpi_communication")
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
 #endif /* WITH_MPI */
-    endif ! sweep==0 .and. current_n_end < current_n .and. l_nev > 0 
+    endif ! sweep==0 .and. current_n_end < current_n .and. l_nev > 0
 
     if (current_local_n > 1) then
       if (useGPU .and. allComputeOnGPU) then
@@ -1781,7 +1784,7 @@ subroutine trans_ev_tridi_to_band_&
           if (wantDebug) call obj%timer%start("cuda_memcpy")
           successGPU =  gpu_memcpy(c_loc(bcast_buffer_mpi_fortran_ptr(1,1)), &
                                    c_loc(hh_trans_mpi_fortran_ptr(1,current_tv_off+1)),  &
-                                     size(hh_trans,dim=1) * (current_tv_off+current_local_n-(current_tv_off+1)+1) * &   
+                                     size(hh_trans,dim=1) * (current_tv_off+current_local_n-(current_tv_off+1)+1) * &
                                      size_of_datatype, &
                                      gpuMemcpyDeviceToDevice)
           check_memcpy_gpu("tridi_to_band: bcast_buffer -> bcast_buffer_dev", successGPU)
@@ -1833,7 +1836,7 @@ subroutine trans_ev_tridi_to_band_&
                      int(mod(sweep,np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
       endif
- 
+
       if (useGPU .and. .not.(allComputeOnGPU)) then
         if (wantDebug) call obj%timer%start("memcpy")
         successGPU =  gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer(1,1)),kind=c_intptr_t),  &
@@ -2067,7 +2070,7 @@ subroutine trans_ev_tridi_to_band_&
                            bottom_recv_request(i), mpierr)
               if (wantDebug) call obj%timer%stop("host_mpi_communication")
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
-#endif /* WITH_MPI */               
+#endif /* WITH_MPI */
             else !useGPU
 #ifdef WITH_MPI
               if (wantDebug) call obj%timer%start("mpi_communication")
@@ -2295,7 +2298,7 @@ subroutine trans_ev_tridi_to_band_&
               enddo
               !$omp end parallel do
               call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
-   
+
             endif ! useGPU
 
 #else /* WITH_OPENMP_TRADITIONAL */
@@ -2724,7 +2727,7 @@ subroutine trans_ev_tridi_to_band_&
                 int(mpi_comm_rows,kind=MPI_KIND), bottom_send_request(i), mpierr)
                 if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
-          
+
 #endif /* WITH_MPI */
               else !useGPU
                 bottom_border_send_buffer(1:stripe_width*bottom_msg_length,i) = reshape(&
@@ -2779,7 +2782,7 @@ subroutine trans_ev_tridi_to_band_&
             if (useGPU) then
               if (wantDebug) call obj%timer%start("compute_hh_trafo")
               my_thread = 1 ! at the moment only dummy variable
-              thread_width2 = 1 ! for the moment dummy variable 
+              thread_width2 = 1 ! for the moment dummy variable
               call compute_hh_trafo_&
                    &MATH_DATATYPE&
                    &_openmp_&
@@ -2973,9 +2976,9 @@ subroutine trans_ev_tridi_to_band_&
                (obj, useGPU, wantDebug, aIntern, aIntern_dev, stripe_width, a_dim2, stripe_count, max_threads, &
                l_nev, a_off, nbw, max_blk_size,  bcast_buffer, bcast_buffer_dev, &
                hh_tau_dev, kernel_flops, kernel_time, n_times, 0, top_msg_length, i, &
-               my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)          
+               my_thread, thread_width2, kernel, last_stripe_width=last_stripe_width)
              if (wantDebug) call obj%timer%stop("compute_hh_trafo")
-           
+
            else ! useGPU
              call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
 
@@ -3148,7 +3151,7 @@ subroutine trans_ev_tridi_to_band_&
                          top_send_request(i), mpierr)
              if (wantDebug) call obj%timer%stop("host_mpi_communication")
 #endif /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
-#endif /* WITH_MPI */ 
+#endif /* WITH_MPI */
            else ! useGPU
 #ifdef WITH_MPI
              if (wantDebug) call obj%timer%start("mpi_communication")
@@ -3409,7 +3412,7 @@ subroutine trans_ev_tridi_to_band_&
 
             if (allComputeOnGPU) then
               ! memcpy DeviceToDevice row_group_dev -> q_dev
-              do i = 1, row_group_size  
+              do i = 1, row_group_size
                if (wantDebug) call obj%timer%start("cuda_aware_gpublas")
                call gpublas_PRECISION_COPY(l_nev, c_loc(row_group_mpi_fortran_ptr(1,i)), 1, &
                                            c_loc(q_mpi_fortran_ptr((num_blk / np_rows) * nblk + i,1)), ldq)
@@ -3483,7 +3486,7 @@ subroutine trans_ev_tridi_to_band_&
                      my_thread, thread_width, l_nev)
               enddo
               !$omp end parallel do
-              call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)              
+              call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
 #else /* WITH_OPENMP_TRADITIONAL */
               call pack_row_&
                    &MATH_DATATYPE&
@@ -3863,12 +3866,12 @@ subroutine trans_ev_tridi_to_band_&
       check_dealloc_gpu("tridi_to_band: result_buffer_dev", successGPU)
       nullify(result_buffer_mpi_fortran_ptr)
     endif
- 
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       nullify(bcast_buffer)
-    
+
       successGPU = gpu_free_host(bcast_buffer_host)
       check_host_dealloc_gpu("tridi_to_band: bcast_buffer_host", successGPU)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)

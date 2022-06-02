@@ -46,6 +46,8 @@
 
 #include "syclCommon.hpp"
 
+#include "dpct/dpct.hpp"
+
 #include <vector>
 #include <optional>
 
@@ -57,43 +59,68 @@ std::optional<cl::sycl::queue> chosenQueue;
 void elpa::gpu::sycl::collectGpuDevices() {
   if (deviceCollectionFlag) {
     return;
+  } else {
+    deviceCollectionFlag = true;
   }
 
+  // We need to be opinionated about the device selection. Currently, devices are displayed in duplicate, if they are supported
+  // by multiple platforms. For now, a first step could be only supporting level zero and Intel GPUs. This will have to be
+  // changed later as we move towards generalizing the backend.
   for (auto const &p : cl::sycl::platform::get_platforms()) {
-    for (auto dev : p.get_devices()) {
-      if (dev.get_info<cl::sycl::info::device::device_type>() == cl::sycl::info::device_type::gpu) {
-        devices.push_back(dev);
+    if (p.get_info<cl::sycl::info::platform::name>().find("Level-Zero") != std::string::npos) {
+      for (auto dev : p.get_devices()) {
+        if (dev.get_info<cl::sycl::info::device::device_type>() == cl::sycl::info::device_type::gpu) {
+          devices.push_back(dev);
+        }
       }
     }
   }
 }
 
-void elpa::gpu::sycl::selectGpuDevice(int deviceId) {
+int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
+  /*
   collectGpuDevices();
   if (deviceId >= devices.size()){
     std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
-    abort();
+    return 0;
   }
-  chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId]);
+  cl::sycl::property::queue::in_order io;
+  cl::sycl::property_list props(io);
+  chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId], props);*/
+  dpct::device_ext &dev_ct1 = dpct::get_current_device();
+  cl::sycl::queue &q_ct1 = dev_ct1.default_queue();
+  return 1;
 }
 
 void elpa::gpu::sycl::selectDefaultGpuDevice() {
+  /*
   cl::sycl::gpu_selector gpuSelector;
-  chosenQueue = std::make_optional<cl::sycl::queue>(gpuSelector);
+  cl::sycl::property::queue::in_order io;
+  cl::sycl::property_list props(io);
+  chosenQueue = std::make_optional<cl::sycl::queue>(gpuSelector, props);*/
+  dpct::device_ext &dev_ct1 = dpct::get_current_device();
+  cl::sycl::queue &q_ct1 = dev_ct1.default_queue();
 }
 
 cl::sycl::queue & elpa::gpu::sycl::getQueue() {
+  /*
   if (!chosenQueue) {
     elpa::gpu::sycl::selectDefaultGpuDevice();
-  }
-  return *chosenQueue;
+  }*/
+  dpct::device_ext &dev_ct1 = dpct::get_current_device();
+  cl::sycl::queue &q_ct1 = dev_ct1.default_queue();
+  return q_ct1;
 }
 
 cl::sycl::device elpa::gpu::sycl::getDevice() {
   if (!chosenQueue) {
     elpa::gpu::sycl::selectDefaultGpuDevice();
   }
-  return chosenQueue->get_device();
+  dpct::device_ext &dev_ct1 = dpct::get_current_device();
+  cl::sycl::queue &q_ct1 = dev_ct1.default_queue();
+
+
+  return dev_ct1;
 }
 
 size_t elpa::gpu::sycl::getNumDevices() {

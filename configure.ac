@@ -335,7 +335,7 @@ if test x"${FC_does_infer_interfaces}" = x"yes"; then
          buf(:) = 42;
       end if
 
-      
+
       !! this is OK
       !call MPI_Bcast(buf, 10, MPI_INT, 0, MPI_COMM_WORLD, ierr)
 
@@ -381,10 +381,10 @@ if test x"${FC_does_infer_interfaces}" = x"yes"; then
       implicit none
       integer :: a
       real*8  :: b
-      
+
         call foo(a)
         call foo(b)
-      
+
       end program
 
       ])],
@@ -646,7 +646,7 @@ else
       LIBS="-l${lib} ${old_LIBS}"
       AC_MSG_CHECKING([whether -l${lib} already contains a BLACS implementation])
       AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY([blacs_gridinit])],[blacs_in_scalapack=yes],[blacs_in_scalapack=no])
-	       
+
       AC_MSG_RESULT([${blacs_in_scalapack}])
       if test x"${blacs_in_scalapack}" = x"yes"; then
         break
@@ -830,7 +830,7 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
                    fi
                    ],
                   [enable_runtime_threading_support_checks=yes])
-  
+
   AC_MSG_RESULT([${enable_runtime_threading_support_checks}])
   if test x"${enable_runtime_threading_support_checks}" = x"yes" ; then
    AC_DEFINE([THREADING_SUPPORT_CHECK],[1],[can check at runtime the threading support level of MPI])
@@ -848,7 +848,7 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
                    fi
                    ],
                   [enable_allow_thread_limiting=yes])
-  
+
   AC_MSG_RESULT([${enable_allow_thread_limiting}])
   if test x"${enable_allow_thread_limiting}" = x"yes" ; then
    AC_DEFINE([ALLOW_THREAD_LIMITING],[1],[ELPA can at runtime limit the number of OpenMP threads to 1 if needed])
@@ -861,7 +861,7 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
   if test x"${enable_allow_thread_limiting}" = x"no" && test x"${enable_runtime_threading_support_checks}" = x"yes"; then
     AC_MSG_NOTICE([You set --disable-allow-thread-limiting and --enable-runtime-threading-support-checks. If ELPA detects during a run that])
     AC_MSG_NOTICE([your MPI library does not provide a sufficient level of threading support, ELPA will only _print_ a warning and continue])
-    AC_MSG_NOTICE([This might lead to undefined behavior, includig wrong results])    
+    AC_MSG_NOTICE([This might lead to undefined behavior, includig wrong results])
   fi
 
   AC_ARG_WITH([threading-support-check-during-build],[AS_HELP_STRING([--with-threading-support-check-during-build],[Do checks at build time whether the MPI threading level support is sufficient. (default: on)])],
@@ -890,9 +890,9 @@ if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"$
       use iso_c_binding
       implicit none
       include "mpif.h"
-    
+
       integer(kind=c_int) :: provided, error, status
-    
+
       status = 1
       call mpi_init_thread(MPI_THREAD_MULTIPLE, provided,error)
       !call mpi_init(error)
@@ -902,7 +902,7 @@ if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"$
       endif
       call  mpi_finalize(error)
       call exit(status)
-    
+
     end
   ])],
   [mpi_threading_level_sufficient=yes],
@@ -925,7 +925,7 @@ if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"$
     AC_MSG_WARN([   --without-threading-support-check-during-build: DO THIS AT YOUR OWN RISK! This will be fast, but might])
     AC_MSG_WARN([   (depending on your MPI library sometimes) lead to wrong results])
     AC_MSG_ERROR([You do have to take an action of the choices above!])
-  fi		 
+  fi
 fi
 
 AC_LANG_POP([Fortran])
@@ -1303,7 +1303,7 @@ AC_MSG_RESULT([${can_link_with_}])
 if test x"$can_link_with_" = x"yes"; then
   AC_DEFINE([NEED_UNDERSCORE_TO_LINK_AGAINST_FORTRAN],[1],[need to append an underscore])
 fi
-  
+
 AC_MSG_CHECKING(whether we can link C programs against Fortran without _ )
 AC_LINK_IFELSE([AC_LANG_SOURCE([
 int main(int argc, char **argv) {
@@ -1805,6 +1805,9 @@ if test x"${use_sycl_gpu_backend}" = x"yes"; then
     AC_MSG_NOTICE([You specified --enable-intel-gpu=sycl for a SYCL GPU backend. You might want to activate the SYCL GPU kernel by specifying  --enable-intel-gpu-sycl])
   fi
 fi
+
+dnl To allow people to set custom ar flags
+test -n "$ARFLAGS" || ARFLAGS="cru"
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])

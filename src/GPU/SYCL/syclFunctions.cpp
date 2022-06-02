@@ -43,7 +43,7 @@
 //
 // This file was written by A. Marek, MPCDF (2022)
 // it is based on a prototype implementation developed for MPCDF
-// by A. Poeppl, Intel (2022)
+// by A. Poeppl, Intel Corporation (2022)
 */
 
 #include <CL/sycl.hpp>
@@ -51,7 +51,6 @@
 #include <complex>
 #include <oneapi/mkl.hpp>
 
-#include <complex>
 #include <iostream>
 #include <cstdint>
 #include <vector>
@@ -141,10 +140,12 @@ static oneapi::mkl::side sideFromChar(char c) {
     return elpa::gpu::sycl::getNumDevices();
   }
 
-
-
-  void syclSetDeviceFromC(int targetGpuDeviceId) {
-    elpa::gpu::sycl::selectGpuDevice(targetGpuDeviceId);
+  int syclSetDeviceFromC(int targetGpuDeviceId) {
+    int success = elpa::gpu::sycl::selectGpuDevice(targetGpuDeviceId);
+    if (success) {
+      //std::cout << "<<<<<<< GPU " << targetGpuDeviceId << " has been selected. >>>>>>>>" << std::endl;
+    }
+    return success;
   }
 
   void syclSetGpuParamsFromC() {
@@ -173,8 +174,9 @@ static oneapi::mkl::side sideFromChar(char c) {
   int syclMallocFromC(intptr_t *a, size_t elems) {
     auto &queue = elpa::gpu::sycl::getQueue();
     *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, queue));
+    char *bytes = reinterpret_cast<char *>(*a);
     if (*a) {
-      std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
+      //std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
       return 1;
     } else {
       std::cout << "Allocation failed!" << std::endl;

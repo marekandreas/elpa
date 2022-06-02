@@ -4,6 +4,9 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 AM_FCFLAGS = $(SCALAPACK_FCFLAGS) $(FC_MODINC)modules
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
+AM_LDFLAGS2 = $(LDFLAGS)
+AM_ARFLAGS = 'qc'
+ARFLAGS = 'qc'
 
 FCLD = @ACTUAL_FC@
 
@@ -171,9 +174,9 @@ if WITH_OPENMP_OFFLOAD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/OpenMP/elpa_index_openmp_offload_gpu.cpp src/GPU/OpenMP/openmpOffloadFunctions.cpp
 endif
 
-if WITH_SYCL_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclFunctions.cpp
-endif
+#if WITH_SYCL_GPU_VERSION
+#  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclFunctions.cpp
+#endif
 
 if WITH_AMD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
@@ -740,7 +743,7 @@ validate_double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_module
 
 noinst_PROGRAMS += validate_real_2stage_banded@SUFFIX@
 check_SCRIPTS += validate_real_2stage_banded@SUFFIX@_default.sh
-validate_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90 
+validate_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
 validate_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 validate_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 

@@ -42,26 +42,35 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//
+//    This file was ported from the NVIDIA version of the component by A. Poeppl, Intel Corporation
+
+#include "config-f90.h"
 
 #include <CL/sycl.hpp>
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <complex>
+#include <iostream>
+#include <cstdint>
+#include <vector>
+#include <optional>
+#include <type_traits>
+
 #include "src/GPU/SYCL/syclCommon.hpp"
 
 template <typename T>
 void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
-  using local_double_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
+  using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
+
   auto device = elpa::gpu::sycl::getDevice();
   auto &queue = elpa::gpu::sycl::getQueue();
 
   queue.submit([&](sycl::handler &h) {
-    local_double_buffer q_s(sycl::range(nb+1), h);
-    local_double_buffer dotp_s(sycl::range(nb+1), h);
+    local_buffer q_s(sycl::range(nb+1), h);
+    local_buffer dotp_s(sycl::range(nb+1), h);
     sycl::range<1> global_range(nev * nb);
     sycl::range<1> local_range(nb);
-
     h.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(32)]] {
       unsigned int tid = it.get_local_id(0);
       unsigned int local_range = it.get_local_range(0);
@@ -79,20 +88,26 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
         }
 
         T q_v2 = q_s[tid];
-        dotp_s[tid] = q_v2 * hh[h_off];
+
+        // If we are dealing with complex numbers, then the  complex conjugate is needed.
+        // My assumption here is that the FORTRAN side will not call this function with any
+        // complex types other than float or double. If this needs to be changed, then the
+        // check for the corresponding type needs to be added here.
+        if constexpr (std::is_same<T, std::complex<float>>::value || std::is_same<T, std::complex<double>>::value) {
+          dotp_s[tid] = q_v2 * std::conj(hh[h_off]);
+        } else {
+          dotp_s[tid] = q_v2 * hh[h_off];
+        }
 
         it.barrier(sycl::access::fence_space::local_space);
 
-        //reduce_real<T, blk>(dotp_s, item_ct1);
         T dotp_res = joint_reduce(it.get_group(), dotp_sp, dotp_sp + local_range, sycl::plus<>());
-
-        //it.barrier(sycl::access::fence_space::local_space);
 
         q_v2 -= dotp_res * hh_tau[j - 1] * hh[h_off];
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == it.get_local_range()[0] - 1)) {
-            q[q_off] = q_v2;
+          q[q_off] = q_v2;
         }
         it.barrier();
 
@@ -101,6 +116,7 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
       }
     });
   });
+  queue.wait_and_throw();
 }
 
 extern "C" void launch_compute_hh_trafo_c_sycl_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {

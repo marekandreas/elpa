@@ -1,4 +1,3 @@
-#if 0
 //    This file is part of ELPA.
 //
 //    The ELPA library was originally created by the ELPA consortium,
@@ -46,16 +45,19 @@
 //
 // --------------------------------------------------------------------------------------------------
 //
-// This file was originally written by NVIDIA
-// and re-written by A. Marek, MPCDF
-// and finally re-written and ported to SYCL by A. Poeppl, Intel Corporation
-#endif
+// This file was originally written by NVIDIA, re-written by A. Marek, MPCDF and then ported to SYCL by Alexander Poeppl, Intel Corporation
 
+#include "config-f90.h"
 #include "syclCommon.hpp"
 
 #include <CL/sycl.hpp>
 #include <stdlib.h>
 #include <stdio.h>
+#include <complex>
+#include <iostream>
+#include <cstdint>
+#include <vector>
+#include <optional>
 
 template<typename T> void launch_my_pack_c_sycl_kernel(const int row_count, const int n_offset, const int max_idx,
                                                         const int stripe_width, const int a_dim2, const int stripe_count,
@@ -67,7 +69,7 @@ template<typename T> void launch_my_pack_c_sycl_kernel(const int row_count, cons
   sycl::range<2> rGlobal = sycl::range<2>(stripe_count, row_count * wgSize);
 
   for (int i_off = 0; i_off < stripe_width / wgSize; i_off++) {
-    queue.parallel_for(sycl::nd_range<2>(rLocal, rGlobal), [=](sycl::nd_item<2> it) {
+    queue.parallel_for(sycl::nd_range<2>(rGlobal, rLocal), [=](sycl::nd_item<2> it) {
       //my_pack_c_cuda_kernel_real_single(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off, it);
       int b_id = it.get_group(0);
       int t_id = it.get_local_id(1) + i_off * it.get_local_range().get(1);
@@ -79,8 +81,8 @@ template<typename T> void launch_my_pack_c_sycl_kernel(const int row_count, cons
         row_group[dst_ind + (l_nev * it.get_group(1))] = a[t_id + (stripe_width * (n_offset + it.get_group(1))) + (b_id * stripe_width * a_dim2)];
       }
     });
+    queue.wait_and_throw();
   }
-  queue.wait_and_throw();
 }
 
 
@@ -100,11 +102,11 @@ extern "C" void launch_my_pack_c_sycl_kernel_complex_double(const int row_count,
   launch_my_pack_c_sycl_kernel<std::complex<double>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev);
 }
 
-
 template<typename T> void launch_extract_hh_tau_c_sycl_kernel(T *bcast_buffer, T *hh_tau, int const nbw, int const n, int const is_zero) {
   sycl::queue &queue = elpa::gpu::sycl::getQueue();
   int const maxWgSize = queue.get_device().get_info<sycl::info::device::max_work_group_size>();
-  sycl::range<1> rGlobal(n);
+  int numWorkItems = (1 + (n-1)/maxWgSize) * maxWgSize;
+  sycl::range<1> rGlobal(numWorkItems);
   sycl::range<1> rLocal(maxWgSize);
   T *hh = bcast_buffer;
   queue.parallel_for(sycl::nd_range<1>(rGlobal, rLocal), [=](sycl::nd_item<1> it) {
@@ -141,7 +143,6 @@ extern "C" void launch_extract_hh_tau_c_sycl_kernel_complex_double(std::complex<
     launch_extract_hh_tau_c_sycl_kernel<std::complex<double>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 }
 
-
 template<typename T> void launch_my_unpack_c_sycl_kernel(int const row_count, int const n_offset, int const max_idx,
                                                           int const stripe_width, int const a_dim2, int const stripe_count,
                                                           int const l_nev, T *row_group, T* a) {
@@ -153,11 +154,11 @@ template<typename T> void launch_my_unpack_c_sycl_kernel(int const row_count, in
   for (int i_off = 0; i_off < stripe_width / wgSize; i_off++) {
     queue.parallel_for(sycl::nd_range<2>(rGlobal, rLocal), [=](sycl::nd_item<2> it) {
         int b_id = it.get_group(0);
-        int t_id = it.get_local_id(1) + i_off * it.get_local_range().get(1);
+        int t_id = it.get_local_id(1) + i_off * it.get_local_range(1);
         int src_ind = b_id * stripe_width + t_id;
 
         if (src_ind < max_idx) {
-          a[(t_id + (n_offset + it.get_group(1) * stripe_width) + (b_id * stripe_width * a_dim2))] = row_group[src_ind + it.get_group(1) * l_nev];
+          a[(t_id + ((n_offset + it.get_group(1)) * stripe_width) + (b_id * stripe_width * a_dim2))] = row_group[src_ind + it.get_group(1) * l_nev];
         }
     });
   }
@@ -179,14 +180,3 @@ extern "C" void launch_my_unpack_c_sycl_kernel_complex_single(const int row_coun
 extern "C" void launch_my_unpack_c_sycl_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, std::complex<double> *row_group_dev, std::complex<double> *a_dev) {
   launch_my_unpack_c_sycl_kernel<std::complex<double>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev, a_dev);
 }
-
-/** Not sure what exactly this is for?
-#ifndef MEMCPY_ALREADY_DEFINED
-extern "C" int cuda_MemcpyDeviceToDevice(int val)
-{
-    val = dpct::device_to_device;
-    return val;
-}
-#define MEMCPY_ALREADY_DEFINED 1
-#endif
-*/
