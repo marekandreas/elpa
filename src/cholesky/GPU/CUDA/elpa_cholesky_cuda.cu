@@ -55,6 +55,7 @@
 #include <alloca.h>
 #include <complex.h>
 #include <cuComplex.h>
+#include <stdint.h>
 #include "config-f90.h"
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
@@ -66,17 +67,25 @@ __global__ void cuda_copy_double_a_tmatc_kernel(double *a_dev, double *tmatc_dev
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
 }
 
-extern "C" void cuda_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in){
+extern "C" void cuda_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
 
+#ifdef WITH_GPU_STREAMS
+  cudaStream_t streamId = *((cudaStream_t*)my_stream);
+#endif
+
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nblk,1,1);
 
+#ifdef WITH_GPU_STREAMS
+  cuda_copy_double_a_tmatc_kernel<<<blocks,threadsPerBlock, 0, streamId>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+#else
   cuda_copy_double_a_tmatc_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+#endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing copy_double_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
@@ -90,17 +99,25 @@ __global__ void cuda_copy_float_a_tmatc_kernel(float *a_dev, float *tmatc_dev, c
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
 }
 
-extern "C" void cuda_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in){
+extern "C" void cuda_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
 
+#ifdef WITH_GPU_STREAMS
+  cudaStream_t streamId = *((cudaStream_t*)my_stream);
+#endif
+
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nblk,1,1);
 
+#ifdef WITH_GPU_STREAMS
+  cuda_copy_float_a_tmatc_kernel<<<blocks,threadsPerBlock,0,streamId>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+#else
   cuda_copy_float_a_tmatc_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+#endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing copy_float_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
@@ -114,12 +131,16 @@ __global__ void cuda_copy_double_complex_a_tmatc_kernel(cuDoubleComplex *a_dev, 
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = cuConj(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
 }
 
-extern "C" void cuda_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, double _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in){
+extern "C" void cuda_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, double _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
+
+#ifdef WITH_GPU_STREAMS
+  cudaStream_t streamId = *((cudaStream_t*)my_stream);
+#endif
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nblk,1,1);
@@ -127,7 +148,11 @@ extern "C" void cuda_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, d
   cuDoubleComplex* a_casted = (cuDoubleComplex*) a_dev;
   cuDoubleComplex* tmatc_casted = (cuDoubleComplex*) tmatc_dev;
 
+#ifdef WITH_GPU_STREAMS
+  cuda_copy_double_complex_a_tmatc_kernel<<<blocks,threadsPerBlock,0,streamId>>>(a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+#else
   cuda_copy_double_complex_a_tmatc_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+#endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing copy_double_complex_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
@@ -141,12 +166,16 @@ __global__ void cuda_copy_float_complex_a_tmatc_kernel(cuFloatComplex *a_dev, cu
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = cuConjf(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
 }
 
-extern "C" void cuda_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, float _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in){
+extern "C" void cuda_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, float _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
+
+#ifdef WITH_GPU_STREAMS
+  cudaStream_t streamId = *((cudaStream_t*)my_stream);
+#endif
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nblk,1,1);
@@ -154,7 +183,11 @@ extern "C" void cuda_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, flo
   cuFloatComplex* a_casted = (cuFloatComplex*) a_dev;
   cuFloatComplex* tmatc_casted = (cuFloatComplex*) tmatc_dev;
 
+#ifdef WITH_GPU_STREAMS
+  cuda_copy_float_complex_a_tmatc_kernel<<<blocks,threadsPerBlock,0,streamId>>>(a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+#else
   cuda_copy_float_complex_a_tmatc_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+#endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing copy_float_complex_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));

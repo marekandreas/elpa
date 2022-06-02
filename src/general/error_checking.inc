@@ -1,5 +1,6 @@
 !cannot use __FILE__ because filename with path can be too long for gfortran (max line length)
 #define check_memcpy_gpu(file, success) call check_memcpy_GPU_f(file, __LINE__, success)
+#define check_stream_synchronize_gpu(file, success) call check_memcpy_GPU_f(file, __LINE__, success)
 #define check_alloc_gpu(file, success) call check_alloc_GPU_f(file, __LINE__, success)
 #define check_dealloc_gpu(file, success) call check_dealloc_GPU_f(file, __LINE__, success)
 #define check_host_register_gpu(file, success) call check_host_register_GPU_f(file, __LINE__, success)

@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [17:1:0])
+AC_SUBST([ELPA_SO_VERSION], [18:0:1])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -40,17 +40,17 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20211125, "Current ELPA API version")
-print_current_api_version=20211125
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20220510, "Current ELPA API version")
+print_current_api_version=20220510
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20211125], [Current ELPA autotune version])
-print_current_autotune_version=20211125
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20211125], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20211125, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20220510], [Current ELPA autotune version])
+print_current_autotune_version=20220510
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20220510], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20220510, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1651423146],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1668076349],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -103,7 +103,32 @@ fi
 
 
 dnl mpi
-AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi=[[yes|no]]], [compile with MPI. Default: yes])],,[with_mpi=yes])
+correct_mpi_argument=no
+with_mpi_specified=no
+AC_ARG_WITH([mpi], 
+	    [AS_HELP_STRING([--with-mpi=[[yes|no]]], 
+	                    [compile with MPI. Default: yes])],
+	         	    [
+			     with_mpi_specified=yes
+			     if test x"$withval" = x"auto"; then
+			       correct_mpi_argument=yes
+			     fi
+			     if test x"$withval" = x"yes"; then
+			       correct_mpi_argument=yes
+			     fi
+			     if test x"$withval" = x"no"; then
+                               correct_mpi_argument=yes
+                             fi],
+			     [with_mpi=yes])
+
+
+if test x"$with_mpi_specified" = x"yes"; then
+  if test x"$correct_mpi_argument" = x"no"; then
+    AC_MSG_ERROR([if --with-mpi is specified, it must be either --with-mpi=yes, or --with-mpi=no])
+  fi
+fi
+
+
 AM_CONDITIONAL([WITH_MPI],[test x"$with_mpi" = x"yes"])
 if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
@@ -1765,7 +1790,7 @@ use_sycl_gpu_backend=no
 use_intel_gpu=no
 AC_MSG_CHECKING(whether INTEL GPU version should be used)
 AC_ARG_ENABLE([intel-gpu],
-                AS_HELP_STRING([--enable-intel-gpu=(openmp|sycl)],
+                AS_HELP_STRING([--enable-intel-gpu=[[openmp|sycl]]],
                                [do use INTEL GPU version with either OpenMP or SYCL backend]),
                                [if test x"$enableval" = x"openmp"; then
 				  use_openmp_gpu_backend=yes
@@ -1784,7 +1809,7 @@ AC_MSG_RESULT([${use_intel_gpu}])
 if test x"${use_intel_gpu}" = x"yes"; then
   if test x"${use_openmp_gpu_backend}" = x"no"; then
     if test x"${use_sycl_gpu_backend}" = x"no"; then
-      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=(openmp|sycl)])
+      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=[[openmp|sycl]]])
     fi
   fi
 fi
@@ -1843,8 +1868,6 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   fi
   AC_LANG_POP([C])
 fi
-
-
 
 if test x"${need_amd_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
@@ -1929,6 +1952,73 @@ if test x"${need_nvidia_gpu}" = x"yes"; then
     fi
   fi
 fi
+
+use_cuda_streams=no
+use_hip_streams=no
+use_gpu_streams=no
+AC_MSG_CHECKING(whether GPU streams should be used)
+AC_ARG_ENABLE([gpu-streams],
+                AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
+			       [do use Nvidia or AMD GPU version with Cuda or HIP streams, respectively]),
+                               [if test x"$enableval" = x"nvidia"; then
+				  use_cuda_streams=yes
+				  use_gpu_streams=yes
+				fi
+				if test x"$enableval" = x"amd"; then
+				  use_hip_streams=yes
+				  use_gpu_streams=yes
+				fi
+				if test x"$enableval" = x"yes"; then
+                                  AC_MSG_ERROR([Wrong value! Must be either "nvidia" or "amd" ])
+                                fi
+				if test x"$enableval" = x"no"; then
+                                  use_cuda_streams=no
+                                  use_hip_streams=no
+				  use_gpu_streams=no
+                                fi
+				],
+              [use_gpu_streams=no])
+AC_MSG_RESULT([${use_gpu_streams}])
+
+if test x"$use_cuda_streams" = x"yes"; then
+  if test x"$need_nvidia_gpu" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=nvidia is set, you must also use --enable-nvidia-gpu])
+  fi
+  if test x"$need_amd_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-amd-gpu])
+  fi
+  if test x"${enable_openmp}" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=nvidia currently not supported in combination with --enable-openmp])
+  fi
+  if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
+    echo "---------------------------------------------------------------------------"
+    echo " The combination --enable-cuda-aware-mpi and --enable-gpu-streams=nvidia   "
+    echo " has not been tested is officially not yet supported! Use at your own risk!"
+    echo "---------------------------------------------------------------------------"
+  fi
+  if test x"${with_cusolver}" = x"yes"; then
+    echo "---------------------------------------------------------------------------"
+    echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
+    echo " has not been tested is officially not yet supported! Use at your own risk!"
+    echo "---------------------------------------------------------------------------"
+  fi
+  AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
+
+fi
+
+if test x"$use_hip_streams" = x"yes"; then
+  if test x"$need_amd_gpu" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you must also use --enable-amd-gpu])
+  fi
+  if test x"$need_nvidia_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-nvidia-gpu])
+  fi
+  if test x"${enable_openmp}" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=amd currently not supported in combination with --enable-openmp])
+  fi
+  AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
+fi
+
 
 m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AM_CONDITIONAL([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[test x"$use_[]elpa_m4_kernel[]" = x"yes"])
@@ -2604,13 +2694,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2021.11.002.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2021.11.002                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2022.05.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2022.05.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
@@ -2631,6 +2721,9 @@ else
   fi
 
   make -f $srcdir/generated_headers.am generated-headers top_srcdir="$srcdir" CPP="$CPP"
+  if test x"$CPP" = x""; then
+    AC_MSG_ERROR([The variable \$CPP has not been set by configure. If you encounter an error, try specifying CPP])
+  fi
 fi
 if test x"$enable_threading_support_checks" = x"no" && test x"$with_mpi" = x"yes" && test x"${enable_openmp}" = x"yes"; then
   echo " "

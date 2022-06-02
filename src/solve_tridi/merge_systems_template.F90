@@ -541,7 +541,7 @@
           write(error_unit,*) "Error in global_product. Aborting..."
           return
         endif
-        z(1:na1) = SIGN( SQRT( -z(1:na1) ), z1(1:na1) )
+        z(1:na1) = SIGN( SQRT( ABS( z(1:na1) ) ), z1(1:na1) )
 
         call global_gather_&
         &PRECISION&
@@ -757,9 +757,18 @@
 
           if (useGPU) then
             ! copy back after sendrecv
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
+                 gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+            check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+            
+#else
             successGPU = gpu_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice)
             check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
+#endif
           endif
 
           ! Gather the parts in d1 and z which are fitting to qtmp1.
@@ -823,6 +832,19 @@
             if (useGPU) then
               !TODO: it should be enough to copy l_rows x ncnt
               ! copy to device
+#ifdef WITH_GPU_STREAMS
+              successGPU = gpu_memcpy_async(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
+                                 gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+              check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)
+
+              !TODO the previous loop could be possible to do on device and thus
+              !copy less
+              successGPU = gpu_memcpy_async(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
+                                 gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+              check_memcpy_gpu("merge_systems: ev_dev", successGPU)
+              successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+#else
               successGPU = gpu_memcpy(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
               check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)
@@ -832,6 +854,7 @@
               successGPU = gpu_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
               check_memcpy_gpu("merge_systems: ev_dev", successGPU)
+#endif
             endif
 
             ! Multiply old Q with eigenvectors (upper half)
@@ -874,9 +897,18 @@
             if (useGPU) then
               !TODO the previous loop could be possible to do on device and thus
               !copy less
+#ifdef WITH_GPU_STREAMS
+              successGPU = gpu_memcpy_async(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
+                                 gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice, &
+                                 my_stream)
+              check_memcpy_gpu("merge_systems: ev_dev", successGPU)
+              successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+#else
               successGPU = gpu_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice)
               check_memcpy_gpu("merge_systems: ev_dev", successGPU)
+#endif
             endif
 
             ! Multiply old Q with eigenvectors (lower half)
@@ -907,9 +939,17 @@
               !previous copy or copy whole array here
 
               ! COPY BACK
+#ifdef WITH_GPU_STREAMS
+              successGPU = gpu_memcpy_async(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &
+                                 gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+              check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)
+              successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("merge_systems: qtmp2_dev", successGPU)
+#else
               successGPU = gpu_memcpy(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyDeviceToHost)
               check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)
+#endif
             endif
 
 

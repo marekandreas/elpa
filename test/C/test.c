@@ -333,13 +333,50 @@ int main(int argc, char** argv) {
 #endif
 
 #if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)
-# ifdef TEST_COMPLEX
-   elpa_set(handle, "complex_kernel", TEST_KERNEL, &error_elpa);
-# else
-   elpa_set(handle, "real_kernel", TEST_KERNEL, &error_elpa);
-# endif
-   assert_elpa_ok(error_elpa);
+   kernel = TEST_KERNEL
+#ifdef TEST_COMPLEX
+   elpa_set(handle, "complex_kernel", kernel, &error_elpa);
+#else
+   elpa_set(handle, "real_kernel", kernel, &error_elpa);
 #endif
+
+#ifdef TEST_REAL
+#if (TEST_NVIDIA_GPU == 1)
+#if WITH_NVIDIA_SM80_GPU_KERNEL == 1
+     kernel = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
+#else
+     kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
+#endif
+#endif /* TEST_NVIDIA_GPU */
+
+#if (TEST_AMD_GPU == 1)
+     kernel = ELPA_2STAGE_REAL_AMD_GPU
+#endif
+
+#if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
+     kernel = ELPA_2STAGE_REAL_INTEL_GPU_SYCL
+#endif
+#endif /* TEST_REAL */
+#ifdef TEST_COMPLEX
+#if (TEST_NVIDIA_GPU == 1)
+     kernel = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
+#endif
+#if (TEST_AMD_GPU == 1)
+     kernel = ELPA_2STAGE_COMPLEX_AMD_GPU
+#endif
+#if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
+     kernel = ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL
+#endif
+#endif /* TEST_COMPLEX */
+
+#ifdef TEST_COMPLEX
+   elpa_set(handle, "complex_kernel", kernel, &error_elpa);
+#else
+   elpa_set(handle, "real_kernel", kernel, &error_elpa);
+#endif
+
+   assert_elpa_ok(error_elpa);
+#endif /* defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL) */
 
    elpa_get(handle, "solver", &value, &error_elpa);
    if (myid == 0) {

@@ -60,9 +60,16 @@ subroutine pack_row_group_&
 &PRECISION &
 (obj, row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, a_dim2, l_nev, &
  rows, n_offset, row_count, result_buffer_dev, nblk, num_result_buffers, nbuf, doCopyResult, &
- wantDebug, allComputeOnGPU)
+ wantDebug, allComputeOnGPU, my_stream)
   use gpu_c_kernel
-  use elpa_gpu
+  use elpa_gpu, only : gpu_stream_synchronize, gpu_memcpy, gpu_memcpy_async, SIZE_OF_DOUBLE_REAL, &
+#ifdef WANT_SINGLE_PRECISION_REAL
+          SIZE_OF_SINGLE_REAL, &
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+          SIZE_OF_SINGLE_COMPLEX, &
+#endif
+          SIZE_OF_DOUBLE_COMPLEX, gpuMemcpyDeviceToHost, gpuMemcpyDeviceToDevice
   use elpa_abstract_impl
   use precision
   use, intrinsic :: iso_c_binding
@@ -90,6 +97,7 @@ subroutine pack_row_group_&
 #if COMPLEXCASE == 1
   complex(kind=C_DATATYPE_KIND), pointer       :: result_buffer_mpi_fortran_ptr(:,:,:)
 #endif
+  integer(kind=c_intptr_t)                     :: my_stream
   
 
   if (wantDebug) call obj%timer%start("pack_row_group")
@@ -111,9 +119,33 @@ subroutine pack_row_group_&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
-  (row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev)
+  (row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev, my_stream)
 
   if (.not.(allComputeOnGPU)) then
+#ifdef WITH_GPU_STREAMS
+    successGPU =  gpu_memcpy_async(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
+    &PRECISION&
+    &_&
+    &MATH_DATATYPE&
+    & , gpuMemcpyDeviceToHost, my_stream)
+    if (.not.(successGPU)) then
+      print *,"pack_row_group_&
+      &MATH_DATATYPE&
+      &_gpu_&
+      &PRECISION&
+      &: error in cudaMemcpy"
+      stop 1
+    endif
+    successGPU = gpu_stream_synchronize(my_stream)
+    if (.not.(successGPU)) then
+      print *,"pack_row_group_&
+      &MATH_DATATYPE&
+      &_gpu_&
+      &PRECISION&
+      &: error in stream_synchronize"
+      stop 1
+    endif
+#else
     successGPU =  gpu_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
     &PRECISION&
     &_&
@@ -127,9 +159,36 @@ subroutine pack_row_group_&
       &: error in cudaMemcpy"
       stop 1
     endif
+#endif
   else ! allComputeOnGPU
     if (doCopyResult) then
       ! need to copy row_group_dev -> result_buffer_dev
+#ifdef WITH_GPU_STREAMS
+      successGPU =  gpu_memcpy_async(c_loc(result_buffer_mpi_fortran_ptr(1, 1, nbuf)), &
+                    row_group_dev , row_count * l_nev * size_of_&
+                    &PRECISION&
+                    &_&
+                    &MATH_DATATYPE&
+                    & , gpuMemcpyDeviceToDevice, my_stream)
+      if (.not.(successGPU)) then
+        print *,"pack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in cudaMemcpy"
+        stop 1
+      endif
+      successGPU = gpu_stream_synchronize(my_stream)
+      if (.not.(successGPU)) then
+        print *,"pack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in stream_synchronize"
+        stop 1
+      endif
+
+#else
       successGPU =  gpu_memcpy(c_loc(result_buffer_mpi_fortran_ptr(1, 1, nbuf)), &
                     row_group_dev , row_count * l_nev * size_of_&
                     &PRECISION&
@@ -144,6 +203,7 @@ subroutine pack_row_group_&
         &: error in cudaMemcpy"
         stop 1
       endif
+#endif
 
     endif
   endif ! allComputeOnGPU
@@ -158,13 +218,20 @@ subroutine unpack_row_group_&
   &_gpu_&
   &PRECISION &
   (obj, row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, &
-   a_dim2, l_nev, rows, n_offset, row_count, wantDebug, allComputeOnGPU)
+   a_dim2, l_nev, rows, n_offset, row_count, wantDebug, allComputeOnGPU, my_stream)
   use gpu_c_kernel
   use elpa_abstract_impl
 
   use precision
   use, intrinsic :: iso_c_binding
-  use elpa_gpu
+  use elpa_gpu, only : gpu_devicesynchronize, gpu_memcpy_async, gpuMemcpyHostToDevice, gpu_memcpy, &
+#ifdef WANT_SINGLE_PRECISION_REAL
+          SIZE_OF_SINGLE_REAL, &
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+          SIZE_OF_SINGLE_COMPLEX, &
+#endif
+          SIZE_OF_DOUBLE_REAL, SIZE_OF_DOUBLE_COMPLEX, gpu_stream_synchronize
   implicit none
   class(elpa_abstract_impl_t), intent(inout)   :: obj
   integer(kind=c_intptr_t)                     :: row_group_dev, a_dev
@@ -180,12 +247,38 @@ subroutine unpack_row_group_&
   integer(kind=ik)                             :: max_idx
   logical                                      :: successGPU
   logical, intent(in)                          :: wantDebug, allComputeOnGPU
+  integer(kind=c_intptr_t)                     :: my_stream
 
   if (wantDebug) call obj%timer%start("unpack_row_group")
   ! Use many blocks for higher GPU occupancy
   max_idx = (stripe_count - 1) * stripe_width + last_stripe_width
 
   if (.not.(allComputeOnGPU)) then
+#ifdef WITH_GPU_STREAMS
+    successGPU =  gpu_memcpy_async(row_group_dev , int(loc(rows(1, 1)),kind=c_intptr_t),row_count * l_nev * &
+                             size_of_&
+                             &PRECISION&
+                             &_&
+                             &MATH_DATATYPE&
+                             &, gpuMemcpyHostToDevice, my_stream)
+    if (.not.(successGPU)) then
+        print *,"unpack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in cudaMemcpy"
+        stop 1
+    endif
+    successGPU = gpu_stream_synchronize(my_stream)
+    if (.not.(successGPU)) then
+        print *,"unpack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in cudaStreamSynchronize"
+        stop 1
+    endif
+#else
     successGPU =  gpu_memcpy(row_group_dev , int(loc(rows(1, 1)),kind=c_intptr_t),row_count * l_nev * &
                              size_of_&
                              &PRECISION&
@@ -200,6 +293,7 @@ subroutine unpack_row_group_&
         &: error in cudaMemcpy"
         stop 1
     endif
+#endif
   endif ! allComputeOnGPU
 
   ! only read access to row_group_dev
@@ -208,7 +302,7 @@ subroutine unpack_row_group_&
   &_&
   &PRECISION &
   ( row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
-                                          row_group_dev,a_dev)
+                                          row_group_dev, a_dev, my_stream)
 
   if (allComputeOnGPU) then
     if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
@@ -235,7 +329,7 @@ subroutine unpack_and_prepare_row_group_&
   &PRECISION &
   (obj, row_group, row_group_dev, a_dev, stripe_count, stripe_width, &
    last_stripe_width, a_dim2, l_nev, row_group_size, nblk,      &
-   unpack_idx, next_unpack_idx, force, wantDebug, allComputeOnGPU)
+   unpack_idx, next_unpack_idx, force, wantDebug, allComputeOnGPU, my_stream)
 
   use, intrinsic :: iso_c_binding
   use precision
@@ -258,6 +352,7 @@ subroutine unpack_and_prepare_row_group_&
   integer(kind=ik), intent(inout)              :: unpack_idx
   integer(kind=ik), intent(in)                 :: next_unpack_idx
   logical, intent(in)                          :: force, wantDebug, allComputeOnGPU
+  integer(kind=c_intptr_t)                     :: my_stream
 
   if (wantDebug) call obj%timer%start("unpack_and_prepare_row_group")
 
@@ -273,7 +368,7 @@ subroutine unpack_and_prepare_row_group_&
       &PRECISION&
       (obj, row_group_dev, a_dev, stripe_count, stripe_width, last_stripe_width, &
        a_dim2, l_nev, row_group(:, :), unpack_idx - row_group_size, row_group_size, &
-       wantDebug, allComputeOnGPU)
+       wantDebug, allComputeOnGPU, my_stream)
       row_group_size = 1
     else
       ! Just prepare for the upcoming row
@@ -291,7 +386,7 @@ subroutine extract_hh_tau_&
   &MATH_DATATYPE&
   &_gpu_&
   &PRECISION&
-  & (bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero)
+  & (bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero, my_stream)
   use gpu_c_kernel
   use precision
   use, intrinsic :: iso_c_binding
@@ -300,6 +395,7 @@ subroutine extract_hh_tau_&
   integer(kind=ik), value  :: nbw, n
   logical, value           :: is_zero
   integer(kind=ik)         :: val_is_zero
+  integer(kind=c_intptr_t) :: my_stream
   if (is_zero) then
    val_is_zero = 1
   else
@@ -310,5 +406,5 @@ subroutine extract_hh_tau_&
   &MATH_DATATYPE&
   &_&
   &PRECISION&
-  & (bcast_buffer_dev, hh_tau_dev, nbw, n, val_is_zero)
+  & (bcast_buffer_dev, hh_tau_dev, nbw, n, val_is_zero, my_stream)
 end subroutine

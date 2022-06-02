@@ -51,18 +51,19 @@ subroutine compute_hh_trafo_&
 &_&
 #endif
 &PRECISION &
-(obj, useGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, &
+(obj, my_pe, useGPU, wantDebug, a, a_dev, stripe_width, a_dim2, stripe_count, max_threads, &
 #ifdef WITH_OPENMP_TRADITIONAL
 l_nev, &
 #endif
 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 hh_tau_dev, kernel_flops, kernel_time, n_times, off, ncols, istripe, &
 #ifdef WITH_OPENMP_TRADITIONAL
-my_thread, thread_width, kernel, last_stripe_width)
+my_thread, thread_width, kernel, last_stripe_width, my_stream, success)
 #else
-last_stripe_width, kernel)
+last_stripe_width, kernel, my_stream, success)
 #endif
 
+  use ELPA_utilities, only : error_unit
   use precision
   use elpa_abstract_impl
   use, intrinsic :: iso_c_binding
@@ -109,7 +110,14 @@ last_stripe_width, kernel)
   !use cuda_functions
   !use hip_functions
   use gpu_c_kernel
-  use elpa_gpu
+  use elpa_gpu, only: gpu_stream_synchronize, &
+#ifdef WANT_SINGLE_PRECISION_REAL
+          SIZE_OF_SINGLE_REAL, &
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+          SIZE_OF_SINGLE_COMPLEX, &
+#endif
+          SIZE_OF_DOUBLE_REAL, SIZE_OF_DOUBLE_COMPLEX
 
   use elpa_generated_fortran_interfaces
 
@@ -118,7 +126,7 @@ last_stripe_width, kernel)
   logical, intent(in)                        :: useGPU, wantDebug
   real(kind=c_double), intent(inout)         :: kernel_time  ! MPI_WTIME always needs double
   integer(kind=lik)                          :: kernel_flops
-  integer(kind=ik), intent(in)               :: nbw, max_blk_size
+  integer(kind=ik), intent(in)               :: nbw, max_blk_size, my_pe
 #if REALCASE == 1
   real(kind=C_DATATYPE_KIND)                 :: bcast_buffer(nbw,max_blk_size)
 #endif
@@ -176,18 +184,21 @@ last_stripe_width, kernel)
 #endif
   real(kind=c_double)                        :: ttt ! MPI_WTIME always needs double
 
+  logical, optional                          :: success
   integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                                  &PRECISION&
                                                                  &_&
                                                                  &MATH_DATATYPE
+  integer(kind=c_intptr_t), optional         :: my_stream
 
 
+  success = .true.
   j = -99
 
   !if (wantDebug) then
 #ifdef WITH_NVIDIA_GPU_VERSION
     if (useGPU .and. &
-#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+#if defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
 #if REALCASE == 1
       ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU .and. kernel .ne. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU)) then
 #endif
@@ -204,7 +215,8 @@ last_stripe_width, kernel)
 #endif
 #endif  /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
       write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not a NVIDIA GPU kernel!"
-      stop
+      success = .false.
+      return
     endif
 #endif /* WITH_NVIDIA_GPU_VERSION */
 
@@ -217,11 +229,12 @@ last_stripe_width, kernel)
       ( kernel .ne. ELPA_2STAGE_COMPLEX_AMD_GPU)) then
 #endif
       write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not an AMD GPU kernel!"
-      stop
+      success = .false.
+      return
     endif
 #endif /* WITH_AMD_GPU_VERSION */
 
-#ifdef WITH_GPU_SYCL_VERSION
+#ifdef WITH_SYCL_GPU_VERSION
     if (useGPU .and. &
 #if REALCASE == 1
       ( kernel .ne. ELPA_2STAGE_REAL_INTEL_GPU_SYCL)) then
@@ -231,8 +244,10 @@ last_stripe_width, kernel)
 #endif
       write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not an INTEL GPU SYCL kernel!"
       stop
+      success = .false.
+      return
     endif
-#endif /* WITH_GPU_SYCL_VERSION */
+#endif /* WITH_SYCL_GPU_VERSION */
   !endif ! wantDebug
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -263,7 +278,9 @@ last_stripe_width, kernel)
     ! ncols - indicates the number of HH reflectors to apply; at least 1 must be available
     if (ncols < 1) then
       if (wantDebug) then
-        print *, "Returning early from compute_hh_trafo"
+        if (my_pe .eq. 0) then      
+          write(error_unit,'(a)') "Returning early from compute_hh_trafo (only task=0 prints this)"
+        endif
       endif
       return
     endif
@@ -363,7 +380,7 @@ last_stripe_width, kernel)
            &_&
            &PRECISION&
            &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
-           hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+           hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols, my_stream)
 #ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
     endif
 
@@ -381,7 +398,7 @@ last_stripe_width, kernel)
             &_&
             &PRECISION&
             &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
-            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols, my_stream)
 #endif
     endif
 

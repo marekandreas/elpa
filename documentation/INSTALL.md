@@ -2,13 +2,13 @@
 
 ## 0. Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2021.11.002**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2022.05.001.rc1**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
 As anounced, with the the release 2021.11.001 the **legacy interface has been removed**.
 
-The release of ELPA 2021.11.002 does change the API and ABI compared to the release 2020.05.002.
+The release of ELPA 2022.05.001.rc1 does change the API and ABI compared to the release 2020.05.002.
 
 ## 1. How to install *ELPA* ##
 
@@ -213,17 +213,13 @@ However, this is still considered experimental. Especially the following feature
 been tested.
 
 AMD GPUs:
-```
---enable-amd-gpu
-```
-- runs in the MPI build have not yet been tested.
+- multi-GPU runs on _one_ node have been tested (with MPI)
+- multi-GPU runs on _mutliple_ nodes have not been tested
 
 Intel GPUs:
 ```
---enable-intel-gpu
+--enable-intel-gpu=[openmp|sycl]
 ```
-- memory management is still missing. Data will always be copied between the host and the GPUs, even if not necessary.
-- runs with MPI build have not yet been tested.
 - ELPA 2-stage optimized Intel GPU kernels are still missing.
 
 

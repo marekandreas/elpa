@@ -437,12 +437,30 @@ max_threads, isSkewsymmetric)
     cur_l_cols = 0
 #endif
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(a_dev, int(loc(a_mat),kind=c_intptr_t), &
+                  matrixRows*matrixCols*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+    check_memcpy_gpu("bandred: a_dev", successGPU)
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("bandred: a_dev", successGPU)
+#else
     successGPU = gpu_memcpy(a_dev, int(loc(a_mat),kind=c_intptr_t), &
                   matrixRows*matrixCols*size_of_datatype, gpuMemcpyHostToDevice)
     check_memcpy_gpu("bandred: a_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmat_dev, nbw*nbw*size_of_datatype)
     check_alloc_gpu("bandred: tmat_dev", successGPU)
+
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_host_register(int(loc(tmat),kind=c_intptr_t), &
+                 nbw *nbw *numBlocks * size_of_datatype,&
+                  gpuHostRegisterDefault)
+    check_host_register_gpu("bandred: tmat", successGPU)
+#endif
+
+
+
 
 #ifndef WITH_OPENMP_TRADITIONAL
     istep = (na-1)/nbw
@@ -532,7 +550,7 @@ max_threads, isSkewsymmetric)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
-        successGPU = gpu_malloc_host(vmr_host,max_l_rows*2*n_cols*size_of_datatype)
+        successGPU = gpu_malloc_host(vmr_host, max_l_rows*2*n_cols*size_of_datatype)
         check_host_alloc_gpu("bandred: vmr_host", successGPU)
         call c_f_pointer(vmr_host, vmrGPU, [max_l_rows*2*n_cols])
         call c_f_pointer(vmr_host, vmrGPU_2d, [max_l_rows,2*n_cols])
@@ -618,6 +636,19 @@ max_threads, isSkewsymmetric)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy2d_async(int(loc(a_mat(1, lc_start)),kind=c_intptr_t), &
+                        int((matrixRows*size_of_datatype),kind=c_intptr_t), &
+                        (a_dev + int( ( (lc_start-1) * matrixRows*size_of_datatype),kind=c_intptr_t )), &
+                        int(matrixRows*size_of_datatype,kind=c_intptr_t), &
+                        int(lr_end*size_of_datatype,kind=c_intptr_t), &
+                        int((lc_end - lc_start+1),kind=c_intptr_t),int(gpuMemcpyDeviceToHost,kind=c_int), &
+                        my_stream)
+          check_memcpy_gpu("bandred: a_dev -> a_mat", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("bandred: a_dev -> a_mat", successGPU)
+#else
           successGPU = gpu_memcpy2d(int(loc(a_mat(1, lc_start)),kind=c_intptr_t), &
                         int((matrixRows*size_of_datatype),kind=c_intptr_t), &
                         (a_dev + int( ( (lc_start-1) * matrixRows*size_of_datatype),kind=c_intptr_t )), &
@@ -625,6 +656,8 @@ max_threads, isSkewsymmetric)
                         int(lr_end*size_of_datatype,kind=c_intptr_t), &
                         int((lc_end - lc_start+1),kind=c_intptr_t),int(gpuMemcpyDeviceToHost,kind=c_int))
           check_memcpy_gpu("bandred: a_dev -> a_mat", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
         else
           do memcols = lc_start, lc_end
@@ -929,6 +962,19 @@ max_threads, isSkewsymmetric)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy2d_async((a_dev+ &
+                         int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
+                         int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
+                         int(matrixRows*size_of_datatype,kind=c_intptr_t), &
+                         int(lr_end*size_of_datatype,kind=c_intptr_t), &
+                         int((lc_end - lc_start+1),kind=c_intptr_t), &
+                         int(gpuMemcpyHostToDevice,kind=c_int), my_stream)
+            check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("bandred: a_mat -> a_dev", successGPU)
+#else
             successGPU = gpu_memcpy2d((a_dev+ &
                          int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
                          int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
@@ -937,6 +983,8 @@ max_threads, isSkewsymmetric)
                          int((lc_end - lc_start+1),kind=c_intptr_t), &
                          int(gpuMemcpyHostToDevice,kind=c_int))
             check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           else
             do memcols = lc_start, lc_end
@@ -1023,6 +1071,18 @@ max_threads, isSkewsymmetric)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy2d_async((a_dev+ &
+                       int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
+                       int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
+                       int(matrixRows*size_of_datatype,kind=c_intptr_t), &
+                       int(lr_end*size_of_datatype,kind=c_intptr_t), &
+                       int((lc_end - lc_start+1),kind=c_intptr_t), &
+                       int(gpuMemcpyHostToDevice,kind=c_int), my_stream)
+          check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("bandred: a_mat -> a_dev", successGPU)
+#else
           successGPU = gpu_memcpy2d((a_dev+ &
                        int(((lc_start-1)*matrixRows*size_of_datatype),kind=c_intptr_t)), &
                        int(matrixRows*size_of_datatype,kind=c_intptr_t), int(loc(a_mat(1,lc_start)),kind=c_intptr_t), &
@@ -1031,6 +1091,7 @@ max_threads, isSkewsymmetric)
                        int((lc_end - lc_start+1),kind=c_intptr_t), &
                        int(gpuMemcpyHostToDevice,kind=c_int))
           check_memcpy_gpu("bandred: a_mat -> a_dev", successGPU)
+#endif
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
         else
           do memcols = lc_start, lc_end
@@ -1122,6 +1183,18 @@ max_threads, isSkewsymmetric)
       endif ! useGPU
 
       if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(vmr_dev, int(loc(vmrGPU_2d(1,1)),kind=c_intptr_t), &
+                     max_l_rows*2*n_cols*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+        check_memcpy_gpu("bandred: vmrGPU_2d -> vmr_dev", successGPU)
+
+        successGPU = gpu_memcpy_async(umc_dev, int(loc(umcGPU_2d(1,1)), kind=c_intptr_t), &
+                     max_l_cols*2*n_cols*size_of_datatype, &
+                        gpuMemcpyHostToDevice, my_stream)
+        check_memcpy_gpu("bandred: umcGPU -> umc_dev", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("bandred: umcGPU -> umc_dev", successGPU)
+#else
         successGPU = gpu_memcpy(vmr_dev, int(loc(vmrGPU_2d(1,1)),kind=c_intptr_t), &
                      max_l_rows*2*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("bandred: vmrGPU_2d -> vmr_dev", successGPU)
@@ -1130,6 +1203,7 @@ max_threads, isSkewsymmetric)
                      max_l_cols*2*n_cols*size_of_datatype, &
                         gpuMemcpyHostToDevice)
         check_memcpy_gpu("bandred: umcGPU -> umc_dev", successGPU)
+#endif
       endif ! useGPU
 
 
@@ -1226,6 +1300,19 @@ max_threads, isSkewsymmetric)
       endif ! l_cols>0 .and. l_rows>0
 
       if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(int(loc(vmrGPU(1)),kind=c_intptr_t), vmr_dev, &
+                     max_l_rows*2*n_cols*size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+        check_memcpy_gpu("bandred: vmr_dev -> vmrGPU", successGPU)
+
+        successGPU = gpu_memcpy_async(int(loc(umcGPU(1)), kind=c_intptr_t), umc_dev, &
+                     max_l_cols*2*n_cols*size_of_datatype, &
+                        gpuMemcpyDeviceToHost, my_stream)
+        check_memcpy_gpu("bandred: umc_dev -> umcGPU", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("bandred: umc_dev -> umcGPU", successGPU)
+
+#else
         successGPU = gpu_memcpy(int(loc(vmrGPU(1)),kind=c_intptr_t), vmr_dev, &
                      max_l_rows*2*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("bandred: vmr_dev -> vmrGPU", successGPU)
@@ -1234,6 +1321,7 @@ max_threads, isSkewsymmetric)
                      max_l_cols*2*n_cols*size_of_datatype, &
                         gpuMemcpyDeviceToHost)
         check_memcpy_gpu("bandred: umc_dev -> umcGPU", successGPU)
+#endif
       endif ! useGPU
 
     else ! n_way > 1
@@ -1250,9 +1338,19 @@ max_threads, isSkewsymmetric)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memset_async(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
+                        0, max_l_rows*n_cols*size_of_datatype, my_stream)
+            check_memset_gpu("bandred: vmr_dev", successGPU)
+            !successGPU = gpu_stream_synchronize(my_stream)
+            !check_stream_synchronize_gpu("bandred: vmr_dev", successGPU)
+#else
             successGPU = gpu_memset(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
                         0, max_l_rows*n_cols*size_of_datatype)
             check_memset_gpu("bandred: vmr_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           else
             allocate(vmr_debug(max_l_rows*n_cols))
@@ -1264,15 +1362,33 @@ max_threads, isSkewsymmetric)
             deallocate(vmr_debug)
           endif
 #endif
+
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(vmr_dev, int(loc(vmrGPU(1)),kind=c_intptr_t), &
+                        max_l_rows*n_cols*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+          check_memcpy_gpu("bandred: vmrGPU -> vmr_dev", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("bandred: vmrGPU -> vmr_dev", successGPU)
+#else
           successGPU = gpu_memcpy(vmr_dev, int(loc(vmrGPU(1)),kind=c_intptr_t), &
                         max_l_rows*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("bandred: vmrGPU -> vmr_dev", successGPU)
+#endif
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
+
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memset_async(umc_dev, 0, l_cols*n_cols*size_of_datatype, my_stream)
+            check_memset_gpu("bandred: umc_dev", successGPU)
+            !successGPU = gpu_stream_synchronize(my_stream)
+            !check_stream_synchronize_gpu("bandred: umc_dev", successGPU)
+#else
             successGPU = gpu_memset(umc_dev, 0, l_cols*n_cols*size_of_datatype)
             check_memset_gpu("bandred: umc_dev", successGPU)
+#endif
+
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
           else
             allocate(umc_debug(l_cols*n_cols))
@@ -1284,6 +1400,20 @@ max_threads, isSkewsymmetric)
           endif
 #endif
 
+
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(umc_dev+l_cols*n_cols*size_of_datatype, &
+                        int(loc(umcGPU(1+l_cols*n_cols)),kind=c_intptr_t), &
+#ifndef WITH_OPENMP_TRADITIONAL
+                        (umc_size-l_cols*n_cols)*size_of_datatype, &
+#else
+                        (max_l_cols*2*n_cols-l_cols*n_cols)*size_of_datatype, &
+#endif
+                        gpuMemcpyHostToDevice, my_stream)
+          check_memcpy_gpu("bandred: umcGPU -> umc_dev", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("bandred: umcGPU -> umc_dev", successGPU)
+#else
           successGPU = gpu_memcpy(umc_dev+l_cols*n_cols*size_of_datatype, &
                         int(loc(umcGPU(1+l_cols*n_cols)),kind=c_intptr_t), &
 #ifndef WITH_OPENMP_TRADITIONAL
@@ -1293,6 +1423,7 @@ max_threads, isSkewsymmetric)
 #endif
                         gpuMemcpyHostToDevice)
           check_memcpy_gpu("bandred: umcGPU -> umc_dev", successGPU)
+#endif /* WITH_GPU_STREAMS */
         endif ! useGPU
 
         do i=0,(istep*nbw-1)/tile_size
@@ -1381,6 +1512,19 @@ max_threads, isSkewsymmetric)
 
         if (useGPU) then
           if (tile_size < istep*nbw .or. n_way > 1) then
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(int(loc(vmrGPU(1+max_l_rows*n_cols)),kind=c_intptr_t), &
+                          vmr_dev+max_l_rows*n_cols*size_of_datatype, &
+#ifndef WITH_OPENMP_TRADITIONAL
+                          (vmr_size-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+#else
+                          (max_l_rows*2*n_cols-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+#endif
+            check_memcpy_gpu("bandred: vmr_dev -> vmrGPU", successGPU)
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("bandred: vmr_dev -> vmrGPU", successGPU)
+
+#else /* WITH_GPU_STREAMS */
             successGPU = gpu_memcpy(int(loc(vmrGPU(1+max_l_rows*n_cols)),kind=c_intptr_t), &
                           vmr_dev+max_l_rows*n_cols*size_of_datatype, &
 #ifndef WITH_OPENMP_TRADITIONAL
@@ -1389,11 +1533,20 @@ max_threads, isSkewsymmetric)
                           (max_l_rows*2*n_cols-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyDeviceToHost)
 #endif
             check_memcpy_gpu("bandred: vmr_dev -> vmrGPU", successGPU)
+#endif /* WITH_GPU_STREAMS */
           endif
 
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(int(loc(umcGPU(1)),kind=c_intptr_t), &
+                        umc_dev, l_cols*n_cols*size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+          check_memcpy_gpu("bandred: umc_dev -> umcGPU", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("bandred: umc_dev -> umcGPU", successGPU)
+#else
           successGPU = gpu_memcpy(int(loc(umcGPU(1)),kind=c_intptr_t), &
                         umc_dev, l_cols*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("bandred: umc_dev -> umcGPU", successGPU)
+#endif
         endif ! useGPU
       endif ! l_cols>0 .and. l_rows>0
 
@@ -1488,6 +1641,17 @@ max_threads, isSkewsymmetric)
     ! U = U * Tmat**T
 
     if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(umc_dev, int(loc(umcGPU(1)),kind=c_intptr_t), &
+                    l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+      check_memcpy_gpu("bandred: umcGPU -> umc_dev ", successGPU)
+
+      successGPU = gpu_memcpy_async(tmat_dev,int(loc(tmat(1,1,istep)),kind=c_intptr_t), &
+                    nbw*nbw*size_of_datatype,gpuMemcpyHostToDevice, my_stream)
+      check_memcpy_gpu("bandred: tmat -> tmat_dev ", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("bandred: tmat -> tmat_dev ", successGPU)
+#else
       successGPU = gpu_memcpy(umc_dev, int(loc(umcGPU(1)),kind=c_intptr_t), &
                     l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_gpu("bandred: umcGPU -> umc_dev ", successGPU)
@@ -1495,6 +1659,7 @@ max_threads, isSkewsymmetric)
       successGPU = gpu_memcpy(tmat_dev,int(loc(tmat(1,1,istep)),kind=c_intptr_t), &
                     nbw*nbw*size_of_datatype,gpuMemcpyHostToDevice)
       check_memcpy_gpu("bandred: tmat -> tmat_dev ", successGPU)
+#endif
 
       call obj%timer%start("gpublas")
       call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
@@ -1512,9 +1677,17 @@ max_threads, isSkewsymmetric)
          n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
       call obj%timer%stop("gpublas")
 
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(vav),kind=c_intptr_t), &
+                  vav_dev, nbw*nbw*size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+      check_memcpy_gpu("bandred: vav_dev -> vav ", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("bandred: vav_dev -> vav ", successGPU)
+#else
       successGPU = gpu_memcpy(int(loc(vav),kind=c_intptr_t), &
                   vav_dev, nbw*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("bandred: vav_dev -> vav ", successGPU)
+#endif
     else ! useGPU
 
       call obj%timer%start("blas")
@@ -1568,9 +1741,17 @@ max_threads, isSkewsymmetric)
 #endif
 
     if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(vav_dev, int(loc(vav),kind=c_intptr_t), &
+                       nbw*nbw*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+      check_memcpy_gpu("bandred: vav -> vav_dev ", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("bandred: vav -> vav_dev ", successGPU)
+#else
       successGPU = gpu_memcpy(vav_dev, int(loc(vav),kind=c_intptr_t), &
                        nbw*nbw*size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_gpu("bandred: vav -> vav_dev ", successGPU)
+#endif
     endif
 
 
@@ -1605,6 +1786,17 @@ max_threads, isSkewsymmetric)
       endif
       call obj%timer%stop("gpublas")
 
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(umcGPU(1)),kind=c_intptr_t), &
+#ifndef WITH_OPENMP_TRADITIONAL
+                  umc_dev, umc_size*size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+#else
+                  umc_dev, max_l_cols*2*n_cols*size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+#endif
+      check_memcpy_gpu("bandred: umc_dev -> umcGPU ", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("bandred: umc_dev -> umcGPU ", successGPU)
+#else /* WITH_GPU_STREAMS */
       successGPU = gpu_memcpy(int(loc(umcGPU(1)),kind=c_intptr_t), &
 #ifndef WITH_OPENMP_TRADITIONAL
                   umc_dev, umc_size*size_of_datatype, gpuMemcpyDeviceToHost)
@@ -1612,6 +1804,7 @@ max_threads, isSkewsymmetric)
                   umc_dev, max_l_cols*2*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
 #endif
       check_memcpy_gpu("bandred: umc_dev -> umcGPU ", successGPU)
+#endif /* WITH_GPU_STREAMS */
 
       ! Transpose umc -> umr (stored in vmr, second half)
       if (isSkewsymmetric) then
@@ -1641,6 +1834,18 @@ max_threads, isSkewsymmetric)
         endif
       endif
 
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
+                  int(loc(vmrGPU(1+max_l_rows*n_cols)),kind=c_intptr_t), &
+#ifndef WITH_OPENMP_TRADITIONAL
+                  (vmr_size-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+#else
+                  (max_l_rows*2*n_cols-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+#endif
+      check_memcpy_gpu("bandred: vmr -> vmrGPU ", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("bandred: vmr -> vmrGPU ", successGPU)
+#else /* WITH_GPU_STREAMS */
       successGPU = gpu_memcpy(vmr_dev+max_l_rows*n_cols*size_of_datatype, &
                   int(loc(vmrGPU(1+max_l_rows*n_cols)),kind=c_intptr_t), &
 #ifndef WITH_OPENMP_TRADITIONAL
@@ -1649,7 +1854,7 @@ max_threads, isSkewsymmetric)
                   (max_l_rows*2*n_cols-max_l_rows*n_cols)*size_of_datatype, gpuMemcpyHostToDevice)
 #endif
       check_memcpy_gpu("bandred: vmr -> vmrGPU ", successGPU)
-
+#endif /* WITH_GPU_STREAMS */
     else ! useGPU
       call obj%timer%start("blas")
 #if REALCASE == 1
@@ -1902,11 +2107,21 @@ max_threads, isSkewsymmetric)
     ! (band to tridi). Previously, a has been kept on the device and then
     ! copied in redist_band (called from tridiag_band). However, it seems to
     ! be easier to do it here.
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(int(loc(a_mat),kind=c_intptr_t), &
+                  int(a_dev,kind=c_intptr_t), &
+                  int(matrixRows*matrixCols* size_of_datatype, kind=c_intptr_t), &
+                  gpuMemcpyDeviceToHost, my_stream)
+    check_memcpy_gpu("bandred: a_dev -> a_mat ", successGPU)
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("bandred: a_dev -> a_mat ", successGPU)
+#else
     successGPU = gpu_memcpy(int(loc(a_mat),kind=c_intptr_t), &
                   int(a_dev,kind=c_intptr_t), &
                   int(matrixRows*matrixCols* size_of_datatype, kind=c_intptr_t), &
                   gpuMemcpyDeviceToHost)
     check_memcpy_gpu("bandred: a_dev -> a_mat ", successGPU)
+#endif
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
@@ -1916,6 +2131,12 @@ max_threads, isSkewsymmetric)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     endif
 #endif
+
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_host_unregister(int(loc(tmat),kind=c_intptr_t))
+    check_host_unregister_gpu("bandred: tmat ", successGPU)
+#endif
+
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("bandred: a_dev ", successGPU)
 

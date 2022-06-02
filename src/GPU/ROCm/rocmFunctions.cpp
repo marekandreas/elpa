@@ -75,6 +75,71 @@
 
 #ifdef WITH_AMD_GPU_VERSION
 extern "C" {
+#ifdef WITH_GPU_STREAMS
+  int hipStreamCreateFromC(intptr_t *stream) {
+    *stream = (intptr_t) malloc(sizeof(hipStream_t));
+    hipError_t status = hipStreamCreate((hipStream_t*) *stream);
+    if (status == hipSuccess) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else{
+      errormessage("Error in hipStreamCreate: %s\n", "unknown error");
+      return 0;
+    }
+
+  }
+
+  int hipStreamDestroyFromC(intptr_t *stream){
+    hipError_t status = hipStreamDestroy(*(hipStream_t*) *stream);
+    *stream = (intptr_t) NULL;
+    if (status ==hipSuccess) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else{
+      errormessage("Error in hipStreamDestroy: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+  int rocblasSetStreamFromC(intptr_t handle, intptr_t stream) {
+    rocblas_status status = rocblas_set_stream(*((rocblas_handle*)handle), *((hipStream_t*)stream));
+    if (status == rocblas_status_success ) {
+      return 1;
+    }
+    else if (status == rocblas_status_invalid_handle) {
+      errormessage("Error in rocblasSetStream: %s\n", "the HIP Runtime initialization failed");
+      return 0;
+    }
+    else{
+      errormessage("Error in rocblasSetStream: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+  int hipStreamSynchronizeFromC(intptr_t stream) {
+    hipError_t status = hipStreamSynchronize(*((hipStream_t*)stream));
+    if (status == hipSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in hipStreamSynchronize: %s\n", "unknown error");
+      return 0;
+    }
+  }
+#endif /* WITH_GPU_STREAMS */
+
+  int hipMemcpy2dAsyncFromC(intptr_t *dest, size_t dpitch, intptr_t *src, size_t spitch, size_t width, size_t height, int dir, intptr_t stream) {
+
+    hipError_t hiperr = hipMemcpy2DAsync( dest, dpitch, src, spitch, width, height, (hipMemcpyKind)dir, *((hipStream_t*)stream) );
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipMemcpy2dAsync: %s\n",hipGetErrorString(hiperr));
+      return 0;
+    }
+    return 1;
+  }
+
 
   int rocblasCreateFromC(intptr_t *handle) {
 //     printf("in c: %p\n", *cublas_handle);
@@ -208,11 +273,33 @@ extern "C" {
     return 1;
   }
 
+#ifdef WITH_GPU_STREAMS
+  int hipMemsetAsyncFromC(intptr_t *a, int value, size_t count, intptr_t stream) {
+
+    hipError_t hiperr = hipMemsetAsync( a, value, count, *((hipStream_t*)stream));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipMemsetAsync: %s\n",hipGetErrorString(hiperr));
+      return 0;
+    }
+    return 1;
+  }
+#endif
+
   int hipMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir) {
 
     hipError_t hiperr = hipMemcpy( dest, src, count, (hipMemcpyKind)dir);
     if (hiperr != hipSuccess) {
       errormessage("Error in hipMemcpy: %s\n",hipGetErrorString(hiperr));
+      return 0;
+    }
+    return 1;
+  }
+
+  int hipMemcpyAsyncFromC(intptr_t *dest, intptr_t *src, size_t count, int dir, intptr_t stream) {
+
+    hipError_t hiperr = hipMemcpyAsync( dest, src, count, (hipMemcpyKind)dir, *((hipStream_t*)stream));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipMemcpyAsync: %s\n",hipGetErrorString(hiperr));
       return 0;
     }
     return 1;

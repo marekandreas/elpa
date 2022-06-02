@@ -404,7 +404,14 @@ program test
 #endif
      stop 77
 #endif
-
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+#ifdef WITH_GPU_STREAMS
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
+#endif
+#endif
  
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
                                 np_rows, np_cols, &
@@ -972,7 +979,7 @@ program test
 
 #ifdef TEST_REAL
 #if (TEST_NVIDIA_GPU == 1)
-#if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY == 1
+#if WITH_NVIDIA_SM80_GPU_KERNEL == 1
      kernel = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
 #else
      kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
