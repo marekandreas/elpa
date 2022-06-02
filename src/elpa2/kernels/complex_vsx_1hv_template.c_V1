@@ -1,0 +1,942 @@
+//    This file is part of ELPA.
+//
+//    The ELPA library was originally created by the ELPA consortium,
+//    consisting of the following organizations:
+//
+//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+//      Informatik,
+//    - Technische Universität München, Lehrstuhl für Informatik mit
+//      Schwerpunkt Wissenschaftliches Rechnen ,
+//    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+//    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//      and
+//    - IBM Deutschland GmbH
+//
+//    This particular source code file contains additions, changes and
+//    enhancements authored by Intel Corporation which is not part of
+//    the ELPA consortium.
+//
+//    More information can be found here:
+//    http://elpa.mpcdf.mpg.de/
+//
+//    ELPA is free software: you can redistribute it and/or modify
+//    it under the terms of the version 3 of the license of the
+//    GNU Lesser General Public License as published by the Free
+//    Software Foundation.
+//
+//    ELPA is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//    You should have received a copy of the GNU Lesser General Public License
+//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+//
+//    ELPA reflects a substantial effort on the part of the original
+//    ELPA consortium, and we ask you to respect the spirit of the
+//    license that we chose: i.e., please contribute any changes you
+//    may have back to the original ELPA library distribution, and keep
+//    any derivatives of ELPA under the same license that we chose for
+//    the original distribution, the GNU Lesser General Public License.
+//
+//
+// --------------------------------------------------------------------------------------------------
+//
+// This file contains the compute intensive kernels for the Householder transformations.
+// It should be compiled with the highest possible optimization level.
+//
+// On Intel Nehalem or Intel Westmere or AMD Magny Cours use -O3 -msse3
+// On Intel Sandy Bridge use -O3 -mavx
+//
+// Copyright of the original code rests with the authors inside the ELPA
+// consortium. The copyright of any additional modifications shall rest
+// with their original authors, but shall adhere to the licensing terms
+// distributed along with the original code in the file "COPYING".
+//
+// Author: Andreas Marek, MPCDF
+// --------------------------------------------------------------------------------------------------
+
+#include "config-f90.h"
+
+#include <complex.h>
+
+#ifdef HAVE_VSX_SSE
+#include <altivec.h>
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+#define offset 2
+#define __SSE_DATATYPE __vector double
+#define _SSE_LOAD (__vector double) vec_ld
+#define _SSE_STORE vec_st
+#define _SSE_MUL vec_mul
+#define _SSE_ADD vec_add
+#define _SSE_XOR vec_xor
+#define _SSE_MADDSUB _mm_maddsub_pd
+#define _SSE_ADDSUB _mm_addsub_pd
+#define _SSE_SHUFFLE _mm_shuffle_pd
+#define _SHUFFLE _MM_SHUFFLE2(0,1)
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+#define offset 4
+#define __SSE_DATATYPE __vector float
+#define _SSE_LOAD (__vector float) vec_ld
+#define _SSE_STORE vec_st
+#define _SSE_MUL vec_mul
+#define _SSE_ADD vec_add
+#define _SSE_XOR vec_xor
+#define _SSE_MADDSUB _mm_maddsub_ps
+#define _SSE_ADDSUB _mm_addsub_ps
+#define _SSE_SHUFFLE _mm_shuffle_ps
+#define _SHUFFLE 0xb1
+#endif
+
+#define __forceinline __attribute__((always_inline))
+
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+//Forward declaration
+static __forceinline void hh_trafo_complex_kernel_6_VSX_1hv_double(double complex* q, double complex* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_4_VSX_1hv_double(double complex* q, double complex* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_2_VSX_1hv_double(double complex* q, double complex* hh, int nb, int ldq);
+#endif
+
+#ifdef SINGLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_6_VSX_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_4_VSX_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+static __forceinline void hh_trafo_complex_kernel_2_VSX_1hv_single(float complex* q, float complex* hh, int nb, int ldq);
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+/*
+!f>#ifdef HAVE_VSX_SSE
+!f> interface
+!f>   subroutine single_hh_trafo_complex_vsx_1hv_double(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_vsx_1hv_double")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     ! complex(kind=c_double_complex)     :: q(*)
+!f>     type(c_ptr), value                   :: q
+!f>     complex(kind=c_double_complex)     :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+#endif
+
+#ifdef SINGLE_PRECISION_COMPLEX
+/*
+!f>#ifdef HAVE_VSX_SSE
+!f> interface
+!f>   subroutine single_hh_trafo_complex_vsx_1hv_single(q, hh, pnb, pnq, pldq) &
+!f>                             bind(C, name="single_hh_trafo_complex_vsx_1hv_single")
+!f>     use, intrinsic :: iso_c_binding
+!f>     integer(kind=c_int)     :: pnb, pnq, pldq
+!f>     ! complex(kind=c_float_complex)   :: q(*)
+!f>     type(c_ptr), value                :: q
+!f>     complex(kind=c_float_complex)   :: hh(pnb,2)
+!f>   end subroutine
+!f> end interface
+!f>#endif
+*/
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+void single_hh_trafo_complex_vsx_1hv_double(double complex* q, double complex* hh, int* pnb, int* pnq, int* pldq)
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+void single_hh_trafo_complex_vsx_1hv_single(float complex* q, float complex* hh, int* pnb, int* pnq, int* pldq)
+#endif
+{
+	int i;
+	int nb = *pnb;
+	int nq = *pldq;
+	int ldq = *pldq;
+	//int ldh = *pldh;
+
+	for (i = 0; i < nq-4; i+=6)
+	{
+#ifdef DOUBLE_PRECISION_COMPLEX
+		hh_trafo_complex_kernel_6_VSX_1hv_double(&q[i], hh, nb, ldq);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+		hh_trafo_complex_kernel_6_VSX_1hv_single(&q[i], hh, nb, ldq);
+#endif
+	}
+	if (nq-i == 0) {
+	  return;
+	} else {
+
+	if (nq-i > 2)
+	{
+#ifdef DOUBLE_PRECISION_COMPLEX
+		hh_trafo_complex_kernel_4_VSX_1hv_double(&q[i], hh, nb, ldq);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+		hh_trafo_complex_kernel_4_VSX_1hv_single(&q[i], hh, nb, ldq);
+#endif
+	}
+	else
+	{
+#ifdef DOUBLE_PRECISION_COMPLEX
+		hh_trafo_complex_kernel_2_VSX_1hv_double(&q[i], hh, nb, ldq);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+		hh_trafo_complex_kernel_2_VSX_1hv_single(&q[i], hh, nb, ldq);
+#endif
+	}
+    }
+}
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_6_VSX_1hv_double(double complex* q, double complex* hh, int nb, int ldq)
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_6_VSX_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+#endif
+{
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+	double mone = -1.0;
+	double one = 1.0;
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	float* q_dbl = (float*)q;
+	float* hh_dbl = (float*)hh;
+	float mone = -1.0;
+	float one = 1.0;
+#endif
+	__SSE_DATATYPE x1, x2, x3, x4, x5, x6;
+	__SSE_DATATYPE x1_swaped, x2_swaped, x3_swaped, x4_swaped, x5_swaped, x6_swaped;
+	__SSE_DATATYPE q1, q2, q3, q4, q5, q6;
+	__SSE_DATATYPE q1_swaped, q2_swaped, q3_swaped, q4_swaped, q5_swaped, q6_swaped;
+	__SSE_DATATYPE h1_real, h1_imag, tmpg, tmpg1;
+	__SSE_DATATYPE tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, vhh_swaped, plus_minus, minus_plus, vhh;
+	__SSE_DATATYPE vmone, vone, tau1, tau1_swaped, tmpa1_swaped, tmpb1_swaped, tmpc1_swaped;
+	__SSE_DATATYPE tmpa2_swaped, tmpb2_swaped, tmpc2_swaped, tmpa3_swaped, tmpb3_swaped, tmpc3_swaped;
+	__SSE_DATATYPE tmpa4_swaped, tmpb4_swaped, tmpc4_swaped, tmpa5_swaped, tmpb5_swaped, tmpc5_swaped;
+	__SSE_DATATYPE tmpa6_swaped, tmpb6_swaped, tmpc6_swaped;
+
+	int i=0;
+
+	x1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[0]);
+	x2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[offset]);
+	x3 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX
+	x4 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[3*offset]);
+	x5 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[4*offset]);
+	x6 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[5*offset]);
+#endif
+	for (i = 1; i < nb; i++)
+	{
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		h1_real = vec_splats(hh_dbl[i*2]);
+		h1_imag = vec_splats(hh_dbl[(i*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+		h1_real = vec_splats(hh_dbl[i*2]);
+		h1_imag = vec_splats(hh_dbl[(i*2)+1]);
+#endif
+#ifndef __ELPA_USE_FMA__
+		vmone = vec_splats(mone);
+		vone  = vec_splats(one);
+#endif
+
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+0]);
+		q2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+offset]);
+		q3 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX
+		q4 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+3*offset]);
+		q5 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+4*offset]);
+		q6 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+5*offset]);
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		// plus_minus = vec(1;-1)
+		plus_minus = (__vector double)  vec_sld( (__vector unsigned int) vmone, (__vector unsigned int) vone, 8);
+#endif
+		minus_plus = _SSE_MUL(vmone, plus_minus);
+		h1_imag = _SSE_MUL(h1_imag, plus_minus);
+
+		// we want to compute x1 = x1 + q1*conj(hh)
+		// => x1 = x1 + vector (q1[0]*hh[0] + q1[1]*hh[1] ; q1[1]*hh[0] - q1[0]*hh[1]
+		// => x1 = x1 + vec_mul(q1, h1_real) + vec_mul(q1_swapped,(h[1],h[1])*plus_minus)
+
+		tmp1 = _SSE_MUL(q1, h1_real);
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmpa1_swaped = (__vector double)  vec_sld( (__vector unsigned int) q1, (__vector unsigned int) q1, 8);
+		tmpb1_swaped = (__vector double)  vec_sld( (__vector unsigned int) q1, (__vector unsigned int) tmpa1_swaped, 8);
+                q1_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb1_swaped, (__vector unsigned int) q1, 8);
+		//q1_swaped = vec(q1[1] ; q1[0])
+#endif
+
+                x1 = _SSE_ADD(x1, _SSE_ADD(tmp1, _SSE_MUL(q1_swaped, h1_imag)));
+
+		tmp2 = _SSE_MUL(q2, h1_real);
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmpa2_swaped = (__vector double)  vec_sld( (__vector unsigned int) q2, (__vector unsigned int) q2, 8);
+		tmpb2_swaped = (__vector double)  vec_sld( (__vector unsigned int) q2, (__vector unsigned int) tmpa2_swaped, 8);
+                q2_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb2_swaped, (__vector unsigned int) q2, 8);
+		//q2_swaped = vec(q2[1] ; q2[0])
+#endif
+
+                x2 = _SSE_ADD(x2, _SSE_ADD(tmp2, _SSE_MUL(q2_swaped, h1_imag)));
+
+		tmp3 = _SSE_MUL(q3, h1_real);
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmpa3_swaped = (__vector double)  vec_sld( (__vector unsigned int) q3, (__vector unsigned int) q3, 8);
+		tmpb3_swaped = (__vector double)  vec_sld( (__vector unsigned int) q3, (__vector unsigned int) tmpa3_swaped, 8);
+                q3_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb3_swaped, (__vector unsigned int) q3, 8);
+		//q3_swaped = vec(q3[1] ; q3[0])
+#endif
+
+                x3 = _SSE_ADD(x3, _SSE_ADD(tmp3, _SSE_MUL(q3_swaped, h1_imag)));
+
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmp4 = _SSE_MUL(q4, h1_real);
+
+		tmpa4_swaped = (__vector double)  vec_sld( (__vector unsigned int) q4, (__vector unsigned int) q4, 8);
+		tmpb4_swaped = (__vector double)  vec_sld( (__vector unsigned int) q4, (__vector unsigned int) tmpa4_swaped, 8);
+                q4_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb4_swaped, (__vector unsigned int) q4, 8);
+		//q4_swaped = vec(q4[1] ; q4[0])
+
+                x4 = _SSE_ADD(x4, _SSE_ADD(tmp4, _SSE_MUL(q4_swaped, h1_imag)));
+
+		tmp5 = _SSE_MUL(q5, h1_real);
+
+		tmpa5_swaped = (__vector double)  vec_sld( (__vector unsigned int) q5, (__vector unsigned int) q5, 8);
+		tmpb5_swaped = (__vector double)  vec_sld( (__vector unsigned int) q5, (__vector unsigned int) tmpa5_swaped, 8);
+                q5_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb5_swaped, (__vector unsigned int) q5, 8);
+		//q5_swaped = vec(q5[1] ; q5[0])
+
+                x5 = _SSE_ADD(x5, _SSE_ADD(tmp5, _SSE_MUL(q5_swaped, h1_imag)));
+
+		tmp6 = _SSE_MUL(q6, h1_real);
+
+		tmpa6_swaped = (__vector double)  vec_sld( (__vector unsigned int) q6, (__vector unsigned int) q6, 8);
+		tmpb6_swaped = (__vector double)  vec_sld( (__vector unsigned int) q6, (__vector unsigned int) tmpa6_swaped, 8);
+                q6_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb6_swaped, (__vector unsigned int) q6, 8);
+		//q6_swaped = vec(q6[1] ; q6[0])
+
+                x6 = _SSE_ADD(x6, _SSE_ADD(tmp6, _SSE_MUL(q6_swaped, h1_imag)));
+
+
+#endif /* DOUBLE_PRECISION_COMPLEX */
+	}
+
+        tau1 = _SSE_LOAD(0, (unsigned long int *) &hh_dbl[0]);
+
+	// we want to compute x * (-tau) = - x * tau = - vec( x[0]*tau1[0] - x[1]*tau[1], x[0]*tau[1] + x[1]*tau[0])
+	// = - vec_mul(x1_swaped * tau) + minus_plus * (tmpb1_swaped * tau_swapped)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	// x1_swaped = vec(x[0],x[0]
+        tmpa1_swaped = (__vector double)  vec_sld( (__vector unsigned int) x1, (__vector unsigned int) x1, 8);
+        x1_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x1, (__vector unsigned int) tmpa1_swaped, 8);
+
+	// tmpb1_swaped  = vec(x[1], x[1])
+	tmpb1_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa1_swaped, (__vector unsigned int) x1, 8);
+	// tau1_swaped
+	tmpg =    (__vector double)  vec_sld( (__vector unsigned int) tau1, (__vector unsigned int) tau1, 8);
+        tmpg1 =   (__vector double)  vec_sld( (__vector unsigned int) tau1, (__vector unsigned int) tmpg, 8);
+	tau1_swaped =  (__vector double)  vec_sld( (__vector unsigned int) tmpg1, (__vector unsigned int) tau1, 8); 
+#endif
+	tmp1 = _SSE_MUL(x1_swaped, tau1);
+	tmpg1 = _SSE_MUL(minus_plus, tau1_swaped);
+
+        x1 = _SSE_MUL(vmone, _SSE_ADD(tmp1, _SSE_MUL(tmpb1_swaped, tmpg1)));
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	// x2_swaped = vec(x[0],x[0]
+        tmpa2_swaped = (__vector double)  vec_sld( (__vector unsigned int) x2, (__vector unsigned int) x2, 8);
+        x2_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x2, (__vector unsigned int) tmpa2_swaped, 8);
+
+	// tmpb2_swaped  = vec(x[1], x[1])
+	tmpb2_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa2_swaped, (__vector unsigned int) x2, 8);
+#endif
+	tmp2 = _SSE_MUL(x2_swaped, tau1);
+
+        x2 = _SSE_MUL(vmone, _SSE_ADD(tmp2, _SSE_MUL(tmpb2_swaped, tmpg1)));
+
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	// x3_swaped = vec(x[0],x[0]
+        tmpa3_swaped = (__vector double)  vec_sld( (__vector unsigned int) x3, (__vector unsigned int) x3, 8);
+        x3_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x3, (__vector unsigned int) tmpa3_swaped, 8);
+
+	// tmpb3_swaped  = vec(x[1], x[1])
+	tmpb3_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa3_swaped, (__vector unsigned int) x3, 8);
+#endif
+	tmp3 = _SSE_MUL(x3_swaped, tau1);
+
+        x3 = _SSE_MUL(vmone, _SSE_ADD(tmp3, _SSE_MUL(tmpb3_swaped, tmpg1)));
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+
+	// x4_swaped = vec(x[0],x[0]
+        tmpa4_swaped = (__vector double)  vec_sld( (__vector unsigned int) x4, (__vector unsigned int) x4, 8);
+        x4_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x4, (__vector unsigned int) tmpa4_swaped, 8);
+
+	// tmpb4_swaped  = vec(x[1], x[1])
+	tmpb4_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa4_swaped, (__vector unsigned int) x4, 8);
+	tmp4 = _SSE_MUL(x4_swaped, tau1);
+
+        x4 = _SSE_MUL(vmone, _SSE_ADD(tmp4, _SSE_MUL(tmpb4_swaped, tmpg1)));
+
+	// x5_swaped = vec(x[0],x[0]
+        tmpa5_swaped = (__vector double)  vec_sld( (__vector unsigned int) x5, (__vector unsigned int) x5, 8);
+        x5_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x5, (__vector unsigned int) tmpa5_swaped, 8);
+
+	// tmpb5_swaped  = vec(x[1], x[1])
+	tmpb5_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa5_swaped, (__vector unsigned int) x5, 8);
+	tmp5 = _SSE_MUL(x5_swaped, tau1);
+
+        x5 = _SSE_MUL(vmone, _SSE_ADD(tmp5, _SSE_MUL(tmpb5_swaped, tmpg1)));
+
+	// x6_swaped = vec(x[0],x[0]
+        tmpa6_swaped = (__vector double)  vec_sld( (__vector unsigned int) x6, (__vector unsigned int) x6, 8);
+        x6_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x6, (__vector unsigned int) tmpa6_swaped, 8);
+
+	// tmpb6_swaped  = vec(x[1], x[1])
+	tmpb6_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa6_swaped, (__vector unsigned int) x6, 8);
+	tmp6 = _SSE_MUL(x6_swaped, tau1);
+
+        x6 = _SSE_MUL(vmone, _SSE_ADD(tmp6, _SSE_MUL(tmpb6_swaped, tmpg1)));
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[0]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[offset]);
+	q3 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX 
+	q4 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[3*offset]);
+	q5 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[4*offset]);
+	q6 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[5*offset]);
+#endif
+
+	q1 = _SSE_ADD(q1, x1);
+	q2 = _SSE_ADD(q2, x2);
+	q3 = _SSE_ADD(q3, x3);
+#ifdef DOUBLE_PRECISION_COMPLEX 
+	q4 = _SSE_ADD(q4, x4);
+	q5 = _SSE_ADD(q5, x5);
+	q6 = _SSE_ADD(q6, x6);
+#endif
+
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q_dbl[0]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q_dbl[offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q_dbl[2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX 
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q_dbl[3*offset]);
+	_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q_dbl[4*offset]);
+	_SSE_STORE((__vector unsigned int) q6, 0, (unsigned int *) &q_dbl[5*offset]);
+#endif
+	for (i = 1; i < nb; i++)
+	{
+
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+0]);
+		q2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+offset]);
+		q3 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX
+		q4 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+3*offset]);
+		q5 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+4*offset]);
+		q6 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+5*offset]);
+#endif
+
+		vhh = _SSE_LOAD(0, (unsigned long int *) &hh_dbl[(i+2)]);
+
+	       // we want to compute q = q + x * h = vec(x[0]*h[0] - x[1]*h[1], x[0]*h1[1] + x[1]*h[0])
+	       // = vec_mul(x1_swaped * h) + vec_mul(tmpb1_swaped , vec_mul( minus_plus, h_swapped))
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       // x1_swaped = vec(x[0],x[0]) = known from before
+	       // tmpb1_swaped  = vec(x[1], x[1]) = known from before
+	       // h_swaped
+	       tmpg =    (__vector double)  vec_sld( (__vector unsigned int) vhh, (__vector unsigned int) vhh, 8);
+               tmpg1 =   (__vector double)  vec_sld( (__vector unsigned int) vhh, (__vector unsigned int) tmpg, 8);
+       	       vhh_swaped =  (__vector double)  vec_sld( (__vector unsigned int) tmpg1, (__vector unsigned int) vhh, 8); 
+#endif
+	       tmp1  = _SSE_MUL(x1_swaped, vhh);
+	       tmpg1 = _SSE_MUL(minus_plus, vhh_swaped);
+
+               q1 = _SSE_ADD(q1,  _SSE_ADD(tmp1, _SSE_MUL(tmpb1_swaped, tmpg1))); 
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       // x2_swaped = vec(x[0],x[0]) = known from before
+	       // tmpb2_swaped  = vec(x[1], x[1]) = known from before
+	       // h_swaped = known from before
+#endif
+	       tmp2  = _SSE_MUL(x2_swaped, vhh);
+
+               q2 = _SSE_ADD(q2,  _SSE_ADD(tmp2, _SSE_MUL(tmpb2_swaped, tmpg1))); 
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       // x3_swaped = vec(x[0],x[0]) = known from before
+	       // tmpb3_swaped  = vec(x[1], x[1]) = known from before
+	       // h_swaped = known from before
+#endif
+	       tmp3  = _SSE_MUL(x3_swaped, vhh);
+
+               q3 = _SSE_ADD(q3,  _SSE_ADD(tmp3, _SSE_MUL(tmpb3_swaped, tmpg1))); 
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       tmp4  = _SSE_MUL(x4_swaped, vhh);
+
+               q4 = _SSE_ADD(q4,  _SSE_ADD(tmp4, _SSE_MUL(tmpb4_swaped, tmpg1))); 
+
+	       tmp5  = _SSE_MUL(x5_swaped, vhh);
+
+               q5 = _SSE_ADD(q5,  _SSE_ADD(tmp5, _SSE_MUL(tmpb5_swaped, tmpg1))); 
+
+	       tmp6  = _SSE_MUL(x6_swaped, vhh);
+
+               q6 = _SSE_ADD(q6,  _SSE_ADD(tmp6, _SSE_MUL(tmpb6_swaped, tmpg1))); 
+
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
+		_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q_dbl[(2*i*ldq)+0]);
+		_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q_dbl[(2*i*ldq)+offset]);
+		_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q_dbl[(2*i*ldq)+2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX
+		_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q_dbl[(2*i*ldq)+3*offset]);
+		_SSE_STORE((__vector unsigned int) q5, 0, (unsigned int *) &q_dbl[(2*i*ldq)+4*offset]);
+		_SSE_STORE((__vector unsigned int) q6, 0, (unsigned int *) &q_dbl[(2*i*ldq)+5*offset]);
+#endif
+	}
+}
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_4_VSX_1hv_double(double complex* q, double complex* hh, int nb, int ldq)
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_4_VSX_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+#endif
+{
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+	double mone = -1.0;
+	double one = 1.0;
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	float* q_dbl = (float*)q;
+	float* hh_dbl = (float*)hh;
+	float mone = -1.0;
+	float one = 1.0;
+#endif
+	__SSE_DATATYPE x1, x2, x3, x4;
+	__SSE_DATATYPE x1_swaped, x2_swaped, x3_swaped, x4_swaped;
+	__SSE_DATATYPE q1, q2, q3, q4;
+	__SSE_DATATYPE q1_swaped, q2_swaped, q3_swaped, q4_swaped;
+	__SSE_DATATYPE h1_real, h1_imag, tmpg, tmpg1;
+	__SSE_DATATYPE tmp1, tmp2, tmp3, tmp4, vhh_swaped, plus_minus, minus_plus, vhh;
+	__SSE_DATATYPE vmone, vone, tau1, tau1_swaped, tmpa1_swaped, tmpb1_swaped, tmpc1_swaped;
+	__SSE_DATATYPE tmpa2_swaped, tmpb2_swaped, tmpc2_swaped, tmpa3_swaped, tmpb3_swaped, tmpc3_swaped;
+	__SSE_DATATYPE tmpa4_swaped, tmpb4_swaped, tmpc4_swaped;
+
+	int i=0;
+
+	x1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[0]);
+	x2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[offset]);
+	x3 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX
+	x4 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[3*offset]);
+#endif
+	for (i = 1; i < nb; i++)
+	{
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		h1_real = vec_splats(hh_dbl[i*2]);
+		h1_imag = vec_splats(hh_dbl[(i*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+		h1_real = vec_splats(hh_dbl[i*2]);
+		h1_imag = vec_splats(hh_dbl[(i*2)+1]);
+#endif
+#ifndef __ELPA_USE_FMA__
+		vmone = vec_splats(mone);
+		vone  = vec_splats(one);
+#endif
+
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+0]);
+		q2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+offset]);
+		q3 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX
+		q4 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+3*offset]);
+#endif
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		// plus_minus = vec(1;-1)
+		plus_minus = (__vector double)  vec_sld( (__vector unsigned int) vmone, (__vector unsigned int) vone, 8);
+#endif
+		minus_plus = _SSE_MUL(vmone, plus_minus);
+		h1_imag = _SSE_MUL(h1_imag, plus_minus);
+
+		// we want to compute x1 = x1 + q1*conj(hh)
+		// => x1 = x1 + vector (q1[0]*hh[0] + q1[1]*hh[1] ; q1[1]*hh[0] - q1[0]*hh[1]
+		// => x1 = x1 + vec_mul(q1, h1_real) + vec_mul(q1_swapped,(h[1],h[1])*plus_minus)
+
+		tmp1 = _SSE_MUL(q1, h1_real);
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmpa1_swaped = (__vector double)  vec_sld( (__vector unsigned int) q1, (__vector unsigned int) q1, 8);
+		tmpb1_swaped = (__vector double)  vec_sld( (__vector unsigned int) q1, (__vector unsigned int) tmpa1_swaped, 8);
+                q1_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb1_swaped, (__vector unsigned int) q1, 8);
+		//q1_swaped = vec(q1[1] ; q1[0])
+#endif
+
+                x1 = _SSE_ADD(x1, _SSE_ADD(tmp1, _SSE_MUL(q1_swaped, h1_imag)));
+
+		tmp2 = _SSE_MUL(q2, h1_real);
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmpa2_swaped = (__vector double)  vec_sld( (__vector unsigned int) q2, (__vector unsigned int) q2, 8);
+		tmpb2_swaped = (__vector double)  vec_sld( (__vector unsigned int) x2, (__vector unsigned int) tmpa2_swaped, 8);
+                q2_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb2_swaped, (__vector unsigned int) x2, 8);
+#endif
+
+                x2 = _SSE_ADD(x2, _SSE_ADD(tmp2, _SSE_MUL(q2_swaped, h1_imag)));
+
+		tmp3 = _SSE_MUL(q3, h1_real);
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmpa3_swaped = (__vector double)  vec_sld( (__vector unsigned int) q3, (__vector unsigned int) q3, 8);
+		tmpb3_swaped = (__vector double)  vec_sld( (__vector unsigned int) x3, (__vector unsigned int) tmpa3_swaped, 8);
+                q3_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb3_swaped, (__vector unsigned int) x3, 8);
+#endif
+
+                x3 = _SSE_ADD(x3, _SSE_ADD(tmp3, _SSE_MUL(q3_swaped, h1_imag)));
+
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmp4 = _SSE_MUL(q4, h1_real);
+
+		tmpa4_swaped = (__vector double)  vec_sld( (__vector unsigned int) q4, (__vector unsigned int) q4, 8);
+		tmpb4_swaped = (__vector double)  vec_sld( (__vector unsigned int) x4, (__vector unsigned int) tmpa4_swaped, 8);
+                q4_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb4_swaped, (__vector unsigned int) x4, 8);
+
+                x4 = _SSE_ADD(x4, _SSE_ADD(tmp4, _SSE_MUL(q4_swaped, h1_imag)));
+
+#endif /* DOUBLE_PRECISION_COMPLEX */
+	}
+
+        tau1 = _SSE_LOAD(0, (unsigned long int *) &hh_dbl[0]);
+
+	// we want to compute x * (-tau) = - x * tau = - vec( x[0]*tau1[0] - x[1]*tau[1], x[0]*tau[1] + x[1]*tau[0])
+	// = - vec_mul(x1_swaped * tau) + minus_plus * (tmpb1_swaped * tau_swapped)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	// x1_swaped = vec(x[0],x[0]
+        tmpa1_swaped = (__vector double)  vec_sld( (__vector unsigned int) x1, (__vector unsigned int) x1, 8);
+        x1_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x1, (__vector unsigned int) tmpa1_swaped, 8);
+
+	// tmpb1_swaped  = vec(x[1], x[1])
+	tmpb1_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa1_swaped, (__vector unsigned int) x1, 8);
+	// tau1_swaped
+	tmpg =    (__vector double)  vec_sld( (__vector unsigned int) tau1, (__vector unsigned int) tau1, 8);
+        tmpg1 =   (__vector double)  vec_sld( (__vector unsigned int) tau1, (__vector unsigned int) tmpg, 8);
+	tau1_swaped =  (__vector double)  vec_sld( (__vector unsigned int) tmpg1, (__vector unsigned int) tau1, 8); 
+#endif
+	tmp1 = _SSE_MUL(x1_swaped, tau1);
+	tmpg1 = _SSE_MUL(minus_plus, tau1_swaped);
+
+        x1 = _SSE_MUL(vmone, _SSE_ADD(tmp1, _SSE_MUL(tmpb1_swaped, tmpg1)));
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	// x2_swaped = vec(x[0],x[0]
+        tmpa2_swaped = (__vector double)  vec_sld( (__vector unsigned int) x2, (__vector unsigned int) x2, 8);
+        x2_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x2, (__vector unsigned int) tmpa2_swaped, 8);
+
+	// tmpb2_swaped  = vec(x[1], x[1])
+	tmpb2_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa2_swaped, (__vector unsigned int) x2, 8);
+#endif
+	tmp2 = _SSE_MUL(x2_swaped, tau1);
+
+        x2 = _SSE_MUL(vmone, _SSE_ADD(tmp2, _SSE_MUL(tmpb2_swaped, tmpg1)));
+
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	// x3_swaped = vec(x[0],x[0]
+        tmpa3_swaped = (__vector double)  vec_sld( (__vector unsigned int) x3, (__vector unsigned int) x3, 8);
+        x3_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x3, (__vector unsigned int) tmpa3_swaped, 8);
+
+	// tmpb3_swaped  = vec(x[1], x[1])
+	tmpb3_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa3_swaped, (__vector unsigned int) x3, 8);
+#endif
+	tmp3 = _SSE_MUL(x3_swaped, tau1);
+
+        x3 = _SSE_MUL(vmone, _SSE_ADD(tmp3, _SSE_MUL(tmpb3_swaped, tmpg1)));
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+
+	// x4_swaped = vec(x[0],x[0]
+        tmpa4_swaped = (__vector double)  vec_sld( (__vector unsigned int) x4, (__vector unsigned int) x4, 8);
+        x4_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x4, (__vector unsigned int) tmpa4_swaped, 8);
+
+	// tmpb4_swaped  = vec(x[1], x[1])
+	tmpb4_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa4_swaped, (__vector unsigned int) x4, 8);
+	tmp4 = _SSE_MUL(x4_swaped, tau1);
+
+        x4 = _SSE_MUL(vmone, _SSE_ADD(tmp4, _SSE_MUL(tmpb4_swaped, tmpg1)));
+
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[0]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[offset]);
+	q3 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX 
+	q4 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[3*offset]);
+#endif
+
+	q1 = _SSE_ADD(q1, x1);
+	q2 = _SSE_ADD(q2, x2);
+	q3 = _SSE_ADD(q3, x3);
+#ifdef DOUBLE_PRECISION_COMPLEX 
+	q4 = _SSE_ADD(q4, x4);
+#endif
+
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q_dbl[0]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q_dbl[offset]);
+	_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q_dbl[2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX 
+	_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q_dbl[3*offset]);
+#endif
+	for (i = 1; i < nb; i++)
+	{
+
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+0]);
+		q2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+offset]);
+		q3 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX
+		q4 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+3*offset]);
+#endif
+
+		vhh = _SSE_LOAD(0, (unsigned long int *) &hh_dbl[(i+2)]);
+
+	       // we want to compute q = q + x * h = vec(x[0]*h[0] - x[1]*h[1], x[0]*h1[1] + x[1]*h[0])
+	       // = vec_mul(x1_swaped * h) + vec_mul(tmpb1_swaped , vec_mul( minus_plus, h_swapped))
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       // x1_swaped = vec(x[0],x[0]) = known from before
+	       // tmpb1_swaped  = vec(x[1], x[1]) = known from before
+	       // h_swaped
+	       tmpg =    (__vector double)  vec_sld( (__vector unsigned int) vhh, (__vector unsigned int) vhh, 8);
+               tmpg1 =   (__vector double)  vec_sld( (__vector unsigned int) vhh, (__vector unsigned int) tmpg, 8);
+       	       vhh_swaped =  (__vector double)  vec_sld( (__vector unsigned int) tmpg1, (__vector unsigned int) vhh, 8); 
+#endif
+	       tmp1  = _SSE_MUL(x1_swaped, vhh);
+	       tmpg1 = _SSE_MUL(minus_plus, vhh_swaped);
+
+               q1 = _SSE_ADD(q1,  _SSE_ADD(tmp1, _SSE_MUL(tmpb1_swaped, tmpg1))); 
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       // x2_swaped = vec(x[0],x[0]) = known from before
+	       // tmpb2_swaped  = vec(x[1], x[1]) = known from before
+	       // h_swaped = known from before
+#endif
+	       tmp2  = _SSE_MUL(x2_swaped, vhh);
+
+               q2 = _SSE_ADD(q2,  _SSE_ADD(tmp2, _SSE_MUL(tmpb2_swaped, tmpg1))); 
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       // x3_swaped = vec(x[0],x[0]) = known from before
+	       // tmpb3_swaped  = vec(x[1], x[1]) = known from before
+	       // h_swaped = known from before
+#endif
+	       tmp3  = _SSE_MUL(x3_swaped, vhh);
+
+               q3 = _SSE_ADD(q3,  _SSE_ADD(tmp3, _SSE_MUL(tmpb3_swaped, tmpg1))); 
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       tmp4  = _SSE_MUL(x4_swaped, vhh);
+
+               q4 = _SSE_ADD(q4,  _SSE_ADD(tmp4, _SSE_MUL(tmpb4_swaped, tmpg1))); 
+
+#endif /* DOUBLE_PRECISION_COMPLEX */
+
+		_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q_dbl[(2*i*ldq)+0]);
+		_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q_dbl[(2*i*ldq)+offset]);
+		_SSE_STORE((__vector unsigned int) q3, 0, (unsigned int *) &q_dbl[(2*i*ldq)+2*offset]);
+#ifdef DOUBLE_PRECISION_COMPLEX
+		_SSE_STORE((__vector unsigned int) q4, 0, (unsigned int *) &q_dbl[(2*i*ldq)+3*offset]);
+#endif
+	}
+
+}
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_2_VSX_1hv_double(double complex* q, double complex* hh, int nb, int ldq)
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+static __forceinline void hh_trafo_complex_kernel_2_VSX_1hv_single(float complex* q, float complex* hh, int nb, int ldq)
+#endif
+{
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	double* q_dbl = (double*)q;
+	double* hh_dbl = (double*)hh;
+	double mone = -1.0;
+	double one = 1.0;
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+	float* q_dbl = (float*)q;
+	float* hh_dbl = (float*)hh;
+	float mone = -1.0;
+	float one = 1.0;
+#endif
+	__SSE_DATATYPE x1, x2;
+	__SSE_DATATYPE x1_swaped, x2_swaped;
+	__SSE_DATATYPE q1, q2;
+	__SSE_DATATYPE q1_swaped, q2_swaped;
+	__SSE_DATATYPE h1_real, h1_imag, tmpg, tmpg1;
+	__SSE_DATATYPE tmp1, tmp2, vhh_swaped, plus_minus, minus_plus, vhh;
+	__SSE_DATATYPE vmone, vone, tau1, tau1_swaped, tmpa1_swaped, tmpb1_swaped, tmpc1_swaped;
+	__SSE_DATATYPE tmpa2_swaped, tmpb2_swaped, tmpc2_swaped;
+
+	int i=0;
+
+	x1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[0]);
+	x2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[offset]);
+	for (i = 1; i < nb; i++)
+	{
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		h1_real = vec_splats(hh_dbl[i*2]);
+		h1_imag = vec_splats(hh_dbl[(i*2)+1]);
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+		h1_real = vec_splats(hh_dbl[i*2]);
+		h1_imag = vec_splats(hh_dbl[(i*2)+1]);
+#endif
+#ifndef __ELPA_USE_FMA__
+		vmone = vec_splats(mone);
+		vone  = vec_splats(one);
+#endif
+
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+0]);
+		q2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+offset]);
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		// plus_minus = vec(1;-1)
+		plus_minus = (__vector double)  vec_sld( (__vector unsigned int) vmone, (__vector unsigned int) vone, 8);
+#endif
+		minus_plus = _SSE_MUL(vmone, plus_minus);
+		h1_imag = _SSE_MUL(h1_imag, plus_minus);
+
+		// we want to compute x1 = x1 + q1*conj(hh)
+		// => x1 = x1 + vector (q1[0]*hh[0] + q1[1]*hh[1] ; q1[1]*hh[0] - q1[0]*hh[1]
+		// => x1 = x1 + vec_mul(q1, h1_real) + vec_mul(q1_swapped,(h[1],h[1])*plus_minus)
+
+		tmp1 = _SSE_MUL(q1, h1_real);
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmpa1_swaped = (__vector double)  vec_sld( (__vector unsigned int) q1, (__vector unsigned int) q1, 8);
+		tmpb1_swaped = (__vector double)  vec_sld( (__vector unsigned int) q1, (__vector unsigned int) tmpa1_swaped, 8);
+                q1_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb1_swaped, (__vector unsigned int) q1, 8);
+		//q1_swaped = vec(q1[1] ; q1[0])
+#endif
+
+                x1 = _SSE_ADD(x1, _SSE_ADD(tmp1, _SSE_MUL(q1_swaped, h1_imag)));
+
+		tmp2 = _SSE_MUL(q2, h1_real);
+#ifdef DOUBLE_PRECISION_COMPLEX
+		tmpa2_swaped = (__vector double)  vec_sld( (__vector unsigned int) q2, (__vector unsigned int) q2, 8);
+		tmpb2_swaped = (__vector double)  vec_sld( (__vector unsigned int) x2, (__vector unsigned int) tmpa2_swaped, 8);
+                q2_swaped   = (__vector double)  vec_sld( (__vector unsigned int) tmpb2_swaped, (__vector unsigned int) x2, 8);
+#endif
+
+                x2 = _SSE_ADD(x2, _SSE_ADD(tmp2, _SSE_MUL(q2_swaped, h1_imag)));
+
+	}
+
+        tau1 = _SSE_LOAD(0, (unsigned long int *) &hh_dbl[0]);
+
+	// we want to compute x * (-tau) = - x * tau = - vec( x[0]*tau1[0] - x[1]*tau[1], x[0]*tau[1] + x[1]*tau[0])
+	// = - vec_mul(x1_swaped * tau) + minus_plus * (tmpb1_swaped * tau_swapped)
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	// x1_swaped = vec(x[0],x[0]
+        tmpa1_swaped = (__vector double)  vec_sld( (__vector unsigned int) x1, (__vector unsigned int) x1, 8);
+        x1_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x1, (__vector unsigned int) tmpa1_swaped, 8);
+
+	// tmpb1_swaped  = vec(x[1], x[1])
+	tmpb1_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa1_swaped, (__vector unsigned int) x1, 8);
+	// tau1_swaped
+	tmpg =    (__vector double)  vec_sld( (__vector unsigned int) tau1, (__vector unsigned int) tau1, 8);
+        tmpg1 =   (__vector double)  vec_sld( (__vector unsigned int) tau1, (__vector unsigned int) tmpg, 8);
+	tau1_swaped =  (__vector double)  vec_sld( (__vector unsigned int) tmpg1, (__vector unsigned int) tau1, 8); 
+#endif
+	tmp1 = _SSE_MUL(x1_swaped, tau1);
+	tmpg1 = _SSE_MUL(minus_plus, tau1_swaped);
+
+        x1 = _SSE_MUL(vmone, _SSE_ADD(tmp1, _SSE_MUL(tmpb1_swaped, tmpg1)));
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	// x2_swaped = vec(x[0],x[0]
+        tmpa2_swaped = (__vector double)  vec_sld( (__vector unsigned int) x2, (__vector unsigned int) x2, 8);
+        x2_swaped    = (__vector double)  vec_sld( (__vector unsigned int) x2, (__vector unsigned int) tmpa2_swaped, 8);
+
+	// tmpb2_swaped  = vec(x[1], x[1])
+	tmpb2_swaped = (__vector double)  vec_sld( (__vector unsigned int) tmpa2_swaped, (__vector unsigned int) x2, 8);
+#endif
+	tmp2 = _SSE_MUL(x2_swaped, tau1);
+
+        x2 = _SSE_MUL(vmone, _SSE_ADD(tmp2, _SSE_MUL(tmpb2_swaped, tmpg1)));
+
+
+	q1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[0]);
+	q2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[offset]);
+
+	q1 = _SSE_ADD(q1, x1);
+	q2 = _SSE_ADD(q2, x2);
+
+	_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q_dbl[0]);
+	_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q_dbl[offset]);
+	for (i = 1; i < nb; i++)
+	{
+
+		q1 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+0]);
+		q2 = _SSE_LOAD(0, (unsigned long int *) &q_dbl[(2*i*ldq)+offset]);
+
+		vhh = _SSE_LOAD(0, (unsigned long int *) &hh_dbl[(i+2)]);
+
+	       // we want to compute q = q + x * h = vec(x[0]*h[0] - x[1]*h[1], x[0]*h1[1] + x[1]*h[0])
+	       // = vec_mul(x1_swaped * h) + vec_mul(tmpb1_swaped , vec_mul( minus_plus, h_swapped))
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       // x1_swaped = vec(x[0],x[0]) = known from before
+	       // tmpb1_swaped  = vec(x[1], x[1]) = known from before
+	       // h_swaped
+	       tmpg =    (__vector double)  vec_sld( (__vector unsigned int) vhh, (__vector unsigned int) vhh, 8);
+               tmpg1 =   (__vector double)  vec_sld( (__vector unsigned int) vhh, (__vector unsigned int) tmpg, 8);
+       	       vhh_swaped =  (__vector double)  vec_sld( (__vector unsigned int) tmpg1, (__vector unsigned int) vhh, 8); 
+#endif
+	       tmp1  = _SSE_MUL(x1_swaped, vhh);
+	       tmpg1 = _SSE_MUL(minus_plus, vhh_swaped);
+
+               q1 = _SSE_ADD(q1,  _SSE_ADD(tmp1, _SSE_MUL(tmpb1_swaped, tmpg1))); 
+
+#ifdef DOUBLE_PRECISION_COMPLEX
+	       // x2_swaped = vec(x[0],x[0]) = known from before
+	       // tmpb2_swaped  = vec(x[1], x[1]) = known from before
+	       // h_swaped = known from before
+#endif
+	       tmp2  = _SSE_MUL(x2_swaped, vhh);
+
+               q2 = _SSE_ADD(q2,  _SSE_ADD(tmp2, _SSE_MUL(tmpb2_swaped, tmpg1))); 
+
+		_SSE_STORE((__vector unsigned int) q1, 0, (unsigned int *) &q_dbl[(2*i*ldq)+0]);
+		_SSE_STORE((__vector unsigned int) q2, 0, (unsigned int *) &q_dbl[(2*i*ldq)+offset]);
+	}
+	
+}

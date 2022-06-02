@@ -58,9 +58,9 @@ l_nev, &
 a_off, nbw, max_blk_size, bcast_buffer, bcast_buffer_dev, &
 hh_tau_dev, kernel_flops, kernel_time, n_times, off, ncols, istripe, &
 #ifdef WITH_OPENMP_TRADITIONAL
-my_thread, thread_width, kernel, last_stripe_width, success)
+my_thread, thread_width, kernel, last_stripe_width, my_stream, success)
 #else
-last_stripe_width, kernel, success)
+last_stripe_width, kernel, my_stream, success)
 #endif
 
   use ELPA_utilities, only : error_unit
@@ -110,7 +110,14 @@ last_stripe_width, kernel, success)
   !use cuda_functions
   !use hip_functions
   use gpu_c_kernel
-  use elpa_gpu
+  use elpa_gpu, only: gpu_stream_synchronize, &
+#ifdef WANT_SINGLE_PRECISION_REAL
+          SIZE_OF_SINGLE_REAL, &
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+          SIZE_OF_SINGLE_COMPLEX, &
+#endif
+          SIZE_OF_DOUBLE_REAL, SIZE_OF_DOUBLE_COMPLEX
 
   use elpa_generated_fortran_interfaces
 
@@ -182,6 +189,7 @@ last_stripe_width, kernel, success)
                                                                  &PRECISION&
                                                                  &_&
                                                                  &MATH_DATATYPE
+  integer(kind=c_intptr_t), optional         :: my_stream
 
 
   success = .true.
@@ -190,7 +198,7 @@ last_stripe_width, kernel, success)
   !if (wantDebug) then
 #ifdef WITH_NVIDIA_GPU_VERSION
     if (useGPU .and. &
-#ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
+#if defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
 #if REALCASE == 1
       ( kernel .ne. ELPA_2STAGE_REAL_NVIDIA_GPU .and. kernel .ne. ELPA_2STAGE_REAL_NVIDIA_SM80_GPU)) then
 #endif
@@ -226,7 +234,7 @@ last_stripe_width, kernel, success)
     endif
 #endif /* WITH_AMD_GPU_VERSION */
 
-#ifdef WITH_GPU_SYCL_VERSION
+#ifdef WITH_SYCL_GPU_VERSION
     if (useGPU .and. &
 #if REALCASE == 1
       ( kernel .ne. ELPA_2STAGE_REAL_INTEL_GPU_SYCL)) then
@@ -239,7 +247,7 @@ last_stripe_width, kernel, success)
       success = .false.
       return
     endif
-#endif /* WITH_GPU_SYCL_VERSION */
+#endif /* WITH_SYCL_GPU_VERSION */
   !endif ! wantDebug
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -372,7 +380,7 @@ last_stripe_width, kernel, success)
            &_&
            &PRECISION&
            &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
-           hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+           hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols, my_stream)
 #ifdef WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
     endif
 
@@ -390,7 +398,7 @@ last_stripe_width, kernel, success)
             &_&
             &PRECISION&
             &(a_dev + dev_offset, bcast_buffer_dev + dev_offset_1, &
-            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols)
+            hh_tau_dev + dev_offset_2, nl, nbw,stripe_width, ncols, my_stream)
 #endif
     endif
 

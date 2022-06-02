@@ -250,6 +250,9 @@ function elpa_solve_evp_&
                                                                       &_&
                                                                       &MATH_DATATYPE
 #endif
+#ifdef WITH_GPU_STREAMS
+   !integer(kind=c_intptr_t)                        :: num
+#endif
    
 #ifdef ACTIVATE_SKEW
    call obj%timer%start("elpa_solve_skew_evp_&
@@ -391,17 +394,22 @@ print *,"Device pointer + REDIST"
 #ifdef REDISTRIBUTE_MATRIX
   ! this case is not yet implemeted
 #else
-   allocate(aIntern(1:matrixRows,1:matrixCols))
+   allocate(aIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+   check_allocate("elpa1_template: aIntern", istat, errorMessage)
+
    a       => aIntern(1:matrixRows,1:matrixCols)
 
-   allocate(evIntern(1:obj%na))
+   allocate(evIntern(1:obj%na), stat=istat, errmsg=errorMessage)
+   check_allocate("elpa1_template: evIntern", istat, errorMessage)
    ev      => evIntern(1:obj%na)
 
    if (present(qExtern)) then
 #ifdef ACTIVATE_SKEW
-     allocate(qIntern(1:matrixRows,1:2*matrixCols))
+     allocate(qIntern(1:matrixRows,1:2*matrixCols), stat=istat, errmsg=errorMessage)
+     check_allocate("elpa1_template: qIntern", istat, errorMessage)
 #else
-     allocate(qIntern(1:matrixRows,1:matrixCols))
+     allocate(qIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+     check_allocate("elpa1_template: qIntern", istat, errorMessage)
 #endif
    endif
 #endif /* REDISTRIBUTE_MATRIX */
@@ -470,68 +478,24 @@ print *,"Device pointer + REDIST"
 
    ev      => evIntern(1:obj%na)
 
-!#ifdef DEVICE_POINTER
-!#ifndef REDISTRIBUTE_MATRIX
-!   ! in case that aExtern, qExtern, and evExtern are device pointers
-!   ! we have to allocate aIntern, qIntern, evIntern and 
-!   ! point a,q, ev to this
-!
-!   allocate(aIntern(1:matrixRows,1:matrixCols))
-!   a       => aIntern(1:matrixRows,1:matrixCols)
-!
-!   allocate(evIntern(1:obj%na))
-!   ev      => evIntern(1:obj%na)
-!  
-!   if (present(qExtern)) then
-!#ifdef ACTIVATE_SKEW
-!     allocate(qIntern(1:matrixRows,1:2*matrixCols))
-!     q       => qIntern(1:matrixRows,1:2*matrixCols)
-!#else
-!     allocate(qIntern(1:matrixRows,1:matrixCols))
-!     q       => qIntern(1:matrixRows,1:matrixCols)
-!#endif
-!   endif
-!
-!#endif /* REDISTRIBUTE_MATRIX */
-!    
-!   ! and copy aExtern to aIntern
-!
-!   !TODO: intel gpu
-!   successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &
-!                             gpuMemcpyDeviceToHost)
-!   check_memcpy_gpu("elpa1: aExtern -> aIntern", successGPU)
-!
-!#else /* DEVICE_POINTER */
-!
-!   ! aIntern, qIntern, are normally pointers,
-!   ! in case of redistribute aIntern, qIntern, are arrays storing the internally
-!   ! redistributed matrix
-!
-!   ! in case of redistribute matrix the pointers will be reassigned
-!
-!   ! ev is always a pointer
-!#ifndef REDISTRIBUTE_MATRIX
-!   aIntern => aExtern(1:matrixRows,1:matrixCols)
-!   a       => aIntern(1:matrixRows,1:matrixCols)
-!
-!   evIntern => evExtern(1:obj%na)
-!   ev       => evIntern(1:obj%na)
-!
-!   if (present(qExtern)) then
-!#ifdef ACTIVATE_SKEW
-!     qIntern => qExtern(1:matrixRows,1:2*matrixCols)
-!     q       => qIntern(1:matrixRows,1:2*matrixCols)
-!#else
-!     qIntern => qExtern(1:matrixRows,1:matrixCols)
-!     q       => qIntern(1:matrixRows,1:matrixCols)
-!#endif
-!   endif
-!#else  /* REDISTRIBUTE_MATRIX */
-!   ! currently we do not redistribute ev
-!   evIntern => evExtern(1:obj%na)
-!   ev       => evIntern(1:obj%na)
-!#endif /* REDISTRIBUTE_MATRIX */
-!#endif /* DEVICE_POINTER */
+#ifdef WITH_GPU_STREAMS
+   !page lock ev (or evIntern, or evExtern)
+   !num = (obj%na) * size_of_&
+   !                 &PRECISION&
+   !                 &_real
+   !successGPU = gpu_host_register(int(loc(ev),kind=c_intptr_t), num,&
+   !             gpuHostRegisterDefault)
+   !check_host_register_gpu("elpa1_template: ev", successGPU)
+
+   !!page lock a (or aInter, or aExtern)
+   !num = (matrixRows*matrixCols) * size_of_datatype
+
+   !successGPU = gpu_host_register(int(loc(a),kind=c_intptr_t), num,&
+   !             gpuHostRegisterDefault)
+   !check_host_register_gpu("elpa1_template: a", successGPU)
+
+#endif /* WITH_GPU_STREAMS */
+
 
 #ifdef WITH_NVTX
    call nvtxRangePush("elpa1")
@@ -640,6 +604,20 @@ print *,"Device pointer + REDIST"
    allocate(e(na), tau(na), stat=istat, errmsg=errorMessage)
    check_allocate("elpa1_template: e, tau", istat, errorMessage)
 
+#ifdef WITH_GPU_STREAMS
+! currenly only needed in tridiag and done there
+
+!   !page lock ev (or evIntern, or evExtern)
+!   num = (obj%na) * size_of_&
+!                    &PRECISION&
+!                    &_real
+!   successGPU = gpu_host_register(int(loc(e),kind=c_intptr_t), num,&
+!                gpuHostRegisterDefault)
+!   check_host_register_gpu("elpa1_template: e", successGPU)
+#endif
+
+
+
    ! start the computations
    ! as default do all three steps (this might change at some point)
    do_tridiag  = .true.
@@ -679,6 +657,7 @@ print *,"Device pointer + REDIST"
     if (do_solve) then
      call obj%autotune_timer%start("solve")
      call obj%timer%start("solve")
+
 #ifdef HAVE_LIKWID
      call likwid_markerStartRegion("solve")
 #endif
@@ -824,7 +803,7 @@ print *,"Device pointer + REDIST"
     check_deallocate("elpa1_template: q_real", istat, errorMessage)
 #endif
 
-   deallocate(e, tau, stat=istat, errmsg=errorMessage)
+   deallocate(tau, stat=istat, errmsg=errorMessage)
    check_deallocate("elpa1_template: e, tau", istat, errorMessage)
 
    if (obj%eigenvalues_only) then
@@ -898,17 +877,25 @@ print *,"Device pointer + REDIST"
 #if defined(REDISTRIBUTE_MATRIX)
    if (doRedistributeMatrix) then
 #endif
-     deallocate(aIntern)
+     deallocate(aIntern, stat=istat, errmsg=errorMessage)
+     check_deallocate("elpa1_template: aIntern", istat, errorMessage)
      !deallocate(evIntern)
      nullify(evIntern)
      if (present(qExtern)) then
-       deallocate(qIntern)
+       deallocate(qIntern, stat=istat, errmsg=errorMessage)
+       check_deallocate("elpa1_template: qIntern", istat, errorMessage)
      endif
 #if defined(REDISTRIBUTE_MATRIX)
    endif
 #endif
 
 #endif /* defined(DEVICE_POINTER) || defined(REDISTRIBUTE_MATRIX) */
+
+#ifdef WITH_GPU_STREAMS
+   !successGPU = gpu_host_unregister(int(loc(a),kind=c_intptr_t))
+   !check_host_unregister_gpu("elpa1_template: a", successGPU)
+#endif
+
 
 #if !defined(DEVICE_POINTER) && !defined(REDISTRIBUTE_MATRIX)
    nullify(aIntern)
@@ -917,7 +904,17 @@ print *,"Device pointer + REDIST"
      nullify(qIntern)
    endif
 #endif
-   
+ 
+   deallocate(e, stat=istat, errmsg=errorMessage)
+   check_deallocate("elpa1_template: e", istat, errorMessage)
+#ifdef WITH_GPU_STREAMS
+   !successGPU = gpu_host_unregister(int(loc(ev),kind=c_intptr_t))
+   !check_host_unregister_gpu("elpa1_template: ev", successGPU)
+
+   !successGPU = gpu_host_unregister(int(loc(e),kind=c_intptr_t))
+   !check_host_unregister_gpu("elpa1_template: e", successGPU)
+#endif
+
    nullify(ev)
    nullify(a)
    nullify(q)

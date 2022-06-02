@@ -58,303 +58,342 @@ module invert_trm_gpu
   public
   contains
 
-    subroutine gpu_copy_double_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+    subroutine gpu_copy_double_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1, nb
       integer(kind=C_intptr_T)        :: a_dev, tmat2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call cuda_copy_double_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call hip_copy_double_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+    subroutine gpu_copy_float_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1, nb
       integer(kind=C_intptr_T)        :: a_dev, tmat2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call cuda_copy_float_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call hip_copy_float_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+    subroutine gpu_copy_double_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1, nb
       integer(kind=C_intptr_T)        :: a_dev, tmat2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call cuda_copy_double_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call hip_copy_double_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+    subroutine gpu_copy_float_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1, nb
       integer(kind=C_intptr_T)        :: a_dev, tmat2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call cuda_copy_float_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb)
+      call hip_copy_float_complex_a_tmat2(a_dev, tmat2_dev, nblk, matrixRows, l_cols, l_colx, l_row1, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+    subroutine gpu_copy_double_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, l_col1, nb
       integer(kind=C_intptr_T)        :: tmp2_dev, tmat2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call cuda_copy_double_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call hip_copy_double_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+    subroutine gpu_copy_float_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, l_col1, nb
       integer(kind=C_intptr_T)        :: tmp2_dev, tmat2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call cuda_copy_float_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call hip_copy_float_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+    subroutine gpu_copy_double_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, l_col1, nb
       integer(kind=C_intptr_T)        :: tmp2_dev, tmat2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call cuda_copy_double_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call hip_copy_double_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+    subroutine gpu_copy_float_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, l_col1, nb
       integer(kind=C_intptr_T)        :: tmp2_dev, tmat2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call cuda_copy_float_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb)
+      call hip_copy_float_complex_tmp2_tmat2(tmp2_dev, tmat2_dev, nblk, l_col1, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+    subroutine gpu_copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call cuda_copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call hip_copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+    subroutine gpu_copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call cuda_copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call hip_copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+    subroutine gpu_copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
+      integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call cuda_copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call hip_copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+    subroutine gpu_copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call cuda_copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev)
+      call hip_copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+    subroutine gpu_copy_double_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, nb
       integer(kind=C_intptr_T)        :: tmp1_dev, tmp2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+      call cuda_copy_double_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+      call hip_copy_double_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+    subroutine gpu_copy_float_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, nb
       integer(kind=C_intptr_T)        :: tmp1_dev, tmp2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+      call cuda_copy_float_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+      call hip_copy_float_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+    subroutine gpu_copy_double_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, nb
       integer(kind=C_intptr_T)        :: tmp1_dev, tmp2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+      call cuda_copy_double_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+      call hip_copy_double_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+    subroutine gpu_copy_float_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, nb
       integer(kind=C_intptr_T)        :: tmp1_dev, tmp2_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+      call cuda_copy_float_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb)
+      call hip_copy_float_complex_tmp1_tmp2(tmp1_dev, tmp2_dev, nblk, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+    subroutine gpu_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_row1, l_col1, matrixRows, nb
       integer(kind=C_intptr_T)        :: a_dev, tmp1_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call cuda_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call hip_copy_double_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+    subroutine gpu_copy_float_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_row1, l_col1, matrixRows, nb
       integer(kind=C_intptr_T)        :: a_dev, tmp1_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call cuda_copy_float_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call hip_copy_float_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+    subroutine gpu_copy_double_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_row1, l_col1, matrixRows, nb
       integer(kind=C_intptr_T)        :: a_dev, tmp1_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call cuda_copy_double_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call hip_copy_double_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+    subroutine gpu_copy_float_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_row1, l_col1, matrixRows, nb
       integer(kind=C_intptr_T)        :: a_dev, tmp1_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call cuda_copy_float_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb)
+      call hip_copy_float_complex_a_tmp1(a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb, my_stream)
 #endif
 
     end subroutine

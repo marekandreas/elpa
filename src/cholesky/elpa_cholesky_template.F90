@@ -284,42 +284,84 @@
     successGPU = gpu_malloc(tmp1_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmp1_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmp1_dev, 0, nblk*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memset tmp1_dev", successGPU)
+#else
     successGPU = gpu_memset(tmp1_dev, 0, nblk*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_cholesky: memset tmp1_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmp2_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmp2_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmp2_dev, 0, nblk*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memset tmp2_dev", successGPU)
+#else
     successGPU = gpu_memset(tmp2_dev, 0, nblk*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_cholesky: memset tmp2_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmatc_dev, l_cols*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmatc_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmatc_dev, 0, l_cols*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memset tmatc_dev", successGPU)
+#else
     successGPU = gpu_memset(tmatc_dev, 0, l_cols*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_cholesky: memset tmatc_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmatr_dev, l_rows*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmatr_dev", successGPU)
 
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmatr_dev, 0, l_rows*nblk*size_of_datatype, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memset tmatr_dev", successGPU)
+#else
     successGPU = gpu_memset(tmatr_dev, 0, l_rows*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_cholesky: memset tmatr_dev", successGPU)
+#endif
 
 #ifndef DEVICE_POINTER
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: a_dev", successGPU)
-#else
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_host_register(int(loc(a),kind=c_intptr_t), &
+                    matrixRows*matrixCols * size_of_datatype,&
+                    gpuHostRegisterDefault)
+    check_host_register_gpu("elpa_cholesky: a_tmp", successGPU)
+#endif
+#else /* DEVICE_POINTER */
     a_dev = transfer(a, a_dev)
     allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_cholesky: a_tmp", istat, errorMessage)
+    check_allocate("elpa_cholesky: a_tmp", istat, errorMessage)
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_host_register(int(loc(a_tmp),kind=c_intptr_t), &
+                    matrixRows*matrixCols * size_of_datatype,&
+                    gpuHostRegisterDefault)
+    check_host_register_gpu("elpa_cholesky: a_tmp", successGPU)
 #endif
+#endif /* DEVICE_POINTER */
+  endif ! useGPU
 
-  endif
   allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_cholesky: tmp1", istat, errorMessage)
 
   allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_cholesky: tmp2", istat, errorMessage)
+
+#ifdef WITH_GPU_STREAMS
+  if (useGPU) then
+    successGPU = gpu_host_register(int(loc(tmp1),kind=c_intptr_t), &
+                    nblk*nblk * size_of_datatype,&
+                    gpuHostRegisterDefault)
+    check_host_register_gpu("elpa_cholesky: tmp1", successGPU)
+  endif
+#endif
+
 
   tmp1 = 0
   tmp2 = 0
@@ -330,14 +372,36 @@
   allocate(tmatc(l_cols,nblk), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_cholesky: tmatc", istat, errorMessage)
 
+#ifdef WITH_GPU_STREAMS
+  if (useGPU) then
+    successGPU = gpu_host_register(int(loc(tmatr),kind=c_intptr_t), &
+                      l_rows*nblk * size_of_datatype,&
+                      gpuHostRegisterDefault)
+    check_host_register_gpu("elpa_cholesky: tmatr", successGPU)
+
+    successGPU = gpu_host_register(int(loc(tmatc),kind=c_intptr_t), &
+                      l_cols*nblk * size_of_datatype,&
+                      gpuHostRegisterDefault)
+    check_host_register_gpu("elpa_cholesky: tmatc", successGPU)
+  endif
+#endif
+
   tmatr = 0
   tmatc = 0
 
 #ifndef DEVICE_POINTER
   if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(a_dev, int(loc(a(1,1)),kind=c_intptr_t), &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+    check_memcpy_gpu("elpa_cholesky 1: memcpy a-> a_dev", successGPU)
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_cholesky 1: memcpy a-> a_dev", successGPU)
+#else
     successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t), &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_cholesky 1: memcpy a-> a_dev", successGPU)
+#endif
   endif
 #endif
 
@@ -373,16 +437,32 @@
 
 #ifndef DEVICE_POINTER
           call obj%timer%start("blas")
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+#else
           successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+#endif
 
           call PRECISION_POTRF('U', int(na-n+1,kind=BLAS_KIND), a(l_row1,l_col1), &
                              int(matrixRows,kind=BLAS_KIND), infoBLAS )
           info = int(infoBLAS,kind=ik)
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(a_dev, int(loc(a(1,1)),kind=c_intptr_t), &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+          check_memcpy_gpu("elpa_cholesky: memcpy a -> a_dev", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("elpa_cholesky: memcpy a -> a_dev", successGPU)
+#else
           successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t), &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+#endif
           call obj%timer%stop("blas")
 
           if (info/=0) then
@@ -400,16 +480,32 @@
           endif ! info
 #else /* DEVICE_POINTER */
           call obj%timer%start("blas")
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev,  &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
+#else
           successGPU = gpu_memcpy(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev,  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
+#endif
 
           call PRECISION_POTRF('U', int(na-n+1,kind=BLAS_KIND), a_tmp(l_row1,l_col1), &
                              int(matrixRows,kind=BLAS_KIND), infoBLAS )
           info = int(infoBLAS,kind=ik)
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t), &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
+#else
           successGPU = gpu_memcpy(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t), &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
+#endif
           call obj%timer%stop("blas")
 
           if (info/=0) then
@@ -480,16 +576,32 @@
 #else /* WITH_NVIDIA_CUSOLVER */
 #ifndef DEVICE_POINTER
           call obj%timer%start("blas")
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+#else
           successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+#endif
 
           call PRECISION_POTRF('U', int(nblk,kind=BLAS_KIND), a(l_row1,l_col1), &
                                int(matrixRows,kind=BLAS_KIND) , infoBLAS )
           info = int(infoBLAS,kind=ik)
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(a_dev, int(loc(a(1,1)),kind=c_intptr_t), &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+          check_memcpy_gpu("elpa_cholesky: memcpy a -> a_dev", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("elpa_cholesky: memcpy a -> a_dev", successGPU)
+#else
           successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t), &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
+#endif
           call obj%timer%stop("blas")
 
           if (info/=0) then
@@ -507,16 +619,32 @@
           endif ! info
 #else /* DEVICE_POINTER */
           call obj%timer%start("blas")
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev,  &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
+#else
           successGPU = gpu_memcpy(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev,  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
+#endif
 
           call PRECISION_POTRF('U', int(nblk,kind=BLAS_KIND), a_tmp(l_row1,l_col1), &
                                int(matrixRows,kind=BLAS_KIND) , infoBLAS )
           info = int(infoBLAS,kind=ik)
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t), &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+          check_memcpy_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
+#else
           successGPU = gpu_memcpy(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t), &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
+#endif
           call obj%timer%stop("blas")
 
           if (info/=0) then
@@ -567,7 +695,7 @@
         endif
  
         if (useGPU) then
-          call gpu_copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nblk)
+          call gpu_copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nblk, my_stream)
         else ! useGPU
           nc = 0
           do i=1,nblk
@@ -585,10 +713,17 @@
 !#ifndef WITH_CUDA_AWARE_MPI
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(int(loc(tmp1),kind=c_intptr_t), tmp1_dev, num, &
+                              gpuMemcpyDeviceToHost, my_stream)
+        check_memcpy_gpu("elpa_cholesky: tmp1_dev to tmp1", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_cholesky: tmp1_dev to tmp1", successGPU)
+#else
         successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), tmp1_dev, num, &
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_cholesky: tmp1_dev to tmp1", successGPU)
-
+#endif
       endif
 !#endif
 
@@ -630,17 +765,24 @@
 !#ifndef WITH_CUDA_AWARE_MPI
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
+                              gpuMemcpyHostToDevice, my_stream)
+        check_memcpy_gpu("elpa_cholesky: tmp1 to tmp1_dev", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_cholesky: tmp1 to tmp1_dev", successGPU)
+#else
         successGPU = gpu_memcpy(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_cholesky: tmp1 to tmp1_dev", successGPU)
-
+#endif
       endif
 !#endif
 
 #endif /* WITH_MPI */
 
       if (useGPU) then
-        call gpu_copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nblk)
+        call gpu_copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nblk, my_stream)
       else ! useGPU
         nc = 0
         do i=1,nblk
@@ -681,7 +823,7 @@
       if (my_prow==prow(n, nblk, np_rows)) then
         ! if l_cols-l_colx+1 == 0 kernel launch with 0 blocks => raises error
         if (l_cols-l_colx+1>0) &
-           call gpu_copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+           call gpu_copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       endif
     else ! useGPU
       do i=1,nblk
@@ -708,9 +850,17 @@
     if (useGPU) then
       if (l_cols-l_colx+1 > 0) then
         num = l_cols*nblk*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
+                              gpuMemcpyDeviceToHost, my_stream)
+        check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
+#else
         successGPU = gpu_memcpy(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
+#endif
       endif
     endif
 !#endif
@@ -754,9 +904,17 @@
     if (useGPU) then
       !if (l_cols-l_colx+1 > 0) then
         num = l_cols*nblk*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(tmatc_dev, int(loc(tmatc),kind=c_intptr_t), num, &
+                              gpuMemcpyHostToDevice, my_stream)
+        check_memcpy_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
+#else
         successGPU = gpu_memcpy(tmatc_dev, int(loc(tmatc),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
+#endif
       !endif
     endif
 !#endif
@@ -773,15 +931,31 @@
       ! - not mpi case
       ! - or mpi and cuda_aware_mpi
       num = l_cols*nblk*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
+                              gpuMemcpyDeviceToHost, my_stream)
+      check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
+#else
       successGPU = gpu_memcpy(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
                               gpuMemcpyDeviceToHost)
       check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
 #endif
+#endif /* !defined(WITH_MPI) */
 
       num = l_rows*nblk*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(tmatr),kind=c_intptr_t), tmatr_dev, num, &
+                              gpuMemcpyDeviceToHost, my_stream)
+      check_memcpy_gpu("elpa_cholesky: tmatr_dev to tmatr", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("elpa_cholesky: tmatr_dev to tmatr", successGPU)
+#else
       successGPU = gpu_memcpy(int(loc(tmatr),kind=c_intptr_t), tmatr_dev, num, &
                               gpuMemcpyDeviceToHost)
       check_memcpy_gpu("elpa_cholesky: tmatr_dev to tmatr", successGPU)
+#endif
     endif
 
     call elpa_transpose_vectors_&
@@ -798,9 +972,17 @@
 
     if (useGPU) then
       num = l_rows*nblk*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(tmatr_dev, int(loc(tmatr),kind=c_intptr_t), num, &
+                              gpuMemcpyHostToDevice, my_stream)
+      check_memcpy_gpu("elpa_cholesky: tmat to tmatr_dev", successGPU)
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("elpa_cholesky: tmat to tmatr_dev", successGPU)
+#else
       successGPU = gpu_memcpy(tmatr_dev, int(loc(tmatr),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice)
       check_memcpy_gpu("elpa_cholesky: tmat to tmatr_dev", successGPU)
+#endif
     endif
 
 
@@ -861,23 +1043,54 @@
     check_dealloc_gpu("elpa_cholesky: tmatr_dev", successGPU)
   endif
 
+#ifdef WITH_GPU_STREAMS
+  if (useGPU) then
+    successGPU = gpu_host_unregister(int(loc(tmatc),kind=c_intptr_t))
+    check_host_unregister_gpu("elpa_cholesky: tmatc", successGPU)
+
+    successGPU = gpu_host_unregister(int(loc(tmatr),kind=c_intptr_t))
+    check_host_unregister_gpu("elpa_cholesky: tmatr", successGPU)
+
+    successGPU = gpu_host_unregister(int(loc(tmp1),kind=c_intptr_t))
+    check_host_unregister_gpu("elpa_cholesky: tmp1", successGPU)
+  endif
+#endif
+
   deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
   check_deallocate("elpa_cholesky: tmp1, tmp2, tmatr, tmatc", istat, errorMessage)
 
 
+
+
 #ifndef DEVICE_POINTER
   if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
+                     matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memcpy 2 a-> a_dev", successGPU)
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_cholesky: memcpy 2 a-> a_dev", successGPU)
+#else
     successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
                      matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("elpa_cholesky: memcpy 2 a-> a_dev", successGPU)
+#endif
   endif
-#else
+#else /* DEVICE_POINTER */
   if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev,  &
+                     matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memcpy 2 a-> a_dev", successGPU)
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_cholesky: memcpy 2 a -> a_dev", successGPU)
+#else
     successGPU = gpu_memcpy(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev,  &
                      matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("elpa_cholesky: memcpy 2 a-> a_dev", successGPU)
-  endif
 #endif
+  endif
+#endif /* DEVICE_POINTER */
   ! Set the lower triangle to 0, it contains garbage (form the above matrix multiplications)
 
   !if (useGPU) then
@@ -905,16 +1118,37 @@
 
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("elpa_cholesky: a_dev", successGPU)
+
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_host_unregister(int(loc(a),kind=c_intptr_t))
+    check_host_unregister_gpu("elpa_cholesky: a", successGPU)
+#endif
+
   endif
+#else /* DEVICE_POINTER */
+
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t), &
+                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+    check_memcpy_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
 #else
     successGPU = gpu_memcpy(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t), &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
+#endif
+
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
+    check_host_unregister_gpu("elpa_cholesky: a_tmp", successGPU)
+#endif
+
 
     deallocate(a_tmp, stat=istat, errmsg=errorMessage)
     check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
 
-#endif
+#endif /* DEVICE_POINTER */
 
   ! restore original OpenMP settings
 #ifdef WITH_OPENMP_TRADITIONAL

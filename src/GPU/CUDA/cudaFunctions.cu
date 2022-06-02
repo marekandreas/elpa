@@ -78,8 +78,94 @@
 #define debugmessage(x, ...)
 #endif
 
+
 #ifdef WITH_NVIDIA_GPU_VERSION
 extern "C" {
+  int cudaStreamCreateFromC(intptr_t *stream) {
+    *stream = (intptr_t) malloc(sizeof(cudaStream_t));
+
+    cudaError_t status = cudaStreamCreate((cudaStream_t*) *stream);
+
+    if (status == cudaSuccess) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else{
+      errormessage("Error in cudaStreamCreate: %s\n", "unknown error");
+      return 0;
+    }
+
+  }
+
+  int cudaStreamDestroyFromC(intptr_t *stream){
+    cudaError_t status = cudaStreamDestroy(*(cudaStream_t*) *stream);
+    *stream = (intptr_t) NULL;
+    if (status == cudaSuccess) {
+//       printf("all OK\n");
+      return 1;
+    }
+    else{
+      errormessage("Error in cudaStreamDestroy: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+  int cudaStreamSynchronizeFromC(intptr_t stream) {
+    cudaError_t status = cudaStreamSynchronize(*((cudaStream_t*)stream));
+    if (status == cudaSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in cudaStreamSynchronize: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+  int cublasSetStreamFromC(intptr_t handle, intptr_t stream) {
+    cublasStatus_t status = cublasSetStream(*((cublasHandle_t*)handle), *((cudaStream_t*)stream));
+    if (status == CUBLAS_STATUS_SUCCESS) {
+      return 1;
+    }
+    else if (status == CUBLAS_STATUS_NOT_INITIALIZED) {
+      errormessage("Error in cublasSetStream: %s\n", "the CUDA Runtime initialization failed");
+      return 0;
+    }
+    else{
+      errormessage("Error in cublasSetStream: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+
+#ifdef WITH_NVIDIA_CUSOLVER
+  int cusolverSetStreamFromC(intptr_t cusolver_handle, intptr_t stream) {
+    cusolverStatus_t status = cusolverDnSetStream(*((cusolverDnHandle_t*)cusolver_handle), *((cudaStream_t*)stream));
+    if (status == CUSOLVER_STATUS_SUCCESS) {
+      return 1;
+    }
+    else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
+      errormessage("Error in cusolverDnSetStream: %s\n", "the CUDA Runtime initialization failed");
+      return 0;
+    }
+    else{
+      errormessage("Error in cusolverDnSetStream: %s\n", "unknown error");
+      return 0;
+    }
+  }
+#endif
+
+  int cudaMemcpy2dAsyncFromC(intptr_t *dest, size_t dpitch, intptr_t *src, size_t spitch, size_t width, size_t height, int dir, intptr_t stream) {
+  
+    cudaError_t cuerr = cudaMemcpy2DAsync( dest, dpitch, src, spitch, width, height, (cudaMemcpyKind)dir, *((cudaStream_t*)stream) );
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cudaMemcpy2dAsync: %s\n",cudaGetErrorString(cuerr));
+      return 0;
+    }
+    return 1;
+  }
+
+
+
 
   int cublasCreateFromC(intptr_t *cublas_handle) {
     *cublas_handle = (intptr_t) malloc(sizeof(cublasHandle_t));
@@ -252,11 +338,31 @@ extern "C" {
     return 1;
   }
 
+  int cudaMemsetAsyncFromC(intptr_t *a, int value, size_t count, intptr_t stream) {
+
+    cudaError_t cuerr = cudaMemsetAsync( a, value, count, *((cudaStream_t*)stream));
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cudaMemsetAsync: %s\n",cudaGetErrorString(cuerr));
+      return 0;
+    }
+    return 1;
+  }
+
   int cudaMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir) {
 
     cudaError_t cuerr = cudaMemcpy( dest, src, count, (cudaMemcpyKind)dir);
     if (cuerr != cudaSuccess) {
       errormessage("Error in cudaMemcpy: %s\n",cudaGetErrorString(cuerr));
+      return 0;
+    }
+    return 1;
+  }
+
+  int cudaMemcpyAsyncFromC(intptr_t *dest, intptr_t *src, size_t count, int dir, intptr_t stream) {
+
+    cudaError_t cuerr = cudaMemcpyAsync( dest, src, count, (cudaMemcpyKind)dir, *((cudaStream_t*)stream));
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cudaMemcpyAsync: %s\n",cudaGetErrorString(cuerr));
       return 0;
     }
     return 1;

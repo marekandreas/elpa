@@ -8,9 +8,13 @@
 #include "config-f90.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <cuda_runtime.h>
 #include <cub/cub.cuh>
+
+#include "config-f90.h"
+
 
 
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -158,8 +162,12 @@ void set_max_shared_bytes(const void *func)
 }
 
 template <int bM, class F>
-void launch_NVIDIA_sm80_kernel(F *q, const F *hh, const F *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+void launch_NVIDIA_sm80_kernel(F *q, const F *hh, const F *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
 {
+#ifdef WITH_GPU_STREAMS
+  cudaStream_t streamId = *((cudaStream_t*)my_stream);
+#endif
+
 #ifdef USE_MMA
   // This is set such that shared memory bank conflicts are minimized.
   constexpr int block_y = bM < 64 ? 8 : 4;
@@ -177,7 +185,11 @@ void launch_NVIDIA_sm80_kernel(F *q, const F *hh, const F *hh_tau, const int nev
   int shared_bytes = (bM + shared_memory_bytes(bM, bN) + 1) * sizeof(F);
 #endif
   int grid_y = (nev + bN - 1) / bN;
+#ifdef WITH_GPU_STREAMS
+  kernel<<<dim3(1, grid_y, 1), dim3(1, block_y, block_z), shared_bytes, streamId>>>(q, hh, hh_tau, nev, nb, ldq, ncols);
+#else
   kernel<<<dim3(1, grid_y, 1), dim3(1, block_y, block_z), shared_bytes>>>(q, hh, hh_tau, nev, nb, ldq, ncols);
+#endif
 }
 
 /*
@@ -190,20 +202,20 @@ nb        : nbw (==b)
 ncols     : N_R (==n+b-1)
 */
 extern "C" {
-  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
   
   {
   
       switch (nb) {
-        case 1024: launch_NVIDIA_sm80_kernel<1024>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-        case  512: launch_NVIDIA_sm80_kernel< 512>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-        case  256: launch_NVIDIA_sm80_kernel< 256>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-        case  128: launch_NVIDIA_sm80_kernel< 128>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-        case   64: launch_NVIDIA_sm80_kernel<  64>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-        case   32: launch_NVIDIA_sm80_kernel<  32>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-        case   16: launch_NVIDIA_sm80_kernel<  16>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-        case    8: launch_NVIDIA_sm80_kernel<   8>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-        case    4: launch_NVIDIA_sm80_kernel<   4>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        case 1024: launch_NVIDIA_sm80_kernel<1024>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case  512: launch_NVIDIA_sm80_kernel< 512>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case  256: launch_NVIDIA_sm80_kernel< 256>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case  128: launch_NVIDIA_sm80_kernel< 128>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case   64: launch_NVIDIA_sm80_kernel<  64>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case   32: launch_NVIDIA_sm80_kernel<  32>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case   16: launch_NVIDIA_sm80_kernel<  16>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case    8: launch_NVIDIA_sm80_kernel<   8>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case    4: launch_NVIDIA_sm80_kernel<   4>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
         //case    2: launch_new_kernel<   2>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
         //case    1: launch_new_kernel<   1>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
         default: printf("Unsupported nb = %d for new kernel \n", nb);
@@ -216,14 +228,14 @@ extern "C" {
       }
   }
 
-  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
+  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream) {
   double *q_casted, *hh_casted, *hh_tau_casted;
 
   q_casted = (double*) q;
   hh_casted = (double*) hh;
   hh_tau_casted = (double*) hh_tau;
 
-  launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q_casted, hh_casted, hh_tau_casted, nev, nb, ldq, ncols);
+  launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q_casted, hh_casted, hh_tau_casted, nev, nb, ldq, ncols, my_stream);
 
   q = (float*) q_casted;
 
