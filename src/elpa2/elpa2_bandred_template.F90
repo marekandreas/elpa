@@ -705,90 +705,88 @@ myid=my_prow+my_pcol*np_rowsMPI
 
     else !useQR
 #endif /* REALCASE == 1 */
-       if(.true.) then !blocked implementation
+#ifndef WITH_OPENMP_TRADITIONAL
+       if(.not.useGPU) then !blocked implementation
 !       if(.false.) then
           call obj%timer%start("hh_block")
+          
+          cs_new=0.
+          cs_old=0.
+          oldpe=-1
+          off=0
+          lcstart=n_cols
+          allocate(ex_buff(l_rows*nblk))
 
-       cs_new=0.
-       cs_old=0.
-       oldpe=-1
-       off=0
-       lcstart=n_cols
-       allocate(ex_buff(l_rows*nblk))
-       taublock(1)=0. !first entry is not computed below
-       do lc = n_cols, 0, -1
-          if(lc.ne.0) then
-             ncol = istep*nbw + lc ! absolute column number of householder Vector
-             nrow = ncol - nbw ! Absolute number of pivot row             
-             cur_pcol = pcol(ncol, nblk, np_cols) ! Processor column owning current block
-          end if
-
-          if((mod(lc,nblk).eq.0).and.(oldpe.ne.-1)) then
-             !broadcast data
-#ifdef WITH_MPI
-             call obj%timer%start("bcast_multi")
-             if(lrex.gt.0) call mpi_bcast(ex_buff, int(lrex*off,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                  int(oldpe,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
-                  mpierr)
-             call obj%timer%stop("bcast_multi")
-#endif
-             !inner loop over block
-             ioff=0
-             do ilc=lcstart,lc+1,-1
-                ncol = istep*nbw + ilc ! absolute column number of householder Vector
-                nrow = ncol - nbw ! Absolute number of pivot row
-                if (nrow == 1) exit ! Nothing to do
-                
-                lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
-                lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
-                ioff=ioff+1
-                call get_hh_vec(ex_buff2d(1:lr,ioff),vr)
-!                cs_old=cs_old+sum(abs(vr(1:lr)))
-                call apply_ht(vr,ilc,a_mat,ex_buff2d(:,ioff+1:off))
-
-!                call get_apply_ht(vr,ilc,a_mat,ex_buff2d(:,ioff:off))
-
-!                cs_new=cs_new+sum(abs(vr(1:lr)))
-
-                if (useGPU_reduction_lower_block_to_tridiagonal) then
-                   vmrGPU(cur_l_rows * (ilc - 1) + 1 : cur_l_rows * (ilc - 1) + lr) = vr(1:lr)
-                else
-                   vmrCPU(1:lr,ilc) = vr(1:lr)
-                endif
-#if REALCASE == 1
-                taublock(ilc) = tau
-#else
-                taublock(ilc) = conjg(tau)
-#endif
-                vrlblock(ilc)=vrl
-             end do
-             !reset counters for next block
-             off=0
-             lcstart=lc
-          end if
-
-          if(lc.ne.0) then             
-             ncol = istep*nbw + lc ! absolute column number of householder Vector
-             nrow = ncol - nbw ! Absolute number of pivot row
-             if (nrow == 1) cycle ! Nothing to do
-             
-             if(off.eq.0) then !reset buffer size to next batch
-                lrex  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length                
-                ex_buff2d(1:lrex,1:nblk) => ex_buff
+          do lc = n_cols, 0, -1
+             if(lc.ne.0) then
+                ncol = istep*nbw + lc ! absolute column number of householder Vector
+                nrow = ncol - nbw ! Absolute number of pivot row             
+                cur_pcol = pcol(ncol, nblk, np_cols) ! Processor column owning current block
              end if
-             !copy current a_mat entry to buffer
-             off=off+1
-             lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
-             if(my_pcol.eq.cur_pcol) ex_buff2d(1:lrex,off)=a_mat(1:lrex,lch)
-             oldpe=cur_pcol
-          end if
-       end do
-       deallocate(ex_buff)
-       call obj%timer%stop("hh_block")
-
-    else !old, unblocked implementation
-       cs_new=0.
-      do lc = n_cols, 1, -1
+             
+             if((mod(lc,nblk).eq.0).and.(oldpe.ne.-1)) then
+                !broadcast data
+#ifdef WITH_MPI
+                call obj%timer%start("bcast_multi")
+                if(lrex.gt.0) call mpi_bcast(ex_buff, int(lrex*off,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                     int(oldpe,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
+                     mpierr)
+                call obj%timer%stop("bcast_multi")
+#endif
+                !inner loop over block
+                ioff=0
+                do ilc=lcstart,lc+1,-1
+                   ncol = istep*nbw + ilc ! absolute column number of householder Vector
+                   nrow = ncol - nbw ! Absolute number of pivot row
+                   if (nrow == 1) then
+                      taublock(1)=0.
+                      exit ! Nothing to do
+                   end if
+                   
+                   lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
+                   lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+                   ioff=ioff+1
+                   call get_hh_vec(ex_buff2d(1:lr,ioff),vr)
+                   call apply_ht(vr,ilc,a_mat,ex_buff2d(:,ioff+1:off))
+                   if (useGPU_reduction_lower_block_to_tridiagonal) then
+                      vmrGPU(cur_l_rows * (ilc - 1) + 1 : cur_l_rows * (ilc - 1) + lr) = vr(1:lr)
+                   else
+                      vmrCPU(1:lr,ilc) = vr(1:lr)
+                   endif
+#if REALCASE == 1
+                   taublock(ilc) = tau
+#else
+                   taublock(ilc) = conjg(tau)
+#endif
+                   vrlblock(ilc)=vrl
+                end do
+                !reset counters for next block
+                off=0
+                lcstart=lc
+             end if
+             
+             if(lc.ne.0) then             
+                ncol = istep*nbw + lc ! absolute column number of householder Vector
+                nrow = ncol - nbw ! Absolute number of pivot row
+                if (nrow == 1) cycle ! Nothing to do
+                
+                if(off.eq.0) then !reset buffer size to next batch
+                   lrex  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length                
+                   ex_buff2d(1:lrex,1:nblk) => ex_buff
+                end if
+                !copy current a_mat entry to buffer
+                off=off+1
+                lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+                if(my_pcol.eq.cur_pcol) ex_buff2d(1:lrex,off)=a_mat(1:lrex,lch)
+                oldpe=cur_pcol
+             end if
+          end do
+          deallocate(ex_buff)
+          call obj%timer%stop("hh_block")
+          
+       else !old, unblocked implementation
+#else          
+       do lc = n_cols, 1, -1
 
         ncol = istep*nbw + lc ! absolute column number of householder Vector
         nrow = ncol - nbw ! Absolute number of pivot row
@@ -798,8 +796,10 @@ myid=my_prow+my_pcol*np_rowsMPI
 
         tau = 0
 
-        if (nrow == 1) exit ! Nothing to do
-
+        if (nrow == 1) then
+           taublock(lc)=0.  
+           exit ! Nothing to do
+        end if
         cur_pcol = pcol(ncol, nblk, np_cols) ! Processor column owning current block
 
         if (my_pcol==cur_pcol) then
@@ -857,13 +857,7 @@ myid=my_prow+my_pcol*np_rowsMPI
           ! Scale vr and store Householder Vector for back transformation
 
           vr(1:lr) = vr(1:lr) * xf
-          if (my_prow==prow(nrow, nblk, np_rows)) then
-            a_mat(1:lr-1,lch) = vr(1:lr-1)
-            a_mat(lr,lch) = vrl
-            vr(lr) = 1.0_rck
-          else
-            a_mat(1:lr,lch) = vr(1:lr)
-          endif
+          if (my_prow==prow(nrow, nblk, np_rows)) vr(lr) = 1.0_rck
        endif
 
         ! Broadcast Householder Vector and tau along columns
@@ -900,11 +894,12 @@ myid=my_prow+my_pcol*np_rowsMPI
         tau = vr(lr+1)
 
 #if REALCASE == 1
-        tmat(lc,lc,istep) = tau ! Store tau in diagonal of tmat
+        taublock(lc) = tau
+#else
+        taublock(lc) = conjg(tau)
 #endif
-#if COMPLEXCASE == 1
-        tmat(lc,lc,istep) = conjg(tau) ! Store tau in diagonal of tmat
-#endif
+        vrlblock(lc)=vrl
+        
         ! Transform remaining columns in current block with Householder Vector
         ! Local dot product
 
@@ -1044,7 +1039,10 @@ myid=my_prow+my_pcol*np_rowsMPI
       enddo
 #endif /* WITH_OPENMP_TRADITIONAL */
      enddo ! lc
-  endif
+#endif
+#ifndef WITH_OPENMP_TRADITIONAL   
+    endif
+#endif
       if (useGPU_reduction_lower_block_to_tridiagonal) then
         ! store column tiles back to GPU
         if (do_memcpy) then
@@ -2429,7 +2427,7 @@ contains
     !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
     !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj, &
 #ifdef WITH_MPI
-    !$omp&  MPI_STATUS_IGNORE, &
+    !$omp&  MPI_STATUS_IGNORE, MPI_IN_PLACE, &
 #endif
     !$omp&  useNonBlockingCollectivesRows, useNonBlockingCollectivesCols) &
     !$omp private(mynlc, j, lcx, ii, pp, mpierr, allreduce_request2)        
@@ -2652,7 +2650,7 @@ contains
     !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
     !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj, &
 #ifdef WITH_MPI
-    !$omp&  MPI_STATUS_IGNORE, &
+    !$omp&  MPI_STATUS_IGNORE, MPI_IN_PLACE, &
 #endif
     !$omp&  useNonBlockingCollectivesRows, useNonBlockingCollectivesCols) &
     !$omp private(mynlc, j, lcx, ii, pp, mpierr, allreduce_request2)        
