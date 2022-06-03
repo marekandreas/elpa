@@ -1831,8 +1831,11 @@ if test x"${use_sycl_gpu_backend}" = x"yes"; then
   fi
 fi
 
-dnl To allow people to set custom ar flags
-test -n "$ARFLAGS" || ARFLAGS="cru"
+
+if test x"${need_intel_gpu}" = x"yes" ; then
+  dnl To allow people to set custom ar flags
+  test -n "$ARFLAGS" || ARFLAGS="cru"
+fi
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
