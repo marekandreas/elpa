@@ -2623,7 +2623,7 @@ contains
           ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) + tauc*aux1(nlc)*vr(1:lr)
        end do
     else
-       call PRECISION_GERC(int(lr,kind=BLAS_KIND),ubound(ex_buff2d,2),tauc,vr,1_BLAS_KIND,&
+       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(ubound(ex_buff2d,2),kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
             aux1(nlc+1),1_BLAS_KIND,ex_buff2d,int(ubound(ex_buff2d,1),kind=BLAS_KIND))
     end if
     
