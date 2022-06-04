@@ -101,7 +101,15 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
 
         it.barrier(sycl::access::fence_space::local_space);
 
-        T dotp_res = joint_reduce(it.get_group(), dotp_sp, dotp_sp + local_range, sycl::plus<>());
+        T dotp_res;
+        if constexpr (std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value ) {
+            T dotp_wi = dotp_sp[it.get_local_id()];
+            auto real_part = sycl::reduce_over_group(it.get_group(), dotp_wi.real(), sycl::plus<>());
+            auto imag_part = sycl::reduce_over_group(it.get_group(), dotp_wi.imag(), sycl::plus<>());
+            dotp_res = T(real_part, imag_part);
+        } else {
+          dotp_res = joint_reduce(it.get_group(), dotp_sp, dotp_sp + local_range, sycl::plus<>());
+        }
 
         q_v2 -= dotp_res * hh_tau[j - 1] * hh[h_off];
         q_s[tid + 1] = q_v2;
