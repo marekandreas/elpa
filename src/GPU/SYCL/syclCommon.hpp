@@ -42,14 +42,28 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-// Author: Andreas Marek, MPCDF
+// This file was written by A. Poeppl, Intel Corporation (2022) for MPCDF
 
-#include "config-f90.h"
+#ifndef SYCL_COMMON_HPP
+#define SYCL_COMMON_HPP
 
-#define COMPLEXCASE 1
-#define DOUBLE_PRECISION 1
-#include "../../general/precision_macros.h"
-#include "complex_vsx_1hv_template.c"
-#undef COMPLEXCASE
-#undef DOUBLE_PRECISION
+#pragma once
 
+#include <CL/sycl.hpp>
+
+namespace elpa {
+namespace gpu {
+namespace sycl {
+
+  void collectGpuDevices();
+  void printGpuInfo();
+  int selectGpuDevice(int deviceNum);
+  void selectDefaultGpuDevice();
+  size_t getNumDevices();
+  cl::sycl::device getDevice();
+  cl::sycl::queue & getQueue();
+
+}
+}
+}
+#endif

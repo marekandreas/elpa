@@ -47,36 +47,14 @@
 //
 #include <CL/sycl.hpp>
 
-
-static std::vector<sycl::device> devices_index;
-static std::optional<sycl::queue> chosenDeviceQueue_index{};
-
-bool deviceCollectionFlag_index = false;
+#include "syclCommon.hpp"
 
 extern "C" {
-
-  static void collectGpuDevices_index() {
-    if (deviceCollectionFlag_index) {
-      return;
-    }
-    for (auto const &p : sycl::platform::get_platforms()) {
-      for (auto dev : p.get_devices()) {
-        using namespace sycl::info;
-        // why this?
-#ifndef ENABLE_ALL_DEVICES
-        if (dev.get_info<device::device_type>() == device_type::gpu)
-#endif
-        {
-          devices_index.push_back(dev);
-        }
-      }
-    }
-  }
-
   int sycl_gpu_count() {
+    using namespace elpa::gpu::sycl;
     int count = -1000;
-    collectGpuDevices_index();
-    count = devices_index.size();
+    collectGpuDevices();
+    count = getNumDevices();
     return count;
   }
 }

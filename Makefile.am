@@ -4,6 +4,16 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 AM_FCFLAGS = $(SCALAPACK_FCFLAGS) $(FC_MODINC)modules
 AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
+if WITH_SYCL_GPU_VERSION
+AM_LDFLAGS2 = $(LDFLAGS)
+AM_ARFLAGS = 'qc'
+ARFLAGS = 'qc'
+endif
+if WITH_OPENMP_OFFLOAD_GPU_VERSION
+AM_LDFLAGS2 = $(LDFLAGS)
+AM_ARFLAGS = 'qc'
+ARFLAGS = 'qc'
+endif
 
 FCLD = @ACTUAL_FC@
 
@@ -53,6 +63,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
   src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
   src/elpa2/GPU/ROCm/interface_c_hip_kernel.F90 \
+  src/elpa2/GPU/SYCL/interface_c_sycl_kernel.F90 \
   src/elpa2/mod_pack_unpack_gpu.F90 \
   src/elpa2/qr/qr_utils.F90 \
   src/elpa2/qr/elpa_qrkernels.F90 \
@@ -161,17 +172,18 @@ if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
 endif
 endif
 
-#if WITH_INTEL_GPU_VERSION
-#  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/INTEL/mkl_offload.cpp
-#endif
+if WITH_SYCL_GPU_VERSION
+  libelpa@SUFFIX@_private_la_CXXFLAGS = $(AM_CXXFLAGS) -Isrc
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclCommon.cpp src/GPU/SYCL/syclFunctions.cpp src/GPU/SYCL/syclUtils.cpp src/elpa2/GPU/SYCL/ev_tridi_band_sycl_gpu_real.cpp
+endif
 
 if WITH_OPENMP_OFFLOAD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/OpenMP/elpa_index_openmp_offload_gpu.cpp src/GPU/OpenMP/openmpOffloadFunctions.cpp
 endif
 
-if WITH_SYCL_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclFunctions.cpp
-endif
+#if WITH_SYCL_GPU_VERSION
+#  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclFunctions.cpp
+#endif
 
 if WITH_AMD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
@@ -738,7 +750,7 @@ validate_double_instance@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_module
 
 noinst_PROGRAMS += validate_real_2stage_banded@SUFFIX@
 check_SCRIPTS += validate_real_2stage_banded@SUFFIX@_default.sh
-validate_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90 
+validate_real_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/real_2stage_banded.F90
 validate_real_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 validate_real_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
@@ -881,6 +893,9 @@ EXTRA_DIST = \
   src/GPU/check_legacy_gpu_setting_template.F90 \
   src/GPU/CUDA/cuUtils_template.cu \
   src/GPU/ROCm/hipUtils_template.cpp \
+  src/GPU/SYCL/syclUtils.cpp \
+  src/GPU/SYCL/syclCommon.cpp \
+  src/GPU/SYCL/syclFunctions.cpp \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
