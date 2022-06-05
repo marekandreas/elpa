@@ -1788,10 +1788,10 @@ fi
 use_openmp_gpu_backend=no
 use_sycl_gpu_backend=no
 use_intel_gpu=no
-AC_MSG_CHECKING(whether INTEL GPU version should be used)
-AC_ARG_ENABLE([intel-gpu],
-                AS_HELP_STRING([--enable-intel-gpu=[[openmp|sycl]]],
-                               [do use INTEL GPU version with either OpenMP or SYCL backend]),
+AC_MSG_CHECKING(whether INTEL GPU version should be used with OpenMP or SYCL backend) 
+AC_ARG_ENABLE([intel-gpu-backend],
+              [AS_HELP_STRING([--enable-intel-gpu-backend=[[openmp|sycl]]],
+                               [do use INTEL GPU version with either OpenMP or SYCL backend])],
                                [if test x"$enableval" = x"openmp"; then
 				  use_openmp_gpu_backend=yes
                                   use_intel_gpu=yes
@@ -1809,7 +1809,7 @@ AC_MSG_RESULT([${use_intel_gpu}])
 if test x"${use_intel_gpu}" = x"yes"; then
   if test x"${use_openmp_gpu_backend}" = x"no"; then
     if test x"${use_sycl_gpu_backend}" = x"no"; then
-      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=[[openmp|sycl]]])
+      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu-backend=[[openmp|sycl]]])
     fi
   fi
 fi
@@ -1822,12 +1822,12 @@ fi
 
 if test x"${need_intel_gpu_sycl}" = x"yes"; then
     if test x"${use_sycl_gpu_backend}" = x"no"; then
-      AC_MSG_ERROR([You specified --enable-intel-gpu-sycl for the SYCL GPU kernel. You must also specify --enable-intel-gpu=sycl ])
+      AC_MSG_ERROR([You specified --enable-intel-gpu-sycl for the SYCL GPU kernel. You must also specify --enable-intel-gpu-backend=sycl ])
     fi
 fi
 if test x"${use_sycl_gpu_backend}" = x"yes"; then
   if test x"${need_intel_gpu_sycl}" = x"no"; then
-    AC_MSG_NOTICE([You specified --enable-intel-gpu=sycl for a SYCL GPU backend. You might want to activate the SYCL GPU kernel by specifying  --enable-intel-gpu-sycl])
+    AC_MSG_NOTICE([You specified --enable-intel-gpu-backend=sycl for a SYCL GPU backend. You might want to activate the SYCL GPU kernel by specifying  --enable-intel-gpu-sycl])
   fi
 fi
 
@@ -1961,8 +1961,8 @@ use_hip_streams=no
 use_gpu_streams=no
 AC_MSG_CHECKING(whether GPU streams should be used)
 AC_ARG_ENABLE([gpu-streams],
-                AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
-			       [do use Nvidia or AMD GPU version with Cuda or HIP streams, respectively]),
+               [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
+			       [do use Nvidia or AMD GPU version with Cuda or HIP streams, respectively])],
                                [if test x"$enableval" = x"nvidia"; then
 				  use_cuda_streams=yes
 				  use_gpu_streams=yes
