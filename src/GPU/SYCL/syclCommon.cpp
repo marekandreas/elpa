@@ -46,8 +46,6 @@
 
 #include "syclCommon.hpp"
 
-#include "dpct/dpct.hpp"
-
 #include <vector>
 #include <optional>
 
@@ -78,7 +76,6 @@ void elpa::gpu::sycl::collectGpuDevices() {
 }
 
 int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
-  /*
   collectGpuDevices();
   if (deviceId >= devices.size()){
     std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
@@ -86,41 +83,29 @@ int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
   }
   cl::sycl::property::queue::in_order io;
   cl::sycl::property_list props(io);
-  chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId], props);*/
-  dpct::device_ext &dev_ct1 = dpct::get_current_device();
-  cl::sycl::queue &q_ct1 = dev_ct1.default_queue();
+  chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId], props);
   return 1;
 }
 
 void elpa::gpu::sycl::selectDefaultGpuDevice() {
-  /*
   cl::sycl::gpu_selector gpuSelector;
   cl::sycl::property::queue::in_order io;
   cl::sycl::property_list props(io);
-  chosenQueue = std::make_optional<cl::sycl::queue>(gpuSelector, props);*/
-  dpct::device_ext &dev_ct1 = dpct::get_current_device();
-  cl::sycl::queue &q_ct1 = dev_ct1.default_queue();
+  chosenQueue = std::make_optional<cl::sycl::queue>(gpuSelector, props);
 }
 
 cl::sycl::queue & elpa::gpu::sycl::getQueue() {
-  /*
   if (!chosenQueue) {
     elpa::gpu::sycl::selectDefaultGpuDevice();
-  }*/
-  dpct::device_ext &dev_ct1 = dpct::get_current_device();
-  cl::sycl::queue &q_ct1 = dev_ct1.default_queue();
-  return q_ct1;
+  }
+  return *chosenQueue;
 }
 
 cl::sycl::device elpa::gpu::sycl::getDevice() {
   if (!chosenQueue) {
     elpa::gpu::sycl::selectDefaultGpuDevice();
   }
-  dpct::device_ext &dev_ct1 = dpct::get_current_device();
-  cl::sycl::queue &q_ct1 = dev_ct1.default_queue();
-
-
-  return dev_ct1;
+  return chosenQueue->get_device();
 }
 
 size_t elpa::gpu::sycl::getNumDevices() {
