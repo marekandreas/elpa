@@ -51,91 +51,103 @@ module cholesky_cuda
 
   public
   interface
-    subroutine cuda_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)&
+    subroutine cuda_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
              bind(C, name="cuda_copy_double_a_tmatc_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmatc_dev
       integer(kind=c_int), intent(in)  :: nblk, matrixRows, l_cols, l_colx, l_row1
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine 
   end interface
 
   interface
-    subroutine cuda_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)&
+    subroutine cuda_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
              bind(C, name="cuda_copy_float_a_tmatc_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmatc_dev
       integer(kind=c_int), intent(in)  :: nblk, matrixRows, l_cols, l_colx, l_row1
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine 
   end interface
 
   interface
-    subroutine cuda_copy_double_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)&
+    subroutine cuda_copy_double_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
              bind(C, name="cuda_copy_double_complex_a_tmatc_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmatc_dev
       integer(kind=c_int), intent(in)  :: nblk, matrixRows, l_cols, l_colx, l_row1
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine 
   end interface
 
   interface
-    subroutine cuda_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)&
+    subroutine cuda_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
              bind(C, name="cuda_copy_float_complex_a_tmatc_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmatc_dev
       integer(kind=c_int), intent(in)  :: nblk, matrixRows, l_cols, l_colx, l_row1
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine 
   end interface
 
   contains
 
-    subroutine cuda_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+    subroutine cuda_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=C_intptr_T)        :: a_dev, tmatc_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call cuda_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine cuda_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+    subroutine cuda_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=C_intptr_T)        :: a_dev, tmatc_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call cuda_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine cuda_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+    subroutine cuda_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=C_intptr_T)        :: a_dev, tmatc_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call cuda_copy_double_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine cuda_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+    subroutine cuda_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=C_intptr_T)        :: a_dev, tmatc_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call cuda_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine

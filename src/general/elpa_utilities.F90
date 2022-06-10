@@ -62,7 +62,7 @@ module ELPA_utilities
   private ! By default, all routines contained are private
 
   public :: output_unit, error_unit
-  public :: check_alloc, check_alloc_GPU_f, check_memcpy_GPU_f, check_dealloc_GPU_f
+  public :: check_alloc, check_alloc_GPU_f, check_memcpy_GPU_f, check_dealloc_GPU_f, check_stream_synchronize_GPU_f
   public :: check_host_alloc_GPU_f, check_host_dealloc_GPU_f, check_host_register_GPU_f, check_host_unregister_GPU_f
   public :: check_memset_GPU_f
   public :: check_allocate_f, check_deallocate_f
@@ -208,6 +208,28 @@ module ELPA_utilities
       endif
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *, file_name, ":", line,  " error in openmp_offload_free when deallocating "
+      endif
+      stop 1
+    endif
+ end subroutine
+
+ subroutine check_stream_synchronize_GPU_f(file_name, line, successGPU)
+    use elpa_gpu
+    implicit none
+
+    character(len=*), intent(in)    :: file_name
+    integer(kind=c_int), intent(in)    :: line
+    logical                         :: successGPU
+
+    if (.not.(successGPU)) then
+      if (use_gpu_vendor == nvidia_gpu) then
+        print *, file_name, ":", line,  " error in cuda_stream_synchronize"
+      endif
+      if (use_gpu_vendor == amd_gpu) then
+        print *, file_name, ":", line,  " error in hip_strean_synchronize"
+      endif
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *, file_name, ":", line,  " error in openmp offload stream synchronize "
       endif
       stop 1
     endif

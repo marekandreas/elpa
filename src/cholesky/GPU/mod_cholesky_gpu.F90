@@ -59,62 +59,70 @@ module cholesky_gpu
   public
   contains
 
-    subroutine gpu_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+    subroutine gpu_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=C_intptr_T)        :: a_dev, tmatc_dev
+      integer(kind=C_intptr_T)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call cuda_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call hip_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+    subroutine gpu_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=C_intptr_T)        :: a_dev, tmatc_dev
+      integer(kind=C_intptr_T)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call cuda_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call hip_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+    subroutine gpu_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=C_intptr_T)        :: a_dev, tmatc_dev
+      integer(kind=C_intptr_T)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call cuda_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call hip_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine gpu_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+    subroutine gpu_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=C_intptr_T)        :: a_dev, tmatc_dev
+      integer(kind=C_intptr_T)        :: my_stream
+
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call cuda_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1)
+      call hip_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine

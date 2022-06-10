@@ -60,7 +60,7 @@ module mod_check_for_gpu
       use hip_functions
       use openmp_offload_functions
       use sycl_functions
-      use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray
+      use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray, my_stream
       use precision
       use elpa_mpi
       use elpa_omp
@@ -78,9 +78,11 @@ module mod_check_for_gpu
       logical, save                              :: allreadySET=.false.
       integer(kind=ik)                           :: maxThreads, thread
       integer(kind=c_intptr_t)                   :: handle_tmp
+      !integer(kind=c_intptr_t)                   :: stream
       logical                                    :: gpuIsInitialized=.false.
       !character(len=1024)           :: envname
-
+      character(len=8)                           :: fmt 
+      character(len=12)                          :: gpu_string
       if (.not.(present(wantDebug))) then
         wantDebugMessage = .false.
       else
@@ -286,8 +288,29 @@ module mod_check_for_gpu
           if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', use_gpu_id
           endif
- 
+      
+#ifdef WITH_GPU_STREAMS
+#ifdef WITH_NVIDIA_GPU_VERSION
+          success = cuda_stream_create(my_stream)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+          success = hip_stream_create(my_stream)
+#endif
+
+          if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
+            print *,"Cannot create cuda stream handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+            print *,"Cannot create hip stream handle"
+#endif
+            stop 1
+          endif
+#endif /* WITH_GPU_STREAMS */
+
           success = .true.
+
           ! handle creation
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -379,6 +402,41 @@ module mod_check_for_gpu
           enddo
 #endif
 #endif
+
+#ifdef WITH_GPU_STREAMS
+          ! set stream
+          do thread = 0, maxThreads-1
+#ifdef WITH_NVIDIA_GPU_VERSION
+            success = cublas_set_stream(cublasHandleArray(thread), my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+            success = rocblas_set_stream(rocblasHandleArray(thread), my_stream)
+#endif
+            if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
+              print *,"Cannot create cublas stream handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+              print *,"Cannot create rocblas stream handle"
+#endif
+              stop 1
+            endif
+          enddo
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_CUSOLVER
+          do thread=0, maxThreads-1
+            success = cusolver_set_stream(cusolverHandleArray(thread), my_stream)
+            if (.not.(success)) then
+              print *,"Cannot create cusolver stream handle"
+              stop 1
+            endif
+          enddo
+#endif
+#endif
+
+
+#endif /* WITH_GPU_STREAMS */
 
         endif ! alreadySET
         gpuIsInitialized = .true.
@@ -466,7 +524,13 @@ module mod_check_for_gpu
             endif
           endif
 
+          fmt = '(I5.5)'
+
+          write (gpu_string,fmt) numberOfDevices
+
+          call obj%timer%start("check_gpu_"//gpu_string)
           deviceNumber = mod(myid, numberOfDevices)
+          call obj%timer%start("set_device")
 #ifdef WITH_NVIDIA_GPU_VERSION
           if (.not.(allocated(cudaDeviceArray))) then
             allocate(cudaDeviceArray(0:maxThreads-1))
@@ -531,6 +595,7 @@ module mod_check_for_gpu
           if (wantDebugMessage) then
             print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
           endif
+          call obj%timer%stop("set_device")
 
           call obj%set("use_gpu_id",deviceNumber, error)
           if (error .ne. ELPA_OK) then
@@ -538,9 +603,27 @@ module mod_check_for_gpu
             stop
           endif
           allreadySET = .true.
-
+      
+#ifdef WITH_GPU_STREAMS
+#ifdef WITH_NVIDIA_GPU_VERSION
+          success = cuda_stream_create(my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+          success = hip_stream_create(my_stream)
+#endif
+          if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
+            print *,"Cannot create cuda stream handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+            print *,"Cannot create hip stream handle"
+#endif
+            stop 1
+          endif
+#endif /* WITH_GPU_STREAMS */
 
           ! handle creation
+          call obj%timer%start("create_handle")
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
             !print *,"Creating handle for thread:",thread
@@ -579,7 +662,9 @@ module mod_check_for_gpu
               stop 1
             endif
           enddo
+          call obj%timer%stop("create_handle")
 
+          call obj%timer%start("create_gpusolver")
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_NVIDIA_CUSOLVER
           do thread=0, maxThreads-1
@@ -628,7 +713,44 @@ module mod_check_for_gpu
           enddo
 #endif
 #endif
+          call obj%timer%stop("create_gpusolver")
 
+#ifdef WITH_GPU_STREAMS
+          ! set stream
+          do thread = 0, maxThreads-1
+#ifdef WITH_NVIDIA_GPU_VERSION
+            success = cublas_set_stream(cublasHandleArray(thread), my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+            success = rocblas_set_stream(rocblasHandleArray(thread), my_stream)
+#endif
+            if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
+              print *,"Cannot create cublas stream handle"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+              print *,"Cannot create rocblas stream handle"
+#endif
+              stop 1
+            endif
+          enddo
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_CUSOLVER
+          do thread=0, maxThreads-1
+            success = cusolver_set_stream(cusolverHandleArray(thread), my_stream)
+            if (.not.(success)) then
+              print *,"Cannot create cusolver stream handle"
+              stop 1
+            endif
+          enddo
+#endif
+#endif
+
+
+#endif /* WITH_GPU_STREAMS */
+
+          call obj%timer%stop("check_gpu_"//gpu_string)
         endif
         gpuIsInitialized = .true.
       endif

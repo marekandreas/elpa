@@ -63,5 +63,5 @@ check_call_redirect(["cpp", "-P", "-traditional", "-Wall", "-Werror"] + cpp_args
 # compile
 check_call(args + [tmp_filename])
 
-# cleanup
+# cleanup (may be commented out for better debuggability
 os.remove(tmp_filename)

@@ -1,0 +1,226 @@
+---
+MainSourceFile:  '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/dpct_output/mma_m8n8k4_fp64_sm80.dp.hpp'
+Replacements:
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          0
+    Length:          0
+    ReplacementText: "#include <CL/sycl.hpp>\n#include <dpct/dpct.hpp>\n"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          1782
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          1983
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          2239
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          2464
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          2865
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          3243
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          3360
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          3731
+    Length:          11
+    ReplacementText: ''
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          3797
+    Length:          0
+    ReplacementText: ",\n         sycl::nd_item<3> item_ct1"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          4303
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(0)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          4317
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range().get(1)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          4330
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(1)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          4345
+    Length:          10
+    ReplacementText: 'item_ct1.get_local_range().get(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          4358
+    Length:          11
+    ReplacementText: 'item_ct1.get_local_id(2)'
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+  - FilePath:        '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh'
+    Offset:          4896
+    Length:          0
+    ReplacementText: "/*\n\t\t\tDPCT1053:70: Migration of device assembly code is not supported.\n\t\t\t*/\n\t\t\t"
+    ConstantFlag:    ''
+    ConstantOffset:  0
+    InitStr:         ''
+    NewHostVarName:  ''
+    BlockLevelFormatFlag: false
+DpctVersion:     2022.0.0
+MainHelperFileName: dpct
+USMLevel:        ''
+FeatureMap:
+  device.hpp:
+    device_ext:
+      IsCalled:        false
+      FeatureName:     ''
+      SubFeatureMap:
+        device_ext_default_queue:
+          IsCalled:        true
+          CallerSrcFiles:
+            - '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu'
+            - '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu'
+          FeatureName:     'device_ext::default_queue'
+          SubFeatureMap:   {}
+    get_current_device:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu'
+        - '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu'
+      FeatureName:     get_current_device
+      SubFeatureMap:   {}
+    get_default_queue:
+      IsCalled:        true
+      CallerSrcFiles:
+        - '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu'
+        - '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu'
+        - '/nfs/home2/apoeppl/Projects/ELPA/elpa/src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real_sm80.cu'
+      FeatureName:     get_default_queue
+      SubFeatureMap:   {}
+CompileTargets:  {}
+OptionMap:
+  AsyncHandler:
+    Value:           'false'
+    Specified:       false
+  CommentsEnabled:
+    Value:           'true'
+    Specified:       true
+  CompilationsDir:
+    Value:           ''
+    Specified:       false
+  CtadEnabled:
+    Value:           'false'
+    Specified:       false
+  CustomHelperFileName:
+    Value:           dpct
+    Specified:       false
+  ExperimentalFlag:
+    Value:           '0'
+    Specified:       false
+  ExplicitClNamespace:
+    Value:           'false'
+    Specified:       false
+  ExplicitNamespace:
+    Value:           '20'
+    Specified:       false
+  ExtensionFlag:
+    Value:           '4294967295'
+    Specified:       false
+  NDRangeDim:
+    Value:           '1'
+    Specified:       true
+  NoDRYPattern:
+    Value:           'false'
+    Specified:       false
+  OptimizeMigration:
+    Value:           'false'
+    Specified:       false
+  ProcessAll:
+    Value:           'false'
+    Specified:       false
+  SyclNamedLambda:
+    Value:           'false'
+    Specified:       false
+  UsmLevel:
+    Value:           '1'
+    Specified:       true
+...

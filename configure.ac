@@ -360,7 +360,7 @@ if test x"${FC_does_infer_interfaces}" = x"yes"; then
          buf(:) = 42;
       end if
 
-      
+
       !! this is OK
       !call MPI_Bcast(buf, 10, MPI_INT, 0, MPI_COMM_WORLD, ierr)
 
@@ -406,10 +406,10 @@ if test x"${FC_does_infer_interfaces}" = x"yes"; then
       implicit none
       integer :: a
       real*8  :: b
-      
+
         call foo(a)
         call foo(b)
-      
+
       end program
 
       ])],
@@ -671,7 +671,7 @@ else
       LIBS="-l${lib} ${old_LIBS}"
       AC_MSG_CHECKING([whether -l${lib} already contains a BLACS implementation])
       AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY([blacs_gridinit])],[blacs_in_scalapack=yes],[blacs_in_scalapack=no])
-	       
+
       AC_MSG_RESULT([${blacs_in_scalapack}])
       if test x"${blacs_in_scalapack}" = x"yes"; then
         break
@@ -855,7 +855,7 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
                    fi
                    ],
                   [enable_runtime_threading_support_checks=yes])
-  
+
   AC_MSG_RESULT([${enable_runtime_threading_support_checks}])
   if test x"${enable_runtime_threading_support_checks}" = x"yes" ; then
    AC_DEFINE([THREADING_SUPPORT_CHECK],[1],[can check at runtime the threading support level of MPI])
@@ -873,7 +873,7 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
                    fi
                    ],
                   [enable_allow_thread_limiting=yes])
-  
+
   AC_MSG_RESULT([${enable_allow_thread_limiting}])
   if test x"${enable_allow_thread_limiting}" = x"yes" ; then
    AC_DEFINE([ALLOW_THREAD_LIMITING],[1],[ELPA can at runtime limit the number of OpenMP threads to 1 if needed])
@@ -886,7 +886,7 @@ if test x"$with_mpi" = x"yes" && test x"$enable_openmp" = x"yes"; then
   if test x"${enable_allow_thread_limiting}" = x"no" && test x"${enable_runtime_threading_support_checks}" = x"yes"; then
     AC_MSG_NOTICE([You set --disable-allow-thread-limiting and --enable-runtime-threading-support-checks. If ELPA detects during a run that])
     AC_MSG_NOTICE([your MPI library does not provide a sufficient level of threading support, ELPA will only _print_ a warning and continue])
-    AC_MSG_NOTICE([This might lead to undefined behavior, includig wrong results])    
+    AC_MSG_NOTICE([This might lead to undefined behavior, includig wrong results])
   fi
 
   AC_ARG_WITH([threading-support-check-during-build],[AS_HELP_STRING([--with-threading-support-check-during-build],[Do checks at build time whether the MPI threading level support is sufficient. (default: on)])],
@@ -915,9 +915,9 @@ if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"$
       use iso_c_binding
       implicit none
       include "mpif.h"
-    
+
       integer(kind=c_int) :: provided, error, status
-    
+
       status = 1
       call mpi_init_thread(MPI_THREAD_MULTIPLE, provided,error)
       !call mpi_init(error)
@@ -927,7 +927,7 @@ if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"$
       endif
       call  mpi_finalize(error)
       call exit(status)
-    
+
     end
   ])],
   [mpi_threading_level_sufficient=yes],
@@ -950,7 +950,7 @@ if test x"${enable_openmp}" = x"yes" && test x"${with_mpi}" = x"yes" && test x"$
     AC_MSG_WARN([   --without-threading-support-check-during-build: DO THIS AT YOUR OWN RISK! This will be fast, but might])
     AC_MSG_WARN([   (depending on your MPI library sometimes) lead to wrong results])
     AC_MSG_ERROR([You do have to take an action of the choices above!])
-  fi		 
+  fi
 fi
 
 AC_LANG_POP([Fortran])
@@ -1328,7 +1328,7 @@ AC_MSG_RESULT([${can_link_with_}])
 if test x"$can_link_with_" = x"yes"; then
   AC_DEFINE([NEED_UNDERSCORE_TO_LINK_AGAINST_FORTRAN],[1],[need to append an underscore])
 fi
-  
+
 AC_MSG_CHECKING(whether we can link C programs against Fortran without _ )
 AC_LINK_IFELSE([AC_LANG_SOURCE([
 int main(int argc, char **argv) {
@@ -1788,10 +1788,10 @@ fi
 use_openmp_gpu_backend=no
 use_sycl_gpu_backend=no
 use_intel_gpu=no
-AC_MSG_CHECKING(whether INTEL GPU version should be used)
-AC_ARG_ENABLE([intel-gpu],
-                AS_HELP_STRING([--enable-intel-gpu=[[openmp|sycl]]],
-                               [do use INTEL GPU version with either OpenMP or SYCL backend]),
+AC_MSG_CHECKING(whether INTEL GPU version should be used with OpenMP or SYCL backend) 
+AC_ARG_ENABLE([intel-gpu-backend],
+              [AS_HELP_STRING([--enable-intel-gpu-backend=[[openmp|sycl]]],
+                               [do use INTEL GPU version with either OpenMP or SYCL backend])],
                                [if test x"$enableval" = x"openmp"; then
 				  use_openmp_gpu_backend=yes
                                   use_intel_gpu=yes
@@ -1809,7 +1809,7 @@ AC_MSG_RESULT([${use_intel_gpu}])
 if test x"${use_intel_gpu}" = x"yes"; then
   if test x"${use_openmp_gpu_backend}" = x"no"; then
     if test x"${use_sycl_gpu_backend}" = x"no"; then
-      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu=[[openmp|sycl]]])
+      AC_MSG_ERROR([No GPU backend specified. Specify --enable-intel-gpu-backend=[[openmp|sycl]]])
     fi
   fi
 fi
@@ -1822,13 +1822,19 @@ fi
 
 if test x"${need_intel_gpu_sycl}" = x"yes"; then
     if test x"${use_sycl_gpu_backend}" = x"no"; then
-      AC_MSG_ERROR([You specified --enable-intel-gpu-sycl for the SYCL GPU kernel. You must also specify --enable-intel-gpu=sycl ])
+      AC_MSG_ERROR([You specified --enable-intel-gpu-sycl for the SYCL GPU kernel. You must also specify --enable-intel-gpu-backend=sycl ])
     fi
 fi
 if test x"${use_sycl_gpu_backend}" = x"yes"; then
   if test x"${need_intel_gpu_sycl}" = x"no"; then
-    AC_MSG_NOTICE([You specified --enable-intel-gpu=sycl for a SYCL GPU backend. You might want to activate the SYCL GPU kernel by specifying  --enable-intel-gpu-sycl])
+    AC_MSG_NOTICE([You specified --enable-intel-gpu-backend=sycl for a SYCL GPU backend. You might want to activate the SYCL GPU kernel by specifying  --enable-intel-gpu-sycl])
   fi
+fi
+
+
+if test x"${need_intel_gpu}" = x"yes" ; then
+  dnl To allow people to set custom ar flags
+  test -n "$ARFLAGS" || ARFLAGS="cru"
 fi
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
@@ -1865,8 +1871,6 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   fi
   AC_LANG_POP([C])
 fi
-
-
 
 if test x"${need_amd_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
@@ -1951,6 +1955,73 @@ if test x"${need_nvidia_gpu}" = x"yes"; then
     fi
   fi
 fi
+
+use_cuda_streams=no
+use_hip_streams=no
+use_gpu_streams=no
+AC_MSG_CHECKING(whether GPU streams should be used)
+AC_ARG_ENABLE([gpu-streams],
+               [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
+			       [do use Nvidia or AMD GPU version with Cuda or HIP streams, respectively])],
+                               [if test x"$enableval" = x"nvidia"; then
+				  use_cuda_streams=yes
+				  use_gpu_streams=yes
+				fi
+				if test x"$enableval" = x"amd"; then
+				  use_hip_streams=yes
+				  use_gpu_streams=yes
+				fi
+				if test x"$enableval" = x"yes"; then
+                                  AC_MSG_ERROR([Wrong value! Must be either "nvidia" or "amd" ])
+                                fi
+				if test x"$enableval" = x"no"; then
+                                  use_cuda_streams=no
+                                  use_hip_streams=no
+				  use_gpu_streams=no
+                                fi
+				],
+              [use_gpu_streams=no])
+AC_MSG_RESULT([${use_gpu_streams}])
+
+if test x"$use_cuda_streams" = x"yes"; then
+  if test x"$need_nvidia_gpu" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=nvidia is set, you must also use --enable-nvidia-gpu])
+  fi
+  if test x"$need_amd_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-amd-gpu])
+  fi
+  if test x"${enable_openmp}" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=nvidia currently not supported in combination with --enable-openmp])
+  fi
+  if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
+    echo "---------------------------------------------------------------------------"
+    echo " The combination --enable-cuda-aware-mpi and --enable-gpu-streams=nvidia   "
+    echo " has not been tested is officially not yet supported! Use at your own risk!"
+    echo "---------------------------------------------------------------------------"
+  fi
+  if test x"${with_cusolver}" = x"yes"; then
+    echo "---------------------------------------------------------------------------"
+    echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
+    echo " has not been tested is officially not yet supported! Use at your own risk!"
+    echo "---------------------------------------------------------------------------"
+  fi
+  AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
+
+fi
+
+if test x"$use_hip_streams" = x"yes"; then
+  if test x"$need_amd_gpu" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you must also use --enable-amd-gpu])
+  fi
+  if test x"$need_nvidia_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-nvidia-gpu])
+  fi
+  if test x"${enable_openmp}" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=amd currently not supported in combination with --enable-openmp])
+  fi
+  AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
+fi
+
 
 m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AM_CONDITIONAL([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[test x"$use_[]elpa_m4_kernel[]" = x"yes"])
@@ -2626,13 +2697,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-echo " "
-echo "***********************************************************************"
-echo "*  This is the first release candidate of ELPA 2022.05.001.rc1        *"
-echo "*  There might be still some changes until the final release of       *"
-echo "*  ELPA 2022.05.001                                                   *"
-echo "***********************************************************************"
-echo " "
+#echo " "
+#echo "***********************************************************************"
+#echo "*  This is the first release candidate of ELPA 2022.05.001.rc1        *"
+#echo "*  There might be still some changes until the final release of       *"
+#echo "*  ELPA 2022.05.001                                                   *"
+#echo "***********************************************************************"
+#echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
