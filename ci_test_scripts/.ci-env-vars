@@ -1,6 +1,3 @@
-
-
-if [ "$(hostname)" != "miy01" -a "$(hostname)" != "miy02" -a "$(hostname)" != "miy03" ]; then
 export MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread"
 export MKL_INTEL_SCALAPACK_FCFLAGS_MPI_NO_OMP="-I$MKL_HOME/include/intel64/lp64"
 export MKL_INTEL_SCALAPACK_LDFLAGS_MPI_NO_OMP="$MKL_INTEL_SCALAPACK_MPI_NO_OMP_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
@@ -53,15 +50,9 @@ export MKL_GFORTRAN_SCALAPACK_MPI_OMP_ILP64_BASELINE="-L$MKL_HOME/lib/intel64 -l
 export MKL_GFORTRAN_SCALAPACK_FCFLAGS_MPI_OMP_ILP64="-I$MKL_HOME/include/intel64/ilp64"
 export MKL_GFORTRAN_SCALAPACK_LDFLAGS_MPI_OMP_ILP64="$MKL_GFORTRAN_SCALAPACK_MPI_OMP_ILP64_BASELINE -Wl,-rpath,$MKL_HOME/lib/intel64"
 
-
-
-
-
 export ASAN_OPTIONS=suppressions=./ci_test_scripts/no_asan_for_mpi.supp,fast_unwind_on_malloc=0
 export LSAN_OPTIONS=suppressions=./ci_test_scripts/no_lsan_for_mpi.supp
 
-fi
 
-if [ "$(hostname)" != "knl1" -a "$(hostname)" != "knl2" -a "$(hostname)" != "knl3" -a "$(hostname)" != "knl4" -a  "$(hostname)" != "maik" ] ; then export I_MPI_DEBUG=5; fi
-
+export I_MPI_DEBUG=5
 module list

@@ -125,13 +125,9 @@ then
   then
     CLUSTER="talos"
   fi
-  if [[ "$HOST" =~ "freya" ]]
+  if [[ "$HOST" =~ "ada" ]]
   then
-    CLUSTER="freya"
-  fi
-  if [[ "$HOST" =~ "draco" ]]
-  then
-    CLUSTER="draco"
+    CLUSTER="ada"
   fi
 
   echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS on $mpiTasks tasks"
