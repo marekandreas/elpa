@@ -160,7 +160,7 @@ max_threads, isSkewsymmetric)
 #endif
   integer(kind=ik)                            :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
   integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc, iblock, nblocks, c_start, &
-                                                blc_start, blc_end, blc_len !, niblock, tsize
+                                                blc_start, blc_end, blc_len, lchl !, niblock, tsize
   integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
   real(kind=rk)                              :: vnorm2
@@ -755,12 +755,11 @@ if(.true.) then
              nrow = ncol - nbw ! Absolute number of pivot row
              lrex  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length                
              ex_buff2d(1:lrex,1:nblk) => ex_buff
-             lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+             lchl = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
 
              if(my_pcol.eq.cur_pcol) then
                 do off=1,blc_len
-!                   ex_buff2d(1:lrex,off)=a_mat(1:lrex,lch-off+1)
-                   ex_buff2d(1:lrex,off)=a_mat(1:lrex,lch-blc_len+off)
+                   ex_buff2d(1:lrex,off)=a_mat(1:lrex,lchl-blc_len+off)
                 end do
              end if
 
@@ -786,9 +785,7 @@ if(.true.) then
                 lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
                 off=off+1
                 call get_hh_vec(ex_buff2d(1:lr,blc_len-off+1),vr)
-                call apply_ht(vr,lc,a_mat,ex_buff2d(:,1:blc_len-off))
-!                call get_hh_vec(ex_buff2d(1:lr,off),vr)
-!                call apply_ht(vr,lc,a_mat,ex_buff2d(:,off+1:blc_len))
+                call apply_ht_b(vr,lc,a_mat,ex_buff2d(:,1:blc_len-off))
                 if (useGPU_reduction_lower_block_to_tridiagonal) then
                    vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
                 else
@@ -801,6 +798,13 @@ if(.true.) then
 #endif
                 vrlblock(lc)=vrl
              end do
+
+             if(my_pcol.eq.cur_pcol) then
+                do off=1,blc_len
+                   a_mat(1:lrex,lchl-blc_len+off)=ex_buff2d(1:lrex,off)
+                end do
+             end if
+             
           end do
           deallocate(blockinfo)
           deallocate(members)
@@ -2738,21 +2742,34 @@ contains
 #endif /* WITH_OPENMP_TRADITIONAL */
   end subroutine apply_ht
 
-  subroutine get_apply_ht(vr,lc,a_mat,ex_buff2d)
+
+   subroutine apply_ht_b(vr,lc,a_mat,ex_buff2d)
 #ifdef USE_ASSUMED_SIZE
     MATH_DATATYPE(kind=rck)                     :: a_mat(matrixRows,*)
 #else
     MATH_DATATYPE(kind=rck)                     :: a_mat(matrixRows,matrixCols)
 #endif
     integer:: lc
-    MATH_DATATYPE(kind=rck):: vr(:), ex_buff2d(:,:), d1,d2,d3,d4
-    integer:: iioff, mynlc
+    MATH_DATATYPE(kind=rck):: vr(:), ex_buff2d(:,:)
+    MATH_DATATYPE(kind=rck):: tauc
+    integer:: iioff, mynlc, imin, imax, icount, iblk, bingo
+    integer:: liblock,lblc_len,lcx,lcur_pcol,lblc_end
+    logical:: use_gemv, use_gerc
 
+    use_gemv=.true.
+    use_gerc=.true.
+#if REALCASE == 1
+    tauc=-tau
+#endif
+#if COMPLEXCASE == 1
+    tauc=-conjg(tau)
+#endif    
+    
 #ifdef WITH_OPENMP_TRADITIONAL
     !Open up one omp region to avoid paying openmp overhead.
     !This does not help performance due to the addition of two openmp barriers around the MPI call,
     !But in the future this may be beneficial if these barriers are replaced with a faster implementation
-    stop 'get_apply_ht with omp not implememted yet'
+    
     !$omp  parallel &
     !$omp  default(none) &
     !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
@@ -2831,46 +2848,57 @@ contains
        endif
     enddo
     !$omp end parallel
-    
-#else /* WITH_OPENMP_TRADITIONAL */
-!call obj%timer%start("dotprod")
 
-    !data to compute vr and to transform the remaining ex_buff
-    nlc = 0 ! number of local columns
-    do iioff=1,ubound(ex_buff2d,2)
-       nlc = nlc+2
-       if (lr>0) then
-          if (my_prow==prow(nrow, nblk, np_rows)) then
-             aux1(nlc-1) = dot_product(ex_buff2d(1:lr-1,1),ex_buff2d(1:lr-1,iioff))
-             aux1(nlc) = ex_buff2d(lr,iioff)
-          else
-             aux1(nlc-1) = dot_product(ex_buff2d(1:lr,1),ex_buff2d(1:lr,iioff))
-             aux1(nlc) = 0.0_rck
-          endif
-       else
-          aux1(nlc-1:nlc) = 0.
+#else /* WITH_OPENMP_TRADITIONAL */
+    nlc=0
+
+   do liblock=iblock+1,nblocks
+       lblc_len=blockinfo(3,liblock)
+       lcx = blockinfo(2,liblock)
+       lcur_pcol = blockinfo(1,liblock)
+       if (my_pcol.eq.lcur_pcol) then
+          if(lr.gt.0) then             
+             if(lblc_len.lt.4) then
+                do j=1,lblc_len
+                   aux1(nlc+j) = dot_product(vr(1:lr),a_mat(1:lr,lcx+j-1))
+                end do
+             else
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(lblc_len,kind=BLAS_KIND), &
+                     ONE, a_mat(1,lcx), int(matrixRows,kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
+                     1_BLAS_KIND)
+             end if
+          end if
+          nlc=nlc+lblc_len
        end if
     end do
 
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx>0) then
-          nlc = nlc+2
-          if (lr>0) then
-             if (my_prow==prow(nrow, nblk, np_rows)) then
-                aux1(nlc-1) = dot_product(ex_buff2d(1:lr-1,1),a_mat(1:lr-1,lcx))
-                aux1(nlc) = a_mat(lr,lcx)
-             else
-                aux1(nlc-1) = dot_product(ex_buff2d(1:lr,1),a_mat(1:lr,lcx))
-                aux1(nlc) = 0.0_rck
-             endif
-          else
-             aux1(nlc-1:nlc) = 0.
-          end if
-       endif
-    enddo
-!    call obj%timer%stop("dotprod")
+    if (lr.le.0) then
+       aux1(1:nlc)=0.
+    end if
 
+    !we also need to transform the remaining ex_buff
+    if (lr>0) then
+       imax=ubound(ex_buff2d,2)
+       if(imax.lt.4) then
+          do iioff=1,imax
+             nlc = nlc+1       
+             aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,iioff))
+          end do
+       else
+          call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND), &
+               ONE, ex_buff2d, int(size(ex_buff2d,1),kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
+               1_BLAS_KIND)
+          nlc=nlc+imax
+       end if
+    else
+       aux1(nlc+1:nlc+ubound(ex_buff2d,2)) = 0.
+       nlc=nlc+ubound(ex_buff2d,2)
+    end if
+
+#if COMPLEXCASE == 1
+    if(use_gemv.neqv.use_gerc) aux1(1:nlc)=conjg(aux1(1:nlc))
+#endif
+    
     ! Get global dot products
 #ifdef WITH_MPI
     if (useNonBlockingCollectivesRows) then
@@ -2891,59 +2919,45 @@ contains
        endif
        if (wantDebug) call obj%timer%stop("mpi_communication")
     endif
+#else /* WITH_MPI */
+!    if (nlc > 0) aux2=aux1
 #endif /* WITH_MPI */
 
-    !get vr
-#if REALCASE == 1
-    vnorm2 = aux1(1)
-#endif
-#if COMPLEXCASE == 1
-    vnorm2 = real(aux1(1),kind=rk)
-#endif
-    vrl    = aux1(2)
-
-    ! Householder transformation
-    call hh_transform_&
-         &MATH_DATATYPE&
-         &_&
-         &PRECISION &
-         (obj, vrl, vnorm2, xf, tau, wantDebug)
-
-    ! Scale vr and store Householder Vector for back transformation
-    vr(1:lr) = ex_buff2d(1:lr,1) * xf
-    if (my_prow==prow(nrow, nblk, np_rows)) vr(lr) = 1.0_rck
-
-    !transform the remaining ex_buff
-!    call obj%timer%start("mtrans")
-    nlc = 2
-    do iioff=2,ubound(ex_buff2d,2)
-       nlc = nlc+2
-#if REALCASE == 1
-       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - tau*(aux1(nlc-1)*xf+aux1(nlc))*vr(1:lr)
-#endif
-#if COMPLEXCASE == 1
-       ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) - conjg(tau)*(aux1(nlc-1)*xf+aux1(nlc))*vr(1:lr)
-#endif       
+    if(lr.le.0) return !no data on this processor
+    
+    ! Transform
+    nlc=0
+    do liblock=iblock+1,nblocks
+       lblc_len=blockinfo(3,liblock)
+       lcx = blockinfo(2,liblock)
+       lcur_pcol = blockinfo(1,liblock)
+       if (my_pcol.eq.lcur_pcol) then             
+          if(lblc_len.lt.4) then
+             do j=1,lblc_len
+                a_mat(1:lr,lcx+j-1) = a_mat(1:lr,lcx+j-1) + tauc*aux1(nlc+j)*vr(1:lr)
+             end do
+          else
+             call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(lblc_len,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
+                  aux1(nlc+1),1_BLAS_KIND,a_mat(1,lcx),int(ubound(a_mat,1),kind=BLAS_KIND))
+          end if
+          nlc=nlc+lblc_len
+       end if
     end do
 
-    !transform a_mat
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx>0) then
-          nlc = nlc+2
-#if REALCASE == 1
-          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - tau*(aux1(nlc-1)*xf+aux1(nlc))*vr(1:lr)
-#endif
-#if COMPLEXCASE == 1
-          a_mat(1:lr,lcx) = a_mat(1:lr,lcx) - conjg(tau)*(aux1(nlc-1)*xf+aux1(nlc))*vr(1:lr)
-#endif
-       endif
-    enddo
-!    call obj%timer%stop("mtrans")    
-
+    !we also need to transform the remaining ex_buff
+    imax=ubound(ex_buff2d,2)
+    if(imax.lt.4) then
+       do iioff=1,imax
+          nlc = nlc+1
+          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) + tauc*aux1(nlc)*vr(1:lr)
+       end do
+    else
+       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
+            aux1(nlc+1),1_BLAS_KIND,ex_buff2d,int(ubound(ex_buff2d,1),kind=BLAS_KIND))
+    end if
+    
 #endif /* WITH_OPENMP_TRADITIONAL */
-  end subroutine get_apply_ht
-
+  end subroutine apply_ht_b
   
 end subroutine bandred_&
 &MATH_DATATYPE&
