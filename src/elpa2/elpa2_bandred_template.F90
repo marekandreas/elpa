@@ -150,6 +150,8 @@ max_threads, isSkewsymmetric)
   integer(kind=ik)                            :: my_prow, my_pcol, np_rows, np_cols, myid
   integer(kind=MPI_KIND)                      :: mpierr,  my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
   integer(kind=ik)                            :: l_cols, l_rows, max_l_rows, max_l_cols
+  integer(kind=ik),allocatable                :: blockinfo(:,:)
+  integer(kind=MPI_KIND),allocatable          :: members(:)
 #if REALCASE == 1
   integer(kind=ik)                            :: vmrCols
 #endif
@@ -157,10 +159,11 @@ max_threads, isSkewsymmetric)
   integer(kind=ik)                            :: mynlc, lrs, transformChunkSize
 #endif
   integer(kind=ik)                            :: i, j, lcs, lce, lre, lc, lr, cur_pcol, n_cols, nrow
-  integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc
+  integer(kind=ik)                            :: istep, ncol, lch, lcx, nlc, iblock, nblocks, c_start, &
+                                                blc_start, blc_end, blc_len !, niblock, tsize
   integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
-  real(kind=rk)                              :: vnorm2, cs_old, cs_new
+  real(kind=rk)                              :: vnorm2
   MATH_DATATYPE(kind=rck)                    :: xf, aux1(2*nbw+2*nblk), aux2(nbw), vrl, tau
   MATH_DATATYPE(kind=rck)                    :: vav(nbw,nbw)
 
@@ -710,13 +713,102 @@ myid=my_prow+my_pcol*np_rowsMPI
 !       if(.false.) then
           call obj%timer%start("hh_block")
           
-          cs_new=0.
-          cs_old=0.
+
+
+if(.true.) then
+!if(.false.) then
+
+!          lcstart=n_cols
+
+
+          allocate(blockinfo(4,n_cols/nblk+1))
+          allocate(members(n_cols/nblk+2))
+          members=-1
+          iblock=0
+          do lc = n_cols, 1, -1
+             ncol = istep*nbw + lc
+             if((lc.eq.n_cols).or.(mod(ncol,nblk).eq.0)) then
+                cur_pcol = pcol(ncol, nblk, np_cols) ! Processor column owning current block
+                !new block
+                iblock=iblock+1
+                lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+                blockinfo(1,iblock)=cur_pcol !owner of this block
+                blockinfo(2,iblock)=((lch-1)/nblk)*nblk+1 !first a_mat index of this block
+                blockinfo(3,iblock)=mod(ncol-1,nblk)+1 !length of block
+                blockinfo(4,iblock)=lc !last local cell indes of this block
+                members(iblock)=cur_pcol
+             end if
+          end do
+          nblocks=iblock
+
+          allocate(ex_buff(l_rows*nblk))
+!          allocate(ex_buff(l_rows*n_cols))
+          do iblock=1,nblocks
+             c_start = blockinfo(2,iblock)
+             blc_end = blockinfo(4,iblock)
+             blc_len=blockinfo(3,iblock)
+             blc_start=blc_end-blc_len+1
+             cur_pcol = blockinfo(1,iblock)
+
+             !reset buffer size
+             ncol = istep*nbw + blc_end ! absolute column number of householder Vector
+             nrow = ncol - nbw ! Absolute number of pivot row
+             lrex  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length                
+             ex_buff2d(1:lrex,1:nblk) => ex_buff
+             lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+
+             if(my_pcol.eq.cur_pcol) then
+                do off=1,blc_len
+!                   ex_buff2d(1:lrex,off)=a_mat(1:lrex,lch-off+1)
+                   ex_buff2d(1:lrex,off)=a_mat(1:lrex,lch-blc_len+off)
+                end do
+             end if
+
+#ifdef WITH_MPI
+             call obj%timer%start("bcast_multi")
+             if(lrex.gt.0) call mpi_bcast(ex_buff, int(lrex*blc_len,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                  int(cur_pcol,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
+                  mpierr)
+             call obj%timer%stop("bcast_multi")
+#endif
+
+
+             off=0
+             do lc = blc_end, blc_start, -1
+                ncol = istep*nbw + lc ! absolute column number of householder Vector
+                nrow = ncol - nbw ! Absolute number of pivot row  
+                if (nrow == 1) then !done
+                   taublock(1)=0. 
+                   exit
+                end if
+
+                lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
+                lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
+                off=off+1
+                call get_hh_vec(ex_buff2d(1:lr,blc_len-off+1),vr)
+                call apply_ht(vr,lc,a_mat,ex_buff2d(:,1:blc_len-off))
+!                call get_hh_vec(ex_buff2d(1:lr,off),vr)
+!                call apply_ht(vr,lc,a_mat,ex_buff2d(:,off+1:blc_len))
+                if (useGPU_reduction_lower_block_to_tridiagonal) then
+                   vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
+                else
+                   vmrCPU(1:lr,lc) = vr(1:lr)
+                endif
+#if REALCASE == 1
+                taublock(lc) = tau
+#else
+                taublock(lc) = conjg(tau)
+#endif
+                vrlblock(lc)=vrl
+             end do
+          end do
+          deallocate(blockinfo)
+          deallocate(members)
+else
           oldpe=-1
           off=0
           lcstart=n_cols
           allocate(ex_buff(l_rows*nblk))
-
           do lc = n_cols, 0, -1
              if(lc.ne.0) then
                 ncol = istep*nbw + lc ! absolute column number of householder Vector
@@ -781,7 +873,9 @@ myid=my_prow+my_pcol*np_rowsMPI
                 oldpe=cur_pcol
              end if
           end do
+end if
           deallocate(ex_buff)
+
           call obj%timer%stop("hh_block")
           
        else !old, unblocked implementation
@@ -883,7 +977,6 @@ myid=my_prow+my_pcol*np_rowsMPI
           !if (wantDebug)
           call obj%timer%stop("bcast_single")
        endif
-       cs_new=cs_new+sum(abs(vr(1:lr)))
 #endif /* WITH_MPI */
 
         if (useGPU_reduction_lower_block_to_tridiagonal) then
@@ -2528,9 +2621,15 @@ contains
           icount=imax-imin+1
           if (lr.gt.0) then             
              lcx = local_index(istep*nbw+imin, my_pcol, np_cols, nblk, 0)
-             call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND), &
-                  ONE, a_mat(1,lcx), int(matrixRows,kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
-                  1_BLAS_KIND)
+             if(icount.lt.4) then
+                do j=1,icount
+                   aux1(nlc+j) = dot_product(vr(1:lr),a_mat(1:lr,lcx+j-1))
+                end do
+             else
+                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND), &
+                     ONE, a_mat(1,lcx), int(matrixRows,kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
+                     1_BLAS_KIND)
+             end if
           end if
           nlc=nlc+icount  
        end do
@@ -2542,7 +2641,8 @@ contains
     !we also need to transform the remaining ex_buff
     if (lr>0) then
        imax=ubound(ex_buff2d,2)
-       if(.not.use_gemv) then
+!       if(.not.use_gemv) then
+       if(imax.lt.4) then
           do iioff=1,imax
              nlc = nlc+1       
              aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,iioff))
@@ -2609,21 +2709,29 @@ contains
           end do
           imin=j       
           icount=imax-imin+1
-          call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
-               aux1(nlc+1),1_BLAS_KIND,a_mat(1,lcx),int(ubound(a_mat,1),kind=BLAS_KIND))
+          if(icount.lt.4) then
+             do j=1,icount
+                a_mat(1:lr,lcx+j-1) = a_mat(1:lr,lcx+j-1) + tauc*aux1(nlc+j)*vr(1:lr)
+             end do
+          else
+             call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
+                  aux1(nlc+1),1_BLAS_KIND,a_mat(1,lcx),int(ubound(a_mat,1),kind=BLAS_KIND))
+          end if
           nlc=nlc+icount
        end do
     end if
 
     
     !we also need to transform the remaining ex_buff
-    if(.not.use_gerc) then
-       do iioff=1,ubound(ex_buff2d,2)
+    imax=ubound(ex_buff2d,2)
+!    if(.not.use_gerc) then
+    if(imax.lt.4) then
+       do iioff=1,imax
           nlc = nlc+1
           ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) + tauc*aux1(nlc)*vr(1:lr)
        end do
     else
-       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(ubound(ex_buff2d,2),kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
+       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
             aux1(nlc+1),1_BLAS_KIND,ex_buff2d,int(ubound(ex_buff2d,1),kind=BLAS_KIND))
     end if
     
