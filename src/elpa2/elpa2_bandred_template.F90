@@ -709,19 +709,12 @@ myid=my_prow+my_pcol*np_rowsMPI
 
     else !useQR
 #endif /* REALCASE == 1 */
-#ifndef WITH_OPENMP_TRADITIONAL
-       if(.not.useGPU) then !blocked implementation
-!       if(.false.) then
+#if 1
+!#ifndef WITH_OPENMP_TRADITIONAL
+!       if(.not.useGPU) then !blocked implementation
+       if(.true.) then !blocked implementation
           call obj%timer%start("hh_block")
           
-
-
-if(.true.) then
-!if(.false.) then
-
-!          lcstart=n_cols
-
-
           allocate(blockinfo(4,n_cols/nblk+1))
           allocate(members(n_cols/nblk+2))
           members=-1
@@ -741,8 +734,7 @@ if(.true.) then
              end if
           end do
           nblocks=iblock
-
-!          allocate(ex_buff(l_rows*nblk))
+          
           allocate(ex_buff(l_rows*n_cols))
           lrex  = l_rows
           ex_buff2d(1:lrex,1:n_cols) => ex_buff
@@ -754,16 +746,17 @@ if(.true.) then
              cur_pcol = blockinfo(1,iblock)
 
              if(my_pcol.eq.cur_pcol) then
+                !$omp parallel do private(nlc)
                 do off=1,blc_len
                    ex_buff2d(1:lrex,blc_start+off-1)=a_mat(1:lrex,c_start+off-1)
                 end do
+                !$omp end parallel do
              end if
           end do
 #ifdef WITH_MPI
           call obj%timer%start("bcast_multi")
           if(lrex.gt.0) then
              allocate(breq(0:nblocks-1))
-             !          do iblock=1,nblocks
              do j=0,nblocks-1
                 !mix bcasts with different root to level the stess on the network
                 iblock=mod(j+my_prow,nblocks)+1
@@ -781,75 +774,35 @@ if(.true.) then
           end if
           call obj%timer%stop("bcast_multi")
 #endif
-if(.false.) then
-          do iblock=1,nblocks
-             c_start = blockinfo(2,iblock)
-             blc_end = blockinfo(4,iblock)
-             blc_len=blockinfo(3,iblock)
-             blc_start=blc_end-blc_len+1
-             cur_pcol = blockinfo(1,iblock)
+          call obj%timer%start("hh_trans")
+          off=0
+          do lc = n_cols, 1, -1
+             ncol = istep*nbw + lc ! absolute column number of householder Vector
+             nrow = ncol - nbw ! Absolute number of pivot row  
+             if (nrow == 1) then !done
+                taublock(1)=0. 
+                exit
+             end if
              
-             off=0
-             do lc = blc_end, blc_start, -1
-                ncol = istep*nbw + lc ! absolute column number of householder Vector
-                nrow = ncol - nbw ! Absolute number of pivot row  
-                if (nrow == 1) then !done
-                   taublock(1)=0. 
-                   exit
-                end if
+             lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
+             off=off+1
+             call get_hh_vec(ex_buff2d(1:lr,n_cols-off+1),vr)
 
-                lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
-                off=off+1
-                call get_hh_vec(ex_buff2d(1:lr,blc_end-off+1),vr)
-                call apply_ht_b(vr,lc,a_mat,ex_buff2d(:,1:blc_end-off))
-                if (useGPU_reduction_lower_block_to_tridiagonal) then
-                   vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
-                else
-                   vmrCPU(1:lr,lc) = vr(1:lr)
-                endif
+             call apply_ht_b2(vr,lc,a_mat,ex_buff2d(:,1:n_cols-off))
+             if (useGPU_reduction_lower_block_to_tridiagonal) then
+                vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
+             else
+                vmrCPU(1:lr,lc) = vr(1:lr)
+             endif
 #if REALCASE == 1
-                taublock(lc) = tau
+             taublock(lc) = tau
 #else
-                taublock(lc) = conjg(tau)
+             taublock(lc) = conjg(tau)
 #endif
-                vrlblock(lc)=vrl
-             end do
+             vrlblock(lc)=vrl
           end do
-       else
-!         do iblock=1,nblocks
-!             c_start = blockinfo(2,iblock)
-!             blc_end = blockinfo(4,iblock)
-!             blc_len=blockinfo(3,iblock)
-!             blc_start=blc_end-blc_len+1
-!             cur_pcol = blockinfo(1,iblock)
-             
-             off=0
-             do lc = n_cols, 1, -1
-                ncol = istep*nbw + lc ! absolute column number of householder Vector
-                nrow = ncol - nbw ! Absolute number of pivot row  
-                if (nrow == 1) then !done
-                   taublock(1)=0. 
-                   exit
-                end if
-
-                lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
-                off=off+1
-                call get_hh_vec(ex_buff2d(1:lr,n_cols-off+1),vr)
-                call apply_ht_b2(vr,lc,a_mat,ex_buff2d(:,1:n_cols-off))
-                if (useGPU_reduction_lower_block_to_tridiagonal) then
-                   vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
-                else
-                   vmrCPU(1:lr,lc) = vr(1:lr)
-                endif
-#if REALCASE == 1
-                taublock(lc) = tau
-#else
-                taublock(lc) = conjg(tau)
-#endif
-                vrlblock(lc)=vrl
-             end do
-!          end do
-       end if
+          call obj%timer%stop("hh_trans")
+          
           do iblock=1,nblocks
              c_start = blockinfo(2,iblock)
              blc_end = blockinfo(4,iblock)
@@ -858,84 +811,16 @@ if(.false.) then
              cur_pcol = blockinfo(1,iblock)
              
              if(my_pcol.eq.cur_pcol) then
+                !$omp  parallel do private(off)
                 do off=1,blc_len
                    a_mat(1:lrex,c_start+off-1)=ex_buff2d(1:lrex,blc_start+off-1)
                 end do
-             end if
-             
+                !$omp end parallel do                
+             end if             
           end do
+          
           deallocate(blockinfo)
           deallocate(members)
-else
-          oldpe=-1
-          off=0
-          lcstart=n_cols
-          allocate(ex_buff(l_rows*nblk))
-          do lc = n_cols, 0, -1
-             if(lc.ne.0) then
-                ncol = istep*nbw + lc ! absolute column number of householder Vector
-                nrow = ncol - nbw ! Absolute number of pivot row             
-                cur_pcol = pcol(ncol, nblk, np_cols) ! Processor column owning current block
-             end if
-             
-             if((mod(lc,nblk).eq.0).and.(oldpe.ne.-1)) then
-                !broadcast data
-#ifdef WITH_MPI
-                call obj%timer%start("bcast_multi")
-                if(lrex.gt.0) call mpi_bcast(ex_buff, int(lrex*off,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                     int(oldpe,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
-                     mpierr)
-                call obj%timer%stop("bcast_multi")
-#endif
-                !inner loop over block
-                ioff=0
-                do ilc=lcstart,lc+1,-1
-                   ncol = istep*nbw + ilc ! absolute column number of householder Vector
-                   nrow = ncol - nbw ! Absolute number of pivot row
-                   if (nrow == 1) then
-                      taublock(1)=0.
-                      exit ! Nothing to do
-                   end if
-                   
-                   lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
-                   lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
-                   ioff=ioff+1
-                   call get_hh_vec(ex_buff2d(1:lr,ioff),vr)
-                   call apply_ht(vr,ilc,a_mat,ex_buff2d(:,ioff+1:off))
-                   if (useGPU_reduction_lower_block_to_tridiagonal) then
-                      vmrGPU(cur_l_rows * (ilc - 1) + 1 : cur_l_rows * (ilc - 1) + lr) = vr(1:lr)
-                   else
-                      vmrCPU(1:lr,ilc) = vr(1:lr)
-                   endif
-#if REALCASE == 1
-                   taublock(ilc) = tau
-#else
-                   taublock(ilc) = conjg(tau)
-#endif
-                   vrlblock(ilc)=vrl
-                end do
-                !reset counters for next block
-                off=0
-                lcstart=lc
-             end if
-             
-             if(lc.ne.0) then             
-                ncol = istep*nbw + lc ! absolute column number of householder Vector
-                nrow = ncol - nbw ! Absolute number of pivot row
-                if (nrow == 1) cycle ! Nothing to do
-                
-                if(off.eq.0) then !reset buffer size to next batch
-                   lrex  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length                
-                   ex_buff2d(1:lrex,1:nblk) => ex_buff
-                end if
-                !copy current a_mat entry to buffer
-                off=off+1
-                lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
-                if(my_pcol.eq.cur_pcol) ex_buff2d(1:lrex,off)=a_mat(1:lrex,lch)
-                oldpe=cur_pcol
-             end if
-          end do
-end if
           deallocate(ex_buff)
 
           call obj%timer%stop("hh_block")
@@ -1195,9 +1080,8 @@ end if
 #endif /* WITH_OPENMP_TRADITIONAL */
      enddo ! lc
 #endif
-#ifndef WITH_OPENMP_TRADITIONAL   
     endif
-#endif
+
       if (useGPU_reduction_lower_block_to_tridiagonal) then
         ! store column tiles back to GPU
         if (do_memcpy) then
@@ -2526,8 +2410,6 @@ contains
        !            if (wantDebug)            call obj%timer%stop("mpi_comm")
     endif
     
-#else /* WITH_MPI */
-!    aux2 = aux1 ! this should be optimized
 #endif
 
 #if REALCASE == 1
@@ -2551,472 +2433,6 @@ contains
 
   end subroutine get_hh_vec
   
-  subroutine apply_ht(vr,lc,a_mat,ex_buff2d)
-#ifdef USE_ASSUMED_SIZE
-    MATH_DATATYPE(kind=rck)                     :: a_mat(matrixRows,*)
-#else
-    MATH_DATATYPE(kind=rck)                     :: a_mat(matrixRows,matrixCols)
-#endif
-    integer:: lc
-    MATH_DATATYPE(kind=rck):: vr(:), ex_buff2d(:,:)
-    MATH_DATATYPE(kind=rck):: tauc
-    integer:: iioff, mynlc, imin, imax, icount, iblk, bingo
-    logical:: use_gemv, use_gerc
-
-    use_gemv=.true.
-    use_gerc=.true.
-#if REALCASE == 1
-    tauc=-tau
-#endif
-#if COMPLEXCASE == 1
-    tauc=-conjg(tau)
-#endif    
-    
-#ifdef WITH_OPENMP_TRADITIONAL
-    !Open up one omp region to avoid paying openmp overhead.
-    !This does not help performance due to the addition of two openmp barriers around the MPI call,
-    !But in the future this may be beneficial if these barriers are replaced with a faster implementation
-    
-    !$omp  parallel &
-    !$omp  default(none) &
-    !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
-    !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj, &
-#ifdef WITH_MPI
-    !$omp&  MPI_STATUS_IGNORE, MPI_IN_PLACE, &
-#endif
-    !$omp&  useNonBlockingCollectivesRows, useNonBlockingCollectivesCols) &
-    !$omp private(mynlc, j, lcx, ii, pp, mpierr, allreduce_request2)        
-    mynlc = 0 ! number of local columns
-    
-    !This loop does not have independent iterations,
-    !'mynlc' is incremented each iteration, and it is difficult to remove this dependency
-    !Thus each thread executes every iteration of the loop, except it only does the work if it 'owns' that iteration
-    !That is, a thread only executes the work associated with an iteration if its thread id is congruent to
-    !the iteration number modulo the number of threads
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx>0 ) then
-          mynlc = mynlc+1
-          if ( mod((j-1), omp_get_num_threads()) .eq. omp_get_thread_num() ) then
-             if (lr>0) aux1(mynlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
-          endif
-       endif
-    enddo
-    
-    ! Get global dot products
-    
-    !$omp barrier
-    !$omp single
-#ifdef WITH_MPI
-    if (useNonBlockingCollectivesRows) then
-       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-       if (mynlc > 0) then
-          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               allreduce_request2, mpierr)
-          call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-    else
-       if (wantDebug) call obj%timer%start("mpi_communication")
-       if (mynlc>0) then
-          call mpi_allreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_communication")
-    endif
-#else /* WITH_MPI */
-!    if (mynlc > 0) aux2 = aux1
-#endif /* WITH_MPI */
-    !$omp end single
-    !$omp barrier
-    
-    ! Transform
-    transformChunkSize=32
-    mynlc = 0
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx > 0) then
-          mynlc = mynlc+1
-          !This loop could be parallelized with an openmp pragma with static scheduling and chunk size 32
-          !However, for some reason this is slower than doing it manually, so it is parallelized as below.
-          do ii=omp_get_thread_num()*transformChunkSize,lr,omp_get_num_threads()*transformChunkSize
-             do pp = 1,transformChunkSize
-                if (pp + ii > lr) exit
-#if REALCASE == 1
-                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - tau*aux1(mynlc)*vr(ii+pp)
-#endif
-#if COMPLEXCASE == 1
-                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - conjg(tau)*aux1(mynlc)*vr(ii+pp)
-#endif
-             enddo
-          enddo
-       endif
-    enddo
-    !$omp end parallel
-    
-#else /* WITH_OPENMP_TRADITIONAL */
-
-    if(.not.use_gemv) then
-       nlc = 0 ! number of local columns
-       do j=1,lc-1
-          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-          if (lcx>0) then
-             nlc = nlc+1
-             if (lr>0) then
-                aux1(nlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
-             else
-                aux1(nlc) = 0.
-             end if
-          endif
-       enddo
-    else
-       nlc=0
-       do iblk=1,lc-1,nblk
-          imax=min(iblk+nblk-1,lc-1)
-          do j=iblk,imax
-             lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-             if(lcx.gt.0) exit
-          end do
-          imin=j       
-          icount=imax-imin+1
-          if (lr.gt.0) then             
-             lcx = local_index(istep*nbw+imin, my_pcol, np_cols, nblk, 0)
-             if(icount.lt.4) then
-                do j=1,icount
-                   aux1(nlc+j) = dot_product(vr(1:lr),a_mat(1:lr,lcx+j-1))
-                end do
-             else
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND), &
-                     ONE, a_mat(1,lcx), int(matrixRows,kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
-                     1_BLAS_KIND)
-             end if
-          end if
-          nlc=nlc+icount  
-       end do
-       if (lr.le.0) then
-          aux1(1:nlc)=0.
-       end if
-    endif
-    
-    !we also need to transform the remaining ex_buff
-    if (lr>0) then
-       imax=ubound(ex_buff2d,2)
-!       if(.not.use_gemv) then
-       if(imax.lt.4) then
-          do iioff=1,imax
-             nlc = nlc+1       
-             aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,iioff))
-          end do
-       else
-          call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND), &
-               ONE, ex_buff2d, int(size(ex_buff2d,1),kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
-               1_BLAS_KIND)
-          nlc=nlc+imax
-       end if
-    else
-       aux1(nlc+1:nlc+ubound(ex_buff2d,2)) = 0.
-       nlc=nlc+ubound(ex_buff2d,2)
-    end if
-
-#if COMPLEXCASE == 1
-    if(use_gemv.neqv.use_gerc) aux1(1:nlc)=conjg(aux1(1:nlc))
-#endif
-    
-    ! Get global dot products
-#ifdef WITH_MPI
-    if (useNonBlockingCollectivesRows) then
-       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-       if (nlc > 0) then
-          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               allreduce_request3, mpierr)
-          call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-    else
-       if (wantDebug) call obj%timer%start("mpi_communication")
-       if (nlc>0) then
-          call mpi_allreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_communication")
-    endif
-#else /* WITH_MPI */
-!    if (nlc > 0) aux2=aux1
-#endif /* WITH_MPI */
-
-    if(lr.le.0) return !no data on this processor
-
-    
-    ! Transform
-    if(.not.use_gerc) then
-       nlc = 0
-       do j=1,lc-1
-          lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-          if (lcx>0) then
-             nlc = nlc+1
-             a_mat(1:lr,lcx) = a_mat(1:lr,lcx) + tauc*aux1(nlc)*vr(1:lr)
-          endif
-       enddo
-    else
-       nlc=0
-       do iblk=1,lc-1,nblk
-          imax=min(iblk+nblk-1,lc-1)
-          do j=iblk,imax
-             lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-             if(lcx.gt.0) exit
-          end do
-          imin=j       
-          icount=imax-imin+1
-          if(icount.lt.4) then
-             do j=1,icount
-                a_mat(1:lr,lcx+j-1) = a_mat(1:lr,lcx+j-1) + tauc*aux1(nlc+j)*vr(1:lr)
-             end do
-          else
-             call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(icount,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
-                  aux1(nlc+1),1_BLAS_KIND,a_mat(1,lcx),int(ubound(a_mat,1),kind=BLAS_KIND))
-          end if
-          nlc=nlc+icount
-       end do
-    end if
-
-    
-    !we also need to transform the remaining ex_buff
-    imax=ubound(ex_buff2d,2)
-!    if(.not.use_gerc) then
-    if(imax.lt.4) then
-       do iioff=1,imax
-          nlc = nlc+1
-          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) + tauc*aux1(nlc)*vr(1:lr)
-       end do
-    else
-       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
-            aux1(nlc+1),1_BLAS_KIND,ex_buff2d,int(ubound(ex_buff2d,1),kind=BLAS_KIND))
-    end if
-    
-#endif /* WITH_OPENMP_TRADITIONAL */
-  end subroutine apply_ht
-
-
-   subroutine apply_ht_b(vr,lc,a_mat,ex_buff2d)
-#ifdef USE_ASSUMED_SIZE
-    MATH_DATATYPE(kind=rck)                     :: a_mat(matrixRows,*)
-#else
-    MATH_DATATYPE(kind=rck)                     :: a_mat(matrixRows,matrixCols)
-#endif
-    integer:: lc
-    MATH_DATATYPE(kind=rck):: vr(:), ex_buff2d(:,:)
-    MATH_DATATYPE(kind=rck):: tauc
-    integer:: iioff, mynlc, imin, imax, icount, iblk, bingo
-    integer:: liblock,lblc_len,lcx,lcur_pcol,lblc_end
-    logical:: use_gemv, use_gerc
-
-    use_gemv=.true.
-    use_gerc=.true.
-#if REALCASE == 1
-    tauc=-tau
-#endif
-#if COMPLEXCASE == 1
-    tauc=-conjg(tau)
-#endif    
-    
-#ifdef WITH_OPENMP_TRADITIONAL
-    !Open up one omp region to avoid paying openmp overhead.
-    !This does not help performance due to the addition of two openmp barriers around the MPI call,
-    !But in the future this may be beneficial if these barriers are replaced with a faster implementation
-    
-    !$omp  parallel &
-    !$omp  default(none) &
-    !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
-    !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj, &
-#ifdef WITH_MPI
-    !$omp&  MPI_STATUS_IGNORE, MPI_IN_PLACE, &
-#endif
-    !$omp&  useNonBlockingCollectivesRows, useNonBlockingCollectivesCols) &
-    !$omp private(mynlc, j, lcx, ii, pp, mpierr, allreduce_request2)        
-    mynlc = 0 ! number of local columns
-    
-    !This loop does not have independent iterations,
-    !'mynlc' is incremented each iteration, and it is difficult to remove this dependency
-    !Thus each thread executes every iteration of the loop, except it only does the work if it 'owns' that iteration
-    !That is, a thread only executes the work associated with an iteration if its thread id is congruent to
-    !the iteration number modulo the number of threads
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx>0 ) then
-          mynlc = mynlc+1
-          if ( mod((j-1), omp_get_num_threads()) .eq. omp_get_thread_num() ) then
-             if (lr>0) aux1(mynlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
-          endif
-       endif
-    enddo
-    
-    ! Get global dot products
-    
-    !$omp barrier
-    !$omp single
-#ifdef WITH_MPI
-    if (useNonBlockingCollectivesRows) then
-       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-       if (mynlc > 0) then
-          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               allreduce_request2, mpierr)
-          call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-    else
-       if (wantDebug) call obj%timer%start("mpi_communication")
-       if (mynlc>0) then
-          call mpi_allreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_communication")
-    endif
-#else /* WITH_MPI */
-!    if (mynlc > 0) aux2 = aux1
-#endif /* WITH_MPI */
-    !$omp end single
-    !$omp barrier
-    
-    ! Transform
-    transformChunkSize=32
-    mynlc = 0
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx > 0) then
-          mynlc = mynlc+1
-          !This loop could be parallelized with an openmp pragma with static scheduling and chunk size 32
-          !However, for some reason this is slower than doing it manually, so it is parallelized as below.
-          do ii=omp_get_thread_num()*transformChunkSize,lr,omp_get_num_threads()*transformChunkSize
-             do pp = 1,transformChunkSize
-                if (pp + ii > lr) exit
-#if REALCASE == 1
-                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - tau*aux1(mynlc)*vr(ii+pp)
-#endif
-#if COMPLEXCASE == 1
-                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - conjg(tau)*aux1(mynlc)*vr(ii+pp)
-#endif
-             enddo
-          enddo
-       endif
-    enddo
-    !$omp end parallel
-
-#else /* WITH_OPENMP_TRADITIONAL */
-    nlc=0
-
-   do liblock=iblock+1,nblocks
-       lblc_len=blockinfo(3,liblock)
-       lcx = blockinfo(2,liblock)
-       lcur_pcol = blockinfo(1,liblock)
-       if (my_pcol.eq.lcur_pcol) then
-          if(lr.gt.0) then             
-             if(lblc_len.lt.4) then
-                do j=1,lblc_len
-                   aux1(nlc+j) = dot_product(vr(1:lr),a_mat(1:lr,lcx+j-1))
-                end do
-             else
-                call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(lblc_len,kind=BLAS_KIND), &
-                     ONE, a_mat(1,lcx), int(matrixRows,kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
-                     1_BLAS_KIND)
-             end if
-          end if
-          nlc=nlc+lblc_len
-       end if
-    end do
-
-    if (lr.le.0) then
-       aux1(1:nlc)=0.
-    end if
-
-    !we also need to transform the remaining ex_buff
-    if (lr>0) then
-       imax=ubound(ex_buff2d,2)
-       if(imax.lt.4) then
-          do iioff=1,imax
-             nlc = nlc+1       
-             aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,iioff))
-          end do
-       else
-          call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND), &
-               ONE, ex_buff2d, int(size(ex_buff2d,1),kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
-               1_BLAS_KIND)
-          nlc=nlc+imax
-       end if
-    else
-       aux1(nlc+1:nlc+ubound(ex_buff2d,2)) = 0.
-       nlc=nlc+ubound(ex_buff2d,2)
-    end if
-
-#if COMPLEXCASE == 1
-    if(use_gemv.neqv.use_gerc) aux1(1:nlc)=conjg(aux1(1:nlc))
-#endif
-    
-    ! Get global dot products
-#ifdef WITH_MPI
-    if (useNonBlockingCollectivesRows) then
-       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-       if (nlc > 0) then
-          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               allreduce_request3, mpierr)
-          call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-    else
-       if (wantDebug) call obj%timer%start("mpi_communication")
-       if (nlc>0) then
-          call mpi_allreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_communication")
-    endif
-#else /* WITH_MPI */
-!    if (nlc > 0) aux2=aux1
-#endif /* WITH_MPI */
-
-    if(lr.le.0) return !no data on this processor
-    
-    ! Transform
-    nlc=0
-    do liblock=iblock+1,nblocks
-       lblc_len=blockinfo(3,liblock)
-       lcx = blockinfo(2,liblock)
-       lcur_pcol = blockinfo(1,liblock)
-       if (my_pcol.eq.lcur_pcol) then             
-          if(lblc_len.lt.4) then
-             do j=1,lblc_len
-                a_mat(1:lr,lcx+j-1) = a_mat(1:lr,lcx+j-1) + tauc*aux1(nlc+j)*vr(1:lr)
-             end do
-          else
-             call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(lblc_len,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
-                  aux1(nlc+1),1_BLAS_KIND,a_mat(1,lcx),int(ubound(a_mat,1),kind=BLAS_KIND))
-          end if
-          nlc=nlc+lblc_len
-       end if
-    end do
-
-    !we also need to transform the remaining ex_buff
-    imax=ubound(ex_buff2d,2)
-    if(imax.lt.4) then
-       do iioff=1,imax
-          nlc = nlc+1
-          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) + tauc*aux1(nlc)*vr(1:lr)
-       end do
-    else
-       call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
-            aux1(nlc+1),1_BLAS_KIND,ex_buff2d,int(ubound(ex_buff2d,1),kind=BLAS_KIND))
-    end if
-    
-#endif /* WITH_OPENMP_TRADITIONAL */
-  end subroutine apply_ht_b
-
 
   subroutine apply_ht_b2(vr,lc,a_mat,ex_buff2d)
 #ifdef USE_ASSUMED_SIZE
@@ -3029,133 +2445,57 @@ contains
     MATH_DATATYPE(kind=rck):: tauc
     integer:: iioff, mynlc, imin, imax, icount, iblk, bingo
     integer:: liblock,lblc_len,lcx,lcur_pcol,lblc_end
-    logical:: use_gemv, use_gerc
+    integer:: thresh_blas
 
-    use_gemv=.true.
-    use_gerc=.true.
+    !using blas when 3 or more entries have to be computed
+    thresh_blas=3
+
 #if REALCASE == 1
     tauc=-tau
 #endif
 #if COMPLEXCASE == 1
     tauc=-conjg(tau)
 #endif    
-    
-#ifdef WITH_OPENMP_TRADITIONAL
-    !Open up one omp region to avoid paying openmp overhead.
-    !This does not help performance due to the addition of two openmp barriers around the MPI call,
-    !But in the future this may be beneficial if these barriers are replaced with a faster implementation
-    
-    !$omp  parallel &
-    !$omp  default(none) &
-    !$omp  shared(lc, istep, nbw, my_pcol, np_cols, nblk, &
-    !$omp& lr, vr, a_mat, transformChunkSize, tau, aux1, aux2, wantDebug, mpi_comm_rows, obj, &
-#ifdef WITH_MPI
-    !$omp&  MPI_STATUS_IGNORE, MPI_IN_PLACE, &
-#endif
-    !$omp&  useNonBlockingCollectivesRows, useNonBlockingCollectivesCols) &
-    !$omp private(mynlc, j, lcx, ii, pp, mpierr, allreduce_request2)        
-    mynlc = 0 ! number of local columns
-    
-    !This loop does not have independent iterations,
-    !'mynlc' is incremented each iteration, and it is difficult to remove this dependency
-    !Thus each thread executes every iteration of the loop, except it only does the work if it 'owns' that iteration
-    !That is, a thread only executes the work associated with an iteration if its thread id is congruent to
-    !the iteration number modulo the number of threads
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx>0 ) then
-          mynlc = mynlc+1
-          if ( mod((j-1), omp_get_num_threads()) .eq. omp_get_thread_num() ) then
-             if (lr>0) aux1(mynlc) = dot_product(vr(1:lr),a_mat(1:lr,lcx))
-          endif
-       endif
-    enddo
-    
-    ! Get global dot products
-    
-    !$omp barrier
-    !$omp single
-#ifdef WITH_MPI
-    if (useNonBlockingCollectivesRows) then
-       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-       if (mynlc > 0) then
-          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               allreduce_request2, mpierr)
-          call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-    else
-       if (wantDebug) call obj%timer%start("mpi_communication")
-       if (mynlc>0) then
-          call mpi_allreduce(MPI_IN_PLACE, aux1, int(mynlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
-               mpierr)
-       endif
-       if (wantDebug) call obj%timer%stop("mpi_communication")
-    endif
-#else /* WITH_MPI */
-!    if (mynlc > 0) aux2 = aux1
-#endif /* WITH_MPI */
-    !$omp end single
-    !$omp barrier
-    
-    ! Transform
-    transformChunkSize=32
-    mynlc = 0
-    do j=1,lc-1
-       lcx = local_index(istep*nbw+j, my_pcol, np_cols, nblk, 0)
-       if (lcx > 0) then
-          mynlc = mynlc+1
-          !This loop could be parallelized with an openmp pragma with static scheduling and chunk size 32
-          !However, for some reason this is slower than doing it manually, so it is parallelized as below.
-          do ii=omp_get_thread_num()*transformChunkSize,lr,omp_get_num_threads()*transformChunkSize
-             do pp = 1,transformChunkSize
-                if (pp + ii > lr) exit
-#if REALCASE == 1
-                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - tau*aux1(mynlc)*vr(ii+pp)
-#endif
-#if COMPLEXCASE == 1
-                a_mat(ii+pp,lcx) = a_mat(ii+pp,lcx) - conjg(tau)*aux1(mynlc)*vr(ii+pp)
-#endif
-             enddo
-          enddo
-       endif
-    enddo
-    !$omp end parallel
 
-#else /* WITH_OPENMP_TRADITIONAL */
-    nlc=0
-    
-    !we also need to transform the remaining ex_buff
+    imax=ubound(ex_buff2d,2)
+    !we need to transform the remaining ex_buff
     if (lr>0) then
-       imax=ubound(ex_buff2d,2)
-       if(imax.lt.4) then
-          do iioff=1,imax
-             nlc = nlc+1       
-             aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,iioff))
+#ifdef WITH_OPENMP_TRADITIONAL
+       !$omp  parallel do private(nlc)
+       do nlc=1,imax
+          aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,nlc))
+       end do
+       !$omp end parallel do
+#else
+       if(imax.lt.thresh_blas) then !note that aux1 is conjg between > and < thresh_blas!!
+          do nlc=1,imax
+             aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,nlc))
           end do
-       else
+       else         
           call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND), &
-               ONE, ex_buff2d, int(size(ex_buff2d,1),kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1(nlc+1), &
+               ONE, ex_buff2d, size(ex_buff2d,1,kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1, &
                1_BLAS_KIND)
-          nlc=nlc+imax
        end if
+#endif /* WITH_OPENMP_TRADITIONAL */
     else
-       aux1(nlc+1:nlc+ubound(ex_buff2d,2)) = 0.
-       nlc=nlc+ubound(ex_buff2d,2)
+       aux1(1:imax) = 0.
     end if
 
-#if COMPLEXCASE == 1
-    if(use_gemv.neqv.use_gerc) aux1(1:nlc)=conjg(aux1(1:nlc))
-#endif
+    !#if COMPLEXCASE == 1
+           !note that aux1 is conjg between > and < thresh_blas!!
+!    if(thresh_gemv.neqv.thresh_gerc) then
+!       do lc=min(thresh_gemv,thresh_gerc),max(thresh_gemv,thresh_gerc)
+!          aux1(lc)=conjg(aux1(lc))
+!       end do
+!    end if
+!#endif
     
     ! Get global dot products
 #ifdef WITH_MPI
     if (useNonBlockingCollectivesRows) then
        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-       if (nlc > 0) then
-          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+       if (imax > 0) then
+          call mpi_iallreduce(MPI_IN_PLACE, aux1, int(imax,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                allreduce_request3, mpierr)
           call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
@@ -3163,35 +2503,35 @@ contains
        if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
     else
        if (wantDebug) call obj%timer%start("mpi_communication")
-       if (nlc>0) then
-          call mpi_allreduce(MPI_IN_PLACE, aux1, int(nlc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+       if (imax>0) then
+          call mpi_allreduce(MPI_IN_PLACE, aux1, int(imax,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), &
                mpierr)
        endif
        if (wantDebug) call obj%timer%stop("mpi_communication")
     endif
-#else /* WITH_MPI */
-!    if (nlc > 0) aux2=aux1
 #endif /* WITH_MPI */
 
     if(lr.le.0) return !no data on this processor
-    
-    ! Transform
-    nlc=0
 
-    !we also need to transform the remaining ex_buff
-    imax=ubound(ex_buff2d,2)
-    if(imax.lt.4) then
-       do iioff=1,imax
-          nlc = nlc+1
-          ex_buff2d(1:lr,iioff) = ex_buff2d(1:lr,iioff) + tauc*aux1(nlc)*vr(1:lr)
+    ! Transform
+#ifdef WITH_OPENMP_TRADITIONAL
+    !$omp  parallel do private(nlc)
+    do nlc=1,imax         
+       ex_buff2d(1:lr,nlc) = ex_buff2d(1:lr,nlc) + tauc*aux1(nlc)*vr(1:lr)
+    end do
+    !$omp end parallel do
+#else
+    if(imax.lt.thresh_blas) then !note that aux1 is conjg between > and < thresh_blas!!
+       do nlc=1,imax         
+          ex_buff2d(1:lr,nlc) = ex_buff2d(1:lr,nlc) + tauc*aux1(nlc)*vr(1:lr)
        end do
     else
        call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
-            aux1(nlc+1),1_BLAS_KIND,ex_buff2d,int(ubound(ex_buff2d,1),kind=BLAS_KIND))
+            aux1,1_BLAS_KIND,ex_buff2d,ubound(ex_buff2d,1,kind=BLAS_KIND))
     end if
-    
 #endif /* WITH_OPENMP_TRADITIONAL */
+
   end subroutine apply_ht_b2
   
 end subroutine bandred_&
