@@ -162,16 +162,17 @@ max_threads, isSkewsymmetric)
                                                 blc_start, blc_end, blc_len
   integer(kind=ik)                            :: tile_size, l_rows_tile, l_cols_tile
 
-  MATH_DATATYPE(kind=rck)                    :: aux1(2*nbw+2*nblk), aux2(nbw), vrl, tau
+  MATH_DATATYPE(kind=rck)                    :: vrl, tau
   MATH_DATATYPE(kind=rck)                    :: vav(nbw,nbw)
 
   MATH_DATATYPE(kind=rck), allocatable        :: tmpGPU(:)
   MATH_DATATYPE(kind=rck), pointer            :: vmrGPU(:), umcGPU(:)
   MATH_DATATYPE(kind=rck), pointer            :: vmrGPU_2d(:,:), umcGPU_2d(:,:)
-  MATH_DATATYPE(kind=rck), allocatable        :: tmpCPU(:,:), vmrCPU(:,:), umcCPU(:,:), vmrCPU_qr(:,:)
-  MATH_DATATYPE(kind=rck), allocatable        :: vr(:), taublock(:), vrlblock(:)
+  MATH_DATATYPE(kind=rck), allocatable        :: vmrCPU(:,:), umcCPU(:,:), vmrCPU_qr(:,:)
+  MATH_DATATYPE(kind=rck), allocatable        :: vr(:)
+  MATH_DATATYPE(kind=rck)                     :: taublock(nbw), vrlblock(nbw)
   MATH_DATATYPE(kind=rck), allocatable, target:: ex_buff(:)
-  MATH_DATATYPE(kind=rck), pointer            :: ex_buff2d(:,:)
+  MATH_DATATYPE(kind=rck), pointer, contiguous:: ex_buff2d(:,:)
 
 #if REALCASE == 1
   ! needed for blocked QR decomposition
@@ -529,8 +530,6 @@ max_threads, isSkewsymmetric)
 
   endif ! useGPU
 
-  allocate(taublock(nbw),vrlblock(nbw))
-
   do istep = blk_end, 1, -1
 
     n_cols = MIN(na,(istep+1)*nbw) - istep*nbw ! Number of columns in current step
@@ -803,13 +802,30 @@ max_threads, isSkewsymmetric)
           cur_pcol = blockinfo(1,iblock)
           
           if(my_pcol.eq.cur_pcol) then
-             !$omp  parallel do private(off)
+             !$omp  parallel do private(off,lc,lch,ncol,nrow,lr)
              do off=1,blc_len
-                a_mat(1:lrex,c_start+off-1)=ex_buff2d(1:lrex,blc_start+off-1)
+                lc=blc_start+off-1
+                lch=c_start+off-1
+                ncol = istep*nbw + lc ! absolute column number of householder Vector
+                nrow = ncol - nbw ! Absolute number of pivot row   
+                lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
+
+                if (nrow.gt.1) then
+                   if (useGPU_reduction_lower_block_to_tridiagonal) then
+                      a_mat(1:lr,lch)=vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) 
+                   else
+                      a_mat(1:lr,lch)=vmrCPU(1:lr,lc)  
+                   endif
+                   if (my_prow==prow(nrow, nblk, np_rows)) a_mat(lr,lch) = vrlblock(lc)
+                   a_mat(lr+1:lrex,c_start+off-1)=ex_buff2d(lr+1:lrex,blc_start+off-1)
+                else
+                   a_mat(1:lrex,c_start+off-1)=ex_buff2d(1:lrex,blc_start+off-1)
+                end if
              end do
              !$omp end parallel do                
           end if
        end do
+
           
        deallocate(blockinfo)
        deallocate(ex_buff)
@@ -1473,28 +1489,21 @@ max_threads, isSkewsymmetric)
 
       else ! useGPU
 
-!        allocate(tmpCPU(l_cols,n_cols), stat=istat, errmsg=errorMessage)
-!        check_allocate("bandred: tmpCPU", istat, errorMessage)
-
 #ifdef WITH_MPI
         if (useNonBlockingCollectivesRows) then
           if (wantDebug) call obj%timer%start("mpi_nbc_communication")
           call mpi_iallreduce(MPI_IN_PLACE, umcCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6, mpierr)
           call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
-!          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
           if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
         else
           if (wantDebug) call obj%timer%start("mpi_communication")
           call mpi_allreduce(MPI_IN_PLACE, umcCPU, int(l_cols*n_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-!          umcCPU(1:l_cols,1:n_cols) = tmpCPU(1:l_cols,1:n_cols)
           if (wantDebug) call obj%timer%stop("mpi_communication")
         endif
 #endif /* WITH_MPI */
 
-!        deallocate(tmpCPU, stat=istat, errmsg=errorMessage)
-!        check_deallocate("bandred: tmpCPU", istat, errorMessage)
       endif ! useGPU
     endif ! l_cols > 0
     ! U = U * Tmat**T
@@ -1876,24 +1885,6 @@ max_threads, isSkewsymmetric)
     enddo ! i=0,(istep*nbw-1)/tile_size
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-    !store Householder vectors for back transformation
-    do lc = n_cols, 1, -1
-       ncol = istep*nbw + lc ! absolute column number of householder Vector
-       nrow = ncol - nbw ! Absolute number of pivot row             
-       cur_pcol = pcol(ncol, nblk, np_cols) ! Processor column owning current block
-       if (nrow == 1) exit ! Nothing to do
-       lr  = local_index(nrow, my_prow, np_rows, nblk, -1) ! current row length
-       lch = local_index(ncol, my_pcol, np_cols, nblk, -1) ! HV local column number
-       if (my_pcol==cur_pcol) then
-          if (useGPU_reduction_lower_block_to_tridiagonal) then
-             a_mat(1:lr,lch)=vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) 
-          else
-             a_mat(1:lr,lch)=vmrCPU(1:lr,lc)  
-          endif
-          if (my_prow==prow(nrow, nblk, np_rows)) a_mat(lr,lch) = vrlblock(lc)
-       end if
-    end do
-    
     if (.not.(useGPU)) then
       if (allocated(vr)) then
         deallocate(vr, stat=istat, errmsg=errorMessage)
@@ -2101,8 +2092,6 @@ max_threads, isSkewsymmetric)
     endif
   endif
 #endif
-  deallocate(taublock, stat=istat, errmsg=errorMessage)
-  deallocate(vrlblock, stat=istat, errmsg=errorMessage)
   
   call obj%timer%stop("bandred_&
   &MATH_DATATYPE&
@@ -2172,6 +2161,7 @@ contains
   subroutine apply_ht(tau,vr,ex_buff2d)
     MATH_DATATYPE(kind=rck):: tau, vr(:), ex_buff2d(:,:)
     MATH_DATATYPE(kind=rck):: tauc
+    MATH_DATATYPE(kind=rck):: aux1(nbw)
     integer:: nlc, imax
     logical:: use_blas
 
