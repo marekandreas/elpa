@@ -781,7 +781,7 @@ max_threads, isSkewsymmetric)
           
           call apply_ht(tau,vr,ex_buff2d(:,1:n_cols-off))
           if (useGPU_reduction_lower_block_to_tridiagonal) then
-             vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) = vr(1:lr)
+             vmrGPU(max_l_rows * (lc - 1) + 1 : max_l_rows * (lc - 1) + lr) = vr(1:lr)
           else
              vmrCPU(1:lr,lc) = vr(1:lr)
           endif
@@ -812,7 +812,7 @@ max_threads, isSkewsymmetric)
 
                 if (nrow.gt.1) then
                    if (useGPU_reduction_lower_block_to_tridiagonal) then
-                      a_mat(1:lr,lch)=vmrGPU(cur_l_rows * (lc - 1) + 1 : cur_l_rows * (lc - 1) + lr) 
+                      a_mat(1:lr,lch)=vmrGPU(max_l_rows * (lc - 1) + 1 : max_l_rows * (lc - 1) + lr) 
                    else
                       a_mat(1:lr,lch)=vmrCPU(1:lr,lc)  
                    endif
