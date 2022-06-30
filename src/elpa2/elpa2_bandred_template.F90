@@ -760,7 +760,7 @@ max_threads, isSkewsymmetric)
                   MPI_MATH_DATATYPE_PRECISION, int(cur_pcol,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
                   breq(j),mpierr)     
           end do
-          call mpi_waitall(nblocks,breq,MPI_STATUS_IGNORE,mpierr)
+          call mpi_waitall(nblocks, breq, MPI_STATUSES_IGNORE, mpierr)
           deallocate(breq)
        end if
        call obj%timer%stop("bcast_multi")
