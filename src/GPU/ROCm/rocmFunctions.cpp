@@ -73,6 +73,8 @@
 #define debugmessage(x, ...)
 #endif
 
+// hipStream_t elpa_hip_stm;
+
 #ifdef WITH_AMD_GPU_VERSION
 extern "C" {
 #ifdef WITH_GPU_STREAMS
@@ -118,13 +120,24 @@ extern "C" {
     }
   }
 
-  int hipStreamSynchronizeFromC(intptr_t stream) {
+  int hipStreamSynchronizeExplicitFromC(intptr_t stream) {
     hipError_t status = hipStreamSynchronize(*((hipStream_t*)stream));
     if (status == hipSuccess) {
       return 1;
     }
     else{
-      errormessage("Error in hipStreamSynchronize: %s\n", "unknown error");
+      errormessage("Error in hipStreamSynchronizeExplicit: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+  int hipStreamSynchronizeImplicitiFromC() {
+    hipError_t status = hipStreamSynchronize(hipStreamPerThread);
+    if (status == hipSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in hipStreamSynchronizeImplicit: %s\n", "unknown error");
       return 0;
     }
   }
@@ -162,6 +175,17 @@ extern "C" {
       errormessage("Error in rocblas_create_handle: %s\n", "unknown error");
       return 0;
     }
+#if 0
+    if (hipStreamCreate(&elpa_hip_stm) != hipSuccess) {
+        errormessage("failed to create stream, %s, %d\n", __FILE__, __LINE__);
+        return 0;
+    }
+
+    if (rocblas_set_stream(*(rocblas_handle *)handle, elpa_hip_stm) != rocblas_status_success) {
+        errormessage("failed to attach stream to blas handle, %s, %d\n", __FILE__, __LINE__);
+        return EXIT_FAILURE;
+    }
+#endif
   }
 
   int rocblasDestroyFromC(intptr_t *handle) {
@@ -179,6 +203,9 @@ extern "C" {
       errormessage("Error in rocblas_destroy_handle: %s\n", "unknown error");
       return 0;
     }
+#if 0
+    hipStreamDestroy(elpa_hip_stm);
+#endif
   }
 
   int hipSetDeviceFromC(int n) {
@@ -296,7 +323,7 @@ extern "C" {
   }
 
   int hipMemcpyAsyncFromC(intptr_t *dest, intptr_t *src, size_t count, int dir, intptr_t stream) {
-
+  
     hipError_t hiperr = hipMemcpyAsync( dest, src, count, (hipMemcpyKind)dir, *((hipStream_t*)stream));
     if (hiperr != hipSuccess) {
       errormessage("Error in hipMemcpyAsync: %s\n",hipGetErrorString(hiperr));

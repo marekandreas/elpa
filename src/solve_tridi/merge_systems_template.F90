@@ -758,10 +758,17 @@
           if (useGPU) then
             ! copy back after sendrecv
 #ifdef WITH_GPU_STREAMS
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("tridiag qtmp1_dev", successGPU)
+
             successGPU = gpu_memcpy_async(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
             check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
+
             successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+            ! synchronize streamsPerThread; maybe not neccessary
+            successGPU = gpu_stream_synchronize()
             check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
             
 #else
@@ -833,6 +840,9 @@
               !TODO: it should be enough to copy l_rows x ncnt
               ! copy to device
 #ifdef WITH_GPU_STREAMS
+              successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("tridiag qtmp2_dev", successGPU)
+
               successGPU = gpu_memcpy_async(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
               check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)
@@ -842,7 +852,11 @@
               successGPU = gpu_memcpy_async(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
               check_memcpy_gpu("merge_systems: ev_dev", successGPU)
+
               successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+              ! synchronize streamsPerThread; maybe not neccessary
+              successGPU = gpu_stream_synchronize()
               check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
 #else
               successGPU = gpu_memcpy(qtmp2_dev, int(loc(qtmp2(1,1)),kind=c_intptr_t), &
@@ -898,11 +912,18 @@
               !TODO the previous loop could be possible to do on device and thus
               !copy less
 #ifdef WITH_GPU_STREAMS
+              successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("tridiag qtmp1_dev", successGPU)
+
               successGPU = gpu_memcpy_async(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
                                  gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyHostToDevice, &
                                  my_stream)
               check_memcpy_gpu("merge_systems: ev_dev", successGPU)
+
               successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+              ! synchronize streamsPerThread; maybe not neccessary
+              successGPU = gpu_stream_synchronize()
               check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
 #else
               successGPU = gpu_memcpy(ev_dev, int(loc(ev(1,1)),kind=c_intptr_t), &
@@ -940,10 +961,17 @@
 
               ! COPY BACK
 #ifdef WITH_GPU_STREAMS
+              successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("tridiag qtmp2_dev", successGPU)
+
               successGPU = gpu_memcpy_async(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &
                                  gemm_dim_k * gemm_dim_m * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
               check_memcpy_gpu("merge_systems: qtmp2_dev", successGPU)
+
               successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("merge_systems: qtmp2_dev", successGPU)
+              ! synchronize streamsPerThread; maybe not neccessary
+              successGPU = gpu_stream_synchronize()
               check_stream_synchronize_gpu("merge_systems: qtmp2_dev", successGPU)
 #else
               successGPU = gpu_memcpy(int(loc(qtmp2(1,1)),kind=c_intptr_t), qtmp2_dev, &

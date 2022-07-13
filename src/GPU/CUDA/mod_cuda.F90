@@ -97,12 +97,22 @@ module cuda_functions
   end interface
 
   interface
-    function cuda_stream_synchronize_c(stream) result(istat) &
-             bind(C, name="cudaStreamSynchronizeFromC")
+    function cuda_stream_synchronize_explicit_c(stream) result(istat) &
+             bind(C, name="cudaStreamSynchronizeExplicitFromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
       integer(kind=C_intptr_T), value  :: stream
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+  interface
+    function cuda_stream_synchronize_implicit_c() result(istat) &
+             bind(C, name="cudaStreamSynchronizeImplicitFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
       integer(kind=C_INT)              :: istat
     end function
   end interface
@@ -1504,16 +1514,23 @@ module cuda_functions
      use, intrinsic :: iso_c_binding
      implicit none
 
-     integer(kind=C_intptr_t)                  :: stream
+     integer(kind=C_intptr_t), optional        :: stream
      logical                                   :: success
+
+     if (present(stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-     success = cuda_stream_synchronize_c(stream) /= 0
+       success = cuda_stream_synchronize_explicit_c(stream) /= 0
 #else
-     success = .true.
+       success = .true.
 #endif
+     else
+#ifdef WITH_NVIDIA_GPU_VERSION
+       success = cuda_stream_synchronize_implicit_c() /= 0
+#else
+       success = .true.
+#endif
+     endif
    end function
-
-
 
 
 #ifdef WITH_NVTX

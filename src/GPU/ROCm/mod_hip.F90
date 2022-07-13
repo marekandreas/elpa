@@ -106,8 +106,8 @@ module hip_functions
   end interface
 
   interface
-    function hip_stream_synchronize_c(stream) result(istat) &
-             bind(C, name="hipStreamSynchronizeFromC")
+    function hip_stream_synchronize_explicit_c(stream) result(istat) &
+             bind(C, name="hipStreamSynchronizeExplicitFromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -115,6 +115,17 @@ module hip_functions
       integer(kind=C_INT)              :: istat
     end function
   end interface
+
+  interface
+    function hip_stream_synchronize_implicit_c() result(istat) &
+             bind(C, name="hipStreamSynchronizeImplicitFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
 #endif /* WITH_GPU_STREAMS */
 
 
@@ -1327,13 +1338,22 @@ module hip_functions
      use, intrinsic :: iso_c_binding
      implicit none
 
-     integer(kind=C_intptr_t)                  :: stream
+     integer(kind=C_intptr_t), optional        :: stream
      logical                                   :: success
+
+     if (present(stream)) then
 #ifdef WITH_AMD_GPU_VERSION
-     success = hip_stream_synchronize_c(stream) /= 0
+       success = hip_stream_synchronize_explicit_c(stream) /= 0
 #else
-     success = .true.
+       success = .true.
 #endif
+     else
+#ifdef WITH_AMD_GPU_VERSION
+       success = hip_stream_synchronize_implicit_c() /= 0
+#else
+       success = .true.
+#endif
+     endif
    end function
 
 #endif /* WITH_GPU_STREAMS */

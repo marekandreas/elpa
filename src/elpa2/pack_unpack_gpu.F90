@@ -123,6 +123,9 @@ subroutine pack_row_group_&
 
   if (.not.(allComputeOnGPU)) then
 #ifdef WITH_GPU_STREAMS
+   successGPU = gpu_stream_synchronize(my_stream)
+   check_stream_synchronize_gpu("pack_row_group", successGPU)
+
     successGPU =  gpu_memcpy_async(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
     &PRECISION&
     &_&
@@ -136,7 +139,18 @@ subroutine pack_row_group_&
       &: error in cudaMemcpy"
       stop 1
     endif
+
     successGPU = gpu_stream_synchronize(my_stream)
+    if (.not.(successGPU)) then
+      print *,"pack_row_group_&
+      &MATH_DATATYPE&
+      &_gpu_&
+      &PRECISION&
+      &: error in stream_synchronize"
+      stop 1
+    endif
+    ! synchronize streamsPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
     if (.not.(successGPU)) then
       print *,"pack_row_group_&
       &MATH_DATATYPE&
@@ -163,7 +177,10 @@ subroutine pack_row_group_&
   else ! allComputeOnGPU
     if (doCopyResult) then
       ! need to copy row_group_dev -> result_buffer_dev
-#ifdef WITH_GPU_STREAMS
+#ifdef WITH_GPU_STREAMS  
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("pack_row_group 1", successGPU)
+
       successGPU =  gpu_memcpy_async(c_loc(result_buffer_mpi_fortran_ptr(1, 1, nbuf)), &
                     row_group_dev , row_count * l_nev * size_of_&
                     &PRECISION&
@@ -178,7 +195,18 @@ subroutine pack_row_group_&
         &: error in cudaMemcpy"
         stop 1
       endif
+
       successGPU = gpu_stream_synchronize(my_stream)
+      if (.not.(successGPU)) then
+        print *,"pack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in stream_synchronize"
+        stop 1
+      endif
+      ! synchronize streamsPerThread; maybe not neccessary
+      successGPU = gpu_stream_synchronize()
       if (.not.(successGPU)) then
         print *,"pack_row_group_&
         &MATH_DATATYPE&
@@ -270,6 +298,16 @@ subroutine unpack_row_group_&
         stop 1
     endif
     successGPU = gpu_stream_synchronize(my_stream)
+    if (.not.(successGPU)) then
+        print *,"unpack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in cudaStreamSynchronize"
+        stop 1
+    endif
+    ! synchronize streamsPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
     if (.not.(successGPU)) then
         print *,"unpack_row_group_&
         &MATH_DATATYPE&

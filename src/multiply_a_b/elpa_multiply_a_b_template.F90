@@ -252,10 +252,17 @@
 
     check_host_register_gpu("elpa_mult_at_b: b", successGPU)
 #ifdef WITH_GPU_STREAMS
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_mult_at_b: b to b_dev", successGPU)
+
     successGPU = gpu_memcpy_async(b_dev,int(loc(b),kind=c_intptr_t),num,&
                   gpuMemcpyHostToDevice, my_stream)
     check_memcpy_gpu("elpa_mult_at_b: b to b_dev", successGPU)
+
     successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_mult_at_b: b to b_dev", successGPU)
+    ! synchronize streamsPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
     check_stream_synchronize_gpu("elpa_mult_at_b: b to b_dev", successGPU)
 #else
     successGPU = gpu_memcpy(b_dev,int(loc(b),kind=c_intptr_t),num,&
@@ -275,10 +282,17 @@
                     gpuHostRegisterDefault)
     check_host_register_gpu("elpa_mult_at_b: a_tmp", successGPU)
 
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_mult_at_b: a_dev to a_tmp", successGPU)
+
     successGPU = gpu_memcpy_async(int(loc(a_tmp),kind=c_intptr_t), a, num,&
                   gpuMemcpyDeviceToHost, my_stream)
     check_memcpy_gpu("elpa_mult_at_b: a_dev -> a_tmp", successGPU)
+
     successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_mult_at_b: a_dev -> a_tmp", successGPU)
+    ! synchronize streamsPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
     check_stream_synchronize_gpu("elpa_mult_at_b: a_dev -> a_tmp", successGPU)
 #else
     successGPU = gpu_memcpy(int(loc(a_tmp),kind=c_intptr_t), a, num,&
@@ -443,10 +457,17 @@
             if (useGPU) then
               num = l_rows*nblk_mult*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+              successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("elpa_mult_at_b: aux_mat to aux_dev", successGPU)
+
               successGPU = gpu_memcpy_async(aux_dev, int(loc(aux_mat),kind=c_intptr_t), &
                             num, gpuMemcpyHostToDevice, my_stream)
               check_memcpy_gpu("elpa_mult_at_b: aux_mat to aux_dev", successGPU)
+
               successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("elpa_mult_at_b: aux_mat to aux_dev", successGPU)
+              ! synchronize streamsPerThread; maybe not neccessary
+              successGPU = gpu_stream_synchronize()
               check_stream_synchronize_gpu("elpa_mult_at_b: aux_mat to aux_dev", successGPU)
 #else
               successGPU = gpu_memcpy(aux_dev, int(loc(aux_mat),kind=c_intptr_t), &
@@ -465,10 +486,17 @@
 
               num = nstor*(lce-lcs+1)*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+              successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
+
               successGPU = gpu_memcpy_async(int(loc(tmp1),kind=c_intptr_t), &
                             tmp1_dev, num, gpuMemcpyDeviceToHost, my_stream)
               check_memcpy_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
+
               successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
+              ! synchronize streamsPerThread; maybe not neccessary
+              successGPU = gpu_stream_synchronize()
               check_stream_synchronize_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
 #else
               successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), &
@@ -542,10 +570,17 @@
 
     num = ldc*ldcCols*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_mult_at_b: c_tmp to c", successGPU)
+
     successGPU = gpu_memcpy_async(c,int(loc(c_tmp),kind=c_intptr_t),num,&
                   gpuMemcpyHostToDevice, my_stream)
     check_memcpy_gpu("elpa_mult_at_b: c_tmp -> c", successGPU)
+
     successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_mult_at_b: c_tmp -> c", successGPU)
+    ! synchronize streamsPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
     check_stream_synchronize_gpu("elpa_mult_at_b: c_tmp -> c", successGPU)
 #else
     successGPU = gpu_memcpy(c,int(loc(c_tmp),kind=c_intptr_t),num,&
