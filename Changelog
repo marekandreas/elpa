@@ -1,7 +1,7 @@
 Changelog for next release
 
 - not yet decided
-
+- make sure that OMP_NUM_THREADS is honoured even if omp_threads is not set
 
 Changelog for ELPA 2022.05.001
 - implement OpenMP offloading to GPU for Intel GPU for ELPA 1 and 2 stage (

@@ -425,18 +425,6 @@
         write(error_unit,*) "ELPA2: GPUs are requested but not detected! Aborting..."
 #include "./elpa2_aborting_template.F90"
       endif
-!#ifdef WITH_OPENMP_TRADITIONAL
-!      ! check the number of threads that ELPA should use internally
-!      ! in the GPU case at the moment only _1_ thread internally is allowed
-!      call obj%get("omp_threads", nrThreads, error)
-!      if (nrThreads .ne. 1) then
-!        write(error_unit,*) "Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
-!        write(error_unit,*) "setting 1 openmp thread now"
-!        call obj%set("omp_threads",1, error)
-!        nrThreads=1
-!        call omp_set_num_threads(nrThreads)
-!      endif
-!#endif
       call obj%timer%stop("check_for_gpu")
 
       if (nblk*(max(np_rows,np_cols)-1) >= na) then
