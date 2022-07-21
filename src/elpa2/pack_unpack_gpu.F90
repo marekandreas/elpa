@@ -168,7 +168,7 @@ subroutine pack_row_group_&
       &: error in stream_synchronize"
       stop 1
     endif
-#else
+#else /* WITH_GPU_STREAMS */
     successGPU =  gpu_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
     &PRECISION&
     &_&
@@ -182,7 +182,7 @@ subroutine pack_row_group_&
       &: error in cudaMemcpy"
       stop 1
     endif
-#endif
+#endif /* WITH_GPU_STREAMS */
   else ! allComputeOnGPU
     if (doCopyResult) then
       ! need to copy row_group_dev -> result_buffer_dev
@@ -233,7 +233,7 @@ subroutine pack_row_group_&
         stop 1
       endif
 
-#else
+#else /* WITH_GPU_STREAMS */
       successGPU =  gpu_memcpy(c_loc(result_buffer_mpi_fortran_ptr(1, 1, nbuf)), &
                     row_group_dev , row_count * l_nev * size_of_&
                     &PRECISION&
@@ -248,7 +248,7 @@ subroutine pack_row_group_&
         &: error in cudaMemcpy"
         stop 1
       endif
-#endif
+#endif /* WITH_GPU_STREAMS */
 
     endif
   endif ! allComputeOnGPU
