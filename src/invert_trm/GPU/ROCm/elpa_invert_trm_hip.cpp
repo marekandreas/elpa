@@ -238,10 +238,10 @@ extern "C" void hip_copy_double_complex_a_tmat2_FromC(double _Complex *a_dev, do
   hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
-#if 0
   hipDoubleComplex* a_casted = (hipDoubleComplex*) a_dev;
   hipDoubleComplex* tmat2_casted = (hipDoubleComplex*) tmat2_dev;
 
+#if 0
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 

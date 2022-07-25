@@ -131,7 +131,7 @@ extern "C" {
     }
   }
 
-  int hipStreamSynchronizeImplicitiFromC() {
+  int hipStreamSynchronizeImplicitFromC() {
     hipError_t status = hipStreamSynchronize(hipStreamPerThread);
     if (status == hipSuccess) {
       return 1;
