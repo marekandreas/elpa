@@ -389,7 +389,7 @@ extern "C" {
     return 1;
   }
 
-  int cudaHostRegisterFromC(intptr_t *a, int value, int flag) {
+  int cudaHostRegisterFromC(intptr_t *a, intptr_t value, int flag) {
 
     cudaError_t cuerr = cudaHostRegister( a, value, flag);
     if (cuerr != cudaSuccess) {

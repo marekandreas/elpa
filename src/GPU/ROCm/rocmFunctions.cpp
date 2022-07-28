@@ -342,7 +342,7 @@ extern "C" {
     return 1;
   }
 
-  int hipHostRegisterFromC(intptr_t *a, int value, int flag) {
+  int hipHostRegisterFromC(intptr_t *a, intptr_t value, int flag) {
 
     hipError_t hiperr = hipHostRegister( a, value, (unsigned int)flag);
     if (hiperr != hipSuccess) {
