@@ -61,7 +61,11 @@ int max_threads_glob;
 int max_threads_glob_1;
 int set_max_threads_glob=0;
 int set_max_threads_glob_1=0;
+#ifdef WITH_AMD_GPU_VERSION
+#define default_max_stored_rows 256
+#else
 int const default_max_stored_rows = 256;   
+#endif
 
 static int enumerate_identity(elpa_index_t index, int i);
 static int cardinality_bool(elpa_index_t index);

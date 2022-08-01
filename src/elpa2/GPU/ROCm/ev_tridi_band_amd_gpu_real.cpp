@@ -48,13 +48,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <hip/hip_runtime.h>
-#include <hipcub/hipcub.hpp>
 
 #include "config-f90.h"
 
-// extern hipStream_t elpa_hip_stm;
+#ifdef WITH_HIPCUB
+#include <hipcub/hipcub.hpp>
+#endif
 
-#if (CUDART_VERSION > 9000)
+#if (CUDART_VERSION > 9000) && !defined(WITH_HIPCUB)
 template <typename T, unsigned int blk> __device__ void warp_shfl_reduce_real(volatile T *s_block)
 {
     unsigned int tid = threadIdx.x;
@@ -79,8 +80,9 @@ template <typename T, unsigned int blk> __device__ void warp_shfl_reduce_real(vo
 
     s_block[tid] = val;
 }
-#endif
+#endif /* (CUDART_VERSION > 9000) && !defined(WITH_HIPCUB)*/
 
+#ifndef WITH_HIPCUB
 template <typename T, unsigned int blk> __device__ void warp_reduce_real(volatile T *s_block)
 {
     unsigned int tid = threadIdx.x;
@@ -200,15 +202,29 @@ template <typename T, unsigned int blk> __device__ void reduce_real(T *s_block)
     }
 #endif
 }
+#endif /* WITH_HIPCUB */
 
-#if 0
+
 template <typename T, unsigned int blk>
-__global__ void compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
+#ifdef WITH_HIPCUB
+__global__ void
+__launch_bounds__(blk)
+#else
+__global__ void
+#endif
+compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
 {
     __shared__ T q_s[blk + 1];
+#ifdef WITH_HIPCUB
+    typedef hipcub::BlockReduce<T, blk> BlockReduceT;
+    __shared__ typename BlockReduceT::TempStorage temp_storage;
+#else
     __shared__ T dotp_s[blk];
-
+#endif
     T q_v2;
+#ifdef WITH_HIPCUB
+    T q_v, dt, hv, ht;
+#endif
 
     int q_off, h_off, j;
 
@@ -222,12 +238,23 @@ __global__ void compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * _
 
     while (j >= 1)
     {
+#ifdef WITH_HIPCUB
+	ht = hh_tau[j - 1];
+        hv = hh[h_off];
+#endif
         if (tid == 0)
         {
             q_s[tid] = q[q_off];
         }
 
         q_v2 = q_s[tid];
+#ifdef WITH_HIPCUB
+        dt = q_v2 * hv;
+
+        q_v = BlockReduceT(temp_storage).Sum(dt);
+
+        q_v2 -= q_v * ht * hv;
+#else
         dotp_s[tid] = q_v2 * hh[h_off];
 
         __syncthreads();
@@ -237,6 +264,7 @@ __global__ void compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * _
         __syncthreads();
 
         q_v2 -= dotp_s[0] * hh_tau[j - 1] * hh[h_off];
+#endif
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == blockDim.x - 1))
@@ -251,60 +279,6 @@ __global__ void compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * _
         j -= 1;
     }
 }
-#else /* if 0 */
-template <typename T, unsigned int blk>
-__global__ void
-__launch_bounds__(blk)
-compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau,
-        const int nb, const int ldq, const int ncols)
-{
-    __shared__ T q_s[blk + 1];
-    typedef hipcub::BlockReduce<T, blk> BlockReduceT;
-    __shared__ typename BlockReduceT::TempStorage temp_storage;
-
-    T q_v2, q_v, dt, hv, ht;
-
-    int q_off, h_off, j;
-
-    unsigned int tid = threadIdx.x;
-    unsigned int bid = blockIdx.x;
-
-    j = ncols;
-    q_off = bid + (j + tid - 1) * ldq;
-    h_off = tid + (j - 1) * nb;
-    q_s[tid] = q[q_off];
-
-    while (j >= 1)
-    {
-        ht = hh_tau[j - 1];
-        hv = hh[h_off];
-
-        if (tid == 0)
-        {
-            q_s[tid] = q[q_off];
-        }
-
-        q_v2 = q_s[tid];
-        dt = q_v2 * hv;
-
-        q_v = BlockReduceT(temp_storage).Sum(dt);
-
-        q_v2 -= q_v * ht * hv;
-        q_s[tid + 1] = q_v2;
-
-        if ((j == 1) || (tid == blockDim.x - 1))
-        {
-            q[q_off] = q_v2;
-        }
-
-        __syncthreads();
-
-        q_off -= ldq;
-        h_off -= nb;
-        j -= 1;
-    }
-}
-#endif /* if 0 */
 
 extern "C" void launch_compute_hh_trafo_c_hip_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
 {

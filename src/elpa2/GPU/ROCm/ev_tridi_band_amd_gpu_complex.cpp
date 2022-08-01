@@ -49,12 +49,13 @@
 #include <stdint.h>
 #include <hip/hip_runtime.h>
 #include <hip/hip_complex.h>
-#include <hipcub/hipcub.hpp>
 
 #include "config-f90.h"
+#ifdef WITH_HIPCUB
+#include <hipcub/hipcub.hpp>
+#endif
 
-
-
+#ifndef WITH_HIPCUB
 template <typename T, unsigned int blk> __device__ void warp_reduce_complex(volatile T *s_block)
 {
     unsigned int tid = threadIdx.x;
@@ -168,14 +169,25 @@ template <typename T, unsigned int blk> __device__ void reduce_complex(T *s_bloc
     }
 
 }
+#endif /* WITH_HIPCUB */
 
-#if 0
+
 template <unsigned int blk>
 __global__ void
+#ifdef WITH_HIPCUB
+__launch_bounds__(blk)
+#endif
 compute_hh_trafo_hip_kernel_complex_double(hipDoubleComplex * __restrict__ q, const hipDoubleComplex * __restrict__ hh, const hipDoubleComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
 {
     __shared__ hipDoubleComplex q_s[blk + 1];
+#ifndef WITH_HIPCUB
     __shared__ hipDoubleComplex dotp_s[blk];
+#else
+    typedef hipcub::BlockReduce<hipDoubleComplex, blk> BlockReduceT;
+    __shared__ typename BlockReduceT::TempStorage temp_storage;
+
+    hipDoubleComplex q_v, dt, hv, ht;
+#endif
 
     hipDoubleComplex q_v2;
 
@@ -191,12 +203,23 @@ compute_hh_trafo_hip_kernel_complex_double(hipDoubleComplex * __restrict__ q, co
 
     while (j >= 1)
     {
+#ifdef WITH_HIPCUB
+	ht = hh_tau[j - 1];
+        hv = hh[h_off];
+#endif
         if (tid == 0)
         {
             q_s[tid] = q[q_off];
         }
 
         q_v2 = q_s[tid];
+#ifdef WITH_HIPCUB
+        dt = hipCmul(q_v2, hipConj(hv));
+
+        q_v = BlockReduceT(temp_storage).Sum(dt);
+
+        q_v2 = hipCsub(q_v2, hipCmul(hipCmul(q_v, ht), hv));
+#else
         dotp_s[tid] = hipCmul(q_v2, hipConj(hh[h_off]));
 
         __syncthreads();
@@ -206,6 +229,7 @@ compute_hh_trafo_hip_kernel_complex_double(hipDoubleComplex * __restrict__ q, co
         __syncthreads();
 
         q_v2 = hipCsub(q_v2, hipCmul(hipCmul(dotp_s[0], hh_tau[j - 1]), hh[h_off]));
+#endif
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == blockDim.x - 1))
@@ -220,60 +244,6 @@ compute_hh_trafo_hip_kernel_complex_double(hipDoubleComplex * __restrict__ q, co
         j -= 1;
     }
 }
-#else /* if 0 */
-template <unsigned int blk>
-__global__ void
-__launch_bounds__(blk)
-compute_hh_trafo_hip_kernel_complex_double(hipDoubleComplex * __restrict__ q, const hipDoubleComplex * __restrict__ hh,
-        const hipDoubleComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
-{
-    __shared__ hipDoubleComplex q_s[blk + 1];
-    typedef hipcub::BlockReduce<hipDoubleComplex, blk> BlockReduceT;
-    __shared__ typename BlockReduceT::TempStorage temp_storage;
-
-    hipDoubleComplex q_v2, q_v, dt, hv, ht;
-
-    int q_off, h_off, j;
-
-    unsigned int tid = threadIdx.x;
-    unsigned int bid = blockIdx.x;
-
-    j = ncols;
-    q_off = bid + (j + tid - 1) * ldq;
-    h_off = tid + (j - 1) * nb;
-    q_s[tid] = q[q_off];
-
-    while (j >= 1)
-    {
-        ht = hh_tau[j - 1];
-        hv = hh[h_off];
-
-        if (tid == 0)
-        {
-            q_s[tid] = q[q_off];
-        }
-
-        q_v2 = q_s[tid];
-        dt = hipCmul(q_v2, hipConj(hv));
-
-        q_v = BlockReduceT(temp_storage).Sum(dt);
-
-        q_v2 = hipCsub(q_v2, hipCmul(hipCmul(q_v, ht), hv));
-        q_s[tid + 1] = q_v2;
-
-        if ((j == 1) || (tid == blockDim.x - 1))
-        {
-            q[q_off] = q_v2;
-        }
-
-        __syncthreads();
-
-        q_off -= ldq;
-        h_off -= nb;
-        j -= 1;
-    }
-}
-#endif /* if 0 */
 
 extern "C" void launch_compute_hh_trafo_c_hip_kernel_complex_double(hipDoubleComplex *q, const hipDoubleComplex *hh, const hipDoubleComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
 {
@@ -370,12 +340,23 @@ extern "C" void launch_compute_hh_trafo_c_hip_kernel_complex_double(hipDoubleCom
     }
 }
 
-#if 0
 template <unsigned int blk>
-__global__ void compute_hh_trafo_hip_kernel_complex_single(hipFloatComplex * __restrict__ q, const hipFloatComplex * __restrict__ hh, const hipFloatComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
+__global__ void 
+#ifdef WITH_HIPCUB
+__launch_bounds__(blk)
+#endif
+
+compute_hh_trafo_hip_kernel_complex_single(hipFloatComplex * __restrict__ q, const hipFloatComplex * __restrict__ hh, const hipFloatComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
 {
     __shared__ hipFloatComplex q_s[blk + 1];
+#ifndef WITH_HIPCUB
     __shared__ hipFloatComplex dotp_s[blk];
+#else
+    typedef hipcub::BlockReduce<hipFloatComplex, blk> BlockReduceT;
+    __shared__ typename BlockReduceT::TempStorage temp_storage;
+
+    hipFloatComplex q_v, dt, hv, ht;
+#endif
 
     hipFloatComplex q_v2;
 
@@ -391,12 +372,23 @@ __global__ void compute_hh_trafo_hip_kernel_complex_single(hipFloatComplex * __r
 
     while (j >= 1)
     {
+#ifdef WITH_HIPCUB
+        ht = hh_tau[j - 1];
+        hv = hh[h_off];
+#endif
         if (tid == 0)
         {
             q_s[tid] = q[q_off];
         }
 
         q_v2 = q_s[tid];
+#ifdef WITH_HIPCUB
+        dt = hipCmulf(q_v2, hipConjf(hv));
+
+        q_v = BlockReduceT(temp_storage).Sum(dt);
+
+        q_v2 = hipCsubf(q_v2, hipCmulf(hipCmulf(q_v, ht), hv));
+#else
         dotp_s[tid] = hipCmulf(q_v2, hipConjf(hh[h_off]));
 
         __syncthreads();
@@ -406,6 +398,7 @@ __global__ void compute_hh_trafo_hip_kernel_complex_single(hipFloatComplex * __r
         __syncthreads();
 
         q_v2 = hipCsubf(q_v2, hipCmulf(hipCmulf(dotp_s[0], hh_tau[j - 1]), hh[h_off]));
+#endif
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == blockDim.x - 1))
@@ -420,61 +413,6 @@ __global__ void compute_hh_trafo_hip_kernel_complex_single(hipFloatComplex * __r
         j -= 1;
     }
 }
-#else /* if 0 */
-template <unsigned int blk>
-__global__ void
-__launch_bounds__(blk)
-compute_hh_trafo_hip_kernel_complex_single(hipFloatComplex * __restrict__ q, const hipFloatComplex * __restrict__ hh,
-        const hipFloatComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
-{
-    __shared__ hipFloatComplex q_s[blk + 1];
-    typedef hipcub::BlockReduce<hipFloatComplex, blk> BlockReduceT;
-    __shared__ typename BlockReduceT::TempStorage temp_storage;
-
-    hipFloatComplex q_v2, q_v, dt, hv, ht;
-
-    int q_off, h_off, j;
-
-    unsigned int tid = threadIdx.x;
-    unsigned int bid = blockIdx.x;
-
-    j = ncols;
-    q_off = bid + (j + tid - 1) * ldq;
-    h_off = tid + (j - 1) * nb;
-    q_s[tid] = q[q_off];
-
-    while (j >= 1)
-    {
-        ht = hh_tau[j - 1];
-        hv = hh[h_off];
-
-        if (tid == 0)
-        {
-            q_s[tid] = q[q_off];
-        }
-
-        q_v2 = q_s[tid];
-        dt = hipCmulf(q_v2, hipConjf(hv));
-
-        q_v = BlockReduceT(temp_storage).Sum(dt);
-
-        q_v2 = hipCsubf(q_v2, hipCmulf(hipCmulf(q_v, ht), hv));
-
-        q_s[tid + 1] = q_v2;
-
-        if ((j == 1) || (tid == blockDim.x - 1))
-        {
-            q[q_off] = q_v2;
-        }
-
-        __syncthreads();
-
-        q_off -= ldq;
-        h_off -= nb;
-        j -= 1;
-    }
-}
-#endif /* if 0 */
 
 extern "C" void launch_compute_hh_trafo_c_hip_kernel_complex_single(hipFloatComplex *q, const hipFloatComplex *hh, const hipFloatComplex *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
 {

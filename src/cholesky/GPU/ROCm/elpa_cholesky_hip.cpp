@@ -54,10 +54,12 @@
 #include <time.h>
 #include <alloca.h>
 #include <complex.h>
-#include <hip/hip_complex.h>
-#include "hip/hip_runtime.h"
 #include <stdint.h>
+
 #include "config-f90.h"
+
+#include "hip/hip_runtime.h"
+#include <hip/hip_complex.h>
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
@@ -247,16 +249,20 @@ extern "C" void hip_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, do
 #endif
 
 #else /* if 0 */
+
+  hipDoubleComplex* a_casted = (hipDoubleComplex*) a_dev;
+  hipDoubleComplex* tmatc_casted = (hipDoubleComplex*) tmatc_dev;
+
   if ((l_cols-l_colx+1) % BLK_X_DIM == 0 && nblk % BLK_X_DIM == 0 && TRANS_COALESCED) {
       dim3 blocks = dim3(nblk / BLK_X_DIM, (l_cols-l_colx+1) / BLK_X_DIM);
       dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
 
 #ifdef WITH_GPU_STREAMS
-      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<double _Complex>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev,
-              tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<hipDoubleComplex>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted,
+              tmatc_casted, l_cols, matrixRows, l_colx, l_row1, nblk);
 #else
-      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<double _Complex>, blocks, threadsPerBlock, 0, 0, a_dev,
-              tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<hipDoubleComplex>, blocks, threadsPerBlock, 0, 0, a_casted,
+              tmatc_casted, l_cols, matrixRows, l_colx, l_row1, nblk);
 #endif
   }
   else {
@@ -311,16 +317,19 @@ extern "C" void hip_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, floa
 #endif
 
 #else /* if 0 */
+  hipFloatComplex* a_casted = (hipFloatComplex*) a_dev;
+  hipFloatComplex* tmatc_casted = (hipFloatComplex*) tmatc_dev;
+
   if ((l_cols-l_colx+1) % BLK_X_DIM == 0 && nblk % BLK_X_DIM == 0 && TRANS_COALESCED) {
       dim3 blocks = dim3(nblk / BLK_X_DIM, (l_cols-l_colx+1) / BLK_X_DIM);
       dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
 
 #ifdef WITH_GPU_STREAMS
-      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<float _Complex>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev,
-              tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<hipComplex>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted,
+              tmatc_casted, l_cols, matrixRows, l_colx, l_row1, nblk);
 #else
-      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<float _Complex>, blocks, threadsPerBlock, 0, 0, a_dev,
-              tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<hipComplex>, blocks, threadsPerBlock, 0, 0, a_casted,
+              tmatc_casted, l_cols, matrixRows, l_colx, l_row1, nblk);
 #endif
   }
   else {
