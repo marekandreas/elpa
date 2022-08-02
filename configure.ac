@@ -442,18 +442,63 @@ fi
 #AC_LANG_POP([Fortran])
 
 want_mpi_launcher="no"
-AC_MSG_CHECKING(whether mpi-launcher should be detected)
+AC_MSG_CHECKING(whether mpi-launcher should be detected automatically)
 AC_ARG_ENABLE(detect-mpi-launcher,
               [AS_HELP_STRING([--enable-detect-mpi-launcher (default: enabled)],
-                              [detect mpi launcher])],
+                              [automatically detect mpi launcher])],
               [want_mpi_launcher="$enableval"],
               [want_mpi_launcher="yes"])
 AC_MSG_RESULT([${want_mpi_launcher}])
 
+use_mpiexec=no
+use_mpiexec_hydra=no
+use_mpirun=no
+use_srun=no
+use_mpi_launcher=no
+AC_MSG_CHECKING(whether a specific MPI launcher should be used)
+AC_ARG_ENABLE([mpi-launcher],
+               [AS_HELP_STRING([--enable-mpi-launcher=[[mpiexec|mpiexec.hydra|mpirun|srun]]],
+			       [use specified MPI launcher])],
+                               [if test x"$enableval" = x"mpiexec"; then
+				  use_mpiexec=yes
+                                  use_mpi_launcher=yes
+				fi
+				if test x"$enableval" = x"mpiexec.hydra"; then
+				  use_mpiexec_hydra=yes
+                                  use_mpi_launcher=yes
+				fi
+				if test x"$enableval" = x"mpirun"; then
+				  use_mpirun=yes
+                                  use_mpi_launcher=yes
+				fi
+				if test x"$enableval" = x"srun"; then
+				  use_srun=yes
+                                  use_mpi_launcher=yes
+				fi
+				if test x"$enableval" = x"yes"; then
+                                  AC_MSG_ERROR([Wrong value! Must be either "mpiexec" or "mpiexec.hydra" or "mpirun" or "srun"])
+                                fi
+				if test x"$enableval" = x"no"; then
+                                  use_mpiexec=no
+                                  use_mpiexec_hydra=no
+                                  use_mpirun=no
+                                  use_srun=no
+                                  use_mpi_launcher=no
+                                fi
+				],
+              [use_mpi_launcher=no])
+AC_MSG_RESULT([${use_mpi_launcher}])
+
+if test x"$want_mpi_launcher" = x"yes"; then
+  if test x"$use_mpi_launcher" = x"yes"; then
+      AC_MSG_ERROR([You cannot specify a MPI launcher and ask for automatic detection. Disable one or the other option ])
+  fi
+fi
+
 dnl check which MPI binray invokes a MPI job
 if test x"$with_mpi" = x"yes"; then
   if test x"$want_mpi_launcher" = x"yes"; then
-    AC_CHECK_PROGS([MPI_BINARY], [srun mpiexec.hydra mpiexec mpirun poe runjob aprun poe], [no])
+    AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe srun runjob aprun poe], [no])
     if test x"$MPI_BINARY" = x"no"; then
       AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun, aprun])
     fi
