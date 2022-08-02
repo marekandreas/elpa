@@ -453,7 +453,7 @@ AC_MSG_RESULT([${want_mpi_launcher}])
 dnl check which MPI binray invokes a MPI job
 if test x"$with_mpi" = x"yes"; then
   if test x"$want_mpi_launcher" = x"yes"; then
-    AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun aprun], [no])
+    AC_CHECK_PROGS([MPI_BINARY], [srun mpiexec.hydra mpiexec mpirun poe runjob aprun poe], [no])
     if test x"$MPI_BINARY" = x"no"; then
       AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun, aprun])
     fi
