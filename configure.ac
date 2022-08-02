@@ -1785,6 +1785,27 @@ if test x"${need_amd_gpu}" = x"yes"; then
   use_complex_amd_gpu=yes
 fi
 
+use_hipblas=no
+if test x"${need_amd_gpu}" = x"yes"; then
+  AC_MSG_CHECKING(whether the AMD HIPBLAS marshalling library should be used)
+  AC_ARG_ENABLE([marshalling-hipblas-library],
+                AS_HELP_STRING([--enable-marshalling-hipblas-library],
+                               [instead of rocblas use indirection layer hipblas, default no]),
+                [
+  	       if test x"$enableval" = x"yes"; then
+  	         use_hipblas=yes
+  	       else
+  	         use_hipblas=no
+  	       fi
+  	       ],
+                [use_hipblas=no])
+  AC_MSG_RESULT([${use_hipblas}])
+  #AM_CONDITIONAL([OPTIONAL_C_ERROR_ARGUMENT],[test x"$optional_c_error_argument" = x"yes"])
+fi
+if test x"${use_hipblas}" = x"yes"; then
+        AC_DEFINE([HIPBLAS], [1], [use hipblas instead of rocblas])
+fi
+
 use_openmp_gpu_backend=no
 use_sycl_gpu_backend=no
 use_intel_gpu=no
@@ -1880,10 +1901,18 @@ if test x"${need_amd_gpu}" = x"yes" ; then
     AC_MSG_ERROR([hipcc not found; try to set the hip-path or disable AMD GPU support])
   fi
 
-  #dnl check whether we find rocblas
-  AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
-  if test x"${have_rocblas}" = x"no"; then
-    AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
+  if test x"${use_hipblas}" = x"yes"; then
+    #dnl check whether we find marshalling hipblas
+    AC_SEARCH_LIBS([hipblasDgemm],[hipblas],[have_hipblas=yes],[have_hipblas=no])
+    if test x"${have_hipblas}" = x"no"; then
+      AC_MSG_ERROR([Could not link hipblas; try to set the hip-path or disable AMD GPU support])
+    fi
+  else
+    #dnl check whether we find rocblas
+    AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
+    if test x"${have_rocblas}" = x"no"; then
+      AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
+    fi
   fi
   #AC_SEARCH_LIBS([hipMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
   #if test x"${have_cudart}" = x"no"; then
