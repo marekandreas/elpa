@@ -66,7 +66,7 @@ extern hipStream_t elpa_hip_stm;
 #define BLK_X_DIM      32
 #define BLK_Y_DIM      4
 #define BLK_ALG        1
-#define BLK_VERB       1
+#define BLK_VERB       0
 
 template <typename T>
 __global__ void hip_copy_a_tmat2_kernel(
