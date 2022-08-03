@@ -450,39 +450,30 @@ AC_ARG_ENABLE(detect-mpi-launcher,
               [want_mpi_launcher="yes"])
 AC_MSG_RESULT([${want_mpi_launcher}])
 
-use_mpiexec=no
-use_mpiexec_hydra=no
-use_mpirun=no
-use_srun=no
-use_mpi_launcher=no
 AC_MSG_CHECKING(whether a specific MPI launcher should be used)
 AC_ARG_ENABLE([mpi-launcher],
                [AS_HELP_STRING([--enable-mpi-launcher=[[mpiexec|mpiexec.hydra|mpirun|srun]]],
 			       [use specified MPI launcher])],
                                [if test x"$enableval" = x"mpiexec"; then
-				  use_mpiexec=yes
+				  MPI_BINARY=mpiexec
                                   use_mpi_launcher=yes
 				fi
 				if test x"$enableval" = x"mpiexec.hydra"; then
-				  use_mpiexec_hydra=yes
+				  MPI_BINARY=mpiexec.hydra
                                   use_mpi_launcher=yes
 				fi
 				if test x"$enableval" = x"mpirun"; then
-				  use_mpirun=yes
+				  MPI_BINARY=mpirun
                                   use_mpi_launcher=yes
 				fi
 				if test x"$enableval" = x"srun"; then
-				  use_srun=yes
+				  MPI_BINARY=srun
                                   use_mpi_launcher=yes
 				fi
 				if test x"$enableval" = x"yes"; then
                                   AC_MSG_ERROR([Wrong value! Must be either "mpiexec" or "mpiexec.hydra" or "mpirun" or "srun"])
                                 fi
 				if test x"$enableval" = x"no"; then
-                                  use_mpiexec=no
-                                  use_mpiexec_hydra=no
-                                  use_mpirun=no
-                                  use_srun=no
                                   use_mpi_launcher=no
                                 fi
 				],
