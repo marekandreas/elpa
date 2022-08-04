@@ -62,8 +62,13 @@
 #include <stdint.h>
 #include <complex.h>
 #ifdef WITH_AMD_GPU_VERSION
-//missing header for rocblas
+
+#ifdef HIPBLAS
+#include "hipblas.h"
+#else
 #include "rocblas.h"
+#endif
+
 #include "hip/hip_runtime_api.h"
 #endif
 

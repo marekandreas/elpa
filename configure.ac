@@ -442,18 +442,54 @@ fi
 #AC_LANG_POP([Fortran])
 
 want_mpi_launcher="no"
-AC_MSG_CHECKING(whether mpi-launcher should be detected)
+AC_MSG_CHECKING(whether mpi-launcher should be detected automatically)
 AC_ARG_ENABLE(detect-mpi-launcher,
               [AS_HELP_STRING([--enable-detect-mpi-launcher (default: enabled)],
-                              [detect mpi launcher])],
+                              [automatically detect mpi launcher])],
               [want_mpi_launcher="$enableval"],
               [want_mpi_launcher="yes"])
 AC_MSG_RESULT([${want_mpi_launcher}])
 
+AC_MSG_CHECKING(whether a specific MPI launcher should be used)
+AC_ARG_ENABLE([mpi-launcher],
+               [AS_HELP_STRING([--enable-mpi-launcher=[[mpiexec|mpiexec.hydra|mpirun|srun]]],
+			       [use specified MPI launcher])],
+                               [if test x"$enableval" = x"mpiexec"; then
+				  MPI_BINARY=mpiexec
+                                  use_mpi_launcher=yes
+				fi
+				if test x"$enableval" = x"mpiexec.hydra"; then
+				  MPI_BINARY=mpiexec.hydra
+                                  use_mpi_launcher=yes
+				fi
+				if test x"$enableval" = x"mpirun"; then
+				  MPI_BINARY=mpirun
+                                  use_mpi_launcher=yes
+				fi
+				if test x"$enableval" = x"srun"; then
+				  MPI_BINARY=srun
+                                  use_mpi_launcher=yes
+				fi
+				if test x"$enableval" = x"yes"; then
+                                  AC_MSG_ERROR([Wrong value! Must be either "mpiexec" or "mpiexec.hydra" or "mpirun" or "srun"])
+                                fi
+				if test x"$enableval" = x"no"; then
+                                  use_mpi_launcher=no
+                                fi
+				],
+              [use_mpi_launcher=no])
+AC_MSG_RESULT([${use_mpi_launcher}])
+
+if test x"$want_mpi_launcher" = x"yes"; then
+  if test x"$use_mpi_launcher" = x"yes"; then
+      AC_MSG_ERROR([You cannot specify a MPI launcher and ask for automatic detection. Disable one or the other option ])
+  fi
+fi
+
 dnl check which MPI binray invokes a MPI job
 if test x"$with_mpi" = x"yes"; then
   if test x"$want_mpi_launcher" = x"yes"; then
-    AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe runjob srun aprun], [no])
+    AC_CHECK_PROGS([MPI_BINARY], [mpiexec.hydra mpiexec mpirun poe srun runjob aprun poe], [no])
     if test x"$MPI_BINARY" = x"no"; then
       AC_MSG_ERROR([Could not find either of the MPI binaries: mpiexec.hydra, mpiexec, mpirun, poe, runjob, srun, aprun])
     fi
@@ -1785,6 +1821,27 @@ if test x"${need_amd_gpu}" = x"yes"; then
   use_complex_amd_gpu=yes
 fi
 
+use_hipblas=no
+if test x"${need_amd_gpu}" = x"yes"; then
+  AC_MSG_CHECKING(whether the AMD HIPBLAS marshalling library should be used)
+  AC_ARG_ENABLE([marshalling-hipblas-library],
+                AS_HELP_STRING([--enable-marshalling-hipblas-library],
+                               [instead of rocblas use indirection layer hipblas, default no]),
+                [
+  	       if test x"$enableval" = x"yes"; then
+  	         use_hipblas=yes
+  	       else
+  	         use_hipblas=no
+  	       fi
+  	       ],
+                [use_hipblas=no])
+  AC_MSG_RESULT([${use_hipblas}])
+  #AM_CONDITIONAL([OPTIONAL_C_ERROR_ARGUMENT],[test x"$optional_c_error_argument" = x"yes"])
+fi
+if test x"${use_hipblas}" = x"yes"; then
+        AC_DEFINE([HIPBLAS], [1], [use hipblas instead of rocblas])
+fi
+
 use_openmp_gpu_backend=no
 use_sycl_gpu_backend=no
 use_intel_gpu=no
@@ -1880,10 +1937,18 @@ if test x"${need_amd_gpu}" = x"yes" ; then
     AC_MSG_ERROR([hipcc not found; try to set the hip-path or disable AMD GPU support])
   fi
 
-  #dnl check whether we find rocblas
-  AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
-  if test x"${have_rocblas}" = x"no"; then
-    AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
+  if test x"${use_hipblas}" = x"yes"; then
+    #dnl check whether we find marshalling hipblas
+    AC_SEARCH_LIBS([hipblasDgemm],[hipblas],[have_hipblas=yes],[have_hipblas=no])
+    if test x"${have_hipblas}" = x"no"; then
+      AC_MSG_ERROR([Could not link hipblas; try to set the hip-path or disable AMD GPU support])
+    fi
+  else
+    #dnl check whether we find rocblas
+    AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
+    if test x"${have_rocblas}" = x"no"; then
+      AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
+    fi
   fi
   #AC_SEARCH_LIBS([hipMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
   #if test x"${have_cudart}" = x"no"; then

@@ -363,21 +363,38 @@ module elpa_gpu
 
       implicit none
 
-      integer(kind=c_intptr_t), intent(in)  :: stream
-      logical                               :: success
+      integer(kind=c_intptr_t), intent(in), optional  :: stream
+      logical                                         :: success
 
+      if (present(stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_stream_synchronize(stream)
-      endif
+        if (use_gpu_vendor == nvidia_gpu) then
+          success = cuda_stream_synchronize(stream)
+        endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_stream_synchronize(stream)
+        if (use_gpu_vendor == amd_gpu) then
+          success = hip_stream_synchronize(stream)
+        endif
+#endif
+#endif
+      else
+#ifdef WITH_NVIDIA_GPU_VERSION
+        if (use_gpu_vendor == nvidia_gpu) then
+          success = cuda_stream_synchronize()
+        endif
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
+        if (use_gpu_vendor == amd_gpu) then
+          success = hip_stream_synchronize()
+        endif
+#endif
+#endif
       endif
-#endif
-#endif
+
+
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"gpu_stream_syncronize not implemented for openmp offload"

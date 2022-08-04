@@ -165,13 +165,13 @@ subroutine symm_matrix_allreduce_&
     call obj%timer%stop("mpi_nbc_communication")
   else
     call obj%timer%start("mpi_communication")
-    call mpi_allreduce(h1, h2, int(nc,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+    call mpi_allreduce(MPI_IN_PLACE,h1, int(nc,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
                      int(comm,kind=MPI_KIND), mpierr)
     call obj%timer%stop("mpi_communication")
   endif
   nc = 0
   do i=1,n
-    a(1:i,i) = h2(nc+1:nc+i)
+    a(1:i,i) = h1(nc+1:nc+i)
 #ifdef SKEW_SYMMETRIC_BUILD
     a(i,1:i-1) = - a(1:i-1,i)
 #else

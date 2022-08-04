@@ -72,7 +72,6 @@ module hip_functions
 !  integer(kind=c_intptr_t), parameter :: size_of_single_complex = 8_ck4
 !#endif
 
-#ifdef WITH_GPU_STREAMS
   interface
     function hip_stream_create_c(stream) result(istat) &
              bind(C, name="hipStreamCreateFromC")
@@ -106,8 +105,8 @@ module hip_functions
   end interface
 
   interface
-    function hip_stream_synchronize_c(stream) result(istat) &
-             bind(C, name="hipStreamSynchronizeFromC")
+    function hip_stream_synchronize_explicit_c(stream) result(istat) &
+             bind(C, name="hipStreamSynchronizeExplicitFromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -115,8 +114,16 @@ module hip_functions
       integer(kind=C_INT)              :: istat
     end function
   end interface
-#endif /* WITH_GPU_STREAMS */
 
+  interface
+    function hip_stream_synchronize_implicit_c() result(istat) &
+             bind(C, name="hipStreamSynchronizeImplicitFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
 
   ! functions to set and query the CUDA devices
   interface
@@ -556,7 +563,6 @@ module hip_functions
     end function hip_memset_c
   end interface
 
-#ifdef WITH_GPU_STREAMS
   interface
     function hip_memset_async_c(a, val, size, stream) result(istat) &
              bind(C, name="hipMemsetAsyncFromC")
@@ -573,8 +579,6 @@ module hip_functions
 
     end function hip_memset_async_c
   end interface
-#endif
-
 
   ! cuBLAS
   interface rocblas_dgemm
@@ -1281,8 +1285,6 @@ module hip_functions
   contains
 
     !streams
-#ifdef WITH_GPU_STREAMS
-
     function hip_stream_create(stream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -1327,16 +1329,23 @@ module hip_functions
      use, intrinsic :: iso_c_binding
      implicit none
 
-     integer(kind=C_intptr_t)                  :: stream
+     integer(kind=C_intptr_t), optional        :: stream
      logical                                   :: success
-#ifdef WITH_AMD_GPU_VERSION
-     success = hip_stream_synchronize_c(stream) /= 0
-#else
-     success = .true.
-#endif
-   end function
 
-#endif /* WITH_GPU_STREAMS */
+     if (present(stream)) then
+#ifdef WITH_AMD_GPU_VERSION
+       success = hip_stream_synchronize_explicit_c(stream) /= 0
+#else
+       success = .true.
+#endif
+     else
+#ifdef WITH_AMD_GPU_VERSION
+       success = hip_stream_synchronize_implicit_c() /= 0
+#else
+       success = .true.
+#endif
+     endif
+   end function
 
 #if 0
 #ifdef WITH_NVTX
@@ -1506,7 +1515,6 @@ module hip_functions
 #endif
  end function hip_memset
 
-#ifdef WITH_GPU_STREAMS
   function hip_memset_async(a, val, size, stream) result(success)
 
    use, intrinsic :: iso_c_binding
@@ -1526,7 +1534,6 @@ module hip_functions
    success = .true.
 #endif
   end function hip_memset_async
-#endif
 
  ! functions to memcopy CUDA memory
 

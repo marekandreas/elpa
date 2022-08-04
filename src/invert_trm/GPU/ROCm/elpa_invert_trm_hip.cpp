@@ -61,6 +61,31 @@
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
+extern hipStream_t elpa_hip_stm;
+
+#define BLK_X_DIM      32
+#define BLK_Y_DIM      4
+#define BLK_ALG        1
+#define BLK_VERB       0
+
+template <typename T>
+__global__ void hip_copy_a_tmat2_kernel(
+        T const* __restrict__ a_dev,
+        T* __restrict__ tmat2_dev,
+        const int nblk,
+        const int matrixRows,
+        const int l_colx,
+        const int l_row1)
+{
+    int x = blockIdx.x * BLK_X_DIM + threadIdx.x;
+    int y = blockIdx.y * BLK_X_DIM + threadIdx.y;
+    int j;
+
+    for (j = 0; j < BLK_X_DIM; j += BLK_Y_DIM) {
+        tmat2_dev[(l_colx - 1 + y + j) * nblk + x] = a_dev[(l_colx - 1 + y + j) * matrixRows + x + l_row1 - 1];
+    }
+}
+
 __global__ void hip_copy_double_a_tmat2_kernel(double *a_dev, double *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1){
 
   int nb_index    = threadIdx.x +1; // range 1..nb
@@ -79,17 +104,49 @@ extern "C" void hip_copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev, 
   int nb     = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
+#if 0
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_a_tmat2_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+  hipLaunchKernelGGL(hip_copy_double_a_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
 #else
   hipLaunchKernelGGL(hip_copy_double_a_tmat2_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
 #endif
+
+#else /* if 0 */
+  if ((l_cols-l_colx+1) % BLK_X_DIM == 0 && nb % BLK_X_DIM == 0 && BLK_ALG) {
+      dim3 blocks = dim3(nb / BLK_X_DIM, (l_cols-l_colx+1) / BLK_X_DIM);
+      dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
+
+#if BLK_VERB
+      printf("called elpa_invert_trm_hip tmat2 double ...... hipcc\n");
+
+
+#endif
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_a_tmat2_kernel<double>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev,
+              tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_a_tmat2_kernel<double>, blocks, threadsPerBlock, 0, 0, a_dev,
+              tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+#endif
+  }
+  else {
+      dim3 blocks = dim3(l_cols-l_colx+1,1,1);
+      dim3 threadsPerBlock = dim3(nb,1,1);
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_double_a_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_double_a_tmat2_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+#endif
+  }
+#endif /* if 0 */
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing hip_copy_double_a_tmat2_kernel: %s\n",hipGetErrorString(cuerr));
@@ -113,17 +170,47 @@ extern "C" void hip_copy_float_a_tmat2_FromC(float *a_dev, float *tmat2_dev, int
   int nb     = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
+#if 0
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_a_tmat2_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+  hipLaunchKernelGGL(hip_copy_float_a_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
 #else
   hipLaunchKernelGGL(hip_copy_float_a_tmat2_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
 #endif
+
+#else /* if 0 */
+  if ((l_cols-l_colx+1) % BLK_X_DIM == 0 && nb % BLK_X_DIM == 0 && BLK_ALG) {
+      dim3 blocks = dim3(nb / BLK_X_DIM, (l_cols-l_colx+1) / BLK_X_DIM);
+      dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
+
+#if BLK_VERB
+      printf("called elpa_invert_trm_hip tmat2 float ...... hipcc\n");
+#endif
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_a_tmat2_kernel<float>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev,
+              tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_a_tmat2_kernel<float>, blocks, threadsPerBlock, 0, 0, a_dev,
+              tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+#endif
+  }
+  else {
+      dim3 blocks = dim3(l_cols-l_colx+1,1,1);
+      dim3 threadsPerBlock = dim3(nb,1,1);
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_float_a_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_float_a_tmat2_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+#endif
+  }
+#endif /* if 0 */
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing hip_copy_float_a_tmat2_kernel: %s\n",hipGetErrorString(cuerr));
@@ -148,20 +235,49 @@ extern "C" void hip_copy_double_complex_a_tmat2_FromC(double _Complex *a_dev, do
   int nb     = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   hipDoubleComplex* a_casted = (hipDoubleComplex*) a_dev;
   hipDoubleComplex* tmat2_casted = (hipDoubleComplex*) tmat2_dev;
 
+#if 0
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+  hipLaunchKernelGGL(hip_copy_double_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
 #else
   hipLaunchKernelGGL(hip_copy_double_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
 #endif
+#else /* if 0 */
+  if ((l_cols-l_colx+1) % BLK_X_DIM == 0 && nb % BLK_X_DIM == 0 && BLK_ALG) {
+      dim3 blocks = dim3(nb / BLK_X_DIM, (l_cols-l_colx+1) / BLK_X_DIM);
+      dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
+
+#if BLK_VERB
+      printf("called elpa_invert_trm_hip tmat2 hipDoubleComplex ...... hipcc\n");
+#endif
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_a_tmat2_kernel<hipDoubleComplex>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted,
+              tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_a_tmat2_kernel<hipDoubleComplex>, blocks, threadsPerBlock, 0, 0, a_casted,
+              tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+#endif
+  }
+  else {
+      dim3 blocks = dim3(l_cols-l_colx+1,1,1);
+      dim3 threadsPerBlock = dim3(nb,1,1);
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_double_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_double_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+#endif
+  }
+#endif /* if 0 */
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing hip_copy_double_complex_a_tmat2_kernel: %s\n",hipGetErrorString(cuerr));
@@ -186,7 +302,7 @@ extern "C" void hip_copy_float_complex_a_tmat2_FromC(float _Complex *a_dev, floa
   int nb     = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   hipFloatComplex* a_casted = (hipFloatComplex*) a_dev;
@@ -195,11 +311,41 @@ extern "C" void hip_copy_float_complex_a_tmat2_FromC(float _Complex *a_dev, floa
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
+#if 0
+
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+  hipLaunchKernelGGL(hip_copy_float_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
 #else
   hipLaunchKernelGGL(hip_copy_float_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
 #endif
+#else /* if 0 */
+  if ((l_cols-l_colx+1) % BLK_X_DIM == 0 && nb % BLK_X_DIM == 0 && BLK_ALG) {
+      dim3 blocks = dim3(nb / BLK_X_DIM, (l_cols-l_colx+1) / BLK_X_DIM);
+      dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
+
+#if BLK_VERB
+      printf("called elpa_invert_trm_hip tmat2 hipFloatComplex ...... hipcc\n");
+#endif
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_a_tmat2_kernel<hipFloatComplex>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted,
+              tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_a_tmat2_kernel<hipFloatComplex>, blocks, threadsPerBlock, 0, 0, a_casted,
+              tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+#endif
+  }
+  else {
+      dim3 blocks = dim3(l_cols-l_colx+1,1,1);
+      dim3 threadsPerBlock = dim3(nb,1,1);
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_float_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_float_complex_a_tmat2_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+#endif
+  }
+#endif /* if 0 */
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing hip_copy_float_complex_a_tmat2_kernel: %s\n",hipGetErrorString(cuerr));
@@ -221,14 +367,14 @@ extern "C" void hip_copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat2
   int nb     = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   dim3 blocks = dim3(nb,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, streamId, tmp2_dev, tmat2_dev, nblk, l_col1);
+  hipLaunchKernelGGL(hip_copy_double_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, tmp2_dev, tmat2_dev, nblk, l_col1);
 #else
   hipLaunchKernelGGL(hip_copy_double_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, 0, tmp2_dev, tmat2_dev, nblk, l_col1);
 #endif
@@ -254,14 +400,14 @@ extern "C" void hip_copy_float_tmp2_tmat2_FromC(float *tmp2_dev, float *tmat2_de
   int nb     = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   dim3 blocks = dim3(nb,1,1);
   dim3 threadsPerBlock = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, streamId, tmp2_dev, tmat2_dev, nblk, l_col1);
+  hipLaunchKernelGGL(hip_copy_float_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, tmp2_dev, tmat2_dev, nblk, l_col1);
 #else
   hipLaunchKernelGGL(hip_copy_float_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, 0, tmp2_dev, tmat2_dev, nblk, l_col1);
 #endif
@@ -286,7 +432,7 @@ extern "C" void hip_copy_double_complex_tmp2_tmat2_FromC(double _Complex *tmp2_d
   int nb     = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   hipDoubleComplex* tmp2_casted = (hipDoubleComplex*) tmp2_dev;
@@ -297,7 +443,7 @@ extern "C" void hip_copy_double_complex_tmp2_tmat2_FromC(double _Complex *tmp2_d
   dim3 threadsPerBlock = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_complex_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, streamId, tmp2_casted, tmat2_casted, nblk, l_col1);
+  hipLaunchKernelGGL(hip_copy_double_complex_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, tmp2_casted, tmat2_casted, nblk, l_col1);
 #else
   hipLaunchKernelGGL(hip_copy_double_complex_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, 0, tmp2_casted, tmat2_casted, nblk, l_col1);
 #endif
@@ -322,7 +468,7 @@ extern "C" void hip_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev
   int nb     = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   hipFloatComplex* tmp2_casted = (hipFloatComplex*) tmp2_dev;
@@ -333,7 +479,7 @@ extern "C" void hip_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev
   dim3 threadsPerBlock = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_complex_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, streamId, tmp2_casted, tmat2_casted, nblk, l_col1);
+  hipLaunchKernelGGL(hip_copy_float_complex_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, tmp2_casted, tmat2_casted, nblk, l_col1);
 #else
   hipLaunchKernelGGL(hip_copy_float_complex_tmp2_tmat2_kernel, blocks, threadsPerBlock, 0, 0, tmp2_casted, tmat2_casted, nblk, l_col1);
 #endif
@@ -341,6 +487,31 @@ extern "C" void hip_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev
   if (cuerr != hipSuccess){
     printf("Error in executing hip_copy_float_complex_tmp2_tmat2_kernel: %s\n",hipGetErrorString(cuerr));
   }
+}
+
+template <typename T>
+__global__ void hip_copy_a_tmat1_kernel(
+        T * __restrict__ a_dev,
+        T * __restrict__ tmat1_dev,
+        const int l_rows,
+        const int matrixRows,
+        const int l_col1,
+        const int nb,
+        const int l_row1)
+{
+    int x = blockIdx.x * BLK_X_DIM + threadIdx.x;
+    int y = blockIdx.y * BLK_X_DIM + threadIdx.y;
+    int j;
+
+    for (j = 0; j < BLK_X_DIM; j += BLK_Y_DIM) {
+        tmat1_dev[(y + j) * l_rows + x] = a_dev[(l_col1 - 1 + y + j) * matrixRows + x];
+    }
+
+    __syncthreads();
+
+    for (j = 0; j < BLK_X_DIM; j += BLK_Y_DIM) {
+        a_dev[(l_col1 - 1 + y + j) * matrixRows + x] = 0;
+    }
 }
 
 __global__ void hip_copy_double_a_tmat1_kernel(double *a_dev, double *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1){
@@ -361,17 +532,44 @@ extern "C" void hip_copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev, 
   int l_col1 = *l_col1_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
+#if 0
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_a_tmat1_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+  hipLaunchKernelGGL(hip_copy_double_a_tmat1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
 #else
   hipLaunchKernelGGL(hip_copy_double_a_tmat1_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
 #endif
+
+#else /* if 0 */
+  if ((l_row1-1) % BLK_X_DIM == 0 && nb % BLK_X_DIM == 0 && BLK_ALG) {
+      dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
+      dim3 blocks = dim3((l_row1-1) / BLK_X_DIM, nb / BLK_X_DIM);
+
+#if BLK_VERB
+      printf("called elpa_invert_trm_hip tmat1 double ...... hipcc\n");
+#endif
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_a_tmat1_kernel<double>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_a_tmat1_kernel<double>, blocks, threadsPerBlock, 0, 0, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+#endif
+  }
+  else {
+      dim3 threadsPerBlock = dim3(nb, 1, 1);
+      dim3 blocks = dim3(l_row1-1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_double_a_tmat1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_double_a_tmat1_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+#endif
+  }
+#endif /* if 0 */
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing hip_copy_double_a_tmat1_kernel: %s\n",hipGetErrorString(cuerr));
@@ -395,23 +593,75 @@ extern "C" void hip_copy_float_a_tmat1_FromC(float *a_dev, float *tmat1_dev, int
   int l_col1 = *l_col1_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
+#if 0
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
   //dim3 threadsPerBlock = dim3(1, 1, 1);
   //dim3 blocks = dim3(1,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_a_tmat1_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+  hipLaunchKernelGGL(hip_copy_float_a_tmat1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
 #else
   hipLaunchKernelGGL(hip_copy_float_a_tmat1_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
 #endif
+#else /* if 0 */
+  if ((l_row1-1) % BLK_X_DIM == 0 && nb % BLK_X_DIM == 0 && BLK_ALG) {
+      dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
+      dim3 blocks = dim3((l_row1-1) / BLK_X_DIM, nb / BLK_X_DIM);
+
+#if BLK_VERB
+      printf("called elpa_invert_trm_hip tmat1 float ...... hipcc\n");
+#endif
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_a_tmat1_kernel<float>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_a_tmat1_kernel<float>, blocks, threadsPerBlock, 0, 0, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+#endif
+  }
+  else {
+      dim3 threadsPerBlock = dim3(nb, 1, 1);
+      dim3 blocks = dim3(l_row1-1,1,1);
+      //dim3 threadsPerBlock = dim3(1, 1, 1);
+      //dim3 blocks = dim3(1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_float_a_tmat1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+#else
+      hipLaunchKernelGGL(hip_copy_float_a_tmat1_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+#endif
+  }
+#endif /* if 0 */
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing hip_copy_float_a_tmat1_kernel: %s\n",hipGetErrorString(cuerr));
   }
+}
+template <typename T>
+__global__ void hip_copy_a_tmat1_complex_kernel(
+        T * __restrict__ a_dev,
+        T * __restrict__ tmat1_dev,
+        const int l_rows,
+        const int matrixRows,
+        const int l_col1,
+        const int nb,
+        const int l_row1, T *zero_dev)
+{
+    int x = blockIdx.x * BLK_X_DIM + threadIdx.x;
+    int y = blockIdx.y * BLK_X_DIM + threadIdx.y;
+    int j;
+
+    for (j = 0; j < BLK_X_DIM; j += BLK_Y_DIM) {
+        tmat1_dev[(y + j) * l_rows + x] = a_dev[(l_col1 - 1 + y + j) * matrixRows + x];
+    }
+
+    __syncthreads();
+
+    for (j = 0; j < BLK_X_DIM; j += BLK_Y_DIM) {
+        a_dev[(l_col1 - 1 + y + j) * matrixRows + x] = zero_dev[0];
+    }
 }
 
 __global__ void hip_copy_double_complex_a_tmat1_kernel(hipDoubleComplex *a_dev, hipDoubleComplex *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, hipDoubleComplex *zero_dev){
@@ -431,7 +681,7 @@ extern "C" void hip_copy_double_complex_a_tmat1_FromC(double _Complex *a_dev, do
   int l_col1 = *l_col1_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
 
@@ -439,14 +689,44 @@ extern "C" void hip_copy_double_complex_a_tmat1_FromC(double _Complex *a_dev, do
   hipDoubleComplex* tmat1_casted = (hipDoubleComplex*) tmat1_dev;
   hipDoubleComplex* zero_casted = (hipDoubleComplex*)ZERO;
 
+#if 0
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+  hipLaunchKernelGGL(hip_copy_double_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
 #else
   hipLaunchKernelGGL(hip_copy_double_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
 #endif
+
+#else /* if 0 */
+  if ((l_row1-1) % BLK_X_DIM == 0 && nb % BLK_X_DIM == 0 && BLK_ALG) {
+      dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
+      dim3 blocks = dim3((l_row1-1) / BLK_X_DIM, nb / BLK_X_DIM);
+
+#if BLK_VERB
+      printf("called elpa_invert_trm_hip tmat1 double complex ...... hipcc\n");
+#endif
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_a_tmat1_complex_kernel<hipDoubleComplex>, blocks, threadsPerBlock, 0, elpa_hip_stm, 
+              a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+#else
+      hipLaunchKernelGGL(hip_copy_a_tmat1_complex_kernel<hipDoubleComplex>, blocks, threadsPerBlock, 0, 0, 
+              a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+#endif
+  }
+  else {
+      dim3 threadsPerBlock = dim3(nb, 1, 1);
+      dim3 blocks = dim3(l_row1-1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_double_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+#else
+      hipLaunchKernelGGL(hip_copy_double_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+#endif
+  }
+#endif /* if 0 */
+
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing hip_copy_double_complex_a_tmat1_kernel: %s\n",hipGetErrorString(cuerr));
@@ -471,21 +751,51 @@ extern "C" void hip_copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, floa
   int l_col1 = *l_col1_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   hipFloatComplex* a_casted = (hipFloatComplex*) a_dev;
   hipFloatComplex* tmat1_casted = (hipFloatComplex*) tmat1_dev;
   hipFloatComplex* zero_casted = (hipFloatComplex*)ZERO;
 
+#if 0
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+  hipLaunchKernelGGL(hip_copy_float_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
 #else
   hipLaunchKernelGGL(hip_copy_float_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
 #endif
+
+#else /* if 0 */
+  if ((l_row1-1) % BLK_X_DIM == 0 && nb % BLK_X_DIM == 0 && BLK_ALG) {
+      dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
+      dim3 blocks = dim3((l_row1-1) / BLK_X_DIM, nb / BLK_X_DIM);
+
+#if BLK_VERB
+      printf("called elpa_invert_trm_hip tmat1 float complex ...... hipcc\n");
+#endif
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_a_tmat1_complex_kernel<hipFloatComplex>, blocks, threadsPerBlock, 0, elpa_hip_stm, 
+              a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+#else
+      hipLaunchKernelGGL(hip_copy_a_tmat1_complex_kernel<hipFloatComplex>, blocks, threadsPerBlock, 0, 0, 
+              a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+#endif
+  }
+  else {
+      dim3 threadsPerBlock = dim3(nb, 1, 1);
+      dim3 blocks = dim3(l_row1-1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+      hipLaunchKernelGGL(hip_copy_float_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+#else
+      hipLaunchKernelGGL(hip_copy_float_complex_a_tmat1_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmat1_casted, l_rows, matrixRows, l_col1, nb, l_row1, zero_casted);
+#endif
+  }
+#endif /* if 0 */
+
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing hip_copy_float_complex_a_tmat1_kernel: %s\n",hipGetErrorString(cuerr));
@@ -508,14 +818,14 @@ extern "C" void hip_copy_double_tmp1_tmp2_FromC(double *tmp1_dev, double *tmp2_d
   int nb = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, streamId, tmp1_dev, tmp2_dev, nblk, nb);
+  hipLaunchKernelGGL(hip_copy_double_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, tmp1_dev, tmp2_dev, nblk, nb);
 #else
   hipLaunchKernelGGL(hip_copy_double_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, 0, tmp1_dev, tmp2_dev, nblk, nb);
 #endif
@@ -541,14 +851,14 @@ extern "C" void hip_copy_float_tmp1_tmp2_FromC(float *tmp1_dev, float *tmp2_dev,
   int nb = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, streamId, tmp1_dev, tmp2_dev, nblk, nb);
+  hipLaunchKernelGGL(hip_copy_float_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, tmp1_dev, tmp2_dev, nblk, nb);
 #else
   hipLaunchKernelGGL(hip_copy_float_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, 0, tmp1_dev, tmp2_dev, nblk, nb);
 #endif
@@ -574,7 +884,7 @@ extern "C" void hip_copy_double_complex_tmp1_tmp2_FromC(double _Complex *tmp1_de
   int nb = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
@@ -585,7 +895,7 @@ extern "C" void hip_copy_double_complex_tmp1_tmp2_FromC(double _Complex *tmp1_de
 
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_complex_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, streamId, tmp1_casted, tmp2_casted, nblk, nb);
+  hipLaunchKernelGGL(hip_copy_double_complex_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, tmp1_casted, tmp2_casted, nblk, nb);
 #else
   hipLaunchKernelGGL(hip_copy_double_complex_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, 0, tmp1_casted, tmp2_casted, nblk, nb);
 #endif
@@ -611,7 +921,7 @@ extern "C" void hip_copy_float_complex_tmp1_tmp2_FromC(float _Complex *tmp1_dev,
   int nb = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
@@ -622,7 +932,7 @@ extern "C" void hip_copy_float_complex_tmp1_tmp2_FromC(float _Complex *tmp1_dev,
 
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_complex_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, streamId, tmp1_casted, tmp2_casted, nblk, nb);
+  hipLaunchKernelGGL(hip_copy_float_complex_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, tmp1_casted, tmp2_casted, nblk, nb);
 #else
   hipLaunchKernelGGL(hip_copy_float_complex_tmp1_tmp2_kernel, blocks, threadsPerBlock, 0, 0, tmp1_casted, tmp2_casted, nblk, nb);
 #endif
@@ -649,14 +959,14 @@ extern "C" void hip_copy_double_a_tmp1_FromC(double *a_dev, double *tmp1_dev, in
   int nb = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_a_tmp1_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
+  hipLaunchKernelGGL(hip_copy_double_a_tmp1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
 #else
   hipLaunchKernelGGL(hip_copy_double_a_tmp1_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
 #endif
@@ -684,14 +994,14 @@ extern "C" void hip_copy_float_a_tmp1_FromC(float *a_dev, float *tmp1_dev, int *
   int nb = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_a_tmp1_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
+  hipLaunchKernelGGL(hip_copy_float_a_tmp1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
 #else
   hipLaunchKernelGGL(hip_copy_float_a_tmp1_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nb);
 #endif
@@ -718,7 +1028,7 @@ extern "C" void hip_copy_double_complex_a_tmp1_FromC(double _Complex *a_dev, dou
   int nb = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   hipDoubleComplex* a_casted = (hipDoubleComplex*) a_dev;
@@ -729,7 +1039,7 @@ extern "C" void hip_copy_double_complex_a_tmp1_FromC(double _Complex *a_dev, dou
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_complex_a_tmp1_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
+  hipLaunchKernelGGL(hip_copy_double_complex_a_tmp1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
 #else
   hipLaunchKernelGGL(hip_copy_double_complex_a_tmp1_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
 #endif
@@ -756,7 +1066,7 @@ extern "C" void hip_copy_float_complex_a_tmp1_FromC(float _Complex *a_dev, float
   int nb = *nb_in;
  
 #ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
+  hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
 #endif
 
   hipFloatComplex* a_casted = (hipFloatComplex*) a_dev;
@@ -767,7 +1077,7 @@ extern "C" void hip_copy_float_complex_a_tmp1_FromC(float _Complex *a_dev, float
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_complex_a_tmp1_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
+  hipLaunchKernelGGL(hip_copy_float_complex_a_tmp1_kernel, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
 #else
   hipLaunchKernelGGL(hip_copy_float_complex_a_tmp1_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmp1_casted, l_row1, l_col1, matrixRows, nb);
 #endif

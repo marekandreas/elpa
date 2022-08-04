@@ -250,8 +250,14 @@
     check_alloc_gpu("elpa_invert_trm: tmp1_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
+
     successGPU = gpu_memset_async(tmp1_dev, 0, nblk*nblk*size_of_datatype, my_stream)
     check_memcpy_gpu("elpa_invert_trm: memset tmp1_dev", successGPU)
+
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
 #else
     successGPU = gpu_memset(tmp1_dev, 0, nblk*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset tmp1_dev", successGPU)
@@ -261,8 +267,14 @@
     check_alloc_gpu("elpa_invert_trm: tmp2_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
+
     successGPU = gpu_memset_async(tmp2_dev, 0, nblk*nblk*size_of_datatype, my_stream)
     check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
+
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
 #else
     successGPU = gpu_memset(tmp2_dev, 0, nblk*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
@@ -272,8 +284,14 @@
     check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
+
     successGPU = gpu_memset_async(tmat1_dev, 0, l_rows*nblk*size_of_datatype, my_stream)
     check_memcpy_gpu("elpa_invert_trm: memset tmat1_dev", successGPU)
+
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
 #else
     successGPU = gpu_memset(tmat1_dev, 0, l_rows*nblk*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset tmat1_dev", successGPU)
@@ -283,8 +301,14 @@
     check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
+
     successGPU = gpu_memset_async(tmat2_dev, 0, nblk*l_cols*size_of_datatype, my_stream)
     check_memcpy_gpu("elpa_invert_trm: memset tmat2_dev", successGPU)
+
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
 #else
     successGPU = gpu_memset(tmat2_dev, 0, nblk*l_cols*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset tmat2_dev", successGPU)
@@ -316,8 +340,14 @@
     successGPU = gpu_malloc(zero_dev, 1*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: zero_dev", successGPU)
 #ifdef WITH_GPU_STREAMS
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
+
     successGPU = gpu_memset_async(zero_dev, 0, 1*size_of_datatype, my_stream)
     check_memcpy_gpu("elpa_invert_trm: memset zero_dev", successGPU)
+
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
 #else
     successGPU = gpu_memset(zero_dev, 0, 1*size_of_datatype)
     check_memcpy_gpu("elpa_invert_trm: memset zero_dev", successGPU)
@@ -367,10 +397,17 @@
 #ifndef DEVICE_POINTER
   if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
+
     successGPU = gpu_memcpy_async(a_dev, int(loc(a(1,1)),kind=c_intptr_t),  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice, my_stream)
     check_memcpy_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
+
     successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
+    ! synchronize streamsPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
     check_stream_synchronize_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
 #else
     successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t),  &
@@ -417,10 +454,17 @@
 #ifndef DEVICE_POINTER
           call obj%timer%start("blas")
 #ifdef WITH_GPU_STREAMS
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("invert_trm: memcpy a_dev -> a", successGPU)
+
           successGPU = gpu_memcpy_async(int(loc(a(1,1)),kind=c_intptr_t), a_dev, &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
           check_memcpy_gpu("invert_trm: memcpy a_dev -> a", successGPU)
+
           successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("invert_trm: memcpy a_dev -> a", successGPU)
+          ! synchronize streamsPerThread; maybe not neccessary
+          successGPU = gpu_stream_synchronize()
           check_stream_synchronize_gpu("invert_trm: memcpy a_dev -> a", successGPU)
 #else
           successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev, &
@@ -433,10 +477,17 @@
           info = int(infoBLAS,kind=ik)
 
 #ifdef WITH_GPU_STREAMS
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("invert_trm: memcpy a -> a_dev", successGPU)
+
           successGPU = gpu_memcpy_async(a_dev, int(loc(a(1,1)),kind=c_intptr_t),  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice, my_stream)
           check_memcpy_gpu("invert_trm: memcpy a -> a_dev", successGPU)
+
           successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("invert_trm: memcpy a -> a_dev", successGPU)
+          ! synchronize streamsPerThread; maybe not neccessary
+          successGPU = gpu_stream_synchronize()
           check_stream_synchronize_gpu("invert_trm: memcpy a -> a_dev", successGPU)
 #else
           successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t),  &
@@ -447,10 +498,17 @@
 #else /* DEVICE_POINTER */
           call obj%timer%start("blas")
 #ifdef WITH_GPU_STREAMS
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("invert_trm: memcpy a_dev -> a", successGPU)
+
           successGPU = gpu_memcpy_async(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev, &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
           check_memcpy_gpu("invert_trm: memcpy a_dev -> a", successGPU)
+
           successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("invert_trm: memcpy a_dev -> a", successGPU)
+          ! synchronize streamsPerThread; maybe not neccessary
+          successGPU = gpu_stream_synchronize()
           check_stream_synchronize_gpu("invert_trm: memcpy a_dev -> a", successGPU)
 #else
           successGPU = gpu_memcpy(int(loc(a_tmp(1,1)),kind=c_intptr_t), a_dev, &
@@ -463,10 +521,17 @@
           info = int(infoBLAS,kind=ik)
 
 #ifdef WITH_GPU_STREAMS
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("invert_trm: memcpy a -> a_dev", successGPU)
+
           successGPU = gpu_memcpy_async(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t),  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyHostToDevice, my_stream)
           check_memcpy_gpu("invert_trm: memcpy a -> a_dev", successGPU)
+
           successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("invert_trm: memcpy a -> a_dev", successGPU)
+          ! synchronize streamsPerThread; maybe not neccessary
+          successGPU = gpu_stream_synchronize()
           check_stream_synchronize_gpu("invert_trm: memcpy a -> a_dev", successGPU)
 #else
           successGPU = gpu_memcpy(a_dev, int(loc(a_tmp(1,1)),kind=c_intptr_t),  &
@@ -530,10 +595,17 @@
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmp1_dev to tmp1", successGPU)
+
         successGPU = gpu_memcpy_async(int(loc(tmp1),kind=c_intptr_t), tmp1_dev, num, &
                               gpuMemcpyDeviceToHost, my_stream)
         check_memcpy_gpu("elpa_invert_trm: tmp1_dev to tmp1", successGPU)
+
         successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmp1_dev to tmp1", successGPU)
+        ! synchronize streamsPerThread; maybe not neccessary
+        successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu("elpa_invert_trm: tmp1_dev to tmp1", successGPU)
 #else
         successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), tmp1_dev, num, &
@@ -570,10 +642,17 @@
       if ((useGPU)) then  
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
+
         successGPU = gpu_memcpy_async(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
+
         successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
+        ! synchronize streamsPerThread; maybe not neccessary
+        successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
 #else
         successGPU = gpu_memcpy(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
@@ -655,10 +734,17 @@
       if (useGPU) then
         num = l_rows*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
+
         successGPU = gpu_memcpy_async(int(loc(tmat1),kind=c_intptr_t), tmat1_dev, num, &
                               gpuMemcpyDeviceToHost, my_stream)
         check_memcpy_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
+
         successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
+        ! synchronize streamsPerThread; maybe not neccessary
+        successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
 #else
         successGPU = gpu_memcpy(int(loc(tmat1),kind=c_intptr_t), tmat1_dev, num, &
@@ -704,10 +790,17 @@
         ! cuda aware MPI here
         num = l_rows*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
+
         successGPU = gpu_memcpy_async(tmat1_dev, int(loc(tmat1),kind=c_intptr_t), num, &
                               gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
+
         successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
+        ! synchronize streamsPerThread; maybe not neccessary
+        successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
 #else
         successGPU = gpu_memcpy(tmat1_dev, int(loc(tmat1),kind=c_intptr_t), num, &
@@ -726,10 +819,17 @@
       if (l_cols-l_col1+1 > 0) then
         num = nblk*l_cols*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmat2_dev to tmat2", successGPU)
+
         successGPU = gpu_memcpy_async(int(loc(tmat2),kind=c_intptr_t), tmat2_dev, num, &
                               gpuMemcpyDeviceToHost, my_stream)
         check_memcpy_gpu("elpa_invert_trm: tmat2_dev to tmat2", successGPU)
+
         successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmat2_dev to tmat2", successGPU)
+        ! synchronize streamsPerThread; maybe not neccessary
+        successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu("elpa_invert_trm: tmat2_dev to tmat2", successGPU)
 #else
         successGPU = gpu_memcpy(int(loc(tmat2),kind=c_intptr_t), tmat2_dev, num, &
@@ -750,10 +850,17 @@
       if (l_cols-l_col1+1 > 0) then
         num = nblk*l_cols*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmat2 to tmat2_dev", successGPU)
+
         successGPU = gpu_memcpy_async(tmat2_dev, int(loc(tmat2),kind=c_intptr_t), num, &
                                 gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("elpa_invert_trm: tmat2 to tmat2_dev", successGPU)
+
         successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: tmat2 to tmat2_dev", successGPU)
+        ! synchronize streamsPerThread; maybe not neccessary
+        successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu("elpa_invert_trm: tmat2 to tmat2_dev", successGPU)
 #else
         successGPU = gpu_memcpy(tmat2_dev, int(loc(tmat2),kind=c_intptr_t), num, &
@@ -818,10 +925,17 @@
   if (useGPU) then
   ! copy results back
 #ifdef WITH_GPU_STREAMS
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
+
     successGPU = gpu_memcpy_async(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
     check_memcpy_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
+
     successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
+    ! synchronize streamsPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
     check_stream_synchronize_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
 #else
     successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
