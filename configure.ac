@@ -1840,7 +1840,10 @@ if test x"${need_amd_gpu}" = x"yes"; then
 fi
 if test x"${use_hipblas}" = x"yes"; then
         AC_DEFINE([HIPBLAS], [1], [use hipblas instead of rocblas])
+else
+	AC_DEFINE([WITH_HIPCUB], [1], [use hipcub library in some kernels])
 fi
+
 
 use_openmp_gpu_backend=no
 use_sycl_gpu_backend=no
