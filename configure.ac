@@ -2592,6 +2592,8 @@ else
 fi
 AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[is_intel=yes],[])
 AX_FC_CHECK_DEFINE([__PGI],[is_pgi=yes],[])
+AX_FC_CHECK_DEFINE([_CRAYFTN],[is_cray=yes],[])
+
 ACTUAL_FC="$FC"
 AC_SUBST([ACTUAL_FC])
 
@@ -2599,6 +2601,9 @@ if test x"$is_intel" = x"yes" ; then
 	need_manual_cpp=yes
 fi
 if test x"$is_pgi" = x"yes" ; then
+	need_manual_cpp=yes
+fi
+if test x"$is_cray" = x"yes" ; then
 	need_manual_cpp=yes
 fi
 

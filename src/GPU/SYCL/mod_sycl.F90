@@ -388,7 +388,7 @@ module sycl_functions
     end function
   end interface
 
-  ! mkl lapack openmp offload
+  ! mkl lapack via sycl
   interface
     subroutine mkl_sycl_dtrtri_c(handle, uplo, diag, n, a, lda, info) &
                               bind(C,name='mklSyclDtrtriFromC')
@@ -509,8 +509,9 @@ module sycl_functions
     end subroutine
   end interface
 
-  ! mkl blas openmp offload
-  interface mkl_opemmp_offload_dgemm
+  ! mkl blas via sycl
+#ifdef WITH_SYCL_GPU_VERSION
+  interface mkl_sycl_dgemm
     module procedure mkl_sycl_dgemm_intptr
     module procedure mkl_sycl_dgemm_cptr
   end interface
@@ -595,7 +596,7 @@ module sycl_functions
     end subroutine
   end interface
 
-
+#endif /* WITH_SYCL_GPU_VERSION */
 
   interface mkl_sycl_dcopy
     module procedure mkl_sycl_dcopy_intptr
@@ -619,7 +620,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_dcopy_cptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='openmpOpenmpOffloadDcopyFromC')
+                              bind(C,name='mklSyclDcopyFromC')
 
       use, intrinsic :: iso_c_binding
 
@@ -827,6 +828,7 @@ module sycl_functions
     end subroutine
   end interface
 
+#ifdef WITH_SYCL_GPU_VERSION
 
   interface
     subroutine mkl_sycl_zgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
@@ -896,6 +898,7 @@ module sycl_functions
     end subroutine
   end interface
 
+#endif /* WITH_SYCL_GPU_VERSION */
 
   interface mkl_sycl_zcopy
     module procedure mkl_sycl_zcopy_intptr
