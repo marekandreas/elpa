@@ -1793,6 +1793,24 @@ if test x"${need_nvidia_gpu}" = x"yes"; then
       use_complex_nvidia_sm80_gpu=no
     fi
   fi
+
+  AC_MSG_CHECKING(whether the NVIDIA cub should be used (only for the real kernels))
+  AC_ARG_ENABLE([nvidia-cub],
+                AS_HELP_STRING([--enable-nvidia-cub],
+                               [use reductions from cub in real NVIDIA GPU kernel, default no]),
+                [
+               if test x"$enableval" = x"yes"; then
+                 use_cucub=yes
+               else
+                 use_cucub=no
+               fi
+               ],
+                [use_cucub=no])
+  AC_MSG_RESULT([${use_cucub}])
+
+  if test x"${use_cucub}" = x"yes"; then
+    AC_DEFINE([WITH_CUCUB], [1], [use cucub library in some kernels])
+  fi
 fi
 
 if test x"${need_nvidia_sm80_gpu}" = x"yes"; then

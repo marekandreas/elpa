@@ -52,7 +52,25 @@
 
 #include "config-f90.h"
 
+//switched off since still wrong results
+//#ifdef WITH_CUCUB
+//#define WITH_CUCUB_COMPLEX
+//#endif
 
+#ifdef WITH_CUCUB_COMPLEX
+#include <cub/cub.cuh>
+#endif
+
+#ifdef WITH_CUCUB_COMPLEX
+__host__ __device__ cuDoubleComplex operator+(const cuDoubleComplex &a, const cuDoubleComplex &b) {
+    return cuCadd(a,b);
+}
+__host__ __device__ cuFloatComplex operator+(const cuFloatComplex &a, const cuFloatComplex &b) {
+    return cuCaddf(a,b);
+
+#endif
+
+#ifndef WITH_CUCUB_COMPLEX
 template <typename T, unsigned int blk> __device__ void warp_reduce_complex(volatile T *s_block)
 {
     unsigned int tid = threadIdx.x;
@@ -166,13 +184,24 @@ template <typename T, unsigned int blk> __device__ void reduce_complex(T *s_bloc
     }
 
 }
+#endif /* WITH_CUCUB_COMPLEX */
 
 template <unsigned int blk>
-__global__ void compute_hh_trafo_cuda_kernel_complex_double(cuDoubleComplex * __restrict__ q, const cuDoubleComplex * __restrict__ hh, const cuDoubleComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
+__global__ void
+#ifdef WITH_CUCUB_COMPLEX
+__launch_bounds__(blk)
+#endif
+compute_hh_trafo_cuda_kernel_complex_double(cuDoubleComplex * __restrict__ q, const cuDoubleComplex * __restrict__ hh, const cuDoubleComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
 {
     __shared__ cuDoubleComplex q_s[blk + 1];
+#ifndef WITH_CUCUB_COMPLEX
     __shared__ cuDoubleComplex dotp_s[blk];
+#else
+    typedef cub::BlockReduce<cuDoubleComplex, blk> BlockReduceT;
+    __shared__ typename BlockReduceT::TempStorage temp_storage;
 
+    cuDoubleComplex q_v, dt, hv, ht;
+#endif
     cuDoubleComplex q_v2;
 
     int q_off, h_off, j;
@@ -187,12 +216,23 @@ __global__ void compute_hh_trafo_cuda_kernel_complex_double(cuDoubleComplex * __
 
     while (j >= 1)
     {
+#ifdef WITH_CUCUB_COMPLEX
+	ht = hh_tau[j - 1];
+        hv = hh[h_off];
+#endif
         if (tid == 0)
         {
             q_s[tid] = q[q_off];
         }
 
         q_v2 = q_s[tid];
+#ifdef WITH_CUCUB_COMPLEX
+        dt = cuCmul(q_v2, hipConj(hv));
+
+        q_v = BlockReduceT(temp_storage).Sum(dt);
+
+        q_v2 = cuCsub(q_v2, cuCmul(hipCmul(q_v, ht), hv));
+#else
         dotp_s[tid] = cuCmul(q_v2, cuConj(hh[h_off]));
 
         __syncthreads();
@@ -202,6 +242,7 @@ __global__ void compute_hh_trafo_cuda_kernel_complex_double(cuDoubleComplex * __
         __syncthreads();
 
         q_v2 = cuCsub(q_v2, cuCmul(cuCmul(dotp_s[0], hh_tau[j - 1]), hh[h_off]));
+#endif
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == blockDim.x - 1))
@@ -313,10 +354,21 @@ extern "C" void launch_compute_hh_trafo_c_cuda_kernel_complex_double(cuDoubleCom
 }
 
 template <unsigned int blk>
-__global__ void compute_hh_trafo_cuda_kernel_complex_single(cuFloatComplex * __restrict__ q, const cuFloatComplex * __restrict__ hh, const cuFloatComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
+__global__ void
+#ifdef WITH_HIPCUB
+__launch_bounds__(blk)
+#endif
+compute_hh_trafo_cuda_kernel_complex_single(cuFloatComplex * __restrict__ q, const cuFloatComplex * __restrict__ hh, const cuFloatComplex * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
 {
     __shared__ cuFloatComplex q_s[blk + 1];
+#ifndef WITH_CUCUB_COMPLEX
     __shared__ cuFloatComplex dotp_s[blk];
+#else
+    typedef cub::BlockReduce<cuFloatComplex, blk> BlockReduceT;
+    __shared__ typename BlockReduceT::TempStorage temp_storage;
+
+    cuFloatComplex q_v, dt, hv, ht;
+#endif
 
     cuFloatComplex q_v2;
 
@@ -332,12 +384,23 @@ __global__ void compute_hh_trafo_cuda_kernel_complex_single(cuFloatComplex * __r
 
     while (j >= 1)
     {
+#ifdef WITH_CUCUB_COMPLEX
+        ht = hh_tau[j - 1];
+        hv = hh[h_off];
+#endif
         if (tid == 0)
         {
             q_s[tid] = q[q_off];
         }
 
         q_v2 = q_s[tid];
+#ifdef WITH_CUCUB_COMPLEX
+        dt = cuCmulf(q_v2, cuConjf(hv));
+
+        q_v = BlockReduceT(temp_storage).Sum(dt);
+
+        q_v2 = cuCsubf(q_v2, cuCmulf(cuCmulf(q_v, ht), hv));
+#else
         dotp_s[tid] = cuCmulf(q_v2, cuConjf(hh[h_off]));
 
         __syncthreads();
@@ -347,6 +410,7 @@ __global__ void compute_hh_trafo_cuda_kernel_complex_single(cuFloatComplex * __r
         __syncthreads();
 
         q_v2 = cuCsubf(q_v2, cuCmulf(cuCmulf(dotp_s[0], hh_tau[j - 1]), hh[h_off]));
+#endif
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == blockDim.x - 1))
