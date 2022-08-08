@@ -110,13 +110,24 @@ extern "C" {
     }
   }
 
-  int cudaStreamSynchronizeFromC(intptr_t stream) {
+  int cudaStreamSynchronizeExplicitFromC(intptr_t stream) {
     cudaError_t status = cudaStreamSynchronize(*((cudaStream_t*)stream));
     if (status == cudaSuccess) {
       return 1;
     }
     else{
-      errormessage("Error in cudaStreamSynchronize: %s\n", "unknown error");
+      errormessage("Error in cudaStreamSynchronizeExplicit: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+  int cudaStreamSynchronizeImplicitFromC() {
+    cudaError_t status = cudaStreamSynchronize(cudaStreamPerThread);
+    if (status == cudaSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in cudaStreamSynchronizeImplicit: %s\n", "unknown error");
       return 0;
     }
   }
@@ -378,7 +389,7 @@ extern "C" {
     return 1;
   }
 
-  int cudaHostRegisterFromC(intptr_t *a, int value, int flag) {
+  int cudaHostRegisterFromC(intptr_t *a, intptr_t value, int flag) {
 
     cudaError_t cuerr = cudaHostRegister( a, value, flag);
     if (cuerr != cudaSuccess) {

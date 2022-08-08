@@ -14,6 +14,8 @@ include:
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/generated_tests.inc.yml'
   # layout tests
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/layout_tests.inc.yml'
+  # hip_on_nvidia
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/hip_on_nvidia_tests.inc.yml'
   # nvhpcsdk tests
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/nvhpcsdk_tests.inc.yml'
 

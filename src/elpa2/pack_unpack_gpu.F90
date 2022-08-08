@@ -73,6 +73,7 @@ subroutine pack_row_group_&
   use elpa_abstract_impl
   use precision
   use, intrinsic :: iso_c_binding
+  !use elpa_utilities, only : check_stream_synchronize_gpu_f
   implicit none
   class(elpa_abstract_impl_t), intent(inout)   :: obj
   integer(kind=c_intptr_t)                     :: row_group_dev, a_dev, result_buffer_dev
@@ -123,6 +124,17 @@ subroutine pack_row_group_&
 
   if (.not.(allComputeOnGPU)) then
 #ifdef WITH_GPU_STREAMS
+   successGPU = gpu_stream_synchronize(my_stream)
+   !check_stream_synchronize_gpu("pack_row_group", successGPU)
+   if (.not.(successGPU)) then
+     print *,"pack_row_group_&
+     &MATH_DATATYPE&
+     &_gpu_&
+     &PRECISION&
+     &: error in stream_synchronize"
+     stop 1
+   endif
+
     successGPU =  gpu_memcpy_async(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
     &PRECISION&
     &_&
@@ -136,6 +148,7 @@ subroutine pack_row_group_&
       &: error in cudaMemcpy"
       stop 1
     endif
+
     successGPU = gpu_stream_synchronize(my_stream)
     if (.not.(successGPU)) then
       print *,"pack_row_group_&
@@ -145,7 +158,17 @@ subroutine pack_row_group_&
       &: error in stream_synchronize"
       stop 1
     endif
-#else
+    ! synchronize streamsPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
+    if (.not.(successGPU)) then
+      print *,"pack_row_group_&
+      &MATH_DATATYPE&
+      &_gpu_&
+      &PRECISION&
+      &: error in stream_synchronize"
+      stop 1
+    endif
+#else /* WITH_GPU_STREAMS */
     successGPU =  gpu_memcpy(int(loc(rows(:, 1: row_count)),kind=c_intptr_t), row_group_dev , row_count * l_nev * size_of_&
     &PRECISION&
     &_&
@@ -159,11 +182,22 @@ subroutine pack_row_group_&
       &: error in cudaMemcpy"
       stop 1
     endif
-#endif
+#endif /* WITH_GPU_STREAMS */
   else ! allComputeOnGPU
     if (doCopyResult) then
       ! need to copy row_group_dev -> result_buffer_dev
-#ifdef WITH_GPU_STREAMS
+#ifdef WITH_GPU_STREAMS  
+      successGPU = gpu_stream_synchronize(my_stream)
+      !check_stream_synchronize_gpu("pack_row_group 1", successGPU)
+      if (.not.(successGPU)) then
+        print *,"pack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in stream_synchronize"
+        stop 1
+      endif
+
       successGPU =  gpu_memcpy_async(c_loc(result_buffer_mpi_fortran_ptr(1, 1, nbuf)), &
                     row_group_dev , row_count * l_nev * size_of_&
                     &PRECISION&
@@ -178,6 +212,7 @@ subroutine pack_row_group_&
         &: error in cudaMemcpy"
         stop 1
       endif
+
       successGPU = gpu_stream_synchronize(my_stream)
       if (.not.(successGPU)) then
         print *,"pack_row_group_&
@@ -187,8 +222,18 @@ subroutine pack_row_group_&
         &: error in stream_synchronize"
         stop 1
       endif
+      ! synchronize streamsPerThread; maybe not neccessary
+      successGPU = gpu_stream_synchronize()
+      if (.not.(successGPU)) then
+        print *,"pack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in stream_synchronize"
+        stop 1
+      endif
 
-#else
+#else /* WITH_GPU_STREAMS */
       successGPU =  gpu_memcpy(c_loc(result_buffer_mpi_fortran_ptr(1, 1, nbuf)), &
                     row_group_dev , row_count * l_nev * size_of_&
                     &PRECISION&
@@ -203,7 +248,7 @@ subroutine pack_row_group_&
         &: error in cudaMemcpy"
         stop 1
       endif
-#endif
+#endif /* WITH_GPU_STREAMS */
 
     endif
   endif ! allComputeOnGPU
@@ -222,6 +267,7 @@ subroutine unpack_row_group_&
   use gpu_c_kernel
   use elpa_abstract_impl
 
+  !use elpa_utilities, only : check_stream_synchronize_gpu_f
   use precision
   use, intrinsic :: iso_c_binding
   use elpa_gpu, only : gpu_devicesynchronize, gpu_memcpy_async, gpuMemcpyHostToDevice, gpu_memcpy, &
@@ -270,6 +316,16 @@ subroutine unpack_row_group_&
         stop 1
     endif
     successGPU = gpu_stream_synchronize(my_stream)
+    if (.not.(successGPU)) then
+        print *,"unpack_row_group_&
+        &MATH_DATATYPE&
+        &_gpu_&
+        &PRECISION&
+        &: error in cudaStreamSynchronize"
+        stop 1
+    endif
+    ! synchronize streamsPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
     if (.not.(successGPU)) then
         print *,"unpack_row_group_&
         &MATH_DATATYPE&
@@ -335,6 +391,7 @@ subroutine unpack_and_prepare_row_group_&
   use precision
   use gpu_c_kernel
   use elpa_abstract_impl
+  !use elpa_utilities, only : check_stream_synchronize_gpu_f
 
   implicit none
 
