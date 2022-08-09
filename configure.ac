@@ -2462,7 +2462,7 @@ AC_ARG_ENABLE([SX-Aurora],
 			      fi],
               [enable_kcomputer=no])
 AC_MSG_RESULT([${enable_sxaurora}])
-AM_CONDITIONAL([BUILD_KCOMPUTER],[test x"$enable_sxaurora" = x"yes"])
+AM_CONDITIONAL([BUILD_SXAURORA],[test x"$enable_sxaurora" = x"yes"])
 if test x"${enable_sxaurora}" = x"yes"; then
  AC_DEFINE([BUILD_SXAURORA], [1], [build for SX-Aurora])
  FC_MODINC="-I"
