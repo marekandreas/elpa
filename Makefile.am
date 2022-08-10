@@ -112,6 +112,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
+  src/GPU/device_arrays_template.F90 \
+  src/GPU/handle_creation_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
@@ -891,6 +893,8 @@ EXTRA_DIST = \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
   src/GPU/check_legacy_gpu_setting_template.F90 \
+  src/GPU/device_arrays_template.F90 \
+  src/GPU/handle_creation_template.F90 \
   src/GPU/CUDA/cuUtils_template.cu \
   src/GPU/ROCm/hipUtils_template.cpp \
   src/GPU/SYCL/syclUtils.cpp \
