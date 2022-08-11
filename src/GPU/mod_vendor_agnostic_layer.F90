@@ -320,9 +320,11 @@ module elpa_gpu
       logical                               :: success
 
 #ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
       if (use_gpu_vendor == nvidia_gpu) then
         success = cublas_set_stream(handle, stream)
       endif
+#endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
@@ -368,9 +370,11 @@ module elpa_gpu
 
       if (present(stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
         if (use_gpu_vendor == nvidia_gpu) then
           success = cuda_stream_synchronize(stream)
         endif
+#endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
@@ -381,9 +385,11 @@ module elpa_gpu
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
         if (use_gpu_vendor == nvidia_gpu) then
           success = cuda_stream_synchronize()
         endif
+#endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_GPU_STREAMS

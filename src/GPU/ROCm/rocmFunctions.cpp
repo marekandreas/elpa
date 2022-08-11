@@ -156,13 +156,53 @@
 #define BLAS_diagonal_unit HIPBLAS_DIAG_UNIT
 //#define BLAS_float_complex hipblas_float_complex
 //#define BLAS_set_stream hipblas_set_stream
-#else
+#else /* HIPBLAS */
 #define BLAS rocblas
-//#define BLAS_status rocblas_status
-//#define BLAS_handle rocblas_handle
-//#define BLAS_float_complex rocblas_float_complex
-//#define BLAS_set_stream rocblas_set_stream
-#endif
+#define BLAS_status rocblas_status
+#define BLAS_handle rocblas_handle
+#define BLAS_set_stream rocblas_set_stream
+#define BLAS_status_success rocblas_status_success
+#define BLAS_status_invalid_handle rocblas_status_invalid_handle
+#define BLAS_status_memory_error rocblas_status_memory_error
+#define BLAS_create_handle rocblas_create_handle
+#define BLAS_destroy_handle rocblas_destroy_handle
+#define BLAS_double_complex rocblas_double_complex
+#define BLAS_float_complex rocblas_float_complex
+#define BLAS_ctrsm rocblas_ctrsm
+#define BLAS_ztrsm rocblas_ztrsm
+#define BLAS_dtrsm rocblas_dtrsm
+#define BLAS_strsm rocblas_strsm
+#define BLAS_ctrmm rocblas_ctrmm
+#define BLAS_ztrmm rocblas_ztrmm
+#define BLAS_dtrmm rocblas_dtrmm
+#define BLAS_strmm rocblas_strmm
+#define BLAS_ccopy rocblas_ccopy
+#define BLAS_zcopy rocblas_zcopy
+#define BLAS_dcopy rocblas_dcopy
+#define BLAS_scopy rocblas_scopy
+#define BLAS_cgemm rocblas_cgemm
+#define BLAS_zgemm rocblas_zgemm
+#define BLAS_dgemm rocblas_dgemm
+#define BLAS_sgemm rocblas_sgemm
+#define BLAS_cgemv rocblas_cgemv
+#define BLAS_zgemv rocblas_zgemv
+#define BLAS_dgemv rocblas_dgemv
+#define BLAS_sgemv rocblas_sgemv
+#define BLAS_operation rocblas_operation
+#define BLAS_operation_none rocblas_operation_none
+#define BLAS_operation_transpose rocblas_operation_transpose
+#define BLAS_operation_conjugate_transpose rocblas_operation_conjugate_transpose
+#define BLAS_operation_none rocblas_operation_none
+#define BLAS_fill rocblas_fill
+#define BLAS_fill_lower rocblas_fill_lower
+#define BLAS_fill_upper rocblas_fill_upper
+#define BLAS_side rocblas_side
+#define BLAS_side_left rocblas_side_left
+#define BLAS_side_right rocblas_side_right
+#define BLAS_diagonal rocblas_diagonal
+#define BLAS_diagonal_non_unit rocblas_diagonal_non_unit
+#define BLAS_diagonal_unit rocblas_diagonal_unit
+#endif /* HIPBLAS */
 
 #ifdef HIPBLAS
 #include "hipblas.h"
