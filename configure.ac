@@ -1858,8 +1858,26 @@ if test x"${need_amd_gpu}" = x"yes"; then
 fi
 if test x"${use_hipblas}" = x"yes"; then
         AC_DEFINE([HIPBLAS], [1], [use hipblas instead of rocblas])
-else
-	AC_DEFINE([WITH_HIPCUB], [1], [use hipcub library in some kernels])
+fi
+
+if test x"${need_amd_gpu}" = x"yes"; then
+  AC_MSG_CHECKING(whether the hipcub should be used)
+  AC_ARG_ENABLE([hipcub],
+                AS_HELP_STRING([--enable-hipcub],
+                               [use reductions from hipub in AMD GPU kernels, default no]),
+                [
+               if test x"$enableval" = x"yes"; then
+                 use_hipcub=yes
+               else
+                 use_hipcub=no
+               fi
+               ],
+                [use_hipcub=no])
+  AC_MSG_RESULT([${use_hipcub}])
+
+  if test x"${use_hipcub}" = x"yes"; then
+    AC_DEFINE([WITH_HIPCUB], [1], [use hipcub library in some kernels])
+  fi
 fi
 
 
