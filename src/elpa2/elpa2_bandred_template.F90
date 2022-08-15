@@ -2307,11 +2307,15 @@ contains
                ONE, ex_buff2d, size(ex_buff2d,1,kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1, &
                1_BLAS_KIND)
        else
+#ifdef WITH_OPENMP_TRADITIONAL
           !$omp  parallel do private(nlc)
+#endif
           do nlc=1,imax
              aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,nlc))
           end do
-          !$omp end parallel do          
+#ifdef WITH_OPENMP_TRADITIONAL
+          !$omp end parallel do
+#endif         
        end if
     else
        aux1(1:imax) = 0.
