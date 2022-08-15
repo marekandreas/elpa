@@ -223,11 +223,8 @@ module mod_check_for_gpu
 
         success = .true.
         if (.not.(allreadySet)) then
-
+          deviceNumber = use_gpu_id
 #include "./device_arrays_template.F90"
-          if (wantDebugMessage) then
-            print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
-          endif
 
 #include "./handle_creation_template.F90"
 
@@ -327,9 +324,6 @@ module mod_check_for_gpu
 
           !include device arrays here
 #include "./device_arrays_template.F90"
-          if (wantDebugMessage) then
-            print '(3(a,i0))', 'MPI rank ', myid, ' uses GPU #', deviceNumber
-          endif
 
           call obj%timer%stop("set_device")
 
