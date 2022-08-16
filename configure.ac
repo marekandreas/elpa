@@ -1793,6 +1793,24 @@ if test x"${need_nvidia_gpu}" = x"yes"; then
       use_complex_nvidia_sm80_gpu=no
     fi
   fi
+
+  AC_MSG_CHECKING(whether the NVIDIA cub should be used (only for the real kernels))
+  AC_ARG_ENABLE([nvidia-cub],
+                AS_HELP_STRING([--enable-nvidia-cub],
+                               [use reductions from cub in real NVIDIA GPU kernel, default no]),
+                [
+               if test x"$enableval" = x"yes"; then
+                 use_cucub=yes
+               else
+                 use_cucub=no
+               fi
+               ],
+                [use_cucub=no])
+  AC_MSG_RESULT([${use_cucub}])
+
+  if test x"${use_cucub}" = x"yes"; then
+    AC_DEFINE([WITH_CUCUB], [1], [use cucub library in some kernels])
+  fi
 fi
 
 if test x"${need_nvidia_sm80_gpu}" = x"yes"; then
@@ -1841,6 +1859,27 @@ fi
 if test x"${use_hipblas}" = x"yes"; then
         AC_DEFINE([HIPBLAS], [1], [use hipblas instead of rocblas])
 fi
+
+if test x"${need_amd_gpu}" = x"yes"; then
+  AC_MSG_CHECKING(whether the hipcub should be used)
+  AC_ARG_ENABLE([hipcub],
+                AS_HELP_STRING([--enable-hipcub],
+                               [use reductions from hipub in AMD GPU kernels, default no]),
+                [
+               if test x"$enableval" = x"yes"; then
+                 use_hipcub=yes
+               else
+                 use_hipcub=no
+               fi
+               ],
+                [use_hipcub=no])
+  AC_MSG_RESULT([${use_hipcub}])
+
+  if test x"${use_hipcub}" = x"yes"; then
+    AC_DEFINE([WITH_HIPCUB], [1], [use hipcub library in some kernels])
+  fi
+fi
+
 
 use_openmp_gpu_backend=no
 use_sycl_gpu_backend=no
@@ -2592,6 +2631,8 @@ else
 fi
 AX_FC_CHECK_DEFINE([__INTEL_COMPILER],[is_intel=yes],[])
 AX_FC_CHECK_DEFINE([__PGI],[is_pgi=yes],[])
+AX_FC_CHECK_DEFINE([_CRAYFTN],[is_cray=yes],[])
+
 ACTUAL_FC="$FC"
 AC_SUBST([ACTUAL_FC])
 
@@ -2599,6 +2640,9 @@ if test x"$is_intel" = x"yes" ; then
 	need_manual_cpp=yes
 fi
 if test x"$is_pgi" = x"yes" ; then
+	need_manual_cpp=yes
+fi
+if test x"$is_cray" = x"yes" ; then
 	need_manual_cpp=yes
 fi
 

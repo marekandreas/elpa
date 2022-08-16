@@ -750,11 +750,15 @@ max_threads, isSkewsymmetric)
           cur_pcol = blockinfo(1,iblock)
           
           if(my_pcol.eq.cur_pcol) then
+#ifdef WITH_OPENMP_TRADITIONAL
              !$omp parallel do private(off)
+#endif
              do off=1,blc_len
                 ex_buff2d(1:lrex,blc_start+off-1)=a_mat(1:lrex,c_start+off-1)
              end do
+#ifdef WITH_OPENMP_TRADITIONAL
              !$omp end parallel do
+#endif
           end if
        end do
 #ifdef WITH_MPI
@@ -815,7 +819,9 @@ max_threads, isSkewsymmetric)
           cur_pcol = blockinfo(1,iblock)
           
           if(my_pcol.eq.cur_pcol) then
+#ifdef WITH_OPENMP_TRADITIONAL
              !$omp  parallel do private(off,lc,lch,ncol,nrow,lr)
+#endif
              do off=1,blc_len
                 lc=blc_start+off-1
                 lch=c_start+off-1
@@ -835,7 +841,9 @@ max_threads, isSkewsymmetric)
                    a_mat(1:lrex,c_start+off-1)=ex_buff2d(1:lrex,blc_start+off-1)
                 end if
              end do
-             !$omp end parallel do                
+#ifdef WITH_OPENMP_TRADITIONAL
+             !$omp end parallel do
+#endif             
           end if
        end do
 
@@ -2299,11 +2307,15 @@ contains
                ONE, ex_buff2d, size(ex_buff2d,1,kind=BLAS_KIND), vr, 1_BLAS_KIND, ZERO, aux1, &
                1_BLAS_KIND)
        else
+#ifdef WITH_OPENMP_TRADITIONAL
           !$omp  parallel do private(nlc)
+#endif
           do nlc=1,imax
              aux1(nlc) = dot_product(vr(1:lr),ex_buff2d(1:lr,nlc))
           end do
-          !$omp end parallel do          
+#ifdef WITH_OPENMP_TRADITIONAL
+          !$omp end parallel do
+#endif         
        end if
     else
        aux1(1:imax) = 0.
@@ -2343,11 +2355,15 @@ contains
        call PRECISION_GERC(int(lr,kind=BLAS_KIND),int(imax,kind=BLAS_KIND),tauc,vr,1_BLAS_KIND,&
             aux1,1_BLAS_KIND,ex_buff2d,ubound(ex_buff2d,1,kind=BLAS_KIND))
     else
+#ifdef WITH_OPENMP_TRADITIONAL 
        !$omp  parallel do private(nlc)
+#endif
        do nlc=1,imax         
           ex_buff2d(1:lr,nlc) = ex_buff2d(1:lr,nlc) + tauc*aux1(nlc)*vr(1:lr)
        end do
-       !$omp end parallel do       
+#ifdef WITH_OPENMP_TRADITIONAL 
+       !$omp end parallel do
+#endif       
     end if
 
   end subroutine apply_ht

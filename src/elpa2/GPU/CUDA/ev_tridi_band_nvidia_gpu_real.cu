@@ -51,7 +51,11 @@
 
 #include "config-f90.h"
 
-#if (CUDART_VERSION >= 9000)
+#ifdef WITH_CUCUB
+#include <cub/cub.cuh>
+#endif
+
+#if (CUDART_VERSION >= 9000) && !defined(WITH_CUCUB)
 template <typename T, unsigned int blk> __device__ void warp_shfl_reduce_real(volatile T *s_block)
 {
     unsigned int tid = threadIdx.x;
@@ -75,8 +79,9 @@ template <typename T, unsigned int blk> __device__ void warp_shfl_reduce_real(vo
 
     s_block[tid] = val;
 }
-#endif
+#endif /* (CUDART_VERSION >= 9000) && !defined(WITH_CUCUB) */
 
+#ifndef WITH_CUCUB
 template <typename T, unsigned int blk> __device__ void warp_reduce_real(volatile T *s_block)
 {
     unsigned int tid = threadIdx.x;
@@ -196,15 +201,28 @@ template <typename T, unsigned int blk> __device__ void reduce_real(T *s_block)
     }
 #endif
 }
+#endif /* ifndef CUCB */
 
 template <typename T, unsigned int blk>
-__global__ void compute_hh_trafo_cuda_kernel_real(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
+#ifdef WITH_HIPCUB
+__global__ void
+__launch_bounds__(blk)
+#else
+__global__ void
+#endif
+compute_hh_trafo_cuda_kernel_real(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau, const int nb, const int ldq, const int ncols)
 {
     __shared__ T q_s[blk + 1];
+#ifdef WITH_CUCUB
+    typedef cub::BlockReduce<T, blk> BlockReduceT;
+    __shared__ typename BlockReduceT::TempStorage temp_storage;
+#else
     __shared__ T dotp_s[blk];
-
+#endif
     T q_v2;
-
+#ifdef WITH_CUCUB
+    T q_v, dt, hv, ht;
+#endif
     int q_off, h_off, j;
 
     unsigned int tid = threadIdx.x;
@@ -217,12 +235,23 @@ __global__ void compute_hh_trafo_cuda_kernel_real(T * __restrict__ q, const T * 
 
     while (j >= 1)
     {
+#ifdef WITH_CUCUB
+	ht = hh_tau[j - 1];
+        hv = hh[h_off];
+#endif
         if (tid == 0)
         {
             q_s[tid] = q[q_off];
         }
 
         q_v2 = q_s[tid];
+#ifdef WITH_CUCUB
+        dt = q_v2 * hv;
+
+        q_v = BlockReduceT(temp_storage).Sum(dt);
+
+        q_v2 -= q_v * ht * hv;
+#else
         dotp_s[tid] = q_v2 * hh[h_off];
 
         __syncthreads();
@@ -232,6 +261,7 @@ __global__ void compute_hh_trafo_cuda_kernel_real(T * __restrict__ q, const T * 
         __syncthreads();
 
         q_v2 -= dotp_s[0] * hh_tau[j - 1] * hh[h_off];
+#endif
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == blockDim.x - 1))
