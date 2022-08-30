@@ -138,16 +138,16 @@ module mod_check_for_gpu
         enddo
       endif
 #endif
-!#ifdef WITH_AMD_GPU_VERSION
-!#ifdef WITH_AMD_CUSOLVER
-!      if (.not.(allocated(cusolverHandleArray))) then
-!        allocate(cusolverHandleArray(0:maxThreads-1))
-!        do thread=0, maxThreads-1
-!          cusolverHandleArray(thread) = -1
-!        enddo
-!      endif
-!#endif
-!#endif
+#ifdef WITH_AMD_GPU_VERSION
+#ifdef WITH_AMD_ROCSOLVER
+      if (.not.(allocated(rocsolverHandleArray))) then
+        allocate(rocsolverHandleArray(0:maxThreads-1))
+        do thread=0, maxThreads-1
+          rocsolverHandleArray(thread) = -1
+        enddo
+      endif
+#endif
+#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (.not.(allocated(openmpOffloadHandleArray))) then
         allocate(openmpOffloadHandleArray(0:maxThreads-1))
