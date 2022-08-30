@@ -201,6 +201,7 @@ compute_hh_trafo_cuda_kernel_complex_double(cuDoubleComplex * __restrict__ q, co
     __shared__ typename BlockReduceT::TempStorage temp_storage;
 
     cuDoubleComplex q_v, dt, hv, ht;
+    __shared__ cuDoubleComplex q_vs;
 #endif
     cuDoubleComplex q_v2;
 
@@ -230,6 +231,9 @@ compute_hh_trafo_cuda_kernel_complex_double(cuDoubleComplex * __restrict__ q, co
         dt = cuCmul(q_v2, hipConj(hv));
 
         q_v = BlockReduceT(temp_storage).Sum(dt);
+
+       if (tid == 0) q_vs = q_v;
+        __syncthreads();
 
         q_v2 = cuCsub(q_v2, cuCmul(hipCmul(q_v, ht), hv));
 #else
@@ -368,6 +372,7 @@ compute_hh_trafo_cuda_kernel_complex_single(cuFloatComplex * __restrict__ q, con
     __shared__ typename BlockReduceT::TempStorage temp_storage;
 
     cuFloatComplex q_v, dt, hv, ht;
+    __shared__ cuFloatComplex q_vs;
 #endif
 
     cuFloatComplex q_v2;
@@ -398,6 +403,9 @@ compute_hh_trafo_cuda_kernel_complex_single(cuFloatComplex * __restrict__ q, con
         dt = cuCmulf(q_v2, cuConjf(hv));
 
         q_v = BlockReduceT(temp_storage).Sum(dt);
+
+        if (tid == 0) q_vs = q_v;
+         __syncthreads();
 
         q_v2 = cuCsubf(q_v2, cuCmulf(cuCmulf(q_v, ht), hv));
 #else
