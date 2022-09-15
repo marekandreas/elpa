@@ -2,7 +2,7 @@
 from itertools import product
 
 language_flag = {
-    "Fortran": "",
+    #"Fortran": "",
     "C": "_c_version",
 }
 
@@ -111,7 +111,8 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
 
     if deviceptr == 1 and (m  != "random"):
         continue
-
+	
+	# C-tests only for "random" matrix and "square" layout
     if lang == "C" and (m == "analytic" or m == "toeplitz" or m == "frank" or lay == "all_layouts"):
         continue
 
@@ -124,7 +125,8 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
 
 
     # not implemented in the test.c file yet
-    if lang == "C" and (t == "cholesky" or t == "hermitian_multiply" or q == 1):
+    if lang == "C" and (t == "hermitian_multiply" or q == 1):
+    #if lang == "C" and (t == "cholesky" or t == "hermitian_multiply" or q == 1):
         continue
 
     # exclude some test combinations
@@ -161,7 +163,8 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     # cholesky tests only 1stage and teoplitz or random matrix
     if (t == "cholesky" and ((not (m == "toeplitz" or m == "random")) or s == "2stage")):
         continue
-
+	
+	# excludes "eigenvalues" from C-tests
     if (t == "eigenvalues" and (m == "random")):
         continue
 

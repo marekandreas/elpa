@@ -331,16 +331,16 @@
  */
 #define elpa_cholesky(handle, a, error) _Generic((a), \
                 double*: \
-                  elpa_cholesky_d, \
+                  elpa_cholesky_a_h_a_d, \
                 \
                 float*: \
-                  elpa_cholesky_f, \
+                  elpa_cholesky_a_h_a_f, \
                 \
                 double complex*: \
-                  elpa_cholesky_dc, \
+                  elpa_cholesky_a_h_a_dc, \
                 \
                 float complex*: \
-                  elpa_cholesky_fc \
+                  elpa_cholesky_a_h_a_fc \
         )(handle, a, error)
 
 
@@ -363,17 +363,17 @@
  */
 #define elpa_hermitian_multiply(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error) _Generic((a), \
                 double*: \
-                  elpa_hermitian_multiply_d, \
+                  elpa_hermitian_multiply_a_h_a_d, \
                 \
                 float*: \
-                  elpa_hermitian_multiply_f, \
+                  elpa_hermitian_multiply_a_h_a_f, \
                 \
                 double complex*: \
-                  elpa_hermitian_multiply_dc, \
+                  elpa_hermitian_multiply_a_h_a_dc, \
                 \
                 float complex*: \
-                  elpa_hermitian_multiply_fc \
-        )(handle, a, error)
+                  elpa_hermitian_multiply_a_h_a_fc \
+        )(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error)
 
 
 /*! \brief generic C method for elpa_invert_triangular

@@ -144,9 +144,9 @@ int main(int argc, char** argv) {
    /* mpi */
    C_INT_TYPE myid, nprocs;
    C_INT_MPI_TYPE myidMPI, nprocsMPI;
-   C_INT_TYPE na_cols, na_rows;
-   C_INT_TYPE np_cols, np_rows;
-   C_INT_TYPE my_prow, my_pcol;
+   C_INT_TYPE na_cols, na_rows; // local matrix size
+   C_INT_TYPE np_cols, np_rows; // number of MPI processes per column/row
+   C_INT_TYPE my_prow, my_pcol; // local MPI task position (my_prow, my_pcol) in the grid (0..np_cols -1, 0..np_rows -1)
    C_INT_TYPE mpi_comm;
    C_INT_MPI_TYPE provided_mpi_thread_level;
 
@@ -154,9 +154,19 @@ int main(int argc, char** argv) {
    C_INT_TYPE my_blacs_ctxt, sc_desc[9], info, blacs_ok;
 
    /* The Matrix */
-   MATRIX_TYPE *a, *as, *z, *b, *bs;
+   MATRIX_TYPE *a, *as;
+#if defined(TEST_HERMITIAN_MULTIPLY)
+   MATRIX_TYPE *b, *c;
+#endif	   
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+   MATRIX_TYPE *b, *bs;
+#endif	   
+   /* eigenvectors */
+   MATRIX_TYPE *z;
+   /* eigenvalues */
    EV_TYPE *ev;
 
+   
    C_INT_TYPE error, status;
    int error_elpa;
 
@@ -250,7 +260,8 @@ int main(int argc, char** argv) {
    }
 
 
-   /* allocate the matrices needed for elpa */
+   /* Allocate the matrices needed for elpa */
+	
    a  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
    z  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
    as = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
@@ -258,12 +269,22 @@ int main(int argc, char** argv) {
 
    PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, z, as);
 
+#ifdef TEST_HERMITIAN_MULTIPLY
+	b  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+	c  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+	PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, b, z, c); // b=c
+#endif
+	   
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-   b  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   bs = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, b, z, bs, nblk, np_rows, np_cols, my_prow, my_pcol);
+	b  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+	bs = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+	PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, b, z, bs, nblk, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
+#if defined(TEST_CHOLESKY)
+	PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol);
+#endif
+	
    if (elpa_init(CURRENT_API_VERSION) != ELPA_OK) {
      fprintf(stderr, "Error: ELPA API version not supported");
      exit(1);
@@ -273,6 +294,7 @@ int main(int argc, char** argv) {
    //assert_elpa_ok(error_elpa);
 
    /* Set parameters */
+	
    elpa_set(handle, "na", (int) na, &error_elpa);
    assert_elpa_ok(error_elpa);
 
@@ -309,7 +331,8 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
 
-   /* Set tunables */
+   /* Set kernel */
+	
 #ifdef TEST_SOLVER_1STAGE
    elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &error_elpa);
 #else
@@ -383,6 +406,24 @@ int main(int argc, char** argv) {
      printf("Solver is set to %d \n", value);
    }
 
+	/* The actual solve step */
+
+#if defined(TEST_EIGENVECTORS)
+	elpa_eigenvectors(handle, a, ev, z, &error_elpa);
+#endif
+
+#if defined(TEST_EIGENVALUES)
+	elpa_eigenvalues(handle, a, ev, &error_elpa);
+#endif
+
+#if defined(TEST_CHOLESKY)
+	elpa_cholesky(handle, a, &error_elpa);
+#endif
+
+#if defined(TEST_HERMITIAN_MULTIPLY)
+	elpa_hermitian_multiply(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+#endif
+	
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
      elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error_elpa);
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
@@ -390,35 +431,44 @@ int main(int argc, char** argv) {
      memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE));
      elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error_elpa);
 #endif
-#else
-   /* Solve EV problem */
-   elpa_eigenvectors(handle, a, ev, z, &error_elpa);
 #endif
+	
    assert_elpa_ok(error_elpa);
 
    elpa_deallocate(handle, &error_elpa);
    elpa_uninit(&error_elpa);
 
-   /* check the results */
-#if defined(TEST_GENERALIZED_EIGENPROBLEM)
-   status = CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
-                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs);
-#else
+   /* Check the results */
+
+#if defined(TEST_EIGENPROBLEM)
    status = CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
                                 sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+   status = CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
+                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs);
+#endif
+
+#if defined(TEST_EIGENPROBLEM) || defined(TEST_GENERALIZED_EIGENPROBLEM)
    if (status !=0){
      printf("The computed EVs are not correct !\n");
    }
    if (status ==0){
      printf("All ok!\n");
    }
-
+#endif
+	
    free(a);
    free(z);
    free(as);
    free(ev);
+	
+#ifdef TEST_HERMITIAN_MULTIPLY
+	free(b);
+	free(c);
+#endif
+	
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
    free(b);
    free(bs);

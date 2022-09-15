@@ -439,6 +439,8 @@ program test
 #endif
    endif
 
+	! Allocate the matrices needed for elpa 
+	
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
    allocate(z (na_rows,na_cols))
@@ -526,7 +528,7 @@ program test
    ! correctness checks have been implemented; do not allow these
    ! combinations
    ! ANALYTIC + TEST_SOLVE_TRIDIAGONAL: we need a TOEPLITZ MATRIX
-   ! ANALTIC  + TEST_CHOLESKY: no correctness check yet implemented
+   ! ANALYTIC + TEST_CHOLESKY: no correctness check yet implemented
 
    call prepare_matrix_analytic(na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
    as(:,:) = a
@@ -703,6 +705,8 @@ program test
    e => elpa_allocate(error_elpa)
    assert_elpa_ok(error_elpa)
 
+	! Set parameters
+	
    call e%set("na", int(na,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("nev", int(nev,kind=c_int), error_elpa)
@@ -810,7 +814,7 @@ program test
    endif
 #endif
 
-   ! set device
+   ! Set device
    success = .true.
 #if TEST_NVIDIA_GPU == 1
    success = cuda_setdevice(gpuID)
@@ -1034,6 +1038,7 @@ program test
 #endif
 
      ! The actual solve step
+	 
 #if defined(TEST_EIGENVECTORS)
 #if TEST_QR_DECOMPOSITION == 1
      call e%timer_start("e%eigenvectors_qr()")
@@ -1366,6 +1371,8 @@ program test
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
+     ! Check the results
+	 
      if (do_test_analytic_eigenvalues) then
        status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, &
                                            my_prow, my_pcol, check_all_evals, .false.)
