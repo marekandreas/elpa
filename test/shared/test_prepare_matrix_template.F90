@@ -192,11 +192,11 @@
 #ifdef DOUBLE_PRECISION_REAL
     !c> void prepare_matrix_random_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                          TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                          double *a, double *z, double *as);
+    !c>                                          double *a, double *z, double *as, int is_skewsymmetric);
 #else
     !c> void prepare_matrix_random_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                          TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                          float *a, float *z, float *as);
+    !c>                                          float *a, float *z, float *as, int is_skewsymmetric);
 #endif
 #endif /* REALCASE */
 
@@ -204,11 +204,11 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> void prepare_matrix_random_complex_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                             TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                             complex double *a, complex double *z, complex double *as);
+    !c>                                             complex double *a, complex double *z, complex double *as, int is_skewsymmetric);
 #else
     !c> void prepare_matrix_random_complex_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                             TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                             complex float *a, complex float *z, complex float *as);
+    !c>                                             complex float *a, complex float *z, complex float *as, int is_skewsymmetric);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -216,7 +216,7 @@ subroutine prepare_matrix_random_&
 &MATH_DATATYPE&
 &_wrapper_&
 &PRECISION&
-& (na, myid, na_rows, na_cols, sc_desc, a, z, as) &
+& (na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric) &
    bind(C, name="prepare_matrix_random_&
    &MATH_DATATYPE&
    &_&
@@ -228,6 +228,7 @@ subroutine prepare_matrix_random_&
 #include "./test_precision_kinds.F90"
 
       TEST_INT_TYPE , value   :: myid, na, na_rows, na_cols
+      integer, value          :: is_skewsymmetric
       TEST_INT_TYPE           :: sc_desc(1:9)
       MATH_DATATYPE(kind=rck) :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                  as(1:na_rows,1:na_cols)
@@ -235,7 +236,7 @@ subroutine prepare_matrix_random_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      & (na, myid, sc_desc, a, z, as)
+      & (na, myid, sc_desc, a, z, as, is_skewsymmetric=is_skewsymmetric)
     end subroutine
 
 !----------------------------------------------------------------------------------------------------------------

@@ -473,6 +473,23 @@ print("  " + " \\\n  ".join([
 print("endif")
 print("endif")
 
+name = "validate_real_skewsymmetric_double_c_version"
+print("if ENABLE_C_TESTS")
+print("if HAVE_SKEWSYMMETRIC")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/C/test_skewsymmetric.c")
+print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+print(name + "_CFLAGS = $(test_program_cflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
+print("endif")
+
+
+
+
 
 name = "validate_split_comm_real_double"
 print("check_SCRIPTS += " + name + "_extended.sh")
