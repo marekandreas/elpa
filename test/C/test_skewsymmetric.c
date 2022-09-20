@@ -291,6 +291,8 @@ int main(int argc, char** argv) {
      }
    }
 
+   free(z_skewsymmetric_prepare);
+
    // prepare the complex matrix for the "brute force" case
    a_complex  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
    z_complex  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
@@ -494,6 +496,8 @@ int main(int argc, char** argv) {
    MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+   free(z_complex);
+   free(ev_complex);
 
    free(a_skewsymmetric);
    free(z_skewsymmetric);
