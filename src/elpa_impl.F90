@@ -1388,19 +1388,19 @@ module elpa_impl
 #endif
           return
         endif ! mpierr happend
-        call self%set("mpi_comm_cols", -12345, error2)
-        if (error2 .ne. ELPA_OK) then
-#ifdef USE_FORTRAN2008
-          if (present(error)) then
-            error = error2
-          else
-            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-          endif
-#else
-          error = error2
-#endif
-          return
-        endif ! error happend
+!        call self%set("mpi_comm_cols", -12345, error2)
+!        if (error2 .ne. ELPA_OK) then
+!#ifdef USE_FORTRAN2008
+!          if (present(error)) then
+!            error = error2
+!          else
+!            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+!          endif
+!#else
+!          error = error2
+!#endif
+!          return
+!        endif ! error happend
         mpi_comm_colsMPI = int(mpi_comm_cols,kind=MPI_KIND)
         call mpi_comm_free(mpi_comm_colsMPI, mpierr)
         mpi_comm_cols = int(mpi_comm_colsMPI, kind=c_int)
@@ -1417,19 +1417,19 @@ module elpa_impl
 #endif
           return
         endif ! mpierr happend
-        call self%set("mpi_comm_rows", -12345,error2)
-        if (error2 .ne. ELPA_OK) then
-#ifdef USE_FORTRAN2008
-          if (present(error)) then
-            error = error2
-          else
-            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
-          endif
-#else
-          error = error2
-#endif
-          return
-        endif ! error happend
+!        call self%set("mpi_comm_rows", -12345,error2)
+!        if (error2 .ne. ELPA_OK) then
+!#ifdef USE_FORTRAN2008
+!          if (present(error)) then
+!            error = error2
+!          else
+!            write(error_unit, *) "Error in elpa_destroy but you do not check the error codes!"
+!          endif
+!#else
+!          error = error2
+!#endif
+!          return
+!        endif ! error happend
       endif
 #endif /* WITH_MPI */
 
