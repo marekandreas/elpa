@@ -496,6 +496,10 @@ int main(int argc, char** argv) {
    MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
+   elpa_deallocate(handle_complex, &error_elpa);
+   elpa_deallocate(handle_skewsymmetric, &error_elpa);
+   elpa_uninit(&error_elpa);
+
    free(z_complex);
    free(ev_complex);
 
