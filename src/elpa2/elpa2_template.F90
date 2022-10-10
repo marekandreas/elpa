@@ -203,6 +203,9 @@
                                                                                             &PRECISION&
                                                                                             &_&
                                                                                             &MATH_DATATYPE
+   integer(kind=c_intptr_t), parameter                                :: size_of_real_datatype = size_of_&
+                                                                                                 &PRECISION&
+                                                                                                 &_real
    integer(kind=ik)                                                   :: na, nev, nblk, matrixCols, &
                                                                          mpi_comm_rows, mpi_comm_cols,        &
                                                                          mpi_comm_all, check_pd, error, matrixRows
@@ -1591,7 +1594,7 @@ print *,"Device pointer + REDIST"
    successGPU = gpu_memcpy(qExtern, c_loc(qIntern(1,1)), obj%local_nrows*obj%local_ncols*size_of_datatype, &
                              gpuMemcpyHostToDevice)
    check_memcpy_gpu("elpa1: qIntern -> qExtern", successGPU)
-   successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_datatype, &
+   successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_real_datatype, &
                              gpuMemcpyHostToDevice)
    check_memcpy_gpu("elpa1: ev -> evExtern", successGPU)
 #endif

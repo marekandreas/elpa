@@ -243,19 +243,23 @@ program test
 #if TEST_GPU_DEVICE_POINTER_API == 1
 #if TEST_REAL == 1
 #if TEST_DOUBLE
-   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_double_real
+   integer(kind=c_intptr_t), parameter :: size_of_datatype      = size_of_double_real
+   integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_double_real
 #endif
 #if TEST_SINGLE
-   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_single_real
+   integer(kind=c_intptr_t), parameter :: size_of_datatype      = size_of_single_real
+   integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_single_real
 #endif
 #endif /* TEST_REAL == 1 */
 
 #if TEST_COMPLEX == 1
 #if TEST_DOUBLE
-   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_double_complex
+   integer(kind=c_intptr_t), parameter :: size_of_datatype      = size_of_double_complex
+   integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_double_real
 #endif
 #if TEST_SINGLE
-   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_single_complex
+   integer(kind=c_intptr_t), parameter :: size_of_datatype      = size_of_single_complex
+   integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_single_real
 #endif
 #endif
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
@@ -835,7 +839,7 @@ program test
      print *,"Cannot allocate matrix q on GPU! Aborting..."
      stop
    endif
-   successGPU = gpu_malloc(ev_dev, na*size_of_datatype)
+   successGPU = gpu_malloc(ev_dev, na*size_of_real_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate vector of eigenvalues on GPU! Aborting..."
      stop
