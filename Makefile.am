@@ -35,6 +35,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_private_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 libelpa@SUFFIX@_private_la_SOURCES = \
+  elpa/elpa_explicit_name.c \
   src/elpa_impl.F90 \
   src/elpa_autotune_impl.F90 \
   src/elpa_abstract_impl.F90 \
@@ -167,7 +168,7 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 if WITH_NVIDIA_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/elpa_explicit_name_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu
 
 if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real_sm80.cu src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh
@@ -884,6 +885,7 @@ EXTRA_DIST = \
   elpa.spec \
   elpa/elpa.h \
   elpa/elpa_generic.h \
+  elpa/elpa_explicit_name.h \
   src/GPU/SYCL/collectGpuDevices.h \
   fdep/fortran_dependencies.mk \
   fdep/fortran_dependencies.pl \

@@ -727,10 +727,10 @@ function check_correctness_evp_gen_numeric_residuals_&
       &PRECISION&
       & (na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs)
 
-    end function
-
+    end function   
+    
     !-----------------------------------------------------------------------------------------------------------
-
+    
     function check_correctness_eigenvalues_toeplitz_&
     &MATH_DATATYPE&
     &_&
@@ -809,6 +809,9 @@ function check_correctness_evp_gen_numeric_residuals_&
     endif
     end function
 
+    !-----------------------------------------------------------------------------------------------------------
+
+
     function check_correctness_cholesky_&
     &MATH_DATATYPE&
     &_&
@@ -836,7 +839,7 @@ function check_correctness_evp_gen_numeric_residuals_&
 
       status = 0
       tmp1(:,:) = 0.0_rck
-
+ 
 
 #if REALCASE == 1
       ! tmp1 = a**T
@@ -936,17 +939,89 @@ function check_correctness_evp_gen_numeric_residuals_&
 #endif
     end function
 
+   ! cholesky C-interface
+   ! additional parameter na_cols is needed on top of Fortran interface
+   
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> TEST_C_INT_TYPE check_correctness_cholesky_real_double_f(TEST_C_INT_TYPE na, 
+    !c>                                                        double *a, double *as,
+    !c>                                                        TEST_C_INT_TYPE na_rows,
+    !c>                                                        TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                        TEST_C_INT_TYPE myid);
+#else
+    !c> TEST_C_INT_TYPE check_correctness_cholesky_real_single_f(TEST_C_INT_TYPE na, 
+    !c>                                                        float  *a, float  *as,
+    !c>                                                        TEST_C_INT_TYPE na_rows,
+    !c>                                                        TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                        TEST_C_INT_TYPE myid);
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> TEST_C_INT_TYPE check_correctness_cholesky_complex_double_f(TEST_C_INT_TYPE na, 
+    !c>                                                        complex double *a, complex double *as,
+    !c>                                                        TEST_C_INT_TYPE na_rows,
+    !c>                                                        TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                        TEST_C_INT_TYPE myid);
+#else
+    !c> TEST_C_INT_TYPE check_correctness_cholesky_complex_single_f(TEST_C_INT_TYPE na, 
+    !c>                                                        complex float *a, complex float *as,
+    !c>                                                        TEST_C_INT_TYPE na_rows,    
+    !c>                                                        TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                        TEST_C_INT_TYPE myid);
+#endif
+#endif /* COMPLEXCASE */
+
+    function check_correctness_cholesky_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    &_f (na, a, as, na_rows, na_cols, sc_desc, myid) result(status) &
+      bind(C,name="check_correctness_cholesky_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &_f")
+      use iso_c_binding
+      use precision_for_tests
+      implicit none
+#include "./test_precision_kinds.F90"
+      
+      TEST_INT_TYPE            :: status
+      TEST_INT_TYPE, value     :: na, na_rows, na_cols, myid
+      MATH_DATATYPE(kind=rck)  :: a(1:na_rows,1:na_cols), as(1:na_rows,1:na_cols)
+      TEST_INT_TYPE            :: sc_desc(1:9)
+
+      status = check_correctness_cholesky_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      & (na, a, as, na_rows, sc_desc, myid)
+
+    end function
+    
+    !-----------------------------------------------------------------------------------------------------------
+    ! transa_NH = 'H' - hermitian multiply  C = A**H * B
+    ! transa_NH = 'N' - normal multiply     C = A    * B
+	
     function check_correctness_hermitian_multiply_&
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    & (na, a, b, c, na_rows, sc_desc, myid) result(status)
+    & (transa_NH, na, a, b, c, na_rows, sc_desc, myid) result(status) 
       use precision_for_tests
       use tests_blas_interfaces
       use tests_scalapack_interfaces
       implicit none
 #include "./test_precision_kinds.F90"
       TEST_INT_TYPE                                                   :: status
+	  character*1                                                     :: transa_NH, transa_NTC
       TEST_INT_TYPE, intent(in)                                       :: na, myid, na_rows
       MATH_DATATYPE(kind=rck), intent(in)                             :: a(:,:), b(:,:), c(:,:)
       MATH_DATATYPE(kind=rck), dimension(size(a,dim=1),size(a,dim=2)) :: tmp1, tmp2
@@ -963,38 +1038,47 @@ function check_correctness_evp_gen_numeric_residuals_&
       status = 0
       tmp1(:,:) = ZERO
 
-#if REALCASE == 1
-      ! tmp1 = a**T
-#ifdef WITH_MPI
-      call p&
-            &BLAS_CHAR&
-            &tran(na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
-#else /* WITH_MPI */
-      tmp1 = transpose(a)
-#endif /* WITH_MPI */
+! #if REALCASE == 1
+      ! ! tmp1 = a**T
+! #ifdef WITH_MPI
+      ! call p&
+            ! &BLAS_CHAR&
+            ! &tran(na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
+! #else /* WITH_MPI */
+      ! tmp1 = transpose(a)
+! #endif /* WITH_MPI */
 
-#endif /* REALCASE == 1 */
+! #endif /* REALCASE == 1 */
 
-#if COMPLEXCASE == 1
-      ! tmp1 = a**H
-#ifdef WITH_MPI
-      call p&
-            &BLAS_CHAR&
-            &tranc(na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
-#else /* WITH_MPI */
-      tmp1 = transpose(conjg(a))
-#endif /* WITH_MPI */
-#endif /* COMPLEXCASE == 1 */
+! #if COMPLEXCASE == 1
+      ! ! tmp1 = a**H
+! #ifdef WITH_MPI
+      ! call p&
+            ! &BLAS_CHAR&
+            ! &tranc(na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
+! #else /* WITH_MPI */
+      ! tmp1 = transpose(conjg(a))
+! #endif /* WITH_MPI */
+! #endif /* COMPLEXCASE == 1 */
 
+   transa_NTC = "N"
+   if (transa_NH .eq. "H") then
+#if REALCASE == 1   
+      transa_NTC = "T"
+#else
+      transa_NTC = "C"
+#endif
+   endif
+   
    ! tmp2 = tmp1 * b
 #ifdef WITH_MPI
    call p&
          &BLAS_CHAR&
-         &gemm("N","N", na, na, na, ONE, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, b, 1_BLAS_KIND, 1_BLAS_KIND, &
+         &gemm(transa_NTC,"N", na, na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, b, 1_BLAS_KIND, 1_BLAS_KIND, &
                sc_desc, ZERO, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else
    call BLAS_CHAR&
-        &gemm("N","N", na, na, na, ONE, tmp1, na, b, na, ZERO, tmp2, na)
+        &gemm(transa_NTC,"N", na, na, na, ONE, a, na, b, na, ZERO, tmp2, na)
 #endif
 
       ! compare tmp2 with c
@@ -1053,6 +1137,76 @@ function check_correctness_evp_gen_numeric_residuals_&
       endif
 #endif
     end function
+
+   ! hermitian_multiply C-interface
+   ! additional parameter na_cols is needed on top of Fortran interface
+   
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_real_double_f(char transa_NH, TEST_C_INT_TYPE na, 
+    !c>                                                        double *a, double *b, double *c,
+    !c>                                                        TEST_C_INT_TYPE na_rows,
+    !c>                                                        TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                        TEST_C_INT_TYPE myid);
+#else
+    !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_real_single_f(char transa_NH, TEST_C_INT_TYPE na, 
+    !c>                                                        float *a, float *b, float *c,
+    !c>                                                        TEST_C_INT_TYPE na_rows,
+    !c>                                                        TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                        TEST_C_INT_TYPE myid);
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_complex_double_f(char transa_NH, TEST_C_INT_TYPE na, 
+    !c>                                                        complex double *a, complex double *b, complex double *c,
+    !c>                                                        TEST_C_INT_TYPE na_rows,
+    !c>                                                        TEST_C_INT_TYPE na_cols,    
+    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                        TEST_C_INT_TYPE myid);
+#else
+    !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_complex_single_f(char transa_NH, TEST_C_INT_TYPE na, 
+    !c>                                                        complex float *a, complex float *b, complex float *c,
+    !c>                                                        TEST_C_INT_TYPE na_rows,
+    !c>                                                        TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+    !c>                                                        TEST_C_INT_TYPE myid);
+#endif
+#endif /* COMPLEXCASE */
+
+    function check_correctness_hermitian_multiply_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    &_f (transa_NH, na, a, b, c, na_rows, na_cols, sc_desc, myid) result(status) &
+      bind(C,name="check_correctness_hermitian_multiply_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &_f")
+      use iso_c_binding
+      use precision_for_tests
+      implicit none
+#include "./test_precision_kinds.F90"
+      
+      TEST_INT_TYPE              :: status
+	  character(1,C_CHAR), value :: transa_NH
+      TEST_INT_TYPE, value       :: na, na_rows, na_cols, myid
+      MATH_DATATYPE(kind=rck)    :: a(1:na_rows,1:na_cols), b(1:na_rows,1:na_cols), c(1:na_rows,1:na_cols)
+      TEST_INT_TYPE              :: sc_desc(1:9)
+
+      status = check_correctness_hermitian_multiply_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      & (transa_NH, na, a, b, c, na_rows, sc_desc, myid)
+
+      end function
+
+    !-----------------------------------------------------------------------------------------------------------
 
     function check_correctness_eigenvalues_frank_&
     &MATH_DATATYPE&

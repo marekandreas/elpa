@@ -2,7 +2,7 @@
 from itertools import product
 
 language_flag = {
-    #"Fortran": "",
+    "Fortran": "",
     "C": "_c_version",
 }
 
@@ -90,7 +90,12 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
                                                    sorted(split_comm_flag.keys()),
                                                    sorted(explicit_name_flag.keys())):
     
-
+    # for debugging the loop
+    #if (lang=="Fortran" and m=="toeplitz" and g=="NVIDIA_GPU_ON" and gid==1 and q==0 and t=="eigenvalues" and p=="double" and d=="real" and s=="1stage" and lay=="square" and spl=="by_elpa" and api_name=="explicit"):
+    #     print("Here")
+    
+    # begin: exclude some test combinations
+         
     if gid == 1 and (g == "GPU_OFF" ):
         continue
 
@@ -103,39 +108,42 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if lay == "all_layouts" and (api_name == "explicit"):
         continue
 
-    if api_name == "explicit" and (m  != "random"):
+    if api_name == "explicit" and not(m  == "random" 
+                                      or (lang=="Fortran" and t=="eigenvalues" and m=="toeplitz" and s=="1stage" and lay=="square")
+                                      or (lang=="C" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
         continue
 
-    if gid == 1 and (m  != "random"):
-        continue
+    if gid == 1 and not(m  == "random" 
+                        or (lang=="Fortran" and t=="eigenvalues" and m=="toeplitz" and s=="1stage" and lay=="square")
+                        or (lang=="C" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
+         continue
 
-    if deviceptr == 1 and (m  != "random"):
-        continue
+    if deviceptr == 1 and not(m  == "random" 
+                              or (lang=="Fortran" and t=="eigenvalues" and m=="toeplitz" and s=="1stage" and lay=="square")
+                              or (lang=="C" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
+      continue
 	
-	# C-tests only for "random" matrix and "square" layout
-    if lang == "C" and (m == "analytic" or m == "toeplitz" or m == "frank" or lay == "all_layouts"):
+    # C-tests only for "random" or "analytic" matrix and "square" layout
+    if lang == "C" and (m == "toeplitz" or m == "frank" or lay == "all_layouts"):
         continue
 
-    if lang == "C" and (api_name == "explicit"):
+    if lang == "C" and (api_name == "explicit") and (gid != deviceptr) and (t != "eigenvectors") and (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply"):
         continue
-
-    if api_name == "explicit" and ((t != "eigenvectors") and (t != "cholesky") and (t != "hermitian_multiply")):
+       
+    if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply")):
         continue
-
-
 
     # not implemented in the test.c file yet
-    if lang == "C" and (t == "hermitian_multiply" or q == 1):
-    #if lang == "C" and (t == "cholesky" or t == "hermitian_multiply" or q == 1):
+    if lang == "C" and q == 1:
         continue
 
-    # exclude some test combinations
-
-    # analytic tests only for "eigenvectors"
+    # analytic tests only for "eigenvectors" (Fortan) and "eigenvalues" (C)
     #if(m == "analytic" and ( g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON" or t != "eigenvectors")):
-    if(m == "analytic" and t != "eigenvectors"):
+    if(m == "analytic" and lang == "Fortran" and t != "eigenvectors"):
         continue
-
+    if(m == "analytic" and lang == "C" and t != "eigenvalues"):
+        continue
+       
     # Frank tests only for "eigenvectors" and eigenvalues and real double precision case
     if(m == "frank" and ((t != "eigenvectors" or t != "eigenvalues") and (d != "real" or p != "double"))):
         continue
@@ -164,8 +172,11 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if (t == "cholesky" and ((not (m == "toeplitz" or m == "random")) or s == "2stage")):
         continue
 	
-	# excludes "eigenvalues" from C-tests
     if (t == "eigenvalues" and (m == "random")):
+        continue
+    
+    # "eigenvalues" in C are tested only for analytic matrix
+    if (t == "eigenvalues" and lang == "C" and m != "analytic"):
         continue
 
     if (t == "hermitian_multiply" and (s == "2stage")):
@@ -197,7 +208,9 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
 
         if (lang == "C" and kernel == "all_kernels"):
             continue
-
+        
+        # end: exclude some test combinations
+      
         if (lang == "C"):
             print("if ENABLE_C_TESTS")
             endifs += 1
@@ -422,6 +435,98 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         print("endif")
     print("endif")
 
+
+
+
+#invert_triangular with GPU
+gpu_combined_flag = {
+    0: "-DTEST_GPU=0",
+    1: "-DTEST_GPU=1",
+}
+for lang, p, d, g, api_name in product(sorted(language_flag.keys()), 
+                             sorted(prec_flag.keys()), 
+                             sorted(domain_flag.keys()),
+                             sorted(gpu_flag.keys()), 
+                             sorted(explicit_name_flag.keys())):
+    endifs = 0
+    
+    use_gpu = 0
+    if (g!="GPU_OFF"): use_gpu=1
+    
+    # exclude some test combinations
+    
+    if use_gpu==1 and api_name!="explicit":
+        continue
+    
+    # conditional cases
+    
+    if (g == "NVIDIA_GPU_ON"):
+        print("if WITH_NVIDIA_GPU_VERSION")
+        endifs += 1
+
+    #if (g == "INTEL_GPU_ON"):
+    #    print("if WITH_INTEL_GPU_VERSION")
+    #    endifs += 1
+
+    if (g == "OPENMP_OFFLOAD_GPU_ON"):
+        print("if WITH_OPENMP_OFFLOAD_GPU_VERSION")
+        endifs += 1
+
+    if (g == "SYCL_GPU_ON"):
+        print("if WITH_SYCL_GPU_VERSION")
+        endifs += 1
+
+    if (g == "AMD_GPU_ON"):
+        print("if WITH_AMD_GPU_VERSION")
+        endifs += 1
+        
+    if (p == "single"):
+        if (d == "real"):
+            print("if WANT_SINGLE_PRECISION_REAL")
+        elif (d == "complex"):
+            print("if WANT_SINGLE_PRECISION_COMPLEX")
+        else:
+            raise Exception("Oh no!")
+        endifs += 1
+    
+    if (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON"):
+      gpu_suffix="gpu_api_"
+    else:
+      gpu_suffix=""
+            
+    name = "validate{langsuffix}_{d}_{p}_{gpu_suffix}{api_name}invert_triangular".format(
+        langsuffix=language_flag[lang], 
+        d=d, p=p, gpu_suffix=gpu_suffix,
+        api_name="explicit_" if api_name == "explicit" else "")
+
+    if lang == "C":
+        print("if ENABLE_C_TESTS")
+        endifs += 1
+    print("check_SCRIPTS += " + name + "_default.sh")
+    print("noinst_PROGRAMS += " + name)
+    if lang == "Fortran":
+        print(name + "_SOURCES = test/Fortran/test_invert_triangular.F90")
+        print(name + "_LDADD = $(test_program_ldadd)")
+        print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+
+    elif lang == "C":
+        print(name + "_SOURCES = test/C/test_invert_triangular.c")
+        print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+        print(name + "_CFLAGS = $(test_program_cflags) \\")
+
+    else:
+        raise Exception("Unknown language")
+
+    print("  " + " \\\n  ".join([
+        domain_flag[d],
+        prec_flag[p],
+        gpu_flag[g], 
+        explicit_name_flag[api_name],
+        gpu_combined_flag[use_gpu] ]))
+    
+    print("endif\n" * endifs)
+
+    
 name = "validate_multiple_objs_real_double"
 print("if ENABLE_AUTOTUNING")
 print("check_SCRIPTS += " + name + "_extended.sh")
@@ -432,7 +537,7 @@ print(name + "_FCFLAGS = $(test_program_fcflags) \\")
 print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['double']]))
-print("endif")
+print("endif\n")
 
 name = "validate_skewsymmetric_real_double"
 print("if HAVE_SKEWSYMMETRIC")
@@ -444,7 +549,7 @@ print(name + "_FCFLAGS = $(test_program_fcflags) \\")
 print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['double']]))
-print("endif")
+print("endif\n")
 
 name = "validate_skewsymmetric_real_single"
 print("if HAVE_SKEWSYMMETRIC")
@@ -458,7 +563,7 @@ print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['single']]))
 print("endif")
-print("endif")
+print("endif\n")
 
 
 
@@ -474,7 +579,7 @@ print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['double']]))
 print("endif")
-print("endif")
+print("endif\n")
 
 
 name = "validate_split_comm_real_double"

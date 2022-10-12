@@ -68,6 +68,16 @@ module test_prepare_matrix
 #endif
    end interface
 
+  interface prepare_matrix_random_triangular
+    module procedure prepare_matrix_random_triangular_complex_double
+    module procedure prepare_matrix_random_triangular_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_matrix_random_triangular_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_matrix_random_triangular_complex_single
+#endif
+   end interface
 
   interface prepare_matrix_toeplitz
     module procedure prepare_matrix_toeplitz_complex_double
@@ -93,7 +103,16 @@ module test_prepare_matrix
 #endif
    end interface
 
-
+  interface prepare_matrix_unit
+    module procedure prepare_matrix_unit_complex_double
+    module procedure prepare_matrix_unit_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_matrix_unit_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_matrix_unit_complex_single
+#endif
+   end interface
 
    private prows, pcols, map_global_array_index_to_local_index
 

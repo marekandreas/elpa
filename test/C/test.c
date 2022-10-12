@@ -53,6 +53,12 @@
 #include <elpa/elpa.h>
 #include <assert.h>
 
+#if (TEST_NVIDIA_GPU == 1)
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#endif
+
+
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
 #error "define exactly one of TEST_REAL or TEST_COMPLEX"
 #endif
@@ -75,14 +81,22 @@
 #    define MATRIX_TYPE float
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_real_single_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_real_single_f
+#    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_real_single_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_single_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_single_f
+#    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_real_single_f
+#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_single_f
+#    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_real_single_f
 #  else
 #    define MATRIX_TYPE complex float
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_single_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_single_f
+#    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_complex_single_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_single_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_complex_single_f
+#    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_complex_single_f
+#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_complex_single_f
+#    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_complex_single_f
 #  endif
 #else
 #  define EV_TYPE double
@@ -90,14 +104,22 @@
 #    define MATRIX_TYPE double
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_real_double_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_real_double_f
+#    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_real_double_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_double_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_double_f
+#    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_real_double_f
+#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_double_f
+#    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_real_double_f
 #  else
 #    define MATRIX_TYPE complex double
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_double_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_double_f
+#    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_complex_double_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_double_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_complex_double_f
+#    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_complex_double_f
+#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_complex_double_f
+#    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_complex_double_f
 #  endif
 #endif
 
@@ -137,6 +159,7 @@
 
 #include "test/shared/generated.h"
 
+
 int main(int argc, char** argv) {
    /* matrix dimensions */
    C_INT_TYPE na, nev, nblk;
@@ -153,6 +176,11 @@ int main(int argc, char** argv) {
    /* blacs */
    C_INT_TYPE my_blacs_ctxt, sc_desc[9], info, blacs_ok;
 
+   /* gpu */
+#if TEST_GPU_SET_ID == 1
+   C_INT_TYPE  gpuID = 0;
+#endif
+      
    /* The Matrix */
    MATRIX_TYPE *a, *as;
 #if defined(TEST_HERMITIAN_MULTIPLY)
@@ -166,6 +194,10 @@ int main(int argc, char** argv) {
    /* eigenvalues */
    EV_TYPE *ev;
 
+#if TEST_GPU_DEVICE_POINTER_API == 1
+   MATRIX_TYPE *a_dev, *z_dev, *b_dev, *c_dev;
+   EV_TYPE *ev_dev;
+#endif
    
    C_INT_TYPE error, status;
    int error_elpa;
@@ -219,6 +251,13 @@ int main(int argc, char** argv) {
 #endif
 #endif
 
+// pointer API is tested only for CUDA
+#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 0
+#ifdef WITH_MPI
+   MPI_Finalize();
+#endif
+   return 77;
+#endif
 
 
    if (argc == 4) {
@@ -239,6 +278,16 @@ int main(int argc, char** argv) {
 
    np_rows = nprocs/np_cols;
 
+   if (myid == 0){
+       printf("Matrix size: %i\n", na);
+       printf("Num eigenvectors: %i\n", nev);
+       printf("Blocksize: %i\n", nblk);
+#ifdef WITH_MPI
+       printf("Num MPI proc: %i\n", nprocs);
+       printf("Number of processor rows=%i, cols=%i, total=%i\n", np_rows, np_cols, nprocs);
+#endif
+   }
+         
    /* set up blacs */
    /* convert communicators before */
 #ifdef WITH_MPI
@@ -285,6 +334,12 @@ int main(int argc, char** argv) {
 	PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol);
 #endif
 	
+#if defined(TEST_EIGENVALUES)
+   PREPARE_MATRIX_ANALYTIC(na, a, na_rows, na_cols, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
+   memcpy(as, a, na_rows * na_cols * sizeof(MATRIX_TYPE));
+#endif  
+      
+   
    if (elpa_init(CURRENT_API_VERSION) != ELPA_OK) {
      fprintf(stderr, "Error: ELPA API version not supported");
      exit(1);
@@ -327,7 +382,7 @@ int main(int argc, char** argv) {
    elpa_set(handle, "blacs_context", (int) my_blacs_ctxt, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
-
+   
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
 
@@ -401,46 +456,503 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error_elpa);
 #endif /* defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL) */
 
+#if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
+   int nDevices;
+   cudaError_t err = cudaGetDeviceCount(&nDevices);
+   if (err != cudaSuccess) printf("%s\n", cudaGetErrorString(err));
+   printf("Number of Devices found: %d\n\n", nDevices);
+   // simple test
+   // Can (and should) fail often
+   gpuID = myid%2;
+   if(nDevices==1) gpuID=0; 
+   printf("gpuID: %i\n", gpuID);
+   elpa_set(handle, "use_gpu_id", gpuID, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+   
+#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 1
+   
+   // Set device
+   cudaError_t cuerr = cudaSetDevice(gpuID);
+   if (cuerr != cudaSuccess){    
+      printf("Error in cudaSetDevice: %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+#if defined(TEST_EIGENVECTORS)
+   // malloc
+   cuerr = cudaMalloc((void **) &a_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
+   if (cuerr != cudaSuccess){    
+      printf("Error in cudaMalloc(a_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaMalloc((void **) &z_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMalloc(z_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaMalloc((void **) &ev_dev, na*sizeof(EV_TYPE));   
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMalloc(ev_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+
+
+   cuerr = cudaMemcpy(a_dev, a, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(a_dev, a): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+#endif /* defined(TEST_EIGENVECTORS) */
+
+#if defined(TEST_EIGENVALUES)
+   // malloc
+   cuerr = cudaMalloc((void **) &a_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
+   if (cuerr != cudaSuccess){    
+      printf("Error in cudaMalloc(a_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaMalloc((void **) &ev_dev, na*sizeof(EV_TYPE));   
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMalloc(ev_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaMemcpy(a_dev, a, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(a_dev, a): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+#endif /* TEST_EIGENVALUES */
+
+#if defined(TEST_CHOLESKY)
+   elpa_set(handle, "gpu_cholesky", 1, &error_elpa);
+   assert_elpa_ok(error_elpa);
+   
+   cuerr = cudaMalloc((void **) &a_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
+   if (cuerr != cudaSuccess){    
+      printf("Error in cudaMalloc(a_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaMemcpy(a_dev, a, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(a_dev, a): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+#endif /* TEST_CHOLESKY */
+
+#if defined(TEST_HERMITIAN_MULTIPLY)
+   elpa_set(handle, "gpu_hermitian_multiply", 1, &error_elpa);
+   assert_elpa_ok(error_elpa);
+   
+   cuerr = cudaMalloc((void **) &a_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
+   if (cuerr != cudaSuccess){    
+      printf("Error in cudaMalloc(a_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+	
+   cuerr = cudaMalloc((void **) &b_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
+   if (cuerr != cudaSuccess){    
+      printf("Error in cudaMalloc(b_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      } 	
+	  
+   cuerr = cudaMalloc((void **) &c_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
+   if (cuerr != cudaSuccess){    
+      printf("Error in cudaMalloc(c_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaMemcpy(a_dev, a, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(a_dev, a): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+
+   cuerr = cudaMemcpy(b_dev, b, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(b_dev, b): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+
+   cuerr = cudaMemcpy(c_dev, c, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(c_dev, c): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+
+#endif /* TEST_HERMITIAN_MULTIPLY */
+
+#endif /* TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 1 */     
+   
    elpa_get(handle, "solver", &value, &error_elpa);
    if (myid == 0) {
      printf("Solver is set to %d \n", value);
    }
-
+      
+   //----------------------------------------------------------------------------------------------------------------------------     
 	/* The actual solve step */
 
 #if defined(TEST_EIGENVECTORS)
-	elpa_eigenvectors(handle, a, ev, z, &error_elpa);
+#if defined(TEST_EXPLICIT_NAME)
+   
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_eigenvectors_double(handle, a_dev, ev_dev, z_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_eigenvectors_double(handle, a    , ev    , z    , &error_elpa);
+     assert_elpa_ok(error_elpa);
 #endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_eigenvectors_float (handle, a_dev, ev_dev, z_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_eigenvectors_float (handle, a    , ev    , z    , &error_elpa);
+     assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_REAL */
 
-#if defined(TEST_EIGENVALUES)
-	elpa_eigenvalues(handle, a, ev, &error_elpa);
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_eigenvectors_double_complex(handle, a_dev, ev_dev, z_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_eigenvectors_double_complex(handle, a    , ev    , z    , &error_elpa);
+     assert_elpa_ok(error_elpa);
 #endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_eigenvectors_float_complex (handle, a_dev, ev_dev, z_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_eigenvectors_float_complex (handle, a    , ev    , z    , &error_elpa); 
+     assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_COMPLEX */
+   
+#else /* TEST_EXPLICIT_NAME */
+   
+	elpa_eigenvectors(handle, a, ev, z, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif /* TEST_EXPLICIT_NAME */
+#endif /* TEST_EIGENVECTORS */
+
+   
+#if defined(TEST_EIGENVALUES)
+#if defined(TEST_EXPLICIT_NAME)
+   
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+   elpa_eigenvalues_double(handle, a_dev, ev_dev, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+   elpa_eigenvalues_double(handle, a    , ev    , &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_eigenvalues_float (handle, a_dev, ev_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_eigenvalues_float (handle, a    , ev    , &error_elpa);
+     assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_REAL */
+
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_eigenvalues_double_complex(handle, a_dev, ev_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_eigenvalues_double_complex(handle, a    , ev    , &error_elpa);
+     assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_eigenvalues_float_complex (handle, a_dev, ev_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_eigenvalues_float_complex (handle, a    , ev    , &error_elpa); 
+     assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_COMPLEX */
+   
+#else /* TEST_EXPLICIT_NAME */   
+	elpa_eigenvalues(handle, a, ev, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif /* TEST_EXPLICIT_NAME */
+#endif /* TEST_EIGENVALUES */
 
 #if defined(TEST_CHOLESKY)
-	elpa_cholesky(handle, a, &error_elpa);
+#if defined(TEST_EXPLICIT_NAME)
+   
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+   elpa_cholesky_double(handle, a_dev, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+   elpa_cholesky_double(handle, a    , &error_elpa);
+   assert_elpa_ok(error_elpa);
 #endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_cholesky_float (handle, a_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_cholesky_float (handle, a    , &error_elpa);
+     assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_REAL */
+
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_cholesky_double_complex(handle, a_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_cholesky_double_complex(handle, a    , &error_elpa);
+     assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+     elpa_cholesky_float_complex (handle, a_dev, &error_elpa);
+     assert_elpa_ok(error_elpa);
+#else
+     elpa_cholesky_float_complex (handle, a    , &error_elpa); 
+     assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_COMPLEX */
+
+#else /* TEST_EXPLICIT_NAME */
+   elpa_cholesky(handle, a, &error_elpa);
+   assert_elpa_ok(error_elpa);
+   
+#endif /* TEST_EXPLICIT_NAME */
+#endif /* TEST_CHOLESKY */
 
 #if defined(TEST_HERMITIAN_MULTIPLY)
-	elpa_hermitian_multiply(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+#if defined(TEST_EXPLICIT_NAME)
+
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+	elpa_hermitian_multiply_double(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+	elpa_hermitian_multiply_double(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
 #endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+	elpa_hermitian_multiply_float(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+	elpa_hermitian_multiply_float(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_REAL */
+
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+	elpa_hermitian_multiply_double_complex(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+	elpa_hermitian_multiply_double_complex(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+	elpa_hermitian_multiply_float_complex(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+	elpa_hermitian_multiply_float_complex(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_COMPLEX */
+
+#else /* TEST_EXPLICIT_NAME */
+	elpa_hermitian_multiply(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif /* TEST_EXPLICIT_NAME */
+#endif /* TEST_HERMITIAN_MULTIPLY */
 	
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
      elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error_elpa);
+     assert_elpa_ok(error_elpa);
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      //a = as, so that the problem can be solved again
      memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE));
      elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error_elpa);
+     assert_elpa_ok(error_elpa);
 #endif
 #endif
 	
-   assert_elpa_ok(error_elpa);
 
-   elpa_deallocate(handle, &error_elpa);
-   elpa_uninit(&error_elpa);
+//----------------------------------------------------------------------------------------------------------------------------     
+   /* TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host, deallocate device pointers */
 
+#if TEST_GPU_DEVICE_POINTER_API == 1
+
+#if defined(TEST_EIGENVECTORS)
+   // copy for testing
+   cuerr = cudaMemcpy(z , z_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(z , z_dev ): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaMemcpy(ev, ev_dev, na*sizeof(EV_TYPE)    , cudaMemcpyDeviceToHost);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(ev, ev_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+
+   // and deallocate device pointer
+   cuerr = cudaFree(a_dev);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaFree(a_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaFree(z_dev);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaFree(z_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaFree(ev_dev);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaFree(ev_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+#endif /* defined(TEST_EIGENVECTORS) */   
+
+#if defined(TEST_EIGENVALUES)
+   // copy for testing
+   cuerr = cudaMemcpy(ev, ev_dev, na*sizeof(EV_TYPE)    , cudaMemcpyDeviceToHost);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(ev, ev_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+
+   // and deallocate device pointer
+   cuerr = cudaFree(a_dev);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaFree(a_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   
+   cuerr = cudaFree(ev_dev);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaFree(ev_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+#endif /* TEST_EIGENVALUES */  
+
+#if defined(TEST_CHOLESKY)
+   // copy for testing
+   cuerr = cudaMemcpy(a , a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(a, a_dev ): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+
+   // and deallocate device pointer
+   cuerr = cudaFree(a_dev);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaFree(a_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+#endif /* TEST_CHOLESKY */
+
+#if defined(TEST_HERMITIAN_MULTIPLY)
+   // copy for testing
+   cuerr = cudaMemcpy(a , a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(a, a_dev ): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaMemcpy(b , b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(b, b_dev ): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+      
+   cuerr = cudaMemcpy(c , c_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaMemcpy(c, c_dev ): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+      
+   // and deallocate device pointers
+   cuerr = cudaFree(a_dev);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaFree(a_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+   
+   cuerr = cudaFree(b_dev);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaFree(b_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }
+
+   cuerr = cudaFree(c_dev);
+   if (cuerr != cudaSuccess){    
+      fprintf(stderr, "Error in cudaFree(c_dev): %s\n", cudaGetErrorString(cuerr));
+      exit(1);
+      }      
+#endif /* TEST_HERMITIAN_MULTIPLY */
+   
+#endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
+   
+   //----------------------------------------------------------------------------------------------------------------------------
    /* Check the results */
 
-#if defined(TEST_EIGENPROBLEM)
+#if defined(TEST_CHOLESKY)
+	status = CHECK_CORRECTNESS_CHOLESKY(na, a, as, na_rows, na_cols, sc_desc, myid);
+#endif
+
+#if defined(TEST_HERMITIAN_MULTIPLY)
+   status = CHECK_CORRECTNESS_HERMITIAN_MULTIPLY('H', na, a, b, c, na_rows, na_cols, sc_desc, myid);
+#endif
+
+#if defined(TEST_EIGENVALUES)
+   status = CHECK_CORRECTNESS_ANALYTIC (na, nev, ev, z, na_rows, na_cols, nblk, myid, np_rows, np_cols, 
+                                           my_prow, my_pcol, 1, 0);
+#endif
+   
+#if defined(TEST_EIGENVECTORS)
    status = CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
                                 sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
 #endif
@@ -450,15 +962,21 @@ int main(int argc, char** argv) {
                                 sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs);
 #endif
 
-#if defined(TEST_EIGENPROBLEM) || defined(TEST_GENERALIZED_EIGENPROBLEM)
    if (status !=0){
-     printf("The computed EVs are not correct !\n");
+     printf("Test produced an error!\n");
    }
    if (status ==0){
      printf("All ok!\n");
    }
-#endif
-	
+
+   //----------------------------------------------------------------------------------------------------------------------------
+   /* Deallocate */
+   
+   elpa_deallocate(handle, &error_elpa);
+   assert_elpa_ok(error_elpa);
+   elpa_uninit(&error_elpa);
+   assert_elpa_ok(error_elpa);
+   
    free(a);
    free(z);
    free(as);
@@ -473,10 +991,10 @@ int main(int argc, char** argv) {
    free(b);
    free(bs);
 #endif
-
+   
 #ifdef WITH_MPI
    MPI_Finalize();
 #endif
-
+   
    return status;
 }

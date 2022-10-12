@@ -122,7 +122,7 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #endif
 
 #define TEST_GPU 0
-#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) | (TEST_INTEL_GPU_OPENMP == 1) | (TEST_INTEL_GPU_SYCL == 1)
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
 #undef TEST_GPU
 #define TEST_GPU 1
 #endif
@@ -192,7 +192,7 @@ program test
    EV_TYPE, allocatable, target        :: ev(:)
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
-   type(c_ptr)                         :: a_dev, q_dev, ev_dev, b_dev, c_dev
+   type(c_ptr)                         :: a_dev, q_dev, ev_dev, b_dev, c_dev ! q_dev -- eigenvectors (analogous to z)
 #endif
 
 
@@ -243,19 +243,23 @@ program test
 #if TEST_GPU_DEVICE_POINTER_API == 1
 #if TEST_REAL == 1
 #if TEST_DOUBLE
-   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_double_real
+   integer(kind=c_intptr_t), parameter :: size_of_datatype      = size_of_double_real
+   integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_double_real
 #endif
 #if TEST_SINGLE
-   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_single_real
+   integer(kind=c_intptr_t), parameter :: size_of_datatype      = size_of_single_real
+   integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_single_real
 #endif
 #endif /* TEST_REAL == 1 */
 
 #if TEST_COMPLEX == 1
 #if TEST_DOUBLE
-   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_double_complex
+   integer(kind=c_intptr_t), parameter :: size_of_datatype      = size_of_double_complex
+   integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_double_real
 #endif
 #if TEST_SINGLE
-   integer(kind=c_intptr_t), parameter :: size_of_datatype = size_of_single_complex
+   integer(kind=c_intptr_t), parameter :: size_of_datatype      = size_of_single_complex
+   integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_single_real
 #endif
 #endif
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
@@ -802,7 +806,7 @@ program test
 #endif
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
-   ! create device pointers for a,q, ev copy a to
+   ! create device pointers for a,q, ev; copy a to device
 #if TEST_NVIDIA_GPU == 1
    if (gpu_vendor(NVIDIA_GPU) == NVIDIA_GPU) then
      call set_gpu_parameters()
@@ -839,12 +843,34 @@ program test
      print *,"Cannot allocate matrix q on GPU! Aborting..."
      stop
    endif
-   successGPU = gpu_malloc(ev_dev, na*size_of_datatype)
+   successGPU = gpu_malloc(ev_dev, na*size_of_real_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate vector of eigenvalues on GPU! Aborting..."
      stop
    endif
 
+   successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, &
+                           gpuMemcpyHostToDevice)
+   if (.not.(successGPU)) then
+     print *,"Cannot copy matrix a to GPU! Aborting..."
+     stop
+   endif
+#endif
+
+#if defined(TEST_EIGENVALUES)
+   ! malloc
+   successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
+   if (.not.(successGPU)) then
+     print *,"Cannot allocate matrix a on GPU! Aborting..."
+     stop
+   endif
+
+   successGPU = gpu_malloc(ev_dev, na*size_of_real_datatype)
+   if (.not.(successGPU)) then
+     print *,"Cannot allocate vector of eigenvalues on GPU! Aborting..."
+     stop
+   endif
+        
    successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
@@ -938,12 +964,12 @@ program test
    successGPU = gpu_memcpy(c_dev, c_loc(c), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
-     print *,"Cannot copy matrix b to GPU! Aborting..."
+     print *,"Cannot copy matrix c to GPU! Aborting..."
      stop
    endif
 
 
-#endif
+#endif /* TEST_HERMITIAN_MULTIPLY */
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
@@ -1111,23 +1137,43 @@ program test
 #ifdef TEST_EXPLICIT_NAME
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1)
+     call e%eigenvalues_double(a_dev, ev_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
+#else
      call e%eigenvalues_double(a, ev, error_elpa)
      assert_elpa_ok(error_elpa)
 #endif
+#endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1)
+     call e%eigenvalues_float(a_dev, ev_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
+#else
      call e%eigenvalues_float(a, ev, error_elpa)
      assert_elpa_ok(error_elpa)
 #endif
+#endif /* TEST_SINGLE */
 #endif /* TEST_REAL */
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1)
+     call e%eigenvalues_double_complex(a_dev, ev_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
+#else
      call e%eigenvalues_double_complex(a, ev, error_elpa)
      assert_elpa_ok(error_elpa)
 #endif
+#endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1)
+     call e%eigenvalues_float_complex(a_dev, ev_dev, error_elpa)
+     assert_elpa_ok(error_elpa)
+#else
      call e%eigenvalues_float_complex(a, ev, error_elpa)
      assert_elpa_ok(error_elpa)
 #endif
+#endif /* TEST_SINGLE */
 #endif /* TEST_COMPLEX */
 #else /* TEST_EXPLICIT_NAME */
      call e%eigenvalues(a, ev, error_elpa)
@@ -1270,7 +1316,8 @@ program test
      endif
 
 
-
+   !-----------------------------------------------------------------------------------------------------------------------------     
+   ! TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host, deallocate device pointers
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
 
@@ -1313,6 +1360,29 @@ program test
      stop
    endif
 #endif /* defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM) */
+
+#if defined(TEST_EIGENVALUES)
+   ! copy for testing
+   successGPU = gpu_memcpy(c_loc(ev), ev_dev, na*size_of_real_datatype, gpuMemcpyDeviceToHost)
+   if (.not.(successGPU)) then
+     print *,"cannot copy vector of eigenvalues from GPU to host! Aborting..."
+     stop
+   endif
+
+   ! and deallocate device pointer
+   successGPU = gpu_free(a_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of a_dev on GPU. Aborting..."
+     stop
+   endif
+   
+   successGPU = gpu_free(ev_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of ev_dev on GPU. Aborting..."
+     stop
+   endif
+#endif /* TEST_EIGENVALUES  */
+
 
 #if defined(TEST_CHOLESKY)
    successGPU = gpu_memcpy(c_loc(a), a_dev, na_rows*na_cols*size_of_datatype, &
@@ -1371,6 +1441,7 @@ program test
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
+     !-----------------------------------------------------------------------------------------------------------------------------
      ! Check the results
 	 
      if (do_test_analytic_eigenvalues) then
@@ -1411,7 +1482,7 @@ program test
 
 #ifdef TEST_HERMITIAN_MULTIPLY
      if (do_test_hermitian_multiply) then
-       status = check_correctness_hermitian_multiply(na, a, b, c, na_rows, sc_desc, myid )
+       status = check_correctness_hermitian_multiply("H", na, a, b, c, na_rows, sc_desc, myid )
        call check_status(status, myid)
      endif
 #endif
@@ -1447,6 +1518,9 @@ program test
    end do ! kernels
 #endif /* TEST_ALL_KERNELS */
 
+   !-----------------------------------------------------------------------------------------------------------------------------
+   ! Deallocate 
+   
    call elpa_deallocate(e, error_elpa)
    assert_elpa_ok(error_elpa)
 

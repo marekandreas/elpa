@@ -60,65 +60,6 @@
                   elpa_eigenvectors_a_h_a_fc \
         )(handle, a, ev, q, error)
 
-/*! \brief generic C method for elpa_eigenvectors_double
- *
- *  \details
- *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double device pointer to matrix a in GPU memory
- *  \param  ev      on return: double pointer to eigenvalues in GPU memory
- *  \param  q       on return: double pointer to eigenvectors in GPU memory
- *  \param  error   on return the error code, which can be queried with elpa_strerr()
- *  \result void
- */
-#define elpa_eigenvectors_double(handle, a, ev, q, error) _Generic((a), \
-                double*: \
-                  elpa_eigenvectors_d_ptr_d \
-        )(handle, a, ev, q, error)
-
-/*! \brief generic C method for elpa_eigenvectors_float
- *
- *  \details
- *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float device pointer to matrix a in GPU memory
- *  \param  ev      on return: float pointer to eigenvalues in GPU memory
- *  \param  q       on return: float pointer to eigenvectors in GPU memory
- *  \param  error   on return the error code, which can be queried with elpa_strerr()
- *  \result void
- */
-#define elpa_eigenvectors_float(handle, a, ev, q, error) _Generic((a), \
-                float*: \
-                  elpa_eigenvectors_d_ptr_f \
-        )(handle, a, ev, q, error)
-
-/*! \brief generic C method for elpa_eigenvectors_double_complex
- *
- *  \details
- *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double complex device pointer to matrix a in GPU memory
- *  \param  ev      on return: double pointer to eigenvalues in GPU memory
- *  \param  q       on return: double complex pointer to eigenvectors in GPU memory
- *  \param  error   on return the error code, which can be queried with elpa_strerr()
- *  \result void
- */
-#define elpa_eigenvectors_double_complex(handle, a, ev, q, error) _Generic((a), \
-                double complex*: \
-                  elpa_eigenvectors_d_ptr_dc \
-        )(handle, a, ev, q, error)
-
-/*! \brief generic C method for elpa_eigenvectors_float_complex
- *
- *  \details
- *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float complex device pointer to matrix a in GPU memory
- *  \param  ev      on return: float pointer to eigenvalues in GPU memory
- *  \param  q       on return: float complex pointer to eigenvectors in GPU memory
- *  \param  error   on return the error code, which can be queried with elpa_strerr()
- *  \result void
- */
-#define elpa_eigenvectors_float_complex(handle, a, ev, q, error) _Generic((a), \
-                float complex*: \
-                  elpa_eigenvectors_d_ptr_fc \
-        )(handle, a, ev, q, error)
 
 /*! \brief generic C method for elpa_skew_eigenvectors
  *
@@ -218,61 +159,6 @@
                   elpa_eigenvalues_a_h_a_fc \
         )(handle, a, ev, error)
 
-/*! \brief generic C method for elpa_eigenvalues_double
- *
- *  \details
- *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double pointer to matrix a in GPU memory
- *  \param  ev      on return: double pointer to eigenvalues in GPU memory
- *  \param  error   on return the error code, which can be queried with elpa_strerr()
- *  \result void
- */
-#define elpa_eigenvalues_double(handle, a, ev, error) _Generic((a), \
-                double*: \
-                  elpa_eigenvalues_d_ptr_d \
-        )(handle, a, ev, error)
-
-/*! \brief generic C method for elpa_eigenvalues_float
- *
- *  \details
- *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float pointer to matrix a in GPU memory
- *  \param  ev      on return: float pointer to eigenvalues in GPU memory
- *  \param  error   on return the error code, which can be queried with elpa_strerr()
- *  \result void
- */
-#define elpa_eigenvalues_float(handle, a, ev, error) _Generic((a), \
-                float*: \
-                  elpa_eigenvalues_d_ptr_f \
-        )(handle, a, ev, error)
-
-/*! \brief generic C method for elpa_eigenvalues_double_complex
- *
- *  \details
- *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double complex pointer to matrix a in GPU memory
- *  \param  ev      on return: double pointer to eigenvalues in GPU memory
- *  \param  error   on return the error code, which can be queried with elpa_strerr()
- *  \result void
- */
-#define elpa_eigenvalues_double_complex(handle, a, ev, error) _Generic((a), \
-                double complex*: \
-                  elpa_eigenvalues_d_ptr_dc \
-        )(handle, a, ev, error)
-
-/*! \brief generic C method for elpa_eigenvalues_float_complex
- *
- *  \details
- *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float complex pointer to matrix a in GPU memory
- *  \param  ev      on return: float pointer to eigenvalues in GPU memory
- *  \param  error   on return the error code, which can be queried with elpa_strerr()
- *  \result void
- */
-#define elpa_eigenvalues_float_complex(handle, a, ev, error) _Generic((a), \
-                float complex*: \
-                  elpa_eigenvalues_d_ptr_fc \
-        )(handle, a, ev, error)
 
 /*! \brief generic C method for elpa_skew_eigenvalues
  *
@@ -387,14 +273,14 @@
  */
 #define elpa_invert_triangular(handle, a, error) _Generic((a), \
                 double*: \
-                  elpa_invert_trm_d, \
+                  elpa_invert_trm_a_h_a_d, \
                 \
                 float*: \
-                  elpa_invert_trm_f, \
+                  elpa_invert_trm_a_h_a_f, \
                 \
                 double complex*: \
-                  elpa_invert_trm_dc, \
+                  elpa_invert_trm_a_h_a_dc, \
                 \
                 float complex*: \
-                  elpa_invert_trm_fc \
+                  elpa_invert_trm_a_h_a_fc \
         )(handle, a, error)

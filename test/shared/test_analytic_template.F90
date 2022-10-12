@@ -141,6 +141,68 @@
     call timer%free()
   end subroutine
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> void prepare_matrix_analytic_real_double_f(TEST_C_INT_TYPE na, 
+    !c>                                           double *a,
+    !c>                                           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                           TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
+    !c>                                           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                           TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
+#else
+    !c> void prepare_matrix_analytic_real_single_f(TEST_C_INT_TYPE na, 
+    !c>                                           float *a,
+    !c>                                           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                           TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
+    !c>                                           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                           TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> void prepare_matrix_analytic_complex_double_f(TEST_C_INT_TYPE na, 
+    !c>                                           complex double *a,
+    !c>                                           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                           TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
+    !c>                                           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                           TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
+#else
+    !c> void prepare_matrix_analytic_complex_single_f(TEST_C_INT_TYPE na, 
+    !c>                                           complex float *a,
+    !c>                                           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                           TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
+    !c>                                           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                           TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
+#endif
+#endif /* COMPLEXCASE */
+  subroutine prepare_matrix_analytic_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    &_f(na, a, na_rows, na_cols, nblk, myid, np_rows, np_cols, my_prow, my_pcol) &
+    bind(C,name="prepare_matrix_analytic_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &_f")
+    use iso_c_binding
+    use precision_for_tests
+
+    implicit none
+    TEST_INT_TYPE, value              :: na, na_rows, na_cols, nblk, myid, np_rows, np_cols, my_prow, my_pcol
+    MATH_DATATYPE(kind=REAL_DATATYPE) ::  a(1:na_rows,1:na_cols)
+  
+    call prepare_matrix_analytic_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      & (na, a, nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+      
+  end subroutine  
+  
+  !-----------------------------------------------------------------------------------------------------------
+    
   function check_correctness_analytic_&
     &MATH_DATATYPE&
     &_&
@@ -352,7 +414,100 @@
     call timer%free()
   end function
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> TEST_C_INT_TYPE check_correctness_analytic_real_double_f(TEST_C_INT_TYPE na, 
+    !c>                                                        TEST_C_INT_TYPE nev,
+    !c>                                                        double *ev, double *z,
+    !c>                                                        TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
+    !c>                                                        TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                                        TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol,
+    !c>                                                        TEST_C_INT_TYPE check_all_evals, 
+    !c>                                                        TEST_C_INT_TYPE check_eigenvectors);
+#else
+    !c> TEST_C_INT_TYPE check_correctness_analytic_real_single_f(TEST_C_INT_TYPE na, 
+    !c>                                                        TEST_C_INT_TYPE nev,
+    !c>                                                        float *ev, float *z,
+    !c>                                                        TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
+    !c>                                                        TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                                        TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol,
+    !c>                                                        TEST_C_INT_TYPE check_all_evals, 
+    !c>                                                        TEST_C_INT_TYPE check_eigenvectors);
+#endif
+#endif /* REALCASE */
 
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> TEST_C_INT_TYPE check_correctness_analytic_complex_double_f(TEST_C_INT_TYPE na, 
+    !c>                                                        TEST_C_INT_TYPE nev,
+    !c>                                                        double *ev, complex double *z,
+    !c>                                                        TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
+    !c>                                                        TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                                        TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol,
+    !c>                                                        TEST_C_INT_TYPE check_all_evals, 
+    !c>                                                        TEST_C_INT_TYPE check_eigenvectors);
+#else
+    !c> TEST_C_INT_TYPE check_correctness_analytic_complex_single_f(TEST_C_INT_TYPE na, 
+    !c>                                                        TEST_C_INT_TYPE nev,
+    !c>                                                        float *ev, complex float *z,
+    !c>                                                        TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>                                                        TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
+    !c>                                                        TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>                                                        TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol,
+    !c>                                                        TEST_C_INT_TYPE check_all_evals, 
+    !c>                                                        TEST_C_INT_TYPE check_eigenvectors);
+#endif
+#endif /* COMPLEXCASE */
+
+  function check_correctness_analytic_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    &_f (na, nev, ev, z, na_rows, na_cols, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, &
+      check_eigenvectors) result(status) &
+      bind(C,name="check_correctness_analytic_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &_f")
+    use iso_c_binding
+    use precision_for_tests
+    
+    implicit none
+#include "./test_precision_kinds.F90"
+    TEST_INT_TYPE, value                   :: na, nev, na_rows, na_cols, nblk, myid, &
+                                                       np_rows, np_cols, my_prow, my_pcol
+    TEST_INT_TYPE                          :: status
+    MATH_DATATYPE(kind=rck)                :: z(1:na_rows,1:na_cols)
+    real(kind=rk), intent(inout)           :: ev(1:na)
+    TEST_INT_TYPE, value                   :: check_all_evals  , check_eigenvectors
+    logical                                :: check_all_evals_f, check_eigenvectors_f
+    
+    if (check_all_evals == 0) then
+        check_all_evals_f = .false.
+    else 
+        check_all_evals_f = .true.
+    end if
+    
+    if (check_eigenvectors == 0) then
+        check_eigenvectors_f = .false.
+    else 
+        check_eigenvectors_f = .true.
+    end if
+    
+    status = check_correctness_analytic_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals_f, check_eigenvectors_f)
+
+  end function
+    
+    !-----------------------------------------------------------------------------------------------------------
+    
   function analytic_matrix_&
     &MATH_DATATYPE&
     &_&
@@ -585,6 +740,55 @@
     write(*,*)
   end subroutine
 
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+  !c> void print_matrix_real_double_f (TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na, double *a, const char *mat_name_c);
+#else
+  !c> void print_matrix_real_single_f (TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na, float  *a, const char *mat_name_c);  
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+  !c> void print_matrix_complex_double_f (TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na, complex double *a, const char *mat_name_c);
+#else
+  !c> void print_matrix_complex_single_f (TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na, complex float  *a, const char *mat_name_c);
+#endif
+#endif /* COMPLEXCASE */
+
+  subroutine print_matrix_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    &_f (myid, na, mat, mat_name_c) &
+    bind(C,name="print_matrix_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &_f")
+   
+    use iso_c_binding
+    use precision_for_tests
+    use elpa_api 
+    
+    implicit none
+#include "./test_precision_kinds.F90"
+    TEST_INT_TYPE, value    :: myid, na
+    !character(len=*)  :: mat_name
+    !CHARACTER(kind=C_CHAR), value :: mat_name
+    MATH_DATATYPE(kind=rck) :: mat(na, na)
+    type(c_ptr), intent(in), value                :: mat_name_c
+    character(len=elpa_strlen_c(mat_name_c)), pointer :: mat_name_f
+      
+    call c_f_pointer(mat_name_c, mat_name_f)
+      
+    call print_matrix_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      & (myid, na, mat, mat_name_f)
+
+  end subroutine
 
   subroutine check_matrices_&
     &MATH_DATATYPE&
