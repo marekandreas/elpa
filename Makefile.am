@@ -709,6 +709,7 @@ libelpatest@SUFFIX@_la_SOURCES = \
   test/shared/test_prepare_matrix.F90 \
   test/shared/test_analytic.F90 \
   test/shared/GPU/test_gpu_vendor_agnostic_layer.F90 \
+  test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.c \
   test/shared/test_output_type.F90
 
 if WITH_NVIDIA_GPU_VERSION
@@ -995,6 +996,7 @@ EXTRA_DIST = \
   test/shared/test_prepare_matrix_template.F90 \
   test/shared/test_analytic_template.F90 \
   test/shared/test_scalapack_template.F90 \
+  test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h \
   test_project_1stage/Makefile.am \
   test_project_1stage/autogen.sh \
   test_project_1stage/configure.ac \

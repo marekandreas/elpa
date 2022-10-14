@@ -99,7 +99,7 @@ extern "C" {
     }
     return 1;
   }
-
+  
   int cudaFreeFromC(intptr_t *a) {
 #ifdef DEBUG_CUDA
     printf("CUDA Free, pointer address: %p \n", a);

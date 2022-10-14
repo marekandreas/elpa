@@ -433,7 +433,7 @@ subroutine prepare_matrix_random_spd_&
     !c>                                       TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
     !c>                                       TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #else
-    !c> void prepare_matrix_random_triangular_real_single_f(TEST_C_INT_TYPE na, float *a, TEST_C_INT_TYPE myid, 
+    !c> void prepare_matrix_random_triangular_real_single_f(TEST_C_INT_TYPE na, float *a, TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
     !c>                                       TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
     !c>                                       TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
     !c>                                       TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
@@ -695,7 +695,7 @@ subroutine prepare_matrix_random_spd_&
     !c>                                       TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
     !c>                                       TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #else
-    !c> void prepare_matrix_unit_real_single_f(TEST_C_INT_TYPE na, float *a, TEST_C_INT_TYPE myid, 
+    !c> void prepare_matrix_unit_real_single_f(TEST_C_INT_TYPE na, float *a, TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
     !c>                                       TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
     !c>                                       TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
     !c>                                       TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);

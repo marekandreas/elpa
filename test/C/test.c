@@ -53,11 +53,6 @@
 #include <elpa/elpa.h>
 #include <assert.h>
 
-#if (TEST_NVIDIA_GPU == 1)
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-#endif
-
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
 #error "define exactly one of TEST_REAL or TEST_COMPLEX"
@@ -156,6 +151,9 @@
 #define TEST_GPU  1
 #endif
 
+#if (TEST_GPU == 1)
+#include "test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h"
+#endif
 
 #include "test/shared/generated.h"
 
@@ -177,6 +175,7 @@ int main(int argc, char** argv) {
    C_INT_TYPE my_blacs_ctxt, sc_desc[9], info, blacs_ok;
 
    /* gpu */
+   C_INT_TYPE successGPU;
 #if TEST_GPU_SET_ID == 1
    C_INT_TYPE  gpuID = 0;
 #endif
@@ -251,8 +250,8 @@ int main(int argc, char** argv) {
 #endif
 #endif
 
-// pointer API is tested only for CUDA
-#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 0
+// pointer API is tested only for NVIDIA and AMD
+#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 0 && TEST_AMD_GPU == 0
 #ifdef WITH_MPI
    MPI_Finalize();
 #endif
@@ -458,8 +457,7 @@ int main(int argc, char** argv) {
 
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    int nDevices;
-   cudaError_t err = cudaGetDeviceCount(&nDevices);
-   if (err != cudaSuccess) printf("%s\n", cudaGetErrorString(err));
+   gpuGetDeviceCount(&nDevices);
    printf("Number of Devices found: %d\n\n", nDevices);
    // simple test
    // Can (and should) fail often
@@ -470,60 +468,61 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error_elpa);
 #endif
    
-#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 1
+#if TEST_GPU_DEVICE_POINTER_API == 1
+   set_gpu_parameters();
    
    // Set device
-   cudaError_t cuerr = cudaSetDevice(gpuID);
-   if (cuerr != cudaSuccess){    
-      printf("Error in cudaSetDevice: %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuSetDevice(gpuID);
+   if (!successGPU){    
+      printf("Error in cudaSetDevice\n");
       exit(1);
       }
    
 #if defined(TEST_EIGENVECTORS)
    // malloc
-   cuerr = cudaMalloc((void **) &a_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
-   if (cuerr != cudaSuccess){    
-      printf("Error in cudaMalloc(a_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
       exit(1);
       }
    
-   cuerr = cudaMalloc((void **) &z_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMalloc(z_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMalloc((intptr_t *) &z_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMalloc(z_dev)\n");
       exit(1);
       }
    
-   cuerr = cudaMalloc((void **) &ev_dev, na*sizeof(EV_TYPE));   
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMalloc(ev_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMalloc((intptr_t *) &ev_dev, na*sizeof(EV_TYPE));
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMalloc(ev_dev)\n");
       exit(1);
       }
-
-
-   cuerr = cudaMemcpy(a_dev, a, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(a_dev, a): %s\n", cudaGetErrorString(cuerr));
+      
+   // copy
+   successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
       exit(1);
       }
-#endif /* defined(TEST_EIGENVECTORS) */
+#endif /* TEST_EIGENVECTORS */
 
 #if defined(TEST_EIGENVALUES)
-   // malloc
-   cuerr = cudaMalloc((void **) &a_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
-   if (cuerr != cudaSuccess){    
-      printf("Error in cudaMalloc(a_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+   if (!successGPU){
+      fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
       exit(1);
       }
    
-   cuerr = cudaMalloc((void **) &ev_dev, na*sizeof(EV_TYPE));   
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMalloc(ev_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMalloc((intptr_t *) &ev_dev, na*sizeof(EV_TYPE));
+   if (!successGPU){
+      fprintf(stderr, "Error in gpuMalloc(ev_dev)\n");
       exit(1);
       }
-   
-   cuerr = cudaMemcpy(a_dev, a, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(a_dev, a): %s\n", cudaGetErrorString(cuerr));
+      
+   // copy
+   successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
       exit(1);
       }
 #endif /* TEST_EIGENVALUES */
@@ -532,15 +531,16 @@ int main(int argc, char** argv) {
    elpa_set(handle, "gpu_cholesky", 1, &error_elpa);
    assert_elpa_ok(error_elpa);
    
-   cuerr = cudaMalloc((void **) &a_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
-   if (cuerr != cudaSuccess){    
-      printf("Error in cudaMalloc(a_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
       exit(1);
       }
-   
-   cuerr = cudaMemcpy(a_dev, a, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(a_dev, a): %s\n", cudaGetErrorString(cuerr));
+      
+   // copy
+   successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
       exit(1);
       }
 #endif /* TEST_CHOLESKY */
@@ -549,42 +549,42 @@ int main(int argc, char** argv) {
    elpa_set(handle, "gpu_hermitian_multiply", 1, &error_elpa);
    assert_elpa_ok(error_elpa);
    
-   cuerr = cudaMalloc((void **) &a_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
-   if (cuerr != cudaSuccess){    
-      printf("Error in cudaMalloc(a_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
       exit(1);
       }
-	
-   cuerr = cudaMalloc((void **) &b_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
-   if (cuerr != cudaSuccess){    
-      printf("Error in cudaMalloc(b_dev): %s\n", cudaGetErrorString(cuerr));
+      
+   successGPU = gpuMalloc((intptr_t *) &b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMalloc(b_dev)\n");
       exit(1);
-      } 	
-	  
-   cuerr = cudaMalloc((void **) &c_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
-   if (cuerr != cudaSuccess){    
-      printf("Error in cudaMalloc(c_dev): %s\n", cudaGetErrorString(cuerr));
+      }
+      
+   successGPU = gpuMalloc((intptr_t *) &c_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMalloc(c_dev)\n");
       exit(1);
       }
    
-   cuerr = cudaMemcpy(a_dev, a, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(a_dev, a): %s\n", cudaGetErrorString(cuerr));
+   // copy
+   successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
+      exit(1);
+      }
+   
+   successGPU = gpuMemcpy((intptr_t *) b_dev, (intptr_t *) b, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(b_dev, b)\n");
       exit(1);
       }
 
-   cuerr = cudaMemcpy(b_dev, b, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(b_dev, b): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMemcpy((intptr_t *) c_dev, (intptr_t *) c, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(c_dev, c)\n");
       exit(1);
       }
-
-   cuerr = cudaMemcpy(c_dev, c, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(c_dev, c): %s\n", cudaGetErrorString(cuerr));
-      exit(1);
-      }
-
 #endif /* TEST_HERMITIAN_MULTIPLY */
 
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 1 */     
@@ -823,113 +823,112 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_EIGENVECTORS)
    // copy for testing
-   cuerr = cudaMemcpy(z , z_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(z , z_dev ): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMemcpy((intptr_t *) z , (intptr_t *) z_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(z, z_dev)\n");
       exit(1);
       }
-   
-   cuerr = cudaMemcpy(ev, ev_dev, na*sizeof(EV_TYPE)    , cudaMemcpyDeviceToHost);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(ev, ev_dev): %s\n", cudaGetErrorString(cuerr));
+      
+   successGPU = gpuMemcpy((intptr_t *) ev, (intptr_t *) ev_dev, na*sizeof(EV_TYPE)    , gpuMemcpyDeviceToHost);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(ev, ev_dev)\n");
       exit(1);
-      }
-
+      }   
+     
    // and deallocate device pointer
-   cuerr = cudaFree(a_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(a_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuFree((intptr_t *) a_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(a_dev)\n");
       exit(1);
-      }
-   
-   cuerr = cudaFree(z_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(z_dev): %s\n", cudaGetErrorString(cuerr));
+      }   
+      
+   successGPU = gpuFree((intptr_t *) z_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(z_dev)\n");
       exit(1);
-      }
-   
-   cuerr = cudaFree(ev_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(ev_dev): %s\n", cudaGetErrorString(cuerr));
+      }   
+      
+   successGPU = gpuFree((intptr_t *) ev_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(ev_dev)\n");
       exit(1);
-      }
+      }   
 #endif /* defined(TEST_EIGENVECTORS) */   
 
 #if defined(TEST_EIGENVALUES)
    // copy for testing
-   cuerr = cudaMemcpy(ev, ev_dev, na*sizeof(EV_TYPE)    , cudaMemcpyDeviceToHost);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(ev, ev_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMemcpy((intptr_t *) ev, (intptr_t *) ev_dev, na*sizeof(EV_TYPE)    , gpuMemcpyDeviceToHost);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(ev, ev_dev)\n");
       exit(1);
       }
-
+      
    // and deallocate device pointer
-   cuerr = cudaFree(a_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(a_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuFree((intptr_t *) a_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(a_dev)\n");
       exit(1);
-      }
-   
-   
-   cuerr = cudaFree(ev_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(ev_dev): %s\n", cudaGetErrorString(cuerr));
+      }  
+      
+   successGPU = gpuFree((intptr_t *) ev_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(ev_dev)\n");
       exit(1);
       }
 #endif /* TEST_EIGENVALUES */  
 
 #if defined(TEST_CHOLESKY)
    // copy for testing
-   cuerr = cudaMemcpy(a , a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(a, a_dev ): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMemcpy((intptr_t *) a , (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(a, a_dev)\n");
       exit(1);
       }
 
    // and deallocate device pointer
-   cuerr = cudaFree(a_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(a_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuFree((intptr_t *) a_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(a_dev)\n");
       exit(1);
       }
 #endif /* TEST_CHOLESKY */
 
 #if defined(TEST_HERMITIAN_MULTIPLY)
    // copy for testing
-   cuerr = cudaMemcpy(a , a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(a, a_dev ): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMemcpy((intptr_t *) a, (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(a, a_dev)\n");
       exit(1);
       }
    
-   cuerr = cudaMemcpy(b , b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(b, b_dev ): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMemcpy((intptr_t *) b, (intptr_t *) b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(b, b_dev)\n");
       exit(1);
       }
-      
-   cuerr = cudaMemcpy(c , c_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(c, c_dev ): %s\n", cudaGetErrorString(cuerr));
+   
+   successGPU = gpuMemcpy((intptr_t *) c, (intptr_t *) c_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(c, c_dev)\n");
       exit(1);
       }
-      
+            
    // and deallocate device pointers
-   cuerr = cudaFree(a_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(a_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuFree((intptr_t *) a_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(a_dev)\n");
       exit(1);
       }
    
-   cuerr = cudaFree(b_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(b_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuFree((intptr_t *) b_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(b_dev)\n");
       exit(1);
       }
 
-   cuerr = cudaFree(c_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(c_dev): %s\n", cudaGetErrorString(cuerr));
+successGPU = gpuFree((intptr_t *) c_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(c_dev)\n");
       exit(1);
       }      
 #endif /* TEST_HERMITIAN_MULTIPLY */

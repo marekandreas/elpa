@@ -53,10 +53,6 @@
 #include <elpa/elpa.h>
 #include <assert.h>
 
-#if (TEST_NVIDIA_GPU == 1)
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-#endif
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
 //#error "define exactly one of TEST_REAL or TEST_COMPLEX"
@@ -115,6 +111,11 @@
 #define C_INT_TYPE int
 #endif
 
+
+#if (TEST_GPU == 1)
+#include "test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h"
+#endif
+
 #include "test/shared/generated.h"
 
 
@@ -137,14 +138,13 @@ int main(int argc, char** argv) {
 
 #if TEST_GPU == 1
    MATRIX_TYPE *a_dev;
+   int successGPU;
 #endif
    
    C_INT_TYPE status;
    int error_elpa;
   
    elpa_t handle;
-
-   C_INT_TYPE value;
 
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
@@ -177,13 +177,14 @@ int main(int argc, char** argv) {
 #endif
 #endif
 
-// pointer API is tested only for CUDA
-#if TEST_GPU == 1 && TEST_NVIDIA_GPU == 0
+// pointer API is tested only for NVIDIA and AMD
+#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 0 && TEST_AMD_GPU == 0
 #ifdef WITH_MPI
    MPI_Finalize();
 #endif
    return 77;
 #endif
+
    
    if (argc == 4) {
      na = atoi(argv[1]);
@@ -301,8 +302,7 @@ int main(int argc, char** argv) {
 
 #if (TEST_GPU == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    int nDevices;
-   cudaError_t err = cudaGetDeviceCount(&nDevices);
-   if (err != cudaSuccess) printf("%s\n", cudaGetErrorString(err));
+   gpuGetDeviceCount(&nDevices);
    printf("Number of Devices found: %d\n\n", nDevices);
    int gpuID = myid%2;
    if(nDevices==1) gpuID=0;
@@ -310,9 +310,10 @@ int main(int argc, char** argv) {
    elpa_set(handle, "use_gpu_id", gpuID, &error_elpa);
    assert_elpa_ok(error_elpa);
    
-   cudaError_t cuerr = cudaSetDevice(gpuID);
-   if (cuerr != cudaSuccess){    
-      printf("Error in cudaSetDevice: %s\n", cudaGetErrorString(cuerr));
+   // Set device
+   successGPU = gpuSetDevice(gpuID);
+   if (!successGPU){    
+      printf("Error in cudaSetDevice\n");
       exit(1);
       }
 #endif
@@ -320,16 +321,19 @@ int main(int argc, char** argv) {
    //-----------------------------------------------------------------------------------------------------------------------------
    // TEST_GPU == 1: create device pointer for a_dev; copy a -> a_dev
 #if TEST_GPU == 1
+   set_gpu_parameters();
    
-   cuerr = cudaMalloc((void **) &a_dev, na_rows*na_cols*sizeof(MATRIX_TYPE));   
-   if (cuerr != cudaSuccess){    
-      printf("Error in cudaMalloc(a_dev): %s\n", cudaGetErrorString(cuerr));
+   // malloc
+   successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
       exit(1);
       }
-   
-   cuerr = cudaMemcpy(a_dev, a, na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyHostToDevice);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(a_dev, a): %s\n", cudaGetErrorString(cuerr));
+      
+   // copy
+   successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
       exit(1);
       }
 #endif /* TEST_GPU */   
@@ -402,16 +406,16 @@ int main(int argc, char** argv) {
    // TEST_GPU == 1: copy for testing from device to host, deallocate device pointers
 #if TEST_GPU == 1
    // copy for testing
-   cuerr = cudaMemcpy(a , a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), cudaMemcpyDeviceToHost);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaMemcpy(a , a_dev ): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuMemcpy((intptr_t *) a , (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuMemcpy(a, a_dev)\n");
       exit(1);
       }
-   
+
    // and deallocate device pointer
-   cuerr = cudaFree(a_dev);
-   if (cuerr != cudaSuccess){    
-      fprintf(stderr, "Error in cudaFree(a_dev): %s\n", cudaGetErrorString(cuerr));
+   successGPU = gpuFree((intptr_t *) a_dev);
+   if (!successGPU){    
+      fprintf(stderr, "Error in gpuFree(a_dev)\n");
       exit(1);
       }
 #endif /* TEST_GPU */
