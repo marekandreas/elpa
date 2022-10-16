@@ -152,7 +152,7 @@ program test
    TEST_INT_TYPE                          :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
 
    ! The Matrix
-   MATRIX_TYPE, allocatable               :: a(:,:), as(:,:)
+   MATRIX_TYPE, allocatable, target       :: a(:,:), as(:,:)
    MATRIX_TYPE, allocatable               :: c(:,:) ! = a^{-1}*as - should be a unit matrix
    
 

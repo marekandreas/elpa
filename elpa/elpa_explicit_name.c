@@ -45,15 +45,14 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-#include <stdio.h>
-#include <elpa/elpa.h>
+
 
 #include "elpa_explicit_name.h"
-#include "config.h"
 
 #if defined(WITH_NVIDIA_GPU_VERSION)
 int is_device_ptr(void *a_void_ptr);
 #endif
+
 
 /*! \brief generic C method for elpa_eigenvectors_double
  *

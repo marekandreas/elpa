@@ -77,21 +77,25 @@
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_real_single_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_real_single_f
 #    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_real_single_f
+#    define PREPARE_MATRIX_TOEPLITZ prepare_matrix_toeplitz_real_single_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_single_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_single_f
 #    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_real_single_f
 #    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_single_f
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_real_single_f
+#    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_real_single_f
 #  else
 #    define MATRIX_TYPE complex float
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_single_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_single_f
 #    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_complex_single_f
+#    define PREPARE_MATRIX_TOEPLITZ prepare_matrix_toeplitz_complex_single_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_single_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_complex_single_f
 #    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_complex_single_f
 #    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_complex_single_f
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_complex_single_f
+#    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_complex_single_f
 #  endif
 #else
 #  define EV_TYPE double
@@ -100,21 +104,25 @@
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_real_double_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_real_double_f
 #    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_real_double_f
+#    define PREPARE_MATRIX_TOEPLITZ prepare_matrix_toeplitz_real_double_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_double_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_double_f
 #    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_real_double_f
 #    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_double_f
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_real_double_f
+#    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_real_double_f
 #  else
 #    define MATRIX_TYPE complex double
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_double_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_double_f
 #    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_complex_double_f
+#    define PREPARE_MATRIX_TOEPLITZ prepare_matrix_toeplitz_complex_double_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_double_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_complex_double_f
 #    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_complex_double_f
 #    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_complex_double_f
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_complex_double_f
+#    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_complex_double_f
 #  endif
 #endif
 
@@ -153,6 +161,7 @@
 
 #if (TEST_GPU == 1)
 #include "test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h"
+#include "test/shared/GPU/test_gpu_vendor_agnostic_layerVariables.h"
 #endif
 
 #include "test/shared/generated.h"
@@ -196,6 +205,11 @@ int main(int argc, char** argv) {
 #if TEST_GPU_DEVICE_POINTER_API == 1
    MATRIX_TYPE *a_dev, *z_dev, *b_dev, *c_dev;
    EV_TYPE *ev_dev;
+#endif
+
+#if defined(TEST_MATRIX_TOEPLITZ) // only for solve_triadiagonal
+   EV_TYPE *d, *sd, *ds, *sds;
+   EV_TYPE diagonalElement, subdiagonalElement;
 #endif
    
    C_INT_TYPE error, status;
@@ -338,6 +352,18 @@ int main(int argc, char** argv) {
    memcpy(as, a, na_rows * na_cols * sizeof(MATRIX_TYPE));
 #endif  
       
+#if defined(TEST_SOLVE_TRIDIAGONAL)
+   d   = calloc(na, sizeof(EV_TYPE));
+   ds  = calloc(na, sizeof(EV_TYPE));
+   sd  = calloc(na, sizeof(EV_TYPE));
+   sds = calloc(na, sizeof(EV_TYPE));
+   
+   diagonalElement = 0.45;
+   subdiagonalElement = 0.78;
+   PREPARE_MATRIX_TOEPLITZ(na, diagonalElement, subdiagonalElement, 
+               d, sd, ds, sds, a, as, nblk, na_rows, na_cols, np_rows, 
+               np_cols, my_prow, my_pcol);
+#endif
    
    if (elpa_init(CURRENT_API_VERSION) != ELPA_OK) {
      fprintf(stderr, "Error: ELPA API version not supported");
@@ -815,6 +841,11 @@ int main(int argc, char** argv) {
 #endif
 #endif
 	
+#if defined(TEST_SOLVE_TRIDIAGONAL)
+     elpa_solve_tridiagonal(handle, d, sd, z, &error_elpa);
+     assert_elpa_ok(error_elpa);
+     memcpy(ev, d, na*sizeof(EV_TYPE));
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------------     
    /* TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host, deallocate device pointers */
@@ -961,6 +992,11 @@ successGPU = gpuFree((intptr_t *) c_dev);
                                 sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs);
 #endif
 
+#if defined(TEST_SOLVE_TRIDIAGONAL)
+   status = CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ(na, na_rows, na_cols, diagonalElement, 
+                                subdiagonalElement, ev, z, myid);
+#endif
+
    if (status !=0){
      printf("Test produced an error!\n");
    }
@@ -989,6 +1025,13 @@ successGPU = gpuFree((intptr_t *) c_dev);
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
    free(b);
    free(bs);
+#endif
+
+#if defined(TEST_MATRIX_TOEPLITZ)
+   free(d);
+   free(ds);
+   free(sd);
+   free(sds);
 #endif
    
 #ifdef WITH_MPI

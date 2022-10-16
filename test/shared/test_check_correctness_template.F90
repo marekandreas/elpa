@@ -619,6 +619,7 @@ function check_correctness_evp_numeric_residuals_&
 #endif
 #endif /* COMPLEXCASE */
 
+! extra na_rows, na_cols parameters are needed for C-interface
 function check_correctness_evp_numeric_residuals_&
 &MATH_DATATYPE&
 &_&
@@ -743,9 +744,9 @@ function check_correctness_evp_gen_numeric_residuals_&
 
       TEST_INT_TYPE               :: status, ii, j, myid
       TEST_INT_TYPE, intent(in)   :: na
-      real(kind=rck) :: diagonalElement, subdiagonalElement
-      real(kind=rck) :: ev_analytic(na), ev(na)
-      MATH_DATATYPE(kind=rck) :: z(:,:)
+      real(kind=rk) :: diagonalElement, subdiagonalElement ! DEBUGPETER rck -> rk
+      real(kind=rk) :: ev_analytic(na), ev(na) ! DEBUGPETER rck -> rk
+      MATH_DATATYPE(kind=rck) :: z(:,:) ! needed only for correct expansion of 4 cases: double/single, real/complex
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
       real(kind=rck), parameter   :: pi = 3.141592653589793238462643383279_c_double
@@ -809,6 +810,69 @@ function check_correctness_evp_gen_numeric_residuals_&
     endif
     end function
 
+
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> TEST_C_INT_TYPE check_correctness_eigenvalues_toeplitz_real_double_f(TEST_C_INT_TYPE na, 
+    !c>     TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols, 
+    !c>     double diagonalElement, double subdiagonalElement,
+    !c>     double *ev, 
+    !c>     double *z, TEST_C_INT_TYPE myid);
+#else
+    !c> TEST_C_INT_TYPE check_correctness_eigenvalues_toeplitz_real_float_f(TEST_C_INT_TYPE na, 
+    !c>     TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols, 
+    !c>     float diagonalElement, float subdiagonalElement,
+    !c>     float *ev, 
+    !c>     float *z, TEST_C_INT_TYPE myid);
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> TEST_C_INT_TYPE check_correctness_eigenvalues_toeplitz_complex_double_f(TEST_C_INT_TYPE na, 
+    !c>     TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols, 
+    !c>     double diagonalElement, double subdiagonalElement,
+    !c>     double *ev, 
+    !c>     double complex *z, TEST_C_INT_TYPE myid);
+#else
+    !c> TEST_C_INT_TYPE check_correctness_eigenvalues_toeplitz_complex_float_f(TEST_C_INT_TYPE na, 
+    !c>     TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols, 
+    !c>     float diagonalElement, float subdiagonalElement,
+    !c>     float *ev, 
+    !c>     float complex *z, TEST_C_INT_TYPE myid);
+#endif
+#endif /* COMPLEXCASE */
+
+! extra na_rows, na_cols parameters are needed for C-interface
+   function check_correctness_eigenvalues_toeplitz_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    &_f (na, na_rows, na_cols, diagonalElement, subdiagonalElement, ev, z, myid) result(status) &
+      bind(C,name="check_correctness_eigenvalues_toeplitz_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      &_f")
+
+      use iso_c_binding
+      use precision_for_tests
+      implicit none
+#include "./test_precision_kinds.F90"
+
+      TEST_INT_TYPE            :: status
+      TEST_INT_TYPE, value     :: na, na_rows, na_cols, myid
+      real(kind=rk), value     :: diagonalElement, subdiagonalElement
+      real(kind=rk)            :: ev(1:na)
+      MATH_DATATYPE(kind=rck)  :: z(1:na_rows,1:na_cols) ! needed only for correct expansion of 4 cases: double/single, real/complex
+      
+      status = check_correctness_eigenvalues_toeplitz_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      & (na, diagonalElement, subdiagonalElement, ev, z, myid)
+
+    end function  
     !-----------------------------------------------------------------------------------------------------------
 
 

@@ -45,9 +45,23 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
+#pragma once
 
-int gpuMemcpyHostToDevice;
-int gpuMemcpyDeviceToHost;
+#include "config-f90.h"
+
+#include <stdio.h>
+#include <math.h>
+#include <stdio.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <alloca.h>
+#include <stdint.h>
+#include <complex.h>
+
+extern int gpuMemcpyHostToDevice;
+extern int gpuMemcpyDeviceToHost;
 
 void set_gpu_parameters();
 

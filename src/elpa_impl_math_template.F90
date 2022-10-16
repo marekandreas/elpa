@@ -866,3 +866,50 @@
 #endif
     end subroutine   
 
+#if 0
+
+#ifdef DOUBLE_PRECISION_REAL      
+    !c> void elpa_solve_tridiagonal_d(elpa_t handle, double *a, int *error);
+#endif
+#ifdef SINGLE_PRECISION_REAL      
+    !c> void elpa_solve_tridiagonal_f(elpa_t handle, float *a, int *error);
+#endif
+
+    subroutine elpa_solve_tridiagonal_&
+                    &ELPA_IMPL_SUFFIX&
+                    &_c(handle, a_p, error) &
+#ifdef REALCASE
+#ifdef DOUBLE_PRECISION_REAL
+                    bind(C, name="elpa_solve_tridiagonal_a_h_a_d")
+#endif
+#ifdef SINGLE_PRECISION_REAL
+                    bind(C, name="elpa_solve_tridiagonal_a_h_a_f")
+#endif
+#endif
+#ifdef COMPLEXCASE
+#ifdef DOUBLE_PRECISION_COMPLEX
+                    bind(C, name="elpa_solve_tridiagonal_a_h_a_dc")
+#endif
+#ifdef SINGLE_PRECISION_COMPLEX
+                    bind(C, name="elpa_solve_tridiagonal_a_h_a_fc")
+#endif
+#endif
+
+      type(c_ptr), intent(in), value            :: handle, a_p
+#ifdef USE_FORTRAN2008
+      integer(kind=c_int), optional, intent(in) :: error
+#else
+      integer(kind=c_int), intent(in)           :: error
+#endif
+      MATH_DATATYPE(kind=C_DATATYPE_KIND), pointer              :: a(:, :)
+      type(elpa_impl_t), pointer                :: self
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(a_p, a, [self%local_nrows, self%local_ncols])
+
+      call elpa_invert_trm_a_h_a_&
+              &ELPA_IMPL_SUFFIX&
+              & (self, a, error)
+    end subroutine
+    
+#endif 

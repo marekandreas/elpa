@@ -59,8 +59,8 @@
 #include <stdint.h>
 #include <complex.h>
 
-extern int gpuMemcpyHostToDevice;
-extern int gpuMemcpyDeviceToHost;
+#include "test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h"
+
 
 void set_gpu_parameters(){
 #ifdef WITH_NVIDIA_GPU_VERSION

@@ -200,7 +200,7 @@ program test
 
 #if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
    EV_TYPE, allocatable                :: d(:), sd(:), ds(:), sds(:)
-   EV_TYPE                             :: diagonalELement, subdiagonalElement
+   EV_TYPE                             :: diagonalElement, subdiagonalElement
 #endif
 
    TEST_INT_TYPE                       :: status

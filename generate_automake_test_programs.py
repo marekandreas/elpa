@@ -123,8 +123,8 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
                               or (lang=="C" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
       continue
 	
-    # C-tests only for "random" or "analytic" matrix and "square" layout
-    if lang == "C" and (m == "toeplitz" or m == "frank" or lay == "all_layouts"):
+    # C-tests only for "random", "analytic" or "toeplitz" matrix and "square" layout
+    if lang == "C" and (m == "frank" or lay == "all_layouts"):
         continue
 
     if lang == "C" and (api_name == "explicit") and (gid != deviceptr) and (t != "eigenvectors") and (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply"):
@@ -176,9 +176,14 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
         continue
     
     # "eigenvalues" in C are tested only for analytic matrix
-    if (t == "eigenvalues" and lang == "C" and m != "analytic"):
+    if (lang == "C" and t == "eigenvalues" and m != "analytic"):
         continue
-
+    
+    # "solve_tridiagonal" in C are tested only for analytic matrix
+    if (lang == "C" and t == "solve_tridiagonal"):
+    #if (lang == "C" and t == "solve_tridiagonal" and m != "toeplitz"): # DEBUGPETER
+        continue
+        
     if (t == "hermitian_multiply" and (s == "2stage")):
         continue
 

@@ -63,6 +63,8 @@ module test_gpu
   integer(kind=c_int)            :: gpuHostRegisterDefault    
   integer(kind=c_int)            :: gpuMemcpyHostToDevice    
   integer(kind=c_int)            :: gpuMemcpyDeviceToHost   
+  !integer(kind=c_int), bind(C)   :: gpuMemcpyHostToDevice ! DEBUGPETER    
+  !integer(kind=c_int), bind(C)   :: gpuMemcpyDeviceToHost ! DEBUGPETER  
   integer(kind=c_int)            :: gpuMemcpyDeviceToDevice
   integer(kind=c_int)            :: gpuHostRegisterMapped
   integer(kind=c_int)            :: gpuHostRegisterPortable

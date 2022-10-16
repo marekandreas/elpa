@@ -495,6 +495,7 @@ subroutine prepare_matrix_random_spd_&
      TEST_INT_TYPE, intent(in) :: na, nblk, np_rows, np_cols, my_prow, my_pcol
      MATH_DATATYPE(kind=rck)   :: diagonalElement, subdiagonalElement
      MATH_DATATYPE(kind=rck)   :: d(:), sd(:), ds(:), sds(:)
+     
      MATH_DATATYPE(kind=rck)   :: a(:,:), as(:,:)
 
      TEST_INT_TYPE             :: ii
@@ -535,6 +536,7 @@ subroutine prepare_matrix_random_spd_&
      sds = sd
      as = a
    end subroutine
+
 
    subroutine prepare_matrix_toeplitz_mixed_complex&
    &_&
@@ -601,6 +603,82 @@ subroutine prepare_matrix_random_spd_&
      as = a
 #endif
    end subroutine
+
+#if REALCASE == 1
+#ifdef DOUBLE_PRECISION_REAL
+    !c> void prepare_matrix_toeplitz_real_double_f(TEST_C_INT_TYPE na, 
+    !c>           double diagonalElement, double subdiagonalElement,
+    !c>           double *d, double *sd, double *ds, double *sds,
+    !c>           double *a, double *as, TEST_C_INT_TYPE nblk, 
+    !c>           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>           TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
+#else
+    !c> void prepare_matrix_toeplitz_real_single_f(TEST_C_INT_TYPE na, 
+    !c>           float diagonalElement, float subdiagonalElement,
+    !c>           float *d, float *sd, float *ds, float *sds,
+    !c>           float *a, float *as, TEST_C_INT_TYPE nblk, 
+    !c>           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>           TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);    
+#endif
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef DOUBLE_PRECISION_COMPLEX
+    !c> void prepare_matrix_toeplitz_complex_double_f(TEST_C_INT_TYPE na, 
+    !c>           double diagonalElement, double subdiagonalElement,
+    !c>           double *d, double *sd, double *ds, double *sds,
+    !c>           double complex *a, double complex *as, TEST_C_INT_TYPE nblk, 
+    !c>           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>           TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
+#else
+    !c> void prepare_matrix_toeplitz_complex_single_f(TEST_C_INT_TYPE na, 
+    !c>           float diagonalElement, float subdiagonalElement,
+    !c>           float *d, float *sd, float *ds, float *sds,
+    !c>           float complex *a, float complex *as, TEST_C_INT_TYPE nblk, 
+    !c>           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
+    !c>           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
+    !c>           TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
+#endif
+#endif /* COMPLEXCASE */
+
+   ! extra parameters na_rows, na_cols are needed for C-interface
+   ! d, sd, ds, sds are real for C -interface
+   subroutine prepare_matrix_toeplitz_&
+   &MATH_DATATYPE&
+   &_wrapper_&
+   &PRECISION&
+   & (na, diagonalElement, subdiagonalElement, d, sd, ds, sds, a, as, &
+      nblk, na_rows, na_cols, np_rows, np_cols, my_prow, my_pcol) &
+   bind(C, name="prepare_matrix_toeplitz_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   &_f")
+      use iso_c_binding
+
+      implicit none
+#include "./test_precision_kinds.F90"
+      TEST_INT_TYPE, value    :: na, nblk, na_rows, na_cols, np_rows, np_cols, my_prow, my_pcol
+      real(kind=rk), value    :: diagonalElement, subdiagonalElement
+      real(kind=rk)           :: d(1:na), sd(1:na), ds(1:na), sds(1:na)
+      MATH_DATATYPE(kind=rck) :: a(1:na_rows,1:na_cols), as(1:na_rows,1:na_cols)
+
+#if REALCASE == 1
+      call prepare_matrix_toeplitz_&
+#else
+      call prepare_matrix_toeplitz_mixed_complex_&
+#endif
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION&
+      & (na, diagonalElement, subdiagonalElement, d, sd, ds, sds, a, as, &
+      nblk, np_rows, np_cols, my_prow, my_pcol)
+    end subroutine
+    
+!----------------------------------------------------------------------------------------------------------------
 
 !----------------------------------------------------------------------------------------------------------------
 
