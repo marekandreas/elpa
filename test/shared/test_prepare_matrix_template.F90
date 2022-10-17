@@ -604,6 +604,8 @@ subroutine prepare_matrix_random_spd_&
 #endif
    end subroutine
 
+
+   
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
     !c> void prepare_matrix_toeplitz_real_double_f(TEST_C_INT_TYPE na, 

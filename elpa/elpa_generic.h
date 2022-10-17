@@ -284,3 +284,22 @@
                 float complex*: \
                   elpa_invert_trm_a_h_a_fc \
         )(handle, a, error)
+
+/*! \brief generic C method for elpa_solve_tridiagonal
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param d        float/double pointer to array d;  on input diagonal elements of tridiagonal matrix,
+ *                                                    on return the eigenvalues in ascending order
+ *  \param e        float/double pointer to array e; on input subdiagonal elements of matrix, on return destroyed
+ *  \param q        on return float/double pointer to eigenvectors
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+#define elpa_solve_tridiagonal(handle, d, e, q, error) _Generic((d), \
+                double*: \
+                  elpa_solve_tridiagonal_d, \
+                \
+                float*: \
+                  elpa_solve_tridiagonal_f \
+        )(handle, d, e, q, error)

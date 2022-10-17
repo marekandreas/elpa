@@ -179,9 +179,9 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if (lang == "C" and t == "eigenvalues" and m != "analytic"):
         continue
     
-    # "solve_tridiagonal" in C are tested only for analytic matrix
-    if (lang == "C" and t == "solve_tridiagonal"):
-    #if (lang == "C" and t == "solve_tridiagonal" and m != "toeplitz"): # DEBUGPETER
+    # "solve_tridiagonal" in C are tested only for toeplitz matrix
+    # validate_c_version_real_[double/float]_solve_tridiagonal_1stage_toeplitz_default
+    if (lang == "C" and ((t=="solve_tridiagonal" and m!="toeplitz") or (t!="solve_tridiagonal" and m=="toeplitz"))): 
         continue
         
     if (t == "hermitian_multiply" and (s == "2stage")):

@@ -744,8 +744,8 @@ function check_correctness_evp_gen_numeric_residuals_&
 
       TEST_INT_TYPE               :: status, ii, j, myid
       TEST_INT_TYPE, intent(in)   :: na
-      real(kind=rk) :: diagonalElement, subdiagonalElement ! DEBUGPETER rck -> rk
-      real(kind=rk) :: ev_analytic(na), ev(na) ! DEBUGPETER rck -> rk
+      real(kind=rk) :: diagonalElement, subdiagonalElement
+      real(kind=rk) :: ev_analytic(na), ev(na)
       MATH_DATATYPE(kind=rck) :: z(:,:) ! needed only for correct expansion of 4 cases: double/single, real/complex
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
