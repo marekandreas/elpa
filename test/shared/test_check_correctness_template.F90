@@ -819,7 +819,7 @@ function check_correctness_evp_gen_numeric_residuals_&
     !c>     double *ev, 
     !c>     double *z, TEST_C_INT_TYPE myid);
 #else
-    !c> TEST_C_INT_TYPE check_correctness_eigenvalues_toeplitz_real_float_f(TEST_C_INT_TYPE na, 
+    !c> TEST_C_INT_TYPE check_correctness_eigenvalues_toeplitz_real_single_f(TEST_C_INT_TYPE na, 
     !c>     TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols, 
     !c>     float diagonalElement, float subdiagonalElement,
     !c>     float *ev, 
@@ -835,7 +835,7 @@ function check_correctness_evp_gen_numeric_residuals_&
     !c>     double *ev, 
     !c>     double complex *z, TEST_C_INT_TYPE myid);
 #else
-    !c> TEST_C_INT_TYPE check_correctness_eigenvalues_toeplitz_complex_float_f(TEST_C_INT_TYPE na, 
+    !c> TEST_C_INT_TYPE check_correctness_eigenvalues_toeplitz_complex_single_f(TEST_C_INT_TYPE na, 
     !c>     TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols, 
     !c>     float diagonalElement, float subdiagonalElement,
     !c>     float *ev, 
