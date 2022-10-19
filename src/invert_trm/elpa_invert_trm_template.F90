@@ -232,7 +232,6 @@
 
   if (useGPU) then
      call obj%timer%start("check_for_gpu")
-     call obj%set("use_gpu_id", myid, error)
     if (check_for_gpu(obj, myid, numGPU, .TRUE.)) then
        ! set the neccessary parameters       
       call set_gpu_parameters()

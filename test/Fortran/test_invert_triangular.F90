@@ -357,6 +357,9 @@ TEST_INT_TYPE                             :: gpuID
      stop
    endif
 
+   call e%set("gpu_invert_trm", 1, error_elpa)
+   assert_elpa_ok(error_elpa)
+   
 #endif /* TEST_GPU */
 
    assert_elpa_ok(e%setup())

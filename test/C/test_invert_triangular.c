@@ -314,9 +314,13 @@ int main(int argc, char** argv) {
    // Set device
    successGPU = gpuSetDevice(gpuID);
    if (!successGPU){    
-      printf("Error in cudaSetDevice\n");
+      printf("Error in gpuSetDevice\n");
       exit(1);
       }
+      
+   elpa_set(handle, "gpu_invert_trm", 1, &error_elpa);
+   assert_elpa_ok(error_elpa);
+   
 #endif
 
    //-----------------------------------------------------------------------------------------------------------------------------

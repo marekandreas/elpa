@@ -500,7 +500,7 @@ int main(int argc, char** argv) {
    // Set device
    successGPU = gpuSetDevice(gpuID);
    if (!successGPU){    
-      printf("Error in cudaSetDevice\n");
+      printf("Error in gpuSetDevice\n");
       exit(1);
       }
    

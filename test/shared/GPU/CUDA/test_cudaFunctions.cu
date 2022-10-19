@@ -81,7 +81,7 @@ extern "C" {
 
     cudaError_t cuerr = cudaSetDevice(n);
     if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaSetDevice: %s\n",cudaGetErrorString(cuerr));
+      errormessage("Error in cudaSetDevice(%i): %s\n", n, cudaGetErrorString(cuerr));
       return 0;
     }
     return 1;
