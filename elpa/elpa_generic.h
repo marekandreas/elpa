@@ -73,10 +73,10 @@
  */
 #define elpa_skew_eigenvectors(handle, a, ev, q, error) _Generic((a), \
                 double*: \
-                  elpa_eigenvectors_a_h_a_d, \
+                  elpa_skew_eigenvectors_a_h_a_d, \
                 \
                 float*: \
-                  elpa_eigenvectors_a_h_a_f \
+                  elpa_skew_eigenvectors_a_h_a_f \
         )(handle, a, ev, q, error)
 
 /*! \brief generic C method for elpa_skew_eigenvectors_double
@@ -91,7 +91,7 @@
  */
 #define elpa_skew_eigenvectors_double(handle, a, ev, q, error) _Generic((a), \
                 double*: \
-                  elpa_eigenvectors_d_ptr_d \
+                  elpa_skew_eigenvectors_d_ptr_d \
         )(handle, a, ev, q, error)
 
 /*! \brief generic C method for elpa_skew_eigenvectors_float
@@ -106,7 +106,7 @@
  */
 #define elpa_skew_eigenvectors_float(handle, a, ev, q, error) _Generic((a), \
                 float*: \
-                  elpa_eigenvectors_d_ptr_f \
+                  elpa_skew_eigenvectors_d_ptr_f \
         )(handle, a, ev, q, error)
 
 /*! \brief generic C method for elpa_generalized_eigenvectors
@@ -171,10 +171,10 @@
  */
 #define elpa_skew_eigenvalues(handle, a, ev, error) _Generic((a), \
                 double*: \
-                  elpa_eigenvalues_a_h_a_d, \
+                  elpa_skew_eigenvalues_a_h_a_d, \
                 \
                 float*: \
-                  elpa_eigenvalues_a_h_a_f, \
+                  elpa_skew_eigenvalues_a_h_a_f, \
         )(handle, a, ev, error)
 
 /*! \brief generic C method for elpa_skew_eigenvalues_double
@@ -188,7 +188,7 @@
  */
 #define elpa_skew_eigenvalues_double(handle, a, ev, error) _Generic((a), \
                 double*: \
-                  elpa_eigenvalues_d_ptr_d \
+                  elpa_skew_eigenvalues_d_ptr_d \
         )(handle, a, ev, error)
 
 /*! \brief generic C method for elpa_skew_eigenvalues_float
@@ -202,7 +202,7 @@
  */
 #define elpa_skew_eigenvalues_float(handle, a, ev, error) _Generic((a), \
                 float*: \
-                  elpa_eigenvalues_d_ptr_f \
+                  elpa_skew_eigenvalues_d_ptr_f \
         )(handle, a, ev, error)
 
 

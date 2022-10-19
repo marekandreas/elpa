@@ -218,6 +218,7 @@ int main(int argc, char** argv) {
    elpa_t handle;
 
    int  value;
+   int is_skewsymmetric;
 
 #ifdef WITH_MPI
 #ifndef WITH_OPENMP_TRADITIONAL
@@ -329,7 +330,8 @@ int main(int argc, char** argv) {
    as = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
    ev = calloc(na, sizeof(EV_TYPE));
 
-   PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   is_skewsymmetric=0;
+   PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
 
 #ifdef TEST_HERMITIAN_MULTIPLY
 	b  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));

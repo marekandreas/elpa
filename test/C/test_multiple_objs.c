@@ -154,6 +154,7 @@ int main(int argc, char** argv) {
    C_INT_TYPE i, unfinished;
 
    C_INT_TYPE value;
+   int is_skewsymmetric;
 
 #ifdef WITH_MPI
    MPI_Init(&argc, &argv);
@@ -231,17 +232,18 @@ int main(int argc, char** argv) {
    as = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
    ev = calloc(na, sizeof(EV_TYPE));
 
+   is_skewsymmetric=0;
 #ifdef TEST_REAL
 #ifdef TEST_DOUBLE
-   prepare_matrix_random_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
 #else
-   prepare_matrix_random_real_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_real_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
 #endif
 #else
 #ifdef TEST_DOUBLE
-   prepare_matrix_random_complex_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_complex_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
 #else
-   prepare_matrix_random_complex_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as);
+   prepare_matrix_random_complex_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
 #endif
 #endif
 
