@@ -1023,7 +1023,9 @@ program test
      assert_elpa_ok(error_elpa)
 #endif
      if (myid == 0) then
-       print *, elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
+       print *, "The settings in the test program want to use ",elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
+       print *, "(This might be overriden with some environment settings)"
+       
      endif
 #endif /* TEST_SOLVER_2STAGE */
 

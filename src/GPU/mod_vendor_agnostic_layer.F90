@@ -1496,11 +1496,11 @@ module elpa_gpu
       if (use_gpu_vendor == nvidia_gpu) then
         call cusolver_dtrtri(uplo, diag, n, a, lda, info)
       endif
+#ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        !call hipsolver_dtrtri(uplo, diag, n, a, lda, info)
-        print *,"not yet implemented"
-        stop
+        call rocsolver_dtrtri(uplo, diag, n, a, lda, info)
       endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
@@ -1537,11 +1537,11 @@ module elpa_gpu
       if (use_gpu_vendor == nvidia_gpu) then
         call cusolver_strtri(uplo, diag, n, a, lda, info)
       endif
+#ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        !call hipsolver_strtri(uplo, diag, n, a, lda, info)
-        print *,"not yet implemented"
-        stop
+        call rocsolver_strtri(uplo, diag, n, a, lda, info)
       endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
@@ -1578,11 +1578,11 @@ module elpa_gpu
       if (use_gpu_vendor == nvidia_gpu) then
         call cusolver_ztrtri(uplo, diag, n, a, lda, info)
       endif
+#ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        !call hipsolver_ztrtri(uplo, diag, n, a, lda, info)
-        print *,"not yet implemented"
-        stop
+        call rocsolver_ztrtri(uplo, diag, n, a, lda, info)
       endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
@@ -1619,11 +1619,11 @@ module elpa_gpu
       if (use_gpu_vendor == nvidia_gpu) then
         call cusolver_ctrtri(uplo, diag, n, a, lda, info)
       endif
+#ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        !call hipsolver_ctrtri(uplo, diag, n, a, lda, info)
-        print *,"not yet implemented"
-        stop
+        call rocsolver_ctrtri(uplo, diag, n, a, lda, info)
       endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
@@ -1660,11 +1660,11 @@ module elpa_gpu
       if (use_gpu_vendor == nvidia_gpu) then
         call cusolver_dpotrf(uplo, n, a, lda, info)
       endif
+#ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        !call cusolver_dpotrf(uplo, n, a, lda, info)
-        print *,"not yet implemented"
-        stop
+        call rocsolver_dpotrf(uplo, n, a, lda, info)
       endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
@@ -1701,11 +1701,11 @@ module elpa_gpu
       if (use_gpu_vendor == nvidia_gpu) then
         call cusolver_spotrf(uplo, n, a, lda, info)
       endif
+#ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        !call cusolver_spotrf(uplo, n, a, lda, info)
-        print *,"not yet implemented"
-        stop
+        call rocsolver_spotrf(uplo, n, a, lda, info)
       endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
@@ -1742,11 +1742,11 @@ module elpa_gpu
       if (use_gpu_vendor == nvidia_gpu) then
         call cusolver_zpotrf(uplo, n, a, lda, info)
       endif
+#ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        !call cusolver_zpotrf(uplo, n, a, lda, info)
-        print *,"not yet implemented"
-        stop
+        call rocsolver_zpotrf(uplo, n, a, lda, info)
       endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
@@ -1783,11 +1783,11 @@ module elpa_gpu
       if (use_gpu_vendor == nvidia_gpu) then
         call cusolver_cpotrf(uplo, n, a, lda, info)
       endif
+#ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        !call cusolver_cpotrf(uplo, n, a, lda, info)
-        print *,"not yet implemented"
-        stop
+        call rocsolver_cpotrf(uplo, n, a, lda, info)
       endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then

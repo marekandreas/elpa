@@ -1309,7 +1309,7 @@ static int use_gpu_id_cardinality(elpa_index_t index) {
 	return 0;
         }
 	return count;
-#elif WITH_AMD_GPU_VERION
+#elif WITH_AMD_GPU_VERSION
 	int count;
 	count = amd_gpu_count();
         if (count == -1000) {

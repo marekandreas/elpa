@@ -1879,6 +1879,19 @@ if test x"${need_amd_gpu}" = x"yes"; then
     AC_DEFINE([WITH_HIPCUB], [1], [use hipcub library in some kernels])
   fi
 fi
+AC_MSG_CHECKING(whether AMD rocsolver library should be used)
+AC_ARG_WITH([rocsolver],
+            [AS_HELP_STRING([--with-rocsolver],
+                            [Use AMD rocsolver library, disabled by default])],
+            [
+               if test x"$withval" = x"yes"; then
+                 with_rocsolver=yes
+               else
+                 with_rocsolver=no
+               fi
+	     ],
+            [with_rocsolver="no"])
+AC_MSG_RESULT([${with_rocsolver}])
 
 
 use_openmp_gpu_backend=no
@@ -1993,6 +2006,13 @@ if test x"${need_amd_gpu}" = x"yes" ; then
   #if test x"${have_cudart}" = x"no"; then
   #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   #fi
+  if test x"${with_rocsolver}" = x"yes"; then
+    AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
+    if test x"${have_rocsolver}" = x"no"; then
+      AC_MSG_ERROR([Could not link rocsolver; try to set the hip-path or disable AMD GPU support])
+    fi
+    AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
+  fi
   AC_LANG_POP([C])
 fi
 

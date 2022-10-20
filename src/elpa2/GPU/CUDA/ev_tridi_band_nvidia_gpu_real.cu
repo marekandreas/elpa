@@ -216,6 +216,7 @@ compute_hh_trafo_cuda_kernel_real(T * __restrict__ q, const T * __restrict__ hh,
 #ifdef WITH_CUCUB
     typedef cub::BlockReduce<T, blk> BlockReduceT;
     __shared__ typename BlockReduceT::TempStorage temp_storage;
+    __shared__ T q_vs;
 #else
     __shared__ T dotp_s[blk];
 #endif
@@ -249,6 +250,9 @@ compute_hh_trafo_cuda_kernel_real(T * __restrict__ q, const T * __restrict__ hh,
         dt = q_v2 * hv;
 
         q_v = BlockReduceT(temp_storage).Sum(dt);
+
+       if (tid == 0) q_vs = q_v;
+        __syncthreads();
 
         q_v2 -= q_v * ht * hv;
 #else
