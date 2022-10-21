@@ -336,7 +336,7 @@ int main(int argc, char** argv) {
 #ifdef TEST_HERMITIAN_MULTIPLY
 	b  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	c  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-	PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, b, z, c); // b=c
+	PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, b, z, c, is_skewsymmetric); // b=c
 #endif
 	   
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)

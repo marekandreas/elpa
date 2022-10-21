@@ -628,7 +628,8 @@ nobase_elpa_include_HEADERS = \
   src/helpers/scalapack_interfaces.h \
   elpa/elpa_simd_constants.h \
   elpa/elpa.h \
-  elpa/elpa_generic.h
+  elpa/elpa_generic.h \
+  elpa/elpa_explicit_name.h
 
 nobase_nodist_elpa_include_HEADERS = \
   elpa/elpa_version.h \

@@ -48,9 +48,6 @@
 #include <stdio.h>
 #include <elpa/elpa.h>
 
-#include "config.h"
-
-
 void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error);
 void elpa_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error);
 void elpa_eigenvectors_double_complex(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
