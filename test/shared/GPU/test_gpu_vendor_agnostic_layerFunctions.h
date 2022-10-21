@@ -46,6 +46,7 @@
 //    the original distribution, the GNU Lesser General Public License.
 //
 #pragma once
+#include <stdint.h> // for intptr_t
 
 extern int gpuMemcpyHostToDevice;
 extern int gpuMemcpyDeviceToHost;
