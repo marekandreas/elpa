@@ -189,7 +189,7 @@ endif
 #endif
 
 if WITH_AMD_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp  src/GPU/ROCm/elpa_explicit_name_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
 endif
 
 if !WITH_MPI

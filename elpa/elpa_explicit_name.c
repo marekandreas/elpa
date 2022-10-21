@@ -49,7 +49,7 @@
 
 #include "elpa_explicit_name.h"
 
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
 int is_device_ptr(void *a_void_ptr);
 #endif
 
@@ -67,7 +67,7 @@ int is_device_ptr(void *a_void_ptr);
 
 void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -98,7 +98,7 @@ void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, i
 
 void elpa_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -129,7 +129,7 @@ void elpa_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *
 
 void elpa_eigenvectors_double_complex(elpa_t handle, double complex *a, double *ev, double complex *q, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
    
@@ -161,7 +161,7 @@ void elpa_eigenvectors_double_complex(elpa_t handle, double complex *a, double *
 
 void elpa_eigenvectors_float_complex(elpa_t handle, float complex *a, float *ev, float complex *q, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
    
@@ -193,7 +193,7 @@ void elpa_eigenvectors_float_complex(elpa_t handle, float complex *a, float *ev,
 
 void elpa_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -220,7 +220,7 @@ void elpa_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error)
 
 void elpa_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -247,7 +247,7 @@ void elpa_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
 
 void elpa_eigenvalues_double_complex(elpa_t handle, double complex *a, double *ev, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -274,7 +274,7 @@ void elpa_eigenvalues_double_complex(elpa_t handle, double complex *a, double *e
  
 void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -300,7 +300,7 @@ void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, 
 
 void elpa_cholesky_double(elpa_t handle, double *a, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -326,7 +326,7 @@ void elpa_cholesky_double(elpa_t handle, double *a, int *error)
 
 void elpa_cholesky_float(elpa_t handle, float *a, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -352,7 +352,7 @@ void elpa_cholesky_float(elpa_t handle, float *a, int *error)
 
 void elpa_cholesky_double_complex(elpa_t handle, double complex *a, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -378,7 +378,7 @@ void elpa_cholesky_double_complex(elpa_t handle, double complex *a, int *error)
 
 void elpa_cholesky_float_complex(elpa_t handle, float complex *a, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -414,7 +414,7 @@ void elpa_cholesky_float_complex(elpa_t handle, float complex *a, int *error)
  
 void elpa_hermitian_multiply_double(elpa_t handle, char uplo_a, char uplo_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -449,7 +449,7 @@ void elpa_hermitian_multiply_double(elpa_t handle, char uplo_a, char uplo_c, int
  
 void elpa_hermitian_multiply_float(elpa_t handle, char uplo_a, char uplo_c, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -484,7 +484,7 @@ void elpa_hermitian_multiply_float(elpa_t handle, char uplo_a, char uplo_c, int 
  
 void elpa_hermitian_multiply_double_complex(elpa_t handle, char uplo_a, char uplo_c, int ncb, double complex *a, double complex *b, int nrows_b, int ncols_b, double complex *c, int nrows_c, int ncols_c, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -519,7 +519,7 @@ void elpa_hermitian_multiply_double_complex(elpa_t handle, char uplo_a, char upl
  
 void elpa_hermitian_multiply_float_complex(elpa_t handle, char uplo_a, char uplo_c, int ncb, float complex *a, float complex *b, int nrows_b, int ncols_b, float complex *c, int nrows_c, int ncols_c, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -545,7 +545,7 @@ void elpa_hermitian_multiply_float_complex(elpa_t handle, char uplo_a, char uplo
 
 void elpa_invert_triangular_double(elpa_t handle, double *a, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -571,7 +571,7 @@ void elpa_invert_triangular_double(elpa_t handle, double *a, int *error)
 
 void elpa_invert_triangular_float(elpa_t handle, float *a, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -597,7 +597,7 @@ void elpa_invert_triangular_float(elpa_t handle, float *a, int *error)
 
 void elpa_invert_triangular_double_complex(elpa_t handle, double complex *a, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -623,7 +623,7 @@ void elpa_invert_triangular_double_complex(elpa_t handle, double complex *a, int
 
 void elpa_invert_triangular_float_complex(elpa_t handle, float complex *a, int *error)
 	{
-#if defined(WITH_NVIDIA_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	

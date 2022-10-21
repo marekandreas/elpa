@@ -47,19 +47,6 @@
 //
 #pragma once
 
-#include "config-f90.h"
-
-#include <stdio.h>
-#include <math.h>
-#include <stdio.h>
-
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <alloca.h>
-#include <stdint.h>
-#include <complex.h>
-
 extern int gpuMemcpyHostToDevice;
 extern int gpuMemcpyDeviceToHost;
 

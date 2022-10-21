@@ -46,8 +46,6 @@
 //    the original distribution, the GNU Lesser General Public License.
 //
 
-#include "config-f90.h"
-
 #include <stdio.h>
 #include <math.h>
 #include <stdio.h>
@@ -61,6 +59,7 @@
 
 #include "test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h"
 
+#include "config-f90.h"
 
 void set_gpu_parameters(){
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -80,6 +79,7 @@ int gpuGetDeviceCount(int *count){
 #ifdef WITH_AMD_GPU_VERSION
    return hipGetDeviceCountFromC(count);
 #endif
+   return -1;
 }
 
 int gpuSetDevice(int n){
