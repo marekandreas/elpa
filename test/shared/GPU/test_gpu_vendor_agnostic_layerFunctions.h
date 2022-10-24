@@ -46,23 +46,16 @@
 //    the original distribution, the GNU Lesser General Public License.
 //
 #pragma once
+#include <stdint.h> // for intptr_t
 
-#include "config-f90.h"
-
-#include <stdio.h>
-#include <math.h>
-#include <stdio.h>
-
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <alloca.h>
-#include <stdint.h>
-#include <complex.h>
 
 extern int gpuMemcpyHostToDevice;
 extern int gpuMemcpyDeviceToHost;
 
+#ifdef __cplusplus
+extern "C" {    
+#endif
+    
 void set_gpu_parameters();
 
 int gpuGetDeviceCount(int *count);
@@ -73,3 +66,7 @@ int gpuMalloc(intptr_t *a, size_t width_height);
 int gpuFree(intptr_t *a);
    
 int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir);
+   
+#ifdef __cplusplus
+}    
+#endif

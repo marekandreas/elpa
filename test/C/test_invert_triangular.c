@@ -66,6 +66,14 @@
 //#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
 #endif
 
+#ifdef __cplusplus
+#define double_complex std::complex<double>
+#define float_complex std::complex<float>
+#else
+#define double_complex double complex
+#define float_complex float complex
+#endif
+
 #ifdef TEST_SINGLE
 #  define EV_TYPE float
 #  ifdef TEST_REAL
@@ -75,7 +83,7 @@
 #    define PREPARE_MATRIX_UNIT prepare_matrix_unit_real_single_f
 #    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_single_f
 #  else
-#    define MATRIX_TYPE complex float
+#    define MATRIX_TYPE float_complex
 #    define PRINT_MATRIX print_matrix_complex_single_f
 #    define PREPARE_MATRIX_RANDOM_TRIANGULAR prepare_matrix_random_triangular_complex_single_f
 #    define PREPARE_MATRIX_UNIT prepare_matrix_unit_complex_single_f
@@ -90,7 +98,8 @@
 #    define PREPARE_MATRIX_UNIT prepare_matrix_unit_real_double_f
 #    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_double_f
 #  else
-#    define MATRIX_TYPE complex double
+//#    define MATRIX_TYPE std::complex<double>
+#    define MATRIX_TYPE double_complex
 #    define PRINT_MATRIX print_matrix_complex_double_f
 #    define PREPARE_MATRIX_RANDOM_TRIANGULAR prepare_matrix_random_triangular_complex_double_f
 #    define PREPARE_MATRIX_UNIT prepare_matrix_unit_complex_double_f
@@ -110,6 +119,7 @@
 #define TEST_C_INT_TYPE int
 #define C_INT_TYPE int
 #endif
+
 
 
 #if (TEST_GPU == 1)
@@ -192,9 +202,15 @@ int main(int argc, char** argv) {
      nev = atoi(argv[2]);
      nblk = atoi(argv[3]);
    } else {
+#ifdef __cplusplus
+     na = 100;
+     nev = 50;
+     nblk = 4;
+#else
      na = 500;
      nev = 250;
      nblk = 16;
+#endif 
    }
 
    for (np_cols = (C_INT_TYPE) sqrt((double) nprocs); np_cols > 1; np_cols--) {
@@ -226,9 +242,9 @@ int main(int argc, char** argv) {
    }
 
    /* allocate the matrices needed for elpa */
-   a  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   as = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   c  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   a  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   as = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   c  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
    
    PREPARE_MATRIX_RANDOM_TRIANGULAR (na, a, nblk, myid, na_rows, na_cols, np_rows, np_cols, my_prow, my_pcol);
    memcpy(as, a, na_rows*na_cols*sizeof(MATRIX_TYPE));

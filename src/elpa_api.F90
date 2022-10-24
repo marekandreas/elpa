@@ -1012,6 +1012,7 @@ module elpa_api
     !> \param   api_version integer: api_version that ELPA should use
     !> \result  error       integer: error code, which can be queried with elpa_strerr
     !
+    !c> // /src/elpa_api.F90    
     !c> int elpa_init(int api_version);
     function elpa_init(api_version) result(error) bind(C, name="elpa_init")
       use elpa_utilities, only : error_unit
@@ -1078,6 +1079,10 @@ module elpa_api
       call elpa_uninit(error)
     end subroutine
 #endif
+
+    !c_no> #ifdef __cplusplus
+    !c_no> }
+    !c_no> #endif
 
     subroutine elpa_uninit(error)
 #ifdef USE_FORTRAN2008

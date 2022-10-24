@@ -288,6 +288,16 @@ module elpa_impl
 #endif
     end function
 
+    !c> // /src/elpa_impl.F90
+    !c> #ifdef __cplusplus
+    !c> #define double_complex std::complex<double>
+    !c> #define float_complex std::complex<float>
+    !c> extern "C" {
+    !c> #else
+    !c> #define double_complex double complex
+    !c> #define float_complex float complex
+    !c> #endif
+    
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #define elpa_allocate(...) CONC(elpa_allocate, NARGS(__VA_ARGS__))(__VA_ARGS__)

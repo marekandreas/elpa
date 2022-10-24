@@ -162,14 +162,14 @@
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> void prepare_matrix_analytic_complex_double_f(TEST_C_INT_TYPE na, 
-    !c>                                           complex double *a,
+    !c>                                           double_complex *a,
     !c>                                           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
     !c>                                           TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
     !c>                                           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
     !c>                                           TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #else
     !c> void prepare_matrix_analytic_complex_single_f(TEST_C_INT_TYPE na, 
-    !c>                                           complex float *a,
+    !c>                                           float_complex *a,
     !c>                                           TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
     !c>                                           TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
     !c>                                           TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
@@ -442,7 +442,7 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> TEST_C_INT_TYPE check_correctness_analytic_complex_double_f(TEST_C_INT_TYPE na, 
     !c>                                                        TEST_C_INT_TYPE nev,
-    !c>                                                        double *ev, complex double *z,
+    !c>                                                        double *ev, double_complex *z,
     !c>                                                        TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
     !c>                                                        TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
     !c>                                                        TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
@@ -452,7 +452,7 @@
 #else
     !c> TEST_C_INT_TYPE check_correctness_analytic_complex_single_f(TEST_C_INT_TYPE na, 
     !c>                                                        TEST_C_INT_TYPE nev,
-    !c>                                                        float *ev, complex float *z,
+    !c>                                                        float *ev, float_complex *z,
     !c>                                                        TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
     !c>                                                        TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid,
     !c>                                                        TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
@@ -750,12 +750,16 @@
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-  !c> void print_matrix_complex_double_f (TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na, complex double *a, const char *mat_name_c);
+  !c> void print_matrix_complex_double_f (TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na, double_complex *a, const char *mat_name_c);
 #else
-  !c> void print_matrix_complex_single_f (TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na, complex float  *a, const char *mat_name_c);
+  !c> void print_matrix_complex_single_f (TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na, float_complex  *a, const char *mat_name_c);
 #endif
 #endif /* COMPLEXCASE */
 
+    !c> #ifdef __cplusplus
+    !c> }
+    !c> #endif
+    
   subroutine print_matrix_&
     &MATH_DATATYPE&
     &_&

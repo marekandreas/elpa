@@ -70,14 +70,14 @@
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE float
 #  else
-#    define MATRIX_TYPE complex float
+#    define MATRIX_TYPE float complex
 #  endif
 #else
 #  define EV_TYPE double
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE double
 #  else
-#    define MATRIX_TYPE complex double
+#    define MATRIX_TYPE double complex
 #  endif
 #endif
 
@@ -94,6 +94,9 @@
 #define TEST_C_INT_TYPE int
 #define C_INT_TYPE int
 #endif
+
+#define double_complex double complex 
+#define float_complex float complex 
 
 #include "test/shared/generated.h"
 

@@ -322,11 +322,11 @@
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
     !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_ss_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
-    !c>                                         double *as, complex double *z, double *ev,  TEST_C_INT_TYPE sc_desc[9],
+    !c>                                         double *as, double_complex *z, double *ev,  TEST_C_INT_TYPE sc_desc[9],
     !c>                                         TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #else
     !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_ss_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
-    !c>                                         float *as, complex float *z, float *ev, TEST_C_INT_TYPE sc_desc[9],
+    !c>                                         float *as, float_complex *z, float *ev, TEST_C_INT_TYPE sc_desc[9],
     !c>                                         TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol);
 #endif
 #endif /* REALCASE */
@@ -603,7 +603,7 @@ function check_correctness_evp_numeric_residuals_&
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_complex_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, 
     !c>                                                              TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
-    !c>                                                              complex double *as, complex double *z, double *ev, 
+    !c>                                                              double_complex *as, double_complex *z, double *ev, 
     !c>                                                              TEST_C_INT_TYPE sc_desc[9],
     !c>                                                              TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
     !c>                                                              TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, 
@@ -611,7 +611,7 @@ function check_correctness_evp_numeric_residuals_&
 #else
     !c> TEST_C_INT_TYPE check_correctness_evp_numeric_residuals_complex_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev, 
     !c>                                                                  TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
-    !c>                                                                  complex float *as, complex float *z, float *ev, 
+    !c>                                                                  float_complex *as, float_complex *z, float *ev, 
     !c>                                                                  TEST_C_INT_TYPE sc_desc[9],
     !c>                                                                  TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
     !c>                                                                  TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, 
@@ -682,21 +682,21 @@ function check_correctness_evp_numeric_residuals_&
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> TEST_C_INT_TYPE check_correctness_evp_gen_numeric_residuals_complex_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev,
     !c>                                                                    TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
-    !c>                                                                    complex double *as, complex double *z, double *ev,
+    !c>                                                                    double_complex *as, double_complex *z, double *ev,
     !c>                                                                    TEST_C_INT_TYPE sc_desc[9],
     !c>                                                                    TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
     !c>                                                                    TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols,
     !c>                                                                    TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol,
-    !c>                                                                    complex double *bs);
+    !c>                                                                    double_complex *bs);
 #else
     !c> TEST_C_INT_TYPE check_correctness_evp_gen_numeric_residuals_complex_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE nev,
     !c>                                                                    TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols,
-    !c>                                                                    complex float *as, complex float *z, float *ev, 
+    !c>                                                                    float_complex *as, float_complex *z, float *ev, 
     !c>                                                                    TEST_C_INT_TYPE sc_desc[9],
     !c>                                                                    TEST_C_INT_TYPE nblk, TEST_C_INT_TYPE myid, 
     !c>                                                                    TEST_C_INT_TYPE np_rows, TEST_C_INT_TYPE np_cols, 
     !c>                                                                    TEST_C_INT_TYPE my_prow, TEST_C_INT_TYPE my_pcol,
-    !c>                                                                    complex float *bs);
+    !c>                                                                    float_complex *bs);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -833,13 +833,13 @@ function check_correctness_evp_gen_numeric_residuals_&
     !c>     TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols, 
     !c>     double diagonalElement, double subdiagonalElement,
     !c>     double *ev, 
-    !c>     double complex *z, TEST_C_INT_TYPE myid);
+    !c>     double_complex *z, TEST_C_INT_TYPE myid);
 #else
     !c> TEST_C_INT_TYPE check_correctness_eigenvalues_toeplitz_complex_single_f(TEST_C_INT_TYPE na, 
     !c>     TEST_C_INT_TYPE na_rows, TEST_C_INT_TYPE na_cols, 
     !c>     float diagonalElement, float subdiagonalElement,
     !c>     float *ev, 
-    !c>     float complex *z, TEST_C_INT_TYPE myid);
+    !c>     float_complex *z, TEST_C_INT_TYPE myid);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -1027,14 +1027,14 @@ function check_correctness_evp_gen_numeric_residuals_&
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> TEST_C_INT_TYPE check_correctness_cholesky_complex_double_f(TEST_C_INT_TYPE na, 
-    !c>                                                        complex double *a, complex double *as,
+    !c>                                                        double_complex *a, double_complex *as,
     !c>                                                        TEST_C_INT_TYPE na_rows,
     !c>                                                        TEST_C_INT_TYPE na_cols,
     !c>                                                        TEST_C_INT_TYPE sc_desc[9],
     !c>                                                        TEST_C_INT_TYPE myid);
 #else
     !c> TEST_C_INT_TYPE check_correctness_cholesky_complex_single_f(TEST_C_INT_TYPE na, 
-    !c>                                                        complex float *a, complex float *as,
+    !c>                                                        float_complex *a, float_complex *as,
     !c>                                                        TEST_C_INT_TYPE na_rows,    
     !c>                                                        TEST_C_INT_TYPE na_cols,
     !c>                                                        TEST_C_INT_TYPE sc_desc[9],
@@ -1226,14 +1226,14 @@ function check_correctness_evp_gen_numeric_residuals_&
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_complex_double_f(char transa_NH, TEST_C_INT_TYPE na, 
-    !c>                                                        complex double *a, complex double *b, complex double *c,
+    !c>                                                        double_complex *a, double_complex *b, double_complex *c,
     !c>                                                        TEST_C_INT_TYPE na_rows,
     !c>                                                        TEST_C_INT_TYPE na_cols,    
     !c>                                                        TEST_C_INT_TYPE sc_desc[9],
     !c>                                                        TEST_C_INT_TYPE myid);
 #else
     !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_complex_single_f(char transa_NH, TEST_C_INT_TYPE na, 
-    !c>                                                        complex float *a, complex float *b, complex float *c,
+    !c>                                                        float_complex *a, float_complex *b, float_complex *c,
     !c>                                                        TEST_C_INT_TYPE na_rows,
     !c>                                                        TEST_C_INT_TYPE na_cols,
     !c>                                                        TEST_C_INT_TYPE sc_desc[9],

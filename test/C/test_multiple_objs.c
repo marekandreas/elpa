@@ -94,6 +94,9 @@
 #define C_INT_TYPE int
 #endif
 
+#define double_complex double complex 
+#define float_complex float complex 
+
 #include "test/shared/generated.h"
 void set_basic_parameters(elpa_t *handle, C_INT_TYPE na, C_INT_TYPE nev, C_INT_TYPE na_rows, C_INT_TYPE na_cols, C_INT_TYPE nblk, C_INT_TYPE my_prow, C_INT_TYPE my_pcol){
    int error_elpa;
