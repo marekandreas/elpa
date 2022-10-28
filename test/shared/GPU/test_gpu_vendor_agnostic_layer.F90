@@ -197,6 +197,7 @@ module test_gpu
       type(c_ptr)                          :: array
       integer(kind=c_intptr_t), intent(in) :: elements
       logical                              :: success
+
       success = .false.
 
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -228,6 +229,8 @@ module test_gpu
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
 
+      success = .false.
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_memcpy_intptr(dst, src, size, dir)
@@ -256,6 +259,8 @@ module test_gpu
       integer(kind=c_intptr_t), intent(in)  :: size
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
+
+      success = .false.
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then
@@ -286,6 +291,8 @@ module test_gpu
       integer(kind=C_INT), intent(in)       :: dir
       logical :: success
 
+      success = .false.
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_memcpy_mixed(dst, src, size, dir)
@@ -313,6 +320,8 @@ module test_gpu
 
       logical :: success
 
+      success = .false.
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_free_intptr(a)
@@ -339,6 +348,8 @@ module test_gpu
       type(c_ptr)                :: a
 
       logical :: success
+
+      success = .false.
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then

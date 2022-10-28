@@ -224,6 +224,7 @@ compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * __restrict__ hh, 
     T q_v2;
 #ifdef WITH_HIPCUB
     T q_v, dt, hv, ht;
+    __shared__ T q_vs;
 #endif
 
     int q_off, h_off, j;
@@ -252,6 +253,9 @@ compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * __restrict__ hh, 
         dt = q_v2 * hv;
 
         q_v = BlockReduceT(temp_storage).Sum(dt);
+
+	if (tid == 0) q_vs = q_v;
+        __syncthreads();
 
         q_v2 -= q_v * ht * hv;
 #else
