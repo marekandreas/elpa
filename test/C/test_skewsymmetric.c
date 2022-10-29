@@ -52,21 +52,18 @@
 
 #include <elpa/elpa.h>
 #include <assert.h>
+#include <complex.h>
 
 #if !(defined(TEST_REAL) ^ defined(TEST_COMPLEX))
-#error "define exactly one of TEST_REAL or TEST_COMPLEX"
+//#error "define exactly one of TEST_REAL or TEST_COMPLEX"
 #endif
 
 #if !(defined(TEST_SINGLE) ^ defined(TEST_DOUBLE))
-#error "define exactly one of TEST_SINGLE or TEST_DOUBLE"
+//#error "define exactly one of TEST_SINGLE or TEST_DOUBLE"
 #endif
 
 #if !(defined(TEST_SOLVER_1STAGE) ^ defined(TEST_SOLVER_2STAGE))
-#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
-#endif
-
-#ifdef TEST_GENERALIZED_DECOMP_EIGENPROBLEM
-#define TEST_GENERALIZED_EIGENPROBLEM
+//#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
 #endif
 
 #ifdef TEST_SINGLE
@@ -78,7 +75,8 @@
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_single_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_single_f
 #  else
-#    define MATRIX_TYPE complex float
+#    define MATRIX_TYPE complex float;
+//float _Complex
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_single_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_single_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_single_f
@@ -94,12 +92,22 @@
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_double_f
 #  else
 #    define MATRIX_TYPE complex double
+//double _Complex
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_double_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_double_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_double_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_complex_double_f
 #  endif
 #endif
+
+#ifdef TEST_SINGLE
+#define MATRIX_TYPE_COMPLEX complex float
+//float _Complex
+#else
+#define MATRIX_TYPE_COMPLEX complex double
+//double _Complex
+#endif
+
 
 #define assert_elpa_ok(x) assert(x == ELPA_OK)
 
@@ -154,16 +162,19 @@ int main(int argc, char** argv) {
    C_INT_TYPE my_blacs_ctxt, sc_desc[9], info, blacs_ok;
 
    /* The Matrix */
-   MATRIX_TYPE *a, *as, *z, *b, *bs;
-   EV_TYPE *ev;
+   MATRIX_TYPE *a_skewsymmetric, *as_skewsymmetric, *z_skewsymmetric, *z_skewsymmetric_prepare;
+   EV_TYPE *ev_skewsymmetric;
+   MATRIX_TYPE_COMPLEX *a_complex, *as_complex, *z_complex;
+   EV_TYPE *ev_complex;
 
    C_INT_TYPE error, status;
    int error_elpa;
 
-   elpa_t handle;
+   elpa_t handle_skewsymmetric, handle_complex;
 
    int  value;
    int is_skewsymmetric;
+   long int _elements, _nrows, _ncols, i;
 
 #ifdef WITH_MPI
 #ifndef WITH_OPENMP_TRADITIONAL
@@ -252,163 +263,132 @@ int main(int argc, char** argv) {
 
 
    /* allocate the matrices needed for elpa */
-   a  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   z  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   as = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   ev = calloc(na, sizeof(EV_TYPE));
+   a_skewsymmetric  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   z_skewsymmetric  = calloc(na_rows*2*na_cols, sizeof(MATRIX_TYPE));
+   z_skewsymmetric_prepare  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   as_skewsymmetric = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   ev_skewsymmetric = calloc(na, sizeof(EV_TYPE));
 
-   is_skewsymmetric=0;
-   PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
+   for (_elements=0;_elements<na_rows*na_cols;_elements++){
+     a_skewsymmetric[_elements] = 0.;
+     z_skewsymmetric_prepare[_elements] = 0.;
+     as_skewsymmetric[_elements] = 0.;
+   }
+   for (_elements=0;_elements<na_rows*2*na_cols;_elements++){
+     z_skewsymmetric[_elements] = 0.;
+   }
+   for (_elements=0;_elements<na;_elements++){
+     ev_skewsymmetric[_elements] = 0.;
+   }
 
-#if defined(TEST_GENERALIZED_EIGENPROBLEM)
-   b  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   bs = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, b, z, bs, nblk, np_rows, np_cols, my_prow, my_pcol);
-#endif
+   is_skewsymmetric=1;
+   PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a_skewsymmetric, z_skewsymmetric_prepare, as_skewsymmetric, is_skewsymmetric);
+
+   //copy to z FORTRAN DATA LAYOUT
+   for (_nrows=0; _nrows<na_rows; _nrows++) {
+     for (_ncols=0; _ncols<na_cols; _ncols++) {
+       z_skewsymmetric[_nrows + na_rows*_ncols] = z_skewsymmetric_prepare[_nrows + na_rows*_ncols];
+     }
+   }
+
+   free(z_skewsymmetric_prepare);
+
+   // prepare the complex matrix for the "brute force" case
+   a_complex  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
+   z_complex  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
+   as_complex = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
+   ev_complex = calloc(na, sizeof(EV_TYPE));
+
+   //for (_elements=0;_elements<na_rows*na_cols;_elements++){
+   //  a_complex[_elements] = 0.;
+   //  z_complex[_elements] = 0.;
+   //  as_complex[_elements] = 0.;
+   //}  
+   //for (_elements=0;_elements<na;_elements++){
+   //  ev_complex[_elements] = 0.;
+   //}
+
+   for (_ncols=0;_ncols<na_cols;_ncols++) {
+     for (_nrows=0;_nrows<na_rows;_nrows++) {
+        a_complex[_nrows + na_rows*_ncols] = 0.0 + a_skewsymmetric[_nrows + na_rows*_ncols]*_Complex_I;
+     }
+   }
+
+   for (_ncols=0;_ncols<na_cols;_ncols++) {
+     for (_nrows=0;_nrows<na_rows;_nrows++) {
+        z_complex[_nrows + na_rows*_ncols] = a_complex[_nrows + na_rows*_ncols];
+        as_complex[_nrows + na_rows*_ncols] = a_complex[_nrows + na_rows*_ncols];
+     }
+   }
+
 
    if (elpa_init(CURRENT_API_VERSION) != ELPA_OK) {
      fprintf(stderr, "Error: ELPA API version not supported");
      exit(1);
    }
 
-   handle = elpa_allocate(&error_elpa);
-   //assert_elpa_ok(error_elpa);
+
+   //first set up and solve the brute force problem
+
+   handle_complex = elpa_allocate(&error_elpa);
 
    /* Set parameters */
-   elpa_set(handle, "na", (int) na, &error_elpa);
+   elpa_set(handle_complex, "na", (int) na, &error_elpa);
    assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "nev", (int) nev, &error_elpa);
+   elpa_set(handle_complex, "nev", (int) nev, &error_elpa);
    assert_elpa_ok(error_elpa);
 
    if (myid == 0) {
      printf("Setting the matrix parameters na=%d, nev=%d \n",na,nev);
    }
-   elpa_set(handle, "local_nrows", (int) na_rows, &error_elpa);
+   elpa_set(handle_complex, "local_nrows", (int) na_rows, &error_elpa);
    assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "local_ncols", (int) na_cols, &error_elpa);
+   elpa_set(handle_complex, "local_ncols", (int) na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "nblk", (int) nblk, &error_elpa);
+   elpa_set(handle_complex, "nblk", (int) nblk, &error_elpa);
    assert_elpa_ok(error_elpa);
 
 #ifdef WITH_MPI
-   elpa_set(handle, "mpi_comm_parent", (int) (MPI_Comm_c2f(MPI_COMM_WORLD)), &error_elpa);
+   elpa_set(handle_complex, "mpi_comm_parent", (int) (MPI_Comm_c2f(MPI_COMM_WORLD)), &error_elpa);
    assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "process_row", (int) my_prow, &error_elpa);
+   elpa_set(handle_complex, "process_row", (int) my_prow, &error_elpa);
    assert_elpa_ok(error_elpa);
 
-   elpa_set(handle, "process_col", (int) my_pcol, &error_elpa);
-   assert_elpa_ok(error_elpa);
-#endif
-#ifdef TEST_GENERALIZED_EIGENPROBLEM
-   elpa_set(handle, "blacs_context", (int) my_blacs_ctxt, &error_elpa);
+   elpa_set(handle_complex, "process_col", (int) my_pcol, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
 
    /* Setup */
-   assert_elpa_ok(elpa_setup(handle));
+   assert_elpa_ok(elpa_setup(handle_complex));
 
-   /* Set tunables */
-#ifdef TEST_SOLVER_1STAGE
-   elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &error_elpa);
-#else
-   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error_elpa);
-#endif
-   assert_elpa_ok(error_elpa);
-
-#if TEST_NVIDIA_GPU == 1
-   elpa_set(handle, "nvidia-gpu", TEST_GPU, &error_elpa);
-   assert_elpa_ok(error_elpa);
-#endif
-
-#if TEST_AMD_GPU == 1
-   elpa_set(handle, "amd-gpu", TEST_GPU, &error_elpa);
-   assert_elpa_ok(error_elpa);
-#endif
-
-#if TEST_INTEL_GPU == 1
-   elpa_set(handle, "intel-gpu", TEST_GPU, &error_elpa);
-   assert_elpa_ok(error_elpa);
-#endif
-
-#if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)
-   kernel = TEST_KERNEL
-#ifdef TEST_COMPLEX
-   elpa_set(handle, "complex_kernel", kernel, &error_elpa);
-#else
-   elpa_set(handle, "real_kernel", kernel, &error_elpa);
-#endif
-
-#ifdef TEST_REAL
-#if (TEST_NVIDIA_GPU == 1)
-#if WITH_NVIDIA_SM80_GPU_KERNEL == 1
-     kernel = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
-#else
-     kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
-#endif
-#endif /* TEST_NVIDIA_GPU */
-
-#if (TEST_AMD_GPU == 1)
-     kernel = ELPA_2STAGE_REAL_AMD_GPU
-#endif
-
-#if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
-     kernel = ELPA_2STAGE_REAL_INTEL_GPU_SYCL
-#endif
-#endif /* TEST_REAL */
-#ifdef TEST_COMPLEX
-#if (TEST_NVIDIA_GPU == 1)
-     kernel = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
-#endif
-#if (TEST_AMD_GPU == 1)
-     kernel = ELPA_2STAGE_COMPLEX_AMD_GPU
-#endif
-#if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
-     kernel = ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL
-#endif
-#endif /* TEST_COMPLEX */
-
-#ifdef TEST_COMPLEX
-   elpa_set(handle, "complex_kernel", kernel, &error_elpa);
-#else
-   elpa_set(handle, "real_kernel", kernel, &error_elpa);
-#endif
-
-   assert_elpa_ok(error_elpa);
-#endif /* defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL) */
-
-   elpa_get(handle, "solver", &value, &error_elpa);
+   elpa_get(handle_complex, "solver", &value, &error_elpa);
    if (myid == 0) {
      printf("Solver is set to %d \n", value);
    }
 
-#if defined(TEST_GENERALIZED_EIGENPROBLEM)
-     elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error_elpa);
-#if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
-     //a = as, so that the problem can be solved again
-     memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE));
-     elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error_elpa);
-#endif
-#else
    /* Solve EV problem */
-   elpa_eigenvectors(handle, a, ev, z, &error_elpa);
-#endif
+   elpa_eigenvectors_a_h_a_dc(handle_complex, a_complex, ev_complex, z_complex, &error_elpa);
    assert_elpa_ok(error_elpa);
 
-   elpa_deallocate(handle, &error_elpa);
-   elpa_uninit(&error_elpa);
+
+#ifdef WITH_MPI
+   /* barrier */
+   MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
 
    /* check the results */
-#if defined(TEST_GENERALIZED_EIGENPROBLEM)
-   status = CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
-                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs);
+
+#ifdef TEST_SINGLE
+   status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as_complex, z_complex, ev_complex, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
 #else
-   status = CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
-                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
+   status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as_complex, z_complex, ev_complex, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
 #endif
+
 
    if (status !=0){
      printf("The computed EVs are not correct !\n");
@@ -417,14 +397,118 @@ int main(int argc, char** argv) {
      printf("All ok!\n");
    }
 
-   free(a);
-   free(z);
-   free(as);
-   free(ev);
-#if defined(TEST_GENERALIZED_EIGENPROBLEM)
-   free(b);
-   free(bs);
+
+   free(a_complex);
+   //free(z_complex);
+   free(as_complex);
+   //free(ev_complex);
+
+#ifdef WITH_MPI
+   /* barrier */
+   MPI_Barrier(MPI_COMM_WORLD);
 #endif
+   // now run the skewsymmetric case
+
+   handle_skewsymmetric = elpa_allocate(&error_elpa);
+
+   /* Set parameters */
+   elpa_set(handle_skewsymmetric, "na", (int) na, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+   elpa_set(handle_skewsymmetric, "nev", (int) nev, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+   if (myid == 0) {
+     printf("Setting the matrix parameters na=%d, nev=%d \n",na,nev);
+   }
+   elpa_set(handle_skewsymmetric, "local_nrows", (int) na_rows, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+   elpa_set(handle_skewsymmetric, "local_ncols", (int) na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+   elpa_set(handle_skewsymmetric, "nblk", (int) nblk, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+#ifdef WITH_MPI
+   elpa_set(handle_skewsymmetric, "mpi_comm_parent", (int) (MPI_Comm_c2f(MPI_COMM_WORLD)), &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+   elpa_set(handle_skewsymmetric, "process_row", (int) my_prow, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+   elpa_set(handle_skewsymmetric, "process_col", (int) my_pcol, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+
+
+   /* Setup */
+   assert_elpa_ok(elpa_setup(handle_skewsymmetric));
+
+   elpa_get(handle_skewsymmetric, "solver", &value, &error_elpa);
+   if (myid == 0) {
+     printf("Solver is set to %d \n", value);
+   }
+   /* Solve EV problem */
+   elpa_skew_eigenvectors(handle_skewsymmetric, a_skewsymmetric, ev_skewsymmetric, z_skewsymmetric, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
+
+#ifdef WITH_MPI
+   /* barrier */
+   MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+
+   /* check the results */
+
+   // check eigenvalues
+   for (i=0;i<na; i++) {
+     if (myid == 0) {
+#ifdef TEST_DOUBLE
+       if (fabs(ev_complex[i]-ev_skewsymmetric[i])/fabs(ev_complex[i]) > 1e-10) {
+#endif
+#ifdef TEST_SINGLE
+       if (fabs(ev_complex[i]-ev_skewsymmetric[i])/fabs(ev_complex[i]) > 1e-4) {
+#endif
+	 printf("ev: i= %d,%f,%f\n",ev_complex[i],ev_skewsymmetric[i]);
+         status = 1;
+       }
+     }
+   }
+
+   for (_elements=0;_elements<na_rows*na_cols;_elements++) {
+     z_complex[_elements] = 0.;
+   }
+
+   for (_ncols=0;_ncols<na_cols;_ncols++) {
+     for (_nrows=0;_nrows<na_rows;_nrows++) {
+       z_complex[_nrows + na_rows*_ncols] = z_skewsymmetric[_nrows + na_rows*_ncols] + z_skewsymmetric[_nrows+na_rows*(na_cols+_ncols)]*_Complex_I;
+     }
+   }
+#ifdef WITH_MPI
+   MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+   status = check_correctness_evp_numeric_residuals_ss_real_double_f(na, nev, na_rows, na_cols, as_skewsymmetric, z_complex, ev_skewsymmetric, sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
+
+#ifdef WITH_MPI
+   MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+   elpa_deallocate(handle_complex, &error_elpa);
+   elpa_deallocate(handle_skewsymmetric, &error_elpa);
+   elpa_uninit(&error_elpa);
+
+   free(z_complex);
+   free(ev_complex);
+
+   free(a_skewsymmetric);
+   free(z_skewsymmetric);
+   free(as_skewsymmetric);
+   free(ev_skewsymmetric);
+
+
 
 #ifdef WITH_MPI
    MPI_Finalize();

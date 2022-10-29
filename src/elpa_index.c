@@ -233,9 +233,9 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_PARAMETER_ENTRY("num_process_cols", "Number of process column number in the 2D domain decomposition", NULL, PRINT_STRUCTURE),
         INT_PARAMETER_ENTRY("num_processes", "Total number of processes", NULL, PRINT_STRUCTURE),
         INT_PARAMETER_ENTRY("bandwidth", "If specified, a band matrix with this bandwidth is expected as input; bandwidth must be multiply of nblk and at least 2", bw_is_valid, PRINT_YES),
-        INT_ANY_ENTRY("mpi_comm_rows", "Communicator for inter-row communication", PRINT_NO),
-        INT_ANY_ENTRY("mpi_comm_cols", "Communicator for inter-column communication", PRINT_NO),
-        INT_ANY_ENTRY("mpi_comm_parent", "Parent communicator", PRINT_NO),
+        INT_PARAMETER_ENTRY("mpi_comm_rows", "Communicator for inter-row communication", NULL, PRINT_NO),
+        INT_PARAMETER_ENTRY("mpi_comm_cols", "Communicator for inter-column communication", NULL, PRINT_NO),
+        INT_PARAMETER_ENTRY("mpi_comm_parent", "Parent communicator", NULL, PRINT_NO),
         INT_ANY_ENTRY("blacs_context", "BLACS context", PRINT_NO),
         INT_ENTRY("verbose", "ELPA API prints verbose messages", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_NONE, \
                         cardinality_bool, enumerate_identity, verbose_is_valid, NULL, PRINT_YES),

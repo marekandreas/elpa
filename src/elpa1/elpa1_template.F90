@@ -249,6 +249,9 @@ function elpa_solve_evp_&
                                                                       &PRECISION&
                                                                       &_&
                                                                       &MATH_DATATYPE
+   integer(kind=c_intptr_t), parameter             :: size_of_real_datatype = size_of_&
+                                                                      &PRECISION&
+                                                                      &_real
 #endif
 #ifdef WITH_GPU_STREAMS
    !integer(kind=c_intptr_t)                        :: num
@@ -306,18 +309,6 @@ function elpa_solve_evp_&
        call obj%timer%stop("check_for_gpu")
 #include "./elpa1_aborting_template.F90"
      endif
-#ifdef WITH_OPENMP_TRADITIONAL
-     ! check the number of threads that ELPA should use internally
-     ! in the GPU case at the moment only _1_ thread internally is allowed
-     call obj%get("omp_threads", nrThreads, error)
-     !if (nrThreads .ne. 1) then
-     !write(error_unit, *) "ELPA1: Experimental feature: Using OpenMP with GPU code paths needs internal to ELPA _1_ OpenMP thread"
-     !write(error_unit, *) "setting 1 openmp thread now"
-     !call obj%set("omp_threads",1, error)
-     !nrThreads=1
-     !call omp_set_num_threads(nrThreads)
-     !endif
-#endif
      call obj%timer%stop("check_for_gpu")
    endif ! useGPU
 #endif
@@ -868,7 +859,7 @@ print *,"Device pointer + REDIST"
    successGPU = gpu_memcpy(qExtern, c_loc(qIntern(1,1)), matrixRows*matrixCols*size_of_datatype, &
                              gpuMemcpyHostToDevice)
    check_memcpy_gpu("elpa1: qIntern -> qExtern", successGPU)
-   successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_datatype, &
+   successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_real_datatype, &
                              gpuMemcpyHostToDevice)
    check_memcpy_gpu("elpa1: ev -> evExtern", successGPU)
 #endif

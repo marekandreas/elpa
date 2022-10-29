@@ -299,7 +299,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
                   print("check_SCRIPTS += " + name + "_default.sh")
           elif lay == "all_layouts":
               if kernel == "all_kernels":
-                  print("check_SCRIPTS += " + name + "_extended.sh")
+                  print("check_SCRIPTS += " + name + "_debug.sh")
               else:
                   print("check_SCRIPTS += " + name + "_extended.sh")
           else:
@@ -344,7 +344,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
                   print("check_SCRIPTS += " + name + "_default.sh")
           elif lay == "all_layouts":
               if kernel == "all_kernels":
-                  print("check_SCRIPTS += " + name + "_extended.sh")
+                  print("check_SCRIPTS += " + name + "_debug.sh")
               else:
                   print("check_SCRIPTS += " + name + "_extended.sh")
           else:
@@ -472,6 +472,23 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 print("endif")
+
+name = "validate_real_skewsymmetric_double_c_version"
+print("if ENABLE_C_TESTS")
+print("if HAVE_SKEWSYMMETRIC")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/C/test_skewsymmetric.c")
+print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+print(name + "_CFLAGS = $(test_program_cflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
+print("endif")
+
+
+
 
 
 name = "validate_split_comm_real_double"
