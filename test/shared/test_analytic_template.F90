@@ -756,9 +756,6 @@
 #endif
 #endif /* COMPLEXCASE */
 
-    !c> #ifdef __cplusplus
-    !c> }
-    !c> #endif
     
   subroutine print_matrix_&
     &MATH_DATATYPE&

@@ -1051,6 +1051,7 @@ module elpa_api
     end function
 
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> // c_o: /src/elpa_api.F90 
     !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #define elpa_uninit(...) CONC(elpa_uninit, NARGS(__VA_ARGS__))(__VA_ARGS__)
     !c_o> #endif
@@ -1071,6 +1072,7 @@ module elpa_api
       call elpa_uninit()
     end subroutine
 #else
+    !c_no> // c_no: /src/elpa_api.F90 
     !c_no> #if OPTIONAL_C_ERROR_ARGUMENT != 1
     !c_no> void elpa_uninit(int *error);
     !c_no> #endif

@@ -65,19 +65,27 @@
 //#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
 #endif
 
+#ifdef __cplusplus
+#define double_complex std::complex<double>
+#define float_complex std::complex<float>
+#else
+#define double_complex double complex
+#define float_complex float complex
+#endif
+
 #ifdef TEST_SINGLE
 #  define EV_TYPE float
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE float
 #  else
-#    define MATRIX_TYPE complex float
+#    define MATRIX_TYPE float_complex 
 #  endif
 #else
 #  define EV_TYPE double
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE double
 #  else
-#    define MATRIX_TYPE complex double
+#    define MATRIX_TYPE double_complex
 #  endif
 #endif
 
@@ -94,10 +102,8 @@
 #define C_INT_TYPE int
 #endif
 
-#define double_complex double complex 
-#define float_complex float complex 
-
 #include "test/shared/generated.h"
+
 void set_basic_parameters(elpa_t *handle, C_INT_TYPE na, C_INT_TYPE nev, C_INT_TYPE na_rows, C_INT_TYPE na_cols, C_INT_TYPE nblk, C_INT_TYPE my_prow, C_INT_TYPE my_pcol){
    int error_elpa;
    elpa_set(*handle, "na", (int) na, &error_elpa);
@@ -196,9 +202,15 @@ int main(int argc, char** argv) {
      nev = atoi(argv[2]);
      nblk = atoi(argv[3]);
    } else {
+#ifdef __cplusplus
+     na = 100;
+     nev = 50;
+     nblk = 4;
+#else
      na = 500;
      nev = 250;
      nblk = 16;
+#endif 
    }
 
    for (np_cols = (C_INT_TYPE) sqrt((double) nprocs); np_cols > 1; np_cols--) {
@@ -230,10 +242,10 @@ int main(int argc, char** argv) {
    }
 
    /* allocate the matrices needed for elpa */
-   a  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   z  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   as = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   ev = calloc(na, sizeof(EV_TYPE));
+   a  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   z  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   as = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   ev = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
 
    is_skewsymmetric=0;
 #ifdef TEST_REAL

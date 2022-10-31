@@ -69,9 +69,11 @@
 #ifdef __cplusplus
 #define double_complex std::complex<double>
 #define float_complex std::complex<float>
+#define Complex_I std::complex<EV_TYPE> (0.0,1.0); 
 #else
 #define double_complex double complex
 #define float_complex float complex
+#define Complex_I _Complex_I
 #endif
 
 #ifdef TEST_SINGLE
@@ -320,7 +322,7 @@ int main(int argc, char** argv) {
 
    for (_ncols=0;_ncols<na_cols;_ncols++) {
      for (_nrows=0;_nrows<na_rows;_nrows++) {
-        a_complex[_nrows + na_rows*_ncols] = 0.0 + a_skewsymmetric[_nrows + na_rows*_ncols]*_Complex_I;
+        a_complex[_nrows + na_rows*_ncols] = 0.0 + a_skewsymmetric[_nrows + na_rows*_ncols]*Complex_I;
      }
    }
 
@@ -493,7 +495,7 @@ int main(int argc, char** argv) {
 
    for (_ncols=0;_ncols<na_cols;_ncols++) {
      for (_nrows=0;_nrows<na_rows;_nrows++) {
-       z_complex[_nrows + na_rows*_ncols] = z_skewsymmetric[_nrows + na_rows*_ncols] + z_skewsymmetric[_nrows+na_rows*(na_cols+_ncols)]*_Complex_I;
+       z_complex[_nrows + na_rows*_ncols] = z_skewsymmetric[_nrows + na_rows*_ncols] + z_skewsymmetric[_nrows+na_rows*(na_cols+_ncols)]*Complex_I;
      }
    }
 #ifdef WITH_MPI

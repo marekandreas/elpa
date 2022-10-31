@@ -67,15 +67,15 @@ void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, i
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
-		printf("elpa_eigenvectors_double dev\n"); // DEBUGPETER
+		//printf("elpa_eigenvectors_double dev\n");
 		elpa_eigenvectors_d_ptr_d(handle, a, ev, q, error);
 		}
 	else {
-		printf("elpa_eigenvectors_double host\n"); // DEBUGPETER
+		//printf("elpa_eigenvectors_double host\n");
 		elpa_eigenvectors_a_h_a_d(handle, a, ev, q, error);
 		}	
 #else
-   printf("elpa_eigenvectors_double non-nvidia version\n"); // DEBUGPETER
+   //printf("elpa_eigenvectors_double non-nvidia version\n");
 	elpa_eigenvectors_a_h_a_d(handle, a, ev, q, error);
 #endif		
 	}

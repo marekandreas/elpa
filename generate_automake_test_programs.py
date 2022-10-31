@@ -416,9 +416,6 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
 
 for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys()), sorted(domain_flag.keys())):
     endifs = 0
-      
-    if (lang == "C++"):
-        continue
          
     if (p == "single"):
         if (d == "real"):
@@ -446,6 +443,11 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
         print(name + "_CFLAGS = $(test_program_cflags) \\")
 
+    elif lang == "C++":
+        print(name + "_SOURCES = test/C++/test_autotune.cpp")
+        print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+        print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
+      
     else:
         raise Exception("Unknown language")
 
@@ -566,6 +568,35 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif\n")
 
+name = "validate_multiple_objs_real_double_c_version"
+print("if ENABLE_C_TESTS")
+print("if ENABLE_AUTOTUNING")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/C/test_multiple_objs.c")
+print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+print(name + "_CFLAGS = $(test_program_cflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
+print("endif\n")
+
+name = "validate_multiple_objs_real_double_cpp_version"
+print("if ENABLE_C_TESTS")
+print("if ENABLE_AUTOTUNING")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/C++/test_multiple_objs.cpp")
+print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
+print("endif\n")
+
+
 name = "validate_skewsymmetric_real_double"
 print("if HAVE_SKEWSYMMETRIC")
 print("check_SCRIPTS += " + name + "_extended.sh")
@@ -592,21 +623,6 @@ print("  " + " \\\n  ".join([
 print("endif")
 print("endif\n")
 
-
-
-name = "validate_multiple_objs_real_double_c_version"
-print("if ENABLE_C_TESTS")
-print("if ENABLE_AUTOTUNING")
-print("check_SCRIPTS += " + name + "_extended.sh")
-print("noinst_PROGRAMS += " + name)
-print(name + "_SOURCES = test/C/test_multiple_objs.c")
-print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
-print(name + "_CFLAGS = $(test_program_cflags) \\")
-print("  " + " \\\n  ".join([
-        domain_flag['real'],
-        prec_flag['double']]))
-print("endif")
-print("endif\n")
 
 name = "validate_real_skewsymmetric_double_c_version"
 print("if ENABLE_C_TESTS")
