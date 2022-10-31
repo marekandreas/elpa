@@ -56,8 +56,9 @@ extern "C" {
     hipError_t hiperr = hipPointerGetAttributes(&attributes, a_void_ptr);  
     if (hiperr != hipSuccess)
 		  {    
-		  printf("Error in is_device_ptr: hipPointerGetAttributes: %s\n", hipGetErrorString(hiperr));
-		  exit(1);
+		  printf("Warning in is_device_ptr(): hipPointerGetAttributes: %s\n", hipGetErrorString(hiperr));
+		  printf("Pointer wasn't allocated via hip, so we use an all host array (a_h_a) function\n");
+        return 0;
 		  }
     
     if (attributes.memoryType==hipMemoryTypeDevice) return 1;
