@@ -355,9 +355,8 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
          C_LACPY("A", &na_rows, &nb_cols, B, &na_rows, Buf_to_send_B, &na_rows);
          MPI_Sendrecv(Buf_to_send_B, (C_INT_MPI_TYPE) (nb_cols*na_rows), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_B, 0, Buf_to_receive_B, (C_INT_MPI_TYPE) (nb_cols*Buf_rows), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_B, 0, col_comm, &status); 
          MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_BMPI); // find out how many elements I have received
-         Size_receive_B = (C_INT_TYPE) Size_receive_BMPI;
-         Size_receive_B = Size_receive_B/nb_cols;    // how many rows I have received
-	 
+         if (nb_cols!=0) Size_receive_B = (C_INT_TYPE) Size_receive_BMPI / nb_cols; // how many rows I have received
+         else Size_receive_B=0; // can happen only if nb_cols=Size_receive_BMPI=0
       }
       else
       {
@@ -430,7 +429,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
          else
             b_rows_mult = cols_in_buffer_U - j*nblk;
          
-         C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &done, U_local_start, &curr_rows, B_local_start, &Size_receive_B, &done, Res, &na_rows); 
+         if(Size_receive_B!=0) C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &done, U_local_start, &curr_rows, B_local_start, &Size_receive_B, &done, Res, &na_rows); 
   
          U_local_start = U_local_start + nblk*curr_rows; 
          B_local_start = B_local_start + nblk; 
@@ -444,8 +443,8 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       MPI_Wait(&request_B_Send, &status);
       MPI_Wait(&request_B_Recv, &status);
       MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_BMPI); // find out how many elements I have received
-      Size_receive_B = (C_INT_TYPE) Size_receive_BMPI;
-      Size_receive_B = (C_INT_TYPE) Size_receive_B / nb_cols;    // how many rows I have received
+      if (nb_cols!=0) Size_receive_B = (C_INT_TYPE) Size_receive_BMPI / nb_cols; // how many rows I have received
+      else Size_receive_B=0; // can happen only if nb_cols=Size_receive_BMPI=0
 
    }         
    
@@ -482,7 +481,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       else
          b_rows_mult = cols_in_buffer_U - j*nblk;
       
-      C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &done, U_local_start, &curr_rows, B_local_start, &Size_receive_B, &done, Res, &na_rows); 
+      if(Size_receive_B!=0) C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &done, U_local_start, &curr_rows, B_local_start, &Size_receive_B, &done, Res, &na_rows); 
 
       U_local_start = U_local_start + nblk*curr_rows; 
       B_local_start = B_local_start + nblk;

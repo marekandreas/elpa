@@ -813,6 +813,11 @@ TESTS = $(check_SCRIPTS)
 	@echo 'if [ "$$CHECK_LEVEL" = "extended" ] || [ "$$CHECK_LEVEL" = "autotune" ]  ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
 	@chmod +x $@
 
+%_debug.sh: %
+	@echo "#!/bin/bash" > $@
+	@echo 'if [ "$$CHECK_LEVEL" = "debug" ] ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
+	@chmod +x $@
+
 %_default.sh: %
 	@echo "#!/bin/bash" > $@
 	@echo '$(wrapper)' ./$^ '$$TEST_FLAGS' >> $@

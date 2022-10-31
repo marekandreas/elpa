@@ -60,6 +60,7 @@ module hip_functions
 
   ! TODO global variable, has to be changed
   integer(kind=C_intptr_T), allocatable :: rocblasHandleArray(:)
+  integer(kind=C_intptr_T), allocatable :: rocsolverHandleArray(:)
   integer(kind=c_int), allocatable      :: hipDeviceArray(:)
 
 !  integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
@@ -104,6 +105,19 @@ module hip_functions
     end function
   end interface
 
+  ! not needed
+  !interface
+  !  function rocsolver_set_stream_c(handle, stream) result(istat) &
+  !           bind(C, name="rocsolverSetStreamFromC")
+  !    use, intrinsic :: iso_c_binding
+  !    implicit none
+
+  !    integer(kind=C_intptr_T), value  :: handle
+  !    integer(kind=C_intptr_T), value  :: stream
+  !    integer(kind=C_INT)              :: istat
+  !  end function
+  !end interface
+
   interface
     function hip_stream_synchronize_explicit_c(stream) result(istat) &
              bind(C, name="hipStreamSynchronizeExplicitFromC")
@@ -145,6 +159,30 @@ module hip_functions
       integer(kind=C_INT)  :: istat
     end function rocblas_destroy_c
   end interface
+
+!not needed  
+!  interface
+!    function rocsolver_create_c(handle) result(istat) &
+!             bind(C, name="rocsolverCreateFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      ! no value here
+!      integer(kind=C_intptr_T) :: handle
+!      integer(kind=C_INT)      :: istat
+!    end function rocsolver_create_c
+!  end interface
+
+!not needed
+!  interface
+!    function rocsolver_destroy_c(handle) result(istat) &
+!             bind(C, name="rocsolverDestroyFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      ! no value here
+!      integer(kind=C_intptr_T) :: handle
+!      integer(kind=C_INT)      :: istat
+!    end function rocsolver_destroy_c
+!  end interface
 
   interface
     function hip_setdevice_c(n) result(istat) &
@@ -579,6 +617,133 @@ module hip_functions
 
     end function hip_memset_async_c
   end interface
+
+
+  ! rocSOLVER
+  interface
+    subroutine rocsolver_dtrtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='rocsolverDtrtri_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine rocsolver_dtrtri_c
+  end interface
+
+  interface
+    subroutine rocsolver_strtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='rocsolverStrtri_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine rocsolver_strtri_c
+  end interface
+
+  interface
+    subroutine rocsolver_ztrtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='rocsolverZtrtri_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine rocsolver_ztrtri_c
+  end interface
+
+  interface
+    subroutine rocsolver_ctrtri_c(handle, uplo, diag, n, a, lda, info) &
+                              bind(C,name='rocsolverCtrtri_elpa_wrapper')
+
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine rocsolver_ctrtri_c
+  end interface
+
+  interface
+    subroutine rocsolver_dpotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='rocsolverDpotrf_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine rocsolver_dpotrf_c
+  end interface
+
+  interface
+    subroutine rocsolver_spotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='rocsolverSpotrf_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine rocsolver_spotrf_c
+  end interface
+
+  interface
+    subroutine rocsolver_zpotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='rocsolverZpotrf_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine rocsolver_zpotrf_c
+  end interface
+
+
+  interface
+    subroutine rocsolver_cpotrf_c(handle, uplo, n, a, lda, info) &
+                              bind(C,name='rocsolverCpotrf_elpa_wrapper')
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: handle
+
+    end subroutine rocsolver_cpotrf_c
+  end interface
+
 
   ! cuBLAS
   interface rocblas_dgemm
@@ -1325,6 +1490,23 @@ module hip_functions
 #endif
    end function
 
+!   ! not needed
+!   function rocsolver_set_stream(handle, stream) result(success)
+!     use, intrinsic :: iso_c_binding
+!     implicit none
+!
+!     integer(kind=C_intptr_t)                  :: handle
+!     integer(kind=C_intptr_t)                  :: stream
+!     logical                                   :: success
+!
+!#ifdef WITH_AMD_ROCSOLVER
+!     success = rocsolver_set_stream_c(handle, stream) /= 0
+!#else
+!     success = .true.
+!#endif
+!   end function
+
+
    function hip_stream_synchronize(stream) result(success)
      use, intrinsic :: iso_c_binding
      implicit none
@@ -1393,6 +1575,35 @@ module hip_functions
      success = .true.
 #endif
    end function
+
+!not needed
+!   function rocsolver_create(handle) result(success)
+!     use, intrinsic :: iso_c_binding
+!     implicit none
+!
+!     integer(kind=C_intptr_t)                  :: handle
+!     logical                                   :: success
+!#ifdef WITH_AMD_ROCSOLVER
+!     success = rocsolver_create_c(handle) /= 0
+!#else
+!     success = .true.
+!#endif
+!   end function
+
+!not needed
+!   function rocsolver_destroy(handle) result(success)
+!     use, intrinsic :: iso_c_binding
+!     implicit none
+!
+!     integer(kind=C_intptr_t)                  :: handle
+!     logical                                   :: success
+!#ifdef WITH_AMD_ROCSOLVER
+!     success = rocsolver_destroy_c(handle) /= 0
+!#else
+!     success = .true.
+!#endif
+!   end function
+
 
     function hip_setdevice(n) result(success)
       use, intrinsic :: iso_c_binding
@@ -1875,6 +2086,185 @@ module hip_functions
         success = .true.
 #endif
     end function
+
+    subroutine rocsolver_dtrtri(uplo, diag, n, a, lda, info, threadID)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=c_int), optional   :: threadID
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+
+      if (present(threadID)) then
+        rocsolverHandle = rocsolverHandleArray(threadID)
+      else
+        rocsolverHandle = rocsolverHandleArray(0)
+      endif
+
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_dtrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine rocsolver_strtri(uplo, diag, n, a, lda, info, threadID)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=c_int), optional   :: threadID
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+
+      if (present(threadID)) then
+        rocsolverHandle = rocsolverHandleArray(threadID)
+      else
+        rocsolverHandle = rocsolverHandleArray(0)
+      endif
+
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_strtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine rocsolver_ztrtri(uplo, diag, n, a, lda, info, threadID)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=c_int), optional   :: threadID
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+
+      if (present(threadID)) then
+        rocsolverHandle = rocsolverHandleArray(threadID)
+      else
+        rocsolverHandle = rocsolverHandleArray(0)
+      endif
+
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_ztrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+
+    subroutine rocsolver_ctrtri(uplo, diag, n, a, lda, info, threadID)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=c_int), optional   :: threadID
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+
+      if (present(threadID)) then
+        rocsolverHandle = rocsolverHandleArray(threadID)
+      else
+        rocsolverHandle = rocsolverHandleArray(0)
+      endif
+
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_ctrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine rocsolver_dpotrf(uplo, n, a, lda, info, threadID)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=c_int), optional   :: threadID
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+
+      if (present(threadID)) then
+        rocsolverHandle = rocsolverHandleArray(threadID)
+      else
+        rocsolverHandle = rocsolverHandleArray(0)
+      endif
+
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_dpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine rocsolver_spotrf(uplo, n, a, lda, info, threadID)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=c_int), optional   :: threadID
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+
+      if (present(threadID)) then
+        rocsolverHandle = rocsolverHandleArray(threadID)
+      else
+        rocsolverHandle = rocsolverHandleArray(0)
+      endif
+
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_spotrf_c(rocsolverHandle, uplo, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine rocsolver_zpotrf(uplo, n, a, lda, info, threadID)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=c_int), optional   :: threadID
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+
+      if (present(threadID)) then
+        rocsolverHandle = rocsolverHandleArray(threadID)
+      else
+        rocsolverHandle = rocsolverHandleArray(0)
+      endif
+
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_zpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine rocsolver_cpotrf(uplo, n, a, lda, info, threadID)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=c_int), optional   :: threadID
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+
+      if (present(threadID)) then
+        rocsolverHandle = rocsolverHandleArray(threadID)
+      else
+        rocsolverHandle = rocsolverHandleArray(0)
+      endif
+
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_cpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
+#endif
+    end subroutine
+
+
 
     ! cuBLAS
     subroutine rocblas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)

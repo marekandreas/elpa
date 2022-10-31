@@ -56,10 +56,16 @@ void elpa_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *
 void elpa_eigenvectors_double_complex(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
 void elpa_eigenvectors_float_complex(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
 
+void elpa_skew_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error);
+void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error);
+
 void elpa_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error);
 void elpa_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error);
 void elpa_eigenvalues_double_complex(elpa_t handle, double complex *a, double *ev, int *error);
 void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, int *error);
+
+void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error);
+void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error);
 
 void elpa_cholesky_double(elpa_t handle, double *a, int *error);
 void elpa_cholesky_float(elpa_t handle, float *a, int *error);

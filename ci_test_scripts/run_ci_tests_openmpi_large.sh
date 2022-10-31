@@ -177,7 +177,8 @@ then
     echo "##copy everything back from /tmp/elpa to runner directory"  >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "#cp -r * \$runner_path"  >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "#cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "#exit \$exitCode" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
+    echo "#Important always return exit code!"
+    echo "exit \$exitCode" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
 
     echo " "
     echo "Job script for the run"

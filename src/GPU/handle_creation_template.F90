@@ -74,18 +74,20 @@
           enddo
 #endif
 #endif
-!#ifdef WITH_AMD_GPU_VERSION
-!#ifdef WITH_AMD_CUSOLVER
-!          do thread=0, maxThreads-1
-!            success = cusolver_create(handle_tmp)
-!            cusolverHandleArray(thread) = handle_tmp
-!            if (.not.(success)) then
-!              print *,"Cannot create cusolver handle"
-!              stop 1
-!            endif
-!          enddo
-!#endif
-!#endif
+#ifdef WITH_AMD_GPU_VERSION
+#ifdef WITH_AMD_ROCSOLVER
+          !do thread=0, maxThreads-1
+            !not needed
+            !success = rocsolver_create(handle_tmp)
+            !rocsolverHandleArray(thread) = handle_tmp
+            !if (.not.(success)) then
+            !  print *,"Cannot create rocsolver handle"
+            !  stop 1
+            !endif
+          !enddo
+          rocsolverHandleArray(:) = rocblasHandleArray(:)
+#endif
+#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
           do thread=0, maxThreads-1
@@ -141,6 +143,19 @@
               stop 1
             endif
           enddo
+#endif
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+#ifdef WITH_AMD_ROCSOLVER
+          !not needed
+          !do thread=0, maxThreads-1
+          !  success = rocsolver_set_stream(rocsolverHandleArray(thread), my_stream)
+          !  if (.not.(success)) then
+          !    print *,"Cannot create rocsolver stream handle"
+          !    stop 1
+          !  endif
+          !enddo
 #endif
 #endif
 

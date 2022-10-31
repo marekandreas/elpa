@@ -170,6 +170,7 @@ then
     echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo "exitCode=\$?" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "#Important always return exit code!"
     echo "exit \$exitCode" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
 
     echo " "

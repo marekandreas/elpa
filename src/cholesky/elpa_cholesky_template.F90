@@ -457,7 +457,7 @@
 
       if (useGPU) then
         if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
-#ifdef WITH_NVIDIA_CUSOLVER
+#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
           call obj%timer%start("gpusolver")
 
           a_off = (l_row1-1 + (l_col1-1)*matrixRows) * size_of_datatype
@@ -468,7 +468,7 @@
             return
           endif
           call obj%timer%stop("gpusolver")
-#else /* WITH_NVIDIA_CUSOLVER */
+#else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
 
 #ifndef DEVICE_POINTER
           call obj%timer%start("blas")
@@ -585,7 +585,7 @@
             return
           endif ! info
 #endif /* DEVICE_POINTER */
-#endif /* WITH_NVIDIA_CUSOLVER */
+#endif /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
         endif ! (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols))
       else ! useGPU
         if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
@@ -625,7 +625,7 @@
       if (my_pcol==pcol(n, nblk, np_cols)) then
 
         if (useGPU) then
-#ifdef WITH_NVIDIA_CUSOLVER
+#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
           call obj%timer%start("gpusolver")
 
           a_off = (l_row1-1 + (l_col1-1)*matrixRows) * size_of_datatype
@@ -636,7 +636,7 @@
             return
           endif
           call obj%timer%stop("gpusolver")
-#else /* WITH_NVIDIA_CUSOLVER */
+#else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
 #ifndef DEVICE_POINTER
           call obj%timer%start("blas")
 #ifdef WITH_GPU_STREAMS
@@ -753,7 +753,7 @@
           endif ! info
 
 #endif /* DEVICE_POINTER */
-#endif /* WITH_NVIDIA_CUSOLVER */
+#endif /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
         else ! useGPU
           ! The process owning the upper left remaining block does the
           ! Cholesky-Factorization of this block

@@ -435,7 +435,7 @@
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
 
-#ifdef WITH_NVIDIA_CUSOLVER
+#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
           call obj%timer%start("gpusolver")
 
           a_off = ((l_row1-1) + (l_col1-1)*matrixRows) * size_of_datatype
@@ -447,7 +447,7 @@
           endif
           call obj%timer%stop("gpusolver")
          
-#else /* WITH_NVIDIA_CUSOLVER */
+#else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
          
           ! still have to use cpu blas -> a generic GPU implementation would be needed
 #ifndef DEVICE_POINTER
@@ -539,7 +539,7 @@
 #endif
           call obj%timer%stop("blas")
 #endif /* DEVICE_POINTER */
-#endif /* WITH_NVIDIA_CUSOLVER */
+#endif /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
 
         else ! useGPU
           call obj%timer%start("blas")
