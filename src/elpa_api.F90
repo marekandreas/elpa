@@ -1080,10 +1080,66 @@ module elpa_api
 #endif
 
     subroutine elpa_uninit(error)
+      use cuda_functions
+      use hip_functions
+      use openmp_offload_functions
+      use sycl_functions
+      use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray, my_stream
+      use elpa_omp
+      implicit none
+      
 #ifdef USE_FORTRAN2008
       integer, optional, intent(out) :: error
 #else
       integer, intent(out)           :: error
+#endif
+      logical                                    :: success
+      integer(kind=ik)                           :: maxThreads, thread
+
+      ! needed for handle destruction
+#ifdef WITH_OPENMP_TRADITIONAL
+      maxThreads=omp_get_max_threads()
+#else /* WITH_OPENMP_TRADITIONAL */
+      maxThreads=1
+#endif /* WITH_OPENMP_TRADITIONAL */
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      if (allocated(gpublasHandleArray)) then   
+
+#include "./GPU/handle_destruction_template.F90"
+      
+        deallocate(gpublasHandleArray)
+        deallocate(gpuDeviceArray)
+      
+#ifdef WITH_NVIDIA_GPU_VERSION
+        deallocate(cublasHandleArray)
+        deallocate(cudaDeviceArray)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        deallocate(rocblasHandleArray)
+        deallocate(hipDeviceArray)
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        deallocate(openmpOffloadHandleArray)
+        deallocate(openmpOffloadDeviceArray)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        deallocate(syclHandleArray)
+        deallocate(syclDeviceArray)
+#endif
+
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_CUSOLVER)
+        deallocate(cusolverHandleArray)
+#endif
+
+#if defined(WITH_AMD_GPU_VERSION) && defined(WITH_AMD_ROCSOLVER)
+        deallocate(rocsolverHandleArray)
+#endif
+
+      endif
 #endif
 
 #ifdef USE_FORTRAN2008
@@ -1092,6 +1148,7 @@ module elpa_api
      error = ELPA_OK
 #endif
     end subroutine
+    
     !> \brief helper function for error strings
     !> Parameters
     !> \param   elpa_error  integer: error code to querry
