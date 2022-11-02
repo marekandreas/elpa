@@ -235,7 +235,7 @@ compute_hh_trafo_cuda_kernel_complex_double(cuDoubleComplex * __restrict__ q, co
        if (tid == 0) q_vs = q_v;
         __syncthreads();
 
-        q_v2 = cuCsub(q_v2, cuCmul(hipCmul(q_v, ht), hv));
+        q_v2 = cuCsub(q_v2, cuCmul(hipCmul(q_vs, ht), hv));
 #else
         dotp_s[tid] = cuCmul(q_v2, cuConj(hh[h_off]));
 
@@ -407,7 +407,7 @@ compute_hh_trafo_cuda_kernel_complex_single(cuFloatComplex * __restrict__ q, con
         if (tid == 0) q_vs = q_v;
          __syncthreads();
 
-        q_v2 = cuCsubf(q_v2, cuCmulf(cuCmulf(q_v, ht), hv));
+        q_v2 = cuCsubf(q_v2, cuCmulf(cuCmulf(q_vs, ht), hv));
 #else
         dotp_s[tid] = cuCmulf(q_v2, cuConjf(hh[h_off]));
 

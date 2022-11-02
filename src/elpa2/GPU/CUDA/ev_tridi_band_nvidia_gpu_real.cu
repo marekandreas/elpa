@@ -254,7 +254,7 @@ compute_hh_trafo_cuda_kernel_real(T * __restrict__ q, const T * __restrict__ hh,
        if (tid == 0) q_vs = q_v;
         __syncthreads();
 
-        q_v2 -= q_v * ht * hv;
+        q_v2 -= q_vs * ht * hv;
 #else
         dotp_s[tid] = q_v2 * hh[h_off];
 
