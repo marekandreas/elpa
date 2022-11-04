@@ -4,20 +4,20 @@ stages:
 
 include:
   #set environment variables
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/before.inc.yml'
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/after.inc.yml'
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/before.inc.yml'
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/after.inc.yml'
   # python tests 
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/special_tests.inc.yml'
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/special_tests.inc.yml'
   # linking against ELPA tests
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/project_tests.inc.yml'
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/project_tests.inc.yml'
   # ELPA tests
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/generated_tests.inc.yml'
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/generated_tests.inc.yml'
   # layout tests
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/layout_tests.inc.yml'
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/layout_tests.inc.yml'
   # hip_on_nvidia
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/hip_on_nvidia_tests.inc.yml'
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/hip_on_nvidia_tests.inc.yml'
   # nvhpcsdk tests
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/nvhpcsdk_tests.inc.yml'
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/nvhpcsdk_tests.inc.yml'
 
 
 
