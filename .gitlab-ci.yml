@@ -11,13 +11,13 @@ include:
   # linking against ELPA tests
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/project_tests.inc.yml'
   # ELPA tests
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/generated_tests.inc.yml'
+  #- remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/generated_tests.inc.yml'
   # layout tests
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/layout_tests.inc.yml'
+  #- remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/layout_tests.inc.yml'
   # hip_on_nvidia
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/hip_on_nvidia_tests.inc.yml'
+  #- remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/hip_on_nvidia_tests.inc.yml'
   # nvhpcsdk tests
-  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/nvhpcsdk_tests.inc.yml'
+  #- remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/peter_added_cxx_cxxflags/nvhpcsdk_tests.inc.yml'
 
 
 
