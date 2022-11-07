@@ -218,9 +218,12 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
         
         # end: exclude some test combinations
       
-        #if (lang == "C"):
-        if (lang != "Fortran"):
+        if (lang == "C"):
             print("if ENABLE_C_TESTS")
+            endifs += 1
+
+        if (lang == "C++"):
+            print("if ENABLE_CPP_TESTS")
             endifs += 1
 
         if (g == "NVIDIA_GPU_ON"):
@@ -431,6 +434,9 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
     print("if ENABLE_AUTOTUNING")
     if lang == "C":
         print("if ENABLE_C_TESTS")
+    if lang == "C++":
+        print("if ENABLE_CPP_TESTS")
+         
     print("check_SCRIPTS += " + name + "_autotune.sh")
     print("noinst_PROGRAMS += " + name)
     if lang == "Fortran":
@@ -456,6 +462,8 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         prec_flag[p]]))
     print("endif\n" * endifs)
     if lang == "C":
+        print("endif")
+    if lang == "C++":
         print("endif")
     print("endif")
 
@@ -523,9 +531,13 @@ for lang, p, d, g, api_name in product(sorted(language_flag.keys()),
         d=d, p=p, gpu_suffix=gpu_suffix,
         api_name="explicit_" if api_name == "explicit" else "")
 
-    if (lang == "C" or lang == "C++"):
+    if (lang == "C"):
         print("if ENABLE_C_TESTS")
         endifs += 1
+    if (lang == "C++"):
+        print("if ENABLE_CPP_TESTS")
+        endifs += 1
+         
     print("check_SCRIPTS += " + name + "_default.sh")
     print("noinst_PROGRAMS += " + name)
     if lang == "Fortran":
@@ -583,7 +595,7 @@ print("endif")
 print("endif\n")
 
 name = "validate_multiple_objs_real_double_cpp_version"
-print("if ENABLE_C_TESTS")
+print("if ENABLE_CPP_TESTS")
 print("if ENABLE_AUTOTUNING")
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
@@ -640,7 +652,7 @@ print("endif")
 
 
 name = "validate_real_skewsymmetric_double_cpp_version"
-print("if ENABLE_C_TESTS")
+print("if ENABLE_CPP_TESTS")
 print("if HAVE_SKEWSYMMETRIC")
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
