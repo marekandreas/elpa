@@ -45,11 +45,13 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-#include <stdio.h>
+#pragma once
 #include <elpa/elpa.h>
+#include <elpa/elpa_configured_options.h>
 
-#include "config.h"
-
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
+int is_device_ptr(void *a_void_ptr);
+#endif
 
 void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error);
 void elpa_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error);
