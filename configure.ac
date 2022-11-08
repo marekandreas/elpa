@@ -134,7 +134,7 @@ if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
 
-dnl CPP
+dnl CXX
 AC_LANG_PUSH([C++])
 AC_PROG_CXX
 AC_LANG_POP([C++])
@@ -297,6 +297,7 @@ AM_PROG_AR
 AM_PROG_AS
 AC_PROG_CC_C99
 AM_PROG_CC_C_O
+AC_PROG_CPP
 AC_LANG_POP([C])
 
 # Fortran
