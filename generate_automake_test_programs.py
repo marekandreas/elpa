@@ -299,7 +299,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
                   print("check_SCRIPTS += " + name + "_default.sh")
           elif lay == "all_layouts":
               if kernel == "all_kernels":
-                  print("check_SCRIPTS += " + name + "_debug.sh")
+                  print("check_SCRIPTS += " + name + "_extended.sh")
               else:
                   print("check_SCRIPTS += " + name + "_extended.sh")
           else:
@@ -344,7 +344,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
                   print("check_SCRIPTS += " + name + "_default.sh")
           elif lay == "all_layouts":
               if kernel == "all_kernels":
-                  print("check_SCRIPTS += " + name + "_debug.sh")
+                  print("check_SCRIPTS += " + name + "_extended.sh")
               else:
                   print("check_SCRIPTS += " + name + "_extended.sh")
           else:
