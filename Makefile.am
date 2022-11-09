@@ -628,14 +628,15 @@ nobase_elpa_include_HEADERS = \
   src/helpers/scalapack_interfaces.h \
   elpa/elpa_simd_constants.h \
   elpa/elpa.h \
-  elpa/elpa_generic.h
+  elpa/elpa_generic.h \
+  elpa/elpa_explicit_name.h 
 
+# headers generated during configure
 nobase_nodist_elpa_include_HEADERS = \
   elpa/elpa_version.h \
   elpa/elpa_constants.h \
   elpa/elpa_generated.h \
   elpa/elpa_generated_c_api.h \
-  elpa/elpa_explicit_name.h \
   elpa/elpa_configured_options.h
   
 dist_man_MANS = \
