@@ -2163,6 +2163,7 @@ AM_CONDITIONAL([WITH_NVIDIA_GPU_VERSION],[test x"$use_real_nvidia_gpu" = x"yes" 
 if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" ; then
   AC_DEFINE([WITH_NVIDIA_GPU_VERSION],[1],[enable Nvidia GPU support])
   AC_DEFINE([WITH_NVIDIA_GPU_KERNEL],[1],[Nvidia GPU kernel should be build])
+  AC_DEFINE_SUBST(CURRENT_WITH_NVIDIA_GPU_VERSION, 1, "enable use NVIDIA GPU in C-headers")
   ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=1
   ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=1
 
@@ -2199,6 +2200,7 @@ if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" 
     AC_LANG_POP([C])
   fi
 else
+  AC_DEFINE_SUBST(CURRENT_WITH_NVIDIA_GPU_VERSION, 0, "disable use NVIDIA GPU in C-headers")
   ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=0
   ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=0
 fi
@@ -2211,6 +2213,7 @@ AM_CONDITIONAL([WITH_AMD_GPU_VERSION],[test x"$use_real_amd_gpu" = x"yes" -o x"$
 if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
   AC_DEFINE([WITH_AMD_GPU_VERSION],[1],[enable AMD GPU support])
   AC_DEFINE([WITH_AMD_GPU_KERNEL],[1],[AMD GPU kernel should be build])
+  AC_DEFINE_SUBST(CURRENT_WITH_AMD_GPU_VERSION, 1, "enable use AMD GPU in C-headers")
   ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=1
   ELPA_2STAGE_REAL_AMD_GPU_COMPILED=1
 
@@ -2237,6 +2240,7 @@ if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
   #  AC_LANG_POP([C])
   #fi
 else
+  AC_DEFINE_SUBST(CURRENT_WITH_AMD_GPU_VERSION, 0, "disable use AMD GPU in C-headers")
   ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=0
   ELPA_2STAGE_REAL_AMD_GPU_COMPILED=0
 fi
@@ -2639,6 +2643,7 @@ AC_CONFIG_FILES([
   elpa/elpa_constants.h
   elpa/elpa_version.h
   elpa/elpa_build_config.h
+  elpa/elpa_configured_options.h
 ])
 
 m4_include([m4/ax_fc_check_define.m4])

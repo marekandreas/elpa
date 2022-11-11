@@ -60,9 +60,9 @@ module test_gpu
   integer(kind=c_int), parameter :: intel_gpu = 3
   integer(kind=c_int), parameter :: no_gpu = -1
   integer(kind=c_int)            :: use_gpu_vendor
-  integer(kind=c_int)            :: gpuHostRegisterDefault    
-  integer(kind=c_int)            :: gpuMemcpyHostToDevice    
-  integer(kind=c_int)            :: gpuMemcpyDeviceToHost   
+  integer(kind=c_int)            :: gpuHostRegisterDefault
+  integer(kind=c_int)            :: gpuMemcpyHostToDevice
+  integer(kind=c_int)            :: gpuMemcpyDeviceToHost
   integer(kind=c_int)            :: gpuMemcpyDeviceToDevice
   integer(kind=c_int)            :: gpuHostRegisterMapped
   integer(kind=c_int)            :: gpuHostRegisterPortable

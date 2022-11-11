@@ -81,7 +81,7 @@ extern "C" {
 
     cudaError_t cuerr = cudaSetDevice(n);
     if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaSetDevice: %s\n",cudaGetErrorString(cuerr));
+      errormessage("Error in cudaSetDevice(%i): %s\n", n, cudaGetErrorString(cuerr));
       return 0;
     }
     return 1;
@@ -99,7 +99,7 @@ extern "C" {
     }
     return 1;
   }
-
+  
   int cudaFreeFromC(intptr_t *a) {
 #ifdef DEBUG_CUDA
     printf("CUDA Free, pointer address: %p \n", a);

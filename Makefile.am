@@ -35,6 +35,7 @@ libelpa@SUFFIX@_public_la_SOURCES = \
 noinst_LTLIBRARIES += libelpa@SUFFIX@_private.la
 libelpa@SUFFIX@_private_la_FCFLAGS = $(AM_FCFLAGS) $(FC_MODOUT)private_modules $(FC_MODINC)private_modules
 libelpa@SUFFIX@_private_la_SOURCES = \
+  elpa/elpa_explicit_name.c \
   src/elpa_impl.F90 \
   src/elpa_autotune_impl.F90 \
   src/elpa_abstract_impl.F90 \
@@ -167,7 +168,7 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 if WITH_NVIDIA_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/elpa_explicit_name_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu
 
 if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real_sm80.cu src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh
@@ -188,7 +189,7 @@ endif
 #endif
 
 if WITH_AMD_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp  src/GPU/ROCm/elpa_explicit_name_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
 endif
 
 if !WITH_MPI
@@ -627,14 +628,17 @@ nobase_elpa_include_HEADERS = \
   src/helpers/scalapack_interfaces.h \
   elpa/elpa_simd_constants.h \
   elpa/elpa.h \
-  elpa/elpa_generic.h
+  elpa/elpa_generic.h \
+  elpa/elpa_explicit_name.h 
 
+# headers generated during configure
 nobase_nodist_elpa_include_HEADERS = \
   elpa/elpa_version.h \
   elpa/elpa_constants.h \
   elpa/elpa_generated.h \
-  elpa/elpa_generated_c_api.h
-
+  elpa/elpa_generated_c_api.h \
+  elpa/elpa_configured_options.h
+  
 dist_man_MANS = \
   man/elpa2_print_kernels.1 \
   man/elpa_init.3 \
@@ -708,6 +712,7 @@ libelpatest@SUFFIX@_la_SOURCES = \
   test/shared/test_prepare_matrix.F90 \
   test/shared/test_analytic.F90 \
   test/shared/GPU/test_gpu_vendor_agnostic_layer.F90 \
+  test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.c \
   test/shared/test_output_type.F90
 
 if WITH_NVIDIA_GPU_VERSION
@@ -998,6 +1003,7 @@ EXTRA_DIST = \
   test/shared/test_prepare_matrix_template.F90 \
   test/shared/test_analytic_template.F90 \
   test/shared/test_scalapack_template.F90 \
+  test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h \
   test_project_1stage/Makefile.am \
   test_project_1stage/autogen.sh \
   test_project_1stage/configure.ac \
