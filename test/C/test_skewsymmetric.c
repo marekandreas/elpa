@@ -471,7 +471,7 @@ int main(int argc, char** argv) {
 #ifdef TEST_SINGLE
        if (fabs(ev_complex[i]-ev_skewsymmetric[i])/fabs(ev_complex[i]) > 1e-4) {
 #endif
-	 printf("ev: i= %d,%f,%f\n",ev_complex[i],ev_skewsymmetric[i]);
+	 printf("ev: i= %d,%f,%f\n",i,ev_complex[i],ev_skewsymmetric[i]);
          status = 1;
        }
      }

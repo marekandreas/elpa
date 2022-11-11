@@ -856,8 +856,10 @@ print *,"Device pointer + REDIST"
   
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
    !copy qIntern and ev to provided device pointers
+   if (present(qExtern)) then
    successGPU = gpu_memcpy(qExtern, c_loc(qIntern(1,1)), matrixRows*matrixCols*size_of_datatype, &
                              gpuMemcpyHostToDevice)
+   endif
    check_memcpy_gpu("elpa1: qIntern -> qExtern", successGPU)
    successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_real_datatype, &
                              gpuMemcpyHostToDevice)

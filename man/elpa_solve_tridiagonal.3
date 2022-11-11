@@ -13,7 +13,7 @@ use elpa
 class(elpa_t), pointer :: elpa
 .br
 
-.RI  "call elpa%\fBeigenvectors\fP (d, e, q, error)"
+.RI  "call elpa%\fBsolve_tridiagonal\fP (d, e, q, error)"
 .br
 .RI " "
 .br
@@ -41,7 +41,7 @@ The return error code of the function. Should be "ELPA_OK". The error code can b
 elpa_t handle;
 
 .br
-.RI "void \fBelpa_eigenvalues\fP(\fBelpa_t\fP handle, \fBdatatype\fP *d, \fBdatatype\fP *e, \fBdatatype\fP *q, \fBint\fP *error);"
+.RI "void \fBelpa_solve_tridiagonal\fP(\fBelpa_t\fP handle, \fBdatatype\fP *d, \fBdatatype\fP *e, \fBdatatype\fP *q, \fBint\fP *error);"
 .br
 .RI " "
 .br
@@ -59,7 +59,7 @@ The diagonal elements of the matrix. The dimensions of the matrix must be set \f
 The offdiagonal elements of the matrix. The \fBdatatype\fP can be one of "double" or "float".
 .TP
 .RI "datatype *\fBq\fP;"
-The storage space for the computed eigenvectors. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex".
+The storage space for the computed eigenvectors. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double" or "float".
 .TP
 .RI "int *\fBerror\fP;"
 The error code of the function. Should be "ELPA_OK". The error codes can be querried with \fBelpa_strerr\fP(3)
