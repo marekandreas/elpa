@@ -1,9 +1,21 @@
 Changelog for next release
 
+
 - not yet decided
+
+Changelog for ELPA 2022.11.001.rc1
+- fix a few bugs in the C interface for the ELPA solvers
+- complete the C API
 - make sure that OMP_NUM_THREADS is honoured even if omp_threads is not set
-- fix error when calling elpa_skew_eigenvectors from C
 - fix MPI_COMMUNICATORS per ELPA object
+- significantly improve the performance of the ELPA band-reduction step of 
+  the 2step solver
+- fix a few minor bugs in AMD GPU port: is now production ready
+- allow to use NVIDIA's CUB implementation; experimental feature
+- allow to use AMD's rocsolver library
+- implement "HIP to ROCm" layer, in order to be able to run AMD GPU code paths
+  on NVIDIA devices
+- remove the neccessity to provide the CPP variable
 
 Changelog for ELPA 2022.05.001
 - implement OpenMP offloading to GPU for Intel GPU for ELPA 1 and 2 stage (
