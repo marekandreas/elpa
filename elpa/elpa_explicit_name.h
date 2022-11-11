@@ -45,8 +45,9 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
+#pragma once
 #include <elpa/elpa.h>
-#include "config.h"
+#include <elpa/elpa_configured_options.h>
 
 #ifdef __cplusplus
 #define double_complex std::complex<double> 
@@ -57,7 +58,7 @@ extern "C" {
 #define float_complex float complex
 #endif
 
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
 int is_device_ptr(void *a_void_ptr);
 #endif
 
@@ -69,10 +70,16 @@ void elpa_eigenvectors_float_complex(elpa_t handle, float_complex *a, float *ev,
 void elpa_skew_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error);
 void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error);
 
+void elpa_skew_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error);
+void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error);
+
 void elpa_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error);
 void elpa_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error);
 void elpa_eigenvalues_double_complex(elpa_t handle, double_complex *a, double *ev, int *error);
 void elpa_eigenvalues_float_complex(elpa_t handle, float_complex *a, float *ev, int *error);
+
+void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error);
+void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error);
 
 void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error);
 void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error);

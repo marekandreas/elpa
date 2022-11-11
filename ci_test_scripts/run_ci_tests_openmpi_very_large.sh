@@ -154,7 +154,7 @@ then
     echo "fi" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo "module purge" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
-    echo "module load git autoconf automake libtool  cuda/11.4 gcc/11 openmpi_gpu/4 mkl/2022.0" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "module load git autoconf automake libtool  cuda/11.4 gcc/11 openmpi_gpu/4 mkl/2022.1" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo "module load anaconda/3/2021.11 mpi4py/3.0.3" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo "export LD_LIBRARY_PATH=\$MKL_HOME/lib/intel64:\$LD_LIBRARY_PATH" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo "export OMPI_MCA_coll=^hcoll" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
@@ -170,6 +170,7 @@ then
     echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo "exitCode=\$?" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
+    echo "#Important always return exit code!"
     echo "exit \$exitCode" >> ./run_${CLUSTER}_1node_openmpi_very_large_2GPU.sh
 
     echo " "

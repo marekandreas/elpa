@@ -1049,7 +1049,9 @@ program test
      assert_elpa_ok(error_elpa)
 #endif
      if (myid == 0) then
-       print *, elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
+       print *, "The settings in the test program want to use ",elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
+       print *, "(This might be overriden with some environment settings)"
+       
      endif
 #endif /* TEST_SOLVER_2STAGE */
 
@@ -1317,7 +1319,7 @@ program test
 
 
    !-----------------------------------------------------------------------------------------------------------------------------     
-   ! TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host, deallocate device pointers
+   ! TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
 
@@ -1343,22 +1345,6 @@ program test
      stop
    endif
 
-   ! and deallocate device pointer
-   successGPU = gpu_free(a_dev)
-   if (.not.(successGPU)) then
-     print *,"cannot free memory of a_dev on GPU. Aborting..."
-     stop
-   endif
-   successGPU = gpu_free(q_dev)
-   if (.not.(successGPU)) then
-     print *,"cannot free memory of q_dev on GPU. Aborting..."
-     stop
-   endif
-   successGPU = gpu_free(ev_dev)
-   if (.not.(successGPU)) then
-     print *,"cannot free memory of ev_dev on GPU. Aborting..."
-     stop
-   endif
 #endif /* defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM) */
 
 #if defined(TEST_EIGENVALUES)
@@ -1366,19 +1352,6 @@ program test
    successGPU = gpu_memcpy(c_loc(ev), ev_dev, na*size_of_real_datatype, gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"cannot copy vector of eigenvalues from GPU to host! Aborting..."
-     stop
-   endif
-
-   ! and deallocate device pointer
-   successGPU = gpu_free(a_dev)
-   if (.not.(successGPU)) then
-     print *,"cannot free memory of a_dev on GPU. Aborting..."
-     stop
-   endif
-   
-   successGPU = gpu_free(ev_dev)
-   if (.not.(successGPU)) then
-     print *,"cannot free memory of ev_dev on GPU. Aborting..."
      stop
    endif
 #endif /* TEST_EIGENVALUES  */
@@ -1389,11 +1362,6 @@ program test
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"cannot copy matrix of eigenvectors from GPU to host! Aborting..."
-     stop
-   endif
-   successGPU = gpu_free(a_dev)
-   if (.not.(successGPU)) then
-     print *,"cannot free memory of a_dev on GPU. Aborting..."
      stop
    endif
 #endif /* TEST_CHOLESKY */
@@ -1417,24 +1385,6 @@ program test
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix c_dev -> c ! Aborting..."
-     stop
-   endif
-
-   successGPU = gpu_free(a_dev)
-   if (.not.(successGPU)) then
-     print *,"cannot free memory of a_dev on GPU. Aborting..."
-     stop
-   endif
-
-   successGPU = gpu_free(b_dev)
-   if (.not.(successGPU)) then
-     print *,"cannot free memory of b_dev on GPU. Aborting..."
-     stop
-   endif
-
-   successGPU = gpu_free(c_dev)
-   if (.not.(successGPU)) then
-     print *,"cannot free memory of c_dev on GPU. Aborting..."
      stop
    endif
 #endif /* TEST_HERMITIAN_MULTIPLY */
@@ -1519,8 +1469,73 @@ program test
 #endif /* TEST_ALL_KERNELS */
 
    !-----------------------------------------------------------------------------------------------------------------------------
-   ! Deallocate 
+   ! Deallocate
    
+#if TEST_GPU_DEVICE_POINTER_API == 1
+
+#if defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM)
+   ! and deallocate device pointers
+   successGPU = gpu_free(a_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of a_dev on GPU. Aborting..."
+     stop
+   endif
+   successGPU = gpu_free(q_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of q_dev on GPU. Aborting..."
+     stop
+   endif
+   successGPU = gpu_free(ev_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of ev_dev on GPU. Aborting..."
+     stop
+   endif
+#endif /* defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM) */
+
+#if defined(TEST_EIGENVALUES)
+   successGPU = gpu_free(a_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of a_dev on GPU. Aborting..."
+     stop
+   endif
+   
+   successGPU = gpu_free(ev_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of ev_dev on GPU. Aborting..."
+     stop
+   endif
+#endif /* TEST_EIGENVALUES  */
+
+#if defined(TEST_CHOLESKY)
+   successGPU = gpu_free(a_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of a_dev on GPU. Aborting..."
+     stop
+   endif
+#endif /* TEST_CHOLESKY */
+
+#if defined(TEST_HERMITIAN_MULTIPLY)
+   successGPU = gpu_free(a_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of a_dev on GPU. Aborting..."
+     stop
+   endif
+
+   successGPU = gpu_free(b_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of b_dev on GPU. Aborting..."
+     stop
+   endif
+
+   successGPU = gpu_free(c_dev)
+   if (.not.(successGPU)) then
+     print *,"cannot free memory of c_dev on GPU. Aborting..."
+     stop
+   endif
+#endif /* TEST_HERMITIAN_MULTIPLY */
+
+#endif /* TEST_GPU_DEVICE_POINTER_API */
+
    call elpa_deallocate(e, error_elpa)
    assert_elpa_ok(error_elpa)
 

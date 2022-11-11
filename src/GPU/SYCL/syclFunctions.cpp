@@ -165,12 +165,21 @@ static oneapi::mkl::side sideFromChar(char c) {
     return 1;
   }
 
+  int syclblasDestroyFromC(intptr_t* handle){
+    //stub function
+    return 1;
+  }
+  
   int syclsolverCreateFromC(intptr_t* handle){
     //stub function
     return 1;
   }
 
-
+  int syclsolverDestroyFromC(intptr_t* handle){
+    //stub function
+    return 1;
+  }
+  
   int syclMallocFromC(intptr_t *a, size_t elems) {
     auto &queue = elpa::gpu::sycl::getQueue();
     *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, queue));

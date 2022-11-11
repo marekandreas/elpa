@@ -187,6 +187,7 @@ compute_hh_trafo_hip_kernel_complex_double(hipDoubleComplex * __restrict__ q, co
     __shared__ typename BlockReduceT::TempStorage temp_storage;
 
     hipDoubleComplex q_v, dt, hv, ht;
+    __shared__ hipDoubleComplex q_vs;
 #endif
 
     hipDoubleComplex q_v2;
@@ -218,7 +219,10 @@ compute_hh_trafo_hip_kernel_complex_double(hipDoubleComplex * __restrict__ q, co
 
         q_v = BlockReduceT(temp_storage).Sum(dt);
 
-        q_v2 = hipCsub(q_v2, hipCmul(hipCmul(q_v, ht), hv));
+	if (tid == 0) q_vs = q_v;
+        __syncthreads();
+
+	q_v2 = hipCsub(q_v2, hipCmul(hipCmul(q_vs, ht), hv));
 #else
         dotp_s[tid] = hipCmul(q_v2, hipConj(hh[h_off]));
 
@@ -356,6 +360,7 @@ compute_hh_trafo_hip_kernel_complex_single(hipFloatComplex * __restrict__ q, con
     __shared__ typename BlockReduceT::TempStorage temp_storage;
 
     hipFloatComplex q_v, dt, hv, ht;
+    __shared__ hipFloatComplex q_vs;
 #endif
 
     hipFloatComplex q_v2;
@@ -387,7 +392,10 @@ compute_hh_trafo_hip_kernel_complex_single(hipFloatComplex * __restrict__ q, con
 
         q_v = BlockReduceT(temp_storage).Sum(dt);
 
-        q_v2 = hipCsubf(q_v2, hipCmulf(hipCmulf(q_v, ht), hv));
+	if (tid == 0) q_vs = q_v;
+        __syncthreads();
+
+	q_v2 = hipCsubf(q_v2, hipCmulf(hipCmulf(q_vs, ht), hv));
 #else
         dotp_s[tid] = hipCmulf(q_v2, hipConjf(hh[h_off]));
 

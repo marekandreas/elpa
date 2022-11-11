@@ -90,11 +90,21 @@ extern "C" {
     return 1;
   }
 
+  int openmpOffloadblasDestroyFromC(intptr_t* handle){
+    //stub function
+    return 1;
+  }
+  
   int openmpOffloadsolverCreateFromC(intptr_t* handle){
     //stub function
     return 1;
   }
 
+  int openmpOffloadsolverDestroyFromC(intptr_t* handle){
+    //stub function
+    return 1;
+  }
+  
   int openmpOffloadMallocFromC(intptr_t *a, size_t elems) {
       int device = openmpOffloadChosenGpu;
       *a = (intptr_t) omp_target_alloc(elems, device);

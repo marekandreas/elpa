@@ -645,6 +645,8 @@ int main(int argc, char** argv) {
 #if defined(TEST_DOUBLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
      elpa_eigenvectors_double(handle, a_dev, ev_dev, z_dev, &error_elpa);
+     //printf("HERE\n"); // DEBUGPETER
+     //elpa_eigenvectors_d_ptr_d(handle, a_dev, ev_dev, z_dev, &error_elpa); // DEBUGPETER
      assert_elpa_ok(error_elpa);
 #else
      elpa_eigenvectors_double(handle, a    , ev    , z    , &error_elpa);

@@ -631,12 +631,15 @@ nobase_elpa_include_HEADERS = \
   elpa/elpa_generic.h \
   elpa/elpa_explicit_name.h
 
+
+# headers generated during configure
 nobase_nodist_elpa_include_HEADERS = \
   elpa/elpa_version.h \
   elpa/elpa_constants.h \
   elpa/elpa_generated.h \
-  elpa/elpa_generated_c_api.h
-
+  elpa/elpa_generated_c_api.h \
+  elpa/elpa_configured_options.h
+  
 dist_man_MANS = \
   man/elpa2_print_kernels.1 \
   man/elpa_init.3 \
@@ -814,6 +817,11 @@ TESTS = $(check_SCRIPTS)
 	@echo 'if [ "$$CHECK_LEVEL" = "extended" ] || [ "$$CHECK_LEVEL" = "autotune" ]  ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
 	@chmod +x $@
 
+#%_debug.sh: %
+#	@echo "#!/bin/bash" > $@
+#	@echo 'if [ "$$CHECK_LEVEL" = "debug" ] ; then $(wrapper) ./$^ $$TEST_FLAGS ; else exit 77; fi' >> $@
+#	@chmod +x $@
+
 %_default.sh: %
 	@echo "#!/bin/bash" > $@
 	@echo '$(wrapper)' ./$^ '$$TEST_FLAGS' >> $@
@@ -887,7 +895,6 @@ EXTRA_DIST = \
   elpa.spec \
   elpa/elpa.h \
   elpa/elpa_generic.h \
-  elpa/elpa_explicit_name.h \
   src/GPU/SYCL/collectGpuDevices.h \
   fdep/fortran_dependencies.mk \
   fdep/fortran_dependencies.pl \

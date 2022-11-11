@@ -60,7 +60,6 @@
 #include "config-f90.h"
 
 
-
 void set_gpu_parameters(){
 #ifdef WITH_NVIDIA_GPU_VERSION
    gpuMemcpyHostToDevice = cudaMemcpyHostToDeviceFromC();
@@ -79,6 +78,7 @@ int gpuGetDeviceCount(int *count){
 #ifdef WITH_AMD_GPU_VERSION
    return hipGetDeviceCountFromC(count);
 #endif
+   return -1;
 }
 
 int gpuSetDevice(int n){

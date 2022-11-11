@@ -2,17 +2,11 @@
 
 ## Current Release ##
 
-The current release is ELPA 2022.05.001. The current supported API version
-is 20211125. This release supports the earliest API version 20170403.
-The current version for autotuning is also 20211125 and down to version 20170403 ist supported
+The current release is ELPA 2022.11.001.rc1. The current supported API version
+is 20221109. This release supports the earliest API version 20170403.
+The current version for autotuning is also 20221109 and down to version 20170403 ist supported
 for autotuning. When the autotune version is set to a value **below** 20211125 the old autotunig
-implentation is used, and for 20211125 the new implentation is used.
-
-The release ELPA 2018.11.001 was the last release, where the legacy API has been
-enabled by default (and can be disabled at build time).
-With release ELPA 2019.05.001 the legacy API is disabled by default, however,
-can be still switched on at build time.
-With the release ELPA 2019.11.001 the legacy API has been deprecated and support has been droped.
+implentation is used, and for 20211125 and higher the new implentation is used.
 
 [![Build 
 status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://gitlab.mpcdf.mpg.de/elpa/elpa/commits/master)
@@ -133,7 +127,7 @@ the possible configure options.
 
 ## Using *ELPA*
 
-Please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2022.05.001/html/index.html) doxygen documentation, where you find the definition of the interfaces. You might want to have a look at the [PERFORMANCE tuning document](./documentation/PERFORMANCE_TUNING.md) to avoid some usual pitfalls.
+Please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2022.11.001.rc1/html/index.html) doxygen documentation, where you find the definition of the interfaces. You might want to have a look at the [PERFORMANCE tuning document](./documentation/PERFORMANCE_TUNING.md) to avoid some usual pitfalls.
 
 ## Contributing to *ELPA*
 

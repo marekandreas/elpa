@@ -40,17 +40,17 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20220510, "Current ELPA API version")
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20221109, "Current ELPA API version")
 print_current_api_version=20220510
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20220510], [Current ELPA autotune version])
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20221109], [Current ELPA autotune version])
 print_current_autotune_version=20220510
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20220510], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20220510, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20221109], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20221109, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1668076349],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1685521972],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -134,7 +134,7 @@ if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
 
-dnl CPP
+dnl CXX
 AC_LANG_PUSH([C++])
 AC_PROG_CXX
 AC_LANG_POP([C++])
@@ -297,6 +297,7 @@ AM_PROG_AR
 AM_PROG_AS
 AC_PROG_CC_C99
 AM_PROG_CC_C_O
+AC_PROG_CPP
 AC_LANG_POP([C])
 
 # Fortran
@@ -1879,6 +1880,19 @@ if test x"${need_amd_gpu}" = x"yes"; then
     AC_DEFINE([WITH_HIPCUB], [1], [use hipcub library in some kernels])
   fi
 fi
+AC_MSG_CHECKING(whether AMD rocsolver library should be used)
+AC_ARG_WITH([rocsolver],
+            [AS_HELP_STRING([--with-rocsolver],
+                            [Use AMD rocsolver library, disabled by default])],
+            [
+               if test x"$withval" = x"yes"; then
+                 with_rocsolver=yes
+               else
+                 with_rocsolver=no
+               fi
+	     ],
+            [with_rocsolver="no"])
+AC_MSG_RESULT([${with_rocsolver}])
 
 
 use_openmp_gpu_backend=no
@@ -1993,6 +2007,13 @@ if test x"${need_amd_gpu}" = x"yes" ; then
   #if test x"${have_cudart}" = x"no"; then
   #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   #fi
+  if test x"${with_rocsolver}" = x"yes"; then
+    AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
+    if test x"${have_rocsolver}" = x"no"; then
+      AC_MSG_ERROR([Could not link rocsolver; try to set the hip-path or disable AMD GPU support])
+    fi
+    AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
+  fi
   AC_LANG_POP([C])
 fi
 
@@ -2143,6 +2164,7 @@ AM_CONDITIONAL([WITH_NVIDIA_GPU_VERSION],[test x"$use_real_nvidia_gpu" = x"yes" 
 if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" ; then
   AC_DEFINE([WITH_NVIDIA_GPU_VERSION],[1],[enable Nvidia GPU support])
   AC_DEFINE([WITH_NVIDIA_GPU_KERNEL],[1],[Nvidia GPU kernel should be build])
+  AC_DEFINE_SUBST(CURRENT_WITH_NVIDIA_GPU_VERSION, 1, "enable use NVIDIA GPU in C-headers")
   ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=1
   ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=1
 
@@ -2179,6 +2201,7 @@ if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" 
     AC_LANG_POP([C])
   fi
 else
+  AC_DEFINE_SUBST(CURRENT_WITH_NVIDIA_GPU_VERSION, 0, "disable use NVIDIA GPU in C-headers")
   ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED=0
   ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED=0
 fi
@@ -2191,6 +2214,7 @@ AM_CONDITIONAL([WITH_AMD_GPU_VERSION],[test x"$use_real_amd_gpu" = x"yes" -o x"$
 if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
   AC_DEFINE([WITH_AMD_GPU_VERSION],[1],[enable AMD GPU support])
   AC_DEFINE([WITH_AMD_GPU_KERNEL],[1],[AMD GPU kernel should be build])
+  AC_DEFINE_SUBST(CURRENT_WITH_AMD_GPU_VERSION, 1, "enable use AMD GPU in C-headers")
   ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=1
   ELPA_2STAGE_REAL_AMD_GPU_COMPILED=1
 
@@ -2217,6 +2241,7 @@ if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
   #  AC_LANG_POP([C])
   #fi
 else
+  AC_DEFINE_SUBST(CURRENT_WITH_AMD_GPU_VERSION, 0, "disable use AMD GPU in C-headers")
   ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=0
   ELPA_2STAGE_REAL_AMD_GPU_COMPILED=0
 fi
@@ -2637,6 +2662,7 @@ AC_CONFIG_FILES([
   elpa/elpa_constants.h
   elpa/elpa_version.h
   elpa/elpa_build_config.h
+  elpa/elpa_configured_options.h
 ])
 
 m4_include([m4/ax_fc_check_define.m4])
@@ -2824,13 +2850,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2022.05.001.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2022.05.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2022.11.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2022.11.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

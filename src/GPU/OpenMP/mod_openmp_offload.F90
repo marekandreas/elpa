@@ -79,17 +79,18 @@ module openmp_offload_functions
       integer(kind=C_INT)      :: istat
     end function
   end interface
-!
-!  interface
-!    function cublas_destroy_c(handle) result(istat) &
-!             bind(C, name="cublasDestroyFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T) :: handle
-!      integer(kind=C_INT)  :: istat
-!    end function cublas_destroy_c
-!  end interface
-!
+
+  interface
+    function openmp_offload_blas_destroy_c(handle) result(istat) &
+             bind(C, name="openmpOffloadblasDestroyFromC")
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_INT)      :: istat
+    end function
+  end interface
+
   interface
     function openmp_offload_solver_create_c(handle) result(istat) &
              bind(C, name="openmpOffloadsolverCreateFromC")
@@ -101,15 +102,16 @@ module openmp_offload_functions
     end function
   end interface
 
-!  interface
-!    function cusolver_destroy_c(handle) result(istat) &
-!             bind(C, name="cusolverDestroyFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T) :: handle
-!      integer(kind=C_INT)  :: istat
-!    end function cusolver_destroy_c
-!  end interface
+  interface
+    function openmp_offload_solver_destroy_c(handle) result(istat) &
+             bind(C, name="openmpOffloadsolverDestroyFromC")
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_INT)      :: istat
+    end function
+  end interface
 
 
   interface
@@ -1245,18 +1247,18 @@ module openmp_offload_functions
 #endif
    end function
 
-!   function cublas_destroy(handle) result(success)
-!     use, intrinsic :: iso_c_binding
-!     implicit none
-!
-!     integer(kind=C_intptr_t)                  :: handle
-!     logical                                   :: success
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!     success = cublas_destroy_c(handle) /= 0
-!#else
-!     success = .true.
-!#endif
-!   end function
+   function openmp_offload_blas_destroy(handle) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: handle
+     logical                                   :: success
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+     success = openmp_offload_blas_destroy_c(handle) /= 0
+#else
+     success = .true.
+#endif
+   end function
 
    function openmp_offload_solver_create(handle) result(success)
      use, intrinsic :: iso_c_binding
@@ -1271,18 +1273,18 @@ module openmp_offload_functions
 #endif
    end function
 
-!   function cusolver_destroy(handle) result(success)
-!     use, intrinsic :: iso_c_binding
-!     implicit none
-!
-!     integer(kind=C_intptr_t)                  :: handle
-!     logical                                   :: success
-!#ifdef WITH_NVIDIA_CUSOLVER
-!     success = cusolver_destroy_c(handle) /= 0
-!#else
-!     success = .true.
-!#endif
-!   end function
+   function openmp_offload_solver_destroy(handle) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: handle
+     logical                                   :: success
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+     success = openmp_offload_solver_destroy_c(handle) /= 0
+#else
+     success = .true.
+#endif
+   end function
 
     function openmp_offload_setdevice(n) result(success)
       use, intrinsic :: iso_c_binding
