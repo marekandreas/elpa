@@ -169,6 +169,8 @@
       endif
     end subroutine
 
+    !c> // /src/elpa_impl_math_generalized_template.F90
+
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL  
     !c> void elpa_generalized_eigenvectors_d(elpa_t handle, double *a, double *b, double *ev, double *q,
@@ -181,11 +183,11 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_generalized_eigenvectors_dc(elpa_t handle, double complex *a, double complex *b, double *ev, double complex *q,
+    !c> void elpa_generalized_eigenvectors_dc(elpa_t handle, double_complex *a, double_complex *b, double *ev, double_complex *q,
     !c> int is_already_decomposed, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_generalized_eigenvectors_fc(elpa_t handle, float complex *a, float complex *b, float *ev, float complex *q,
+    !c> void elpa_generalized_eigenvectors_fc(elpa_t handle, float_complex *a, float_complex *b, float *ev, float_complex *q,
     !c> int is_already_decomposed, int *error);
 #endif
 #endif
@@ -358,11 +360,11 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_generalized_eigenvalues_dc(elpa_t handle, double complex *a, double complex *b, double *ev,
+    !c> void elpa_generalized_eigenvalues_dc(elpa_t handle, double_complex *a, double_complex *b, double *ev,
     !c> int is_already_decomposed, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_generalized_eigenvalues_fc(elpa_t handle, float complex *a, float complex *b, float *ev,
+    !c> void elpa_generalized_eigenvalues_fc(elpa_t handle, float_complex *a, float_complex *b, float *ev,
     !c> int is_already_decomposed, int *error);
 #endif
 #endif

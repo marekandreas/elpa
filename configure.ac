@@ -2459,6 +2459,24 @@ if test x"${enable_c_tests}" = x"yes"; then
  AC_DEFINE([ENABLE_C_TESTS], [1], [enable C tests])
 fi
 
+AC_MSG_CHECKING(whether C++ tests should be provided)
+AC_ARG_ENABLE([cpp-tests],
+              AS_HELP_STRING([--enable-cpp-tests],
+                             [enables the C++ tests for elpa, default yes.]),
+			     [
+			      if test x"$enableval" = x"yes"; then
+			        enable_cpp_tests=yes
+		              else
+			        enable_cpp_tests=no
+			      fi
+			      ],
+              [enable_cpp_tests=yes])
+AC_MSG_RESULT([${enable_cpp_tests}])
+AM_CONDITIONAL([ENABLE_CPP_TESTS],[test x"$enable_cpp_tests" = x"yes"])
+if test x"${enable_cpp_tests}" = x"yes"; then
+ AC_DEFINE([ENABLE_CPP_TESTS], [1], [enable C++ tests])
+fi
+
 AC_MSG_CHECKING(make compilable with Intel ifx)
 AC_ARG_ENABLE([ifx-compiler],
               AS_HELP_STRING([--enable-ifx-compiler],

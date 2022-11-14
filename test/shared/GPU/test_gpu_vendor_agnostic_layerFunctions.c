@@ -59,6 +59,7 @@
 
 #include "config-f90.h"
 
+
 void set_gpu_parameters(){
 #ifdef WITH_NVIDIA_GPU_VERSION
    gpuMemcpyHostToDevice = cudaMemcpyHostToDeviceFromC();

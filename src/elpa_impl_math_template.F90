@@ -217,7 +217,8 @@
 #endif
     end subroutine  
 
-
+    !c> // /src/elpa_impl_math_template.F90
+    
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL    
     !c> void elpa_hermitian_multiply_a_h_a_d(elpa_t handle, char uplo_a, char uplo_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error);
@@ -228,10 +229,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX    
-    !c> void elpa_hermitian_multiply_a_h_a_dc(elpa_t handle, char uplo_a, char uplo_c, int ncb, double complex *a, double complex *b, int nrows_b, int ncols_b, double complex *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_hermitian_multiply_a_h_a_dc(elpa_t handle, char uplo_a, char uplo_c, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_hermitian_multiply_a_h_a_fc(elpa_t handle, char uplo_a, char uplo_c, int ncb, float complex *a, float complex *b, int nrows_b, int ncols_b, float complex *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_hermitian_multiply_a_h_a_fc(elpa_t handle, char uplo_a, char uplo_c, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
 #endif
 #endif
     subroutine elpa_hermitian_multiply_a_h_a_&
@@ -292,10 +293,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX    
-    !c> void elpa_hermitian_multiply_d_ptr_dc(elpa_t handle, char uplo_a, char uplo_c, int ncb, double complex *a, double complex *b, int nrows_b, int ncols_b, double complex *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_hermitian_multiply_d_ptr_dc(elpa_t handle, char uplo_a, char uplo_c, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_hermitian_multiply_d_ptr_fc(elpa_t handle, char uplo_a, char uplo_c, int ncb, float complex *a, float complex *b, int nrows_b, int ncols_b, float complex *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_hermitian_multiply_d_ptr_fc(elpa_t handle, char uplo_a, char uplo_c, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
 #endif
 #endif
     subroutine elpa_hermitian_multiply_d_ptr_&
@@ -410,10 +411,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_cholesky_a_h_a_dc(elpa_t handle, double complex *a, int *error);
+    !c> void elpa_cholesky_a_h_a_dc(elpa_t handle, double_complex *a, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_cholesky_a_h_a_fc(elpa_t handle, float complex *a, int *error);
+    !c> void elpa_cholesky_a_h_a_fc(elpa_t handle, float_complex *a, int *error);
 #endif
 #endif
     subroutine elpa_choleksy_a_h_a_&
@@ -522,10 +523,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_cholesky_d_ptr_dc(elpa_t handle, double complex *a, int *error);
+    !c> void elpa_cholesky_d_ptr_dc(elpa_t handle, double_complex *a, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_cholesky_d_ptr_fc(elpa_t handle, float complex *a, int *error);
+    !c> void elpa_cholesky_d_ptr_fc(elpa_t handle, float_complex *a, int *error);
 #endif
 #endif
     subroutine elpa_choleksy_d_ptr_&
@@ -638,10 +639,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX     
-    !c> void elpa_invert_trm_a_h_a_dc(elpa_t handle, double complex *a, int *error);
+    !c> void elpa_invert_trm_a_h_a_dc(elpa_t handle, double_complex *a, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX      
-    !c> void elpa_invert_trm_a_h_a_fc(elpa_t handle, float complex *a, int *error);
+    !c> void elpa_invert_trm_a_h_a_fc(elpa_t handle, float_complex *a, int *error);
 #endif
 #endif
     subroutine elpa_invert_trm_a_h_a_&
@@ -752,10 +753,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX     
-    !c> void elpa_invert_trm_d_ptr_dc(elpa_t handle, double complex *a, int *error);
+    !c> void elpa_invert_trm_d_ptr_dc(elpa_t handle, double_complex *a, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX      
-    !c> void elpa_invert_trm_d_ptr_fc(elpa_t handle, float complex *a, int *error);
+    !c> void elpa_invert_trm_d_ptr_fc(elpa_t handle, float_complex *a, int *error);
 #endif
 #endif
     subroutine elpa_invert_trm_d_ptr_&

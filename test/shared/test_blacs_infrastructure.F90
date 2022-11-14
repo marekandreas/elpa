@@ -183,6 +183,11 @@ module test_blacs_infrastructure
     !c>                                TEST_C_INT_TYPE sc_desc[9],
     !c>                                TEST_C_INT_TYPE my_blacs_ctxt,
     !c>                                TEST_C_INT_TYPE_PTR info, TEST_C_INT_TYPE_PTR blacs_ok);
+    
+    !c> #ifdef __cplusplus
+    !c> }
+    !c> #endif
+    
     subroutine set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, &
                                          np_rows, np_cols, na_rows,  &
                                          na_cols, sc_desc,           &

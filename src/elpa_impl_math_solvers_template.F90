@@ -274,7 +274,9 @@
       endif
 #endif
     end subroutine 
-
+    
+    !c> // /src/elpa_impl_math_solvers_template.F90 
+    
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
     !c> void elpa_eigenvectors_a_h_a_d(elpa_t handle, double *a, double *ev, double *q, int *error);
@@ -285,10 +287,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvectors_a_h_a_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
+    !c> void elpa_eigenvectors_a_h_a_dc(elpa_t handle, double_complex *a, double *ev, double_complex *q, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvectors_a_h_a_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
+    !c> void elpa_eigenvectors_a_h_a_fc(elpa_t handle, float_complex *a, float *ev, float_complex *q, int *error);
 #endif
 #endif
     subroutine elpa_eigenvectors_a_h_a_&
@@ -341,10 +343,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvectors_d_ptr_dc(elpa_t handle, double complex *a, double *ev, double complex *q, int *error);
+    !c> void elpa_eigenvectors_d_ptr_dc(elpa_t handle, double_complex *a, double *ev, double_complex *q, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvectors_d_ptr_fc(elpa_t handle, float complex *a, float *ev, float complex *q, int *error);
+    !c> void elpa_eigenvectors_d_ptr_fc(elpa_t handle, float_complex *a, float *ev, float_complex *q, int *error);
 #endif
 #endif
     subroutine elpa_eigenvectors_d_ptr_&
@@ -931,10 +933,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvalues_a_h_a_dc(elpa_t handle, double complex *a, double *ev, int *error);
+    !c> void elpa_eigenvalues_a_h_a_dc(elpa_t handle, double_complex *a, double *ev, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvalues_a_h_a_fc(elpa_t handle, float complex *a, float *ev, int *error);
+    !c> void elpa_eigenvalues_a_h_a_fc(elpa_t handle, float_complex *a, float *ev, int *error);
 #endif
 #endif
     subroutine elpa_eigenvalues_a_h_a_&
@@ -983,10 +985,10 @@
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvalues_d_ptr_dc(elpa_t handle, double complex *a, double *ev, int *error);
+    !c> void elpa_eigenvalues_d_ptr_dc(elpa_t handle, double_complex *a, double *ev, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_eigenvalues_d_ptr_fc(elpa_t handle, float complex *a, float *ev, int *error);
+    !c> void elpa_eigenvalues_d_ptr_fc(elpa_t handle, float_complex *a, float *ev, int *error);
 #endif
 #endif
     subroutine elpa_eigenvalues_d_ptr_&

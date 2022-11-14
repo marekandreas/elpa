@@ -70,6 +70,14 @@
 #define TEST_GENERALIZED_EIGENPROBLEM
 #endif
 
+#ifdef __cplusplus
+#define double_complex std::complex<double>
+#define float_complex std::complex<float>
+#else
+#define double_complex double complex
+#define float_complex float complex
+#endif
+
 #ifdef TEST_SINGLE
 #  define EV_TYPE float
 #  ifdef TEST_REAL
@@ -85,7 +93,7 @@
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_real_single_f
 #    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_real_single_f
 #  else
-#    define MATRIX_TYPE complex float
+#    define MATRIX_TYPE float_complex
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_single_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_single_f
 #    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_complex_single_f
@@ -112,7 +120,7 @@
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_real_double_f
 #    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_real_double_f
 #  else
-#    define MATRIX_TYPE complex double
+#    define MATRIX_TYPE double_complex
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_double_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_double_f
 #    define PREPARE_MATRIX_ANALYTIC prepare_matrix_analytic_complex_double_f
@@ -127,7 +135,6 @@
 #endif
 
 #define assert_elpa_ok(x) assert(x == ELPA_OK)
-
 
 #ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define TEST_C_INT_TYPE_PTR long int*
@@ -279,9 +286,15 @@ int main(int argc, char** argv) {
      nev = atoi(argv[2]);
      nblk = atoi(argv[3]);
    } else {
+#ifdef __cplusplus
+     na = 100;
+     nev = 50;
+     nblk = 4;
+#else
      na = 500;
      nev = 250;
      nblk = 16;
+#endif      
    }
 
    for (np_cols = (C_INT_TYPE) sqrt((double) nprocs); np_cols > 1; np_cols--) {
@@ -325,23 +338,23 @@ int main(int argc, char** argv) {
 
    /* Allocate the matrices needed for elpa */
 	
-   a  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   z  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   as = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   ev = calloc(na, sizeof(EV_TYPE));
+   a  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   z  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   as = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   ev = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
 
    is_skewsymmetric=0;
    PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
 
 #ifdef TEST_HERMITIAN_MULTIPLY
-	b  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-	c  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+	b  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+	c  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, b, z, c, is_skewsymmetric); // b=c
 #endif
 	   
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-	b  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-	bs = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+	b  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+	bs = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, b, z, bs, nblk, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
@@ -355,10 +368,10 @@ int main(int argc, char** argv) {
 #endif  
       
 #if defined(TEST_SOLVE_TRIDIAGONAL)
-   d   = calloc(na, sizeof(EV_TYPE));
-   ds  = calloc(na, sizeof(EV_TYPE));
-   sd  = calloc(na, sizeof(EV_TYPE));
-   sds = calloc(na, sizeof(EV_TYPE));
+   d   = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
+   ds  = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
+   sd  = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
+   sds = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
    
    diagonalElement = 0.45;
    subdiagonalElement = 0.78;

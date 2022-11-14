@@ -629,7 +629,8 @@ nobase_elpa_include_HEADERS = \
   elpa/elpa_simd_constants.h \
   elpa/elpa.h \
   elpa/elpa_generic.h \
-  elpa/elpa_explicit_name.h 
+  elpa/elpa_explicit_name.h
+
 
 # headers generated during configure
 nobase_nodist_elpa_include_HEADERS = \

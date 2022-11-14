@@ -48,9 +48,14 @@
 #pragma once
 #include <stdint.h> // for intptr_t
 
+
 extern int gpuMemcpyHostToDevice;
 extern int gpuMemcpyDeviceToHost;
 
+#ifdef __cplusplus
+extern "C" {    
+#endif
+    
 void set_gpu_parameters();
 
 int gpuGetDeviceCount(int *count);
@@ -61,3 +66,7 @@ int gpuMalloc(intptr_t *a, size_t width_height);
 int gpuFree(intptr_t *a);
    
 int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir);
+   
+#ifdef __cplusplus
+}    
+#endif
