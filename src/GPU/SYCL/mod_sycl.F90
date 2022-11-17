@@ -77,17 +77,18 @@ module sycl_functions
       integer(kind=C_INT)      :: istat
     end function
   end interface
-!
-!  interface
-!    function cublas_destroy_c(handle) result(istat) &
-!             bind(C, name="cublasDestroyFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T) :: handle
-!      integer(kind=C_INT)  :: istat
-!    end function cublas_destroy_c
-!  end interface
-!
+
+  interface
+    function sycl_blas_destroy_c(handle) result(istat) &
+             bind(C, name="syclblasDestroyFromC")
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_INT)      :: istat
+    end function
+  end interface
+
   interface
     function sycl_solver_create_c(handle) result(istat) &
              bind(C, name="syclsolverCreateFromC")
@@ -99,15 +100,16 @@ module sycl_functions
     end function
   end interface
 
-!  interface
-!    function cusolver_destroy_c(handle) result(istat) &
-!             bind(C, name="cusolverDestroyFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T) :: handle
-!      integer(kind=C_INT)  :: istat
-!    end function cusolver_destroy_c
-!  end interface
+  interface
+    function sycl_solver_destroy_c(handle) result(istat) &
+             bind(C, name="syclsolverDestroyFromC")
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_INT)      :: istat
+    end function
+  end interface
 
 
   interface
@@ -1247,18 +1249,18 @@ module sycl_functions
 #endif
    end function
 
-!   function cublas_destroy(handle) result(success)
-!     use, intrinsic :: iso_c_binding
-!     implicit none
-!
-!     integer(kind=C_intptr_t)                  :: handle
-!     logical                                   :: success
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!     success = cublas_destroy_c(handle) /= 0
-!#else
-!     success = .true.
-!#endif
-!   end function
+   function sycl_blas_destroy(handle) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: handle
+     logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+     success = sycl_blas_destroy_c(handle) /= 0
+#else
+     success = .true.
+#endif
+   end function
 
    function sycl_solver_create(handle) result(success)
      use, intrinsic :: iso_c_binding
@@ -1273,18 +1275,18 @@ module sycl_functions
 #endif
    end function
 
-!   function cusolver_destroy(handle) result(success)
-!     use, intrinsic :: iso_c_binding
-!     implicit none
-!
-!     integer(kind=C_intptr_t)                  :: handle
-!     logical                                   :: success
-!#ifdef WITH_NVIDIA_CUSOLVER
-!     success = cusolver_destroy_c(handle) /= 0
-!#else
-!     success = .true.
-!#endif
-!   end function
+   function sycl_solver_destroy(handle) result(success)
+     use, intrinsic :: iso_c_binding
+     implicit none
+
+     integer(kind=C_intptr_t)                  :: handle
+     logical                                   :: success
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+     success = sycl_solver_destroy_c(handle) /= 0
+#else
+     success = .true.
+#endif
+   end function
 
     function sycl_setdevice(n) result(success)
       use, intrinsic :: iso_c_binding

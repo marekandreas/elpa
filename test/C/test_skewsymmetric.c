@@ -66,6 +66,16 @@
 //#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
 #endif
 
+#ifdef __cplusplus
+#define double_complex std::complex<double>
+#define float_complex std::complex<float>
+#define Complex_I std::complex<EV_TYPE> (0.0,1.0); 
+#else
+#define double_complex double complex
+#define float_complex float complex
+#define Complex_I _Complex_I
+#endif
+
 #ifdef TEST_SINGLE
 #  define EV_TYPE float
 #  ifdef TEST_REAL
@@ -75,8 +85,7 @@
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_single_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_single_f
 #  else
-#    define MATRIX_TYPE complex float;
-//float _Complex
+#    define MATRIX_TYPE float_complex
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_single_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_single_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_single_f
@@ -91,8 +100,7 @@
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_double_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_double_f
 #  else
-#    define MATRIX_TYPE complex double
-//double _Complex
+#    define MATRIX_TYPE double_complex
 #    define PREPARE_MATRIX_RANDOM prepare_matrix_random_complex_double_f
 #    define PREPARE_MATRIX_RANDOM_SPD prepare_matrix_random_spd_complex_double_f
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_double_f
@@ -101,11 +109,9 @@
 #endif
 
 #ifdef TEST_SINGLE
-#define MATRIX_TYPE_COMPLEX complex float
-//float _Complex
+#define MATRIX_TYPE_COMPLEX float_complex
 #else
-#define MATRIX_TYPE_COMPLEX complex double
-//double _Complex
+#define MATRIX_TYPE_COMPLEX double_complex
 #endif
 
 
@@ -228,9 +234,15 @@ int main(int argc, char** argv) {
      nev = atoi(argv[2]);
      nblk = atoi(argv[3]);
    } else {
+#ifdef __cplusplus
+     na = 100;
+     nev = 50;
+     nblk = 4;
+#else
      na = 500;
      nev = 250;
      nblk = 16;
+#endif 
    }
 
    for (np_cols = (C_INT_TYPE) sqrt((double) nprocs); np_cols > 1; np_cols--) {
@@ -263,11 +275,11 @@ int main(int argc, char** argv) {
 
 
    /* allocate the matrices needed for elpa */
-   a_skewsymmetric  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   z_skewsymmetric  = calloc(na_rows*2*na_cols, sizeof(MATRIX_TYPE));
-   z_skewsymmetric_prepare  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   as_skewsymmetric = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   ev_skewsymmetric = calloc(na, sizeof(EV_TYPE));
+   a_skewsymmetric  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   z_skewsymmetric  = (MATRIX_TYPE *) calloc(na_rows*2*na_cols, sizeof(MATRIX_TYPE));
+   z_skewsymmetric_prepare  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   as_skewsymmetric = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   ev_skewsymmetric = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
 
    for (_elements=0;_elements<na_rows*na_cols;_elements++){
      a_skewsymmetric[_elements] = 0.;
@@ -294,10 +306,10 @@ int main(int argc, char** argv) {
    free(z_skewsymmetric_prepare);
 
    // prepare the complex matrix for the "brute force" case
-   a_complex  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
-   z_complex  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
-   as_complex = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
-   ev_complex = calloc(na, sizeof(EV_TYPE));
+   a_complex  = (MATRIX_TYPE_COMPLEX *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
+   z_complex  = (MATRIX_TYPE_COMPLEX *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
+   as_complex = (MATRIX_TYPE_COMPLEX *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE_COMPLEX));
+   ev_complex = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
 
    //for (_elements=0;_elements<na_rows*na_cols;_elements++){
    //  a_complex[_elements] = 0.;
@@ -310,7 +322,7 @@ int main(int argc, char** argv) {
 
    for (_ncols=0;_ncols<na_cols;_ncols++) {
      for (_nrows=0;_nrows<na_rows;_nrows++) {
-        a_complex[_nrows + na_rows*_ncols] = 0.0 + a_skewsymmetric[_nrows + na_rows*_ncols]*_Complex_I;
+        a_complex[_nrows + na_rows*_ncols] = 0.0 + a_skewsymmetric[_nrows + na_rows*_ncols]*Complex_I;
      }
    }
 
@@ -483,7 +495,7 @@ int main(int argc, char** argv) {
 
    for (_ncols=0;_ncols<na_cols;_ncols++) {
      for (_nrows=0;_nrows<na_rows;_nrows++) {
-       z_complex[_nrows + na_rows*_ncols] = z_skewsymmetric[_nrows + na_rows*_ncols] + z_skewsymmetric[_nrows+na_rows*(na_cols+_ncols)]*_Complex_I;
+       z_complex[_nrows + na_rows*_ncols] = z_skewsymmetric[_nrows + na_rows*_ncols] + z_skewsymmetric[_nrows+na_rows*(na_cols+_ncols)]*Complex_I;
      }
    }
 #ifdef WITH_MPI

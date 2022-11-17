@@ -75,11 +75,11 @@ module mod_check_for_gpu
       integer(kind=ik)                           :: deviceNumber, mpierr, maxNumberOfDevices
       logical                                    :: gpuAvailable
       integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
-      logical, save                              :: allreadySET=.false.
+      logical, save                              :: alreadySET=.false.
       integer(kind=ik)                           :: maxThreads, thread
       integer(kind=c_intptr_t)                   :: handle_tmp
       !integer(kind=c_intptr_t)                   :: stream
-      logical                                    :: gpuIsInitialized=.false.
+      !logical                                    :: gpuIsInitialized=.false.
       !character(len=1024)           :: envname
       character(len=8)                           :: fmt 
       character(len=12)                          :: gpu_string
@@ -190,7 +190,7 @@ module mod_check_for_gpu
 #endif
 #endif
 
-      if (obj%is_set("use_gpu_id") == 1) then
+      if (obj%is_set("use_gpu_id") == 1) then ! useGPUid
         call obj%get("use_gpu_id", use_gpu_id, error)
         if (error .ne. ELPA_OK) then
           print *,"check_for_gpu: cannot querry use_gpu_id. Aborting..."
@@ -222,30 +222,31 @@ module mod_check_for_gpu
         !endif
 
         success = .true.
-        if (.not.(allreadySet)) then
+        if (.not.(alreadySET)) then
           deviceNumber = use_gpu_id
 #include "./device_arrays_template.F90"
 
 #include "./handle_creation_template.F90"
 
         endif ! alreadySET
-        gpuIsInitialized = .true.
+        alreadySET = .true.
+        !gpuIsInitialized = .true.
 
       else ! useGPUid
 
         !TODO: have to set this somewhere
-        if (gpuIsInitialized) then
-          gpuAvailable = .true.
-          numberOfDevices = -1
-          if (myid == 0 .and. wantDebugMessage) then
-            print *, "Skipping GPU init, should have already been initialized "
-          endif
-          return
-        else
+        !if (gpuIsInitialized) then
+        !  gpuAvailable = .true.
+        !  numberOfDevices = -1
+        !  if (myid == 0 .and. wantDebugMessage) then
+        !    print *, "Skipping GPU init, should have already been initialized "
+        !  endif
+        !  return
+        !else
           if (myid == 0 .and. wantDebugMessage) then
             print *, "Initializing the GPU devices"
           endif
-        endif
+        !endif
 
         success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -332,13 +333,13 @@ module mod_check_for_gpu
             print *,"Cannot set use_gpu_id. Aborting..."
             stop
           endif
-          allreadySET = .true.
  
 #include "./handle_creation_template.F90"
-
+          
+          alreadySET = .true.
           call obj%timer%stop("check_gpu_"//gpu_string)
-        endif
-        gpuIsInitialized = .true.
-      endif
+        endif ! numberOfDevices .ne. 0
+        !gpuIsInitialized = .true.
+      endif ! useGPUid
     end function
 end module

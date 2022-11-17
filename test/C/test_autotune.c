@@ -65,19 +65,27 @@
 //#error "define exactly one of TEST_SOLVER_1STAGE or TEST_SOLVER_2STAGE"
 #endif
 
+#ifdef __cplusplus
+#define double_complex std::complex<double>
+#define float_complex std::complex<float>
+#else
+#define double_complex double complex
+#define float_complex float complex
+#endif
+
 #ifdef TEST_SINGLE
 #  define EV_TYPE float
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE float
 #  else
-#    define MATRIX_TYPE complex float
+#    define MATRIX_TYPE float_complex
 #  endif
 #else
 #  define EV_TYPE double
 #  ifdef TEST_REAL
 #    define MATRIX_TYPE double
 #  else
-#    define MATRIX_TYPE complex double
+#    define MATRIX_TYPE double_complex
 #  endif
 #endif
 
@@ -94,6 +102,7 @@
 #define TEST_C_INT_TYPE int
 #define C_INT_TYPE int
 #endif
+
 
 #include "test/shared/generated.h"
 
@@ -154,9 +163,15 @@ int main(int argc, char** argv) {
      nev = atoi(argv[2]);
      nblk = atoi(argv[3]);
    } else {
+#ifdef __cplusplus
+     na = 100;
+     nev = 50;
+     nblk = 4;
+#else
      na = 500;
      nev = 250;
      nblk = 16;
+#endif 
    }
 
    for (np_cols = (C_INT_TYPE) sqrt((double) nprocs); np_cols > 1; np_cols--) {
@@ -188,10 +203,10 @@ int main(int argc, char** argv) {
    }
 
    /* allocate the matrices needed for elpa */
-   a  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   z  = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   as = calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   ev = calloc(na, sizeof(EV_TYPE));
+   a  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   z  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   as = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+   ev = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
 
    is_skewsymmetric=0;
 #ifdef TEST_REAL
@@ -303,11 +318,11 @@ int main(int argc, char** argv) {
 #ifdef TEST_DOUBLE
       status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as, z, ev,
                                 sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
-      memcpy(a, as, na_rows*na_cols*sizeof(complex double));
+      memcpy(a, as, na_rows*na_cols*sizeof(double_complex));
 #else
       status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as, z, ev,
                                 sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
-      memcpy(a, as, na_rows*na_cols*sizeof(complex float));
+      memcpy(a, as, na_rows*na_cols*sizeof(float_complex));
 #endif
 #endif
 

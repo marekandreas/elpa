@@ -4,6 +4,7 @@ from itertools import product
 language_flag = {
     "Fortran": "",
     "C": "_c_version",
+    "C++": "_cpp_version",
 }
 
 domain_flag = {
@@ -115,33 +116,33 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
 
     if gid == 1 and not(m  == "random" 
                         or (lang=="Fortran" and t=="eigenvalues" and m=="toeplitz" and s=="1stage" and lay=="square")
-                        or (lang=="C" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
+                        or (lang!="Fortran" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
          continue
 
     if deviceptr == 1 and not(m  == "random" 
                               or (lang=="Fortran" and t=="eigenvalues" and m=="toeplitz" and s=="1stage" and lay=="square")
-                              or (lang=="C" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
+                              or (lang!="Fortran" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
       continue
 	
-    # C-tests only for "random", "analytic" or "toeplitz" matrix and "square" layout
-    if lang == "C" and (m == "frank" or lay == "all_layouts"):
+    # C/C++-tests only for "random", "analytic" or "toeplitz" matrix and "square" layout
+    if lang!="Fortran" and (m == "frank" or lay == "all_layouts"):
         continue
 
-    if lang == "C" and (api_name == "explicit") and (gid != deviceptr) and (t != "eigenvectors") and (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply"):
+    if lang!="Fortran" and (api_name == "explicit") and (gid != deviceptr) and (t != "eigenvectors") and (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply"):
         continue
        
     if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply")):
         continue
 
     # not implemented in the test.c file yet
-    if lang == "C" and q == 1:
+    if lang!="Fortran" and q == 1:
         continue
 
-    # analytic tests only for "eigenvectors" (Fortan) and "eigenvalues" (C)
+    # analytic tests only for "eigenvectors" (Fortan) and "eigenvalues" (C,C++)
     #if(m == "analytic" and ( g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON" or t != "eigenvectors")):
-    if(m == "analytic" and lang == "Fortran" and t != "eigenvectors"):
+    if(lang == "Fortran" and m == "analytic" and t != "eigenvectors"):
         continue
-    if(m == "analytic" and lang == "C" and t != "eigenvalues"):
+    if(lang != "Fortran" and m == "analytic" and t != "eigenvalues"):
         continue
        
     # Frank tests only for "eigenvectors" and eigenvalues and real double precision case
@@ -175,14 +176,14 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if (t == "eigenvalues" and (m == "random")):
         continue
     
-    # "eigenvalues" in C are tested only for analytic matrix
-    if (lang == "C" and t == "eigenvalues" and m != "analytic"):
+    # "eigenvalues" in C/C++ are tested only for analytic matrix
+    if (lang != "Fortran" and t == "eigenvalues" and m != "analytic"):
         continue
     
-    # "solve_tridiagonal" in C are tested only for toeplitz matrix
+    # "solve_tridiagonal" in C/C++ are tested only for toeplitz matrix
     # validate_c_version_real_[double/single]_solve_tridiagonal_1stage_toeplitz_default
     # validate_c_version_real_[double/single]_solve_tridiagonal_1stage_gpu_toeplitz_default
-    if (lang == "C" and ((t=="solve_tridiagonal" and m!="toeplitz") or (t!="solve_tridiagonal" and m=="toeplitz"))): 
+    if (lang != "Fortran" and ((t=="solve_tridiagonal" and m!="toeplitz") or (t!="solve_tridiagonal" and m=="toeplitz"))): 
         continue
         
     if (t == "hermitian_multiply" and (s == "2stage")):
@@ -212,13 +213,17 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
         if (t == "eigenvalues" and kernel == "all_kernels"):
             continue
 
-        if (lang == "C" and kernel == "all_kernels"):
+        if (lang != "Fortran" and kernel == "all_kernels"):
             continue
         
         # end: exclude some test combinations
       
         if (lang == "C"):
             print("if ENABLE_C_TESTS")
+            endifs += 1
+
+        if (lang == "C++"):
+            print("if ENABLE_CPP_TESTS")
             endifs += 1
 
         if (g == "NVIDIA_GPU_ON"):
@@ -321,7 +326,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
                   print("check_SCRIPTS += " + name + "_default.sh")
           elif lay == "all_layouts":
               if kernel == "all_kernels":
-                  print("check_SCRIPTS += " + name + "_debug.sh")
+                  print("check_SCRIPTS += " + name + "_extended.sh")
               else:
                   print("check_SCRIPTS += " + name + "_extended.sh")
           else:
@@ -336,7 +341,12 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
               print(name + "_SOURCES = test/C/test.c")
               print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
               print(name + "_CFLAGS = $(test_program_cflags) \\")
-
+          
+          elif lang == "C++":
+              print(name + "_SOURCES = test/C++/test.cpp")
+              print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+              print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
+            
           else:
               raise Exception("Unknown language")
 
@@ -366,7 +376,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
                   print("check_SCRIPTS += " + name + "_default.sh")
           elif lay == "all_layouts":
               if kernel == "all_kernels":
-                  print("check_SCRIPTS += " + name + "_debug.sh")
+                  print("check_SCRIPTS += " + name + "_extended.sh")
               else:
                   print("check_SCRIPTS += " + name + "_extended.sh")
           else:
@@ -382,6 +392,11 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
               print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
               print(name + "_CFLAGS = $(test_program_cflags) \\")
 
+          elif lang == "C++":
+              print(name + "_SOURCES = test/C++/test.cpp")
+              print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+              print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
+            
           else:
               raise Exception("Unknown language")
 
@@ -404,6 +419,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
 
 for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys()), sorted(domain_flag.keys())):
     endifs = 0
+         
     if (p == "single"):
         if (d == "real"):
             print("if WANT_SINGLE_PRECISION_REAL")
@@ -418,6 +434,9 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
     print("if ENABLE_AUTOTUNING")
     if lang == "C":
         print("if ENABLE_C_TESTS")
+    if lang == "C++":
+        print("if ENABLE_CPP_TESTS")
+         
     print("check_SCRIPTS += " + name + "_autotune.sh")
     print("noinst_PROGRAMS += " + name)
     if lang == "Fortran":
@@ -430,6 +449,11 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
         print(name + "_CFLAGS = $(test_program_cflags) \\")
 
+    elif lang == "C++":
+        print(name + "_SOURCES = test/C++/test_autotune.cpp")
+        print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+        print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
+      
     else:
         raise Exception("Unknown language")
 
@@ -438,6 +462,8 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         prec_flag[p]]))
     print("endif\n" * endifs)
     if lang == "C":
+        print("endif")
+    if lang == "C++":
         print("endif")
     print("endif")
 
@@ -505,9 +531,13 @@ for lang, p, d, g, api_name in product(sorted(language_flag.keys()),
         d=d, p=p, gpu_suffix=gpu_suffix,
         api_name="explicit_" if api_name == "explicit" else "")
 
-    if lang == "C":
+    if (lang == "C"):
         print("if ENABLE_C_TESTS")
         endifs += 1
+    if (lang == "C++"):
+        print("if ENABLE_CPP_TESTS")
+        endifs += 1
+         
     print("check_SCRIPTS += " + name + "_default.sh")
     print("noinst_PROGRAMS += " + name)
     if lang == "Fortran":
@@ -519,7 +549,12 @@ for lang, p, d, g, api_name in product(sorted(language_flag.keys()),
         print(name + "_SOURCES = test/C/test_invert_triangular.c")
         print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
         print(name + "_CFLAGS = $(test_program_cflags) \\")
-
+    
+    elif lang == "C++":
+        print(name + "_SOURCES = test/C++/test_invert_triangular.cpp")
+        print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+        print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
+         
     else:
         raise Exception("Unknown language")
 
@@ -544,6 +579,35 @@ print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['double']]))
 print("endif\n")
+
+name = "validate_multiple_objs_real_double_c_version"
+print("if ENABLE_C_TESTS")
+print("if ENABLE_AUTOTUNING")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/C/test_multiple_objs.c")
+print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+print(name + "_CFLAGS = $(test_program_cflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
+print("endif\n")
+
+name = "validate_multiple_objs_real_double_cpp_version"
+print("if ENABLE_CPP_TESTS")
+print("if ENABLE_AUTOTUNING")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/C++/test_multiple_objs.cpp")
+print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
+print("endif\n")
+
 
 name = "validate_skewsymmetric_real_double"
 print("if HAVE_SKEWSYMMETRIC")
@@ -572,21 +636,6 @@ print("endif")
 print("endif\n")
 
 
-
-name = "validate_multiple_objs_real_double_c_version"
-print("if ENABLE_C_TESTS")
-print("if ENABLE_AUTOTUNING")
-print("check_SCRIPTS += " + name + "_extended.sh")
-print("noinst_PROGRAMS += " + name)
-print(name + "_SOURCES = test/C/test_multiple_objs.c")
-print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
-print(name + "_CFLAGS = $(test_program_cflags) \\")
-print("  " + " \\\n  ".join([
-        domain_flag['real'],
-        prec_flag['double']]))
-print("endif")
-print("endif\n")
-
 name = "validate_real_skewsymmetric_double_c_version"
 print("if ENABLE_C_TESTS")
 print("if HAVE_SKEWSYMMETRIC")
@@ -602,6 +651,19 @@ print("endif")
 print("endif")
 
 
+name = "validate_real_skewsymmetric_double_cpp_version"
+print("if ENABLE_CPP_TESTS")
+print("if HAVE_SKEWSYMMETRIC")
+print("check_SCRIPTS += " + name + "_extended.sh")
+print("noinst_PROGRAMS += " + name)
+print(name + "_SOURCES = test/C++/test_skewsymmetric.cpp")
+print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
+print("  " + " \\\n  ".join([
+        domain_flag['real'],
+        prec_flag['double']]))
+print("endif")
+print("endif")
 
 
 

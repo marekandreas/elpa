@@ -1012,6 +1012,7 @@ module elpa_api
     !> \param   api_version integer: api_version that ELPA should use
     !> \result  error       integer: error code, which can be queried with elpa_strerr
     !
+    !c> // /src/elpa_api.F90    
     !c> int elpa_init(int api_version);
     function elpa_init(api_version) result(error) bind(C, name="elpa_init")
       use elpa_utilities, only : error_unit
@@ -1050,6 +1051,7 @@ module elpa_api
     end function
 
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> // c_o: /src/elpa_api.F90 
     !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #define elpa_uninit(...) CONC(elpa_uninit, NARGS(__VA_ARGS__))(__VA_ARGS__)
     !c_o> #endif
@@ -1070,6 +1072,7 @@ module elpa_api
       call elpa_uninit()
     end subroutine
 #else
+    !c_no> // c_no: /src/elpa_api.F90 
     !c_no> #if OPTIONAL_C_ERROR_ARGUMENT != 1
     !c_no> void elpa_uninit(int *error);
     !c_no> #endif
@@ -1079,11 +1082,71 @@ module elpa_api
     end subroutine
 #endif
 
+    !c_no> #ifdef __cplusplus
+    !c_no> }
+    !c_no> #endif
+
     subroutine elpa_uninit(error)
+      use cuda_functions
+      use hip_functions
+      use openmp_offload_functions
+      use sycl_functions
+      use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray, my_stream
+      use elpa_omp
+      implicit none
+      
 #ifdef USE_FORTRAN2008
       integer, optional, intent(out) :: error
 #else
       integer, intent(out)           :: error
+#endif
+      logical                                    :: success
+      integer(kind=ik)                           :: maxThreads, thread
+
+      ! needed for handle destruction
+#ifdef WITH_OPENMP_TRADITIONAL
+      maxThreads=omp_get_max_threads()
+#else /* WITH_OPENMP_TRADITIONAL */
+      maxThreads=1
+#endif /* WITH_OPENMP_TRADITIONAL */
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      if (allocated(gpublasHandleArray)) then   
+
+#include "./GPU/handle_destruction_template.F90"
+      
+        deallocate(gpublasHandleArray)
+        deallocate(gpuDeviceArray)
+      
+#ifdef WITH_NVIDIA_GPU_VERSION
+        deallocate(cublasHandleArray)
+        deallocate(cudaDeviceArray)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        deallocate(rocblasHandleArray)
+        deallocate(hipDeviceArray)
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        deallocate(openmpOffloadHandleArray)
+        deallocate(openmpOffloadDeviceArray)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        deallocate(syclHandleArray)
+        deallocate(syclDeviceArray)
+#endif
+
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_CUSOLVER)
+        deallocate(cusolverHandleArray)
+#endif
+
+#if defined(WITH_AMD_GPU_VERSION) && defined(WITH_AMD_ROCSOLVER)
+        deallocate(rocsolverHandleArray)
+#endif
+
+      endif
 #endif
 
 #ifdef USE_FORTRAN2008
@@ -1092,6 +1155,7 @@ module elpa_api
      error = ELPA_OK
 #endif
     end subroutine
+    
     !> \brief helper function for error strings
     !> Parameters
     !> \param   elpa_error  integer: error code to querry

@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [18:0:1])
+AC_SUBST([ELPA_SO_VERSION], [19:0:0])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -40,17 +40,17 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20220510, "Current ELPA API version")
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20221109, "Current ELPA API version")
 print_current_api_version=20220510
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20220510], [Current ELPA autotune version])
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20221109], [Current ELPA autotune version])
 print_current_autotune_version=20220510
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20220510], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20220510, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20221109], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20221109, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1668076349],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1685521972],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -134,7 +134,7 @@ if test x"${with_mpi}" = x"yes"; then
   AC_DEFINE([WITH_MPI], [1], [use MPI])
 fi
 
-dnl CPP
+dnl CXX
 AC_LANG_PUSH([C++])
 AC_PROG_CXX
 AC_LANG_POP([C++])
@@ -297,6 +297,7 @@ AM_PROG_AR
 AM_PROG_AS
 AC_PROG_CC_C99
 AM_PROG_CC_C_O
+AC_PROG_CPP
 AC_LANG_POP([C])
 
 # Fortran
@@ -2458,6 +2459,24 @@ if test x"${enable_c_tests}" = x"yes"; then
  AC_DEFINE([ENABLE_C_TESTS], [1], [enable C tests])
 fi
 
+AC_MSG_CHECKING(whether C++ tests should be provided)
+AC_ARG_ENABLE([cpp-tests],
+              AS_HELP_STRING([--enable-cpp-tests],
+                             [enables the C++ tests for elpa, default yes.]),
+			     [
+			      if test x"$enableval" = x"yes"; then
+			        enable_cpp_tests=yes
+		              else
+			        enable_cpp_tests=no
+			      fi
+			      ],
+              [enable_cpp_tests=yes])
+AC_MSG_RESULT([${enable_cpp_tests}])
+AM_CONDITIONAL([ENABLE_CPP_TESTS],[test x"$enable_cpp_tests" = x"yes"])
+if test x"${enable_cpp_tests}" = x"yes"; then
+ AC_DEFINE([ENABLE_CPP_TESTS], [1], [enable C++ tests])
+fi
+
 AC_MSG_CHECKING(make compilable with Intel ifx)
 AC_ARG_ENABLE([ifx-compiler],
               AS_HELP_STRING([--enable-ifx-compiler],
@@ -2831,13 +2850,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2022.05.001.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2022.05.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2022.11.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2022.11.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

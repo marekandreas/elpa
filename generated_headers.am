@@ -42,7 +42,11 @@ elpa/elpa_generated.h: $(top_srcdir)/src/elpa_impl.F90 \
 #endif
 
 generated_headers += test/shared/generated.h
-test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.*90) | test/shared
+#test/shared/generated.h: $(wildcard $(top_srcdir)/test/shared/*.*90) | test/shared
+test/shared/generated.h: $(top_srcdir)/test/shared/test_prepare_matrix_template.F90 \
+                         $(top_srcdir)/test/shared/test_check_correctness_template.F90 \
+                         $(top_srcdir)/test/shared/test_analytic_template.F90 \
+                         $(top_srcdir)/test/shared/test_blacs_infrastructure.F90 | test/shared
 	@rm -f $@
 	$(call extract_interface,!c>)
 

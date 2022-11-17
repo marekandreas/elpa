@@ -288,7 +288,18 @@ module elpa_impl
 #endif
     end function
 
+    !c> // /src/elpa_impl.F90
+    !c> #ifdef __cplusplus
+    !c> #define double_complex std::complex<double>
+    !c> #define float_complex std::complex<float>
+    !c> extern "C" {
+    !c> #else
+    !c> #define double_complex double complex
+    !c> #define float_complex float complex
+    !c> #endif
+    
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> // c_o: /src/elpa_impl.F90 
     !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #define elpa_allocate(...) CONC(elpa_allocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
     !c_o> #endif
@@ -300,10 +311,15 @@ module elpa_impl
     !c> */
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
     !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
-    !c_o> elpa_t elpa_allocate2(int *error);
-    !c_o> elpa_t elpa_allocate1();
+    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
+    !c_o> #define NARGS(...) NARGS_(5, ##__VA_ARGS__, 4, 3, 2, 1, 0)
+    !c_o> #define NARGS_(_5, _4, _3, _2, _1, N, ...) N
+    !c_o> #define CONC(A, B) CONC_(A, B)
+    !c_o> #define CONC_(A, B) A##B
+    !c_o> elpa_t elpa_allocate1(int *error);
+    !c_o> elpa_t elpa_allocate0();
     !c_o> #endif
-    function elpa_impl_allocate_c1() result(ptr) bind(C, name="elpa_allocate1")
+    function elpa_impl_allocate_c0() result(ptr) bind(C, name="elpa_allocate0")
       type(c_ptr)                :: ptr
       type(elpa_impl_t), pointer :: obj
 
@@ -311,7 +327,7 @@ module elpa_impl
       ptr = c_loc(obj)
     end function
 
-    function elpa_impl_allocate_c2(error) result(ptr) bind(C, name="elpa_allocate2")
+    function elpa_impl_allocate_c1(error) result(ptr) bind(C, name="elpa_allocate1")
       integer(kind=c_int)        :: error
       type(c_ptr)                :: ptr
       type(elpa_impl_t), pointer :: obj
@@ -320,6 +336,7 @@ module elpa_impl
       ptr = c_loc(obj)
     end function
 #else
+    !c_no> // c_no: /src/elpa_impl.F90 
     !c_no> #if OPTIONAL_C_ERROR_ARGUMENT != 1
     !c_no> elpa_t elpa_allocate(int *error);
     !c_no> #endif
@@ -334,11 +351,6 @@ module elpa_impl
 #endif
 
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
-    !c_o> #if OPTIONAL_C_ERROR_ARGUMENT == 1
-    !c_o> #define NARGS(...) NARGS_(__VA_ARGS__, 5, 4, 3, 2, 1, 0)
-    !c_o> #define NARGS_(_5, _4, _3, _2, _1, N, ...) N
-    !c_o> #define CONC(A, B) CONC_(A, B)
-    !c_o> #define CONC_(A, B) A##B
     !c_o> #define elpa_deallocate(...) CONC(elpa_deallocate, NARGS(__VA_ARGS__))(__VA_ARGS__)
     !c_o> #endif
 #endif
