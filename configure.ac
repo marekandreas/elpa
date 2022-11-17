@@ -200,7 +200,7 @@ dnl heterogenous-cluster-support
 AC_MSG_CHECKING(whether heterogenous-cluster-support should be enabled)
 AC_ARG_ENABLE([heterogenous-cluster-support],
               AS_HELP_STRING([--enable-heterogenous-cluster-support],
-                             [allow ELPA to automatically switch to a kernel supported on all CPUs of a cluster (only works for Intel CPUs at the moment), default no. Activate only if necessary has a performance penalty! This feature is exerpimental! (default: disabled)]),
+                             [allow ELPA to automatically switch to a kernel supported on all CPUs of a cluster (only works for Intel CPUs at the moment), default no. Activate only if necessary has a performance penalty! This feature is experimental! (default: disabled)]),
               [
 	       if test x"$enableval" = x"yes"; then
 	         enable_heterogenous_cluster_support=yes
