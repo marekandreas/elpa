@@ -117,6 +117,7 @@
                                                             &_&
                                                             &MATH_DATATYPE
 
+  integer(kind=c_intptr_t)                     :: gpuHandle
   success = .true.
   gpu_multiply_a_b = 0
 
@@ -479,9 +480,10 @@
               b_off = ((lcs-1)*ldb+lrs-1)*size_of_datatype
 
               call obj%timer%start("gpublas")
+              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
               call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nstor, lce-lcs+1, &
                    lre-lrs+1, ONE, aux_dev+aux_off, l_rows, b_dev+b_off, ldb, ZERO, &
-                   tmp1_dev, nstor)
+                   tmp1_dev, nstor, gpuHandle)
               call obj%timer%stop("gpublas")
 
               num = nstor*(lce-lcs+1)*size_of_datatype

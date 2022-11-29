@@ -194,6 +194,7 @@ subroutine trans_ev_band_to_full_&
   logical                                        :: useNonBlockingCollectivesRows
   integer(kind=c_int)                            :: non_blocking_collectives_rows, non_blocking_collectives_cols
   logical                                        :: success
+  integer(kind=c_intptr_t)                       :: gpuHandle, my_stream
 
   success = .true.
 
@@ -297,6 +298,7 @@ subroutine trans_ev_band_to_full_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
 
@@ -414,6 +416,7 @@ subroutine trans_ev_band_to_full_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
 
@@ -445,6 +448,7 @@ subroutine trans_ev_band_to_full_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
 
@@ -491,6 +495,7 @@ subroutine trans_ev_band_to_full_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+         my_stream = obj%gpu_setup%my_stream
          successGPU = gpu_stream_synchronize(my_stream)
          check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev", successGPU)
 
@@ -506,6 +511,7 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef CUDA_AWARE_MPI_BAND_TO_FULL
 #ifdef WITH_GPU_STREAMS
+         my_stream = obj%gpu_setup%my_stream
          successGPU = gpu_stream_synchronize(my_stream)
          check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp2_dev", successGPU)
 
@@ -621,6 +627,7 @@ subroutine trans_ev_band_to_full_&
 #ifdef MORE_GPUBLAS
 
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: hvm -> hvm_dev", successGPU)
 
@@ -645,10 +652,12 @@ subroutine trans_ev_band_to_full_&
           call c_f_pointer(hvm_gpu_dev,hvm_gpu_deviceptr, [max_local_rows,cwy_blocking])
 
           call obj%timer%start("gpublas")
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
 
           call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
                                        t_rows, t_cols, l_rows, ONE, hvm_dev, max_local_rows, &
-                                       c_loc(hvm_gpu_deviceptr(:,(i-1)*nbw+1:)), max_local_rows , ZERO, t_tmp_dev, cwy_blocking)
+                                       c_loc(hvm_gpu_deviceptr(:,(i-1)*nbw+1:)), max_local_rows , ZERO, t_tmp_dev, &
+                                       cwy_blocking, gpuHandle)
 
 
           call obj%timer%stop("gpublas")
@@ -685,6 +694,7 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp", successGPU)
 
@@ -711,6 +721,7 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp -> t_tmp_dev", successGPU)
 
@@ -737,6 +748,7 @@ subroutine trans_ev_band_to_full_&
           call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
           call obj%timer%stop("cuda_mpi_nbc_communication")
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp2_dev -> t_tmp_dev", successGPU)
 
@@ -760,6 +772,7 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp", successGPU)
 
@@ -785,6 +798,7 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp -> t_tmp_dev", successGPU)
 
@@ -810,6 +824,7 @@ subroutine trans_ev_band_to_full_&
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("cuda_mpi_communication")
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp2_dev -> t_tmp_dev", successGPU)
 
@@ -833,6 +848,7 @@ subroutine trans_ev_band_to_full_&
         if (useGPU) then
 #ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
@@ -852,20 +868,23 @@ subroutine trans_ev_band_to_full_&
 #endif
 
           call obj%timer%start("gpublas")
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', &
-                                   t_rows, t_cols, ONE, tmat_dev, cwy_blocking, t_tmp_dev, cwy_blocking)
+                                   t_rows, t_cols, ONE, tmat_dev, cwy_blocking, t_tmp_dev, cwy_blocking, gpuHandle)
 
           t_tmp_gpu_dev = transfer(t_tmp_dev, t_tmp_gpu_dev)
           tmat_gpu_dev = transfer(tmat_dev, tmat_gpu_dev)
           call c_f_pointer(tmat_gpu_dev,tmat_gpu_deviceptr, [cwy_blocking,cwy_blocking])
           call c_f_pointer(t_tmp_gpu_dev,t_tmp_gpu_deviceptr, [cwy_blocking*nbw])
 
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('R', 'U', 'N', 'N', &
                                    t_rows, t_cols, -ONE, c_loc(tmat_gpu_deviceptr(t_rows+1,t_rows+1)), cwy_blocking, &
-                                   t_tmp_gpu_dev, cwy_blocking)
+                                   t_tmp_gpu_dev, cwy_blocking, gpuHandle)
           call obj%timer%stop("gpublas")
 
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp2", successGPU)
 
@@ -914,6 +933,7 @@ subroutine trans_ev_band_to_full_&
 #ifdef MORE_GPUBLAS
 
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
@@ -933,19 +953,22 @@ subroutine trans_ev_band_to_full_&
 #endif
 
           call obj%timer%start("gpublas")
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', &
-                                   t_rows, t_cols, ONE, tmat_dev, cwy_blocking, t_tmp_dev, cwy_blocking)
+                                   t_rows, t_cols, ONE, tmat_dev, cwy_blocking, t_tmp_dev, cwy_blocking, gpuHandle)
 
           t_tmp_gpu_dev = transfer(t_tmp_dev, t_tmp_gpu_dev)
           tmat_gpu_dev = transfer(tmat_dev, tmat_gpu_dev)
           call c_f_pointer(tmat_gpu_dev,tmat_gpu_deviceptr, [cwy_blocking,cwy_blocking])
           call c_f_pointer(t_tmp_gpu_dev,t_tmp_gpu_deviceptr, [cwy_blocking*nbw])
 
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('R', 'U', 'N', 'N', &
                                    t_rows, t_cols, -ONE, c_loc(tmat_gpu_deviceptr(t_rows+1,t_rows+1)), cwy_blocking, &
-                                   t_tmp_gpu_dev, cwy_blocking)
+                                   t_tmp_gpu_dev, cwy_blocking, gpuHandle)
           call obj%timer%stop("gpublas")
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           succcessGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp2", successGPU)
 
@@ -997,6 +1020,7 @@ subroutine trans_ev_band_to_full_&
       if (useGPU) then
 #ifndef MORE_GPUBAS
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev_band_to_full: hvm -> hvm_dev", successGPU)
 
@@ -1016,15 +1040,17 @@ subroutine trans_ev_band_to_full_&
 #endif
 #endif /* MORE_GPUBAS */
         call obj%timer%start("gpublas")
+        gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
         call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', &
                                      n_cols, l_cols, l_rows, ONE, hvm_dev, max_local_rows, &
-                                     q_dev, ldq , ZERO, tmp_dev, n_cols)
+                                     q_dev, ldq , ZERO, tmp_dev, n_cols, gpuHandle)
         call obj%timer%stop("gpublas")
 
 #ifdef WITH_MPI
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
         ! copy data from device to host for a later MPI_ALLREDUCE
-#ifdef WITH_GPU_STREAMS
+#ifdef WITH_GPU_STREAMS  
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 
@@ -1065,6 +1091,7 @@ subroutine trans_ev_band_to_full_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("trans_ev_band_to_full: tmp_dev", successGPU)
 
@@ -1100,6 +1127,7 @@ subroutine trans_ev_band_to_full_&
     if (useGPU) then
 #ifndef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 
@@ -1135,7 +1163,8 @@ subroutine trans_ev_band_to_full_&
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
 
 #ifdef MORE_GPUBLAS
-#ifdef WITH_GPU_STREAMS
+#ifdef WITH_GPU_STREAMS  
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 
@@ -1162,6 +1191,7 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
 
@@ -1189,6 +1219,7 @@ subroutine trans_ev_band_to_full_&
       call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
       call obj%timer%stop("cuda_mpi_nbc_communication")
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2_dev -> tmp_dev", successGPU)
 
@@ -1213,6 +1244,7 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 
@@ -1239,6 +1271,7 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
 
@@ -1264,6 +1297,7 @@ subroutine trans_ev_band_to_full_&
                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
       call obj%timer%stop("cuda_mpi_communication")
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2_dev -> tmp_dev", successGPU)
 
@@ -1288,6 +1322,7 @@ subroutine trans_ev_band_to_full_&
       if (useGPU) then
 #ifndef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
 
@@ -1309,6 +1344,7 @@ subroutine trans_ev_band_to_full_&
 
         ! needed: as long as not device to device copy
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
@@ -1328,10 +1364,11 @@ subroutine trans_ev_band_to_full_&
 #endif
 
         call obj%timer%start("gpublas")
+        gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
         call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
-                                 n_cols, l_cols, ONE, tmat_dev, cwy_blocking, tmp_dev, n_cols)
+                                 n_cols, l_cols, ONE, tmat_dev, cwy_blocking, tmp_dev, n_cols, gpuHandle)
         call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, tmp_dev, &
-                                   n_cols, ONE, q_dev, ldq)
+                                   n_cols, ONE, q_dev, ldq, gpuHandle)
         call obj%timer%stop("gpublas")
       else ! useGPU
         call obj%timer%start("blas")
@@ -1351,6 +1388,7 @@ subroutine trans_ev_band_to_full_&
       if (useGPU) then
         ! needed as long as not device to device copy
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
@@ -1370,11 +1408,12 @@ subroutine trans_ev_band_to_full_&
 #endif
 
         call obj%timer%start("gpublas")
+        gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
         call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
                                    n_cols, l_cols, ONE, tmat_dev, cwy_blocking, &
-                                   tmp_dev, n_cols)
+                                   tmp_dev, n_cols, gpuHandle)
         call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &
-                                    -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq)
+                                    -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq, gpuHandle)
         call obj%timer%stop("gpublas")
       else ! useGPU
         call obj%timer%start("blas")
@@ -1411,6 +1450,7 @@ subroutine trans_ev_band_to_full_&
 
     ! final transfer of q_dev
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
 

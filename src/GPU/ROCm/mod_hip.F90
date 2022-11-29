@@ -58,10 +58,10 @@ module hip_functions
   integer(kind=ik) :: hipHostRegisterPortable
   integer(kind=ik) :: hipHostRegisterMapped
 
-  ! TODO global variable, has to be changed
-  integer(kind=C_intptr_T), allocatable :: rocblasHandleArray(:)
-  integer(kind=C_intptr_T), allocatable :: rocsolverHandleArray(:)
-  integer(kind=c_int), allocatable      :: hipDeviceArray(:)
+  !! TODO global variable, has to be changed
+  !integer(kind=C_intptr_T), allocatable :: rocblasHandleArray(:)
+  !integer(kind=C_intptr_T), allocatable :: rocsolverHandleArray(:)
+  !integer(kind=c_int), allocatable      :: hipDeviceArray(:)
 
 !  integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
 !#ifdef WANT_SINGLE_PRECISION_REAL
@@ -2087,7 +2087,7 @@ module hip_functions
 #endif
     end function
 
-    subroutine rocsolver_dtrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine rocsolver_dtrtri(uplo, diag, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2095,21 +2095,15 @@ module hip_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocsolverHandle
 
-      if (present(threadID)) then
-        rocsolverHandle = rocsolverHandleArray(threadID)
-      else
-        rocsolverHandle = rocsolverHandleArray(0)
-      endif
 
 #ifdef WITH_AMD_ROCSOLVER
       call rocsolver_dtrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine rocsolver_strtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine rocsolver_strtri(uplo, diag, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2117,21 +2111,15 @@ module hip_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocsolverHandle
 
-      if (present(threadID)) then
-        rocsolverHandle = rocsolverHandleArray(threadID)
-      else
-        rocsolverHandle = rocsolverHandleArray(0)
-      endif
 
 #ifdef WITH_AMD_ROCSOLVER
       call rocsolver_strtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine rocsolver_ztrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine rocsolver_ztrtri(uplo, diag, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2139,14 +2127,7 @@ module hip_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocsolverHandle
-
-      if (present(threadID)) then
-        rocsolverHandle = rocsolverHandleArray(threadID)
-      else
-        rocsolverHandle = rocsolverHandleArray(0)
-      endif
 
 #ifdef WITH_AMD_ROCSOLVER
       call rocsolver_ztrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
@@ -2154,7 +2135,7 @@ module hip_functions
     end subroutine
 
 
-    subroutine rocsolver_ctrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine rocsolver_ctrtri(uplo, diag, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2162,21 +2143,14 @@ module hip_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocsolverHandle
-
-      if (present(threadID)) then
-        rocsolverHandle = rocsolverHandleArray(threadID)
-      else
-        rocsolverHandle = rocsolverHandleArray(0)
-      endif
 
 #ifdef WITH_AMD_ROCSOLVER
       call rocsolver_ctrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine rocsolver_dpotrf(uplo, n, a, lda, info, threadID)
+    subroutine rocsolver_dpotrf(uplo, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2184,21 +2158,14 @@ module hip_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocsolverHandle
-
-      if (present(threadID)) then
-        rocsolverHandle = rocsolverHandleArray(threadID)
-      else
-        rocsolverHandle = rocsolverHandleArray(0)
-      endif
 
 #ifdef WITH_AMD_ROCSOLVER
       call rocsolver_dpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine rocsolver_spotrf(uplo, n, a, lda, info, threadID)
+    subroutine rocsolver_spotrf(uplo, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2206,21 +2173,14 @@ module hip_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocsolverHandle
-
-      if (present(threadID)) then
-        rocsolverHandle = rocsolverHandleArray(threadID)
-      else
-        rocsolverHandle = rocsolverHandleArray(0)
-      endif
 
 #ifdef WITH_AMD_ROCSOLVER
       call rocsolver_spotrf_c(rocsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine rocsolver_zpotrf(uplo, n, a, lda, info, threadID)
+    subroutine rocsolver_zpotrf(uplo, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2228,21 +2188,14 @@ module hip_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocsolverHandle
-
-      if (present(threadID)) then
-        rocsolverHandle = rocsolverHandleArray(threadID)
-      else
-        rocsolverHandle = rocsolverHandleArray(0)
-      endif
 
 #ifdef WITH_AMD_ROCSOLVER
       call rocsolver_zpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine rocsolver_cpotrf(uplo, n, a, lda, info, threadID)
+    subroutine rocsolver_cpotrf(uplo, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2250,14 +2203,7 @@ module hip_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocsolverHandle
-
-      if (present(threadID)) then
-        rocsolverHandle = rocsolverHandleArray(threadID)
-      else
-        rocsolverHandle = rocsolverHandleArray(0)
-      endif
 
 #ifdef WITH_AMD_ROCSOLVER
       call rocsolver_cpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
@@ -2267,7 +2213,7 @@ module hip_functions
 
 
     ! cuBLAS
-    subroutine rocblas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine rocblas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2276,20 +2222,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dgemm_intptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine rocblas_dgemm_intptr
 
-    subroutine rocblas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine rocblas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2298,20 +2238,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_DOUBLE)             :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine rocblas_dgemm_cptr
 
-    subroutine rocblas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine rocblas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2320,20 +2254,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_sgemm_intptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine rocblas_sgemm_intptr
 
-    subroutine rocblas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine rocblas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2342,20 +2270,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_FLOAT)              :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_sgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine rocblas_sgemm_cptr
 
-    subroutine rocblas_dcopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine rocblas_dcopy_intptr(n, x, incx, y, incy, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2363,20 +2285,14 @@ module hip_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dcopy_intptr_c(rocblasHandle, n, x, incx, y, incy)
 #endif
     end subroutine rocblas_dcopy_intptr
 
-    subroutine rocblas_dcopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine rocblas_dcopy_cptr(n, x, incx, y, incy, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2384,20 +2300,14 @@ module hip_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dcopy_cptr_c(rocblasHandle, n, x, incx, y, incy)
 #endif
     end subroutine rocblas_dcopy_cptr
 
-    subroutine rocblas_scopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine rocblas_scopy_intptr(n, x, incx, y, incy, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2405,20 +2315,14 @@ module hip_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_scopy_intptr_c(rocblasHandle, n, x, incx, y, incy)
 #endif
     end subroutine rocblas_scopy_intptr
 
-    subroutine rocblas_scopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine rocblas_scopy_cptr(n, x, incx, y, incy, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2426,20 +2330,14 @@ module hip_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_scopy_cptr_c(rocblasHandle, n, x, incx, y, incy)
 #endif
     end subroutine rocblas_scopy_cptr
 
-    subroutine rocblas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2449,20 +2347,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dtrmm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_dtrmm_intptr
 
-    subroutine rocblas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2472,20 +2364,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dtrmm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_dtrmm_cptr
 
-    subroutine rocblas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2495,20 +2381,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_strmm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_strmm_intptr
 
-    subroutine rocblas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2518,21 +2398,15 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_strmm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_strmm_cptr
 
 
-    subroutine rocblas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2542,20 +2416,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dtrsm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_dtrsm_intptr
 
-    subroutine rocblas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2565,20 +2433,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dtrsm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_dtrsm_cptr
 
-    subroutine rocblas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2588,20 +2450,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_strsm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_strsm_intptr
 
-    subroutine rocblas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2611,20 +2467,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_strsm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_strsm_cptr
 
-    subroutine rocblas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine rocblas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2634,20 +2484,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_zgemm_intptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine rocblas_zgemm_intptr
 
-    subroutine rocblas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine rocblas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2657,20 +2501,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_zgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine rocblas_zgemm_cptr
 
-    subroutine rocblas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine rocblas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2680,20 +2518,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_cgemm_intptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine rocblas_cgemm_intptr
 
-    subroutine rocblas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine rocblas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2703,20 +2535,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_cgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine rocblas_cgemm_cptr
 
-    subroutine rocblas_zcopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine rocblas_zcopy_intptr(n, x, incx, y, incy, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2724,20 +2550,14 @@ module hip_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_zcopy_intptr_c(rocblasHandle, n, x, incx, y, incy)
 #endif
     end subroutine rocblas_zcopy_intptr
 
-    subroutine rocblas_zcopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine rocblas_zcopy_cptr(n, x, incx, y, incy, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2745,20 +2565,14 @@ module hip_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_zcopy_cptr_c(rocblasHandle, n, x, incx, y, incy)
 #endif
     end subroutine rocblas_zcopy_cptr
 
-    subroutine rocblas_ccopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine rocblas_ccopy_intptr(n, x, incx, y, incy, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2766,20 +2580,14 @@ module hip_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ccopy_intptr_c(rocblasHandle, n, x, incx, y, incy)
 #endif
     end subroutine rocblas_ccopy_intptr
 
-    subroutine rocblas_ccopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine rocblas_ccopy_cptr(n, x, incx, y, incy, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2787,20 +2595,14 @@ module hip_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ccopy_cptr_c(rocblasHandle, n, x, incx, y, incy)
 #endif
     end subroutine rocblas_ccopy_cptr
 
-    subroutine rocblas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2810,20 +2612,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ztrmm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_ztrmm_intptr
 
-    subroutine rocblas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2833,20 +2629,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ztrmm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_ztrmm_cptr
 
-    subroutine rocblas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2856,20 +2646,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ctrmm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_ctrmm_intptr
 
-    subroutine rocblas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2879,20 +2663,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ctrmm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_ctrmm_cptr
 
-    subroutine rocblas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2902,20 +2680,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ztrsm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_ztrsm_intptr
 
-    subroutine rocblas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2925,20 +2697,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ztrsm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_ztrsm_cptr
 
-    subroutine rocblas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2948,20 +2714,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ctrsm_intptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_ctrsm_intptr
 
-    subroutine rocblas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine rocblas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, rocblasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2971,20 +2731,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_ctrsm_cptr_c(rocblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine rocblas_ctrsm_cptr
 
-    subroutine rocblas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine rocblas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, rocblasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2993,20 +2747,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_dgemv_c(rocblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine rocblas_dgemv
 
-    subroutine rocblas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine rocblas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, rocblasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -3015,20 +2763,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_sgemv_c(rocblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine rocblas_sgemv
 
-    subroutine rocblas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine rocblas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, rocblasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -3037,20 +2779,14 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_zgemv_c(rocblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine rocblas_zgemv
 
-    subroutine rocblas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine rocblas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, rocblasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -3059,14 +2795,8 @@ module hip_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: rocblasHandle
 
-      if (present(threadID)) then
-        rocblasHandle = rocblasHandleArray(threadID)
-      else
-        rocblasHandle = rocblasHandleArray(0)
-      endif   
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_cgemv_c(rocblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif

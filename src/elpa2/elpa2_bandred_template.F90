@@ -241,6 +241,8 @@ max_threads, isSkewsymmetric)
   integer(kind=c_int)                         :: myThreadID, mimick
   integer(kind=c_int)                         :: memcols
 
+  integer(kind=c_intptr_t)                    :: gpuHandle, my_stream
+
 
   max_threads_used = max_threads
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -443,6 +445,7 @@ max_threads, isSkewsymmetric)
 #endif
 
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("bandred: a_dev", successGPU)
 
@@ -650,6 +653,7 @@ max_threads, isSkewsymmetric)
 #endif
 
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("bandred: a_dev -> a_mat", successGPU)
 
@@ -861,6 +865,7 @@ max_threads, isSkewsymmetric)
 #endif
 
 #ifdef WITH_GPU_STREAMS
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("bandred: a_mat -> a_dev", successGPU)
 
@@ -976,6 +981,7 @@ max_threads, isSkewsymmetric)
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("bandred: a_mat -> a_dev", successGPU)
 
@@ -1094,6 +1100,7 @@ max_threads, isSkewsymmetric)
 
       if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("bandred: vmr_dev", successGPU)
 
@@ -1142,14 +1149,14 @@ max_threads, isSkewsymmetric)
         !the startup cost for parallelizing the dgemms inside the loop is too great
         !$omp  parallel do schedule(static,1) num_threads(max_threads_used) &
         !$omp  default(none) &
-        !$omp  private(i, lcs, lce, lrs, lre, myThreadID, successGPU) &
+        !$omp  private(i, lcs, lce, lrs, lre, myThreadID, gpuHandle, successGPU) &
         !$omp  shared(istep, nbw, tile_size, obj, l_cols, l_cols_tile, l_rows, isSkewsymmetric, &
         !$omp&       n_cols, l_rows_tile, umcCPU, vmrCPU, a_mat, matrixRows, max_l_cols, max_l_rows, &
-        !$omp&       useGPU, a_dev, umc_dev, vmr_dev, gpuDeviceArray)
+        !$omp&       useGPU, a_dev, umc_dev, vmr_dev)
         do i=0,(istep*nbw-1)/tile_size
           myThreadID=omp_get_thread_num()
           if (useGPU) then
-            successGPU = gpu_setdevice(gpuDeviceArray(myThreadID))
+            successGPU = gpu_setdevice(obj%gpu_setup%gpuDeviceArray(myThreadID))
           endif
           lcs = i*l_cols_tile+1                   ! local column start
           lce = min(l_cols, (i+1)*l_cols_tile)    ! local column end
@@ -1162,16 +1169,17 @@ max_threads, isSkewsymmetric)
           if ( lre > lrs .and. l_cols > lcs ) then
             if (useGPU) then
               call obj%timer%start("gpublas")
+              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
               if (isSkewsymmetric) then
                 call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
                                     -ONE, a_dev + (lrs-1 + (lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
                                     umc_dev + (lcs-1 + (n_cols+1+1)*max_l_cols)*size_of_datatype, max_l_cols, &
-                                    ZERO, vmr_dev + (lrs-1+(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows)
+                                    ZERO, vmr_dev + (lrs-1+(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows, gpuHandle)
               else
                 call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
                                     ONE, a_dev + (lrs-1 +(lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
                                     umc_dev+(lcs-1+(n_cols+1-1)*max_l_cols)*size_of_datatype, max_l_cols,    &
-                                    ZERO, vmr_dev + (lrs-1 +(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows)
+                                    ZERO, vmr_dev + (lrs-1 +(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows, gpuHandle)
               endif
               call obj%timer%stop("gpublas")
             else ! useGPU
@@ -1198,10 +1206,11 @@ max_threads, isSkewsymmetric)
           if ( lce > lcs .and. i > 0 ) then
             if (useGPU) then
               call obj%timer%start("gpublas")
+              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
               call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', lce-lcs+1, n_cols, lrs-1,    &
                                    ONE, a_dev+(1-1+(lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
                                    vmr_dev + (1-1 +(1-1)*max_l_rows)*size_of_datatype, max_l_rows, &
-                                   ZERO, umc_dev+(lcs-1 +(1-1)*max_l_cols)*size_of_datatype, max_l_cols)
+                                   ZERO, umc_dev+(lcs-1 +(1-1)*max_l_cols)*size_of_datatype, max_l_cols, gpuHandle)
               call obj%timer%stop("gpublas")
             else ! useGPU
               call obj%timer%start("blas")
@@ -1218,6 +1227,7 @@ max_threads, isSkewsymmetric)
 
       if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("bandred: vmr_dev", successGPU)
 
@@ -1264,6 +1274,7 @@ max_threads, isSkewsymmetric)
 #endif
 
 #ifdef WITH_GPU_STREAMS
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("bandred: vmr_dev", successGPU)
 
@@ -1292,6 +1303,7 @@ max_threads, isSkewsymmetric)
 #endif
 
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("bandred: vmrGPU", successGPU)
 
@@ -1381,6 +1393,7 @@ max_threads, isSkewsymmetric)
 
           if (useGPU) then
             call obj%timer%start("gpublas")
+            gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
 #ifndef WITH_OPENMP_TRADITIONAL
             call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
                                        lce-lcs+1, n_cols, lre,     &
@@ -1389,7 +1402,7 @@ max_threads, isSkewsymmetric)
                                        matrixRows, vmr_dev,max_l_rows,    &
                                        ONE, (umc_dev+ (lcs-1)*     &
                                            size_of_datatype),      &
-                                       max_l_cols)
+                                       max_l_cols, gpuHandle)
 #else
             call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',                   &
                                        lce-lcs+1, n_cols, lre,     &
@@ -1398,7 +1411,7 @@ max_threads, isSkewsymmetric)
                                        matrixRows, vmr_dev,max_l_rows,    &
                                        ONE, (umc_dev+ (lcs-1)*     &
                                            size_of_datatype),      &
-                                       max_l_cols)
+                                       max_l_cols, gpuHandle)
 #endif
 
             call obj%timer%stop("gpublas")
@@ -1407,6 +1420,7 @@ max_threads, isSkewsymmetric)
             call obj%timer%start("gpublas")
 
             lre = min(l_rows,i*l_rows_tile)
+            gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
             if (isSkewsymmetric) then
               call gpublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, -ONE, &
                             (a_dev+ ((lcs-1)*matrixRows*                 &
@@ -1415,7 +1429,7 @@ max_threads, isSkewsymmetric)
                               size_of_datatype),              &
                               max_l_cols, ONE, (vmr_dev+(max_l_rows * n_cols)* &
                             size_of_datatype),              &
-                              max_l_rows)
+                              max_l_rows, gpuHandle)
             else
               call gpublas_PRECISION_GEMM('N', 'N', lre,n_cols, lce-lcs+1, ONE, &
                                           (a_dev+ ((lcs-1)*matrixRows*                 &
@@ -1424,7 +1438,7 @@ max_threads, isSkewsymmetric)
                                             size_of_datatype),              &
                                             max_l_cols, ONE, (vmr_dev+(max_l_rows * n_cols)* &
                                           size_of_datatype),              &
-                                            max_l_rows)
+                                            max_l_rows, gpuHandle)
             endif
             call obj%timer%stop("gpublas")
           else ! useGPU
@@ -1620,19 +1634,21 @@ max_threads, isSkewsymmetric)
 #endif
 
       call obj%timer%start("gpublas")
+      gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
       call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',  &
-                          l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, max_l_cols)
+                          l_cols, n_cols, ONE, tmat_dev, nbw, umc_dev, max_l_cols, gpuHandle)
       call obj%timer%stop("gpublas")
 
       ! VAV = Tmat * V**T * A * V * Tmat**T = (U*Tmat**T)**T * V * Tmat**T
       call obj%timer%start("gpublas")
+      gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
       call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',             &
                                n_cols, n_cols, l_cols, ONE, umc_dev, max_l_cols, &
                                (umc_dev+(max_l_cols * n_cols )*size_of_datatype),max_l_cols, &
-                               ZERO, vav_dev, nbw)
+                               ZERO, vav_dev, nbw, gpuHandle)
 
       call gpublas_PRECISION_TRMM('Right', 'Upper', BLAS_TRANS_OR_CONJ, 'Nonunit',    &
-         n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw)
+         n_cols, n_cols, ONE, tmat_dev, nbw, vav_dev, nbw, gpuHandle)
       call obj%timer%stop("gpublas")
 
 #ifdef WITH_GPU_STREAMS
@@ -1731,6 +1747,7 @@ max_threads, isSkewsymmetric)
 
     if (useGPU) then
       call obj%timer%start("gpublas")
+      gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
       if (isSkewsymmetric) then
         call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
@@ -1742,7 +1759,7 @@ max_threads, isSkewsymmetric)
                                   (umc_dev+(max_l_cols * n_cols )* &
                                   size_of_datatype),   &
                                   max_l_cols, vav_dev,nbw,        &
-                                  ONE, umc_dev, max_l_cols)
+                                  ONE, umc_dev, max_l_cols, gpuHandle)
       else
         call gpublas_PRECISION_GEMM('N', 'N', l_cols, n_cols, n_cols,&
 #if REALCASE == 1
@@ -1754,7 +1771,7 @@ max_threads, isSkewsymmetric)
                                  (umc_dev+(max_l_cols * n_cols )* &
                                  size_of_datatype),   &
                                  max_l_cols, vav_dev,nbw,        &
-                                 ONE, umc_dev, max_l_cols)
+                                 ONE, umc_dev, max_l_cols, gpuHandle)
       endif
       call obj%timer%stop("gpublas")
 
@@ -1900,9 +1917,9 @@ max_threads, isSkewsymmetric)
 !$omp parallel num_threads(max_threads_used) &
     !$omp default(none) &
     !$omp private( ii, i, lcs, lce, lre, n_way, m_way, m_id, n_id, work_per_thread, mystart, myend, myThreadID, &
-    !$omp&         a_dev0, a_dev1, vmr_dev0, vmr_dev1, umc_dev0, umc_dev1 ) &
+    !$omp&         a_dev0, a_dev1, vmr_dev0, vmr_dev1, umc_dev0, umc_dev1, gpuHandle ) &
     !$omp shared(a_mat, n_threads, istep, tile_size, nbw, n_cols, obj, vmrcpu, l_cols_tile, l_rows, l_rows_tile, &
-    !$omp&       gpuMemcpyDeviceToHost, gpuMemcpyHostToDevice, successGPU, gpuDeviceArray,  max_threads_used, &
+    !$omp&       gpuMemcpyDeviceToHost, gpuMemcpyHostToDevice, successGPU, max_threads_used, &
 #ifndef WITH_OPENMP_TRADITIONAL
     !$omp&       umc_size, vmr_size, &
 #endif
@@ -1911,7 +1928,7 @@ max_threads, isSkewsymmetric)
     n_threads  = omp_get_num_threads()
     myThreadID = omp_get_thread_num()
     if (useGPU) then
-      successGPU = gpu_setdevice(gpuDeviceArray(myThreadID))
+      successGPU = gpu_setdevice(obj%gpu_setup%gpuDeviceArray(myThreadID))
     endif
 
     if (mod(n_threads, 2) == 0) then
@@ -1942,6 +1959,7 @@ max_threads, isSkewsymmetric)
       if ( myend-mystart+1 < 1) cycle
       if (useGPU) then
         call obj%timer%start("gpublas")
+        gpuHandle = obj%gpu_setup%gpublasHandleArray(myThreadID)
         ! original
         !call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, myend-mystart+1,    &
         !                         lce-lcs+1, 2*n_cols, -ONE, &
@@ -1957,7 +1975,7 @@ max_threads, isSkewsymmetric)
                                  vmr_dev+(mystart-1+(1-1)*max_l_rows)*size_of_datatype, max_l_rows, umc_dev +(lcs-1+  &
                                  (1-1)*max_l_cols)*size_of_datatype, &
                                  max_l_cols, ONE, a_dev+(mystart-1+(lcs-1)*matrixRows)* &
-                                 size_of_datatype, matrixRows, threadID=myThreadID)
+                                 size_of_datatype, matrixRows, gpuHandle)
 
         call obj%timer%stop("gpublas")
       else ! useGPU
@@ -1982,12 +2000,13 @@ max_threads, isSkewsymmetric)
       if (useGPU) then
         call obj%timer%start("gpublas")
 
+        gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
         call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
                                    lre, lce-lcs+1, 2*n_cols, -ONE, &
                                    vmr_dev, max_l_rows, (umc_dev +(lcs-1)*  &
                                    size_of_datatype), &
                                    max_l_cols, ONE, (a_dev+(lcs-1)*matrixRows* &
-                                   size_of_datatype), matrixRows)
+                                   size_of_datatype), matrixRows, gpuHandle)
         call obj%timer%stop("gpublas")
       else ! useGPU
 

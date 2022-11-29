@@ -1,45 +1,45 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
-          if (.not.(allocated(cudaDeviceArray))) then
-            allocate(cudaDeviceArray(0:maxThreads-1))
-            allocate(gpuDeviceArray(0:maxThreads-1))
+          if (.not.(allocated(obj%gpu_setup%cudaDeviceArray))) then
+            allocate(obj%gpu_setup%cudaDeviceArray(0:maxThreads-1))
+            allocate(obj%gpu_setup%gpuDeviceArray(0:maxThreads-1))
             success = cuda_setdevice(deviceNumber)
             do thread=0,maxThreads-1
-              cudaDeviceArray(thread) = deviceNumber
-              gpuDeviceArray(thread) = deviceNumber
+              obj%gpu_setup%cudaDeviceArray(thread) = deviceNumber
+              obj%gpu_setup%gpuDeviceArray(thread) = deviceNumber
             enddo
           endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-          if (.not.(allocated(hipDeviceArray))) then
-            allocate(hipDeviceArray(0:maxThreads-1))
-            allocate(gpuDeviceArray(0:maxThreads-1))
+          if (.not.(allocated(obj%gpu_setup%hipDeviceArray))) then
+            allocate(obj%gpu_setup%hipDeviceArray(0:maxThreads-1))
+            allocate(obj%gpu_setup%gpuDeviceArray(0:maxThreads-1))
             success = hip_setdevice(deviceNumber)
             do thread=0,maxThreads-1
-              hipDeviceArray(thread) = deviceNumber
-              gpuDeviceArray(thread) = deviceNumber
+              obj%gpu_setup%hipDeviceArray(thread) = deviceNumber
+              obj%gpu_setup%gpuDeviceArray(thread) = deviceNumber
             enddo
           endif
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-          if (.not.(allocated(openmpOffloadDeviceArray))) then
-            allocate(openmpOffloadDeviceArray(0:maxThreads-1))
-            allocate(gpuDeviceArray(0:maxThreads-1))
+          if (.not.(allocated(obj%gpu_setup%openmpOffloadDeviceArray))) then
+            allocate(obj%gpu_setup%openmpOffloadDeviceArray(0:maxThreads-1))
+            allocate(obj%gpu_setup%gpuDeviceArray(0:maxThreads-1))
             success = openmp_offload_setdevice(deviceNumber)
             do thread=0,maxThreads-1
-              openmpOffloadDeviceArray(thread) = deviceNumber
-              gpuDeviceArray(thread) = deviceNumber
+              obj%gpu_setup%openmpOffloadDeviceArray(thread) = deviceNumber
+              obj%gpu_setup%gpuDeviceArray(thread) = deviceNumber
             enddo
           endif
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-          if (.not.(allocated(syclDeviceArray))) then
-            allocate(syclDeviceArray(0:maxThreads-1))
-            allocate(gpuDeviceArray(0:maxThreads-1))
+          if (.not.(allocated(obj%gpu_setup%syclDeviceArray))) then
+            allocate(obj%gpu_setup%syclDeviceArray(0:maxThreads-1))
+            allocate(obj%gpu_setup%gpuDeviceArray(0:maxThreads-1))
             !success = sycl_setdevice(deviceNumber)
             success = sycl_setdevice(0)
             do thread=0,maxThreads-1
-              syclDeviceArray(thread) = deviceNumber
-              gpuDeviceArray(thread) = deviceNumber
+              obj%gpu_setup%syclDeviceArray(thread) = deviceNumber
+              obj%gpu_setup%gpuDeviceArray(thread) = deviceNumber
             enddo
           endif
 #endif

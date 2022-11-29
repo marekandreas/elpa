@@ -200,6 +200,7 @@ subroutine tridiag_&
   integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
   logical                                       :: success
 
+  integer(kind=c_intptr_t)                      :: gpuHandle
   success = .true.
  
   if(useGPU) then
@@ -791,9 +792,9 @@ subroutine tridiag_&
 !$omp num_threads(max_threads) &
 !$omp default(none) &
 !$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end) &
-!$omp shared(useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
+!$omp shared(obj, gpuHandle, useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, a_offset, &
-!$omp&       max_local_cols, max_local_rows, obj, wantDebug, l_rows_per_tile, l_cols_per_tile, &
+!$omp&       max_local_cols, max_local_rows, wantDebug, l_rows_per_tile, l_cols_per_tile, &
 !$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat, &
 !$omp&       matrixCols)
      my_thread = omp_get_thread_num()
@@ -883,10 +884,12 @@ subroutine tridiag_&
               ! this requires altering of the algorithm when later explicitly updating the matrix
               ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
               if (wantDebug) call obj%timer%start("gpublas")
+              
+              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
               call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
                                         ONE, a_dev, matrixRows,                   &
                                         v_row_dev , 1,                          &
-                                        ONE, u_col_dev, 1)
+                                        ONE, u_col_dev, 1, gpuHandle)
 
        ! todo: try with non transposed!!!
 !                 if(i/=j) then
@@ -911,12 +914,13 @@ subroutine tridiag_&
                   
                 a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                           size_of_datatype
-
+  
+                gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                 call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                               l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                               ONE, a_dev + a_offset, matrixRows,  &
                               v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
-                              ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1)
+                              ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1, gpuHandle)
               enddo !i=0,(istep-2)/tile_size
 
               do i=0,(istep-2)/tile_size
@@ -930,15 +934,17 @@ subroutine tridiag_&
                 a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * &
                         size_of_datatype
                 if (isSkewsymmetric) then
+                   gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                    call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                -ONE, a_dev + a_offset, matrixRows, &
                                v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
-                               ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
+                               ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1, gpuHandle)
                 else
+                   gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                    call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
                                ONE, a_dev + a_offset, matrixRows, &
                                v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
-                               ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1)
+                               ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1, gpuHandle)
                 endif
               enddo ! i=0,(istep-2)/tile_size
             end if !multiplication as one block / per stripes
@@ -1186,6 +1192,7 @@ subroutine tridiag_&
                ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                ! we than use the same calls as for CPU version
                if (wantDebug) call obj%timer%start("gpublas")
+               gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
                                        l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
                                        ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
@@ -1193,7 +1200,7 @@ subroutine tridiag_&
                                        max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
                                        size_of_datatype,  &
                                        max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
-                                       size_of_datatype , matrixRows)
+                                       size_of_datatype , matrixRows, gpuHandle)
                if (wantDebug) call obj%timer%stop("gpublas")
              endif ! matBlockasOne
            else !useGPU
@@ -1215,10 +1222,11 @@ subroutine tridiag_&
              !update whole (remaining) part of matrix, including tiles below diagonal
              !we can do that in one large cublas call
              if (wantDebug) call obj%timer%start("gpublas")
+             gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
              call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
                                        ONE, vu_stored_rows_dev, max_local_rows, &
                                        uv_stored_cols_dev, max_local_cols,  &
-                                       ONE, a_dev, matrixRows)
+                                       ONE, a_dev, matrixRows, gpuHandle)
              if (wantDebug) call obj%timer%stop("gpublas")
            endif ! mat_vec_as
          endif

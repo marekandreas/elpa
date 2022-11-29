@@ -153,7 +153,7 @@ subroutine trans_ev_&
   logical                                       :: useNonBlockingCollectivesRows
   integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
   logical                                       :: success
-
+  integer(kind=c_intptr_t)                      :: gpuHandle
   success = .true.
 
   if(useGPU) then
@@ -527,9 +527,10 @@ subroutine trans_ev_&
       if (l_rows > 0) then
         if (useGPU) then
           call obj%timer%start("gpublas")
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',   &
                                    nstor, l_cols, l_rows, ONE, hvm_dev, hvm_ubnd,  &
-                                   q_dev, ldq, ZERO, tmp_dev, nstor)
+                                   q_dev, ldq, ZERO, tmp_dev, nstor, gpuHandle)
           call obj%timer%stop("gpublas")
         else ! useGPU
 
@@ -661,13 +662,14 @@ subroutine trans_ev_&
       if (l_rows > 0) then
         if (useGPU) then
           call obj%timer%start("gpublas")
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
                                    nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
-                                   tmp_dev, nstor)
+                                   tmp_dev, nstor, gpuHandle)
 
           call gpublas_PRECISION_GEMM('N', 'N' ,l_rows ,l_cols ,nstor,  &
                                    -ONE, hvm_dev, hvm_ubnd, tmp_dev, nstor,   &
-                                   ONE, q_dev, ldq)
+                                   ONE, q_dev, ldq, gpuHandle)
           call obj%timer%stop("gpublas")
         else !useGPU
 #ifdef WITH_MPI

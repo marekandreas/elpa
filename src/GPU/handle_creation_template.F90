@@ -15,34 +15,35 @@
             stop 1
           endif
 #endif /* WITH_GPU_STREAMS */
-
+          obj%gpu_setup%my_stream = my_stream
+           
           ! handle creation
           call obj%timer%start("create_handle")
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
             !print *,"Creating handle for thread:",thread
             success = cublas_create(handle_tmp)
-            cublasHandleArray(thread) = handle_tmp
-            gpublasHandleArray(thread) = handle_tmp
+            obj%gpu_setup%cublasHandleArray(thread) = handle_tmp
+            obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
 #endif
 #ifdef WITH_AMD_GPU_VERSION
             success = rocblas_create(handle_tmp)
-            rocblasHandleArray(thread) = handle_tmp
-            gpublasHandleArray(thread) = handle_tmp
+            obj%gpu_setup%rocblasHandleArray(thread) = handle_tmp
+            obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
             handle_tmp = 0
             ! not needed dummy call
             success = openmp_offload_blas_create(handle_tmp)
-            openmpOffloadHandleArray(thread) = handle_tmp
-            gpublasHandleArray(thread) = handle_tmp
+            obj%gpu_setup%openmpOffloadHandleArray(thread) = handle_tmp
+            obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
             handle_tmp = 0
             ! not needed dummy call
             success = sycl_blas_create(handle_tmp)
-            syclHandleArray(thread) = handle_tmp
-            gpublasHandleArray(thread) = handle_tmp
+            obj%gpu_setup%syclHandleArray(thread) = handle_tmp
+            obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
 #endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -66,7 +67,7 @@
 #ifdef WITH_NVIDIA_CUSOLVER
           do thread=0, maxThreads-1
             success = cusolver_create(handle_tmp)
-            cusolverHandleArray(thread) = handle_tmp
+            obj%gpu_setup%cusolverHandleArray(thread) = handle_tmp
             if (.not.(success)) then
               print *,"Cannot create cusolver handle"
               stop 1
@@ -79,20 +80,20 @@
           !do thread=0, maxThreads-1
             !not needed
             !success = rocsolver_create(handle_tmp)
-            !rocsolverHandleArray(thread) = handle_tmp
+            !obj%gpu_setup%rocsolverHandleArray(thread) = handle_tmp
             !if (.not.(success)) then
             !  print *,"Cannot create rocsolver handle"
             !  stop 1
             !endif
           !enddo
-          rocsolverHandleArray(:) = rocblasHandleArray(:)
+          obj%gpu_setup%rocsolverHandleArray(:) = obj%gpu_setup%rocblasHandleArray(:)
 #endif
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
           do thread=0, maxThreads-1
             success = openmp_offload_solver_create(handle_tmp)
-            openmpOffloadsolverHandleArray(thread) = handle_tmp
+            obj%gpu_setup%openmpOffloadsolverHandleArray(thread) = handle_tmp
             if (.not.(success)) then
               print *,"Cannot create openmpOffloadsolver handle"
               stop 1
@@ -104,7 +105,7 @@
 #ifdef WITH_SYCL_SOLVER
           do thread=0, maxThreads-1
             success = sycl_solver_create(handle_tmp)
-            syclsolverHandleArray(thread) = handle_tmp
+            obj%gpu_setup%syclsolverHandleArray(thread) = handle_tmp
             if (.not.(success)) then
               print *,"Cannot create syclsolver handle"
               stop 1
@@ -118,10 +119,10 @@
           ! set stream
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
-            success = cublas_set_stream(cublasHandleArray(thread), my_stream)
+            success = cublas_set_stream(obj%gpu_setup%cublasHandleArray(thread), obj%gpu_setup%my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-            success = rocblas_set_stream(rocblasHandleArray(thread), my_stream)
+            success = rocblas_set_stream(obj%gpu_setup%rocblasHandleArray(thread), obj%gpu_setup%my_stream)
 #endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -137,7 +138,7 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_NVIDIA_CUSOLVER
           do thread=0, maxThreads-1
-            success = cusolver_set_stream(cusolverHandleArray(thread), my_stream)
+            success = cusolver_set_stream(obj%gpu_setup%cusolverHandleArray(thread), obj%gpu_setup%my_stream)
             if (.not.(success)) then
               print *,"Cannot create cusolver stream handle"
               stop 1
@@ -150,7 +151,7 @@
 #ifdef WITH_AMD_ROCSOLVER
           !not needed
           !do thread=0, maxThreads-1
-          !  success = rocsolver_set_stream(rocsolverHandleArray(thread), my_stream)
+          !  success = rocsolver_set_stream(obj%gpu_setup%rocsolverHandleArray(thread), obj%gpu_setup%my_stream)
           !  if (.not.(success)) then
           !    print *,"Cannot create rocsolver stream handle"
           !    stop 1

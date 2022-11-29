@@ -1091,7 +1091,7 @@ module elpa_api
       use hip_functions
       use openmp_offload_functions
       use sycl_functions
-      use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray, my_stream
+      !use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray, my_stream
       use elpa_omp
       implicit none
       
@@ -1103,51 +1103,51 @@ module elpa_api
       logical                                    :: success
       integer(kind=ik)                           :: maxThreads, thread
 
-      ! needed for handle destruction
-#ifdef WITH_OPENMP_TRADITIONAL
-      maxThreads=omp_get_max_threads()
-#else /* WITH_OPENMP_TRADITIONAL */
-      maxThreads=1
-#endif /* WITH_OPENMP_TRADITIONAL */
-
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      if (allocated(gpublasHandleArray)) then   
-
-#include "./GPU/handle_destruction_template.F90"
-      
-        deallocate(gpublasHandleArray)
-        deallocate(gpuDeviceArray)
-      
-#ifdef WITH_NVIDIA_GPU_VERSION
-        deallocate(cublasHandleArray)
-        deallocate(cudaDeviceArray)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-        deallocate(rocblasHandleArray)
-        deallocate(hipDeviceArray)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        deallocate(openmpOffloadHandleArray)
-        deallocate(openmpOffloadDeviceArray)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-        deallocate(syclHandleArray)
-        deallocate(syclDeviceArray)
-#endif
-
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_CUSOLVER)
-        deallocate(cusolverHandleArray)
-#endif
-
-#if defined(WITH_AMD_GPU_VERSION) && defined(WITH_AMD_ROCSOLVER)
-        deallocate(rocsolverHandleArray)
-#endif
-
-      endif
-#endif
+!      ! needed for handle destruction
+!#ifdef WITH_OPENMP_TRADITIONAL
+!      maxThreads=omp_get_max_threads()
+!#else /* WITH_OPENMP_TRADITIONAL */
+!      maxThreads=1
+!#endif /* WITH_OPENMP_TRADITIONAL */
+!
+!#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+!      if (allocated(gpublasHandleArray)) then   
+!
+!#include "./GPU/handle_destruction_template.F90"
+!      
+!        deallocate(self%gpu_setup%gpublasHandleArray)
+!        deallocate(self%gpu_setup%gpuDeviceArray)
+!      
+!#ifdef WITH_NVIDIA_GPU_VERSION
+!        deallocate(self%gpu_setup%cublasHandleArray)
+!        deallocate(self%gpu_setup%cudaDeviceArray)
+!#endif
+!
+!#ifdef WITH_AMD_GPU_VERSION
+!        deallocate(self%gpu_setup%rocblasHandleArray)
+!        deallocate(self%gpu_setup%hipDeviceArray)
+!#endif
+!
+!#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+!        deallocate(self%gpu_setup%openmpOffloadHandleArray)
+!        deallocate(self%gpu_setup%openmpOffloadDeviceArray)
+!#endif
+!
+!#ifdef WITH_SYCL_GPU_VERSION
+!        deallocate(self%gpu_setup%syclHandleArray)
+!        deallocate(self%gpu_setup%syclDeviceArray)
+!#endif
+!
+!#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_CUSOLVER)
+!        deallocate(self%gpu_setup%cusolverHandleArray)
+!#endif
+!
+!#if defined(WITH_AMD_GPU_VERSION) && defined(WITH_AMD_ROCSOLVER)
+!        deallocate(self%gpu_setup%rocsolverHandleArray)
+!#endif
+!
+!      endif
+!#endif
 
 #ifdef USE_FORTRAN2008
      if (present(error)) error = ELPA_OK

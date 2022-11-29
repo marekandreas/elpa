@@ -59,11 +59,11 @@ module cuda_functions
   integer(kind=ik) :: cudaHostRegisterPortable
   integer(kind=ik) :: cudaHostRegisterMapped
 
-  ! TODO global variable, has to be changed
-  ! especially to have multiply elpa objects 
-  integer(kind=C_intptr_T), allocatable :: cublasHandleArray(:)
-  integer(kind=C_intptr_T), allocatable :: cusolverHandleArray(:)
-  integer(kind=c_int), allocatable      :: cudaDeviceArray(:)
+  !! TODO global variable, has to be changed
+  !! especially to have multiply elpa objects 
+  !integer(kind=C_intptr_T), allocatable :: cublasHandleArray(:)
+  !integer(kind=C_intptr_T), allocatable :: cusolverHandleArray(:)
+  !integer(kind=c_int), allocatable      :: cudaDeviceArray(:)
 
 !  integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
 !#ifdef WANT_SINGLE_PRECISION_REAL
@@ -2090,7 +2090,7 @@ module cuda_functions
 #endif
     end function
 
-    subroutine cusolver_dtrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine cusolver_dtrtri(uplo, diag, n, a, lda, info, cusolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2098,21 +2098,14 @@ module cuda_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cusolverHandle
-
-      if (present(threadID)) then
-        cusolverHandle = cusolverHandleArray(threadID)
-      else
-        cusolverHandle = cusolverHandleArray(0)
-      endif      
 
 #ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_dtrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine cusolver_strtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine cusolver_strtri(uplo, diag, n, a, lda, info, cusolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2120,21 +2113,14 @@ module cuda_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cusolverHandle
-
-      if (present(threadID)) then
-        cusolverHandle = cusolverHandleArray(threadID)
-      else
-        cusolverHandle = cusolverHandleArray(0)
-      endif      
 
 #ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_strtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine cusolver_ztrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine cusolver_ztrtri(uplo, diag, n, a, lda, info, cusolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2142,21 +2128,14 @@ module cuda_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cusolverHandle
-
-      if (present(threadID)) then
-        cusolverHandle = cusolverHandleArray(threadID)
-      else
-        cusolverHandle = cusolverHandleArray(0)
-      endif      
 
 #ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_ztrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine cusolver_ctrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine cusolver_ctrtri(uplo, diag, n, a, lda, info, cusolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2164,21 +2143,14 @@ module cuda_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cusolverHandle
-
-      if (present(threadID)) then
-        cusolverHandle = cusolverHandleArray(threadID)
-      else
-        cusolverHandle = cusolverHandleArray(0)
-      endif      
 
 #ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_ctrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine cusolver_dpotrf(uplo, n, a, lda, info, threadID)
+    subroutine cusolver_dpotrf(uplo, n, a, lda, info, cusolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2186,21 +2158,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cusolverHandle
-
-      if (present(threadID)) then
-        cusolverHandle = cusolverHandleArray(threadID)
-      else
-        cusolverHandle = cusolverHandleArray(0)
-      endif      
 
 #ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_dpotrf_c(cusolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine cusolver_spotrf(uplo, n, a, lda, info, threadID)
+    subroutine cusolver_spotrf(uplo, n, a, lda, info, cusolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2208,21 +2173,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cusolverHandle
-
-      if (present(threadID)) then
-        cusolverHandle = cusolverHandleArray(threadID)
-      else
-        cusolverHandle = cusolverHandleArray(0)
-      endif      
 
 #ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_spotrf_c(cusolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine cusolver_zpotrf(uplo, n, a, lda, info, threadID)
+    subroutine cusolver_zpotrf(uplo, n, a, lda, info, cusolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2230,21 +2188,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cusolverHandle
-
-      if (present(threadID)) then
-        cusolverHandle = cusolverHandleArray(threadID)
-      else
-        cusolverHandle = cusolverHandleArray(0)
-      endif      
 
 #ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_zpotrf_c(cusolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine cusolver_cpotrf(uplo, n, a, lda, info, threadID)
+    subroutine cusolver_cpotrf(uplo, n, a, lda, info, cusolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2252,14 +2203,7 @@ module cuda_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cusolverHandle
-
-      if (present(threadID)) then
-        cusolverHandle = cusolverHandleArray(threadID)
-      else
-        cusolverHandle = cusolverHandleArray(0)
-      endif      
 
 #ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_cpotrf_c(cusolverHandle, uplo, n, a, lda, info)
@@ -2267,7 +2211,7 @@ module cuda_functions
     end subroutine
 
     ! cuBLAS
-    subroutine cublas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine cublas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2276,20 +2220,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dgemm_intptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine cublas_dgemm_intptr
 
-    subroutine cublas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine cublas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2298,14 +2236,8 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_DOUBLE)             :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dgemm_cptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
@@ -2313,7 +2245,7 @@ module cuda_functions
 
 
 
-    subroutine cublas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine cublas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2322,21 +2254,15 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_sgemm_intptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine cublas_sgemm_intptr
 
 
-    subroutine cublas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine cublas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2345,14 +2271,8 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_FLOAT)              :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_sgemm_cptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
@@ -2360,7 +2280,7 @@ module cuda_functions
 
 
 
-    subroutine cublas_dcopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine cublas_dcopy_intptr(n, x, incx, y, incy, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2368,20 +2288,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dcopy_intptr_c(cublasHandle, n, x, incx, y, incy)
 #endif
     end subroutine cublas_dcopy_intptr
 
-    subroutine cublas_dcopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine cublas_dcopy_cptr(n, x, incx, y, incy, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2389,20 +2303,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dcopy_cptr_c(cublasHandle, n, x, incx, y, incy)
 #endif
     end subroutine cublas_dcopy_cptr
 
-    subroutine cublas_scopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine cublas_scopy_intptr(n, x, incx, y, incy, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2410,20 +2318,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_scopy_intptr_c(cublasHandle, n, x, incx, y, incy)
 #endif
     end subroutine cublas_scopy_intptr
 
-    subroutine cublas_scopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine cublas_scopy_cptr(n, x, incx, y, incy, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2431,21 +2333,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
-
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_scopy_cptr_c(cublasHandle, n, x, incx, y, incy)
 #endif
     end subroutine cublas_scopy_cptr
 
-    subroutine cublas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2455,20 +2350,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dtrmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_dtrmm_intptr
 
-    subroutine cublas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2478,21 +2367,15 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dtrmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_dtrmm_cptr
 
 
-    subroutine cublas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2502,20 +2385,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_strmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_strmm_intptr
 
-    subroutine cublas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2525,20 +2402,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_strmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_strmm_cptr
 
-    subroutine cublas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2548,20 +2419,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dtrsm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_dtrsm_intptr
 
-    subroutine cublas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2571,21 +2436,15 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dtrsm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_dtrsm_cptr
 
 
-    subroutine cublas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2595,20 +2454,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_strsm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_strsm_intptr
 
-    subroutine cublas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2618,21 +2471,15 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_strsm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_strsm_cptr
 
 
-    subroutine cublas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine cublas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2642,21 +2489,15 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_zgemm_intptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine cublas_zgemm_intptr
 
 
-    subroutine cublas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine cublas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2666,14 +2507,8 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_zgemm_cptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
@@ -2681,7 +2516,7 @@ module cuda_functions
 
 
 
-    subroutine cublas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine cublas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2691,20 +2526,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c  
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_cgemm_intptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine cublas_cgemm_intptr
 
-    subroutine cublas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine cublas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2714,14 +2543,8 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       type(c_ptr)                     :: a, b, c  
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_cgemm_cptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
@@ -2729,7 +2552,7 @@ module cuda_functions
 
 
 
-    subroutine cublas_zcopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine cublas_zcopy_intptr(n, x, incx, y, incy, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2737,20 +2560,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_zcopy_intptr_c(cublasHandle, n, x, incx, y, incy)
 #endif
     end subroutine cublas_zcopy_intptr
 
-    subroutine cublas_zcopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine cublas_zcopy_cptr(n, x, incx, y, incy, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2758,20 +2575,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_zcopy_cptr_c(cublasHandle, n, x, incx, y, incy)
 #endif
     end subroutine cublas_zcopy_cptr
 
-    subroutine cublas_ccopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine cublas_ccopy_intptr(n, x, incx, y, incy, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2779,20 +2590,14 @@ module cuda_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ccopy_intptr_c(cublasHandle, n, x, incx, y, incy)
 #endif
     end subroutine cublas_ccopy_intptr
 
-    subroutine cublas_ccopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine cublas_ccopy_cptr(n, x, incx, y, incy, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2800,21 +2605,15 @@ module cuda_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ccopy_cptr_c(cublasHandle, n, x, incx, y, incy)
 #endif
     end subroutine cublas_ccopy_cptr
 
 
-    subroutine cublas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2824,20 +2623,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ztrmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ztrmm_intptr
 
-    subroutine cublas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2847,21 +2640,15 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ztrmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ztrmm_cptr
 
 
-    subroutine cublas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2871,20 +2658,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ctrmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ctrmm_intptr
 
-    subroutine cublas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2894,20 +2675,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ctrmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ctrmm_cptr
 
-    subroutine cublas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2917,20 +2692,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ztrsm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ztrsm_intptr
 
-    subroutine cublas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2940,21 +2709,15 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ztrsm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ztrsm_cptr
 
 
-    subroutine cublas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2964,20 +2727,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ctrsm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ctrsm_intptr
 
-    subroutine cublas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine cublas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2987,21 +2744,15 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_ctrsm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine cublas_ctrsm_cptr
 
 
-    subroutine cublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine cublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, cublasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -3010,20 +2761,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_dgemv_c(cublasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine cublas_dgemv
 
-    subroutine cublas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine cublas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, cublasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -3032,20 +2777,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_sgemv_c(cublasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine cublas_sgemv
 
-    subroutine cublas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine cublas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, cublasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -3054,20 +2793,14 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_zgemv_c(cublasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine cublas_zgemv
 
-    subroutine cublas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine cublas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, cublasHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -3076,14 +2809,8 @@ module cuda_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: cublasHandle
 
-      if (present(threadID)) then
-        cublasHandle = cublasHandleArray(threadID)
-      else
-        cublasHandle = cublasHandleArray(0)
-      endif      
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_cgemv_c(cublasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
