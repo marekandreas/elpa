@@ -1329,6 +1329,9 @@ module elpa_impl
     subroutine elpa_destroy(self, error)
       use elpa_gpu_setup
       use elpa_gpu
+#ifdef WITH_OPENMP_TRADITIONAL
+      use elpa_omp
+#endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
 #endif
