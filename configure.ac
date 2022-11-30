@@ -2477,13 +2477,15 @@ if test x"${enable_cpp_tests}" = x"yes"; then
  AC_DEFINE([ENABLE_CPP_TESTS], [1], [enable C++ tests])
 fi
 
-#check for MPI-CXX wrapper
-if test x"${enable_cpp_tests}" = x"yes"; then
- AC_PROG_CXX
- AC_ARG_VAR(MPICXX,[MPI C++ compiler command])
- AC_CHECK_PROGS(MPICXX, mpic++ mpicxx mpiCC hcp mpxlC_r mpxlC mpCC cmpic++, $CXX)
- CXX="$MPICXX"
-fi
+##check for MPI-CXX wrapper
+#if test x"${enable_cpp_tests}" = x"yes"; then
+#  if test x"$with_mpi" = x"yes"; then
+#    AC_PROG_CXX
+#    AC_ARG_VAR(MPICXX,[MPI C++ compiler command])
+#    AC_CHECK_PROGS(MPICXX, mpic++ mpicxx mpiCC hcp mpxlC_r mpxlC mpCC cmpic++, $CXX)
+#    CXX="$MPICXX"
+#  fi
+#fi
 
 
 
