@@ -134,6 +134,7 @@
                                                                       &_real
       integer(kind=c_intptr_t)                    :: gpuHandle
       integer(kind=ik), intent(in)                :: max_threads
+      integer(kind=c_intptr_t)                    :: my_stream
 #ifdef WITH_OPENMP_TRADITIONAL
       integer(kind=ik)                            :: my_thread
 
@@ -759,6 +760,7 @@
           if (useGPU) then
             ! copy back after sendrecv
 #ifdef WITH_GPU_STREAMS
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("tridiag qtmp1_dev", successGPU)
 
@@ -766,6 +768,7 @@
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
             check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
 
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
             ! synchronize streamsPerThread; maybe not neccessary

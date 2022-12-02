@@ -661,6 +661,8 @@ module elpa_impl
       endif
 #endif
 
+      self%gpu_setup%gpuAlreadySet=.false.
+
       error = ELPA_OK
 
       ! In most cases, we actually need the parent communicator to be supplied,

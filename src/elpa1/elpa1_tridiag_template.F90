@@ -200,7 +200,7 @@ subroutine tridiag_&
   integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
   logical                                       :: success
 
-  integer(kind=c_intptr_t)                      :: gpuHandle
+  integer(kind=c_intptr_t)                      :: gpuHandle, my_stream
   success = .true.
  
   if(useGPU) then
@@ -513,12 +513,14 @@ subroutine tridiag_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("tridiag a_dev", successGPU)
 
     successGPU = gpu_memcpy_async(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice, my_stream)
 
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("tridiag a_dev", successGPU)
     ! synchronize streamsPerThread; maybe not neccessary
@@ -556,6 +558,7 @@ subroutine tridiag_&
         ! (l_rows)*size_of_PRECISION_real, gpuMemcpyDeviceToDevice)
 
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("tridiag a_dev 1", successGPU)
 
@@ -564,6 +567,7 @@ subroutine tridiag_&
                                   my_stream)
         check_memcpy_gpu("tridiag a_dev 1", successGPU)
 
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("tridiag a_dev 1", successGPU)
         ! synchronize streamsPerThread; maybe not neccessary
@@ -709,6 +713,7 @@ subroutine tridiag_&
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU ) then
 #ifdef WITH_GPU_STREAMS
+         my_stream = obj%gpu_setup%my_stream
          successGPU = gpu_stream_synchronize(my_stream)
          check_stream_synchronize_gpu("tridiag u_col_dev", successGPU)
 
@@ -745,12 +750,14 @@ subroutine tridiag_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+       my_stream = obj%gpu_setup%my_stream
        successGPU = gpu_stream_synchronize(my_stream)
        check_stream_synchronize_gpu("tridiag v_col_dev", successGPU)
 
        successGPU = gpu_memcpy_async(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
                      l_cols * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
 
+       my_stream = obj%gpu_setup%my_stream
        successGPU = gpu_stream_synchronize(my_stream)
        check_stream_synchronize_gpu("tridiag v_col_dev", successGPU)
        ! synchronize streamsPerThread; maybe not neccessary
@@ -765,12 +772,14 @@ subroutine tridiag_&
 
 
 #ifdef WITH_GPU_STREAMS
+       my_stream = obj%gpu_setup%my_stream
        successGPU = gpu_stream_synchronize(my_stream)
        check_stream_synchronize_gpu("tridiag v_row_dev", successGPU)
 
        successGPU = gpu_memcpy_async(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
                                  l_rows * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
 
+       my_stream = obj%gpu_setup%my_stream
        successGPU = gpu_stream_synchronize(my_stream)
        check_stream_synchronize_gpu("tridiag v_row_dev", successGPU)
        ! synchronize streamsPerThread; maybe not neccessary
@@ -950,6 +959,7 @@ subroutine tridiag_&
             end if !multiplication as one block / per stripes
 
 #ifdef WITH_GPU_STREAMS
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("tridiag u_col", successGPU)
 
@@ -957,6 +967,7 @@ subroutine tridiag_&
                         u_col_dev, l_cols * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
             check_memcpy_gpu("tridiag: u_col_dev 1", successGPU)
 
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("tridiag: u_col_dev 1", successGPU)
             ! synchronize streamsPerThread; maybe not neccessary
@@ -969,6 +980,7 @@ subroutine tridiag_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("tridiag u_row_dev", successGPU)
 
@@ -976,6 +988,7 @@ subroutine tridiag_&
                         u_row_dev, l_rows * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
             check_memcpy_gpu("tridiag: u_row_dev 1", successGPU)
 
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("tridiag: u_col_dev 1", successGPU)
             ! synchronize streamsPerThread; maybe not neccessary
@@ -1137,6 +1150,7 @@ subroutine tridiag_&
 
          if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+           my_stream = obj%gpu_setup%my_stream
            successGPU = gpu_stream_synchronize(my_stream)
            check_stream_synchronize_gpu("tridiag vu_stored_rows_dev", successGPU)
 
@@ -1144,6 +1158,7 @@ subroutine tridiag_&
                                      max_local_rows * 2 * max_stored_uv *          &
                                      size_of_datatype, gpuMemcpyHostToDevice, my_stream)
 
+           my_stream = obj%gpu_setup%my_stream
            successGPU = gpu_stream_synchronize(my_stream)
            check_stream_synchronize_gpu("tridiag vu_stored_rows_dev", successGPU)
            ! synchronize streamsPerThread; maybe not neccessary
@@ -1157,6 +1172,7 @@ subroutine tridiag_&
            check_memcpy_gpu("tridiag: uv_stored_rows_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
+           my_stream = obj%gpu_setup%my_stream
            successGPU = gpu_stream_synchronize(my_stream)
            check_stream_synchronize_gpu("tridiag uv_stored_cols_dev", successGPU)
 
@@ -1164,6 +1180,7 @@ subroutine tridiag_&
                                      max_local_cols * 2 * max_stored_uv *          &
                                      size_of_datatype, gpuMemcpyHostToDevice, my_stream)
 
+           my_stream = obj%gpu_setup%my_stream
            successGPU = gpu_stream_synchronize(my_stream)
            check_stream_synchronize_gpu("tridiag uv_stored_cols_dev", successGPU)
            ! synchronize streamsPerThread; maybe not neccessary
@@ -1239,6 +1256,7 @@ subroutine tridiag_&
            !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
             a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 #ifdef WITH_GPU_STREAMS
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("tridiag a_dev3", successGPU)
 
@@ -1246,6 +1264,7 @@ subroutine tridiag_&
                                     1 *  size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
             check_memcpy_gpu("tridiag: a_dev 3", successGPU)
 
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("tridiag: a_dev 3", successGPU)
             ! synchronize streamsPerThread; maybe not neccessary
@@ -1278,12 +1297,14 @@ subroutine tridiag_&
            !successGPU = gpu_threadsynchronize()
            !check_memcpy_gpu("tridiag: a_dev 4a5a", successGPU)
 #ifdef WITH_GPU_STREAMS
+           my_stream = obj%gpu_setup%my_stream
            successGPU = gpu_stream_synchronize(my_stream)
            check_stream_synchronize_gpu("tridiag a_dev4", successGPU)
 
            successGPU = gpu_memcpy_async(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
                                    int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice, my_stream)
 
+           my_stream = obj%gpu_setup%my_stream
            successGPU = gpu_stream_synchronize(my_stream)
            check_stream_synchronize_gpu("tridiag a_dev4", successGPU)
            ! synchronize streamsPerThread; maybe not neccessary
@@ -1307,6 +1328,7 @@ subroutine tridiag_&
        ! We use last l_cols value of loop above
        if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+         my_stream = obj%gpu_setup%my_stream
          successGPU = gpu_stream_synchronize(my_stream)
          check_stream_synchronize_gpu("tridiag a_dev5", successGPU)
 
@@ -1314,6 +1336,7 @@ subroutine tridiag_&
                                  1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
          check_memcpy_gpu("tridiag: a_dev 5", successGPU)
 
+         my_stream = obj%gpu_setup%my_stream
          successGPU = gpu_stream_synchronize(my_stream)
          check_stream_synchronize_gpu("tridiag: a_dev 5", successGPU)
          ! synchronize streamsPerThread; maybe not neccessary
@@ -1374,6 +1397,7 @@ subroutine tridiag_&
   if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
     if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("tridiag a_dev6", successGPU)
 
@@ -1381,6 +1405,7 @@ subroutine tridiag_&
                              1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
       check_memcpy_gpu("tridiag: a_dev 6", successGPU)
 
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("tridiag: a_dev 6", successGPU)
       ! synchronize streamsPerThread; maybe not neccessary
@@ -1405,6 +1430,7 @@ subroutine tridiag_&
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
     if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("tridiag a_dev7", successGPU)
 
@@ -1412,6 +1438,7 @@ subroutine tridiag_&
                               1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
       check_memcpy_gpu("tridiag: a_dev 7", successGPU)
 
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("tridiag: a_dev 7", successGPU)
       ! synchronize streamsPerThread; maybe not neccessary
@@ -1431,6 +1458,7 @@ subroutine tridiag_&
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
     if(useGPU) then
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("tridiag a_dev8", successGPU)
 
@@ -1438,6 +1466,7 @@ subroutine tridiag_&
                    gpuMemcpyDeviceToHost, my_stream)
       check_memcpy_gpu("tridiag: a_dev 8", successGPU)
 
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("tridiag: a_dev 8", successGPU)
       ! synchronize streamsPerThread; maybe not neccessary
