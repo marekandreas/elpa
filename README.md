@@ -57,7 +57,7 @@ GNU Lesser General Public License as published by the Free Software Foundation.
 
 There exist several ways to obtain the *ELPA* library either as sources or pre-compiled packages:
 
-- official release tar-gz sources from the *ELPA* [webpage](https://elpa.mpcdf.mpg.de/elpa-tar-archive)
+- official release tar-gz sources from the *ELPA* [webpage](https://elpa.mpcdf.mpg.de/elpa-tar-archive/ELPA_TARBALL_ARCHIVE.html)
 - from the *ELPA* [git repository](https://gitlab.mpcdf.mpg.de/elpa/elpa)
 - as packaged software for several Linux distributions (e.g. Debian, Fedora, OpenSuse)
 
