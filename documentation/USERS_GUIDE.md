@@ -225,7 +225,7 @@ This is necessary to make the threading an autotunable option.
 For each tunable parameter mentioned in Section II, there exists a default value. This means, that if this parameter is **not explicitly** set by the user by the
 *ELPA* set method, *ELPA* takes the default value for the parameter. E.g. if the user does not set a solver method, than *ELPA* will take the default 1`ELPA_SOLVER_1STAGE`.
 
-The user can change this default value by setting an enviroment variable to the desired value.
+The user can change this default value by setting an environment variable to the desired value.
 
 The name of this variable is always constructed in the following way:
 ```
@@ -239,6 +239,16 @@ export ELPA_DEFAULT_solver=ELPA_SOLVER_2STAGE
 ```
 
 in order to define the 2stage solver as the default.
+
+Speciall care has to be taken for keywords of the ELPA library, which contain a dash in the variable name, especially
+the variables "nivida-gpu", "amd-gpu", and "intel-gpu". Since environment variables containing a dash are not allowed, for
+these variables a work-around must be taken, for example
+```
+env 'ELPA_DEFAULT_nvidia-gpu=1' ./test_elpa.x ...
+```
+We will at a later release the alternative names "nvidia_gpu", "amd_gpu", and "intel_gpu", where the usual setting of
+environment variables will work.
+
 
 **Important note**
 The default valule is completly ignored, if the user has manually set a parameter-value pair with the *ELPA* set method!
