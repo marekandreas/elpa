@@ -3,7 +3,9 @@ Changelog for next release
 
 - not yet decided
 
-Changelog for ELPA 2022.11.001.rc1
+Changelog for ELPA 2022.11.001.rc2
+- store GPU setup per ELPA object
+- clarify documentation a bit
 - add a C++ interface, including an example test program
 - fix a few bugs in the C interface for the ELPA solvers
 - complete the C API
