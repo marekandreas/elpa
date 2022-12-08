@@ -61,10 +61,10 @@ module openmp_offload_functions
   integer(kind=ik) :: openmpOffloadHostRegisterPortable
   integer(kind=ik) :: openmpOffloadHostRegisterMapped
 
-  ! TODO global variable, has to be changed
-  integer(kind=C_intptr_T), allocatable :: openmpOffloadHandleArray(:)
-  integer(kind=C_intptr_T), allocatable :: openmpOffloadsolverHandleArray(:)
-  integer(kind=c_int), allocatable      :: openmpOffloadDeviceArray(:)
+  !! TODO global variable, has to be changed
+  !integer(kind=C_intptr_T), allocatable :: openmpOffloadHandleArray(:)
+  !integer(kind=C_intptr_T), allocatable :: openmpOffloadsolverHandleArray(:)
+  !integer(kind=c_int), allocatable      :: openmpOffloadDeviceArray(:)
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 

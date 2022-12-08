@@ -200,7 +200,7 @@ dnl heterogenous-cluster-support
 AC_MSG_CHECKING(whether heterogenous-cluster-support should be enabled)
 AC_ARG_ENABLE([heterogenous-cluster-support],
               AS_HELP_STRING([--enable-heterogenous-cluster-support],
-                             [allow ELPA to automatically switch to a kernel supported on all CPUs of a cluster (only works for Intel CPUs at the moment), default no. Activate only if necessary has a performance penalty! This feature is exerpimental! (default: disabled)]),
+                             [allow ELPA to automatically switch to a kernel supported on all CPUs of a cluster (only works for Intel CPUs at the moment), default no. Activate only if necessary has a performance penalty! This feature is experimental! (default: disabled)]),
               [
 	       if test x"$enableval" = x"yes"; then
 	         enable_heterogenous_cluster_support=yes
@@ -2477,6 +2477,18 @@ if test x"${enable_cpp_tests}" = x"yes"; then
  AC_DEFINE([ENABLE_CPP_TESTS], [1], [enable C++ tests])
 fi
 
+##check for MPI-CXX wrapper
+#if test x"${enable_cpp_tests}" = x"yes"; then
+#  if test x"$with_mpi" = x"yes"; then
+#    AC_PROG_CXX
+#    AC_ARG_VAR(MPICXX,[MPI C++ compiler command])
+#    AC_CHECK_PROGS(MPICXX, mpic++ mpicxx mpiCC hcp mpxlC_r mpxlC mpCC cmpic++, $CXX)
+#    CXX="$MPICXX"
+#  fi
+#fi
+
+
+
 AC_MSG_CHECKING(make compilable with Intel ifx)
 AC_ARG_ENABLE([ifx-compiler],
               AS_HELP_STRING([--enable-ifx-compiler],
@@ -2852,7 +2864,7 @@ fi
 
 echo " "
 echo "***********************************************************************"
-echo "*  This is the first release candidate of ELPA 2022.11.001.rc1        *"
+echo "*  This is the first release candidate of ELPA 2022.11.001.rc2        *"
 echo "*  There might be still some changes until the final release of       *"
 echo "*  ELPA 2022.11.001                                                   *"
 echo "***********************************************************************"

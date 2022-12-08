@@ -2,7 +2,7 @@
 
 ## Current Release ##
 
-The current release is ELPA 2022.11.001.rc1. The current supported API version
+The current release is ELPA 2022.11.001.rc2. The current supported API version
 is 20221109. This release supports the earliest API version 20170403.
 The current version for autotuning is also 20221109 and down to version 20170403 ist supported
 for autotuning. When the autotune version is set to a value **below** 20211125 the old autotunig
@@ -57,7 +57,7 @@ GNU Lesser General Public License as published by the Free Software Foundation.
 
 There exist several ways to obtain the *ELPA* library either as sources or pre-compiled packages:
 
-- official release tar-gz sources from the *ELPA* [webpage](https://elpa.mpcdf.mpg.de/elpa-tar-archive)
+- official release tar-gz sources from the *ELPA* [webpage](https://elpa.mpcdf.mpg.de/elpa-tar-archive/ELPA_TARBALL_ARCHIVE.html)
 - from the *ELPA* [git repository](https://gitlab.mpcdf.mpg.de/elpa/elpa)
 - as packaged software for several Linux distributions (e.g. Debian, Fedora, OpenSuse)
 
@@ -127,7 +127,7 @@ the possible configure options.
 
 ## Using *ELPA*
 
-Please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2022.11.001.rc1/html/index.html) doxygen documentation, where you find the definition of the interfaces. You might want to have a look at the [PERFORMANCE tuning document](./documentation/PERFORMANCE_TUNING.md) to avoid some usual pitfalls.
+Please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2022.11.001.rc2/html/index.html) doxygen documentation, where you find the definition of the interfaces. You might want to have a look at the [PERFORMANCE tuning document](./documentation/PERFORMANCE_TUNING.md) to avoid some usual pitfalls.
 
 ## Contributing to *ELPA*
 

@@ -55,6 +55,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/elpa2_determine_workload.F90 \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
+  src/GPU/mod_gpu_setup.F90 \
   src/GPU/check_for_gpu.F90 \
   src/GPU/mod_vendor_agnostic_layer.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
@@ -115,6 +116,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa_impl_generalized_transform_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
+  src/GPU/handle_destruction_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
@@ -906,6 +908,7 @@ EXTRA_DIST = \
   src/GPU/check_legacy_gpu_setting_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
+  src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuUtils_template.cu \
   src/GPU/ROCm/hipUtils_template.cpp \
   src/GPU/SYCL/syclUtils.cpp \

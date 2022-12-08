@@ -65,6 +65,7 @@ module elpa_impl
   use elpa_autotune_impl
 #endif
   use elpa1_auxiliary_impl
+  !use elpa_gpu_setup
   use, intrinsic :: iso_c_binding
   use iso_fortran_env
   implicit none
@@ -88,6 +89,8 @@ module elpa_impl
 
    !This object has been created through the legacy api.
    integer :: from_legacy_api
+
+   !type(elpa_gpu_setup_t), public :: gpu_setup
 
    !> \brief methods available with the elpa_impl_t type
    contains
@@ -657,6 +660,8 @@ module elpa_impl
         endif
       endif
 #endif
+
+      self%gpu_setup%gpuAlreadySet=.false.
 
       error = ELPA_OK
 
@@ -1324,6 +1329,25 @@ module elpa_impl
     !> \param   self            class(elpa_impl_t) the allocated ELPA object
     !> \param   error           integer, optional error code
     subroutine elpa_destroy(self, error)
+      use elpa_gpu_setup
+      use elpa_gpu
+#ifdef WITH_OPENMP_TRADITIONAL
+      use elpa_omp
+#endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      use cuda_functions
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+
+      implicit none
 #ifdef WITH_MPI
       integer                              :: mpi_comm_rows, mpi_comm_cols, &
                                               mpi_string_length
@@ -1337,7 +1361,9 @@ module elpa_impl
 #else
       integer, intent(out)                 :: error
 #endif
-      integer                              :: error2
+      integer                              :: error2, istat, maxThreads, thread
+      logical                              :: success
+      character(200)                       :: errorMessage
 
 #ifdef USE_FORTRAN2008
       if (present(error)) then
@@ -1444,6 +1470,90 @@ module elpa_impl
 !        endif ! error happend
       endif
 #endif /* WITH_MPI */
+
+      ! cleanup GPU allocations
+      ! needed for handle destruction
+#ifdef WITH_OPENMP_TRADITIONAL
+      maxThreads=omp_get_max_threads()
+#else /* WITH_OPENMP_TRADITIONAL */
+      maxThreads=1
+#endif /* WITH_OPENMP_TRADITIONAL */
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      if (allocated(self%gpu_setup%gpublasHandleArray)) then
+
+#include "./GPU/handle_destruction_template.F90"
+
+        deallocate(self%gpu_setup%gpublasHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate gpublasHandleArray: " // errorMessage
+        endif 
+        deallocate(self%gpu_setup%gpuDeviceArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate gpuDeviceArray: " // errorMessage
+        endif 
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        deallocate(self%gpu_setup%cublasHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate cublasHandleArray: " // errorMessage
+        endif 
+        deallocate(self%gpu_setup%cudaDeviceArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate cudaDeviceArray: " // errorMessage
+        endif 
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        deallocate(self%gpu_setup%rocblasHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate rocblasHandleArray: " // errorMessage
+        endif 
+        deallocate(self%gpu_setup%hipDeviceArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate hipDeviceArray: " // errorMessage
+        endif 
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        deallocate(self%gpu_setup%openmpOffloadHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate openmpOffloadHandleArray: " // errorMessage
+        endif 
+        deallocate(self%gpu_setup%openmpOffloadDeviceArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate openmpOffloadDeviceArray: " // errorMessage
+        endif 
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        deallocate(self%gpu_setup%syclHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate syclHandleArray: " // errorMessage
+        endif 
+        deallocate(self%gpu_setup%syclDeviceArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate syclDeviceArray: " // errorMessage
+        endif 
+#endif
+
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_CUSOLVER)
+        deallocate(self%gpu_setup%cusolverHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate cusolverHandleArray: " // errorMessage
+        endif 
+#endif
+
+#if defined(WITH_AMD_GPU_VERSION) && defined(WITH_AMD_ROCSOLVER)
+        deallocate(self%gpu_setup%rocsolverHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate rocsolverHandleArray: " // errorMessage
+        endif 
+#endif
+      endif
+#endif
+
+
 
       call timer_free(self%timer)
       call timer_free(self%autotune_timer)

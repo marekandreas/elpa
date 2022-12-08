@@ -106,6 +106,7 @@
                                                             &_&
                                                             &MATH_DATATYPE
 
+  integer(kind=c_intptr_t)                   :: gpublasHandle, gpusolverHandle, my_stream
   success = .true.
 
   gpu_cholesky = 0
@@ -301,6 +302,7 @@
     check_alloc_gpu("elpa_cholesky: tmp1_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_memset_async(tmp1_dev, 0, nblk*nblk*size_of_datatype, my_stream)
     check_memcpy_gpu("elpa_cholesky: memset tmp1_dev", successGPU)
 
@@ -315,6 +317,7 @@
     check_alloc_gpu("elpa_cholesky: tmp2_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_memset_async(tmp2_dev, 0, nblk*nblk*size_of_datatype, my_stream)
     check_memcpy_gpu("elpa_cholesky: memset tmp2_dev", successGPU)
 
@@ -329,6 +332,7 @@
     check_alloc_gpu("elpa_cholesky: tmatc_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_memset_async(tmatc_dev, 0, l_cols*nblk*size_of_datatype, my_stream)
     check_memcpy_gpu("elpa_cholesky: memset tmatc_dev", successGPU)
 
@@ -343,6 +347,7 @@
     check_alloc_gpu("elpa_cholesky: tmatr_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_memset_async(tmatr_dev, 0, l_rows*nblk*size_of_datatype, my_stream)
     check_memcpy_gpu("elpa_cholesky: memset tmatr_dev", successGPU)
 
@@ -420,6 +425,7 @@
 #ifndef DEVICE_POINTER
   if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("elpa_cholesky 1: memcpy a-> a_dev", successGPU)
 
@@ -459,9 +465,9 @@
         if (my_prow==prow(n, nblk, np_rows) .and. my_pcol==pcol(n, nblk, np_cols)) then
 #if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
           call obj%timer%start("gpusolver")
-
+          gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = (l_row1-1 + (l_col1-1)*matrixRows) * size_of_datatype
-          call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info)
+          call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info, gpusolverHandle)
           if (info .ne. 0) then
             write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF 1"
             success = .false.
@@ -473,6 +479,7 @@
 #ifndef DEVICE_POINTER
           call obj%timer%start("blas")
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
 
@@ -495,6 +502,7 @@
                              int(matrixRows,kind=BLAS_KIND), infoBLAS )
           info = int(infoBLAS,kind=ik)
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_cholesky: memcpy a -> a_dev", successGPU)
 
@@ -530,6 +538,7 @@
 #else /* DEVICE_POINTER */
           call obj%timer%start("blas")
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
 
@@ -552,6 +561,7 @@
                              int(matrixRows,kind=BLAS_KIND), infoBLAS )
           info = int(infoBLAS,kind=ik)
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
 
@@ -627,9 +637,9 @@
         if (useGPU) then
 #if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
           call obj%timer%start("gpusolver")
-
+          gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = (l_row1-1 + (l_col1-1)*matrixRows) * size_of_datatype
-          call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info)
+          call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info, gpusolverHandle)
           if (info .ne. 0) then
             write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF 2"
             success = .false.
@@ -640,6 +650,7 @@
 #ifndef DEVICE_POINTER
           call obj%timer%start("blas")
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
 
@@ -662,6 +673,7 @@
                                int(matrixRows,kind=BLAS_KIND) , infoBLAS )
           info = int(infoBLAS,kind=ik)
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_cholesky: memcpy a -> a_dev", successGPU)
 
@@ -697,6 +709,7 @@
 #else /* DEVICE_POINTER */
           call obj%timer%start("blas")
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_cholesky: memcpy a_dev-> a_tmp", successGPU)
 
@@ -719,6 +732,7 @@
                                int(matrixRows,kind=BLAS_KIND) , infoBLAS )
           info = int(infoBLAS,kind=ik)
 #ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
 
@@ -786,6 +800,7 @@
         endif
  
         if (useGPU) then
+          my_stream = obj%gpu_setup%my_stream
           call gpu_copy_PRECISION_a_tmp1 (a_dev, tmp1_dev, l_row1, l_col1, matrixRows, nblk, my_stream)
         else ! useGPU
           nc = 0
@@ -805,6 +820,7 @@
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("elpa_cholesky: tmp1_dev to tmp1", successGPU)
 
@@ -864,6 +880,7 @@
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("elpa_cholesky: tmp1 to tmp1_dev", successGPU)
 
@@ -887,6 +904,7 @@
 #endif /* WITH_MPI */
 
       if (useGPU) then
+        my_stream = obj%gpu_setup%my_stream
         call gpu_copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nblk, my_stream)
       else ! useGPU
         nc = 0
@@ -898,10 +916,11 @@
 
       if (useGPU) then
         call obj%timer%start("gpublas")
+        gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
         if (l_cols-l_colx+1 > 0) then
           a_off = (l_row1-1 + (l_colx-1)*matrixRows) * size_of_datatype
           call gpublas_PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', nblk, l_cols-l_colx+1, ONE, &
-                            tmp2_dev, nblk, a_dev+a_off, matrixRows)
+                            tmp2_dev, nblk, a_dev+a_off, matrixRows, gpublasHandle)
         endif
         call obj%timer%stop("gpublas")
 
@@ -928,6 +947,7 @@
       if (my_prow==prow(n, nblk, np_rows)) then
         ! if l_cols-l_colx+1 == 0 kernel launch with 0 blocks => raises error
         if (l_cols-l_colx+1>0) &
+           my_stream = obj%gpu_setup%my_stream
            call gpu_copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       endif
     else ! useGPU
@@ -956,6 +976,7 @@
       if (l_cols-l_colx+1 > 0) then
         num = l_cols*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
 
@@ -1017,6 +1038,7 @@
       !if (l_cols-l_colx+1 > 0) then
         num = l_cols*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
 
@@ -1051,6 +1073,7 @@
       ! - or mpi and cuda_aware_mpi
       num = l_cols*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
 
@@ -1072,6 +1095,7 @@
 
       num = l_rows*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("elpa_cholesky: tmatr_dev to tmatr", successGPU)
 
@@ -1106,6 +1130,7 @@
     if (useGPU) then
       num = l_rows*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("elpa_cholesky: tmat to tmatr_dev", successGPU)
 
@@ -1134,12 +1159,13 @@
         lre = min(l_rows,(i+1)*l_rows_tile)
         if (lce  < lcs .or. lre < lrs) cycle
         call obj%timer%start("gpublas")
+        gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
         tmatr_off = (lrs-1 + (1-1)*l_rows) * size_of_datatype
         tmatc_off = (lcs-1 + (1-1)*l_cols) * size_of_datatype
         a_off = (lrs-1 + (lcs-1)*matrixRows) * size_of_datatype
         call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, lre-lrs+1, lce-lcs+1, nblk, &
                             -ONE, tmatr_dev+tmatr_off, l_rows, tmatc_dev+tmatc_off, l_cols, ONE, &
-                            a_dev+a_off, matrixRows)
+                            a_dev+a_off, matrixRows, gpublasHandle)
         call obj%timer%stop("gpublas")
       enddo
     else !useGPU
@@ -1205,6 +1231,7 @@
 #ifndef DEVICE_POINTER
   if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("elpa_cholesky: memcpy 2 a-> a_dev", successGPU)
 
@@ -1225,7 +1252,8 @@
   endif
 #else /* DEVICE_POINTER */
   if (useGPU) then
-#ifdef WITH_GPU_STREAMS
+#ifdef WITH_GPU_STREAMS 
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("elpa_cholesky: memcpy 2 a -> a_dev", successGPU)
 
@@ -1282,6 +1310,7 @@
 #else /* DEVICE_POINTER */
 
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("elpa_cholesky: memcpy a_tmp-> a_dev", successGPU)
 

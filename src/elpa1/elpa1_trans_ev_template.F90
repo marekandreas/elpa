@@ -153,7 +153,7 @@ subroutine trans_ev_&
   logical                                       :: useNonBlockingCollectivesRows
   integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
   logical                                       :: success
-
+  integer(kind=c_intptr_t)                      :: gpuHandle, my_stream
   success = .true.
 
   if(useGPU) then
@@ -348,6 +348,7 @@ subroutine trans_ev_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("trans_ev", successGPU)
 
@@ -355,6 +356,7 @@ subroutine trans_ev_&
                   num, gpuMemcpyHostToDevice, my_stream)
     check_memcpy_gpu("trans_ev", successGPU)
 
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("trans_ev", successGPU)
     ! synchronize streamsPerThread; maybe not neccessary
@@ -491,6 +493,7 @@ subroutine trans_ev_&
 
         !hvm_dev(1:hvm_ubnd*nstor) = hvm1(1:hvm_ubnd*nstor)
 #ifdef WITH_GPU_STREAMS  
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev", successGPU)
 
@@ -503,6 +506,7 @@ subroutine trans_ev_&
                       max_stored_rows * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("trans_ev", successGPU)
 
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev", successGPU)
         ! synchronize streamsPerThread; maybe not neccessary
@@ -527,9 +531,10 @@ subroutine trans_ev_&
       if (l_rows > 0) then
         if (useGPU) then
           call obj%timer%start("gpublas")
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',   &
                                    nstor, l_cols, l_rows, ONE, hvm_dev, hvm_ubnd,  &
-                                   q_dev, ldq, ZERO, tmp_dev, nstor)
+                                   q_dev, ldq, ZERO, tmp_dev, nstor, gpuHandle)
           call obj%timer%stop("gpublas")
         else ! useGPU
 
@@ -546,6 +551,8 @@ subroutine trans_ev_&
         if (useGPU) then
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #ifdef WITH_GPU_STREAMS
+
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_memset_async(tmp_dev, 0, l_cols * nstor * size_of_datatype, my_stream)
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("trans_ev", successGPU)
@@ -573,6 +580,7 @@ subroutine trans_ev_&
         ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
         ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev", successGPU)
 
@@ -580,6 +588,7 @@ subroutine trans_ev_&
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
         check_memcpy_gpu("trans_ev", successGPU)
 
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev", successGPU)
         ! synchronize streamsPerThread; maybe not neccessary
@@ -629,6 +638,7 @@ subroutine trans_ev_&
 #ifndef WITH_CUDA_AWARE_MPI
         ! copy back tmp2 - after reduction...
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev", successGPU)
 
@@ -636,6 +646,7 @@ subroutine trans_ev_&
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("trans_ev", successGPU)
 
+        my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev", successGPU)
         ! synchronize streamsPerThread; maybe not neccessary
@@ -661,13 +672,14 @@ subroutine trans_ev_&
       if (l_rows > 0) then
         if (useGPU) then
           call obj%timer%start("gpublas")
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
                                    nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
-                                   tmp_dev, nstor)
+                                   tmp_dev, nstor, gpuHandle)
 
           call gpublas_PRECISION_GEMM('N', 'N' ,l_rows ,l_cols ,nstor,  &
                                    -ONE, hvm_dev, hvm_ubnd, tmp_dev, nstor,   &
-                                   ONE, q_dev, ldq)
+                                   ONE, q_dev, ldq, gpuHandle)
           call obj%timer%stop("gpublas")
         else !useGPU
 #ifdef WITH_MPI
@@ -706,6 +718,7 @@ subroutine trans_ev_&
 
     !q_mat = q_dev
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("trans_ev", successGPU)
 
@@ -713,6 +726,7 @@ subroutine trans_ev_&
                   q_dev, ldq * matrixCols * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
     check_memcpy_gpu("trans_ev", successGPU)
 
+    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("trans_ev", successGPU)
     ! synchronize streamsPerThread; maybe not neccessary

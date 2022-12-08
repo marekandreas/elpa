@@ -60,7 +60,7 @@ module mod_check_for_gpu
       use hip_functions
       use openmp_offload_functions
       use sycl_functions
-      use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray, my_stream
+      !use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray, my_stream
       use precision
       use elpa_mpi
       use elpa_omp
@@ -75,7 +75,7 @@ module mod_check_for_gpu
       integer(kind=ik)                           :: deviceNumber, mpierr, maxNumberOfDevices
       logical                                    :: gpuAvailable
       integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
-      logical, save                              :: alreadySET=.false.
+      !logical, save                              :: alreadySET=.false.
       integer(kind=ik)                           :: maxThreads, thread
       integer(kind=c_intptr_t)                   :: handle_tmp
       !integer(kind=c_intptr_t)                   :: stream
@@ -83,6 +83,8 @@ module mod_check_for_gpu
       !character(len=1024)           :: envname
       character(len=8)                           :: fmt 
       character(len=12)                          :: gpu_string
+      integer(kind=c_intptr_t)                   :: my_stream
+
       if (.not.(present(wantDebug))) then
         wantDebugMessage = .false.
       else
@@ -109,82 +111,82 @@ module mod_check_for_gpu
 #endif /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      if (.not.(allocated(cublasHandleArray))) then
-        allocate(cublasHandleArray(0:maxThreads-1))
-        allocate(gpublasHandleArray(0:maxThreads-1))
+      if (.not.(allocated(obj%gpu_setup%cublasHandleArray))) then
+        allocate(obj%gpu_setup%cublasHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpublasHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          cublasHandleArray(thread) = -1
-          gpublasHandleArray(thread) = -1
+          obj%gpu_setup%cublasHandleArray(thread) = -1
+          obj%gpu_setup%gpublasHandleArray(thread) = -1
         enddo
       endif
 #endif
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_NVIDIA_CUSOLVER
-      if (.not.(allocated(cusolverHandleArray))) then
-        allocate(cusolverHandleArray(0:maxThreads-1))
+      if (.not.(allocated(obj%gpu_setup%cusolverHandleArray))) then
+        allocate(obj%gpu_setup%cusolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          cusolverHandleArray(thread) = -1
+          obj%gpu_setup%cusolverHandleArray(thread) = -1
         enddo
       endif
 #endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (.not.(allocated(rocblasHandleArray))) then
-        allocate(rocblasHandleArray(0:maxThreads-1))
-        allocate(gpublasHandleArray(0:maxThreads-1))
+      if (.not.(allocated(obj%gpu_setup%rocblasHandleArray))) then
+        allocate(obj%gpu_setup%rocblasHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpublasHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          rocblasHandleArray(thread) = -1
-          gpublasHandleArray(thread) = -1
+          obj%gpu_setup%rocblasHandleArray(thread) = -1
+          obj%gpu_setup%gpublasHandleArray(thread) = -1
         enddo
       endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_AMD_ROCSOLVER
-      if (.not.(allocated(rocsolverHandleArray))) then
-        allocate(rocsolverHandleArray(0:maxThreads-1))
+      if (.not.(allocated(obj%gpu_setup%rocsolverHandleArray))) then
+        allocate(obj%gpu_setup%rocsolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          rocsolverHandleArray(thread) = -1
+          obj%gpu_setup%rocsolverHandleArray(thread) = -1
         enddo
       endif
 #endif
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (.not.(allocated(openmpOffloadHandleArray))) then
-        allocate(openmpOffloadHandleArray(0:maxThreads-1))
-        allocate(gpublasHandleArray(0:maxThreads-1))
+      if (.not.(allocated(obj%gpu_setup%openmpOffloadHandleArray))) then
+        allocate(obj%gpu_setup%openmpOffloadHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpublasHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          openmpOffloadHandleArray(thread) = -1
-          gpublasHandleArray(thread) = -1
+          obj%gpu_setup%openmpOffloadHandleArray(thread) = -1
+          obj%gpu_setup%gpublasHandleArray(thread) = -1
         enddo
       endif
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      if (.not.(allocated(openmpOffloadsolverHandleArray))) then
-        allocate(openmpOffloadsolverHandleArray(0:maxThreads-1))
+      if (.not.(allocated(obj%gpu_setup%openmpOffloadsolverHandleArray))) then
+        allocate(obj%gpu_setup%openmpOffloadsolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          openmpOffloadsolverHandleArray(thread) = -1
+          obj%gpu_setup%openmpOffloadsolverHandleArray(thread) = -1
         enddo
       endif
 #endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
-      if (.not.(allocated(syclHandleArray))) then
-        allocate(syclHandleArray(0:maxThreads-1))
-        allocate(gpublasHandleArray(0:maxThreads-1))
+      if (.not.(allocated(obj%gpu_setup%syclHandleArray))) then
+        allocate(obj%gpu_setup%syclHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpublasHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          syclHandleArray(thread) = -1
-          gpublasHandleArray(thread) = -1
+          obj%gpu_setup%syclHandleArray(thread) = -1
+          obj%gpu_setup%gpublasHandleArray(thread) = -1
         enddo
       endif
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
 #ifdef WITH_SYCL_SOLVER
-      if (.not.(allocated(syclsolverHandleArray))) then
-        allocate(syclsolverHandleArray(0:maxThreads-1))
+      if (.not.(allocated(obj%gpu_setup%syclsolverHandleArray))) then
+        allocate(obj%gpu_setup%syclsolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
-          syclsolverHandleArray(thread) = -1
+          obj%gpu_setup%syclsolverHandleArray(thread) = -1
         enddo
       endif
 #endif
@@ -222,63 +224,68 @@ module mod_check_for_gpu
         !endif
 
         success = .true.
-        if (.not.(alreadySET)) then
+        if (.not.(obj%gpu_setup%gpuAlreadySet)) then
           deviceNumber = use_gpu_id
 #include "./device_arrays_template.F90"
 
 #include "./handle_creation_template.F90"
 
         endif ! alreadySET
-        alreadySET = .true.
+        obj%gpu_setup%gpuAlreadySET = .true.
         !gpuIsInitialized = .true.
 
       else ! useGPUid
 
-        !TODO: have to set this somewhere
-        !if (gpuIsInitialized) then
-        !  gpuAvailable = .true.
-        !  numberOfDevices = -1
-        !  if (myid == 0 .and. wantDebugMessage) then
-        !    print *, "Skipping GPU init, should have already been initialized "
-        !  endif
-        !  return
-        !else
-          if (myid == 0 .and. wantDebugMessage) then
-            print *, "Initializing the GPU devices"
-          endif
-        !endif
 
-        success = .true.
+        ! make sure GPU setup is only done once (per ELPA object)
+
+        if (.not.(obj%gpu_setup%gpuAlreadySet)) then
+
+          !TODO: have to set this somewhere
+          !if (gpuIsInitialized) then
+          !  gpuAvailable = .true.
+          !  numberOfDevices = -1
+          !  if (myid == 0 .and. wantDebugMessage) then
+          !    print *, "Skipping GPU init, should have already been initialized "
+          !  endif
+          !  return
+          !else
+            if (myid == 0 .and. wantDebugMessage) then
+              print *, "Initializing the GPU devices"
+            endif
+          !endif
+
+          success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
-        ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
-        success = cuda_getdevicecount(numberOfDevices)
+          ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
+          success = cuda_getdevicecount(numberOfDevices)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        success = hip_getdevicecount(numberOfDevices)
+          success = hip_getdevicecount(numberOfDevices)
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        numberOfDevices = openmp_offload_getdevicecount()
-        success = .true.
+          numberOfDevices = openmp_offload_getdevicecount()
+          success = .true.
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        numberOfDevices = sycl_getdevicecount()
-        success = .true.
+          numberOfDevices = sycl_getdevicecount()
+          success = .true.
 #endif
-        if (.not.(success)) then
+          if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-          print *,"error in cuda_getdevicecount"
+            print *,"error in cuda_getdevicecount"
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-          print *,"error in hip_getdevicecount"
+            print *,"error in hip_getdevicecount"
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-          print *,"error in openmp_offload_getdevicecount"
+            print *,"error in openmp_offload_getdevicecount"
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-          print *,"error in sycl_getdevicecount"
+            print *,"error in sycl_getdevicecount"
 #endif
-          stop 1
-        endif
+            stop 1
+          endif
 
 !#ifdef  WITH_INTEL_GPU_VERSION
 !        gpuAvailable = .false.
@@ -292,54 +299,55 @@ module mod_check_for_gpu
 !#endif
 
 
-        ! make sure that all nodes have the same number of GPU's, otherwise
-        ! we run into loadbalancing trouble
+          ! make sure that all nodes have the same number of GPU's, otherwise
+          ! we run into loadbalancing trouble
 #ifdef WITH_MPI
-        call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
+          call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
 
-        if (maxNumberOfDevices .ne. numberOfDevices) then
-          print *,"Different number of GPU devices on MPI tasks!"
-          print *,"GPUs will NOT be used!"
-          gpuAvailable = .false.
-          return
-        endif
-#endif
-        if (numberOfDevices .ne. 0) then
-          gpuAvailable = .true.
-          ! Usage of GPU is possible since devices have been detected
-
-          if (myid==0) then
-            if (wantDebugMessage) then
-              print *
-              print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
-            endif
+          if (maxNumberOfDevices .ne. numberOfDevices) then
+            print *,"Different number of GPU devices on MPI tasks!"
+            print *,"GPUs will NOT be used!"
+            gpuAvailable = .false.
+            return
           endif
+#endif
+          if (numberOfDevices .ne. 0) then
+            gpuAvailable = .true.
+            ! Usage of GPU is possible since devices have been detected
 
-          fmt = '(I5.5)'
+            if (myid==0) then
+              if (wantDebugMessage) then
+                print *
+                print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
+              endif
+            endif
 
-          write (gpu_string,fmt) numberOfDevices
+            fmt = '(I5.5)'
 
-          call obj%timer%start("check_gpu_"//gpu_string)
-          deviceNumber = mod(myid, numberOfDevices)
-          call obj%timer%start("set_device")
+            write (gpu_string,fmt) numberOfDevices
 
-          !include device arrays here
+            call obj%timer%start("check_gpu_"//gpu_string)
+            deviceNumber = mod(myid, numberOfDevices)
+            call obj%timer%start("set_device")
+
+            !include device arrays here
 #include "./device_arrays_template.F90"
 
-          call obj%timer%stop("set_device")
+            call obj%timer%stop("set_device")
 
-          call obj%set("use_gpu_id",deviceNumber, error)
-          if (error .ne. ELPA_OK) then
-            print *,"Cannot set use_gpu_id. Aborting..."
-            stop
-          endif
+            call obj%set("use_gpu_id",deviceNumber, error)
+            if (error .ne. ELPA_OK) then
+              print *,"Cannot set use_gpu_id. Aborting..."
+              stop
+            endif
  
 #include "./handle_creation_template.F90"
           
-          alreadySET = .true.
-          call obj%timer%stop("check_gpu_"//gpu_string)
-        endif ! numberOfDevices .ne. 0
-        !gpuIsInitialized = .true.
+            obj%gpu_setup%gpuAlreadySet = .true.
+            call obj%timer%stop("check_gpu_"//gpu_string)
+          endif ! numberOfDevices .ne. 0
+          !gpuIsInitialized = .true.
+        endif !obj%gpu_setup%gpuAlreadySet
       endif ! useGPUid
     end function
 end module

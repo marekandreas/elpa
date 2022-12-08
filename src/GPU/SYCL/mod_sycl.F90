@@ -61,10 +61,10 @@ module sycl_functions
   integer(kind=ik) :: syclHostRegisterPortable
   integer(kind=ik) :: syclHostRegisterMapped
 
-  ! TODO global variable, has to be changed
-  integer(kind=C_intptr_T), allocatable :: syclHandleArray(:)
-  integer(kind=C_intptr_T), allocatable :: syclsolverHandleArray(:)
-  integer(kind=c_int), allocatable      :: syclDeviceArray(:)
+  !! TODO global variable, has to be changed
+  !integer(kind=C_intptr_T), allocatable :: syclHandleArray(:)
+  !integer(kind=C_intptr_T), allocatable :: syclsolverHandleArray(:)
+  !integer(kind=c_int), allocatable      :: syclDeviceArray(:)
 
   ! functions to set and query the GPU devices
   interface
@@ -1619,7 +1619,7 @@ module sycl_functions
 !#endif
 !    end function
 
-    subroutine mkl_sycl_dtrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine mkl_sycl_dtrtri(uplo, diag, n, a, lda, info, syclsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1627,21 +1627,14 @@ module sycl_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclsolverHandle
-
-      if (present(threadID)) then
-        syclsolverHandle = syclsolverHandleArray(threadID)
-      else
-        syclsolverHandle = syclsolverHandleArray(0)
-      endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call mkl_sycl_dtrtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_strtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine mkl_sycl_strtri(uplo, diag, n, a, lda, info, syclsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1649,21 +1642,14 @@ module sycl_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclsolverHandle
-
-      if (present(threadID)) then
-        syclsolverHandle = syclsolverHandleArray(threadID)
-      else
-        syclsolverHandle = syclsolverHandleArray(0)
-      endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call mkl_sycl_strtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ztrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine mkl_sycl_ztrtri(uplo, diag, n, a, lda, info, syclsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1671,21 +1657,14 @@ module sycl_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclsolverHandle
-
-      if (present(threadID)) then
-        syclsolverHandle = syclsolverHandleArray(threadID)
-      else
-        syclsolverHandle = syclsolverHandleArray(0)
-      endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call mkl_sycl_ztrtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ctrtri(uplo, diag, n, a, lda, info, threadID)
+    subroutine mkl_sycl_ctrtri(uplo, diag, n, a, lda, info, syclsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1693,21 +1672,14 @@ module sycl_functions
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclsolverHandle
-
-      if (present(threadID)) then
-        syclsolverHandle = syclsolverHandleArray(threadID)
-      else
-        syclsolverHandle = syclsolverHandleArray(0)
-      endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call mkl_sycl_ctrtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dpotrf(uplo, n, a, lda, info, threadID)
+    subroutine mkl_sycl_dpotrf(uplo, n, a, lda, info, syclsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1715,21 +1687,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclsolverHandle
-
-      if (present(threadID)) then
-        syclsolverHandle = syclsolverHandleArray(threadID)
-      else
-        syclsolverHandle = syclsolverHandleArray(0)
-      endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call mkl_sycl_dpotrf_c(syclsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_spotrf(uplo, n, a, lda, info, threadID)
+    subroutine mkl_sycl_spotrf(uplo, n, a, lda, info, syclsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1737,21 +1702,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclsolverHandle
-
-      if (present(threadID)) then
-        syclsolverHandle = syclsolverHandleArray(threadID)
-      else
-        syclsolverHandle = syclsolverHandleArray(0)
-      endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call mkl_sycl_spotrf_c(syclsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_zpotrf(uplo, n, a, lda, info, threadID)
+    subroutine mkl_sycl_zpotrf(uplo, n, a, lda, info, syclsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1759,21 +1717,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclsolverHandle
-
-      if (present(threadID)) then
-        syclsolverHandle = syclsolverHandleArray(threadID)
-      else
-        syclsolverHandle = syclsolverHandleArray(0)
-      endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call mkl_sycl_zpotrf_c(syclsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_cpotrf(uplo, n, a, lda, info, threadID)
+    subroutine mkl_sycl_cpotrf(uplo, n, a, lda, info, syclsolverHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1781,14 +1732,7 @@ module sycl_functions
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclsolverHandle
-
-      if (present(threadID)) then
-        syclsolverHandle = syclsolverHandleArray(threadID)
-      else
-        syclsolverHandle = syclsolverHandleArray(0)
-      endif      
 
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call mkl_sycl_cpotrf_c(syclsolverHandle, uplo, n, a, lda, info)
@@ -1796,7 +1740,7 @@ module sycl_functions
     end subroutine
 
     ! mkl
-    subroutine mkl_sycl_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1805,20 +1749,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1827,14 +1765,8 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_DOUBLE)             :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
@@ -1842,7 +1774,7 @@ module sycl_functions
 
 
 
-    subroutine mkl_sycl_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1851,21 +1783,15 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_sgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine 
 
 
-    subroutine mkl_sycl_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -1874,14 +1800,8 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       real(kind=C_FLOAT)              :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_sgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
@@ -1889,7 +1809,7 @@ module sycl_functions
 
 
 
-    subroutine mkl_sycl_dcopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_dcopy_intptr(n, x, incx, y, incy, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -1897,20 +1817,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dcopy_intptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine 
 
-    subroutine mkl_sycl_dcopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_dcopy_cptr(n, x, incx, y, incy, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -1918,20 +1832,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_OPENMP_OFFLOAD_VERSION
       call mkl_sycl_dcopy_cptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_scopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_scopy_intptr(n, x, incx, y, incy, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -1939,20 +1847,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_OPENMP_OFFLOAD_VERSION
       call mkl_sycl_scopy_intptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_scopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_scopy_cptr(n, x, incx, y, incy, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -1960,21 +1862,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
-
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_scopy_cptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -1984,20 +1879,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dtrmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2007,21 +1896,15 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dtrmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-   subroutine mkl_sycl_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+   subroutine mkl_sycl_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2031,20 +1914,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_strmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2054,20 +1931,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_strmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2077,20 +1948,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dtrsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2100,21 +1965,15 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_DOUBLE)             :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dtrsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_sycl_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2124,20 +1983,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_strsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2147,21 +2000,15 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(kind=C_FLOAT)              :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_strsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_sycl_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2171,21 +2018,15 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_zgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine
 
 
-    subroutine mkl_sycl_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2195,14 +2036,8 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_zgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
@@ -2210,7 +2045,7 @@ module sycl_functions
 
 
 
-    subroutine mkl_sycl_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2220,20 +2055,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c  
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_cgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, threadID)
+    subroutine mkl_sycl_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2243,14 +2072,8 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       type(c_ptr)                     :: a, b, c  
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_cgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
 #endif
@@ -2258,7 +2081,7 @@ module sycl_functions
 
 
 
-    subroutine mkl_sycl_zcopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_zcopy_intptr(n, x, incx, y, incy, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2266,20 +2089,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_zcopy_intptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_zcopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_zcopy_cptr(n, x, incx, y, incy, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2287,20 +2104,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_zcopy_cptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ccopy_intptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_ccopy_intptr(n, x, incx, y, incy, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2308,20 +2119,14 @@ module sycl_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ccopy_intptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ccopy_cptr(n, x, incx, y, incy, threadID)
+    subroutine mkl_sycl_ccopy_cptr(n, x, incx, y, incy, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2329,21 +2134,15 @@ module sycl_functions
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ccopy_cptr_c(syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
 
-    subroutine mkl_sycl_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2353,20 +2152,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ztrmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2376,21 +2169,15 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ztrmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_sycl_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2400,20 +2187,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ctrmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2423,20 +2204,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ctrmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2446,20 +2221,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ztrsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2469,21 +2238,15 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ztrsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_sycl_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2493,20 +2256,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ctrsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, threadID)
+    subroutine mkl_sycl_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
 
       use, intrinsic :: iso_c_binding
 
@@ -2516,21 +2273,15 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX)   :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_ctrsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
 
-    subroutine mkl_sycl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine mkl_sycl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2539,20 +2290,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       real(kind=C_DOUBLE)             :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine mkl_sycl_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2561,20 +2306,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       real(kind=C_FLOAT)              :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_sgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine mkl_sycl_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2583,20 +2322,14 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_zgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, threadID)
+    subroutine mkl_sycl_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclHandle)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -2605,14 +2338,8 @@ module sycl_functions
       integer(kind=C_INT), intent(in) :: lda,incx,incy
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=c_int), optional   :: threadID
       integer(kind=C_intptr_T)        :: syclHandle
 
-      if (present(threadID)) then
-        syclHandle = syclHandleArray(threadID)
-      else
-        syclHandle = syclHandleArray(0)
-      endif      
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_cgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif

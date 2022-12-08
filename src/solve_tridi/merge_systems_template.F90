@@ -132,7 +132,9 @@
       integer(kind=c_intptr_t), parameter         :: size_of_datatype = size_of_&
                                                                       &PRECISION&
                                                                       &_real
+      integer(kind=c_intptr_t)                    :: gpuHandle
       integer(kind=ik), intent(in)                :: max_threads
+      integer(kind=c_intptr_t)                    :: my_stream
 #ifdef WITH_OPENMP_TRADITIONAL
       integer(kind=ik)                            :: my_thread
 
@@ -758,6 +760,7 @@
           if (useGPU) then
             ! copy back after sendrecv
 #ifdef WITH_GPU_STREAMS
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("tridiag qtmp1_dev", successGPU)
 
@@ -765,6 +768,7 @@
                  gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
             check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
 
+            my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
             ! synchronize streamsPerThread; maybe not neccessary
@@ -876,10 +880,11 @@
             if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) then
               if (useGPU) then
                 call obj%timer%start("gpublas")
+                gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                 call gpublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
                                     1.0_rk, qtmp1_dev, ubound(qtmp1,dim=1),    &
                                     ev_dev, ubound(ev,dim=1), &
-                                    1.0_rk, qtmp2_dev, ubound(qtmp2,dim=1))
+                                    1.0_rk, qtmp2_dev, ubound(qtmp2,dim=1), gpuHandle)
                 call obj%timer%stop("gpublas")
               else ! useGPU
                 call obj%timer%start("blas")
@@ -937,10 +942,11 @@
             if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) then
               if (useGPU) then
                 call obj%timer%start("gpublas")
+                gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                 call gpublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
                                     1.0_rk, qtmp1_dev + l_rnm * size_of_datatype, ubound(qtmp1,dim=1),    &
                                     ev_dev, ubound(ev,dim=1), &
-                                    1.0_rk, qtmp2_dev + l_rnm * size_of_datatype, ubound(qtmp2,dim=1))
+                                    1.0_rk, qtmp2_dev + l_rnm * size_of_datatype, ubound(qtmp2,dim=1), gpuHandle)
                 call obj%timer%stop("gpublas")
               else ! useGPU
                 call obj%timer%start("blas")

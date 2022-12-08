@@ -278,6 +278,8 @@ subroutine trans_ev_tridi_to_band_&
   logical                                    :: useNonBlockingCollectivesRows
   integer(kind=c_int)                        :: non_blocking_collectives_rows, non_blocking_collectives_cols
 
+  integer(kind=c_intptr_t)                   :: gpuHandle, my_stream
+
   if(useGPU) then
     gpuString = "_gpu"
   else
@@ -649,6 +651,7 @@ subroutine trans_ev_tridi_to_band_&
                     gpuHostRegisterDefault)
       check_host_register_gpu("tridi_to_band: q", successGPU)
 
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_tridi_to_band 1: q -> q_dev", successGPU)
 
@@ -690,6 +693,7 @@ subroutine trans_ev_tridi_to_band_&
                     gpuHostRegisterDefault)
       check_host_register_gpu("tridi_to_band: hh_trans", successGPU)
 
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("tridi_to_band: hh_trans -> hh_trans_dev", successGPU)
 
@@ -728,6 +732,7 @@ subroutine trans_ev_tridi_to_band_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_memset_async(aIntern_dev , 0, num, my_stream)
       check_memset_gpu("tridi_to_band: aIntern_dev", successGPU)
 
@@ -791,6 +796,7 @@ subroutine trans_ev_tridi_to_band_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_memset_async(row_group_dev , 0, num, my_stream)
       check_memset_gpu("tridi_to_band: row_group_dev", successGPU)
 
@@ -866,6 +872,7 @@ subroutine trans_ev_tridi_to_band_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("tridi_to_band: row_dev", successGPU)
 
@@ -934,6 +941,7 @@ subroutine trans_ev_tridi_to_band_&
           if (useGPU) then
             ! An unpacking of the current row group may occur before queuing the next row
 
+            my_stream = obj%gpu_setup%my_stream
             call unpack_and_prepare_row_group_&
             &MATH_DATATYPE&
             &_gpu_&
@@ -963,6 +971,7 @@ subroutine trans_ev_tridi_to_band_&
             if (allComputeOnGPU) then
               ! memcopy row_dev -> row_group_dev
 #ifdef WITH_GPU_STREAMS
+              my_stream = obj%gpu_setup%my_stream
               successGPU = gpu_stream_synchronize(my_stream)
               check_stream_synchronize_gpu("tridi_to_band: row_dev", successGPU)
 
@@ -1032,6 +1041,7 @@ subroutine trans_ev_tridi_to_band_&
           if (useGPU) then
             ! An unpacking of the current row group may occur before queuing the next row
 
+            my_stream = obj%gpu_setup%my_stream
             call unpack_and_prepare_row_group_&
             &MATH_DATATYPE&
             &_gpu_&
@@ -1058,6 +1068,7 @@ subroutine trans_ev_tridi_to_band_&
             if (allComputeOnGPU) then
               ! memcpy row_dev -> row_group_dev
 #ifdef WITH_GPU_STREAMS
+              my_stream = obj%gpu_setup%my_stream
               successGPU = gpu_stream_synchronize(my_stream)
               check_stream_synchronize_gpu("tridi_to_band: row_dev", successGPU)
 
@@ -1130,8 +1141,9 @@ subroutine trans_ev_tridi_to_band_&
 
             if (allComputeOnGPU) then
               if (wantDebug) call obj%timer%start("cuda_aware_gpublas")
+              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
               call gpublas_PRECISION_COPY(l_nev, c_loc(q_mpi_fortran_ptr(src_offset,1)), ldq, &
-                                          c_loc(row_group_mpi_fortran_ptr(1,row_group_size)), 1)
+                                          c_loc(row_group_mpi_fortran_ptr(1,row_group_size)), 1, gpuHandle)
               if (wantDebug) call obj%timer%stop("cuda_aware_gpublas")
             else ! allComputeOnGPU
               row_group(:, row_group_size) = q(src_offset, 1:l_nev)
@@ -1192,8 +1204,9 @@ subroutine trans_ev_tridi_to_band_&
               src_offset = src_offset+1
 
               if (wantDebug) call obj%timer%start("cuda_aware_gpublas")
+              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
               call gpublas_PRECISION_COPY(l_nev, c_loc(q_mpi_fortran_ptr(src_offset,1)), ldq, &
-                                          c_loc(row_mpi_fortran_ptr(1)), 1)
+                                          c_loc(row_mpi_fortran_ptr(1)), 1, gpuHandle)
               if (wantDebug) call obj%timer%stop("cuda_aware_gpublas")
 #ifdef WITH_GPU_STREAMS
               if (wantDebug) call obj%timer%start("cuda_aware_stream_synchronize")
@@ -1247,8 +1260,9 @@ subroutine trans_ev_tridi_to_band_&
             src_offset = src_offset+1
 
             if (wantDebug) call obj%timer%start("cuda_aware_gpublas")
+            gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
             call gpublas_PRECISION_COPY(l_nev, c_loc(q_mpi_fortran_ptr(src_offset,1)), ldq, &
-                                          c_loc(row_mpi_fortran_ptr(1)), 1)
+                                          c_loc(row_mpi_fortran_ptr(1)), 1, gpuHandle)
             if (wantDebug) call obj%timer%stop("cuda_aware_gpublas")
 
 #ifdef WITH_GPU_STREAMS
@@ -4286,8 +4300,9 @@ subroutine trans_ev_tridi_to_band_&
               ! memcpy DeviceToDevice row_group_dev -> q_dev
               do i = 1, row_group_size
                if (wantDebug) call obj%timer%start("cuda_aware_gpublas")
+               gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                call gpublas_PRECISION_COPY(l_nev, c_loc(row_group_mpi_fortran_ptr(1,i)), 1, &
-                                           c_loc(q_mpi_fortran_ptr((num_blk / np_rows) * nblk + i,1)), ldq)
+                                           c_loc(q_mpi_fortran_ptr((num_blk / np_rows) * nblk + i,1)), ldq, gpuHandle)
                if (wantDebug) call obj%timer%stop("cuda_aware_gpublas")
               enddo
             else ! allComputeOnGPU
@@ -4453,8 +4468,9 @@ subroutine trans_ev_tridi_to_band_&
           if (allComputeOnGPU) then
             do i = 1, min(na - num_blk*nblk, nblk)
               if (wantDebug) call obj%timer%start("cuda_aware_gpublas")
+              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
               call gpublas_PRECISION_COPY(l_nev, c_loc(result_buffer_mpi_fortran_ptr(1,i,nbuf)), 1, &
-                                          c_loc(q_mpi_fortran_ptr(j*nblk + i,1)), ldq)
+                                          c_loc(q_mpi_fortran_ptr(j*nblk + i,1)), ldq, gpuHandle)
               if (wantDebug) call obj%timer%stop("cuda_aware_gpublas")
             enddo
           else ! allComputeOnGPU
