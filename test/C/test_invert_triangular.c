@@ -123,8 +123,8 @@
 
 
 #if (TEST_GPU == 1)
-#include "test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h"
-#include "test/shared/GPU/test_gpu_vendor_agnostic_layerVariables.h"
+#include "../shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h"
+#include "../shared/GPU/test_gpu_vendor_agnostic_layerVariables.h"
 #endif
 
 #include "test/shared/generated.h"
