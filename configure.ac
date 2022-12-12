@@ -1350,12 +1350,10 @@ AC_LANG_PUSH([C])
 dnl check whether one can link against Fortran programs from C
 AC_MSG_CHECKING(whether we need _ in C programs to link against a Fortran library)
 AC_LINK_IFELSE([AC_LANG_SOURCE([
-int main(int argc, char **argv) {
+char dgemm_(void);
 
-  int m, n, k, lda, ldb, ldc;
-  double alpha, beta;
-  double *a, *b, *c;
-  dgemm_("N", "N", &m, &n, &k, &alpha, a, lda, b, &ldb, &beta, c, &ldc);
+int main(int argc, char **argv) {
+  return dgemm_();
 }
  ])],
    [can_link_with_=yes],
@@ -1368,12 +1366,10 @@ fi
 
 AC_MSG_CHECKING(whether we can link C programs against Fortran without _ )
 AC_LINK_IFELSE([AC_LANG_SOURCE([
-int main(int argc, char **argv) {
+char dgemm(void);
 
-  int m, n, k, lda, ldb, ldc;
-  double alpha, beta;
-  double *a, *b, *c;
-  dgemm("N", "N", &m, &n, &k, &alpha, a, lda, b, &ldb, &beta, c, &ldc);
+int main(int argc, char **argv) {
+  return dgemm();
 }
  ])],
    [can_link_without_=yes],
