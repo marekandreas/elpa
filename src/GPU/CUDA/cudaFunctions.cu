@@ -99,9 +99,9 @@ extern "C" {
 
   int cudaStreamDestroyFromC(intptr_t *stream){
     cudaError_t status = cudaStreamDestroy(*(cudaStream_t*) *stream);
-    *stream = (intptr_t) NULL;
     if (status == cudaSuccess) {
 //       printf("all OK\n");
+	 free((void*) *stream);
       return 1;
     }
     else{
@@ -201,8 +201,8 @@ extern "C" {
 
   int cublasDestroyFromC(intptr_t *cublas_handle) {
     cublasStatus_t status = cublasDestroy(*((cublasHandle_t*) *cublas_handle));
-    *cublas_handle = (intptr_t) NULL;
     if (status == CUBLAS_STATUS_SUCCESS) {
+	 free((void*) *cublas_handle);
 //       printf("all OK\n");
       return 1;
     }
@@ -241,9 +241,9 @@ extern "C" {
 
   int cusolverDestroyFromC(intptr_t *cusolver_handle) {
     cusolverStatus_t status = cusolverDnDestroy(*((cusolverDnHandle_t*) *cusolver_handle));
-    *cusolver_handle = (intptr_t) NULL;
     if (status == CUSOLVER_STATUS_SUCCESS) {
 //       printf("all OK\n");
+      free((void*) *cusolver_handle);
       return 1;
     }
     else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
