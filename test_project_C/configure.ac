@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
-AC_INIT([elpa_test_project],[2022.11.001.rc2], elpa-library@mpcdf.mpg.de)
-elpaversion="2022.11.001.rc2"
+AC_INIT([elpa_test_project],[2022.11.001], elpa-library@mpcdf.mpg.de)
+elpaversion="2022.11.001"
 AC_CONFIG_SRCDIR([src/test_real.c])
 
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
