@@ -18,7 +18,7 @@
 #endif /* WITH_GPU_STREAMS */
 
 
-          ! handle creation
+          ! handle destruction
           do thread = 0, maxThreads-1
             success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION

@@ -110,7 +110,7 @@
 
       call random_seed(size=n)
       allocate(iseed(n))
-      iseed(:) = myid
+      iseed(:) = myid + 1
       call random_seed(put=iseed)
 #if REALCASE == 1
       call random_number(z)

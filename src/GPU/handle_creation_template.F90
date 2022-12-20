@@ -1,9 +1,9 @@
 #ifdef WITH_GPU_STREAMS
 #ifdef WITH_NVIDIA_GPU_VERSION
-          success = cuda_stream_create(my_stream)
+          success = cuda_stream_create(obj%gpu_setup%my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-          success = hip_stream_create(my_stream)
+          success = hip_stream_create(obj%gpu_setup%my_stream)
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -15,21 +15,24 @@
             stop 1
           endif
 #endif /* WITH_GPU_STREAMS */
-          obj%gpu_setup%my_stream = my_stream
            
           ! handle creation
           call obj%timer%start("create_handle")
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
             !print *,"Creating handle for thread:",thread
-            success = cublas_create(handle_tmp)
-            obj%gpu_setup%cublasHandleArray(thread) = handle_tmp
-            obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
+            !success = cublas_create(handle_tmp)
+            !obj%gpu_setup%cublasHandleArray(thread) = handle_tmp
+            !obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
+            success = cublas_create(obj%gpu_setup%cublasHandleArray(thread))
+            obj%gpu_setup%gpublasHandleArray(thread) = obj%gpu_setup%cublasHandleArray(thread)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-            success = rocblas_create(handle_tmp)
-            obj%gpu_setup%rocblasHandleArray(thread) = handle_tmp
-            obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
+            !success = rocblas_create(handle_tmp)
+            !obj%gpu_setup%rocblasHandleArray(thread) = handle_tmp
+            !obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
+            success = rocblas_create(obj%gpu_setup%rocblasHandleArray(thread))
+            obj%gpu_setup%gpublasHandleArray(thread) = obj%gpu_setup%rocblasHandleArray(thread)
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
             handle_tmp = 0
@@ -66,8 +69,9 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_NVIDIA_CUSOLVER
           do thread=0, maxThreads-1
-            success = cusolver_create(handle_tmp)
-            obj%gpu_setup%cusolverHandleArray(thread) = handle_tmp
+            !success = cusolver_create(handle_tmp)
+            !obj%gpu_setup%cusolverHandleArray(thread) = handle_tmp
+            success = cusolver_create(obj%gpu_setup%cusolverHandleArray(thread))
             if (.not.(success)) then
               print *,"Cannot create cusolver handle"
               stop 1
@@ -92,8 +96,9 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
           do thread=0, maxThreads-1
-            success = openmp_offload_solver_create(handle_tmp)
-            obj%gpu_setup%openmpOffloadsolverHandleArray(thread) = handle_tmp
+            !success = openmp_offload_solver_create(handle_tmp)
+            !obj%gpu_setup%openmpOffloadsolverHandleArray(thread) = handle_tmp
+            success = openmp_offload_solver_create(obj%gpu_setup%openmpOffloadsolverHandleArray(thread))
             if (.not.(success)) then
               print *,"Cannot create openmpOffloadsolver handle"
               stop 1
@@ -104,8 +109,9 @@
 #ifdef WITH_SYCL_GPU_VERSION
 #ifdef WITH_SYCL_SOLVER
           do thread=0, maxThreads-1
-            success = sycl_solver_create(handle_tmp)
-            obj%gpu_setup%syclsolverHandleArray(thread) = handle_tmp
+            !success = sycl_solver_create(handle_tmp)
+            !obj%gpu_setup%syclsolverHandleArray(thread) = handle_tmp
+            success = sycl_solver_create(obj%gpu_setup%syclsolverHandleArray(thread))
             if (.not.(success)) then
               print *,"Cannot create syclsolver handle"
               stop 1

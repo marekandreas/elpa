@@ -83,7 +83,6 @@ module mod_check_for_gpu
       !character(len=1024)           :: envname
       character(len=8)                           :: fmt 
       character(len=12)                          :: gpu_string
-      integer(kind=c_intptr_t)                   :: my_stream
 
       if (.not.(present(wantDebug))) then
         wantDebugMessage = .false.

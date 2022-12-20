@@ -55,7 +55,7 @@
 #include <alloca.h>
 #include <complex.h>
 
-#include "test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h"
+#include "./test_gpu_vendor_agnostic_layerFunctions.h"
 
 #include "config-f90.h"
 
