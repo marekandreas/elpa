@@ -4491,11 +4491,12 @@ subroutine trans_ev_tridi_to_band_&
           ! result_buffer 4
           if (wantDebug) call obj%timer%start("cuda_mpi_communication")
 
-          if (j+num_result_buffers < num_result_blocks) &
-          call MPI_Irecv(result_buffer_mpi_fortran_ptr(1,1,nbuf), int(l_nev*nblk,kind=MPI_KIND), &
+          if (j+num_result_buffers < num_result_blocks) then
+            call MPI_Irecv(result_buffer_mpi_fortran_ptr(1,1,nbuf), int(l_nev*nblk,kind=MPI_KIND), &
                          MPI_MATH_DATATYPE_PRECISION_EXPL, &
                          0_MPI_KIND, int(result_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
                          result_recv_request(nbuf), mpierr)
+          endif
 
           ! carefull the "recieve" has to be done at the corresponding wait or send
           !         if (j+num_result_buffers < num_result_blocks) &
@@ -4504,10 +4505,11 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_CUDA_AWARE_MPI_TRANS_TRIDI_TO_BAND */
           if (wantDebug) call obj%timer%start("host_mpi_communication")
 
-          if (j+num_result_buffers < num_result_blocks) &
-          call MPI_Irecv(result_buffer(1,1,nbuf), int(l_nev*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+          if (j+num_result_buffers < num_result_blocks) then
+            call MPI_Irecv(result_buffer(1,1,nbuf), int(l_nev*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                            0_MPI_KIND, int(result_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
                            result_recv_request(nbuf), mpierr)
+          endif
 
           ! carefull the "recieve" has to be done at the corresponding wait or send
           !         if (j+num_result_buffers < num_result_blocks) &
@@ -4517,10 +4519,11 @@ subroutine trans_ev_tridi_to_band_&
         else ! useGPU
           if (wantDebug) call obj%timer%start("mpi_communication")
 
-          if (j+num_result_buffers < num_result_blocks) &
-          call MPI_Irecv(result_buffer(1,1,nbuf), int(l_nev*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+          if (j+num_result_buffers < num_result_blocks) then
+            call MPI_Irecv(result_buffer(1,1,nbuf), int(l_nev*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
                            0_MPI_KIND, int(result_recv_tag,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), &
                            result_recv_request(nbuf), mpierr)
+          endif
 
           ! carefull the "recieve" has to be done at the corresponding wait or send
           !         if (j+num_result_buffers < num_result_blocks) &
@@ -4771,8 +4774,9 @@ subroutine trans_ev_tridi_to_band_&
 
   endif
 
-  if (my_prow==0 .and. my_pcol==0 .and.print_flops == 1) &
+  if (my_prow==0 .and. my_pcol==0 .and.print_flops == 1) then
       write(error_unit,'(" Kernel time:",f10.3," MFlops: ",es12.5)')  kernel_time, kernel_flops/kernel_time*1.d-6
+  endif
 
   ! deallocate all working space
 

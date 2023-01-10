@@ -810,8 +810,9 @@
             if (j>na1) then
               if (p_col(idx2(j-na1)) == np_rem) then
                 ndef = ndef+1
-                if (p_col_out(i) == my_pcol) &
-                      q(l_rqs:l_rqe,l_col_out(i)) = qtmp1(1:l_rows,ndef)
+                if (p_col_out(i) == my_pcol) then
+                  q(l_rqs:l_rqe,l_col_out(i)) = qtmp1(1:l_rows,ndef)
+                endif
               endif
             endif
           enddo

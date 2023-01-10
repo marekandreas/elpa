@@ -912,27 +912,28 @@ max_threads, isSkewsymmetric)
       vav = 0
       call obj%timer%start("blas0")
       if (useGPU_reduction_lower_block_to_tridiagonal) then
-        if (l_rows > 0) &
+        if (l_rows > 0) then
 #if REALCASE == 1
-        call PRECISION_SYRK('U', 'T',            &
+          call PRECISION_SYRK('U', 'T',            &
 #endif
 #if COMPLEXCASE == 1
-        call PRECISION_HERK('U', 'C',            &
+          call PRECISION_HERK('U', 'C',            &
 #endif
                            int(n_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
                            vmrGPU, int(max(l_rows, 1),kind=BLAS_KIND), &
                            ZERO, vav, int(nbw,kind=BLAS_KIND))
-
+        endif
       else ! useGPU_reduction_to_tridiagonal
-        if (l_rows > 0) &
+        if (l_rows > 0) then
 #if REALCASE == 1
-        call PRECISION_SYRK('U', 'T',           &
+          call PRECISION_SYRK('U', 'T',           &
 #endif
 #if COMPLEXCASE == 1
-        call PRECISION_HERK('U', 'C',           &
+          call PRECISION_HERK('U', 'C',           &
 #endif
                             int(n_cols,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, vmrCPU, &
                             int(max(l_rows, 1),kind=BLAS_KIND), ZERO, vav, int(nbw,kind=BLAS_KIND))
+        endif
       endif
       call obj%timer%stop("blas0")
 #if REALCASE == 1

@@ -488,13 +488,14 @@ subroutine tridiag_&
   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a_mat
   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a_mat
 
-  if (my_prow == prow(na, nblk, np_rows) .and. my_pcol == pcol(na, nblk, np_cols)) &
+  if (my_prow == prow(na, nblk, np_rows) .and. my_pcol == pcol(na, nblk, np_cols)) then
 #if COMPLEXCASE == 1
-  d_vec(na) = real(a_mat(l_rows,l_cols), kind=rk)
+    d_vec(na) = real(a_mat(l_rows,l_cols), kind=rk)
 #endif
 #if REALCASE == 1
-  d_vec(na) = a_mat(l_rows,l_cols)
+    d_vec(na) = a_mat(l_rows,l_cols)
 #endif
+  endif
 
   if (useGPU) then
     ! allocate memmory for matrix A on the device and than copy the matrix
@@ -1200,8 +1201,9 @@ subroutine tridiag_&
            l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
            l_row_beg = 1
            l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
-           if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) &
-           cycle
+           if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) then
+             cycle
+           endif
 
 
            if (useGPU) then
