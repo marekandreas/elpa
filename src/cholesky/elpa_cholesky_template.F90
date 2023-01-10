@@ -946,9 +946,10 @@
     if (useGPU) then
       if (my_prow==prow(n, nblk, np_rows)) then
         ! if l_cols-l_colx+1 == 0 kernel launch with 0 blocks => raises error
-        if (l_cols-l_colx+1>0) &
+        if (l_cols-l_colx+1>0) then
            my_stream = obj%gpu_setup%my_stream
            call gpu_copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+        endif
       endif
     else ! useGPU
       do i=1,nblk
