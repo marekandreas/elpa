@@ -144,6 +144,7 @@ extern "C" void hip_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, 
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing copy_double_a_tmatc_kernel: %s\n",hipGetErrorString(cuerr));
+    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
   }
 }
 
@@ -195,6 +196,7 @@ extern "C" void hip_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing copy_float_a_tmatc_kernel: %s\n",hipGetErrorString(cuerr));
+    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
   }
 }
 
@@ -254,6 +256,7 @@ extern "C" void hip_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, do
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing copy_double_complex_a_tmatc_kernel: %s\n",hipGetErrorString(cuerr));
+    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
   }
 }
 
@@ -312,5 +315,6 @@ extern "C" void hip_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, floa
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
     printf("Error in executing copy_float_complex_a_tmatc_kernel: %s\n",hipGetErrorString(cuerr));
+    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
   }
 }
