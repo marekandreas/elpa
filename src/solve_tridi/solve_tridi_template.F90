@@ -677,12 +677,13 @@ subroutine solve_tridi_&
        ! If DSTEQR fails also, we don't know what to do further ...
 
        if (info /= 0) then
-         if (wantDebug) &
+         if (wantDebug) then
            write(error_unit,'(a,i8,a)') 'ELPA1_solve_tridi_single: ERROR: Lapack routine DSTEQR failed, info= ',info,', Aborting!'
-           success = .false.
-           return
          endif
-       end if
+         success = .false.
+         return
+       endif
+     end if
 
        deallocate(work,iwork,ds,es, stat=istat, errmsg=errorMessage)
        check_deallocate("solve_tridi_single: work, iwork, ds, es", istat, errorMessage)
