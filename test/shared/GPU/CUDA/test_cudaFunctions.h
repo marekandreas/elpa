@@ -1,5 +1,5 @@
 //
-//    Copyright 2022, P. Karpov, MPCDF
+//    Copyright 2023, P. Karpov
 //
 //    This file is part of ELPA.
 //
@@ -45,80 +45,28 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
+//
+// --------------------------------------------------------------------------------------------------
+//
+#pragma once
+#include <stdint.h> // for intptr_t
 
-#include <stdio.h>
-#include <math.h>
-
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <alloca.h>
-#include <complex.h>
-
-#include "./test_gpu_vendor_agnostic_layerFunctions.h"
-
-#include "config-f90.h"
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-#include "./CUDA/test_cudaFunctions.h"
-#endif 
-#ifdef WITH_AMD_GPU_VERSION
-#include "./ROCm/test_rocmFunctions.h"
-#endif 
-
-void set_gpu_parameters(){
-#ifdef WITH_NVIDIA_GPU_VERSION
-   gpuMemcpyHostToDevice = cudaMemcpyHostToDeviceFromC();
-   gpuMemcpyDeviceToHost = cudaMemcpyDeviceToHostFromC();
-#endif 
-#ifdef WITH_AMD_GPU_VERSION
-   gpuMemcpyHostToDevice = hipMemcpyHostToDeviceFromC();
-   gpuMemcpyDeviceToHost = hipMemcpyDeviceToHostFromC();
-#endif 
-}
-
-int gpuGetDeviceCount(int *count){
-#ifdef WITH_NVIDIA_GPU_VERSION
-   return cudaGetDeviceCountFromC(count);
-#endif 
-#ifdef WITH_AMD_GPU_VERSION
-   return hipGetDeviceCountFromC(count);
+#ifdef __cplusplus
+extern "C"
+{
 #endif
-   return -1;
+  int cudaSetDeviceFromC(int n);
+  int cudaGetDeviceCountFromC(int *count);
+  int cudaMallocFromC(intptr_t *a, size_t width_height);
+  int cudaFreeFromC(intptr_t *a);
+  int cudaMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir);
+  int cudaMemcpyDeviceToDeviceFromC(void);
+  int cudaMemcpyHostToDeviceFromC(void);
+  int cudaMemcpyDeviceToHostFromC(void);
+  int cudaHostRegisterDefaultFromC(void);
+  int cudaHostRegisterPortableFromC(void);
+  int cudaHostRegisterMappedFromC(void);
+#ifdef __cplusplus
 }
-
-int gpuSetDevice(int n){
-#ifdef WITH_NVIDIA_GPU_VERSION
-   return cudaSetDeviceFromC(n);
-#endif   
-#ifdef WITH_AMD_GPU_VERSION
-   return hipSetDeviceFromC(n);
 #endif
-}
 
-int gpuMalloc(intptr_t *a, size_t width_height) {
-#ifdef WITH_NVIDIA_GPU_VERSION
-   return cudaMallocFromC(a, width_height);
-#endif   
-#ifdef WITH_AMD_GPU_VERSION
-   return hipMallocFromC(a, width_height);
-#endif 
-}
-
-int gpuFree(intptr_t *a) {
-#ifdef WITH_NVIDIA_GPU_VERSION
-   return cudaFreeFromC(a);
-#endif   
-#ifdef WITH_AMD_GPU_VERSION
-   return hipFreeFromC(a);
-#endif  
-}
-
-int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir){
-#ifdef WITH_NVIDIA_GPU_VERSION
-   return cudaMemcpyFromC(dest, src, count, dir);
-#endif  
-#ifdef WITH_AMD_GPU_VERSION
-   return hipMemcpyFromC(dest, src, count, dir);
-#endif  
-}

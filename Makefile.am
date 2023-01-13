@@ -1008,6 +1008,8 @@ EXTRA_DIST = \
   test/shared/test_analytic_template.F90 \
   test/shared/test_scalapack_template.F90 \
   test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h \
+  test/shared/GPU/CUDA/test_cudaFunctions.h \
+  test/shared/GPU/ROCm/test_rocmFunctions.h \
   test_project_1stage/Makefile.am \
   test_project_1stage/autogen.sh \
   test_project_1stage/configure.ac \
