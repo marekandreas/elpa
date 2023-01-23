@@ -140,9 +140,7 @@ subroutine tridiag_band_&
   character(200)                               :: errorMessage
   character(20)                                :: gpuString
 
-#ifndef WITH_MPI
   integer(kind=ik)                             :: startAddr
-#endif
 
    integer(kind=MPI_KIND)                      :: allreduce_request1, allreduce_request2
    logical                                     :: useNonBlockingCollectivesAll
@@ -321,9 +319,11 @@ subroutine tridiag_band_&
       num_chunks  = num_chunks+1
 #ifdef WITH_MPI
       if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_irecv(hh_trans(1,num_hh_vecs+1), int(nb*local_size,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION_EXPL,     &
-                    int(nt,kind=MPI_KIND), int(10+n-block_limits(nt),kind=MPI_KIND), &
-                    int(mpi_comm_all,kind=MPI_KIND), ireq_hhr(num_chunks), mpierr)
+      if (np_rows*np_cols>1) then
+        call mpi_irecv(hh_trans(1,num_hh_vecs+1), int(nb*local_size,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION_EXPL,     &
+                      int(nt,kind=MPI_KIND), int(10+n-block_limits(nt),kind=MPI_KIND), &
+                      int(mpi_comm_all,kind=MPI_KIND), ireq_hhr(num_chunks), mpierr)
+      endif
       if (wantDebug) call obj%timer%stop("mpi_communication")
 
 #else /* WITH_MPI */
@@ -412,9 +412,9 @@ subroutine tridiag_band_&
 #endif /* WITH_MPI */
   endif
 
-#ifndef WITH_MPI
+if (np_rows*np_cols==1) then
   startAddr = ubound(hh_trans,dim=2)
-#endif /* WITH_MPI */
+endif
 
 #ifdef WITH_OPENMP_TRADITIONAL
    do istep=1,na-nblockEnd-block_limits(my_pe)*nb
@@ -843,9 +843,14 @@ subroutine tridiag_band_&
 
 #ifdef WITH_MPI
           if (wantDebug) call obj%timer%start("mpi_communication")
-          call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                         global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
-                         int(10+iblk,kind=MPI_KIND), int(mpi_comm_all,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
+          if (np_rows*np_cols>1) then
+            call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                           global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1,np_cols)), &
+                           int(10+iblk,kind=MPI_KIND), int(mpi_comm_all,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
+          else
+            startAddr = startAddr - hh_cnt(iblk)
+            hh_trans(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
+          endif
           if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
           ! do the post-poned irecv here
@@ -1150,10 +1155,15 @@ subroutine tridiag_band_&
 
 #ifdef WITH_MPI
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), &
-                       MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                       global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
-                       int(10+iblk,kind=MPI_KIND), int(mpi_comm_all,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
+        if (np_rows*np_cols>1) then
+          call mpi_isend(hh_send(1,1,iblk), int(nb*hh_cnt(iblk),kind=MPI_KIND), &
+                         MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                         global_id(hh_dst(iblk), mod(iblk+block_limits(my_pe)-1, np_cols)), &
+                         int(10+iblk,kind=MPI_KIND), int(mpi_comm_all,kind=MPI_KIND), ireq_hhs(iblk), mpierr)
+        else
+          startAddr = startAddr - hh_cnt(iblk)
+          hh_trans(1:nb,startAddr+1:startAddr+hh_cnt(iblk)) = hh_send(1:nb,1:hh_cnt(iblk),iblk)
+        endif
         if (wantDebug) call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
         ! do the post-poned irecv here
@@ -1185,8 +1195,10 @@ subroutine tridiag_band_&
 !    stop 1
 !  endif
 
-  call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
-  call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+  if(np_rows*np_cols>1) then
+    call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
+    call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+  endif
 ! deallocate(mpi_statuses, stat=istat, errmsg=errorMessage)
 ! if (istat .ne. 0) then
 !   print *,"tridiag_band_real: error when deallocating mpi_statuses"//errorMessage
@@ -1201,9 +1213,11 @@ subroutine tridiag_band_&
   if (wantDebug) call obj%timer%start("mpi_communication")
   call mpi_wait(ireq_ab,MPI_STATUS_IGNORE,mpierr)
   call mpi_wait(ireq_hv,MPI_STATUS_IGNORE,mpierr)
-
-  call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
-  call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+  
+  if(np_rows*np_cols>1) then
+    call mpi_waitall(nblocks, ireq_hhs, MPI_STATUSES_IGNORE, mpierr)
+    call mpi_waitall(num_chunks, ireq_hhr, MPI_STATUSES_IGNORE, mpierr)
+  endif
   if (wantDebug) call obj%timer%stop("mpi_communication")
 #endif
 

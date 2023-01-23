@@ -767,7 +767,7 @@ max_threads, isSkewsymmetric)
        end do
 #ifdef WITH_MPI
        call obj%timer%start("bcast_multi")
-       if(lrex.gt.0) then
+       if(lrex.gt.0 .and. np_rows*np_cols.gt.1) then
           allocate(breq(0:nblocks-1))
           do j=0,nblocks-1
              !mix bcasts with different root to level the stess on the network
