@@ -167,10 +167,10 @@ then
       echo " "	
       echo "Exit Code of sbatch: $exitCode"	
       echo " "	
-      cat ./ELPA_CI.out.*	
+      cat ./ELPA_CI_2gpu.out.*	
       #if [ $exitCode -ne 0 ]	
       #then	
-      cat ./ELPA_CI.err.*	
+      cat ./ELPA_CI_2gpu.err.*	
       #fi
     
     # CPU runners    
