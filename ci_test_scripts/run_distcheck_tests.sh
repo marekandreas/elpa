@@ -110,9 +110,9 @@ then
   then
     CLUSTER="talos"
   fi
-  if [[ "$HOST" =~ "freya" ]]
+  if [[ "$HOST" =~ "ada" ]]
   then
-    CLUSTER="freya"
+    CLUSTER="ada"
   fi
   if [[ "$HOST" =~ "draco" ]]
   then
