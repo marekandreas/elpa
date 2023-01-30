@@ -114,55 +114,114 @@ then
   then
     CLUSTER="ada"
   fi
+  if [[ "$HOST" =~ "draco" ]]
+  then
+    CLUSTER="draco"
+  fi
 
   echo "Running on $CLUSTER with runner $CI_RUNNER_DESCRIPTION with tag $CI_RUNNER_TAGS on $mpiTasks tasks"
 
   #distcheck
   if [[ "$CI_RUNNER_TAGS" =~ "distcheck" ]]
   then
-    cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
-    echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "if [ \$SLURM_PROCID -eq 0 ]" >> ./run_${CLUSTER}_1node.sh
-    echo "then" >> ./run_${CLUSTER}_1node.sh
-    echo "echo \"process \$SLURM_PROCID running configure\"" >> ./run_${CLUSTER}_1node.sh
-    echo "#decouple from SLURM (maybe this could be removed)" >> ./run_${CLUSTER}_1node.sh
-    echo "export _save_SLURM_MPI_TYPE=\$SLURM_MPI_TYPE" >> ./run_${CLUSTER}_1node.sh
-    echo "export _save_I_MPI_SLURM_EXT=\$I_MPI_SLURM_EXT"  >> ./run_${CLUSTER}_1node.sh
-    echo "export _save_I_MPI_PMI_LIBRARY=\$I_MPI_PMI_LIBRARY" >> ./run_${CLUSTER}_1node.sh
-    echo "export _save_I_MPI_PMI2=\$I_MPI_PMI2" >> ./run_${CLUSTER}_1node.sh
-    echo "export _save_I_MPI_HYDRA_BOOTSTRAP=\$I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node.sh
-    echo "unset SLURM_MPI_TYPE I_MPI_SLURM_EXT I_MPI_PMI_LIBRARY I_MPI_PMI2 I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node.sh
-    echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "./configure " "$configureArgs" " || { cat config.log; exit 1; }"  >> ./run_${CLUSTER}_1node.sh
-    echo "fi" >> ./run_${CLUSTER}_1node.sh
-    echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
-    echo "export DISTCHECK_CONFIGURE_FLAGS=\" $distcheckConfigureArgs \" "  >> ./run_${CLUSTER}_1node.sh
-    echo "make distcheck TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" || { chmod u+rwX -R . ; exit 1 ; } " >> ./run_${CLUSTER}_1node.sh
-    echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "exitCode=\$?" >> ./run_${CLUSTER}_1node.sh
-    echo " " >> ./run_${CLUSTER}_1node.sh
-    echo "##copy everything back from /tmp/elpa to runner directory" >> ./run_${CLUSTER}_1node.sh
-    echo "#cp -r * \$runner_path" >> ./run_${CLUSTER}_1node.sh
-    echo "#cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node.sh
-    echo "exit \$exitCode" >> ./run_${CLUSTER}_1node.sh
-    echo " "
-    echo "Job script for the run"
-    cat ./run_${CLUSTER}_1node.sh
-    echo " "
-    echo "Submitting to SLURM"
-    sbatch -W ./run_${CLUSTER}_1node.sh
-    exitCode=$?
+    
+    # GPU runners
+    if [ "$gpuJob" == "yes" ]
+    then
+      echo "GPU run"
+      cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node_2GPU.sh .
+      echo "if \[ \$SLURM_PROCID -eq 0 \]" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "then" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "echo \"process \$SLURM_PROCID running configure\"" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "#decouple from SLURM (maybe this could be removed)" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export _save_SLURM_MPI_TYPE=\$SLURM_MPI_TYPE" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export _save_I_MPI_SLURM_EXT=\$I_MPI_SLURM_EXT"  >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export _save_I_MPI_PMI_LIBRARY=\$I_MPI_PMI_LIBRARY" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export _save_I_MPI_PMI2=\$I_MPI_PMI2" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export _save_I_MPI_HYDRA_BOOTSTRAP=\$I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "unset SLURM_MPI_TYPE I_MPI_SLURM_EXT I_MPI_PMI_LIBRARY I_MPI_PMI2 I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "./configure " "$configureArgs" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "fi" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo " " >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export OMP_NUM_THREADS=$ompThreads" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node_2GPU.sh
+      echo "export DISTCHECK_CONFIGURE_FLAGS=\" $distcheckConfigureArgs \" "  >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo "make distcheck TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" || { chmod u+rwX -R . ; exit 1 ; } " >> ./run_${CLUSTER}_1node_2GPU.sh
+      
+      echo " " >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo "exitCode=\$?" >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo " " >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo "#copy everything back from /tmp/elpa to runner directory" >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo "cp -r * \$runner_path" >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo "cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo "exit \$exitCode" >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo " "	
+      echo "Job script for the run"	
+      cat ./run_${CLUSTER}_1node_2GPU.sh	
+      echo " "	
+      echo "Submitting to SLURM"	
+      sbatch -W ./run_${CLUSTER}_1node_2GPU.sh	
+      exitCode=$?	
+      echo " "	
+      echo "Exit Code of sbatch: $exitCode"	
+      echo " "	
+      cat ./ELPA_CI_2gpu.out.*	
+      #if [ $exitCode -ne 0 ]	
+      #then	
+      cat ./ELPA_CI_2gpu.err.*	
+      #fi
+    
+    # CPU runners    
+    else
+      echo "CPU run"  
+      cp $HOME/runners/job_script_templates/run_${CLUSTER}_1node.sh .
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "if [ \$SLURM_PROCID -eq 0 ]" >> ./run_${CLUSTER}_1node.sh
+      echo "then" >> ./run_${CLUSTER}_1node.sh
+      echo "echo \"process \$SLURM_PROCID running configure\"" >> ./run_${CLUSTER}_1node.sh
+      echo "#decouple from SLURM (maybe this could be removed)" >> ./run_${CLUSTER}_1node.sh
+      echo "export _save_SLURM_MPI_TYPE=\$SLURM_MPI_TYPE" >> ./run_${CLUSTER}_1node.sh
+      echo "export _save_I_MPI_SLURM_EXT=\$I_MPI_SLURM_EXT"  >> ./run_${CLUSTER}_1node.sh
+      echo "export _save_I_MPI_PMI_LIBRARY=\$I_MPI_PMI_LIBRARY" >> ./run_${CLUSTER}_1node.sh
+      echo "export _save_I_MPI_PMI2=\$I_MPI_PMI2" >> ./run_${CLUSTER}_1node.sh
+      echo "export _save_I_MPI_HYDRA_BOOTSTRAP=\$I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node.sh
+      echo "unset SLURM_MPI_TYPE I_MPI_SLURM_EXT I_MPI_PMI_LIBRARY I_MPI_PMI2 I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "./configure " "$configureArgs" " || { cat config.log; exit 1; }"  >> ./run_${CLUSTER}_1node.sh
+      echo "fi" >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "export TASKS=$mpiTasks" >> ./run_${CLUSTER}_1node.sh
+      echo "export DISTCHECK_CONFIGURE_FLAGS=\" $distcheckConfigureArgs \" "  >> ./run_${CLUSTER}_1node.sh
+      echo "make distcheck TEST_FLAGS=\" $matrixSize $nrEV $blockSize \" || { chmod u+rwX -R . ; exit 1 ; } " >> ./run_${CLUSTER}_1node.sh
+      
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "exitCode=\$?" >> ./run_${CLUSTER}_1node.sh
+      echo " " >> ./run_${CLUSTER}_1node.sh
+      echo "#copy everything back from /tmp/elpa to runner directory" >> ./run_${CLUSTER}_1node.sh
+      echo "cp -r * \$runner_path" >> ./run_${CLUSTER}_1node.sh
+      echo "cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node.sh
+      echo "exit \$exitCode" >> ./run_${CLUSTER}_1node.sh
+      echo " "
+      echo "Job script for the run"
+      cat ./run_${CLUSTER}_1node.sh
+      echo " "
+      echo "Submitting to SLURM"
+      sbatch -W ./run_${CLUSTER}_1node.sh
+      exitCode=$?
 
-    echo " "
-    echo "Exit Code of sbatch: $exitCode"
-    echo " "
-    cat ./ELPA_CI.out.*
-    #if [ $exitCode -ne 0 ]
-    #then
-    cat ./ELPA_CI.err.*
-    #fi
-
+      echo " "
+      echo "Exit Code of sbatch: $exitCode"
+      echo " "
+      cat ./ELPA_CI.out.*
+      #if [ $exitCode -ne 0 ]
+      #then
+      cat ./ELPA_CI.err.*
+      #fi
+    
+    fi
+  
   fi
 
   if [ -f ./test-suite.log ]
