@@ -42,6 +42,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! Author: Andreas Marek, MPCDF
+! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
@@ -116,12 +117,12 @@ module sycl_functions
 !  end interface
 
 !  interface
-!    function sycl_solver_set_stream_c(syclHandle, syclStream) result(istat) &
+!    function sycl_solver_set_stream_c(sycl_solverHandle, syclStream) result(istat) &
 !             bind(C, name="syclsolverSetStreamFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !
-!      integer(kind=C_intptr_T), value  :: syclHandle
+!      integer(kind=C_intptr_T), value  :: sycl_solverHandle
 !      integer(kind=C_intptr_T), value  :: syclStream
 !      integer(kind=C_INT)              :: istat
 !    end function
@@ -149,21 +150,21 @@ module sycl_functions
   end interface
 
   interface
-    function sycl_solver_create_c(syclHandle) result(istat) &
+    function sycl_solver_create_c(sycl_solverHandle) result(istat) &
              bind(C, name="syclsolverCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T) :: syclHandle
+      integer(kind=C_intptr_T) :: sycl_solverHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
 
   interface
-    function sycl_solver_destroy_c(syclHandle) result(istat) &
+    function sycl_solver_destroy_c(sycl_solverHandle) result(istat) &
              bind(C, name="syclsolverDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T) :: syclHandle
+      integer(kind=C_intptr_T) :: sycl_solverHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
@@ -1265,7 +1266,7 @@ module sycl_functions
 !      integer(kind=C_intptr_t)                  :: syclStream
 !      logical                                   :: success
 !
-!#ifdef WITH_SYCL_GPU_VERSION
+!#ifdef WITH_SYCL_SYCL_SOLVER
 !      success = sycl_solver_set_stream_c(sycl_solverHandle, syclStream) /= 0
 !#else
 !      success = .true.
@@ -1340,7 +1341,7 @@ module sycl_functions
       implicit none
       integer(kind=C_intptr_t)                  :: sycl_solverHandle
       logical                                   :: success
-#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       success = sycl_solver_create_c(sycl_solverHandle) /= 0
 #else
       success = .true.
@@ -1352,7 +1353,7 @@ module sycl_functions
       implicit none
       integer(kind=C_intptr_t)                  :: sycl_solverHandle
       logical                                   :: success
-#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       success = sycl_solver_destroy_c(sycl_solverHandle) /= 0
 #else
       success = .true.
@@ -1782,7 +1783,7 @@ module sycl_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: sycl_solverHandle
-#ifdef WITH_SYCL_SYCL_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call sycl_solver_Dtrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -1795,7 +1796,7 @@ module sycl_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: sycl_solverHandle
-#ifdef WITH_SYCL_SYCL_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call sycl_solver_Dpotrf_c(sycl_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
@@ -1930,7 +1931,7 @@ module sycl_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: sycl_solverHandle
-#ifdef WITH_SYCL_SYCL_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call sycl_solver_Strtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -1943,7 +1944,7 @@ module sycl_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: sycl_solverHandle
-#ifdef WITH_SYCL_SYCL_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call sycl_solver_Spotrf_c(sycl_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
@@ -2078,7 +2079,7 @@ module sycl_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: sycl_solverHandle
-#ifdef WITH_SYCL_SYCL_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call sycl_solver_Ztrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -2091,7 +2092,7 @@ module sycl_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: sycl_solverHandle
-#ifdef WITH_SYCL_SYCL_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call sycl_solver_Zpotrf_c(sycl_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
@@ -2226,7 +2227,7 @@ module sycl_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: sycl_solverHandle
-#ifdef WITH_SYCL_SYCL_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call sycl_solver_Ctrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -2239,7 +2240,7 @@ module sycl_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: sycl_solverHandle
-#ifdef WITH_SYCL_SYCL_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call sycl_solver_Cpotrf_c(sycl_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine

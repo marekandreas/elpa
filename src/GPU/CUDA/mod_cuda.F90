@@ -42,6 +42,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! Author: Andreas Marek, MPCDF
+! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
@@ -116,12 +117,12 @@ module cuda_functions
   end interface
 
   interface
-    function cusolver_set_stream_c(cudaHandle, cudaStream) result(istat) &
+    function cusolver_set_stream_c(cusolverHandle, cudaStream) result(istat) &
              bind(C, name="cusolverSetStreamFromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=C_intptr_T), value  :: cudaHandle
+      integer(kind=C_intptr_T), value  :: cusolverHandle
       integer(kind=C_intptr_T), value  :: cudaStream
       integer(kind=C_INT)              :: istat
     end function
@@ -149,21 +150,21 @@ module cuda_functions
   end interface
 
   interface
-    function cusolver_create_c(cudaHandle) result(istat) &
+    function cusolver_create_c(cusolverHandle) result(istat) &
              bind(C, name="cusolverCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T) :: cudaHandle
+      integer(kind=C_intptr_T) :: cusolverHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
 
   interface
-    function cusolver_destroy_c(cudaHandle) result(istat) &
+    function cusolver_destroy_c(cusolverHandle) result(istat) &
              bind(C, name="cusolverDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value :: cudaHandle
+      integer(kind=C_intptr_T), value :: cusolverHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
@@ -1265,7 +1266,7 @@ module cuda_functions
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 
-#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_CUSOLVER
       success = cusolver_set_stream_c(cusolverHandle, cudaStream) /= 0
 #else
       success = .true.
@@ -1340,7 +1341,7 @@ module cuda_functions
       implicit none
       integer(kind=C_intptr_t)                  :: cusolverHandle
       logical                                   :: success
-#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_CUSOLVER
       success = cusolver_create_c(cusolverHandle) /= 0
 #else
       success = .true.
@@ -1352,7 +1353,7 @@ module cuda_functions
       implicit none
       integer(kind=C_intptr_t)                  :: cusolverHandle
       logical                                   :: success
-#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_NVIDIA_CUSOLVER
       success = cusolver_destroy_c(cusolverHandle) /= 0
 #else
       success = .true.

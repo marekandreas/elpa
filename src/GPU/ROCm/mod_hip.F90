@@ -42,6 +42,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! Author: Andreas Marek, MPCDF
+! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
@@ -116,12 +117,12 @@ module hip_functions
   end interface
 
 !  interface
-!    function rocsolver_set_stream_c(hipHandle, hipStream) result(istat) &
+!    function rocsolver_set_stream_c(rocsolverHandle, hipStream) result(istat) &
 !             bind(C, name="rocsolverSetStreamFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !
-!      integer(kind=C_intptr_T), value  :: hipHandle
+!      integer(kind=C_intptr_T), value  :: rocsolverHandle
 !      integer(kind=C_intptr_T), value  :: hipStream
 !      integer(kind=C_INT)              :: istat
 !    end function
@@ -149,21 +150,21 @@ module hip_functions
   end interface
 
 !  interface
-!    function rocsolver_create_c(hipHandle) result(istat) &
+!    function rocsolver_create_c(rocsolverHandle) result(istat) &
 !             bind(C, name="rocsolverCreateFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
-!      integer(kind=C_intptr_T) :: hipHandle
+!      integer(kind=C_intptr_T) :: rocsolverHandle
 !      integer(kind=C_INT)      :: istat
 !    end function
 !  end interface
 !
 !  interface
-!    function rocsolver_destroy_c(hipHandle) result(istat) &
+!    function rocsolver_destroy_c(rocsolverHandle) result(istat) &
 !             bind(C, name="rocsolverDestroyFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
-!      integer(kind=C_intptr_T), value :: hipHandle
+!      integer(kind=C_intptr_T), value :: rocsolverHandle
 !      integer(kind=C_INT)      :: istat
 !    end function
 !  end interface
@@ -1265,7 +1266,7 @@ module hip_functions
 !      integer(kind=C_intptr_t)                  :: hipStream
 !      logical                                   :: success
 !
-!#ifdef WITH_AMD_GPU_VERSION
+!#ifdef WITH_AMD_ROCSOLVER
 !      success = rocsolver_set_stream_c(rocsolverHandle, hipStream) /= 0
 !#else
 !      success = .true.
@@ -1340,7 +1341,7 @@ module hip_functions
 !      implicit none
 !      integer(kind=C_intptr_t)                  :: rocsolverHandle
 !      logical                                   :: success
-!#ifdef WITH_AMD_GPU_VERSION
+!#ifdef WITH_AMD_ROCSOLVER
 !      success = rocsolver_create_c(rocsolverHandle) /= 0
 !#else
 !      success = .true.
@@ -1352,7 +1353,7 @@ module hip_functions
 !      implicit none
 !      integer(kind=C_intptr_t)                  :: rocsolverHandle
 !      logical                                   :: success
-!#ifdef WITH_AMD_GPU_VERSION
+!#ifdef WITH_AMD_ROCSOLVER
 !      success = rocsolver_destroy_c(rocsolverHandle) /= 0
 !#else
 !      success = .true.
