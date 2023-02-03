@@ -257,6 +257,7 @@ module test_cuda_functions
 
       integer(kind=ik), intent(in)  :: n
       logical                       :: success
+      success = .false.
 #ifdef WITH_NVIDIA_GPU_VERSION
       success = cuda_setdevice_c(int(n,kind=c_int)) /= 0
 #else

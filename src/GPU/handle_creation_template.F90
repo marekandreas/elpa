@@ -69,9 +69,9 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_NVIDIA_CUSOLVER
           do thread=0, maxThreads-1
-            !success = cusolver_create(handle_tmp)
-            !obj%gpu_setup%cusolverHandleArray(thread) = handle_tmp
-            success = cusolver_create(obj%gpu_setup%cusolverHandleArray(thread))
+            success = cusolver_create(handle_tmp)
+            obj%gpu_setup%cusolverHandleArray(thread) = handle_tmp
+            obj%gpu_setup%gpusolverHandleArray(thread) = handle_tmp
             if (.not.(success)) then
               print *,"Cannot create cusolver handle"
               stop 1
@@ -96,9 +96,10 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
           do thread=0, maxThreads-1
-            !success = openmp_offload_solver_create(handle_tmp)
-            !obj%gpu_setup%openmpOffloadsolverHandleArray(thread) = handle_tmp
-            success = openmp_offload_solver_create(obj%gpu_setup%openmpOffloadsolverHandleArray(thread))
+            success = openmp_offload_solver_create(handle_tmp)
+            obj%gpu_setup%openmpOffloadsolverHandleArray(thread) = handle_tmp
+            obj%gpu_setup%gpusolverHandleArray(thread) = handle_tmp
+            !success = openmp_offload_solver_create(obj%gpu_setup%openmpOffloadsolverHandleArray(thread))
             if (.not.(success)) then
               print *,"Cannot create openmpOffloadsolver handle"
               stop 1
@@ -109,9 +110,10 @@
 #ifdef WITH_SYCL_GPU_VERSION
 #ifdef WITH_SYCL_SOLVER
           do thread=0, maxThreads-1
-            !success = sycl_solver_create(handle_tmp)
-            !obj%gpu_setup%syclsolverHandleArray(thread) = handle_tmp
-            success = sycl_solver_create(obj%gpu_setup%syclsolverHandleArray(thread))
+            success = sycl_solver_create(handle_tmp)
+            obj%gpu_setup%syclsolverHandleArray(thread) = handle_tmp
+            obj%gpu_setup%gpusolverHandleArray(thread) = handle_tmp
+            !success = sycl_solver_create(obj%gpu_setup%syclsolverHandleArray(thread))
             if (.not.(success)) then
               print *,"Cannot create syclsolver handle"
               stop 1
