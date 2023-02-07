@@ -1318,7 +1318,7 @@ module sycl_functions
       integer(kind=C_intptr_t)                  :: mkl_syclHandle
       logical                                   :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      success = cublas_create_c(mkl_syclHandle) /= 0
+      success = mkl_sycl_create_c(mkl_syclHandle) /= 0
 #else
       success = .true.
 #endif

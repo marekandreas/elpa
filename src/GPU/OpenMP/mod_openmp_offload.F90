@@ -1318,7 +1318,7 @@ module openmp_offload_functions
       integer(kind=C_intptr_t)                  :: mkl_openmp_offloadHandle
       logical                                   :: success
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = cublas_create_c(mkl_openmp_offloadHandle) /= 0
+      success = mkl_openmp_offload_create_c(mkl_openmp_offloadHandle) /= 0
 #else
       success = .true.
 #endif

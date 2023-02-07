@@ -1318,7 +1318,7 @@ module hip_functions
       integer(kind=C_intptr_t)                  :: rocblasHandle
       logical                                   :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = cublas_create_c(rocblasHandle) /= 0
+      success = rocblas_create_c(rocblasHandle) /= 0
 #else
       success = .true.
 #endif
