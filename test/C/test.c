@@ -161,7 +161,7 @@
 #endif
 
 #define TEST_GPU  0
-#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1)
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_SYCL == 1)
 #undef TEST_GPU
 #define TEST_GPU  1
 #endif

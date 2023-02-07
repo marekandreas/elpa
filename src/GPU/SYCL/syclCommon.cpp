@@ -164,7 +164,7 @@ void elpa::gpu::sycl::printGpuInfo() {
       std::cout << "       * Max Compute Units:                       " << device.get_info<cl::sycl::info::device::max_compute_units>() << std::endl;
       std::cout << "       * Double Precision Floating Point support: " << ((device.has(cl::sycl::aspect::fp64)) ? "Yes" : "No") << std::endl;
       std::cout << "       * Max Work Item Dimensions:                " << device.get_info<cl::sycl::info::device::max_work_item_dimensions>() << std::endl;
-      auto maxWorkItemSize = device.get_info<cl::sycl::info::device::max_work_item_sizes>();
+      auto maxWorkItemSize = device.get_info<cl::sycl::info::device::max_work_item_sizes<3>>();
       std::cout << "       * Max Work Item Sizes:                     " << "{" << maxWorkItemSize[0] << ", " << maxWorkItemSize[1] << ", " << maxWorkItemSize[2] << "}" << std::endl;
       std::cout << "       * Max Work Group Sizes:                    " << device.get_info<cl::sycl::info::device::max_work_group_size>() << std::endl;
       std::cout << "       * Max Memory Alloc size:                   " << device.get_info<cl::sycl::info::device::max_mem_alloc_size>() << std::endl;
