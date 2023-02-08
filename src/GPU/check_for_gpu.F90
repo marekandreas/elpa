@@ -273,8 +273,7 @@ module mod_check_for_gpu
           success = .true.
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-          numberOfDevices = sycl_getdevicecount()
-          success = .true.
+          success = sycl_getdevicecount(numberOfDevices)
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION

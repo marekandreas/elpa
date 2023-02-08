@@ -130,6 +130,28 @@ module sycl_functions
 
   ! functions to set and query the GPU devices
   interface
+     function sycl_blas_create_c(handle) result(istat) &
+              bind(C, name="syclblasCreateFromC")
+       use, intrinsic :: iso_c_binding
+
+       implicit none
+       integer(kind=C_intptr_T) :: handle
+       integer(kind=C_INT)      :: istat
+     end function
+  end interface
+
+  interface
+     function sycl_blas_destroy_c(handle) result(istat) &
+              bind(C, name="syclblasDestroyFromC")
+       use, intrinsic :: iso_c_binding
+
+       implicit none
+       integer(kind=C_intptr_T) :: handle
+       integer(kind=C_INT)      :: istat
+     end function
+  end interface
+
+  interface
     function mkl_sycl_create_c(syclHandle) result(istat) &
              bind(C, name="mklSyclCreateFromC")
       use, intrinsic :: iso_c_binding
@@ -535,7 +557,7 @@ module sycl_functions
 
   interface
     subroutine sycl_solver_Dtrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="syclsolverDtrtri_elpa_wrapper")
+                              bind(C,name="syclsolverDtrtriFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo, diag
@@ -548,7 +570,7 @@ module sycl_functions
 
   interface
     subroutine sycl_solver_Dpotrf_c(sycl_solverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="syclsolverDpotrf_elpa_wrapper")
+                              bind(C,name="syclsolverDpotrfFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
@@ -566,7 +588,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Dgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name="mklSyclDgemm_elpa_wrapper")
+                              bind(C,name="mklSyclDgemmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
@@ -580,7 +602,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Dgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name="mklSyclDgemm_elpa_wrapper")
+                              bind(C,name="mklSyclDgemmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
@@ -599,7 +621,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Dcopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklSyclDcopy_elpa_wrapper")
+                              bind(C,name="mklSyclDcopyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
@@ -611,7 +633,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Dcopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklSyclDcopy_elpa_wrapper")
+                              bind(C,name="mklSyclDcopyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
@@ -628,7 +650,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Dtrmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclDtrmm_elpa_wrapper")
+                              bind(C,name="mklSyclDtrmmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -642,7 +664,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Dtrmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclDtrmm_elpa_wrapper")
+                              bind(C,name="mklSyclDtrmmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -661,7 +683,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Dtrsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclDtrsm_elpa_wrapper")
+                              bind(C,name="mklSyclDtrsmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -675,7 +697,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Dtrsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclDtrsm_elpa_wrapper")
+                              bind(C,name="mklSyclDtrsmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -689,7 +711,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Dgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="mklSyclDgemv_elpa_wrapper")
+                              bind(C,name="mklSyclDgemvFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta
@@ -703,7 +725,7 @@ module sycl_functions
 
   interface
     subroutine sycl_solver_Strtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="syclsolverStrtri_elpa_wrapper")
+                              bind(C,name="syclsolverStrtriFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo, diag
@@ -716,7 +738,7 @@ module sycl_functions
 
   interface
     subroutine sycl_solver_Spotrf_c(sycl_solverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="syclsolverSpotrf_elpa_wrapper")
+                              bind(C,name="syclsolverSpotrfFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
@@ -734,7 +756,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Sgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name="mklSyclSgemm_elpa_wrapper")
+                              bind(C,name="mklSyclSgemmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
@@ -748,7 +770,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Sgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name="mklSyclSgemm_elpa_wrapper")
+                              bind(C,name="mklSyclSgemmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
@@ -767,7 +789,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Scopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklSyclScopy_elpa_wrapper")
+                              bind(C,name="mklSyclScopyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
@@ -779,7 +801,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Scopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklSyclScopy_elpa_wrapper")
+                              bind(C,name="mklSyclScopyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
@@ -796,7 +818,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Strmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclStrmm_elpa_wrapper")
+                              bind(C,name="mklSyclStrmmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -810,7 +832,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Strmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclStrmm_elpa_wrapper")
+                              bind(C,name="mklSyclStrmmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -829,7 +851,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Strsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclStrsm_elpa_wrapper")
+                              bind(C,name="mklSyclStrsmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -843,7 +865,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Strsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclStrsm_elpa_wrapper")
+                              bind(C,name="mklSyclStrsmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -857,7 +879,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Sgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="mklSyclSgemv_elpa_wrapper")
+                              bind(C,name="mklSyclSgemvFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta
@@ -871,7 +893,7 @@ module sycl_functions
 
   interface
     subroutine sycl_solver_Ztrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="syclsolverZtrtri_elpa_wrapper")
+                              bind(C,name="syclsolverZtrtriFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo, diag
@@ -884,7 +906,7 @@ module sycl_functions
 
   interface
     subroutine sycl_solver_Zpotrf_c(sycl_solverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="syclsolverZpotrf_elpa_wrapper")
+                              bind(C,name="syclsolverZpotrfFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
@@ -902,7 +924,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Zgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name="mklSyclZgemm_elpa_wrapper")
+                              bind(C,name="mklSyclZgemmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
@@ -916,7 +938,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Zgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name="mklSyclZgemm_elpa_wrapper")
+                              bind(C,name="mklSyclZgemmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
@@ -935,7 +957,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Zcopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklSyclZcopy_elpa_wrapper")
+                              bind(C,name="mklSyclZcopyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
@@ -947,7 +969,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Zcopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklSyclZcopy_elpa_wrapper")
+                              bind(C,name="mklSyclZcopyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
@@ -964,7 +986,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ztrmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclZtrmm_elpa_wrapper")
+                              bind(C,name="mklSyclZtrmmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -978,7 +1000,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ztrmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclZtrmm_elpa_wrapper")
+                              bind(C,name="mklSyclZtrmmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -997,7 +1019,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ztrsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclZtrsm_elpa_wrapper")
+                              bind(C,name="mklSyclZtrsmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -1011,7 +1033,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ztrsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclZtrsm_elpa_wrapper")
+                              bind(C,name="mklSyclZtrsmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -1025,7 +1047,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Zgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="mklSyclZgemv_elpa_wrapper")
+                              bind(C,name="mklSyclZgemvFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta
@@ -1039,7 +1061,7 @@ module sycl_functions
 
   interface
     subroutine sycl_solver_Ctrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="syclsolverCtrtri_elpa_wrapper")
+                              bind(C,name="syclsolverCtrtriFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo, diag
@@ -1052,7 +1074,7 @@ module sycl_functions
 
   interface
     subroutine sycl_solver_Cpotrf_c(sycl_solverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="syclsolverCpotrf_elpa_wrapper")
+                              bind(C,name="syclsolverCpotrfFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
@@ -1070,7 +1092,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Cgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name="mklSyclCgemm_elpa_wrapper")
+                              bind(C,name="mklSyclCgemmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
@@ -1084,7 +1106,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Cgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name="mklSyclCgemm_elpa_wrapper")
+                              bind(C,name="mklSyclCgemmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
@@ -1103,7 +1125,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ccopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklSyclCcopy_elpa_wrapper")
+                              bind(C,name="mklSyclCcopyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
@@ -1115,7 +1137,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ccopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklSyclCcopy_elpa_wrapper")
+                              bind(C,name="mklSyclCcopyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
@@ -1132,7 +1154,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ctrmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclCtrmm_elpa_wrapper")
+                              bind(C,name="mklSyclCtrmmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -1146,7 +1168,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ctrmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclCtrmm_elpa_wrapper")
+                              bind(C,name="mklSyclCtrmmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -1165,7 +1187,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ctrsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclCtrsm_elpa_wrapper")
+                              bind(C,name="mklSyclCtrsmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -1179,7 +1201,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Ctrsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklSyclCtrsm_elpa_wrapper")
+                              bind(C,name="mklSyclCtrsmFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
@@ -1193,7 +1215,7 @@ module sycl_functions
 
   interface
     subroutine mkl_sycl_Cgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="mklSyclCgemv_elpa_wrapper")
+                              bind(C,name="mklSyclCgemvFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: cta
@@ -1311,6 +1333,32 @@ module sycl_functions
 !      call nvtxRangePushA(c_name)
 !    end subroutine
 !#endif
+
+    function sycl_blas_create(handle) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_t)                  :: handle
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_blas_create_c(handle) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function sycl_blas_destroy(handle) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_t)                  :: handle
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_blas_destroy_c(handle) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
     function mkl_sycl_create(mkl_syclHandle) result(success)
       use, intrinsic :: iso_c_binding
