@@ -59,64 +59,44 @@
 
 #include "src/GPU/SYCL/syclCommon.hpp"
 
-template <typename T, int wg_size, int sg_size>
-T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
+// Detect complex number template arguments
+namespace {
+    template <class> struct is_complex_number                    : public std::false_type {};
+    template <class T> struct is_complex_number<std::complex<T>> : public std::true_type {};
+}
 
-  auto g = it.get_group();
+template<typename T, int wg_size, int sg_size, int step>
+inline void reduction_step(T *local_mem, sycl::nd_item<1> &it) {
   auto lId = it.get_local_id(0);
 
-  auto sg = it.get_sub_group();
-  auto sgId = sg.get_local_id();
+  if constexpr (wg_size >= step && sg_size < step) {
+    int constexpr half_step = step >> 1;
+    local_mem[lId] += static_cast<T>(lId < half_step) * local_mem[lId + half_step];
+    it.barrier(sycl::access::fence_space::local_space);
+  }
+}
 
-  constexpr auto local_fence = sycl::access::fence_space::local_space;
-  if constexpr (wg_size >= 1024) {
-    local_mem[lId] += static_cast<T>(lId < 512) * local_mem[lId + 512];
-    it.barrier(local_fence);
-  }
-  if constexpr (wg_size >= 512) {
-    local_mem[lId] += static_cast<T>(lId < 256) * local_mem[lId + 256];
-    it.barrier(local_fence);
-  }
-  if constexpr (wg_size >= 256) {
-    local_mem[lId] += static_cast<T>(lId < 128) * local_mem[lId + 128];
-    it.barrier(local_fence);
-  }
-  if constexpr (wg_size >= 128) {
-    local_mem[lId] += static_cast<T>(lId < 64) * local_mem[lId + 64];
-    it.barrier(local_fence);
-  }
-  if constexpr (wg_size >= 64) {
-    local_mem[lId] += static_cast<T>(lId < 32) * local_mem[lId + 32];
-    it.barrier(local_fence);
-  }
-  if constexpr (wg_size >= 32 && sg_size < 32) {
-    local_mem[lId] += static_cast<T>(lId < 16) * local_mem[lId + 16];
-    it.barrier(local_fence);
-  }
-  if constexpr (wg_size >= 16 && sg_size < 16) {
-    local_mem[lId] += static_cast<T>(lId < 8) * local_mem[lId + 8];
-    it.barrier(local_fence);
-  }
-  if constexpr (wg_size >= 8 && sg_size < 8) {
-    local_mem[lId] += static_cast<T>(lId < 4) * local_mem[lId + 4];
-    it.barrier(local_fence);
-  }
-  if constexpr (wg_size >= 4 && sg_size < 4) {
-    local_mem[lId] += static_cast<T>(lId < 2) * local_mem[lId + 2];
-    it.barrier(local_fence);
-  }
-  if constexpr (wg_size >= 2 && sg_size < 2) {
-    local_mem[lId] += static_cast<T>(lId < 1) * local_mem[lId + 1];
-    it.barrier(local_fence);
-  }
-  T local_res = local_mem[lId];
-  T sg_added_res = sycl::reduce_over_group(sg, local_res, sycl::plus<>());
-  return sycl::group_broadcast(g, sg_added_res);
+template <typename T, int wg_size, int sg_size>
+T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
+  reduction_step<T, wg_size, sg_size, 1024>(local_mem, it);
+  reduction_step<T, wg_size, sg_size,  512>(local_mem, it);
+  reduction_step<T, wg_size, sg_size,  256>(local_mem, it);
+  reduction_step<T, wg_size, sg_size,  128>(local_mem, it);
+  reduction_step<T, wg_size, sg_size,   64>(local_mem, it);
+  reduction_step<T, wg_size, sg_size,   32>(local_mem, it);
+  reduction_step<T, wg_size, sg_size,   16>(local_mem, it);
+  reduction_step<T, wg_size, sg_size,    8>(local_mem, it);
+  reduction_step<T, wg_size, sg_size,    4>(local_mem, it);
+  reduction_step<T, wg_size, sg_size,    2>(local_mem, it);
+
+  T local_res = local_mem[it.get_local_id(0)];
+  T sg_added_res = sycl::reduce_over_group(it.get_sub_group(), local_res, sycl::plus<>());
+  return sycl::group_broadcast(it.get_group(), sg_added_res);
 }
 
 template <typename T, int wg_size, int sg_size>
 void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
-  using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
+  using local_buffer = sycl::local_accessor<T>;
 
   auto device = elpa::gpu::sycl::getDevice();
   auto &queue = elpa::gpu::sycl::getQueue();
@@ -125,13 +105,22 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
     local_buffer q_s(sycl::range(nb+1), h);
     local_buffer q_s_reserve(sycl::range(nb), h);
 
-    local_buffer dotp_s(sycl::range(nb+1), h);
+    // For real numbers, using the custom reduction is still a lot faster, for complex ones, the SYCL one is better.
+    // And for the custom reduction we need the SLM.
+    sycl::range<1> r(0);
+    if constexpr (!is_complex_number<T>::value) {
+      r = sycl::range<1>(nb + 1);
+    }
+    local_buffer dotp_s(r, h);
+
     sycl::range<1> global_range(nev * nb);
     sycl::range<1> local_range(nb);
     h.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(sg_size)]]{
       using sf = sycl::access::fence_space;
       unsigned int tid = it.get_local_id(0);
       unsigned int local_range = it.get_local_range(0);
+      auto g = it.get_group();
+
       int j = ncols;
       int reserve_counter = wg_size + 2;
       int q_off = (j + tid - 1) * ldq + it.get_group(0);
@@ -140,13 +129,11 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
 
       q_s[tid] = q[q_off];
 
-      T *dotp_sp = dotp_s.get_pointer();
-
       for (; j >= 1; j--) {
         // We can preload the q values into shared local memoory every X iterations
         // instead of doing it in every iteration. This seems to save some time.
         if (reserve_counter > sg_size) {
-          q_off_res = sycl::group_broadcast(it.get_group(), q_off);
+          q_off_res = sycl::group_broadcast(g, q_off);
           if (j - tid >= 1 && tid <= sg_size) {
             q_s_reserve[tid] = q[q_off_res - tid * ldq];
           }
@@ -167,24 +154,27 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
         T q_v2 = q_s[tid];
         T hh_h_off = hh[h_off];
 
-        // If we are dealing with complex numbers, then the  complex conjugate is needed.
-        // My assumption here is that the FORTRAN side will not call this function with any
-        // complex types other than float or double. If this needs to be changed, then the
-        // check for the corresponding type needs to be added here.
-        if constexpr (std::is_same<T, std::complex<float>>::value || std::is_same<T, std::complex<double>>::value) {
-          dotp_sp[tid] = q_v2 * std::conj(hh_h_off);
+        // For Complex numbers, the native SYCL implementation of the reduction is faster than the hand-coded one. But for
+        // real numbers, there's still a significant advantage to using the hand-crafted solution. The correct variant is
+        // picked at template instantiation time.
+        T dotp_res;
+        if constexpr (is_complex_number<T>::value) {
+          // I don't get it. Is it now faster or slower?!
+          // dotp_res = sycl::reduce_over_group(g, q_v2 * std::conj(hh_h_off), sycl::plus<>());
+          dotp_s[tid] = q_v2 * std::conj(hh_h_off); //hh_h_off;
+          it.barrier(sf::local_space);
+          dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
         } else {
-          dotp_sp[tid] = q_v2 * hh_h_off;
+          dotp_s[tid] = q_v2 * hh_h_off;
+          it.barrier(sf::local_space);
+          dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
         }
 
-        it.barrier(sf::local_space);
-
-        T dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_sp);
         q_v2 -= dotp_res * hh_tau_jm1 * hh_h_off;
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == it.get_local_range()[0] - 1)) {
-          q[q_off] = q_v2;
+           q[q_off] = q_v2;
         }
 
         q_off -= ldq;
