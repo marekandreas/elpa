@@ -531,7 +531,7 @@ module elpa_gpu
       endif
 #ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        success = hip_host_malloc(array, elements)
+        success = hip_malloc_host(array, elements)
       endif
 #endif
 
@@ -1202,7 +1202,7 @@ module elpa_gpu
 
 #ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        success = hip_host_free(a)
+        success = hip_free_host(a)
       endif
 #endif
 

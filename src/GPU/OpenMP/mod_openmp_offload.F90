@@ -42,6 +42,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! Author: Andreas Marek, MPCDF
+! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
@@ -116,12 +117,12 @@ module openmp_offload_functions
 !  end interface
 
 !  interface
-!    function openmp_offload_solver_set_stream_c(openmp_offloadHandle, openmp_offloadStream) result(istat) &
+!    function openmp_offload_solver_set_stream_c(openmp_offload_solverHandle, openmp_offloadStream) result(istat) &
 !             bind(C, name="openmpOffloadsolverSetStreamFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !
-!      integer(kind=C_intptr_T), value  :: openmp_offloadHandle
+!      integer(kind=C_intptr_T), value  :: openmp_offload_solverHandle
 !      integer(kind=C_intptr_T), value  :: openmp_offloadStream
 !      integer(kind=C_INT)              :: istat
 !    end function
@@ -149,21 +150,21 @@ module openmp_offload_functions
   end interface
 
   interface
-    function openmp_offload_solver_create_c(openmp_offloadHandle) result(istat) &
+    function openmp_offload_solver_create_c(openmp_offload_solverHandle) result(istat) &
              bind(C, name="openmpOffloadsolverCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T) :: openmp_offloadHandle
+      integer(kind=C_intptr_T) :: openmp_offload_solverHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
 
   interface
-    function openmp_offload_solver_destroy_c(openmp_offloadHandle) result(istat) &
+    function openmp_offload_solver_destroy_c(openmp_offload_solverHandle) result(istat) &
              bind(C, name="openmpOffloadsolverDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T) :: openmp_offloadHandle
+      integer(kind=C_intptr_T) :: openmp_offload_solverHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
@@ -1265,7 +1266,7 @@ module openmp_offload_functions
 !      integer(kind=C_intptr_t)                  :: openmpOffloadStream
 !      logical                                   :: success
 !
-!#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+!#ifdef WITH_OPENMP_OFFLOAD_OPENMP_OFFLOAD_SOLVER
 !      success = openmp_offload_solver_set_stream_c(openmp_offload_solverHandle, openmpOffloadStream) /= 0
 !#else
 !      success = .true.
@@ -1317,7 +1318,7 @@ module openmp_offload_functions
       integer(kind=C_intptr_t)                  :: mkl_openmp_offloadHandle
       logical                                   :: success
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = cublas_create_c(mkl_openmp_offloadHandle) /= 0
+      success = mkl_openmp_offload_create_c(mkl_openmp_offloadHandle) /= 0
 #else
       success = .true.
 #endif
@@ -1340,7 +1341,7 @@ module openmp_offload_functions
       implicit none
       integer(kind=C_intptr_t)                  :: openmp_offload_solverHandle
       logical                                   :: success
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       success = openmp_offload_solver_create_c(openmp_offload_solverHandle) /= 0
 #else
       success = .true.
@@ -1352,7 +1353,7 @@ module openmp_offload_functions
       implicit none
       integer(kind=C_intptr_t)                  :: openmp_offload_solverHandle
       logical                                   :: success
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       success = openmp_offload_solver_destroy_c(openmp_offload_solverHandle) /= 0
 #else
       success = .true.
@@ -1782,7 +1783,7 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: openmp_offload_solverHandle
-#ifdef WITH_OPENMP_OFFLOAD_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call openmp_offload_solver_Dtrtri_c(openmp_offload_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -1795,7 +1796,7 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: openmp_offload_solverHandle
-#ifdef WITH_OPENMP_OFFLOAD_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call openmp_offload_solver_Dpotrf_c(openmp_offload_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
@@ -1930,7 +1931,7 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: openmp_offload_solverHandle
-#ifdef WITH_OPENMP_OFFLOAD_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call openmp_offload_solver_Strtri_c(openmp_offload_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -1943,7 +1944,7 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: openmp_offload_solverHandle
-#ifdef WITH_OPENMP_OFFLOAD_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call openmp_offload_solver_Spotrf_c(openmp_offload_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
@@ -2078,7 +2079,7 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: openmp_offload_solverHandle
-#ifdef WITH_OPENMP_OFFLOAD_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call openmp_offload_solver_Ztrtri_c(openmp_offload_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -2091,7 +2092,7 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: openmp_offload_solverHandle
-#ifdef WITH_OPENMP_OFFLOAD_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call openmp_offload_solver_Zpotrf_c(openmp_offload_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
@@ -2226,7 +2227,7 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: openmp_offload_solverHandle
-#ifdef WITH_OPENMP_OFFLOAD_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call openmp_offload_solver_Ctrtri_c(openmp_offload_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
@@ -2239,7 +2240,7 @@ module openmp_offload_functions
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
       integer(kind=C_intptr_T)        :: openmp_offload_solverHandle
-#ifdef WITH_OPENMP_OFFLOAD_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
       call openmp_offload_solver_Cpotrf_c(openmp_offload_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine

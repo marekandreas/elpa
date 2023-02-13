@@ -488,7 +488,7 @@ extern "C" {
     return 1;
   }
 
-  int hipHostMallocFromC(intptr_t *a, size_t width_height) {
+  int hipMallocHostFromC(intptr_t *a, size_t width_height) {
 
     hipError_t hiperr = hipHostMalloc((void **) a, width_height, hipHostMallocMapped);
 #ifdef DEBUG_HIP
@@ -501,7 +501,7 @@ extern "C" {
     return 1;
   }
 
-  int hipHostFreeFromC(intptr_t *a) {
+  int hipFreeHostFromC(intptr_t *a) {
 #ifdef DEBUG_HIP
     printf("FreeHost pointer address: %p \n", a);
 #endif
@@ -1131,7 +1131,7 @@ extern "C" {
 #endif /* WITH_AMD_ROCSOLVER */
 
 
-  void rocblas_dgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, double alpha,
+  void rocblasDgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, double alpha,
                                const double *A, int lda,  const double *x, int incx,
                                double beta, double *y, int incy) {
 
@@ -1139,7 +1139,7 @@ extern "C" {
                 m, n, &alpha, A, lda, x, incx, &beta, y, incy);
   }
 
-  void rocblas_sgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, float alpha,
+  void rocblasSgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, float alpha,
                                const float *A, int lda,  const float *x, int incx,
                                float beta, float *y, int incy) {
 
@@ -1147,7 +1147,7 @@ extern "C" {
                 m, n, &alpha, A, lda, x, incx, &beta, y, incy);
   }
 
-  void rocblas_zgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, double _Complex alpha,
+  void rocblasZgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, double _Complex alpha,
                                const double _Complex *A, int lda,  const double _Complex *x, int incx,
                                double _Complex beta, double _Complex *y, int incy) {
 
@@ -1167,7 +1167,7 @@ extern "C" {
                 m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);
   }
 
-  void rocblas_cgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, float _Complex alpha,
+  void rocblasCgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, float _Complex alpha,
                                const float _Complex *A, int lda,  const float _Complex *x, int incx,
                                float _Complex beta, float _Complex *y, int incy) {
 
@@ -1188,7 +1188,7 @@ extern "C" {
   }
 
 
-  void rocblas_dgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
+  void rocblasDgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
                                double alpha, const double *A, int lda,
                                const double *B, int ldb, double beta,
                                double *C, int ldc) {
@@ -1197,7 +1197,7 @@ extern "C" {
                 m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
   }
 
-  void rocblas_sgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
+  void rocblasSgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
                                float alpha, const float *A, int lda,
                                const float *B, int ldb, float beta,
                                float *C, int ldc) {
@@ -1206,7 +1206,7 @@ extern "C" {
                 m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
   }
 
-  void rocblas_zgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
+  void rocblasZgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
                                double _Complex alpha, const double _Complex *A, int lda,
                                const double _Complex *B, int ldb, double _Complex beta,
                                double _Complex *C, int ldc) {
@@ -1227,7 +1227,7 @@ extern "C" {
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
-  void rocblas_cgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
+  void rocblasCgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
                                float _Complex alpha, const float _Complex *A, int lda,
                                const float _Complex *B, int ldb, float _Complex beta,
                                float _Complex *C, int ldc) {
@@ -1287,7 +1287,7 @@ extern "C" {
   }
 
 
-  void rocblas_dtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
+  void rocblasDtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, const double *A,
                                int lda, double *B, int ldb){
 
@@ -1295,14 +1295,14 @@ extern "C" {
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
-  void rocblas_strmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
+  void rocblasStrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float alpha, const float *A,
                                int lda, float *B, int ldb){
     BLAS_status status = BLAS_strmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
-  void rocblas_ztrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
+  void rocblasZtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double _Complex alpha, const double _Complex *A,
                                int lda, double _Complex *B, int ldb){
 
@@ -1318,7 +1318,7 @@ extern "C" {
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
-  void rocblas_ctrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
+  void rocblasCtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float _Complex alpha, const float _Complex *A,
                                int lda, float _Complex *B, int ldb){
 
@@ -1335,7 +1335,7 @@ extern "C" {
   }
 
 
-  void rocblas_dtrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
+  void rocblasDtrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, double *A,
                                int lda, double *B, int ldb){
 
@@ -1343,14 +1343,14 @@ extern "C" {
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
-  void rocblas_strsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
+  void rocblasStrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float alpha, float *A,
                                int lda, float *B, int ldb){
     BLAS_status status = BLAS_strsm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
-  void rocblas_ztrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
+  void rocblasZtrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double _Complex alpha, const double _Complex *A,
                                int lda, double _Complex *B, int ldb){
 
@@ -1366,7 +1366,7 @@ extern "C" {
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
-  void rocblas_ctrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
+  void rocblasCtrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float _Complex alpha, const float _Complex *A,
                                int lda, float _Complex *B, int ldb){
 
