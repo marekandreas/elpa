@@ -137,7 +137,45 @@ fi
 dnl CXX
 AC_LANG_PUSH([C++])
 AC_PROG_CXX
+
+cxx11_standard=no
+AX_CHECK_COMPILE_FLAG([-std=gnu++11], [
+  cxx11_standard=yes
+], [
+  echo "C++ compiler cannot compile -std=gnu++11 code"
+  echo "testing -std=c++11.."
+])
+if test x"$cxx11_standard" = x"yes"; then
+  CXXFLAGS+=" -std=gnu++11"
+fi
+
+if test x"$cxx11_standard" = x"no"; then
+  AX_CHECK_COMPILE_FLAG([-std=c++11], [
+    cxx11_standard=yes
+  ], [
+    echo "C++ compiler cannot compile -std=c++11 code"
+    echo "testing -c++11.."
+  ])
+  if test x"$cxx11_standard" = x"yes"; then
+    CXXFLAGS+=" -std=c++11"
+  fi
+fi
+
+if test x"$cxx11_standard" = x"no"; then
+  AX_CHECK_COMPILE_FLAG([-c++11], [
+    cxx11_standard=yes
+  ], [
+    echo "C++ compiler cannot compile -c++11 code"
+    echo "C++ compiler cannot compile C++11 code"
+    exit -1
+  ])
+  if test x"$cxx11_standard" = x"yes"; then
+    CXXFLAGS+=" -c++11"
+  fi
+fi
+
 AC_LANG_POP([C++])
+
 
 dnl C
 AC_LANG_PUSH([C])
