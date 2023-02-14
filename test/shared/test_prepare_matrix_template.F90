@@ -362,7 +362,6 @@ subroutine prepare_matrix_random_spd_&
       MATH_DATATYPE(kind=rck), intent(inout)    :: a(:,:)
     
       TEST_INT_TYPE                             :: l_1, l_2, x_1, x_2, I_glob, J_glob, i_loc, j_loc
-      integer(kind=8)                             :: seed, a_rnd
 #if COMPLEXCASE == 1
       real(kind=rk)                             :: xr(size(a,dim=1), size(a,dim=2))
 #endif /* COMPLEXCASE */
@@ -406,11 +405,6 @@ subroutine prepare_matrix_random_spd_&
               l_2 = (j_loc-1)/nblk 
 	          x_2 = mod(j_loc-1, nblk) + 1 
 	          J_glob = (l_2*np_cols + my_pcol)*nblk + x_2
-              
-              !! test for pseudorandom numbers
-              !seed = int(100*(I_glob-1) + J_glob, kind=8)
-              !a_rnd = seed * 10039
-              !a(i_loc,j_loc) = real(mod(a_rnd * a_rnd, 1000003)) / 1000003
               
               if (I_glob == J_glob) then 
                   a(i_loc,j_loc) = I_glob 
