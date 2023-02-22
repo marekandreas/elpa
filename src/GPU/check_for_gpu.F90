@@ -48,7 +48,7 @@ module mod_check_for_gpu
 
   contains
     ! TODO: proper cleanup of handles and hanldeArrays
- 
+
     ! check_for_gpu could be called at several places during a run of ELPA
     ! for example in cholesky, invert_trm, multiply and of course the solvers
     ! Thus the following logic is implemented
@@ -77,11 +77,13 @@ module mod_check_for_gpu
       integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
       !logical, save                              :: alreadySET=.false.
       integer(kind=ik)                           :: maxThreads, thread
+      integer(kind=c_int)                        :: syclShowOnlyIntelGpus
+      integer(kind=ik)                           :: syclShowAllDevices
       integer(kind=c_intptr_t)                   :: handle_tmp
       !integer(kind=c_intptr_t)                   :: stream
       !logical                                    :: gpuIsInitialized=.false.
       !character(len=1024)           :: envname
-      character(len=8)                           :: fmt 
+      character(len=8)                           :: fmt
       character(len=12)                          :: gpu_string
 
       if (.not.(present(wantDebug))) then
@@ -201,7 +203,7 @@ module mod_check_for_gpu
         if (use_gpu_id == -99) then
           print *,"Problem you did not set which gpu id this task should use"
         endif
- 
+
         ! check whether gpu ud has been set for each proces
 #ifdef WITH_MPI
         call mpi_allreduce(use_gpu_id, min_use_gpu_id, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
@@ -267,8 +269,21 @@ module mod_check_for_gpu
           success = .true.
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-          numberOfDevices = sycl_getdevicecount()
+          if (obj%is_set("sycl_show_all_devices") == 1) then ! useGPUid
+            call obj%get("sycl_show_all_devices", syclShowAllDevices, error)
+            if (syclShowAllDevices == 1) then
+              syclShowOnlyIntelGpus = 0
+            else
+              syclShowOnlyIntelGpus = 1
+            endif
+          else
+            syclShowOnlyIntelGpus = 1
+          endif
+          numberOfDevices = sycl_getdevicecount(syclShowOnlyIntelGpus)
           success = .true.
+          if (wantDebugMessage) then
+            call sycl_printdevices()
+          endif
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -339,9 +354,9 @@ module mod_check_for_gpu
               print *,"Cannot set use_gpu_id. Aborting..."
               stop
             endif
- 
+
 #include "./handle_creation_template.F90"
-          
+
             obj%gpu_setup%gpuAlreadySet = .true.
             call obj%timer%stop("check_gpu_"//gpu_string)
           endif ! numberOfDevices .ne. 0

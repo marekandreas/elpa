@@ -123,12 +123,22 @@ module sycl_functions
   end interface
 
   interface
-    function sycl_getdevicecount_c() result(n) &
+    function sycl_getdevicecount_c(only_gpus) result(n) &
              bind(C, name="syclGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT) :: n
+      integer(kind=C_INT), intent(in), value :: only_gpus
     end function sycl_getdevicecount_c
+  end interface
+
+  interface
+    function sycl_printdevices_c() result(n) &
+             bind(C, name="syclPrintDevicesFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT) :: n
+    end function sycl_printdevices_c
   end interface
 
   !interface
@@ -561,7 +571,7 @@ module sycl_functions
       type(c_ptr), value                      :: a, b, c
       integer(kind=C_intptr_T), value         :: handle
 
-    end subroutine 
+    end subroutine
   end interface
 
   interface
@@ -617,7 +627,7 @@ module sycl_functions
       integer(kind=C_intptr_T), value         :: x, y
       integer(kind=C_intptr_T), value         :: handle
 
-    end subroutine 
+    end subroutine
   end interface
 
   interface
@@ -652,7 +662,7 @@ module sycl_functions
       integer(kind=C_intptr_T), value         :: x, y
       integer(kind=C_intptr_T), value         :: handle
 
-    end subroutine 
+    end subroutine
   end interface
 
   interface
@@ -810,7 +820,7 @@ module sycl_functions
       integer(kind=C_intptr_T), value         :: a, b
       integer(kind=C_intptr_T), value         :: handle
 
-    end subroutine 
+    end subroutine
   end interface
 
   interface
@@ -1109,7 +1119,7 @@ module sycl_functions
       integer(kind=C_intptr_T), value        :: a, b
       integer(kind=C_intptr_T), value        :: handle
 
-    end subroutine 
+    end subroutine
   end interface
 
   interface
@@ -1144,7 +1154,7 @@ module sycl_functions
       integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: handle
 
-    end subroutine 
+    end subroutine
   end interface
 
   interface
@@ -1178,7 +1188,7 @@ module sycl_functions
       integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: handle
 
-    end subroutine 
+    end subroutine
   end interface
 
   interface
@@ -1300,18 +1310,19 @@ module sycl_functions
 #else
       success = .true.
 #endif
-    end function 
+    end function
 
 
-    function sycl_getdevicecount() result(n)
+    function sycl_getdevicecount(only_gpus) result(n)
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=ik)     :: n
-      !integer(kind=c_int)  :: nCasted
-      !logical              :: success
+      integer(kind=ik)           :: n
+      integer(kind=c_int)        :: only_gpus
+      !integer(kind=c_int)       :: nCasted
+      !logical                   :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      n = sycl_getdevicecount_c()
+      n = sycl_getdevicecount_c(only_gpus)
       !n = int(nCasted)
 #else
       !success = .true.
@@ -1319,6 +1330,17 @@ module sycl_functions
 #endif
     end function sycl_getdevicecount
 
+    subroutine  sycl_printdevices()
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=ik)           :: n
+#ifdef WITH_SYCL_GPU_VERSION
+      n = sycl_printdevices_c()
+#else
+      n = 0
+#endif
+    end subroutine sycl_printdevices
 !    function cuda_devicesynchronize()result(success)
 !
 !      use, intrinsic :: iso_c_binding
@@ -1495,16 +1517,16 @@ module sycl_functions
       success = .true.
 #endif
     end function
-  
+
     function sycl_memcpy_cptr(dst, src, elems, direction) result(success)
       use, intrinsic :: iso_c_binding
-  
+
       type(c_ptr), intent(inout)            :: dst
       type(c_ptr), intent(inout)            :: src
       integer (kind=c_intptr_t), intent(in) :: elems
       integer (kind=c_int), intent(in)      :: direction
       logical                               :: success
-  
+
 #ifdef WITH_SYCL_GPU_VERSION
       success = sycl_memcpy_cptr_c(dst, src, elems, direction) /= 0
 #else
@@ -1770,7 +1792,7 @@ module sycl_functions
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
-    end subroutine 
+    end subroutine
 
 
 
@@ -1788,7 +1810,7 @@ module sycl_functions
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_sgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
-    end subroutine 
+    end subroutine
 
 
     subroutine mkl_sycl_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
@@ -1822,7 +1844,7 @@ module sycl_functions
 #ifdef WITH_SYCL_GPU_VERSION
       call mkl_sycl_dcopy_intptr_c(syclHandle, n, x, incx, y, incy)
 #endif
-    end subroutine 
+    end subroutine
 
     subroutine mkl_sycl_dcopy_cptr(n, x, incx, y, incy, syclHandle)
 
@@ -2054,7 +2076,7 @@ module sycl_functions
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, b, c  
+      integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: syclHandle
 
 #ifdef WITH_SYCL_GPU_VERSION
@@ -2071,7 +2093,7 @@ module sycl_functions
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
-      type(c_ptr)                     :: a, b, c  
+      type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: syclHandle
 
 #ifdef WITH_SYCL_GPU_VERSION

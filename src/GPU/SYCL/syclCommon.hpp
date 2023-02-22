@@ -55,11 +55,11 @@ namespace elpa {
 namespace gpu {
 namespace sycl {
 
-  void collectGpuDevices();
+  void collectGpuDevices(bool onlyGpus);
   void printGpuInfo();
   int selectGpuDevice(int deviceNum);
   void selectDefaultGpuDevice();
-  size_t getNumDevices();
+  size_t getNumDevices(bool onlyGpus);
   cl::sycl::device getDevice();
   cl::sycl::queue & getQueue();
 

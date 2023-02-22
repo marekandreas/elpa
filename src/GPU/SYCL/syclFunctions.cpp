@@ -65,8 +65,8 @@ using namespace cl;
 
 extern "C" {
 
-static void collectGpuDevices() {
-  elpa::gpu::sycl::collectGpuDevices();
+static void collectGpuDevices(int onlyGpus) {
+  elpa::gpu::sycl::collectGpuDevices(onlyGpus);
 }
 
 static oneapi::mkl::transpose transposeFromChar(char c) {
@@ -135,9 +135,14 @@ static oneapi::mkl::side sideFromChar(char c) {
     return syclMemcpyDeviceToHost;
   }
 
-  int syclGetDeviceCountFromC() {
-    collectGpuDevices();
-    return elpa::gpu::sycl::getNumDevices();
+  int syclPrintDevicesFromC(int onlyGpus) {
+    elpa::gpu::sycl::printGpuInfo();
+    return 0;
+  }
+
+  int syclGetDeviceCountFromC(int onlyGpus) {
+    collectGpuDevices(onlyGpus);
+    return elpa::gpu::sycl::getNumDevices(onlyGpus);
   }
 
   int syclSetDeviceFromC(int targetGpuDeviceId) {
@@ -149,7 +154,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclSetGpuParamsFromC() {
-    collectGpuDevices();
     // These do not really have any meaning, as there is an universal address space,
     // and as long as the pointer is either a host pointer, or of the chosen GPU, there
     // is no need to indicate the direction. However, they are used by ELPA, and we can
@@ -169,7 +173,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     //stub function
     return 1;
   }
-  
+
   int syclsolverCreateFromC(intptr_t* handle){
     //stub function
     return 1;
@@ -179,7 +183,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     //stub function
     return 1;
   }
-  
+
   int syclMallocFromC(intptr_t *a, size_t elems) {
     auto &queue = elpa::gpu::sycl::getQueue();
     *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, queue));

@@ -50,11 +50,13 @@
 #include "syclCommon.hpp"
 
 extern "C" {
-  int sycl_gpu_count() {
+  int sycl_gpu_count(int show_all_sycl_devices) {
     using namespace elpa::gpu::sycl;
     int count = -1000;
-    collectGpuDevices();
-    count = getNumDevices();
+    //
+    bool all = static_cast<bool>(show_all_sycl_devices);
+    collectGpuDevices(all);
+    count = getNumDevices(all);
     return count;
   }
 }
