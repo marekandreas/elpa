@@ -65,7 +65,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_stream_create_c(syclStream) result(istat) &
-!             bind(C, name="syclOffloadStreamCreateFromC")
+!             bind(C, name="syclStreamCreateFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T) :: syclStream
@@ -85,7 +85,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_stream_synchronize_explicit_c(syclStream) result(istat) &
-!             bind(C, name="syclOffloadStreamSynchronizeExplicitFromC")
+!             bind(C, name="syclStreamSynchronizeExplicitFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !
@@ -96,7 +96,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_stream_synchronize_implicit_c() result(istat) &
-!             bind(C, name="syclOffloadStreamSynchronizeImplicitFromC")
+!             bind(C, name="syclStreamSynchronizeImplicitFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !
@@ -153,7 +153,7 @@ module sycl_functions
 
   interface
     function mkl_sycl_create_c(syclHandle) result(istat) &
-             bind(C, name="mklSyclCreateFromC")
+             bind(C, name="syclblasCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: syclHandle
@@ -163,7 +163,7 @@ module sycl_functions
 
   interface
     function mkl_sycl_destroy_c(syclHandle) result(istat) &
-             bind(C, name="mklSyclDestroyFromC")
+             bind(C, name="syclblasDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: syclHandle
@@ -193,7 +193,7 @@ module sycl_functions
 
   interface
     function sycl_setdevice_c(n) result(istat) &
-             bind(C, name="syclOffloadSetDeviceFromC")
+             bind(C, name="syclSetDeviceFromC")
 
       use, intrinsic :: iso_c_binding
       implicit none
@@ -204,7 +204,7 @@ module sycl_functions
 
   interface
     function sycl_getdevicecount_c(n) result(istat) &
-             bind(C, name="syclOffloadGetDeviceCountFromC")
+             bind(C, name="syclGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT), intent(out) :: n
@@ -214,7 +214,7 @@ module sycl_functions
 
 !  interface
 !    function sycl_devicesynchronize_c()result(istat) &
-!             bind(C,name="syclOffloadDeviceSynchronizeFromC")
+!             bind(C,name="syclDeviceSynchronizeFromC")
 !
 !      use, intrinsic :: iso_c_binding
 !      implicit none
@@ -225,7 +225,7 @@ module sycl_functions
   ! functions to copy GPU memory
   interface
     function sycl_memcpyDeviceToDevice_c() result(flag) &
-             bind(C, name="syclOffloadMemcpyDeviceToDeviceFromC")
+             bind(C, name="syclMemcpyDeviceToDeviceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -234,7 +234,7 @@ module sycl_functions
 
   interface
     function sycl_memcpyHostToDevice_c() result(flag) &
-             bind(C, name="syclOffloadMemcpyHostToDeviceFromC")
+             bind(C, name="syclMemcpyHostToDeviceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -243,7 +243,7 @@ module sycl_functions
 
   interface
     function sycl_memcpyDeviceToHost_c() result(flag) &
-             bind(C, name="syclOffloadMemcpyDeviceToHostFromC")
+             bind(C, name="syclMemcpyDeviceToHostFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -252,7 +252,7 @@ module sycl_functions
 
 !  interface
 !    function sycl_hostRegisterDefault_c() result(flag) &
-!             bind(C, name="syclOffloadHostRegisterDefaultFromC")
+!             bind(C, name="syclHostRegisterDefaultFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=c_int) :: flag
@@ -261,7 +261,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_hostRegisterPortable_c() result(flag) &
-!             bind(C, name="syclOffloadHostRegisterPortableFromC")
+!             bind(C, name="syclHostRegisterPortableFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=c_int) :: flag
@@ -270,7 +270,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_hostRegisterMapped_c() result(flag) &
-!             bind(C, name="syclOffloadHostRegisterMappedFromC")
+!             bind(C, name="syclHostRegisterMappedFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=c_int) :: flag
@@ -279,7 +279,7 @@ module sycl_functions
 !
   interface
     function sycl_memcpy_intptr_c(dst, src, size, dir) result(istat) &
-             bind(C, name="syclOffloadMemcpyFromC")
+             bind(C, name="syclMemcpyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_t), value              :: dst
@@ -292,7 +292,7 @@ module sycl_functions
 
   interface
     function sycl_memcpy_cptr_c(dst, src, size, dir) result(istat) &
-             bind(C, name="syclOffloadMemcpyFromC")
+             bind(C, name="syclMemcpyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr), value                           :: dst
@@ -305,7 +305,7 @@ module sycl_functions
 
   interface
     function sycl_memcpy_mixed_to_device_c(dst, src, size, dir) result(istat) &
-             bind(C, name="syclOffloadMemcpyFromC")
+             bind(C, name="syclMemcpyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr), value                           :: dst
@@ -318,7 +318,7 @@ module sycl_functions
 
   interface
     function sycl_memcpy_mixed_to_host_c(dst, src, size, dir) result(istat) &
-             bind(C, name="syclOffloadMemcpyFromC")
+             bind(C, name="syclMemcpyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr), value                           :: src
@@ -331,7 +331,7 @@ module sycl_functions
 
 !  interface
 !    function sycl_memcpy_async_intptr_c(dst, src, size, dir, syclStream) result(istat) &
-!             bind(C, name="syclOffloadMemcpyAsyncFromC")
+!             bind(C, name="syclMemcpyAsyncFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_t), value              :: dst
@@ -345,7 +345,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_memcpy_async_cptr_c(dst, src, size, dir, syclStream) result(istat) &
-!             bind(C, name="syclOffloadMemcpyAsyncFromC")
+!             bind(C, name="syclMemcpyAsyncFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      type(c_ptr), value                           :: dst
@@ -359,7 +359,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_memcpy_async_mixed_to_device_c(dst, src, size, dir, syclStream) result(istat) &
-!             bind(C, name="syclOffloadMemcpyAsyncFromC")
+!             bind(C, name="syclMemcpyAsyncFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      type(c_ptr), value                           :: dst
@@ -373,7 +373,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_memcpy_async_mixed_to_host_c(dst, src, size, dir, syclStream) result(istat) &
-!             bind(C, name="syclOffloadMemcpyAsyncFromC")
+!             bind(C, name="syclMemcpyAsyncFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      type(c_ptr), value                           :: src
@@ -387,7 +387,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
-!             bind(C, name="syclOffloadMemcpy2dFromC")
+!             bind(C, name="syclMemcpy2dFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value                :: dst
@@ -403,7 +403,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
-!             bind(C, name="syclOffloadMemcpy2dFromC")
+!             bind(C, name="syclMemcpy2dFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      type(c_ptr), value                :: dst
@@ -419,7 +419,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_memcpy2d_async_intptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) result(istat) &
-!             bind(C, name="syclOffloadMemcpy2dAsyncFromC")
+!             bind(C, name="syclMemcpy2dAsyncFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value                :: dst
@@ -436,7 +436,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_memcpy2d_async_cptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) result(istat) &
-!             bind(C, name="syclOffloadMemcpy2dAsyncFromC")
+!             bind(C, name="syclMemcpy2dAsyncFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      type(c_ptr), value                :: dst
@@ -453,7 +453,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_host_register_c(a, size, flag) result(istat) &
-!             bind(C, name="syclOffloadHostRegisterFromC")
+!             bind(C, name="syclHostRegisterFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_t), value              :: a
@@ -465,7 +465,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_host_unregister_c(a) result(istat) &
-!             bind(C, name="syclOffloadHostUnregisterFromC")
+!             bind(C, name="syclHostUnregisterFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_t), value              :: a
@@ -474,13 +474,28 @@ module sycl_functions
 !  end interface
 !
   interface
-    function sycl_free_c(a) result(istat) &
-             bind(C, name="syclOffloadFreeFromC")
+    function sycl_free_intptr_c(a) result(istat) &
+             bind(C, name="syclFreeFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T)  :: a
       integer(kind=C_INT)              :: istat
     end function
+  end interface
+
+  interface
+    function sycl_free_cptr_c(a) result(istat) &
+             bind(C, name="syclFreeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                      :: a
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+  interface sycl_free
+    module procedure sycl_free_intptr
+    module procedure sycl_free_cptr
   end interface
 
   interface sycl_memcpy
@@ -498,8 +513,8 @@ module sycl_functions
 !  end interface
 
   interface
-    function sycl_malloc_c(a, width_height) result(istat) &
-             bind(C, name="syclOffloadMallocFromC")
+    function sycl_malloc_intptr_c(a, width_height) result(istat) &
+             bind(C, name="syclMallocFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       ! no value since **pointer
@@ -509,9 +524,26 @@ module sycl_functions
     end function
   end interface
 
+  interface
+    function sycl_malloc_cptr_c(a, width_height) result(istat) &
+             bind(C, name="syclMallocFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      ! no value since **pointer
+      type(c_ptr)                                 :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
+      integer(kind=C_INT)                         :: istat
+    end function
+  end interface
+
+  interface sycl_malloc
+    module procedure sycl_malloc_intptr
+    module procedure sycl_malloc_cptr
+  end interface
+
 !  interface
 !    function sycl_free_host_c(a) result(istat) &
-!             bind(C, name="syclOffloadFreeHostFromC")
+!             bind(C, name="syclFreeHostFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      type(c_ptr), value               :: a
@@ -521,7 +553,7 @@ module sycl_functions
 !
 !  interface
 !    function sycl_malloc_host_c(a, width_height) result(istat) &
-!             bind(C, name="syclOffloadMallocHostFromC")
+!             bind(C, name="syclMallocHostFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      type(c_ptr)                    :: a
@@ -532,7 +564,7 @@ module sycl_functions
 
   interface
     function sycl_memset_c(a, val, size) result(istat) &
-             bind(C, name="syclOffloadMemsetFromC")
+             bind(C, name="syclMemsetFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value            :: a
@@ -544,7 +576,7 @@ module sycl_functions
 
 !  interface
 !    function sycl_memset_async_c(a, val, size, syclStream) result(istat) &
-!             bind(C, name="syclOffloadMemsetAsyncFromC")
+!             bind(C, name="syclMemsetAsyncFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value            :: a
@@ -1446,30 +1478,56 @@ module sycl_functions
 !#endif
 !    end function
 !
-    function sycl_malloc(a, width_height) result(success)
+    function sycl_malloc_intptr(a, width_height) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t)                  :: a
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_malloc_c(a, width_height) /= 0
+      success = sycl_malloc_intptr_c(a, width_height) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function sycl_free(a) result(success)
+    function sycl_malloc_cptr(a, width_height) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                               :: a
+      integer(kind=c_intptr_t), intent(in)      :: width_height
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_malloc_cptr_c(a, width_height) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function sycl_free_intptr(a) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: a
       logical                  :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_free_c(a) /= 0
+      success = sycl_free_intptr_c(a) /= 0
 #else
       success = .true.
 #endif
     end function
+
+    function sycl_free_cptr(a) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)              :: a
+      logical                  :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_free_cptr_c(a) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
 
 !    function sycl_malloc_host(a, width_height) result(success)
 !      use, intrinsic :: iso_c_binding

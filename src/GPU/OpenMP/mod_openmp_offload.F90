@@ -452,13 +452,28 @@ module openmp_offload_functions
 !  end interface
 !
   interface
-    function openmp_offload_free_c(a) result(istat) &
+    function openmp_offload_free_intptr_c(a) result(istat) &
              bind(C, name="openmpOffloadFreeFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T)  :: a
       integer(kind=C_INT)              :: istat
     end function
+  end interface
+
+  interface
+    function openmp_offload_free_cptr_c(a) result(istat) &
+             bind(C, name="openmpOffloadFreeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                      :: a
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+  interface openmp_offload_free
+    module procedure openmp_offload_free_intptr
+    module procedure openmp_offload_free_cptr
   end interface
 
   interface openmp_offload_memcpy
@@ -476,7 +491,7 @@ module openmp_offload_functions
 !  end interface
 
   interface
-    function openmp_offload_malloc_c(a, width_height) result(istat) &
+    function openmp_offload_malloc_intptr_c(a, width_height) result(istat) &
              bind(C, name="openmpOffloadMallocFromC")
       use, intrinsic :: iso_c_binding
       implicit none
@@ -486,6 +501,24 @@ module openmp_offload_functions
       integer(kind=C_INT)                         :: istat
     end function
   end interface
+
+  interface
+    function openmp_offload_malloc_cptr_c(a, width_height) result(istat) &
+             bind(C, name="openmpOffloadMallocFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      ! no value since **pointer
+      type(c_ptr)                                 :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
+      integer(kind=C_INT)                         :: istat
+    end function
+  end interface
+
+  interface openmp_offload_malloc
+    module procedure openmp_offload_malloc_intptr
+    module procedure openmp_offload_malloc_cptr
+  end interface
+
 
 !  interface
 !    function openmp_offload_free_host_c(a) result(istat) &
@@ -1398,30 +1431,56 @@ module openmp_offload_functions
 !#endif
 !    end function
 !
-    function openmp_offload_malloc(a, width_height) result(success)
+    function openmp_offload_malloc_intptr(a, width_height) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t)                  :: a
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_malloc_c(a, width_height) /= 0
+      success = openmp_offload_malloc_intptr_c(a, width_height) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function openmp_offload_free(a) result(success)
+    function openmp_offload_malloc_cptr(a, width_height) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                               :: a
+      integer(kind=c_intptr_t), intent(in)      :: width_height
+      logical                                   :: success
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      success = openmp_offload_malloc_cptr_c(a, width_height) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function openmp_offload_free_intptr(a) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: a
       logical                  :: success
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      success = openmp_offload_free_c(a) /= 0
+      success = openmp_offload_free_intptr_c(a) /= 0
 #else
       success = .true.
 #endif
     end function
+
+    function openmp_offload_free_cptr(a) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)              :: a
+      logical                  :: success
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      success = openmp_offload_free_cptr_c(a) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
 
 !    function openmp_offload_malloc_host(a, width_height) result(success)
 !      use, intrinsic :: iso_c_binding

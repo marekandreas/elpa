@@ -114,6 +114,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
+  src/GPU/vendor_agnostic_layer_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
@@ -730,6 +731,15 @@ libelpatest@SUFFIX@_la_SOURCES += \
   test/shared/GPU/ROCm/test_rocmFunctions.cpp
 endif
 
+if WITH_SYCL_GPU_VERSION
+libelpatest@SUFFIX@_la_SOURCES += \
+  test/shared/GPU/SYCL/test_sycl.F90 \
+  test/shared/GPU/SYCL/test_syclFunctions.cpp
+endif
+
+
+
+
 if WITH_SCALAPACK_TESTS
 libelpatest@SUFFIX@_la_SOURCES += \
   test/shared/test_scalapack.F90
@@ -1011,6 +1021,7 @@ EXTRA_DIST = \
   test/shared/GPU/test_gpu_vendor_agnostic_layerVariables.h \
   test/shared/GPU/CUDA/test_cudaFunctions.h \
   test/shared/GPU/ROCm/test_rocmFunctions.h \
+  test/shared/GPU/SYCL/test_syclFunctions.h \
   test_project_1stage/Makefile.am \
   test_project_1stage/autogen.sh \
   test_project_1stage/configure.ac \

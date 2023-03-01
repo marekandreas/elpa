@@ -452,13 +452,28 @@ module hip_functions
   end interface
 
   interface
-    function hip_free_c(a) result(istat) &
+    function hip_free_intptr_c(a) result(istat) &
              bind(C, name="hipFreeFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a
       integer(kind=C_INT)              :: istat
     end function
+  end interface
+
+  interface
+    function hip_free_cptr_c(a) result(istat) &
+             bind(C, name="hipFreeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value               :: a
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+  interface hip_free
+    module procedure hip_free_intptr
+    module procedure hip_free_cptr
   end interface
 
   interface hip_memcpy
@@ -476,7 +491,7 @@ module hip_functions
   end interface
 
   interface
-    function hip_malloc_c(a, width_height) result(istat) &
+    function hip_malloc_intptr_c(a, width_height) result(istat) &
              bind(C, name="hipMallocFromC")
       use, intrinsic :: iso_c_binding
       implicit none
@@ -485,6 +500,23 @@ module hip_functions
       integer(kind=c_intptr_t), intent(in), value :: width_height
       integer(kind=C_INT)                         :: istat
     end function
+  end interface
+
+  interface
+    function hip_malloc_cptr_c(a, width_height) result(istat) &
+             bind(C, name="hipMallocFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      ! no value since **pointer
+      type(c_ptr)                                 :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
+      integer(kind=C_INT)                         :: istat
+    end function
+  end interface
+
+  interface hip_malloc
+    module procedure hip_malloc_intptr
+    module procedure hip_malloc_cptr
   end interface
 
   interface
@@ -1398,26 +1430,51 @@ module hip_functions
 #endif
     end function
 
-    function hip_malloc(a, width_height) result(success)
+    function hip_malloc_intptr(a, width_height) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t)                  :: a
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_malloc_c(a, width_height) /= 0
+      success = hip_malloc_intptr_c(a, width_height) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function hip_free(a) result(success)
+    function hip_malloc_cptr(a, width_height) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                               :: a
+      integer(kind=c_intptr_t), intent(in)      :: width_height
+      logical                                   :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_malloc_cptr_c(a, width_height) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function hip_free_intptr(a) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: a
       logical                  :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_free_c(a) /= 0
+      success = hip_free_intptr_c(a) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function hip_free_cptr(a) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)               :: a
+      logical                  :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_free_cptr_c(a) /= 0
 #else
       success = .true.
 #endif

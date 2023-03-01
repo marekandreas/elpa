@@ -452,13 +452,28 @@ module cuda_functions
   end interface
 
   interface
-    function cuda_free_c(a) result(istat) &
+    function cuda_free_intptr_c(a) result(istat) &
              bind(C, name="cudaFreeFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a
       integer(kind=C_INT)              :: istat
     end function
+  end interface
+
+  interface
+    function cuda_free_cptr_c(a) result(istat) &
+             bind(C, name="cudaFreeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value               :: a
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+  interface cuda_free
+    module procedure cuda_free_intptr
+    module procedure cuda_free_cptr
   end interface
 
   interface cuda_memcpy
@@ -476,7 +491,7 @@ module cuda_functions
   end interface
 
   interface
-    function cuda_malloc_c(a, width_height) result(istat) &
+    function cuda_malloc_intptr_c(a, width_height) result(istat) &
              bind(C, name="cudaMallocFromC")
       use, intrinsic :: iso_c_binding
       implicit none
@@ -485,6 +500,24 @@ module cuda_functions
       integer(kind=c_intptr_t), intent(in), value :: width_height
       integer(kind=C_INT)                         :: istat
     end function
+  end interface
+
+  interface
+    function cuda_malloc_cptr_c(a, width_height) result(istat) &
+             bind(C, name="cudaMallocFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      ! no value since **pointer
+      type(c_ptr)                                 :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
+      integer(kind=C_INT)                         :: istat
+    end function
+  end interface
+
+
+  interface cuda_malloc
+    module procedure cuda_malloc_intptr
+    module procedure cuda_malloc_cptr
   end interface
 
   interface
@@ -1398,26 +1431,51 @@ module cuda_functions
 #endif
     end function
 
-    function cuda_malloc(a, width_height) result(success)
+    function cuda_malloc_intptr(a, width_height) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t)                  :: a
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
-      success = cuda_malloc_c(a, width_height) /= 0
+      success = cuda_malloc_intptr_c(a, width_height) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function cuda_free(a) result(success)
+    function cuda_malloc_cptr(a, width_height) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                               :: a
+      integer(kind=c_intptr_t), intent(in)      :: width_height
+      logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_malloc_cptr_c(a, width_height) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function cuda_free_intptr(a) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: a
       logical                  :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
-      success = cuda_free_c(a) /= 0
+      success = cuda_free_intptr_c(a) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function cuda_free_cptr(a) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)              :: a
+      logical                  :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_free_cptr_c(a) /= 0
 #else
       success = .true.
 #endif
