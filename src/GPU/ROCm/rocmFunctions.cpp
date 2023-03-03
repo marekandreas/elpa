@@ -228,9 +228,14 @@
 
 #ifdef WITH_AMD_GPU_VERSION
 extern "C" {
-  int hipStreamCreateFromC(intptr_t *stream) {
-    *stream = (intptr_t) malloc(sizeof(hipStream_t));
-    hipError_t status = hipStreamCreate((hipStream_t*) *stream);
+  int hipStreamCreateFromC(hipStream_t *rocblasStream) {
+    //*stream = (intptr_t) malloc(sizeof(hipStream_t));
+
+    if (sizeof(intptr_t) != sizeof(hipStream_t)) {
+      printf("Stream sizes do not match \n");
+    }
+
+    hipError_t status = hipStreamCreate(rocblasStream);
     if (status == hipSuccess) {
 //       printf("all OK\n");
       return 1;
@@ -242,9 +247,9 @@ extern "C" {
 
   }
 
-  int hipStreamDestroyFromC(intptr_t *stream){
-    hipError_t status = hipStreamDestroy(*(hipStream_t*) *stream);
-    *stream = (intptr_t) NULL;
+  int hipStreamDestroyFromC(hipStream_t rocblasStream){
+    hipError_t status = hipStreamDestroy(rocblasStream);
+    //*stream = (intptr_t) NULL;
     if (status ==hipSuccess) {
 //       printf("all OK\n");
       return 1;
@@ -255,23 +260,8 @@ extern "C" {
     }
   }
 
-  int rocblasSetStreamFromC(intptr_t handle, intptr_t stream) {
-    BLAS_status status = BLAS_set_stream(*((BLAS_handle*)handle), *((hipStream_t*)stream));
-    if (status == BLAS_status_success ) {
-      return 1;
-    }
-    else if (status == BLAS_status_invalid_handle) {
-      errormessage("Error in rocblasSetStream: %s\n", "the HIP Runtime initialization failed");
-      return 0;
-    }
-    else{
-      errormessage("Error in rocblasSetStream: %s\n", "unknown error");
-      return 0;
-    }
-  }
-
-  int hipStreamSynchronizeExplicitFromC(intptr_t stream) {
-    hipError_t status = hipStreamSynchronize(*((hipStream_t*)stream));
+  int hipStreamSynchronizeExplicitFromC(hipStream_t rocblasStream) {
+    hipError_t status = hipStreamSynchronize(rocblasStream);
     if (status == hipSuccess) {
       return 1;
     }
@@ -292,9 +282,43 @@ extern "C" {
     }
   }
 
-  int hipMemcpy2dAsyncFromC(intptr_t *dest, size_t dpitch, intptr_t *src, size_t spitch, size_t width, size_t height, int dir, intptr_t stream) {
+  int rocblasSetStreamFromC(BLAS_handle rocblasHandle, hipStream_t rocblasStream) {
+    //BLAS_status status = BLAS_set_stream(*((BLAS_handle*)handle), *((hipStream_t*)stream));
+    BLAS_status status = BLAS_set_stream(rocblasHandle, rocblasStream);
+    if (status == BLAS_status_success ) {
+      return 1;
+    }
+    else if (status == BLAS_status_invalid_handle) {
+      errormessage("Error in rocblasSetStream: %s\n", "the HIP Runtime initialization failed");
+      return 0;
+    }
+    else{
+      errormessage("Error in rocblasSetStream: %s\n", "unknown error");
+      return 0;
+    }
+  }
 
-    hipError_t hiperr = hipMemcpy2DAsync( dest, dpitch, src, spitch, width, height, (hipMemcpyKind)dir, *((hipStream_t*)stream) );
+#ifdef WITH_AMD_ROCSOLVER
+// not needed for ROCM; rocmsolver users rocblas handle 
+//  int rocsolverSetStreamFromC(intptr_t rocsolver_handle, intptr_t stream) {
+//    rocsolverStatus_t status = rocsolverDnSetStream(*((cusolverDnHandle_t*)cusolver_handle), *((cudaStream_t*)stream));
+//    if (status == CUSOLVER_STATUS_SUCCESS) {
+//      return 1;
+//    }
+//    else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
+//      errormessage("Error in cusolverDnSetStream: %s\n", "the CUDA Runtime initialization failed");
+//      return 0;
+//    }
+//    else{
+//      errormessage("Error in cusolverDnSetStream: %s\n", "unknown error");
+//      return 0;
+//    }
+//  }
+#endif
+
+  int hipMemcpy2dAsyncFromC(intptr_t *dest, size_t dpitch, intptr_t *src, size_t spitch, size_t width, size_t height, int dir, hipStream_t rocblasStream) {
+
+    hipError_t hiperr = hipMemcpy2DAsync( dest, dpitch, src, spitch, width, height, (hipMemcpyKind)dir, rocblasStream );
     if (hiperr != hipSuccess) {
       errormessage("Error in hipMemcpy2dAsync: %s\n",hipGetErrorString(hiperr));
       return 0;
@@ -303,11 +327,18 @@ extern "C" {
   }
 
 
-  int rocblasCreateFromC(intptr_t *handle) {
+  int rocblasCreateFromC(BLAS_handle *rocblasHandle) {
 //     printf("in c: %p\n", *cublas_handle);
-    *handle = (intptr_t) malloc(sizeof(BLAS_handle));
+    //*handle = (intptr_t) malloc(sizeof(BLAS_handle));
 //     printf("in c: %p\n", *cublas_handle);
-    BLAS_status status = BLAS_create_handle((BLAS_handle*) *handle);
+    if (sizeof(intptr_t) != sizeof(BLAS_handle)) {
+      //errormessage("Error in rocblasCreate: sizes not the same");
+        printf("ERROR on sizes\n");
+      return 0;
+    }
+
+    //BLAS_status status = BLAS_create_handle((BLAS_handle*) *handle);
+    BLAS_status status = BLAS_create_handle(rocblasHandle);
     if (status == BLAS_status_success) {
 //       printf("all OK\n");
       return 1;
@@ -339,28 +370,10 @@ extern "C" {
 #endif
   }
 
-
-#ifdef WITH_AMD_ROCSOLVER
-// not needed for ROCM; rocmsolver users rocblas handle 
-//  int rocsolverSetStreamFromC(intptr_t rocsolver_handle, intptr_t stream) {
-//    rocsolverStatus_t status = rocsolverDnSetStream(*((cusolverDnHandle_t*)cusolver_handle), *((cudaStream_t*)stream));
-//    if (status == CUSOLVER_STATUS_SUCCESS) {
-//      return 1;
-//    }
-//    else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
-//      errormessage("Error in cusolverDnSetStream: %s\n", "the CUDA Runtime initialization failed");
-//      return 0;
-//    }
-//    else{
-//      errormessage("Error in cusolverDnSetStream: %s\n", "unknown error");
-//      return 0;
-//    }
-//  }
-#endif
-
-  int rocblasDestroyFromC(intptr_t *handle) {
-    BLAS_status status = BLAS_destroy_handle(*((BLAS_handle*) *handle));
-    *handle = (intptr_t) NULL;
+  int rocblasDestroyFromC(BLAS_handle rocblasHandle) {
+    //BLAS_status status = BLAS_destroy_handle(*((BLAS_handle*) *handle));
+    BLAS_status status = BLAS_destroy_handle(rocblasHandle);
+    //*handle = (intptr_t) NULL;
     if (status == BLAS_status_success) {
 //       printf("all OK\n");
       return 1;
@@ -419,8 +432,6 @@ extern "C" {
 //  }
 #endif /* WITH_AMD_ROCSOLVER */
 
-
-
   int hipSetDeviceFromC(int n) {
 
     hipError_t hiperr = hipSetDevice(n);
@@ -477,7 +488,7 @@ extern "C" {
     return 1;
   }
 
-  int hipHostMallocFromC(intptr_t *a, size_t width_height) {
+  int hipMallocHostFromC(intptr_t *a, size_t width_height) {
 
     hipError_t hiperr = hipHostMalloc((void **) a, width_height, hipHostMallocMapped);
 #ifdef DEBUG_HIP
@@ -490,7 +501,7 @@ extern "C" {
     return 1;
   }
 
-  int hipHostFreeFromC(intptr_t *a) {
+  int hipFreeHostFromC(intptr_t *a) {
 #ifdef DEBUG_HIP
     printf("FreeHost pointer address: %p \n", a);
 #endif
@@ -513,9 +524,9 @@ extern "C" {
     return 1;
   }
 
-  int hipMemsetAsyncFromC(intptr_t *a, int value, size_t count, intptr_t stream) {
+  int hipMemsetAsyncFromC(intptr_t *a, int value, size_t count, hipStream_t rocblasStream) {
 
-    hipError_t hiperr = hipMemsetAsync( a, value, count, *((hipStream_t*)stream));
+    hipError_t hiperr = hipMemsetAsync( a, value, count, rocblasStream);
     if (hiperr != hipSuccess) {
       errormessage("Error in hipMemsetAsync: %s\n",hipGetErrorString(hiperr));
       return 0;
@@ -533,9 +544,9 @@ extern "C" {
     return 1;
   }
 
-  int hipMemcpyAsyncFromC(intptr_t *dest, intptr_t *src, size_t count, int dir, intptr_t stream) {
+  int hipMemcpyAsyncFromC(intptr_t *dest, intptr_t *src, size_t count, int dir, hipStream_t rocblasStream) {
   
-    hipError_t hiperr = hipMemcpyAsync( dest, src, count, (hipMemcpyKind)dir, *((hipStream_t*)stream));
+    hipError_t hiperr = hipMemcpyAsync( dest, src, count, (hipMemcpyKind)dir, rocblasStream);
     if (hiperr != hipSuccess) {
       errormessage("Error in hipMemcpyAsync: %s\n",hipGetErrorString(hiperr));
       return 0;
@@ -659,7 +670,7 @@ extern "C" {
   }
 
 #ifdef WITH_AMD_ROCSOLVER
-  void rocsolverDtrtri_elpa_wrapper (intptr_t handle, char uplo, char diag, int64_t n, double *A, int64_t lda, int *info) {
+  void rocsolverDtrtri_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, char diag, int64_t n, double *A, int64_t lda, int *info) {
     BLAS_status status;
 
     int info_gpu = 0;
@@ -693,7 +704,7 @@ extern "C" {
 //#ifdef DEBUG_CUDA
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
-    status = rocsolver_dtrtri(*((BLAS_handle*)handle), hip_fill_mode(uplo), hip_diag_type(diag), n, A, lda, devInfo);
+    status = rocsolver_dtrtri(rocblasHandle, hip_fill_mode(uplo), hip_diag_type(diag), n, A, lda, devInfo);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Dtrtri %s\n",hipGetErrorString(hiperr));
@@ -716,7 +727,7 @@ extern "C" {
     }
   }
 
-  void rocsolverStrtri_elpa_wrapper (intptr_t handle, char uplo, char diag, int64_t n, float *A, int64_t lda, int *info) {
+  void rocsolverStrtri_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, char diag, int64_t n, float *A, int64_t lda, int *info) {
     BLAS_status status;
 
     int info_gpu = 0;
@@ -750,7 +761,7 @@ extern "C" {
 //#ifdef DEBUG_CUDA
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
-    status = rocsolver_strtri(*((BLAS_handle*)handle), hip_fill_mode(uplo), hip_diag_type(diag), n, A, lda, devInfo);
+    status = rocsolver_strtri(rocblasHandle, hip_fill_mode(uplo), hip_diag_type(diag), n, A, lda, devInfo);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Strtri %s\n",hipGetErrorString(hiperr));
@@ -773,7 +784,7 @@ extern "C" {
     }
   }
 
-  void rocsolverZtrtri_elpa_wrapper (intptr_t handle, char uplo, char diag, int64_t n, double _Complex *A, int64_t lda, int *info) {
+  void rocsolverZtrtri_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, char diag, int64_t n, double _Complex *A, int64_t lda, int *info) {
     BLAS_status status;
 
     int info_gpu = 0;
@@ -809,7 +820,7 @@ extern "C" {
 //#ifdef DEBUG_CUDA
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
-    status = rocsolver_ztrtri(*((BLAS_handle*)handle), hip_fill_mode(uplo), hip_diag_type(diag), n, A_casted, lda, devInfo);
+    status = rocsolver_ztrtri(rocblasHandle, hip_fill_mode(uplo), hip_diag_type(diag), n, A_casted, lda, devInfo);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Ztrtri %s\n",hipGetErrorString(hiperr));
@@ -832,7 +843,7 @@ extern "C" {
     }
   }
 
-  void rocsolverCtrtri_elpa_wrapper (intptr_t handle, char uplo, char diag, int64_t n, float _Complex *A, int64_t lda, int *info) {
+  void rocsolverCtrtri_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, char diag, int64_t n, float _Complex *A, int64_t lda, int *info) {
     BLAS_status status;
 
     int info_gpu = 0;
@@ -868,7 +879,7 @@ extern "C" {
 //#ifdef DEBUG_CUDA
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
-    status = rocsolver_ctrtri(*((BLAS_handle*)handle), hip_fill_mode(uplo), hip_diag_type(diag), n, A_casted, lda, devInfo);
+    status = rocsolver_ctrtri(rocblasHandle, hip_fill_mode(uplo), hip_diag_type(diag), n, A_casted, lda, devInfo);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Ctrtri %s\n",hipGetErrorString(hiperr));
@@ -892,7 +903,7 @@ extern "C" {
   }
 
 
-  void rocsolverDpotrf_elpa_wrapper (intptr_t handle, char uplo, int n, double *A, int lda, int *info) {
+  void rocsolverDpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, double *A, int lda, int *info) {
     BLAS_status  status;
 
     int info_gpu = 0;
@@ -924,7 +935,7 @@ extern "C" {
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
 
-    status = rocsolver_dpotrf(*((BLAS_handle*)handle), hip_fill_mode(uplo), n, A, lda, devInfo);
+    status = rocsolver_dpotrf(rocblasHandle, hip_fill_mode(uplo), n, A, lda, devInfo);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Dpotrf %s\n",hipGetErrorString(hiperr));
@@ -947,7 +958,7 @@ extern "C" {
     }
   }
 
-  void rocsolverSpotrf_elpa_wrapper (intptr_t handle, char uplo, int n, float *A, int lda, int *info) {
+  void rocsolverSpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, float *A, int lda, int *info) {
     BLAS_status status;
 
     int info_gpu = 0;
@@ -979,7 +990,7 @@ extern "C" {
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
 
-    status = rocsolver_spotrf(*((BLAS_handle*)handle), hip_fill_mode(uplo), n, A, lda, devInfo);
+    status = rocsolver_spotrf(rocblasHandle, hip_fill_mode(uplo), n, A, lda, devInfo);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Spotrf %s\n",hipGetErrorString(hiperr));
@@ -1002,7 +1013,7 @@ extern "C" {
     }
   }
 
-  void rocsolverZpotrf_elpa_wrapper (intptr_t handle, char uplo, int n, double _Complex *A, int lda, int *info) {
+  void rocsolverZpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, double _Complex *A, int lda, int *info) {
     BLAS_status status;
 
     int info_gpu = 0;
@@ -1036,7 +1047,7 @@ extern "C" {
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
 
-    status = rocsolver_zpotrf(*((BLAS_handle*)handle), hip_fill_mode(uplo), n, A_casted, lda, devInfo);
+    status = rocsolver_zpotrf(rocblasHandle, hip_fill_mode(uplo), n, A_casted, lda, devInfo);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Zpotrf %s\n",hipGetErrorString(hiperr));
@@ -1060,7 +1071,7 @@ extern "C" {
   }
 
 
-  void rocsolverCpotrf_elpa_wrapper (intptr_t handle, char uplo, int n, float _Complex *A, int lda, int *info) {
+  void rocsolverCpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, float _Complex *A, int lda, int *info) {
     BLAS_status status;
 
     int info_gpu = 0;
@@ -1094,7 +1105,7 @@ extern "C" {
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
 
-    status = rocsolver_cpotrf(*((BLAS_handle*)handle), hip_fill_mode(uplo), n, A_casted, lda, devInfo);
+    status = rocsolver_cpotrf(rocblasHandle, hip_fill_mode(uplo), n, A_casted, lda, devInfo);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Cpotrf %s\n",hipGetErrorString(hiperr));
@@ -1120,23 +1131,23 @@ extern "C" {
 #endif /* WITH_AMD_ROCSOLVER */
 
 
-  void rocblas_dgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, double alpha,
+  void rocblasDgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, double alpha,
                                const double *A, int lda,  const double *x, int incx,
                                double beta, double *y, int incy) {
 
-    BLAS_status status = BLAS_dgemv(*((BLAS_handle*)handle), hip_operation(trans),
+    BLAS_status status = BLAS_dgemv(rocblasHandle, hip_operation(trans),
                 m, n, &alpha, A, lda, x, incx, &beta, y, incy);
   }
 
-  void rocblas_sgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, float alpha,
+  void rocblasSgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, float alpha,
                                const float *A, int lda,  const float *x, int incx,
                                float beta, float *y, int incy) {
 
-    BLAS_status status = BLAS_sgemv(*((BLAS_handle*)handle), hip_operation(trans),
+    BLAS_status status = BLAS_sgemv(rocblasHandle, hip_operation(trans),
                 m, n, &alpha, A, lda, x, incx, &beta, y, incy);
   }
 
-  void rocblas_zgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, double _Complex alpha,
+  void rocblasZgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, double _Complex alpha,
                                const double _Complex *A, int lda,  const double _Complex *x, int incx,
                                double _Complex beta, double _Complex *y, int incy) {
 
@@ -1152,11 +1163,11 @@ extern "C" {
 #endif
     BLAS_double_complex* y_casted = (BLAS_double_complex*) y;
 
-    BLAS_status status = BLAS_zgemv(*((BLAS_handle*)handle), hip_operation(trans),
+    BLAS_status status = BLAS_zgemv(rocblasHandle, hip_operation(trans),
                 m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);
   }
 
-  void rocblas_cgemv_elpa_wrapper (intptr_t handle, char trans, int m, int n, float _Complex alpha,
+  void rocblasCgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, float _Complex alpha,
                                const float _Complex *A, int lda,  const float _Complex *x, int incx,
                                float _Complex beta, float _Complex *y, int incy) {
 
@@ -1172,30 +1183,30 @@ extern "C" {
 #endif
     BLAS_float_complex* y_casted = (BLAS_float_complex*) y;
 
-    BLAS_status status = BLAS_cgemv(*((BLAS_handle*)handle), hip_operation(trans),
+    BLAS_status status = BLAS_cgemv(rocblasHandle, hip_operation(trans),
                 m, n, &alpha_casted, A_casted, lda, x_casted, incx, &beta_casted, y_casted, incy);
   }
 
 
-  void rocblas_dgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
+  void rocblasDgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
                                double alpha, const double *A, int lda,
                                const double *B, int ldb, double beta,
                                double *C, int ldc) {
 
-    BLAS_status status = BLAS_dgemm(*((BLAS_handle*)handle), hip_operation(transa), hip_operation(transb),
+    BLAS_status status = BLAS_dgemm(rocblasHandle, hip_operation(transa), hip_operation(transb),
                 m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
   }
 
-  void rocblas_sgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
+  void rocblasSgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
                                float alpha, const float *A, int lda,
                                const float *B, int ldb, float beta,
                                float *C, int ldc) {
 
-    BLAS_status status = BLAS_sgemm(*((BLAS_handle*)handle), hip_operation(transa), hip_operation(transb),
+    BLAS_status status = BLAS_sgemm(rocblasHandle, hip_operation(transa), hip_operation(transb),
                 m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
   }
 
-  void rocblas_zgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
+  void rocblasZgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
                                double _Complex alpha, const double _Complex *A, int lda,
                                const double _Complex *B, int ldb, double _Complex beta,
                                double _Complex *C, int ldc) {
@@ -1212,11 +1223,11 @@ extern "C" {
 #endif
     BLAS_double_complex* C_casted = (BLAS_double_complex*) C;
 
-    BLAS_status status = BLAS_zgemm(*((BLAS_handle*)handle), hip_operation(transa), hip_operation(transb),
+    BLAS_status status = BLAS_zgemm(rocblasHandle, hip_operation(transa), hip_operation(transb),
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
-  void rocblas_cgemm_elpa_wrapper (intptr_t handle, char transa, char transb, int m, int n, int k,
+  void rocblasCgemm_elpa_wrapper (BLAS_handle rocblasHandle, char transa, char transb, int m, int n, int k,
                                float _Complex alpha, const float _Complex *A, int lda,
                                const float _Complex *B, int ldb, float _Complex beta,
                                float _Complex *C, int ldc) {
@@ -1233,7 +1244,7 @@ extern "C" {
 #endif
     BLAS_float_complex* C_casted = (BLAS_float_complex*) C;
 
-    BLAS_status status = BLAS_cgemm(*((BLAS_handle*)handle), hip_operation(transa), hip_operation(transb),
+    BLAS_status status = BLAS_cgemm(rocblasHandle, hip_operation(transa), hip_operation(transb),
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
@@ -1243,17 +1254,17 @@ extern "C" {
   // todo: by passing B twice (in place of C as well), we should fall back to in-place algorithm
 
 
-  void rocblasDcopy_elpa_wrapper (intptr_t handle, int n, double *x, int incx, double *y, int incy){
+  void rocblasDcopy_elpa_wrapper (BLAS_handle rocblasHandle, int n, double *x, int incx, double *y, int incy){
 
-    BLAS_status status = BLAS_dcopy(*((BLAS_handle*)handle), n, x, incx, y, incy);
+    BLAS_status status = BLAS_dcopy(rocblasHandle, n, x, incx, y, incy);
   }
 
-  void rocblasScopy_elpa_wrapper (intptr_t handle, int n, float *x, int incx, float *y, int incy){
+  void rocblasScopy_elpa_wrapper (BLAS_handle rocblasHandle, int n, float *x, int incx, float *y, int incy){
 
-    BLAS_status status = BLAS_scopy(*((BLAS_handle*)handle), n, x, incx, y, incy);
+    BLAS_status status = BLAS_scopy(rocblasHandle, n, x, incx, y, incy);
   }
 
-  void rocblasZcopy_elpa_wrapper (intptr_t handle, int n, double _Complex *x, int incx, double _Complex *y, int incy){
+  void rocblasZcopy_elpa_wrapper (BLAS_handle rocblasHandle, int n, double _Complex *x, int incx, double _Complex *y, int incy){
 #ifndef HIPBLAS
     const BLAS_double_complex* X_casted = (const BLAS_double_complex*) x;
 #else
@@ -1261,10 +1272,10 @@ extern "C" {
 #endif
           BLAS_double_complex* Y_casted = (BLAS_double_complex*) y;
 
-    BLAS_status status = BLAS_zcopy(*((BLAS_handle*)handle), n, X_casted, incx, Y_casted, incy);
+    BLAS_status status = BLAS_zcopy(rocblasHandle, n, X_casted, incx, Y_casted, incy);
   }
 
-  void rocblasCcopy_elpa_wrapper (intptr_t handle, int n, float _Complex *x, int incx, float _Complex *y, int incy){
+  void rocblasCcopy_elpa_wrapper (BLAS_handle rocblasHandle, int n, float _Complex *x, int incx, float _Complex *y, int incy){
 #ifndef HIPBLAS
     const BLAS_float_complex* X_casted = (const BLAS_float_complex*) x;
 #else
@@ -1272,26 +1283,26 @@ extern "C" {
 #endif
           BLAS_float_complex* Y_casted = (      BLAS_float_complex*) y;
 
-    BLAS_status status = BLAS_ccopy(*((BLAS_handle*)handle), n, X_casted, incx, Y_casted, incy);
+    BLAS_status status = BLAS_ccopy(rocblasHandle, n, X_casted, incx, Y_casted, incy);
   }
 
 
-  void rocblas_dtrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+  void rocblasDtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, const double *A,
                                int lda, double *B, int ldb){
 
-    BLAS_status status = BLAS_dtrmm(*((BLAS_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    BLAS_status status = BLAS_dtrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
-  void rocblas_strmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+  void rocblasStrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float alpha, const float *A,
                                int lda, float *B, int ldb){
-    BLAS_status status = BLAS_strmm(*((BLAS_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    BLAS_status status = BLAS_strmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
-  void rocblas_ztrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+  void rocblasZtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double _Complex alpha, const double _Complex *A,
                                int lda, double _Complex *B, int ldb){
 
@@ -1303,11 +1314,11 @@ extern "C" {
           BLAS_double_complex* A_casted = (      BLAS_double_complex*) A;
 #endif
     BLAS_double_complex* B_casted = (BLAS_double_complex*) B;
-    BLAS_status status = BLAS_ztrmm(*((BLAS_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    BLAS_status status = BLAS_ztrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
-  void rocblas_ctrmm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+  void rocblasCtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float _Complex alpha, const float _Complex *A,
                                int lda, float _Complex *B, int ldb){
 
@@ -1319,27 +1330,27 @@ extern "C" {
           BLAS_float_complex* A_casted = (      BLAS_float_complex*) A;
 #endif
     BLAS_float_complex* B_casted = (BLAS_float_complex*) B;
-    BLAS_status status = BLAS_ctrmm(*((BLAS_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    BLAS_status status = BLAS_ctrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
 
-  void rocblas_dtrsm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+  void rocblasDtrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, double *A,
                                int lda, double *B, int ldb){
 
-    BLAS_status status = BLAS_dtrsm(*((BLAS_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    BLAS_status status = BLAS_dtrsm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
-  void rocblas_strsm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+  void rocblasStrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float alpha, float *A,
                                int lda, float *B, int ldb){
-    BLAS_status status = BLAS_strsm(*((BLAS_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    BLAS_status status = BLAS_strsm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
   }
 
-  void rocblas_ztrsm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+  void rocblasZtrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double _Complex alpha, const double _Complex *A,
                                int lda, double _Complex *B, int ldb){
 
@@ -1351,11 +1362,11 @@ extern "C" {
           BLAS_double_complex* A_casted = (      BLAS_double_complex*) A;
 #endif
     BLAS_double_complex* B_casted = (BLAS_double_complex*) B;
-    BLAS_status status = BLAS_ztrsm(*((BLAS_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    BLAS_status status = BLAS_ztrsm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 
-  void rocblas_ctrsm_elpa_wrapper (intptr_t handle, char side, char uplo, char transa, char diag,
+  void rocblasCtrsm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float _Complex alpha, const float _Complex *A,
                                int lda, float _Complex *B, int ldb){
 
@@ -1367,7 +1378,7 @@ extern "C" {
           BLAS_float_complex* A_casted = (      BLAS_float_complex*) A;
 #endif
     BLAS_float_complex* B_casted = (BLAS_float_complex*) B;
-    BLAS_status status = BLAS_ctrsm(*((BLAS_handle*)handle), hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+    BLAS_status status = BLAS_ctrsm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
 

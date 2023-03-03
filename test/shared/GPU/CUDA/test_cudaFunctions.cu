@@ -65,6 +65,7 @@
 #include <cublas_v2.h>
 #endif
 
+#include "./test_cudaFunctions.h"
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
@@ -75,8 +76,8 @@
 #endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-extern "C" {
-
+extern "C"
+{
   int cudaSetDeviceFromC(int n) {
 
     cudaError_t cuerr = cudaSetDevice(n);
@@ -87,6 +88,16 @@ extern "C" {
     return 1;
   }
 
+  int cudaGetDeviceCountFromC(int *count) {
+
+    cudaError_t cuerr = cudaGetDeviceCount(count);
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cudaGetDeviceCount: %s\n",cudaGetErrorString(cuerr));
+      return 0;
+    }
+    return 1;
+  }
+  
   int cudaMallocFromC(intptr_t *a, size_t width_height) {
 
     cudaError_t cuerr = cudaMalloc((void **) a, width_height);
@@ -147,6 +158,5 @@ extern "C" {
       int val = cudaHostRegisterMapped;
       return val;
   }
-
 }
 #endif /* TEST_NVIDIA_GPU == 1 */

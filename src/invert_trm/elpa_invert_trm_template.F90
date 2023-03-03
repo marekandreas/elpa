@@ -711,16 +711,18 @@
       else ! useGPU
         call obj%timer%start("blas")
 #ifndef DEVICE_POINTER
-        if (l_cols-l_colx+1>0) &
-        call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
+        if (l_cols-l_colx+1>0) then
+          call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
                               tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND))
+        endif
         call obj%timer%stop("blas")
         if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
         if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
 #else
-        if (l_cols-l_colx+1>0) &
-        call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
+        if (l_cols-l_colx+1>0) then
+          call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
                               tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a_tmp(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND))
+        endif
         call obj%timer%stop("blas")
         if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a_tmp(l_row1:l_row1+nb-1,l_colx:l_cols)
         if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
@@ -859,9 +861,10 @@
     endif
 
     call obj%timer%start("mpi_communication")
-    if (l_cols-l_col1+1 > 0) &
-    call MPI_Bcast(tmat2(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+    if (l_cols-l_col1+1 > 0) then
+      call MPI_Bcast(tmat2(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                    int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+    endif
 
     call obj%timer%stop("mpi_communication")
 
@@ -913,29 +916,31 @@
       gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
       tmat2_off = (1 - 1 + (l_col1-1) * nblk) * size_of_datatype      
       a_off = (1 - 1 + (l_col1-1) * matrixRows) * size_of_datatype
-      if (l_row1>1 .and. l_cols-l_col1+1>0) &
+      if (l_row1>1 .and. l_cols-l_col1+1>0) then
         call gpublas_PRECISION_GEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -ONE, &
                                     tmat1_dev, l_rows, tmat2_dev + tmat2_off, &
                                     nblk, ONE, a_dev+a_off, matrixRows, gpublasHandle)
-
+      endif
       call obj%timer%stop("gpublas")
 
     else ! useGPU
       call obj%timer%start("blas")
 #ifndef DEVICE_POINTER
-      if (l_row1>1 .and. l_cols-l_col1+1>0) &
+      if (l_row1>1 .and. l_cols-l_col1+1>0) then
         call PRECISION_GEMM('N', 'N', int(l_row1-1,kind=BLAS_KIND), int(l_cols-l_col1+1,kind=BLAS_KIND), &
                             int(nb,kind=BLAS_KIND), -ONE, &
                              tmat1, int(ubound(tmat1,dim=1),kind=BLAS_KIND), tmat2(1,l_col1), &
                              int(ubound(tmat2,dim=1),kind=BLAS_KIND), ONE, &
                               a(1,l_col1), int(matrixRows,kind=BLAS_KIND) )
+      endif
 #else
-      if (l_row1>1 .and. l_cols-l_col1+1>0) &
+      if (l_row1>1 .and. l_cols-l_col1+1>0) then
         call PRECISION_GEMM('N', 'N', int(l_row1-1,kind=BLAS_KIND), int(l_cols-l_col1+1,kind=BLAS_KIND), &
                             int(nb,kind=BLAS_KIND), -ONE, &
                              tmat1, int(ubound(tmat1,dim=1),kind=BLAS_KIND), tmat2(1,l_col1), &
                              int(ubound(tmat2,dim=1),kind=BLAS_KIND), ONE, &
                               a_tmp(1,l_col1), int(matrixRows,kind=BLAS_KIND) )
+      endif
 #endif
 
       call obj%timer%stop("blas")

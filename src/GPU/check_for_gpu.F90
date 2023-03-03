@@ -123,8 +123,10 @@ module mod_check_for_gpu
 #ifdef WITH_NVIDIA_CUSOLVER
       if (.not.(allocated(obj%gpu_setup%cusolverHandleArray))) then
         allocate(obj%gpu_setup%cusolverHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpusolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
           obj%gpu_setup%cusolverHandleArray(thread) = -1
+          obj%gpu_setup%gpusolverHandleArray(thread) = -1
         enddo
       endif
 #endif
@@ -143,8 +145,10 @@ module mod_check_for_gpu
 #ifdef WITH_AMD_ROCSOLVER
       if (.not.(allocated(obj%gpu_setup%rocsolverHandleArray))) then
         allocate(obj%gpu_setup%rocsolverHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpucsolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
           obj%gpu_setup%rocsolverHandleArray(thread) = -1
+          obj%gpu_setup%gpucsolverHandleArray(thread) = -1
         enddo
       endif
 #endif
@@ -163,8 +167,10 @@ module mod_check_for_gpu
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       if (.not.(allocated(obj%gpu_setup%openmpOffloadsolverHandleArray))) then
         allocate(obj%gpu_setup%openmpOffloadsolverHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpusolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
           obj%gpu_setup%openmpOffloadsolverHandleArray(thread) = -1
+          obj%gpu_setup%gpusolverHandleArray(thread) = -1
         enddo
       endif
 #endif

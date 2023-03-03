@@ -172,6 +172,8 @@ module test_gpu
       integer(kind=c_intptr_t), intent(in) :: elements
       logical                              :: success
 
+      success = .false.
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then
         success = cuda_malloc_intptr(array, elements)

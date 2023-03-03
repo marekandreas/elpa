@@ -1,11 +1,12 @@
-!    Copyright 2022, A. Marek
+!    Copyright 2014 - 2023, A. Marek
 !
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -40,9 +41,8 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! This file was written by A. Marek, MPCDF (2022)
-! it is based on a prototype implementation developed for MPCDF
-! by A. Poeppl, Intel (2022)
+! Author: Andreas Marek, MPCDF
+! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
@@ -61,93 +61,149 @@ module sycl_functions
   integer(kind=ik) :: syclHostRegisterPortable
   integer(kind=ik) :: syclHostRegisterMapped
 
-  !! TODO global variable, has to be changed
-  !integer(kind=C_intptr_T), allocatable :: syclHandleArray(:)
-  !integer(kind=C_intptr_T), allocatable :: syclsolverHandleArray(:)
-  !integer(kind=c_int), allocatable      :: syclDeviceArray(:)
+!  ! streams
+!
+!  interface
+!    function sycl_stream_create_c(syclStream) result(istat) &
+!             bind(C, name="syclOffloadStreamCreateFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T) :: syclStream
+!      integer(kind=C_INT)      :: istat
+!    end function
+!  end interface
+!
+!  interface
+!    function sycl_stream_destroy_c(syclStream) result(istat) &
+!             bind(C, name="syclStreamDestroyFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value :: syclStream
+!      integer(kind=C_INT)             :: istat
+!    end function
+!  end interface
+!
+!  interface
+!    function sycl_stream_synchronize_explicit_c(syclStream) result(istat) &
+!             bind(C, name="syclOffloadStreamSynchronizeExplicitFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!
+!      integer(kind=C_intptr_T), value  :: syclStream
+!      integer(kind=C_INT)              :: istat
+!    end function
+!  end interface
+!
+!  interface
+!    function sycl_stream_synchronize_implicit_c() result(istat) &
+!             bind(C, name="syclOffloadStreamSynchronizeImplicitFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!
+!      integer(kind=C_INT)              :: istat
+!    end function
+!  end interface
+!
+!  interface
+!    function mkl_sycl_set_stream_c(syclHandle, syclStream) result(istat) &
+!             bind(C, name="mklSyclSetStreamFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!
+!      integer(kind=C_intptr_T), value  :: syclHandle
+!      integer(kind=C_intptr_T), value  :: syclStream
+!      integer(kind=C_INT)              :: istat
+!    end function
+!  end interface
+
+!  interface
+!    function sycl_solver_set_stream_c(sycl_solverHandle, syclStream) result(istat) &
+!             bind(C, name="syclsolverSetStreamFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!
+!      integer(kind=C_intptr_T), value  :: sycl_solverHandle
+!      integer(kind=C_intptr_T), value  :: syclStream
+!      integer(kind=C_INT)              :: istat
+!    end function
+!  end interface
 
   ! functions to set and query the GPU devices
   interface
-    function sycl_blas_create_c(handle) result(istat) &
-             bind(C, name="syclblasCreateFromC")
+    function mkl_sycl_create_c(syclHandle) result(istat) &
+             bind(C, name="mklSyclCreateFromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_intptr_T) :: syclHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
 
   interface
-    function sycl_blas_destroy_c(handle) result(istat) &
-             bind(C, name="syclblasDestroyFromC")
+    function mkl_sycl_destroy_c(syclHandle) result(istat) &
+             bind(C, name="mklSyclDestroyFromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_intptr_T) :: syclHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
 
   interface
-    function sycl_solver_create_c(handle) result(istat) &
+    function sycl_solver_create_c(sycl_solverHandle) result(istat) &
              bind(C, name="syclsolverCreateFromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_intptr_T) :: sycl_solverHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
 
   interface
-    function sycl_solver_destroy_c(handle) result(istat) &
+    function sycl_solver_destroy_c(sycl_solverHandle) result(istat) &
              bind(C, name="syclsolverDestroyFromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(kind=C_intptr_T) :: handle
+      integer(kind=C_intptr_T) :: sycl_solverHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
 
-
   interface
-    function sycl_setdevice_c(device_id) result(istat) &
-                     bind (C, name="syclSetDeviceFromC")
-      use, intrinsic :: iso_c_binding
+    function sycl_setdevice_c(n) result(istat) &
+             bind(C, name="syclOffloadSetDeviceFromC")
 
-      integer (kind=c_int), intent(in), value :: device_id
-      integer(kind=C_INT)                     :: istat
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), value    :: n
+      integer(kind=C_INT)           :: istat
     end function
   end interface
 
   interface
-    function sycl_getdevicecount_c() result(n) &
-             bind(C, name="syclGetDeviceCountFromC")
+    function sycl_getdevicecount_c(n) result(istat) &
+             bind(C, name="syclOffloadGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT) :: n
-    end function sycl_getdevicecount_c
+      integer(kind=C_INT), intent(out) :: n
+      integer(kind=C_INT)              :: istat
+    end function
   end interface
 
-  !interface
-  !  function cuda_devicesynchronize_c()result(istat) &
-  !           bind(C,name='cudaDeviceSynchronizeFromC')
+!  interface
+!    function sycl_devicesynchronize_c()result(istat) &
+!             bind(C,name="syclOffloadDeviceSynchronizeFromC")
+!
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_INT)                       :: istat
+!    end function
+!  end interface
 
-  !    use, intrinsic :: iso_c_binding
-
-  !    implicit none
-  !    integer(kind=C_INT)                       :: istat
-
-  !  end function cuda_devicesynchronize_c
-  !end interface
-
-
-  ! functions to copy memory
+  ! functions to copy GPU memory
   interface
     function sycl_memcpyDeviceToDevice_c() result(flag) &
-             bind(C, name="syclMemcpyDeviceToDeviceFromC")
+             bind(C, name="syclOffloadMemcpyDeviceToDeviceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -156,7 +212,7 @@ module sycl_functions
 
   interface
     function sycl_memcpyHostToDevice_c() result(flag) &
-             bind(C, name="syclMemcpyHostToDeviceFromC")
+             bind(C, name="syclOffloadMemcpyHostToDeviceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -165,7 +221,7 @@ module sycl_functions
 
   interface
     function sycl_memcpyDeviceToHost_c() result(flag) &
-             bind(C, name="syclMemcpyDeviceToHostFromC")
+             bind(C, name="syclOffloadMemcpyDeviceToHostFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -173,8 +229,8 @@ module sycl_functions
   end interface
 
 !  interface
-!    function cuda_hostRegisterDefault_c() result(flag) &
-!             bind(C, name="cudaHostRegisterDefaultFromC")
+!    function sycl_hostRegisterDefault_c() result(flag) &
+!             bind(C, name="syclOffloadHostRegisterDefaultFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=c_int) :: flag
@@ -182,8 +238,8 @@ module sycl_functions
 !  end interface
 !
 !  interface
-!    function cuda_hostRegisterPortable_c() result(flag) &
-!             bind(C, name="cudaHostRegisterPortableFromC")
+!    function sycl_hostRegisterPortable_c() result(flag) &
+!             bind(C, name="syclOffloadHostRegisterPortableFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=c_int) :: flag
@@ -191,75 +247,127 @@ module sycl_functions
 !  end interface
 !
 !  interface
-!    function cuda_hostRegisterMapped_c() result(flag) &
-!             bind(C, name="cudaHostRegisterMappedFromC")
+!    function sycl_hostRegisterMapped_c() result(flag) &
+!             bind(C, name="syclOffloadHostRegisterMappedFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=c_int) :: flag
 !    end function
 !  end interface
-
+!
   interface
-    function sycl_memcpy_intptr_c(dst, src, elems, direction) &
-             result (istat) bind (C, name="syclMemcpyFromC")
+    function sycl_memcpy_intptr_c(dst, src, size, dir) result(istat) &
+             bind(C, name="syclOffloadMemcpyFromC")
       use, intrinsic :: iso_c_binding
-      integer (kind=c_intptr_t), intent(in), value :: dst
-      integer (kind=c_intptr_t), intent(in), value :: src
-      integer (kind=c_intptr_t), intent(in), value :: elems
-      integer (kind=c_int), intent(in), value      :: direction
-      integer (kind=c_int)                         :: istat
+      implicit none
+      integer(kind=C_intptr_t), value              :: dst
+      integer(kind=C_intptr_t), value              :: src
+      integer(kind=c_intptr_t), intent(in), value    :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=C_INT)                          :: istat
     end function
   end interface
 
   interface
-    function sycl_memcpy_cptr_c(dst, src, elems, direction) &
-                    result (istat) bind (C, name="syclMemcpyFromC")
+    function sycl_memcpy_cptr_c(dst, src, size, dir) result(istat) &
+             bind(C, name="syclOffloadMemcpyFromC")
       use, intrinsic :: iso_c_binding
-      type(c_ptr), intent(in), value               :: dst
-      type(c_ptr), intent(in), value               :: src
-      integer (kind=c_intptr_t), intent(in), value :: elems
-      integer (kind=c_int), intent(in), value      :: direction
-      integer (kind=c_int)                         :: istat
-    end function
-
-  end interface
-
-  interface
-    function sycl_memcpy_mixed_to_device_c(dst, src, elems, direction) result (istat) &
-                    bind (C, name="syclMemcpyFromC")
-      use, intrinsic :: iso_c_binding
-
-      type(c_ptr), intent(in), value               :: dst
-      integer (kind=c_intptr_t), intent(in), value :: src
-      integer (kind=c_intptr_t), intent(in), value :: elems
-      integer (kind=c_int), intent(in), value      :: direction
-      integer (kind=c_int)                         :: istat
+      implicit none
+      type(c_ptr), value                           :: dst
+      type(c_ptr), value                           :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=C_INT)                          :: istat
     end function
   end interface
 
   interface
-    function sycl_memcpy_mixed_to_host_c(dst, src, elems, direction) result (istat) &
-                    bind (C, name="syclMemcpyFromC")
+    function sycl_memcpy_mixed_to_device_c(dst, src, size, dir) result(istat) &
+             bind(C, name="syclOffloadMemcpyFromC")
       use, intrinsic :: iso_c_binding
-
-      type(c_ptr), intent(in), value               :: src
-      integer (kind=c_intptr_t), intent(in), value :: dst
-      integer (kind=c_intptr_t), intent(in), value :: elems
-      integer (kind=c_int), intent(in), value      :: direction
-      integer (kind=c_int)                         :: istat
+      implicit none
+      type(c_ptr), value                           :: dst
+      integer(kind=c_intptr_t), value              :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=C_INT)                          :: istat
     end function
+  end interface
 
-
+  interface
+    function sycl_memcpy_mixed_to_host_c(dst, src, size, dir) result(istat) &
+             bind(C, name="syclOffloadMemcpyFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value                           :: src
+      integer(kind=c_intptr_t), value              :: dst
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=C_INT)                          :: istat
+    end function
   end interface
 
 !  interface
-!    function cuda_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
-!             bind(C, name="cudaMemcpy2dFromC")
-!
+!    function sycl_memcpy_async_intptr_c(dst, src, size, dir, syclStream) result(istat) &
+!             bind(C, name="syclOffloadMemcpyAsyncFromC")
 !      use, intrinsic :: iso_c_binding
-!
 !      implicit none
+!      integer(kind=C_intptr_t), value              :: dst
+!      integer(kind=C_intptr_t), value              :: src
+!      integer(kind=c_intptr_t), intent(in), value  :: size
+!      integer(kind=C_INT), intent(in), value       :: dir
+!      integer(kind=c_intptr_t), value              :: syclStream
+!      integer(kind=C_INT)                          :: istat
+!    end function
+!  end interface
 !
+!  interface
+!    function sycl_memcpy_async_cptr_c(dst, src, size, dir, syclStream) result(istat) &
+!             bind(C, name="syclOffloadMemcpyAsyncFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr), value                           :: dst
+!      type(c_ptr), value                           :: src
+!      integer(kind=c_intptr_t), intent(in), value  :: size
+!      integer(kind=C_INT), intent(in), value       :: dir
+!      integer(kind=c_intptr_t), value              :: syclStream
+!      integer(kind=C_INT)                          :: istat
+!    end function
+!  end interface
+!
+!  interface
+!    function sycl_memcpy_async_mixed_to_device_c(dst, src, size, dir, syclStream) result(istat) &
+!             bind(C, name="syclOffloadMemcpyAsyncFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr), value                           :: dst
+!      integer(kind=C_intptr_t), value              :: src
+!      integer(kind=c_intptr_t), intent(in), value  :: size
+!      integer(kind=C_INT), intent(in), value       :: dir
+!      integer(kind=c_intptr_t), value              :: syclStream
+!      integer(kind=C_INT)                          :: istat
+!    end function
+!  end interface
+!
+!  interface
+!    function sycl_memcpy_async_mixed_to_host_c(dst, src, size, dir, syclStream) result(istat) &
+!             bind(C, name="syclOffloadMemcpyAsyncFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr), value                           :: src
+!      integer(kind=C_intptr_t), value              :: dst
+!      integer(kind=c_intptr_t), intent(in), value  :: size
+!      integer(kind=C_INT), intent(in), value       :: dir
+!      integer(kind=c_intptr_t), value              :: syclStream
+!      integer(kind=C_INT)                          :: istat
+!    end function
+!  end interface
+!
+!  interface
+!    function sycl_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
+!             bind(C, name="syclOffloadMemcpy2dFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
 !      integer(kind=C_intptr_T), value                :: dst
 !      integer(kind=c_intptr_t), intent(in), value    :: dpitch
 !      integer(kind=C_intptr_T), value                :: src
@@ -268,18 +376,14 @@ module sycl_functions
 !      integer(kind=c_intptr_t), intent(in), value    :: height
 !      integer(kind=C_INT), intent(in), value         :: dir
 !      integer(kind=C_INT)                            :: istat
-!
-!    end function cuda_memcpy2d_intptr_c
+!    end function
 !  end interface
 !
 !  interface
-!    function cuda_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
-!             bind(C, name="cudaMemcpy2dFromC")
-!
+!    function sycl_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
+!             bind(C, name="syclOffloadMemcpy2dFromC")
 !      use, intrinsic :: iso_c_binding
-!
 !      implicit none
-!
 !      type(c_ptr), value                :: dst
 !      integer(kind=c_intptr_t), intent(in), value    :: dpitch
 !      type(c_ptr), value                :: src
@@ -288,46 +392,72 @@ module sycl_functions
 !      integer(kind=c_intptr_t), intent(in), value    :: height
 !      integer(kind=C_INT), intent(in), value         :: dir
 !      integer(kind=C_INT)                            :: istat
-!
-!    end function cuda_memcpy2d_cptr_c
+!    end function
 !  end interface
 !
 !  interface
-!    function cuda_host_register_c(a, size, flag) result(istat) &
-!             bind(C, name="cudaHostRegisterFromC")
-!
+!    function sycl_memcpy2d_async_intptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) result(istat) &
+!             bind(C, name="syclOffloadMemcpy2dAsyncFromC")
 !      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value                :: dst
+!      integer(kind=c_intptr_t), intent(in), value    :: dpitch
+!      integer(kind=C_intptr_T), value                :: src
+!      integer(kind=c_intptr_t), intent(in), value    :: spitch
+!      integer(kind=c_intptr_t), intent(in), value    :: width
+!      integer(kind=c_intptr_t), intent(in), value    :: height
+!      integer(kind=C_INT), intent(in), value         :: dir
+!      integer(kind=c_intptr_t), value                :: syclStream
+!      integer(kind=C_INT)                            :: istat
+!    end function
+!  end interface
 !
+!  interface
+!    function sycl_memcpy2d_async_cptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) result(istat) &
+!             bind(C, name="syclOffloadMemcpy2dAsyncFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr), value                :: dst
+!      integer(kind=c_intptr_t), intent(in), value    :: dpitch
+!      type(c_ptr), value                :: src
+!      integer(kind=c_intptr_t), intent(in), value    :: spitch
+!      integer(kind=c_intptr_t), intent(in), value    :: width
+!      integer(kind=c_intptr_t), intent(in), value    :: height
+!      integer(kind=C_INT), intent(in), value         :: dir
+!      integer(kind=c_intptr_t), value                :: syclStream
+!      integer(kind=C_INT)                            :: istat
+!    end function
+!  end interface
+!
+!  interface
+!    function sycl_host_register_c(a, size, flag) result(istat) &
+!             bind(C, name="syclOffloadHostRegisterFromC")
+!      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_t), value              :: a
 !      integer(kind=c_intptr_t), intent(in), value  :: size
 !      integer(kind=C_INT), intent(in), value       :: flag
 !      integer(kind=C_INT)                          :: istat
-!
-!    end function cuda_host_register_c
+!    end function
 !  end interface
 !
 !  interface
-!    function cuda_host_unregister_c(a) result(istat) &
-!             bind(C, name="cudaHostUnregisterFromC")
-!
+!    function sycl_host_unregister_c(a) result(istat) &
+!             bind(C, name="syclOffloadHostUnregisterFromC")
 !      use, intrinsic :: iso_c_binding
-!
 !      implicit none
 !      integer(kind=C_intptr_t), value              :: a
 !      integer(kind=C_INT)                          :: istat
-!
-!    end function cuda_host_unregister_c
+!    end function
 !  end interface
-
-  ! functions to allocate and free device memory
+!
   interface
-    function sycl_free_c(a) result (istat) &
-             bind (C, name="syclFreeFromC")
+    function sycl_free_c(a) result(istat) &
+             bind(C, name="syclOffloadFreeFromC")
       use, intrinsic :: iso_c_binding
-
-      integer (kind=c_intptr_t) :: a
-      integer (kind=c_int)      :: istat
+      implicit none
+      integer(kind=C_intptr_T)  :: a
+      integer(kind=C_INT)              :: istat
     end function
   end interface
 
@@ -338,866 +468,742 @@ module sycl_functions
     module procedure sycl_memcpy_mixed_to_host
   end interface
 
+!  interface sycl_memcpy_async
+!    module procedure sycl_memcpy_async_intptr
+!    module procedure sycl_memcpy_async_cptr
+!    module procedure sycl_memcpy_async_mixed_to_device
+!    module procedure sycl_memcpy_async_mixed_to_host
+!  end interface
 
   interface
-    function sycl_malloc_c(a, elems) result (istat) &
-             bind (C, name="syclMallocFromC")
+    function sycl_malloc_c(a, width_height) result(istat) &
+             bind(C, name="syclOffloadMallocFromC")
       use, intrinsic :: iso_c_binding
-
-
-      integer (kind=c_intptr_t)                       :: a
-      integer (kind=c_intptr_t), intent(in), value    :: elems
-      integer (kind=c_int)                            :: istat
+      implicit none
+      ! no value since **pointer
+      integer(kind=C_intptr_T)                    :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
+      integer(kind=C_INT)                         :: istat
     end function
   end interface
 
-  !interface
-  !  function cuda_free_host_c(a) result(istat) &
-  !           bind(C, name="cudaFreeHostFromC")
-
-  !    use, intrinsic :: iso_c_binding
-
-  !    implicit none
-  !    type(c_ptr), value                    :: a
-  !    integer(kind=C_INT)              :: istat
-
-  !  end function cuda_free_host_c
-  !end interface
-
-  !interface
-  !  function cuda_malloc_host_c(a, width_height) result(istat) &
-  !           bind(C, name="cudaMallocHostFromC")
-
-  !    use, intrinsic :: iso_c_binding
-  !    implicit none
-
-  !    type(c_ptr)                    :: a
-  !    integer(kind=c_intptr_t), intent(in), value   :: width_height
-  !    integer(kind=C_INT)                         :: istat
-
-  !  end function cuda_malloc_host_c
-  !end interface
+!  interface
+!    function sycl_free_host_c(a) result(istat) &
+!             bind(C, name="syclOffloadFreeHostFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr), value               :: a
+!      integer(kind=C_INT)              :: istat
+!    end function
+!  end interface
+!
+!  interface
+!    function sycl_malloc_host_c(a, width_height) result(istat) &
+!             bind(C, name="syclOffloadMallocHostFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr)                    :: a
+!      integer(kind=c_intptr_t), intent(in), value   :: width_height
+!      integer(kind=C_INT)                         :: istat
+!    end function
+!  end interface
 
   interface
-    function sycl_memset_c(array, val, elems) result (istat) &
-                    bind (C, name="syclMemsetFromC")
+    function sycl_memset_c(a, val, size) result(istat) &
+             bind(C, name="syclOffloadMemsetFromC")
       use, intrinsic :: iso_c_binding
-
-      integer (kind=c_intptr_t), intent(in), value :: array
-      integer (kind=c_intptr_t), intent(in), value :: elems
-      integer (kind=c_int32_t), intent(in), value  :: val
-      integer (kind=c_int)                         :: istat
+      implicit none
+      integer(kind=C_intptr_T), value            :: a
+      integer(kind=C_INT), value                 :: val
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT)                        :: istat
     end function
   end interface
 
-  ! mkl lapack via sycl
-  interface
-    subroutine mkl_sycl_dtrtri_c(handle, uplo, diag, n, a, lda, info) &
-                              bind(C,name='mklSyclDtrtriFromC')
-      use, intrinsic :: iso_c_binding
+!  interface
+!    function sycl_memset_async_c(a, val, size, syclStream) result(istat) &
+!             bind(C, name="syclOffloadMemsetAsyncFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value            :: a
+!      integer(kind=C_INT), value                 :: val
+!      integer(kind=c_intptr_t), intent(in), value  :: size
+!      integer(kind=C_INT)                        :: istat
+!      integer(kind=c_intptr_t), value            :: syclStream
+!    end function
+!  end interface
 
+  interface
+    subroutine sycl_solver_Dtrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info) &
+                              bind(C,name="syclsolverDtrtri_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo, diag
       integer(kind=C_INT64_T), intent(in),value :: n, lda
       integer(kind=C_intptr_T), value           :: a
       integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: handle
-
+      integer(kind=C_intptr_T), value           :: sycl_solverHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_strtri_c(handle, uplo, diag, n, a, lda, info) &
-                              bind(C,name='mklSyclStrtriFromC')
+    subroutine sycl_solver_Dpotrf_c(sycl_solverHandle, uplo, n, a, lda, info) &
+                              bind(C,name="syclsolverDpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: handle
-
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_sycl_ztrtri_c(handle, uplo, diag, n, a, lda, info) &
-                              bind(C,name='mklSyclZtrtriFromC')
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: handle
-
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_sycl_ctrtri_c(handle, uplo, diag, n, a, lda, info) &
-                              bind(C,name='mklSyclCtrtriFromC')
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: handle
-
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_sycl_dpotrf_c(handle, uplo, n, a, lda, info) &
-                              bind(C,name='mklSyclDpotrfFromC')
-      use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
       integer(kind=C_intptr_T), value           :: a
       integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: handle
-
+      integer(kind=C_intptr_T), value           :: sycl_solverHandle
     end subroutine
   end interface
 
-  interface
-    subroutine mkl_sycl_spotrf_c(handle, uplo, n, a, lda, info) &
-                              bind(C,name='mklSyclSpotrfFromC')
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: handle
-
-    end subroutine
+  interface mkl_sycl_Dgemm
+    module procedure mkl_sycl_Dgemm_intptr
+    module procedure mkl_sycl_Dgemm_cptr
   end interface
 
   interface
-    subroutine mkl_sycl_zpotrf_c(handle, uplo, n, a, lda, info) &
-                              bind(C,name='mklSyclZpotrfFromC')
+    subroutine mkl_sycl_Dgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="mklSyclDgemm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: handle
-
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_sycl_cpotrf_c(handle, uplo, n, a, lda, info) &
-                              bind(C,name='mklSyclCpotrfFromC')
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: handle
-
-    end subroutine
-  end interface
-
-  ! mkl blas via sycl
-#ifdef WITH_SYCL_GPU_VERSION
-  interface mkl_sycl_dgemm
-    module procedure mkl_sycl_dgemm_intptr
-    module procedure mkl_sycl_dgemm_cptr
-  end interface
-
-  interface mkl_sycl_sgemm
-    module procedure mkl_sycl_sgemm_intptr
-    module procedure mkl_sycl_sgemm_cptr
-  end interface
-
-  interface mkl_sycl_zgemm
-    module procedure mkl_sycl_zgemm_intptr
-    module procedure mkl_sycl_zgemm_cptr
-  end interface
-
-  interface mkl_sycl_cgemm
-    module procedure mkl_sycl_cgemm_intptr
-    module procedure mkl_sycl_cgemm_cptr
-  end interface
-
-  interface
-    subroutine mkl_sycl_dgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                           bind (C, name="mklSyclDgemmFromC")
-      use, intrinsic :: iso_c_binding
-
-      character (1, c_char), intent(in), value     :: cta, ctb
-      integer (kind=c_int), intent(in), value      :: m, n, k
-      integer (kind=c_int), intent(in), value      :: lda, ldb, ldc
-      real (kind=c_double), value                  :: alpha, beta
-      integer (kind=c_intptr_t), intent(in), value :: a, b, c
-      integer(kind=C_intptr_T), value              :: handle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_sycl_dgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name='mklSyclDgemmFromC')
-
-      use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
       integer(kind=C_INT),value               :: m,n,k
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
-      real(kind=C_DOUBLE),value               :: alpha,beta
-      type(c_ptr), value                      :: a, b, c
-      integer(kind=C_intptr_T), value         :: handle
-
-    end subroutine 
-  end interface
-
-  interface
-    subroutine mkl_sycl_sgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name='mklSyclSgemmFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value               :: cta, ctb
-      integer(kind=C_INT),value               :: m,n,k
-      integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
-      real(kind=C_FLOAT),value                :: alpha,beta
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, b, c
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_sgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
-                              bind(C,name='mklSyclSgemmFromC')
-
+    subroutine mkl_sycl_Dgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="mklSyclDgemm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value               :: cta, ctb
       integer(kind=C_INT),value               :: m,n,k
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
-      real(kind=C_FLOAT),value                :: alpha,beta
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
-#endif /* WITH_SYCL_GPU_VERSION */
-
-  interface mkl_sycl_dcopy
-    module procedure mkl_sycl_dcopy_intptr
-    module procedure mkl_sycl_dcopy_cptr
+  interface mkl_sycl_Dcopy
+    module procedure mkl_sycl_Dcopy_intptr
+    module procedure mkl_sycl_Dcopy_cptr
   end interface
 
   interface
-    subroutine mkl_sycl_dcopy_intptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklSyclDcopyFromC')
-
+    subroutine mkl_sycl_Dcopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklSyclDcopy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT),value               :: n
       integer(kind=C_INT), intent(in), value  :: incx,incy
       integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: handle
-
-    end subroutine 
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_dcopy_cptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklSyclDcopyFromC')
-
+    subroutine mkl_sycl_Dcopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklSyclDcopy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT),value               :: n
       integer(kind=C_INT), intent(in), value  :: incx,incy
       type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
-  interface mkl_sycl_scopy
-    module procedure mkl_sycl_scopy_intptr
-    module procedure mkl_sycl_scopy_cptr
+  interface mkl_sycl_Dtrmm
+    module procedure mkl_sycl_Dtrmm_intptr
+    module procedure mkl_sycl_Dtrmm_cptr
   end interface
 
   interface
-    subroutine mkl_sycl_scopy_intptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklSyclScopyFromC')
-
+    subroutine mkl_sycl_Dtrmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclDtrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
 
+  interface
+    subroutine mkl_sycl_Dtrmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclDtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface mkl_sycl_Dtrsm
+    module procedure mkl_sycl_Dtrsm_intptr
+    module procedure mkl_sycl_Dtrsm_cptr
+  end interface
+
+  interface
+    subroutine mkl_sycl_Dtrsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclDtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_sycl_Dtrsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclDtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_sycl_Dgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="mklSyclDgemv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_DOUBLE) , value              :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine sycl_solver_Strtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info) &
+                              bind(C,name="syclsolverStrtri_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: sycl_solverHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine sycl_solver_Spotrf_c(sycl_solverHandle, uplo, n, a, lda, info) &
+                              bind(C,name="syclsolverSpotrf_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: sycl_solverHandle
+    end subroutine
+  end interface
+
+  interface mkl_sycl_Sgemm
+    module procedure mkl_sycl_Sgemm_intptr
+    module procedure mkl_sycl_Sgemm_cptr
+  end interface
+
+  interface
+    subroutine mkl_sycl_Sgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="mklSyclSgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m,n,k
+      integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
+      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, b, c
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_sycl_Sgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="mklSyclSgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m,n,k
+      integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
+      real(kind=C_FLOAT) ,value               :: alpha,beta
+      type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface mkl_sycl_Scopy
+    module procedure mkl_sycl_Scopy_intptr
+    module procedure mkl_sycl_Scopy_cptr
+  end interface
+
+  interface
+    subroutine mkl_sycl_Scopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklSyclScopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
       integer(kind=C_INT), intent(in), value  :: incx,incy
       integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: handle
-
-    end subroutine 
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_scopy_cptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklSyclScopyFromC')
-
+    subroutine mkl_sycl_Scopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklSyclScopy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT),value               :: n
       integer(kind=C_INT), intent(in), value  :: incx,incy
       type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
-  interface mkl_sycl_dtrmm
-    module procedure mkl_sycl_dtrmm_intptr
-    module procedure mkl_sycl_dtrmm_cptr
+  interface mkl_sycl_Strmm
+    module procedure mkl_sycl_Strmm_intptr
+    module procedure mkl_sycl_Strmm_cptr
   end interface
 
   interface
-    subroutine mkl_sycl_dtrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclDtrmmFromC')
-
+    subroutine mkl_sycl_Strmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclStrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE), value              :: alpha
+      real(kind=C_FLOAT) , value              :: alpha
       integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_dtrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclDtrmmFromC')
-
+    subroutine mkl_sycl_Strmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclStrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE), value              :: alpha
+      real(kind=C_FLOAT) , value              :: alpha
       type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
-
-  interface mkl_sycl_strmm
-    module procedure mkl_sycl_strmm_intptr
-    module procedure mkl_sycl_strmm_cptr
+  interface mkl_sycl_Strsm
+    module procedure mkl_sycl_Strsm_intptr
+    module procedure mkl_sycl_Strsm_cptr
   end interface
 
-
   interface
-    subroutine mkl_sycl_strmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclStrmmFromC')
-
+    subroutine mkl_sycl_Strsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclStrsm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT), value               :: alpha
+      real(kind=C_FLOAT) , value              :: alpha
       integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_strmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclStrmmFromC')
-
+    subroutine mkl_sycl_Strsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclStrsm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT), value               :: alpha
+      real(kind=C_FLOAT) , value              :: alpha
       type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
-
-  interface mkl_sycl_dtrsm
-    module procedure mkl_sycl_dtrsm_intptr
-    module procedure mkl_sycl_dtrsm_cptr
-  end interface
-
   interface
-    subroutine mkl_sycl_dtrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclDtrsmFromC')
-
+    subroutine mkl_sycl_Sgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="mklSyclSgemv_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      character(1,C_CHAR),value               :: cta
       integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE), value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_FLOAT) , value              :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_dtrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclDtrsmFromC')
-
+    subroutine sycl_solver_Ztrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info) &
+                              bind(C,name="syclsolverZtrtri_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE), value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: handle
-
-    end subroutine
-  end interface
-
-
-  interface mkl_sycl_strsm
-    module procedure mkl_sycl_strsm_intptr
-    module procedure mkl_sycl_strsm_cptr
-  end interface
-
-  interface
-    subroutine mkl_sycl_strsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclStrsmFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT), value               :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: handle
-
-    end subroutine 
-  end interface
-
-  interface
-    subroutine mkl_sycl_strsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclStrsmFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT), value               :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: handle
-
-    end subroutine
-  end interface
-
-#ifdef WITH_SYCL_GPU_VERSION
-
-  interface
-    subroutine mkl_sycl_zgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mklSyclZgemmFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value              :: cta, ctb
-      integer(kind=C_INT),value              :: m,n,k
-      integer(kind=C_INT), intent(in), value :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX),value   :: alpha,beta
-      integer(kind=C_intptr_T), value        :: a, b, c
-      integer(kind=C_intptr_T), value        :: handle
-
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: sycl_solverHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_zgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mklSyclZgemmFromC')
-
+    subroutine sycl_solver_Zpotrf_c(sycl_solverHandle, uplo, n, a, lda, info) &
+                              bind(C,name="syclsolverZpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value              :: cta, ctb
-      integer(kind=C_INT),value              :: m,n,k
-      integer(kind=C_INT), intent(in), value :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX),value   :: alpha,beta
-      type(c_ptr), value                     :: a, b, c
-      integer(kind=C_intptr_T), value        :: handle
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: sycl_solverHandle
+    end subroutine
+  end interface
 
+  interface mkl_sycl_Zgemm
+    module procedure mkl_sycl_Zgemm_intptr
+    module procedure mkl_sycl_Zgemm_cptr
+  end interface
+
+  interface
+    subroutine mkl_sycl_Zgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="mklSyclZgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m,n,k
+      integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, b, c
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_cgemm_intptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mklSyclCgemmFromC')
-
+    subroutine mkl_sycl_Zgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="mklSyclZgemm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value              :: cta, ctb
-      integer(kind=C_INT),value              :: m,n,k
-      integer(kind=C_INT), intent(in), value :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX),value    :: alpha,beta
-      integer(kind=C_intptr_T), value        :: a, b, c
-      integer(kind=C_intptr_T), value        :: handle
-
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m,n,k
+      integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
-  interface
-    subroutine mkl_sycl_cgemm_cptr_c(handle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc) &
-                              bind(C,name='mklSyclCgemmFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value              :: cta, ctb
-      integer(kind=C_INT),value              :: m,n,k
-      integer(kind=C_INT), intent(in), value :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX),value    :: alpha,beta
-      type(c_ptr), value                     :: a, b, c
-      integer(kind=C_intptr_T), value        :: handle
-
-    end subroutine
-  end interface
-
-#endif /* WITH_SYCL_GPU_VERSION */
-
-  interface mkl_sycl_zcopy
-    module procedure mkl_sycl_zcopy_intptr
-    module procedure mkl_sycl_zcopy_cptr
+  interface mkl_sycl_Zcopy
+    module procedure mkl_sycl_Zcopy_intptr
+    module procedure mkl_sycl_Zcopy_cptr
   end interface
 
   interface
-    subroutine mkl_sycl_zcopy_intptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklSyclZcopyFromC')
-
+    subroutine mkl_sycl_Zcopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklSyclZcopy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT),value               :: n
       integer(kind=C_INT), intent(in), value  :: incx,incy
       integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_zcopy_cptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklSyclZcopyFromC')
-
+    subroutine mkl_sycl_Zcopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklSyclZcopy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT),value               :: n
       integer(kind=C_INT), intent(in), value  :: incx,incy
       type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
-
-  interface mkl_sycl_ccopy
-    module procedure mkl_sycl_ccopy_intptr
-    module procedure mkl_sycl_ccopy_cptr
+  interface mkl_sycl_Ztrmm
+    module procedure mkl_sycl_Ztrmm_intptr
+    module procedure mkl_sycl_Ztrmm_cptr
   end interface
 
   interface
-    subroutine mkl_sycl_ccopy_intptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklSyclCcopyFromC')
-
+    subroutine mkl_sycl_Ztrmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclZtrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
 
+  interface
+    subroutine mkl_sycl_Ztrmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclZtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface mkl_sycl_Ztrsm
+    module procedure mkl_sycl_Ztrsm_intptr
+    module procedure mkl_sycl_Ztrsm_cptr
+  end interface
+
+  interface
+    subroutine mkl_sycl_Ztrsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclZtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_sycl_Ztrsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclZtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_sycl_Zgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="mklSyclZgemv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine sycl_solver_Ctrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info) &
+                              bind(C,name="syclsolverCtrtri_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value                 :: uplo, diag
+      integer(kind=C_INT64_T), intent(in),value :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: sycl_solverHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine sycl_solver_Cpotrf_c(sycl_solverHandle, uplo, n, a, lda, info) &
+                              bind(C,name="syclsolverCpotrf_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value                 :: uplo
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a
+      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: sycl_solverHandle
+    end subroutine
+  end interface
+
+  interface mkl_sycl_Cgemm
+    module procedure mkl_sycl_Cgemm_intptr
+    module procedure mkl_sycl_Cgemm_cptr
+  end interface
+
+  interface
+    subroutine mkl_sycl_Cgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="mklSyclCgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m,n,k
+      integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, b, c
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_sycl_Cgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="mklSyclCgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m,n,k
+      integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
+    end subroutine
+  end interface
+
+  interface mkl_sycl_Ccopy
+    module procedure mkl_sycl_Ccopy_intptr
+    module procedure mkl_sycl_Ccopy_cptr
+  end interface
+
+  interface
+    subroutine mkl_sycl_Ccopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklSyclCcopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT),value               :: n
       integer(kind=C_INT), intent(in), value  :: incx,incy
       integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_ccopy_cptr_c(handle, n, x, incx, y, incy) &
-                              bind(C,name='mklSyclCcopyFromC')
-
+    subroutine mkl_sycl_Ccopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklSyclCcopy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT),value               :: n
       integer(kind=C_INT), intent(in), value  :: incx,incy
       type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
-  interface mkl_sycl_ztrmm
-    module procedure mkl_sycl_ztrmm_intptr
-    module procedure mkl_sycl_ztrmm_cptr
+  interface mkl_sycl_Ctrmm
+    module procedure mkl_sycl_Ctrmm_intptr
+    module procedure mkl_sycl_Ctrmm_cptr
   end interface
 
   interface
-    subroutine mkl_sycl_ztrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclZtrmmFromC')
-
+    subroutine mkl_sycl_Ctrmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclCtrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value              :: side, uplo, trans, diag
-      integer(kind=C_INT),value              :: m,n
-      integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX), value          :: alpha
-      integer(kind=C_intptr_T), value        :: a, b
-      integer(kind=C_intptr_T), value         :: handle
-
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_ztrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclZtrmmFromC')
-
+    subroutine mkl_sycl_Ctrmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclCtrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value              :: side, uplo, trans, diag
-      integer(kind=C_INT),value              :: m,n
-      integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX), value  :: alpha
-      type(c_ptr), value                     :: a, b
-      integer(kind=C_intptr_T), value        :: handle
-
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
-  interface mkl_sycl_ctrmm
-    module procedure mkl_sycl_ctrmm_intptr
-    module procedure mkl_sycl_ctrmm_cptr
+  interface mkl_sycl_Ctrsm
+    module procedure mkl_sycl_Ctrsm_intptr
+    module procedure mkl_sycl_Ctrsm_cptr
   end interface
 
   interface
-    subroutine mkl_sycl_ctrmm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclCtrmmFromC')
-
+    subroutine mkl_sycl_Ctrsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclCtrsm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value              :: side, uplo, trans, diag
-      integer(kind=C_INT),value              :: m,n
-      integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX), value   :: alpha
-      integer(kind=C_intptr_T), value        :: a, b
-      integer(kind=C_intptr_T), value        :: handle
-
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_ctrmm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclCtrmmFromC')
-
+    subroutine mkl_sycl_Ctrsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklSyclCtrsm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value              :: side, uplo, trans, diag
-      integer(kind=C_INT),value              :: m,n
-      integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX), value   :: alpha
-      type(c_ptr), value                     :: a, b
-      integer(kind=C_intptr_T), value        :: handle
-
-    end subroutine mkl_sycl_ctrmm_cptr_c
-  end interface
-
-  interface mkl_sycl_ztrsm
-    module procedure mkl_sycl_ztrsm_intptr
-    module procedure mkl_sycl_ztrsm_cptr
-  end interface
-
-  interface
-    subroutine mkl_sycl_ztrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclZtrsmFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value              :: side, uplo, trans, diag
-      integer(kind=C_INT),value              :: m,n
-      integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX), value  :: alpha
-      integer(kind=C_intptr_T), value        :: a, b
-      integer(kind=C_intptr_T), value        :: handle
-
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
 
   interface
-    subroutine mkl_sycl_ztrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclZtrsmFromC')
-
+    subroutine mkl_sycl_Cgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="mklSyclCgemv_elpa_wrapper")
       use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value              :: side, uplo, trans, diag
-      integer(kind=C_INT),value              :: m,n
-      integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX), value  :: alpha
-      type(c_ptr), value                     :: a, b
-      integer(kind=C_intptr_T), value        :: handle
-
-    end subroutine
-  end interface
-
-  interface mkl_sycl_ctrsm
-    module procedure mkl_sycl_ctrsm_intptr
-    module procedure mkl_sycl_ctrsm_cptr
-  end interface
-
- interface
-    subroutine mkl_sycl_ctrsm_intptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclCtrsmFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value              :: side, uplo, trans, diag
-      integer(kind=C_INT),value              :: m,n
-      integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX), value   :: alpha
-      integer(kind=C_intptr_T), value        :: a, b
-      integer(kind=C_intptr_T), value        :: handle
-
-    end subroutine 
-  end interface
-
-  interface
-    subroutine mkl_sycl_ctrsm_cptr_c(handle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name='mklSyclCtrsmFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value              :: side, uplo, trans, diag
-      integer(kind=C_INT),value              :: m,n
-      integer(kind=C_INT), intent(in), value :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX), value   :: alpha
-      type(c_ptr), value                     :: a, b
-      integer(kind=C_intptr_T), value        :: handle
-
-    end subroutine
-  end interface
-
-
-  interface
-    subroutine mkl_sycl_dgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name='mklSyclDgemvFromC')
-
-      use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value               :: cta
       integer(kind=C_INT),value               :: m,n
       integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      real(kind=C_DOUBLE),value               :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX) , value              :: alpha, beta
       integer(kind=C_intptr_T), value         :: a, x, y
-      integer(kind=C_intptr_T), value         :: handle
-
-    end subroutine 
-  end interface
-
-  interface
-    subroutine mkl_sycl_sgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name='mklSyclSgemvFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value               :: cta
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      real(kind=C_FLOAT),value                :: alpha,beta
-      integer(kind=C_intptr_T), value         :: a, x, y
-      integer(kind=C_intptr_T), value         :: handle
-
+      integer(kind=C_intptr_T), value         :: mkl_syclHandle
     end subroutine
   end interface
-
- interface
-    subroutine mkl_sycl_zgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name='mklSyclZgemvFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value               :: cta
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_DOUBLE_COMPLEX),value    :: alpha,beta
-      integer(kind=C_intptr_T), value         :: a, x, y
-      integer(kind=C_intptr_T), value         :: handle
-
-    end subroutine 
-  end interface
-
-  interface
-    subroutine mkl_sycl_cgemv_c(handle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name='mklSyclCgemvFromC')
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value               :: cta
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_FLOAT_COMPLEX),value     :: alpha,beta
-      integer(kind=C_intptr_T), value         :: a, x, y
-      integer(kind=C_intptr_T), value         :: handle
-
-    end subroutine
-  end interface
-
 
 !#ifdef WITH_NVTX
 !  ! NVTX profiling interfaces
@@ -1216,83 +1222,147 @@ module sycl_functions
 
   contains
 
-#ifdef WITH_NVTX
-!   ! this wrapper is needed for the string conversion
-!   subroutine nvtxRangePush(range_name)
-!     implicit none
-!     character(len=*), intent(in) :: range_name
+!    function sycl_stream_create(syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_t)                  :: syclStream
+!      logical                                   :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_stream_create_c(syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
 !
-!     character(kind=C_CHAR,len=1), dimension(len(range_name)+1) :: c_name
-!     integer i
+!    function sycl_stream_destroy(syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_t)                  :: syclStream
+!      logical                                   :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_stream_destroy_c(syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
 !
-!     do i = 1, len(range_name)
-!       c_name(i) = range_name(i:i)
-!     end do
-!     c_name(len(range_name)+1) = char(0)
+!    function mkl_sycl_set_stream(mkl_syclHandle, syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_t)                  :: mkl_syclHandle
+!      integer(kind=C_intptr_t)                  :: syclStream
+!      logical                                   :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = mkl_sycl_set_stream_c(mkl_syclHandle, syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
 !
-!     call nvtxRangePushA(c_name)
-!   end subroutine
-#endif
+!    function sycl_solver_set_stream(sycl_solverHandle, syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_t)                  :: sycl_solverHandle
+!      integer(kind=C_intptr_t)                  :: syclStream
+!      logical                                   :: success
+!
+!#ifdef WITH_SYCL_SYCL_SOLVER
+!      success = sycl_solver_set_stream_c(sycl_solverHandle, syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
+!
+!
+!    function sycl_stream_synchronize(syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_t), optional        :: syclStream
+!      logical                                   :: success
+!      if (present(syclStream)) then
+!#ifdef WITH_SYCL_GPU_VERSION
+!        success = sycl_stream_synchronize_explicit_c(syclStream) /= 0
+!#else
+!        success = .true.
+!#endif
+!      else
+!#ifdef WITH_SYCL_GPU_VERSION
+!        success = sycl_stream_synchronize_implicit_c() /= 0
+!#else
+!        success = .true.
+!#endif
+!      endif
+!    end function
+!
+!#ifdef WITH_NVTX
+!    ! this wrapper is needed for the string conversion
+!    subroutine nvtxRangePush(range_name)
+!      implicit none
+!      character(len=*), intent(in) :: range_name
+!
+!      character(kind=C_CHAR,len=1), dimension(len(range_name)+1) :: c_name
+!      integer i
+!
+!      do i = 1, len(range_name)
+!        c_name(i) = range_name(i:i)
+!      end do
+!      c_name(len(range_name)+1) = char(0)
+!
+!      call nvtxRangePushA(c_name)
+!    end subroutine
+!#endif
 
-    ! functions to set and query the GPU devices
-
-   function sycl_blas_create(handle) result(success)
-     use, intrinsic :: iso_c_binding
-     implicit none
-
-     integer(kind=C_intptr_t)                  :: handle
-     logical                                   :: success
+    function mkl_sycl_create(mkl_syclHandle) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: mkl_syclHandle
+      logical                                   :: success
 #ifdef WITH_SYCL_GPU_VERSION
-     success = sycl_blas_create_c(handle) /= 0
+      success = mkl_sycl_create_c(mkl_syclHandle) /= 0
 #else
-     success = .true.
+      success = .true.
 #endif
-   end function
+    end function
 
-   function sycl_blas_destroy(handle) result(success)
-     use, intrinsic :: iso_c_binding
-     implicit none
-
-     integer(kind=C_intptr_t)                  :: handle
-     logical                                   :: success
+    function mkl_sycl_destroy(mkl_syclHandle) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)   :: mkl_syclHandle
+      logical                    :: success
 #ifdef WITH_SYCL_GPU_VERSION
-     success = sycl_blas_destroy_c(handle) /= 0
+      success = mkl_sycl_destroy_c(mkl_syclHandle) /= 0
 #else
-     success = .true.
+      success = .true.
 #endif
-   end function
+    end function
 
-   function sycl_solver_create(handle) result(success)
-     use, intrinsic :: iso_c_binding
-     implicit none
-
-     integer(kind=C_intptr_t)                  :: handle
-     logical                                   :: success
+    function sycl_solver_create(sycl_solverHandle) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: sycl_solverHandle
+      logical                                   :: success
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-     success = sycl_solver_create_c(handle) /= 0
+      success = sycl_solver_create_c(sycl_solverHandle) /= 0
 #else
-     success = .true.
+      success = .true.
 #endif
-   end function
+    end function
 
-   function sycl_solver_destroy(handle) result(success)
-     use, intrinsic :: iso_c_binding
-     implicit none
-
-     integer(kind=C_intptr_t)                  :: handle
-     logical                                   :: success
+    function sycl_solver_destroy(sycl_solverHandle) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: sycl_solverHandle
+      logical                                   :: success
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-     success = sycl_solver_destroy_c(handle) /= 0
+      success = sycl_solver_destroy_c(sycl_solverHandle) /= 0
 #else
-     success = .true.
+      success = .true.
 #endif
-   end function
+    end function
 
     function sycl_setdevice(n) result(success)
       use, intrinsic :: iso_c_binding
-
       implicit none
-
       integer(kind=ik), intent(in)  :: n
       logical                       :: success
 #ifdef WITH_SYCL_GPU_VERSION
@@ -1300,117 +1370,117 @@ module sycl_functions
 #else
       success = .true.
 #endif
-    end function 
+    end function
 
-
-    function sycl_getdevicecount() result(n)
+    function sycl_getdevicecount(n) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
-
       integer(kind=ik)     :: n
-      !integer(kind=c_int)  :: nCasted
-      !logical              :: success
+      integer(kind=c_int)  :: nCasted
+      logical              :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      n = sycl_getdevicecount_c()
-      !n = int(nCasted)
+      success = sycl_getdevicecount_c(nCasted) /=0
+      n = int(nCasted)
 #else
-      !success = .true.
+      success = .true.
       n = 0
 #endif
-    end function sycl_getdevicecount
+    end function
 
-!    function cuda_devicesynchronize()result(success)
-!
+!    function sycl_devicesynchronize()result(success)
 !      use, intrinsic :: iso_c_binding
-!
 !      implicit none
 !      logical :: success
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!      success = cuda_devicesynchronize_c() /=0
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_devicesynchronize_c() /=0
 !#else
 !      success = .true.
 !#endif
-!    end function cuda_devicesynchronize
-
-
-    ! functions to allocate and free memory
-
-    function sycl_malloc(array, elements) result(success)
+!    end function
+!
+    function sycl_malloc(a, width_height) result(success)
       use, intrinsic :: iso_c_binding
-
-      integer (kind=c_intptr_t), intent(inout) :: array
-      integer (kind=c_intptr_t), intent(in)    :: elements
-      logical                                  :: success
-
+      implicit none
+      integer(kind=c_intptr_t)                  :: a
+      integer(kind=c_intptr_t), intent(in)      :: width_height
+      logical                                   :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_malloc_c(array, elements) /= 0
+      success = sycl_malloc_c(a, width_height) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function sycl_free(array) result(success)
+    function sycl_free(a) result(success)
       use, intrinsic :: iso_c_binding
-
-      integer (kind=c_intptr_t), intent(inout) :: array
-      logical                                  :: success
-
+      implicit none
+      integer(kind=C_intptr_T) :: a
+      logical                  :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_free_c(array) /= 0
+      success = sycl_free_c(a) /= 0
 #else
       success = .true.
 #endif
     end function
 
-!    function cuda_malloc_host(a, width_height) result(success)
-!
-!     use, intrinsic :: iso_c_binding
-!     implicit none
-!
-!     type(c_ptr)                               :: a
-!     integer(kind=c_intptr_t), intent(in)      :: width_height
-!     logical                                   :: success
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!     success = cuda_malloc_host_c(a, width_height) /= 0
+!    function sycl_malloc_host(a, width_height) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr)                               :: a
+!      integer(kind=c_intptr_t), intent(in)      :: width_height
+!      logical                                   :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_malloc_host_c(a, width_height) /= 0
 !#else
-!     success = .true.
+!      success = .true.
 !#endif
-!   end function
+!    end function
 !
-!   function cuda_free_host(a) result(success)
-!
-!     use, intrinsic :: iso_c_binding
-!
-!     implicit none
-!      type(c_ptr), value                    :: a
-!     logical                  :: success
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!     success = cuda_free_host_c(a) /= 0
+!    function sycl_free_host(a) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr)                   :: a
+!      logical                  :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_free_host_c(a) /= 0
 !#else
-!     success = .true.
+!      success = .true.
 !#endif
-!   end function cuda_free_host
+!    end function
 
-
-    function sycl_memset(array, val, elems) result(success)
+    function sycl_memset(a, val, size) result(success)
       use, intrinsic :: iso_c_binding
-
-      integer (kind=c_intptr_t), intent(in)    :: array
-      integer (kind=c_intptr_t), intent(in)    :: elems
-      integer (kind=c_int), intent(in)         :: val
-      logical                                  :: success
-
+      implicit none
+      integer(kind=c_intptr_t)                :: a
+      integer(kind=ik)                        :: val
+      integer(kind=c_intptr_t), intent(in)      :: size
+      integer(kind=C_INT)                     :: istat
+      logical :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_memset_c(array, int(val,kind=c_int32_t), int(elems,kind=c_size_t)) /= 0
+      success= sycl_memset_c(a, int(val,kind=c_int), int(size,kind=c_intptr_t)) /=0
 #else
       success = .true.
 #endif
     end function
 
+!    function sycl_memset_async(a, val, size, syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=c_intptr_t)                :: a
+!      integer(kind=ik)                        :: val
+!      integer(kind=c_intptr_t), intent(in)    :: size
+!      integer(kind=C_INT)                     :: istat
+!      integer(kind=c_intptr_t)                :: syclStream
+!      logical :: success
+!
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success= sycl_memset_async_c(a, int(val,kind=c_int), int(size,kind=c_intptr_t), syclStream) /=0
+!#else
+!      success = .true.
+!#endif
+!    end function
 
-    ! functions to memcopy memory
-
-    function sycl_MemcpyDeviceToDevice() result(flag)
+    function sycl_memcpyDeviceToDevice() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
@@ -1421,7 +1491,7 @@ module sycl_functions
 #endif
     end function
 
-    function sycl_MemcpyHostToDevice() result(flag)
+    function sycl_memcpyHostToDevice() result(flag)
       use, intrinsic :: iso_c_binding
       use precision
       implicit none
@@ -1433,124 +1503,181 @@ module sycl_functions
 #endif
     end function
 
-    function sycl_MemcpyDeviceToHost() result(flag)
+    function sycl_memcpyDeviceToHost() result(flag)
       use, intrinsic :: iso_c_binding
       use precision
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_SYCL_GPU_VERSION
-      flag = int(sycl_memcpyDeviceToHost_c())
+      flag = int( sycl_memcpyDeviceToHost_c())
 #else
       flag = 0
 #endif
     end function
 
-!   function cuda_hostRegisterDefault() result(flag)
-!     use, intrinsic :: iso_c_binding
-!     use precision
-!     implicit none
-!     integer(kind=ik) :: flag
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!   flag = int(cuda_hostRegisterDefault_c())
-!#else
-!   flag = 0
-!#endif
-!   end function
-!
-!   function cuda_hostRegisterPortable() result(flag)
-!     use, intrinsic :: iso_c_binding
-!     use precision
-!     implicit none
-!     integer(kind=ik) :: flag
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!   flag = int(cuda_hostRegisterPortable_c())
-!#else
-!   flag = 0
-!#endif
-!   end function
-!
-!   function cuda_hostRegisterMapped() result(flag)
-!     use, intrinsic :: iso_c_binding
-!     use precision
-!     implicit none
-!     integer(kind=ik) :: flag
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!   flag = int(cuda_hostRegisterMapped_c())
-!#else
-!   flag = 0
-!#endif
-!   end function
-
-    function sycl_memcpy_intptr(dst, src, elems, direction) result(success)
-      use, intrinsic :: iso_c_binding
-
-      integer (kind=c_intptr_t), intent(inout) :: dst
-      integer (kind=c_intptr_t), intent(inout) :: src
-      integer (kind=c_intptr_t), intent(in)    :: elems
-      integer (kind=c_int), intent(in)         :: direction
-      logical                                  :: success
-#ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_memcpy_intptr_c(dst, src, elems, direction) /= 0
-#else
-      success = .true.
-#endif
-    end function
-  
-    function sycl_memcpy_cptr(dst, src, elems, direction) result(success)
-      use, intrinsic :: iso_c_binding
-  
-      type(c_ptr), intent(inout)            :: dst
-      type(c_ptr), intent(inout)            :: src
-      integer (kind=c_intptr_t), intent(in) :: elems
-      integer (kind=c_int), intent(in)      :: direction
-      logical                               :: success
-  
-#ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_memcpy_cptr_c(dst, src, elems, direction) /= 0
-#else
-      success = .true.
-#endif
-    end function
-
-    function sycl_memcpy_mixed_to_device(dst, src, elems, direction) result(success)
-      use, intrinsic :: iso_c_binding
-
-      type(c_ptr), intent(inout)               :: dst
-      integer (kind=c_intptr_t), intent(inout) :: src
-      integer (kind=c_intptr_t), intent(in)    :: elems
-      integer (kind=c_int), intent(in)         :: direction
-      logical                                  :: success
-
-#ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_memcpy_mixed_to_device_c(dst, src, elems, direction) /= 0
-#else
-      success = .true.
-#endif
-    end function
-
-    function sycl_memcpy_mixed_to_host(dst, src, elems, direction) result(success)
-      use, intrinsic :: iso_c_binding
-
-      type(c_ptr), intent(inout)               :: src
-      integer (kind=c_intptr_t), intent(inout) :: dst
-      integer (kind=c_intptr_t), intent(in)    :: elems
-      integer (kind=c_int), intent(in)         :: direction
-      logical                                  :: success
-
-#ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_memcpy_mixed_to_host_c(dst, src, elems, direction) /= 0
-#else
-      success = .true.
-#endif
-    end function
-
-
-!    function cuda_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir) result(success)
-!
+!    function sycl_hostRegisterDefault() result(flag)
 !      use, intrinsic :: iso_c_binding
-!
+!      use precision
 !      implicit none
+!      integer(kind=ik) :: flag
+!#ifdef WITH_SYCL_GPU_VERSION
+!      flag = int(sycl_hostRegisterDefault_c())
+!#else
+!      flag = 0
+!#endif
+!    end function
 !
+!    function sycl_hostRegisterPortable() result(flag)
+!      use, intrinsic :: iso_c_binding
+!      use precision
+!      implicit none
+!      integer(kind=ik) :: flag
+!#ifdef WITH_SYCL_GPU_VERSION
+!      flag = int(sycl_hostRegisterPortable_c())
+!#else
+!      flag = 0
+!#endif
+!    end function
+!
+!    function sycl_hostRegisterMapped() result(flag)
+!      use, intrinsic :: iso_c_binding
+!      use precision
+!      implicit none
+!      integer(kind=ik) :: flag
+!#ifdef WITH_SYCL_GPU_VERSION
+!      flag = int(sycl_hostRegisterMapped_c())
+!#else
+!      flag = 0
+!#endif
+!    end function
+
+    function sycl_memcpy_intptr(dst, src, size, dir) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_intptr_c(dst, src, size, dir) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function sycl_memcpy_cptr(dst, src, size, dir) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                           :: dst
+      type(c_ptr)                           :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_cptr_c(dst, src, size, dir) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function sycl_memcpy_mixed_to_device(dst, src, size, dir) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                           :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_mixed_to_device_c(dst, src, size, dir) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function sycl_memcpy_mixed_to_host(dst, src, size, dir) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                           :: src
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_mixed_to_host_c(dst, src, size, dir) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+!    function sycl_memcpy_async_intptr(dst, src, size, dir, syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_t)              :: dst
+!      integer(kind=C_intptr_t)              :: src
+!      integer(kind=c_intptr_t), intent(in)  :: size
+!      integer(kind=C_INT), intent(in)       :: dir
+!      integer(kind=c_intptr_t), intent(in)  :: syclStream
+!      logical :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_memcpy_async_intptr_c(dst, src, size, dir, syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
+!
+!    function sycl_memcpy_async_cptr(dst, src, size, dir, syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr)                           :: dst
+!      type(c_ptr)                           :: src
+!      integer(kind=c_intptr_t), intent(in)  :: size
+!      integer(kind=C_INT), intent(in)       :: dir
+!      integer(kind=c_intptr_t), intent(in)  :: syclStream
+!      logical :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_memcpy_async_cptr_c(dst, src, size, dir, syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
+!
+!    function sycl_memcpy_async_mixed_to_device(dst, src, size, dir, syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr)                           :: dst
+!      integer(kind=C_intptr_t)              :: src
+!      integer(kind=c_intptr_t), intent(in)  :: size
+!      integer(kind=C_INT), intent(in)       :: dir
+!      integer(kind=c_intptr_t), intent(in)  :: syclStream
+!      logical :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_memcpy_async_mixed_to_device_c(dst, src, size, dir, syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
+!
+!    function sycl_memcpy_async_mixed_to_host(dst, src, size, dir, syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr)                           :: src
+!      integer(kind=C_intptr_t)              :: dst
+!      integer(kind=c_intptr_t), intent(in)  :: size
+!      integer(kind=C_INT), intent(in)       :: dir
+!      integer(kind=c_intptr_t), intent(in)  :: syclStream
+!      logical :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_memcpy_async_mixed_to_host_c(dst, src, size, dir, syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
+!
+!    function sycl_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
 !      integer(kind=C_intptr_T)           :: dst
 !      integer(kind=c_intptr_t), intent(in) :: dpitch
 !      integer(kind=C_intptr_T)           :: src
@@ -1559,19 +1686,16 @@ module sycl_functions
 !      integer(kind=c_intptr_t), intent(in) :: height
 !      integer(kind=C_INT), intent(in)    :: dir
 !      logical                            :: success
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!      success = cuda_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
 !#else
 !      success = .true.
 !#endif
-!    end function cuda_memcpy2d_intptr
+!    end function
 !
-!    function cuda_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir) result(success)
-!
+!    function sycl_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir) result(success)
 !      use, intrinsic :: iso_c_binding
-!
 !      implicit none
-!
 !      type(c_ptr)           :: dst
 !      integer(kind=c_intptr_t), intent(in) :: dpitch
 !      type(c_ptr)           :: src
@@ -1580,826 +1704,667 @@ module sycl_functions
 !      integer(kind=c_intptr_t), intent(in) :: height
 !      integer(kind=C_INT), intent(in)    :: dir
 !      logical                            :: success
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!      success = cuda_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
 !#else
 !      success = .true.
 !#endif
-!    end function cuda_memcpy2d_cptr
+!    end function
 !
-! function cuda_host_register(a, size, flag) result(success)
-!
+!    function sycl_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, syclStream) result(success)
 !      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T)           :: dst
+!      integer(kind=c_intptr_t), intent(in) :: dpitch
+!      integer(kind=C_intptr_T)           :: src
+!      integer(kind=c_intptr_t), intent(in) :: spitch
+!      integer(kind=c_intptr_t), intent(in) :: width
+!      integer(kind=c_intptr_t), intent(in) :: height
+!      integer(kind=C_INT), intent(in)    :: dir
+!      integer(kind=c_intptr_t), intent(in) :: syclStream
+!      logical                            :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_memcpy2d_async_intptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
 !
+!    function sycl_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height, dir, syclStream) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      type(c_ptr)           :: dst
+!      integer(kind=c_intptr_t), intent(in) :: dpitch
+!      type(c_ptr)           :: src
+!      integer(kind=c_intptr_t), intent(in) :: spitch
+!      integer(kind=c_intptr_t), intent(in) :: width
+!      integer(kind=c_intptr_t), intent(in) :: height
+!      integer(kind=C_INT), intent(in)    :: dir
+!      integer(kind=c_intptr_t), intent(in) :: syclStream
+!      logical                            :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_memcpy2d_async_cptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
+!
+!    function sycl_host_register(a, size, flag) result(success)
+!      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_t)              :: a
 !      integer(kind=c_intptr_t), intent(in)  :: size
 !      integer(kind=C_INT), intent(in)       :: flag
 !      logical :: success
-!
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!        success = cuda_host_register_c(a, size, flag) /= 0
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_host_register_c(a, size, flag) /= 0
 !#else
-!        success = .true.
+!      success = .true.
 !#endif
 !    end function
 !
-! function cuda_host_unregister(a) result(success)
-!
+!    function sycl_host_unregister(a) result(success)
 !      use, intrinsic :: iso_c_binding
-!
 !      implicit none
 !      integer(kind=C_intptr_t)              :: a
 !      logical :: success
-!
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!        success = cuda_host_unregister_c(a) /= 0
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_host_unregister_c(a) /= 0
 !#else
-!        success = .true.
+!      success = .true.
 !#endif
 !    end function
 
-    subroutine mkl_sycl_dtrtri(uplo, diag, n, a, lda, info, syclsolverHandle)
+    subroutine sycl_solver_Dtrtri(uplo, diag, n, a, lda, info, sycl_solverHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: uplo, diag
       integer(kind=C_INT64_T)         :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: syclsolverHandle
-
+      integer(kind=C_intptr_T)        :: sycl_solverHandle
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_sycl_dtrtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
+      call sycl_solver_Dtrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_strtri(uplo, diag, n, a, lda, info, syclsolverHandle)
+    subroutine sycl_solver_Dpotrf(uplo, n, a, lda, info, sycl_solverHandle)
       use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: syclsolverHandle
-
-#ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_sycl_strtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_ztrtri(uplo, diag, n, a, lda, info, syclsolverHandle)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: syclsolverHandle
-
-#ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_sycl_ztrtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_ctrtri(uplo, diag, n, a, lda, info, syclsolverHandle)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: syclsolverHandle
-
-#ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_sycl_ctrtri_c(syclsolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_dpotrf(uplo, n, a, lda, info, syclsolverHandle)
-      use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
       integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: syclsolverHandle
-
+      integer(kind=C_intptr_T)        :: sycl_solverHandle
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_sycl_dpotrf_c(syclsolverHandle, uplo, n, a, lda, info)
+      call sycl_solver_Dpotrf_c(sycl_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_spotrf(uplo, n, a, lda, info, syclsolverHandle)
+    subroutine mkl_sycl_Dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: syclsolverHandle
-
-#ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_sycl_spotrf_c(syclsolverHandle, uplo, n, a, lda, info)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_zpotrf(uplo, n, a, lda, info, syclsolverHandle)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: syclsolverHandle
-
-#ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_sycl_zpotrf_c(syclsolverHandle, uplo, n, a, lda, info)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_cpotrf(uplo, n, a, lda, info, syclsolverHandle)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: syclsolverHandle
-
-#ifdef WITH_OPENMP_OFFLOAD_SOLVER
-      call mkl_sycl_cpotrf_c(syclsolverHandle, uplo, n, a, lda, info)
-#endif
-    end subroutine
-
-    ! mkl
-    subroutine mkl_sycl_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
-      use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE)             :: alpha,beta
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_dgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+      call mkl_sycl_Dgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
+    subroutine mkl_sycl_Dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE)             :: alpha,beta
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_dgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+      call mkl_sycl_Dgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
-    end subroutine 
+    end subroutine
 
-
-
-    subroutine mkl_sycl_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
+    subroutine mkl_sycl_Dcopy_intptr(n, x, incx, y, incy, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Dcopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
 
+    subroutine mkl_sycl_Dcopy_cptr(n, x, incx, y, incy, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)                     :: x, y
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Dcopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Dtrmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE) ,value               :: alpha
+      type(c_ptr)                     :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Dtrmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Dtrsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Dtrsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Dgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine
+
+    subroutine sycl_solver_Strtri(uplo, diag, n, a, lda, info, sycl_solverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=C_intptr_T)        :: sycl_solverHandle
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+      call sycl_solver_Strtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine sycl_solver_Spotrf(uplo, n, a, lda, info, sycl_solverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=C_intptr_T)        :: sycl_solverHandle
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+      call sycl_solver_Spotrf_c(sycl_solverHandle, uplo, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT)              :: alpha,beta
+      real(kind=C_FLOAT) ,value               :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_sgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+      call mkl_sycl_Sgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
-    end subroutine 
+    end subroutine
 
-
-    subroutine mkl_sycl_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
+    subroutine mkl_sycl_Sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT)              :: alpha,beta
+      real(kind=C_FLOAT) ,value               :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_sgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+      call mkl_sycl_Sgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
-
-
-    subroutine mkl_sycl_dcopy_intptr(n, x, incx, y, incy, syclHandle)
-
+    subroutine mkl_sycl_Scopy_intptr(n, x, incx, y, incy, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_dcopy_intptr_c(syclHandle, n, x, incx, y, incy)
+      call mkl_sycl_Scopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy)
 #endif
-    end subroutine 
+    end subroutine
 
-    subroutine mkl_sycl_dcopy_cptr(n, x, incx, y, incy, syclHandle)
-
+    subroutine mkl_sycl_Scopy_cptr(n, x, incx, y, incy, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_OPENMP_OFFLOAD_VERSION
-      call mkl_sycl_dcopy_cptr_c(syclHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_scopy_intptr(n, x, incx, y, incy, syclHandle)
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_OPENMP_OFFLOAD_VERSION
-      call mkl_sycl_scopy_intptr_c(syclHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_scopy_cptr(n, x, incx, y, incy, syclHandle)
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_scopy_cptr_c(syclHandle, n, x, incx, y, incy)
+      call mkl_sycl_Scopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE)             :: alpha
+      real(kind=C_FLOAT) ,value               :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_dtrmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_sycl_Strmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE)             :: alpha
+      real(kind=C_FLOAT) ,value               :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_dtrmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_sycl_Strmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-
-   subroutine mkl_sycl_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT)              :: alpha
+      real(kind=C_FLOAT) ,value               :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_strmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_sycl_Strsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT)              :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      real(kind=C_FLOAT) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_strmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_sycl_Strsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      character(1,C_CHAR),value       :: cta
       integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE)             :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_dtrsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_sycl_Sgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine sycl_solver_Ztrtri(uplo, diag, n, a, lda, info, sycl_solverHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE)             :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_dtrsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=C_intptr_T)        :: sycl_solverHandle
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+      call sycl_solver_Ztrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
 
-
-    subroutine mkl_sycl_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine sycl_solver_Zpotrf(uplo, n, a, lda, info, sycl_solverHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT)              :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_strsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=C_intptr_T)        :: sycl_solverHandle
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+      call sycl_solver_Zpotrf_c(sycl_solverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT)              :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_strsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-
-    subroutine mkl_sycl_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
-
-      use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
       integer(kind=C_intptr_T)        :: a, b, c
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_zgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      call mkl_sycl_Zgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
-
-    subroutine mkl_sycl_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
-
+    subroutine mkl_sycl_Zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
       integer(kind=C_INT)             :: m,n,k
       integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
       type(c_ptr)                     :: a, b, c
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_zgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
+      call mkl_sycl_Zgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
-
-
-    subroutine mkl_sycl_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
-
+    subroutine mkl_sycl_Zcopy_intptr(n, x, incx, y, incy, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, b, c  
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_cgemm_intptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclHandle)
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
-      type(c_ptr)                     :: a, b, c  
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_cgemm_cptr_c(syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c,ldc)
-#endif
-    end subroutine
-
-
-
-    subroutine mkl_sycl_zcopy_intptr(n, x, incx, y, incy, syclHandle)
-
-      use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_zcopy_intptr_c(syclHandle, n, x, incx, y, incy)
+      call mkl_sycl_Zcopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_zcopy_cptr(n, x, incx, y, incy, syclHandle)
-
+    subroutine mkl_sycl_Zcopy_cptr(n, x, incx, y, incy, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_zcopy_cptr_c(syclHandle, n, x, incx, y, incy)
+      call mkl_sycl_Zcopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ccopy_intptr(n, x, incx, y, incy, syclHandle)
-
+    subroutine mkl_sycl_Ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Ztrmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
 
+    subroutine mkl_sycl_Ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      type(c_ptr)                     :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Ztrmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Ztrsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Ztrsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Zgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine
+
+    subroutine sycl_solver_Ctrtri(uplo, diag, n, a, lda, info, sycl_solverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: uplo, diag
+      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=C_intptr_T)        :: sycl_solverHandle
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+      call sycl_solver_Ctrtri_c(sycl_solverHandle, uplo, diag, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine sycl_solver_Cpotrf(uplo, n, a, lda, info, sycl_solverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: uplo
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a
+      integer(kind=c_int)             :: info
+      integer(kind=C_intptr_T)        :: sycl_solverHandle
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+      call sycl_solver_Cpotrf_c(sycl_solverHandle, uplo, n, a, lda, info)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m,n,k
+      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, b, c
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Cgemm_intptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m,n,k
+      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      type(c_ptr)                     :: a, b, c
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call mkl_sycl_Cgemm_cptr_c(mkl_syclHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine mkl_sycl_Ccopy_intptr(n, x, incx, y, incy, mkl_syclHandle)
+      use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ccopy_intptr_c(syclHandle, n, x, incx, y, incy)
+      call mkl_sycl_Ccopy_intptr_c(mkl_syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ccopy_cptr(n, x, incx, y, incy, syclHandle)
-
+    subroutine mkl_sycl_Ccopy_cptr(n, x, incx, y, incy, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=C_INT)             :: n
       integer(kind=C_INT), intent(in) :: incx, incy
       type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ccopy_cptr_c(syclHandle, n, x, incx, y, incy)
+      call mkl_sycl_Ccopy_cptr_c(mkl_syclHandle, n, x, incx, y, incy)
 #endif
     end subroutine
 
-
-    subroutine mkl_sycl_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ztrmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_sycl_Ctrmm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ztrmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_sycl_Ctrmm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-
-    subroutine mkl_sycl_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX)   :: alpha
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
       integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ctrmm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_sycl_Ctrsm_intptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX)   :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ctrmm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_sycl_Ctrsm_cptr_c(mkl_syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
-    subroutine mkl_sycl_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
+    subroutine mkl_sycl_Cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_syclHandle)
       use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ztrsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ztrsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-
-    subroutine mkl_sycl_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX)   :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ctrsm_intptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclHandle)
-
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX)   :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_ctrsm_cptr_c(syclHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-
-    subroutine mkl_sycl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclHandle)
-      use, intrinsic :: iso_c_binding
-
       implicit none
       character(1,C_CHAR),value       :: cta
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,incx,incy
-      real(kind=C_DOUBLE)             :: alpha,beta
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
       integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
+      integer(kind=C_intptr_T)        :: mkl_syclHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_dgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+      call mkl_sycl_Cgemv_c(mkl_syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
-
-    subroutine mkl_sycl_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclHandle)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: cta
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,incx,incy
-      real(kind=C_FLOAT)              :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_sgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclHandle)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: cta
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_zgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_sycl_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclHandle)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      character(1,C_CHAR),value       :: cta
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_FLOAT_COMPLEX)   :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: syclHandle
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call mkl_sycl_cgemv_c(syclHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
-#endif
-    end subroutine
-
-
-!     subroutine mkl_sycl_dsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
-!       use, intrinsic :: iso_c_binding
-!
-!       implicit none
-!       character(1,C_CHAR),value       :: cta
-!       integer(kind=C_INT)             :: n
-!       integer(kind=C_INT), intent(in) :: lda,incx,incy
-!       real(kind=C_DOUBLE)             :: alpha,beta
-!       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_SYCL_GPU_VERSION
-!       call mkl_sycl_dsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
-! #endif
-!     end subroutine mkl_sycl_dsymv
-!
-!     subroutine mkl_sycl_ssymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
-!       use, intrinsic :: iso_c_binding
-!
-!       implicit none
-!       character(1,C_CHAR),value       :: cta
-!       integer(kind=C_INT)             :: n
-!       integer(kind=C_INT), intent(in) :: lda,incx,incy
-!       real(kind=C_FLOAT)              :: alpha,beta
-!       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_SYCL_GPU_VERSION
-!       call mkl_sycl_ssymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
-! #endif
-!     end subroutine mkl_sycl_ssymv
-!
-!     subroutine mkl_sycl_zsymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
-!       use, intrinsic :: iso_c_binding
-!
-!       implicit none
-!       character(1,C_CHAR),value       :: cta
-!       integer(kind=C_INT)             :: n
-!       integer(kind=C_INT), intent(in) :: lda,incx,incy
-!       complex(kind=C_DOUBLE_COMPLEX)             :: alpha,beta
-!       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_SYCL_GPU_VERSION
-! !       call mkl_sycl_zsymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
-! #endif
-!     end subroutine mkl_sycl_zsymv
-!
-!     subroutine mkl_sycl_csymv(cta, n, alpha, a, lda, x, incx, beta, y, incy)
-!       use, intrinsic :: iso_c_binding
-!
-!       implicit none
-!       character(1,C_CHAR),value       :: cta
-!       integer(kind=C_INT)             :: n
-!       integer(kind=C_INT), intent(in) :: lda,incx,incy
-!       complex(kind=C_FLOAT_COMPLEX)              :: alpha,beta
-!       integer(kind=C_intptr_T)        :: a, x, y
-! #ifdef WITH_SYCL_GPU_VERSION
-! !       call mkl_sycl_csymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
-! #endif
-!     end subroutine mkl_sycl_csymv
 
 end module sycl_functions
