@@ -916,6 +916,7 @@ EXTRA_DIST = \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
   src/GPU/check_legacy_gpu_setting_template.F90 \
+  src/GPU/vendor_agnostic_layer_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
