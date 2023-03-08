@@ -62,6 +62,10 @@
 #include <stdint.h>
 #include <complex.h>
 
+#ifdef WITH_AMD_ROCSOLVER
+#include <rocsolver.h>
+#endif
+
 #ifdef WITH_AMD_GPU_VERSION
 
 #include "../../../../src/GPU/ROCm/rocmFunctions_template.h"

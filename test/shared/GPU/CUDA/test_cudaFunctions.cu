@@ -64,6 +64,10 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
 #include <cublas_v2.h>
 #endif
+#ifdef WITH_NVIDIA_CUSOLVER
+#include <cusolverDn.h>
+#endif
+
 
 #include "./test_cudaFunctions.h"
 
