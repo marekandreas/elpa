@@ -203,6 +203,16 @@
     end function
   end interface
 
+  interface
+    function sycl_getcpucount_c(n) result(istat) &
+             bind(C, name="syclGetCpuCountFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), intent(out) :: n
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
 !  interface
 !    function sycl_devicesynchronize_c()result(istat) &
 !             bind(C,name="syclDeviceSynchronizeFromC")
@@ -1449,8 +1459,26 @@
       integer(kind=ik)     :: n
       integer(kind=c_int)  :: nCasted
       logical              :: success
+
+      print *,"in devicecount: ",ncasted
 #ifdef WITH_SYCL_GPU_VERSION
       success = sycl_getdevicecount_c(nCasted) /=0
+      print *,"in devicecount: ",ncasted,success
+      n = int(nCasted)
+#else
+      success = .true.
+      n = 0
+#endif
+    end function
+
+    function sycl_getcpucount(n) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=ik)     :: n
+      integer(kind=c_int)  :: nCasted
+      logical              :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_getcpucount_c(nCasted) /=0
       n = int(nCasted)
 #else
       success = .true.

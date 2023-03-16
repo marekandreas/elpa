@@ -273,7 +273,10 @@ module mod_check_for_gpu
           success = .true.
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-          success = sycl_getdevicecount(numberOfDevices)
+          obj%gpu_setup%syclCPU=.false.
+          !success = sycl_getdevicecount(numberOfDevices)
+          success = .true.
+          numberOfDevices=0
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -301,6 +304,23 @@ module mod_check_for_gpu
 !          gpuAvailable = .true.
 !        endif
 !#endif
+
+
+#ifdef WITH_SYCL_GPU_VERSION
+        ! special case: maybe we want to run the sycl code path on cpu ?
+        if (numberOfDevices .eq. 0) then
+          success = sycl_getcpucount(numberOfDevices)
+          if (.not.(success)) then
+#ifdef WITH_SYCL_GPU_VERSION
+            print *,"error in sycl_getdevicecount"
+#endif
+            stop 1
+          endif
+          if (numberOfDevices .ge. 0) then
+            obj%gpu_setup%syclCPU=.true.
+          endif
+        endif
+#endif
 
 
           ! make sure that all nodes have the same number of GPU's, otherwise

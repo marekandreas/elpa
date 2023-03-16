@@ -75,8 +75,37 @@ void elpa::gpu::sycl::collectGpuDevices() {
   }
 }
 
+void elpa::gpu::sycl::collectCpuDevices() {
+  if (deviceCollectionFlag) {
+    return;
+  } else {
+    deviceCollectionFlag = true;
+  }
+
+  // We need to be opinionated about the device selection. Currently, devices are displayed in duplicate, if they are supported
+  // by multiple platforms. For now, a first step could be only supporting level zero and Intel GPUs. This will have to be
+  // changed later as we move towards generalizing the backend.
+  for (auto const &p : cl::sycl::platform::get_platforms()) {
+    for (auto dev : p.get_devices()) {
+      devices.push_back(dev);
+    }
+  }
+}
+
 int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
   collectGpuDevices();
+  if (deviceId >= devices.size()){
+    std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
+    return 0;
+  }
+  cl::sycl::property::queue::in_order io;
+  cl::sycl::property_list props(io);
+  chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId], props);
+  return 1;
+}
+
+int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
+  collectCpuDevices();
   if (deviceId >= devices.size()){
     std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
     return 0;
@@ -110,6 +139,11 @@ cl::sycl::device elpa::gpu::sycl::getDevice() {
 
 size_t elpa::gpu::sycl::getNumDevices() {
   collectGpuDevices();
+  return devices.size();
+}
+
+size_t elpa::gpu::sycl::getNumCpuDevices() {
+  collectCpuDevices();
   return devices.size();
 }
 

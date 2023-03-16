@@ -68,6 +68,11 @@ extern "C" {
 static void collectGpuDevices() {
   elpa::gpu::sycl::collectGpuDevices();
 }
+static void collectCpuDevices() {
+  elpa::gpu::sycl::collectCpuDevices();
+}
+
+bool isCPU=1;
 
 static oneapi::mkl::transpose transposeFromChar(char c) {
   switch (c) {
@@ -135,9 +140,25 @@ static oneapi::mkl::side sideFromChar(char c) {
     return syclMemcpyDeviceToHost;
   }
 
-  int syclGetDeviceCountFromC() {
+  int syclGetDeviceCountFromC(int *count) {
+    int count_tmp;
     collectGpuDevices();
-    return elpa::gpu::sycl::getNumDevices();
+    count_tmp = elpa::gpu::sycl::getNumDevices();
+    *count = count_tmp;
+    //return elpa::gpu::sycl::getNumDevices();
+    return 1;
+  }
+
+  int syclGetCpuCountFromC(int *count) {
+    int count_tmp;
+    collectCpuDevices();
+    count_tmp = elpa::gpu::sycl::getNumCpuDevices();
+    if (count_tmp > 0) {
+      //elpa::gpu::sycl::isCPU=0;
+      isCPU=0;
+    }
+    *count = count_tmp;
+    return 1;
   }
 
   int syclSetDeviceFromC(int targetGpuDeviceId) {
@@ -150,6 +171,18 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclSetGpuParamsFromC() {
     collectGpuDevices();
+    // These do not really have any meaning, as there is an universal address space,
+    // and as long as the pointer is either a host pointer, or of the chosen GPU, there
+    // is no need to indicate the direction. However, they are used by ELPA, and we can
+    // use them as an indication to help detect programming errors such as switched src
+    // and dst.
+    syclMemcpyHostToDevice = 0;
+    syclMemcpyDeviceToHost = 1;
+    syclMemcpyDeviceToDevice = 2;
+  }
+
+  void syclSetCpuParamsFromC() {
+    collectCpuDevices();
     // These do not really have any meaning, as there is an universal address space,
     // and as long as the pointer is either a host pointer, or of the chosen GPU, there
     // is no need to indicate the direction. However, they are used by ELPA, and we can
@@ -205,50 +238,100 @@ static oneapi::mkl::side sideFromChar(char c) {
     auto &queue = elpa::gpu::sycl::getQueue();
     bool isFailed = false;
     using sycl::usm::alloc;
-    if (direction == syclMemcpyDeviceToDevice) {
-      if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::device) {
-        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+    //if (elpa::gpu::sycl::isCPU == 0) {
+    if (isCPU == 0) {
+      if (direction == syclMemcpyDeviceToDevice) {
+        if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::host) {
+          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+          isFailed = true;
+        }
+        if (sycl::get_pointer_type(src, queue.get_context()) != alloc::host) {
+          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen GPU queue." << std::endl;
+          isFailed = true;
+        }
+      } else if (direction == syclMemcpyDeviceToHost) {
+        if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::host) {
+          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is likely not a host pointer!." << std::endl;
+          isFailed = true;
+        }
+        if (sycl::get_pointer_type(src, queue.get_context()) != alloc::host) {
+          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+          isFailed = true;
+        }
+      } else if (direction == syclMemcpyHostToDevice) {
+        if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::host) {
+          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+          isFailed = true;
+        }
+        if (sycl::get_pointer_type(src, queue.get_context()) != alloc::host) {
+          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is likely not a host pointer!." << std::endl;
+          isFailed = true;
+        }
+      } else {
+        std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
         isFailed = true;
       }
-      if (sycl::get_pointer_type(src, queue.get_context()) != alloc::device) {
-        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen GPU queue." << std::endl;
-        isFailed = true;
+      if (!isFailed) {
+        queue.memcpy(dst, src, size).wait();
+        return 1;
+      } else {
+        return 0;
       }
-    } else if (direction == syclMemcpyDeviceToHost) {
-      if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::unknown) {
-        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is likely not a host pointer!." << std::endl;
-        isFailed = true;
-      }
-      if (sycl::get_pointer_type(src, queue.get_context()) != alloc::device) {
-        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-        isFailed = true;
-      }
-    } else if (direction == syclMemcpyHostToDevice) {
-      if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::device) {
-        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-        isFailed = true;
-      }
-      if (sycl::get_pointer_type(src, queue.get_context()) != alloc::unknown) {
-        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is likely not a host pointer!." << std::endl;
-        isFailed = true;
-      }
-    } else {
-      std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
-      isFailed = true;
     }
-    if (!isFailed) {
-      queue.memcpy(dst, src, size).wait();
-      return 1;
-    } else {
-      return 0;
+    else {
+      if (direction == syclMemcpyDeviceToDevice) {
+        if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::device) {
+          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+          isFailed = true;
+        }
+        if (sycl::get_pointer_type(src, queue.get_context()) != alloc::device) {
+          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen GPU queue." << std::endl;
+          isFailed = true;
+        }
+      } else if (direction == syclMemcpyDeviceToHost) {
+        if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::unknown) {
+          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is likely not a host pointer!." << std::endl;
+          isFailed = true;
+        }
+        if (sycl::get_pointer_type(src, queue.get_context()) != alloc::device) {
+          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+          isFailed = true;
+        }
+      } else if (direction == syclMemcpyHostToDevice) {
+        if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::device) {
+          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+          isFailed = true;
+        }
+        if (sycl::get_pointer_type(src, queue.get_context()) != alloc::unknown) {
+          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is likely not a host pointer!." << std::endl;
+          isFailed = true;
+        }
+      } else {
+        std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
+        isFailed = true;
+      }
+      if (!isFailed) {
+        queue.memcpy(dst, src, size).wait();
+        return 1;
+      } else {
+        return 0;
+      }
     }
   }
 
   int syclMemsetFromC(void *mem, int32_t val, size_t size) {
     auto &queue = elpa::gpu::sycl::getQueue();
-    if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::device) {
-      std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-      return 0;
+    //if (elpa::gpu::sycl::isCPU == 0) {
+    if (isCPU == 0) {
+      if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::host) {
+        std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        return 0;
+      }
+    } else {
+      if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::device) {
+        std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        return 0;
+      }
     }
     queue.memset(mem, val, size).wait();
     return 1;

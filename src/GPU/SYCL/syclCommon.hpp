@@ -56,10 +56,14 @@ namespace gpu {
 namespace sycl {
 
   void collectGpuDevices();
+  void collectCpuDevices();
   void printGpuInfo();
   int selectGpuDevice(int deviceNum);
+  int selectCpuDevice(int deviceNum);
   void selectDefaultGpuDevice();
+  //bool isCPU=1;
   size_t getNumDevices();
+  size_t getNumCpuDevices();
   cl::sycl::device getDevice();
   cl::sycl::queue & getQueue();
 
