@@ -1331,13 +1331,13 @@ print *,"Device pointer + REDIST"
          end do
        endif
 
+#ifdef WITH_SYCL_GPU_VERSION
      if (obj%gpu_setup%syclCPU) then
        print *,"Switching of the GPU trans_ev_tridi due to SYCL CPU",obj%gpu_setup%syclCPU
        do_useGPU_trans_ev_tridi_to_band =.false.
        kernel = DEFAULT_KERNEL
      endif
-
-
+#endif
 
        ! Backtransform stage 1
      if (do_trans_to_band) then
