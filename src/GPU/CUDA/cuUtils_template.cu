@@ -182,38 +182,38 @@ __global__ void extract_hh_tau_c_cuda_kernel_complex_single(cuFloatComplex *hh, 
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-extern "C" void launch_my_pack_c_cuda_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *a_dev, double *row_group_dev, intptr_t my_stream)
+extern "C" void launch_my_pack_c_cuda_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *a_dev, double *row_group_dev, cudaStream_t my_stream)
 #else
-extern "C" void launch_my_pack_c_cuda_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *a_dev, float *row_group_dev, intptr_t my_stream)
+extern "C" void launch_my_pack_c_cuda_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *a_dev, float *row_group_dev, cudaStream_t my_stream)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-extern "C" void launch_my_pack_c_cuda_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex *a_dev, cuDoubleComplex *row_group_dev, intptr_t my_stream)
+extern "C" void launch_my_pack_c_cuda_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex *a_dev, cuDoubleComplex *row_group_dev, cudaStream_t my_stream)
 #else
-extern "C" void launch_my_pack_c_cuda_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex *a_dev, cuFloatComplex *row_group_dev, intptr_t my_stream)
+extern "C" void launch_my_pack_c_cuda_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex *a_dev, cuFloatComplex *row_group_dev, cudaStream_t my_stream)
 #endif
 #endif
 {
     cudaError_t err;
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
-#ifdef WITH_GPU_STREAMS
-   cudaStream_t streamId = *((cudaStream_t*)my_stream);
-#endif
+//#ifdef WITH_GPU_STREAMS
+//   cudaStream_t streamId = *((cudaStream_t*)my_stream);
+//#endif
 
     for (int i_off = 0; i_off < stripe_width / blocksize; i_off++)
     {
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
 #ifdef WITH_GPU_STREAMS
-        my_pack_c_cuda_kernel_real_double<<<grid_size, blocksize, 0, streamId>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        my_pack_c_cuda_kernel_real_double<<<grid_size, blocksize, 0, my_stream>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
         my_pack_c_cuda_kernel_real_double<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
 #else /* DOUBLE_PRECISION_REAL */
 #ifdef WITH_GPU_STREAMS
-        my_pack_c_cuda_kernel_real_single<<<grid_size, blocksize, 0, streamId>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        my_pack_c_cuda_kernel_real_single<<<grid_size, blocksize, 0, my_stream>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
         my_pack_c_cuda_kernel_real_single<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
@@ -223,13 +223,13 @@ extern "C" void launch_my_pack_c_cuda_kernel_complex_single(const int row_count,
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 #ifdef WITH_GPU_STREAMS
-        my_pack_c_cuda_kernel_complex_double<<<grid_size, blocksize, 0, streamId>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        my_pack_c_cuda_kernel_complex_double<<<grid_size, blocksize, 0, my_stream>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
         my_pack_c_cuda_kernel_complex_double<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
 #else /* DOUBLE_PRECISION_COMPLEX */
 #ifdef WITH_GPU_STREAMS
-        my_pack_c_cuda_kernel_complex_single<<<grid_size, blocksize, 0, streamId>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        my_pack_c_cuda_kernel_complex_single<<<grid_size, blocksize, 0, my_stream>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
         my_pack_c_cuda_kernel_complex_single<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
@@ -246,36 +246,36 @@ extern "C" void launch_my_pack_c_cuda_kernel_complex_single(const int row_count,
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-extern "C" void launch_extract_hh_tau_c_cuda_kernel_real_double(double *bcast_buffer_dev, double *hh_tau_dev, const int nbw, const int n, const int is_zero, intptr_t my_stream)
+extern "C" void launch_extract_hh_tau_c_cuda_kernel_real_double(double *bcast_buffer_dev, double *hh_tau_dev, const int nbw, const int n, const int is_zero, cudaStream_t my_stream)
 #else
-extern "C" void launch_extract_hh_tau_c_cuda_kernel_real_single(float *bcast_buffer_dev, float *hh_tau_dev, const int nbw, const int n, const int is_zero, intptr_t my_stream)
+extern "C" void launch_extract_hh_tau_c_cuda_kernel_real_single(float *bcast_buffer_dev, float *hh_tau_dev, const int nbw, const int n, const int is_zero, cudaStream_t my_stream)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-extern "C" void launch_extract_hh_tau_c_cuda_kernel_complex_double(cuDoubleComplex *bcast_buffer_dev, cuDoubleComplex *hh_tau_dev, const int nbw, const int n, const int is_zero, intptr_t my_stream)
+extern "C" void launch_extract_hh_tau_c_cuda_kernel_complex_double(cuDoubleComplex *bcast_buffer_dev, cuDoubleComplex *hh_tau_dev, const int nbw, const int n, const int is_zero, cudaStream_t my_stream)
 #else
-extern "C" void launch_extract_hh_tau_c_cuda_kernel_complex_single(cuFloatComplex *bcast_buffer_dev, cuFloatComplex *hh_tau_dev, const int nbw, const int n, const int is_zero, intptr_t my_stream)
+extern "C" void launch_extract_hh_tau_c_cuda_kernel_complex_single(cuFloatComplex *bcast_buffer_dev, cuFloatComplex *hh_tau_dev, const int nbw, const int n, const int is_zero, cudaStream_t my_stream)
 #endif
 #endif
 {
     cudaError_t err;
     int grid_size = 1 + (n - 1) / MAX_BLOCK_SIZE;
 
-#ifdef WITH_GPU_STREAMS
-   cudaStream_t streamId = *((cudaStream_t*)my_stream);
-#endif
+//#ifdef WITH_GPU_STREAMS
+//   cudaStream_t streamId = *((cudaStream_t*)my_stream);
+//#endif
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
 #ifdef WITH_GPU_STREAMS
-    extract_hh_tau_c_cuda_kernel_real_double<<<grid_size, MAX_BLOCK_SIZE, 0, streamId>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    extract_hh_tau_c_cuda_kernel_real_double<<<grid_size, MAX_BLOCK_SIZE, 0, my_stream>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
     extract_hh_tau_c_cuda_kernel_real_double<<<grid_size, MAX_BLOCK_SIZE>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
 #else /* DOUBLE_PRECISION_REAL */
 #ifdef WITH_GPU_STREAMS
-    extract_hh_tau_c_cuda_kernel_real_single<<<grid_size, MAX_BLOCK_SIZE, 0, streamId>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    extract_hh_tau_c_cuda_kernel_real_single<<<grid_size, MAX_BLOCK_SIZE, 0, my_stream>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
     extract_hh_tau_c_cuda_kernel_real_single<<<grid_size, MAX_BLOCK_SIZE>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
@@ -285,13 +285,13 @@ extern "C" void launch_extract_hh_tau_c_cuda_kernel_complex_single(cuFloatComple
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 #ifdef WITH_GPU_STREAMS
-    extract_hh_tau_c_cuda_kernel_complex_double<<<grid_size, MAX_BLOCK_SIZE, 0, streamId>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    extract_hh_tau_c_cuda_kernel_complex_double<<<grid_size, MAX_BLOCK_SIZE, 0, my_stream>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
     extract_hh_tau_c_cuda_kernel_complex_double<<<grid_size, MAX_BLOCK_SIZE>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
 #else /* DOUBLE_PRECISION_COMPLEX */
 #ifdef WITH_GPU_STREAMS
-    extract_hh_tau_c_cuda_kernel_complex_single<<<grid_size, MAX_BLOCK_SIZE, 0, streamId>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    extract_hh_tau_c_cuda_kernel_complex_single<<<grid_size, MAX_BLOCK_SIZE, 0, my_stream>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
     extract_hh_tau_c_cuda_kernel_complex_single<<<grid_size, MAX_BLOCK_SIZE>>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
@@ -307,16 +307,16 @@ extern "C" void launch_extract_hh_tau_c_cuda_kernel_complex_single(cuFloatComple
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-extern "C" void launch_my_unpack_c_cuda_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *row_group_dev, double *a_dev, intptr_t my_stream)
+extern "C" void launch_my_unpack_c_cuda_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *row_group_dev, double *a_dev, cudaStream_t my_stream)
 #else
-extern "C" void launch_my_unpack_c_cuda_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *row_group_dev, float *a_dev, intptr_t my_stream)
+extern "C" void launch_my_unpack_c_cuda_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *row_group_dev, float *a_dev, cudaStream_t my_stream)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-extern "C" void launch_my_unpack_c_cuda_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex *row_group_dev, cuDoubleComplex *a_dev, intptr_t my_stream)
+extern "C" void launch_my_unpack_c_cuda_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuDoubleComplex *row_group_dev, cuDoubleComplex *a_dev, cudaStream_t my_stream)
 #else
-extern "C" void launch_my_unpack_c_cuda_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex *row_group_dev, cuFloatComplex *a_dev, intptr_t my_stream)
+extern "C" void launch_my_unpack_c_cuda_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, cuFloatComplex *row_group_dev, cuFloatComplex *a_dev, cudaStream_t my_stream)
 #endif
 #endif
 {
@@ -324,22 +324,22 @@ extern "C" void launch_my_unpack_c_cuda_kernel_complex_single(const int row_coun
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
 
-#ifdef WITH_GPU_STREAMS
-   cudaStream_t streamId = *((cudaStream_t*)my_stream);
-#endif
+//#ifdef WITH_GPU_STREAMS
+//   cudaStream_t streamId = *((cudaStream_t*)my_stream);
+//#endif
 
     for (int i_off = 0; i_off < stripe_width / blocksize; i_off++)
     {
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
 #ifdef WITH_GPU_STREAMS
-        my_unpack_c_cuda_kernel_real_double<<<grid_size, blocksize, 0, streamId>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        my_unpack_c_cuda_kernel_real_double<<<grid_size, blocksize, 0, my_stream>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
         my_unpack_c_cuda_kernel_real_double<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif
 #else /* DOUBLE_PRECISION_REAL */
 #ifdef WITH_GPU_STREAMS
-        my_unpack_c_cuda_kernel_real_single<<<grid_size, blocksize, 0, streamId>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        my_unpack_c_cuda_kernel_real_single<<<grid_size, blocksize, 0, my_stream>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
         my_unpack_c_cuda_kernel_real_single<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif
@@ -349,13 +349,13 @@ extern "C" void launch_my_unpack_c_cuda_kernel_complex_single(const int row_coun
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 #ifdef WITH_GPU_STREAMS
-        my_unpack_c_cuda_kernel_complex_double<<<grid_size, blocksize, 0, streamId>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        my_unpack_c_cuda_kernel_complex_double<<<grid_size, blocksize, 0, my_stream>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
         my_unpack_c_cuda_kernel_complex_double<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif
 #else /* DOUBLE_PRECISION_COMPLEX */
 #ifdef WITH_GPU_STREAMS
-        my_unpack_c_cuda_kernel_complex_single<<<grid_size, blocksize, 0, streamId>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        my_unpack_c_cuda_kernel_complex_single<<<grid_size, blocksize, 0, my_stream>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
         my_unpack_c_cuda_kernel_complex_single<<<grid_size, blocksize>>>(n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif

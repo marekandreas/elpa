@@ -164,9 +164,9 @@ void set_max_shared_bytes(const void *func)
 template <int bM, class F>
 void launch_NVIDIA_sm80_kernel(F *q, const F *hh, const F *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
 {
-#ifdef WITH_GPU_STREAMS
-  cudaStream_t streamId = *((cudaStream_t*)my_stream);
-#endif
+//#ifdef WITH_GPU_STREAMS
+//  cudaStream_t streamId = *((cudaStream_t*)my_stream);
+//#endif
 
 #ifdef USE_MMA
   // This is set such that shared memory bank conflicts are minimized.
@@ -186,7 +186,7 @@ void launch_NVIDIA_sm80_kernel(F *q, const F *hh, const F *hh_tau, const int nev
 #endif
   int grid_y = (nev + bN - 1) / bN;
 #ifdef WITH_GPU_STREAMS
-  kernel<<<dim3(1, grid_y, 1), dim3(1, block_y, block_z), shared_bytes, streamId>>>(q, hh, hh_tau, nev, nb, ldq, ncols);
+  kernel<<<dim3(1, grid_y, 1), dim3(1, block_y, block_z), shared_bytes, my_stream>>>(q, hh, hh_tau, nev, nb, ldq, ncols);
 #else
   kernel<<<dim3(1, grid_y, 1), dim3(1, block_y, block_z), shared_bytes>>>(q, hh, hh_tau, nev, nb, ldq, ncols);
 #endif

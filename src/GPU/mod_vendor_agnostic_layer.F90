@@ -52,7 +52,6 @@ module elpa_gpu
   use precision
   use iso_c_binding
 
-
 #include "./vendor_agnostic_layer_template.F90"
 
 end module
