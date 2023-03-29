@@ -112,6 +112,15 @@
 #undef BLAS_diagonal
 #undef BLAS_diagonal_non_unit
 #undef BLAS_diagonal_unit
+#undef BLAS_ddot
+#undef BLAS_sdot
+#undef BLAS_zdot
+#undef BLAS_cdot
+#undef BLAS_dscal
+#undef BLAS_sscal
+#undef BLAS_zscal
+#undef BLAS_cscal
+
 
 #ifdef HIPBLAS
 #define BLAS hipblas
@@ -158,6 +167,14 @@
 #define BLAS_diagonal hipblasDiagType_t
 #define BLAS_diagonal_non_unit HIPBLAS_DIAG_NON_UNIT
 #define BLAS_diagonal_unit HIPBLAS_DIAG_UNIT
+#define BLAS_ddot hipblasDdot
+#define BLAS_ddot hipblasSdot
+#define BLAS_ddot hipblasZdot
+#define BLAS_ddot hipblasCdot
+#define BLAS_dscal hipblasDscal
+#define BLAS_sscal hipblasSscal
+#define BLAS_zscal hipblasZscal
+#define BLAS_cscal hipblasCscal
 //#define BLAS_float_complex hipblas_float_complex
 //#define BLAS_set_stream hipblas_set_stream
 #else /* HIPBLAS */
@@ -206,6 +223,14 @@
 #define BLAS_diagonal rocblas_diagonal
 #define BLAS_diagonal_non_unit rocblas_diagonal_non_unit
 #define BLAS_diagonal_unit rocblas_diagonal_unit
+#define BLAS_ddot rocblas_ddot
+#define BLAS_ddot rocblas_sdot
+#define BLAS_ddot rocblas_zdot
+#define BLAS_ddot rocblas_cdot
+#define BLAS_dscal rocblas_dscal
+#define BLAS_sscal rocblas_sscal
+#define BLAS_zscal rocblas_zscal
+#define BLAS_cscal rocblas_cscal
 #endif /* HIPBLAS */
 
 #ifdef HIPBLAS
@@ -1381,6 +1406,164 @@ extern "C" {
     BLAS_status status = BLAS_ctrsm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
   }
+
+  // result can be on host or device depending on pointer mode
+  void rocblasDdot_elpa_wrapper (BLAS_HANDLE rocblasHandle, int length, const double *X, int incx, const double *Y, int incy, double *result) {
+
+    //BLAS_status BLAS_set_pointer_mode(rocblasHandle, rocblas_pointer_mode_device);
+    //if (status != BLAS_status_success ) {
+    //  printf("rocblasDdot: error when setting pointer mode\n");
+    //}
+
+    BLAS_status status = BLAS_ddot(rocblasHandle, length, X, incx, Y, incy, result);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasDdot\n");
+    }
+  }
+
+  void rocblasSdot_elpa_wrapper (BLAS_HANDLE rocblasHandle, int length, const float *X, int incx, const float *Y, int incy, float *result) {
+
+    //BLAS_status BLAS_set_pointer_mode(rocblasHandle, rocblas_pointer_mode_device);
+    //if (status != BLAS_status_success ) {
+    //  printf("rocblasSdot: error when setting pointer mode\n");
+    //}
+
+    BLAS_status status = BLAS_sdot(rocblasHandle, length, X, incx, Y, incy, result);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasSdot\n");
+    }
+  }
+
+  void rocblasZdot_elpa_wrapper (char conj, BLAS_HANDLE rocblasHandle, int length, const double _Complex *X, int incx, const double _Complex *Y, int incy, double _Complex *result) {
+
+    //BLAS_status BLAS_set_pointer_mode(rocblasHandle, rocblas_pointer_mode_device);
+    //if (status != BLAS_status_success ) {
+    //  printf("rocblasZdot: error when setting pointer mode\n");
+    //}
+
+#ifndef HIPBLAS
+    const BLAS_double_complex* X_casted = (const BLAS_double_complex*) X;
+    const BLAS_double_complex* Y_casted = (const BLAS_double_complex*) Y;
+#else
+          BLAS_double_complex* X_casted = (      BLAS_double_complex*) X;
+          BLAS_double_complex* X_casted = (      BLAS_double_complex*) Y;
+#endif
+          BLAS_double_complex* result_casted = (      BLAS_double_complex*) result;
+
+    BLAS_status status;
+    if (conju == 'C' || conju == 'c') {
+      status = BLAS_zdotc(rocblasHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+    if (conju == 'U' || conju == 'u') {
+      status = BLAS_zdotu(rocblasHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasZdot\n");
+    }
+  }
+
+  void rocblasCdot_elpa_wrapper (char conj, BLAS_HANDLE rocblasHandle, int length, const float _Complex *X, int incx, const float _Complex *Y, int incy, float _Complex *result) {
+
+    //BLAS_status BLAS_set_pointer_mode(rocblasHandle, rocblas_pointer_mode_device);
+    //if (status != BLAS_status_success ) {
+    //  printf("rocblasCdot: error when setting pointer mode\n");
+    //}
+
+#ifndef HIPBLAS
+    const BLAS_float_complex* X_casted = (const BLAS_float_complex*) X;
+    const BLAS_float_complex* Y_casted = (const BLAS_float_complex*) Y;
+#else
+          BLAS_float_complex* X_casted = (      BLAS_float_complex*) X;
+          BLAS_float_complex* X_casted = (      BLAS_float_complex*) Y;
+#endif
+          BLAS_float_complex* result_casted = (      BLAS_float_complex*) result;
+
+    BLAS_status status;
+    if (conju == 'C' || conju == 'c') {
+      status = BLAS_cdotc(rocblasHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+    if (conju == 'U' || conju == 'u') {
+      status = BLAS_cdotu(rocblasHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+  }
+
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasCdot\n");
+    }
+  }
+
+  void rocblasSetPointerModeFromC(BLAS_HANDLE rocblasHandle, rocblas_pointer_mode mode) {
+    BLAS_status status = rocblas_status rocblas_set_pointer_mode(rocblasHandle, mode);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasSetPointerMode\n");
+    }
+  }
+
+  void rocblasGetPointerModeFromC(BLAS_HANDLE rocblasHandle, rocblas_pointer_mode *mode) {
+    BLAS_status status = rocblas_status rocblas_get_pointer_mode(rocblasHandle, mode);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasGetPointerMode\n");
+    }
+  }
+
+  int rocblasPointerModeDeviceFromC(void) {
+      int val = (int)rocblas_pointer_mode_device;
+      return val;
+  }
+
+  int rocblasPointerModeHostFromC(void) {
+      int val = (int)rocblas_pointer_mode_host;
+      return val;
+  }
+
+
+  void rocblasDscal_elpa_wrapper (BLAS_HANDLE rocblasHandle, int n, double alpha, double *x, int incx){
+
+    BLAS_status status = BLAS_Dscal(rocblasHandle, n, &alpha, x, incx);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasDscal\n");
+    }
+  }
+
+  void rocblasSscal_elpa_wrapper (BLAS_HANDLE rocblasHandle, int n, float alpha, float *x, int incx){
+
+    BLAS_status status = BLAS_Sscal(rocblasHandle, n, &alpha, x, incx);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasSscal\n");
+    }
+  }
+
+  void rocblasZscal_elpa_wrapper (BLAS_HANDLE rocblasHandle, int n, double _Complex alpha, double _Complex *x, int incx){
+
+#ifndef HIPBLAS
+    const BLAS_double_complex* X_casted = (const BLAS_double_complex*) X;
+#else
+          BLAS_double_complex* X_casted = (      BLAS_double_complex*) X;
+#endif
+    BLAS_double_complex alpha_casted = *((BLAS_double_complex*)(&alpha));
+
+    BLAS_status status = BLAS_Zscal(rocblasHandle, n, &alpha_casted, X_casted, incx);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasZscal\n");
+    }
+  }
+
+  void rocblasCscal_elpa_wrapper (BLAS_HANDLE rocblasHandle, int n, float _Complex alpha, float _Complex *x, int incx){
+
+#ifndef HIPBLAS
+    const BLAS_float_complex* X_casted = (const BLAS_float_complex*) X;
+#else
+          BLAS_float_complex* X_casted = (      BLAS_float_complex*) X;
+#endif
+    BLAS_float_complex alpha_casted = *((BLAS_float_complex*)(&alpha));
+
+    BLAS_status status = BLAS_Cscal(rocblasHandle, n, &alpha_casted, X_casted, incx);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasCscal\n");
+    }
+  }
+
 
 
 }

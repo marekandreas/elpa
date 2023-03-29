@@ -1368,6 +1368,122 @@ extern "C" {
     }
   }
 
+  // result can be on host or device depending on pointer mode
+  void cublasDdot_elpa_wrapper (cublasHandle_t cudaHandle, int length, const double *X, int incx, const double *Y, int incy, double *result) {
+    cublasStatus_t status = cublasDdot(cudaHandle, length, X, incx, Y, incy, result);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDdot\n");
+    }
+  }
+
+  void cublasSdot_elpa_wrapper (cublasHandle_t cudaHandle, int length, const float *X, int incx, const float *Y, int incy, float *result) {
+
+    //cublasSetPointerMode(cudaHandle, CUBLAS_POINTER_MODE_DEVICE);
+    cublasStatus_t status = cublasSdot(cudaHandle, length, X, incx, Y, incy, result);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasSdot\n");
+    }
+  }
+
+  void cublasZdot_elpa_wrapper (char conju, cublasHandle_t cudaHandle, int length, const double _Complex *X, int incx, const double _Complex *Y, int incy, double _Complex *result) {
+
+    //cublasSetPointerMode(cudaHandle, CUBLAS_POINTER_MODE_DEVICE);
+    const cuDoubleComplex* X_casted = (const cuDoubleComplex*) X;
+    const cuDoubleComplex* Y_casted = (const cuDoubleComplex*) Y;
+          cuDoubleComplex* result_casted = (cuDoubleComplex*) result;
+    cublasStatus_t status;
+    if (conju == 'C' || conju == 'c') {
+      status = cublasZdotc(cudaHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+    if (conju == 'U' || conju == 'u') {
+	    printf("not using conjugate in dot\n");
+      status = cublasZdotu(cudaHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZdot\n");
+    }
+    //cuDoubleComplex* result = (cuDoubleComplex*) result_casted;
+  }
+
+  void cublasCdot_elpa_wrapper (char conju, cublasHandle_t cudaHandle, int length, const float _Complex *X, int incx, const float _Complex *Y, int incy, float _Complex *result) {
+
+    //cublasSetPointerMode(cudaHandle, CUBLAS_POINTER_MODE_DEVICE);
+    const cuFloatComplex* X_casted = (const cuFloatComplex*) X;
+    const cuFloatComplex* Y_casted = (const cuFloatComplex*) Y;
+          cuFloatComplex* result_casted = (cuFloatComplex*) result;
+
+    cublasStatus_t status;
+    if (conju == 'C' || conju == 'c') {
+      status = cublasCdotc(cudaHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+    if (conju == 'U' || conju == 'u') {
+      status = cublasCdotu(cudaHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCdot\n");
+    }
+    printf("Leaving setPointer\n");
+  }
+
+  void cublasSetPointerModeFromC(cublasHandle_t cudaHandle, cublasPointerMode_t mode) {
+    cublasSetPointerMode(cudaHandle, mode);
+  }
+
+  void cublasGetPointerModeFromC(cublasHandle_t cudaHandle, cublasPointerMode_t *mode) {
+    //cublasPointerMode_t mode_tmp;
+    //cublasGetPointerMode(cudaHandle, &mode_tmp);
+    cublasGetPointerMode(cudaHandle, mode);
+    //printf("in getpointer mode %d \n",mode_tmp);
+    //printf("in getpointer mode %d \n",*mode);
+    //*mode = mode_tmp;
+  }
+
+  int cublasPointerModeDeviceFromC(void) {
+      int val = CUBLAS_POINTER_MODE_DEVICE;
+      return val;
+  }
+
+  int cublasPointerModeHostFromC(void) {
+      int val = CUBLAS_POINTER_MODE_HOST;
+      return val;
+  }
+
+  void cublasDscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, double alpha, double *x, int incx){
+
+    cublasStatus_t status = cublasDscal(cudaHandle, n, &alpha, x, incx);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDscal\n");
+    }
+  }
+
+  void cublasSscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, float alpha, float *x, int incx){
+
+    cublasStatus_t status = cublasSscal(cudaHandle, n, &alpha, x, incx);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasSscal\n");
+    }
+  }
+
+  void cublasZscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, double _Complex alpha, double _Complex *x, int incx){
+    cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
+    cuDoubleComplex* X_casted     = (cuDoubleComplex*) x;
+
+    cublasStatus_t status = cublasZscal(cudaHandle, n, &alpha_casted, X_casted, incx);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZscal\n");
+    }
+  }
+
+  void cublasCscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, float _Complex alpha, float _Complex *x, int incx){
+    cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
+    cuFloatComplex* X_casted     = (cuFloatComplex*) x;
+
+    cublasStatus_t status = cublasCscal(cudaHandle, n, &alpha_casted, X_casted, incx);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCscal\n");
+    }
+  }
 
 }
 #endif /* WITH_NVIDIA_GPU_VERSION */
