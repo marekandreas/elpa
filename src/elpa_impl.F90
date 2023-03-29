@@ -1538,6 +1538,10 @@ module elpa_impl
 #endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_CUSOLVER)
+        deallocate(self%gpu_setup%gpusolverHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate gpusolverHandleArray: " // errorMessage
+        endif 
         deallocate(self%gpu_setup%cusolverHandleArray, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate cusolverHandleArray: " // errorMessage
@@ -1545,11 +1549,40 @@ module elpa_impl
 #endif
 
 #if defined(WITH_AMD_GPU_VERSION) && defined(WITH_AMD_ROCSOLVER)
+        deallocate(self%gpu_setup%gpusolverHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate gpusolverHandleArray: " // errorMessage
+        endif 
         deallocate(self%gpu_setup%rocsolverHandleArray, stat=istat, errmsg=errorMessage)
         if (istat .ne. 0) then
           write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate rocsolverHandleArray: " // errorMessage
         endif 
 #endif
+
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && defined(WITH_OPENMP_OFFLOAD_SOLVER)
+        deallocate(self%gpu_setup%gpusolverHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate gpusolverHandleArray: " // errorMessage
+        endif 
+        deallocate(self%gpu_setup%openmpOffloadsolverHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate openmpOffloadsolverHandleArray: " // errorMessage
+        endif 
+#endif
+
+#if defined(WITH_SYCL_GPU_VERSION) && defined(WITH_SYCL_SOLVER)
+        deallocate(self%gpu_setup%gpusolverHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate gpusolverHandleArray: " // errorMessage
+        endif 
+        deallocate(self%gpu_setup%syclsolverHandleArray, stat=istat, errmsg=errorMessage)
+        if (istat .ne. 0) then
+          write(error_unit, "(a,i0,a)") "ELPA: elpa_destroy cannot deallocate openmpOffloadsolverHandleArray: " // errorMessage
+        endif 
+#endif
+
+
+
       endif
 #endif
 

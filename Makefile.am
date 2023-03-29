@@ -62,6 +62,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/ROCm/mod_hip.F90 \
   src/GPU/OpenMP/mod_openmp_offload.F90 \
   src/GPU/SYCL/mod_sycl.F90 \
+  src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
   src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
   src/elpa2/GPU/ROCm/interface_c_hip_kernel.F90 \
@@ -114,9 +115,16 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
+  src/GPU/vendor_agnostic_layer_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
+  src/GPU/CUDA/cuda_template.F90 \
+  src/GPU/CUDA/cudaFunctions_template.h \
+  src/GPU/ROCm/hip_template.F90 \
+  src/GPU/ROCm/rocmFunctions_template.h \
+  src/GPU/SYCL/sycl_template.F90 \
+  src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
@@ -730,6 +738,15 @@ libelpatest@SUFFIX@_la_SOURCES += \
   test/shared/GPU/ROCm/test_rocmFunctions.cpp
 endif
 
+if WITH_SYCL_GPU_VERSION
+libelpatest@SUFFIX@_la_SOURCES += \
+  test/shared/GPU/SYCL/test_sycl.F90 \
+  test/shared/GPU/SYCL/test_syclFunctions.cpp
+endif
+
+
+
+
 if WITH_SCALAPACK_TESTS
 libelpatest@SUFFIX@_la_SOURCES += \
   test/shared/test_scalapack.F90
@@ -906,11 +923,17 @@ EXTRA_DIST = \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
   src/GPU/check_legacy_gpu_setting_template.F90 \
+  src/GPU/vendor_agnostic_layer_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
+  src/GPU/CUDA/cuda_template.F90 \
+  src/GPU/CUDA/cudaFunctions_template.h \
   src/GPU/CUDA/cuUtils_template.cu \
+  src/GPU/ROCm/hip_template.F90 \
+  src/GPU/ROCm/rocmFunctions_template.h \
   src/GPU/ROCm/hipUtils_template.cpp \
+  src/GPU/SYCL/sycl_template.F90 \
   src/GPU/SYCL/syclUtils.cpp \
   src/GPU/SYCL/syclCommon.cpp \
   src/GPU/SYCL/syclFunctions.cpp \
@@ -1008,6 +1031,10 @@ EXTRA_DIST = \
   test/shared/test_analytic_template.F90 \
   test/shared/test_scalapack_template.F90 \
   test/shared/GPU/test_gpu_vendor_agnostic_layerFunctions.h \
+  test/shared/GPU/test_gpu_vendor_agnostic_layerVariables.h \
+  test/shared/GPU/CUDA/test_cudaFunctions.h \
+  test/shared/GPU/ROCm/test_rocmFunctions.h \
+  test/shared/GPU/SYCL/test_syclFunctions.h \
   test_project_1stage/Makefile.am \
   test_project_1stage/autogen.sh \
   test_project_1stage/configure.ac \

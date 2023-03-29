@@ -1,11 +1,12 @@
-!    Copyright 2022, A. Marek
+!    Copyright 2014 - 2023, A. Marek
 !
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -40,9 +41,8 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! This file was written by A. Marek, MPCDF (2022)
-! it is based on a prototype implementation developed for MPCDF
-! by A. Poeppl, Intel (2022)
+! Author: Andreas Marek, MPCDF
+! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
@@ -54,6 +54,7 @@ module sycl_functions
 
   public
 
+#if 0
   integer(kind=ik) :: syclMemcpyHostToDevice
   integer(kind=ik) :: syclMemcpyDeviceToHost
   integer(kind=ik) :: syclMemcpyDeviceToDevice
@@ -2423,5 +2424,9 @@ module sycl_functions
 ! !       call mkl_sycl_csymv_c(cta, n, alpha, a, lda, x, incx, beta, y, incy)
 ! #endif
 !     end subroutine mkl_sycl_csymv
+
+#endif
+
+#include "./sycl_template.F90"
 
 end module sycl_functions

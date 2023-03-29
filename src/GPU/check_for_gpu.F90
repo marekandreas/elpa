@@ -125,8 +125,10 @@ module mod_check_for_gpu
 #ifdef WITH_NVIDIA_CUSOLVER
       if (.not.(allocated(obj%gpu_setup%cusolverHandleArray))) then
         allocate(obj%gpu_setup%cusolverHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpusolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
           obj%gpu_setup%cusolverHandleArray(thread) = -1
+          obj%gpu_setup%gpusolverHandleArray(thread) = -1
         enddo
       endif
 #endif
@@ -145,8 +147,10 @@ module mod_check_for_gpu
 #ifdef WITH_AMD_ROCSOLVER
       if (.not.(allocated(obj%gpu_setup%rocsolverHandleArray))) then
         allocate(obj%gpu_setup%rocsolverHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpucsolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
           obj%gpu_setup%rocsolverHandleArray(thread) = -1
+          obj%gpu_setup%gpucsolverHandleArray(thread) = -1
         enddo
       endif
 #endif
@@ -165,8 +169,10 @@ module mod_check_for_gpu
 #ifdef WITH_OPENMP_OFFLOAD_SOLVER
       if (.not.(allocated(obj%gpu_setup%openmpOffloadsolverHandleArray))) then
         allocate(obj%gpu_setup%openmpOffloadsolverHandleArray(0:maxThreads-1))
+        allocate(obj%gpu_setup%gpusolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
           obj%gpu_setup%openmpOffloadsolverHandleArray(thread) = -1
+          obj%gpu_setup%gpusolverHandleArray(thread) = -1
         enddo
       endif
 #endif
@@ -271,6 +277,9 @@ module mod_check_for_gpu
 #ifdef WITH_SYCL_GPU_VERSION
           if (obj%is_set("sycl_show_all_devices") == 1) then ! useGPUid
             call obj%get("sycl_show_all_devices", syclShowAllDevices, error)
+            if (myid == 0 .and. wantDebugMessage) then
+              print *, "SYCL: sycl_show_all_devices =  ", syclShowAllDevices
+            endif
             if (syclShowAllDevices == 1) then
               syclShowOnlyIntelGpus = 0
             else
@@ -279,11 +288,18 @@ module mod_check_for_gpu
           else
             syclShowOnlyIntelGpus = 1
           endif
-          numberOfDevices = sycl_getdevicecount(syclShowOnlyIntelGpus)
-          success = .true.
+          if (myid == 0 .and. wantDebugMessage) then
+            print *, "SYCL: syclShowOnlyIntelGpus =  ", syclShowOnlyIntelGpus
+          endif
+          success = sycl_getdevicecount(numberOfDevices, syclShowOnlyIntelGpus)
+          if (myid == 0 .and. wantDebugMessage) then
+            print *, "SYCL: numberOfDevices =  ", numberOfDevices
+          endif
           if (wantDebugMessage) then
             call sycl_printdevices()
           endif
+          !obj%gpu_setup%syclCPU=.false.
+          !success = sycl_getdevicecount(numberOfDevices)
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -311,6 +327,21 @@ module mod_check_for_gpu
 !          gpuAvailable = .true.
 !        endif
 !#endif
+
+
+#ifdef WITH_SYCL_GPU_VERSION
+        ! special case: maybe we want to run the sycl code path on cpu ?
+        if (numberOfDevices .eq. 0) then
+          success = sycl_getcpucount(numberOfDevices)
+          if (.not.(success)) then
+            print *,"error in sycl_getdevicecount"
+            stop 1
+          endif
+          if (numberOfDevices .ge. 0) then
+            obj%gpu_setup%syclCPU=.true.
+          endif
+        endif
+#endif
 
 
           ! make sure that all nodes have the same number of GPU's, otherwise

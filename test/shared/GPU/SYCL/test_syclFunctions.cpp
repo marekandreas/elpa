@@ -1,12 +1,12 @@
-// Copyright 2021, A. Marek MPCDF
+/*
+//    Copyright 2022, A. Marek
 //
 //    This file is part of ELPA.
 //
 //    The ELPA library was originally created by the ELPA consortium,
 //    consisting of the following organizations:
 //
-//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
-//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 //    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 //      Informatik,
 //    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -17,10 +17,6 @@
 //      and
 //    - IBM Deutschland GmbH
 //
-//
-//    This particular source code file contains additions, changes and
-//    enhancements authored by Intel Corporation which is not part of
-//    the ELPA consortium.
 //
 //    More information can be found here:
 //    http://elpa.mpcdf.mpg.de/
@@ -36,7 +32,7 @@
 //    GNU Lesser General Public License for more details.
 //
 //    You should have received a copy of the GNU Lesser General Public License
-//    along with ELPA. If not, see <http://www.gnu.org/licenses/>
+//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
 //
 //    ELPA reflects a substantial effort on the part of the original
 //    ELPA consortium, and we ask you to respect the spirit of the
@@ -45,19 +41,24 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
+// This file was written by A. Marek, MPCDF (2022)
+// it is based on a prototype implementation developed for MPCDF
+// by A. Poeppl, Intel Corporation (2022)
+*/
+
 #include <CL/sycl.hpp>
 
-#include "syclCommon.hpp"
+#include <complex>
+#include <oneapi/mkl.hpp>
 
-extern "C" {
-  int sycl_gpu_count(int show_all_sycl_devices) {
-    using namespace elpa::gpu::sycl;
-    int count = -1000;
-    //
-    bool all = static_cast<bool>(show_all_sycl_devices);
-    collectGpuDevices(all);
-    count = getNumDevices();
-    return count;
-  }
-}
+#include <iostream>
+#include <cstdint>
+#include <vector>
+#include <optional>
+
+#include "config-f90.h"
+
+#include "../../../../src/GPU/SYCL/syclCommon.hpp"
+
+#include "../../../../src/GPU/SYCL/syclFunctions_template.hpp"
 

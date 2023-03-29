@@ -928,15 +928,17 @@
 
         call obj%timer%start("blas")
 #ifndef DEVICE_POINTER
-        if (l_cols-l_colx+1>0) &
-        call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', int(nblk,kind=BLAS_KIND),  &
+        if (l_cols-l_colx+1>0) then
+          call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', int(nblk,kind=BLAS_KIND),  &
                             int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, tmp2, &
                             int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND) )
+        endif
 #else
-        if (l_cols-l_colx+1>0) &
-        call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', int(nblk,kind=BLAS_KIND),  &
+        if (l_cols-l_colx+1>0) then
+          call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', int(nblk,kind=BLAS_KIND),  &
                             int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, tmp2, &
                             int(ubound(tmp2,dim=1),kind=BLAS_KIND), a_tmp(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND) )
+        endif
 #endif
         call obj%timer%stop("blas")
       endif ! useGPU
@@ -946,9 +948,10 @@
     if (useGPU) then
       if (my_prow==prow(n, nblk, np_rows)) then
         ! if l_cols-l_colx+1 == 0 kernel launch with 0 blocks => raises error
-        if (l_cols-l_colx+1>0) &
+        if (l_cols-l_colx+1>0) then
            my_stream = obj%gpu_setup%my_stream
            call gpu_copy_PRECISION_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+        endif
       endif
     else ! useGPU
       do i=1,nblk
@@ -1004,9 +1007,10 @@
 !#ifndef WITH_CUDA_AWARE_MPI
     do i=1,nblk
       call obj%timer%start("mpi_communication")
-      if (l_cols-l_colx+1>0) &
-      call MPI_Bcast(tmatc(l_colx,i), int(l_cols-l_colx+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+      if (l_cols-l_colx+1>0) then
+        call MPI_Bcast(tmatc(l_colx,i), int(l_cols-l_colx+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                      int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+      endif
 
       call obj%timer%stop("mpi_communication")
     enddo

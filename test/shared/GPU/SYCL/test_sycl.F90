@@ -1,12 +1,11 @@
-!    Copyright 2014 - 2023, A. Marek
+!    Copyright 2014-2023, A. Marek
 !
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
-!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -41,20 +40,20 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! Author: Andreas Marek, MPCDF
-! This file is the generated version. Do NOT edit
+! This file was written by A. Marek, MPCDF
 
 
 #include "config-f90.h"
-
-module hip_functions
+module test_sycl_functions
   use, intrinsic :: iso_c_binding
-  use precision
+  use precision_for_tests
   implicit none
 
   public
 
+  ! TODO global variable, has to be changed
+  integer(kind=C_intptr_T) :: syclHandle = -1
 
-#include "./hip_template.F90"
+#include "../../../../src/GPU/SYCL/sycl_template.F90"
 
-end module hip_functions
+end module test_sycl_functions

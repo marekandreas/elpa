@@ -158,6 +158,13 @@ program test
 #if TEST_AMD_GPU == 1
    use test_hip_functions
 #endif
+#if TEST_INTEL_GPU_SYCL == 1
+   use test_sycl_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#error "openmp_offload missing"
+#endif
+
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 

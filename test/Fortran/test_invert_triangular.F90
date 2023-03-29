@@ -132,6 +132,9 @@ program test
 #if TEST_AMD_GPU == 1
    use test_hip_functions
 #endif
+#if TEST_INTEL_GPU_SYCL == 1
+   use test_sycl_functions
+#endif
 
 #endif /* TEST_GPU */
 

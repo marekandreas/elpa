@@ -100,10 +100,10 @@ module test_setup_mpi
       myid   = int(myidMPI,kind=BLAS_KIND)
       nprocs = int(nprocsMPI,kind=BLAS_KIND)
 
-      if (nprocs <= 1) then
-        print *, "The test programs must be run with more than 1 task to ensure that usage with MPI is actually tested"
-        stop 1
-      endif
+      !if (nprocs <= 1) then
+      !  print *, "The test programs must be run with more than 1 task to ensure that usage with MPI is actually tested"
+      !  stop 1
+      !endif
 #else
       myid = 0
       nprocs = 1

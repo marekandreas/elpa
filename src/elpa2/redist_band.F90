@@ -290,11 +290,15 @@ subroutine redist_band_&
   ! Exchange all data with MPI_Alltoallv
 #ifdef WITH_MPI
   call obj%timer%start("mpi_communication")
-
-  call MPI_Alltoallv(sbuf, int(ncnt_s,kind=MPI_KIND), int(nstart_s,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                     rbuf, int(ncnt_r,kind=MPI_KIND), int(nstart_r,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
-                     int(mpi_comm_all,kind=MPI_KIND), mpierr)
-
+  
+  if (np_rows*np_cols>1) then
+    call MPI_Alltoallv(sbuf, int(ncnt_s,kind=MPI_KIND), int(nstart_s,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       rbuf, int(ncnt_r,kind=MPI_KIND), int(nstart_r,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION_EXPL, &
+                       int(mpi_comm_all,kind=MPI_KIND), mpierr)
+  else
+    rbuf = sbuf
+  endif
+  
   call obj%timer%stop("mpi_communication")
 #else /* WITH_MPI */
   rbuf = sbuf

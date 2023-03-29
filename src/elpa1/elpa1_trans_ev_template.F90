@@ -429,15 +429,16 @@ subroutine trans_ev_&
 
       tmat = 0
       call obj%timer%start("blas")
-      if (l_rows>0) &
+      if (l_rows>0) then
 #if REALCASE == 1
-      call PRECISION_SYRK('U', 'T',   &
+        call PRECISION_SYRK('U', 'T',   &
 #endif
 #if COMPLEXCASE == 1
-      call PRECISION_HERK('U', 'C',   &
+        call PRECISION_HERK('U', 'C',   &
 #endif
                          int(nstor,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
                          hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), ZERO, tmat, int(max_stored_rows,kind=BLAS_KIND))
+      endif
       call obj%timer%stop("blas")
       nc = 0
       do n = 1, nstor-1

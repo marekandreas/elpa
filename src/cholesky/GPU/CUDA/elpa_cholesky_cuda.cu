@@ -89,6 +89,7 @@ extern "C" void cuda_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev,
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing copy_double_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
   }
 }
 
@@ -121,6 +122,7 @@ extern "C" void cuda_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, in
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing copy_float_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
   }
 }
 
@@ -156,6 +158,7 @@ extern "C" void cuda_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, d
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing copy_double_complex_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
   }
 }
 
@@ -191,5 +194,6 @@ extern "C" void cuda_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, flo
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing copy_float_complex_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk); 
   }
 }

@@ -86,6 +86,32 @@ void elpa::gpu::sycl::collectGpuDevices(bool onlyGpus) {
   }
 }
 
+void elpa::gpu::sycl::collectCpuDevices() {
+  if (deviceCollectionFlag) {
+    return;
+  } else {
+    deviceCollectionFlag = true;
+  }
+
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+
+  // We need to be opinionated about the device selection. Currently, devices are displayed in duplicate, if they are supported
+  // by multiple platforms. For now, a first step could be only supporting level zero and Intel GPUs. This will have to be
+  // changed later as we move towards generalizing the backend.
+  for (auto const &p : cl::sycl::platform::get_platforms()) {
+    for (auto dev : p.get_devices()) {
+      devices.push_back(dev);
+    }
+  }
+}
+
 int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
   if (deviceId >= devices.size()){
     std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
@@ -94,6 +120,12 @@ int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
   cl::sycl::property::queue::in_order io;
   cl::sycl::property_list props(io);
   chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId], props);
+  return 1;
+}
+
+int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
+  collectCpuDevices();
+  elpa::gpu::sycl::selectGpuDevice(deviceId);
   return 1;
 }
 
@@ -118,7 +150,12 @@ cl::sycl::device elpa::gpu::sycl::getDevice() {
   return chosenQueue->get_device();
 }
 
-size_t elpa::gpu::sycl::getNumDevices(bool onlyGpus) {
+size_t elpa::gpu::sycl::getNumDevices() {
+  return devices.size();
+}
+
+size_t elpa::gpu::sycl::getNumCpuDevices() {
+  collectCpuDevices();
   return devices.size();
 }
 

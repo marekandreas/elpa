@@ -79,7 +79,9 @@ module elpa_gpu_setup
     integer(kind=c_int), allocatable      :: openmpOffloadDeviceArray(:)
 
     logical                               :: gpuAlreadySet
-
+#ifdef WITH_SYCL_GPU_VERSION
+    logical                               :: syclCPU
+#endif
   end type
 
 end module
