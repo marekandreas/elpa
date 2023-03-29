@@ -60,6 +60,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/mod_vendor_agnostic_layer.F90 \
   src/GPU/mod_vendor_agnostic_layer_utilities.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
+  src/GPU/CUDA/mod_nccl.F90 \
   src/GPU/ROCm/mod_hip.F90 \
   src/GPU/OpenMP/mod_openmp_offload.F90 \
   src/GPU/SYCL/mod_sycl.F90 \
@@ -123,6 +124,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \
+  src/GPU/CUDA/nccl_template.F90 \
+  src/GPU/CUDA/ncclFunctions_template.h \
   src/GPU/ROCm/hip_template.F90 \
   src/GPU/ROCm/rocmFunctions_template.h \
   src/GPU/SYCL/sycl_template.F90 \
@@ -201,6 +204,10 @@ endif
 #  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclFunctions.cpp
 #endif
 
+
+if WITH_NVIDIA_NCCL
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/ncclFunctions.cpp
+endif
 
 if WITH_AMD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp  src/GPU/ROCm/elpa_explicit_name_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
@@ -934,6 +941,8 @@ EXTRA_DIST = \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \
+  src/GPU/CUDA/nccl_template.F90 \
+  src/GPU/CUDA/ncclFunctions_template.h \
   src/GPU/CUDA/cuUtils_template.cu \
   src/GPU/ROCm/hip_template.F90 \
   src/GPU/ROCm/rocmFunctions_template.h \
