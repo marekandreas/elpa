@@ -187,38 +187,38 @@ __global__ void extract_hh_tau_c_hip_kernel_complex_single(hipFloatComplex *hh, 
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-extern "C" void launch_my_pack_c_hip_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *a_dev, double *row_group_dev, hipStream_t my_stream)
+extern "C" void launch_my_pack_c_hip_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *a_dev, double *row_group_dev, intptr_t my_stream)
 #else
-extern "C" void launch_my_pack_c_hip_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *a_dev, float *row_group_dev, hipStream_t my_stream)
+extern "C" void launch_my_pack_c_hip_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *a_dev, float *row_group_dev, intptr_t my_stream)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-extern "C" void launch_my_pack_c_hip_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipDoubleComplex *a_dev, hipDoubleComplex *row_group_dev, hipStream_t my_stream)
+extern "C" void launch_my_pack_c_hip_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipDoubleComplex *a_dev, hipDoubleComplex *row_group_dev, intptr_t my_stream)
 #else
-extern "C" void launch_my_pack_c_hip_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipFloatComplex *a_dev, hipFloatComplex *row_group_dev, hipStream_t my_stream)
+extern "C" void launch_my_pack_c_hip_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipFloatComplex *a_dev, hipFloatComplex *row_group_dev, intptr_t my_stream)
 #endif
 #endif
 {
     hipError_t err;
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
-//#ifdef WITH_GPU_STREAMS
-//    hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
-//#endif
+#ifdef WITH_GPU_STREAMS
+    hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
+#endif
 
     for (int i_off = 0; i_off < stripe_width / blocksize; i_off++)
     {
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
 #ifdef WITH_GPU_STREAMS
-        hipLaunchKernelGGL(my_pack_c_hip_kernel_real_double, dim3(grid_size), dim3(blocksize), 0, my_stream, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        hipLaunchKernelGGL(my_pack_c_hip_kernel_real_double, dim3(grid_size), dim3(blocksize), 0, elpa_hip_stm, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
         hipLaunchKernelGGL(my_pack_c_hip_kernel_real_double, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
 #else /* DOUBLE_PRECISION_REAL */
 #ifdef WITH_GPU_STREAMS
-        hipLaunchKernelGGL(my_pack_c_hip_kernel_real_single, dim3(grid_size), dim3(blocksize), 0, my_stream, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        hipLaunchKernelGGL(my_pack_c_hip_kernel_real_single, dim3(grid_size), dim3(blocksize), 0, elpa_hip_stm, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
         hipLaunchKernelGGL(my_pack_c_hip_kernel_real_single, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
@@ -228,13 +228,13 @@ extern "C" void launch_my_pack_c_hip_kernel_complex_single(const int row_count, 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 #ifdef WITH_GPU_STREAMS
-        hipLaunchKernelGGL(my_pack_c_hip_kernel_complex_double, dim3(grid_size), dim3(blocksize), 0, my_stream, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        hipLaunchKernelGGL(my_pack_c_hip_kernel_complex_double, dim3(grid_size), dim3(blocksize), 0, elpa_hip_stm, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
         hipLaunchKernelGGL(my_pack_c_hip_kernel_complex_double, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
 #else /* DOUBLE_PRECISION_COMPLEX */
 #ifdef WITH_GPU_STREAMS
-        hipLaunchKernelGGL(my_pack_c_hip_kernel_complex_single, dim3(grid_size), dim3(blocksize), 0, my_stream, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
+        hipLaunchKernelGGL(my_pack_c_hip_kernel_complex_single, dim3(grid_size), dim3(blocksize), 0, elpa_hip_stm, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #else
         hipLaunchKernelGGL(my_pack_c_hip_kernel_complex_single, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, a_dev, row_group_dev, i_off);
 #endif
@@ -251,35 +251,35 @@ extern "C" void launch_my_pack_c_hip_kernel_complex_single(const int row_count, 
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-extern "C" void launch_extract_hh_tau_c_hip_kernel_real_double(double *bcast_buffer_dev, double *hh_tau_dev, const int nbw, const int n, const int is_zero, hipStream_t my_stream)
+extern "C" void launch_extract_hh_tau_c_hip_kernel_real_double(double *bcast_buffer_dev, double *hh_tau_dev, const int nbw, const int n, const int is_zero, intptr_t my_stream)
 #else
-extern "C" void launch_extract_hh_tau_c_hip_kernel_real_single(float *bcast_buffer_dev, float *hh_tau_dev, const int nbw, const int n, const int is_zero, hipStream_t my_stream)
+extern "C" void launch_extract_hh_tau_c_hip_kernel_real_single(float *bcast_buffer_dev, float *hh_tau_dev, const int nbw, const int n, const int is_zero, intptr_t my_stream)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-extern "C" void launch_extract_hh_tau_c_hip_kernel_complex_double(hipDoubleComplex *bcast_buffer_dev, hipDoubleComplex *hh_tau_dev, const int nbw, const int n, const int is_zero, hipStream_t my_stream)
+extern "C" void launch_extract_hh_tau_c_hip_kernel_complex_double(hipDoubleComplex *bcast_buffer_dev, hipDoubleComplex *hh_tau_dev, const int nbw, const int n, const int is_zero, intptr_t my_stream)
 #else
-extern "C" void launch_extract_hh_tau_c_hip_kernel_complex_single(hipFloatComplex *bcast_buffer_dev, hipFloatComplex *hh_tau_dev, const int nbw, const int n, const int is_zero, hipStream_t my_stream)
+extern "C" void launch_extract_hh_tau_c_hip_kernel_complex_single(hipFloatComplex *bcast_buffer_dev, hipFloatComplex *hh_tau_dev, const int nbw, const int n, const int is_zero, intptr_t my_stream)
 #endif
 #endif
 {
     hipError_t err;
     int grid_size = 1 + (n - 1) / MAX_BLOCK_SIZE;
-//#ifdef WITH_GPU_STREAMS
-//    hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
-//#endif
+#ifdef WITH_GPU_STREAMS
+    hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
+#endif
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
 #ifdef WITH_GPU_STREAMS
-    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_real_double, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, my_stream, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_real_double, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, elpa_hip_stm, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
     hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_real_double, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, 0, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
 #else /* DOUBLE_PRECISION_REAL */
 #ifdef WITH_GPU_STREAMS
-    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_real_single, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, my_stream, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_real_single, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, elpa_hip_stm, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
     hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_real_single, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, 0, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
@@ -289,13 +289,13 @@ extern "C" void launch_extract_hh_tau_c_hip_kernel_complex_single(hipFloatComple
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 #ifdef WITH_GPU_STREAMS
-    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_complex_double, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, my_stream, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_complex_double, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, elpa_hip_stm, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
     hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_complex_double, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, 0, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
 #else /* DOUBLE_PRECISION_COMPLEX */
 #ifdef WITH_GPU_STREAMS
-    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_complex_single, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, my_stream, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+    hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_complex_single, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, elpa_hip_stm, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #else
     hipLaunchKernelGGL(extract_hh_tau_c_hip_kernel_complex_single, dim3(grid_size), dim3(MAX_BLOCK_SIZE), 0, 0, bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
 #endif
@@ -311,38 +311,38 @@ extern "C" void launch_extract_hh_tau_c_hip_kernel_complex_single(hipFloatComple
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-extern "C" void launch_my_unpack_c_hip_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *row_group_dev, double *a_dev, hipStream_t my_stream)
+extern "C" void launch_my_unpack_c_hip_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *row_group_dev, double *a_dev, intptr_t my_stream)
 #else
-extern "C" void launch_my_unpack_c_hip_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *row_group_dev, float *a_dev, hipStream_t my_stream)
+extern "C" void launch_my_unpack_c_hip_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *row_group_dev, float *a_dev, intptr_t my_stream)
 #endif
 #endif
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-extern "C" void launch_my_unpack_c_hip_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipDoubleComplex *row_group_dev, hipDoubleComplex *a_dev, hipStream_t my_stream)
+extern "C" void launch_my_unpack_c_hip_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipDoubleComplex *row_group_dev, hipDoubleComplex *a_dev, intptr_t my_stream)
 #else
-extern "C" void launch_my_unpack_c_hip_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipFloatComplex *row_group_dev, hipFloatComplex *a_dev, hipStream_t my_stream)
+extern "C" void launch_my_unpack_c_hip_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, hipFloatComplex *row_group_dev, hipFloatComplex *a_dev, intptr_t my_stream)
 #endif
 #endif
 {
     hipError_t err;
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
-//#ifdef WITH_GPU_STREAMS
-//    hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
-//#endif
+#ifdef WITH_GPU_STREAMS
+    hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
+#endif
 
     for (int i_off = 0; i_off < stripe_width / blocksize; i_off++)
     {
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
 #ifdef WITH_GPU_STREAMS
-        hipLaunchKernelGGL(my_unpack_c_hip_kernel_real_double, dim3(grid_size), dim3(blocksize), 0, my_stream, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        hipLaunchKernelGGL(my_unpack_c_hip_kernel_real_double, dim3(grid_size), dim3(blocksize), 0, elpa_hip_stm, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
         hipLaunchKernelGGL(my_unpack_c_hip_kernel_real_double, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif
 #else /* DOUBLE_PRECISION_REAL */
 #ifdef WITH_GPU_STREAMS
-        hipLaunchKernelGGL(my_unpack_c_hip_kernel_real_single, dim3(grid_size), dim3(blocksize), 0, my_stream, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        hipLaunchKernelGGL(my_unpack_c_hip_kernel_real_single, dim3(grid_size), dim3(blocksize), 0, elpa_hip_stm, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
         hipLaunchKernelGGL(my_unpack_c_hip_kernel_real_single, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif
@@ -352,13 +352,13 @@ extern "C" void launch_my_unpack_c_hip_kernel_complex_single(const int row_count
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
 #ifdef WITH_GPU_STREAMS
-        hipLaunchKernelGGL(my_unpack_c_hip_kernel_complex_double, dim3(grid_size), dim3(blocksize), 0, my_stream, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        hipLaunchKernelGGL(my_unpack_c_hip_kernel_complex_double, dim3(grid_size), dim3(blocksize), 0, elpa_hip_stm, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
         hipLaunchKernelGGL(my_unpack_c_hip_kernel_complex_double, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif
 #else /* DOUBLE_PRECISION_COMPLEX */
 #ifdef WITH_GPU_STREAMS
-        hipLaunchKernelGGL(my_unpack_c_hip_kernel_complex_single, dim3(grid_size), dim3(blocksize), 0, my_stream, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
+        hipLaunchKernelGGL(my_unpack_c_hip_kernel_complex_single, dim3(grid_size), dim3(blocksize), 0, elpa_hip_stm, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #else
         hipLaunchKernelGGL(my_unpack_c_hip_kernel_complex_single, dim3(grid_size), dim3(blocksize), 0, 0, n_offset, max_idx, stripe_width, a_dim2, l_nev, row_group_dev, a_dev, i_off);
 #endif
