@@ -31,7 +31,7 @@
             success = openmp_offload_blas_destroy(self%gpu_setup%openmpOffloadHandleArray(thread))
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-            success = sycl_blas_destroy(self%gpu_setup%syclHandleArray(thread))
+            success = syclblas_destroy(self%gpu_setup%syclHandleArray(thread))
 #endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION

@@ -48,7 +48,7 @@
 #ifdef WITH_SYCL_GPU_VERSION
             handle_tmp = 0
             ! not needed dummy call
-            success = sycl_blas_create(handle_tmp)
+            success = syclblas_create(handle_tmp)
             obj%gpu_setup%syclHandleArray(thread) = handle_tmp
             obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
 #endif
