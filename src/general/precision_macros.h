@@ -102,6 +102,8 @@
 #undef  gpublas_PRECISION_SYMV
 #undef  gpublas_PRECISION_COPY
 #undef  gpublas_PRECISION_TRSM
+#undef  gpublas_PRECISION_DOT
+#undef  gpublas_PRECISION_SCAL
 #undef  gpusolver_PRECISION_TRTRI
 #undef  gpusolver_PRECISION_POTRF
 #undef  cublas_PRECISION_GEMM
@@ -191,6 +193,8 @@
 #define  gpublas_PRECISION_SYMV gpublas_DSYMV
 #define  gpublas_PRECISION_COPY gpublas_DCOPY
 #define  gpublas_PRECISION_TRSM gpublas_DTRSM
+#define  gpublas_PRECISION_DOT  gpublas_DDOT
+#define  gpublas_PRECISION_SCAL gpublas_DSCAL
 #define  gpusolver_PRECISION_TRTRI gpusolver_DTRTRI
 #define  gpusolver_PRECISION_POTRF gpusolver_DPOTRF
 #define  cublas_PRECISION_GEMM cublas_DGEMM
@@ -277,6 +281,8 @@
 #define  gpublas_PRECISION_SYMV gpublas_SSYMV
 #define  gpublas_PRECISION_COPY gpublas_SCOPY
 #define  gpublas_PRECISION_TRSM gpublas_STRSM
+#define  gpublas_PRECISION_DOT  gpublas_SDOT
+#define  gpublas_PRECISION_SCAL gpublas_SSCAL
 #define  gpusolver_PRECISION_TRTRI gpusolver_STRTRI
 #define  gpusolver_PRECISION_POTRF gpusolver_SPOTRF
 #define  cublas_PRECISION_GEMM cublas_SGEMM
@@ -376,6 +382,9 @@
 #undef  gpublas_PRECISION_SYMV
 #undef  gpublas_PRECISION_COPY
 #undef  gpublas_PRECISION_TRSM
+#undef  gpublas_PRECISION_DCAL
+#undef  gpublas_PRECISION_DOT
+#undef  gpublas_PRECISION_SCAL
 #undef  cublas_PRECISION_GEMM
 #undef  cublas_PRECISION_TRMM
 #undef  cublas_PRECISION_GEMV
@@ -475,6 +484,8 @@
 #define  gpublas_PRECISION_SYMV gpublas_ZSYMV
 #define  gpublas_PRECISION_COPY gpublas_ZCOPY
 #define  gpublas_PRECISION_TRSM gpublas_ZTRSM
+#define  gpublas_PRECISION_DOT gpublas_ZDOT
+#define  gpublas_PRECISION_SCAL gpublas_ZSCAL
 #define  gpusolver_PRECISION_TRTRI gpusolver_ZTRTRI
 #define  gpusolver_PRECISION_POTRF gpusolver_ZPOTRF
 #define  cublas_PRECISION_GEMM cublas_ZGEMM
@@ -565,6 +576,8 @@
 #define  gpublas_PRECISION_SYMV gpublas_CSYMV
 #define  gpublas_PRECISION_COPY gpublas_CCOPY
 #define  gpublas_PRECISION_TRSM gpublas_CTRSM
+#define  gpublas_PRECISION_DOT  gpublas_CDOT
+#define  gpublas_PRECISION_SCAL gpublas_CSCAL
 #define  gpusolver_PRECISION_TRTRI gpusolver_CTRTRI
 #define  gpusolver_PRECISION_POTRF gpusolver_CPOTRF
 #define  cublas_PRECISION_GEMM cublas_CGEMM
