@@ -128,6 +128,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/CUDA/ncclFunctions_template.h \
   src/GPU/ROCm/hip_template.F90 \
   src/GPU/ROCm/rocmFunctions_template.h \
+  src/GPU/OpenMP/openmp_offload_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa1/elpa1_compute_template.F90 \
@@ -947,6 +948,7 @@ EXTRA_DIST = \
   src/GPU/ROCm/hip_template.F90 \
   src/GPU/ROCm/rocmFunctions_template.h \
   src/GPU/ROCm/hipUtils_template.cpp \
+  src/GPU/OpenMP/openmp_offload_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \
   src/GPU/SYCL/syclUtils.cpp \
   src/GPU/SYCL/syclCommon.cpp \
