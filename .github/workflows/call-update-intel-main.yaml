@@ -1,0 +1,13 @@
+name: Update the intel-main branch with the sycl_dev branch
+on:
+  # Instruction: Uncomment next 4 lines and change the branch names "master" to be your default performance branch as needed.
+  push:
+    branches: [ "intel-main" ]
+  pull_request:
+    branches: [ "intel-main" ]
+  workflow_dispatch:
+jobs:
+  update-intel-main:
+    uses: intel-innersource/applications.hpc.workloads.hpc-wl.hpc-wl/.github/workflows/update-intel-main.yml@intel-main
+    with:
+      branch-name: sycl_dev
