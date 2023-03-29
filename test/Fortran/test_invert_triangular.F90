@@ -261,7 +261,7 @@ TEST_INT_TYPE                             :: gpuID
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
-     stop
+     stop 1
    endif
 
 	! Allocate the matrices needed for elpa 
@@ -357,7 +357,7 @@ TEST_INT_TYPE                             :: gpuID
 #endif
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."
-     stop
+     stop 1
    endif
 
    call e%set("gpu_invert_trm", 1, error_elpa)
@@ -376,14 +376,14 @@ TEST_INT_TYPE                             :: gpuID
    successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix a on GPU! Aborting..."
-     stop
+     stop 1
    endif
    
    successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix a to GPU! Aborting..."
-     stop
+     stop 1
    endif
    
 #endif /* TEST_GPU */
@@ -455,14 +455,14 @@ TEST_INT_TYPE                             :: gpuID
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"cannot copy matrix of eigenvectors from GPU to host! Aborting..."
-     stop
+     stop 1
    endif
 
    ! and deallocate device pointer
    successGPU = gpu_free(a_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of a_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
 
 #endif /* TEST_GPU */

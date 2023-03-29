@@ -161,7 +161,7 @@
 #endif
 
 #define TEST_GPU  0
-#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1)
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
 #undef TEST_GPU
 #define TEST_GPU  1
 #endif
@@ -272,8 +272,8 @@ int main(int argc, char** argv) {
 #endif
 #endif
 
-// pointer API is tested only for NVIDIA and AMD
-#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 0 && TEST_AMD_GPU == 0
+// pointer API is tested for NVIDIA, AMD, and INTEL
+#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 0 && TEST_AMD_GPU == 0 && TEST_INTEL_GPU_OPENMP == 0 && TEST_INTEL_GPU_SYCL == 0
 #ifdef WITH_MPI
    MPI_Finalize();
 #endif
@@ -445,7 +445,7 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error_elpa);
 #endif
 
-#if TEST_INTEL_GPU == 1
+#if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
    elpa_set(handle, "intel-gpu", TEST_GPU, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
