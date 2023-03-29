@@ -1312,6 +1312,12 @@
     end subroutine
   end interface
 
+
+  interface rocblas_Dscal
+    module procedure rocblas_Dscal_intptr
+    module procedure rocblas_Dscal_cptr
+  end interface
+
   interface
     subroutine rocblas_Dscal_intptr_c(rocblasHandle, length, alpha, x, incx) &
                bind(C, name="rocblasDscal_elpa_wrapper")
@@ -1361,6 +1367,12 @@
       integer(kind=C_INT),value               :: length, incx, incy
       type(c_ptr), value                      :: x, y, z
     end subroutine
+  end interface
+
+
+  interface rocblas_Sscal
+    module procedure rocblas_Sscal_intptr
+    module procedure rocblas_Sscal_cptr
   end interface
 
   interface
@@ -1416,6 +1428,12 @@
     end subroutine
   end interface
 
+
+  interface rocblas_Zscal
+    module procedure rocblas_Zscal_intptr
+    module procedure rocblas_Zscal_cptr
+  end interface
+
   interface
     subroutine rocblas_Zscal_intptr_c(rocblasHandle, length, alpha, x, incx) &
                bind(C, name="rocblasZscal_elpa_wrapper")
@@ -1467,6 +1485,12 @@
       integer(kind=C_INT),value               :: length, incx, incy
       type(c_ptr), value                      :: x, y, z
     end subroutine
+  end interface
+
+
+  interface rocblas_Cscal
+    module procedure rocblas_Cscal_intptr
+    module procedure rocblas_Cscal_cptr
   end interface
 
   interface

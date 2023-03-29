@@ -1312,6 +1312,12 @@
     end subroutine
   end interface
 
+
+  interface cublas_Dscal
+    module procedure cublas_Dscal_intptr
+    module procedure cublas_Dscal_cptr
+  end interface
+
   interface
     subroutine cublas_Dscal_intptr_c(cublasHandle, length, alpha, x, incx) &
                bind(C, name="cublasDscal_elpa_wrapper")
@@ -1363,6 +1369,12 @@
     end subroutine
   end interface
 
+
+  interface cublas_Sscal
+    module procedure cublas_Sscal_intptr
+    module procedure cublas_Sscal_cptr
+  end interface
+
   interface
     subroutine cublas_Sscal_intptr_c(cublasHandle, length, alpha, x, incx) &
                bind(C, name="cublasSscal_elpa_wrapper")
@@ -1393,11 +1405,11 @@
   end interface
 
   interface
-    subroutine cublas_Zdot_intptr_c(conju, cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Zdot_intptr_c(conj, cublasHandle, length, x, incx, y, incy, z) &
                bind(C, name="cublasZdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: conju
+      character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
       integer(kind=C_intptr_T), value         :: x, y, z
@@ -1405,15 +1417,21 @@
   end interface
 
   interface
-    subroutine cublas_Zdot_cptr_c(conju, cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Zdot_cptr_c(conj, cublasHandle, length, x, incx, y, incy, z) &
                bind(C, name="cublasZdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: conju
+      character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
       type(c_ptr), value                      :: x, y, z
     end subroutine
+  end interface
+
+
+  interface cublas_Zscal
+    module procedure cublas_Zscal_intptr
+    module procedure cublas_Zscal_cptr
   end interface
 
   interface
@@ -1446,11 +1464,11 @@
   end interface
 
   interface
-    subroutine cublas_Cdot_intptr_c(conju, cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Cdot_intptr_c(conj, cublasHandle, length, x, incx, y, incy, z) &
                bind(C, name="cublasCdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: conju
+      character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
       integer(kind=C_intptr_T), value         :: x, y, z
@@ -1458,15 +1476,21 @@
   end interface
 
   interface
-    subroutine cublas_Cdot_cptr_c(conju, cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Cdot_cptr_c(conj, cublasHandle, length, x, incx, y, incy, z) &
                bind(C, name="cublasCdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: conju
+      character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
       type(c_ptr), value                      :: x, y, z
     end subroutine
+  end interface
+
+
+  interface cublas_Cscal
+    module procedure cublas_Cscal_intptr
+    module procedure cublas_Cscal_cptr
   end interface
 
   interface
@@ -2836,7 +2860,7 @@
       integer(kind=c_intptr_t) :: x, y, z
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Zdot_intptr_c(conj, cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Zdot_intptr_c(conj,cublasHandle, length, x, incx, y, incy, z)
 #endif
     end subroutine
 
@@ -2850,7 +2874,7 @@
       type(c_ptr)              :: x, y, z
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Zdot_cptr_c(conj, cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Zdot_cptr_c(conj,cublasHandle, length, x, incx, y, incy, z)
 #endif
     end subroutine
 
@@ -2894,7 +2918,7 @@
       integer(kind=c_intptr_t) :: x, y, z
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Cdot_intptr_c(conj, cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Cdot_intptr_c(conj,cublasHandle, length, x, incx, y, incy, z)
 #endif
     end subroutine
 
@@ -2908,7 +2932,7 @@
       type(c_ptr)              :: x, y, z
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Cdot_cptr_c(conj, cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Cdot_cptr_c(conj,cublasHandle, length, x, incx, y, incy, z)
 #endif
     end subroutine
 
