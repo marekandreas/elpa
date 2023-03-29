@@ -1,8 +1,5 @@
 #! /bin/bash
 
-
-# modules for Intel
-
 if [[ $1 == "pvc" ]]
 then
   module load autoconf/2.71 intel-comp-rt/ci-neo-master/025928 intel-nightly/20230310 intel/mkl-nda/nightly-cev-20230314 intel/mpi/2021.8.0
