@@ -1,4 +1,4 @@
-name: DPEcho Xe Performance Dashboard
+name: ELPA Xe Performance Dashboard
 
 on: [workflow_dispatch]
 
