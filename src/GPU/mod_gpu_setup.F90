@@ -52,7 +52,6 @@ module elpa_gpu_setup
   !use precision
   use iso_c_binding
 
-
   type :: elpa_gpu_setup_t
     integer(kind=c_int)            :: use_gpu_vendor
 
@@ -82,6 +81,8 @@ module elpa_gpu_setup
 #ifdef WITH_SYCL_GPU_VERSION
     logical                               :: syclCPU
 #endif
+
+    integer(kind=c_intptr_t)              :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all
   end type
 
 end module

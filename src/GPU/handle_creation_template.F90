@@ -26,6 +26,10 @@
             !obj%gpu_setup%gpublasHandleArray(thread) = handle_tmp
             success = cublas_create(obj%gpu_setup%cublasHandleArray(thread))
             obj%gpu_setup%gpublasHandleArray(thread) = obj%gpu_setup%cublasHandleArray(thread)
+
+            !get DefaultPointerMode
+            call cublas_getPointerMode(obj%gpu_setup%cublasHandleArray(thread), &
+                                       gpublasDefaultPointerMode)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
             !success = rocblas_create(handle_tmp)
