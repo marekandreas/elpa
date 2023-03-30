@@ -6,49 +6,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        numbers:
+          - real
+#         - complex
+        problem-size:
+          - 1000
+#         - 10000
+#         - 15000
+#         - 20000
         config:
-          - build-script: .github/scripts/build_elpa.sh pvc
-            run-script: .github/scripts/run_elpa.sh pvc
-            verify-script: .github/scripts/parseOutput.py
-            metrics-script: .github/scripts/parseOutput.py
+          - arch: pvc
+            ranks: 2
             slurm-partition: QZ1J-ICX-PVC
-            runner: ortce-skl22_2 # If we are on the same runner, there may be a conflict with the build artifacts (bah!)
-#         - build-script: .github/scripts/build_dpecho_pvc.sh
-#           run-script: .github/scripts/run_dpecho_pvc.sh 2t
+            runner: ortce-skl22_2
+
+#         - build-script: .github/scripts/build_elpa.sh pvc
+#           run-script: .github/scripts/run_elpa.sh pvc
 #           verify-script: .github/scripts/parseOutput.py
 #           metrics-script: .github/scripts/parseOutput.py
 #           slurm-partition: QZ1J-ICX-PVC
-#           runner: ortce-skl22_3 # If we are on the same runner, there may be a conflict with the build artifacts (bah!)
-#         - build-script: .github/scripts/build_dpecho_pvc_mpi.sh
-#           run-script: .github/scripts/run_dpecho_pvc.sh es8t
-#           verify-script: .github/scripts/parseOutput.py -r 8
-#           metrics-script: .github/scripts/parseOutput.py
-#           slurm-partition: QZ1B-SPR-4oam-PVC
-#           runner: ortce-skl22 # If we are on the same runner, there may be a conflict with the build artifacts (bah!)
-#         - build-script: .github/scripts/build_dpecho_icx.sh
-#           run-script: .github/scripts/run_dpecho_icx.sh
-#           verify-script: .github/scripts/parseOutput.py
-#           metrics-script: .github/scripts/parseOutput.py
-#           slurm-partition: QZ1J-ICX-PVC
-#           runner: ortce-skl22_4 # If we are on the same runner, there may be a conflict with the build artifacts (bah!)
-#         - build-script: .github/scripts/build_dpecho_a100.sh
-#           run-script: .github/scripts/run_dpecho_a100.sh
-#           verify-script: .github/scripts/parseOutput.py
-#           metrics-script: .github/scripts/parseOutput.py
-#           slurm-partition: a100-80G
-#           runner: ortce-skl22
-#         - build-script: .github/scripts/build_dpecho_h100.sh
-#           run-script: .github/scripts/run_dpecho_h100.sh
-#           verify-script: .github/scripts/parseOutput.py
-#           metrics-script: .github/scripts/parseOutput.py
-#           slurm-partition: H100
-#           runner: ortce-skl22
+#           runner: ortce-skl22_2 # If we are on the same runner, there may be a conflict with the build artifacts (bah!)
     uses: intel-sandbox/xcss-workflows/.github/workflows/xe-performance-dashboard.yml@main
     with:
-      application: DPEcho
-      build-script: ${{ matrix.config.build-script }}
-      run-script: ${{ matrix.config.run-script }}
-      verify-script: ${{ matrix.config.verify-script }} -v result.log
+      application: ELPA
+      build-script: .github/scripts/build_elpa.sh ${{ matrix.config.arch }}
+      run-script: .github/scripts/run_elpa.sh ${{ matrix.config.arch }} ${{ matrix.problem-size }} ${{ matrix.numbers }} ${{ matrix.config.ranks }}
+      verify-script: .github/scripts/parseOutput.py -v build_${{ matrix.config.arch }}/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
       metrics-script: ${{ matrix.config.metrics-script }} -p -i None -w AlfVen result.log
       slurm-partition: ${{ matrix.config.slurm-partition }}
       runs-on: ${{ matrix.config.runner }}
