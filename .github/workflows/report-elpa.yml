@@ -17,29 +17,29 @@ jobs:
           - arch: pvc
             ranks: 1
             slurm-partition: QZ1J-ICX-PVC
-            runner: ortce-skl22
+            runner: pvc
           - arch: pvc
             ranks: 2
             slurm-partition: QZ1J-ICX-PVC
-            runner: ortce-skl22_2
+            runner: pvc
           - arch: pvc
             ranks: 8
             slurm-partition: QZ1B-SPR-4oam-PVC
-            runner: ortce-skl22_3
+            runner: pvc
           - arch: a100
             ranks: 2
             slurm-partition: a100-80G
-            runner: ortce-skl22
+            runner: nvidia
           - arch: h100
             ranks: 2
             slurm-partition: H100
-            runner: ortce-skl22
+            runner: nvidia
     uses: intel-sandbox/xcss-workflows/.github/workflows/xe-performance-dashboard.yml@main
     with:
       application: ELPA
       build-script: .github/scripts/build_elpa.sh ${{ matrix.config.arch }}
       run-script: .github/scripts/run_elpa.sh ${{ matrix.config.arch }} ${{ matrix.problem-size }} ${{ matrix.numbers }} ${{ matrix.config.ranks }}
-      verify-script: .github/scripts/parseOutput.py -v build_${{ matrix.config.arch }}/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
-      metrics-script: .github/scripts/parseOutput.py -p -i ${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.rank }} -w ${{ matrix.numbers }}_${{ matrix.problem-size }} build_${{ matrix.config.arch }}/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
+      verify-script: .github/scripts/parseOutput.py -v cpa_results/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
+      metrics-script: .github/scripts/parseOutput.py -p -i ${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }} -w ${{ matrix.numbers }}_${{ matrix.problem-size }} cpa_results/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
       slurm-partition: ${{ matrix.config.slurm-partition }}
       runs-on: ${{ matrix.config.runner }}

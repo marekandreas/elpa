@@ -6,7 +6,7 @@ num_evs=$2
 numbers=$3
 num_ranks=$4
 
-build_folder="build_$arch"
+build_folder=build_${numbers}_${arch}_${num_ranks}_${num_evs}
 
 if [[ $arch == "pvc" ]]
 then
@@ -39,4 +39,5 @@ cd $build_folder
 echo $CUDA_HOME
 echo $LD_LIBRARY_PATH
 
-mpirun -n $num_ranks ./validate_${numbers}_double_eigenvectors_2stage_default_kernel_gpu_random $mat_size $num_evs 64 | tee elpa_${numbers}_${arch}_${num_ranks}_${mat_size}.txt
+mkdir -p ../cpa_results
+mpirun -n $num_ranks ./validate_${numbers}_double_eigenvectors_2stage_default_kernel_gpu_random $mat_size $num_evs 64 | tee ../cpa_results/elpa_${numbers}_${arch}_${num_ranks}_${mat_size}.txt

@@ -1,27 +1,33 @@
 #! /bin/bash
 
-if [[ $1 == "pvc" ]]
+arch=$1
+mat_size=$2
+num_evs=$2
+numbers=$3
+num_ranks=$4
+
+if [[ $arch == "pvc" ]]
 then
   module load autoconf/2.71 intel-comp-rt/ci-neo-master/025928 intel-nightly/20230310 intel/mkl-nda/nightly-cev-20230314 intel/mpi/2021.8.0
-elif [[ $1 == "a100" ]]
+elif [[ $arch == "a100" ]]
 then
   module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.0.0 gnu/10.3.0
-elif [[ $1 == "h100" ]]
+elif [[ $arch == "h100" ]]
 then
   module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.0.0 gnu/10.3.0
-elif [[ $1 == "icx" ]]
+elif [[ $arch == "icx" ]]
 then
   module load autoconf/2.71 intel-nightly/20230310 intel/mkl-nda/nightly-cev-20230314 intel/mpi/2021.8.0
 else
-  echo "Unknown Architecture: $1"
+  echo "Unknown Architecture: $arch"
   exit 1
 fi
 
-mkdir -p build_$1
-cd build_$1
+build_folder=build_${numbers}_${arch}_${num_ranks}_${num_evs}
+cd $build_folder
 ../autogen.sh
 
-if [[ $1 == "pvc" ]]
+if [[ $arch == "pvc" ]]
 then
   ../configure CC="mpiicc -cc=icx" CXX="mpiicpc -cxx=icpx" FC="mpiifort -fc=ifx" \
     CXXFLAGS="-g -O3 -march=skylake-avx512 -I$(dirname $(dirname $(which icpx)))/linux/include/sycl -fsycl-targets=spir64 -fsycl -qopenmp" \
@@ -32,9 +38,9 @@ then
     SCALAPACK_LDFLAGS="-fsycl -L$MKLROOT/lib/intel64 -Wc,-fsycl -lmkl_sycl -lmkl_intel_ilp64 -lmkl_scalapack_ilp64 -lmkl_intel_thread -lmkl_core -lmkl_blacs_intelmpi_ilp64 -lsycl -lOpenCL -lpthread -lm -ldl -lirng -lstdc++" \
     --disable-static --enable-sse --enable-sse-assembly --enable-avx --enable-avx2 --enable-avx512 --enable-single-precision --enable-ifx-compiler \
     --disable-c-tests --without-threading-support-check-during-build --enable-intel-gpu-backend=sycl --enable-64bit-integer-math-support --enable-intel-gpu-sycl
-elif [[ $1 == "h100" ]] || [[ $1 == "a100" ]]
+elif [[ $arch == "h100" ]] || [[ $arch == "a100" ]]
 then
-  if [[$1 == "h100"]]
+  if [[$arch == "h100"]]
   then
     compute_capability="sm_90"
   else
