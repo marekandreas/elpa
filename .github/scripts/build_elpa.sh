@@ -24,7 +24,9 @@ else
 fi
 
 build_folder=build_${numbers}_${arch}_${num_ranks}_${num_evs}
+mkdir -p $build_folder
 cd $build_folder
+
 ../autogen.sh
 
 if [[ $arch == "pvc" ]]
