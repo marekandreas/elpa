@@ -32,6 +32,6 @@ jobs:
       build-script: .github/scripts/build_elpa.sh ${{ matrix.config.arch }}
       run-script: .github/scripts/run_elpa.sh ${{ matrix.config.arch }} ${{ matrix.problem-size }} ${{ matrix.numbers }} ${{ matrix.config.ranks }}
       verify-script: .github/scripts/parseOutput.py -v build_${{ matrix.config.arch }}/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
-      metrics-script: ${{ matrix.config.metrics-script }} -p -i None -w AlfVen result.log
+      metrics-script: .github/scripts/parseOutput.py -p -i ${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.rank }} -w ${{ matrix.numbers }}_${{ matrix.problem-size }} build_${{ matrix.config.arch }}/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
       slurm-partition: ${{ matrix.config.slurm-partition }}
       runs-on: ${{ matrix.config.runner }}
