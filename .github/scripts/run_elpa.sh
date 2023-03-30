@@ -19,13 +19,11 @@ then
   export SYCL_PI_LEVEL_ZERO_USE_COPY_ENGINE=0:0
   export I_MPI_OFFLOAD=1
   export I_MPI_OFFLOAD_TOPOLIB=level_zero
-elif [[ $arch == "a100" ]]
+elif [[ $arch == "a100" ]] || [[ $arch == "h100" ]]
 then
-  module load autoconf/2.71 intel/oneapi/2023.0.0 gnu/10.3.0
-  module load nvidia/cuda-12.0
-elif [[ $arch == "h100" ]]
-then
-  echo "Loading modules for H100"
+  echo "Loading modules for NVIDIA GPU ${arch}"
+  # Only run on a single GPU
+  export CUDA_VISIBLE_DEVICES=0
   module load autoconf/2.71 intel/oneapi/2023.0.0 gnu/10.3.0
   module load nvidia/cuda-12.0
 elif [[ $arch == "icx" ]]

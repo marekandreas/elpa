@@ -8,24 +8,32 @@ jobs:
       matrix:
         numbers:
           - real
-#         - complex
+          - complex
         problem-size:
-          - 1000
-#         - 10000
-#         - 15000
-#         - 20000
+          - 10000
+          - 15000
+          - 20000
         config:
+          - arch: pvc
+            ranks: 1
+            slurm-partition: QZ1J-ICX-PVC
+            runner: ortce-skl22
           - arch: pvc
             ranks: 2
             slurm-partition: QZ1J-ICX-PVC
             runner: ortce-skl22_2
-
-#         - build-script: .github/scripts/build_elpa.sh pvc
-#           run-script: .github/scripts/run_elpa.sh pvc
-#           verify-script: .github/scripts/parseOutput.py
-#           metrics-script: .github/scripts/parseOutput.py
-#           slurm-partition: QZ1J-ICX-PVC
-#           runner: ortce-skl22_2 # If we are on the same runner, there may be a conflict with the build artifacts (bah!)
+          - arch: pvc
+            ranks: 8
+            slurm-partition: QZ1B-SPR-4oam-PVC
+            runner: ortce-skl22_3
+          - arch: a100
+            ranks: 2
+            slurm-partition: a100-80G
+            runner: ortce-skl22
+          - arch: h100
+            ranks: 2
+            slurm-partition: H100
+            runner: ortce-skl22
     uses: intel-sandbox/xcss-workflows/.github/workflows/xe-performance-dashboard.yml@main
     with:
       application: ELPA
