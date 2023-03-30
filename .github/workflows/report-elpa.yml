@@ -1,7 +1,8 @@
 name: ELPA Xe Performance Dashboard
-
-on: [workflow_dispatch]
-
+on:
+  - workflow_dispatch
+  - push:
+    branches: ["intel-main"]
 jobs:
   dashboard:
     strategy:
@@ -9,7 +10,7 @@ jobs:
       matrix:
         config:
           - build-script: .github/scripts/build_elpa.sh pvc
-            run-script: .github/scripts/run_elpa.sh pvc1t
+            run-script: .github/scripts/run_elpa.sh pvc
             verify-script: .github/scripts/parseOutput.py
             metrics-script: .github/scripts/parseOutput.py
             slurm-partition: QZ1J-ICX-PVC
