@@ -29,11 +29,11 @@ jobs:
           - arch: a100
             ranks: 2
             slurm-partition: a100-80G
-            runner: nvidia
+            runner: pvc
           - arch: h100
             ranks: 2
             slurm-partition: H100
-            runner: nvidia
+            runner: pvc
     uses: intel-sandbox/xcss-workflows/.github/workflows/xe-performance-dashboard.yml@main
     with:
       application: ELPA
