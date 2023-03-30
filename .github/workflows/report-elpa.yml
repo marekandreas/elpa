@@ -1,8 +1,6 @@
 name: ELPA Xe Performance Dashboard
 on:
   - workflow_dispatch
-  - push:
-    branches: ["intel-main"]
 jobs:
   dashboard:
     strategy:
