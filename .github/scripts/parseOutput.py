@@ -5,8 +5,6 @@ import os
 import re
 import sys
 import json as j
-import numpy as np
-import pandas as pd
 
 def readConf():
     parser = argparse.ArgumentParser(description="ELPA Result Analysis")
@@ -18,50 +16,6 @@ def readConf():
     parser.add_argument('-r', type=int, help='Number of Ranks', default = 1)
     parser.add_argument("filename", type=str, help="Path to the program output.")
     return parser.parse_args()
-
-def parseMetaData(lines):
-    res = {}
-    metadataLines = [l for l in lines if re.match("[\w-]+ = -?\d+( -> \w+)?", l)]
-    for ml in metadataLines:
-        if len(ml) < 3:
-            continue
-        tokens = entry = ml.split(" ")
-        entry = tokens[0]
-        rawData = float(tokens[2])
-        if len(tokens) >= 5:
-            expl = tokens[4]
-        else:
-            expl = None
-        res[entry] = rawData, expl
-    return res
-
-def extractPrognameData(progName):
-    comps = progName.split("_")
-    numberType = f"{comps[1]} {comps[2]}"
-    codepath = "1-Stage" if "1stage" in comps else "2-Stage"
-    return numberType, codepath
-
-def parseRunData(lines):
-    res = {}
-    rundataLines = [l for l in lines if re.match("[\w ]+: \d+", l)]
-    for rl in rundataLines:
-        tokens = rl.split(":")
-        entry = tokens[0]
-        data = float(tokens[1].strip())
-        res[entry] = data
-    rundataLines = [l for l in lines if re.match("[\w ]+: \w+", l)]
-    for rl in rundataLines:
-        tokens = rl.split(":")
-        entry = tokens[0]
-        data = tokens[1].strip()
-        res[entry] = data
-    rundataLines = [l for l in lines if l.startswith('Number of processor')][0]
-    processorData = re.findall("\d+", rundataLines)
-    res['processor rows'] = processorData[0]
-    res['processor cols'] = processorData[1]
-    res['total processors'] = processorData[2]
-    res['number type'], res["codepath"] = extractPrognameData(lines[0].split(" ")[1])
-    return res
 
 def getIndentDepth(line):
     initialSpace = re.findall("^( )+\|", line)
@@ -96,18 +50,8 @@ def parseTimeRatioTree(lines):
 def loadData(filename):
     with open(filename, 'r') as f:
         lines = f.readlines()
-    metaData = parseMetaData(lines)
-    runData = parseRunData(lines)
     perfTree = parseTimeRatioTree(lines)
-    df = pd.DataFrame(perfTree, columns=["component", "depth", "time", "ratio"])
-    df['matrixSize'] = runData['Matrix size']
-    df['numEigenvectors'] = runData['Num eigenvectors']
-    df['blockSize'] = runData['Blocksize']
-    df['mpiRanks'] = runData['Num MPI proc']
-    df['filename'] = filename[:-4]
-    df['numberType'] = runData["number type"]
-    df['code'] = runData["codepath"]
-    return df
+    return perfTree
 
 def verifyCorrectness(filename):
     with open(filename, 'r') as f:
@@ -127,12 +71,14 @@ def verifyCorrectness(filename):
     return True
 
 def getPerformance(filename):
-    df = loadData(filename)
-    rList = df[(df.depth == 0)].time.to_list()
-    if len(rList) != 1:
-        return float('nan')
-    else:
-        return rList[0]
+    perfTree = loadData(filename)
+    for node in perfTree:
+        depth = node[1]
+        time = node[2]
+        if depth == 0:
+            return time
+    print("Malformed Input!")
+    return float('nan')
 
 args = readConf()
 
