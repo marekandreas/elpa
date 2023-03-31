@@ -23,7 +23,7 @@
     subroutine gpu_memcpy_async_and_stream_synchronize_double_scalar &
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -38,6 +38,7 @@
 
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       real(kind=c_double)                           :: &
                                              hostArray
@@ -65,6 +66,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -75,7 +78,7 @@
     subroutine gpu_memcpy_async_and_stream_synchronize_single_scalar &
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -90,6 +93,7 @@
 
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       real(kind=c_float)                            :: &
                                              hostArray
@@ -117,6 +121,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -127,7 +133,7 @@
     subroutine gpu_memcpy_async_and_stream_synchronize_complex_scalar &
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -142,6 +148,7 @@
 
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       complex(kind=c_double_complex)                :: &
                                              hostArray
@@ -169,6 +176,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -179,7 +188,7 @@
     subroutine gpu_memcpy_async_and_stream_synchronize_complex_single_scalar &
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -194,6 +203,7 @@
 
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       complex(kind=c_float_complex)                 :: &
                                              hostArray
@@ -221,6 +231,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -232,7 +244,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -248,6 +260,7 @@
       integer(kind=ik), intent(in)                  :: off1
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       real(kind=c_double)                           :: &
                                          hostArray(:)
@@ -275,6 +288,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -286,7 +301,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -302,6 +317,7 @@
       integer(kind=ik), intent(in)                  :: off1
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       real(kind=c_float)                            :: &
                                          hostArray(:)
@@ -329,6 +345,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -340,7 +358,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -356,6 +374,7 @@
       integer(kind=ik), intent(in)                  :: off1
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       complex(kind=c_double_complex)                :: &
                                          hostArray(:)
@@ -383,6 +402,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -394,7 +415,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -410,6 +431,7 @@
       integer(kind=ik), intent(in)                  :: off1
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       complex(kind=c_float_complex)                 :: &
                                          hostArray(:)
@@ -437,6 +459,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -448,7 +472,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, off2, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -465,6 +489,7 @@
       integer(kind=ik), intent(in)                  :: off2
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       real(kind=c_double)                           :: &
                                          hostArray(:,:)
@@ -492,6 +517,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -503,7 +530,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, off2, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -520,6 +547,7 @@
       integer(kind=ik), intent(in)                  :: off2
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       real(kind=c_float)                            :: &
                                          hostArray(:,:)
@@ -547,6 +575,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -558,7 +588,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, off2, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -575,6 +605,7 @@
       integer(kind=ik), intent(in)                  :: off2
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       complex(kind=c_double_complex)                :: &
                                          hostArray(:,:)
@@ -602,6 +633,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -613,7 +646,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, off2, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -630,6 +663,7 @@
       integer(kind=ik), intent(in)                  :: off2
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       complex(kind=c_float_complex)                 :: &
                                          hostArray(:,:)
@@ -657,6 +691,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -668,7 +704,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, off2, off3, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -686,6 +722,7 @@
       integer(kind=ik), intent(in)                  :: off3
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       real(kind=c_double)                           :: &
                                          hostArray(:,:,:)
@@ -713,6 +750,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -724,7 +763,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, off2, off3, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -742,6 +781,7 @@
       integer(kind=ik), intent(in)                  :: off3
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       real(kind=c_float)                            :: &
                                          hostArray(:,:,:)
@@ -769,6 +809,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -780,7 +822,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, off2, off3, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -798,6 +840,7 @@
       integer(kind=ik), intent(in)                  :: off3
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       complex(kind=c_double_complex)                :: &
                                          hostArray(:,:,:)
@@ -825,6 +868,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
@@ -836,7 +881,7 @@
                 (errormessage, devPtr, devPtrOffset, &
                  hostarray, &
                  off1, off2, off3, &
-                num, direction, my_stream, doSyncBefore, doSyncAfter)
+                num, direction, my_stream, doSyncBefore, doSyncAfter, doSyncDefault)
 
       use iso_c_binding
       use elpa_gpu
@@ -854,6 +899,7 @@
       integer(kind=ik), intent(in)                  :: off3
       logical                                       :: doSyncBefore
       logical                                       :: doSyncAfter
+      logical                                       :: doSyncDefault
 
       complex(kind=c_float_complex)                 :: &
                                          hostArray(:,:,:)
@@ -881,6 +927,8 @@
       if (doSyncAfter) then
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
+      endif
+      if (doSyncDefault) then
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu(trim(errormessage), successGPU)
