@@ -214,7 +214,7 @@ __global__ void cuda_copy_double_tmp2_tmat2_kernel(double *tmp2_dev, double *tma
 
 }
 
-extern "C" void cuda_copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, cudaStream_t my_stream){
   int nblk   = *nblk_in;   
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
@@ -247,7 +247,7 @@ __global__ void cuda_copy_float_tmp2_tmat2_kernel(float *tmp2_dev, float *tmat2_
 
 }
 
-extern "C" void cuda_copy_float_tmp2_tmat2_FromC(float *tmp2_dev, float *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_float_tmp2_tmat2_FromC(float *tmp2_dev, float *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, cudaStream_t my_stream){
   int nblk   = *nblk_in;   
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
@@ -279,7 +279,7 @@ __global__ void cuda_copy_double_complex_tmp2_tmat2_kernel(cuDoubleComplex *tmp2
 
 }
 
-extern "C" void cuda_copy_double_complex_tmp2_tmat2_FromC(double _Complex *tmp2_dev, double _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_double_complex_tmp2_tmat2_FromC(double _Complex *tmp2_dev, double _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, cudaStream_t my_stream){
   int nblk   = *nblk_in;   
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
@@ -315,7 +315,7 @@ __global__ void cuda_copy_float_complex_tmp2_tmat2_kernel(cuFloatComplex *tmp2_d
 
 }
 
-extern "C" void cuda_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev, float _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_dev, float _Complex *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, cudaStream_t my_stream){
   int nblk   = *nblk_in;   
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
@@ -352,7 +352,7 @@ __global__ void cuda_copy_double_a_tmat1_kernel(double *a_dev, double *tmat1_dev
 
 }
 
-extern "C" void cuda_copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, intptr_t my_stream){
+extern "C" void cuda_copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
@@ -386,7 +386,7 @@ __global__ void cuda_copy_float_a_tmat1_kernel(float *a_dev, float *tmat1_dev, c
   a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = 0;
 }
 
-extern "C" void cuda_copy_float_a_tmat1_FromC(float *a_dev, float *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, intptr_t my_stream){
+extern "C" void cuda_copy_float_a_tmat1_FromC(float *a_dev, float *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
@@ -422,7 +422,7 @@ __global__ void cuda_copy_double_complex_a_tmat1_kernel(cuDoubleComplex *a_dev, 
   a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = zero_dev[0];
 }
 
-extern "C" void cuda_copy_double_complex_a_tmat1_FromC(double _Complex *a_dev, double _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, double _Complex *ZERO, intptr_t my_stream){
+extern "C" void cuda_copy_double_complex_a_tmat1_FromC(double _Complex *a_dev, double _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, double _Complex *ZERO, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
@@ -462,7 +462,7 @@ __global__ void cuda_copy_float_complex_a_tmat1_kernel(cuFloatComplex *a_dev, cu
   a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = zero_dev[0];
 }
 
-extern "C" void cuda_copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, float _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, float _Complex *ZERO, intptr_t my_stream){
+extern "C" void cuda_copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, float _Complex *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, float _Complex *ZERO, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
@@ -502,7 +502,7 @@ __global__ void cuda_copy_double_tmp1_tmp2_kernel(double *tmp1_dev, double *tmp2
 }
 
 
-extern "C" void cuda_copy_double_tmp1_tmp2_FromC(double *tmp1_dev, double *tmp2_dev, int *nblk_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_double_tmp1_tmp2_FromC(double *tmp1_dev, double *tmp2_dev, int *nblk_in, int *nb_in, cudaStream_t my_stream){
   int nblk = *nblk_in;
   int nb = *nb_in;
 
@@ -535,7 +535,7 @@ __global__ void cuda_copy_float_tmp1_tmp2_kernel(float *tmp1_dev, float *tmp2_de
 }
 
 
-extern "C" void cuda_copy_float_tmp1_tmp2_FromC(float *tmp1_dev, float *tmp2_dev, int *nblk_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_float_tmp1_tmp2_FromC(float *tmp1_dev, float *tmp2_dev, int *nblk_in, int *nb_in, cudaStream_t my_stream){
   int nblk = *nblk_in;
   int nb = *nb_in;
 
@@ -568,7 +568,7 @@ __global__ void cuda_copy_double_complex_tmp1_tmp2_kernel(cuDoubleComplex *tmp1_
 }
 
 
-extern "C" void cuda_copy_double_complex_tmp1_tmp2_FromC(double _Complex *tmp1_dev, double _Complex *tmp2_dev, int *nblk_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_double_complex_tmp1_tmp2_FromC(double _Complex *tmp1_dev, double _Complex *tmp2_dev, int *nblk_in, int *nb_in, cudaStream_t my_stream){
   int nblk = *nblk_in;
   int nb = *nb_in;
 
@@ -605,7 +605,7 @@ __global__ void cuda_copy_float_complex_tmp1_tmp2_kernel(cuFloatComplex *tmp1_de
 }
 
 
-extern "C" void cuda_copy_float_complex_tmp1_tmp2_FromC(float _Complex *tmp1_dev, float _Complex *tmp2_dev, int *nblk_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_float_complex_tmp1_tmp2_FromC(float _Complex *tmp1_dev, float _Complex *tmp2_dev, int *nblk_in, int *nb_in, cudaStream_t my_stream){
   int nblk = *nblk_in;
   int nb = *nb_in;
 
@@ -641,7 +641,7 @@ __global__ void cuda_copy_double_a_tmp1_kernel(double *a_dev, double *tmp1_dev, 
   }
 }
 
-extern "C" void cuda_copy_double_a_tmp1_FromC(double *a_dev, double *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_double_a_tmp1_FromC(double *a_dev, double *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, cudaStream_t my_stream){
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
   int matrixRows = *matrixRows_in;
@@ -675,7 +675,7 @@ __global__ void cuda_copy_float_a_tmp1_kernel(float *a_dev, float *tmp1_dev, con
 
 }
 
-extern "C" void cuda_copy_float_a_tmp1_FromC(float *a_dev, float *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_float_a_tmp1_FromC(float *a_dev, float *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, cudaStream_t my_stream){
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
   int matrixRows = *matrixRows_in;
@@ -708,7 +708,7 @@ __global__ void cuda_copy_double_complex_a_tmp1_kernel(cuDoubleComplex *a_dev, c
   }
 }
 
-extern "C" void cuda_copy_double_complex_a_tmp1_FromC(double _Complex *a_dev, double _Complex *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_double_complex_a_tmp1_FromC(double _Complex *a_dev, double _Complex *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, cudaStream_t my_stream){
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
   int matrixRows = *matrixRows_in;
@@ -745,7 +745,7 @@ __global__ void cuda_copy_float_complex_a_tmp1_kernel(cuFloatComplex *a_dev, cuF
   }
 }
 
-extern "C" void cuda_copy_float_complex_a_tmp1_FromC(float _Complex *a_dev, float _Complex *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, intptr_t my_stream){
+extern "C" void cuda_copy_float_complex_a_tmp1_FromC(float _Complex *a_dev, float _Complex *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, cudaStream_t my_stream){
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
   int matrixRows = *matrixRows_in;
