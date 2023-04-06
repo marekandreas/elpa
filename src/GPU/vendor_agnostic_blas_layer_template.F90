@@ -47,9 +47,6 @@
 #endif
 
 
-!#ifdef WITH_INTEL_GPU_VERSION
-!  use mkl_offload
-!#endif
   interface gpublas_Dcopy
     module procedure gpublas_Dcopy_intptr
     module procedure gpublas_Dcopy_cptr
@@ -190,6 +187,7 @@
     module procedure gpublas_Caxpy_cptr
   end interface
 
+
   contains
 
     function gpublas_set_stream(handle, stream) result(success)
@@ -243,6 +241,7 @@
 #endif
 
     end function
+
 
     subroutine gpublas_Dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
       use, intrinsic :: iso_c_binding
@@ -645,7 +644,6 @@
         endif
 #endif
     end subroutine
-
     subroutine gpublas_Sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -1047,7 +1045,6 @@
         endif
 #endif
     end subroutine
-
     subroutine gpublas_Zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -1449,7 +1446,6 @@
         endif
 #endif
     end subroutine
-
     subroutine gpublas_Cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -2687,7 +2683,7 @@
     end subroutine
 
 
-    subroutine gpublas_Zaxpy_intptr(gpublasHandle, length, alpha2, x, incx, y, incy)
+    subroutine gpublas_Zaxpy_intptr(gpublasHandle, length, alpha, x, incx, y, incy)
 
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2706,18 +2702,18 @@
       implicit none
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha2
+      complex(kind=C_DOUBLE_COMPLEX)  :: alpha
       integer(kind=c_intptr_t)           :: x, y
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_Zaxpy_intptr(gpublasHandle, length, alpha2, x, incx, y, incy)
+          call cublas_Zaxpy_intptr(gpublasHandle, length, alpha, x, incx, y, incy)
         endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_Zaxpy_intptr(gpublasHandle, length, alpha2, x, incx, y, incy)
+          call rocblas_Zaxpy_intptr(gpublasHandle, length, alpha, x, incx, y, incy)
         endif
 #endif
 

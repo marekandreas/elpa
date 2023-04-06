@@ -1323,7 +1323,6 @@
 !    end subroutine
 !  end interface
 
-
   interface syclblas_Dscal
     module procedure syclblas_Dscal_intptr
     module procedure syclblas_Dscal_cptr
@@ -1350,6 +1349,35 @@
 !      integer(kind=C_INT),value               :: length, incx
 !      real(kind=C_DOUBLE) ,value                :: alpha
 !      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface syclblas_Daxpy
+    module procedure syclblas_Daxpy_intptr
+    module procedure syclblas_Daxpy_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Daxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasDscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Daxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasDscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1380,7 +1408,6 @@
 !    end subroutine
 !  end interface
 
-
   interface syclblas_Sscal
     module procedure syclblas_Sscal_intptr
     module procedure syclblas_Sscal_cptr
@@ -1407,6 +1434,35 @@
 !      integer(kind=C_INT),value               :: length, incx
 !      real(kind=C_FLOAT) ,value                :: alpha
 !      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface syclblas_Saxpy
+    module procedure syclblas_Saxpy_intptr
+    module procedure syclblas_Saxpy_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Saxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasSscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Saxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasSscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1439,7 +1495,6 @@
 !    end subroutine
 !  end interface
 
-
   interface syclblas_Zscal
     module procedure syclblas_Zscal_intptr
     module procedure syclblas_Zscal_cptr
@@ -1466,6 +1521,35 @@
 !      integer(kind=C_INT),value               :: length, incx
 !      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
 !      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface syclblas_Zaxpy
+    module procedure syclblas_Zaxpy_intptr
+    module procedure syclblas_Zaxpy_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Zaxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasZscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Zaxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasZscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1498,7 +1582,6 @@
 !    end subroutine
 !  end interface
 
-
   interface syclblas_Cscal
     module procedure syclblas_Cscal_intptr
     module procedure syclblas_Cscal_cptr
@@ -1525,6 +1608,35 @@
 !      integer(kind=C_INT),value               :: length, incx
 !      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
 !      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface syclblas_Caxpy
+    module procedure syclblas_Caxpy_intptr
+    module procedure syclblas_Caxpy_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Caxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasCscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Caxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasCscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -2743,7 +2855,6 @@
 
     subroutine syclblas_getPointerMode(syclblasHandle, mode)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: mode
@@ -2756,7 +2867,6 @@
 
     subroutine syclblas_setPointerMode(syclblasHandle, mode)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: mode
@@ -2770,7 +2880,6 @@
 
     subroutine syclblas_Ddot_intptr(syclblasHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
@@ -2784,7 +2893,6 @@
 
     subroutine syclblas_Ddot_cptr(syclblasHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
@@ -2798,7 +2906,6 @@
 
     subroutine syclblas_Dscal_intptr(syclblasHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx
@@ -2813,8 +2920,6 @@
 
     subroutine syclblas_Dscal_cptr(syclblasHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx
@@ -2827,10 +2932,37 @@
 #endif
     end subroutine
 
+    subroutine syclblas_Daxpy_intptr(syclblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: syclblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_DOUBLE) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine syclblas_Daxpy_cptr(syclblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: syclblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_DOUBLE) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
 
     subroutine syclblas_Sdot_intptr(syclblasHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
@@ -2844,7 +2976,6 @@
 
     subroutine syclblas_Sdot_cptr(syclblasHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
@@ -2858,7 +2989,6 @@
 
     subroutine syclblas_Sscal_intptr(syclblasHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx
@@ -2873,8 +3003,6 @@
 
     subroutine syclblas_Sscal_cptr(syclblasHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx
@@ -2887,10 +3015,37 @@
 #endif
     end subroutine
 
+    subroutine syclblas_Saxpy_intptr(syclblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: syclblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_FLOAT) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine syclblas_Saxpy_cptr(syclblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: syclblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_FLOAT) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
 
     subroutine syclblas_Zdot_intptr(conj, syclblasHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: syclblasHandle
@@ -2905,7 +3060,6 @@
 
     subroutine syclblas_Zdot_cptr(conj, syclblasHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: syclblasHandle
@@ -2920,7 +3074,6 @@
 
     subroutine syclblas_Zscal_intptr(syclblasHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx
@@ -2935,8 +3088,6 @@
 
     subroutine syclblas_Zscal_cptr(syclblasHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx
@@ -2949,10 +3100,37 @@
 #endif
     end subroutine
 
+    subroutine syclblas_Zaxpy_intptr(syclblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: syclblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine syclblas_Zaxpy_cptr(syclblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: syclblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
 
     subroutine syclblas_Cdot_intptr(conj, syclblasHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: syclblasHandle
@@ -2967,7 +3145,6 @@
 
     subroutine syclblas_Cdot_cptr(conj, syclblasHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: syclblasHandle
@@ -2982,7 +3159,6 @@
 
     subroutine syclblas_Cscal_intptr(syclblasHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx
@@ -2997,8 +3173,6 @@
 
     subroutine syclblas_Cscal_cptr(syclblasHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx
@@ -3007,6 +3181,34 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine syclblas_Caxpy_intptr(syclblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: syclblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine syclblas_Caxpy_cptr(syclblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: syclblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
       stop
 #endif
     end subroutine

@@ -1312,7 +1312,6 @@
 !    end subroutine
 !  end interface
 
-
   interface mkl_openmp_offload_Dscal
     module procedure mkl_openmp_offload_Dscal_intptr
     module procedure mkl_openmp_offload_Dscal_cptr
@@ -1339,6 +1338,35 @@
 !      integer(kind=C_INT),value               :: length, incx
 !      real(kind=C_DOUBLE) ,value                :: alpha
 !      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface mkl_openmp_offload_Daxpy
+    module procedure mkl_openmp_offload_Daxpy_intptr
+    module procedure mkl_openmp_offload_Daxpy_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Daxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadDscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Daxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadDscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1369,7 +1397,6 @@
 !    end subroutine
 !  end interface
 
-
   interface mkl_openmp_offload_Sscal
     module procedure mkl_openmp_offload_Sscal_intptr
     module procedure mkl_openmp_offload_Sscal_cptr
@@ -1396,6 +1423,35 @@
 !      integer(kind=C_INT),value               :: length, incx
 !      real(kind=C_FLOAT) ,value                :: alpha
 !      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface mkl_openmp_offload_Saxpy
+    module procedure mkl_openmp_offload_Saxpy_intptr
+    module procedure mkl_openmp_offload_Saxpy_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Saxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadSscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Saxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadSscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1428,7 +1484,6 @@
 !    end subroutine
 !  end interface
 
-
   interface mkl_openmp_offload_Zscal
     module procedure mkl_openmp_offload_Zscal_intptr
     module procedure mkl_openmp_offload_Zscal_cptr
@@ -1455,6 +1510,35 @@
 !      integer(kind=C_INT),value               :: length, incx
 !      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
 !      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface mkl_openmp_offload_Zaxpy
+    module procedure mkl_openmp_offload_Zaxpy_intptr
+    module procedure mkl_openmp_offload_Zaxpy_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Zaxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadZscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Zaxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadZscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1487,7 +1571,6 @@
 !    end subroutine
 !  end interface
 
-
   interface mkl_openmp_offload_Cscal
     module procedure mkl_openmp_offload_Cscal_intptr
     module procedure mkl_openmp_offload_Cscal_cptr
@@ -1514,6 +1597,35 @@
 !      integer(kind=C_INT),value               :: length, incx
 !      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
 !      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface mkl_openmp_offload_Caxpy
+    module procedure mkl_openmp_offload_Caxpy_intptr
+    module procedure mkl_openmp_offload_Caxpy_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Caxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadCscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Caxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadCscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -2717,7 +2829,6 @@
 
     subroutine mkl_openmp_offload_getPointerMode(mkl_openmp_offloadHandle, mode)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: mode
@@ -2730,7 +2841,6 @@
 
     subroutine mkl_openmp_offload_setPointerMode(mkl_openmp_offloadHandle, mode)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: mode
@@ -2744,7 +2854,6 @@
 
     subroutine mkl_openmp_offload_Ddot_intptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
@@ -2758,7 +2867,6 @@
 
     subroutine mkl_openmp_offload_Ddot_cptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
@@ -2772,7 +2880,6 @@
 
     subroutine mkl_openmp_offload_Dscal_intptr(mkl_openmp_offloadHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx
@@ -2787,8 +2894,6 @@
 
     subroutine mkl_openmp_offload_Dscal_cptr(mkl_openmp_offloadHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx
@@ -2801,10 +2906,37 @@
 #endif
     end subroutine
 
+    subroutine mkl_openmp_offload_Daxpy_intptr(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_DOUBLE) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Daxpy_cptr(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_DOUBLE) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
 
     subroutine mkl_openmp_offload_Sdot_intptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
@@ -2818,7 +2950,6 @@
 
     subroutine mkl_openmp_offload_Sdot_cptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
@@ -2832,7 +2963,6 @@
 
     subroutine mkl_openmp_offload_Sscal_intptr(mkl_openmp_offloadHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx
@@ -2847,8 +2977,6 @@
 
     subroutine mkl_openmp_offload_Sscal_cptr(mkl_openmp_offloadHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx
@@ -2861,10 +2989,37 @@
 #endif
     end subroutine
 
+    subroutine mkl_openmp_offload_Saxpy_intptr(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_FLOAT) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Saxpy_cptr(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_FLOAT) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
 
     subroutine mkl_openmp_offload_Zdot_intptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
@@ -2879,7 +3034,6 @@
 
     subroutine mkl_openmp_offload_Zdot_cptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
@@ -2894,7 +3048,6 @@
 
     subroutine mkl_openmp_offload_Zscal_intptr(mkl_openmp_offloadHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx
@@ -2909,8 +3062,6 @@
 
     subroutine mkl_openmp_offload_Zscal_cptr(mkl_openmp_offloadHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx
@@ -2923,10 +3074,37 @@
 #endif
     end subroutine
 
+    subroutine mkl_openmp_offload_Zaxpy_intptr(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Zaxpy_cptr(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
 
     subroutine mkl_openmp_offload_Cdot_intptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
@@ -2941,7 +3119,6 @@
 
     subroutine mkl_openmp_offload_Cdot_cptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
@@ -2956,7 +3133,6 @@
 
     subroutine mkl_openmp_offload_Cscal_intptr(mkl_openmp_offloadHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx
@@ -2971,8 +3147,6 @@
 
     subroutine mkl_openmp_offload_Cscal_cptr(mkl_openmp_offloadHandle, length, alpha, x, incx)
       use, intrinsic :: iso_c_binding
-      use, intrinsic :: iso_c_binding
-      use precision
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx
@@ -2981,6 +3155,34 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Caxpy_intptr(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
+      stop
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Caxpy_cptr(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print *,"{X}AXPY not yet implemented!"
       stop
 #endif
     end subroutine

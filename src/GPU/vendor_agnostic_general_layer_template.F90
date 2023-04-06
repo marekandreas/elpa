@@ -285,6 +285,7 @@
 #endif
     end subroutine
 
+
     function gpu_stream_synchronize(stream) result(success)
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -1487,3 +1488,5 @@
       endif
 #endif
     end function
+
+
