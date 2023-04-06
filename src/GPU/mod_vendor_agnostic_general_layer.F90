@@ -48,12 +48,11 @@
 
 
 #include "config-f90.h"
-module elpa_gpu
+module elpa_general_gpu
   use precision
   use iso_c_binding
-  use elpa_general_gpu 
-  use elpa_blas_gpu 
-  use elpa_solver_gpu 
+
+#include "./vendor_agnostic_general_layer_template.F90"
 
 end module
 

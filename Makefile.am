@@ -58,6 +58,9 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/mod_gpu_setup.F90 \
   src/GPU/check_for_gpu.F90 \
   src/GPU/mod_vendor_agnostic_layer.F90 \
+  src/GPU/mod_vendor_agnostic_general_layer.F90 \
+  src/GPU/mod_vendor_agnostic_blas_layer.F90 \
+  src/GPU/mod_vendor_agnostic_solver_layer.F90 \
   src/GPU/mod_vendor_agnostic_layer_utilities.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
   src/GPU/CUDA/mod_nccl.F90 \
@@ -117,7 +120,9 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
-  src/GPU/vendor_agnostic_layer_template.F90 \
+  src/GPU/vendor_agnostic_general_layer_template.F90 \
+  src/GPU/vendor_agnostic_blas_layer_template.F90 \
+  src/GPU/vendor_agnostic_solver_layer_template.F90 \
   src/GPU/vendor_agnostic_layer_utilities_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
@@ -935,7 +940,9 @@ EXTRA_DIST = \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
   src/GPU/check_legacy_gpu_setting_template.F90 \
-  src/GPU/vendor_agnostic_layer_template.F90 \
+  src/GPU/vendor_agnostic_general_layer_template.F90 \
+  src/GPU/vendor_agnostic_blas_layer_template.F90 \
+  src/GPU/vendor_agnostic_solver_layer_template.F90 \
   src/GPU/vendor_agnostic_layer_utilities_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
@@ -977,7 +984,7 @@ EXTRA_DIST = \
   src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
   src/elpa1/elpa1_trans_ev_template.F90 \
-  src/elpa1/tridiag_template.F90 \
+  src/elpa1/elpa1_tridiag_template.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/elpa_cholesky_template.F90 \
   src/cholesky/GPU/mod_cholesky_gpu.F90 \
