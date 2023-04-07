@@ -984,7 +984,7 @@ EXTRA_DIST = \
   src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
   src/elpa1/elpa1_trans_ev_template.F90 \
-  src/elpa1/elpa1_tridiag_template.F90 \
+  src/elpa1/tridiag_template.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/elpa_cholesky_template.F90 \
   src/cholesky/GPU/mod_cholesky_gpu.F90 \
