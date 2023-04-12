@@ -96,8 +96,12 @@ T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
 
 template <typename T, int wg_size, int sg_size>
 void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
+  // DPC++ & SYCL 1.2.1 is gradually replaced by SYCL2020. This is to keep ELPA compatible with both
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
+  using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
+#else
   using local_buffer = sycl::local_accessor<T>;
-
+#endif
   auto device = elpa::gpu::sycl::getDevice();
   auto &queue = elpa::gpu::sycl::getQueue();
 
@@ -117,8 +121,8 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
     sycl::range<1> local_range(nb);
     h.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(sg_size)]]{
       using sf = sycl::access::fence_space;
-      unsigned int tid = it.get_local_id(0);
-      unsigned int local_range = it.get_local_range(0);
+      int tid = it.get_local_id(0);
+      int local_range = it.get_local_range(0);
       auto g = it.get_group();
 
       int j = ncols;
