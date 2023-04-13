@@ -154,7 +154,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     collectCpuDevices();
     count_tmp = elpa::gpu::sycl::getNumCpuDevices();
     if (count_tmp > 0) {
-      //elpa::gpu::sycl::isCPU=0;
+      ////elpa::gpu::sycl::isCPU=0;
       isCPU=0;
     }
     *count = count_tmp;
