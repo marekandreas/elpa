@@ -629,51 +629,54 @@ subroutine trans_ev_&
 #ifndef WITH_CUDA_AWARE_MPI
 
 #ifdef WITH_NVIDIA_NCCL
-        ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-        successGPU = nccl_group_start()
-        if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_start!"
-          stop
-        endif
-        successGPU = nccl_Allreduce(tmp_dev, tmp_dev, &
+        if (useGPU) then
+          ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
+          successGPU = nccl_group_start()
+          if (.not.successGPU) then
+            print *,"Error in setting up nccl_group_start!"
+            stop
+          endif
+          successGPU = nccl_Allreduce(tmp_dev, tmp_dev, &
 #if REALCASE == 1
-                                    int(nstor*l_cols,kind=c_size_t), &
+                                      int(nstor*l_cols,kind=c_size_t), &
 #endif
 #if COMPLEXCASE == 1
-                                    int(2*nstor*l_cols,kind=c_size_t), &
+                                      int(2*nstor*l_cols,kind=c_size_t), &
 #endif
 #if REALCASE == 1
 #if DOUBLE_PRECISION == 1
-                                 ncclDouble, &
+                                   ncclDouble, &
 #endif
 #if SINGLE_PRECISION == 1
-                                 ncclFloat, &
+                                   ncclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #if DOUBLE_PRECISION == 1
-                                 ncclDouble, &
+                                   ncclDouble, &
 #endif
 #if SINGLE_PRECISION == 1
-                                 ncclFloat, &
+                                   ncclFloat, &
 #endif
 #endif /* COMPLEXCASE */
-                                 ncclSum, ccl_comm_rows, my_stream)
+                                   ncclSum, ccl_comm_rows, my_stream)
 
-        if (.not.successGPU) then
-          print *,"Error in nccl_allreduce"
-          stop
-        endif
-        successGPU = nccl_group_end()
-        if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_end!"
-          stop
-        endif
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev", successGPU)
-
+          if (.not.successGPU) then
+            print *,"Error in nccl_allreduce"
+            stop
+          endif
+          successGPU = nccl_group_end()
+          if (.not.successGPU) then
+            print *,"Error in setting up nccl_group_end!"
+            stop
+          endif
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("trans_ev", successGPU)
+        else ! use GPU
+          call mpi_iallreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
+        endif ! useGPU
 #else /* WITH_NVIDIA_NCCL */
-
         call mpi_iallreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
 #endif /* WITH_NVIDIA_NCCL */
@@ -689,51 +692,55 @@ subroutine trans_ev_&
 #ifndef WITH_CUDA_AWARE_MPI
 
 #ifdef WITH_NVIDIA_NCCL
-        ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-        success = nccl_group_start()
-        if (.not.success) then
-          print *,"Error in setting up nccl_group_start!"
-          stop
-        endif
+        if (useGPU) then
+          ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
+          success = nccl_group_start()
+          if (.not.success) then
+            print *,"Error in setting up nccl_group_start!"
+            stop
+          endif
 
-        success = nccl_Allreduce(tmp_dev, tmp_dev, &
+          success = nccl_Allreduce(tmp_dev, tmp_dev, &
 #if REALCASE == 1
-                                 int(nstor*l_cols,kind=c_size_t), &
+                                   int(nstor*l_cols,kind=c_size_t), &
 #endif
 #if COMPLEXCASE == 1
-                                 int(2*nstor*l_cols,kind=c_size_t), &
+                                   int(2*nstor*l_cols,kind=c_size_t), &
 #endif
 #if REALCASE == 1
 #if DOUBLE_PRECISION == 1
-                                 ncclDouble, &
+                                   ncclDouble, &
 #endif
 #if SINGLE_PRECISION == 1
-                                 ncclFloat, &
+                                   ncclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #if DOUBLE_PRECISION == 1
-                                 ncclDouble, &
+                                   ncclDouble, &
 #endif
 #if SINGLE_PRECISION == 1
-                                 ncclFloat, &
+                                   ncclFloat, &
 #endif
 #endif /* COMPLEXCASE */
-                                 ncclSum, ccl_comm_rows, my_stream)
+                                   ncclSum, ccl_comm_rows, my_stream)
 
-        if (.not.success) then
-          print *,"Error in nccl_allreduce"
-          stop
-        endif
-        success = nccl_group_end()
-        if (.not.success) then
-          print *,"Error in setting up nccl_group_end!"
-          stop
-        endif
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev", successGPU)
+          if (.not.success) then
+            print *,"Error in nccl_allreduce"
+            stop
+          endif
+          success = nccl_group_end()
+          if (.not.success) then
+            print *,"Error in setting up nccl_group_end!"
+            stop
+          endif
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("trans_ev", successGPU)
+        else ! useGPU
+          call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        endif ! useGPU
 #else /* WITH_NVIDIA_NCCL */
-
         call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 #endif /* WITH_NVIDIA_NCCL */
