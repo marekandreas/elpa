@@ -51,16 +51,16 @@
 
 #include "../general/sanity.F90"
 
-#if defined(WITH_CUDA_AWARE_MPI) || defined(WITH_NVIDIA_NCCL)
-#define MORE_GPUBLAS
-#else
-#undef MORE_GPUBLAS
-#endif
-
 #ifdef WITH_CUDA_AWARE_MPI
 #define CUDA_AWARE_MPI_BAND_TO_FULL
 #else
 #undef CUDA_AWARE_MPI_BAND_TO_FULL
+#endif
+
+#ifdef CUDA_AWARE_MPI_BAND_TO_FULL
+#define MORE_GPUBLAS
+#else
+#undef MORE_GPUBLAS
 #endif
 
 subroutine trans_ev_band_to_full_&
@@ -114,10 +114,6 @@ subroutine trans_ev_band_to_full_&
   use, intrinsic :: iso_c_binding
   use elpa_abstract_impl
   use elpa_blas_interfaces
-#ifdef WITH_NVIDIA_NCCL
-  use nccl_functions
-#endif
-
 
   implicit none
 #include "../general/precision_kinds.F90"
@@ -149,8 +145,8 @@ subroutine trans_ev_band_to_full_&
   ! hvm_dev is fist used and set in this routine
   ! q_mat is changed in trans_ev_tridi on the host, copied to device and passed here. this can be adapted
   ! tmp_dev is first used in this routine
-  ! tmat_complete_dev is not passed along from bandred_real
-  integer(kind=C_intptr_T)                       :: hvm_dev, q_dev, tmp_dev, tmat_complete_dev, dev_offset
+  ! tmat_dev is not passed along from bandred_real
+  integer(kind=C_intptr_T)                       :: hvm_dev, q_dev, tmp_dev, tmat_dev, dev_offset
 #ifdef MORE_GPUBLAS
   integer(kind=C_intptr_T)                       :: t_tmp_dev
 #endif
@@ -161,24 +157,21 @@ subroutine trans_ev_band_to_full_&
   type(c_ptr)                                    :: t_tmp_gpu_dev
   MATH_DATATYPE(kind=rck), pointer               :: t_tmp_gpu_deviceptr(:)
 
-  type(c_ptr)                                    :: tmat_complete_gpu_dev
-  MATH_DATATYPE(kind=rck), pointer               :: tmat_complete_gpu_deviceptr(:,:)
+  type(c_ptr)                                    :: tmat_gpu_dev
+  MATH_DATATYPE(kind=rck), pointer               :: tmat_gpu_deviceptr(:,:)
 
   type(c_ptr)                                    :: hvm_gpu_dev
   MATH_DATATYPE(kind=rck), pointer               :: hvm_gpu_deviceptr(:,:)
 #endif
 
-#if defined(CUDA_AWARE_MPI_BAND_TO_FULL)
-  ! this are dummy device pointers for allreduce, since there is no in_place operation
+#ifdef CUDA_AWARE_MPI_BAND_TO_FULL
   integer(kind=c_intptr_t)                       :: t_tmp2_dev
-  integer(kind=c_intptr_t)                       :: tmp2_dev
   type(c_ptr)                                    :: t_tmp2_gpu_dev
   MATH_DATATYPE(kind=rck), pointer               :: t_tmp2_gpu_deviceptr(:)
 
-#endif
-#ifdef CUDA_AWARE_MPI_BAND_TO_FULL
   type(c_ptr)                                    :: tmp1_mpi_dev, tmp2_mpi_dev
   MATH_DATATYPE(kind=rck), pointer               :: tmp1_mpi_deviceptr(:), tmp2_mpi_deviceptr(:)
+  integer(kind=c_intptr_t)                       :: tmp2_dev
 #endif
 
   integer(kind=ik)                               :: i
@@ -202,10 +195,6 @@ subroutine trans_ev_band_to_full_&
   integer(kind=c_int)                            :: non_blocking_collectives_rows, non_blocking_collectives_cols
   logical                                        :: success
   integer(kind=c_intptr_t)                       :: gpuHandle, my_stream
-#ifdef WITH_NVIDIA_NCCL
-  integer(kind=c_intptr_t)                       :: ccl_comm_rows
-#endif
-
 
   success = .true.
 
@@ -322,11 +311,11 @@ subroutine trans_ev_band_to_full_&
     ! synchronize streamPerThread; maybe not neccessary
     successGPU = gpu_stream_synchronize()
     check_stream_synchronize_gpu("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
-#else /* WITH_GPU_STREAMS */
+#else
     successGPU = gpu_memcpy(q_dev,int(loc(q_mat),kind=c_intptr_t),&
                   ldq*matrixCols*size_of_datatype, gpuMemcpyHostToDevice)
     check_memcpy_gpu("trans_ev_band_to_full: q_mat -> q_dev", successGPU)
-#endif /* WITH_GPU_STREAMS */
+#endif
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
@@ -386,7 +375,7 @@ subroutine trans_ev_band_to_full_&
       successGPU = gpu_malloc(t_tmp_dev,cwy_blocking*nbw*size_of_datatype)
       check_alloc_gpu("trans_ev_band_to_full: t_tmp_dev", successGPU)
 
-#if defined(CUDA_AWARE_MPI_BAND_TO_FULL)
+#ifdef CUDA_AWARE_MPI_BAND_TO_FULL
       successGPU = gpu_malloc(t_tmp2_dev,cwy_blocking*nbw*size_of_datatype)
       check_alloc_gpu("trans_ev_band_to_full: t_tmp2_dev", successGPU)
 #endif
@@ -413,7 +402,7 @@ subroutine trans_ev_band_to_full_&
       check_host_register_gpu("trans_ev_band_to_full: t_tmp2", successGPU)
     endif
 #endif
-  endif ! blocking_factor
+  endif
 
   if (useGPU) then
     successGPU = gpu_malloc(hvm_dev,max_local_rows*cwy_blocking*size_of_datatype)
@@ -442,16 +431,16 @@ subroutine trans_ev_band_to_full_&
 #endif
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    else ! (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU)
+    else
       allocate(tmp_debug(max_local_cols*cwy_blocking))
       tmp_debug(:) = 0.
       successGPU = gpu_memcpy(tmp_dev, int(loc(tmp_debug),kind=c_intptr_t), &
                              max_local_cols*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_gpu("trans_ev_band_to_full: tmp_debug -> tmp_dev", successGPU)
-   endif ! (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU)
+   endif
 #endif
 
-#if defined(CUDA_AWARE_MPI_BAND_TO_FULL) || defined(WITH_NVIDIA_NCCL)
+#ifdef CUDA_AWARE_MPI_BAND_TO_FULL
     successGPU = gpu_malloc(tmp2_dev,max_local_cols*cwy_blocking*size_of_datatype)
     check_alloc_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -468,27 +457,26 @@ subroutine trans_ev_band_to_full_&
 
       successGPU = gpu_stream_synchronize(my_stream)
       check_stream_synchronize_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
-#else /* WITH_GPU_STREAMS */
+#else
       successGPU = gpu_memset(tmp2_dev, 0, max_local_cols*cwy_blocking*size_of_datatype)
       check_memset_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
-#endif /* WITH_GPU_STREAMS */
+#endif
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    else ! (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU)
+    else
      allocate(tmp_debug(max_local_cols*cwy_blocking))
      tmp_debug(:) = 0.
      successGPU = gpu_memcpy(tmp2_dev, int(loc(tmp_debug),kind=c_intptr_t), &
                              max_local_cols*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
      check_memcpy_gpu("trans_ev_band_to_full: tmp_debug -> tmp_dev", successGPU)
-   endif ! (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU)
+   endif
 #endif
-#endif /* defined(CUDA_AWARE_MPI_BAND_TO_FULL) || defined(WITH_NVIDIA_NCCL) */
+#endif /* CUDA_AWARE_MPI_BAND_TO_FULL */
 
-#ifdef MORE_GPUBLAS
-    successGPU = gpu_malloc(tmat_complete_dev,cwy_blocking*cwy_blocking*size_of_datatype)
-    check_alloc_gpu("trans_ev_band_to_full: tmat_complete_dev", successGPU)
-#endif
-  endif ! useGPU 
+    successGPU = gpu_malloc(tmat_dev,cwy_blocking*cwy_blocking*size_of_datatype)
+    check_alloc_gpu("trans_ev_band_to_full: tmat_dev", successGPU)
+  endif
+
 
   hvm = 0.0_rck ! Must be set to 0 !!!
   hvb = 0.0_rck ! Safety only
@@ -521,7 +509,7 @@ subroutine trans_ev_band_to_full_&
          check_memset_gpu("trans_ev_band_to_full: t_tmp_dev", successGPU)
 #endif
 
-#if defined(CUDA_AWARE_MPI_BAND_TO_FULL)
+#ifdef CUDA_AWARE_MPI_BAND_TO_FULL
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
          successGPU = gpu_stream_synchronize(my_stream)
@@ -537,25 +525,25 @@ subroutine trans_ev_band_to_full_&
          check_memset_gpu("trans_ev_band_to_full: t_tmp2_dev", successGPU)
 
 #endif
-#endif /* defined(CUDA_AWARE_MPI_BAND_TO_FULL) */
+#endif /* CUDA_AWARE_MPI_BAND_TO_FULL */
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-       else ! (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU)
+       else
          allocate(tmp_debug(nbw*cwy_blocking))
          tmp_debug(:) = 0.
          successGPU = gpu_memcpy(t_tmp_dev, int(loc(tmp_debug),kind=c_intptr_t), &
                                  nbw*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
          check_memcpy_gpu("trans_ev_band_to_full: tmp_debug -> t_tmp_dev", successGPU)
-#if defined(CUDA_AWARE_MPI_BAND_TO_FULL) 
+#ifdef CUDA_AWARE_MPI_BAND_TO_FULL
          successGPU = gpu_memcpy(t_tmp2_dev, int(loc(tmp_debug),kind=c_intptr_t), &
                                  nbw*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
          check_memcpy_gpu("trans_ev_band_to_full: tmp_debug -> t_tmp_dev", successGPU)
 #endif
          deallocate(tmp_debug)
-       endif ! (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU)
+       endif
 #endif /* defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
      endif ! useGPU
 #endif /* MORE_GPUBLAS */
-  endif ! blocking_factor 
+  endif
   l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q_mat
 
   blk_end = ((na-1)/nbw-1)/blocking_factor + 1
@@ -677,7 +665,7 @@ subroutine trans_ev_band_to_full_&
           t_tmp_gpu_dev = transfer(t_tmp_dev, t_tmp_gpu_dev)
           call c_f_pointer(t_tmp_gpu_dev,t_tmp_gpu_deviceptr,(/(cwy_blocking*nbw)/))
 
-#if defined(CUDA_AWARE_MPI_BAND_TO_FULL)
+#ifdef CUDA_AWARE_MPI_BAND_TO_FULL
           t_tmp2_gpu_dev = transfer(t_tmp2_dev, t_tmp2_gpu_dev)
           call c_f_pointer(t_tmp2_gpu_dev,t_tmp2_gpu_deviceptr,(/(cwy_blocking*nbw)/))
 #endif
@@ -705,11 +693,6 @@ subroutine trans_ev_band_to_full_&
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
 
 #ifdef MORE_GPUBLAS
-
-
-#ifdef WITH_NVIDIA_NCCL
-  ! no memory copy needed
-#else /* WITH_NVIDIA_NCCL */
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -729,63 +712,14 @@ subroutine trans_ev_band_to_full_&
                                   t_tmp_dev, cwy_blocking*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp", successGPU)
 #endif
-#endif /* WITH_NVIDIA_NCCL */
-
 #endif /* MORE_GPUBLAS */
-
-#if defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL)
-          ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-          my_stream = obj%gpu_setup%my_stream
-          successGPU = nccl_group_start()
-          if (.not.success) then
-            print *,"Error in setting up nccl_group_start!"
-            stop 1
-          endif
-          successGPU = nccl_Allreduce(t_tmp_dev, t_tmp_dev, &
-#if REALCASE == 1
-                                      int(cwy_blocking*nbw,kind=c_size_t), &
-#endif
-#if COMPLEXCASE == 1
-                                      int(2*cwy_blocking*nbw,kind=c_size_t), &
-#endif
-#if REALCASE == 1
-#if DOUBLE_PRECISION == 1
-                                      ncclDouble, &
-#endif
-#if SINGLE_PRECISION == 1
-                                      ncclFloat, &
-#endif
-#endif
-#if COMPLEXCASE == 1
-#if DOUBLE_PRECISION == 1
-                                      ncclDouble, &
-#endif
-#if SINGLE_PRECISION == 1
-                                      ncclFloat, &
-#endif
-#endif
-                                      ncclSum, ccl_comm_rows, my_stream)
-          successGPU = nccl_group_end()
-          if (.not.success) then
-            print *,"Error in setting up nccl_group_end!"
-            stop 1
-          endif
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full", successGPU)
-
-#else /* defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL) */
           call obj%timer%start("mpi_nbc_communication")
           call mpi_iallreduce(t_tmp, t_tmp2, int(cwy_blocking*nbw,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
           call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
           call obj%timer%stop("mpi_nbc_communication")
-#endif /* defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL) */
 
 #ifdef MORE_GPUBLAS
-#ifdef WITH_NVIDIA_NCCL
-  ! no memory copy needed
-#else /* WITH_NVIDIA_NCCL */
-
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -800,16 +734,14 @@ subroutine trans_ev_band_to_full_&
           ! synchronize streamPerThread; maybe not neccessary
           successGPU = gpu_stream_synchronize()
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp -> t_tmp_dev", successGPU)
-#else /* WITH_GPU_STREAMS */
+#else
           successGPU = gpu_memcpy(t_tmp_dev, int(loc(t_tmp2),kind=c_intptr_t), &
                                   cwy_blocking*nbw*size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("trans_ev_band_to_full: t_tmp -> t_tmp_dev", successGPU)
-#endif /* WITH_GPU_STREAMS */
-#endif /* WITH_NVIDIA_NCCL */
+#endif
 #endif /* MORE_GPUBLAS */
 
 #else /* CUDA_AWARE_MPI_BAND_TO_FULL */
-          !CUDA_AWARE_MPI is used: -> we need a recv buffer t_tmp2_[dev|gpu_dev|gpu_deviceptr]
           call obj%timer%start("cuda_mpi_nbc_communication")
           call mpi_iallreduce(t_tmp_gpu_deviceptr, t_tmp2_gpu_deviceptr, int(cwy_blocking*nbw,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
@@ -839,11 +771,6 @@ subroutine trans_ev_band_to_full_&
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
 
 #ifdef MORE_GPUBLAS
-
-
-#ifdef WITH_NVIDIA_NCCL
-  ! no memory copy needed
-#else /* WITH_NVIDIA_NCCL */
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -858,57 +785,18 @@ subroutine trans_ev_band_to_full_&
           ! synchronize streamPerThread; maybe not neccessary
           successGPU = gpu_stream_synchronize()
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp", successGPU)
-#else /* WITH_GPU_STREAMS */
+#else
           successGPU = gpu_memcpy(int(loc(t_tmp),kind=c_intptr_t), &
                                   t_tmp_dev, cwy_blocking*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp", successGPU)
-#endif /* WITH_GPU_STREAMS */
-#endif /* WITH_NVIDIA_NCCL */
+#endif
 #endif /* MORE_GPUBLAS */
-
-#if defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL)
-          ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-          my_stream = obj%gpu_setup%my_stream
-          successGPU = nccl_group_start()
-          if (.not.success) then
-            print *,"Error in setting up nccl_group_start!"
-            stop 1
-          endif
-          successGPU = nccl_Allreduce(t_tmp_dev, t_tmp_dev, &
-#if REALCASE == 1
-                                      int(cwy_blocking*nbw,kind=c_size_t), &
-#endif
-#if COMPLEXCASE == 1
-                                      int(2*cwy_blocking*nbw,kind=c_size_t), &
-#endif
-
-#if DOUBLE_PRECISION == 1
-                                      ncclDouble, &
-#endif
-#if SINGLE_PRECISION == 1
-                                      ncclFloat, &
-#endif
-                                      ncclSum, ccl_comm_rows, my_stream)
-          successGPU = nccl_group_end()
-          if (.not.success) then
-            print *,"Error in setting up nccl_group_end!"
-            stop 1
-          endif
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full", successGPU)
-
-#else /* defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL) */
           call obj%timer%start("mpi_communication")
           call mpi_allreduce(t_tmp, t_tmp2, int(cwy_blocking*nbw,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
-#endif /* defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL) */
-
 
 #ifdef MORE_GPUBLAS
-#ifdef WITH_NVIDIA_NCCL
-  ! no memory copy needed
-#else /* WITH_NVIDIA_NCCL */
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -923,16 +811,14 @@ subroutine trans_ev_band_to_full_&
           ! synchronize streamPerThread; maybe not neccessary
           successGPU = gpu_stream_synchronize()
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp -> t_tmp_dev", successGPU)
-#else /* WITH_GPU_STREAMS */
+#else
           successGPU = gpu_memcpy(t_tmp_dev, int(loc(t_tmp2),kind=c_intptr_t), &
                                   cwy_blocking*nbw*size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("trans_ev_band_to_full: t_tmp -> t_tmp_dev", successGPU)
-#endif /* WITH_GPU_STREAMS */
-#endif /* WITH_NVIDIA_NCCL */
+#endif
 #endif /* MORE_GPUBLAS */
 
 #else /* CUDA_AWARE_MPI_BAND_TO_FULL */
-         ! CUDA_AWARE_MPI is used -> we need a recv buffer t_tmp2_[dev|gpu_dev|gpu_deviceptr]
           call obj%timer%start("cuda_mpi_communication")
           call mpi_allreduce(t_tmp_gpu_deviceptr, t_tmp2_gpu_deviceptr, int(cwy_blocking*nbw,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
@@ -964,36 +850,36 @@ subroutine trans_ev_band_to_full_&
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
-          successGPU = gpu_memcpy_async(tmat_complete_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+          successGPU = gpu_memcpy_async(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                           cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
-          check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+          check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
           successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
           ! synchronize streamPerThread; maybe not neccessary
           successGPU = gpu_stream_synchronize()
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
-#else /* WITH_GPU_STREAMS */
-          successGPU = gpu_memcpy(tmat_complete_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+#else
+          successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                           cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
-#endif /* WITH_GPU_STREAMS */
+          check_memcpy_gpu("trans_ev_band_to_full: tmat -> tmat_dev", successGPU)
+#endif
 
           call obj%timer%start("gpublas")
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', &
-                                   t_rows, t_cols, ONE, tmat_complete_dev, cwy_blocking, t_tmp_dev, cwy_blocking, gpuHandle)
+                                   t_rows, t_cols, ONE, tmat_dev, cwy_blocking, t_tmp_dev, cwy_blocking, gpuHandle)
 
           t_tmp_gpu_dev = transfer(t_tmp_dev, t_tmp_gpu_dev)
-          tmat_complete_gpu_dev = transfer(tmat_complete_dev, tmat_complete_gpu_dev)
-          call c_f_pointer(tmat_complete_gpu_dev,tmat_complete_gpu_deviceptr, [cwy_blocking,cwy_blocking])
+          tmat_gpu_dev = transfer(tmat_dev, tmat_gpu_dev)
+          call c_f_pointer(tmat_gpu_dev,tmat_gpu_deviceptr, [cwy_blocking,cwy_blocking])
           call c_f_pointer(t_tmp_gpu_dev,t_tmp_gpu_deviceptr, [cwy_blocking*nbw])
 
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('R', 'U', 'N', 'N', &
-                                   t_rows, t_cols, -ONE, c_loc(tmat_complete_gpu_deviceptr(t_rows+1,t_rows+1)), cwy_blocking, &
+                                   t_rows, t_cols, -ONE, c_loc(tmat_gpu_deviceptr(t_rows+1,t_rows+1)), cwy_blocking, &
                                    t_tmp_gpu_dev, cwy_blocking, gpuHandle)
           call obj%timer%stop("gpublas")
 
@@ -1011,13 +897,11 @@ subroutine trans_ev_band_to_full_&
           ! synchronize streamPerThread; maybe not neccessary
           successGPU = gpu_stream_synchronize()
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp2", successGPU)
-#else /* WITH_GPU_STREAMS */
+#else
           successGPU = gpu_memcpy(int(loc(t_tmp2),kind=c_intptr_t), t_tmp_dev, &
                           cwy_blocking*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp2", successGPU)
-#endif /* WITH_GPU_STREAMS */
-          ! if we had a device copy operation here, then we could skip the above memcpy
-          ! check tmat_complete: tmat_complete is already on device as tmat_complete_dev, same for t_tmp2 as t_tmp_dev
+#endif
           tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp2(1:t_rows,1:t_cols)
 
 #else /* MORE_GPUBLAS */
@@ -1051,36 +935,36 @@ subroutine trans_ev_band_to_full_&
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
-          successGPU = gpu_memcpy_async(tmat_complete_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+          successGPU = gpu_memcpy_async(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                           cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
-          check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+          check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
           successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
           ! synchronize streamPerThread; maybe not neccessary
           successGPU = gpu_stream_synchronize()
-          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
-#else /* WITH_GPU_STREAMS */
-          successGPU = gpu_memcpy(tmat_complete_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+          check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+#else
+          successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                           cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
-#endif /* WITH_GPU_STREAMS */
+          check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+#endif
 
           call obj%timer%start("gpublas")
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', &
-                                   t_rows, t_cols, ONE, tmat_complete_dev, cwy_blocking, t_tmp_dev, cwy_blocking, gpuHandle)
+                                   t_rows, t_cols, ONE, tmat_dev, cwy_blocking, t_tmp_dev, cwy_blocking, gpuHandle)
 
           t_tmp_gpu_dev = transfer(t_tmp_dev, t_tmp_gpu_dev)
-          tmat_complete_gpu_dev = transfer(tmat_complete_dev, tmat_complete_gpu_dev)
-          call c_f_pointer(tmat_complete_gpu_dev,tmat_complete_gpu_deviceptr, [cwy_blocking,cwy_blocking])
+          tmat_gpu_dev = transfer(tmat_dev, tmat_gpu_dev)
+          call c_f_pointer(tmat_gpu_dev,tmat_gpu_deviceptr, [cwy_blocking,cwy_blocking])
           call c_f_pointer(t_tmp_gpu_dev,t_tmp_gpu_deviceptr, [cwy_blocking*nbw])
 
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_TRMM('R', 'U', 'N', 'N', &
-                                   t_rows, t_cols, -ONE, c_loc(tmat_complete_gpu_deviceptr(t_rows+1,t_rows+1)), cwy_blocking, &
+                                   t_rows, t_cols, -ONE, c_loc(tmat_gpu_deviceptr(t_rows+1,t_rows+1)), cwy_blocking, &
                                    t_tmp_gpu_dev, cwy_blocking, gpuHandle)
           call obj%timer%stop("gpublas")
 #ifdef WITH_GPU_STREAMS
@@ -1097,13 +981,11 @@ subroutine trans_ev_band_to_full_&
           ! synchronize streamPerThread; maybe not neccessary
           succcessGPU = gpu_stream_synchronize()
           check_stream_synchronize_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp2", successGPU)
-#else /* WITH_GPU_STREAMS */
+#else
           successGPU = gpu_memcpy(int(loc(t_tmp),kind=c_intptr_t), t_tmp_dev, &
                           cwy_blocking*nbw*size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("trans_ev_band_to_full: t_tmp_dev -> t_tmp2", successGPU)
-#endif /* WITH_GPU_STREAMS */
-          ! if we had a device copy operation here, then we could skip the above memcpy
-          ! check tmat_complete: tmat_complete is already on device as tmat_complete_dev, same for t_tmp2 as t_tmp_dev
+#endif
           tmat_complete(1:t_rows,t_rows+1:t_rows+t_cols) = t_tmp(1:t_rows,1:t_cols)
 
 #else /* MORE_GPUBLAS */
@@ -1166,10 +1048,6 @@ subroutine trans_ev_band_to_full_&
 
 #ifdef WITH_MPI
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
-
-#ifdef WITH_NVIDIA_NCCl
-        ! no memory transfer needed
-#else /* WITH_NVIDIA_NCCl */
         ! copy data from device to host for a later MPI_ALLREDUCE
 #ifdef WITH_GPU_STREAMS  
         my_stream = obj%gpu_setup%my_stream
@@ -1191,10 +1069,10 @@ subroutine trans_ev_band_to_full_&
                       tmp_dev, l_cols*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 #endif
-#endif /* WITH_NVIDIA_NCCl */
 #else /* CUDA_AWARE_MPI_BAND_TO_FULL */
         tmp1_mpi_dev = transfer(tmp_dev, tmp1_mpi_dev)
         call c_f_pointer(tmp1_mpi_dev,tmp1_mpi_deviceptr,(/(l_cols*n_cols)/))
+
 #endif /* CUDA_AWARE_MPI_BAND_TO_FULL */
 #endif /* WITH_MPI */
       else ! useGPU
@@ -1248,7 +1126,6 @@ subroutine trans_ev_band_to_full_&
 #ifdef WITH_MPI
     if (useGPU) then
 #ifndef MORE_GPUBLAS
-! do we support NCCL _WITHOUT_ MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1286,10 +1163,6 @@ subroutine trans_ev_band_to_full_&
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
 
 #ifdef MORE_GPUBLAS
-
-#ifdef WITH_NVIDIA_NCCL
-  ! no memory_transfer needed
-#else /* WITH_NVIDIA_NCCL */
 #ifdef WITH_GPU_STREAMS  
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1309,53 +1182,14 @@ subroutine trans_ev_band_to_full_&
                               tmp_dev, l_cols*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 #endif
-#endif /* WITH_NVIDIA_NCCL */
 #endif /* MORE_GPUBLAS */
-
-#if defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL)
-      ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-      my_stream = obj%gpu_setup%my_stream
-      successGPU = nccl_group_start()
-      if (.not.success) then
-        print *,"Error in setting up nccl_group_start!"
-        stop 1
-      endif
-      successGPU = nccl_Allreduce(tmp_dev, tmp_dev, &
-#if REALCASE == 1
-                                      int(n_cols*l_cols,kind=c_size_t), &
-#endif
-#if COMPLEXCASE == 1
-                                      int(2*n_cols*l_cols,kind=c_size_t), &
-#endif
-
-#if DOUBLE_PRECISION == 1
-                                      ncclDouble, &
-#endif
-#if SINGLE_PRECISION == 1
-                                      ncclFloat, &
-#endif
-                                      ncclSum, ccl_comm_rows, my_stream)
-          successGPU = nccl_group_end()
-          if (.not.success) then
-            print *,"Error in setting up nccl_group_end!"
-            stop 1
-          endif
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full", successGPU)
-
-#else /* defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL) */
       call obj%timer%start("mpi_nbc_communication")
       call mpi_iallreduce(tmp1, tmp2, int(n_cols*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                        int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
       call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
       call obj%timer%stop("mpi_nbc_communication")
-#endif /* defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL) */
-
 
 #ifdef MORE_GPUBLAS
-#ifdef WITH_NVIDIA_NCCL
-  ! no memory_transfer needed
-#else /* WITH_NVIDIA_NCCL */
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1375,7 +1209,6 @@ subroutine trans_ev_band_to_full_&
                               l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 #endif
-#endif /* WITH_NVIDIA_NCCL */
 #endif /* MORE_GPUBLAS */
 
 
@@ -1410,10 +1243,6 @@ subroutine trans_ev_band_to_full_&
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
 
 #ifdef MORE_GPUBLAS
-
-#ifdef WITH_NVIDIA_NCCL
-  ! no memory_transfer needed
-#else /* WITH_NVIDIA_NCCL */
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1433,52 +1262,14 @@ subroutine trans_ev_band_to_full_&
                               tmp_dev, l_cols*n_cols*size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 #endif
-#endif /* WITH_NVIDIA_NCCL */
 #endif /* MORE_GPUBLAS */
 
-
-#if defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL)
-      ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-      my_stream = obj%gpu_setup%my_stream
-      successGPU = nccl_group_start()
-      if (.not.success) then
-        print *,"Error in setting up nccl_group_start!"
-        stop 1
-      endif
-      successGPU = nccl_Allreduce(tmp_dev, tmp_dev, &
-#if REALCASE == 1
-                                      int(n_cols*l_cols,kind=c_size_t), &
-#endif
-#if COMPLEXCASE == 1
-                                      int(2*n_cols*l_cols,kind=c_size_t), &
-#endif
-
-#if DOUBLE_PRECISION == 1
-                                      ncclDouble, &
-#endif
-#if SINGLE_PRECISION == 1
-                                      ncclFloat, &
-#endif
-                                      ncclSum, ccl_comm_rows, my_stream)
-          successGPU = nccl_group_end()
-          if (.not.success) then
-            print *,"Error in setting up nccl_group_end!"
-            stop 1
-          endif
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("trans_ev_band_to_full", successGPU)
-
-#else /* defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL) */
       call obj%timer%start("mpi_communication")
       call mpi_allreduce(tmp1, tmp2, int(n_cols*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                        int(mpi_comm_rows,kind=MPI_KIND), mpierr)
       call obj%timer%stop("mpi_communication")
-#endif /* defined(WITH_NVIDIA_NCCL) && !defined(CUDA_AWARE_MPI_BAND_TO_FULL) */
 
 #ifdef MORE_GPUBLAS
-#ifdef WITH_NVIDIA_NCCL
-  ! no memory_transfer needed
-#else /* WITH_NVIDIA_NCCL */
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1498,7 +1289,6 @@ subroutine trans_ev_band_to_full_&
                               l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
 #endif
-#endif /* WITH_NVIDIA_NCCL */
 #endif /* MORE_GPUBLAS */
 
 #else /* CUDA_AWARE_MPI_BAND_TO_FULL */
@@ -1550,49 +1340,36 @@ subroutine trans_ev_band_to_full_&
                       l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("trans_ev_band_to_full: tmp2 -> tmp_dev", successGPU)
 #endif
-#endif /* !MORE_GPUBLAS */
+#endif /* MORE_GPUBLAS */
 
-#ifdef MORE_GPUBLAS
         ! needed: as long as not device to device copy
 #ifdef WITH_GPU_STREAMS
-        !these memcpys could be avoided if there was a fast tmat_complete_dev = tmp_dev copy!
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
-        successGPU = gpu_memcpy_async(tmat_complete_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+        successGPU = gpu_memcpy_async(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
-        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
         successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
         ! synchronize streamPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
-        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
-#else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(tmat_complete_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+#else
+        successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
-#endif /* WITH_GPU_STREAMS */
+        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+#endif
 
         call obj%timer%start("gpublas")
         gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
         call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
-                                 n_cols, l_cols, ONE, tmat_complete_dev, cwy_blocking, tmp_dev, n_cols, gpuHandle)
+                                 n_cols, l_cols, ONE, tmat_dev, cwy_blocking, tmp_dev, n_cols, gpuHandle)
         call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, tmp_dev, &
                                    n_cols, ONE, q_dev, ldq, gpuHandle)
         call obj%timer%stop("gpublas")
-#else /* MORE_GPUBLAS */
-        call obj%timer%start("blas")
-        call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
-                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
-                            int(cwy_blocking,kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND))
-        call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
-                            int(n_cols,kind=BLAS_KIND), -ONE, hvm, &
-                            int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND), ONE, &
-                            q_mat, int(ldq,kind=BLAS_KIND))
-        call obj%timer%stop("blas")
-#endif /* MORE_GPUBLAS */
       else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -1605,51 +1382,39 @@ subroutine trans_ev_band_to_full_&
         call obj%timer%stop("blas")
       endif ! useGPU
 
-    endif ! (l_rows>0)
+    endif
 #else /* WITH_MPI */
     if (l_rows > 0) then
       if (useGPU) then
-#ifdef MORE_GPUBLAS
         ! needed as long as not device to device copy
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
-        successGPU = gpu_memcpy_async(tmat_complete_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+        successGPU = gpu_memcpy_async(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
-        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 
         successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
+        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
         ! synchronize streamPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
-        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
-#else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(tmat_complete_dev, int(loc(tmat_complete),kind=c_intptr_t), &
+        check_stream_synchronize_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+#else
+        successGPU = gpu_memcpy(tmat_dev, int(loc(tmat_complete),kind=c_intptr_t), &
                       cwy_blocking*cwy_blocking*size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_complete_dev", successGPU)
-#endif /* WITH_GPU_STREAMS */
+        check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
+#endif
 
         call obj%timer%start("gpublas")
         gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
         call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
-                                   n_cols, l_cols, ONE, tmat_complete_dev, cwy_blocking, &
+                                   n_cols, l_cols, ONE, tmat_dev, cwy_blocking, &
                                    tmp_dev, n_cols, gpuHandle)
         call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &
                                     -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq, gpuHandle)
         call obj%timer%stop("gpublas")
-#else /* MORE_GPUBLAS */
-        call obj%timer%start("blas")
-        call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
-                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
-                            int(cwy_blocking,kind=BLAS_KIND), &
-                            tmp1, int(n_cols,kind=BLAS_KIND))
-        call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
-                            -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, &
-                            int(ldq,kind=BLAS_KIND))
-        call obj%timer%stop("blas")
-#endif /* MORE_GPUBLAS */
       else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -1680,31 +1445,29 @@ subroutine trans_ev_band_to_full_&
     check_dealloc_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
 #endif
 
-#ifdef MORE_GPUBLAS
-    successGPU = gpu_free(tmat_complete_dev)
-    check_dealloc_gpu("trans_ev_band_to_full: tmat_complete_dev", successGPU)
-#endif
+    successGPU = gpu_free(tmat_dev)
+    check_dealloc_gpu("trans_ev_band_to_full: tmat_dev", successGPU)
 
     ! final transfer of q_dev
-!#ifdef WITH_GPU_STREAMS
-!    my_stream = obj%gpu_setup%my_stream
-!    successGPU = gpu_stream_synchronize(my_stream)
-!    check_stream_synchronize_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
-!
-!    successGPU = gpu_memcpy_async(int(loc(q_mat),kind=c_intptr_t), q_dev, ldq*matrixCols*size_of_datatype, &
-!                  gpuMemcpyDeviceToHost, my_stream)
-!    check_memcpy_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
-!
-!    successGPU = gpu_stream_synchronize(my_stream)
-!    check_stream_synchronize_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
-!    ! synchronize streamPerThread; maybe not neccessary
-!    successGPU = gpu_stream_synchronize()
-!    check_stream_synchronize_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
-!#else
-!    successGPU = gpu_memcpy(int(loc(q_mat),kind=c_intptr_t), q_dev, ldq*matrixCols*size_of_datatype, &
-!                  gpuMemcpyDeviceToHost)
-!    check_memcpy_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
-!#endif
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
+
+    successGPU = gpu_memcpy_async(int(loc(q_mat),kind=c_intptr_t), q_dev, ldq*matrixCols*size_of_datatype, &
+                  gpuMemcpyDeviceToHost, my_stream)
+    check_memcpy_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
+
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
+    ! synchronize streamPerThread; maybe not neccessary
+    successGPU = gpu_stream_synchronize()
+    check_stream_synchronize_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
+#else
+    successGPU = gpu_memcpy(int(loc(q_mat),kind=c_intptr_t), q_dev, ldq*matrixCols*size_of_datatype, &
+                  gpuMemcpyDeviceToHost)
+    check_memcpy_gpu("trans_ev_band_to_full: q_dev -> q_mat", successGPU)
+#endif
 
     successGPU = gpu_free(q_dev)
     check_dealloc_gpu("trans_ev_band_to_full: q_dev", successGPU)
@@ -1725,13 +1488,14 @@ subroutine trans_ev_band_to_full_&
 
     ! take care of new pointers nullify them
 #ifdef MORE_GPUBLAS
-    nullify(tmat_complete_gpu_deviceptr)
+    nullify(tmat_gpu_deviceptr)
     nullify(hvm_gpu_deviceptr)
     nullify(t_tmp_gpu_deviceptr)
 #endif
 #ifdef CUDA_AWARE_MPI_BAND_TO_FULL
     nullify(tmp1_mpi_deviceptr)
 #endif
+
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
@@ -1750,7 +1514,6 @@ subroutine trans_ev_band_to_full_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     endif
 #endif
-
   else ! useGPU
     deallocate(tmp1, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_band_to_full: tmp1", istat, errorMessage)
@@ -1775,7 +1538,7 @@ subroutine trans_ev_band_to_full_&
       check_dealloc_gpu("trans_ev_band_to_full: t_tmp2_dev", successGPU)
 #endif
     endif
-  endif ! useGPU
+  endif
 #endif /* MORE_GPUBLAS */
 
   if (blocking_factor > 1) then
@@ -1786,7 +1549,7 @@ subroutine trans_ev_band_to_full_&
 
       successGPU = gpu_host_unregister(int(loc(t_tmp2),kind=c_intptr_t))
       check_host_unregister_gpu("trans_ev_band_to_full: t_tmp2", successGPU)
-    endif ! useGPU
+    endif
 #endif
 
     deallocate(t_tmp, stat=istat, errmsg=errorMessage)
@@ -1794,7 +1557,7 @@ subroutine trans_ev_band_to_full_&
 
     deallocate(t_tmp2, stat=istat, errmsg=errorMessage)
     check_deallocate("trans_ev_band_to_full: t_tmp2", istat, errorMessage)
-  endif ! blocking_factor
+  endif
 
   call obj%timer%stop("trans_ev_band_to_full_&
   &MATH_DATATYPE&
