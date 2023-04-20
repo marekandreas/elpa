@@ -3055,17 +3055,16 @@
     end subroutine
 
     subroutine rocblas_Zaxpy_intptr(rocblasHandle, length, alpha, x, incx, y, incy)
-    !subroutine rocblas_Zaxpy_intptr(rocblasHandle, length, x, incx, y, incy)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: rocblasHandle
-      integer(kind=c_int), intent(in)      :: length, incx, incy
-      complex(kind=C_DOUBLE_COMPLEX) ,value, intent(in)               :: alpha
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
       integer(kind=c_intptr_t) :: x, y
 
-!#ifdef WITH_AMD_GPU_VERSION
-!      call rocblas_Zaxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
-!#endif
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Zaxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
+#endif
     end subroutine
 
     subroutine rocblas_Zaxpy_cptr(rocblasHandle, length, alpha, x, incx, y, incy)

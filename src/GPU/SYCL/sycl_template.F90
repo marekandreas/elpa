@@ -191,8 +191,8 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT) :: n
-    end function sycl_printdevices_c
-  end interface  
+    end function
+  end interface
 
   interface
     function sycl_getcpucount_c(n) result(istat) &
@@ -1809,24 +1809,8 @@
       integer(kind=c_int)  :: onlyIntelGpus
       integer(kind=c_int)  :: nCasted
       logical              :: success
-
 #ifdef WITH_SYCL_GPU_VERSION
       success = sycl_getdevicecount_c(nCasted, onlyIntelGpus) /=0
-      n = int(nCasted)
-#else
-      success = .true.
-      n = 0
-#endif
-    end function
-
-    function sycl_getcpucount(n) result(success)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=ik)     :: n
-      integer(kind=c_int)  :: nCasted
-      logical              :: success
-#ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_getcpucount_c(nCasted) /=0
       n = int(nCasted)
 #else
       success = .true.
@@ -1845,6 +1829,21 @@
       n = 0
 #endif
     end subroutine sycl_printdevices
+
+    function sycl_getcpucount(n) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=ik)     :: n
+      integer(kind=c_int)  :: nCasted
+      logical              :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_getcpucount_c(nCasted) /=0
+      n = int(nCasted)
+#else
+      success = .true.
+      n = 0
+#endif
+    end function
 
 !    function sycl_devicesynchronize()result(success)
 !      use, intrinsic :: iso_c_binding
@@ -2994,7 +2993,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3007,7 +3006,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3021,7 +3020,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3035,7 +3034,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3049,7 +3048,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3063,7 +3062,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3078,7 +3077,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3092,7 +3091,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3106,7 +3105,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3120,7 +3119,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3134,7 +3133,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3148,7 +3147,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3163,7 +3162,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3177,7 +3176,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3191,7 +3190,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3205,7 +3204,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3219,7 +3218,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3233,7 +3232,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 

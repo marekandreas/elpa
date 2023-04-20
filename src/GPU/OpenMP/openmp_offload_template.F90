@@ -2808,7 +2808,7 @@
       integer(kind=ik) :: flag
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"pointerModeDevice not yet implemented!"
-      stop
+      stop 1
 #else
       flag = 0
 #endif
@@ -2821,7 +2821,7 @@
       integer(kind=ik) :: flag
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"pointerModeHost not yet implemented!"
-      stop
+      stop 1
 #else
       flag = 0
 #endif
@@ -2835,7 +2835,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"getPointerMode not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2847,7 +2847,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"setPointerMode not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2861,7 +2861,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2874,7 +2874,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2888,7 +2888,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2902,7 +2902,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2916,7 +2916,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2930,7 +2930,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2944,7 +2944,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2957,7 +2957,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2971,7 +2971,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2985,7 +2985,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2999,7 +2999,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3013,7 +3013,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3028,7 +3028,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3042,7 +3042,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3056,7 +3056,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3070,7 +3070,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3084,7 +3084,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3098,7 +3098,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3113,7 +3113,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3127,7 +3127,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3141,7 +3141,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3155,7 +3155,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3169,7 +3169,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -3183,7 +3183,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
