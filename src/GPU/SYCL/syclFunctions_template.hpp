@@ -65,9 +65,10 @@ using namespace cl;
 
 extern "C" {
 
-static void collectGpuDevices() {
-  elpa::gpu::sycl::collectGpuDevices();
+static void collectGpuDevices(bool onlyGpus) {
+  elpa::gpu::sycl::collectGpuDevices(onlyGpus);
 }
+
 static void collectCpuDevices() {
   elpa::gpu::sycl::collectCpuDevices();
 }
@@ -129,6 +130,10 @@ static oneapi::mkl::side sideFromChar(char c) {
     elpa::gpu::sycl::printGpuInfo();
   }
 
+  void syclPrintDevicesFromC() {
+    elpa::gpu::sycl::printGpuInfo();
+  }
+
   int syclMemcpyDeviceToDeviceFromC(){
     return syclMemcpyDeviceToDevice;
   }
@@ -140,12 +145,11 @@ static oneapi::mkl::side sideFromChar(char c) {
     return syclMemcpyDeviceToHost;
   }
 
-  int syclGetDeviceCountFromC(int *count) {
+  int syclGetDeviceCountFromC(int *count, int onlyL0Gpus) {
     int count_tmp;
-    collectGpuDevices();
+    collectGpuDevices(onlyL0Gpus != 0);
     count_tmp = elpa::gpu::sycl::getNumDevices();
     *count = count_tmp;
-    //return elpa::gpu::sycl::getNumDevices();
     return 1;
   }
 
@@ -154,7 +158,6 @@ static oneapi::mkl::side sideFromChar(char c) {
     collectCpuDevices();
     count_tmp = elpa::gpu::sycl::getNumCpuDevices();
     if (count_tmp > 0) {
-      ////elpa::gpu::sycl::isCPU=0;
       isCPU=0;
     }
     *count = count_tmp;
@@ -170,7 +173,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclSetGpuParamsFromC() {
-    collectGpuDevices();
     // These do not really have any meaning, as there is an universal address space,
     // and as long as the pointer is either a host pointer, or of the chosen GPU, there
     // is no need to indicate the direction. However, they are used by ELPA, and we can
@@ -182,7 +184,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclSetCpuParamsFromC() {
-    collectCpuDevices();
     // These do not really have any meaning, as there is an universal address space,
     // and as long as the pointer is either a host pointer, or of the chosen GPU, there
     // is no need to indicate the direction. However, they are used by ELPA, and we can
@@ -385,7 +386,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     gemm(queue, ta, tb, m_, n_, k_, alpha, reinterpret_cast<std::complex<double> *>(a), lda_, reinterpret_cast<std::complex<double> *>(b), ldb_, beta, reinterpret_cast<std::complex<double> *>(c), ldc_);
   }
 
-  void syclblasCgemm_elpa_wrapperintptr_t *handle, char cta, char ctb, int m, int n, int k, std::complex<float> alpha, void *a, int lda, void *b, int ldb, std::complex<float> beta, void *c, int ldc) {
+  void syclblasCgemm_elpa_wrapper(intptr_t *handle, char cta, char ctb, int m, int n, int k, std::complex<float> alpha, void *a, int lda, void *b, int ldb, std::complex<float> beta, void *c, int ldc) {
     // handle not needed
     auto &queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, k_, lda_, ldb_, ldc_;

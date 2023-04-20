@@ -282,7 +282,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
          if (use_gpu_vendor == sycl_gpu) then
-           call mkl_sycl_Dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
+           call syclblas_Dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
          endif
 #endif
     end subroutine
@@ -326,7 +326,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+          call syclblas_Dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -371,7 +371,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+          call syclblas_Dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -415,7 +415,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Dcopy_intptr(n, x, incx, y, incy, handle)
+          call syclblas_Dcopy_intptr(n, x, incx, y, incy, handle)
         endif
 #endif
     end subroutine
@@ -458,7 +458,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Dcopy_cptr(n, x, incx, y, incy, handle)
+          call syclblas_Dcopy_cptr(n, x, incx, y, incy, handle)
         endif
 #endif
     end subroutine
@@ -503,7 +503,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
 
@@ -550,7 +550,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -595,7 +595,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -640,7 +640,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -683,7 +683,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
          if (use_gpu_vendor == sycl_gpu) then
-           call mkl_sycl_Sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
+           call syclblas_Sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
          endif
 #endif
     end subroutine
@@ -727,7 +727,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+          call syclblas_Sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -772,7 +772,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+          call syclblas_Sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -816,7 +816,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Scopy_intptr(n, x, incx, y, incy, handle)
+          call syclblas_Scopy_intptr(n, x, incx, y, incy, handle)
         endif
 #endif
     end subroutine
@@ -859,7 +859,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Scopy_cptr(n, x, incx, y, incy, handle)
+          call syclblas_Scopy_cptr(n, x, incx, y, incy, handle)
         endif
 #endif
     end subroutine
@@ -904,7 +904,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
 
@@ -951,7 +951,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -996,7 +996,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -1041,7 +1041,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -1084,7 +1084,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
          if (use_gpu_vendor == sycl_gpu) then
-           call mkl_sycl_Zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
+           call syclblas_Zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
          endif
 #endif
     end subroutine
@@ -1128,7 +1128,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+          call syclblas_Zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -1173,7 +1173,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+          call syclblas_Zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -1217,7 +1217,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Zcopy_intptr(n, x, incx, y, incy, handle)
+          call syclblas_Zcopy_intptr(n, x, incx, y, incy, handle)
         endif
 #endif
     end subroutine
@@ -1260,7 +1260,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Zcopy_cptr(n, x, incx, y, incy, handle)
+          call syclblas_Zcopy_cptr(n, x, incx, y, incy, handle)
         endif
 #endif
     end subroutine
@@ -1305,7 +1305,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
 
@@ -1352,7 +1352,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -1397,7 +1397,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -1442,7 +1442,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -1485,7 +1485,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
          if (use_gpu_vendor == sycl_gpu) then
-           call mkl_sycl_Cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
+           call syclblas_Cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
          endif
 #endif
     end subroutine
@@ -1529,7 +1529,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+          call syclblas_Cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -1574,7 +1574,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+          call syclblas_Cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -1618,7 +1618,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ccopy_intptr(n, x, incx, y, incy, handle)
+          call syclblas_Ccopy_intptr(n, x, incx, y, incy, handle)
         endif
 #endif
     end subroutine
@@ -1661,7 +1661,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ccopy_cptr(n, x, incx, y, incy, handle)
+          call syclblas_Ccopy_cptr(n, x, incx, y, incy, handle)
         endif
 #endif
     end subroutine
@@ -1706,7 +1706,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
 
@@ -1753,7 +1753,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -1798,7 +1798,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine
@@ -1843,7 +1843,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_Ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+          call syclblas_Ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
         endif
 #endif
     end subroutine

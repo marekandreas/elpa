@@ -175,14 +175,24 @@
   end interface
 
   interface
-    function sycl_getdevicecount_c(n) result(istat) &
+    function sycl_getdevicecount_c(n, only_gpus) result(istat) &
              bind(C, name="syclGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT), intent(out) :: n
+      integer(kind=C_INT), intent(in), value :: only_gpus
       integer(kind=C_INT)              :: istat
     end function
   end interface
+
+  interface
+    function sycl_printdevices_c() result(n) &
+             bind(C, name="syclPrintDevicesFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT) :: n
+    end function sycl_printdevices_c
+  end interface  
 
   interface
     function sycl_getcpucount_c(n) result(istat) &
@@ -1792,14 +1802,16 @@
 #endif
     end function
 
-    function sycl_getdevicecount(n) result(success)
+    function sycl_getdevicecount(n, onlyIntelGpus) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik)     :: n
+      integer(kind=c_int)  :: onlyIntelGpus
       integer(kind=c_int)  :: nCasted
       logical              :: success
+
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_getdevicecount_c(nCasted) /=0
+      success = sycl_getdevicecount_c(nCasted, onlyIntelGpus) /=0
       n = int(nCasted)
 #else
       success = .true.
@@ -1821,6 +1833,18 @@
       n = 0
 #endif
     end function
+
+    subroutine  sycl_printdevices()
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=ik)           :: n
+
+#ifdef WITH_SYCL_GPU_VERSION
+      n = sycl_printdevices_c()
+#else
+      n = 0
+#endif
+    end subroutine sycl_printdevices
 
 !    function sycl_devicesynchronize()result(success)
 !      use, intrinsic :: iso_c_binding
@@ -2834,7 +2858,7 @@
       integer(kind=ik) :: flag
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"pointerModeDevice not yet implemented!"
-      stop
+      stop 1
 #else
       flag = 0
 #endif
@@ -2847,7 +2871,7 @@
       integer(kind=ik) :: flag
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"pointerModeHost not yet implemented!"
-      stop
+      stop 1
 #else
       flag = 0
 #endif
@@ -2861,7 +2885,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"getPointerMode not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2873,7 +2897,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"setPointerMode not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2887,7 +2911,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2900,7 +2924,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2914,7 +2938,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2928,7 +2952,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}SCAL not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2942,7 +2966,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -2956,7 +2980,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}AXPY not yet implemented!"
-      stop
+      stop 1
 #endif
     end subroutine
 

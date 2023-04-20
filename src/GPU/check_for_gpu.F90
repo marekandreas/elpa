@@ -81,11 +81,13 @@ module mod_check_for_gpu
       integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
       !logical, save                              :: alreadySET=.false.
       integer(kind=ik)                           :: maxThreads, thread
+      integer(kind=c_int)                        :: syclShowOnlyIntelGpus
+      integer(kind=ik)                           :: syclShowAllDevices
       integer(kind=c_intptr_t)                   :: handle_tmp
       !integer(kind=c_intptr_t)                   :: stream
       !logical                                    :: gpuIsInitialized=.false.
       !character(len=1024)           :: envname
-      character(len=8)                           :: fmt 
+      character(len=8)                           :: fmt
       character(len=12)                          :: gpu_string
 #ifdef WITH_NVIDIA_NCCL
       TYPE(ncclUniqueId)                         :: ncclId
@@ -110,7 +112,7 @@ module mod_check_for_gpu
       call obj%get("mpi_comm_parent",mpi_comm_all,error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for mpi_comm_parent. Aborting..."
-        stop
+        stop 1
       endif
 
       ! needed later for handle creation
@@ -213,7 +215,7 @@ module mod_check_for_gpu
         call obj%get("use_gpu_id", use_gpu_id, error)
         if (error .ne. ELPA_OK) then
           print *,"check_for_gpu: cannot querry use_gpu_id. Aborting..."
-          stop
+          stop 1
         endif
 
         if (use_gpu_id == -99) then
@@ -285,10 +287,31 @@ module mod_check_for_gpu
           success = .true.
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-          obj%gpu_setup%syclCPU=.false.
-          success = sycl_getdevicecount(numberOfDevices)
-          !success = .true.
-          !numberOfDevices=0
+          call obj%get("sycl_show_all_devices", syclShowAllDevices, error)
+          if (error .ne. ELPA_OK) then
+            print *,"Problem getting option for sycl_show_all_devices. Aborting..."
+            stop 1
+          endif
+
+          if (syclShowAllDevices == 1) then
+            syclShowOnlyIntelGpus = 0
+            obj%gpu_setup%syclCPU = 1
+          else
+            syclShowOnlyIntelGpus = 1
+            obj%gpu_setup%syclCPU = 0
+          endif
+          if (myid == 0 .and. wantDebugMessage) then
+            print *, "SYCL: syclShowOnlyIntelGpus =  ", syclShowOnlyIntelGpus
+          endif
+          success = sycl_getdevicecount(numberOfDevices, syclShowOnlyIntelGpus)
+          if (myid == 0 .and. wantDebugMessage) then
+            print *, "SYCL: numberOfDevices =  ", numberOfDevices
+          endif
+          if (wantDebugMessage) then
+            call sycl_printdevices()
+          endif
+          !obj%gpu_setup%syclCPU=.false.
+          !success = sycl_getdevicecount(numberOfDevices)
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -318,21 +341,21 @@ module mod_check_for_gpu
 !#endif
 
 
-!#ifdef WITH_SYCL_GPU_VERSION
-!        ! special case: maybe we want to run the sycl code path on cpu ?
-!        if (numberOfDevices .eq. 0) then
-!          success = sycl_getcpucount(numberOfDevices)
-!          if (.not.(success)) then
-!#ifdef WITH_SYCL_GPU_VERSION
-!            print *,"error in sycl_getdevicecount"
-!#endif
-!            stop 1
-!          endif
-!          if (numberOfDevices .ge. 0) then
-!            obj%gpu_setup%syclCPU=.true.
-!          endif
-!        endif
-!#endif
+#ifdef WITH_SYCL_GPU_VERSION
+        ! special case: maybe we want to run the sycl code path on cpu ?
+        if (numberOfDevices .eq. 0) then
+          success = sycl_getcpucount(numberOfDevices)
+          if (.not.(success)) then
+#ifdef WITH_SYCL_GPU_VERSION
+            print *,"error in sycl_getdevicecount"
+#endif
+            stop 1
+          endif
+          if (numberOfDevices .ge. 0) then
+            obj%gpu_setup%syclCPU=.true.
+          endif
+        endif
+#endif
 
           ! make sure that all nodes have the same number of GPU's, otherwise
           ! we run into loadbalancing trouble
@@ -373,7 +396,7 @@ module mod_check_for_gpu
             call obj%set("use_gpu_id",deviceNumber, error)
             if (error .ne. ELPA_OK) then
               print *,"Cannot set use_gpu_id. Aborting..."
-              stop
+              stop 1
             endif
  
 #include "./handle_creation_template.F90"
@@ -390,7 +413,7 @@ module mod_check_for_gpu
               success = nccl_get_unique_id(ncclId) 
               if (.not.success) then
                 print *,"Error in setting up unique nccl id!"
-                stop
+                stop 1
               endif
             endif
 
@@ -399,25 +422,25 @@ module mod_check_for_gpu
             call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_all, mpierr)
             if (mpierr .ne. MPI_SUCCESS) then
               print *,"Error when sending unique id"
-              stop
+              stop 1
             endif
 
             success = nccl_group_start()
             if (.not.success) then
               print *,"Error in setting up nccl_group_start!"
-              stop
+              stop 1
             endif
 
             success = nccl_comm_init_rank(ccl_comm_all, nprocs, ncclId, myid)
             if (.not.success) then
               print *,"Error in setting up communicator nccl_comm_all id!"
-              stop
+              stop 1
             endif
 
             success = nccl_group_end()
             if (.not.success) then
               print *,"Error in setting up nccl_group_end!"
-              stop
+              stop 1
             endif
 
             obj%gpu_setup%ccl_comm_all = ccl_comm_all
@@ -427,7 +450,7 @@ module mod_check_for_gpu
             call obj%get("mpi_comm_rows",mpi_comm_rows, error)
             if (error .ne. ELPA_OK) then
               print *,"Problem getting option for mpi_comm_rows. Aborting..."
-              stop
+              stop 1
             endif
 
             call mpi_comm_rank(mpi_comm_rows, myid_rows, mpierr)
@@ -435,32 +458,32 @@ module mod_check_for_gpu
               success = nccl_get_unique_id(ncclId) 
               if (.not.success) then
                 print *,"Error in setting up unique nccl id for rows!"
-                stop
+                stop 1
               endif
             endif
             call mpi_comm_size(mpi_comm_rows, nprows, mpierr)
             call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_rows, mpierr)
             if (mpierr .ne. MPI_SUCCESS) then
               print *,"Error when sending unique id for rows"
-              stop
+              stop 1
             endif
 
             success = nccl_group_start()
             if (.not.success) then
               print *,"Error in setting up nccl_group_start!"
-              stop
+              stop 1
             endif
 
             success = nccl_comm_init_rank(ccl_comm_rows, nprows, ncclId, myid_rows)
             if (.not.success) then
               print *,"Error in setting up communicator nccl_comm_rows id!"
-              stop
+              stop 1
             endif
 
             success = nccl_group_end()
             if (.not.success) then
               print *,"Error in setting up nccl_group_end!"
-              stop
+              stop 1
             endif
 
             obj%gpu_setup%ccl_comm_rows = ccl_comm_rows
@@ -470,7 +493,7 @@ module mod_check_for_gpu
             call obj%get("mpi_comm_cols",mpi_comm_cols, error)
             if (error .ne. ELPA_OK) then
               print *,"Problem getting option for mpi_comm_cols. Aborting..."
-              stop
+              stop 1
             endif
 
             call mpi_comm_rank(mpi_comm_cols, myid_cols, mpierr)
@@ -478,32 +501,32 @@ module mod_check_for_gpu
               success = nccl_get_unique_id(ncclId) 
               if (.not.success) then
                 print *,"Error in setting up unique nccl id for cols!"
-                stop
+                stop 1
               endif
             endif
             call mpi_comm_size(mpi_comm_cols, npcols, mpierr)
             call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_cols, mpierr)
             if (mpierr .ne. MPI_SUCCESS) then
               print *,"Error when sending unique id for cols"
-              stop
+              stop 1
             endif
 
             success = nccl_group_start()
             if (.not.success) then
               print *,"Error in setting up nccl_group_start!"
-              stop
+              stop 1
             endif
 
             success = nccl_comm_init_rank(ccl_comm_cols, npcols, ncclId, myid_cols)
             if (.not.success) then
               print *,"Error in setting up communicator nccl_comm_cols id!"
-              stop
+              stop 1
             endif
 
             success = nccl_group_end()
             if (.not.success) then
               print *,"Error in setting up nccl_group_end!"
-              stop
+              stop 1
             endif
 
             obj%gpu_setup%ccl_comm_cols = ccl_comm_cols
@@ -515,7 +538,7 @@ module mod_check_for_gpu
             !success = nccl_comm_destroy(ccl_comm_all)
             !if (.not.success) then
             !  print *,"Error in destroying ccl_comm_all!"
-            !  stop
+            !  stop 1
             !endif
 #endif
             call obj%timer%stop("check_gpu_"//gpu_string)
