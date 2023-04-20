@@ -130,7 +130,7 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #include "assert.h"
 
 program test
-   use elpa 
+   use elpa
    !use test_util
    use test_setup_mpi
    use test_prepare_matrix
@@ -298,7 +298,7 @@ program test
    do_test_analytic_eigenvalues = .false.
    do_test_analytic_eigenvalues_eigenvectors = .false.
    do_test_frank_eigenvalues = .false.
-   do_test_toeplitz_eigenvalues = .false. 
+   do_test_toeplitz_eigenvalues = .false.
 
    do_test_cholesky = .false.
 #if defined(TEST_CHOLESKY)
@@ -446,12 +446,12 @@ program test
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
-     stop
+     stop 1
 #endif
    endif
 
-	! Allocate the matrices needed for elpa 
-	
+   !Allocate the matrices needed for elpa
+
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
    allocate(z (na_rows,na_cols))
