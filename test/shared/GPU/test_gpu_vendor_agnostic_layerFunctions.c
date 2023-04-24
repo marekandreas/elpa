@@ -145,7 +145,8 @@ int gpuFree(intptr_t *a) {
    return hipFreeFromC(a);
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-   return syclFreeFromC(a);
+   //return syclFreeFromC(a);
+   return syclFreeVoidPtr(a);
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
@@ -166,3 +167,9 @@ int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir){
 #error "openmp_offload missing"
 #endif  
 }
+
+#ifdef WITH_SYCL_GPU_VERSION
+int syclGetCpuCount(int numberOfDevices) {
+   return syclGetCpuCountFromC(&numberOfDevices);
+}
+#endif

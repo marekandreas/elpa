@@ -280,6 +280,13 @@ int main(int argc, char** argv) {
    return 77;
 #endif
 
+// we are switching off testing explicit name in gpu version in C-tests, since SYCL on CPU can't discriminate between a and a_dev
+#if TEST_INTEL_GPU_SYCL==1 && defined(TEST_EXPLICIT_NAME) && TEST_GPU_DEVICE_POINTER_API==1
+#ifdef WITH_MPI
+   MPI_Finalize();
+#endif
+   return 77;
+#endif
 
    if (argc == 4) {
      na = atoi(argv[1]);
@@ -497,13 +504,10 @@ int main(int argc, char** argv) {
 #endif /* defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL) */
 
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
-   int nDevices;
-   gpuGetDeviceCount(&nDevices);
-   printf("Number of Devices found: %d\n\n", nDevices);
-   // simple test
-   // Can (and should) fail often
-   gpuID = myid%2;
-   if(nDevices==1) gpuID=0; 
+   int numberOfDevices;
+   gpuGetDeviceCount(&numberOfDevices);
+   printf("Number of Devices found: %d\n\n", numberOfDevices);
+   gpuID = myid%numberOfDevices; 
    printf("gpuID: %i\n", gpuID);
    elpa_set(handle, "use_gpu_id", gpuID, &error_elpa);
    assert_elpa_ok(error_elpa);
@@ -512,6 +516,15 @@ int main(int argc, char** argv) {
 #if TEST_GPU_DEVICE_POINTER_API == 1
    set_gpu_parameters();
    
+#if TEST_INTEL_GPU_SYCL == 1
+   int numberOfDevices=0;
+   successGPU = syclGetCpuCount(numberOfDevices); // temporary fix for SYCL on CPU
+   if (!successGPU){    
+      printf("Error in syclGetCpuCount\n");
+      exit(1);
+      }
+#endif
+
    // Set device
    successGPU = gpuSetDevice(gpuID);
    if (!successGPU){    
@@ -526,7 +539,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
       exit(1);
       }
-   
+
    successGPU = gpuMalloc((intptr_t *) &z_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
    if (!successGPU){    
       fprintf(stderr, "Error in gpuMalloc(z_dev)\n");
@@ -538,7 +551,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "Error in gpuMalloc(ev_dev)\n");
       exit(1);
       }
-      
+
    // copy
    successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
    if (!successGPU){    
@@ -882,6 +895,7 @@ int main(int argc, char** argv) {
       }   
      
    // and deallocate device pointer
+   //successGPU = gpuFree((void *) a_dev);
    successGPU = gpuFree((intptr_t *) a_dev);
    if (!successGPU){    
       fprintf(stderr, "Error in gpuFree(a_dev)\n");
@@ -972,7 +986,7 @@ int main(int argc, char** argv) {
       exit(1);
       }
 
-successGPU = gpuFree((intptr_t *) c_dev);
+   successGPU = gpuFree((intptr_t *) c_dev);
    if (!successGPU){    
       fprintf(stderr, "Error in gpuFree(c_dev)\n");
       exit(1);

@@ -57,8 +57,10 @@ extern "C"
 #endif
   int syclSetDeviceFromC(int n);
   int syclGetDeviceCountFromC(int *count);
+  int syclGetCpuCountFromC(int *count);
   int syclMallocFromC(intptr_t *a, size_t width_height);
   int syclFreeFromC(intptr_t *a);
+  int syclFreeVoidPtr(void *ptr);
   int syclMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir);
   int syclMemcpyDeviceToDeviceFromC(void);
   int syclMemcpyHostToDeviceFromC(void);

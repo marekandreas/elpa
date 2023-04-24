@@ -149,7 +149,8 @@ int main(int argc, char** argv) {
 
 #if TEST_GPU == 1
    MATRIX_TYPE *a_dev;
-   int successGPU;
+   C_INT_TYPE numberOfDevices;
+   C_INT_TYPE successGPU;
 #endif
    
    C_INT_TYPE status;
@@ -188,8 +189,9 @@ int main(int argc, char** argv) {
 #endif
 #endif
 
-// pointer API is tested only for NVIDIA and AMD
-#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 0 && TEST_AMD_GPU == 0
+// for invert-triangular we test only pointer API without setting gpu_id
+// pointer API is tested for NVIDIA, AMD, and INTEL_SYCL
+#if TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 0 && TEST_AMD_GPU == 0 && TEST_INTEL_GPU_SYCL == 0
 #ifdef WITH_MPI
    MPI_Finalize();
 #endif
@@ -289,61 +291,54 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error_elpa);
 #endif
    
-   /* Setup */
-   assert_elpa_ok(elpa_setup(handle));
-
-#if TEST_NVIDIA_GPU == 1
-   elpa_set(handle, "nvidia-gpu", TEST_GPU, &error_elpa);
-   assert_elpa_ok(error_elpa);
-#endif
-
-#if TEST_AMD_GPU == 1
-   elpa_set(handle, "amd-gpu", TEST_GPU, &error_elpa);
-   assert_elpa_ok(error_elpa);
-#endif
-
-#if TEST_INTEL_GPU == 1
-   elpa_set(handle, "intel-gpu", TEST_GPU, &error_elpa);
-   assert_elpa_ok(error_elpa);
-#endif
-
    elpa_set(handle, "timings", 1, &error_elpa);
    assert_elpa_ok(error_elpa);
 
    elpa_set(handle, "debug", 1, &error_elpa);
    assert_elpa_ok(error_elpa);
-   
-   elpa_set(handle, "verbose", 1, &error_elpa);
-   assert_elpa_ok(error_elpa);
-   
 
-#if (TEST_GPU == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
-   int nDevices;
-   gpuGetDeviceCount(&nDevices);
-   printf("Number of Devices found: %d\n\n", nDevices);
-   int gpuID = myid%2;
-   if(nDevices==1) gpuID=0;
-   printf("gpuID: %i\n", gpuID);
-   elpa_set(handle, "use_gpu_id", gpuID, &error_elpa);
+#if TEST_NVIDIA_GPU == 1
+   elpa_set(handle, "nvidia-gpu", TEST_GPU, &error_elpa);
    assert_elpa_ok(error_elpa);
-   
-   // Set device
-   successGPU = gpuSetDevice(gpuID);
+#endif
+#if TEST_AMD_GPU == 1
+   elpa_set(handle, "amd-gpu", TEST_GPU, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+#if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
+   elpa_set(handle, "intel-gpu", TEST_GPU, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+
+
+#if (TEST_GPU == 1)
+   set_gpu_parameters();
+
+#if TEST_INTEL_GPU_SYCL == 1 /* temporary fix for SYCL on CPU */
+   successGPU = syclGetCpuCount(numberOfDevices); 
+   if (!successGPU){    
+      printf("Error in syclGetCpuCount\n");
+      exit(1);
+      }
+#endif
+
+   // Set device #0 (gpi id is not tested)
+   successGPU = gpuSetDevice(0);
    if (!successGPU){    
       printf("Error in gpuSetDevice\n");
       exit(1);
       }
-      
+
    elpa_set(handle, "gpu_invert_trm", 1, &error_elpa);
-   assert_elpa_ok(error_elpa);
-   
-#endif
+   assert_elpa_ok(error_elpa); 
+#endif /* TEST_GPU */
+
+   assert_elpa_ok(elpa_setup(handle));
 
    //-----------------------------------------------------------------------------------------------------------------------------
    // TEST_GPU == 1: create device pointer for a_dev; copy a -> a_dev
 #if TEST_GPU == 1
-   set_gpu_parameters();
-   
+
    // malloc
    successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
    if (!successGPU){    
