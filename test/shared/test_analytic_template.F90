@@ -210,7 +210,8 @@
     &(na, nev, ev, z, nblk, myid, np_rows, np_cols, my_prow, my_pcol, check_all_evals, &
       check_eigenvectors, print_times) result(status)
     use precision_for_tests
-    
+    use test_util
+
     implicit none
 #include "./test_precision_kinds.F90"
     TEST_INT_TYPE, intent(in)              :: na, nev, nblk, myid, np_rows, &
@@ -395,6 +396,11 @@
     endif
 
     status = 0
+
+    if (is_infinity_or_NaN(max_ev_diff)) then
+      status = 1
+    endif
+
     if (nev .gt. 2) then
       if (max_ev_diff .gt. tol_eigenvalues .or. max_ev_diff .eq. 0.0_rk) status = 1
       if (check_eigenvectors) then
@@ -404,6 +410,9 @@
       if (max_ev_diff .gt. tol_eigenvalues) status = 1
       if (check_eigenvectors) then
         if (glob_max_z_diff .gt. tol_eigenvectors) status = 1
+        if (is_infinity_or_NaN(glob_max_z_diff)) then
+          status = 1
+        endif
       endif
     endif
 
