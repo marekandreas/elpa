@@ -150,8 +150,9 @@ program test
 #endif
    use precision_for_tests
 
-#if TEST_GPU_DEVICE_POINTER_API == 1
+#if TEST_GPU_DEVICE_POINTER_API == 1 || TEST_GPU_SET_ID == 1
    use test_gpu
+   use mod_check_for_gpu
 #if TEST_NVIDIA_GPU == 1
    use test_cuda_functions
 #endif
@@ -202,7 +203,6 @@ program test
    type(c_ptr)                         :: a_dev, q_dev, ev_dev, b_dev, c_dev ! q_dev -- eigenvectors (analogous to z)
 #endif
 
-
    logical                             :: check_all_evals, skip_check_correctness
 
 #if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
@@ -215,6 +215,7 @@ program test
 
    type(output_t)                      :: write_to_file
    class(elpa_t), pointer              :: e
+
 #ifdef TEST_ALL_KERNELS
    TEST_INT_TYPE                       :: i
 #endif
@@ -235,6 +236,9 @@ program test
                                           do_test_toeplitz_eigenvalues, do_test_cholesky,   &
                                           do_test_hermitian_multiply
    logical                             :: ignoreError, success, successGPU
+#if TEST_GPU == 1
+   TEST_INT_TYPE                       :: numberOfDevices
+#endif
 #ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE                       :: max_threads, threads_caller
 #endif
@@ -806,7 +810,20 @@ program test
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    ! simple test
    ! Can (and should) fail often
-   gpuID = mod(myid,2)
+   if (gpu_vendor() /= no_gpu) then
+      call set_gpu_parameters()
+   else 
+      print *,"Cannot set gpu vendor!"
+      stop 1
+   endif
+
+   success = gpu_GetDeviceCount(numberOfDevices)
+   if (.not.(success)) then
+      print *,"Error in gpu_GetDeviceCount. Aborting..."
+      stop 1
+   endif
+   print *,"numberOfDevices=", numberOfDevices
+   gpuID = mod(myid, numberOfDevices)
    !gpuID = mod(myid,1)
    call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
@@ -814,25 +831,24 @@ program test
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
    ! create device pointers for a,q, ev; copy a to device
-#if TEST_NVIDIA_GPU == 1
-   if (gpu_vendor(NVIDIA_GPU) == NVIDIA_GPU) then
+
+   if (gpu_vendor() /= no_gpu) then
      call set_gpu_parameters()
+   else 
+      print *,"Cannot set gpu vendor!"
+      stop 1
    endif
-#endif
-#if TEST_AMD_GPU == 1
-   if (gpu_vendor(AMD_GPU) == AMD_GPU) then
-     call set_gpu_parameters()
-   endif
-#endif
 
    ! Set device
    success = .true.
-#if TEST_NVIDIA_GPU == 1
-   success = cuda_setdevice(gpuID)
+#if TEST_INTEL_GPU_SYCL == 1
+   success = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
+   if (.not.(success)) then
+      print *,"Error in sycl_getcpucount. Aborting..."
+      stop 1
+    endif
 #endif
-#if TEST_AMD_GPU == 1
-   success = hip_setdevice(gpuID)
-#endif
+   success = gpu_setdevice(gpuID)
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."
      stop 1
