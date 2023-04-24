@@ -56,11 +56,8 @@ module mod_check_for_gpu
     ! if NOT the first call to check_for_gpu will set the MPI GPU relation and then
     ! _SET_ use_gpu_id such that subsequent calls abide this setting
     function check_for_gpu(obj, myid, numberOfDevices, wantDebug) result(gpuAvailable)
-      use cuda_functions
-      use hip_functions
-      use openmp_offload_functions
-      use sycl_functions
-      !use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray, my_stream
+      use elpa_gpu, only : gpu_getdevicecount
+      use sycl_functions ! special case: sycl on cpu
       use precision
       use elpa_mpi
       use elpa_omp
@@ -260,39 +257,7 @@ module mod_check_for_gpu
             endif
           !endif
 
-          success = .true.
-#ifdef WITH_NVIDIA_GPU_VERSION
-          ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
-          success = cuda_getdevicecount(numberOfDevices)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-          success = hip_getdevicecount(numberOfDevices)
-#endif
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-          numberOfDevices = openmp_offload_getdevicecount()
-          success = .true.
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-          obj%gpu_setup%syclCPU=.false.
-          !success = sycl_getdevicecount(numberOfDevices)
-          success = .true.
-          numberOfDevices=0
-#endif
-          if (.not.(success)) then
-#ifdef WITH_NVIDIA_GPU_VERSION
-            print *,"error in cuda_getdevicecount"
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-            print *,"error in hip_getdevicecount"
-#endif
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-            print *,"error in openmp_offload_getdevicecount"
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-            print *,"error in sycl_getdevicecount"
-#endif
-            stop 1
-          endif
+          success = gpu_getdevicecount(numberOfDevices)
 
 !#ifdef  WITH_INTEL_GPU_VERSION
 !        gpuAvailable = .false.

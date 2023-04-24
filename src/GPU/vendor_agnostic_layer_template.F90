@@ -243,7 +243,7 @@
       endif
       if (vendor == no_gpu) then
         print *,"setting gpu vendor in tests does not work"
-        stop
+        stop 1
       endif
 !#if TEST_INTEL_GPU == 1
 !      vendor = intel_gpu
@@ -270,57 +270,51 @@
       implicit none
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      if (use_gpu_vendor == nvidia_gpu) then
-        cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-        gpuMemcpyHostToDevice    = cudaMemcpyHostToDevice
-        cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-        gpuMemcpyDeviceToHost    = cudaMemcpyDeviceToHost
-        cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-        gpuMemcpyDeviceToDevice  = cudaMemcpyDeviceToDevice
-        cudaHostRegisterPortable = cuda_hostRegisterPortable()
-        gpuHostRegisterPortable  = cudaHostRegisterPortable
-        cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-        gpuHostRegisterMapped    = cudaHostRegisterMapped
-        cudaHostRegisterDefault  = cuda_hostRegisterDefault()
-        gpuHostRegisterDefault   = cudaHostRegisterDefault
-      endif
+      cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
+      gpuMemcpyHostToDevice    = cudaMemcpyHostToDevice
+      cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
+      gpuMemcpyDeviceToHost    = cudaMemcpyDeviceToHost
+      cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
+      gpuMemcpyDeviceToDevice  = cudaMemcpyDeviceToDevice
+      cudaHostRegisterPortable = cuda_hostRegisterPortable()
+      gpuHostRegisterPortable  = cudaHostRegisterPortable
+      cudaHostRegisterMapped   = cuda_hostRegisterMapped()
+      gpuHostRegisterMapped    = cudaHostRegisterMapped
+      cudaHostRegisterDefault  = cuda_hostRegisterDefault()
+      gpuHostRegisterDefault   = cudaHostRegisterDefault
 #endif
+
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        hipMemcpyHostToDevice   = hip_memcpyHostToDevice()
-        gpuMemcpyHostToDevice   = hipMemcpyHostToDevice
-        hipMemcpyDeviceToHost   = hip_memcpyDeviceToHost()
-        gpuMemcpyDeviceToHost   = hipMemcpyDeviceToHost
-        hipMemcpyDeviceToDevice = hip_memcpyDeviceToDevice()
-        gpuMemcpyDeviceToDevice = hipMemcpyDeviceToDevice
-        hipHostRegisterPortable = hip_hostRegisterPortable()
-        gpuHostRegisterPortable = hipHostRegisterPortable
-        hipHostRegisterMapped   = hip_hostRegisterMapped()
-        gpuHostRegisterMapped   = hipHostRegisterMapped
-        hipHostRegisterDefault  = hip_hostRegisterDefault()
-        gpuHostRegisterDefault  = hipHostRegisterDefault
-      endif
+      hipMemcpyHostToDevice   = hip_memcpyHostToDevice()
+      gpuMemcpyHostToDevice   = hipMemcpyHostToDevice
+      hipMemcpyDeviceToHost   = hip_memcpyDeviceToHost()
+      gpuMemcpyDeviceToHost   = hipMemcpyDeviceToHost
+      hipMemcpyDeviceToDevice = hip_memcpyDeviceToDevice()
+      gpuMemcpyDeviceToDevice = hipMemcpyDeviceToDevice
+      hipHostRegisterPortable = hip_hostRegisterPortable()
+      gpuHostRegisterPortable = hipHostRegisterPortable
+      hipHostRegisterMapped   = hip_hostRegisterMapped()
+      gpuHostRegisterMapped   = hipHostRegisterMapped
+      hipHostRegisterDefault  = hip_hostRegisterDefault()
+      gpuHostRegisterDefault  = hipHostRegisterDefault
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        openmpOffloadMemcpyHostToDevice   = openmp_offload_memcpyHostToDevice()
-        gpuMemcpyHostToDevice             = openmpOffloadMemcpyHostToDevice
-        openmpOffloadMemcpyDeviceToHost   = openmp_offload_memcpyDeviceToHost()
-        gpuMemcpyDeviceToHost             = openmpOffloadMemcpyDeviceToHost
-        openmpOffloadMemcpyDeviceToDevice = openmp_offload_memcpyDeviceToDevice()
-        gpuMemcpyDeviceToDevice           = openmpOffloadMemcpyDeviceToDevice
-        !openmpOffloadHostRegisterPortable = openmp_offload_hostRegisterPortable()
-        !gpuHostRegisterPortable           = openmpOffloadHostRegisterPortable
-        !openmpOffloadHostRegisterMapped   = openmp_offload_hostRegisterMapped()
-        !gpuHostRegisterMapped             = openmpOffloadHostRegisterMapped
-        !openmpOffloadHostRegisterDefault  = openmp_offload_hostRegisterDefault()
-        !gpuHostRegisterDefault            = openmpOffloadHostRegisterDefault
-      endif
+      openmpOffloadMemcpyHostToDevice   = openmp_offload_memcpyHostToDevice()
+      gpuMemcpyHostToDevice             = openmpOffloadMemcpyHostToDevice
+      openmpOffloadMemcpyDeviceToHost   = openmp_offload_memcpyDeviceToHost()
+      gpuMemcpyDeviceToHost             = openmpOffloadMemcpyDeviceToHost
+      openmpOffloadMemcpyDeviceToDevice = openmp_offload_memcpyDeviceToDevice()
+      gpuMemcpyDeviceToDevice           = openmpOffloadMemcpyDeviceToDevice
+      !openmpOffloadHostRegisterPortable = openmp_offload_hostRegisterPortable()
+      !gpuHostRegisterPortable           = openmpOffloadHostRegisterPortable
+      !openmpOffloadHostRegisterMapped   = openmp_offload_hostRegisterMapped()
+      !gpuHostRegisterMapped             = openmpOffloadHostRegisterMapped
+      !openmpOffloadHostRegisterDefault  = openmp_offload_hostRegisterDefault()
+      !gpuHostRegisterDefault            = openmpOffloadHostRegisterDefault
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
         syclMemcpyHostToDevice   = sycl_MemcpyHostToDevice()
         gpuMemcpyHostToDevice    = syclMemcpyHostToDevice
         syclMemcpyDeviceToHost   = sycl_MemcpyDeviceToHost()
@@ -333,7 +327,6 @@
         !gpuHostRegisterMapped             = openmpOffloadHostRegisterMapped
         !openmpOffloadHostRegisterDefault  = openmp_offload_hostRegisterDefault()
         !gpuHostRegisterDefault            = openmpOffloadHostRegisterDefault
-      endif
 #endif
     end subroutine
 
@@ -362,29 +355,21 @@
       success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cublas_set_stream(handle, stream)
-      endif
+      success = cublas_set_stream(handle, stream)
 #endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
-      if (use_gpu_vendor == amd_gpu) then
-        success = rocblas_set_stream(handle, stream)
-      endif
+      success = rocblas_set_stream(handle, stream)
 #endif
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"gpublasSetStream not implemented for openmp offload"
-        stop
-      endif
+      print *,"gpublasSetStream not implemented for openmp offload"
+      stop 1
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"gpublasSetStream not implemented for sycl"
-        stop
-      endif
+      print *,"gpublasSetStream not implemented for sycl"
+      stop 1
 #endif
 
     end function
@@ -413,24 +398,18 @@
       if (present(stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
-        if (use_gpu_vendor == nvidia_gpu) then
-          success = cuda_stream_synchronize(stream)
-        endif
+        success = cuda_stream_synchronize(stream)
 #endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
-        if (use_gpu_vendor == amd_gpu) then
-          success = hip_stream_synchronize(stream)
-        endif
+        success = hip_stream_synchronize(stream)
 #endif
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
-        if (use_gpu_vendor == nvidia_gpu) then
-          success = cuda_stream_synchronize()
-        endif
+        success = cuda_stream_synchronize()
 #endif
 #endif
 #ifdef WITH_AMD_GPU_VERSION
@@ -444,22 +423,72 @@
 
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"gpu_stream_syncronize not implemented for openmp offload"
-        stop
-      endif
+      print *,"gpu_stream_syncronize not implemented for openmp offload"
+      stop 1
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"gpu_stream_synchronize not implemented for sycl"
-        stop
-      endif
+      print *,"gpu_stream_synchronize not implemented for sycl"
+      stop 1
 #endif
 
     end function
 
 
+    function gpu_getdevicecount(n) result(success)
+      use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
+      use cuda_functions
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
 
+      implicit none
+
+      integer(kind=ik)              :: n
+      logical                       :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_getdevicecount(n)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_getdevicecount(n)
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      n = openmp_offload_getdevicecount()
+      success = .true.
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        !obj%gpu_setup%syclCPU=.false.
+        !success = sycl_getdevicecount(numberOfDevices)
+        success = .true.
+        n=0
+      endif
+#endif
+
+      if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
+        print *,"error in cuda_getdevicecount"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+        print *,"error in hip_getdevicecount"
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        print *,"error in openmp_offload_getdevicecount"
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+        print *,"error in sycl_getdevicecount"
+#endif
+        stop 1
+      endif
+    end function
 
     function gpu_setdevice(n) result(success)
       use, intrinsic :: iso_c_binding
@@ -482,24 +511,16 @@
       logical                       :: success
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_setdevice(n)
-      endif
+      success = cuda_setdevice(n)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_setdevice(n)
-      endif
+      success = hip_setdevice(n)
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_setdevice(n)
-      endif
+      success = openmp_offload_setdevice(n)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_setdevice(n)
-      endif
+      success = sycl_setdevice(n)
 #endif
     end function
 
@@ -517,34 +538,27 @@
       success = .false.
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_devicesynchronize()
-      endif
+      success = cuda_devicesynchronize()
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_devicesynchronize()
-      endif
+      success = hip_devicesynchronize()
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: device synchronize"
-        stop
-      endif
+      print *,"not yet implemented: device synchronize"
+      stop 1
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: device synchronize"
-        stop
-      endif
+      print *,"not yet implemented: device synchronize"
+      stop 1
 #endif
     end function
 
 
     function gpu_malloc_host(array, elements) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
-
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -562,34 +576,28 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_malloc_host(array, elements)
-      endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_malloc_host(array, elements)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_malloc_host(array, elements)
-      endif
+      success = hip_malloc_host(array, elements)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: malloc_host"
-        stop
-      endif
+      print *,"not yet implemented: malloc_host"
+      stop 1
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: malloc_host"
-        stop
-      endif
+      print *,"not yet implemented: malloc_host"
+      stop 1
 #endif
 
     end function
 
     function gpu_malloc_intptr(array, elements) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -606,33 +614,26 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_malloc_intptr(array, elements)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_malloc_intptr(array, elements)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_malloc_intptr(array, elements)
-      endif
+      success = hip_malloc_intptr(array, elements)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_malloc_intptr(array, elements)
-      endif
+      success = openmp_offload_malloc_intptr(array, elements)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_malloc_intptr(array, elements)
-      endif
+      success = sycl_malloc_intptr(array, elements)
 #endif
 
     end function
 
     function gpu_malloc_cptr(array, elements) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -649,33 +650,26 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_malloc_cptr(array, elements)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_malloc_cptr(array, elements)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_malloc_cptr(array, elements)
-      endif
+      success = hip_malloc_cptr(array, elements)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_malloc_cptr(array, elements)
-      endif
+      success = openmp_offload_malloc_cptr(array, elements)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_malloc_cptr(array, elements)
-      endif
+      success = sycl_malloc_cptr(array, elements)
 #endif
 
     end function
 
     function gpu_host_register(array, elements, flag) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -693,35 +687,28 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_host_register(array, elements, flag)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_host_register(array, elements, flag)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_host_register(array, elements, flag)
-      endif
+      success = hip_host_register(array, elements, flag)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: host_register"
-        stop
-      endif
+      print *,"not yet implemented: host_register"
+      stop 1
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_register"
-        stop
-      endif
+      print *,"not yet implemented: host_register"
+      stop 1
 #endif
 
     end function
     
     function gpu_memcpy_intptr(dst, src, size, dir) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -741,26 +728,17 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy_intptr(dst, src, size, dir)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy_intptr(dst, src, size, dir)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy_intptr(dst, src, size, dir)
-      endif
+      success = hip_memcpy_intptr(dst, src, size, dir)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_memcpy_intptr(dst, src, size, dir)
-      endif
+      success = openmp_offload_memcpy_intptr(dst, src, size, dir)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_memcpy_intptr(dst, src, size, dir)
-      endif
+      success = sycl_memcpy_intptr(dst, src, size, dir)
 #endif
       return
     
@@ -768,7 +746,9 @@
     
     function gpu_memcpy_cptr(dst, src, size, dir) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -787,26 +767,17 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy_cptr(dst, src, size, dir)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy_cptr(dst, src, size, dir)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy_cptr(dst, src, size, dir)
-      endif
+      success = hip_memcpy_cptr(dst, src, size, dir)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_memcpy_cptr(dst, src, size, dir)
-      endif
+      success = openmp_offload_memcpy_cptr(dst, src, size, dir)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_memcpy_cptr(dst, src, size, dir)
-      endif
+      success = sycl_memcpy_cptr(dst, src, size, dir)
 #endif
       return
     
@@ -814,7 +785,9 @@
     
     function gpu_memcpy_mixed_to_device(dst, src, size, dir) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -834,33 +807,26 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
+#ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_memcpy_mixed_to_device(dst, src, size, dir)
-      endif
-
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy_mixed_to_device(dst, src, size, dir)
-      endif
+      success = hip_memcpy_mixed_to_device(dst, src, size, dir)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_memcpy_mixed_to_device(dst, src, size, dir)
-      endif
+      success = openmp_offload_memcpy_mixed_to_device(dst, src, size, dir)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_memcpy_mixed_to_device(dst, src, size, dir)
-      endif
+      success = sycl_memcpy_mixed_to_device(dst, src, size, dir)
 #endif
     
     end function
     
     function gpu_memcpy_mixed_to_host(dst, src, size, dir) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -880,33 +846,26 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy_mixed_to_host(dst, src, size, dir)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy_mixed_to_host(dst, src, size, dir)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy_mixed_to_host(dst, src, size, dir)
-      endif
+      success = hip_memcpy_mixed_to_host(dst, src, size, dir)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_memcpy_mixed_to_host(dst, src, size, dir)
-      endif
+      success = openmp_offload_memcpy_mixed_to_host(dst, src, size, dir)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_memcpy_mixed_to_host(dst, src, size, dir)
-      endif
+      success = sycl_memcpy_mixed_to_host(dst, src, size, dir)
 #endif
     
     end function
 
     function gpu_memcpy_async_intptr(dst, src, size, dir, stream) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -927,30 +886,21 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy_async_intptr(dst, src, size, dir, stream)
-      endif
-  
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy_async_intptr(dst, src, size, dir, stream)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy_async_intptr(dst, src, size, dir, stream)
-      endif
+      success = hip_memcpy_async_intptr(dst, src, size, dir, stream)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"MemcpyAsync not implemented for openmp offload"
-        stop
-        !success = openmp_offload_memcpy_intptr(dst, src, size, dir)
-      endif
+      print *,"MemcpyAsync not implemented for openmp offload"
+      stop 1
+      !success = openmp_offload_memcpy_intptr(dst, src, size, dir)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        stop
-        !success = sycl_memcpy_intptr(dst, src, size, dir)
-      endif
+      print *,"MemcpyAsync not implemented for sycl"
+      stop 1
+      !success = sycl_memcpy_intptr(dst, src, size, dir)
 #endif
       return
     
@@ -958,7 +908,9 @@
     
     function gpu_memcpy_async_cptr(dst, src, size, dir, stream) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -978,30 +930,21 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy_async_cptr(dst, src, size, dir, stream)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy_async_cptr(dst, src, size, dir, stream)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy_async_cptr(dst, src, size, dir, stream)
-      endif
+      success = hip_memcpy_async_cptr(dst, src, size, dir, stream)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"MemcpyAsync not implemented for openmp offload"
-        stop
-        !success = openmp_offload_memcpy_cptr(dst, src, size, dir)
-      endif
+      print *,"MemcpyAsync not implemented for openmp offload"
+      stop 1
+      !success = openmp_offload_memcpy_cptr(dst, src, size, dir)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        stop
-        !success = sycl_memcpy_cptr(dst, src, size, dir)
-      endif
+      print *,"MemcpyAsync not implemented for sycl"
+      stop 1
+      !success = sycl_memcpy_cptr(dst, src, size, dir)
 #endif
       return
     
@@ -1009,7 +952,9 @@
     
     function gpu_memcpy_async_mixed_to_device(dst, src, size, dir, stream) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1030,37 +975,30 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
+#ifdef WITH_NVIDIA_GPU_VERSION
         success = cuda_memcpy_async_mixed_to_device(dst, src, size, dir, stream)
-      endif
-
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy_async_mixed_to_device(dst, src, size, dir, stream)
-      endif
+      success = hip_memcpy_async_mixed_to_device(dst, src, size, dir, stream)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"MemcpyAsync not implemented for openmp offload"
-        stop
-        !success = openmp_offload_memcpy_mixed_to_device(dst, src, size, dir)
-      endif
+      print *,"MemcpyAsync not implemented for openmp offload"
+      stop 1
+      !success = openmp_offload_memcpy_mixed_to_device(dst, src, size, dir)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        stop
-        !success = sycl_memcpy_mixed_to_device(dst, src, size, dir)
-      endif
+      print *,"MemcpyAsync not implemented for sycl"
+      stop 1
+      !success = sycl_memcpy_mixed_to_device(dst, src, size, dir)
 #endif
     
     end function
     
     function gpu_memcpy_async_mixed_to_host(dst, src, size, dir, stream) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1081,29 +1019,21 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy_async_mixed_to_host(dst, src, size, dir, stream)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy_async_mixed_to_host(dst, src, size, dir, stream)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy_async_mixed_to_host(dst, src, size, dir, stream)
-      endif
+      success = hip_memcpy_async_mixed_to_host(dst, src, size, dir, stream)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"MemcpyAsync not implemented for openmp offload"
-        stop
-        !success = openmp_offload_memcpy_mixed_to_host(dst, src, size, dir)
-      endif
+      print *,"MemcpyAsync not implemented for openmp offload"
+      stop 1
+      !success = openmp_offload_memcpy_mixed_to_host(dst, src, size, dir)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        !success = sycl_memcpy_mixed_to_host(dst, src, size, dir)
-      endif
+      print *,"MemcpyAsync not implemented for sycl"
+      stop 1
+      !success = sycl_memcpy_mixed_to_host(dst, src, size, dir)
 #endif
     
     end function
@@ -1111,7 +1041,9 @@
 
     function gpu_memset(a, val, size) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1132,33 +1064,26 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memset(a, val, size)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memset(a, val, size)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memset(a, val, size)
-      endif
+      success = hip_memset(a, val, size)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_memset(a, val, size)
-      endif
+      success = openmp_offload_memset(a, val, size)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_memset(a, int(val,kind=c_int32_t), size)
-      endif
+      success = sycl_memset(a, int(val,kind=c_int32_t), size)
 #endif
 
     end function
 
     function gpu_memset_async(a, val, size, stream) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1180,30 +1105,21 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memset_async(a, val, size, stream)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memset_async(a, val, size, stream)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memset_async(a, val, size, stream)
-      endif
+      success = hip_memset_async(a, val, size, stream)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        !success = openmp_offload_memset(a, val, size)
-        print *,"Openmp Offload memset_async not yet implemented"
-        stop
-      endif
+      !success = openmp_offload_memset(a, val, size)
+      print *,"Openmp Offload memset_async not yet implemented"
+      stop 1
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        !success = sycl_memset(a, int(val,kind=c_int32_t), size)
-        print *,"Sycl memset_async not yet implemented"
-        stop
-      endif
+      !success = sycl_memset(a, int(val,kind=c_int32_t), size)
+      print *,"Sycl memset_async not yet implemented"
+      stop 1
 #endif
 
     end function
@@ -1213,7 +1129,9 @@
 
     function gpu_free_intptr(a) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1231,26 +1149,17 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_free_intptr(a)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_free_intptr(a)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_free_intptr(a)
-      endif
+      success = hip_free_intptr(a)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_free_intptr(a)
-      endif
+      success = openmp_offload_free_intptr(a)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_free_intptr(a)
-      endif
+      success = sycl_free_intptr(a)
 #endif
 
     end function
@@ -1258,7 +1167,9 @@
 
     function gpu_free_cptr(a) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1276,32 +1187,25 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_free_cptr(a)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_free_cptr(a)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_free_cptr(a)
-      endif
+      success = hip_free_cptr(a)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_free_cptr(a)
-      endif
+      success = openmp_offload_free_cptr(a)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_free_cptr(a)
-      endif
+      success = sycl_free_cptr(a)
 #endif
 
     end function
     function gpu_free_host(a) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1319,28 +1223,19 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_free_host(a)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_free_host(a)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_free_host(a)
-      endif
+      success = hip_free_host(a)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: host_free"
-        stop
-      endif
+      print *,"not yet implemented: free_host"
+      stop 1
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_free"
-        stop
-      endif
+      print *,"not yet implemented: free_host"
+      stop 1
 #endif
 
 
@@ -1348,7 +1243,9 @@
 
     function gpu_host_unregister(a) result(success)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1366,28 +1263,19 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_host_unregister(a)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_host_unregister(a)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_host_unregister(a)
-      endif
+      success = hip_host_unregister(a)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: host_unregister"
-        stop
-      endif
+      print *,"not yet implemented: host_unregister"
+      stop 1
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_unregister"
-        stop
-      endif
+      print *,"not yet implemented: host_unregister"
+      stop 1
 #endif
 
     end function
@@ -1396,7 +1284,9 @@
     function gpu_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir) result(success)
 
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1420,35 +1310,28 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
-      endif
+      success = hip_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: memcpy2d_intptr"
-        stop
-      endif
+      print *,"not yet implemented: memcpy2d_intptr"
+      stop 1
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_intptr"
-        stop
-      endif
+      print *,"not yet implemented: memcpy2d_intptr"
+      stop 1
 #endif
     end function
 
     function gpu_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir) result(success)
 
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1472,35 +1355,28 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)
-      endif
+      success = hip_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: memcpy2d_cptr"
-        stop
-      endif
+      print *,"not yet implemented: memcpy2d_cptr"
+      stop 1
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_cptr"
-        stop
-      endif
+      print *,"not yet implemented: memcpy2d_cptr"
+      stop 1
 #endif
     end function
 
     function gpu_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, stream) result(success)
 
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1525,35 +1401,28 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, stream)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, stream)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, stream)
-      endif
+      success = hip_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, stream)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: memcpy2d_async_intptr"
-        stop
-      endif
+      print *,"not yet implemented: memcpy2d_async_intptr"
+      stop 1
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_async_intptr"
-        stop
-      endif
+      print *,"not yet implemented: memcpy2d_async_intptr"
+      stop 1
 #endif
     end function
 
     function gpu_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height, dir, stream) result(success)
 
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1578,34 +1447,27 @@
 
       success = .false.
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height, dir, stream)
-      endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height, dir, stream)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        success = hip_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height , dir, stream)
-      endif
+      success = hip_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height , dir, stream)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: memcpy2d_async_cptr"
-        stop
-      endif
+      print *,"not yet implemented: memcpy2d_async_cptr"
+      stop 1
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_async-cptr"
-        stop
-      endif
+      print *,"not yet implemented: memcpy2d_async-cptr"
+      stop 1
 #endif
     end function
 
     subroutine gpusolver_dtrtri(uplo, diag, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1623,32 +1485,26 @@
       integer(kind=c_int)             :: info
       integer(kind=c_intptr_t)        :: handle
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_dtrtri(uplo, diag, n, a, lda, info, handle)
-      endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_dtrtri(uplo, diag, n, a, lda, info, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_dtrtri(uplo, diag, n, a, lda, info, handle)
-      endif
+      call rocsolver_dtrtri(uplo, diag, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_dtrtri(uplo, diag, n, a, lda, info, handle)
-      endif
+      call mkl_openmp_offload_dtrtri(uplo, diag, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
-!      if (use_gpu_vendor == sycl_gpu) then
-!        call mkl_sycl_dtrtri(uplo, diag, n, a, lda, info, handle)
-!      endif
+!      call mkl_sycl_dtrtri(uplo, diag, n, a, lda, info, handle)
 #endif
     end subroutine
 
     subroutine gpusolver_strtri(uplo, diag, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1666,32 +1522,26 @@
       integer(kind=c_int)             :: info
       integer(kind=c_intptr_t)        :: handle
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_strtri(uplo, diag, n, a, lda, info, handle)
-      endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_strtri(uplo, diag, n, a, lda, info, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_strtri(uplo, diag, n, a, lda, info, handle)
-      endif
+      call rocsolver_strtri(uplo, diag, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_strtri(uplo, diag, n, a, lda, info, handle)
-      endif
+      call mkl_openmp_offload_strtri(uplo, diag, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
-!      if (use_gpu_vendor == sycl_gpu) then
 !        call mkl_sycl_strtri(uplo, diag, n, a, lda, info, handle)
-!      endif
 #endif
     end subroutine
 
     subroutine gpusolver_ztrtri(uplo, diag, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1709,21 +1559,15 @@
       integer(kind=c_int)             :: info
       integer(kind=c_intptr_t)        :: handle
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_ztrtri(uplo, diag, n, a, lda, info, handle)
-      endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_ztrtri(uplo, diag, n, a, lda, info, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_ztrtri(uplo, diag, n, a, lda, info, handle)
-      endif
+      call rocsolver_ztrtri(uplo, diag, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_ztrtri(uplo, diag, n, a, lda, info, handle)
-      endif
+      call mkl_openmp_offload_ztrtri(uplo, diag, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
 !      if (use_gpu_vendor == sycl_gpu) then
@@ -1734,7 +1578,9 @@
 
     subroutine gpusolver_ctrtri(uplo, diag, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1752,21 +1598,15 @@
       integer(kind=c_int)             :: info
       integer(kind=c_intptr_t)        :: handle
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_ctrtri(uplo, diag, n, a, lda, info, handle)
-      endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_ctrtri(uplo, diag, n, a, lda, info, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_ctrtri(uplo, diag, n, a, lda, info, handle)
-      endif
+      call rocsolver_ctrtri(uplo, diag, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_ctrtri(uplo, diag, n, a, lda, info, handle)
-      endif
+      call mkl_openmp_offload_ctrtri(uplo, diag, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
 !      if (use_gpu_vendor == sycl_gpu) then
@@ -1777,7 +1617,9 @@
 
     subroutine gpusolver_dpotrf(uplo, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1795,21 +1637,15 @@
       integer(kind=c_int)             :: info
       integer(kind=c_intptr_t)        :: handle
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_dpotrf(uplo, n, a, lda, info, handle)
-      endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_dpotrf(uplo, n, a, lda, info, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_dpotrf(uplo, n, a, lda, info, handle)
-      endif
+      call rocsolver_dpotrf(uplo, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_dpotrf(uplo, n, a, lda, info, handle)
-      endif
+      call mkl_openmp_offload_dpotrf(uplo, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
 !      if (use_gpu_vendor == sycl_gpu) then
@@ -1820,7 +1656,9 @@
 
     subroutine gpusolver_spotrf(uplo, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1838,21 +1676,15 @@
       integer(kind=c_int)             :: info
       integer(kind=c_intptr_t)        :: handle
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_spotrf(uplo, n, a, lda, info, handle)
-      endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_spotrf(uplo, n, a, lda, info, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_spotrf(uplo, n, a, lda, info, handle)
-      endif
+      call rocsolver_spotrf(uplo, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_spotrf(uplo, n, a, lda, info, handle)
-      endif
+      call mkl_openmp_offload_spotrf(uplo, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
 !      if (use_gpu_vendor == sycl_gpu) then
@@ -1863,7 +1695,9 @@
 
     subroutine gpusolver_zpotrf(uplo, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1881,21 +1715,15 @@
       integer(kind=c_int)             :: info
       integer(kind=c_intptr_t)        :: handle
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_zpotrf(uplo, n, a, lda, info, handle)
-      endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_zpotrf(uplo, n, a, lda, info, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_zpotrf(uplo, n, a, lda, info, handle)
-      endif
+      call rocsolver_zpotrf(uplo, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_zpotrf(uplo, n, a, lda, info, handle)
-      endif
+      call mkl_openmp_offload_zpotrf(uplo, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
 !      if (use_gpu_vendor == sycl_gpu) then
@@ -1906,7 +1734,9 @@
 
     subroutine gpusolver_cpotrf(uplo, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1924,21 +1754,15 @@
       integer(kind=c_int)             :: info
       integer(kind=c_intptr_t)        :: handle
 
-      if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_cpotrf(uplo, n, a, lda, info, handle)
-      endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cusolver_cpotrf(uplo, n, a, lda, info, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-      if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_cpotrf(uplo, n, a, lda, info, handle)
-      endif
+      call rocsolver_cpotrf(uplo, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_cpotrf(uplo, n, a, lda, info, handle)
-      endif
+      call mkl_openmp_offload_cpotrf(uplo, n, a, lda, info, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
 !      if (use_gpu_vendor == sycl_gpu) then
@@ -1949,7 +1773,9 @@
 
     subroutine gpublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
       use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
       use cuda_functions
+#endif
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
@@ -1968,26 +1794,17 @@
       integer(kind=C_intptr_T)        :: a, x, y
       integer(kind=c_intptr_t)        :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call rocblas_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-         if (use_gpu_vendor == openmp_offload_gpu) then
-           call mkl_openmp_offload_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-         endif
+      call mkl_openmp_offload_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-         if (use_gpu_vendor == sycl_gpu) then
-           call mkl_sycl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-         endif
+      call mkl_sycl_dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
     end subroutine
 
@@ -2012,26 +1829,17 @@
       integer(kind=C_intptr_T)        :: a, x, y
       integer(kind=c_intptr_t)        :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call rocblas_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call mkl_openmp_offload_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call mkl_sycl_sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
 
     end subroutine
@@ -2057,26 +1865,17 @@
       integer(kind=C_intptr_T)        :: a, x, y
       integer(kind=c_intptr_t)        :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call rocblas_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call mkl_openmp_offload_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call mkl_sycl_zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
 
     end subroutine
@@ -2102,26 +1901,17 @@
       integer(kind=C_intptr_T)        :: a, x, y
       integer(kind=c_intptr_t)        :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call rocblas_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call mkl_openmp_offload_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
-        endif
+      call mkl_sycl_cgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, handle)
 #endif
 
     end subroutine
@@ -2147,26 +1937,17 @@
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call rocblas_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_openmp_offload_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_sycl_dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
 
     end subroutine 
@@ -2192,26 +1973,17 @@
       type(c_ptr)                     :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call rocblas_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_openmp_offload_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_sycl_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_sycl_dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
     end subroutine 
 
@@ -2237,26 +2009,17 @@
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call rocblas_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_openmp_offload_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_sycl_sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
     end subroutine
 
@@ -2281,26 +2044,17 @@
       type(c_ptr)                     :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call rocblas_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_openmp_offload_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_sycl_sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
     end subroutine
 
@@ -2326,26 +2080,17 @@
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call rocblas_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_openmp_offload_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_sycl_zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
     end subroutine
 
@@ -2371,26 +2116,17 @@
       type(c_ptr)                     :: a, b, c
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call rocblas_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_openmp_offload_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_sycl_zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
     end subroutine
 
@@ -2417,26 +2153,17 @@
       integer(kind=c_intptr_t)     :: handle
 
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call rocblas_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_openmp_offload_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_sycl_cgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
     end subroutine
 
@@ -2462,26 +2189,17 @@
       type(c_ptr)                     :: a, b, c
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call rocblas_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_openmp_offload_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
-        endif
+      call mkl_sycl_cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
 #endif
     end subroutine
 
@@ -2505,26 +2223,17 @@
       integer(kind=C_intptr_T)        :: x, y
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_dcopy_intptr(n, x, incx, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dcopy_intptr(n, x, incx, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dcopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call rocblas_dcopy_intptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_dcopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_openmp_offload_dcopy_intptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_dcopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_sycl_dcopy_intptr(n, x, incx, y, incy, handle)
 #endif
     end subroutine
 
@@ -2548,26 +2257,17 @@
       type(c_ptr)                     :: x, y
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_dcopy_cptr(n, x, incx, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dcopy_cptr(n, x, incx, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dcopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call rocblas_dcopy_cptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_dcopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_openmp_offload_dcopy_cptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_dcopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_sycl_dcopy_cptr(n, x, incx, y, incy, handle)
 #endif
     end subroutine
 
@@ -2591,26 +2291,17 @@
       integer(kind=C_intptr_T)        :: x, y
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_scopy_intptr(n, x, incx, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_scopy_intptr(n, x, incx, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_scopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call rocblas_scopy_intptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_scopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_openmp_offload_scopy_intptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_scopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_sycl_scopy_intptr(n, x, incx, y, incy, handle)
 #endif
     end subroutine
 
@@ -2634,26 +2325,17 @@
       type(c_ptr)                     :: x, y
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_scopy_cptr(n, x, incx, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_scopy_cptr(n, x, incx, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_scopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call rocblas_scopy_cptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_scopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_openmp_offload_scopy_cptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_scopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_sycl_scopy_cptr(n, x, incx, y, incy, handle)
 #endif
     end subroutine
 
@@ -2678,26 +2360,17 @@
       integer(kind=C_intptr_T)        :: x, y
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_zcopy_intptr(n, x, incx, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_zcopy_intptr(n, x, incx, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_zcopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call rocblas_zcopy_intptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_zcopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_openmp_offload_zcopy_intptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_zcopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_sycl_zcopy_intptr(n, x, incx, y, incy, handle)
 #endif
     end subroutine
 
@@ -2722,26 +2395,17 @@
       integer(kind=c_intptr_t)     :: handle
 
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_zcopy_cptr(n, x, incx, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_zcopy_cptr(n, x, incx, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_zcopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call rocblas_zcopy_cptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_zcopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_openmp_offload_zcopy_cptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_zcopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_sycl_zcopy_cptr(n, x, incx, y, incy, handle)
 #endif
 
     end subroutine
@@ -2766,26 +2430,17 @@
       integer(kind=C_intptr_T)        :: x, y
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ccopy_intptr(n, x, incx, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ccopy_intptr(n, x, incx, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ccopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call rocblas_ccopy_intptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ccopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_openmp_offload_ccopy_intptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ccopy_intptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_sycl_ccopy_intptr(n, x, incx, y, incy, handle)
 #endif
     end subroutine
 
@@ -2809,26 +2464,17 @@
       type(c_ptr)                     :: x, y
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ccopy_cptr(n, x, incx, y, incy, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ccopy_cptr(n, x, incx, y, incy, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ccopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call rocblas_ccopy_cptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ccopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_openmp_offload_ccopy_cptr(n, x, incx, y, incy, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ccopy_cptr(n, x, incx, y, incy, handle)
-        endif
+      call mkl_sycl_ccopy_cptr(n, x, incx, y, incy, handle)
 #endif
     end subroutine
 
@@ -2855,26 +2501,17 @@
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
 
     end subroutine
@@ -2902,26 +2539,17 @@
       type(c_ptr)                     :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -2948,26 +2576,17 @@
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -2994,26 +2613,17 @@
       type(c_ptr)                     :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3040,26 +2650,17 @@
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3087,26 +2688,17 @@
       type(c_ptr)                     :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3133,26 +2725,17 @@
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3180,26 +2763,17 @@
       type(c_ptr)                     :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3226,26 +2800,17 @@
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3272,26 +2837,17 @@
       type(c_ptr)                     :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3318,26 +2874,17 @@
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3364,26 +2911,17 @@
       type(c_ptr)                     :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3410,26 +2948,17 @@
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3457,26 +2986,17 @@
       type(c_ptr)                     :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3503,26 +3023,17 @@
       integer(kind=C_intptr_T)        :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_ctrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
@@ -3550,26 +3061,17 @@
       type(c_ptr)                     :: a, b
       integer(kind=c_intptr_t)     :: handle
 
-        if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
+#endif
 #ifdef WITH_AMD_GPU_VERSION
-        if (use_gpu_vendor == amd_gpu) then
-          call rocblas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call rocblas_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-        if (use_gpu_vendor == openmp_offload_gpu) then
-          call mkl_openmp_offload_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_openmp_offload_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
-
 #ifdef WITH_SYCL_GPU_VERSION
-        if (use_gpu_vendor == sycl_gpu) then
-          call mkl_sycl_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
-        endif
+      call mkl_sycl_ctrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
 #endif
     end subroutine
 
