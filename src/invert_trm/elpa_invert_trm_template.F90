@@ -145,6 +145,15 @@
       print *,"ELPA_INVERT_TRM: Problem getting option for AMD GPU. Aborting..."
       stop
     endif
+  
+  else if (gpu_vendor() == SYCL_GPU) then
+    call obj%get("intel-gpu",gpu,error)
+    if (error .ne. ELPA_OK) then
+      print *,"ELPA_INVERT_TRM: Problem getting option for SYCL GPU. Aborting..."
+      success = .false.
+      return
+    endif  
+
   else
     gpu = 0
   endif

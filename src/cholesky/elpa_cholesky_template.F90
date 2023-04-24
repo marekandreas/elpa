@@ -143,6 +143,13 @@
       success = .false.
       return
     endif
+  else if (gpu_vendor() == SYCL_GPU) then
+    call obj%get("intel-gpu",gpu,error)
+    if (error .ne. ELPA_OK) then
+      write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for SYCL GPU. Aborting..."
+      success = .false.
+      return
+    endif
   else
     gpu = 0
   endif

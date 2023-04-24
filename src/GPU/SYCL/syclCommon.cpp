@@ -94,8 +94,12 @@ void elpa::gpu::sycl::collectCpuDevices() {
 
 int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
   collectGpuDevices();
+  if (devices.size()==0){
+    std::cout << "GPU devices are not available." << std::endl;
+    return 0;
+  }
   if (deviceId >= devices.size()){
-    std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
+    std::cerr << "Invalid GPU device ID selected, only " << devices.size() << " devices available." << std::endl;
     return 0;
   }
   cl::sycl::property::queue::in_order io;
@@ -107,7 +111,7 @@ int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
 int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
   collectCpuDevices();
   if (deviceId >= devices.size()){
-    std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
+    std::cerr << "Invalid CPU device ID selected, only " << devices.size() << " devices available." << std::endl;
     return 0;
   }
   cl::sycl::property::queue::in_order io;
