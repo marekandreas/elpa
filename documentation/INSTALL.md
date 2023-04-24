@@ -13,7 +13,7 @@ The release of ELPA 2022.11.001 does change the API and ABI compared to the rele
 ## 1. How to install *ELPA* ##
 
 First of all, if you do not want to build *ELPA* yourself, and you run Linux,
-it is worth having a look at the [*ELPA* webpage*](http://elpa.mpcdf.mpg.de)
+it is worth having a look at the [*ELPA* webpage](http://elpa.mpcdf.mpg.de)
 and/or the repositories of your Linux distribution: there exist
 pre-build packages for a number of Linux distributions like Fedora,
 Debian, and OpenSuse. More, will hopefully follow in the future.

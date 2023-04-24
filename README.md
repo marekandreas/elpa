@@ -57,7 +57,7 @@ GNU Lesser General Public License as published by the Free Software Foundation.
 
 There exist several ways to obtain the *ELPA* library either as sources or pre-compiled packages:
 
-- official release tar-gz sources from the *ELPA* [webpage](https://elpa.mpcdf.mpg.de/elpa-tar-archive/ELPA_TARBALL_ARCHIVE.html)
+- official release tar-gz sources from the *ELPA* [webpage](https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html)
 - from the *ELPA* [git repository](https://gitlab.mpcdf.mpg.de/elpa/elpa)
 - as packaged software for several Linux distributions (e.g. Debian, Fedora, OpenSuse)
 
@@ -127,7 +127,7 @@ the possible configure options.
 
 ## Using *ELPA*
 
-Please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2022.11.001/html/index.html) doxygen documentation, where you find the definition of the interfaces. You might want to have a look at the [PERFORMANCE tuning document](./documentation/PERFORMANCE_TUNING.md) to avoid some usual pitfalls.
+Please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file, to get a documentation or at the [online](https://elpa.mpcdf.mpg.de/documentation/doxygen/ELPA_DOXYGEN_PAGES/ELPA-2022.11.001/html/index.html) doxygen documentation, where you find the definition of the interfaces. You might want to have a look at the [PERFORMANCE tuning document](./documentation/PERFORMANCE_TUNING.md) to avoid some usual pitfalls.
 
 ## Contributing to *ELPA*
 
