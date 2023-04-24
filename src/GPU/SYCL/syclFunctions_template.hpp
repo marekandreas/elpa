@@ -72,7 +72,7 @@ static void collectCpuDevices() {
   elpa::gpu::sycl::collectCpuDevices();
 }
 
-bool isCPU=1;
+bool isCPU=0;
 
 static oneapi::mkl::transpose transposeFromChar(char c) {
   switch (c) {
@@ -154,8 +154,8 @@ static oneapi::mkl::side sideFromChar(char c) {
     collectCpuDevices();
     count_tmp = elpa::gpu::sycl::getNumCpuDevices();
     if (count_tmp > 0) {
-      //elpa::gpu::sycl::isCPU=0;
-      isCPU=0;
+      //elpa::gpu::sycl::isCPU=1;
+      isCPU=1;
     }
     *count = count_tmp;
     return 1;
@@ -164,7 +164,10 @@ static oneapi::mkl::side sideFromChar(char c) {
   int syclSetDeviceFromC(int targetGpuDeviceId) {
     int success = elpa::gpu::sycl::selectGpuDevice(targetGpuDeviceId);
     if (success) {
-      //std::cout << "<<<<<<< GPU " << targetGpuDeviceId << " has been selected. >>>>>>>>" << std::endl;
+      std::cout << "<<<<<<< GPU " << targetGpuDeviceId << " has been selected. >>>>>>>>" << std::endl;
+    }
+    else {
+      std::cout << "<<<<<<< GPU " << targetGpuDeviceId << " cannot be selected. >>>>>>>>" << std::endl;
     }
     return success;
   }
@@ -234,12 +237,13 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
 
+
   int syclMemcpyFromC(void *dst, void *src, size_t size, int direction) {
     auto &queue = elpa::gpu::sycl::getQueue();
     bool isFailed = false;
     using sycl::usm::alloc;
-    //if (elpa::gpu::sycl::isCPU == 0) {
-    if (isCPU == 0) {
+    //if (elpa::gpu::sycl::isCPU == 1) {
+    if (isCPU == 1) {
       if (direction == syclMemcpyDeviceToDevice) {
         if (sycl::get_pointer_type(dst, queue.get_context()) != alloc::host) {
           std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
@@ -321,8 +325,8 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   int syclMemsetFromC(void *mem, int32_t val, size_t size) {
     auto &queue = elpa::gpu::sycl::getQueue();
-    //if (elpa::gpu::sycl::isCPU == 0) {
-    if (isCPU == 0) {
+    //if (elpa::gpu::sycl::isCPU == 1) {
+    if (isCPU == 1) {
       if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::host) {
         std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
         return 0;
