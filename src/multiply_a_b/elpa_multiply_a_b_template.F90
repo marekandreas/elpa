@@ -125,7 +125,7 @@
   if (gpu_vendor() == NVIDIA_GPU) then
     call obj%get("gpu",gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for GPU. Aborting..."
+      print *,"ELPA_MULITPLY_AB: Problem getting option for GPU. Aborting..."
       stop
     endif
     if (gpu .eq. 1) then
@@ -133,23 +133,32 @@
               & keyword 'nvidia-gpu'"
       call obj%set("nvidia-gpu",gpu,error)
       if (error .ne. ELPA_OK) then
-        print *,"Problem setting option for NVIDIA GPU. Aborting..."
+        print *,"ELPA_MULITPLY_AB: Problem setting option for NVIDIA GPU. Aborting..."
         stop
       endif
     endif
 
     call obj%get("nvidia-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for NVIDIA GPU. Aborting..."
+      print *,"ELPA_MULITPLY_AB: Problem getting option for NVIDIA GPU. Aborting..."
       stop
     endif
 
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for AMD GPU. Aborting..."
+      print *,"ELPA_MULITPLY_AB: Problem getting option for AMD GPU. Aborting..."
       stop
     endif
+  
+  else if (gpu_vendor() == SYCL_GPU) then
+    call obj%get("intel-gpu",gpu,error)
+    if (error .ne. ELPA_OK) then
+      print *,"ELPA_MULITPLY_AB: Problem getting option for SYCL GPU. Aborting..."
+      success = .false.
+      return
+    endif
+
   else
     gpu = 0
   endif
@@ -168,7 +177,8 @@
 
   if (.not.(useGPU)) then
 #ifdef DEVICE_POINTER
-    print *,"You used the interface for device pointers for hermitian_multiply but did not specify GPU usage!. Aborting..."
+    print *,"ELPA_MULITPLY_AB: You used the interface for device pointers &
+             for hermitian_multiply but did not specify GPU usage!. Aborting..."
     stop
 #endif
   endif
@@ -248,8 +258,10 @@
     successGPU = gpu_malloc(b_dev,num)
     check_alloc_gpu("elpa_mult_at_b: b_dev", successGPU)
 
+#if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
     successGPU = gpu_host_register(int(loc(b),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
+#endif    
 
     check_host_register_gpu("elpa_mult_at_b: b", successGPU)
 #ifdef WITH_GPU_STREAMS
@@ -316,19 +328,25 @@
 #endif /* DEVICE_POINTER */
 
     num = l_rows*nblk_mult*size_of_datatype
+#if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
     successGPU = gpu_malloc_host(aux_host, num)
     check_host_alloc_gpu("elpa_mult_at_b: aux_host", successGPU)
-
     call c_f_pointer(aux_host, aux_mat, (/l_rows,nblk_mult/))
+#else
+  allocate(aux_mat(l_rows,nblk_mult))
+#endif
 
     successGPU = gpu_malloc(aux_dev,num)
     check_alloc_gpu("elpa_mult_at_b: aux_dev", successGPU)
 
     num = nblk_mult*l_cols*size_of_datatype
+#if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
     successGPU = gpu_malloc_host(tmp1_host,num)
     check_host_alloc_gpu("elpa_mult_at_b: tmp1_host", successGPU)
-
     call c_f_pointer(tmp1_host,tmp1,(/nblk_mult,l_cols/))
+#else
+    allocate(tmp1(nblk_mult,l_cols))
+#endif
 
     successGPU = gpu_malloc(tmp1_dev,num)
     check_alloc_gpu("elpa_mult_at_b: tmp1_dev", successGPU)
@@ -567,9 +585,10 @@
 #ifndef DEVICE_POINTER
     successGPU = gpu_free(b_dev)
     check_dealloc_gpu("elpa_multiply_a_b: b_dev", successGPU)
-
+#if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
     successGPU = gpu_host_unregister(int(loc(b),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_multiply_a_b: b", successGPU)
+#endif
 #else /* DEVICE_POINTER */
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
@@ -608,17 +627,23 @@
     deallocate(c_tmp, stat=istat, errmsg=errorMessage)
     check_deallocate("elpa_mult_at_b: c_tmp", istat, errorMessage)
 #endif /* DEVICE_POINTER */
+
+#if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
     nullify(aux_mat)
     nullify(tmp1)
 
     successGPU = gpu_free_host(aux_host)
     check_host_dealloc_gpu("elpa_multiply_a_b: aux_host", successGPU)
 
-    successGPU = gpu_free(aux_dev)
-    check_dealloc_gpu("elpa_multiply_a_b: aux_dev", successGPU)
-
     successGPU = gpu_free_host(tmp1_host)
     check_host_dealloc_gpu("elpa_multiply_a_b: tmp1_host", successGPU)
+#else
+    deallocate(aux_mat, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_mult_at_b: aux_mat", istat, errorMessage)
+#endif
+
+    successGPU = gpu_free(aux_dev)
+    check_dealloc_gpu("elpa_multiply_a_b: aux_dev", successGPU)
 
     successGPU = gpu_free(tmp1_dev)
     check_dealloc_gpu("elpa_multiply_a_b: tmp1_dev", successGPU)
