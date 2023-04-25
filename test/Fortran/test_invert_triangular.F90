@@ -169,6 +169,7 @@ program test
 #if TEST_GPU == 1
    type(c_ptr)                            :: a_dev
    TEST_INT_TYPE                          :: numberOfDevices
+   TEST_INT_TYPE                          :: gpuID
    logical                                :: successGPU
 #endif
 
@@ -335,6 +336,17 @@ program test
       stop 1
    endif
 
+   success = gpu_GetDeviceCount(numberOfDevices)
+   if (.not.(success)) then
+      print *,"Error in gpu_GetDeviceCount. Aborting..."
+      stop 1
+   endif
+   print *,"numberOfDevices=", numberOfDevices
+   gpuID = mod(myid, numberOfDevices)   
+
+   call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+
 #if TEST_INTEL_GPU_SYCL == 1 /* temporary fix for SYCL on CPU */
    success = sycl_getcpucount(numberOfDevices)
    if (.not.(success)) then
@@ -343,7 +355,7 @@ program test
    endif
 #endif
 
-   ! Set device #0 (gpi id is not tested)
+   ! Set device #0
    successGPU = gpu_setdevice(0)
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."

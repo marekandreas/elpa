@@ -808,8 +808,6 @@ program test
 #endif
 
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
-   ! simple test
-   ! Can (and should) fail often
    if (gpu_vendor() /= no_gpu) then
       call set_gpu_parameters()
    else 
@@ -824,7 +822,7 @@ program test
    endif
    print *,"numberOfDevices=", numberOfDevices
    gpuID = mod(myid, numberOfDevices)
-   !gpuID = mod(myid,1)
+
    call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
