@@ -246,7 +246,7 @@ last_stripe_width, kernel, my_stream, success)
       ( kernel .ne. ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL)) then
 #endif
       write(error_unit,'(a)') "ERROR: useGPU is set in compute_hh_trafo but not an INTEL GPU SYCL kernel!"
-      stop
+      stop 1
       success = .false.
       return
     endif
@@ -257,7 +257,7 @@ last_stripe_width, kernel, my_stream, success)
   if (useGPU) then
     if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
       write(error_unit,'(a)') "no offlad kernels yet implemented"
-      stop
+      stop 1
    endif
   endif
 #endif

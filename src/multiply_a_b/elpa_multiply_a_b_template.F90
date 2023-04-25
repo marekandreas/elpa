@@ -126,7 +126,7 @@
     call obj%get("gpu",gpu,error)
     if (error .ne. ELPA_OK) then
       print *,"ELPA_MULITPLY_AB: Problem getting option for GPU. Aborting..."
-      stop
+      stop 1
     endif
     if (gpu .eq. 1) then
       print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new &
@@ -134,21 +134,21 @@
       call obj%set("nvidia-gpu",gpu,error)
       if (error .ne. ELPA_OK) then
         print *,"ELPA_MULITPLY_AB: Problem setting option for NVIDIA GPU. Aborting..."
-        stop
+        stop 1
       endif
     endif
 
     call obj%get("nvidia-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
       print *,"ELPA_MULITPLY_AB: Problem getting option for NVIDIA GPU. Aborting..."
-      stop
+      stop 1
     endif
 
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
       print *,"ELPA_MULITPLY_AB: Problem getting option for AMD GPU. Aborting..."
-      stop
+      stop 1
     endif
   
   else if (gpu_vendor() == SYCL_GPU) then
@@ -166,7 +166,7 @@
   call obj%get("gpu_hermitian_multiply",gpu_multiply_a_b, error)
   if (error .ne. ELPA_OK) then
     print *,"ELPA_MULITPLY_AB: Problem getting option for gpu_cholesky. Aborting..."
-    stop
+    stop 1
   endif
 
   if (gpu_multiply_a_b .eq. 1) then
@@ -179,7 +179,7 @@
 #ifdef DEVICE_POINTER
     print *,"ELPA_MULITPLY_AB: You used the interface for device pointers &
              for hermitian_multiply but did not specify GPU usage!. Aborting..."
-    stop
+    stop 1
 #endif
   endif
 
@@ -203,17 +203,17 @@
   call obj%get("mpi_comm_rows",mpi_comm_rows,error)
   if (error .ne. ELPA_OK) then
     print *,"Problem getting option for mpi_comm_rows. Aborting..."
-    stop
+    stop 1
   endif
   call obj%get("mpi_comm_cols",mpi_comm_cols,error)
   if (error .ne. ELPA_OK) then
     print *,"Problem getting option for mpi_comm_cols. Aborting..."
-    stop
+    stop 1
   endif
   call obj%get("mpi_comm_parent",mpi_comm_all,error)
   if (error .ne. ELPA_OK) then
     print *,"Problem getting option for mpi_comm_parent. Aborting..."
-    stop
+    stop 1
   endif
 
   call obj%timer%start("mpi_communication")

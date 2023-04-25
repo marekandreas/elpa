@@ -1955,12 +1955,12 @@ module elpa_impl
          !call self%get("nvidia-gpu", gpu_new, error)
          !if (error .ne. ELPA_OK) then
          !  print *,"ELPA_AUTOTUNE_SETUP: cannot get nvidia-gpu option. Aborting..."
-         !  stop
+         !  stop 1
          !endif
          !call self%set("gpu", gpu_new, error)
          !if (error .ne. ELPA_OK) then
          !  print *,"ELPA_AUTOTUNE_SETUP: cannot set gpu option. Aborting..."
-         !  stop
+         !  stop 1
          !endif
         !else !nvidia not set
         !endif
@@ -2781,7 +2781,7 @@ module elpa_impl
         !    ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ELPA1
         !  else
         !    print *,"ELPA_AUTOTUNE_STEP: Unknown solver"
-        !    stop
+        !    stop 1
         !  endif        
         !else 
         !  ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ANY
@@ -2960,7 +2960,7 @@ module elpa_impl
         !    ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ELPA1
         !  else
         !    print *,"ELPA_AUTOTUNE_STEP: Unknown solver"
-        !    stop
+        !    stop 1
         !  endif        
         !else 
         !  ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ANY
@@ -3138,7 +3138,7 @@ module elpa_impl
           !    ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ELPA1
           !  else
           !    print *,"ELPA_AUTOTUNE_STEP: Unknown solver"
-          !    stop
+          !    stop 1
           !  endif        
           !else 
           !  ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ANY
@@ -3223,7 +3223,7 @@ module elpa_impl
           !    ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ELPA1
           !  else
           !    print *,"ELPA_AUTOTUNE_STEP: Unknown solver"
-          !    stop
+          !    stop 1
           !  endif        
           !else 
           !  ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ANY
@@ -3428,7 +3428,7 @@ module elpa_impl
         !    ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ELPA1
         !  else
         !    print *,"ELPA_AUTOTUNE_STEP: Unknown solver"
-        !    stop
+        !    stop 1
         !  endif        
         !else 
         !  ts_impl%sublevel_part(sublevel) = ELPA_AUTOTUNE_PART_ANY

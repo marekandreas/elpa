@@ -96,7 +96,7 @@ module mod_check_for_gpu
       call obj%get("mpi_comm_parent",mpi_comm_all,error)
       if (error .ne. ELPA_OK) then
         print *,"Problem getting option for mpi_comm_parent. Aborting..."
-        stop
+        stop 1
       endif
 
       ! needed later for handle creation
@@ -198,7 +198,7 @@ module mod_check_for_gpu
         call obj%get("use_gpu_id", use_gpu_id, error)
         if (error .ne. ELPA_OK) then
           print *,"check_for_gpu: cannot querry use_gpu_id. Aborting..."
-          stop
+          stop 1
         endif
 
         if (use_gpu_id == -99) then
@@ -327,7 +327,7 @@ module mod_check_for_gpu
             call obj%set("use_gpu_id",deviceNumber, error)
             if (error .ne. ELPA_OK) then
               print *,"Cannot set use_gpu_id. Aborting..."
-              stop
+              stop 1
             endif
  
 #include "./handle_creation_template.F90"

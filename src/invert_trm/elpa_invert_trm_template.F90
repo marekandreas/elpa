@@ -121,7 +121,7 @@
     call obj%get("gpu",gpu,error)
     if (error .ne. ELPA_OK) then
       print *,"ELPA_INVERT_TRM: Problem getting option for GPU. Aborting..."
-      stop
+      stop 1
     endif
     if (gpu .eq. 1) then
       print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new &
@@ -129,21 +129,21 @@
       call obj%set("nvidia-gpu",gpu,error)
       if (error .ne. ELPA_OK) then
         print *,"ELPA_INVERT_TRM: Problem setting option for NVIDIA GPU. Aborting..."
-        stop
+        stop 1
       endif
     endif
 
     call obj%get("nvidia-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
       print *,"ELPA_INVERT_TRM: Problem getting option for NVIDIA GPU. Aborting..."
-      stop
+      stop 1
     endif
 
   else if (gpu_vendor() == AMD_GPU) then
     call obj%get("amd-gpu",gpu,error)
     if (error .ne. ELPA_OK) then
       print *,"ELPA_INVERT_TRM: Problem getting option for AMD GPU. Aborting..."
-      stop
+      stop 1
     endif
   
   else if (gpu_vendor() == SYCL_GPU) then
@@ -161,7 +161,7 @@
   call obj%get("gpu_invert_trm",gpu_invert_trm,error)
   if (error .ne. ELPA_OK) then
     print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
-    stop
+    stop 1
   endif
 
   if (gpu_invert_trm .eq. 1) then
@@ -173,7 +173,7 @@
   if (.not.(useGPU)) then
 #ifdef DEVICE_POINTER
     print *,"You used the interface for device pointers for elpa_invert_trm but did not specify GPU usage!. Aborting..."
-    stop
+    stop 1
 #endif
   endif
 
@@ -197,23 +197,23 @@
   call obj%get("mpi_comm_parent", mpi_comm_all, error)
   if (error .ne. ELPA_OK) then
     print *,"ELPA_INVERT_TRM: Error getting option for mpi_comm_all. Aborting..."
-    stop
+    stop 1
   endif
   call obj%get("mpi_comm_rows", mpi_comm_rows, error)
   if (error .ne. ELPA_OK) then
     print *,"ELPA_INVERT_TRM: Error getting option for mpi_comm_rows. Aborting..."
-    stop
+    stop 1
   endif
   call obj%get("mpi_comm_cols", mpi_comm_cols, error)
   if (error .ne. ELPA_OK) then
     print *,"ELPA_INVERT_TRM: Error getting option for mpi_comm_cols. Aborting..."
-    stop
+    stop 1
   endif
 
   call obj%get("debug", debug, error)
   if (error .ne. ELPA_OK) then
     print *,"ELPA_INVERT_TRM: Error getting option for debug. Aborting..."
-    stop
+    stop 1
   endif
   if (debug == 1) then
     wantDebug = .true.
@@ -459,7 +459,7 @@
                              info, gpusolverHandle)
           if (info .ne. 0) then
             write(error_unit,*) "elpa_invert_trm: error in gpusolver_TRTRI"
-            stop
+            stop 1
           endif
           call obj%timer%stop("gpusolver")
          

@@ -202,7 +202,7 @@
        call obj%get("omp_threads", nrThreads, error)
        if (error .ne. ELPA_OK) then
          print *,"cannot get option for omp_threads. Aborting..."
-         stop
+         stop 1
        endif
        call omp_set_num_threads(nrThreads)
      else
@@ -210,7 +210,7 @@
        call obj%set("omp_threads",omp_threads_caller, error)
        if (error .ne. ELPA_OK) then
          print *,"cannot set option for omp_threads. Aborting..."
-         stop
+         stop 1
        endif
        nrThreads = omp_threads_caller
        call omp_set_num_threads(omp_threads_caller)

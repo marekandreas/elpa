@@ -347,7 +347,7 @@ program test
    successGPU = gpu_setdevice(0)
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."
-     stop
+     stop 1
    endif
 
    call e%set("gpu_invert_trm", 1, error_elpa)

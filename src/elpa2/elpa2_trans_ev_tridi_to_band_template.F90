@@ -307,13 +307,13 @@ subroutine trans_ev_tridi_to_band_&
   call obj%get("nbc_row_elpa2_tridi_to_band", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem setting option for non blocking collectives for rows in elpa2_tridi_to_band. Aborting..."
-    stop
+    stop 1
   endif
 
   call obj%get("nbc_col_elpa2_tridi_to_band", non_blocking_collectives_cols, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem setting option for non blocking collectives for cols in elpa2_tridi_to_band. Aborting..."
-    stop
+    stop 1
   endif
 
   if (non_blocking_collectives_rows .eq. 1) then
