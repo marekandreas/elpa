@@ -56,8 +56,11 @@ module mod_check_for_gpu
     ! if NOT the first call to check_for_gpu will set the MPI GPU relation and then
     ! _SET_ use_gpu_id such that subsequent calls abide this setting
     function check_for_gpu(obj, myid, numberOfDevices, wantDebug) result(gpuAvailable)
+      use cuda_functions
+      use hip_functions
+      use openmp_offload_functions
+      use sycl_functions
       use elpa_gpu, only : gpu_getdevicecount
-      use sycl_functions ! special case: sycl on cpu
       use precision
       use elpa_mpi
       use elpa_omp
