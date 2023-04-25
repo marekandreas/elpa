@@ -843,7 +843,7 @@ print *,"Device pointer + REDIST"
         ! combination not allowed
         write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
                             &is defined as the GPU kernel!  Setting default kernel"
-                    stop 1
+                    stop
         kernel = DEFAULT_KERNEL
         !TODO do error handling properly
       endif
