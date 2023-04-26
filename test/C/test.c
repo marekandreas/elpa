@@ -516,9 +516,9 @@ int main(int argc, char** argv) {
 #if TEST_GPU_DEVICE_POINTER_API == 1
    set_gpu_parameters();
    
-#if TEST_INTEL_GPU_SYCL == 1
+#if TEST_INTEL_GPU_SYCL == 1 /* temporary fix for SYCL on CPU */
    int numberOfDevices=0;
-   successGPU = syclGetCpuCount(numberOfDevices); // temporary fix for SYCL on CPU
+   successGPU = syclGetCpuCount(numberOfDevices);
    if (!successGPU){    
       printf("Error in syclGetCpuCount\n");
       exit(1);

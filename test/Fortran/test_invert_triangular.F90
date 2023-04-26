@@ -313,6 +313,8 @@ program test
    call e%set("debug",1,error_elpa)
    assert_elpa_ok(error_elpa)
 
+   assert_elpa_ok(e%setup())
+
 #if TEST_NVIDIA_GPU == 1
    call e%set("nvidia-gpu", TEST_GPU,error_elpa)
    assert_elpa_ok(error_elpa)
@@ -328,14 +330,8 @@ program test
 
 
 #if TEST_GPU == 1
-   ! create device pointers for a,q, ev; copy a to device
-   if (gpu_vendor() /= no_gpu) then
-      call set_gpu_parameters()
-   else 
-      print *,"Cannot set gpu vendor!"
-      stop 1
-   endif
 
+#if (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    success = gpu_GetDeviceCount(numberOfDevices)
    if (.not.(success)) then
       print *,"Error in gpu_GetDeviceCount. Aborting..."
@@ -343,9 +339,16 @@ program test
    endif
    print *,"numberOfDevices=", numberOfDevices
    gpuID = mod(myid, numberOfDevices)   
-
    call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
+#endif
+
+   if (gpu_vendor() /= no_gpu) then
+      call set_gpu_parameters()
+   else 
+      print *,"Cannot set gpu vendor!"
+      stop 1
+   endif
 
 #if TEST_INTEL_GPU_SYCL == 1 /* temporary fix for SYCL on CPU */
    success = sycl_getcpucount(numberOfDevices)
@@ -355,8 +358,7 @@ program test
    endif
 #endif
 
-   ! Set device #0
-   successGPU = gpu_setdevice(0)
+   successGPU = gpu_setdevice(gpuID)
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."
      stop 1
@@ -366,7 +368,6 @@ program test
    assert_elpa_ok(error_elpa)
 #endif /* TEST_GPU */
 
-   assert_elpa_ok(e%setup())
 
    !-----------------------------------------------------------------------------------------------------------------------------
    ! TEST_GPU == 1: create device pointer for a_dev; copy a -> a_dev

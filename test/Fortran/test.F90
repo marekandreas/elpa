@@ -782,6 +782,8 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
    call e%set("timings", 1_ik, error_elpa)
+   assert_elpa_ok(error_elpa)
+
    assert_elpa_ok(e%setup())
 
 #ifdef TEST_SOLVER_1STAGE
