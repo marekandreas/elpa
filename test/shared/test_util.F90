@@ -166,7 +166,7 @@ module test_util
       real(kind=c_double) :: x
       logical :: result_infinity_or_NaN
   
-      result_infinity_or_NaN = isnan(x) .or. x>huge(x) .or. x<-huge(x)
+      result_infinity_or_NaN = x/=x .or. x>huge(x) .or. x<-huge(x)
     end function
 
     function is_infinity_or_NaN_single(x) result(result_infinity_or_NaN)
@@ -174,7 +174,7 @@ module test_util
       real(kind=c_float) :: x
       logical :: result_infinity_or_NaN
   
-      result_infinity_or_NaN = isnan(x) .or. x>huge(x) .or. x<-huge(x)
+      result_infinity_or_NaN = x/=x .or. x>huge(x) .or. x<-huge(x)
     end function
 
 end module
