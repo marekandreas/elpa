@@ -1,5 +1,5 @@
 //
-//    Copyright 2014, A. Marek
+//    Copyright 2014 - 2023, A. Marek
 //
 //    This file is part of ELPA.
 //

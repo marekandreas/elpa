@@ -49,9 +49,8 @@
 
 #include "config-f90.h"
 module test_gpu
-  !use precision_for_tests
   use precision_for_tests
   use iso_c_binding
 
-#include "../../../src/GPU/vendor_agnostic_layer_template.F90"
+#include "../../../src/GPU/vendor_agnostic_general_layer_template.F90"
 end module 

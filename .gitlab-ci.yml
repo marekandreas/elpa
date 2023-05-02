@@ -18,6 +18,8 @@ include:
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/hip_on_nvidia_tests.inc.yml'
   # nvhpcsdk tests
   - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/nvhpcsdk_tests.inc.yml'
+  # sycl on cpu tests
+  - remote: 'https://gitlab.mpcdf.mpg.de/elpa/elpa_ci/raw/main/sycl_on_cpu_tests.inc.yml'
 
 
 

@@ -1,4 +1,5 @@
-// Copyright 2021, A. Marek MPCDF
+//
+//    Copyright 2022, A. Marek
 //
 //    This file is part of ELPA.
 //
@@ -16,7 +17,6 @@
 //      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 //      and
 //    - IBM Deutschland GmbH
-//
 //
 //    This particular source code file contains additions, changes and
 //    enhancements authored by Intel Corporation which is not part of
@@ -36,7 +36,7 @@
 //    GNU Lesser General Public License for more details.
 //
 //    You should have received a copy of the GNU Lesser General Public License
-//    along with ELPA. If not, see <http://www.gnu.org/licenses/>
+//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
 //
 //    ELPA reflects a substantial effort on the part of the original
 //    ELPA consortium, and we ask you to respect the spirit of the
@@ -45,19 +45,24 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-#include <CL/sycl.hpp>
+//
+// --------------------------------------------------------------------------------------------------
+//
+// This file was written by A. Marek, MPCDF
+#include "config-f90.h"
 
-#include "syclCommon.hpp"
+#include <stdio.h>
+#include <math.h>
+#include <stdio.h>
 
-extern "C" {
-  int sycl_gpu_count(int show_all_sycl_devices) {
-    using namespace elpa::gpu::sycl;
-    int count = -1000;
-    //
-    bool all = static_cast<bool>(show_all_sycl_devices);
-    collectGpuDevices(all);
-    count = getNumDevices();
-    return count;
-  }
-}
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <alloca.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <complex.h>
+#include "nccl.h"
+
+#include "./ncclFunctions_template.h"
 

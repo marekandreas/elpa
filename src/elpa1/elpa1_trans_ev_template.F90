@@ -98,6 +98,9 @@ subroutine trans_ev_&
   use elpa_abstract_impl
   use elpa_blas_interfaces
   use elpa_gpu
+#ifdef WITH_NVIDIA_NCCL
+  use nccl_functions
+#endif
 
   implicit none
 #include "../general/precision_kinds.F90"
@@ -154,6 +157,10 @@ subroutine trans_ev_&
   integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
   logical                                       :: success
   integer(kind=c_intptr_t)                      :: gpuHandle, my_stream
+#ifdef WITH_NVIDIA_NCCL
+  integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
+#endif
+
   success = .true.
 
   if(useGPU) then
@@ -348,6 +355,7 @@ subroutine trans_ev_&
 #endif
 
 #ifdef WITH_GPU_STREAMS
+! at least in the real case this memory copy could be done before calling this step
     my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("trans_ev", successGPU)
@@ -581,6 +589,9 @@ subroutine trans_ev_&
         ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
         ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
 #ifdef WITH_GPU_STREAMS
+#ifdef WITH_NVIDIA_NCCL
+       ! no memory transfers needed
+#else /* WITH_NVIDIA_NCCL */
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev", successGPU)
@@ -595,11 +606,12 @@ subroutine trans_ev_&
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu("trans_ev", successGPU)
-#else
+#endif /* WITH_NVIDIA_NCCL */
+#else /* WITH_GPU_STREAMS */
         successGPU = gpu_memcpy(int(loc(tmp1(1)),kind=c_intptr_t), tmp_dev,  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("trans_ev", successGPU)
-#endif
+#endif /* WITH_GPU_STREAMS */
 
 #else /* WITH_CUDA_AWARE_MPI */
         ! in case of CUDA_AWARE MPI
@@ -608,37 +620,146 @@ subroutine trans_ev_&
         tmp_mpi_dev = transfer(tmp_dev, tmp_mpi_dev)
         call c_f_pointer(tmp_mpi_dev,tmp_mpi,(/(max_local_cols*max_stored_rows)/))
 
-#endif
+#endif /* WITH_CUDA_AWARE_MPI */
       endif
 
 
       if (useNonBlockingCollectivesRows) then
         call obj%timer%start("mpi_nbc_communication")
 #ifndef WITH_CUDA_AWARE_MPI
+
+#ifdef WITH_NVIDIA_NCCL
+        if (useGPU) then
+          ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
+          successGPU = nccl_group_start()
+          if (.not.successGPU) then
+            print *,"Error in setting up nccl_group_start!"
+            stop
+          endif
+          successGPU = nccl_Allreduce(tmp_dev, tmp_dev, &
+#if REALCASE == 1
+                                      int(nstor*l_cols,kind=c_size_t), &
+#endif
+#if COMPLEXCASE == 1
+                                      int(2*nstor*l_cols,kind=c_size_t), &
+#endif
+#if REALCASE == 1
+#if DOUBLE_PRECISION == 1
+                                   ncclDouble, &
+#endif
+#if SINGLE_PRECISION == 1
+                                   ncclFloat, &
+#endif
+#endif /* REALCASE */
+#if COMPLEXCASE == 1
+#if DOUBLE_PRECISION == 1
+                                   ncclDouble, &
+#endif
+#if SINGLE_PRECISION == 1
+                                   ncclFloat, &
+#endif
+#endif /* COMPLEXCASE */
+                                   ncclSum, ccl_comm_rows, my_stream)
+
+          if (.not.successGPU) then
+            print *,"Error in nccl_allreduce"
+            stop
+          endif
+          successGPU = nccl_group_end()
+          if (.not.successGPU) then
+            print *,"Error in setting up nccl_group_end!"
+            stop
+          endif
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("trans_ev", successGPU)
+        else ! use GPU
+          call mpi_iallreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
+        endif ! useGPU
+#else /* WITH_NVIDIA_NCCL */
         call mpi_iallreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
-#else
+#endif /* WITH_NVIDIA_NCCL */
+
+#else /* WITH_CUDA_AWARE_MPI */
         call mpi_iallreduce(mpi_in_place, tmp_mpi, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
-#endif
+#endif /* WITH_CUDA_AWARE_MPI */
         call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
         call obj%timer%stop("mpi_nbc_communication")
-      else
+      else ! useNonBlockingCollectivesRows
         call obj%timer%start("mpi_communication")
 #ifndef WITH_CUDA_AWARE_MPI
+
+#ifdef WITH_NVIDIA_NCCL
+        if (useGPU) then
+          ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
+          success = nccl_group_start()
+          if (.not.success) then
+            print *,"Error in setting up nccl_group_start!"
+            stop
+          endif
+
+          success = nccl_Allreduce(tmp_dev, tmp_dev, &
+#if REALCASE == 1
+                                   int(nstor*l_cols,kind=c_size_t), &
+#endif
+#if COMPLEXCASE == 1
+                                   int(2*nstor*l_cols,kind=c_size_t), &
+#endif
+#if REALCASE == 1
+#if DOUBLE_PRECISION == 1
+                                   ncclDouble, &
+#endif
+#if SINGLE_PRECISION == 1
+                                   ncclFloat, &
+#endif
+#endif /* REALCASE */
+#if COMPLEXCASE == 1
+#if DOUBLE_PRECISION == 1
+                                   ncclDouble, &
+#endif
+#if SINGLE_PRECISION == 1
+                                   ncclFloat, &
+#endif
+#endif /* COMPLEXCASE */
+                                   ncclSum, ccl_comm_rows, my_stream)
+
+          if (.not.success) then
+            print *,"Error in nccl_allreduce"
+            stop
+          endif
+          success = nccl_group_end()
+          if (.not.success) then
+            print *,"Error in setting up nccl_group_end!"
+            stop
+          endif
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("trans_ev", successGPU)
+        else ! useGPU
+          call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        endif ! useGPU
+#else /* WITH_NVIDIA_NCCL */
         call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-#else
+#endif /* WITH_NVIDIA_NCCL */
+
+#else /* WITH_CUDA_AWARE_MPI */
         call mpi_allreduce(mpi_in_place, tmp_mpi, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-#endif
+#endif /* WITH_CUDA_AWARE_MPI */
         call obj%timer%stop("mpi_communication")
-      endif
+      endif ! useNonBlockingCollectivesRows
 
       if (useGPU) then
 #ifndef WITH_CUDA_AWARE_MPI
         ! copy back tmp2 - after reduction...
 #ifdef WITH_GPU_STREAMS
+
+#ifdef WITH_NVIDIA_NCCL
+        ! no memory copy needed
+#else /* WITH_NVIDIA_NCCL */
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev", successGPU)
@@ -653,11 +774,12 @@ subroutine trans_ev_&
         ! synchronize streamsPerThread; maybe not neccessary
         successGPU = gpu_stream_synchronize()
         check_stream_synchronize_gpu("trans_ev", successGPU)
-#else
+#endif /* WITH_NVIDIA_NCCL */
+#else /* WITH_GPU_STREAMS */
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("trans_ev", successGPU)
-#endif
+#endif /* WITH_GPU_STREAMS */
 #else /* WITH_CUDA_AWARE_MPI */
         
         tmp_dev = transfer(tmp_mpi_dev, tmp_dev)
@@ -719,6 +841,8 @@ subroutine trans_ev_&
 
     !q_mat = q_dev
 #ifdef WITH_GPU_STREAMS
+! most likely this memory could be avoided if device ptr given
+
     my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
     check_stream_synchronize_gpu("trans_ev", successGPU)

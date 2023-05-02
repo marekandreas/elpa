@@ -44,32 +44,44 @@
 //
 // This file was written by A. Poeppl, Intel Corporation (2022) for MPCDF
 
+#include "config-f90.h"
+
 #include "syclCommon.hpp"
 
 #include <vector>
 #include <optional>
+
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 
 static bool deviceCollectionFlag = false;
 
 std::vector<cl::sycl::device> devices;
 std::optional<cl::sycl::queue> chosenQueue;
 
-void elpa::gpu::sycl::collectGpuDevices() {
+void elpa::gpu::sycl::collectGpuDevices(bool onlyGpus) {
   if (deviceCollectionFlag) {
     return;
   } else {
     deviceCollectionFlag = true;
   }
 
-  // We need to be opinionated about the device selection. Currently, devices are displayed in duplicate, if they are supported
-  // by multiple platforms. For now, a first step could be only supporting level zero and Intel GPUs. This will have to be
-  // changed later as we move towards generalizing the backend.
+  // ELPA is a library, and hence we cannot assume the user's environment.
+  // Therefore, we may need to be opinionated about the device selection.
+  // Currently, devices are displayed in duplicate, if they are supported by multiple platforms.
+  // For now, the default behavior is to only utilize the Intel Level Zero platform and and GPUs.
+  // This will have to be changed later as we move towards generalizing the backend.
+  // Alternatively, one can pass an enviromental variable to let ELPA reveal and circle through
+  // all available devices. The displayed devices can then be limited through SYCL device filters
+  // expressed in SYCL env variables.
+  namespace si = cl::sycl::info;
   for (auto const &p : cl::sycl::platform::get_platforms()) {
-    if (p.get_info<cl::sycl::info::platform::name>().find("Level-Zero") != std::string::npos) {
-      for (auto dev : p.get_devices()) {
-        if (dev.get_info<cl::sycl::info::device::device_type>() == cl::sycl::info::device_type::gpu) {
+    if (!onlyGpus || (p.get_info<si::platform::name>().find("Level-Zero") != std::string::npos)) {
+      for (auto dev : p.get_devices((onlyGpus) ? si::device_type::gpu : si::device_type::all)) {
+
           devices.push_back(dev);
-        }
+
       }
     }
   }
@@ -81,7 +93,7 @@ void elpa::gpu::sycl::collectCpuDevices() {
   } else {
     deviceCollectionFlag = true;
   }
-
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
   // We need to be opinionated about the device selection. Currently, devices are displayed in duplicate, if they are supported
   // by multiple platforms. For now, a first step could be only supporting level zero and Intel GPUs. This will have to be
   // changed later as we move towards generalizing the backend.
@@ -93,11 +105,6 @@ void elpa::gpu::sycl::collectCpuDevices() {
 }
 
 int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
-  collectGpuDevices();
-  if (devices.size()==0){
-    std::cout << "GPU devices are not available." << std::endl;
-    return 0;
-  }
   if (deviceId >= devices.size()){
     std::cerr << "Invalid GPU device ID selected, only " << devices.size() << " devices available." << std::endl;
     return 0;
@@ -110,13 +117,7 @@ int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
 
 int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
   collectCpuDevices();
-  if (deviceId >= devices.size()){
-    std::cerr << "Invalid CPU device ID selected, only " << devices.size() << " devices available." << std::endl;
-    return 0;
-  }
-  cl::sycl::property::queue::in_order io;
-  cl::sycl::property_list props(io);
-  chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId], props);
+  elpa::gpu::sycl::selectGpuDevice(deviceId);
   return 1;
 }
 
@@ -142,7 +143,6 @@ cl::sycl::device elpa::gpu::sycl::getDevice() {
 }
 
 size_t elpa::gpu::sycl::getNumDevices() {
-  collectGpuDevices();
   return devices.size();
 }
 
@@ -152,7 +152,13 @@ size_t elpa::gpu::sycl::getNumCpuDevices() {
 }
 
 void elpa::gpu::sycl::printGpuInfo() {
-  collectGpuDevices();
+#ifdef WITH_MPI
+  int mpiRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+  if (mpiRank > 0) {
+    return;
+  }
+#endif
   std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA GPU Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
   std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
   std::cout << "# GPU devices:     " << devices.size() << std::endl;
@@ -160,89 +166,10 @@ void elpa::gpu::sycl::printGpuInfo() {
   for (size_t i = 0; i < devices.size(); i++) {
     bool hasDpSupport = devices[i].has(cl::sycl::aspect::fp64);
     std::cout << " - Device #" << i << ": "
+      << devices[i].get_platform().get_info<cl::sycl::info::platform::name>() << " -> "
       << devices[i].get_info<cl::sycl::info::device::name>() << " ("
       << devices[i].get_info<cl::sycl::info::device::max_compute_units>() << " EUs"
       << (hasDpSupport ? "" : ", SP only") << ")" << std::endl;
   }
-  std::cout << "~~~~~~~~~ Display Verbose SYCL Platform Info ~~~~~~~~~" << std::endl;
-  std::cout << std::endl;
-  for (auto const &platform : cl::sycl::platform::get_platforms()) {
-    std::cout << " - Platform: " << platform.get_info<cl::sycl::info::platform::name>() << std::endl;
-    std::cout << "   * Vendor:  " << platform.get_info<cl::sycl::info::platform::vendor>() << std::endl;
-    std::cout << "   * Version: " << platform.get_info<cl::sycl::info::platform::version>() << std::endl;
-    std::cout << "   * Profile: " << platform.get_info<cl::sycl::info::platform::vendor>() << std::endl;
-    for (auto const &device : platform.get_devices()) {
-      std::cout << "    -- Device: " << device.get_info<cl::sycl::info::device::name>() << std::endl;
-      std::cout << "       * Device Type:                             ";
-      auto deviceType = device.get_info<cl::sycl::info::device::device_type>();
-      switch (deviceType) {
-        case cl::sycl::info::device_type::cpu:
-          std::cout << "CPU" << std::endl;
-          break;
-        case cl::sycl::info::device_type::gpu:
-          std::cout << "GPU" << std::endl;
-          break;
-        case cl::sycl::info::device_type::accelerator:
-          std::cout << "Accelerator" << std::endl;
-          break;
-        case cl::sycl::info::device_type::custom:
-          std::cout << "CUSTOM" << std::endl;
-          break;
-        case cl::sycl::info::device_type::automatic:
-          std::cout << "AUTOMATIC" << std::endl;
-          break;
-        case cl::sycl::info::device_type::host:
-          std::cout << "HOST" << std::endl;
-          break;
-        case cl::sycl::info::device_type::all:
-        default:
-          std::cout << "UNKNOWN" << std::endl;
-          break;
-      }
-      std::cout << "       * Max Compute Units:                       " << device.get_info<cl::sycl::info::device::max_compute_units>() << std::endl;
-      std::cout << "       * Double Precision Floating Point support: " << ((device.has(cl::sycl::aspect::fp64)) ? "Yes" : "No") << std::endl;
-      std::cout << "       * Max Work Item Dimensions:                " << device.get_info<cl::sycl::info::device::max_work_item_dimensions>() << std::endl;
-      auto maxWorkItemSize = device.get_info<cl::sycl::info::device::max_work_item_sizes>();
-      std::cout << "       * Max Work Item Sizes:                     " << "{" << maxWorkItemSize[0] << ", " << maxWorkItemSize[1] << ", " << maxWorkItemSize[2] << "}" << std::endl;
-      std::cout << "       * Max Work Group Sizes:                    " << device.get_info<cl::sycl::info::device::max_work_group_size>() << std::endl;
-      std::cout << "       * Max Memory Alloc size:                   " << device.get_info<cl::sycl::info::device::max_mem_alloc_size>() << std::endl;
-      std::cout << "       * Max Parameter size:                      " << device.get_info<cl::sycl::info::device::max_parameter_size>() << std::endl;
-      std::cout << "       * Global Mem Cache Type:                   ";
-      auto globalMemoryCacheType = device.get_info<cl::sycl::info::device::global_mem_cache_type>();
-      switch (globalMemoryCacheType) {
-        case cl::sycl::info::global_mem_cache_type::none:
-          std::cout << "None" << std::endl;
-          break;
-        case cl::sycl::info::global_mem_cache_type::read_only:
-          std::cout << "Read-Only";
-          break;
-        case cl::sycl::info::global_mem_cache_type::read_write:
-          std::cout << "Read-Write";
-          break;
-        default:
-          std::cout << "UNKNOWN ENTRY!";
-          break;
-      }
-      std::cout << std::endl;
-      std::cout << "       * Local Mem Type:                          ";
-      auto localMemType = device.get_info<cl::sycl::info::device::local_mem_type>();
-      switch (localMemType) {
-        case cl::sycl::info::local_mem_type::none:
-          std::cout << "None";
-          break;
-        case cl::sycl::info::local_mem_type::local:
-          std::cout << "Local";
-          break;
-        case cl::sycl::info::local_mem_type::global:
-          std::cout << "Global";
-          break;
-        default:
-          std::cout << "UNKNOWN ENTRY!";
-          break;
-      }
-      std::cout << std::endl;
-      std::cout << "       * Local Mem Size:                          " << device.get_info<cl::sycl::info::device::local_mem_size>() << std::endl;
-      std::cout << "       * Host Unified Memory:                     " << device.get_info<cl::sycl::info::device::host_unified_memory>() << std::endl;
-    }
-  }
+  std::cout << "~~~~~~~~~~~~~~~~ END ELPA GPU Info ~~~~~~~~~~~~~~~~~~~" << std::endl;
 }

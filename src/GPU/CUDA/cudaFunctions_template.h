@@ -1,3 +1,57 @@
+#if 0
+//
+//    Copyright 2014 - 2023, A. Marek
+//
+//    This file is part of ELPA.
+//
+//    The ELPA library was originally created by the ELPA consortium,
+//    consisting of the following organizations:
+//
+//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+//      Informatik,
+//    - Technische Universität München, Lehrstuhl für Informatik mit
+//      Schwerpunkt Wissenschaftliches Rechnen ,
+//    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+//    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//      and
+//    - IBM Deutschland GmbH
+//
+//    This particular source code file contains additions, changes and
+//    enhancements authored by Intel Corporation which is not part of
+//    the ELPA consortium.
+//
+//    More information can be found here:
+//    http://elpa.mpcdf.mpg.de/
+//
+//    ELPA is free software: you can redistribute it and/or modify
+//    it under the terms of the version 3 of the license of the
+//    GNU Lesser General Public License as published by the Free
+//    Software Foundation.
+//
+//    ELPA is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//    You should have received a copy of the GNU Lesser General Public License
+//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+//
+//    ELPA reflects a substantial effort on the part of the original
+//    ELPA consortium, and we ask you to respect the spirit of the
+//    license that we chose: i.e., please contribute any changes you
+//    may have back to the original ELPA library distribution, and keep
+//    any derivatives of ELPA under the same license that we chose for
+//    the original distribution, the GNU Lesser General Public License.
+//
+//
+// --------------------------------------------------------------------------------------------------
+//
+// This file was written by A. Marek, MPCDF
+#endif
+
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
@@ -1314,6 +1368,122 @@ extern "C" {
     }
   }
 
+  // result can be on host or device depending on pointer mode
+  void cublasDdot_elpa_wrapper (cublasHandle_t cudaHandle, int length, const double *X, int incx, const double *Y, int incy, double *result) {
+    cublasStatus_t status = cublasDdot(cudaHandle, length, X, incx, Y, incy, result);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDdot\n");
+    }
+  }
+
+  void cublasSdot_elpa_wrapper (cublasHandle_t cudaHandle, int length, const float *X, int incx, const float *Y, int incy, float *result) {
+
+    //cublasSetPointerMode(cudaHandle, CUBLAS_POINTER_MODE_DEVICE);
+    cublasStatus_t status = cublasSdot(cudaHandle, length, X, incx, Y, incy, result);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasSdot\n");
+    }
+  }
+
+  void cublasZdot_elpa_wrapper (char conju, cublasHandle_t cudaHandle, int length, const double _Complex *X, int incx, const double _Complex *Y, int incy, double _Complex *result) {
+
+    //cublasSetPointerMode(cudaHandle, CUBLAS_POINTER_MODE_DEVICE);
+    const cuDoubleComplex* X_casted = (const cuDoubleComplex*) X;
+    const cuDoubleComplex* Y_casted = (const cuDoubleComplex*) Y;
+          cuDoubleComplex* result_casted = (cuDoubleComplex*) result;
+    cublasStatus_t status;
+    if (conju == 'C' || conju == 'c') {
+      status = cublasZdotc(cudaHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+    if (conju == 'U' || conju == 'u') {
+	    printf("not using conjugate in dot\n");
+      status = cublasZdotu(cudaHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZdot\n");
+    }
+    //cuDoubleComplex* result = (cuDoubleComplex*) result_casted;
+  }
+
+  void cublasCdot_elpa_wrapper (char conju, cublasHandle_t cudaHandle, int length, const float _Complex *X, int incx, const float _Complex *Y, int incy, float _Complex *result) {
+
+    //cublasSetPointerMode(cudaHandle, CUBLAS_POINTER_MODE_DEVICE);
+    const cuFloatComplex* X_casted = (const cuFloatComplex*) X;
+    const cuFloatComplex* Y_casted = (const cuFloatComplex*) Y;
+          cuFloatComplex* result_casted = (cuFloatComplex*) result;
+
+    cublasStatus_t status;
+    if (conju == 'C' || conju == 'c') {
+      status = cublasCdotc(cudaHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+    if (conju == 'U' || conju == 'u') {
+      status = cublasCdotu(cudaHandle, length, X_casted, incx, Y_casted, incy, result_casted);
+    }
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCdot\n");
+    }
+    printf("Leaving setPointer\n");
+  }
+
+  void cublasSetPointerModeFromC(cublasHandle_t cudaHandle, cublasPointerMode_t mode) {
+    cublasSetPointerMode(cudaHandle, mode);
+  }
+
+  void cublasGetPointerModeFromC(cublasHandle_t cudaHandle, cublasPointerMode_t *mode) {
+    //cublasPointerMode_t mode_tmp;
+    //cublasGetPointerMode(cudaHandle, &mode_tmp);
+    cublasGetPointerMode(cudaHandle, mode);
+    //printf("in getpointer mode %d \n",mode_tmp);
+    //printf("in getpointer mode %d \n",*mode);
+    //*mode = mode_tmp;
+  }
+
+  int cublasPointerModeDeviceFromC(void) {
+      int val = CUBLAS_POINTER_MODE_DEVICE;
+      return val;
+  }
+
+  int cublasPointerModeHostFromC(void) {
+      int val = CUBLAS_POINTER_MODE_HOST;
+      return val;
+  }
+
+  void cublasDscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, double alpha, double *x, int incx){
+
+    cublasStatus_t status = cublasDscal(cudaHandle, n, &alpha, x, incx);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDscal\n");
+    }
+  }
+
+  void cublasSscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, float alpha, float *x, int incx){
+
+    cublasStatus_t status = cublasSscal(cudaHandle, n, &alpha, x, incx);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasSscal\n");
+    }
+  }
+
+  void cublasZscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, double _Complex alpha, double _Complex *x, int incx){
+    cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
+    cuDoubleComplex* X_casted     = (cuDoubleComplex*) x;
+
+    cublasStatus_t status = cublasZscal(cudaHandle, n, &alpha_casted, X_casted, incx);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZscal\n");
+    }
+  }
+
+  void cublasCscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, float _Complex alpha, float _Complex *x, int incx){
+    cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
+    cuFloatComplex* X_casted     = (cuFloatComplex*) x;
+
+    cublasStatus_t status = cublasCscal(cudaHandle, n, &alpha_casted, X_casted, incx);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCscal\n");
+    }
+  }
 
 }
 #endif /* WITH_NVIDIA_GPU_VERSION */

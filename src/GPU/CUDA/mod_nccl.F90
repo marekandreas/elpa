@@ -1,5 +1,4 @@
-#if 0
-!    Copyright 2021, A. Marek, MPCDF
+!    Copyright 2014 - 2023, A. Marek
 !
 !    This file is part of ELPA.
 !
@@ -18,9 +17,6 @@
 !      and
 !    - IBM Deutschland GmbH
 !
-!    This particular source code file contains additions, changes and
-!    enhancements authored by Intel Corporation which is not part of
-!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -44,46 +40,20 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
-#endif
+!
+! Author: Andreas Marek, MPCDF
+! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
-module elpa_gpu_setup
-  !use precision
-  use iso_c_binding
 
-  type :: elpa_gpu_setup_t
-    integer(kind=c_int)            :: use_gpu_vendor
+module nccl_functions
+  use, intrinsic :: iso_c_binding
+  use precision
+  implicit none
 
-    ! per task information should be stored elsewhere
-    integer(kind=C_intptr_T), allocatable :: gpublasHandleArray(:)
-    integer(kind=C_intptr_T), allocatable :: gpusolverHandleArray(:)
-    integer(kind=c_int), allocatable      :: gpuDeviceArray(:)
-    integer(kind=c_intptr_t)              :: my_stream
+  public
 
-    integer(kind=C_intptr_T), allocatable :: cublasHandleArray(:)
-    integer(kind=C_intptr_T), allocatable :: cusolverHandleArray(:)
-    integer(kind=c_int), allocatable      :: cudaDeviceArray(:)
+#include "./nccl_template.F90"
 
-    integer(kind=C_intptr_T), allocatable :: rocblasHandleArray(:)
-    integer(kind=C_intptr_T), allocatable :: rocsolverHandleArray(:)
-    integer(kind=c_int), allocatable      :: hipDeviceArray(:)
-
-    integer(kind=C_intptr_T), allocatable :: syclHandleArray(:)
-    integer(kind=C_intptr_T), allocatable :: syclsolverHandleArray(:)
-    integer(kind=c_int), allocatable      :: syclDeviceArray(:)
-
-    integer(kind=C_intptr_T), allocatable :: openmpOffloadHandleArray(:)
-    integer(kind=C_intptr_T), allocatable :: openmpOffloadsolverHandleArray(:)
-    integer(kind=c_int), allocatable      :: openmpOffloadDeviceArray(:)
-
-    logical                               :: gpuAlreadySet
-#ifdef WITH_SYCL_GPU_VERSION
-    logical                               :: syclCPU
-#endif
-
-    integer(kind=c_intptr_t)              :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all
-  end type
-
-end module
-
+end module nccl_functions
