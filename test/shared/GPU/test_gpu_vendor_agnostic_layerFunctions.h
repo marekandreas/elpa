@@ -66,7 +66,9 @@ int gpuMalloc(intptr_t *a, size_t width_height);
 int gpuFree(intptr_t *a);
    
 int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir);
-   
+
+int syclGetCpuCount(int numberOfDevices);
+
 #ifdef __cplusplus
 }    
 #endif

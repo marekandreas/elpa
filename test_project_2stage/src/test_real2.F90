@@ -193,7 +193,7 @@ program test_real_example
 
    if (elpa_init(20171201) /= elpa_ok) then
      print *, "ELPA API version not supported"
-     stop
+     stop 1
    endif
    e => elpa_allocate()
 

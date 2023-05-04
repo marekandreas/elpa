@@ -60,7 +60,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -115,7 +115,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -170,7 +170,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -225,7 +225,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -282,7 +282,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -339,7 +339,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -396,7 +396,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -453,7 +453,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -511,7 +511,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -569,7 +569,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -627,7 +627,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -685,7 +685,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -744,7 +744,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -803,7 +803,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -862,7 +862,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then
@@ -921,7 +921,7 @@
                                       devPtr+devPtrOffset, num, direction, my_stream)
       else
         print *,"gpu_memcpy_async_and_stream_synchronize: unknown error"
-        stop
+        stop 1
       endif
 
       if (doSyncAfter) then

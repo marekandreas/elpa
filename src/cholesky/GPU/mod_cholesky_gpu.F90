@@ -54,6 +54,10 @@ module cholesky_gpu
 #ifdef WITH_AMD_GPU_VERSION
   use cholesky_hip
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+  use cholesky_sycl
+#endif
+
   implicit none
 
   public
@@ -73,6 +77,9 @@ module cholesky_gpu
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+#endif
 
     end subroutine
 
@@ -89,6 +96,9 @@ module cholesky_gpu
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine
@@ -107,6 +117,9 @@ module cholesky_gpu
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+#endif
 
     end subroutine
 
@@ -123,6 +136,9 @@ module cholesky_gpu
 #endif
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
 
     end subroutine

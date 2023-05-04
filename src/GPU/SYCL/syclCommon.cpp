@@ -106,7 +106,7 @@ void elpa::gpu::sycl::collectCpuDevices() {
 
 int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
   if (deviceId >= devices.size()){
-    std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
+    std::cerr << "Invalid GPU device ID selected, only " << devices.size() << " devices available." << std::endl;
     return 0;
   }
   cl::sycl::property::queue::in_order io;

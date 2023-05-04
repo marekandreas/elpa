@@ -166,7 +166,7 @@
       endif
       if (vendor == no_gpu) then
         print *,"setting gpu vendor in tests does not work"
-        stop
+        stop 1
       endif
 !#if TEST_INTEL_GPU == 1
 !      vendor = intel_gpu
@@ -343,16 +343,72 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"gpu_stream_syncronize not implemented for openmp offload"
-        stop
+        stop 1
       endif
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"gpu_stream_synchronize not implemented for sycl"
-        stop
+        stop 1
       endif
 #endif
 
+    end function
+
+    function gpu_getdevicecount(n) result(success)
+      use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
+      use cuda_functions
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+
+      integer(kind=ik)              :: n
+      logical                       :: success
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_getdevicecount(n)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_getdevicecount(n)
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      n = openmp_offload_getdevicecount()
+      success = .true.
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        !obj%gpu_setup%syclCPU=.false.
+        !success = sycl_getdevicecount(numberOfDevices)
+        success = .true.
+        n=0
+      endif
+#endif
+
+      if (.not.(success)) then
+#ifdef WITH_NVIDIA_GPU_VERSION
+        print *,"error in cuda_getdevicecount"
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+        print *,"error in hip_getdevicecount"
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        print *,"error in openmp_offload_getdevicecount"
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+        print *,"error in sycl_getdevicecount"
+#endif
+        stop 1
+      endif
     end function
 
     function gpu_setdevice(n) result(success)
@@ -423,13 +479,13 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: device synchronize"
-        stop
+        stop 1
       endif
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"not yet implemented: device synchronize"
-        stop
+        stop 1
       endif
 #endif
     end function
@@ -467,14 +523,14 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: malloc_host"
-        stop
+        stop 1
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"not yet implemented: malloc_host"
-        stop
+        stop 1
       endif
 #endif
 
@@ -599,14 +655,14 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: host_register"
-        stop
+        stop 1
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"not yet implemented: host_register"
-        stop
+        stop 1
       endif
 #endif
 
@@ -833,7 +889,7 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"MemcpyAsync not implemented for openmp offload"
-        stop
+        stop 1
         !success = openmp_offload_memcpy_intptr(dst, src, size, dir)
       endif
 #endif
@@ -841,7 +897,7 @@
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"MemcpyAsync not implemented for sycl"
-        stop
+        stop 1
         !success = sycl_memcpy_intptr(dst, src, size, dir)
       endif
 #endif
@@ -884,7 +940,7 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"MemcpyAsync not implemented for openmp offload"
-        stop
+        stop 1
         !success = openmp_offload_memcpy_cptr(dst, src, size, dir)
       endif
 #endif
@@ -892,7 +948,7 @@
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"MemcpyAsync not implemented for sycl"
-        stop
+        stop 1
         !success = sycl_memcpy_cptr(dst, src, size, dir)
       endif
 #endif
@@ -936,7 +992,7 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"MemcpyAsync not implemented for openmp offload"
-        stop
+        stop 1
         !success = openmp_offload_memcpy_mixed_to_device(dst, src, size, dir)
       endif
 #endif
@@ -944,7 +1000,7 @@
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"MemcpyAsync not implemented for sycl"
-        stop
+        stop 1
         !success = sycl_memcpy_mixed_to_device(dst, src, size, dir)
       endif
 #endif
@@ -987,7 +1043,7 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"MemcpyAsync not implemented for openmp offload"
-        stop
+        stop 1
         !success = openmp_offload_memcpy_mixed_to_host(dst, src, size, dir)
       endif
 #endif
@@ -1086,7 +1142,7 @@
       if (use_gpu_vendor == openmp_offload_gpu) then
         !success = openmp_offload_memset(a, val, size)
         print *,"Openmp Offload memset_async not yet implemented"
-        stop
+        stop 1
       endif
 #endif
 
@@ -1094,7 +1150,7 @@
       if (use_gpu_vendor == sycl_gpu) then
         !success = sycl_memset(a, int(val,kind=c_int32_t), size)
         print *,"Sycl memset_async not yet implemented"
-        stop
+        stop 1
       endif
 #endif
 
@@ -1221,14 +1277,14 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: host_free"
-        stop
+        stop 1
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"not yet implemented: host_free"
-        stop
+        stop 1
       endif
 #endif
     end function
@@ -1266,14 +1322,14 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: host_unregister"
-        stop
+        stop 1
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"not yet implemented: host_unregister"
-        stop
+        stop 1
       endif
 #endif
 
@@ -1319,14 +1375,14 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: memcpy2d_intptr"
-        stop
+        stop 1
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"not yet implemented: memcpy2d_intptr"
-        stop
+        stop 1
       endif
 #endif
     end function
@@ -1371,14 +1427,14 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: memcpy2d_cptr"
-        stop
+        stop 1
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"not yet implemented: memcpy2d_cptr"
-        stop
+        stop 1
       endif
 #endif
     end function
@@ -1424,14 +1480,14 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: memcpy2d_async_intptr"
-        stop
+        stop 1
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"not yet implemented: memcpy2d_async_intptr"
-        stop
+        stop 1
       endif
 #endif
     end function
@@ -1477,14 +1533,14 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: memcpy2d_async_cptr"
-        stop
+        stop 1
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         print *,"not yet implemented: memcpy2d_async-cptr"
-        stop
+        stop 1
       endif
 #endif
     end function

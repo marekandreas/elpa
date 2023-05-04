@@ -144,7 +144,7 @@ program test_interface
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
-     stop
+     stop 1
    endif
 
    allocate(a1 (na_rows,na_cols), as1(na_rows,na_cols))

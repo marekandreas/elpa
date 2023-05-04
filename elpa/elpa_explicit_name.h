@@ -58,7 +58,7 @@ extern "C" {
 #define float_complex float complex
 #endif
 
-#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
 int is_device_ptr(void *a_void_ptr);
 #endif
 

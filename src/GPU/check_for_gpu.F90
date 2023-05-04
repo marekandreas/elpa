@@ -61,7 +61,7 @@ module mod_check_for_gpu
       use hip_functions
       use openmp_offload_functions
       use sycl_functions
-      !use elpa_gpu, only : gpuDeviceArray, gpublasHandleArray, my_stream
+      use elpa_gpu, only : gpu_getdevicecount
       use precision
       use elpa_mpi
       use elpa_omp
@@ -274,17 +274,10 @@ module mod_check_for_gpu
             endif
           !endif
 
+
           success = .true.
-#ifdef WITH_NVIDIA_GPU_VERSION
-          ! call getenv("CUDA_PROXY_PIPE_DIRECTORY", envname)
-          success = cuda_getdevicecount(numberOfDevices)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-          success = hip_getdevicecount(numberOfDevices)
-#endif
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-          numberOfDevices = openmp_offload_getdevicecount()
-          success = .true.
+#ifndef WITH_SYCL_GPU_VERSION
+          success = gpu_getdevicecount(numberOfDevices)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
           call obj%get("sycl_show_all_devices", syclShowAllDevices, error)
