@@ -1545,7 +1545,8 @@
         top = 1+(topidx-1)*incx
       else
         top = -99
-        stop
+        print *, "elpa_pdgeqrf_template.F90: Error, aborting..."
+        stop 1
       end if
 
       alpha = seed(id*5+1)

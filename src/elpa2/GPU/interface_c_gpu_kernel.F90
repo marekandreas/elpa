@@ -164,7 +164,7 @@ module gpu_c_kernel
 
 #if defined(WITH_NVIDIA_GPU_VERSION)  && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
       print *, "not yet implemented. ohoh"
-      stop
+      stop 1
       !call launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
@@ -206,7 +206,7 @@ module gpu_c_kernel
 
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY)
       print *,"not yet implemented. oh no"
-      stop
+      stop 1
       !call launch_compute_hh_trafo_c_cuda_sm80_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION

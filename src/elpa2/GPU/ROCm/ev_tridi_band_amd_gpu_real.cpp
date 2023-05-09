@@ -284,7 +284,7 @@ compute_hh_trafo_hip_kernel_real(T * __restrict__ q, const T * __restrict__ hh, 
     }
 }
 
-extern "C" void launch_compute_hh_trafo_c_hip_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols, hipStream_t my_stream)
+extern "C" void launch_compute_hh_trafo_c_hip_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols,  hipStream_t my_stream)
 {
     hipError_t err;
 //#ifdef WITH_GPU_STREAMS

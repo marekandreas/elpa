@@ -138,44 +138,56 @@ dnl CXX
 AC_LANG_PUSH([C++])
 AC_PROG_CXX
 
-cxx11_standard=no
-AX_CHECK_COMPILE_FLAG([-std=gnu++11], [
-  cxx11_standard=yes
-], [
-  echo "C++ compiler cannot compile -std=gnu++11 code"
-  echo "testing -std=c++11.."
-])
-if test x"$cxx11_standard" = x"yes"; then
-  CXXFLAGS+=" -std=gnu++11"
-fi
-
-if test x"$cxx11_standard" = x"no"; then
-  AX_CHECK_COMPILE_FLAG([-std=c++11], [
-    cxx11_standard=yes
-  ], [
-    echo "C++ compiler cannot compile -std=c++11 code"
-    echo "testing -c++11.."
-  ])
-  if test x"$cxx11_standard" = x"yes"; then
-    CXXFLAGS+=" -std=c++11"
-  fi
-fi
-
-if test x"$cxx11_standard" = x"no"; then
-  AX_CHECK_COMPILE_FLAG([-c++11], [
-    cxx11_standard=yes
-  ], [
-    echo "C++ compiler cannot compile -c++11 code"
-    echo "C++ compiler cannot compile C++11 code"
-    exit -1
-  ])
-  if test x"$cxx11_standard" = x"yes"; then
-    CXXFLAGS+=" -c++11"
-  fi
-fi
-
+ac_success="no"
+check_for_c11="no"
+AX_CXX_COMPILE_STDCXX_17
 AC_LANG_POP([C++])
 
+if test x"${ac_success}" = x"no"; then
+  check_for_c11="yes"
+fi
+
+
+AC_LANG_PUSH([C++])
+if test x"${check_for_c11}" = x"yes"; then
+  cxx11_standard=no
+  AX_CHECK_COMPILE_FLAG([-std=gnu++11], [
+    cxx11_standard=yes
+  ], [
+    echo "C++ compiler cannot compile -std=gnu++11 code"
+    echo "testing -std=c++11.."
+  ])
+  if test x"$cxx11_standard" = x"yes"; then
+    CXXFLAGS+=" -std=gnu++11"
+  fi
+  
+  if test x"$cxx11_standard" = x"no"; then
+    AX_CHECK_COMPILE_FLAG([-std=c++11], [
+      cxx11_standard=yes
+    ], [
+      echo "C++ compiler cannot compile -std=c++11 code"
+      echo "testing -c++11.."
+    ])
+    if test x"$cxx11_standard" = x"yes"; then
+      CXXFLAGS+=" -std=c++11"
+    fi
+  fi
+  
+  if test x"$cxx11_standard" = x"no"; then
+    AX_CHECK_COMPILE_FLAG([-c++11], [
+      cxx11_standard=yes
+    ], [
+      echo "C++ compiler cannot compile -c++11 code"
+      echo "C++ compiler cannot compile C++11 code"
+      exit -1
+    ])
+    if test x"$cxx11_standard" = x"yes"; then
+      CXXFLAGS+=" -c++11"
+    fi
+  fi
+  
+  AC_LANG_POP([C++])
+fi
 
 dnl C
 AC_LANG_PUSH([C])
@@ -196,26 +208,28 @@ if test x"${enable_openmp}" = x"yes"; then
   CFLAGS="$OPENMP_CFLAGS $CFLAGS"
 fi
 
-c11_standard=no
-AX_CHECK_COMPILE_FLAG([-std=gnu11], [
-  c11_standard=yes
-], [
-  echo "C compiler cannot compile -std=gnu11 code"
-  echo "testing -std=c11.."
-])
-if test x"$c11_standard" = x"yes"; then
-  CFLAGS+=" -std=gnu11"
-fi
-
-if test x"$c11_standard" = x"no"; then
-  AX_CHECK_COMPILE_FLAG([-std=c11], [
+if test x"${check_for_c11}" = x"yes"; then
+  c11_standard=no
+  AX_CHECK_COMPILE_FLAG([-std=gnu11], [
     c11_standard=yes
   ], [
-    echo "C compiler cannot compile -std=c11 code"
-    echo "testing -c11.."
+    echo "C compiler cannot compile -std=gnu11 code"
+    echo "testing -std=c11.."
   ])
   if test x"$c11_standard" = x"yes"; then
-    CFLAGS+=" -std=c11"
+    CFLAGS+=" -std=gnu11"
+  fi
+  
+  if test x"$c11_standard" = x"no"; then
+    AX_CHECK_COMPILE_FLAG([-std=c11], [
+      c11_standard=yes
+    ], [
+      echo "C compiler cannot compile -std=c11 code"
+      echo "testing -c11.."
+    ])
+    if test x"$c11_standard" = x"yes"; then
+      CFLAGS+=" -std=c11"
+    fi
   fi
 fi
 
@@ -1176,37 +1190,736 @@ dnl
 dnl  default should be one of `enable' or `disable'
 dnl
 AC_DEFUN([ELPA_SELECT_KERNELS], [
-        AC_ARG_ENABLE(m4_bpatsubst($1,[_],[-]),[AS_HELP_STRING([--]m4_case([$2],[enable],[disable],[disable],[enable])[-]m4_bpatsubst($1,[_],[-]),
+        AC_ARG_ENABLE([m4_bpatsubst($3,[_],[-])],
+	[AS_HELP_STRING([--]m4_case([$2],[enable],[disable],[disable],[enable])[-]m4_bpatsubst($3,[_],[-]),          
                 m4_case([$2],[enable],[do not build],[disable],[build])[ ]m4_toupper($1)[ kernels, default: $2d])],
-                      [],[enable_$1=]m4_case([$2],[enable],[yes],[disable],[no]))
-        m4_foreach_w(elpa_m4_kernel,elpa_m4_$1_kernels,[
-                use_[]elpa_m4_kernel[=$enable_$1]
-        ])
-])
+                      [if test x"$enableval" = x"yes"; then
+		        #echo "in function yes $3"
+		        #enable_$1 = "yes"
+                        m4_foreach_w(elpa_m4_kernel,elpa_m4_$1_kernels,[
+                        use_[]elpa_m4_kernel[="yes"]
+			])
+		       else
+		        #echo "in function no $3"
+		        #enable_$1 = "no"
+                        m4_foreach_w(elpa_m4_kernel,elpa_m4_$1_kernels,[
+                        use_[]elpa_m4_kernel[="no"]
+			])
+		       fi
+                      ],
+                      [if test x"$2" = x"enable"; then
+                        m4_foreach_w(elpa_m4_kernel,elpa_m4_$1_kernels,[
+                        use_[]elpa_m4_kernel[="yes"]
+			])
+		       else
+			 if test x"$2" = x"disable"; then
+                           m4_foreach_w(elpa_m4_kernel,elpa_m4_$1_kernels,[
+                           use_[]elpa_m4_kernel[="no"]
+			   ])
+			 else
+                           m4_foreach_w(elpa_m4_kernel,elpa_m4_$1_kernels,[
+                           use_[]elpa_m4_kernel[="no"]
+			   ])
+		         fi
+		       fi
+                      ])
+]) 
+
 
 dnl Modify list of kernels with configure arguments
-ELPA_SELECT_KERNELS([generic],[enable])
-ELPA_SELECT_KERNELS([sparc64],[disable])
-ELPA_SELECT_KERNELS([neon_arch64],[disable])
-ELPA_SELECT_KERNELS([vsx],[disable])
-ELPA_SELECT_KERNELS([sse],[enable])
-ELPA_SELECT_KERNELS([sse_assembly],[enable])
-ELPA_SELECT_KERNELS([avx],[enable])
-ELPA_SELECT_KERNELS([avx2],[enable])
-ELPA_SELECT_KERNELS([avx512],[enable])
-ELPA_SELECT_KERNELS([sve128],[disable])
-ELPA_SELECT_KERNELS([sve256],[disable])
-ELPA_SELECT_KERNELS([sve512],[disable])
-ELPA_SELECT_KERNELS([nvidia_gpu],[disable])
-ELPA_SELECT_KERNELS([nvidia_sm80_gpu],[disable])
-ELPA_SELECT_KERNELS([amd_gpu],[disable])
-ELPA_SELECT_KERNELS([intel_gpu_sycl],[disable])
-ELPA_SELECT_KERNELS([bgp],[disable])
-ELPA_SELECT_KERNELS([bgq],[disable])
+ELPA_SELECT_KERNELS([generic],[enable],[generic_kernels])
+ELPA_SELECT_KERNELS([sparc64],[disable],[sparc64_kernels])
+ELPA_SELECT_KERNELS([neon_arch64],[disable],[neon_arch64_kernels])
+ELPA_SELECT_KERNELS([vsx],[disable],[vsx_kernels])
+ELPA_SELECT_KERNELS([sse],[enable],[sse_kernels])
+ELPA_SELECT_KERNELS([sse_assembly],[enable],[sse_assembly_kernels])
+ELPA_SELECT_KERNELS([avx],[enable],[avx_kernels])
+ELPA_SELECT_KERNELS([avx2],[enable],[avx2_kernels])
+ELPA_SELECT_KERNELS([avx512],[enable],[avx512_kernels])
+ELPA_SELECT_KERNELS([sve128],[disable],[sve128_kernels])
+ELPA_SELECT_KERNELS([sve256],[disable],[sve256_kernels])
+ELPA_SELECT_KERNELS([sve512],[disable],[sve512_kernels])
+ELPA_SELECT_KERNELS([nvidia_gpu],[disable],[nvidia_gpu_kernels])
+ELPA_SELECT_KERNELS([nvidia_sm80_gpu],[disable],[nvidia_sm80_gpu_kernels])
+ELPA_SELECT_KERNELS([amd_gpu],[disable],[amd_gpu_kernels])
+ELPA_SELECT_KERNELS([intel_gpu_sycl],[disable],[intel_gpu_sycl_kernels])
+ELPA_SELECT_KERNELS([bgp],[disable],[bgp_kernels])
+ELPA_SELECT_KERNELS([bgq],[disable],[bgp_kernels])
 
 m4_foreach_w([elpa_m4_kind],[real complex],[
         default_[]elpa_m4_kind[]_kernel=""
 ])
+
+
+
+#compatibiility flag
+AC_MSG_CHECKING(whether obsolete --enable-generic has been provided)
+AC_ARG_ENABLE([generic],
+                AS_HELP_STRING([--enable-generic],
+			       [OBSOLETE FLAG: do use generic kernels for ELPA 2stage (please use --enable-generic-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_generic="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_generic_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The generic kernels have been first disabled (via --enable-generic-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-generic option!")
+				    fi
+			          ])
+                                else
+                                  use_generic="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_generic_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The generic kernels have been first enabled (via --enable-generic-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-generic option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-generic! Please switch to the option --enable-generic-kernels])
+  AC_MSG_WARN([The option --enable-generic will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-sparc64 has been provided)
+AC_ARG_ENABLE([sparc64],
+                AS_HELP_STRING([--enable-sparc64],
+			       [OBSOLETE FLAG: do use sparc64 kernels for ELPA 2stage (please use --enable-sparc64-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_sparc64="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sparc64_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The sparch64 kernels have been first disabled (via --enable-sparc64-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-sparc64 option!")
+				    fi
+			          ])
+                                else
+                                  use_sparc64="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sparc64_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The sparc64 kernels have been first enabled (via --enable-sparc64-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-avx2 option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-sparc64! Please switch to the option --enable-sparc64-kernels])
+  AC_MSG_WARN([The option --enable-sparc64 will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-sparc64 has been provided)
+AC_ARG_ENABLE([neon-arch64],
+                AS_HELP_STRING([--enable-neon-arch64],
+			       [OBSOLETE FLAG: do use neon-arch64 kernels for ELPA 2stage (please use --enable-neon-arch64-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_neon_arch64="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_neon_arch64_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The neon-arch64 kernels have been first disabled (via --enable-neon-arch64-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-neon-arch64 option!")
+				    fi
+			          ])
+                                else
+                                  use_neon_arch64="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_neon_arch64_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The neon_arch64 kernels have been first enabled (via --enable-neon-arch64-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-neon-arch64 option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-neon-arch64! Please switch to the option --enable-neon-arch64-kernels])
+  AC_MSG_WARN([The option --enable-neon-arch64 will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-vsx has been provided)
+AC_ARG_ENABLE([vsx],
+                AS_HELP_STRING([--enable-vsx],
+			       [OBSOLETE FLAG: do use vsx kernels for ELPA 2stage (please use --enable-vsx-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_vsx="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_vsx_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The vsx kernels have been first disabled (via --enable-vsx-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-vsx option!")
+				    fi
+			          ])
+                                else
+                                  use_vsx="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_vsx_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The vsx kernels have been first enabled (via --enable-vsx-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-vsx option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-vsx! Please switch to the option --enable-vsx-kernels])
+  AC_MSG_WARN([The option --enable-vsx will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-sse has been provided)
+AC_ARG_ENABLE([sse],
+                AS_HELP_STRING([--enable-sse],
+			       [OBSOLETE FLAG: do use sse kernels for ELPA 2stage (please use --enable-sse-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_sse="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sse_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The sse kernels have been first disabled (via --enable-sse-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-sse option!")
+				    fi
+			          ])
+                                else
+                                  use_sse="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sse_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The sse kernels have been first enabled (via --enable-sse-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-sse option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-sse! Please switch to the option --enable-sse-kernels])
+  AC_MSG_WARN([The option --enable-sse will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-sse-assembly has been provided)
+AC_ARG_ENABLE([sse-assembly],
+                AS_HELP_STRING([--enable-sse-assembly],
+			       [OBSOLETE FLAG: do use sse-assembly kernels for ELPA 2stage (please use --enable-sse-assembly-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_sse_assembly="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sse_assembly_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The sse-assembly kernels have been first disabled (via --enable-sse-assembly-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-sse-assembly option!")
+				    fi
+			          ])
+                                else
+                                  use_sse_assembly="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sse_assembly_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The sse-assembly kernels have been first enabled (via --enable-sse-assembly-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-sse-assembly option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-sse-assembly! Please switch to the option --enable-sse-assembly-kernels])
+  AC_MSG_WARN([The option --enable-sse-assembly will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-avx has been provided)
+AC_ARG_ENABLE([avx],
+                AS_HELP_STRING([--enable-avx],
+			       [OBSOLETE FLAG: do use avx kernels for ELPA 2stage (please use --enable-avx-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_avx="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_avx_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The avx kernels have been first disabled (via --enable-avx-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-avx option!")
+				    fi
+			          ])
+                                else
+                                  use_avx="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_avx_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The avx kernels have been first enabled (via --enable-avx-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-avx option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-avx! Please switch to the option --enable-avx-kernels])
+  AC_MSG_WARN([The option --enable-avx will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-avx2 has been provided)
+AC_ARG_ENABLE([avx2],
+                AS_HELP_STRING([--enable-avx2],
+			       [OBSOLETE FLAG: do use avx kernels for ELPA 2stage (please use --enable-avx2-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_avx2="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_avx2_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The avx2 kernels have been first disabled (via --enable-avx2-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-avx2 option!")
+				    fi
+                                  use_[]elpa_m4_kernel[="yes"]
+			          ])
+                                else
+                                  use_avx2="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_avx2_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The avx2 kernels have been first enabled (via --enable-avx2-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-avx2 option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-avx2! Please switch to the option --enable-avx2-kernels])
+  AC_MSG_WARN([The option --enable-avx2 will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-avx512 has been provided)
+AC_ARG_ENABLE([avx512],
+                AS_HELP_STRING([--enable-avx512],
+			       [OBSOLETE FLAG: do use avx kernels for ELPA 2stage (please use --enable-avx512-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_avx512="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_avx512_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The avx512 kernels have been first disabled (via --enable-avx512-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-avx512 option!")
+				    fi
+			          ])
+                                else
+                                  use_avx512="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_avx512_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The avx512 kernels have been first enabled (via --enable-avx512-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-avx512 option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-avx512! Please switch to the option --enable-avx512-kernels])
+  AC_MSG_WARN([The option --enable-avx512 will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-sve128 has been provided)
+AC_ARG_ENABLE([sve128],
+                AS_HELP_STRING([--enable-sve128],
+			       [OBSOLETE FLAG: do use sve128 kernels for ELPA 2stage (please use --enable-sve128-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_sve128="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sve128_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The sve128 kernels have been first disabled (via --enable-sve128-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-sve128 option!")
+				    fi
+			          ])
+                                else
+                                  use_sve128="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sve128_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The sve128 kernels have been first enabled (via --enable-sve128-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-sve128 option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-sve128! Please switch to the option --enable-sve128-kernels])
+  AC_MSG_WARN([The option --enable-sve128 will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-sve256 has been provided)
+AC_ARG_ENABLE([sve256],
+                AS_HELP_STRING([--enable-sve256],
+			       [OBSOLETE FLAG: do use sve256 kernels for ELPA 2stage (please use --enable-sve256-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_sve256="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sve256_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The sve256 kernels have been first disabled (via --enable-sve256-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-sve256 option!")
+				    fi
+			          ])
+                                else
+                                  use_sve256="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sve256_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The sve256 kernels have been first enabled (via --enable-sve256-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-sve256 option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-sve256! Please switch to the option --enable-sve256-kernels])
+  AC_MSG_WARN([The option --enable-sve256 will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-sve512 has been provided)
+AC_ARG_ENABLE([sve512],
+                AS_HELP_STRING([--enable-sve512],
+			       [OBSOLETE FLAG: do use sve512 kernels for ELPA 2stage (please use --enable-sve512-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_sve512="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sve512_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The sve512 kernels have been first disabled (via --enable-sve512-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --disable-sve512 option!")
+				    fi
+			          ])
+                                else
+                                  use_sve512="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_sve512_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The sve512 kernels have been first enabled (via --enable-sve512-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-sve512 option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-sve512! Please switch to the option --enable-sve512-kernels])
+  AC_MSG_WARN([The option --enable-sve512 will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-nvidia-gpu has been provided)
+AC_ARG_ENABLE([nvidia-gpu],
+                AS_HELP_STRING([--enable-nvidia-gpu],
+			       [OBSOLETE FLAG: do use nvidia-gpu kernels for ELPA 2stage (please use --enable-nvidia-gpu-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_nvidia_gpu="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_nvidia_gpu_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The nvidia-gpu kernels have been first disabled (via --enable-nvidia-gpu-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --enable-nvidia-gpux option!")
+				    fi
+			          ])
+                                else
+                                  use_nvidia_gpu="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_nvidia_gpu_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The nvidia-gpu kernels have been first enabled (via --enable-nvidia-gpu-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-nvidia-gpu option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-nvidia-gpu! Please switch to the option --enable-nvidia-gpu-kernels])
+  AC_MSG_WARN([The option --enable-nvidia-gpu will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-nvidia-gpu has been provided)
+AC_ARG_ENABLE([nvidia-sm80-gpu],
+                AS_HELP_STRING([--enable-nvidia-sm80-gpu],
+			       [OBSOLETE FLAG: do use nvidia-sm80-gpu kernels for ELPA 2stage (please use --enable-nvidia-sm80-gpu-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_nvidia_sm80_gpu="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_nvidia_sm80_gpu_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The nvidia-sm80-gpu kernels have been first disabled (via --enable-nvidia-sm80-gpu-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --enable-nvidia-sm80-gpu option!")
+				    fi
+			          ])
+                                else
+                                  use_nvidia_sm80_gpu="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_nvidia_sm80_gpu_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The nvidia-sm80-gpu kernels have been first enabled (via --enable-nvidia-sm80-gpu-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-nvidia-sm80-gpu option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-nvidia-sm80-gpu! Please switch to the option --enable-nvidia-sm80-gpu-kernels])
+  AC_MSG_WARN([The option --enable-nvidia-sm80-gpu will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-amd-gpu has been provided)
+AC_ARG_ENABLE([amd-gpu],
+                AS_HELP_STRING([--enable-amd-gpu],
+			       [OBSOLETE FLAG: do use amd-gpu kernels for ELPA 2stage (please use --enable-amd-gpu-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_amd_gpu="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_amd_gpu_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The amd-gpu kernels have been first disabled (via --enable-amd-gpu-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --enable-amd-gpu option!")
+				    fi
+			          ])
+                                else
+                                  use_amd_gpu="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_amd_gpu_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The amd-gpu kernels have been first enabled (via --enable-amd-gpu-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-amd-gpu option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-amd-gpu! Please switch to the option --enable-amd-gpu-kernels])
+  AC_MSG_WARN([The option --enable-amd-gpu will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-intel-gpu-sycl has been provided)
+AC_ARG_ENABLE([intel-gpu-sycl],
+                AS_HELP_STRING([--enable-intel-gpu-sycl],
+			       [OBSOLETE FLAG: do use intel-gpu-sycl kernels for ELPA 2stage (please use --enable-intel-gpu-sycl-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_intel_gpu_sycl="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_intel_gpu_sycl_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The intel-gpu-sycl kernels have been first disabled (via --enable-intel-gpu-sycl-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --enable-intel-gpu-sycl option!")
+				    fi
+			          ])
+                                else
+                                  use_intel_gpu_sycl="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_intel_gpu_sycl_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The intel-gpu-sycl kernels have been first enabled (via --enable-intel-gpu-sycl-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-intel-gpu-sycl option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-intel-gpu-sycl! Please switch to the option --enable-intel-gpu-sycl-kernels])
+  AC_MSG_WARN([The option --enable-intel-gpu-sycl will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-bgp has been provided)
+AC_ARG_ENABLE([bgp],
+                AS_HELP_STRING([--enable-bgp],
+			       [OBSOLETE FLAG: do use bgp kernels for ELPA 2stage (please use --enable-bgp-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_bgp="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_bgp_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The bgp kernels have been first disabled (via --enable-bgp-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --enable-bgp option!")
+				    fi
+			          ])
+                                else
+                                  use_bgp="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_bgp_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The bgp kernels have been first enabled (via --enable-bgp-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-bgp option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-bgp! Please switch to the option --enable-bgp-kernels])
+  AC_MSG_WARN([The option --enable-bgp will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
+AC_MSG_CHECKING(whether obsolete --enable-bgq has been provided)
+AC_ARG_ENABLE([bgq],
+                AS_HELP_STRING([--enable-bgq],
+			       [OBSOLETE FLAG: do use bgq kernels for ELPA 2stage (please use --enable-bgq-kernels]),
+                               [if test x"$enableval" = x"yes"; then
+                                  use_bgq="yes"                  
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_bgq_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"yes"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="yes"]
+				    else
+                                      use_[]elpa_m4_kernel[="yes"]
+				      AC_MSG_WARN("The bgq kernels have been first disabled (via --enable-bgq-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely enabled this via the obsolete --enable-bgq option!")
+				    fi
+			          ])
+                                else
+                                  use_bgq="no"
+                                  m4_foreach_w(elpa_m4_kernel,elpa_m4_bgq_kernels,[
+	          		    if test x"$use_[]elpa_m4_kernel" = x"no"; then
+				      #everything is consistent	    
+                                      use_[]elpa_m4_kernel[="no"]
+				    else
+                                      use_[]elpa_m4_kernel[="no"]
+				      AC_MSG_WARN("The bgq kernels have been first enabled (via --enable-bgq-kernels or it's default behaviour)")
+				      AC_MSG_WARN("and now you have explicitely disabled this via the obsolete --disable-bgq option!")
+				    fi
+			          ])
+                                fi],
+              [])
+AC_MSG_RESULT([${enableval}])
+if test x"${enableval}" = x"yes" ; then
+  AC_MSG_WARN([You did still use the deprecated option --enable-bgq! Please switch to the option --enable-bgq-kernels])
+  AC_MSG_WARN([The option --enable-bgq will be deprecated in one of the next releases.])
+  enableval="no"
+fi
+
 
 if test x"${enable_bgp}" = x"yes" -o x"$enable_bgq" = x"yes"; then
         m4_foreach_w([elpa_m4_kernel], elpa_m4_sparc64_kernels elpa_m4_neon_arch64_kernels elpa_m4_vsx_kernels elpa_m4_sse_kernels elpa_m4_avx_kernels elpa_m4_avx2_kernels elpa_m4_avx512_kernels elpa_m4_sve128_kernels elpa_m4_sve256_kernels elpa_m4_sve512_kernels, [
@@ -1307,6 +2020,8 @@ m4_foreach_w([elpa_m4_arch],[sparc64 neon_arch64 vsx sse avx avx2 avx512 sve128 
         ELPA_KERNEL_DEPENDS([real_]elpa_m4_arch[_block4], [real_]elpa_m4_arch[_block2])
         ELPA_KERNEL_DEPENDS([complex_]elpa_m4_arch[_block2], [complex_]elpa_m4_arch[_block1])
 ])
+
+
 
 m4_foreach_w([elpa_m4_type],elpa_m4_kernel_types,[
         need_[]elpa_m4_type=no
@@ -1983,7 +2698,7 @@ fi
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include --default-stream per-thread"
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include "
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
   NVCC="nvcc"
@@ -2309,16 +3024,97 @@ if test x"$use_openmp_gpu_backend"  = x"yes" ; then
   ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED=1
   ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED=1
 fi
+
 AM_CONDITIONAL([WITH_SYCL_GPU_VERSION],[test x"$use_sycl_gpu_backend" = x"yes"])
 if test x"$use_sycl_gpu_backend"  = x"yes" ; then
   AC_DEFINE([WITH_SYCL_GPU_VERSION],[1],[enable INTEL GPU support via SYCL backend])
   #AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+  AC_DEFINE_SUBST(CURRENT_WITH_SYCL_GPU_VERSION, 1, "enable use SYCL GPU in C-headers")
   ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED=1
   ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED=1
+else
+  AC_DEFINE_SUBST(CURRENT_WITH_SYCL_GPU_VERSION, 0, "disable use SYCL GPU in C-headers")
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED=0
+  ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED=0
 fi
 
 AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED])
+
+
+use_gpu_ccl=no
+use_nvidia_nccl=no
+use_amd_rccl=no
+AC_MSG_CHECKING(whether GPU collective communications library should be used)
+AC_ARG_ENABLE([gpu-ccl],
+               [AS_HELP_STRING([--enable-gpu-ccl=[[nccl|rccl]]],
+                               [do use Nvidia NCCL or AMD RCCL communications library, respectively])],
+                               [if test x"$enableval" = x"nccl"; then
+                                  use_nvidia_nccl=yes
+                                  use_gpu_ccl=yes
+                                fi
+                                if test x"$enableval" = x"rccl"; then
+                                  use_amd_rccl=yes
+                                  use_gpu_ccl=yes
+                                fi
+                                if test x"$enableval" = x"yes"; then
+                                  AC_MSG_ERROR([Wrong value! Must be either "nccl" or "rccl" ])
+                                fi
+                                if test x"$enableval" = x"no"; then
+                                  use_cuda_nccl=no
+                                  use_amd_rccl=no
+                                  use_gpu_ccl=no
+                                fi
+                                ],
+              [use_gpu_ccl=no])
+AC_MSG_RESULT([${use_gpu_ccl}])
+
+if test x"$use_nvidia_nccl" = x"yes"; then
+  if test x"$use_cuda_streams" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=nccl is set, you must also use --enable-gpu-streams=nvidia])
+  fi
+  if test x"$need_amd_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=nccl is set, you cannot set --enable-amd-gpu])
+  fi
+  if test x"${enable_openmp}" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=nccl currently not supported in combination with --enable-openmp])
+  fi
+  if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
+    AC_MSG_ERROR([The combination --enable-cuda-aware-mpi and --enable-gpu-ccl=nccl is not supported"])
+  fi
+  AC_DEFINE([WITH_NVIDIA_NCCL],[1],[enable usage of NVIDIA NCCL])
+
+  AC_ARG_WITH([nccl-path],[AS_HELP_STRING([--with-nccl-path=PATH],[prefix where NCCL is installed @<:@default=auto@:>@])],
+              [NCCL_INSTALL_PATH=$withval], [with_cuda=auto])
+
+  #NCCLFAGS="$NCCL_INSTALL_PATH/include "
+  #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS $NCCLFLAGS"
+
+  AC_LANG_PUSH([C])
+  CXXFLAGS="$CXXFLAGS -I$CUDA_INSTALL_PATH/include -I$NCCL_INSTALL_PATH/include"
+  LDFLAGS="$LDFLAGS -L$NCCL_INSTALL_PATH/lib"
+  dnl check whether we find nccl
+  AC_SEARCH_LIBS([ncclGetVersion],[nccl],[have_nccl=yes],[have_nccl=no])
+  if test x"${have_nccl}" = x"no"; then
+    AC_MSG_ERROR([Could not link NCCL; either set --disable-gpu-ccl=nccl or set the NCCL installation path with --with-nccl-path=])
+  fi
+  AC_LANG_POP([C])
+fi
+AM_CONDITIONAL([WITH_NVIDIA_NCCL],[test x"$use_nvidia_nccl" = x"yes"])
+
+#
+#if test x"$use_hip_streams" = x"yes"; then
+#  if test x"$need_amd_gpu" = x"no"; then
+#    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you must also use --enable-amd-gpu])
+#  fi
+#  if test x"$need_nvidia_gpu" = x"yes"; then
+#    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-nvidia-gpu])
+#  fi
+#  if test x"${enable_openmp}" = x"yes"; then
+#    AC_MSG_ERROR([If --enable-gpu-streams=amd currently not supported in combination with --enable-openmp])
+#  fi
+#  AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
+#fi
 
 
 LT_INIT
@@ -2863,35 +3659,35 @@ echo ""
 
 if test x"${ax_cv_have_sse3_cpu_ext}" = x"yes" -a  x"${need_sse}" = x"no"; then
   echo " "
-  AC_MSG_WARN([You did not request SSE support (--enable-sse), but your local CPU supports it.])
+  AC_MSG_WARN([You did not request SSE support (--enable-sse-kernels), but your local CPU supports it.])
   AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
   echo " "
 fi
 
 if test x"${ax_cv_have_sse3_cpu_ext}" = x"yes" -a  x"${need_sse_assembly}" = x"no"; then
   echo " "
-  AC_MSG_WARN([You did not request SSE-ASSEMBLY support (--enable-sse-assembly), but your local CPU supports it.])
+  AC_MSG_WARN([You did not request SSE-ASSEMBLY support (--enable-sse-assembly-kernels), but your local CPU supports it.])
   AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
   echo " "
 fi
 
 if test x"${ax_cv_have_avx_cpu_ext}" = x"yes" -a  x"${need_avx}" = x"no"; then
   echo " "
-  AC_MSG_WARN([You did not request AVX support (--enable-avx), but your local CPU supports it.])
+  AC_MSG_WARN([You did not request AVX support (--enable-avx-kernels), but your local CPU supports it.])
   AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
   echo " "
 fi
 
 if test x"${ax_cv_have_avx2_cpu_ext}" = x"yes" -a  x"${need_avx2}" = x"no"; then
   echo " "
-  AC_MSG_WARN([You did not request AVX2 support (--enable-avx2), but your local CPU supports it.])
+  AC_MSG_WARN([You did not request AVX2 support (--enable-avx2-kernels), but your local CPU supports it.])
   AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
   echo " "
 fi
 
 if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no"; then
   echo " "
-  AC_MSG_WARN([You did not request AVX512 support (--enable-avx512), but your local CPU supports it.])
+  AC_MSG_WARN([You did not request AVX512 support (--enable-avx512-kernels), but your local CPU supports it.])
   AC_MSG_WARN([You might want to re-configure, except you are cross-compiling])
   echo " "
 fi

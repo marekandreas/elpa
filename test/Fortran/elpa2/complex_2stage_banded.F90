@@ -229,7 +229,7 @@ program test_complex2_double_banded
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
-     stop
+     stop 1
    endif
 
 

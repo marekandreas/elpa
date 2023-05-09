@@ -64,7 +64,7 @@ int set_max_threads_glob_1=0;
 #ifdef WITH_AMD_GPU_VERSION
 #define default_max_stored_rows 256
 #else
-int const default_max_stored_rows = 256;   
+int const default_max_stored_rows = 256;
 #endif
 
 static int enumerate_identity(elpa_index_t index, int i);
@@ -126,7 +126,7 @@ int nvidia_gpu_count();
 int amd_gpu_count();
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-int sycl_gpu_count();
+int sycl_gpu_count(int);
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 int openmp_offload_gpu_count();
@@ -155,6 +155,7 @@ static int output_build_config_is_valid(elpa_index_t index, int n, int new_value
 static int nvidia_gpu_is_valid(elpa_index_t index, int n, int new_value);
 static int amd_gpu_is_valid(elpa_index_t index, int n, int new_value);
 static int intel_gpu_is_valid(elpa_index_t index, int n, int new_value);
+static int expose_all_sycl_devices_is_valid(elpa_index_t index, int n, int new_value);
 static int nbc_is_valid(elpa_index_t index, int n, int new_value);
 static int nbc_elpa1_is_valid(elpa_index_t index, int n, int new_value);
 static int nbc_elpa2_is_valid(elpa_index_t index, int n, int new_value);
@@ -168,7 +169,7 @@ static int elpa_float_value_to_string(char *name, float value, const char **stri
 static int elpa_double_string_to_value(char *name, char *string, double *value);
 static int elpa_double_value_to_string(char *name, double value, const char **string);
 
-         
+
 #define BASE_ENTRY(option_name, option_description, once_value, readonly_value, print_flag_value) \
                 .base = { \
                         .name = option_name, \
@@ -322,6 +323,9 @@ static const elpa_index_int_entry_t int_entries[] = {
                         cardinality_bool, enumerate_identity, intel_gpu_is_valid, NULL, PRINT_YES),
         INT_ENTRY("amd-gpu", "Use AMD GPU acceleration", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, amd_gpu_is_valid, NULL, PRINT_YES),
+        // For SYCL, currently ELPA ignores non-GPU devices.
+        INT_ENTRY("sycl_show_all_devices", "Utilize ALL SYCL devices, not just level zero GPUs.", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                        cardinality_bool, enumerate_identity, expose_all_sycl_devices_is_valid, NULL, PRINT_YES),
         //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
         INT_ENTRY("gpu_hermitian_multiply", "Use GPU acceleration for elpa_hermitian_multiply", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
@@ -1042,6 +1046,14 @@ static int intel_gpu_is_valid(elpa_index_t index, int n, int new_value) {
 #endif
 }
 
+static int expose_all_sycl_devices_is_valid(elpa_index_t index, int n, int new_value) {
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+        return new_value == 0 || new_value == 1;
+#else
+        return new_value == 0;
+#endif
+}
+
 static int nbc_is_valid(elpa_index_t index, int n, int new_value) {
         return new_value == 0 || new_value == 1;
 }
@@ -1329,7 +1341,8 @@ static int use_gpu_id_cardinality(elpa_index_t index) {
 	return count;
 #elif WITH_SYCL_GPU_VERSION
 	int count;
-	count = sycl_gpu_count();
+        int show_all_sycl_devices = elpa_index_get_int_value(index, "sycl_show_all_devices", NULL);
+	count = sycl_gpu_count(show_all_sycl_devices);
         if (count == -1000) {
           fprintf(stderr, "Querrying GPUs failed! Set GPU count = 0\n");
 	return 0;
@@ -1558,7 +1571,7 @@ int elpa_index_autotune_cardinality_new_stepping(elpa_index_t index, int autotun
                         N_level[level] *= int_entries[i].cardinality(index);
                    }
 	    }
-		   if (N_level[level] == 1) { N_level[level] = 0;} 
+		   if (N_level[level] == 1) { N_level[level] = 0;}
           }
 	for (int i=1;i<autotune_level+1;i++){
 	  N += N_level[i];
@@ -1597,7 +1610,7 @@ int elpa_index_set_autotune_parameters(elpa_index_t index, int autotune_level_ol
                current_cpy /= int_entries[i].cardinality(index);
            }
         }
-	
+
         if (debug == 1 && elpa_index_is_printing_mpi_rank(index)) {
                 fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d for level %s ***\n", current, elpa_autotune_level_name(autotune_level_old));
                 elpa_index_print_autotune_parameters(index, autotune_level_old, autotune_domain);
@@ -1629,7 +1642,7 @@ int elpa_index_set_autotune_parameters_new_stepping(elpa_index_t index, int auto
                current_cpy /= int_entries[i].cardinality(index);
            }
         }
-	
+
         if (debug == 1 && elpa_index_is_printing_mpi_rank(index)) {
                 fprintf(stderr, "\n*** AUTOTUNING: setting a new combination of parameters, idx %d for level %s ***\n", current, elpa_autotune_level_name(autotune_level));
                 elpa_index_print_autotune_parameters_new_stepping(index, autotune_level, autotune_domain, autotune_part);

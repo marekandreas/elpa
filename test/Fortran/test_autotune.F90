@@ -215,7 +215,7 @@ program test
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
-     stop
+     stop 1
    endif
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))

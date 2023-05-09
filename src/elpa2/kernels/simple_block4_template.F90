@@ -141,7 +141,8 @@
 #endif
 
 #if COMPLEXCASE==1
-    stop
+    print *, "simple_block4_template.F90: Error, aborting..."
+    stop 1
     !s = conjg(hh(2,2))*1.0
     !do i=3,nb
     !   s = s+(conjg(hh(i,2))*hh(i-1,1))
@@ -175,7 +176,8 @@
 #endif
 
 #if COMPLEXCASE==1
-    stop
+    print *, "simple_block4_template.F90: Error, aborting..."
+    stop 1
     !y(1:nq) = q(1:nq,1) + q(1:nq,2)*conjg(hh(2,2))
 #endif
 
@@ -187,7 +189,8 @@
       h4 = hh(i  ,4)
 #endif
 #if COMPLEXCASE==1
-       stop
+      print *, "simple_block4_template.F90: Error, aborting..."
+      stop 1
     !   h1 = conjg(hh(i-1,1))
     !   h2 = conjg(hh(i,2))
 #endif
@@ -209,7 +212,8 @@
 #endif
 
 #if COMPLEXCASE==1
-    stop
+    print *, "simple_block4_template.F90: Error, aborting..."
+    stop 1
     !x(1:nq) = x(1:nq) + q(1:nq,nb+1)*conjg(hh(nb,1))
 #endif
 

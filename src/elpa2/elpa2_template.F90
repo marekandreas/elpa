@@ -426,6 +426,7 @@
 
       else
         write(error_unit,*) "ELPA2: GPUs are requested but not detected! Aborting..."
+        call obj%timer%stop("check_for_gpu")
 #include "./elpa2_aborting_template.F90"
       endif
       call obj%timer%stop("check_for_gpu")
@@ -461,7 +462,7 @@
               write(error_unit,*) "Either adapt the block size or the process grid, or do not set the GPU kernel! Aborting..."
             endif
 #endif
-            stop
+            stop 1
           else
             ! here we should set the default kernel
             kernel = DEFAULT_KERNEL
@@ -538,8 +539,8 @@ print *,"Device pointer + REDIST"
    ! 2. redistribute aIntern_dummy to aIntern
 
 #ifdef WITH_GPU_STREAMS
-   print *, "elpa2_template: noy yet implemented"
-   stop
+   print *, "elpa2_template: not yet implemented"
+   stop 1
 #endif
 
    successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &
@@ -658,14 +659,14 @@ print *,"Device pointer + REDIST"
     !call obj%get(KERNEL_STRING, kernel, error)
     !if (error .ne. ELPA_OK) then
     !  print *,"Problem getting option for kernel settings. Aborting..."
-    !  stop
+    !  stop 1
     !endif
 
 #ifdef ACTIVATE_SKEW
     !call obj%get("is_skewsymmetric",skewsymmetric,error)
     !if (error .ne. ELPA_OK) then
     !  print *,"Problem getting option for skewsymmetric settings. Aborting..."
-    !  stop
+    !  stop 1
     !endif
     !isSkewsymmetric = (skewsymmetric == 1)
     isSkewsymmetric = .true.
@@ -689,7 +690,7 @@ print *,"Device pointer + REDIST"
       !call obj%get("gpu_tridiag_band", gpu, error)
       !if (error .ne. ELPA_OK) then
       !  print *,"Problem getting option for gpu_tridiag_band settings. Aborting..."
-      !  stop
+      !  stop 1
       !endif
       !do_useGPU_tridiag_band = (gpu == 1)
 
@@ -740,7 +741,7 @@ print *,"Device pointer + REDIST"
         !call obj%set(KERNEL_STRING, GPU_KERNEL, error)
         !if (error .ne. ELPA_OK) then
         !  write(error_unit,*) "Cannot set kernel to GPU kernel"
-        !  stop
+        !  stop 1
         !endif
 
         if (my_pe .eq. 0) write(error_unit,*) "You requested the GPU version, thus the GPU kernel is activated"
@@ -815,7 +816,7 @@ print *,"Device pointer + REDIST"
       !call obj%get(KERNEL_STRING, kernel, error)
       !if (error .ne. ELPA_OK) then
       !  write(error_unit,*) "Cannot get kernel to GPU kernel"
-      !  stop
+      !  stop 1
       !endif
 #if REALCASE == 1
 #ifdef WITH_REAL_NVIDIA_SM80_GPU_KERNEL
@@ -828,7 +829,7 @@ print *,"Device pointer + REDIST"
 #endif /* REALCASE == 1 */
         ! this should never happen, checking as an assert
         write(error_unit,*) "ELPA: INTERNAL ERROR setting GPU kernel!  Aborting..."
-        stop
+        stop 1
       endif
     else ! do not use GPU
 #if REALCASE == 1
@@ -843,7 +844,6 @@ print *,"Device pointer + REDIST"
         ! combination not allowed
         write(error_unit,*) "ELPA: Warning, GPU usage has NOT been requested but compute kernel &
                             &is defined as the GPU kernel!  Setting default kernel"
-                    stop
         kernel = DEFAULT_KERNEL
         !TODO do error handling properly
       endif
@@ -876,14 +876,14 @@ print *,"Device pointer + REDIST"
      !call obj%get(KERNEL_STRING,kernelByUser,error)
      !if (error .ne. ELPA_OK) then
      !  print *,"Problem getting option for user kernel settings. Aborting..."
-     !  stop
+     !  stop 1
      !endif
 
      !if (kernelByUser .ne. kernel) then
      !  call obj%set(KERNEL_STRING, kernel, error)
      !  if (error .ne. ELPA_OK) then
      !    print *,"Problem setting kernel. Aborting..."
-     !    stop
+     !    stop 1
      !  endif
      !endif
 
@@ -906,7 +906,7 @@ print *,"Device pointer + REDIST"
      !call obj%get(KERNEL_STRING,kernelByUser,error)
      !if (error .ne. ELPA_OK) then
      !  print *,"Problem getting option for user kernel settings. Aborting..."
-     !  stop
+     !  stop 1
      !endif
 
      ! map kernel to SIMD Set, and check whether this is set is available on all cores
@@ -925,7 +925,7 @@ print *,"Device pointer + REDIST"
          write(error_unit,*) "You enabled the experimental feature of an heterogenous cluster support."
          write(error_unit,*) "However, this works at the moment only if ELPA is run on (different) Intel CPUs!"
          write(error_unit,*) "ELPA detected also non Intel-CPUs, and will this abort now"
-         stop
+         stop 1
         endif
       else
         if (my_pe == 0 ) then
@@ -948,7 +948,7 @@ print *,"Device pointer + REDIST"
             !  call obj%set(KERNEL_STRING, kernel, error)
             !  if (error .ne. ELPA_OK) then
             !    print *,"Problem setting kernel. Aborting..."
-            !    stop
+            !    stop 1
             !  endif
             if (my_pe == 0 ) write(error_unit,*) "ELPA decided to use ",elpa_int_value_to_string(KERNEL_STRING, kernel)
               exit
@@ -1330,6 +1330,15 @@ print *,"Device pointer + REDIST"
            end if
          end do
        endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+     if (obj%gpu_setup%syclCPU) then
+       print *,"Switching of the GPU trans_ev_tridi due to SYCL CPU",obj%gpu_setup%syclCPU
+       do_useGPU_trans_ev_tridi_to_band =.false.
+       kernel = DEFAULT_KERNEL
+       do_useGPU_trans_ev_band_to_full =.false.
+     endif
+#endif
        ! Backtransform stage 1
      if (do_trans_to_band) then
 

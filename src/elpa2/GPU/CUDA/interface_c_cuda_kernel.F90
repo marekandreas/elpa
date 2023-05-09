@@ -368,7 +368,7 @@ module cuda_c_kernel
 !      call launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 !#endif
        print *,"the single precision kernel is not yet implemented"
-       stop
+       stop 1
     end subroutine
 #endif /* WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY */
 

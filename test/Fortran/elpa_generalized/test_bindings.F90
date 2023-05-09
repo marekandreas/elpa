@@ -87,7 +87,7 @@ program test_bindings
        print *," Ecountered critical error when setting up blacs. Aborting..."
      endif
      call mpi_finalize(mpierr)
-     stop
+     stop 1
    endif
 
    allocate(a (na_rows,na_cols))
