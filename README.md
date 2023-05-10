@@ -105,10 +105,11 @@ Nonetheless, we are grateful if you cite the following publications:
   Parallel Computing 85, 167-177 (2019)
 
   If you use the new support for skew-symmetric matrices:
+
   Benner, P.; Draxl, C.; Marek, A.; Penke C.; Vorwerk, C.;
   "High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving the Bethe-Salpeter Eigenvalue Problem",
-  https://arxiv.org/abs/1912.04062, submitted to Parallel Computing
-  
+  Parallel Computing 96, 102639 (2020)
+  doi:10.1016/j.parco.2020.102639
 
 ## Installation of the *ELPA* library
 
