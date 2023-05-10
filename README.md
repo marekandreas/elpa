@@ -96,8 +96,9 @@ Nonetheless, we are grateful if you cite the following publications:
   
   Yu, V.; Moussa, J.; Kus, P.; Marek, A.; Messmer, P.; Yoon, M.; Lederer, H.; Blum, V.
   "GPU-Acceleration of the ELPA2 Distributed Eigensolver for Dense Symmetric and Hermitian Eigenproblems",
-  Computer Physics Communications, 262, 2021
-
+  Computer Physics Communications 262, 107808 (2021)
+  doi:10.1016/j.cpc.2020.107808
+  
   If you use the new API and/or autotuning:
  
   Kus, P.; Marek, A.; Koecher, S. S.; Kowalski H.-H.; Carbogno, Ch.; Scheurer, Ch.; Reuter, K.; Scheffler, M.; Lederer, H.
