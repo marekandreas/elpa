@@ -98,7 +98,7 @@ Nonetheless, we are grateful if you cite the following publications:
   "GPU-Acceleration of the ELPA2 Distributed Eigensolver for Dense Symmetric and Hermitian Eigenproblems",
   Computer Physics Communications 262, 107808 (2021)
   doi:10.1016/j.cpc.2020.107808
-  
+
   If you use the new API and/or autotuning:
  
   Kus, P.; Marek, A.; Koecher, S. S.; Kowalski H.-H.; Carbogno, Ch.; Scheurer, Ch.; Reuter, K.; Scheffler, M.; Lederer, H.
@@ -107,7 +107,7 @@ Nonetheless, we are grateful if you cite the following publications:
 
   If you use the new support for skew-symmetric matrices:
 
-  Benner, P.; Draxl, C.; Marek, A.; Penke C.; Vorwerk, C.;
+  Penke C.; Marek, A.; Vorwerk, C.; Draxl, C.; Benner, P.;
   "High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving the Bethe-Salpeter Eigenvalue Problem",
   Parallel Computing 96, 102639 (2020)
   doi:10.1016/j.parco.2020.102639
