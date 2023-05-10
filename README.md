@@ -83,7 +83,7 @@ Nonetheless, we are grateful if you cite the following publications:
   T.; Heinecke, A.; Bungartz, H.-J.; Lederer, H.
   "The ELPA library: scalable parallel eigenvalue solutions for electronic
   structure theory and computational science",
-  Journal of Physics Condensed Matter, 26 (2014)
+  Journal of Physics Condensed Matter 26, 213201 (2014)
   doi:10.1088/0953-8984/26/21/213201
   
   If you use the GPU version of ELPA:
