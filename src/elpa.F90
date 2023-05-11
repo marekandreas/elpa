@@ -120,7 +120,7 @@
 !>
 !>  if (elpa_init(20211125) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
-!>     stop
+!>     stop 1
 !>   endif
 !>   elpa => elpa_allocate(success)
 !>   if (success /= ELPA_OK) then
@@ -267,7 +267,7 @@
 !>
 !>  if (elpa_init(20211125) /= ELPA_OK) then
 !>     print *, "ELPA API version not supported"
-!>     stop
+!>     stop 1
 !>   endif
 !>   elpa => elpa_allocate(success)
 !>
@@ -375,7 +375,7 @@ module elpa
           write(*,*) "Cannot allocate the ELPA object!"
           write(*,*) "This is a critical error, but you do not check the error codes!"
           write(*,*) "ELPA not usable with this error"
-          stop
+          stop 1
         endif
       endif
 #endif

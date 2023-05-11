@@ -103,15 +103,15 @@ __global__ void hip_copy_double_a_tmatc_kernel(double *a_dev, double *tmatc_dev,
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
 }
 
-extern "C" void hip_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
+extern "C" void hip_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, hipStream_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
-#ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
-#endif
+//#ifdef WITH_GPU_STREAMS
+//  hipStream_t streamId = *((hipStream_t*)my_stream);
+//#endif
 
 #ifdef NEW_KERNEL
   if ((l_cols-l_colx+1) % BLK_X_DIM == 0 && nblk % BLK_X_DIM == 0 && TRANS_COALESCED) {
@@ -119,7 +119,7 @@ extern "C" void hip_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, 
     dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
 
 #ifdef WITH_GPU_STREAMS
-    hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<double>, blocks, threadsPerBlock, 0, streamId, a_dev,
+    hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<double>, blocks, threadsPerBlock, 0, my_stream, a_dev,
               tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
 #else
     hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<double>, blocks, threadsPerBlock, 0, 0, a_dev,
@@ -133,7 +133,7 @@ extern "C" void hip_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, 
   dim3 threadsPerBlock = dim3(nblk,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_a_tmatc_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+  hipLaunchKernelGGL(hip_copy_double_a_tmatc_kernel, blocks, threadsPerBlock, 0, my_stream, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
 #else
   hipLaunchKernelGGL(hip_copy_double_a_tmatc_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
 #endif
@@ -155,16 +155,16 @@ __global__ void hip_copy_float_a_tmatc_kernel(float *a_dev, float *tmatc_dev, co
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
 }
 
-extern "C" void hip_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
+extern "C" void hip_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, hipStream_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
 
-#ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
-#endif
+//#ifdef WITH_GPU_STREAMS
+//  hipStream_t streamId = *((hipStream_t*)my_stream);
+//#endif
 
 #ifdef NEW_KERNEL
   if ((l_cols-l_colx+1) % BLK_X_DIM == 0 && nblk % BLK_X_DIM == 0 && TRANS_COALESCED) {
@@ -186,7 +186,7 @@ extern "C" void hip_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int
   dim3 threadsPerBlock = dim3(nblk,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_a_tmatc_kernel, blocks, threadsPerBlock, 0, streamId, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+  hipLaunchKernelGGL(hip_copy_float_a_tmatc_kernel, blocks, threadsPerBlock, 0, my_stream, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
 #else
   hipLaunchKernelGGL(hip_copy_float_a_tmatc_kernel, blocks, threadsPerBlock, 0, 0, a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
 #endif
@@ -207,16 +207,16 @@ __global__ void hip_copy_double_complex_a_tmatc_kernel(hipDoubleComplex *a_dev, 
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = hipConj(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
 }
 
-extern "C" void hip_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, double _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
+extern "C" void hip_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, double _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, hipStream_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
 
-#ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
-#endif
+//#ifdef WITH_GPU_STREAMS
+//  hipStream_t streamId = *((hipStream_t*)my_stream);
+//#endif
 
 #ifdef NEW_KERNEL
   hipDoubleComplex* a_casted = (hipDoubleComplex*) a_dev;
@@ -244,7 +244,7 @@ extern "C" void hip_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, do
   hipDoubleComplex* tmatc_casted = (hipDoubleComplex*) tmatc_dev;
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_double_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+  hipLaunchKernelGGL(hip_copy_double_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, my_stream, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
 #else
   hipLaunchKernelGGL(hip_copy_double_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
 #endif
@@ -267,16 +267,16 @@ __global__ void hip_copy_float_complex_a_tmatc_kernel(hipFloatComplex *a_dev, hi
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = hipConjf(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
 }
 
-extern "C" void hip_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, float _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
+extern "C" void hip_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, float _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, hipStream_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
 
-#ifdef WITH_GPU_STREAMS
-  hipStream_t streamId = *((hipStream_t*)my_stream);
-#endif
+//#ifdef WITH_GPU_STREAMS
+//  hipStream_t streamId = *((hipStream_t*)my_stream);
+//#endif
 
 #ifdef NEW_KERNEL
   hipFloatComplex* a_casted = (hipFloatComplex*) a_dev;
@@ -287,7 +287,7 @@ extern "C" void hip_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, floa
       dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
 
 #ifdef WITH_GPU_STREAMS
-      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<hipComplex>, blocks, threadsPerBlock, 0, elpa_hip_stm, a_casted,
+      hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<hipComplex>, blocks, threadsPerBlock, 0, my_stream, a_casted,
               tmatc_casted, l_cols, matrixRows, l_colx, l_row1, nblk);
 #else
       hipLaunchKernelGGL(hip_copy_a_tmatc_kernel<hipComplex>, blocks, threadsPerBlock, 0, 0, a_casted,
@@ -304,7 +304,7 @@ extern "C" void hip_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, floa
   hipFloatComplex* tmatc_casted = (hipFloatComplex*) tmatc_dev;
 
 #ifdef WITH_GPU_STREAMS
-  hipLaunchKernelGGL(hip_copy_float_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, streamId, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+  hipLaunchKernelGGL(hip_copy_float_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, my_stream, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
 #else
   hipLaunchKernelGGL(hip_copy_float_complex_a_tmatc_kernel, blocks, threadsPerBlock, 0, 0, a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
 #endif

@@ -218,7 +218,7 @@ program test_real2_single_banded
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
-     stop
+     stop 1
    endif
 
    if (myid==0) then

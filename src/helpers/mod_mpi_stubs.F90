@@ -61,6 +61,7 @@ module elpa_mpi_stubs
       implicit none
 
       real(kind=c_double) :: time
+      time = 0.0
 #ifndef WITH_MPI
       time = seconds()
 #endif

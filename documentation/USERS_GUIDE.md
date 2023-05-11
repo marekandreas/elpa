@@ -68,7 +68,7 @@ Fortran synopsis
 
  if (elpa_init(20171201) /= ELPA_OK) then        ! put here the API version that you are using
     print *, "ELPA API version not supported"
-    stop
+    stop 1
   endif
   elpa => elpa_allocate(success)
   if (success != ELPA_OK) then
@@ -301,7 +301,7 @@ Fortran synopsis
 
  if (elpa_init(20171201) /= ELPA_OK) then
     print *, "ELPA API version not supported"
-    stop
+    stop 1
   endif
   elpa => elpa_allocate(success)
 
@@ -458,7 +458,7 @@ call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
 ! check the return code
 if (info .ne. 0) then
   print *,"Invalid blacs-distribution. Abort!"
-  stop
+  stop 1
 endif
 
 ! Allocate matrices 
@@ -478,7 +478,7 @@ a(i,j) = [ your problem to be solved]
 
 if (elpa_init(20171201) /= ELPA_OK) then        ! put here the API version that you are using
    print *, "ELPA API version not supported"
-   stop
+   stop 1
  endif
  elpa => elpa_allocate(success)
  if (success != ELPA_OK) then

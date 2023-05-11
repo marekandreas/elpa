@@ -58,10 +58,16 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/mod_gpu_setup.F90 \
   src/GPU/check_for_gpu.F90 \
   src/GPU/mod_vendor_agnostic_layer.F90 \
+  src/GPU/mod_vendor_agnostic_general_layer.F90 \
+  src/GPU/mod_vendor_agnostic_blas_layer.F90 \
+  src/GPU/mod_vendor_agnostic_solver_layer.F90 \
+  src/GPU/mod_vendor_agnostic_layer_utilities.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
+  src/GPU/CUDA/mod_nccl.F90 \
   src/GPU/ROCm/mod_hip.F90 \
   src/GPU/OpenMP/mod_openmp_offload.F90 \
   src/GPU/SYCL/mod_sycl.F90 \
+  src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
   src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
   src/elpa2/GPU/ROCm/interface_c_hip_kernel.F90 \
@@ -88,10 +94,12 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/invert_trm/GPU/mod_invert_trm_gpu.F90 \
   src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
   src/invert_trm/GPU/ROCm/mod_invert_trm_hip.F90 \
+  src/invert_trm/GPU/SYCL/mod_invert_trm_sycl.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/GPU/mod_cholesky_gpu.F90 \
   src/cholesky/GPU/CUDA/mod_cholesky_cuda.F90 \
   src/cholesky/GPU/ROCm/mod_cholesky_hip.F90 \
+  src/cholesky/GPU/SYCL/mod_cholesky_sycl.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/solve_tridi/mod_distribute_global_column.F90 \
@@ -114,9 +122,22 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
+  src/GPU/vendor_agnostic_general_layer_template.F90 \
+  src/GPU/vendor_agnostic_blas_layer_template.F90 \
+  src/GPU/vendor_agnostic_solver_layer_template.F90 \
+  src/GPU/vendor_agnostic_layer_utilities_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
+  src/GPU/CUDA/cuda_template.F90 \
+  src/GPU/CUDA/cudaFunctions_template.h \
+  src/GPU/CUDA/nccl_template.F90 \
+  src/GPU/CUDA/ncclFunctions_template.h \
+  src/GPU/ROCm/hip_template.F90 \
+  src/GPU/ROCm/rocmFunctions_template.h \
+  src/GPU/OpenMP/openmp_offload_template.F90 \
+  src/GPU/SYCL/sycl_template.F90 \
+  src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
@@ -172,6 +193,7 @@ endif
 if WITH_NVIDIA_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/elpa_explicit_name_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu
 
+
 if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real_sm80.cu src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh
 endif
@@ -179,7 +201,7 @@ endif
 
 if WITH_SYCL_GPU_VERSION
   libelpa@SUFFIX@_private_la_CXXFLAGS = $(AM_CXXFLAGS) -Isrc
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclCommon.cpp src/GPU/SYCL/syclFunctions.cpp src/GPU/SYCL/syclUtils.cpp src/elpa2/GPU/SYCL/ev_tridi_band_sycl_gpu_real.cpp
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/elpa_explicit_name_sycl_gpu.cpp src/GPU/SYCL/syclCommon.cpp src/GPU/SYCL/syclFunctions.cpp src/GPU/SYCL/syclUtils.cpp src/elpa2/GPU/SYCL/ev_tridi_band_sycl_gpu_real.cpp src/invert_trm/GPU/SYCL/elpa_invert_trm_sycl.cpp src/cholesky/GPU/SYCL/elpa_cholesky_sycl.cpp
 endif
 
 if WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -189,6 +211,11 @@ endif
 #if WITH_SYCL_GPU_VERSION
 #  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclFunctions.cpp
 #endif
+
+
+if WITH_NVIDIA_NCCL
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/ncclFunctions.cpp
+endif
 
 if WITH_AMD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/elpa_index_amd_gpu.cpp  src/GPU/ROCm/elpa_explicit_name_amd_gpu.cpp src/GPU/ROCm/rocmFunctions.cpp src/GPU/ROCm/hipUtils.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp
@@ -730,6 +757,15 @@ libelpatest@SUFFIX@_la_SOURCES += \
   test/shared/GPU/ROCm/test_rocmFunctions.cpp
 endif
 
+if WITH_SYCL_GPU_VERSION
+libelpatest@SUFFIX@_la_SOURCES += \
+  test/shared/GPU/SYCL/test_sycl.F90 \
+  test/shared/GPU/SYCL/test_syclFunctions.cpp
+endif
+
+
+
+
 if WITH_SCALAPACK_TESTS
 libelpatest@SUFFIX@_la_SOURCES += \
   test/shared/test_scalapack.F90
@@ -906,11 +942,23 @@ EXTRA_DIST = \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
   src/GPU/check_legacy_gpu_setting_template.F90 \
+  src/GPU/vendor_agnostic_general_layer_template.F90 \
+  src/GPU/vendor_agnostic_blas_layer_template.F90 \
+  src/GPU/vendor_agnostic_solver_layer_template.F90 \
+  src/GPU/vendor_agnostic_layer_utilities_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
+  src/GPU/CUDA/cuda_template.F90 \
+  src/GPU/CUDA/cudaFunctions_template.h \
+  src/GPU/CUDA/nccl_template.F90 \
+  src/GPU/CUDA/ncclFunctions_template.h \
   src/GPU/CUDA/cuUtils_template.cu \
+  src/GPU/ROCm/hip_template.F90 \
+  src/GPU/ROCm/rocmFunctions_template.h \
   src/GPU/ROCm/hipUtils_template.cpp \
+  src/GPU/OpenMP/openmp_offload_template.F90 \
+  src/GPU/SYCL/sycl_template.F90 \
   src/GPU/SYCL/syclUtils.cpp \
   src/GPU/SYCL/syclCommon.cpp \
   src/GPU/SYCL/syclFunctions.cpp \
@@ -938,7 +986,7 @@ EXTRA_DIST = \
   src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
   src/elpa1/elpa1_trans_ev_template.F90 \
-  src/elpa1/elpa1_tridiag_template.F90 \
+  src/elpa1/tridiag_template.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/elpa_cholesky_template.F90 \
   src/cholesky/GPU/mod_cholesky_gpu.F90 \
@@ -947,6 +995,7 @@ EXTRA_DIST = \
   src/invert_trm/GPU/mod_invert_trm_gpu.F90 \
   src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
   src/invert_trm/GPU/ROCm/mod_invert_trm_hip.F90 \
+  src/invert_trm/GPU/SYCL/mod_invert_trm_sycl.F90 \
   src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/invert_trm/elpa_invert_trm_template.F90 \
@@ -1011,6 +1060,7 @@ EXTRA_DIST = \
   test/shared/GPU/test_gpu_vendor_agnostic_layerVariables.h \
   test/shared/GPU/CUDA/test_cudaFunctions.h \
   test/shared/GPU/ROCm/test_rocmFunctions.h \
+  test/shared/GPU/SYCL/test_syclFunctions.h \
   test_project_1stage/Makefile.am \
   test_project_1stage/autogen.sh \
   test_project_1stage/configure.ac \

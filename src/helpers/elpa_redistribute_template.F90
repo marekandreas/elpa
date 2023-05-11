@@ -65,13 +65,13 @@
      call obj%get("internal_nblk", nblkInternal, error)
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option. Aborting..."
-       stop
+       stop 1
      endif
 
      call obj%get("matrix_order", matrixOrder, error)
      if (error .ne. ELPA_OK) then
        print *,"Problem getting option. Aborting..."
-       stop
+       stop 1
      endif
 
      layoutExternal=matrixLayouts(matrixOrder)
@@ -159,11 +159,11 @@
 
        if (int(np_rows_,kind=c_int) /= np_rows) then
          print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
-         stop
+         stop 1
        endif
        if (int(np_cols_,kind=c_int) /= np_cols) then
          print *, "BLACS_Gridinfo returned different values for np_cols as set by BLACS_Gridinit"
-         stop
+         stop 1
        endif
      !else
      !  na_rows_ = int(na_rows,kind=BLAS_KIND)
