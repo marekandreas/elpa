@@ -64,99 +64,12 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
 #include <cublas_v2.h>
 #endif
+#ifdef WITH_NVIDIA_CUSOLVER
+#include <cusolverDn.h>
+#endif
+
 
 #include "./test_cudaFunctions.h"
 
-#define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
+#include "../../../../src/GPU/CUDA/cudaFunctions_template.h"
 
-#ifdef DEBUG_CUDA
-#define debugmessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
-#else
-#define debugmessage(x, ...)
-#endif
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-extern "C"
-{
-  int cudaSetDeviceFromC(int n) {
-
-    cudaError_t cuerr = cudaSetDevice(n);
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaSetDevice(%i): %s\n", n, cudaGetErrorString(cuerr));
-      return 0;
-    }
-    return 1;
-  }
-
-  int cudaGetDeviceCountFromC(int *count) {
-
-    cudaError_t cuerr = cudaGetDeviceCount(count);
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaGetDeviceCount: %s\n",cudaGetErrorString(cuerr));
-      return 0;
-    }
-    return 1;
-  }
-  
-  int cudaMallocFromC(intptr_t *a, size_t width_height) {
-
-    cudaError_t cuerr = cudaMalloc((void **) a, width_height);
-#ifdef DEBUG_CUDA
-    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *a, width_height);
-#endif
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaMalloc: %s\n",cudaGetErrorString(cuerr));
-      return 0;
-    }
-    return 1;
-  }
-  
-  int cudaFreeFromC(intptr_t *a) {
-#ifdef DEBUG_CUDA
-    printf("CUDA Free, pointer address: %p \n", a);
-#endif
-    cudaError_t cuerr = cudaFree(a);
-
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaFree: %s\n",cudaGetErrorString(cuerr));
-      return 0;
-    }
-    return 1;
-  }
-
-  int cudaMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir) {
-
-    cudaError_t cuerr = cudaMemcpy( dest, src, count, (cudaMemcpyKind)dir);
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cudaMemcpy: %s\n",cudaGetErrorString(cuerr));
-      return 0;
-    }
-    return 1;
-  }
-
-  int cudaMemcpyDeviceToDeviceFromC(void) {
-      int val = cudaMemcpyDeviceToDevice;
-      return val;
-  }
-  int cudaMemcpyHostToDeviceFromC(void) {
-      int val = cudaMemcpyHostToDevice;
-      return val;
-  }
-  int cudaMemcpyDeviceToHostFromC(void) {
-      int val = cudaMemcpyDeviceToHost;
-      return val;
-  }
-  int cudaHostRegisterDefaultFromC(void) {
-      int val = cudaHostRegisterDefault;
-      return val;
-  }
-  int cudaHostRegisterPortableFromC(void) {
-      int val = cudaHostRegisterPortable;
-      return val;
-  }
-  int cudaHostRegisterMappedFromC(void) {
-      int val = cudaHostRegisterMapped;
-      return val;
-  }
-}
-#endif /* TEST_NVIDIA_GPU == 1 */

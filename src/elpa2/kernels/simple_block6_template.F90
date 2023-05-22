@@ -187,7 +187,8 @@
     enddo
 
 #if COMPLEXCASE==1
-    stop
+    print *, "simple_block6_template.F90: Error, aborting..."
+    stop 1
     !s = conjg(hh(2,2))*1.0
     !do i=3,nb
     !   s = s+(conjg(hh(i,2))*hh(i-1,1))
@@ -242,7 +243,8 @@
       h5 = hh(i-1,5) !
       h6 = hh(i  ,6) !
 #if COMPLEXCASE==1
-       stop
+       print *, "simple_block6_template.F90: Error, aborting..."
+       stop 1
     !   h1 = conjg(hh(i-1,1))
     !   h2 = conjg(hh(i,2))
 #endif

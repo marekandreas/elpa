@@ -65,6 +65,13 @@
 #ifdef WITH_AMD_GPU_VERSION
 #include "./ROCm/test_rocmFunctions.h"
 #endif 
+#ifdef WITH_SYCL_GPU_VERSION
+#include "./SYCL/test_syclFunctions.h"
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#error "openmp_offload missing"
+#endif
+
 
 void set_gpu_parameters(){
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -74,7 +81,14 @@ void set_gpu_parameters(){
 #ifdef WITH_AMD_GPU_VERSION
    gpuMemcpyHostToDevice = hipMemcpyHostToDeviceFromC();
    gpuMemcpyDeviceToHost = hipMemcpyDeviceToHostFromC();
-#endif 
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+   gpuMemcpyHostToDevice = syclMemcpyHostToDeviceFromC();
+   gpuMemcpyDeviceToHost = syclMemcpyDeviceToHostFromC();
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#error "openmp_offload missing"
+#endif
 }
 
 int gpuGetDeviceCount(int *count){
@@ -83,6 +97,12 @@ int gpuGetDeviceCount(int *count){
 #endif 
 #ifdef WITH_AMD_GPU_VERSION
    return hipGetDeviceCountFromC(count);
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+   return syclGetDeviceCountFromC(count);
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#error "openmp_offload missing"
 #endif
    return -1;
 }
@@ -94,6 +114,12 @@ int gpuSetDevice(int n){
 #ifdef WITH_AMD_GPU_VERSION
    return hipSetDeviceFromC(n);
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+   return syclSetDeviceFromC(n);
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#error "openmp_offload missing"
+#endif
 }
 
 int gpuMalloc(intptr_t *a, size_t width_height) {
@@ -102,7 +128,13 @@ int gpuMalloc(intptr_t *a, size_t width_height) {
 #endif   
 #ifdef WITH_AMD_GPU_VERSION
    return hipMallocFromC(a, width_height);
-#endif 
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+   return syclMallocFromC(a, width_height);
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#error "openmp_offload missing"
+#endif   
 }
 
 int gpuFree(intptr_t *a) {
@@ -111,7 +143,14 @@ int gpuFree(intptr_t *a) {
 #endif   
 #ifdef WITH_AMD_GPU_VERSION
    return hipFreeFromC(a);
-#endif  
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+   //return syclFreeFromC(a);
+   return syclFreeVoidPtr(a);
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#error "openmp_offload missing"
+#endif   
 }
 
 int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir){
@@ -120,5 +159,17 @@ int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir){
 #endif  
 #ifdef WITH_AMD_GPU_VERSION
    return hipMemcpyFromC(dest, src, count, dir);
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+   return syclMemcpyFromC(dest, src, count, dir);
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#error "openmp_offload missing"
 #endif  
 }
+
+#ifdef WITH_SYCL_GPU_VERSION
+int syclGetCpuCount(int numberOfDevices) {
+   return syclGetCpuCountFromC(&numberOfDevices);
+}
+#endif

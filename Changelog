@@ -3,6 +3,17 @@ Changelog for next release
 
 - not yet decided
 
+Changelog for ELPA 2023.05.001
+- added CITATION.cff file
+- allow test programs to be run with 1 MPI task
+- correct a memory leak in the gpu stream setup
+- better handling of GPU BLAS handles
+- implement the execution of the AMD HIP code path on NVIDIA GPUs
+- implement the execution of the SYCL GPU code path on CPUs (debugging)
+- port generalized routines to SYCL GPU
+- PoC to use NVIDIA NCCL instead of MPI (not production ready)
+- somewhat cleanup of documentation
+
 Changelog for ELPA 2022.11.001
 - store GPU setup per ELPA object
 - clarify documentation a bit

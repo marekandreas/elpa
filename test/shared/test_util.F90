@@ -76,6 +76,13 @@ module test_util
   TEST_INT_MPI_TYPE, parameter :: mpi_comm_world = -1
 #endif
 
+  interface is_infinity_or_NaN
+    module procedure is_infinity_or_NaN_double
+#if defined(WANT_SINGLE_PRECISION_REAL) || defined(WANT_SINGLE_PRECISION_COMPLEX)
+    module procedure is_infinity_or_NaN_single
+#endif
+  end interface
+
   contains
 !>
 !> This function translates, if ELPA was build with OpenMP support,
@@ -152,5 +159,23 @@ module test_util
         stop 1
       end if
     end subroutine
+
+
+    function is_infinity_or_NaN_double(x) result(result_infinity_or_NaN)
+      implicit none
+      real(kind=c_double) :: x
+      logical :: result_infinity_or_NaN
+  
+      result_infinity_or_NaN = x/=x .or. x>huge(x) .or. x<-huge(x)
+    end function
+
+    function is_infinity_or_NaN_single(x) result(result_infinity_or_NaN)
+      implicit none
+      real(kind=c_float) :: x
+      logical :: result_infinity_or_NaN
+  
+      result_infinity_or_NaN = x/=x .or. x>huge(x) .or. x<-huge(x)
+    end function
+
 end module
 

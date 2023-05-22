@@ -65,7 +65,7 @@
 
 void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error)
 	{
-#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
@@ -78,7 +78,7 @@ void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, i
 		elpa_eigenvectors_a_h_a_d(handle, a, ev, q, error);
 		}	
 #else
-   //printf("elpa_eigenvectors_double non-nvidia version\n");
+	//printf("elpa_eigenvectors_double non-gpu version\n");
 	elpa_eigenvectors_a_h_a_d(handle, a, ev, q, error);
 #endif		
 	}

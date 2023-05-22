@@ -2,7 +2,7 @@
 
 This document provides the guide for using the *ELPA* library with the new API (API version 20170403 or higher).
 
-If you need instructions on how to build *ELPA*, please look at [INSTALL.md] (INSTALL.md).
+If you need instructions on how to build *ELPA*, please look at [INSTALL document](INSTALL.md) .
 
 ### Online and local documentation ###
 
@@ -11,7 +11,7 @@ Local documentation (via man pages) should be available (if *ELPA* has been inst
 For example `man elpa2_print_kernels` should provide the documentation for the *ELPA* program, which prints all
 the available kernels.
 
-Also a [online doxygen documentation](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2022.11.001/html/index.html)
+Also a [online doxygen documentation](https://elpa.mpcdf.mpg.de/documentation/doxygen/ELPA_DOXYGEN_PAGES/ELPA-2023.05.001.rc1/html/index.html)
 for each *ELPA* release is available.
 
 
@@ -68,7 +68,7 @@ Fortran synopsis
 
  if (elpa_init(20171201) /= ELPA_OK) then        ! put here the API version that you are using
     print *, "ELPA API version not supported"
-    stop
+    stop 1
   endif
   elpa => elpa_allocate(success)
   if (success != ELPA_OK) then
@@ -178,7 +178,7 @@ The following table gives a list of all supported parameters which can be used t
 
 ## III) List of computational routines ##
 
-The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2022.11.001/html/index.html) for details.
+The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2023.05.001.rc1/html/index.html) for details.
 
 
 | Name         | Purpose                                                                 | since API version |
@@ -301,7 +301,7 @@ Fortran synopsis
 
  if (elpa_init(20171201) /= ELPA_OK) then
     print *, "ELPA API version not supported"
-    stop
+    stop 1
   endif
   elpa => elpa_allocate(success)
 
@@ -458,7 +458,7 @@ call descinit( sc_desc, na, na, nblk, nblk, 0, 0, my_blacs_ctxt, na_rows, info )
 ! check the return code
 if (info .ne. 0) then
   print *,"Invalid blacs-distribution. Abort!"
-  stop
+  stop 1
 endif
 
 ! Allocate matrices 
@@ -478,7 +478,7 @@ a(i,j) = [ your problem to be solved]
 
 if (elpa_init(20171201) /= ELPA_OK) then        ! put here the API version that you are using
    print *, "ELPA API version not supported"
-   stop
+   stop 1
  endif
  elpa => elpa_allocate(success)
  if (success != ELPA_OK) then

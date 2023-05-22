@@ -1,0 +1,183 @@
+cff-version: 1.2.0
+
+message: "Your are free to obtain and use the ELPA library, as long as you respect the terms of version 3 of the license of the GNU Lesser General Public License. No other conditions have to be met. Nonetheless, we are grateful if you cite the following publications. If you use ELPA in general: T. Auckenthaler et al (2011), A. Marek et al (2014). If you use the GPU version of ELPA: P. Kus et al (2017), V. Yu et al (2021). If you use the new API and/or autotuning: P. Kus et al (2019). If you use the new support for skew-symmetric matrices: C. Penke et al (2020)."
+
+title: "The ELPA Library"
+
+authors:
+  - family-names: "Auckenthaler"
+    given-names: "Thomas"
+  - family-names: "Blum"
+    given-names: "Volker"
+  - family-names: "Heinecke"
+    given-names: "Alexander"
+  - family-names: "Johanni"
+    given-names: "Rainer"
+  - family-names: "Marek"
+    given-names: "Andreas"
+  - family-names: "Soheil"
+    given-names: "Soltani"
+  - family-names: "Huedepohl"
+    given-names: "Lorenz"
+  - family-names: "Kus"
+    given-names: "Pavel"
+  - family-names: "Karpov"
+    given-names: "Peter"
+  - family-names: "Ohlmann"
+    given-names: "Sebastian"
+  - family-names: "Yu"
+    given-names: "Victor"
+  - family-names: "Penke"
+    given-names: "Carolin"
+  - family-names: "Melson"
+    given-names: "Tobias"
+  - family-names: "Juergens"
+    given-names: "Werner"
+  - family-names: "Kangowski"
+    given-names: "Steffen"
+  - family-names: "Weimer"
+    given-names: "Florian"
+
+url: "https://elpa.mpcdf.mpg.de/"
+
+references:
+
+  - type: article
+    authors:
+    - family-names: "Auckenthaler"
+      given-names: "T."
+    - family-names: "Blum"
+      given-names: "V."
+    - family-names: "Bungartz"
+      given-names: "H.-J."
+    - family-names: "Huckle"
+      given-names: "T."
+    - family-names: "Johanni"
+      given-names: "R."
+    - family-names: "Krämer"
+      given-names: "L."
+    - family-names: "Lang"
+      given-names: "B."
+    - family-names: "Lederer"
+      given-names: "H."
+    - family-names: "Willems"
+      given-names: "P. R."
+    title: "Parallel solution of partial symmetric eigenvalue problems from electronic structure calculations"
+    journal: "Parallel Computing"
+    volume: 37
+    start: 783
+    year: 2011
+    doi: "10.1016/j.parco.2011.05.002"
+
+  - type: article
+    authors:
+    - family-names: "Marek"
+      given-names: "Andreas"
+    - family-names: "Blum"
+      given-names: "Volker"
+    - family-names: "Johanni"
+      given-names: "Rainer"
+    - family-names: "Havu"
+      given-names: "Ville"
+    - family-names: "Lang"
+      given-names: "Bruno"
+    - family-names: "Auckenthaler"
+      given-names: "Thomas"
+    - family-names: "Heinecke"
+      given-names: "Alexander"
+    - family-names: "Bungartz"
+      given-names: "Hans-Joachim"
+    - family-names: "Lederer"
+      given-names: "Hermann"
+    title: "The ELPA library: scalable parallel eigenvalue solutions for electronic structure theory and computational science"
+    journal: "Journal of Physics: Condensed Matter"
+    volume: 26
+    start: 213201
+    year: 2014
+    doi: "10.1088/0953-8984/26/21/213201"
+
+  - type: edited-work
+    authors:
+    - family-names: "Kus"
+      given-names: "Pavel"
+    - family-names: "Marek"
+      given-names: "Andreas"
+    - family-names: "Lederer"
+      given-names: "Hermann"
+    title: "GPU Optimization of Large-Scale Eigenvalue Solver"
+    journal: "Numerical Mathematics and Advanced Applications ENUMATH 2017. ENUMATH 2017. Lecture Notes in Computational Science and Engineering. Radu F., Kumar K., Berre I., Nordbotten J., Pop I. (eds)"
+    volume: 126
+    year: 2017
+    publisher:
+      name: Springer
+
+  - type: article
+    authors:
+    - family-names: "Yu"
+      given-names: "Victor When-zhe"
+    - family-names: "Moussa"
+      given-names: "Jonathan"
+    - family-names: "Kus"
+      given-names: "Pavel"
+    - family-names: "Marek"
+      given-names: "Andreas"
+    - family-names: "Messmer"
+      given-names: "Peter"
+    - family-names: "Yoon"
+      given-names: "Mina"
+    - family-names: "Lederer"
+      given-names: "Hermann"
+    - family-names: "Blum"
+      given-names: "Volker"
+    journal: "Computer Physics Communications"
+    volume: 262
+    start: 107808
+    title: "GPU-acceleration of the ELPA2 distributed eigensolver for dense symmetric and hermitian eigenpromlems"
+    year: 2021
+    doi: "10.1016/j.cpc.2020.107808"
+
+  - type: article
+    authors:
+    - family-names: "Kus"
+      given-names: "P."
+    - family-names: "Marek"
+      given-names: "A."
+    - family-names: "Koecher"
+      given-names: "S. S."
+    - family-names: "Kowalski"
+      given-names: "H.-H."
+    - family-names: "Carbogno"
+      given-names: "Ch."
+    - family-names: "Scheurer"
+      given-names: "Ch."
+    - family-names: "Reuter"
+      given-names: "K."
+    - family-names: "Scheffler"
+      given-names: "M."
+    - family-names: "Lederer"
+      given-names: "H."
+    title: "Optimizations of the Eigenvaluesolvers in the ELPA Library"
+    journal: "Parallel Computing"
+    volume: 85
+    start: 167
+    year: 2019
+    doi: "10.1016/j.parco.2019.04.003"
+
+  - type: article
+    authors:
+    - family-names: "Penke"
+      given-names: "C."
+    - family-names: "Marek"
+      given-names: "A."
+    - family-names: "Vorwerk"
+      given-names: "C."
+    - family-names: "Draxl"
+      given-names: "C."
+    - family-names: "Benner"
+      given-names: "P."
+    title: "High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving the Bethe-Salpeter Eigenvalue Problem"
+    journal: "Parallel Computing"
+    volume: 96
+    start: 102639
+    year: 2020
+    doi: "10.1016/j.parco.2020.102639"

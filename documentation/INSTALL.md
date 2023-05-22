@@ -2,18 +2,18 @@
 
 ## 0. Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2022.11.001**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2023.05.001.rc1**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
 As anounced, with the the release 2021.11.001 the **legacy interface has been removed**.
 
-The release of ELPA 2022.11.001 does change the API and ABI compared to the release 2022.05.001.
+The release of ELPA 2023.05.001.rc1 does not change the API and ABI compared to the release 2022.11.001.
 
 ## 1. How to install *ELPA* ##
 
 First of all, if you do not want to build *ELPA* yourself, and you run Linux,
-it is worth having a look at the [*ELPA* webpage*](http://elpa.mpcdf.mpg.de)
+it is worth having a look at the [*ELPA* webpage](http://elpa.mpcdf.mpg.de)
 and/or the repositories of your Linux distribution: there exist
 pre-build packages for a number of Linux distributions like Fedora,
 Debian, and OpenSuse. More, will hopefully follow in the future.
