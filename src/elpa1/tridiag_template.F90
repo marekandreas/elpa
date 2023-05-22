@@ -295,6 +295,7 @@ subroutine tridiag_&
   call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
 
+
   my_prow = int(my_prowMPI, kind=c_int)
   np_rows = int(np_rowsMPI, kind=c_int)
   my_pcol = int(my_pcolMPI, kind=c_int)
@@ -852,8 +853,8 @@ subroutine tridiag_&
       endif ! useGPU
 #else /* MORE_GPU_COMPUTE */
       if (my_prow == prow(istep-1, nblk, np_rows)) then
-        aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1))
-        aux1(2) = v_row(l_rows)
+        aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1)) ! = "q"
+        aux1(2) = v_row(l_rows) ! = "a_11" (or rather a_nn)
       else
         aux1(1) = dot_product(v_row(1:l_rows),v_row(1:l_rows))
         aux1(2) = 0.
@@ -1021,7 +1022,7 @@ subroutine tridiag_&
       return
     endif
 
-    ! Calculate u = (A + VU**T + UV**T)*v
+    ! Calculate u = (A + VU**T + UV**T)*v // Dongarra 1987: "y = (A - UV**T - VU**T)*U"
 
     ! For cache efficiency, we use only the upper half of the matrix tiles for this,
     ! thus the result is partly in u_col(:) and partly in u_row(:)
@@ -1117,7 +1118,7 @@ subroutine tridiag_&
      uc_p(1:l_cols,my_thread) = 0.
      ur_p(1:l_rows,my_thread) = 0.
 #endif /* WITH_OPENMP_TRADITIONAL */
-     do i= 0, (istep-2)/tile_size
+     do i= 0, (istep-2)/tile_size ! iteration over tiles
        l_col_beg = i*l_cols_per_tile+1
        l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
        if (l_col_end < l_col_beg) cycle
@@ -1161,6 +1162,7 @@ subroutine tridiag_&
          ! CPU implementation) or by one large matrix Vector multiply
          if (.not. useGPU) then
            if (wantDebug) call obj%timer%start("blas")
+           ! u_col = a_mat*v_row + u_col(=0)
            call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
                        int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                        ONE, a_mat(l_row_beg, l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
@@ -1175,6 +1177,7 @@ subroutine tridiag_&
                                    1_BLAS_KIND)
 
              else
+               ! u_row = a_mat*v_col + u_row(=0)
                call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
                                    ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
                                    v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, ONE, u_row(l_row_beg:max_local_rows), &
@@ -1300,6 +1303,8 @@ subroutine tridiag_&
          ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
          if (n_stored_vecs > 0) then
            if (wantDebug) call obj%timer%start("blas")
+
+           ! aux = vu_stored_rows*v_row
 #if REALCASE == 1
            call PRECISION_GEMV('T',     &
 #endif
@@ -1309,7 +1314,8 @@ subroutine tridiag_&
                                int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
                                ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
                                v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
-
+           
+           ! u_col = uv_stored_cols*aux + u_col
            call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
                                ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
                                aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
@@ -1461,7 +1467,7 @@ subroutine tridiag_&
                                      size_of_datatype, gpuMemcpyHostToDevice)
 #endif
            check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
-         endif
+         endif ! useGPU
 
          do i = 0, (istep-2)/tile_size
            ! go over tiles above (or on) the diagonal
@@ -1478,7 +1484,7 @@ subroutine tridiag_&
              if (.not. mat_vec_as_one_block) then
                ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
                ! we than use the same calls as for CPU version
-               if (wantDebug) call obj%timer%start("gpublas")
+               if (wantDebug) call obj%timer%start("gpublas_gemm")
                gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
                                        l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
@@ -1488,10 +1494,11 @@ subroutine tridiag_&
                                        size_of_datatype,  &
                                        max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
                                        size_of_datatype , matrixRows, gpuHandle)
-               if (wantDebug) call obj%timer%stop("gpublas")
+               if (wantDebug) call obj%timer%stop("gpublas_gemm")
              endif ! matBlockasOne
            else !useGPU
-             if (wantDebug) call obj%timer%start("blas")
+             if (wantDebug) call obj%timer%start("blas_gemm")
+             !  a_mat = vu_stored_rows*uv_stored_cols + a_mat
              call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
                                   int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
                                   int(2*n_stored_vecs,kind=BLAS_KIND),    &
@@ -1500,7 +1507,7 @@ subroutine tridiag_&
                                   uv_stored_cols(l_col_beg,1), &
                                   int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND))
-             if (wantDebug) call obj%timer%stop("blas")
+             if (wantDebug) call obj%timer%stop("blas_gemm")
            endif !useGPU
          enddo ! i = 0, (istep-2)/tile_size
 
@@ -1508,13 +1515,13 @@ subroutine tridiag_&
            if (mat_vec_as_one_block) then
              !update whole (remaining) part of matrix, including tiles below diagonal
              !we can do that in one large cublas call
-             if (wantDebug) call obj%timer%start("gpublas")
+             if (wantDebug) call obj%timer%start("gpublas_gemm")
              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
              call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
                                        ONE, vu_stored_rows_dev, max_local_rows, &
                                        uv_stored_cols_dev, max_local_cols,  &
                                        ONE, a_dev, matrixRows, gpuHandle)
-             if (wantDebug) call obj%timer%stop("gpublas")
+             if (wantDebug) call obj%timer%stop("gpublas_gemm")
            endif ! mat_vec_as
          endif
 
@@ -1575,7 +1582,7 @@ subroutine tridiag_&
          endif ! useGPU
        endif ! (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols))
 
-     enddo ! main cycle over istep=na,3,-1
+      enddo ! main cycle over istep=na,3,-1
 
 #if COMPLEXCASE == 1
      ! Store e_vec(1) and d_vec(1)
