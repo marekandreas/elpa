@@ -1253,7 +1253,7 @@ subroutine tridiag_&
                                         ONE, a_dev, matrixRows,                   &
                                         v_row_dev , 1,                          &
                                         ONE, u_col_dev, 1, gpuHandle)
-              all nvtxRangePop()
+              call nvtxRangePop()
               
        ! todo: try with non transposed!!!
 !                 if(i/=j) then
