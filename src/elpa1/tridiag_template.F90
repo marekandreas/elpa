@@ -218,23 +218,6 @@ subroutine tridiag_&
 #endif
   integer(kind=c_int) :: pointerMode
 
-#ifdef MORE_GPU_COMPUTE
-  if (useGPU) then
-    !print *,"DEFAULT PointerMode: ", gpublasDefaultPointerMode
-    !
-    gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-    call gpublas_getPointerMode(gpuHandle, pointerMode)
-
-    !print *,"Fortran PointerMode: ", pointerMode, gpublasPointerModeHost, gpublasPointerModeDevice
- 
-    !print *,"setting device"
-    !call gpublas_setPointerMode(gpuHandle, gpublasPointerModeDevice)
-    call gpublas_getPointerMode(gpuHandle, pointerMode)
-
-    !print *,"PointerMode after setting: ", pointerMode, gpublasPointerModeHost, gpublasPointerModeDevice
-  endif
-#endif
-
   success = .true.
  
   if(useGPU) then
@@ -603,87 +586,7 @@ subroutine tridiag_&
 
         a_offset = l_cols * matrixRows * size_of_datatype
 
-#ifdef MORE_GPU_COMPUTE
-#ifdef WITH_GPU_STREAMS
-        !vu_stored_rows -> vu_stored_rows_dev
-        my_stream = obj%gpu_setup%my_stream
-        num = max_local_rows*2*max_stored_uv * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-               ("tridiag vu_stored_rows -> vu_stored_rows_dev", vu_stored_rows_dev, 0_c_intptr_t, &
-                                                    vu_stored_rows(1:max_local_rows,1:2*max_stored_uv), &
-                                                    1, 1, num, gpuMemcpyHostToDevice, my_stream, &
-                                                    .false., .false., .false.)
 
-        
-        !uv_stored_cols -> uv_stored_cols_dev
-        my_stream = obj%gpu_setup%my_stream
-        num = max_local_cols*2*max_stored_uv * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-               ("tridiag uv_stored_cols -> uv_stored_cols_dev", uv_stored_cols_dev, 0_c_intptr_t, &
-                                                    uv_stored_cols(1:max_local_cols,1:2*max_stored_uv), &
-                                                    1, 1, num, gpuMemcpyHostToDevice, my_stream, &
-                                                    .false., .false., .false.)
-        
-        !a_dev -> v_row_dev
-        a_offset = l_cols * matrixRows * size_of_datatype
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("tridiag: a_dev -> v_row_dev", successGPU)
-        successGPU = gpu_memcpy_async(v_row_dev, a_dev + a_offset, (l_rows)* size_of_datatype, gpuMemcpyDeviceToDevice, &
-                                  my_stream)
-        check_memcpy_gpu("tridiag: a_dev -> v_row_dev", successGPU)
-
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("tridiag: a_dev -> v_row_dev", successGPU)
-#else /* WITH_GPU_STREAMS */
-        !vu_stored_rows -> vu_stored_rows_dev
-        successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows),kind=c_intptr_t), (max_local_rows*2*max_stored_uv)* &
-                                size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridiag: vu_stored_rows -> vu_stored_rows_dev", successGPU)
-        !uv_stored_cols -> uv_stored_cols_dev
-        successGPU = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols),kind=c_intptr_t), (max_local_cols*2*max_stored_uv)* &
-                                size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridiag: uv_stored_cols -> uv_stored_cols_dev", successGPU)
-
-        !a_dev -> v_row_dev
-        a_offset = l_cols * matrixRows * size_of_datatype
-        successGPU = gpu_memcpy(v_row_dev, a_dev + a_offset, (l_rows)* size_of_datatype, gpuMemcpyDeviceToDevice)
-        check_memcpy_gpu("tridiag: a_dev -> v_row_dev", successGPU)
-#endif
-
-#if COMPLEXCASE == 1
-        if (n_stored_vecs > 0 .and. l_rows > 0) then
-          ! we cannot handle the conjg on GPU, thus currently copy to host, conj, copy back!
-          ! FIX THIS
-           !repace DeviceToDevice by DCOPY
-           a_offset = (l_cols+1 -1)* size_of_datatype
-           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-           call gpublas_PRECISION_COPY(2*n_stored_vecs, uv_stored_cols_dev + a_offset, max_local_cols, aux_dev, 1, gpuHandle)
-
-           successGPU = gpu_memcpy(int(loc(aux(1)),kind=c_intptr_t), aux_dev, (2*n_stored_vecs)* &
-                                size_of_datatype, gpuMemcpyDeviceToHost)
-
-          aux(1:2*n_stored_vecs) = conjg(aux(1:2*n_stored_vecs))
-
-#ifdef WITH_GPU_STREAMS
-          !aux -> aux_dev
-          num = (2*n_stored_vecs) * size_of_datatype
-          my_stream = obj%gpu_setup%my_stream
-          call gpu_memcpy_async_and_stream_synchronize &
-          ("tridiag aux -> aux_dev", aux_dev, 0_c_intptr_t, &
-                                                       aux(1:2*max_stored_uv), &
-                                                       1,  num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else /* WITH_GPU_STREAMS */
-          !aux -> aux_dev
-          successGPU = gpu_memcpy(aux_dev, int(loc(aux(1),kind=c_intptr_t), (2*n_stored_vecs)* &
-                                size_of_datatype, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("tridiag: aux -> aux_dev", successGPU)
-#endif /*  WITH_GPU_STREAMS */
-        endif ! (n_stored_vecs > 0 .and. l_rows > 0) then
-#endif /* COMPLEXCASE == 1 */
-
-#else /* MORE_GPU_COMPUTE */
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         num = l_rows * size_of_datatype
@@ -700,27 +603,14 @@ subroutine tridiag_&
         check_memcpy_gpu("tridiag a_dev 1", successGPU)
         call nvtxRangePop()
 #endif /* WITH_GPU_STREAMS */
-#endif /* MORE_GPU_COMPUTE */
+
       else ! useGPU
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
       endif ! useGPU
 
       if (n_stored_vecs > 0 .and. l_rows > 0) then
         if (useGPU) then
-#ifdef MORE_GPU_COMPUTE
-          if (wantDebug) call obj%timer%start("gpublas")
-          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-          call gpublas_PRECISION_GEMV('N', l_rows, 2*n_stored_vecs,  &
-                                    ONE, vu_stored_rows_dev, max_local_rows,  &
-#if REALCASE == 1
-                                    uv_stored_cols_dev+(l_cols+1-1 +max_local_cols*(1-1))*size_of_datatype , max_local_cols, &
-#endif
-#if COMPLEXCASE == 1
-                                    aux_dev, 1,   &
-#endif
-                                    ONE, v_row_dev, 1, gpuHandle)
-          if (wantDebug) call obj%timer%stop("gpublas")
-#else /* MORE_GPU_COMPUTE */
+
           ! as on CPU
 #if COMPLEXCASE == 1
           aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
@@ -741,7 +631,7 @@ subroutine tridiag_&
                             ONE, v_row, 1_BLAS_KIND)
           call nvtxRangePop()
           if (wantDebug) call obj%timer%stop("blas")
-#endif /* MORE_GPU_COMPUTE */
+
         else ! useGPU
 #if COMPLEXCASE == 1
           aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
@@ -763,114 +653,7 @@ subroutine tridiag_&
         endif ! useGPU
       endif ! (n_stored_vecs > 0 .and. l_rows > 0)
 
-#ifdef MORE_GPU_COMPUTE
-      if (useGPU) then
-        !maybe not needed!!
-#ifdef WITH_GPU_STREAMS
-        !v_row_dev -> v_row
-        my_stream = obj%gpu_setup%my_stream
-        num = (max_local_rows+1) * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-             ("tridiag v_row_dev -> v_row", v_row_dev, 0_c_intptr_t, &
-                                                  v_row(1:max_local_rows+1), &
-                                                  1, num, gpuMemcpyDeviceToHost, my_stream, &
-                                                  .false., .true., .false.)
-#else /* WITH_GPU_STREAMS */
-        !v_row_dev -> vrow
-        call nvtxRangePush("memcpy v_row_dev -> vrow")
-        successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (max_local_rows+1)* &
-                              size_of_datatype, gpuMemcpyDeviceToHost)
-        call nvtxRangePop()
-        check_memcpy_gpu("tridiag: aux_dev -> aux", successGPU)
-#endif /*  WITH_GPU_STREAMS */
 
-      endif ! useGPU
-#endif /* MORE_GPU_COMPUTE */
-
-#ifdef MORE_GPU_COMPUTE
-      if (useGPU) then
-        if (my_prow == prow(istep-1, nblk, np_rows)) then
-          ! set zero first
-#ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
-          successGPU = gpu_memset_async(aux1_dev, 0, 2 * size_of_datatype, my_stream)
-          check_memcpy_gpu("tridiag: aux1", successGPU)
-#else
-          successGPU = gpu_memset(aux1_dev, 0, 2 * size_of_datatype)
-          check_memcpy_gpu("tridiag: aux1", successGPU)
-#endif
-          if (l_rows-1 .ge. 1) then
-            call nvtxRangePush("gpublas_dot")
-            call gpublas_PRECISION_DOT( &
-#if COMPLEXCASE == 1
-                   'C', &
-#endif
-                   gpuHandle, l_rows-1, v_row_dev, 1, v_row_dev, 1, aux1_dev)
-            call nvtxRangePop()
-          endif
-
-#ifdef WITH_GPU_STREAMS
-          a_offset = l_cols * matrixRows * size_of_datatype
-          my_stream = obj%gpu_setup%my_stream
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("tridiag: v_row_dev -> aux1_dev", successGPU)
-          successGPU = gpu_memcpy_async(aux1_dev+1*size_of_datatype, v_row_dev + (l_rows-1)*size_of_datatype, &
-                  1* size_of_datatype, gpuMemcpyDeviceToDevice, &
-                  my_stream)
-          check_memcpy_gpu("tridiag: v_row_dev -> aux1_dev", successGPU)
-
-          my_stream = obj%gpu_setup%my_stream
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("tridiag: v_row_dev -> aux1_dev", successGPU)
-#else
-          call nvtxRangePush("v_row_dev -> aux1_dev")
-          successGPU = gpu_memcpy(aux1_dev+1*size_of_datatype, v_row_dev + (l_rows-1)*size_of_datatype, &
-                 1* size_of_datatype, gpuMemcpyDeviceToDevice)
-          call nvtxRangePop()
-          check_memcpy_gpu("tridiag: v_row_dev -> aux1_dev", successGPU)
-#endif
-        else ! (my_prow == prow(istep-1, nblk, np_rows))
-          ! set zero first
-#ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
-          successGPU = gpu_memset_async(aux1_dev, 0, 2 * size_of_datatype, my_stream)
-          check_memcpy_gpu("tridiag: aux1", successGPU)
-#else
-          successGPU = gpu_memset(aux1_dev, 0, 2 * size_of_datatype)
-          check_memcpy_gpu("tridiag: aux1", successGPU)
-#endif
-
-          if (l_rows .ge. 1) then
-             ! dot product on GPU only for valid indices
-             gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-             call gpublas_PRECISION_DOT( &
-#if COMPLEXCASE == 1
-                                       'C', &
-#endif
-                                       gpuHandle, l_rows, v_row_dev, 1, v_row_dev, 1, aux1_dev)
-          endif
-
-!#ifdef WITH_GPU_STREAMS
-!          my_stream = obj%gpu_setup%my_stream
-!          successGPU = gpu_memset_async(aux1_dev+1*size_of_datatype, 0, 1 * size_of_datatype, my_stream)
-!          check_memcpy_gpu("tridiag: aux1", successGPU)
-!#else
-!          successGPU = gpu_memset(aux1_dev+1*size_of_datatype, 0, 1 * size_of_datatype)
-!          check_memcpy_gpu("tridiag: aux1", successGPU)
-!#endif
-        endif ! (my_prow == prow(istep-1, nblk, np_rows)) 
-
-      else ! useGPU
-        ! as on CPU
-        if (my_prow == prow(istep-1, nblk, np_rows)) then
-          aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1))
-          aux1(2) = v_row(l_rows)
-        else
-          aux1(1) = dot_product(v_row(1:l_rows),v_row(1:l_rows))
-          aux1(2) = 0.
-        endif
-      endif ! useGPU
-#else /* MORE_GPU_COMPUTE */
       call nvtxRangePush("cpu_dot v_row*v_row, aux1(2)=v_row")
       if (my_prow == prow(istep-1, nblk, np_rows)) then
         aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1)) ! = "q"
@@ -880,78 +663,8 @@ subroutine tridiag_&
         aux1(2) = 0.
       endif
       call nvtxRangePop()
-#endif /* MORE_GPU_COMPUTE */
 
 #ifdef WITH_MPI
-#ifdef MORE_GPU_COMPUTE
-      if (useGPU) then
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev", successGPU)
-
-        ccl_comm_rows = obj%gpu_setup%ccl_comm_rows 
-        successGPU = nccl_group_start() 
-        if (.not.success) then 
-          print *,"Error in setting up nccl_group_start!" 
-          stop 
-        endif 
-        successGPU = nccl_Allreduce(aux1_dev, aux1_dev, &
-#if REALCASE == 1 
-                int(2,kind=c_size_t), &
-#endif
-#if COMPLEXCASE == 1 
-                int(2*2,kind=c_size_t), &
-#endif
-#if DOUBLE_PRECISION == 1                
-                                 ncclDouble, & 
-#endif 
-#if SINGLE_PRECISION == 1                
-                                 ncclFloat, & 
-#endif 
-                                 ncclSum, ccl_comm_rows, my_stream)
-        if (.not.successGPU) then
-          print *,"Error in nccl_allreduce"
-          stop
-        endif
-        successGPU = nccl_group_end()
-        if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_end!"
-          stop
-        endif
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev", successGPU)
-
-        !copy back (not needed if more gpu)
-#ifdef WITH_GPU_STREAMS
-       !aux1_dev -> aux2
-       my_stream = obj%gpu_setup%my_stream
-       num = 2 * size_of_datatype
-       call gpu_memcpy_async_and_stream_synchronize &
-            ("tridiag aux1_dev -> aux2", aux1_dev, 0_c_intptr_t, &
-                                                 aux2(1:2), &
-                                                 1, num, gpuMemcpyDeviceToHost, my_stream, &
-                                                 .false., .true., .false.)
-#else /* WITH_GPU_STREAMS */
-       !aux1_dev -> aux2
-       successGPU = gpu_memcpy(int(loc(aux2),kind=c_intptr_t), aux1_dev, 2 * size_of_datatype,  &
-                             gpuMemcpyDeviceToHost)
-       check_memcpy_gpu("tridiag: aux1_dev -> aux2", successGPU)
-#endif /*  WITH_GPU_STREAMS */
-      else ! useGPU
-        ! as on CPU
-        if (useNonBlockingCollectivesRows) then
-          if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
-          call mpi_iallreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
-                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
-          call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
-          if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
-        else
-          if (wantDebug) call obj%timer%start("mpi_communication")
-          call mpi_allreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
-                             MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          if (wantDebug) call obj%timer%stop("mpi_communication")
-        endif
-      endif ! useGPU
-#else /* MORE_GPU_COMPUTE */
       if (useNonBlockingCollectivesRows) then
         if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
         call mpi_iallreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
@@ -964,7 +677,6 @@ subroutine tridiag_&
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
       endif
-#endif /* MORE_GPU_COMPUTE */
 #else /* WITH_MPI */
       aux2 = aux1
 #endif /* WITH_MPI */
@@ -1803,16 +1515,6 @@ subroutine tridiag_&
   check_deallocate("tridiag: tmp", istat, errorMessage)
 
   if (useGPU) then
-#ifdef MORE_GPU_COMPUTE
-    successgpu = gpu_free(aux_dev)
-    check_dealloc_gpu("tridiag: aux_dev", successgpu)
-
-    successgpu = gpu_free(aux1_dev)
-    check_dealloc_gpu("tridiag: aux1_dev", successgpu)
-
-    successgpu = gpu_free(aux2_dev)
-    check_dealloc_gpu("tridiag: aux2_dev", successgpu)
-#endif
 
     ! todo: should we leave a_mat on the device for further use?
     successGPU = gpu_free(a_dev)
