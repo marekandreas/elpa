@@ -130,7 +130,7 @@ subroutine tridiag_&
 #endif
   real(kind=rk), intent(out)                    :: d_vec(na)
   real(kind=rk), intent(out)                    :: e_vec(na)
-  integer(kind=ik), parameter                   :: max_stored_uv = 32
+  integer(kind=ik)                              :: max_stored_uv = 16
   logical,          parameter                   :: mat_vec_as_one_block = .true.
 
   ! id in processor row and column and total numbers of processor rows and columns
@@ -160,7 +160,9 @@ subroutine tridiag_&
 #endif
 
   real(kind=rk)                                 :: vnorm2
-  MATH_DATATYPE(kind=rck)                       :: vav, x, aux(2*max_stored_uv), aux1(2), aux2(2), vrl, xf
+  MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), aux2(2), vrl, xf
+  MATH_DATATYPE(kind=rck), allocatable          :: aux(:) ! 2*max_stored_uv
+  character(len=32)                             :: max_stored_uv_string
 #ifdef MORE_GPU_COMPUTE
   integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux2_dev
 #endif
@@ -218,8 +220,35 @@ subroutine tridiag_&
 #endif
   integer(kind=c_int) :: pointerMode
 
+  integer(kind=ik)                              :: string_length
+  
+  string_length = 32
+  call get_environment_variable("ELPA_max_stored_uv", max_stored_uv_string, string_length, istat)
+
+  ! Check if the variable was found
+  if (istat /= 0) then
+     write(*,*) 'Environment variable ELPA_max_stored_uv not found'
+     write(*,*) 'Using the default value max_stored_uv = 32'
+     max_stored_uv = 32
+  else
+     write(*,*) 'ELPA_max_stored_uv='// max_stored_uv_string
+     ! Convert the value to integer
+     read(max_stored_uv_string, *, iostat=istat) max_stored_uv
+
+     ! Check if the conversion was successful
+     if (istat /= 0) then
+        write(*,*) 'Error converting ELPA_max_stored_uv='// max_stored_uv_string //' to integer'
+        write(*,*) 'Using the default value max_stored_uv = 32'
+        max_stored_uv = 32
+     else
+        write(*,*) 'max_stored_uv value:', max_stored_uv
+     endif
+  endif
+
+  allocate(aux(2*max_stored_uv), stat=istat, errmsg=errorMessage)
+
   success = .true.
- 
+
   if(useGPU) then
     gpuString = "_gpu"
   else
