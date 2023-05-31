@@ -732,10 +732,10 @@ subroutine tridiag_&
 #endif
                &PRECISION &
                (obj, vrl, vnorm2, xf, tau(istep), wantDebug)
-      ! Scale v_row and store Householder Vector for back transformation
       call nvtxRangePop()
 
       call nvtxRangePush("scale v_row *= xf")
+      ! Scale v_row and store Householder Vector for back transformation
       v_row(1:l_rows) = v_row(1:l_rows) * xf
       call nvtxRangePop()
 
@@ -775,7 +775,7 @@ subroutine tridiag_&
       if (wantDebug) call obj%timer%start("mpi_communication")
       call mpi_bcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                    int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
-                   mpierr)
+                   mpierr) ! Broadcast of v_row across columns. ??? do all processes really need to know the whole v_row?
       if (wantDebug) call obj%timer%stop("mpi_communication")
     endif
 #endif /* WITH_MPI */
@@ -797,7 +797,7 @@ subroutine tridiag_&
       return
     endif
 
-    ! Calculate u = (A + VU**T + UV**T)*v // Dongarra 1987: "y = (A - UV**T - VU**T)*U"
+    ! Calculate u = (A + VU**T + UV**T)*v // Dongarra 1987: "y = (A - UV**T - VU**T)*u"
 
     ! For cache efficiency, we use only the upper half of the matrix tiles for this,
     ! thus the result is partly in u_col(:) and partly in u_row(:)
@@ -819,7 +819,7 @@ subroutine tridiag_&
          successGPU = gpu_memset_async(u_row_dev, 0, l_rows * size_of_datatype, my_stream)
          check_memcpy_gpu("tridiag: u_row_dev", successGPU)
 #else /* WITH_GPU_STREAMS */
-         successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
+         successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype) ! ?? why this is needed?
          check_memcpy_gpu("tridiag: u_col_dev", successGPU)
 
          successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype)
@@ -910,7 +910,7 @@ subroutine tridiag_&
      ur_p(1:l_rows,my_thread) = 0.
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-     call nvtxRangePush("empty nested loop")
+     call nvtxRangePush("empty nested loop") ! PETERDEBUG: we can save 0,1% of time by just skipping it
      do i= 0, (istep-2)/tile_size ! iteration over tiles
        l_col_beg = i*l_cols_per_tile+1
        l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
@@ -981,12 +981,12 @@ subroutine tridiag_&
          endif ! not useGPU
 
 #endif /* WITH_OPENMP_TRADITIONAL */
-            enddo  ! j=0,i
-          enddo  ! i=0,(istep-2)/tile_size
+       enddo  ! j=0,i
+     enddo  ! i=0,(istep-2)/tile_size
           call nvtxRangePop() ! empty nested loop
 
           if (useGPU) then
-            if (mat_vec_as_one_block) then
+            if (mat_vec_as_one_block) then ! PETERDEBUG: check the alternative path: mat_vec_as_one_block = .false. !!!
               ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
               ! this requires altering of the algorithm when later explicitly updating the matrix
               ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
@@ -998,7 +998,8 @@ subroutine tridiag_&
 
               write (nvtx_name, "(A,I0,A,I0)") "gpublas_gemv ", l_rows, "x", l_cols
               call nvtxRangePush(nvtx_name)  
-    
+              
+              ! u_col_dev = a_dev*v_row_dev
               call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
                                         ONE, a_dev, matrixRows,                   &
                                         v_row_dev , 1,                          &
