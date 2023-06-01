@@ -910,7 +910,7 @@ subroutine tridiag_&
      ur_p(1:l_rows,my_thread) = 0.
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-     call nvtxRangePush("empty nested loop") ! PETERDEBUG: we can save 0,1% of time by just skipping it
+     call nvtxRangePush("empty nested loop") ! 0.5us PETERDEBUG: we can save up to 0,2% (last loop in last GEMM cycle for smallish matrix) of time by just skipping it
      do i= 0, (istep-2)/tile_size ! iteration over tiles
        l_col_beg = i*l_cols_per_tile+1
        l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
@@ -993,13 +993,13 @@ subroutine tridiag_&
               if (wantDebug) call obj%timer%start("gpublas")
               
               call nvtxRangePush("gpuHandle = obj%gpu_setup%gpublasHandleArray(0)")
-              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
+              gpuHandle = obj%gpu_setup%gpublasHandleArray(0) ! 0.3-0.5 us
               call nvtxRangePop()
 
               write (nvtx_name, "(A,I0,A,I0)") "gpublas_gemv ", l_rows, "x", l_cols
               call nvtxRangePush(nvtx_name)  
               
-              ! u_col_dev = a_dev*v_row_dev
+              ! u_col_dev = a_dev^T*v_row_dev
               call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
                                         ONE, a_dev, matrixRows,                   &
                                         v_row_dev , 1,                          &
@@ -1091,7 +1091,7 @@ subroutine tridiag_&
                                                       u_row(1:max_local_rows), &
                                                       1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else
-            call nvtxRangePush("memcpy D-H u_row_dev->u_row")  
+            call nvtxRangePush("memcpy D-H u_row_dev->u_row")  ! ??? why this copy is needed at all ? needed only mat_vec_as_one_block = .false. (?)
             successGPU = gpu_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
                         u_row_dev, l_rows * size_of_datatype, gpuMemcpyDeviceToHost)
             call nvtxRangePop()
@@ -1134,7 +1134,7 @@ subroutine tridiag_&
                                aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
            call nvtxRangePop()      
            if (wantDebug) call obj%timer%stop("blas")
-         endif
+         endif ! n_stored_vecs > 0
 
        endif  ! (l_rows>0 .and. l_cols>0)
 
@@ -1159,7 +1159,7 @@ subroutine tridiag_&
        ! Sum up all the u_col(:) parts, transpose u_col -> u_row
 
        if (l_cols > 0) then
-         tmp(1:l_cols) = u_col(1:l_cols)
+         tmp(1:l_cols) = u_col(1:l_cols) ! ??? why to introduce additional vector tmp? why not use MPI_IN_PLACE? 
 #ifdef WITH_MPI
          if (useNonBlockingCollectivesRows) then
            if (wantDebug) call obj%timer%start("mpi_nbc_communication")
@@ -1233,9 +1233,10 @@ subroutine tridiag_&
        ! these matrices are stored combined in one here
        
        call nvtxRangePush("store u,v in U,V") 
-       do j=1,l_rows
+       do j=1,l_rows ! ??? why not to vectorize these two loops ?
 #if REALCASE == 1
          vu_stored_rows(j,2*n_stored_vecs+1) = tau(istep)*v_row(j)
+         !vu_stored_rows(1:l_rows,2*n_stored_vecs+1) = tau(istep)*v_row(1:l_rows)
          vu_stored_rows(j,2*n_stored_vecs+2) = 0.5*tau(istep)*vav*v_row(j) - u_row(j)
 #endif
 #if COMPLEXCASE == 1
@@ -1245,7 +1246,7 @@ subroutine tridiag_&
        enddo
        do j=1,l_cols
 #if REALCASE == 1
-         uv_stored_cols(j,2*n_stored_vecs+1) = 0.5*tau(istep)*vav*v_col(j) - u_col(j)
+         uv_stored_cols(j,2*n_stored_vecs+1) = 0.5*tau(istep)*vav*v_col(j) - u_col(j) ! ??? uv_stored_"cols" -- cols doesn't make any sence here wrt distribution among MPI  processes?  its only that it was constructed from v_col,u_col
          uv_stored_cols(j,2*n_stored_vecs+2) = tau(istep)*v_col(j)
 #endif
 #if COMPLEXCASE == 1
@@ -1373,9 +1374,9 @@ subroutine tridiag_&
                                                       l_rows, l_cols, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., &
                                               .false.)
 #else
-            call nvtxRangePush("memcpy D-H a_dev->a_mat")
+            call nvtxRangePush("memcpy D-H a_dev->a_mat: 1")
             successGPU = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
-                                    1 *  size_of_datatype, gpuMemcpyDeviceToHost)
+                                    1 *  size_of_datatype, gpuMemcpyDeviceToHost) ! ??? needed only in GEMM loop step?
             check_memcpy_gpu("tridiag: a_dev 3", successGPU)
             call nvtxRangePop()
 #endif
@@ -1409,7 +1410,7 @@ subroutine tridiag_&
                                                       l_rows, l_cols, num, gpuMemcpyHostToDevice, my_stream, .false., .false., &
                                               .false.)
 #else
-           call nvtxRangePush("memcpy H-D a_mat->a_dev")
+           call nvtxRangePush("memcpy H-D a_mat->a_dev: 1")
            successGPU = gpu_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
                                    int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice)
            call nvtxRangePop()
