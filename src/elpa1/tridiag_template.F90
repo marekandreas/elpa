@@ -54,7 +54,7 @@
 
 #include "../general/sanity.F90"
 
-!#define GPU_OLD
+#define GPU_OLD
 
 #undef MORE_GPU_COMPUTE
 
