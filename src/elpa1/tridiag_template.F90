@@ -961,79 +961,77 @@ subroutine tridiag_&
      ur_p(1:l_rows,my_thread) = 0.
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-     call nvtxRangePush("empty nested loop") ! 0.5us PETERDEBUG: we can save up to 0,2% (last loop in last GEMM cycle for smallish matrix) of time by just skipping it
-     do i= 0, (istep-2)/tile_size ! iteration over tiles
-       l_col_beg = i*l_cols_per_tile+1
-       l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-       if (l_col_end < l_col_beg) cycle
-       do j = 0, i
-         l_row_beg = j*l_rows_per_tile+1
-         l_row_end = min(l_rows,(j+1)*l_rows_per_tile)
-         if (l_row_end < l_row_beg) cycle
+    call nvtxRangePush("empty nested loop") ! 0.5us PETERDEBUG: we can save up to 0,2% (last loop in last GEMM cycle for smallish matrix) of time by just skipping it
+    if (.not. useGPU) then
+      do i=0, (istep-2)/tile_size ! iteration over tiles
+        l_col_beg = i*l_cols_per_tile+1
+        l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+        if (l_col_end < l_col_beg) cycle
+        do j = 0, i
+          l_row_beg = j*l_rows_per_tile+1
+          l_row_end = min(l_rows,(j+1)*l_rows_per_tile)
+          if (l_row_end < l_row_beg) cycle
 #ifdef WITH_OPENMP_TRADITIONAL
-         if (mod(n_iter,n_threads) == my_thread) then
-           if (.not. useGPU) then
-             if (wantDebug) call obj%timer%start("blas")
-             call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
-                  int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                  ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
-                  v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
+          if (mod(n_iter,n_threads) == my_thread) then
+            if (wantDebug) call obj%timer%start("blas")
+            call PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
+                v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND, ONE, uc_p(l_col_beg,my_thread), 1_BLAS_KIND)
 
-             if (i/=j) then
-               if (isSkewsymmetric) then
-                 call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
-                                     int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                     -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
-                                     v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
-                                     ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+            if (i/=j) then
+              if (isSkewsymmetric) then
+                call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                    int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                    -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                    v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
+                                    ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
 
-               else
-                 call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
-                                     int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                     ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
-                                     v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
-                                     ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
-               endif
-             endif
-           endif ! .not. useGPU
-           if (wantDebug) call obj%timer%stop("blas")
-         endif
-         n_iter = n_iter+1
+              else
+                call PRECISION_GEMV('N', int(l_row_end-l_row_beg+1,kind=BLAS_KIND), &
+                                    int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                    ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND), &
+                                    v_col(l_col_beg:max_local_cols), 1_BLAS_KIND,  &
+                                    ONE, ur_p(l_row_beg,my_thread), 1_BLAS_KIND)
+              endif
+            endif
+            if (wantDebug) call obj%timer%stop("blas")
+          endif
+          n_iter = n_iter+1
 #else /* WITH_OPENMP_TRADITIONAL */
 
-         ! multiplication by blocks is efficient only for CPU
-         ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
-         ! CPU implementation) or by one large matrix Vector multiply
-         if (.not. useGPU) then
-           if (wantDebug) call obj%timer%start("blas")
-           ! u_col = a_mat*v_row + u_col(=0)
-           call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
-                       int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                       ONE, a_mat(l_row_beg, l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
-                       v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,                           &
-                       ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
+          ! multiplication by blocks is efficient only for CPU
+          ! for GPU we introduced 2 other ways, either by stripes (more simmilar to the original
+          ! CPU implementation) or by one large matrix Vector multiply
+          if (wantDebug) call obj%timer%start("blas")
+          ! u_col = a_mat*v_row + u_col(=0)
+          call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,  &
+                      int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                      ONE, a_mat(l_row_beg, l_col_beg), int(matrixRows,kind=BLAS_KIND),         &
+                      v_row(l_row_beg:max_local_rows+1), 1_BLAS_KIND,                           &
+                      ONE, u_col(l_col_beg:max_local_cols), 1_BLAS_KIND)
 
-           if (i/=j) then
-             if (isSkewsymmetric) then
-               call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                   -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
-                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, ONE, u_row(l_row_beg:max_local_rows), &
-                                   1_BLAS_KIND)
+          if (i/=j) then
+            if (isSkewsymmetric) then
+              call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                  -ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
+                                  v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, ONE, u_row(l_row_beg:max_local_rows), &
+                                  1_BLAS_KIND)
 
-             else
-               ! u_row = a_mat*v_col + u_row(=0)
-               call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
-                                   ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
-                                   v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, ONE, u_row(l_row_beg:max_local_rows), &
-                                   1_BLAS_KIND)
-             endif
-           endif
-           if (wantDebug) call obj%timer%stop("blas")
-         endif ! not useGPU
+            else
+              ! u_row = a_mat*v_col + u_row(=0)
+              call PRECISION_GEMV('N',int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND),  &
+                                  ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND),               &
+                                  v_col(l_col_beg:max_local_cols), 1_BLAS_KIND, ONE, u_row(l_row_beg:max_local_rows), &
+                                  1_BLAS_KIND)
+            endif
+          endif
+          if (wantDebug) call obj%timer%stop("blas")
 
 #endif /* WITH_OPENMP_TRADITIONAL */
-       enddo  ! j=0,i
-     enddo  ! i=0,(istep-2)/tile_size
+        enddo  ! j=0,i
+      enddo  ! i=0,(istep-2)/tile_size
+    endif ! .not. useGPU
           call nvtxRangePop() ! empty nested loop
 
           if (useGPU) then
