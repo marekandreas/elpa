@@ -826,7 +826,7 @@ subroutine tridiag_&
       if (wantDebug) call obj%timer%start("mpi_communication")
       call mpi_bcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
                    int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
-                   mpierr) ! Broadcast of v_row across columns. ??? do all processes really need to know the whole v_row?
+                   mpierr)
       if (wantDebug) call obj%timer%stop("mpi_communication")
     endif
 #endif /* WITH_MPI */
