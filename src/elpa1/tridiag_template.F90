@@ -1220,31 +1220,31 @@ subroutine tridiag_&
     endif
 #endif /* WITH_MPI */
 
-       if (isSkewsymmetric) then
-          call elpa_transpose_vectors_ss_&
-          &MATH_DATATYPE&
-          &_&
-          &PRECISION &
-          (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
-         if (.not.(success)) then
-           write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting!"
-           return
-         endif
-       else ! l_cols > 0
-          call nvtxRangePush("elpa_transpose_vectors")
-          call elpa_transpose_vectors_&
-          &MATH_DATATYPE&
-          &_&
-          &PRECISION &
-          (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-           mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
-          call nvtxRangePop()
-          if (.not.(success)) then
-            write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
-            return
-          endif
-       endif ! l_cols > 0
+    if (isSkewsymmetric) then
+      call elpa_transpose_vectors_ss_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION &
+      (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+        mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
+      if (.not.(success)) then
+        write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting!"
+        return
+      endif
+    else ! isSkewsymmetric
+      call nvtxRangePush("elpa_transpose_vectors")
+      call elpa_transpose_vectors_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION &
+      (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+      mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
+      call nvtxRangePop()
+      if (.not.(success)) then
+        write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
+        return
+      endif
+    endif ! isSkewsymmetric
 
        ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
        x = 0
