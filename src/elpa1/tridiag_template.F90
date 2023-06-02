@@ -1132,20 +1132,22 @@ subroutine tridiag_&
             check_memcpy_gpu("tridiag: u_col_dev 1", successGPU)
 #endif
 
+            if (.not. mat_vec_as_one_block) then
 #ifdef WITH_GPU_STREAMS
-            my_stream = obj%gpu_setup%my_stream
-            num = l_rows * size_of_datatype
-            call gpu_memcpy_async_and_stream_synchronize &
-                 ("tridiag u_row_dev -> u_row", u_row_dev, 0_c_intptr_t, &
-                                                      u_row(1:max_local_rows), &
-                                                      1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+              my_stream = obj%gpu_setup%my_stream
+              num = l_rows * size_of_datatype
+              call gpu_memcpy_async_and_stream_synchronize &
+                  ("tridiag u_row_dev -> u_row", u_row_dev, 0_c_intptr_t, &
+                                                        u_row(1:max_local_rows), &
+                                                        1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else
-            call nvtxRangePush("memcpy D-H u_row_dev->u_row")  ! ??? why this copy is needed at all ? needed only mat_vec_as_one_block = .false. (?)
-            successGPU = gpu_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
-                        u_row_dev, l_rows * size_of_datatype, gpuMemcpyDeviceToHost)
-            call nvtxRangePop()
-            check_memcpy_gpu("tridiag: u_row_dev 1", successGPU)
+              call nvtxRangePush("memcpy D-H u_row_dev->u_row")
+              successGPU = gpu_memcpy(int(loc(u_row(1)),kind=c_intptr_t), &
+                          u_row_dev, l_rows * size_of_datatype, gpuMemcpyDeviceToHost)
+              call nvtxRangePop()
+              check_memcpy_gpu("tridiag: u_row_dev 1", successGPU)
 #endif
+            endif ! .not. mat_vec_as_one_block
           endif ! useGPU
 
 #ifdef WITH_OPENMP_TRADITIONAL
