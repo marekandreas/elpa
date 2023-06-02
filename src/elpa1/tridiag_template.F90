@@ -174,7 +174,6 @@ subroutine tridiag_&
 #endif
 
   integer(kind=c_intptr_t)                      :: num
-  MATH_DATATYPE(kind=rck), allocatable          :: tmp(:)
   MATH_DATATYPE(kind=rck), pointer              :: v_row(:), & ! used to store calculated Householder Vector
                                                    v_col(:)   ! the same Vector, but transposed 
   MATH_DATATYPE(kind=rck), pointer              :: u_row_debug(:), & ! used to store calculated Householder Vector
@@ -381,10 +380,6 @@ subroutine tridiag_&
   ! todo: It is little bit confusing, I think, that variables _row actually store columns and vice versa
   ! todo: if something has length max_local_rows, it is actually a column, no?
   ! todo: probably one should read it as v_row = Vector v distributed among rows
-  !
-  allocate(tmp(MAX(max_local_rows,max_local_cols)), stat=istat, errmsg=errorMessage)
-  call check_alloc("tridiag_&
-  &MATH_DATATYPE ", "tmp", istat, errorMessage)
 
   ! allocate v_row 1 element longer to allow store and broadcast tau together with it
   allocate(uv_stored_cols(max_local_cols,2*max_stored_uv), stat=istat, errmsg=errorMessage)
@@ -502,7 +497,6 @@ subroutine tridiag_&
   &MATH_DATATYPE ", "uc_p", istat, errorMessage)
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-  tmp = 0
   v_row = 0
   u_row = 0
   v_col = 0
@@ -1207,27 +1201,25 @@ subroutine tridiag_&
 
        endif
 
-       ! Sum up all the u_col(:) parts, transpose u_col -> u_row
+    ! Sum up all the u_col(:) parts, transpose u_col -> u_row
 
-       if (l_cols > 0) then
-         tmp(1:l_cols) = u_col(1:l_cols) ! ??? why to introduce additional vector tmp? why not use MPI_IN_PLACE? 
 #ifdef WITH_MPI
-         if (useNonBlockingCollectivesRows) then
-           if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-           call mpi_iallreduce(tmp, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
-           call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
-           if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-         else
-           if (wantDebug) call obj%timer%start("mpi_communication")
-           call mpi_allreduce(tmp, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-           if (wantDebug) call obj%timer%stop("mpi_communication")
-         endif
-#else /* WITH_MPI */
-         u_col = tmp
+    if (l_cols > 0) then
+      if (useNonBlockingCollectivesRows) then
+        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+        call mpi_iallreduce(MPI_IN_PLACE, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                          MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
+        call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+      else
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_allreduce(MPI_IN_PLACE, u_col, int(l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                          MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_communication")
+      endif
+    endif
 #endif /* WITH_MPI */
-       endif
+
        if (isSkewsymmetric) then
           call elpa_transpose_vectors_ss_&
           &MATH_DATATYPE&
@@ -1612,8 +1604,6 @@ subroutine tridiag_&
   endif ! (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols))
 #endif /* REALCASE */
 
-  deallocate(tmp, stat=istat, errmsg=errorMessage)
-  check_deallocate("tridiag: tmp", istat, errorMessage)
 
   if (useGPU) then
 
