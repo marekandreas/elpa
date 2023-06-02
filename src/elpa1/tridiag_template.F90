@@ -1246,30 +1246,25 @@ subroutine tridiag_&
       endif
     endif ! isSkewsymmetric
 
-       ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
-       x = 0
-       call nvtxRangePush("cpu_dot v_col*u_col")
-       if (l_cols>0)  &
-       x = dot_product(v_col(1:l_cols),u_col(1:l_cols))
-       call nvtxRangePop()
+    ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
+    vav = 0 ! x=0
+    call nvtxRangePush("cpu_dot v_col*u_col")
+    if (l_cols>0) vav = dot_product(v_col(1:l_cols), u_col(1:l_cols))
+    call nvtxRangePop()
 
 #ifdef WITH_MPI
-       if (useNonBlockingCollectivesCols) then
-         if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-         call mpi_iallreduce(x, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
-               allreduce_request3, mpierr)
-         call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
-         if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-       else
-         if (wantDebug) call obj%timer%start("mpi_communication")
-         call mpi_allreduce(x, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
-                mpierr)
-         if (wantDebug) call obj%timer%stop("mpi_communication")
-       endif
-#else /* WITH_MPI */
-
-       vav = x
-
+    if (useNonBlockingCollectivesCols) then
+      if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+      call mpi_iallreduce(MPI_IN_PLACE, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
+            allreduce_request3, mpierr)
+      call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+    else
+      if (wantDebug) call obj%timer%start("mpi_communication")
+      call mpi_allreduce(MPI_IN_PLACE, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
+              mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_communication")
+    endif
 #endif /* WITH_MPI */
 
        ! store u and v in the matrices U and V
