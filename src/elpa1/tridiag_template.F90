@@ -1113,7 +1113,7 @@ subroutine tridiag_&
                                ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1, gpuHandle)
                 endif
               enddo ! i=0,(istep-2)/tile_size
-            end if !multiplication as one block / per stripes
+            end if ! mat_vec_as_one_block / per stripes
 
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
