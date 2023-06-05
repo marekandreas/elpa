@@ -162,7 +162,7 @@ subroutine tridiag_&
 #endif
 
   real(kind=rk)                                 :: vnorm2
-  MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), aux2(2), vrl, xf, conjg_tau
+  MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), vrl, xf, conjg_tau
   MATH_DATATYPE(kind=rck), allocatable          :: aux(:) ! 2*max_stored_uv ??? why differet logic for real and complex?
   character(len=32)                             :: max_stored_uv_string
   character(len=100)                            :: nvtx_name
@@ -744,27 +744,25 @@ subroutine tridiag_&
 #ifdef WITH_MPI
       if (useNonBlockingCollectivesRows) then
         if (wantDebug) call obj%timer%start("mpi_communication_non_blocking")
-        call mpi_iallreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+        call mpi_iallreduce(MPI_IN_PLACE, aux1, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
         call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication_non_blocking")
       else
         if (wantDebug) call obj%timer%start("mpi_communication")
-        call mpi_allreduce(aux1, aux2, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
+        call mpi_allreduce(MPI_IN_PLACE, aux1, 2_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
       endif
-#else /* WITH_MPI */
-      aux2 = aux1
 #endif /* WITH_MPI */
 
 #if REALCASE == 1
-      vnorm2 = aux2(1)
+      vnorm2 = aux1(1)
 #endif
 #if COMPLEXCASE == 1
-      vnorm2 = real(aux2(1),kind=rk)
+      vnorm2 = real(aux1(1),kind=rk)
 #endif
-      vrl    = aux2(2)
+      vrl    = aux1(2)
 
       ! Householder transformation
       call nvtxRangePush("hh_transform")
