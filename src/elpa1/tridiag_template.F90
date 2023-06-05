@@ -607,7 +607,6 @@ subroutine tridiag_&
 
       ! copy l_cols + 1 column of A to v_row
       if (useGPU) then
-        a_offset = l_cols * matrixRows * size_of_datatype
         ! we use v_row on the host at the moment! successGPU = gpu_memcpy(v_row_dev, a_dev + a_offset, 
         ! (l_rows)*size_of_PRECISION_real, gpuMemcpyDeviceToDevice)
 
