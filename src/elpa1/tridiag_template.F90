@@ -162,7 +162,7 @@ subroutine tridiag_&
 #endif
 
   real(kind=rk)                                 :: vnorm2
-  MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), aux2(2), vrl, xf
+  MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), aux2(2), vrl, xf, conjg_tau
   MATH_DATATYPE(kind=rck), allocatable          :: aux(:) ! 2*max_stored_uv ??? why differet logic for real and complex?
   character(len=32)                             :: max_stored_uv_string
   character(len=100)                            :: nvtx_name
@@ -1267,32 +1267,25 @@ subroutine tridiag_&
     endif
 #endif /* WITH_MPI */
 
-       ! store u and v in the matrices U and V
-       ! these matrices are stored combined in one here
-       
-       call nvtxRangePush("store u,v in U,V") 
-       do j=1,l_rows ! ??? why not to vectorize these two loops ?
+    ! store u and v in the matrices U and V
+    ! these matrices are stored combined in one here
+      
+    call nvtxRangePush("store u,v in U,V")
 #if REALCASE == 1
-         vu_stored_rows(j,2*n_stored_vecs+1) = tau(istep)*v_row(j)
-         !vu_stored_rows(1:l_rows,2*n_stored_vecs+1) = tau(istep)*v_row(1:l_rows)
-         vu_stored_rows(j,2*n_stored_vecs+2) = 0.5*tau(istep)*vav*v_row(j) - u_row(j)
+    conjg_tau = tau(istep)
 #endif
 #if COMPLEXCASE == 1
-         vu_stored_rows(j,2*n_stored_vecs+1) = conjg(tau(istep))*v_row(j)
-         vu_stored_rows(j,2*n_stored_vecs+2) = 0.5*conjg(tau(istep))*vav*v_row(j) - u_row(j)
+    conjg_tau = conjg(tau(istep))
 #endif
-       enddo
-       do j=1,l_cols
-#if REALCASE == 1
-         uv_stored_cols(j,2*n_stored_vecs+1) = 0.5*tau(istep)*vav*v_col(j) - u_col(j) ! ??? uv_stored_"cols" -- cols doesn't make any sence here wrt distribution among MPI  processes?  its only that it was constructed from v_col,u_col
-         uv_stored_cols(j,2*n_stored_vecs+2) = tau(istep)*v_col(j)
-#endif
-#if COMPLEXCASE == 1
-         uv_stored_cols(j,2*n_stored_vecs+1) = 0.5*conjg(tau(istep))*vav*v_col(j) - u_col(j)
-         uv_stored_cols(j,2*n_stored_vecs+2) = conjg(tau(istep))*v_col(j)
-#endif
-       enddo
-       call nvtxRangePop()
+    if (l_rows > 0) then
+      vu_stored_rows(1:l_rows,2*n_stored_vecs+1) = conjg_tau*v_row(1:l_rows)
+      vu_stored_rows(1:l_rows,2*n_stored_vecs+2) = 0.5*conjg_tau*vav*v_row(1:l_rows) - u_row(1:l_rows)
+    endif
+    if (l_cols > 0) then
+      uv_stored_cols(1:l_cols,2*n_stored_vecs+1) = 0.5*conjg_tau*vav*v_col(1:l_cols) - u_col(1:l_cols)
+      uv_stored_cols(1:l_cols,2*n_stored_vecs+2) = conjg_tau*v_col(1:l_cols)
+    endif
+    call nvtxRangePop()
 
        ! We have calculated another Hauseholder Vector, number of implicitly stored increased
        n_stored_vecs = n_stored_vecs+1
