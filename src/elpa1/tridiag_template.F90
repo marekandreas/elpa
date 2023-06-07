@@ -153,7 +153,7 @@ subroutine tridiag_&
 
   integer(kind=ik)                              :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
   integer(kind=ik)                              :: tile_size, l_rows_per_tile, l_cols_per_tile
-  integer(kind=c_intptr_t)                      :: a_offset
+  integer(kind=c_intptr_t)                      :: offset_dev
 
   integer(kind=ik), intent(in)                  :: max_threads_in
   integer(kind=ik)                              :: max_threads
@@ -615,23 +615,23 @@ subroutine tridiag_&
 
       ! copy l_cols + 1 column of A to v_row
       if (useGPU) then
-        ! we use v_row on the host at the moment! successGPU = gpu_memcpy(v_row_dev, a_dev + a_offset, 
+        ! we use v_row on the host at the moment! successGPU = gpu_memcpy(v_row_dev, a_dev + offset_dev, 
         ! (l_rows)*size_of_PRECISION_real, gpuMemcpyDeviceToDevice)
 
-        a_offset = l_cols * matrixRows * size_of_datatype
+        offset_dev = l_cols * matrixRows * size_of_datatype
 
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         num = l_rows * size_of_datatype
         call gpu_memcpy_async_and_stream_synchronize &
-        ("tridiag a_dev -> v_row", a_dev, a_offset, &
+        ("tridiag a_dev -> v_row", a_dev, offset_dev, &
                                                      v_row(1:max_local_rows+1), &
                                                      1,  num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
         write (nvtx_name, "(A,I0)") "memcpy D-H a_dev(:,l_cols+1)->v_row ", l_rows
         call nvtxRangePush(nvtx_name)
         successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), &
-                                  a_dev + a_offset, (l_rows)* size_of_datatype, gpuMemcpyDeviceToHost)
+                                  a_dev + offset_dev, (l_rows)* size_of_datatype, gpuMemcpyDeviceToHost)
         call nvtxRangePop()
         call nvtxRangePush("check_memcpy")
         check_memcpy_gpu("tridiag a_dev 1", successGPU)
@@ -646,9 +646,9 @@ subroutine tridiag_&
         if (useGPU) then ! ??? Peter: why this, even cpu gemv is not needed for a cpu-on;y calcaulations?
 
           ! as on CPU
-#if REALCASE == 1
-          aux(1:2*n_stored_vecs) =       uv_stored_cols(l_cols+1,1:2*n_stored_vecs)
-#endif
+!#if REALCASE == 1
+!          aux(1:2*n_stored_vecs) =       uv_stored_cols(l_cols+1,1:2*n_stored_vecs)
+!#endif
 #if COMPLEXCASE == 1
           aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif 
@@ -676,24 +676,15 @@ subroutine tridiag_&
 
           ! int(ubound(vu_stored_rows,dim=1) = max_local_rows
 
-          write (nvtx_name, "(A,I0)") "memcpy new H-D vu_stored_rows->vu_stored_rows_dev ", max_local_rows*2*n_stored_vecs
-          call nvtxRangePush(nvtx_name)
-          !vu_stored_rows -> vu_stored_rows_dev
-          successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows),kind=c_intptr_t), (max_local_rows*2*n_stored_vecs)* &
-              size_of_datatype, gpuMemcpyHostToDevice) ! Peter: here actually need only l_rows, not max_local_rows. But this would be non-contiguous
-          check_memcpy_gpu("tridiag: vu_stored_rows -> vu_stored_rows_dev", successGPU)
-          call nvtxRangePop()
-
-          !write (nvtx_name, "(A,I0)") "memcpy new H-D uv_stored_cols->uv_stored_cols_dev ", max_local_rows*2*n_stored_vecs
+#if COMPLEXCASE == 1
           write (nvtx_name, "(A,I0)") "memcpy new H-D aux->aux_dev ", 2*n_stored_vecs
           call nvtxRangePush(nvtx_name)
-          !!uv_stored_cols -> uv_stored_cols_dev
-          !!successGPU = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols()),kind=c_intptr_t), (max_local_cols*2*n_stored_vecs)* &
           !aux -> aux_dev
           successGPU = gpu_memcpy(aux_dev, int(loc(aux),kind=c_intptr_t), (1*2*n_stored_vecs)* &
               size_of_datatype, gpuMemcpyHostToDevice) ! Peter: huge (?) overkill: only small part is necessary here, ONLY ONE ROW! -> but it's non-contiguous; shall we make it contigous? l_rows * 2*n_stored_vecs
           check_memcpy_gpu("tridiag: aux -> aux_dev", successGPU)
           call nvtxRangePop()
+#endif
 
           write (nvtx_name, "(A,I0)") "memcpy new H-D v_row->v_row_dev ", l_rows
           call nvtxRangePush(nvtx_name)
@@ -710,12 +701,12 @@ subroutine tridiag_&
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_GEMV('N', l_rows, 2*n_stored_vecs,  &
                                     ONE, vu_stored_rows_dev, max_local_rows,  &
-!#if REALCASE == 1
-!                                    uv_stored_cols_dev+(l_cols+1-1 +max_local_cols*(1-1))*size_of_datatype , max_local_cols, &
-!#endif
-!#if COMPLEXCASE == 1 /* TODO. uv_stored_cols_dev <-> aux_dev. why max_local_cols <-> 1 ??? */
+#if REALCASE == 1
+                                    uv_stored_cols_dev+(l_cols+1-1 +max_local_cols*(1-1))*size_of_datatype , max_local_cols, &
+#endif
+#if COMPLEXCASE == 1
                                     aux_dev, 1,   &
-!#endif
+#endif
                                     ONE, v_row_dev, 1, gpuHandle)
 
           if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
@@ -739,6 +730,7 @@ subroutine tridiag_&
 #endif
 
           if (wantDebug) call obj%timer%start("blas")
+          ! v_row = vu_stored_rows * uv_stored_cols(l_cols+1,1:2*n_stored_vecs) + v_row
           call PRECISION_GEMV('N',   &
                             int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
                             ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
@@ -961,7 +953,7 @@ subroutine tridiag_&
 !$omp default(none) &
 !$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end) &
 !$omp shared(obj, gpuHandle, useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
-!$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, a_offset, &
+!$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, offset_dev, &
 !$omp&       max_local_cols, max_local_rows, wantDebug, l_rows_per_tile, l_cols_per_tile, &
 !$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat, &
 !$omp&       matrixCols)
@@ -1076,7 +1068,7 @@ subroutine tridiag_&
        ! todo: try with non transposed!!!
 !                 if(i/=j) then
 !                   call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
-!                                             ONE, a_dev + a_offset, matrixRows,                        &
+!                                             ONE, a_dev + offset_dev, matrixRows,                        &
 !                                             v_col_dev + (l_col_beg - 1) *                      &
 !                                             size_of_datatype, 1,                          &
 !                                             ONE, u_row_dev + (l_row_beg - 1) *                 &
@@ -1094,12 +1086,12 @@ subroutine tridiag_&
             l_row_beg = 1
             l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
                   
-            a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * size_of_datatype
+            offset_dev = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * size_of_datatype
   
             gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
             call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
                           l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                          ONE, a_dev + a_offset, matrixRows,  &
+                          ONE, a_dev + offset_dev, matrixRows,  &
                           v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
                           ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1, gpuHandle)
           enddo !i=0,(istep-2)/tile_size
@@ -1112,18 +1104,18 @@ subroutine tridiag_&
             l_row_beg = 1
             l_row_end = min(l_rows,i*l_rows_per_tile)
               
-            a_offset = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * size_of_datatype
+            offset_dev = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * size_of_datatype
 
             if (isSkewsymmetric) then
                 gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                 call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                            -ONE, a_dev + a_offset, matrixRows, &
+                            -ONE, a_dev + offset_dev, matrixRows, &
                             v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                             ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1, gpuHandle)
             else
                 gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                 call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                            ONE, a_dev + a_offset, matrixRows, &
+                            ONE, a_dev + offset_dev, matrixRows, &
                             v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
                             ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1, gpuHandle)
             endif
@@ -1178,86 +1170,70 @@ subroutine tridiag_&
 
       ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
       if (n_stored_vecs > 0) then
-#ifdef GPU_OLD /* CPU path, it should be left in! if (.not. useGPU) then */
-        if (wantDebug) call obj%timer%start("blas")
+        if (.not. useGPU) then
+          if (wantDebug) call obj%timer%start("blas")
 
-        write (nvtx_name, "(A,I0,A,I0)") "cpu gemv_x2 ", l_rows, "x", 2*n_stored_vecs
-        call nvtxRangePush(nvtx_name)  
-    
-        ! aux = vu_stored_rows^T*v_row
-        call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,     &
-                            int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
-                            ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
-                            v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
-            
-        ! u_col = uv_stored_cols*aux + u_col
-        call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
-                            ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
-                            aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
-        call nvtxRangePop()      
-        if (wantDebug) call obj%timer%stop("blas")
-#else
-        if (wantDebug) call obj%timer%start("gpublas gemv x2 skinny with copying")
+          write (nvtx_name, "(A,I0,A,I0)") "cpu gemv_x2 ", l_rows, "x", 2*n_stored_vecs
+          call nvtxRangePush(nvtx_name)  
+      
+          ! aux = vu_stored_rows^T*v_row
+          call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,     &
+                              int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                              ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                              v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
+              
+          ! u_col = uv_stored_cols*aux + u_col
+          call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                              ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
+                              aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
+          call nvtxRangePop()      
+          if (wantDebug) call obj%timer%stop("blas")
+        else ! .not. useGPU
+          if (wantDebug) call obj%timer%start("gpublas gemv x2 skinny with copying")
 
-        write (nvtx_name, "(A,I0)") "memcpy new H-D vu_stored_rows->vu_stored_rows_dev ", max_local_rows*2*n_stored_vecs
-        call nvtxRangePush(nvtx_name)
-        !vu_stored_rows -> vu_stored_rows_dev
-        successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows),kind=c_intptr_t), (max_local_rows*2*n_stored_vecs)* &
-            size_of_datatype, gpuMemcpyHostToDevice) ! Peter: here actually need only l_rows, not max_local_rows. But this would be non-contiguous
-        check_memcpy_gpu("tridiag: vu_stored_rows -> vu_stored_rows_dev", successGPU)
-        call nvtxRangePop()
+          write (nvtx_name, "(A,I0)") "memcpy new H-D v_row->v_row_dev ", l_rows
+          call nvtxRangePush(nvtx_name)
+          !v_row->v_row_dev
+          successGPU = gpu_memcpy(v_row_dev, int(loc(v_row),kind=c_intptr_t), (l_rows)* &
+              size_of_datatype, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("tridiag: v_row->v_row_dev", successGPU)
+          call nvtxRangePop()
 
-        write (nvtx_name, "(A,I0)") "memcpy new H-D uv_stored_cols->uv_stored_cols_dev ", max_local_cols*2*n_stored_vecs
-        call nvtxRangePush(nvtx_name)
-        !uv_stored_cols -> uv_stored_cols_dev
-        successGPU = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols),kind=c_intptr_t), (max_local_cols*2*n_stored_vecs)* &
-            size_of_datatype, gpuMemcpyHostToDevice) ! Peter: here actually need only l_rows, not max_local_rows. But this would be non-contiguous
-        check_memcpy_gpu("tridiag: uv_stored_cols -> uv_stored_cols_dev", successGPU)
-        call nvtxRangePop()
+          write (nvtx_name, "(A,I0)") "memcpy new H-D u_col->u_col_dev ", l_cols
+          call nvtxRangePush(nvtx_name)
+          !u_col->u_col_dev
+          successGPU = gpu_memcpy(u_col_dev, int(loc(u_col),kind=c_intptr_t), (l_cols)* &
+              size_of_datatype, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("tridiag: u_col->u_col_dev", successGPU)
+          call nvtxRangePop()
 
-        write (nvtx_name, "(A,I0)") "memcpy new H-D v_row->v_row_dev ", l_rows
-        call nvtxRangePush(nvtx_name)
-        !v_row->v_row_dev
-        successGPU = gpu_memcpy(v_row_dev, int(loc(v_row),kind=c_intptr_t), (l_rows)* &
-            size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridiag: v_row->v_row_dev", successGPU)
-        call nvtxRangePop()
+          write (nvtx_name, "(A,I0,A,I0)") "gpublas gemv_x2 skinny", l_rows, "x", 2*n_stored_vecs
+          call nvtxRangePush(nvtx_name)  
 
-        write (nvtx_name, "(A,I0)") "memcpy new H-D u_col->u_col_dev ", l_cols
-        call nvtxRangePush(nvtx_name)
-        !u_col->u_col_dev
-        successGPU = gpu_memcpy(u_col_dev, int(loc(u_col),kind=c_intptr_t), (l_cols)* &
-            size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridiag: u_col->u_col_dev", successGPU)
-        call nvtxRangePop()
+          ! aux_dev = vu_stored_rows_dev^T*v_row_dev
+          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
+          call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows, 2*n_stored_vecs, &
+                                      ONE, vu_stored_rows_dev, max_local_rows,   &
+                                      v_row_dev,  1, ZERO, aux_dev, 1, gpuHandle)
+              
+          ! u_col_dev = uv_stored_cols_dev*aux_dev + u_col_dev
+          call gpublas_PRECISION_GEMV('N', l_cols, 2*n_stored_vecs, &
+                                      ONE, uv_stored_cols_dev, max_local_cols,   &
+                                      aux_dev, 1, ONE, u_col_dev, 1, gpuHandle)
 
-        write (nvtx_name, "(A,I0,A,I0)") "gpublas gemv_x2 skinny", l_rows, "x", 2*n_stored_vecs
-        call nvtxRangePush(nvtx_name)  
+          if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
+          call nvtxRangePop()
+          
+          !u_col_dev -> u_col
+          write (nvtx_name, "(A,I0)") "memcpy new D-H u_col_dev->u_col ", l_cols
+          call nvtxRangePush(nvtx_name)
+          successGPU = gpu_memcpy(int(loc(u_col),kind=c_intptr_t), u_col_dev, (l_cols)* &
+              size_of_datatype, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("tridiag: u_col_dev -> u_col", successGPU)
+          call nvtxRangePop()
 
-        ! aux_dev = vu_stored_rows_dev^T*v_row_dev
-        gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-        call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows, 2*n_stored_vecs, &
-                                    ONE, vu_stored_rows_dev, max_local_rows,   &
-                                    v_row_dev,  1, ZERO, aux_dev, 1, gpuHandle)
-            
-        ! u_col_dev = uv_stored_cols_dev*aux_dev + u_col_dev
-        call gpublas_PRECISION_GEMV('N', l_cols, 2*n_stored_vecs, &
-                                    ONE, uv_stored_cols_dev, max_local_cols,   &
-                                    aux_dev, 1, ONE, u_col_dev, 1, gpuHandle)
-
-        if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
-        call nvtxRangePop()
-        
-        !u_col_dev -> u_col
-        write (nvtx_name, "(A,I0)") "memcpy new D-H u_col_dev->u_col ", l_cols
-        call nvtxRangePush(nvtx_name)
-        successGPU = gpu_memcpy(int(loc(u_col),kind=c_intptr_t), u_col_dev, (l_cols)* &
-            size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("tridiag: u_col_dev -> u_col", successGPU)
-        call nvtxRangePop()
-
-        if (wantDebug) call obj%timer%stop("gpublas gemv x2 skinny with copying")  
-#endif
+          if (wantDebug) call obj%timer%stop("gpublas gemv x2 skinny with copying")  
+        endif ! .not. useGPU
       endif ! n_stored_vecs > 0
 
     endif  ! (l_rows>0 .and. l_cols>0)
@@ -1311,7 +1287,7 @@ subroutine tridiag_&
         return
       endif
     else ! isSkewsymmetric
-      call nvtxRangePush("elpa_transpose_vectors")
+      call nvtxRangePush("elpa_transpose_vectors u_col->u_row")
       call elpa_transpose_vectors_&
       &MATH_DATATYPE&
       &_&
@@ -1349,7 +1325,7 @@ subroutine tridiag_&
     ! store u and v in the matrices U and V
     ! these matrices are stored combined in one here
       
-    call nvtxRangePush("store u,v in U,V")
+    call nvtxRangePush("store u,v in U,V") ! ??? this can be done in parallel with copying to GPU ?
 #if REALCASE == 1
     conjg_tau = tau(istep)
 #endif
@@ -1357,55 +1333,94 @@ subroutine tridiag_&
     conjg_tau = conjg(tau(istep))
 #endif
     if (l_rows > 0) then
+      ! update vu_stored_rows
       vu_stored_rows(1:l_rows,2*n_stored_vecs+1) = conjg_tau*v_row(1:l_rows)
       vu_stored_rows(1:l_rows,2*n_stored_vecs+2) = 0.5*conjg_tau*vav*v_row(1:l_rows) - u_row(1:l_rows)
     endif
     if (l_cols > 0) then
+      ! update uv_stored_cols
       uv_stored_cols(1:l_cols,2*n_stored_vecs+1) = 0.5*conjg_tau*vav*v_col(1:l_cols) - u_col(1:l_cols)
       uv_stored_cols(1:l_cols,2*n_stored_vecs+2) = conjg_tau*v_col(1:l_cols)
     endif
     call nvtxRangePop()
 
-       ! We have calculated another Hauseholder Vector, number of implicitly stored increased
-       n_stored_vecs = n_stored_vecs+1
-
-       ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
-       if (n_stored_vecs == max_stored_uv .or. istep == 3) then
-
-         if (useGPU) then
+#ifndef GPU_OLD     
+    if (useGPU) then
+      ! update vu_stored_rows_dev
+      offset_dev = ((1-1) + max_local_rows*(2*n_stored_vecs+1-1)) * size_of_datatype
+      num = max_local_rows * 2 * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-           my_stream = obj%gpu_setup%my_stream
-          num = max_local_rows * 2 * max_stored_uv * size_of_datatype
-           call gpu_memcpy_async_and_stream_synchronize &
-                 ("tridiag vu_stored_rows -> vu_stored_rows_dev", vu_stored_rows_dev, 0_c_intptr_t, &
-                                                      vu_stored_rows(1:max_local_rows,1:2*max_stored_uv), &
-                                                      1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+      my_stream = obj%gpu_setup%my_stream
+      call gpu_memcpy_async_and_stream_synchronize &
+            ("tridiag vu_stored_rows -> vu_stored_rows_dev", vu_stored_rows_dev, offset_dev, &
+                                        vu_stored_rows(1:max_local_rows,(2*n_stored_vecs+1):(2*n_stored_vecs+2), &
+                                        1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else
-           call nvtxRangePush("memcpy H-D vu_stored_rows_dev->vu_stored_rows")  
-           successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
-                                     max_local_rows * 2 * max_stored_uv *          &
-                                     size_of_datatype, gpuMemcpyHostToDevice)
-           call nvtxRangePop()
+      call nvtxRangePush("memcpy H-D vu_stored_rows->vu_stored_rows_dev")  ! ??? optimize to two smaller l_rows copies instead of one max_local_rows*2
+      successGPU = gpu_memcpy(vu_stored_rows_dev+offset_dev, int(loc(vu_stored_rows(1,2*n_stored_vecs+1)),kind=c_intptr_t), &
+                                num, gpuMemcpyHostToDevice)
+      call nvtxRangePop()
 #endif
-           check_memcpy_gpu("tridiag: uv_stored_rows_dev", successGPU)
+      check_memcpy_gpu("tridiag: vu_stored_rows_dev", successGPU)
+
+      ! update uv_stored_cols_dev
+      offset_dev = ((1-1) + max_local_cols*(2*n_stored_vecs+1-1)) * size_of_datatype
+      num = max_local_cols * 2 * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
+      call gpu_memcpy_async_and_stream_synchronize &
+            ("tridiag uv_stored_cols -> uv_stored_cols_dev", uv_stored_cols_dev, offset_dev, &
+                                        uv_stored_cols(1:max_local_cols,(2*n_stored_vecs+1):(2*n_stored_vecs+2)), &
+                                        1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+#else
+      call nvtxRangePush("memcpy H-D uv_stored_cols_dev->uv_stored_cols")  
+      successGPU = gpu_memcpy(uv_stored_cols_dev+offset_dev, int(loc(uv_stored_cols(1,2*n_stored_vecs+1)),kind=c_intptr_t), &
+                                num, gpuMemcpyHostToDevice)
+      call nvtxRangePop()
+#endif
+      check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
+    endif ! useGPU
+#endif /* ifndef GPU_OLD */   
+
+    ! We have calculated another Hauseholder Vector, number of implicitly stored increased
+    n_stored_vecs = n_stored_vecs+1
+
+    ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
+    if (n_stored_vecs == max_stored_uv .or. istep == 3) then
+
+!#ifdef GPU_OLD ??? can this part be optimized out and omitted, since now we are copying u and v vectors separately to vu and uv on GPU anyway
+      if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
+        num = max_local_rows * 2 * max_stored_uv * size_of_datatype
+        call gpu_memcpy_async_and_stream_synchronize &
+              ("tridiag vu_stored_rows -> vu_stored_rows_dev", vu_stored_rows_dev, 0_c_intptr_t, &
+                                                  vu_stored_rows(1:max_local_rows,1:2*max_stored_uv), &
+                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+#else
+        successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
+                                  max_local_rows * 2 * max_stored_uv *          &
+                                  size_of_datatype, gpuMemcpyHostToDevice)
+#endif
+        check_memcpy_gpu("tridiag: vu_stored_rows_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
-           my_stream = obj%gpu_setup%my_stream
-           num = max_local_cols * 2 * max_stored_uv * size_of_datatype
-           call gpu_memcpy_async_and_stream_synchronize &
-                 ("tridiag uv_stored_cols -> uv_stored_cols_dev", uv_stored_cols_dev, 0_c_intptr_t, &
-                                                      uv_stored_cols(1:max_local_cols,1:2*max_stored_uv), &
-                                                      1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+        my_stream = obj%gpu_setup%my_stream
+        num = max_local_cols * 2 * max_stored_uv * size_of_datatype
+        call gpu_memcpy_async_and_stream_synchronize &
+              ("tridiag uv_stored_cols -> uv_stored_cols_dev", uv_stored_cols_dev, 0_c_intptr_t, &
+                                                  uv_stored_cols(1:max_local_cols,1:2*max_stored_uv), &
+                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else
-           call nvtxRangePush("memcpy H-D vu_stored_cols_dev->vu_stored_cols")  
-           successGPU = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
-                                     max_local_cols * 2 * max_stored_uv *          &
-                                     size_of_datatype, gpuMemcpyHostToDevice)
-           call nvtxRangePop()
+        successGPU = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
+                                  max_local_cols * 2 * max_stored_uv *          &
+                                  size_of_datatype, gpuMemcpyHostToDevice)
 #endif
-           check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
-         endif ! useGPU
+        check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
 
+      endif ! useGPU
+!#endif /* ifdef GPU_OLD */           
+        
          do i = 0, (istep-2)/tile_size
            ! go over tiles above (or on) the diagonal
            l_col_beg = i*l_cols_per_tile+1
@@ -1476,18 +1491,18 @@ subroutine tridiag_&
        if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
          if (useGPU) then
            !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
-            a_offset = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
+            offset_dev = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             num = 1 * size_of_datatype
             call gpu_memcpy_async_and_stream_synchronize &
-                 ("a_dev -> a_mat", a_dev, a_offset, &
+                 ("a_dev -> a_mat", a_dev, offset_dev, &
                                                       a_mat(1:matrixRows,1:matrixCols), &
                                                       l_rows, l_cols, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., &
                                               .false.)
 #else
             call nvtxRangePush("memcpy D-H a_dev->a_mat: 1")
-            successGPU = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + a_offset, &
+            successGPU = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + offset_dev, &
                                     1 *  size_of_datatype, gpuMemcpyDeviceToHost) ! ??? needed only in GEMM loop step?
             check_memcpy_gpu("tridiag: a_dev 3", successGPU)
             call nvtxRangePop()
@@ -1517,13 +1532,13 @@ subroutine tridiag_&
            my_stream = obj%gpu_setup%my_stream
            num = 1 * size_of_datatype
            call gpu_memcpy_async_and_stream_synchronize &
-                 ("a_mat -> a_dev", a_dev, a_offset, &
+                 ("a_mat -> a_dev", a_dev, offset_dev, &
                                                       a_mat(1:matrixRows,1:matrixCols), &
                                                       l_rows, l_cols, num, gpuMemcpyHostToDevice, my_stream, .false., .false., &
                                               .false.)
 #else
            call nvtxRangePush("memcpy H-D a_mat->a_dev: 1")
-           successGPU = gpu_memcpy(a_dev + a_offset, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
+           successGPU = gpu_memcpy(a_dev + offset_dev, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
                                    int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice)
            call nvtxRangePop()
 #endif
