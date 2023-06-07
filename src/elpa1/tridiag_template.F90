@@ -1420,73 +1420,77 @@ subroutine tridiag_&
 
       endif ! useGPU
 !#endif /* ifdef GPU_OLD */           
-        
-         do i = 0, (istep-2)/tile_size
-           ! go over tiles above (or on) the diagonal
-           l_col_beg = i*l_cols_per_tile+1
-           l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-           l_row_beg = 1
-           l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
-           if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) then
-             cycle
-           endif
-
-
-           if (useGPU) then
-             if (.not. mat_vec_as_one_block) then
-               ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
-               ! we than use the same calls as for CPU version
-               if (wantDebug) call obj%timer%start("gpublas_gemm")
-               gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-               call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
-                                       l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
-                                       ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
-                                       size_of_datatype,  &
-                                       max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
-                                       size_of_datatype,  &
-                                       max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
-                                       size_of_datatype , matrixRows, gpuHandle)
-               if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
-               if (wantDebug) call obj%timer%stop("gpublas_gemm")
-             endif ! matBlockasOne
-           else !useGPU
-             if (wantDebug) call obj%timer%start("blas_gemm")
-             !  a_mat = vu_stored_rows*uv_stored_cols + a_mat
-             call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
-                                  int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
-                                  int(2*n_stored_vecs,kind=BLAS_KIND),    &
-                                  ONE, vu_stored_rows(l_row_beg:max_local_rows,1:2*max_stored_uv), &
-                                  int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
-                                  uv_stored_cols(l_col_beg,1), &
-                                  int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
-                                  ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND))
-             if (wantDebug) call obj%timer%stop("blas_gemm")
-           endif !useGPU
-         enddo ! i = 0, (istep-2)/tile_size
-
-         if (useGPU) then
-           if (mat_vec_as_one_block) then
-             !update whole (remaining) part of matrix, including tiles below diagonal
-             !we can do that in one large cublas call
-             if (wantDebug) call obj%timer%start("gpublas_gemm")
-             write (nvtx_name, "(A,I0,A,I0,A,I0)") "gpublas_gemm ", l_rows, "x", l_cols, "x", 2*n_stored_vecs
-             call nvtxRangePush(nvtx_name)  
       
-             gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-             ! a_dev = vu_stored_rows_dev*uv_stored_cols_dev + a_dev
-             call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
-                                       ONE, vu_stored_rows_dev, max_local_rows, &
-                                       uv_stored_cols_dev, max_local_cols,  &
-                                       ONE, a_dev, matrixRows, gpuHandle)
-             call nvtxRangePop()
+      if (.not. useGPU .OR. .not. mat_vec_as_one_block) then
+        do i = 0, (istep-2)/tile_size
+          ! go over tiles above (or on) the diagonal
+          l_col_beg = i*l_cols_per_tile+1
+          l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+          l_row_beg = 1
+          l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
+          if (l_col_end<l_col_beg .or. l_row_end<l_row_beg) then
+            cycle
+          endif
 
-             if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
-             if (wantDebug) call obj%timer%stop("gpublas_gemm")
-           endif ! mat_vec_as
-         endif
+          if (useGPU) then
+            if (.not. mat_vec_as_one_block) then
+              ! if using mat-vec multiply by stripes, it is enough to update tiles above (or on) the diagonal only
+              ! we than use the same calls as for CPU version
+              if (wantDebug) call obj%timer%start("gpublas_gemm")
+              ! update a_dev
+              ! a_dev = vu_stored_rows_dev*uv_stored_cols_dev + a_dev
+              gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
+              call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,     &
+                                      l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, 2*n_stored_vecs,                      &
+                                      ONE, vu_stored_rows_dev + (l_row_beg - 1) *                                         &
+                                      size_of_datatype,  &
+                                      max_local_rows, uv_stored_cols_dev + (l_col_beg - 1) *                              &
+                                      size_of_datatype,  &
+                                      max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
+                                      size_of_datatype , matrixRows, gpuHandle)
+              if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
+              if (wantDebug) call obj%timer%stop("gpublas_gemm")
+            endif ! .not. mat_vec_as_one_block
+          else ! useGPU
+            if (wantDebug) call obj%timer%start("blas_gemm")
+            ! update a_mat
+            ! a_mat = vu_stored_rows*uv_stored_cols + a_mat
+            call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ,                &
+                                int(l_row_end-l_row_beg+1,kind=BLAS_KIND), int(l_col_end-l_col_beg+1,kind=BLAS_KIND), &
+                                int(2*n_stored_vecs,kind=BLAS_KIND),    &
+                                ONE, vu_stored_rows(l_row_beg:max_local_rows,1:2*max_stored_uv), &
+                                int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                                uv_stored_cols(l_col_beg,1), &
+                                int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),        &
+                                ONE, a_mat(l_row_beg,l_col_beg), int(matrixRows,kind=BLAS_KIND))
+            if (wantDebug) call obj%timer%stop("blas_gemm")
+          endif !useGPU
+        enddo ! i = 0, (istep-2)/tile_size
 
-         n_stored_vecs = 0
-       endif ! (n_stored_vecs == max_stored_uv .or. istep == 3)
+      else !.not. useGPU or .not. mat_vec_as_one_block (i.e. useGPU and mat_vec_as_one_block)
+
+        !update whole (remaining) part of matrix, including tiles below diagonal
+        !we can do that in one large cublas call
+        if (wantDebug) call obj%timer%start("gpublas_gemm")
+        write (nvtx_name, "(A,I0,A,I0,A,I0)") "gpublas_gemm ", l_rows, "x", l_cols, "x", 2*n_stored_vecs
+        call nvtxRangePush(nvtx_name)  
+
+        gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
+        ! update a_dev
+        ! a_dev = vu_stored_rows_dev*uv_stored_cols_dev + a_dev
+        call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, l_rows, l_cols, 2*n_stored_vecs,   &
+                                  ONE, vu_stored_rows_dev, max_local_rows, &
+                                  uv_stored_cols_dev, max_local_cols,  &
+                                  ONE, a_dev, matrixRows, gpuHandle)
+        call nvtxRangePop()
+
+        if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
+        if (wantDebug) call obj%timer%stop("gpublas_gemm")
+
+      endif !.not. useGPU or .not. mat_vec_as_one_block
+
+      n_stored_vecs = 0
+    endif ! (n_stored_vecs == max_stored_uv .or. istep == 3)
 
        if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
          if (useGPU) then
