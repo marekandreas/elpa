@@ -528,8 +528,10 @@ subroutine tridiag_&
     successGPU = gpu_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
     check_alloc_gpu("tridiag: uv_stored_cols_dev", successGPU)
 
+#ifndef GPU_OLD
     successGPU = gpu_malloc(aux_dev, 2*max_stored_uv * size_of_datatype)
     check_alloc_gpu("tridiag: aux_dev", successGPU)
+#endif
 
 #ifdef MORE_GPU_COMPUTE
     successGPU = gpu_malloc(aux_dev, 2*max_stored_uv * size_of_datatype)
@@ -1694,7 +1696,6 @@ subroutine tridiag_&
 
 
   if (useGPU) then
-
     ! todo: should we leave a_mat on the device for further use?
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("tridiag: a_dev 9", successGPU)
@@ -1716,6 +1717,11 @@ subroutine tridiag_&
 
     successGPU = gpu_free(uv_stored_cols_dev)
     check_dealloc_gpu("tridiag:uv_stored_cols_dev ", successGPU)
+
+#ifndef GPU_OLD
+    successgpu = gpu_free(aux_dev)
+    check_dealloc_gpu("tridiag: aux_dev", successgpu)
+#endif
   endif ! useGPU
 
   ! distribute the arrays d_vec and e_vec to all processors
@@ -1821,6 +1827,11 @@ subroutine tridiag_&
 
       successGPU = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: d_vec", successGPU)
+
+#ifndef GPU_OLD
+      successGPU = gpu_host_unregister(int(loc(aux),kind=c_intptr_t))
+      check_host_unregister_gpu("tridiag: aux", successGPU)
+#endif
     endif
 #endif
   else ! useGPU
@@ -1830,6 +1841,11 @@ subroutine tridiag_&
 
   deallocate(vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: vu_stored_rows, uv_stored_cols", istat, errorMessage)
+
+#ifndef GPU_OLD
+  deallocate(aux, stat=istat, errmsg=errorMessage)
+  check_deallocate("tridiag: aux", istat, errorMessage)
+#endif
 
   call obj%timer%stop("tridiag_&
   &MATH_DATATYPE&
