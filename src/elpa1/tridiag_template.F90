@@ -813,6 +813,7 @@ subroutine tridiag_&
 
       ! store Householder Vector for back transformation
       call nvtxRangePush("cpu copy: v_row->a_mat")
+      ! update a_mat
       a_mat(1:l_rows,l_cols+1) = v_row(1:l_rows)
       call nvtxRangePop()
 
@@ -1494,137 +1495,137 @@ subroutine tridiag_&
       n_stored_vecs = 0
     endif ! (n_stored_vecs == max_stored_uv .or. istep == 3)
 
-       if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
-         if (useGPU) then
-           !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
-            offset_dev = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
+    if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
+      if (useGPU) then
+        !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
+        offset_dev = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-            my_stream = obj%gpu_setup%my_stream
-            num = 1 * size_of_datatype
-            call gpu_memcpy_async_and_stream_synchronize &
-                 ("a_dev -> a_mat", a_dev, offset_dev, &
-                                                      a_mat(1:matrixRows,1:matrixCols), &
-                                                      l_rows, l_cols, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., &
-                                              .false.)
+        my_stream = obj%gpu_setup%my_stream
+        num = 1 * size_of_datatype
+        call gpu_memcpy_async_and_stream_synchronize &
+              ("a_dev -> a_mat", a_dev, offset_dev, &
+                a_mat(1:matrixRows,1:matrixCols), &
+                l_rows, l_cols, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else
-            call nvtxRangePush("memcpy D-H a_dev->a_mat: 1")
-            successGPU = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + offset_dev, &
-                                    1 *  size_of_datatype, gpuMemcpyDeviceToHost) ! ??? needed only in GEMM loop step?
-            check_memcpy_gpu("tridiag: a_dev 3", successGPU)
-            call nvtxRangePop()
+        call nvtxRangePush("memcpy D-H a_dev->a_mat: 1")
+        successGPU = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + offset_dev, &
+                                1 *  size_of_datatype, gpuMemcpyDeviceToHost) ! ??? needed only in GEMM loop step?
+        check_memcpy_gpu("tridiag: a_dev 3", successGPU)
+        call nvtxRangePop()
 #endif
-         endif ! useGPU
+      endif ! useGPU
 
-         if (n_stored_vecs > 0) then
-           a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
-                       + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
-         end if
+      if (n_stored_vecs > 0) then
+        a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
+                    + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
+      end if
+
 #if REALCASE == 1
-         if (isSkewsymmetric) then
-           d_vec(istep-1) = 0.0_rk
-         else
-           d_vec(istep-1) = a_mat(l_rows,l_cols)
-         endif
+      if (isSkewsymmetric) then
+        d_vec(istep-1) = 0.0_rk
+      else
+        d_vec(istep-1) = a_mat(l_rows,l_cols)
+      endif
 #endif
 #if COMPLEXCASE == 1
-         d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
+      d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
 #endif
 
-         if (useGPU) then
-           !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
-           !successGPU = gpu_threadsynchronize()
-           !check_memcpy_gpu("tridiag: a_dev 4a5a", successGPU)
+      if (useGPU) then
+        !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
+        !successGPU = gpu_threadsynchronize()
+        !check_memcpy_gpu("tridiag: a_dev 4a5a", successGPU)
 #ifdef WITH_GPU_STREAMS
-           my_stream = obj%gpu_setup%my_stream
-           num = 1 * size_of_datatype
-           call gpu_memcpy_async_and_stream_synchronize &
-                 ("a_mat -> a_dev", a_dev, offset_dev, &
-                                                      a_mat(1:matrixRows,1:matrixCols), &
-                                                      l_rows, l_cols, num, gpuMemcpyHostToDevice, my_stream, .false., .false., &
-                                              .false.)
+        my_stream = obj%gpu_setup%my_stream
+        num = 1 * size_of_datatype
+        call gpu_memcpy_async_and_stream_synchronize &
+              ("a_mat -> a_dev", a_dev, offset_dev, &
+                a_mat(1:matrixRows,1:matrixCols), &
+                l_rows, l_cols, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else
-           call nvtxRangePush("memcpy H-D a_mat->a_dev: 1")
-           successGPU = gpu_memcpy(a_dev + offset_dev, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
-                                   int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice)
-           call nvtxRangePop()
+        call nvtxRangePush("memcpy H-D a_mat->a_dev: 1")
+        successGPU = gpu_memcpy(a_dev + offset_dev, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
+                                int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice)
+        call nvtxRangePop()
 #endif
-           check_memcpy_gpu("tridiag: a_dev 4", successGPU)
-         endif ! useGPU
-       endif ! (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols))
+        check_memcpy_gpu("tridiag: a_dev 4", successGPU)
+      endif ! useGPU
+    endif ! (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols))
 
 #ifdef WITH_NVTX
-       call nvtxRangePop() ! tridi main cycle
+    call nvtxRangePop() ! tridi main cycle
 #endif
 
-      enddo ! main cycle over istep=na,3,-1
+  enddo ! main cycle over istep=na,3,-1
 
 #if COMPLEXCASE == 1
-     ! Store e_vec(1) and d_vec(1)
+  ! Store e_vec(1) and d_vec(1)
 
-     if (my_pcol==pcol(2, nblk, np_cols)) then
-      if (my_prow==prow(1, nblk, np_rows)) then
-       ! We use last l_cols value of loop above
-       if (useGPU) then
+  if (my_pcol==pcol(2, nblk, np_cols)) then
+    if (my_prow==prow(1, nblk, np_rows)) then
+      ! We use last l_cols value of loop above
+      if (useGPU) then
 #ifdef WITH_GPU_STREAMS
-         my_stream = obj%gpu_setup%my_stream
-         num =  1 * size_of_datatype
-         call gpu_memcpy_async_and_stream_synchronize &
-               ("a_dev -> aux3", a_dev, (matrixRows * (l_cols - 1)) * size_of_datatype, &
-                                                    aux3(1:1), &
-                                                    1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+        my_stream = obj%gpu_setup%my_stream
+        num =  1 * size_of_datatype
+        call gpu_memcpy_async_and_stream_synchronize &
+              ("a_dev -> aux3", a_dev, (matrixRows * (l_cols - 1)) * size_of_datatype, &
+                                                  aux3(1:1), &
+                                                  1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else
-         successGPU = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
-                                 1 * size_of_datatype, gpuMemcpyDeviceToHost)
-         check_memcpy_gpu("tridiag: a_dev 5", successGPU)
+        successGPU = gpu_memcpy(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols - 1)) * size_of_datatype, &
+                                1 * size_of_datatype, gpuMemcpyDeviceToHost)
+        check_memcpy_gpu("tridiag: a_dev 5", successGPU)
 #endif
-         vrl = aux3(1)
-       else !useGPU
-         vrl = a_mat(1,l_cols)
-       endif !useGPU
-       call hh_transform_complex_&
-       &PRECISION &
-       (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
+        vrl = aux3(1)
+      else !useGPU
+        vrl = a_mat(1,l_cols)
+      endif !useGPU
+
+      call hh_transform_complex_&
+            &PRECISION &
+            (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
 #if REALCASE == 1
-       e_vec(1) = vrl
+      e_vec(1) = vrl
 #endif
 #if COMPLEXCASE == 1
-       e_vec(1) = real(vrl,kind=rk)
+      e_vec(1) = real(vrl,kind=rk)
 #endif
-       a_mat(1,l_cols) = 1. ! for consistency only
-     endif ! (my_prow==prow(1, nblk, np_rows))
+      a_mat(1,l_cols) = 1. ! for consistency only
+    endif ! (my_prow==prow(1, nblk, np_rows))
 
 #ifdef WITH_MPI
-     if (useNonBlockingCollectivesRows) then
-       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-       call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
-                   int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
-       call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
-       if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-     else
-       if (wantDebug) call obj%timer%start("mpi_communication")
-       call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
-                   int(mpi_comm_rows,kind=MPI_KIND),  mpierr)
-       if (wantDebug) call obj%timer%stop("mpi_communication")
-     endif
-
+    if (useNonBlockingCollectivesRows) then
+      if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+      call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
+                  int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
+      call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+    else
+      if (wantDebug) call obj%timer%start("mpi_communication")
+      call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
+                  int(mpi_comm_rows,kind=MPI_KIND),  mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_communication")
+    endif
 #endif /* WITH_MPI */
-   endif
+
+  endif ! (my_pcol==pcol(2, nblk, np_cols))
 
 #ifdef WITH_MPI
-   if (useNonBlockingCollectivesCols) then
-     if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-     call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
-                  int(mpi_comm_cols,kind=MPI_KIND), bcast_request3, mpierr)
-     call mpi_wait(bcast_request3, MPI_STATUS_IGNORE, mpierr)
-     if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-   else
-     if (wantDebug) call obj%timer%start("mpi_communication")
-     call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
-                  int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-     if (wantDebug) call obj%timer%stop("mpi_communication")
-   endif
-
+  if (useNonBlockingCollectivesCols) then
+    if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+    call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
+                int(mpi_comm_cols,kind=MPI_KIND), bcast_request3, mpierr)
+    call mpi_wait(bcast_request3, MPI_STATUS_IGNORE, mpierr)
+    if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+  else
+    if (wantDebug) call obj%timer%start("mpi_communication")
+    call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
+                int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+    if (wantDebug) call obj%timer%stop("mpi_communication")
+  endif
 #endif /* WITH_MPI */
+
   if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
     if (useGPU) then
 #ifdef WITH_GPU_STREAMS
