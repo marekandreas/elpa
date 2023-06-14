@@ -52,8 +52,8 @@ module elpa1_cuda
   public
 
   interface
-    subroutine cuda_update_matrix_element_double_c(a_dev, index, value, my_stream) &
-             bind(C, name="cuda_update_matrix_element_double_FromC")
+    subroutine cuda_update_matrix_element_add_double_c(a_dev, index, value, my_stream) &
+             bind(C, name="cuda_update_matrix_element_add_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       !integer(kind=C_intptr_T), value  :: a_dev, tmat2_dev
@@ -71,7 +71,7 @@ module elpa1_cuda
 
   contains
 
-    subroutine cuda_update_matrix_element_double(a_dev, index, value, my_stream)
+    subroutine cuda_update_matrix_element_add_double(a_dev, index, value, my_stream)
       use, intrinsic :: iso_c_binding
 !      use precision
       implicit none
@@ -84,7 +84,7 @@ module elpa1_cuda
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_update_matrix_element_double_c(a_dev, index, value, my_stream)
+      call cuda_update_matrix_element_add_double_c(a_dev, index, value, my_stream)
 #endif
 
     end subroutine

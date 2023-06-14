@@ -60,7 +60,7 @@ module elpa1_gpu
   public
   contains
 
-  subroutine gpu_update_matrix_element_double(a_dev, index, value, my_stream) !< Update one matrix element of a device matrix
+  subroutine gpu_update_matrix_element_add_double(a_dev, index, value, my_stream) !< Update one matrix element of a device matrix: a_dev[index] = a_dev[index] + value
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
@@ -73,13 +73,13 @@ module elpa1_gpu
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_matrix_element_double(a_dev, index, value, my_stream)
+    call cuda_update_matrix_element_add_double(a_dev, index, value, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_update_matrix_element_double(a_dev, index, value, my_stream)
+    call hip_update_matrix_element_add_double(a_dev, index, value, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_matrix_element_double(a_dev, index, value, my_stream)
+    call sycl_update_matrix_element_add_double(a_dev, index, value, my_stream)
 #endif
 
   end subroutine

@@ -115,13 +115,13 @@ extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev
 */
 //________________________________________________________________
 
-__global__ void cuda_update_matrix_element_double_kernel(double *a_dev, const int index, double value){
+__global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, const int index, double value){
 
-  a_dev[index] = value;
+  a_dev[index] += value;
 
 }
 
-extern "C" void cuda_update_matrix_element_double_FromC(double *a_dev, int *index_in, double *value_in, cudaStream_t  my_stream){
+extern "C" void cuda_update_matrix_element_add_double_FromC(double *a_dev, int *index_in, double *value_in, cudaStream_t  my_stream){
   int index = *index_in;   
   double value = *value_in;
 
@@ -129,13 +129,13 @@ extern "C" void cuda_update_matrix_element_double_FromC(double *a_dev, int *inde
   dim3 threadsPerBlock = dim3(1,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_update_matrix_element_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, index, value);
+  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, index, value);
 #else
-  cuda_update_matrix_element_double_kernel<<<blocks,threadsPerBlock>>>(a_dev, index, value);
+  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock>>>(a_dev, index, value);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_update_matrix_element_double_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_update_matrix_element_add_double_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 

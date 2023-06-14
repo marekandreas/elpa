@@ -1497,7 +1497,7 @@ subroutine tridiag_&
     endif ! (n_stored_vecs == max_stored_uv .or. istep == 3)
 
     if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
-      if (useGPU .and. .false.) then
+      if (useGPU) then
         ! update a_mat (only one elememt, only in GPU case!) 
         !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
         offset_dev = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
@@ -1525,10 +1525,12 @@ subroutine tridiag_&
         if (useGPU) then
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
           my_stream = obj%gpu_setup%my_stream
-          call gpu_update_matrix_element_double(a_dev, (l_rows-0) + matrixRows*(l_cols-0), dot_prod, my_stream) ! double -> PRECISION
+          call nvtxRangePush("kernel: a_dev(l_rows,l_cols) += dot_prod")
+          call gpu_update_matrix_element_add_double(a_dev, (l_rows-1) + matrixRows*(l_cols-1), dot_prod, my_stream) ! double -> PRECISION
+          call nvtxRangePop()
 #endif
         endif
-      end if
+      endif
 
 #if REALCASE == 1
       if (isSkewsymmetric) then
