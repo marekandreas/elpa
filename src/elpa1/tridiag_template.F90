@@ -110,6 +110,7 @@ subroutine tridiag_&
   use elpa_blas_interfaces
   use elpa_gpu
   use elpa_gpu_util
+  use elpa1_gpu
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions
 #endif
@@ -162,7 +163,7 @@ subroutine tridiag_&
 #endif
 
   real(kind=rk)                                 :: vnorm2
-  MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), vrl, xf, conjg_tau
+  MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), vrl, xf, conjg_tau, dot_prod
   MATH_DATATYPE(kind=rck), allocatable          :: aux(:) ! 2*max_stored_uv ??? why differet logic for real and complex?
   character(len=32)                             :: max_stored_uv_string
   character(len=100)                            :: nvtx_name
@@ -1496,7 +1497,8 @@ subroutine tridiag_&
     endif ! (n_stored_vecs == max_stored_uv .or. istep == 3)
 
     if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
-      if (useGPU) then
+      if (useGPU .and. .false.) then
+        ! update a_mat (only one elememt, only in GPU case!) 
         !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
         offset_dev = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -1515,9 +1517,17 @@ subroutine tridiag_&
 #endif
       endif ! useGPU
 
+      ! update a_mat (only one elememt!)
       if (n_stored_vecs > 0) then
-        a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) &
-                    + dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
+        dot_prod = dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
+        a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) + dot_prod
+
+        if (useGPU) then
+#if REALCASE == 1 && DOUBLE_PRECISION == 1
+          my_stream = obj%gpu_setup%my_stream
+          call gpu_update_matrix_element_double(a_dev, (l_rows-0) + matrixRows*(l_cols-0), dot_prod, my_stream) ! double -> PRECISION
+#endif
+        endif
       end if
 
 #if REALCASE == 1
@@ -1531,7 +1541,7 @@ subroutine tridiag_&
       d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
 #endif
 
-      if (useGPU) then
+      if (useGPU .and. .false.) then
         !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
         !successGPU = gpu_threadsynchronize()
         !check_memcpy_gpu("tridiag: a_dev 4a5a", successGPU)
@@ -1544,6 +1554,7 @@ subroutine tridiag_&
                 l_rows, l_cols, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else
         call nvtxRangePush("memcpy H-D a_mat->a_dev: 1")
+        ! update a_dev (only one elememt!)
         successGPU = gpu_memcpy(a_dev + offset_dev, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
                                 int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice)
         call nvtxRangePop()

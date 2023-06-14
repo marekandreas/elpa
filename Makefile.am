@@ -52,6 +52,8 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/helpers/aligned_mem.F90 \
   src/elpa1/elpa1_compute_private.F90 \
   src/elpa1/elpa1_auxiliary.F90 \
+  src/elpa1/GPU/mod_elpa1_gpu.F90 \
+  src/elpa1/GPU/CUDA/mod_elpa1_cuda.F90 \
   src/elpa2/elpa2_determine_workload.F90 \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
@@ -191,7 +193,16 @@ libelpa@SUFFIX@_private_la_SOURCES += \
 endif
 
 if WITH_NVIDIA_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/elpa_index_nvidia_gpu.cu src/GPU/CUDA/elpa_explicit_name_nvidia_gpu.cu src/GPU/CUDA/cudaFunctions.cu src/GPU/CUDA/cuUtils.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu
+  libelpa@SUFFIX@_private_la_SOURCES += \
+  src/GPU/CUDA/elpa_index_nvidia_gpu.cu \
+  src/GPU/CUDA/elpa_explicit_name_nvidia_gpu.cu \
+  src/GPU/CUDA/cudaFunctions.cu \
+  src/GPU/CUDA/cuUtils.cu \
+  src/elpa1/GPU/CUDA/elpa1_cuda.cu \
+  src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu \
+  src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu \
+  src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu \
+  src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu
 
 
 if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY

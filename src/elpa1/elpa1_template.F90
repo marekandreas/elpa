@@ -536,7 +536,7 @@ print *,"Device pointer + REDIST"
      &MATH_DATATYPE&
      &_1stage_&
      &PRECISION&
-     &")
+     &") !"
      success = .true.
      return
    endif
