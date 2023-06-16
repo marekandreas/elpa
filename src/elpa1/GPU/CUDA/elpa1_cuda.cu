@@ -115,23 +115,40 @@ extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev
 */
 //________________________________________________________________
 
-__global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, const int index, double value){
+__global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, int index, double value, double *d_vec_dev, int istep, int n_stored_vecs, int isSkewsymmetric){
+  if (n_stored_vecs > 0){
+    a_dev[index] += value;
+    }
 
-  a_dev[index] += value;
-
+    if (isSkewsymmetric) {
+      d_vec_dev[istep-1] = 0.0;
+    }
+    else {
+      d_vec_dev[istep-1] = a_dev[index]; // (l_rows,l_cols)
+    }
+/*
+#endif
+#if COMPLEXCASE == 1
+      d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
+#endif
+*/
 }
 
-extern "C" void cuda_update_matrix_element_add_double_FromC(double *a_dev, int *index_in, double *value_in, cudaStream_t  my_stream){
+extern "C" void cuda_update_matrix_element_add_double_FromC(double *a_dev, int *index_in, double *value_in, 
+                          double *d_vec_dev, int *istep_in, int *n_stored_vecs_in, int* isSkewsymmetric_in, cudaStream_t  my_stream){
   int index = *index_in;   
+  int istep = *istep_in;   
+  int n_stored_vecs = *n_stored_vecs_in; 
+  int isSkewsymmetric = *isSkewsymmetric_in;   
   double value = *value_in;
 
   dim3 blocks = dim3(1,1,1);
   dim3 threadsPerBlock = dim3(1,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, index, value);
+  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetric);
 #else
-  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock>>>(a_dev, index, value);
+  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock>>>(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetric);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -140,3 +157,27 @@ extern "C" void cuda_update_matrix_element_add_double_FromC(double *a_dev, int *
 }
 
 //________________________________________________________________
+
+__global__ void cuda_update_array_element_double_kernel(double *array_dev, const int index, double value){
+
+  array_dev[index] = value;
+
+}
+
+extern "C" void cuda_update_array_element_double_FromC(double *array_dev, int *index_in, double *value_in, cudaStream_t  my_stream){
+  int index = *index_in;   
+  double value = *value_in;
+
+  dim3 blocks = dim3(1,1,1);
+  dim3 threadsPerBlock = dim3(1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_update_array_element_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(array_dev, index, value);
+#else
+  cuda_update_array_element_double_kernel<<<blocks,threadsPerBlock>>>(array_dev, index, value);
+#endif
+  cudaError_t cuerr = cudaGetLastError();
+  if (cuerr != cudaSuccess){
+    printf("Error in executing cuda_update_array_element_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  }
+}

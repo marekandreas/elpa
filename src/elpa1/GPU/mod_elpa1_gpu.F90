@@ -60,26 +60,49 @@ module elpa1_gpu
   public
   contains
 
-  subroutine gpu_update_matrix_element_add_double(a_dev, index, value, my_stream) !< Update one matrix element of a device matrix: a_dev[index] = a_dev[index] + value
+  subroutine gpu_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+    use, intrinsic :: iso_c_binding
+    use precision
+    implicit none
+#include "../../general/precision_kinds.F90"
+
+    integer(kind=C_INT), intent(in)     :: index, istep, n_stored_vecs
+    ! MATH_DATATYPE(kind=rck), intent(in) :: value
+    real(kind=c_double), intent(in)     :: value
+    integer(kind=C_intptr_T)            :: a_dev, d_vec_dev
+    integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+    call cuda_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    call hip_update_matrix_element_add_double (a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+    call sycl_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+#endif
+
+  end subroutine
+
+  subroutine gpu_update_array_element_double(array_dev, index, value, my_stream) !< Update one element of device array: array_dev[index] = value
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 #include "../../general/precision_kinds.F90"
 
     integer(kind=C_INT), intent(in)     :: index
-    ! MATH_DATATYPE(kind=rck), intent(in) :: value
     real(kind=c_double), intent(in)     :: value
-    integer(kind=C_intptr_T)            :: a_dev
+    integer(kind=C_intptr_T)            :: array_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_matrix_element_add_double(a_dev, index, value, my_stream)
+    call cuda_update_array_element_double(array_dev, index, value, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_update_matrix_element_add_double(a_dev, index, value, my_stream)
+    call hip_update_array_element_double(array_dev, index, value, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_matrix_element_add_double(a_dev, index, value, my_stream)
+    call sycl_update_array_element_double(array_dev, index, value, my_stream)
 #endif
 
   end subroutine

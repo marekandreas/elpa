@@ -52,26 +52,55 @@ module elpa1_cuda
   public
 
   interface
-    subroutine cuda_update_matrix_element_add_double_c(a_dev, index, value, my_stream) &
+    subroutine cuda_update_matrix_element_add_double_c(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream) &
              bind(C, name="cuda_update_matrix_element_add_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      !integer(kind=C_intptr_T), value  :: a_dev, tmat2_dev
-      !integer(kind=c_int), intent(in)  :: nblk, matrixRows, l_cols, l_colx, l_row1, nb
-      !integer(kind=c_intptr_t), value  :: my_stream
 
-      integer(kind=C_INT), intent(in)     :: index
+      integer(kind=C_INT), intent(in)     :: index, istep, n_stored_vecs
       ! MATH_DATATYPE(kind=rck), intent(in) :: value
-      real(kind=c_double), intent(in)           :: value
-      integer(kind=C_intptr_T), value     :: a_dev
-      integer(kind=c_intptr_t), value            :: my_stream
+      real(kind=c_double), intent(in)     :: value
+      integer(kind=C_intptr_T), value     :: a_dev, d_vec_dev
+      integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
   end interface
 
+  interface
+  subroutine cuda_update_array_element_double_c(array_dev, index, value, my_stream) &
+           bind(C, name="cuda_update_array_element_double_FromC")
+    use, intrinsic :: iso_c_binding
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: index
+    real(kind=c_double), intent(in)     :: value
+    integer(kind=C_intptr_T), value     :: array_dev
+    integer(kind=c_intptr_t), value     :: my_stream
+
+  end subroutine 
+end interface
+
   contains
 
-    subroutine cuda_update_matrix_element_add_double(a_dev, index, value, my_stream)
+    subroutine cuda_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+      use, intrinsic :: iso_c_binding
+!      use precision
+      implicit none
+!#include "../../../general/precision_kinds.F90"
+
+      integer(kind=C_INT), intent(in)     :: index, istep, n_stored_vecs
+      ! MATH_DATATYPE(kind=rck), intent(in) :: value
+      real(kind=c_double), intent(in)           :: value
+      integer(kind=C_intptr_T)            :: a_dev, d_vec_dev
+      integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_update_matrix_element_add_double_c(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+#endif
+
+    end subroutine
+
+    subroutine cuda_update_array_element_double(array_dev, index, value, my_stream)
       use, intrinsic :: iso_c_binding
 !      use precision
       implicit none
@@ -79,12 +108,12 @@ module elpa1_cuda
 
       integer(kind=C_INT), intent(in)     :: index
       ! MATH_DATATYPE(kind=rck), intent(in) :: value
-      real(kind=c_double), intent(in)           :: value
-      integer(kind=C_intptr_T)            :: a_dev
+      real(kind=c_double), intent(in)     :: value
+      integer(kind=C_intptr_T)            :: array_dev
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_update_matrix_element_add_double_c(a_dev, index, value, my_stream)
+      call cuda_update_array_element_double_c(array_dev, index, value, my_stream)
 #endif
 
     end subroutine

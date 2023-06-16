@@ -149,7 +149,7 @@ subroutine tridiag_&
   integer(kind=ik)                              :: n_stored_vecs
 
   integer(kind=C_intptr_T)                      :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
-                                                   uv_stored_cols_dev
+                                                   uv_stored_cols_dev, d_vec_dev
   logical                                       :: successGPU
 
   integer(kind=ik)                              :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
@@ -530,6 +530,9 @@ subroutine tridiag_&
     check_alloc_gpu("tridiag: uv_stored_cols_dev", successGPU)
 
 #ifndef GPU_OLD
+    successGPU = gpu_malloc(d_vec_dev, na * size_of_datatype)
+    check_alloc_gpu("tridiag: d_vec_dev", successGPU)
+
     successGPU = gpu_malloc(aux_dev, 2*max_stored_uv * size_of_datatype)
     check_alloc_gpu("tridiag: aux_dev", successGPU)
 #endif
@@ -556,16 +559,23 @@ subroutine tridiag_&
   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a_mat
 
   if (my_prow == prow(na, nblk, np_rows) .and. my_pcol == pcol(na, nblk, np_cols)) then
+    if (useGPU) then
+#if !defined(GPU_OLD) && REALCASE == 1 && DOUBLE_PRECISION == 1
+      my_stream = obj%gpu_setup%my_stream
+      call gpu_update_array_element_double(d_vec_dev, na, real(a_mat(l_rows,l_cols), kind=rk), my_stream)
+#endif
+    else
 #if COMPLEXCASE == 1
-    d_vec(na) = real(a_mat(l_rows,l_cols), kind=rk)
+      d_vec(na) = real(a_mat(l_rows,l_cols), kind=rk)
 #endif
 #if REALCASE == 1
-    d_vec(na) = a_mat(l_rows,l_cols)
+      d_vec(na) = a_mat(l_rows,l_cols)
 #endif
+    endif !useGPU
   endif
 
   if (useGPU) then
-    ! allocate memmory for matrix A on the device and than copy the matrix
+    ! allocate memory for matrix A on the device and than copy the matrix
 
     num = matrixRows * matrixCols * size_of_datatype
 
@@ -1497,7 +1507,7 @@ subroutine tridiag_&
     endif ! (n_stored_vecs == max_stored_uv .or. istep == 3)
 
     if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
-      if (useGPU) then
+      if (useGPU .and. .false.) then
         ! update a_mat (only one elememt, only in GPU case!) 
         !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
         offset_dev = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
@@ -1521,15 +1531,6 @@ subroutine tridiag_&
       if (n_stored_vecs > 0) then
         dot_prod = dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
         a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) + dot_prod
-
-        if (useGPU) then
-#if REALCASE == 1 && DOUBLE_PRECISION == 1
-          my_stream = obj%gpu_setup%my_stream
-          call nvtxRangePush("kernel: a_dev(l_rows,l_cols) += dot_prod")
-          call gpu_update_matrix_element_add_double(a_dev, (l_rows-1) + matrixRows*(l_cols-1), dot_prod, my_stream) ! double -> PRECISION
-          call nvtxRangePop()
-#endif
-        endif
       endif
 
 #if REALCASE == 1
@@ -1542,6 +1543,16 @@ subroutine tridiag_&
 #if COMPLEXCASE == 1
       d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
 #endif
+
+      if (useGPU) then
+#if !defined(GPU_OLD) && REALCASE == 1 && DOUBLE_PRECISION == 1
+          my_stream = obj%gpu_setup%my_stream
+          call nvtxRangePush("kernel: gpu_update_matrix_element_add")
+          call gpu_update_matrix_element_add_double(a_dev, (l_rows-1) + matrixRows*(l_cols-1), dot_prod, &
+                                                    d_vec_dev, istep, n_stored_vecs, my_stream) ! double -> PRECISION
+          call nvtxRangePop()
+#endif
+      endif ! useGPU
 
       if (useGPU .and. .false.) then
         !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
@@ -1598,12 +1609,7 @@ subroutine tridiag_&
       call hh_transform_complex_&
             &PRECISION &
             (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
-#if REALCASE == 1
-      e_vec(1) = vrl
-#endif
-#if COMPLEXCASE == 1
       e_vec(1) = real(vrl,kind=rk)
-#endif
       a_mat(1,l_cols) = 1. ! for consistency only
     endif ! (my_prow==prow(1, nblk, np_rows))
 
@@ -1708,8 +1714,12 @@ subroutine tridiag_&
   endif ! (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols))
 #endif /* REALCASE */
 
-
   if (useGPU) then
+    offset_dev = 1 * size_of_datatype
+    successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), &
+                            d_vec_dev + offset_dev, (na-1) * size_of_datatype, gpuMemcpyDeviceToHost)
+    check_memcpy_gpu("tridiag: d_vec", successGPU)
+
     ! todo: should we leave a_mat on the device for further use?
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("tridiag: a_dev 9", successGPU)
@@ -1733,8 +1743,11 @@ subroutine tridiag_&
     check_dealloc_gpu("tridiag:uv_stored_cols_dev ", successGPU)
 
 #ifndef GPU_OLD
-    successgpu = gpu_free(aux_dev)
-    check_dealloc_gpu("tridiag: aux_dev", successgpu)
+    successGPU = gpu_free(d_vec_dev)
+    check_dealloc_gpu("tridiag: d_vec_dev", successGPU)
+
+    successGPU = gpu_free(aux_dev)
+    check_dealloc_gpu("tridiag: aux_dev", successGPU)
 #endif
   endif ! useGPU
 
