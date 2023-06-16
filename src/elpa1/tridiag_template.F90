@@ -208,6 +208,9 @@ subroutine tridiag_&
                                                                       &PRECISION&
                                                                       &_&
                                                                       &MATH_DATATYPE
+  integer(kind=c_intptr_t), parameter           :: size_of_datatype_real = size_of_&
+                                                                      &PRECISION&
+                                                                      &_real
   integer(kind=MPI_KIND)                        :: bcast_request1, bcast_request2, bcast_request3
   integer(kind=MPI_KIND)                        :: allreduce_request1, allreduce_request2, allreduce_request3
   integer(kind=MPI_KIND)                        :: allreduce_request4, allreduce_request5, allreduce_request6, &
@@ -530,7 +533,7 @@ subroutine tridiag_&
     check_alloc_gpu("tridiag: uv_stored_cols_dev", successGPU)
 
 #ifndef GPU_OLD
-    successGPU = gpu_malloc(d_vec_dev, na * size_of_datatype)
+    successGPU = gpu_malloc(d_vec_dev, na * size_of_datatype_real)
     check_alloc_gpu("tridiag: d_vec_dev", successGPU)
 
     successGPU = gpu_malloc(aux_dev, 2*max_stored_uv * size_of_datatype)
@@ -1651,7 +1654,7 @@ subroutine tridiag_&
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_memcpy_async(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, &
-                   gpuMemcpyDeviceToHost, my_stream)
+                   gpuMemcpyDeviceToHost, my_stream) !!! PETER: memory leak for complex case! size_of_datatype->size_of_datatype_real
       check_memcpy_gpu("tridiag: a_dev 8", successGPU)
 
       my_stream = obj%gpu_setup%my_stream
@@ -1659,7 +1662,7 @@ subroutine tridiag_&
       check_stream_synchronize_gpu("tridiag: a_dev 8", successGPU)
 #else /* WITH_GPU_STREAMS */
       successGPU = gpu_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, gpuMemcpyDeviceToHost)
-      check_memcpy_gpu("tridiag: a_dev 8", successGPU)
+      check_memcpy_gpu("tridiag: a_dev 8", successGPU) !!! PETER: memory leak for complex case! size_of_datatype->size_of_datatype_real
 #endif /* WITH_GPU_STREAMS */
     else !useGPU
       if (isSkewsymmetric) then
@@ -1676,7 +1679,7 @@ subroutine tridiag_&
     offset_dev = 1 * size_of_datatype
     ! first and last elements of d_vec are treated separately
     successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), &
-                            d_vec_dev + offset_dev, (na-2) * size_of_datatype, gpuMemcpyDeviceToHost)
+                            d_vec_dev + offset_dev, (na-2) * size_of_datatype_real, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("tridiag: d_vec", successGPU)
 #endif
 
