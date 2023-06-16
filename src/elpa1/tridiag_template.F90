@@ -559,19 +559,12 @@ subroutine tridiag_&
   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a_mat
 
   if (my_prow == prow(na, nblk, np_rows) .and. my_pcol == pcol(na, nblk, np_cols)) then
-    if (useGPU) then
-#if !defined(GPU_OLD) && REALCASE == 1 && DOUBLE_PRECISION == 1
-      my_stream = obj%gpu_setup%my_stream
-      call gpu_update_array_element_double(d_vec_dev, na, real(a_mat(l_rows,l_cols), kind=rk), my_stream)
-#endif
-    else
 #if COMPLEXCASE == 1
       d_vec(na) = real(a_mat(l_rows,l_cols), kind=rk)
 #endif
 #if REALCASE == 1
       d_vec(na) = a_mat(l_rows,l_cols)
 #endif
-    endif !useGPU
   endif
 
   if (useGPU) then
@@ -1507,73 +1500,37 @@ subroutine tridiag_&
     endif ! (n_stored_vecs == max_stored_uv .or. istep == 3)
 
     if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
-      if (useGPU .and. .false.) then
-        ! update a_mat (only one elememt, only in GPU case!) 
-        !a_mat(l_rows,l_cols) = a_dev(l_rows,l_cols)
-        offset_dev = ((l_rows - 1) + matrixRows * (l_cols - 1)) * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        num = 1 * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-              ("a_dev -> a_mat", a_dev, offset_dev, &
-                a_mat(1:matrixRows,1:matrixCols), &
-                l_rows, l_cols, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
-#else
-        call nvtxRangePush("memcpy D-H a_dev->a_mat: 1")
-        successGPU = gpu_memcpy(int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), a_dev + offset_dev, &
-                                1 *  size_of_datatype, gpuMemcpyDeviceToHost) ! ??? needed only in GEMM loop step?
-        check_memcpy_gpu("tridiag: a_dev 3", successGPU)
-        call nvtxRangePop()
-#endif
-      endif ! useGPU
 
-      ! update a_mat (only one elememt!)
+      dot_prod = 0.0_rk
       if (n_stored_vecs > 0) then
         dot_prod = dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
-        a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) + dot_prod
       endif
-
-#if REALCASE == 1
-      if (isSkewsymmetric) then
-        d_vec(istep-1) = 0.0_rk
-      else
-        d_vec(istep-1) = a_mat(l_rows,l_cols)
-      endif
-#endif
-#if COMPLEXCASE == 1
-      d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
-#endif
 
       if (useGPU) then
 #if !defined(GPU_OLD) && REALCASE == 1 && DOUBLE_PRECISION == 1
-          my_stream = obj%gpu_setup%my_stream
-          call nvtxRangePush("kernel: gpu_update_matrix_element_add")
-          call gpu_update_matrix_element_add_double(a_dev, (l_rows-1) + matrixRows*(l_cols-1), dot_prod, &
-                                                    d_vec_dev, istep, n_stored_vecs, isSkewsymmetric, my_stream) ! double -> PRECISION
-          call nvtxRangePop()
+        my_stream = obj%gpu_setup%my_stream
+        call nvtxRangePush("kernel: gpu_update_matrix_element_add")
+        call gpu_update_matrix_element_add_double(a_dev, (l_rows-1) + matrixRows*(l_cols-1), dot_prod, &
+                                                  d_vec_dev, istep, n_stored_vecs, isSkewsymmetric, my_stream) ! double -> PRECISION
+        call nvtxRangePop()
+#endif
+      else ! useGPU
+        if (n_stored_vecs > 0) then
+          ! update a_mat (only one elememt!)
+          a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) + dot_prod
+        endif
+#if REALCASE == 1
+        if (isSkewsymmetric) then
+          d_vec(istep-1) = 0.0_rk
+        else
+          d_vec(istep-1) = a_mat(l_rows,l_cols)
+        endif
+#endif
+#if COMPLEXCASE == 1
+        d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
 #endif
       endif ! useGPU
 
-      if (useGPU .and. .false.) then
-        !a_dev(l_rows,l_cols) = a_mat(l_rows,l_cols)
-        !successGPU = gpu_threadsynchronize()
-        !check_memcpy_gpu("tridiag: a_dev 4a5a", successGPU)
-#ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        num = 1 * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-              ("a_mat -> a_dev", a_dev, offset_dev, &
-                a_mat(1:matrixRows,1:matrixCols), &
-                l_rows, l_cols, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else
-        call nvtxRangePush("memcpy H-D a_mat->a_dev: 1")
-        ! update a_dev (only one elememt!)
-        successGPU = gpu_memcpy(a_dev + offset_dev, int(loc(a_mat(l_rows, l_cols)),kind=c_intptr_t), &
-                                int(1 * size_of_datatype, kind=c_intptr_t), gpuMemcpyHostToDevice)
-        call nvtxRangePop()
-#endif
-        check_memcpy_gpu("tridiag: a_dev 4", successGPU)
-      endif ! useGPU
     endif ! (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols))
 
 #ifdef WITH_NVTX
@@ -1715,10 +1672,13 @@ subroutine tridiag_&
 #endif /* REALCASE */
 
   if (useGPU) then
+#ifndef GPU_OLD
     offset_dev = 1 * size_of_datatype
-    !successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), &
-    !                        d_vec_dev + offset_dev, (na-2) * size_of_datatype, gpuMemcpyDeviceToHost)
+    ! first and last elements of d_vec are treated separately
+    successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), &
+                            d_vec_dev + offset_dev, (na-2) * size_of_datatype, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("tridiag: d_vec", successGPU)
+#endif
 
     ! todo: should we leave a_mat on the device for further use?
     successGPU = gpu_free(a_dev)
@@ -1775,7 +1735,7 @@ subroutine tridiag_&
                        int(mpi_comm_rows,kind=MPI_KIND), mpierr)
     tmp_real = e_vec
     call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+                       int(mpi_comm_rows,kind=MPI_KIND), mpierr) !!! PETER: change to MPI_IN_PLACE
     if (wantDebug) call obj%timer%stop("mpi_communication")
   endif
   if (useNonBlockingCollectivesCols) then

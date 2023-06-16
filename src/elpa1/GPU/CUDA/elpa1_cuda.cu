@@ -121,10 +121,10 @@ __global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, int 
     }
 
     if (isSkewsymmetric) {
-      d_vec_dev[istep-1] = 0.0;
+      d_vec_dev[istep-1-1] = 0.0;
     }
     else {
-      d_vec_dev[istep-1] = a_dev[index]; // (l_rows,l_cols)
+      d_vec_dev[istep-1-1] = a_dev[index]; // (l_rows,l_cols)
     }
 /*
 #endif
@@ -160,7 +160,7 @@ extern "C" void cuda_update_matrix_element_add_double_FromC(double *a_dev, int *
 
 __global__ void cuda_update_array_element_double_kernel(double *array_dev, const int index, double value){
 
-  array_dev[index] = value;
+  array_dev[index-1] = value;
 
 }
 
