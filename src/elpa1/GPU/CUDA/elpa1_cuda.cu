@@ -115,7 +115,7 @@ extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev
 */
 //________________________________________________________________
 
-__global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, int index, double value, double *d_vec_dev, int istep, int n_stored_vecs, int isSkewsymmetric){
+__global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, int index, double value, double *d_vec_dev, int istep, int n_stored_vecs, int const isSkewsymmetric){
   if (n_stored_vecs > 0){
     a_dev[index] += value;
     }

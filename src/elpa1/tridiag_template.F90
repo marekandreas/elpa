@@ -1549,7 +1549,7 @@ subroutine tridiag_&
           my_stream = obj%gpu_setup%my_stream
           call nvtxRangePush("kernel: gpu_update_matrix_element_add")
           call gpu_update_matrix_element_add_double(a_dev, (l_rows-1) + matrixRows*(l_cols-1), dot_prod, &
-                                                    d_vec_dev, istep, n_stored_vecs, my_stream) ! double -> PRECISION
+                                                    d_vec_dev, istep, n_stored_vecs, isSkewsymmetric, my_stream) ! double -> PRECISION
           call nvtxRangePop()
 #endif
       endif ! useGPU
@@ -1716,8 +1716,8 @@ subroutine tridiag_&
 
   if (useGPU) then
     offset_dev = 1 * size_of_datatype
-    successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), &
-                            d_vec_dev + offset_dev, (na-1) * size_of_datatype, gpuMemcpyDeviceToHost)
+    !successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), &
+    !                        d_vec_dev + offset_dev, (na-2) * size_of_datatype, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("tridiag: d_vec", successGPU)
 
     ! todo: should we leave a_mat on the device for further use?

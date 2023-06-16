@@ -60,26 +60,30 @@ module elpa1_gpu
   public
   contains
 
-  subroutine gpu_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+  subroutine gpu_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetric, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 #include "../../general/precision_kinds.F90"
 
     integer(kind=C_INT), intent(in)     :: index, istep, n_stored_vecs
+    logical, intent(in)                 :: isSkewsymmetric
     ! MATH_DATATYPE(kind=rck), intent(in) :: value
     real(kind=c_double), intent(in)     :: value
     integer(kind=C_intptr_T)            :: a_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
+    integer(kind=C_INT)                 :: isSkewsymmetricInt=0
+
+    if (isSkewsymmetric) isSkewsymmetricInt = 1
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+    call cuda_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_update_matrix_element_add_double (a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+    call hip_update_matrix_element_add_double (a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, my_stream)
+    call sycl_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream)
 #endif
 
   end subroutine
