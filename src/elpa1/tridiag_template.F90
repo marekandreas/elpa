@@ -1133,7 +1133,6 @@ subroutine tridiag_&
                                                   1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else
 
-        ! this is a troublesome gpu_memcpy? No it's actually gemv above
         call nvtxRangePush("memcpy D-H u_col_dev->u_col")  
         successGPU = gpu_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
                     u_col_dev, l_cols * size_of_datatype, gpuMemcpyDeviceToHost)
@@ -1199,14 +1198,6 @@ subroutine tridiag_&
           successGPU = gpu_memcpy(v_row_dev, int(loc(v_row),kind=c_intptr_t), (l_rows)* &
               size_of_datatype, gpuMemcpyHostToDevice)
           check_memcpy_gpu("tridiag: v_row->v_row_dev", successGPU)
-          call nvtxRangePop()
-
-          write (nvtx_name, "(A,I0)") "memcpy new H-D u_col->u_col_dev ", l_cols
-          call nvtxRangePush(nvtx_name)
-          !u_col->u_col_dev
-          successGPU = gpu_memcpy(u_col_dev, int(loc(u_col),kind=c_intptr_t), (l_cols)* &
-              size_of_datatype, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("tridiag: u_col->u_col_dev", successGPU)
           call nvtxRangePop()
 
           write (nvtx_name, "(A,I0,A,I0)") "gpublas gemv_x2 skinny", l_rows, "x", 2*n_stored_vecs
