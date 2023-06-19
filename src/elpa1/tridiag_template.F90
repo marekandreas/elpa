@@ -458,20 +458,12 @@ subroutine tridiag_&
                   gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: aux", successGPU)
 
-#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
-      num = na * 8
-#else
-      num = na * 4
-#endif
+      num = na * size_of_datatype_real
       successGPU = gpu_host_register(int(loc(e_vec),kind=c_intptr_t),num,&
                       gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: e_vec", successGPU)
 
-#if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
-      num = na * 8
-#else
-      num = na * 4
-#endif
+      num = na * size_of_datatype_real
       successGPU = gpu_host_register(int(loc(d_vec),kind=c_intptr_t),num,&
                       gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: d_vec", successGPU)
@@ -706,7 +698,7 @@ subroutine tridiag_&
           write (nvtx_name, "(A,I0,A,I0)") "gpublas gemv skinny ", l_rows, "x", 2*n_stored_vecs
           call nvtxRangePush(nvtx_name)
 
-          ! v_row = vu_stored_rows * uv_stored_cols(l_cols+1,1:2*n_stored_vecs) + v_row
+          ! v_row_dev = vu_stored_rows_dev * uv_stored_cols_dev(l_cols+1,1:2*n_stored_vecs) + v_row_dev
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_GEMV('N', l_rows, 2*n_stored_vecs,  &
                                     ONE, vu_stored_rows_dev, max_local_rows,  &
@@ -1398,7 +1390,7 @@ subroutine tridiag_&
     ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
     if (n_stored_vecs == max_stored_uv .or. istep == 3) then
 
-!#ifdef GPU_OLD ??? can this part be optimized out and omitted, since now we are copying u and v vectors separately to vu and uv on GPU anyway
+#ifdef GPU_OLD /* this part can be optimized out and omitted, since now we are copying u and v vectors separately to vu and uv on GPU anyway */
       if (useGPU) then
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -1429,7 +1421,7 @@ subroutine tridiag_&
         check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
 
       endif ! useGPU
-!#endif /* ifdef GPU_OLD */           
+#endif /* ifdef GPU_OLD */           
       
       if (.not. useGPU .OR. .not. mat_vec_as_one_block) then
         do i = 0, (istep-2)/tile_size
@@ -1654,7 +1646,7 @@ subroutine tridiag_&
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_memcpy_async(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, &
-                   gpuMemcpyDeviceToHost, my_stream) !!! PETER: memory leak for complex case! size_of_datatype->size_of_datatype_real
+                   gpuMemcpyDeviceToHost, my_stream)
       check_memcpy_gpu("tridiag: a_dev 8", successGPU)
 
       my_stream = obj%gpu_setup%my_stream
@@ -1662,7 +1654,7 @@ subroutine tridiag_&
       check_stream_synchronize_gpu("tridiag: a_dev 8", successGPU)
 #else /* WITH_GPU_STREAMS */
       successGPU = gpu_memcpy(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, 1 * size_of_datatype, gpuMemcpyDeviceToHost)
-      check_memcpy_gpu("tridiag: a_dev 8", successGPU) !!! PETER: memory leak for complex case! size_of_datatype->size_of_datatype_real
+      check_memcpy_gpu("tridiag: a_dev 8", successGPU)
 #endif /* WITH_GPU_STREAMS */
     else !useGPU
       if (isSkewsymmetric) then
