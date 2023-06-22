@@ -1562,7 +1562,7 @@ extern "C" {
 
   void rocblasZscal_elpa_wrapper (BLAS_handle rocblasHandle, int n, double _Complex alpha, double _Complex *X, int incx){
 
-#ifndef HIPBLAS
+#ifdef HIPBLAS
     const BLAS_double_complex* X_casted = (const BLAS_double_complex*) X;
 #else
           BLAS_double_complex* X_casted = (      BLAS_double_complex*) X;
@@ -1577,7 +1577,7 @@ extern "C" {
 
   void rocblasCscal_elpa_wrapper (BLAS_handle rocblasHandle, int n, float _Complex alpha, float _Complex *X, int incx){
 
-#ifndef HIPBLAS
+#ifdef HIPBLAS
     const BLAS_float_complex* X_casted = (const BLAS_float_complex*) X;
 #else
           BLAS_float_complex* X_casted = (      BLAS_float_complex*) X;
