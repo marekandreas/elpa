@@ -115,6 +115,48 @@ extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev
 */
 //________________________________________________________________
 
+__global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int l_rows, int isOurProcessRow, double *dot_prod, double *v_row_last_in){
+  int i = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i < l_rows){
+    if (isOurProcessRow){
+      *dot_prod += v_row_dev[i] * v_row_last_in[i];
+    }
+  }
+
+/*
+  if (isOurProcessRow) {
+    aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1)) ! = "q"
+    aux1(2) = v_row(l_rows) ! = "a_11" (or rather a_nn)
+    }
+  else{
+    aux1(1) = dot_product(v_row(1:l_rows),v_row(1:l_rows))
+    aux1(2) = 0.
+  }
+*/
+}
+
+extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, double *dot_prod, double *v_row_last, cudaStream_t my_stream){
+  int l_rows = *l_rows_in;   
+  int isOurProcessRow = *isOurProcessRow_in;
+  //double dot_prod = *dot_prod_in;
+  //double v_row_last = *v_row_last_in;
+
+  dim3 blocks = dim3(1,1,1);
+  dim3 threadsPerBlock = dim3(1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last);
+#else
+  cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock>>>(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last);
+#endif
+  cudaError_t cuerr = cudaGetLastError();
+  if (cuerr != cudaSuccess){
+    printf("Error in executing cuda_dot_product_and_assign_kernel: %s\n",cudaGetErrorString(cuerr));
+  }
+}
+
+//________________________________________________________________
+
 __global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, int index, double value, double *d_vec_dev, int istep, int n_stored_vecs, int const isSkewsymmetric){
   if (n_stored_vecs > 0){
     a_dev[index] += value;
@@ -135,7 +177,7 @@ __global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, int 
 }
 
 extern "C" void cuda_update_matrix_element_add_double_FromC(double *a_dev, int *index_in, double *value_in, 
-                          double *d_vec_dev, int *istep_in, int *n_stored_vecs_in, int* isSkewsymmetric_in, cudaStream_t  my_stream){
+                          double *d_vec_dev, int *istep_in, int *n_stored_vecs_in, int* isSkewsymmetric_in, cudaStream_t my_stream){
   int index = *index_in;   
   int istep = *istep_in;   
   int n_stored_vecs = *n_stored_vecs_in; 
@@ -164,7 +206,7 @@ __global__ void cuda_update_array_element_double_kernel(double *array_dev, const
 
 }
 
-extern "C" void cuda_update_array_element_double_FromC(double *array_dev, int *index_in, double *value_in, cudaStream_t  my_stream){
+extern "C" void cuda_update_array_element_double_FromC(double *array_dev, int *index_in, double *value_in, cudaStream_t my_stream){
   int index = *index_in;   
   double value = *value_in;
 

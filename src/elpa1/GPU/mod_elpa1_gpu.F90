@@ -60,6 +60,28 @@ module elpa1_gpu
   public
   contains
 
+  subroutine gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last, my_stream)
+    use, intrinsic :: iso_c_binding
+    use precision
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: l_rows, isOurProcessRow
+    real(kind=c_double), intent(out)    :: dot_prod, v_row_last
+    integer(kind=C_intptr_T)            :: v_row_dev
+    integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+    call cuda_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last, my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    call hip_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+    call sycl_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last, my_stream)
+#endif
+
+  end subroutine
+
   subroutine gpu_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetric, my_stream)
     use, intrinsic :: iso_c_binding
     use precision

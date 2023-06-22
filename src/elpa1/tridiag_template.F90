@@ -54,6 +54,7 @@
 
 #include "../general/sanity.F90"
 
+#define GPU_NEW
 !#define GPU_OLD
 
 #undef MORE_GPU_COMPUTE
@@ -524,7 +525,7 @@ subroutine tridiag_&
     successGPU = gpu_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
     check_alloc_gpu("tridiag: uv_stored_cols_dev", successGPU)
 
-#ifndef GPU_OLD
+#ifdef GPU_NEW
     successGPU = gpu_malloc(d_vec_dev, na * size_of_datatype_real)
     check_alloc_gpu("tridiag: d_vec_dev", successGPU)
 
@@ -638,7 +639,7 @@ subroutine tridiag_&
         check_memcpy_gpu("tridiag a_dev 1", successGPU)
         call nvtxRangePop()
 #endif /* WITH_GPU_STREAMS */
-#else /* GPU_OLD */
+#else /* not GPU_OLD (GPU_NEW) */
         write (nvtx_name, "(A,I0)") "memcpy new D-D a_dev(:,l_cols+1)->v_row_dev ", l_rows
         call nvtxRangePush(nvtx_name)
         offset_dev = l_cols * matrixRows * size_of_datatype
@@ -647,7 +648,7 @@ subroutine tridiag_&
         call nvtxRangePush("check_memcpy")
         check_memcpy_gpu("tridiag a_dev 1", successGPU)
         call nvtxRangePop()
-#endif /* GPU_OLD */
+#endif /* GPU_OLD  (GPU_NEW) */
 
       else ! useGPU
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
@@ -682,7 +683,7 @@ subroutine tridiag_&
                             ONE, v_row, 1_BLAS_KIND)
           call nvtxRangePop()
           if (wantDebug) call obj%timer%stop("blas")
-#else /* GPU_OLD ____________________________________________________________________________________________*/
+#else /* not GPU_OLD (GPU_NEW) ___________________________________________________________________________________*/
           if (wantDebug) call obj%timer%start("gpublas gemv skinny with copying")
 
           ! int(ubound(vu_stored_rows,dim=1) = max_local_rows
@@ -724,7 +725,7 @@ subroutine tridiag_&
           call nvtxRangePop()
 
           if (wantDebug) call obj%timer%stop("gpublas gemv skinny with copying")
-#endif /* GPU_OLD ____________________________________________________________________________________________*/
+#endif /* GPU_OLD (GPU_NEW) ___________________________________________________________________________________*/
 
         else ! useGPU
 #if COMPLEXCASE == 1
@@ -748,16 +749,7 @@ subroutine tridiag_&
         endif ! useGPU
       endif ! (n_stored_vecs > 0 .and. l_rows > 0)
 
-#ifndef GPU_OLD
-      !v_row_dev -> v_row
-      write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
-      call nvtxRangePush(nvtx_name)
-      successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)* &
-          size_of_datatype, gpuMemcpyDeviceToHost)
-      check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
-      call nvtxRangePop()
-#endif /* GPU_OLD */
-
+#ifdef GPU_OLD
       call nvtxRangePush("cpu_dot v_row*v_row, aux1(2)=v_row")
       if (my_prow == prow(istep-1, nblk, np_rows)) then
         aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1)) ! = "q"
@@ -767,6 +759,29 @@ subroutine tridiag_&
         aux1(2) = 0.
       endif
       call nvtxRangePop()
+#endif /* GPU_OLD */
+
+#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
+      !gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
+      !call gpublas_PRECISION_DOT(gpuHandle, l_rows-1, v_row_dev, 1, v_row_dev, 1, dot_prod)
+
+      my_stream = obj%gpu_setup%my_stream
+      call nvtxRangePush("kernel: gpu_dot_product_and_assign_double")
+      call gpu_dot_product_and_assign_double(v_row_dev, l_rows, dot_prod, v_row_last, isOurProcessRow, my_stream)
+      call nvtxRangePop()
+#endif /* GPU_NEW */
+
+#ifdef GPU_NEW
+      !v_row_dev -> v_row
+      write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
+      call nvtxRangePush(nvtx_name)
+      successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)* &
+          size_of_datatype, gpuMemcpyDeviceToHost)
+      check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
+      call nvtxRangePop()
+#endif /* GPU_NEW */
+
+
 
 #ifdef WITH_MPI
       if (useNonBlockingCollectivesRows) then
@@ -1347,7 +1362,7 @@ subroutine tridiag_&
     endif
     call nvtxRangePop()
 
-#ifndef GPU_OLD     
+#ifdef GPU_NEW     
     if (useGPU) then
       ! update vu_stored_rows_dev
       offset_dev = ((1-1) + max_local_rows*(2*n_stored_vecs+1-1)) * size_of_datatype
@@ -1383,7 +1398,7 @@ subroutine tridiag_&
 #endif
       check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
     endif ! useGPU
-#endif /* ifndef GPU_OLD */   
+#endif /* GPU_NEW */   
 
     ! We have calculated another Hauseholder Vector, number of implicitly stored increased
     n_stored_vecs = n_stored_vecs+1
@@ -1422,7 +1437,7 @@ subroutine tridiag_&
         check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
 
       endif ! useGPU
-#endif /* ifdef GPU_OLD */           
+#endif /* GPU_OLD */           
       
       if (.not. useGPU .OR. .not. mat_vec_as_one_block) then
         do i = 0, (istep-2)/tile_size
@@ -1503,7 +1518,7 @@ subroutine tridiag_&
       endif
 
       if (useGPU) then
-#if !defined(GPU_OLD) && REALCASE == 1 && DOUBLE_PRECISION == 1
+#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
         my_stream = obj%gpu_setup%my_stream
         call nvtxRangePush("kernel: gpu_update_matrix_element_add")
         call gpu_update_matrix_element_add_double(a_dev, (l_rows-1) + matrixRows*(l_cols-1), dot_prod, &
@@ -1668,7 +1683,7 @@ subroutine tridiag_&
 #endif /* REALCASE */
 
   if (useGPU) then
-#ifndef GPU_OLD
+#ifdef GPU_NEW
     offset_dev = 1 * size_of_datatype
     ! first and last elements of d_vec are treated separately
     successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), &
@@ -1698,7 +1713,7 @@ subroutine tridiag_&
     successGPU = gpu_free(uv_stored_cols_dev)
     check_dealloc_gpu("tridiag:uv_stored_cols_dev ", successGPU)
 
-#ifndef GPU_OLD
+#ifdef GPU_NEW
     successGPU = gpu_free(d_vec_dev)
     check_dealloc_gpu("tridiag: d_vec_dev", successGPU)
 
@@ -1811,7 +1826,7 @@ subroutine tridiag_&
       successGPU = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: d_vec", successGPU)
 
-#ifndef GPU_OLD
+#ifdef GPU_NEW
       successGPU = gpu_host_unregister(int(loc(aux),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: aux", successGPU)
 #endif
@@ -1825,7 +1840,7 @@ subroutine tridiag_&
   deallocate(vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: vu_stored_rows, uv_stored_cols", istat, errorMessage)
 
-#ifndef GPU_OLD
+#ifdef GPU_NEW
   deallocate(aux, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: aux", istat, errorMessage)
 #endif
