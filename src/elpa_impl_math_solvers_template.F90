@@ -511,10 +511,14 @@
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
+    !c> #ifdef HAVE_SKEWSYMMETRIC
     !c> void elpa_skew_eigenvectors_a_h_a_d(elpa_t handle, double *a, double *ev, double *q, int *error);
+    !c> #endif
 #endif
 #ifdef SINGLE_PRECISION_REAL
+    !c> #ifdef HAVE_SKEWSYMMETRIC
     !c> void elpa_skew_eigenvectors_a_h_a_f(elpa_t handle, float *a, float *ev, float *q, int *error);
+    !c> #endif
 #endif
 #endif
     subroutine elpa_skew_eigenvectors_a_h_a_&
@@ -666,10 +670,14 @@
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
+    !c> #ifdef HAVE_SKEWSYMMETRIC
     !c> void elpa_skew_eigenvectors_d_ptr_d(elpa_t handle, double *a, double *ev, double *q, int *error);
+    !c> #endif
 #endif
 #ifdef SINGLE_PRECISION_REAL
+    !c> #ifdef HAVE_SKEWSYMMETRIC
     !c> void elpa_skew_eigenvectors_d_ptr_f(elpa_t handle, float *a, float *ev, float *q, int *error);
+    !c> #endif
 #endif
 #endif
     subroutine elpa_skew_eigenvectors_d_ptr_&
@@ -1247,10 +1255,14 @@
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
+    !c> #ifdef HAVE_SKEWSYMMETRIC
     !c> void elpa_skew_eigenvalues_a_h_a_d(elpa_t handle, double *a, double *ev, int *error);
+    !c> #endif
 #endif
 #ifdef SINGLE_PRECISION_REAL
+    !c> #ifdef HAVE_SKEWSYMMETRIC
     !c> void elpa_skew_eigenvalues_a_h_a_f(elpa_t handle, float *a, float *ev, int *error);
+    !c> #endif
 #endif
 #endif
     subroutine elpa_skew_eigenvalues_a_h_a_&
@@ -1282,10 +1294,14 @@
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL
+    !c> #ifdef HAVE_SKEWSYMMETRIC
     !c> void elpa_skew_eigenvalues_d_ptr_d(elpa_t handle, double *a, double *ev, int *error);
+    !c> #endif
 #endif
 #ifdef SINGLE_PRECISION_REAL
+    !c> #ifdef HAVE_SKEWSYMMETRIC
     !c> void elpa_skew_eigenvalues_d_ptr_f(elpa_t handle, float *a, float *ev, int *error);
+    !c> #endif
 #endif
 #endif
     subroutine elpa_skew_eigenvalues_d_ptr_&
