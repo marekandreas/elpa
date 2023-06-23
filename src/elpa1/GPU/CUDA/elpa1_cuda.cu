@@ -115,13 +115,49 @@ extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev
 */
 //________________________________________________________________
 
-__global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int l_rows, int isOurProcessRow, double *dot_prod, double *v_row_last_in){
-  int i = threadIdx.x + blockIdx.x * blockDim.x;
-  if (i < l_rows){
-    if (isOurProcessRow){
-      *dot_prod += v_row_dev[i] * v_row_last_in[i];
-    }
+__global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int l_rows, int isOurProcessRow, double *dot_prod_partial_dev, double *v_row_last_in){
+  const int threadsPerBlock = 1024;
+  __shared__ float cache[threadsPerBlock];
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
+  int cacheIndex = threadIdx.x;
+
+  double temp = 0;
+  while (tid < l_rows) {
+    temp += v_row_dev[tid] * v_row_dev[tid];
+    tid += blockDim.x * gridDim.x;
   }
+
+  // set the cache values
+  cache[threadIdx.x] = temp;
+  // synchronize threads in this block
+  __syncthreads();
+
+  // for reductions, threadsPerBlock must be a power of 2
+  int i = blockDim.x/2;
+  while (i > 0) {
+    if (threadIdx.x < i) cache[threadIdx.x] += cache[threadIdx.x + i];
+    __syncthreads();
+    i /= 2;
+  }
+
+  if (threadIdx.x == 0) dot_prod_partial_dev[blockIdx.x] = cache[0];
+
+  if (tid == 0)
+    {
+  for (int i=0; i<blocks; i++) {
+    *dot_prod += dot_prod_partial_dev[i];
+  }
+    }
+
+    if (tid == 0)
+    {
+        int sum = 0;
+        for (int i = 0; i < N; i++)
+        {
+            sum += temp[i];
+        }
+        atomicAdd(c, sum);
+    }
 
 /*
   if (isOurProcessRow) {
@@ -141,17 +177,35 @@ extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int 
   //double dot_prod = *dot_prod_in;
   //double v_row_last = *v_row_last_in;
 
-  dim3 blocks = dim3(1,1,1);
-  dim3 threadsPerBlock = dim3(1,1,1);
+  
+  int blocks = (l_rows+1023)/1024;
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(1024,1,1);
+
+  
+  // zero-copy version
+  //double *dot_prod_partial, *dot_prod_partial_dev;
+  //cudaSetDeviceFlags( cudaDeviceMapHost ); // move this outside of the function
+  //cudaHostAlloc( (void**)&dot_prod_partial, blocks*sizeof(double), cudaHostAllocMapped ); // zero-copy buffer
+  //cudaHostGetDevicePointer( &dot_prod_partial_dev, dot_prod_partial, 0 );
+
+  double *dot_prod_partial_managed;
+  cudaMallocManaged(&dot_prod_partial_managed, blocks*sizeof(double));  
 
 #ifdef WITH_GPU_STREAMS
   cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last);
 #else
-  cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock>>>(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last);
+  cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock>>>(v_row_dev, l_rows, isOurProcessRow, dot_prod_partial_managed, v_row_last);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing cuda_dot_product_and_assign_kernel: %s\n",cudaGetErrorString(cuerr));
+  }
+  cudaDeviceSynchronize(); // needed since we are using managed memory
+
+  *dot_prod = 0;
+  for (int i=0; i<blocks; i++) {
+    *dot_prod += dot_prod_partial_managed[i];
   }
 }
 

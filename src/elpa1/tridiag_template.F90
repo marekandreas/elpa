@@ -148,6 +148,7 @@ subroutine tridiag_&
   !integer(kind=ik)                             :: l_cols, l_rows
   integer(kind=ik)                              :: l_cols, l_rows
   integer(kind=ik)                              :: n_stored_vecs
+  integer(kind=ik)                              :: isOurProcessRow
 
   integer(kind=C_intptr_T)                      :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
                                                    uv_stored_cols_dev, d_vec_dev
@@ -164,7 +165,7 @@ subroutine tridiag_&
 #endif
 
   real(kind=rk)                                 :: vnorm2
-  MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), vrl, xf, conjg_tau, dot_prod
+  MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), vrl, xf, conjg_tau, dot_prod, v_row_last
   MATH_DATATYPE(kind=rck), allocatable          :: aux(:) ! 2*max_stored_uv ??? why differet logic for real and complex?
   character(len=32)                             :: max_stored_uv_string
   character(len=100)                            :: nvtx_name
@@ -749,7 +750,42 @@ subroutine tridiag_&
         endif ! useGPU
       endif ! (n_stored_vecs > 0 .and. l_rows > 0)
 
-#ifdef GPU_OLD
+#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
+      if (useGPU) then
+        
+        call nvtxRangePush("kernel: gpublas_PRECISION_DOT")
+        gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
+        call gpublas_PRECISION_DOT(gpuHandle, l_rows-1, v_row_dev, 1, v_row_dev, 1, dot_prod)
+        call nvtxRangePop()
+
+        if (my_prow == prow(istep-1, nblk, np_rows)) then
+          isOurProcessRow = 1
+        else
+          isOurProcessRow = 0
+        end if
+
+        my_stream = obj%gpu_setup%my_stream
+        call nvtxRangePush("kernel: gpu_dot_product_and_assign_double")
+        call gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last, my_stream)
+        call nvtxRangePop()
+        
+        call nvtxRangePush("gpublas_SetPointerMode: device")
+        gpublas_SetPointerMode(gpuHandle, gpublasPointerModeDevice)
+        call gpublas_PRECISION_NORM
+        call nvtxRangePop()
+        
+
+        !v_row_dev -> v_row
+        write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
+        call nvtxRangePush(nvtx_name)
+        successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)* &
+            size_of_datatype, gpuMemcpyDeviceToHost)
+        check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
+        call nvtxRangePop()
+      endif ! useGPU  
+#endif /* GPU_NEW */
+
+!#ifdef GPU_OLD
       call nvtxRangePush("cpu_dot v_row*v_row, aux1(2)=v_row")
       if (my_prow == prow(istep-1, nblk, np_rows)) then
         aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1)) ! = "q"
@@ -759,29 +795,7 @@ subroutine tridiag_&
         aux1(2) = 0.
       endif
       call nvtxRangePop()
-#endif /* GPU_OLD */
-
-#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
-      !gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-      !call gpublas_PRECISION_DOT(gpuHandle, l_rows-1, v_row_dev, 1, v_row_dev, 1, dot_prod)
-
-      my_stream = obj%gpu_setup%my_stream
-      call nvtxRangePush("kernel: gpu_dot_product_and_assign_double")
-      call gpu_dot_product_and_assign_double(v_row_dev, l_rows, dot_prod, v_row_last, isOurProcessRow, my_stream)
-      call nvtxRangePop()
-#endif /* GPU_NEW */
-
-#ifdef GPU_NEW
-      !v_row_dev -> v_row
-      write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
-      call nvtxRangePush(nvtx_name)
-      successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)* &
-          size_of_datatype, gpuMemcpyDeviceToHost)
-      check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
-      call nvtxRangePop()
-#endif /* GPU_NEW */
-
-
+!#endif /* GPU_OLD */
 
 #ifdef WITH_MPI
       if (useNonBlockingCollectivesRows) then

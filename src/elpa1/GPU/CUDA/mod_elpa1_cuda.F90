@@ -59,8 +59,8 @@ module elpa1_cuda
 
       integer(kind=C_INT), intent(in)     :: l_rows, isOurProcessRow
       real(kind=c_double), intent(out)    :: dot_prod, v_row_last
-      integer(kind=C_intptr_T)            :: v_row_dev
-      integer(kind=c_intptr_t)            :: my_stream
+      integer(kind=C_intptr_T), value     :: v_row_dev
+      integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
   end interface
@@ -107,7 +107,7 @@ end interface
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_update_matrix_element_add_double_c(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last, my_stream)
+      call cuda_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last, my_stream)
 #endif
 
     end subroutine
