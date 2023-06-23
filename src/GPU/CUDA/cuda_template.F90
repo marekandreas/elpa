@@ -1297,8 +1297,7 @@
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT), value              :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y !, z
-      real(kind=C_DOUBLE)                     :: result
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
@@ -1309,8 +1308,7 @@
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y
-      real(kind=C_DOUBLE)                     :: result
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
 
@@ -1384,8 +1382,7 @@
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y
-      real(kind=C_FLOAT)                      :: result
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
@@ -1396,8 +1393,7 @@
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y
-      real(kind=C_FLOAT)                      :: result
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
 
@@ -1472,8 +1468,7 @@
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y
-      complex(kind=C_DOUBLE_COMPLEX)          :: result
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
@@ -1485,8 +1480,7 @@
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y
-      complex(kind=C_DOUBLE_COMPLEX)          :: result
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
 
@@ -1561,8 +1555,7 @@
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y
-      complex(kind=C_FLOAT_COMPLEX)           :: result
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
@@ -1574,8 +1567,7 @@
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y
-      complex(kind=C_FLOAT_COMPLEX)           :: result
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
 
@@ -2861,8 +2853,7 @@
       implicit none
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y
-      real(kind=c_double)      :: result
+      integer(kind=c_intptr_t) :: x, y, result
       
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Ddot_intptr_c(cublasHandle, length, x, incx, y, incy, result)
@@ -2874,8 +2865,7 @@
       implicit none
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y
-      real(kind=c_double)      :: result
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Ddot_cptr_c(cublasHandle, length, x, incx, y, incy, result)
@@ -2940,8 +2930,7 @@
       implicit none
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y
-      real(kind=c_float)       :: result
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Sdot_intptr_c(cublasHandle, length, x, incx, y, incy, result)
@@ -2953,8 +2942,7 @@
       implicit none
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y
-      real(kind=c_float)       :: result
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Sdot_cptr_c(cublasHandle, length, x, incx, y, incy, result)
@@ -3020,8 +3008,7 @@
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y
-      complex(kind=C_DOUBLE_COMPLEX) :: result
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Zdot_intptr_c(conj,cublasHandle, length, x, incx, y, incy, result)
@@ -3034,8 +3021,7 @@
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y
-      complex(kind=C_DOUBLE_COMPLEX) :: result
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Zdot_cptr_c(conj,cublasHandle, length, x, incx, y, incy, result)
@@ -3101,8 +3087,7 @@
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y
-      complex(kind=C_FLOAT_COMPLEX) :: result
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Cdot_intptr_c(conj,cublasHandle, length, x, incx, y, incy, result)
@@ -3115,8 +3100,7 @@
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y
-      complex(kind=C_FLOAT_COMPLEX) :: result
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Cdot_cptr_c(conj,cublasHandle, length, x, incx, y, incy, result)

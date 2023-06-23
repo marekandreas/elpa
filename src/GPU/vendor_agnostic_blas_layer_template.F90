@@ -1953,8 +1953,7 @@
       implicit none
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      integer(kind=c_intptr_t)          :: x, y
-      real(kind=c_double)               :: result
+      integer(kind=c_intptr_t)          :: x, y, result
       
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
@@ -2000,8 +1999,7 @@
       implicit none
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      type(c_ptr)                       :: x, y
-      real(kind=c_double)               :: result
+      type(c_ptr)                       :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
@@ -2235,8 +2233,7 @@
       implicit none
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      integer(kind=c_intptr_t)          :: x, y
-      real(kind=c_float)                :: result
+      integer(kind=c_intptr_t)          :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
@@ -2282,8 +2279,7 @@
       implicit none
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      type(c_ptr)                       :: x, y
-      real(kind=c_float)                :: result
+      type(c_ptr)                       :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
@@ -2498,6 +2494,7 @@
         endif
 #endif
     end subroutine
+
     subroutine gpublas_Zdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
@@ -2518,8 +2515,7 @@
       character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      integer(kind=c_intptr_t)          :: x, y
-      complex(kind=c_double_complex)    :: result
+      integer(kind=c_intptr_t)          :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
@@ -2566,8 +2562,7 @@
       character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      type(c_ptr)                       :: x, y
-      complex(kind=c_double_complex)    :: result
+      type(c_ptr)                       :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
@@ -2804,8 +2799,7 @@
       character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      integer(kind=c_intptr_t)          :: x, y
-      complex(kind=c_float_complex)     :: result
+      integer(kind=c_intptr_t)          :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
@@ -2852,8 +2846,7 @@
       character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      type(c_ptr)                       :: x, y
-      complex(kind=c_float_complex)     :: result
+      type(c_ptr)                       :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
