@@ -1255,14 +1255,6 @@ subroutine tridiag_&
         else ! .not. useGPU
           if (wantDebug) call obj%timer%start("gpublas gemv x2 skinny with copying")
 
-          write (nvtx_name, "(A,I0)") "memcpy new H-D v_row->v_row_dev ", l_rows
-          call nvtxRangePush(nvtx_name)
-          !v_row->v_row_dev
-          successGPU = gpu_memcpy(v_row_dev, int(loc(v_row),kind=c_intptr_t), (l_rows)* &
-              size_of_datatype, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("tridiag: v_row->v_row_dev", successGPU)
-          call nvtxRangePop()
-
           write (nvtx_name, "(A,I0,A,I0)") "gpublas gemv_x2 skinny", l_rows, "x", 2*n_stored_vecs
           call nvtxRangePush(nvtx_name)  
 
