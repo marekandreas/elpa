@@ -832,6 +832,41 @@ subroutine tridiag_&
                (obj, vrl, vnorm2, xf, tau(istep), wantDebug)
       call nvtxRangePop()
 
+      ! vrl is newly computed off-diagonal element of the final tridiagonal matrix
+      if (my_prow == prow(istep-1, nblk, np_rows)) then
+#if REALCASE == 1
+        e_vec(istep-1) = vrl
+#endif
+#if COMPLEXCASE == 1
+        e_vec(istep-1) = real(vrl,kind=rk)
+#endif
+      endif
+
+      if (.not. useGPU) then  
+        call nvtxRangePush("scale v_row *= xf")
+        ! Scale v_row and store Householder Vector for back transformation
+        v_row(1:l_rows) = v_row(1:l_rows) * xf
+        call nvtxRangePop()
+
+        if (my_prow == prow(istep-1, nblk, np_rows)) then
+          v_row(l_rows) = 1.
+        endif
+
+        ! store Householder Vector for back transformation
+        call nvtxRangePush("cpu copy: v_row->a_mat")
+        ! update a_mat
+        a_mat(1:l_rows,l_cols+1) = v_row(1:l_rows)
+        call nvtxRangePop()
+      endif ! .not. useGPU 
+
+#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
+      if (useGPU) then      
+        call nvtxRangePush("kernel gpu_scale_set_one_store_v_row")
+        call gpu_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+        call nvtxRangePop()
+      endif ! useGPU  
+#endif /* GPU_NEW */
+
 #if defined(GPU_NEW)
       if (useGPU) then      
         !v_row_dev -> v_row
@@ -843,29 +878,6 @@ subroutine tridiag_&
         call nvtxRangePop()
       endif ! useGPU  
 #endif /* GPU_NEW */
-
-      call nvtxRangePush("scale v_row *= xf")
-      ! Scale v_row and store Householder Vector for back transformation
-      v_row(1:l_rows) = v_row(1:l_rows) * xf
-      call nvtxRangePop()
-
-      if (my_prow == prow(istep-1, nblk, np_rows)) then
-        v_row(l_rows) = 1.
-
-        ! vrl is newly computed off-diagonal element of the final tridiagonal matrix
-#if REALCASE == 1
-        e_vec(istep-1) = vrl
-#endif
-#if COMPLEXCASE == 1
-        e_vec(istep-1) = real(vrl,kind=rk)
-#endif
-      endif
-
-      ! store Householder Vector for back transformation
-      call nvtxRangePush("cpu copy: v_row->a_mat")
-      ! update a_mat
-      a_mat(1:l_rows,l_cols+1) = v_row(1:l_rows)
-      call nvtxRangePop()
 
       ! add tau after the end of actuall v_row, to be broadcasted with it
       v_row(l_rows+1) = tau(istep)
@@ -1575,6 +1587,21 @@ subroutine tridiag_&
 #endif
 
   enddo ! main cycle over istep=na,3,-1
+
+#ifdef GPU_NEW
+  ! copy a_dev -> a_mat for backtransformation
+  num = matrixRows * matrixCols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+  my_stream = obj%gpu_setup%my_stream
+  call gpu_memcpy_async_and_stream_synchronize &
+          ("tridiag a_dev -> a_mat", a_mat(1:matrixRows,1:matrixCols), 0_c_intptr_t, a_dev , &
+                                                1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
+#else
+      successGPU = gpu_memcpy(int(loc(a_mat(1,1)),kind=c_intptr_t), a_dev, &
+                                num, gpuMemcpyDeviceToHost)
+#endif
+      check_memcpy_gpu("tridiag: a_dev", successGPU)
+#endif /* GPU_NEW */
 
 #if COMPLEXCASE == 1
   ! Store e_vec(1) and d_vec(1)

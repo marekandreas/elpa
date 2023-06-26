@@ -56,6 +56,8 @@
 #include <complex.h>
 #include <cuComplex.h>
 #include <stdint.h>
+#include <iostream>
+#include <algorithm>
 #include "config-f90.h"
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
@@ -115,7 +117,7 @@ extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev
 */
 //________________________________________________________________
 
-__global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int l_rows, int isOurProcessRow, double *aux1_dev, double *v_row_last_in){
+__global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int l_rows, int isOurProcessRow, double *aux1_dev){
   const int threadsPerBlock = 1024;
   __shared__ double cache[threadsPerBlock];
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
@@ -168,7 +170,7 @@ __global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int
     }
 }
 
-extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, double *aux1_dev, double *v_row_last, cudaStream_t my_stream){
+extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, double *aux1_dev, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int isOurProcessRow = *isOurProcessRow_in;
   //double dot_prod = *dot_prod_in;
@@ -191,13 +193,80 @@ extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int 
   //cudaMallocManaged(&dot_prod_dev, blocks*sizeof(double));  
 
 #ifdef WITH_GPU_STREAMS
-  cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev, v_row_last);
+  cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev);
 #else
-  cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev, v_row_last);
+  cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing cuda_dot_product_and_assign_kernel: %s\n",cudaGetErrorString(cuerr));
+  }
+}
+
+//________________________________________________________________
+
+__global__ void cuda_scale_set_one_store_v_row_double_kernel(double *a_dev, double *v_row_dev, int l_rows, int l_cols, int matrixRows, int isOurProcessRow, double xf){
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
+
+/*
+  call nvtxRangePush("scale v_row *= xf")
+  ! Scale v_row and store Householder Vector for back transformation
+  v_row(1:l_rows) = v_row(1:l_rows) * xf
+  call nvtxRangePop()
+
+  if (my_prow == prow(istep-1, nblk, np_rows)) then
+    v_row(l_rows) = 1.
+  endif
+
+  ! store Householder Vector for back transformation
+  call nvtxRangePush("cpu copy: v_row->a_mat")
+  ! update a_mat
+  a_mat(1:l_rows,l_cols+1) = v_row(1:l_rows)
+  call nvtxRangePop()
+*/
+
+  int index_global = tid;
+  while (index_global < l_rows) {
+    v_row_dev[index_global] *= xf;
+    index_global += blockDim.x * gridDim.x;
+  }
+
+  if (isOurProcessRow && tid==0)
+    {
+    v_row_dev[l_rows-1] = 1.0;
+    }
+    
+  int i_row = tid;
+  while (i_row < l_rows) {
+    a_dev[i_row + matrixRows*l_cols] = v_row_dev[i_row];
+    i_row += blockDim.x * gridDim.x;
+  }
+
+
+}
+
+extern "C" void cuda_scale_set_one_store_v_row_double_FromC(double *a_dev, double *v_row_dev, int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *isOurProcessRow_in, double *xf_in, cudaStream_t my_stream){
+  int l_rows = *l_rows_in;   
+  int l_cols = *l_cols_in;   
+  int matrixRows = *matrixRows_in;
+  int isOurProcessRow = *isOurProcessRow_in;
+  double xf = *xf_in;
+
+  if (l_rows==0) return;
+  
+  int blocks = std::min((l_rows+1023)/1024, 2147483647);
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(1024,1,1);
+
+  
+#ifdef WITH_GPU_STREAMS
+  cuda_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream);
+#else
+  cuda_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock>>>(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf);
+#endif
+  cudaError_t cuerr = cudaGetLastError();
+  if (cuerr != cudaSuccess){
+    printf("Error in executing cuda_scale_set_one_store_v_row_double_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 

@@ -65,6 +65,20 @@ module elpa1_cuda
   end interface
 
   interface
+  subroutine cuda_scale_set_one_store_v_row_double_c(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream) &
+         bind(C, name="cuda_scale_set_one_store_v_row_double_FromC")
+    use, intrinsic :: iso_c_binding
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, isOurProcessRow
+    real(kind=c_double), intent(in)     :: xf
+    integer(kind=C_intptr_T), value     :: a_dev, v_row_dev 
+    integer(kind=c_intptr_t), value     :: my_stream
+
+  end subroutine 
+end interface
+
+  interface
     subroutine cuda_update_matrix_element_add_double_c(a_dev, index, value, &
              d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream) &
              bind(C, name="cuda_update_matrix_element_add_double_FromC")
@@ -107,7 +121,20 @@ end interface
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
 #endif
+    end subroutine
 
+    subroutine cuda_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, isOurProcessRow
+      real(kind=c_double), intent(in)     :: xf
+      integer(kind=C_intptr_T)            :: a_dev, v_row_dev 
+      integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_scale_set_one_store_v_row_double_c(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+#endif
     end subroutine
 
     subroutine cuda_update_matrix_element_add_double(a_dev, index, value, &
@@ -127,7 +154,6 @@ end interface
       call cuda_update_matrix_element_add_double_c(a_dev, index, value, &
             d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_update_array_element_double(array_dev, index, value, my_stream)
@@ -145,7 +171,6 @@ end interface
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_update_array_element_double_c(array_dev, index, value, my_stream)
 #endif
-
     end subroutine
 
 end module

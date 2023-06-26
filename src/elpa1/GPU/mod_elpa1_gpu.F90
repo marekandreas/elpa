@@ -81,6 +81,28 @@ module elpa1_gpu
 
   end subroutine
 
+  subroutine gpu_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+    use, intrinsic :: iso_c_binding
+    use precision
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, isOurProcessRow
+    real(kind=c_double), intent(in)     :: xf
+    integer(kind=C_intptr_T)            :: a_dev, v_row_dev
+    integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+    call cuda_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    call hip_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+    call sycl_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+#endif
+
+  end subroutine
+
   subroutine gpu_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetric, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
