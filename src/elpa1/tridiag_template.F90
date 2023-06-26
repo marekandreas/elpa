@@ -406,7 +406,6 @@ subroutine tridiag_&
 #endif
 #endif
 
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       num = (max_local_rows+1) * size_of_datatype
       successGPU = gpu_malloc_host(v_row_host, num)
@@ -469,9 +468,16 @@ subroutine tridiag_&
       successGPU = gpu_host_register(int(loc(d_vec),kind=c_intptr_t),num,&
                       gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: d_vec", successGPU)
-    endif ! gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU
+
+#ifdef GPU_NEW
+      num = 2 * size_of_datatype
+      successGPU = gpu_host_register(int(loc(aux1),kind=c_intptr_t),num,&
+                  gpuHostRegisterDefault)
+      check_host_register_gpu("tridiag: aux1", successGPU)
 #endif
+    endif ! gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU
   else ! useGPU
+
     allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
     call check_alloc("tridiag_&
     &MATH_DATATYPE ", "v_row", istat, errorMessage)
@@ -532,6 +538,9 @@ subroutine tridiag_&
 
     successGPU = gpu_malloc(aux_dev, 2*max_stored_uv * size_of_datatype)
     check_alloc_gpu("tridiag: aux_dev", successGPU)
+
+    successGPU = gpu_malloc(aux1_dev, 2 * size_of_datatype)
+    check_alloc_gpu("tridiag: aux1_dev", successGPU)
 #endif
 
 #ifdef MORE_GPU_COMPUTE
@@ -752,50 +761,41 @@ subroutine tridiag_&
 
 #if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
       if (useGPU) then
-        
-        call nvtxRangePush("kernel: gpublas_PRECISION_DOT")
-        gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-        call gpublas_PRECISION_DOT(gpuHandle, l_rows-1, v_row_dev, 1, v_row_dev, 1, dot_prod)
-        call nvtxRangePop()
-
         if (my_prow == prow(istep-1, nblk, np_rows)) then
           isOurProcessRow = 1
         else
           isOurProcessRow = 0
         end if
 
+        !successGPU = gpu_memset(aux1_dev, 0, 2 * size_of_datatype) ! PETERDEBUG: merge this to other kernel
+        !check_memcpy_gpu("tridiag: aux1_dev", successGPU)
+
         my_stream = obj%gpu_setup%my_stream
         call nvtxRangePush("kernel: gpu_dot_product_and_assign_double")
-        call gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, dot_prod, v_row_last, my_stream)
+        call gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
         call nvtxRangePop()
-        
-        call nvtxRangePush("gpublas_SetPointerMode: device")
-        gpublas_SetPointerMode(gpuHandle, gpublasPointerModeDevice)
-        call gpublas_PRECISION_NORM
-        call nvtxRangePop()
-        
 
-        !v_row_dev -> v_row
-        write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
+        !aux1_dev -> aux1
+        write (nvtx_name, "(A,I0)") "memcpy new D-H aux1_dev->aux1 ", 2
         call nvtxRangePush(nvtx_name)
-        successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)* &
-            size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
+        successGPU = gpu_memcpy(int(loc(aux1),kind=c_intptr_t), aux1_dev, 2*size_of_datatype, gpuMemcpyDeviceToHost)
+        check_memcpy_gpu("tridiag: aux1_dev -> aux1", successGPU)
         call nvtxRangePop()
+
       endif ! useGPU  
 #endif /* GPU_NEW */
 
-!#ifdef GPU_OLD
-      call nvtxRangePush("cpu_dot v_row*v_row, aux1(2)=v_row")
-      if (my_prow == prow(istep-1, nblk, np_rows)) then
-        aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1)) ! = "q"
-        aux1(2) = v_row(l_rows) ! = "a_11" (or rather a_nn)
-      else
-        aux1(1) = dot_product(v_row(1:l_rows),v_row(1:l_rows))
-        aux1(2) = 0.
-      endif
-      call nvtxRangePop()
-!#endif /* GPU_OLD */
+      if (.not. useGPU) then
+        call nvtxRangePush("cpu_dot v_row*v_row, aux1(2)=v_row")
+        if (my_prow == prow(istep-1, nblk, np_rows)) then
+          aux1(1) = dot_product(v_row(1:l_rows-1),v_row(1:l_rows-1)) ! = "q"
+          aux1(2) = v_row(l_rows) ! = "a_11" (or rather a_nn)
+        else
+          aux1(1) = dot_product(v_row(1:l_rows),v_row(1:l_rows))
+          aux1(2) = 0.
+        endif
+        call nvtxRangePop()
+      endif ! .not. useGPU 
 
 #ifdef WITH_MPI
       if (useNonBlockingCollectivesRows) then
@@ -831,6 +831,18 @@ subroutine tridiag_&
                &PRECISION &
                (obj, vrl, vnorm2, xf, tau(istep), wantDebug)
       call nvtxRangePop()
+
+#if defined(GPU_NEW)
+      if (useGPU) then      
+        !v_row_dev -> v_row
+        write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
+        call nvtxRangePush(nvtx_name)
+        successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)* &
+            size_of_datatype, gpuMemcpyDeviceToHost)
+        check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
+        call nvtxRangePop()
+      endif ! useGPU  
+#endif /* GPU_NEW */
 
       call nvtxRangePush("scale v_row *= xf")
       ! Scale v_row and store Householder Vector for back transformation
@@ -1733,6 +1745,9 @@ subroutine tridiag_&
 
     successGPU = gpu_free(aux_dev)
     check_dealloc_gpu("tridiag: aux_dev", successGPU)
+
+    successGPU = gpu_free(aux1_dev)
+    check_dealloc_gpu("tridiag: aux1_dev", successGPU)
 #endif
   endif ! useGPU
 
@@ -1843,6 +1858,9 @@ subroutine tridiag_&
 #ifdef GPU_NEW
       successGPU = gpu_host_unregister(int(loc(aux),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: aux", successGPU)
+
+      successGPU = gpu_host_unregister(int(loc(aux1),kind=c_intptr_t))
+      check_host_unregister_gpu("tridiag: aux1", successGPU)
 #endif
     endif
 #endif
