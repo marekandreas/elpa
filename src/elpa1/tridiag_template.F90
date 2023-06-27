@@ -731,7 +731,7 @@ subroutine tridiag_&
 #endif
                                     ONE, v_row_dev, 1, gpuHandle)
 
-          if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
+          if (wantDebug) successGPU = cuda_DeviceSynchronize()
           call nvtxRangePop()
 
           if (wantDebug) call obj%timer%stop("gpublas gemv skinny with copying")
@@ -1119,7 +1119,7 @@ subroutine tridiag_&
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0) ! 0.3-0.5 us
           call nvtxRangePop()
 
-          write (nvtx_name, "(A,I0,A,I0)") "gpublas_gemv ", l_rows, "x", l_cols
+          write (nvtx_name, "(A,I0,A,I0)") "gpublas_gemv: u_col_dev=a_dev^T*v_row_dev, ", l_rows, "x", l_cols
           call nvtxRangePush(nvtx_name)  
               
           ! u_col_dev = a_dev^T*v_row_dev
@@ -1128,7 +1128,7 @@ subroutine tridiag_&
                                     v_row_dev , 1,                          &
                                     ZERO, u_col_dev, 1, gpuHandle)
               
-          if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
+          if (wantDebug) successGPU = cuda_DeviceSynchronize()
           call nvtxRangePop()
               
        ! todo: try with non transposed!!!
@@ -1188,21 +1188,6 @@ subroutine tridiag_&
           enddo ! i=0,(istep-2)/tile_size
         end if ! mat_vec_as_one_block / per stripes
 
-#ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        num = l_cols * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-              ("tridiag u_col_dev -> u_col", u_col_dev, 0_c_intptr_t, &
-                                                  u_col(1:max_local_cols), &
-                                                  1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
-#else
-
-        call nvtxRangePush("memcpy D-H u_col_dev->u_col")  
-        successGPU = gpu_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
-                    u_col_dev, l_cols * size_of_datatype, gpuMemcpyDeviceToHost)
-        call nvtxRangePop()
-        check_memcpy_gpu("tridiag: u_col_dev 1", successGPU)
-#endif
 
         if (.not. mat_vec_as_one_block) then
 #ifdef WITH_GPU_STREAMS
@@ -1254,7 +1239,7 @@ subroutine tridiag_&
           call nvtxRangePop()      
           if (wantDebug) call obj%timer%stop("blas")
         else ! .not. useGPU
-          if (wantDebug) call obj%timer%start("gpublas gemv x2 skinny with copying")
+          if (wantDebug) call obj%timer%start("gpublas gemv x2 skinny")
 
           write (nvtx_name, "(A,I0,A,I0)") "gpublas gemv_x2 skinny", l_rows, "x", 2*n_stored_vecs
           call nvtxRangePush(nvtx_name)  
@@ -1270,22 +1255,31 @@ subroutine tridiag_&
                                       ONE, uv_stored_cols_dev, max_local_cols,   &
                                       aux_dev, 1, ONE, u_col_dev, 1, gpuHandle)
 
-          if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
-          call nvtxRangePop()
-          
-          !u_col_dev -> u_col
-          write (nvtx_name, "(A,I0)") "memcpy new D-H u_col_dev->u_col ", l_cols
-          call nvtxRangePush(nvtx_name)
-          successGPU = gpu_memcpy(int(loc(u_col),kind=c_intptr_t), u_col_dev, (l_cols)* &
-              size_of_datatype, gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("tridiag: u_col_dev -> u_col", successGPU)
+          if (wantDebug) successGPU = cuda_DeviceSynchronize()
           call nvtxRangePop()
 
-          if (wantDebug) call obj%timer%stop("gpublas gemv x2 skinny with copying")  
+          if (wantDebug) call obj%timer%stop("gpublas gemv x2 skinny")  
         endif ! .not. useGPU
       endif ! n_stored_vecs > 0
 
     endif  ! (l_rows>0 .and. l_cols>0)
+
+    if (useGPU .and. l_cols>0) then
+#ifdef WITH_GPU_STREAMS
+      my_stream = obj%gpu_setup%my_stream
+      num = l_cols * size_of_datatype
+      call gpu_memcpy_async_and_stream_synchronize &
+            ("tridiag u_col_dev -> u_col", u_col_dev, 0_c_intptr_t, &
+                                                u_col(1:max_local_cols), &
+                                                1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+#else
+      call nvtxRangePush("memcpy D-H u_col_dev->u_col")  
+      successGPU = gpu_memcpy(int(loc(u_col(1)),kind=c_intptr_t), &
+                  u_col_dev, l_cols * size_of_datatype, gpuMemcpyDeviceToHost)
+      call nvtxRangePop()
+      check_memcpy_gpu("tridiag: u_col_dev 1", successGPU)
+#endif
+    endif ! useGPU
 
     if (useGPU) then
       if (l_rows==0) then
@@ -1508,7 +1502,7 @@ subroutine tridiag_&
                                       size_of_datatype,  &
                                       max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
                                       size_of_datatype , matrixRows, gpuHandle)
-              if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
+              if (wantDebug) successGPU = cuda_DeviceSynchronize()
               if (wantDebug) call obj%timer%stop("gpublas_gemm")
             endif ! .not. mat_vec_as_one_block
           else ! useGPU
@@ -1544,7 +1538,7 @@ subroutine tridiag_&
                                   ONE, a_dev, matrixRows, gpuHandle)
         call nvtxRangePop()
 
-        if (wantDebug) successGPU = cuda_DeviceSynchronize() ! PETERDEBUG
+        if (wantDebug) successGPU = cuda_DeviceSynchronize()
         if (wantDebug) call obj%timer%stop("gpublas_gemm")
 
       endif !.not. useGPU or .not. mat_vec_as_one_block
