@@ -975,23 +975,22 @@ subroutine tridiag_&
         endif ! (gpu_vendor() /= OPENMP_OFFLOAD_GPU)
 #endif
 
+        if (.not. mat_vec_as_one_block) then
 #ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        num = l_cols * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-            ("tridiag v_col -> v_col_dev", v_col_dev, 0_c_intptr_t, &
-                                                  v_col(1:max_local_cols), &
-                                                  1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-
+          my_stream = obj%gpu_setup%my_stream
+          num = l_cols * size_of_datatype
+          call gpu_memcpy_async_and_stream_synchronize &
+              ("tridiag v_col -> v_col_dev",  v_col_dev, 0_c_intptr_t, &
+                                              v_col(1:max_local_cols), &
+                                              1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else
-        call nvtxRangePush("memcpy H-D v_col->v_col_dev")
-        successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
-                      l_cols * size_of_datatype, gpuMemcpyHostToDevice)
-        call nvtxRangePop()
+          call nvtxRangePush("memcpy H-D v_col->v_col_dev")
+          successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
+                        l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+          call nvtxRangePop()
 #endif
-
-        check_memcpy_gpu("tridiag: v_col_dev", successGPU)
-
+          check_memcpy_gpu("tridiag: v_col_dev", successGPU)
+        endif ! .not. mat_vec_as_one_block
 
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
