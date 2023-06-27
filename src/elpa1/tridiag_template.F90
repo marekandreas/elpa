@@ -925,11 +925,13 @@ subroutine tridiag_&
     ! For cache efficiency, we use only the upper half of the matrix tiles for this,
     ! thus the result is partly in u_col(:) and partly in u_row(:)
 
-    call nvtxRangePush("cpu: set u_col,u_row=0")
-    u_col(1:l_cols) = 0
-    u_row(1:l_rows) = 0
-    call nvtxRangePop()
-
+    if (.not. useGPU) then
+      call nvtxRangePush("cpu: set u_col,u_row=0")
+      u_col(1:l_cols) = 0
+      u_row(1:l_rows) = 0
+      call nvtxRangePop()
+    endif
+    
     if (l_rows>0 .and. l_cols>0) then
       if (useGPU) then
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -1286,23 +1288,34 @@ subroutine tridiag_&
 
     endif  ! (l_rows>0 .and. l_cols>0)
 
-       ! Sum up all u_row(:) parts along rows and add them to the u_col(:) parts
-       ! on the processors containing the diagonal
-       ! This is only necessary if u_row has been calculated, i.e. if the
-       ! global tile size is smaller than the global remaining matrix
+    if (useGPU) then
+      if (l_rows==0) then
+        call nvtxRangePush("cpu: set u_col=0")
+        u_col(1:l_cols) = 0
+        call nvtxRangePop()
+      endif
+      if (l_cols==0 .or. mat_vec_as_one_block) then
+        call nvtxRangePush("cpu: set u_row=0")
+        u_row(1:l_rows) = 0
+        call nvtxRangePop()
+      endif
+    endif ! useGPU
 
-       if (tile_size < istep-1) then
+    ! Sum up all u_row(:) parts along rows and add them to the u_col(:) parts
+    ! on the processors containing the diagonal
+    ! This is only necessary if u_row has been calculated, i.e. if the
+    ! global tile size is smaller than the global remaining matrix
 
-         call nvtxRangePush("elpa_reduce_add_vectors")  
-         call elpa_reduce_add_vectors_&
-         &MATH_DATATYPE&
-         &_&
-         &PRECISION &
-         (obj, u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
-         mpi_comm_cols, istep-1, 1, nblk, max_threads)
-         call nvtxRangePop()
-
-       endif
+    if (tile_size < istep-1) then
+      call nvtxRangePush("elpa_reduce_add_vectors")  
+      call elpa_reduce_add_vectors_&
+      &MATH_DATATYPE&
+      &_&
+      &PRECISION &
+      (obj, u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
+      mpi_comm_cols, istep-1, 1, nblk, max_threads)
+      call nvtxRangePop()
+    endif
 
     ! Sum up all the u_col(:) parts, transpose u_col -> u_row
 
@@ -1322,7 +1335,7 @@ subroutine tridiag_&
       endif
     endif
 #endif /* WITH_MPI */
-
+    
     if (isSkewsymmetric) then
       call elpa_transpose_vectors_ss_&
       &MATH_DATATYPE&
