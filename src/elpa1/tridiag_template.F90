@@ -842,18 +842,6 @@ subroutine tridiag_&
 #endif
       endif
 
-#if defined(GPU_NEW)
-      if (useGPU) then      
-        !v_row_dev -> v_row
-        write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
-        call nvtxRangePush(nvtx_name)
-        successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)* &
-            size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
-        call nvtxRangePop()
-      endif ! useGPU  
-#endif /* GPU_NEW */
-
       if (.not. useGPU) then  
         call nvtxRangePush("scale v_row *= xf")
         ! Scale v_row and store Householder Vector for back transformation
