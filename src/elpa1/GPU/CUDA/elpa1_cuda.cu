@@ -231,7 +231,7 @@ __global__ void cuda_scale_set_one_store_v_row_double_kernel(double *a_dev, doub
     index_global += blockDim.x * gridDim.x;
   }
 
-  if (isOurProcessRow && tid==0)
+  if (isOurProcessRow && index_global - blockDim.x*gridDim.x == l_rows-1) // last element
     {
     v_row_dev[l_rows-1] = 1.0;
     }

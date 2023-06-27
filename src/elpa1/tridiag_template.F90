@@ -842,6 +842,18 @@ subroutine tridiag_&
 #endif
       endif
 
+#if defined(GPU_NEW)
+      if (useGPU) then      
+        !v_row_dev -> v_row
+        write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
+        call nvtxRangePush(nvtx_name)
+        successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)* &
+            size_of_datatype, gpuMemcpyDeviceToHost)
+        check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
+        call nvtxRangePop()
+      endif ! useGPU  
+#endif /* GPU_NEW */
+
       if (.not. useGPU) then  
         call nvtxRangePush("scale v_row *= xf")
         ! Scale v_row and store Householder Vector for back transformation
@@ -873,10 +885,10 @@ subroutine tridiag_&
         write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
         call nvtxRangePush(nvtx_name)
         successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)* &
-            size_of_datatype, gpuMemcpyDeviceToHost)
+        size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
         call nvtxRangePop()
-      endif ! useGPU  
+      endif ! useGPU
 #endif /* GPU_NEW */
 
       ! add tau after the end of actuall v_row, to be broadcasted with it
@@ -1581,18 +1593,20 @@ subroutine tridiag_&
   enddo ! main cycle over istep=na,3,-1
 
 #ifdef GPU_NEW
-  ! copy a_dev -> a_mat for backtransformation
-  num = matrixRows * matrixCols * size_of_datatype
+  if (useGPU) then
+    ! copy a_dev -> a_mat for backtransformation
+    num = matrixRows * matrixCols * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-  my_stream = obj%gpu_setup%my_stream
-  call gpu_memcpy_async_and_stream_synchronize &
-          ("tridiag a_dev -> a_mat", a_mat(1:matrixRows,1:matrixCols), 0_c_intptr_t, a_dev , &
-                                                1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
+    my_stream = obj%gpu_setup%my_stream
+    call gpu_memcpy_async_and_stream_synchronize &
+            ("tridiag a_dev -> a_mat", a_mat(1:matrixRows,1:matrixCols), 0_c_intptr_t, a_dev , &
+                                                  1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
 #else
-      successGPU = gpu_memcpy(int(loc(a_mat(1,1)),kind=c_intptr_t), a_dev, &
+    successGPU = gpu_memcpy(int(loc(a_mat(1,1)),kind=c_intptr_t), a_dev, &
                                 num, gpuMemcpyDeviceToHost)
 #endif
-      check_memcpy_gpu("tridiag: a_dev", successGPU)
+    check_memcpy_gpu("tridiag: a_dev", successGPU)
+  endif ! useGPU
 #endif /* GPU_NEW */
 
 #if COMPLEXCASE == 1
