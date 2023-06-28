@@ -44,9 +44,7 @@
 //
 //    This file was ported from the NVIDIA version of the component by A. Poeppl, Intel Corporation
 
-#ifndef ELPA_SYCL_IN_PROXY_APP
 #include "config-f90.h"
-#endif
 
 #include <CL/sycl.hpp>
 #include <stdlib.h>
@@ -59,11 +57,7 @@
 #include <optional>
 #include <type_traits>
 
-#ifndef ELPA_SYCL_IN_PROXY_APP
 #include "src/GPU/SYCL/syclCommon.hpp"
-#else
-#include "syclCommon.hpp"
-#endif
 
 // Detect complex number template arguments
 namespace {
@@ -78,13 +72,13 @@ inline void reduction_step(T *local_mem, sycl::nd_item<1> &it) {
   if constexpr (wg_size >= step && sg_size < step) {
     int constexpr half_step = step >> 1;
     local_mem[lId] += static_cast<T>(lId < half_step) * local_mem[lId + half_step];
-    it.barrier(sycl::access::fence_space::local_space);
+//    it.barrier(sycl::access::fence_space::local_space);
+    it.barrier();
   }
 }
 
 template <typename T, int wg_size, int sg_size>
 T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
-  it.barrier(sycl::access::fence_space::local_space);
   reduction_step<T, wg_size, sg_size, 1024>(local_mem, it);
   reduction_step<T, wg_size, sg_size,  512>(local_mem, it);
   reduction_step<T, wg_size, sg_size,  256>(local_mem, it);
@@ -101,71 +95,90 @@ T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
   return sycl::group_broadcast(it.get_group(), sg_added_res);
 }
 
-template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction=false>
+template <typename T, int wg_size, int sg_size>
 void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
   using local_buffer = sycl::local_accessor<T>;
-  using sf = sycl::access::fence_space;
 
   auto device = elpa::gpu::sycl::getDevice();
   auto &queue = elpa::gpu::sycl::getQueue();
 
-  int constexpr q_reserve_size = wg_size;
-
   queue.submit([&](sycl::handler &h) {
+    local_buffer q_s(sycl::range(nb+1), h);
+    local_buffer q_s_reserve(sycl::range(nb), h);
+
+    // For real numbers, using the custom reduction is still a lot faster, for complex ones, the SYCL one is better.
+    // And for the custom reduction we need the SLM.
+    sycl::range<1> r(0);
+    if constexpr (!is_complex_number<T>::value) {
+      r = sycl::range<1>(nb + 1);
+    }
+    local_buffer dotp_s(r, h);
+
     sycl::range<1> global_range(nev * nb);
     sycl::range<1> local_range(nb);
-
-    local_buffer q_reserve(sycl::range(q_reserve_size), h);
-    local_buffer q_s(sycl::range(nb+1), h);
-    local_buffer dotp_s(sycl::range(nb+1), h);
-
-    h.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(32)]] {
-      int tid = it.get_local_id(0);
-      int local_range = it.get_local_range(0);
+    h.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(sg_size)]]{
+      using sf = sycl::access::fence_space;
+      unsigned int tid = it.get_local_id(0);
+      unsigned int local_range = it.get_local_range(0);
+      auto g = it.get_group();
 
       int j = ncols;
-      int reserve_counter = q_reserve_size;
-      int q_off =     it.get_group(0) + ldq * (j + tid - 1);
-      int q_off_res = it.get_group(0) + ldq * (j       - 1);
+      int reserve_counter = wg_size + 2;
+      int q_off = (j + tid - 1) * ldq + it.get_group(0);
+      int q_off_res = (j - 1) * ldq + it.get_group(0);
       int h_off = tid + (j - 1) * nb;
 
       q_s[tid] = q[q_off];
 
       for (; j >= 1; j--) {
-        if (reserve_counter >= q_reserve_size) {
-          if (j - tid >= 1 && tid < q_reserve_size) {
-            q_reserve[tid] = q[q_off - 2 * tid * ldq];
+        // We can preload the q values into shared local memoory every X iterations
+        // instead of doing it in every iteration. This seems to save some time.
+        if (reserve_counter > sg_size) {
+          q_off_res = sycl::group_broadcast(g, q_off);
+          if (j - tid >= 1 && tid <= sg_size) {
+            q_s_reserve[tid] = q[q_off_res - tid * ldq];
           }
           reserve_counter = 0;
         }
 
+        // All work items use the same value of hh_tau. Be explicit about only loading it once,
+        // and broadcast it to the other work items in the group. (Also, in this loop,
+        // in continuation of the above, a q value from the reserve is consumed.
+        T hh_tau_jm1;
         if (tid == 0) {
-            q_s[tid] = q_reserve[reserve_counter];
+            q_s[tid] = q_s_reserve[reserve_counter];
+            hh_tau_jm1 = hh_tau[j-1];
         }
         reserve_counter++;
 
+        hh_tau_jm1 = sycl::group_broadcast(it.get_group(), hh_tau_jm1);
         T q_v2 = q_s[tid];
         T hh_h_off = hh[h_off];
-        T q_v2_hh_h_h_off;
+
+        // For Complex numbers, the native SYCL implementation of the reduction is faster than the hand-coded one. But for
+        // real numbers, there's still a significant advantage to using the hand-crafted solution. The correct variant is
+        // picked at template instantiation time.
         T dotp_res;
         if constexpr (is_complex_number<T>::value) {
-          q_v2_hh_h_h_off = q_v2 * std::conj(hh_h_off);
+          // I don't get it. Is it now faster or slower?!
+          //dotp_s[tid] = q_v2 * std::conj(hh_h_off); //hh_h_off;
+          //it.barrier(sf::local_space);
+          it.barrier();
+          dotp_res = sycl::reduce_over_group(g, q_v2 * std::conj(hh_h_off), sycl::plus<>());
+          //dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
         } else {
-          q_v2_hh_h_h_off = q_v2 * hh_h_off;
+          dotp_s[tid] = q_v2 * hh_h_off;
+          //it.barrier(sf::local_space);
+          it.barrier();
+          //dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
+          dotp_res = sycl::reduce_over_group(g, q_v2 * hh_h_off, sycl::plus<>());
         }
 
-        if constexpr (is_using_custom_reduction) {
-          dotp_s[tid] = q_v2_hh_h_h_off;
-          dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
-        } else {
-          dotp_res = sycl::reduce_over_group(it.get_group(), q_v2_hh_h_h_off, sycl::plus<>());
-        }
-
-        q_v2 -= dotp_res * hh_tau[j - 1] * hh_h_off;
+        q_v2 -= dotp_res * hh_tau_jm1 * hh_h_off;
         q_s[tid + 1] = q_v2;
 
         if ((j == 1) || (tid == it.get_local_range()[0] - 1)) {
-          q[q_off] = q_v2;
+           q[q_off] = q_v2;
         }
 
         q_off -= ldq;
