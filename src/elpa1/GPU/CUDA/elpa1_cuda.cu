@@ -154,8 +154,9 @@ __global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int
     i /= 2;
   }
 
+  //if (threadIdx.x==0) dot_prod_partial[blockIdx.x] += cache[0];
   if (threadIdx.x==0) atomicAdd(&aux1_dev[0], cache[0]);
-
+  
   if (tid==0)
     {
     if (isOurProcessRow) 
@@ -192,6 +193,9 @@ extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int 
   //double *dot_prod_partial_managed;
   //cudaMallocManaged(&dot_prod_dev, blocks*sizeof(double));  
 
+  //double *dot_prod_partial;
+  //cudaHostAlloc(&dot_prod_partial, sizeof(dot_prod_partial[0])*blocks, cudaHostAllocDefault);
+
 #ifdef WITH_GPU_STREAMS
   cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev);
 #else
@@ -201,6 +205,14 @@ extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int 
   if (cuerr != cudaSuccess){
     printf("Error in executing cuda_dot_product_and_assign_kernel: %s\n",cudaGetErrorString(cuerr));
   }
+
+/*
+  double dot_prod=0;
+  for (int i=0; i<blocks; i++)
+  {
+    dot_prod += dot_prod_partial[i];
+  }
+*/
 }
 
 //________________________________________________________________
@@ -260,7 +272,7 @@ extern "C" void cuda_scale_set_one_store_v_row_double_FromC(double *a_dev, doubl
 
   
 #ifdef WITH_GPU_STREAMS
-  cuda_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream);
+  cuda_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf);
 #else
   cuda_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock>>>(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf);
 #endif
@@ -272,16 +284,140 @@ extern "C" void cuda_scale_set_one_store_v_row_double_FromC(double *a_dev, doubl
 
 //________________________________________________________________
 
-__global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, int index, double value, double *d_vec_dev, int istep, int n_stored_vecs, int const isSkewsymmetric){
-  if (n_stored_vecs > 0){
-    a_dev[index] += value;
-    }
+__global__ void cuda_store_u_v_in_uv_vu_double_kernel(double *vu_stored_rows_dev, double *uv_stored_cols_dev, 
+                double *v_row_dev, double *u_row_dev, double *v_col_dev, double *u_col_dev, double vav_host,
+                int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, double conjg_tau){
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-    if (isSkewsymmetric) {
-      d_vec_dev[istep-1-1] = 0.0;
+/*
+  if (l_rows > 0) then
+    ! update vu_stored_rows
+    vu_stored_rows(1:l_rows,2*n_stored_vecs+1) = conjg_tau*v_row(1:l_rows)
+    vu_stored_rows(1:l_rows,2*n_stored_vecs+2) = 0.5*conjg_tau*vav*v_row(1:l_rows) - u_row(1:l_rows)
+  endif
+  if (l_cols > 0) then
+    ! update uv_stored_cols
+    uv_stored_cols(1:l_cols,2*n_stored_vecs+1) = 0.5*conjg_tau*vav*v_col(1:l_cols) - u_col(1:l_cols)
+    uv_stored_cols(1:l_cols,2*n_stored_vecs+2) = conjg_tau*v_col(1:l_cols)
+  endif
+*/
+
+  int i_row = tid;
+  while (i_row < l_rows) {
+    vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+0)] = conjg_tau*v_row_dev[i_row];
+    vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+1)] = 0.5*conjg_tau*vav_host*v_row_dev[i_row]-u_row_dev[i_row];
+    i_row += blockDim.x * gridDim.x;
+  }
+
+  int i_col = tid;
+  while (i_col < l_cols) {
+    uv_stored_cols_dev[i_col + max_local_cols*(2*n_stored_vecs+0)] = 0.5*conjg_tau*vav_host*v_col_dev[i_col]-u_col_dev[i_col];
+    uv_stored_cols_dev[i_col + max_local_cols*(2*n_stored_vecs+1)] = conjg_tau*v_col_dev[i_col];
+    i_col += blockDim.x * gridDim.x;
+  }
+
+
+}
+
+
+extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, 
+                double *v_row_dev, double *u_row_dev, double *v_col_dev, double *u_col_dev, double *vav_host_in,
+                int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, double *conjg_tau_in, cudaStream_t my_stream){
+  int l_rows = *l_rows_in;   
+  int l_cols = *l_cols_in;   
+  int n_stored_vecs  = *n_stored_vecs_in;
+  int max_local_rows = *max_local_rows_in;   
+  int max_local_cols = *max_local_cols_in;   
+  double conjg_tau = *conjg_tau_in;
+  double vav_host = *vav_host_in;
+
+  
+  int blocks = std::max((l_rows+1023)/1024, (l_cols+1023)/1024);
+  if (blocks==0) return;
+  blocks = std::min(blocks, 2147483647);
+  
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(1024,1,1);
+
+  
+#ifdef WITH_GPU_STREAMS
+  cuda_store_u_v_in_uv_vu_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev,
+                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_dev, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau);
+#else
+  cuda_store_u_v_in_uv_vu_double_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev,
+                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau);
+#endif
+  cudaError_t cuerr = cudaGetLastError();
+  if (cuerr != cudaSuccess){
+    printf("Error in executing cuda_store_u_v_in_uv_vu_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  }
+}
+
+//________________________________________________________________
+
+
+__global__ void cuda_update_matrix_element_add_double_kernel(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *a_dev, double *d_vec_dev, 
+                                                            int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric){
+  
+  const int threadsPerBlock = 1024;
+  __shared__ double cache[threadsPerBlock];
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
+
+/*
+      if (n_stored_vecs > 0) then
+        ! update a_mat (only one elememt!)
+        dot_prod = dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs), uv_stored_cols(l_cols,1:2*n_stored_vecs))
+        a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) + dot_prod
+      endif
+#if REALCASE == 1
+      if (isSkewsymmetric) then
+        d_vec(istep-1) = 0.0_rk
+      else
+        d_vec(istep-1) = a_mat(l_rows,l_cols)
+      endif
+#endif
+#if COMPLEXCASE == 1
+      d_vec(istep-1) = real(a_mat(l_rows,l_cols),kind=rk)
+#endif
+*/
+
+  if (threadIdx.x==0)
+    { 
+    if (isSkewsymmetric) 
+      d_vec_dev[istep-1-1] = 0;
+    else 
+      d_vec_dev[istep-1-1] = a_dev[(l_rows-1) + matrixRows*(l_cols-1)]; // set initial value // PETERDEBUG: move this to other kernel for thread safety
     }
-    else {
-      d_vec_dev[istep-1-1] = a_dev[index]; // (l_rows,l_cols)
+  if (n_stored_vecs > 0)
+    {
+
+    double temp = 0;
+    int index_n = tid;
+    while (index_n < 2*n_stored_vecs) 
+      {
+      temp += vu_stored_rows_dev[(l_rows-1)+max_local_rows*index_n] * uv_stored_cols_dev[(l_cols-1)+max_local_cols*index_n];
+      index_n += blockDim.x * gridDim.x;
+      }
+
+    // set the cache values
+    cache[threadIdx.x] = temp;
+    // synchronize threads in this block
+    __syncthreads();
+
+    // for reductions, threadsPerBlock must be a power of 2
+    int i = blockDim.x/2;
+    while (i > 0) 
+      {
+      if (threadIdx.x < i) cache[threadIdx.x] += cache[threadIdx.x + i];
+      __syncthreads();
+      i /= 2;
+      }
+
+    if (threadIdx.x==0) 
+      {
+      atomicAdd(&a_dev[(l_rows-1) + matrixRows*(l_cols-1)], cache[0]);
+      if (!isSkewsymmetric) atomicAdd(&d_vec_dev[istep-1-1], cache[0]);
+      }
     }
 /*
 #endif
@@ -291,21 +427,33 @@ __global__ void cuda_update_matrix_element_add_double_kernel(double *a_dev, int 
 */
 }
 
-extern "C" void cuda_update_matrix_element_add_double_FromC(double *a_dev, int *index_in, double *value_in, 
-                          double *d_vec_dev, int *istep_in, int *n_stored_vecs_in, int* isSkewsymmetric_in, cudaStream_t my_stream){
-  int index = *index_in;   
+
+extern "C" void cuda_update_matrix_element_add_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *a_dev, double *d_vec_dev, 
+                                                            int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in, 
+                                                            int* isSkewsymmetric_in, cudaStream_t my_stream){
+  int l_rows = *l_rows_in;   
+  int l_cols = *l_cols_in;
+  int matrixRows = *matrixRows_in;
+  int max_local_rows = *max_local_rows_in;
+  int max_local_cols = *max_local_cols_in;
   int istep = *istep_in;   
   int n_stored_vecs = *n_stored_vecs_in; 
   int isSkewsymmetric = *isSkewsymmetric_in;   
-  double value = *value_in;
 
-  dim3 blocks = dim3(1,1,1);
-  dim3 threadsPerBlock = dim3(1,1,1);
+  
+  int blocks = std::min((2*n_stored_vecs+1023)/1024, 32);
+  if (n_stored_vecs==0) blocks=1;
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(1024,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetric);
+  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                                  l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                                  isSkewsymmetric);
 #else
-  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock>>>(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetric);
+  cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, 
+                                                  l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, 
+                                                  isSkewsymmetric);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){

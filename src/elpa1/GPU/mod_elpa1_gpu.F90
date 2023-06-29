@@ -78,7 +78,6 @@ module elpa1_gpu
 #ifdef WITH_SYCL_GPU_VERSION
     call sycl_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
 #endif
-
   end subroutine
 
   subroutine gpu_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
@@ -100,35 +99,71 @@ module elpa1_gpu
 #ifdef WITH_SYCL_GPU_VERSION
     call sycl_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
 #endif
-
   end subroutine
 
-  subroutine gpu_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetric, my_stream)
+
+  subroutine gpu_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
+                                           v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host, &
+                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
+    use, intrinsic :: iso_c_binding
+    use precision
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols
+    real(kind=c_double), intent(in)     :: conjg_tau,vav_host
+    integer(kind=C_intptr_T)            :: vu_stored_rows_dev, uv_stored_cols_dev, &
+                                           v_row_dev, u_row_dev, v_col_dev, u_col_dev!, vav_dev
+    integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+    call cuda_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
+                                        v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host, &
+                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    call hip_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
+                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_dev, &
+                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+    call sycl_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
+                                        v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_dev, &
+                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
+#endif
+  end subroutine
+
+  
+  subroutine gpu_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                            l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                            isSkewsymmetric, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 #include "../../general/precision_kinds.F90"
 
-    integer(kind=C_INT), intent(in)     :: index, istep, n_stored_vecs
+    integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs
     logical, intent(in)                 :: isSkewsymmetric
-    ! MATH_DATATYPE(kind=rck), intent(in) :: value
-    real(kind=c_double), intent(in)     :: value
-    integer(kind=C_intptr_T)            :: a_dev, d_vec_dev
+    integer(kind=C_intptr_T)            :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
     integer(kind=C_INT)                 :: isSkewsymmetricInt=0
 
     if (isSkewsymmetric) isSkewsymmetricInt = 1
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream)
+    call cuda_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                               isSkewsymmetricInt, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_update_matrix_element_add_double (a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream)
+    call hip_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                              isSkewsymmetricInt, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_matrix_element_add_double(a_dev, index, value, d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream)
+    call sycl_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                               isSkewsymmetricInt, my_stream)
 #endif
-
   end subroutine
 
   subroutine gpu_update_array_element_double(array_dev, index, value, my_stream) !< Update one element of device array: array_dev[index] = value
@@ -151,7 +186,6 @@ module elpa1_gpu
 #ifdef WITH_SYCL_GPU_VERSION
     call sycl_update_array_element_double(array_dev, index, value, my_stream)
 #endif
-
   end subroutine
 
 end module

@@ -65,30 +65,48 @@ module elpa1_cuda
   end interface
 
   interface
-  subroutine cuda_scale_set_one_store_v_row_double_c(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream) &
+    subroutine cuda_scale_set_one_store_v_row_double_c(a_dev, v_row_dev, & 
+                                                      l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream) &
          bind(C, name="cuda_scale_set_one_store_v_row_double_FromC")
-    use, intrinsic :: iso_c_binding
-    implicit none
+      use, intrinsic :: iso_c_binding
+      implicit none
 
-    integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, isOurProcessRow
-    real(kind=c_double), intent(in)     :: xf
-    integer(kind=C_intptr_T), value     :: a_dev, v_row_dev 
-    integer(kind=c_intptr_t), value     :: my_stream
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, isOurProcessRow
+      real(kind=c_double), intent(in)     :: xf
+      integer(kind=C_intptr_T), value     :: a_dev, v_row_dev 
+      integer(kind=c_intptr_t), value     :: my_stream
 
-  end subroutine 
-end interface
+    end subroutine 
+  end interface
 
   interface
-    subroutine cuda_update_matrix_element_add_double_c(a_dev, index, value, &
-             d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream) &
+    subroutine cuda_store_u_v_in_uv_vu_double_c(vu_stored_rows_dev, uv_stored_cols_dev, & 
+                                          v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host, &
+                                          l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream) &
+         bind(C, name="cuda_store_u_v_in_uv_vu_double_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols
+      real(kind=c_double), intent(in)     :: conjg_tau,vav_host
+      integer(kind=C_intptr_T), value     :: vu_stored_rows_dev, uv_stored_cols_dev, &
+                                             v_row_dev, u_row_dev, v_col_dev, u_col_dev!, vav_dev
+      integer(kind=c_intptr_t), value     :: my_stream
+
+    end subroutine 
+  end interface
+
+  interface
+    subroutine cuda_update_matrix_element_add_double_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                                l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                                isSkewsymmetricInt, my_stream) &
              bind(C, name="cuda_update_matrix_element_add_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=C_INT), intent(in)     :: index, istep, n_stored_vecs, isSkewsymmetricInt
-      ! MATH_DATATYPE(kind=rck), intent(in) :: value
-      real(kind=c_double), intent(in)     :: value
-      integer(kind=C_intptr_T), value     :: a_dev, d_vec_dev
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, &
+                                             istep, n_stored_vecs, isSkewsymmetricInt
+      integer(kind=C_intptr_T), value     :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
@@ -137,22 +155,42 @@ end interface
 #endif
     end subroutine
 
-    subroutine cuda_update_matrix_element_add_double(a_dev, index, value, &
-            d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream)
+    subroutine cuda_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
+                                              v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host, &
+                                              l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols
+      real(kind=c_double), intent(in)     :: conjg_tau,vav_host
+      integer(kind=C_intptr_T)            :: vu_stored_rows_dev, uv_stored_cols_dev, & 
+                                             v_row_dev, u_row_dev, v_col_dev, u_col_dev!, vav_dev
+      integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_store_u_v_in_uv_vu_double_c(vu_stored_rows_dev, uv_stored_cols_dev, & 
+                                            v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host, &
+                                            l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
+#endif
+    end subroutine
+
+    subroutine cuda_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                                l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                                isSkewsymmetricInt, my_stream)
       use, intrinsic :: iso_c_binding
 !      use precision
       implicit none
 !#include "../../../general/precision_kinds.F90"
 
-      integer(kind=C_INT), intent(in)     :: index, istep, n_stored_vecs, isSkewsymmetricInt
-      ! MATH_DATATYPE(kind=rck), intent(in) :: value
-      real(kind=c_double), intent(in)     :: value
-      integer(kind=C_intptr_T)            :: a_dev, d_vec_dev
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, &
+                                             istep, n_stored_vecs, isSkewsymmetricInt
+      integer(kind=C_intptr_T)            :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_update_matrix_element_add_double_c(a_dev, index, value, &
-            d_vec_dev, istep, n_stored_vecs, isSkewsymmetricInt, my_stream)
+      call cuda_update_matrix_element_add_double_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                                l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                                isSkewsymmetricInt, my_stream)
 #endif
     end subroutine
 

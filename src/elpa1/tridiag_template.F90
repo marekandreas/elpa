@@ -170,7 +170,7 @@ subroutine tridiag_&
   character(len=32)                             :: max_stored_uv_string
   character(len=100)                            :: nvtx_name
 !#ifdef MORE_GPU_COMPUTE
-  integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux2_dev
+  integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux2_dev, vav_dev, dot_prod_dev
 !#endif
 #if COMPLEXCASE == 1
   complex(kind=rck)                             :: aux3(1)
@@ -474,6 +474,11 @@ subroutine tridiag_&
       successGPU = gpu_host_register(int(loc(aux1),kind=c_intptr_t),num,&
                   gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: aux1", successGPU)
+
+      num = 1 * size_of_datatype
+      successGPU = gpu_host_register(int(loc(vav),kind=c_intptr_t),num,&
+                  gpuHostRegisterDefault)
+      check_host_register_gpu("tridiag: vav", successGPU)
 #endif
     endif ! gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU
   else ! useGPU
@@ -541,6 +546,12 @@ subroutine tridiag_&
 
     successGPU = gpu_malloc(aux1_dev, 2 * size_of_datatype)
     check_alloc_gpu("tridiag: aux1_dev", successGPU)
+
+    successGPU = gpu_malloc(vav_dev, 1 * size_of_datatype)
+    check_alloc_gpu("tridiag: vav_dev", successGPU)
+
+    successGPU = gpu_malloc(dot_prod_dev, 1 * size_of_datatype)
+    check_alloc_gpu("tridiag: dot_prod_dev", successGPU)
 #endif
 
 #ifdef MORE_GPU_COMPUTE
@@ -551,7 +562,7 @@ subroutine tridiag_&
     check_alloc_gpu("tridiag: aux1_dev", successGPU)
 
     successGPU = gpu_malloc(aux2_dev, 2 * size_of_datatype)
-    check_alloc_gpu("tridiag: aux1_dev", successGPU)
+    check_alloc_gpu("tridiag: aux2_dev", successGPU)
 #endif
   endif !useGPU
 
@@ -1354,12 +1365,41 @@ subroutine tridiag_&
         return
       endif
     endif ! isSkewsymmetric
+    
+#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL)
+    ! PETERDEBUG: this part could only be useful if we use NCCL for Allreduce of vav_dev
+    if (useGPU) then
+      call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
+      successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
+                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: v_col_dev", successGPU)
+      call nvtxRangePop()
+
+      call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
+      successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
+                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+      call nvtxRangePop()
+
+      gpublas_SetPointerMode(gpuHandle, gpublasPointerModeDevice)
+
+      call nvtxRangePush("kernel: gpublas_PRECISION_DOT")
+      gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
+      call gpublas_PRECISION_DOT(gpuHandle, l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev) ! PETERDEBUG: change it to my own dot-kernel?
+      call nvtxRangePop()
+
+      gpublas_SetPointerMode(gpuHandle, gpublasPointerModeHost)
+      
+    endif ! useGPU
+#endif /* GPU_NEW */
 
     ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
-    vav = 0 ! x=0
-    call nvtxRangePush("cpu_dot v_col*u_col")
-    if (l_cols>0) vav = dot_product(v_col(1:l_cols), u_col(1:l_cols))
-    call nvtxRangePop()
+!    if (.not. useGPU) then
+      vav = 0 ! x=0
+      call nvtxRangePush("cpu_dot v_col*u_col")
+      if (l_cols>0) vav = dot_product(v_col(1:l_cols), u_col(1:l_cols))
+      call nvtxRangePop()
+!    endif
 
 #ifdef WITH_MPI
     if (useNonBlockingCollectivesCols) then
@@ -1378,7 +1418,7 @@ subroutine tridiag_&
 
     ! store u and v in the matrices U and V
     ! these matrices are stored combined in one here
-      
+
     call nvtxRangePush("store u,v in U,V") ! ??? this can be done in parallel with copying to GPU ?
 #if REALCASE == 1
     conjg_tau = tau(istep)
@@ -1398,45 +1438,45 @@ subroutine tridiag_&
     endif
     call nvtxRangePop()
 
-#ifdef GPU_NEW     
+#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
     if (useGPU) then
-      ! update vu_stored_rows_dev
-      offset_dev = ((1-1) + max_local_rows*(2*n_stored_vecs+1-1)) * size_of_datatype
-      num = max_local_rows * 2 * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-      my_stream = obj%gpu_setup%my_stream
-      call gpu_memcpy_async_and_stream_synchronize &
-            ("tridiag vu_stored_rows -> vu_stored_rows_dev", vu_stored_rows_dev, offset_dev, &
-                                        vu_stored_rows(1:max_local_rows,(2*n_stored_vecs+1):(2*n_stored_vecs+2), &
-                                        1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else
-      call nvtxRangePush("memcpy H-D vu_stored_rows->vu_stored_rows_dev")  ! ??? optimize to two smaller l_rows copies instead of one max_local_rows*2
-      successGPU = gpu_memcpy(vu_stored_rows_dev+offset_dev, int(loc(vu_stored_rows(1,2*n_stored_vecs+1)),kind=c_intptr_t), &
-                                num, gpuMemcpyHostToDevice)
+      !!! this can be copied in async manner with streams
+      call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
+      successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
+                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: v_col_dev", successGPU)
       call nvtxRangePop()
-#endif
-      check_memcpy_gpu("tridiag: vu_stored_rows_dev", successGPU)
 
-      ! update uv_stored_cols_dev
-      offset_dev = ((1-1) + max_local_cols*(2*n_stored_vecs+1-1)) * size_of_datatype
-      num = max_local_cols * 2 * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-      my_stream = obj%gpu_setup%my_stream
-      call gpu_memcpy_async_and_stream_synchronize &
-            ("tridiag uv_stored_cols -> uv_stored_cols_dev", uv_stored_cols_dev, offset_dev, &
-                                        uv_stored_cols(1:max_local_cols,(2*n_stored_vecs+1):(2*n_stored_vecs+2)), &
-                                        1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else
-      call nvtxRangePush("memcpy H-D uv_stored_cols_dev->uv_stored_cols")  
-      successGPU = gpu_memcpy(uv_stored_cols_dev+offset_dev, int(loc(uv_stored_cols(1,2*n_stored_vecs+1)),kind=c_intptr_t), &
-                                num, gpuMemcpyHostToDevice)
+      call nvtxRangePush("memcpy new-2 H-D u_row->u_row_dev")
+      successGPU = gpu_memcpy(u_row_dev, int(loc(u_row(1)),kind=c_intptr_t), &
+                    l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: u_row_dev", successGPU)
       call nvtxRangePop()
-#endif
-      check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
+
+      call nvtxRangePush("memcpy new-2 H-D v_row->v_row_dev")
+      successGPU = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
+                    l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: v_row_dev", successGPU)
+      call nvtxRangePop()
+
+      call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
+      successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
+                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+      call nvtxRangePop()
+
+      ! kernel: update vu_stored_rows_dev, uv_stored_cols
+      ! then cpu's "store u,v in U,V" can be deleted. But we should take care of dot_prod below, where vu_stored_rows and uv_stored_cols are used
+      call nvtxRangePush("kernel gpu_store_u_v_in_uv_vu")
+      call gpu_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, &
+                                         v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav, &
+                                         l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, conjg_tau, my_stream)
+      call nvtxRangePop()
     endif ! useGPU
-#endif /* GPU_NEW */   
+#endif /* GPU_NEW */
 
-    ! We have calculated another Hauseholder Vector, number of implicitly stored increased
+
+    ! We have calculated another Householder Vector, number of implicitly stored increased
     n_stored_vecs = n_stored_vecs+1
 
     ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
@@ -1548,22 +1588,19 @@ subroutine tridiag_&
 
     if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
 
-      dot_prod = 0.0_rk
-      if (n_stored_vecs > 0) then
-        dot_prod = dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs),uv_stored_cols(l_cols,1:2*n_stored_vecs))
-      endif
-
       if (useGPU) then
 #if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
         my_stream = obj%gpu_setup%my_stream
         call nvtxRangePush("kernel: gpu_update_matrix_element_add")
-        call gpu_update_matrix_element_add_double(a_dev, (l_rows-1) + matrixRows*(l_cols-1), dot_prod, &
-                                                  d_vec_dev, istep, n_stored_vecs, isSkewsymmetric, my_stream) ! double -> PRECISION
+        call gpu_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                              isSkewsymmetric, my_stream) ! double -> PRECISION
         call nvtxRangePop()
 #endif
       else ! useGPU
         if (n_stored_vecs > 0) then
           ! update a_mat (only one elememt!)
+          dot_prod = dot_product(vu_stored_rows(l_rows,1:2*n_stored_vecs), uv_stored_cols(l_cols,1:2*n_stored_vecs))
           a_mat(l_rows,l_cols) = a_mat(l_rows,l_cols) + dot_prod
         endif
 #if REALCASE == 1
@@ -1775,6 +1812,12 @@ subroutine tridiag_&
 
     successGPU = gpu_free(aux1_dev)
     check_dealloc_gpu("tridiag: aux1_dev", successGPU)
+
+    successGPU = gpu_free(vav_dev)
+    check_dealloc_gpu("tridiag: vav_dev", successGPU)
+
+    successGPU = gpu_free(dot_prod_dev)
+    check_dealloc_gpu("tridiag: dot_prod_dev", successGPU)
 #endif
   endif ! useGPU
 
@@ -1888,6 +1931,9 @@ subroutine tridiag_&
 
       successGPU = gpu_host_unregister(int(loc(aux1),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: aux1", successGPU)
+
+      successGPU = gpu_host_unregister(int(loc(vav),kind=c_intptr_t))
+      check_host_unregister_gpu("tridiag: vav", successGPU)
 #endif
     endif
 #endif
