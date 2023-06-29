@@ -1419,24 +1419,26 @@ subroutine tridiag_&
     ! store u and v in the matrices U and V
     ! these matrices are stored combined in one here
 
-    call nvtxRangePush("store u,v in U,V") ! ??? this can be done in parallel with copying to GPU ?
 #if REALCASE == 1
     conjg_tau = tau(istep)
 #endif
 #if COMPLEXCASE == 1
     conjg_tau = conjg(tau(istep))
 #endif
-    if (l_rows > 0) then
-      ! update vu_stored_rows
-      vu_stored_rows(1:l_rows,2*n_stored_vecs+1) = conjg_tau*v_row(1:l_rows)
-      vu_stored_rows(1:l_rows,2*n_stored_vecs+2) = 0.5*conjg_tau*vav*v_row(1:l_rows) - u_row(1:l_rows)
-    endif
-    if (l_cols > 0) then
-      ! update uv_stored_cols
-      uv_stored_cols(1:l_cols,2*n_stored_vecs+1) = 0.5*conjg_tau*vav*v_col(1:l_cols) - u_col(1:l_cols)
-      uv_stored_cols(1:l_cols,2*n_stored_vecs+2) = conjg_tau*v_col(1:l_cols)
-    endif
-    call nvtxRangePop()
+    if (.not. useGPU) then
+      call nvtxRangePush("store u,v in U,V") ! ??? this can be done in parallel with copying to GPU ?
+      if (l_rows > 0) then
+        ! update vu_stored_rows
+        vu_stored_rows(1:l_rows,2*n_stored_vecs+1) = conjg_tau*v_row(1:l_rows)
+        vu_stored_rows(1:l_rows,2*n_stored_vecs+2) = 0.5*conjg_tau*vav*v_row(1:l_rows) - u_row(1:l_rows)
+      endif
+      if (l_cols > 0) then
+        ! update uv_stored_cols
+        uv_stored_cols(1:l_cols,2*n_stored_vecs+1) = 0.5*conjg_tau*vav*v_col(1:l_cols) - u_col(1:l_cols)
+        uv_stored_cols(1:l_cols,2*n_stored_vecs+2) = conjg_tau*v_col(1:l_cols)
+      endif
+      call nvtxRangePop()
+    endif ! .not. useGPU
 
 #if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
     if (useGPU) then
