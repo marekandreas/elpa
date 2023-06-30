@@ -539,8 +539,8 @@ print *,"Device pointer + REDIST"
    ! 2. redistribute aIntern_dummy to aIntern
 
 #ifdef WITH_GPU_STREAMS
-   print *, "elpa2_template: not yet implemented"
-   stop 1
+   !print *, "elpa2_template: not yet implemented"
+   !stop 1
 #endif
 
    successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &

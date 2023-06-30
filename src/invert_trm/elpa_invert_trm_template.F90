@@ -160,7 +160,7 @@
 
   call obj%get("gpu_invert_trm",gpu_invert_trm,error)
   if (error .ne. ELPA_OK) then
-    print *,"ELPA_INVERT_TRM: Problem getting option for gpu_cholesky. Aborting..."
+    print *,"ELPA_INVERT_TRM: Problem getting option for gpu_invert_trm. Aborting..."
     stop 1
   endif
 
@@ -334,7 +334,7 @@
     successGPU = gpu_host_register(int(loc(a),kind=c_intptr_t), &
                     matrixRows*matrixCols * size_of_datatype,&
                     gpuHostRegisterDefault)
-    check_host_register_gpu("elpa_cholesky: a", successGPU)
+    check_host_register_gpu("elpa_invert_trm: a", successGPU)
 #endif
 #else /* DEVICE_POINTER */
     ! associate with a_dev
@@ -346,7 +346,7 @@
     successGPU = gpu_host_register(int(loc(a_tmp),kind=c_intptr_t), &
                     matrixRows*matrixCols * size_of_datatype,&
                     gpuHostRegisterDefault)
-    check_host_register_gpu("elpa_cholesky: a_tmp", successGPU)
+    check_host_register_gpu("elpa_invert_trm: a_tmp", successGPU)
 #endif
 #endif /* DEVICE_POINTER */
 
@@ -392,17 +392,17 @@
     successGPU = gpu_host_register(int(loc(tmp1),kind=c_intptr_t), &
                     nblk*nblk * size_of_datatype,&
                     gpuHostRegisterDefault)
-    check_host_register_gpu("elpa_cholesky: tmp1", successGPU)
+    check_host_register_gpu("elpa_invert_trm: tmp1", successGPU)
 
     successGPU = gpu_host_register(int(loc(tmat1),kind=c_intptr_t), &
                     l_rows*nblk * size_of_datatype,&
                     gpuHostRegisterDefault)
-    check_host_register_gpu("elpa_cholesky: tmat1", successGPU)
+    check_host_register_gpu("elpa_invert_trm: tmat1", successGPU)
 
     successGPU = gpu_host_register(int(loc(tmat2),kind=c_intptr_t), &
                     nblk * l_cols * size_of_datatype,&
                     gpuHostRegisterDefault)
-    check_host_register_gpu("elpa_cholesky: tmat1", successGPU)
+    check_host_register_gpu("elpa_invert_trm: tmat1", successGPU)
 
   endif
 #endif
@@ -744,6 +744,7 @@
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
           my_stream = obj%gpu_setup%my_stream
+          !TODO Streams
           call gpu_copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
         else
 #ifndef DEVICE_POINTER
@@ -1000,13 +1001,13 @@
 
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_host_unregister(int(loc(a),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_cholesky: a", successGPU)
+    check_host_unregister_gpu("elpa_invert_trm: a", successGPU)
 #endif
 
 #else /* DEVICE_POINTER */
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_cholesky: a_tmp", successGPU)
+    check_host_unregister_gpu("elpa_invert_trm: a_tmp", successGPU)
 #endif
 
     deallocate(a_tmp, stat=istat, errmsg=errorMessage)
@@ -1023,13 +1024,13 @@
 #ifdef WITH_GPU_STREAMS
   if (useGPU) then
     successGPU = gpu_host_unregister(int(loc(tmp1),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_cholesky: tmp1", successGPU)
+    check_host_unregister_gpu("elpa_invert_trm: tmp1", successGPU)
 
     successGPU = gpu_host_unregister(int(loc(tmat1),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_cholesky: tmat1", successGPU)
+    check_host_unregister_gpu("elpa_invert_trm: tmat1", successGPU)
 
     successGPU = gpu_host_unregister(int(loc(tmat2),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_cholesky: tmat2", successGPU)
+    check_host_unregister_gpu("elpa_invert_trm: tmat2", successGPU)
   endif
 #endif
 
