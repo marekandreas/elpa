@@ -476,7 +476,7 @@ module mod_check_for_gpu
             success = nccl_group_end()
             if (.not.success) then
               print *,"Error in setting up nccl_group_end!"
-              stop 1
+              stop 2
             endif
 
             obj%gpu_setup%ccl_comm_rows = ccl_comm_rows
@@ -519,7 +519,7 @@ module mod_check_for_gpu
             success = nccl_group_end()
             if (.not.success) then
               print *,"Error in setting up nccl_group_end!"
-              stop 1
+              stop 3
             endif
 
             obj%gpu_setup%ccl_comm_cols = ccl_comm_cols

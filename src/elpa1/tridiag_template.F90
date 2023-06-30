@@ -58,6 +58,7 @@
 !#define GPU_OLD
 
 #undef MORE_GPU_COMPUTE
+!#undef WITH_NVIDIA_NCCL
 
 #undef SAVE_MATR
 #ifdef DOUBLE_PRECISION_REAL
@@ -125,6 +126,8 @@ subroutine tridiag_&
   integer(kind=ik), intent(in)                  :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
   logical, intent(in)                           :: useGPU, wantDebug
   logical, intent(in)                           :: isSkewsymmetric
+  
+  logical                                       :: useCCL=.false.
 
   MATH_DATATYPE(kind=rck), intent(out)          :: tau(na)
 #ifdef USE_ASSUMED_SIZE
@@ -170,7 +173,7 @@ subroutine tridiag_&
   character(len=32)                             :: max_stored_uv_string
   character(len=100)                            :: nvtx_name
 !#ifdef MORE_GPU_COMPUTE
-  integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux2_dev, vav_dev, dot_prod_dev
+  integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux2_dev, vav_dev, vav_host_or_dev, dot_prod_dev
 !#endif
 #if COMPLEXCASE == 1
   complex(kind=rck)                             :: aux3(1)
@@ -224,12 +227,22 @@ subroutine tridiag_&
 
   integer(kind=c_intptr_t)                      :: gpuHandle, my_stream
 #ifdef WITH_NVIDIA_NCCL
-  integer(kind=c_intptr_t)                      :: ccl_comm_rows
+  integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
 #endif
   integer(kind=c_int) :: pointerMode
 
   integer(kind=ik)                              :: string_length
-  
+
+#if defined (WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
+  successGPU = cuda_stream_create(obj%gpu_setup%my_stream)
+  if (.not.(successGPU)) then
+    print *,"Cannot create gpu stream handle"
+  endif
+  my_stream = obj%gpu_setup%my_stream
+
+  if (useGPU) useCCL = .true.
+#endif
+
   string_length = 32
   call get_environment_variable("ELPA_max_stored_uv", max_stored_uv_string, string_length, istat)
 
@@ -1366,7 +1379,7 @@ subroutine tridiag_&
       endif
     endif ! isSkewsymmetric
     
-#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL)
+#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
     ! PETERDEBUG: this part could only be useful if we use NCCL for Allreduce of vav_dev
     if (useGPU) then
       call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
@@ -1381,27 +1394,27 @@ subroutine tridiag_&
       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
       call nvtxRangePop()
 
-      gpublas_SetPointerMode(gpuHandle, gpublasPointerModeDevice)
+      call gpublas_SetPointerMode(gpuHandle, gpublasPointerModeDevice)
 
       call nvtxRangePush("kernel: gpublas_PRECISION_DOT")
       gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
       call gpublas_PRECISION_DOT(gpuHandle, l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev) ! PETERDEBUG: change it to my own dot-kernel?
       call nvtxRangePop()
 
-      gpublas_SetPointerMode(gpuHandle, gpublasPointerModeHost)
+      call gpublas_SetPointerMode(gpuHandle, gpublasPointerModeHost)
       
     endif ! useGPU
 #endif /* GPU_NEW */
 
     ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
-!    if (.not. useGPU) then
+    if (.not. useGPU .or. (useGPU .and. .not. useCCL)) then
       vav = 0 ! x=0
       call nvtxRangePush("cpu_dot v_col*u_col")
       if (l_cols>0) vav = dot_product(v_col(1:l_cols), u_col(1:l_cols))
       call nvtxRangePop()
-!    endif
+    endif
 
-#ifdef WITH_MPI
+#if defined(WITH_MPI) && !defined(WITH_NVIDIA_NCCL) 
     if (useNonBlockingCollectivesCols) then
       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
       call mpi_iallreduce(MPI_IN_PLACE, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
@@ -1414,7 +1427,33 @@ subroutine tridiag_&
               mpierr)
       if (wantDebug) call obj%timer%stop("mpi_communication")
     endif
-#endif /* WITH_MPI */
+#endif /* defined(WITH_MPI) && !defined(WITH_NVIDIA_NCCL) */
+
+#ifdef WITH_NVIDIA_NCCL
+    if (useGPU) then
+      ! WITH_NVIDIA_NCCL should be renamed to WITH_GPU_CCL
+      ! we need a logical flag like useCCL
+      ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+      
+      successGPU = nccl_group_start() 
+      if (.not.success) then 
+        print *,"Error in setting up nccl_group_start!" 
+        stop 1
+      endif 
+
+      successGPU = nccl_Allreduce(vav_dev, vav_dev, int(1, kind=c_size_t), ncclDouble, ncclSum, ccl_comm_cols, my_stream)
+      if (.not.successGPU) then
+        print *,"Error in nccl_allreduce"
+        stop 1
+      endif
+      successGPU = nccl_group_end()
+      if (.not.successGPU) then
+        print *,"Error in setting up nccl_group_end!"
+        stop 1
+      endif
+
+    endif
+#endif /* WITH_NVIDIA_NCCL */
 
     ! store u and v in the matrices U and V
     ! these matrices are stored combined in one here
@@ -1426,7 +1465,7 @@ subroutine tridiag_&
     conjg_tau = conjg(tau(istep))
 #endif
     if (.not. useGPU) then
-      call nvtxRangePush("store u,v in U,V") ! ??? this can be done in parallel with copying to GPU ?
+      call nvtxRangePush("store u,v in U,V")
       if (l_rows > 0) then
         ! update vu_stored_rows
         vu_stored_rows(1:l_rows,2*n_stored_vecs+1) = conjg_tau*v_row(1:l_rows)
@@ -1442,12 +1481,20 @@ subroutine tridiag_&
 
 #if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
     if (useGPU) then
-      !!! this can be copied in async manner with streams
+      !!! PETERDEBUG: this can be copied in async manner with streams?
+#if !defined(WITH_NVIDIA_NCCL)
       call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
       successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
                     l_cols * size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_gpu("tridiag: v_col_dev", successGPU)
       call nvtxRangePop()
+
+      call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
+      successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
+                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+      call nvtxRangePop()
+#endif
 
       call nvtxRangePush("memcpy new-2 H-D u_row->u_row_dev")
       successGPU = gpu_memcpy(u_row_dev, int(loc(u_row(1)),kind=c_intptr_t), &
@@ -1461,17 +1508,18 @@ subroutine tridiag_&
       check_memcpy_gpu("tridiag: v_row_dev", successGPU)
       call nvtxRangePop()
 
-      call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
-      successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
-                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("tridiag: u_col_dev", successGPU)
-      call nvtxRangePop()
+
 
       ! kernel: update vu_stored_rows_dev, uv_stored_cols
       ! then cpu's "store u,v in U,V" can be deleted. But we should take care of dot_prod below, where vu_stored_rows and uv_stored_cols are used
       call nvtxRangePush("kernel gpu_store_u_v_in_uv_vu")
+#ifdef WITH_NVIDIA_NCCL
+      vav_host_or_dev = vav_dev
+#else
+      vav_host_or_dev = int(loc(vav),kind=c_intptr_t)
+#endif      
       call gpu_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, &
-                                         v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav, &
+                                         v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, &
                                          l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, conjg_tau, my_stream)
       call nvtxRangePop()
     endif ! useGPU
@@ -1951,6 +1999,12 @@ subroutine tridiag_&
   deallocate(aux, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: aux", istat, errorMessage)
 #endif
+
+#if defined (WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
+  success = cuda_stream_destroy(obj%gpu_setup%my_stream)
+#endif
+
+!#define WITH_NVIDIA_NCCL /* PETERDEBUG */
 
   call obj%timer%stop("tridiag_&
   &MATH_DATATYPE&

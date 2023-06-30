@@ -285,7 +285,7 @@ extern "C" void cuda_scale_set_one_store_v_row_double_FromC(double *a_dev, doubl
 //________________________________________________________________
 
 __global__ void cuda_store_u_v_in_uv_vu_double_kernel(double *vu_stored_rows_dev, double *uv_stored_cols_dev, 
-                double *v_row_dev, double *u_row_dev, double *v_col_dev, double *u_col_dev, double vav_host,
+                double *v_row_dev, double *u_row_dev, double *v_col_dev, double *u_col_dev, double* vav_host_or_dev,
                 int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, double conjg_tau){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
@@ -301,17 +301,18 @@ __global__ void cuda_store_u_v_in_uv_vu_double_kernel(double *vu_stored_rows_dev
     uv_stored_cols(1:l_cols,2*n_stored_vecs+2) = conjg_tau*v_col(1:l_cols)
   endif
 */
+  double vav = vav_host_or_dev[0];
 
   int i_row = tid;
   while (i_row < l_rows) {
     vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+0)] = conjg_tau*v_row_dev[i_row];
-    vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+1)] = 0.5*conjg_tau*vav_host*v_row_dev[i_row]-u_row_dev[i_row];
+    vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+1)] = 0.5*conjg_tau*vav*v_row_dev[i_row]-u_row_dev[i_row];
     i_row += blockDim.x * gridDim.x;
   }
 
   int i_col = tid;
   while (i_col < l_cols) {
-    uv_stored_cols_dev[i_col + max_local_cols*(2*n_stored_vecs+0)] = 0.5*conjg_tau*vav_host*v_col_dev[i_col]-u_col_dev[i_col];
+    uv_stored_cols_dev[i_col + max_local_cols*(2*n_stored_vecs+0)] = 0.5*conjg_tau*vav*v_col_dev[i_col]-u_col_dev[i_col];
     uv_stored_cols_dev[i_col + max_local_cols*(2*n_stored_vecs+1)] = conjg_tau*v_col_dev[i_col];
     i_col += blockDim.x * gridDim.x;
   }
@@ -321,7 +322,7 @@ __global__ void cuda_store_u_v_in_uv_vu_double_kernel(double *vu_stored_rows_dev
 
 
 extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, 
-                double *v_row_dev, double *u_row_dev, double *v_col_dev, double *u_col_dev, double *vav_host_in,
+                double *v_row_dev, double *u_row_dev, double *v_col_dev, double *u_col_dev, double *vav_host_or_dev,
                 int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, double *conjg_tau_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
@@ -329,7 +330,7 @@ extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev,
   int max_local_rows = *max_local_rows_in;   
   int max_local_cols = *max_local_cols_in;   
   double conjg_tau = *conjg_tau_in;
-  double vav_host = *vav_host_in;
+  //double vav_host = *vav_host_in;
 
   
   int blocks = std::max((l_rows+1023)/1024, (l_cols+1023)/1024);
@@ -342,10 +343,10 @@ extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev,
   
 #ifdef WITH_GPU_STREAMS
   cuda_store_u_v_in_uv_vu_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev,
-                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_dev, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau);
+                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau);
 #else
   cuda_store_u_v_in_uv_vu_double_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev,
-                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau);
+                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){

@@ -103,31 +103,31 @@ module elpa1_gpu
 
 
   subroutine gpu_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
-                                           v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host, &
+                                           v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, &
                                            l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 
     integer(kind=C_INT), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols
-    real(kind=c_double), intent(in)     :: conjg_tau,vav_host
+    real(kind=c_double), intent(in)     :: conjg_tau !,vav_host
     integer(kind=C_intptr_T)            :: vu_stored_rows_dev, uv_stored_cols_dev, &
-                                           v_row_dev, u_row_dev, v_col_dev, u_col_dev!, vav_dev
+                                           v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
     call cuda_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
-                                        v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host, &
+                                        v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, &
                                         l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
     call hip_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
-                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_dev, &
+                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, &
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
     call sycl_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
-                                        v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_dev, &
+                                        v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, &
                                         l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, conjg_tau, my_stream)
 #endif
   end subroutine
