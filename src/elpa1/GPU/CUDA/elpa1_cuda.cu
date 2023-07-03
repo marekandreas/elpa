@@ -129,7 +129,7 @@ __global__ void cuda_dot_product_double_kernel(int n, double *x_dev, int incx, d
   double temp = 0;
   int i = tid;
   while (i < n) {
-    temp += x_dev[i] * y_dev[i];
+    temp += x_dev[i*incx] * y_dev[i*incy];
     i += blockDim.x * gridDim.x;
   }
 

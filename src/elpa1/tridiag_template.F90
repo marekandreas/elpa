@@ -1392,6 +1392,7 @@ subroutine tridiag_&
       successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
                     l_cols * size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+      call nvtxRangePop()
     endif ! useGPU
 #endif
 
