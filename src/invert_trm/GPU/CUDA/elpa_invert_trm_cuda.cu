@@ -366,12 +366,11 @@ extern "C" void cuda_copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev,
   dim3 threadsPerBlock = dim3(nb, 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
-//DISABLE STREAMS for now  
-//#ifdef WITH_GPU_STREAMS
-//  cuda_copy_double_a_tmat1_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
-//#else
+#ifdef WITH_GPU_STREAMS
+  cuda_copy_double_a_tmat1_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
+#else
   cuda_copy_double_a_tmat1_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
-//#endif
+#endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing cuda_copy_double_a_tmat1_kernel: %s\n",cudaGetErrorString(cuerr));

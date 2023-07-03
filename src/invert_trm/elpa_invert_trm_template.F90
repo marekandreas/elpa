@@ -744,7 +744,6 @@
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
           my_stream = obj%gpu_setup%my_stream
-          !TODO Streams
           call gpu_copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
         else
 #ifndef DEVICE_POINTER
