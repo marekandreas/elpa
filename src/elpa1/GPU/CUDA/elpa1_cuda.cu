@@ -115,6 +115,67 @@ extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev
   sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
 }
 */
+
+//________________________________________________________________
+// device syncronization is needed afterwards, e.g. gpu_memcpy
+
+__global__ void cuda_dot_product_double_kernel(int n, double *x_dev, int incx, double *y_dev, int incy, double *result_dev){
+  const int threadsPerBlock = 1024;
+  __shared__ double cache[threadsPerBlock];
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
+
+  if (threadIdx.x==0) result_dev[0] = 0; // clear old value // PETERDEBUG: move this to other kernel for thread safety
+
+  double temp = 0;
+  int i = tid;
+  while (i < n) {
+    temp += x_dev[i] * y_dev[i];
+    i += blockDim.x * gridDim.x;
+  }
+
+  // set the cache values
+  cache[threadIdx.x] = temp;
+  // synchronize threads in this block
+  __syncthreads();
+
+  // for reductions, threadsPerBlock must be a power of 2
+  i = blockDim.x/2;
+  while (i > 0) {
+    if (threadIdx.x < i) cache[threadIdx.x] += cache[threadIdx.x + i];
+    __syncthreads();
+    i /= 2;
+  }
+
+  if (threadIdx.x==0) atomicAdd(&result_dev[0], cache[0]);
+  
+}
+
+extern "C" void cuda_dot_product_double_FromC(int* n_in, double *x_dev, int *incx_in, double *y_dev, int *incy_in, double *result_dev, cudaStream_t my_stream){
+  int n = *n_in;   
+  int incx = *incx_in;
+  int incy = *incy_in;
+
+  int SM_count;
+  cudaDeviceGetAttribute(&SM_count, cudaDevAttrMultiProcessorCount, 0); // PETERDEBUG move this outside, to set_gpu, claim the number only once during GPU setup
+  int MaxThreadsPerBlock;
+  cudaDeviceGetAttribute(&MaxThreadsPerBlock, cudaDevAttrMaxThreadsPerBlock, 0);
+
+  int blocks = SM_count;
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(MaxThreadsPerBlock,1,1); // PETERDEBUG: or NB?
+
+#ifdef WITH_GPU_STREAMS
+  cuda_dot_product_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(n, x_dev, incx, y_dev, incy, result_dev);
+#else
+  cuda_dot_product_double_kernel<<<blocks,threadsPerBlock>>>(n, x_dev, incx, y_dev, incy, result_dev);
+#endif
+  cudaError_t cuerr = cudaGetLastError();
+  if (cuerr != cudaSuccess){
+    printf("Error in executing cuda_dot_product_kernel: %s\n",cudaGetErrorString(cuerr));
+  }
+
+}
+
 //________________________________________________________________
 
 __global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int l_rows, int isOurProcessRow, double *aux1_dev){

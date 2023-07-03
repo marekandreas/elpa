@@ -60,6 +60,26 @@ module elpa1_gpu
   public
   contains
 
+  subroutine gpu_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, my_stream)
+    use, intrinsic :: iso_c_binding
+    use precision
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: n, incx, incy
+    integer(kind=C_intptr_T)            :: x_dev, y_dev, result_dev
+    integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+    call cuda_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    call hip_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+    call sycl_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, my_stream)
+#endif
+  end subroutine
+
   subroutine gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
     use, intrinsic :: iso_c_binding
     use precision

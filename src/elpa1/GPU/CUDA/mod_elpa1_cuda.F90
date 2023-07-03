@@ -52,6 +52,19 @@ module elpa1_cuda
   public
 
   interface
+  subroutine cuda_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, my_stream) &
+         bind(C, name="cuda_dot_product_double_FromC")
+    use, intrinsic :: iso_c_binding
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: n, incx, incy
+    integer(kind=C_intptr_T), value     :: x_dev, y_dev, result_dev
+    integer(kind=c_intptr_t), value     :: my_stream
+
+  end subroutine 
+end interface
+
+  interface
     subroutine cuda_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream) &
            bind(C, name="cuda_dot_product_and_assign_double_FromC")
       use, intrinsic :: iso_c_binding
@@ -127,6 +140,19 @@ module elpa1_cuda
 end interface
 
   contains
+
+  subroutine cuda_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, my_stream)
+    use, intrinsic :: iso_c_binding
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: n, incx, incy
+    integer(kind=C_intptr_T)            :: x_dev, y_dev, result_dev
+    integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+    call cuda_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, my_stream)
+#endif
+  end subroutine
 
     subroutine cuda_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
       use, intrinsic :: iso_c_binding

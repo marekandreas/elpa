@@ -1378,11 +1378,10 @@ subroutine tridiag_&
         return
       endif
     endif ! isSkewsymmetric
-    
-#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-    ! PETERDEBUG: WITH_NVIDIA_NCCL should be renamed to WITH_GPU_CCL
-    ! PETERDEBUG: this part could only be useful if we use NCCL for Allreduce of vav_dev
+
+#if defined(GPU_NEW)
     if (useGPU) then
+      !!! PETERDEBUG: this can be copied in async manner with streams?
       call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
       successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
                     l_cols * size_of_datatype, gpuMemcpyHostToDevice)
@@ -1393,18 +1392,40 @@ subroutine tridiag_&
       successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
                     l_cols * size_of_datatype, gpuMemcpyHostToDevice)
       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+    endif ! useGPU
+#endif
+
+#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
+    ! PETERDEBUG: WITH_NVIDIA_NCCL should be renamed to WITH_GPU_CCL
+    ! PETERDEBUG: this part could only be useful if we use NCCL for Allreduce of vav_dev
+    if (useGPU) then
+      call nvtxRangePush("kernel: gpu_dot_product_double")
+      call gpu_dot_product_double(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, my_stream)
       call nvtxRangePop()
 
-      call gpublas_SetPointerMode(gpuHandle, gpublasPointerModeDevice)
-
-      call nvtxRangePush("kernel: gpublas_PRECISION_DOT")
-      gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-      call gpublas_PRECISION_DOT(gpuHandle, l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev) ! PETERDEBUG: change it to my own dot-kernel?
-      call nvtxRangePop()
-
-      call gpublas_SetPointerMode(gpuHandle, gpublasPointerModeHost)
+      ! call gpublas_SetPointerMode(gpuHandle, gpublasPointerModeDevice)
+      ! call nvtxRangePush("kernel: gpublas_PRECISION_DOT")
+      ! call gpublas_PRECISION_DOT(gpuHandle, l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev) ! PETERDEBUG: change it to my own dot-kernel
+      ! call nvtxRangePop()
+      ! call gpublas_SetPointerMode(gpuHandle, gpublasPointerModeHost)
       
     endif ! useGPU
+#endif /* GPU_NEW && WITH_NVIDIA_NCCL */
+
+#if defined(GPU_NEW)
+    if (useGPU) then
+      call nvtxRangePush("memcpy new-2 H-D u_row->u_row_dev")
+      successGPU = gpu_memcpy(u_row_dev, int(loc(u_row(1)),kind=c_intptr_t), &
+                    l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+      call nvtxRangePop()
+
+      call nvtxRangePush("memcpy new-2 H-D v_row->v_row_dev")
+      successGPU = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
+                    l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: v_row_dev", successGPU)
+      call nvtxRangePop()
+    endif
 #endif /* GPU_NEW */
 
     ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
@@ -1417,7 +1438,7 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
     if (useCCL) then
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
       ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
       successGPU = nccl_group_start() 
@@ -1436,8 +1457,8 @@ subroutine tridiag_&
       if (.not.successGPU) then
         print *,"Error in setting up nccl_group_end!"
         stop 1
-#endif /* WITH_NVIDIA_NCCL */
       endif
+#endif /* WITH_NVIDIA_NCCL */
 
     else ! useCCL
       if (useNonBlockingCollectivesCols) then
@@ -1482,32 +1503,32 @@ subroutine tridiag_&
 
 #if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
     if (useGPU) then
-      !!! PETERDEBUG: this can be copied in async manner with streams?
-#if !defined(WITH_NVIDIA_NCCL)
-      call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
-      successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
-                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("tridiag: v_col_dev", successGPU)
-      call nvtxRangePop()
 
-      call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
-      successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
-                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("tridiag: u_col_dev", successGPU)
-      call nvtxRangePop()
-#endif
+! #if !defined(WITH_NVIDIA_NCCL)
+!       call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
+!       successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
+!                     l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+!       check_memcpy_gpu("tridiag: v_col_dev", successGPU)
+!       call nvtxRangePop()
 
-      call nvtxRangePush("memcpy new-2 H-D u_row->u_row_dev")
-      successGPU = gpu_memcpy(u_row_dev, int(loc(u_row(1)),kind=c_intptr_t), &
-                    l_rows * size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("tridiag: u_row_dev", successGPU)
-      call nvtxRangePop()
+!       call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
+!       successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
+!                     l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+!       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+!       call nvtxRangePop()
+! #endif
 
-      call nvtxRangePush("memcpy new-2 H-D v_row->v_row_dev")
-      successGPU = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
-                    l_rows * size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("tridiag: v_row_dev", successGPU)
-      call nvtxRangePop()
+!       call nvtxRangePush("memcpy new-2 H-D u_row->u_row_dev")
+!       successGPU = gpu_memcpy(u_row_dev, int(loc(u_row(1)),kind=c_intptr_t), &
+!                     l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+!       check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+!       call nvtxRangePop()
+
+!       call nvtxRangePush("memcpy new-2 H-D v_row->v_row_dev")
+!       successGPU = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
+!                     l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+!       check_memcpy_gpu("tridiag: v_row_dev", successGPU)
+!       call nvtxRangePop()
 
 
 
