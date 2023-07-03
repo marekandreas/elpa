@@ -126,7 +126,7 @@ subroutine tridiag_&
   integer(kind=ik), intent(in)                  :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
   logical, intent(in)                           :: useGPU, wantDebug
   logical, intent(in)                           :: isSkewsymmetric
-  
+
   logical                                       :: useCCL=.false.
 
   MATH_DATATYPE(kind=rck), intent(out)          :: tau(na)
@@ -1380,6 +1380,7 @@ subroutine tridiag_&
     endif ! isSkewsymmetric
     
 #if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
+    ! PETERDEBUG: WITH_NVIDIA_NCCL should be renamed to WITH_GPU_CCL
     ! PETERDEBUG: this part could only be useful if we use NCCL for Allreduce of vav_dev
     if (useGPU) then
       call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
@@ -1414,27 +1415,11 @@ subroutine tridiag_&
       call nvtxRangePop()
     endif
 
-#if defined(WITH_MPI) && !defined(WITH_NVIDIA_NCCL) 
-    if (useNonBlockingCollectivesCols) then
-      if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-      call mpi_iallreduce(MPI_IN_PLACE, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
-            allreduce_request3, mpierr)
-      call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-    else
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_allreduce(MPI_IN_PLACE, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
-              mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
-    endif
-#endif /* defined(WITH_MPI) && !defined(WITH_NVIDIA_NCCL) */
-
+#ifdef WITH_MPI
+    if (useCCL) then
 #ifdef WITH_NVIDIA_NCCL
-    if (useGPU) then
-      ! WITH_NVIDIA_NCCL should be renamed to WITH_GPU_CCL
-      ! we need a logical flag like useCCL
       ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-      
+
       successGPU = nccl_group_start() 
       if (.not.success) then 
         print *,"Error in setting up nccl_group_start!" 
@@ -1446,14 +1431,30 @@ subroutine tridiag_&
         print *,"Error in nccl_allreduce"
         stop 1
       endif
+
       successGPU = nccl_group_end()
       if (.not.successGPU) then
         print *,"Error in setting up nccl_group_end!"
         stop 1
+#endif /* WITH_NVIDIA_NCCL */
       endif
 
-    endif
-#endif /* WITH_NVIDIA_NCCL */
+    else ! useCCL
+      if (useNonBlockingCollectivesCols) then
+        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+        call mpi_iallreduce(MPI_IN_PLACE, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
+              allreduce_request3, mpierr)
+        call mpi_wait(allreduce_request3, MPI_STATUS_IGNORE, mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+      else ! useNonBlockingCollectivesCols
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_allreduce(MPI_IN_PLACE, vav, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(mpi_comm_cols,kind=MPI_KIND), &
+                mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_communication")
+      endif ! useNonBlockingCollectivesCols
+    endif ! useCCL
+#endif /* WITH_MPI */
+
 
     ! store u and v in the matrices U and V
     ! these matrices are stored combined in one here

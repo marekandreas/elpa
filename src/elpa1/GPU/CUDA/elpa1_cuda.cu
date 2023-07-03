@@ -177,9 +177,11 @@ extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int 
   //double dot_prod = *dot_prod_in;
   //double v_row_last = *v_row_last_in;
 
+  //int numSMs;
+  //cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0);
   
   //int blocks = (l_rows+1023)/1024;
-  int blocks = 32;
+  int blocks = 32; // PETERDEBUG: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
   dim3 blocksPerGrid = dim3(blocks,1,1);
   dim3 threadsPerBlock = dim3(1024,1,1);
 
