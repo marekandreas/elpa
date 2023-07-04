@@ -97,7 +97,7 @@
   logical                                    :: successGPU
   logical                                    :: useGPU
   integer(kind=c_int)                        :: gpu, numGPU
-  integer(kind=c_intptr_t)                   :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev, zero_dev
+  integer(kind=c_intptr_t)                   :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev
   type(c_ptr)                                :: tmp1_mpi_dev
   MATH_DATATYPE(kind=rck), pointer           :: tmp1_mpi_fortran_ptr(:)
   type(c_ptr)                                :: tmat1_mpi_dev, tmat2_mpi_dev
@@ -310,7 +310,7 @@
 #endif
 
     successGPU = gpu_malloc(tmat2_dev, nblk*l_cols*size_of_datatype)
-    check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
+    check_alloc_gpu("elpa_invert_trm: tmat2_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
@@ -350,22 +350,6 @@
 #endif
 #endif /* DEVICE_POINTER */
 
-    successGPU = gpu_malloc(zero_dev, 1*size_of_datatype)
-    check_alloc_gpu("elpa_invert_trm: zero_dev", successGPU)
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-
-    successGPU = gpu_memset_async(zero_dev, 0, 1*size_of_datatype, my_stream)
-    check_memcpy_gpu("elpa_invert_trm: memset zero_dev", successGPU)
-
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-#else
-    successGPU = gpu_memset(zero_dev, 0, 1*size_of_datatype)
-    check_memcpy_gpu("elpa_invert_trm: memset zero_dev", successGPU)
-#endif
   endif ! useGPU
 
 
@@ -582,7 +566,7 @@
           &: Error in DTRTRI"
 #endif
 #if COMPLEXCASE == 1
-          &: Error in ZTRTRI"
+          &: Error in ZTRTRI" !"
 #endif
 
           success = .false.
@@ -744,7 +728,7 @@
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
           my_stream = obj%gpu_setup%my_stream
-          call gpu_copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
+          call gpu_copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
         else
 #ifndef DEVICE_POINTER
           tmat1(1:l_row1-1,1:nb) = a(1:l_row1-1,l_col1:l_col1+nb-1)
@@ -1012,9 +996,6 @@
     deallocate(a_tmp, stat=istat, errmsg=errorMessage)
     check_deallocate("elpa_invert_trm: a_tmp", istat, errorMessage)
 #endif /* DEVICE_POINTER */
-
-    successGPU = gpu_free(zero_dev)
-    check_dealloc_gpu("elpa_invert_trm: zero_dev", successGPU)
 
     !successGPU = gpu_host_unregister(int(loc(b),kind=c_intptr_t))
     !check_host_unregister_gpu("elpa_multiply_a_b: b", successGPU)

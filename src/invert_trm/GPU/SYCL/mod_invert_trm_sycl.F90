@@ -139,44 +139,44 @@ module invert_trm_sycl
   end interface
 
   interface
-    subroutine sycl_copy_double_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)&
+    subroutine sycl_copy_double_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)&
              bind(C, name="sycl_copy_double_a_tmat1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev, zero_dev
+      integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev
       integer(kind=c_int), intent(in)  :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine 
   end interface
 
   interface
-    subroutine sycl_copy_float_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)&
+    subroutine sycl_copy_float_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)&
              bind(C, name="sycl_copy_float_a_tmat1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev, zero_dev
+      integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev
       integer(kind=c_int), intent(in)  :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine 
   end interface
 
   interface
-    subroutine sycl_copy_double_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)&
+    subroutine sycl_copy_double_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)&
              bind(C, name="sycl_copy_double_complex_a_tmat1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev, zero_dev
+      integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev
       integer(kind=c_int), intent(in)  :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine 
   end interface
 
   interface
-    subroutine sycl_copy_float_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)&
+    subroutine sycl_copy_float_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)&
              bind(C, name="sycl_copy_float_complex_a_tmat1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev, zero_dev
+      integer(kind=C_intptr_T), value  :: a_dev, tmat1_dev
       integer(kind=c_int), intent(in)  :: l_rows, matrixRows, nb, l_row1, l_col1
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine 
@@ -384,58 +384,58 @@ module invert_trm_sycl
 
     end subroutine
 
-    subroutine sycl_copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
+    subroutine sycl_copy_double_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
-      integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
+      integer(kind=C_intptr_T)        :: a_dev, tmat1_dev
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
+      call sycl_copy_double_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
+    subroutine sycl_copy_float_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
-      integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
+      integer(kind=C_intptr_T)        :: a_dev, tmat1_dev
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
+      call sycl_copy_float_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
+    subroutine sycl_copy_double_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
-      integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
+      integer(kind=C_intptr_T)        :: a_dev, tmat1_dev
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
+      call sycl_copy_double_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
+    subroutine sycl_copy_float_complex_a_tmat1(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in) :: l_rows, matrixRows, nb, l_row1, l_col1
-      integer(kind=C_intptr_T)        :: a_dev, tmat1_dev, zero_dev
+      integer(kind=C_intptr_T)        :: a_dev, tmat1_dev
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, zero_dev, my_stream)
+      call sycl_copy_float_complex_a_tmat1_c(a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
 #endif
 
     end subroutine
