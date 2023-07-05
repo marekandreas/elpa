@@ -176,7 +176,7 @@ subroutine tridiag_&
   character(len=100)                            :: nvtx_name
 !#ifdef MORE_GPU_COMPUTE
   integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux2_dev, vav_dev, vav_host_or_dev, dot_prod_dev, & 
-                                                   xf_dev, xf_host_or_dev
+                                                   xf_dev, xf_host_or_dev, tau_istep_host_or_dev
   integer(kind=c_intptr_t)                      :: vnorm2_dev, vrl_dev ! alias pointers for aux1_dev(1), aux1_dev(2)
 !#endif
 #if COMPLEXCASE == 1
@@ -889,24 +889,12 @@ subroutine tridiag_&
       endif ! useCCL
 #endif /* WITH_MPI */
 
-!!! PETERDEBUG-TEMP: this is temporary copy for the correctness check !
-#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
-        if (useCCL) then
-          !aux1_dev -> aux1
-          write (nvtx_name, "(A,I0)") "memcpy new D-H aux1_dev->aux1 ", 2
-          call nvtxRangePush(nvtx_name)
-          successGPU = gpu_memcpy(int(loc(aux1),kind=c_intptr_t), aux1_dev, 2*size_of_datatype, gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("tridiag: aux1_dev -> aux1", successGPU)
-          call nvtxRangePop()
-        endif
-#endif /* GPU_NEW */
-
-      ! if (useCCL) then ! PETERDEBUG-TEMP uncomment
+      if (useCCL) then
 #if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
         vnorm2_dev = aux1_dev
         vrl_dev = aux1_dev + 1*size_of_datatype
 #endif
-      ! else ! useCCL
+      else ! useCCL
 #if REALCASE == 1
         vnorm2 = aux1(1)
 #endif
@@ -914,18 +902,17 @@ subroutine tridiag_&
         vnorm2 = real(aux1(1),kind=rk)
 #endif
         vrl    = aux1(2)
-      ! endif ! useCCL
+      endif ! useCCL
 
       ! Householder transformation
-      ! if (useCCL) then !!! PETERDEBUG-TEMP -> uncomment
+      if (useCCL) then
 #if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
         call nvtxRangePush("gpu_hh_transform")
         call gpu_hh_transform_double(obj, vrl_dev, vnorm2_dev, xf_dev, tau_dev+(istep-1)*size_of_datatype, & 
                                      wantDebug, my_stream)
         call nvtxRangePop()
 #endif
-      ! else ! useCCL
-
+      else ! useCCL
         call nvtxRangePush("hh_transform")
 #if REALCASE == 1
         call hh_transform_real_&
@@ -936,7 +923,7 @@ subroutine tridiag_&
                 &PRECISION &
                 (obj, vrl, vnorm2, xf, tau(istep), wantDebug)
         call nvtxRangePop()
-      ! endif ! useCCL
+      endif ! useCCL
       
       ! vrl is newly computed off-diagonal element of the final tridiagonal matrix
       if (my_prow == prow(istep-1, nblk, np_rows)) then
@@ -1018,7 +1005,34 @@ subroutine tridiag_&
       if (wantDebug) call obj%timer%stop("mpi_communication")
     endif
 
+    ! PETERDEBUG: broadcast only tau_dev so far. Later also v_row_dev
+#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
+    if (useCCL) then
+      ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
+      successGPU = nccl_group_start() 
+      if (.not. successGPU) then 
+        print *,"Error in setting up nccl_group_start!" 
+        stop 1
+      endif 
+
+      offset_dev = (istep-1) * size_of_datatype
+      successGPU = nccl_Bcast(tau_dev+offset_dev, tau_dev+offset_dev, int(1, kind=c_size_t), ncclDouble, &
+                            int(pcol(istep, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
+      if (.not. successGPU) then
+        print *,"Error in nccl_Bcast"
+        stop 1
+      endif
+
+      successGPU = nccl_group_end()
+      if (.not. successGPU) then
+        print *,"Error in setting up nccl_group_end!"
+        stop 1
+      endif
+      ! successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
+      ! check_stream_synchronize_gpu("nccl_Allreduce aux1_dev", successGPU)
+    endif ! useCCL
+#endif /* WITH_NVIDIA_NCCL */
 #endif /* WITH_MPI */
 
     !recover tau, which has been broadcasted together with v_row
@@ -1497,13 +1511,6 @@ subroutine tridiag_&
       call nvtxRangePush("kernel: gpu_dot_product_double")
       call gpu_dot_product_double(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, my_stream)
       call nvtxRangePop()
-
-      ! call gpublas_SetPointerMode(gpuHandle, gpublasPointerModeDevice)
-      ! call nvtxRangePush("kernel: gpublas_PRECISION_DOT")
-      ! call gpublas_PRECISION_DOT(gpuHandle, l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev) ! PETERDEBUG: change it to my own dot-kernel
-      ! call nvtxRangePop()
-      ! call gpublas_SetPointerMode(gpuHandle, gpublasPointerModeHost)
-      
     endif ! useGPU
 #endif /* GPU_NEW && WITH_NVIDIA_NCCL */
 
@@ -1577,12 +1584,15 @@ subroutine tridiag_&
     ! store u and v in the matrices U and V
     ! these matrices are stored combined in one here
 
+!    if (.not. useCCL) then !!! PETERDEBUG-TEMP uncomment
 #if REALCASE == 1
-    conjg_tau = tau(istep)
+      conjg_tau = tau(istep)
 #endif
 #if COMPLEXCASE == 1
-    conjg_tau = conjg(tau(istep))
+      conjg_tau = conjg(tau(istep))
 #endif
+    ! endif ! .not. useCCL
+    
     if (.not. useGPU) then
       call nvtxRangePush("store u,v in U,V")
       if (l_rows > 0) then
@@ -1632,14 +1642,16 @@ subroutine tridiag_&
       ! kernel: update vu_stored_rows_dev, uv_stored_cols
       ! then cpu's "store u,v in U,V" can be deleted. But we should take care of dot_prod below, where vu_stored_rows and uv_stored_cols are used
       call nvtxRangePush("kernel gpu_store_u_v_in_uv_vu")
-#ifdef WITH_NVIDIA_NCCL
-      vav_host_or_dev = vav_dev
-#else
-      vav_host_or_dev = int(loc(vav),kind=c_intptr_t)
-#endif      
+      if (useCCL) then
+        vav_host_or_dev = vav_dev
+        tau_istep_host_or_dev = tau_dev + (istep-1)*size_of_datatype
+      else ! useCCL
+        vav_host_or_dev = int(loc(vav),kind=c_intptr_t)
+        tau_istep_host_or_dev = int(loc(tau(istep)), kind=c_intptr_t)
+      endif ! useCCL     
       call gpu_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, &
-                                         v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, &
-                                         l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, conjg_tau, my_stream)
+                                         v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                         l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, my_stream)
       call nvtxRangePop()
     endif ! useGPU
 #endif /* GPU_NEW */
@@ -1949,16 +1961,16 @@ subroutine tridiag_&
                             d_vec_dev + offset_dev, (na-2) * size_of_datatype_real, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("tridiag: d_vec", successGPU)
 
-    ! first element of e_vec is treated separately
+    ! e_vec(1) is treated separately
     successGPU = gpu_memcpy(int(loc(e_vec(2)),kind=c_intptr_t), &
                             e_vec_dev + offset_dev, (na-1) * size_of_datatype_real, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("tridiag: e_vec", successGPU)
 
-    !!! PETERDEBUG-TEMP uncomment!
     ! tau(2) is treated separately, tau(1) is not used
-    ! successGPU = gpu_memcpy(int(loc(tau(3)),kind=c_intptr_t), &
-    !                                 tau_dev, (na-2) * size_of_datatype, gpuMemcpyDeviceToHost)
-    ! check_memcpy_gpu("tridiag: tau", successGPU)
+    offset_dev = 2 * size_of_datatype
+    successGPU = gpu_memcpy(int(loc(tau(3)),kind=c_intptr_t), &
+                            tau_dev + offset_dev, (na-2) * size_of_datatype, gpuMemcpyDeviceToHost)
+    check_memcpy_gpu("tridiag: tau", successGPU)
 #endif
 
     ! todo: should we leave a_mat on the device for further use?
