@@ -60,6 +60,8 @@
 #include <algorithm>
 #include "config-f90.h"
 
+#define MAX_THREADS_PER_BLOCK 1024
+
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 /*
@@ -120,8 +122,7 @@ extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev
 // device syncronization is needed afterwards, e.g. gpu_memcpy
 
 __global__ void cuda_dot_product_double_kernel(int n, double *x_dev, int incx, double *y_dev, int incy, double *result_dev){
-  const int threadsPerBlock = 1024;
-  __shared__ double cache[threadsPerBlock];
+  __shared__ double cache[MAX_THREADS_PER_BLOCK]; // extra space of fixed size is reserved for a speedup
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
   if (threadIdx.x==0) result_dev[0] = 0; // clear old value // PETERDEBUG: move this to other kernel for thread safety
@@ -138,7 +139,7 @@ __global__ void cuda_dot_product_double_kernel(int n, double *x_dev, int incx, d
   // synchronize threads in this block
   __syncthreads();
 
-  // for reductions, threadsPerBlock must be a power of 2
+  // for reductions, threadsPerBlock=blockDim.x must be a power of 2
   i = blockDim.x/2;
   while (i > 0) {
     if (threadIdx.x < i) cache[threadIdx.x] += cache[threadIdx.x + i];
@@ -155,14 +156,12 @@ extern "C" void cuda_dot_product_double_FromC(int* n_in, double *x_dev, int *inc
   int incx = *incx_in;
   int incy = *incy_in;
 
-  int SM_count;
-  cudaDeviceGetAttribute(&SM_count, cudaDevAttrMultiProcessorCount, 0); // PETERDEBUG move this outside, to set_gpu, claim the number only once during GPU setup
-  int MaxThreadsPerBlock;
-  cudaDeviceGetAttribute(&MaxThreadsPerBlock, cudaDevAttrMaxThreadsPerBlock, 0);
+  int SM_count=32;
+  //cudaDeviceGetAttribute(&SM_count, cudaDevAttrMultiProcessorCount, 0); // PETERDEBUG move this outside, to set_gpu, claim the number only once during GPU setup
 
   int blocks = SM_count;
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(MaxThreadsPerBlock,1,1); // PETERDEBUG: or NB?
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG: or NB?
 
 #ifdef WITH_GPU_STREAMS
   cuda_dot_product_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(n, x_dev, incx, y_dev, incy, result_dev);
@@ -179,7 +178,7 @@ extern "C" void cuda_dot_product_double_FromC(int* n_in, double *x_dev, int *inc
 //________________________________________________________________
 
 __global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int l_rows, int isOurProcessRow, double *aux1_dev){
-  const int threadsPerBlock = 1024;
+  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
   __shared__ double cache[threadsPerBlock];
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
@@ -241,10 +240,10 @@ extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int 
   //int numSMs;
   //cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0);
   
-  //int blocks = (l_rows+1023)/1024;
+  //int blocks = (l_rows+1023)/MAX_THREADS_PER_BLOCK;
   int blocks = 32; // PETERDEBUG: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(1024,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
   
   // zero-copy version
@@ -329,9 +328,9 @@ extern "C" void cuda_scale_set_one_store_v_row_double_FromC(double *a_dev, doubl
 
   if (l_rows==0) return;
   
-  int blocks = std::min((l_rows+1023)/1024, 2147483647);
+  int blocks = std::min((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 2147483647);
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(1024,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
   
 #ifdef WITH_GPU_STREAMS
@@ -396,12 +395,12 @@ extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev,
   //double vav_host = *vav_host_in;
 
   
-  int blocks = std::max((l_rows+1023)/1024, (l_cols+1023)/1024);
+  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, (l_cols+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK);
   if (blocks==0) return;
   blocks = std::min(blocks, 2147483647);
   
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(1024,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
   
 #ifdef WITH_GPU_STREAMS
@@ -423,7 +422,7 @@ extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev,
 __global__ void cuda_update_matrix_element_add_double_kernel(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *a_dev, double *d_vec_dev, 
                                                             int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric){
   
-  const int threadsPerBlock = 1024;
+  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
   __shared__ double cache[threadsPerBlock];
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
@@ -505,10 +504,10 @@ extern "C" void cuda_update_matrix_element_add_double_FromC(double *vu_stored_ro
   int isSkewsymmetric = *isSkewsymmetric_in;   
 
   
-  int blocks = std::min((2*n_stored_vecs+1023)/1024, 32);
+  int blocks = std::min((2*n_stored_vecs+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 32);
   if (n_stored_vecs==0) blocks=1;
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(1024,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
 #ifdef WITH_GPU_STREAMS
   cuda_update_matrix_element_add_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
