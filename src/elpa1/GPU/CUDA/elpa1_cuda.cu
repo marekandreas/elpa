@@ -56,13 +56,21 @@
 #include <complex.h>
 #include <cuComplex.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 #include "config-f90.h"
 
 #define MAX_THREADS_PER_BLOCK 1024
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
+
+template <typename T> 
+__device__ T sign(T a, T b) {
+    if (b>=0) return fabs(a);
+    else return -fabs(a);
+}
 
 /*
 template <typename T>
@@ -279,10 +287,22 @@ extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int 
 
 //________________________________________________________________
 
-__global__ void cuda_scale_set_one_store_v_row_double_kernel(double *a_dev, double *v_row_dev, int l_rows, int l_cols, int matrixRows, int isOurProcessRow, double xf){
+__global__ void cuda_set_e_vec_scale_set_one_store_v_row_double_kernel(double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev, double *xf_host_or_dev, 
+                                                      int l_rows, int l_cols,  int matrixRows, int istep, bool isOurProcessRow, bool useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
 /*
+  if (my_prow == prow(istep-1, nblk, np_rows)) then
+    if (useCCL) then
+#if REALCASE == 1
+      e_vec(istep-1) = vrl
+#endif
+#if COMPLEXCASE == 1
+      e_vec(istep-1) = real(vrl,kind=rk)
+#endif
+    endif ! useCCL
+  endif
+
   call nvtxRangePush("scale v_row *= xf")
   ! Scale v_row and store Householder Vector for back transformation
   v_row(1:l_rows) = v_row(1:l_rows) * xf
@@ -299,9 +319,14 @@ __global__ void cuda_scale_set_one_store_v_row_double_kernel(double *a_dev, doub
   call nvtxRangePop()
 */
 
+  if (useCCL && isOurProcessRow)
+    {
+    if (tid==0) e_vec_dev[istep-1-1] = *vrl_dev;
+    }
+
   int index_global = tid;
   while (index_global < l_rows) {
-    v_row_dev[index_global] *= xf;
+    v_row_dev[index_global] *= (*xf_host_or_dev);
     index_global += blockDim.x * gridDim.x;
   }
 
@@ -319,28 +344,32 @@ __global__ void cuda_scale_set_one_store_v_row_double_kernel(double *a_dev, doub
 
 }
 
-extern "C" void cuda_scale_set_one_store_v_row_double_FromC(double *a_dev, double *v_row_dev, int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *isOurProcessRow_in, double *xf_in, cudaStream_t my_stream){
+extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_double_FromC(double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev, double *xf_host_or_dev, 
+                                              int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
   int matrixRows = *matrixRows_in;
-  int isOurProcessRow = *isOurProcessRow_in;
-  double xf = *xf_in;
+  int istep = *istep_in;
+  bool isOurProcessRow = *isOurProcessRow_in;
+  bool useCCL = *useCCL_in;
 
   if (l_rows==0) return;
   
   int blocks = std::min((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 2147483647);
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG change to NB
 
   
 #ifdef WITH_GPU_STREAMS
-  cuda_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf);
+  cuda_set_e_vec_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev,
+                                                                                                 l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
 #else
-  cuda_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock>>>(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf);
+  cuda_set_e_vec_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev,
+                                                                                    l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_scale_set_one_store_v_row_double_kernel: %s\n",cudaGetErrorString(cuerr));
+    printf("Error in executing cuda_set_e_vec_scale_set_one_store_v_row_double_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
 
@@ -547,5 +576,127 @@ extern "C" void cuda_update_array_element_double_FromC(double *array_dev, int *i
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing cuda_update_array_element_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  }
+}
+
+//________________________________________________________________
+
+__global__ void cuda_hh_transform_double_kernel(double *alpha_dev, double *xnorm_sq_dev, double *xf_dev, double *tau_dev, bool wantDebug_in){
+
+/*
+#if complexcase == 1
+  alphr = real( alpha, kind=rk )
+  alphi = precision_imag( alpha )
+#endif
+
+#if realcase == 1
+  if ( xnorm_sq==0.0_rk ) then
+#endif
+#if complexcase == 1
+  if ( xnorm_sq==0.0_rk .and. alphi==0.0_rk ) then
+#endif
+
+#if realcase == 1
+    if ( alpha>=0.0_rk ) then
+#endif
+#if complexcase == 1
+    if ( alphr>=0.0_rk ) then
+#endif
+      tau = 0.0_rk
+    else
+      tau = 2.0_rk
+      alpha = -alpha
+    endif
+    xf = 0.0_rk
+
+  else
+
+#if realcase == 1
+    beta = sign( sqrt( alpha**2 + xnorm_sq ), alpha )
+#endif
+#if complexcase == 1
+    beta = sign( sqrt( alphr**2 + alphi**2 + xnorm_sq ), alphr )
+#endif
+    alpha = alpha + beta
+    if ( beta<0 ) then
+      beta = -beta
+      tau  = -alpha / beta
+    else
+#if realcase == 1
+      alpha = xnorm_sq / alpha
+#endif
+#if complexcase == 1
+      alphr = alphi * (alphi/real( alpha , kind=rk))
+      alphr = alphr + xnorm_sq/real( alpha, kind=rk )
+#endif
+
+#if realcase == 1
+      tau = alpha / beta
+      alpha = -alpha
+#endif
+#if complexcase == 1
+      tau = precision_cmplx( alphr/beta, -alphi/beta )
+      alpha = precision_cmplx( -alphr, alphi )
+#endif
+    end if
+    xf = 1.0_rk/alpha
+    alpha = beta
+  endif
+*/
+
+
+  if (*xnorm_sq_dev==0.0)
+    {
+    if (*alpha_dev >= 0.0) *tau_dev = 0.0;
+    else
+      {
+      *tau_dev = 2.0;
+      *alpha_dev = - (*alpha_dev);
+      }
+    
+    *xf_dev = 0.0;
+    }
+
+  else
+    {
+    double beta = sign( sqrt( (*alpha_dev)*(*alpha_dev) + *xnorm_sq_dev ), *alpha_dev);
+
+    *alpha_dev = *alpha_dev + beta;
+    
+    if (beta<0)
+      {
+      beta = -beta;
+      *tau_dev  = - (*alpha_dev) / beta;
+      }
+    else
+      {
+      *alpha_dev = (*xnorm_sq_dev) / (*alpha_dev);
+      *tau_dev = (*alpha_dev) / beta;
+      *alpha_dev = - (*alpha_dev);
+      }
+
+    *xf_dev = 1.0/(*alpha_dev);
+    *alpha_dev = beta;
+    }
+
+}
+
+extern "C" void cuda_hh_transform_double_FromC(double *alpha_dev, double *xnorm_sq_dev, double *xf_dev, double *tau_dev, int *index_in, bool *wantDebug_in, cudaStream_t my_stream){
+  bool wantDebug = *wantDebug_in;
+
+  dim3 blocks = dim3(1,1,1);
+  dim3 threadsPerBlock = dim3(1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_hh_transform_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug);
+#else
+  cuda_hh_transform_double_kernel<<<blocks,threadsPerBlock>>>(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug);
+#endif
+
+  if (wantDebug){
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing cuda_hh_transform_double_kernel: %s\n",cudaGetErrorString(cuerr));
+    }
   }
 }

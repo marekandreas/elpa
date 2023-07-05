@@ -78,15 +78,15 @@ end interface
   end interface
 
   interface
-    subroutine cuda_scale_set_one_store_v_row_double_c(a_dev, v_row_dev, & 
-                                                      l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream) &
-         bind(C, name="cuda_scale_set_one_store_v_row_double_FromC")
+    subroutine cuda_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, &
+                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream) &
+         bind(C, name="cuda_set_e_vec_scale_set_one_store_v_row_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, isOurProcessRow
-      real(kind=c_double), intent(in)     :: xf
-      integer(kind=C_intptr_T), value     :: a_dev, v_row_dev 
+      logical                             :: isOurProcessRow, useCCL
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, istep
+      integer(kind=C_intptr_T), value     :: e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
@@ -126,18 +126,31 @@ end interface
   end interface
 
   interface
-  subroutine cuda_update_array_element_double_c(array_dev, index, value, my_stream) &
-           bind(C, name="cuda_update_array_element_double_FromC")
-    use, intrinsic :: iso_c_binding
-    implicit none
+    subroutine cuda_update_array_element_double_c(array_dev, index, value, my_stream) &
+            bind(C, name="cuda_update_array_element_double_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
 
-    integer(kind=C_INT), intent(in)     :: index
-    real(kind=c_double), intent(in)     :: value
-    integer(kind=C_intptr_T), value     :: array_dev
-    integer(kind=c_intptr_t), value     :: my_stream
+      integer(kind=C_INT), intent(in)     :: index
+      real(kind=c_double), intent(in)     :: value
+      integer(kind=C_intptr_T), value     :: array_dev
+      integer(kind=c_intptr_t), value     :: my_stream
 
-  end subroutine 
-end interface
+    end subroutine 
+  end interface
+
+  interface
+    subroutine cuda_hh_transform_double_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream) &
+            bind(C, name="cuda_hh_transform_double_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      logical                             :: wantDebug
+      integer(kind=C_intptr_T), value     :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
+      integer(kind=c_intptr_t), value     :: my_stream
+
+    end subroutine 
+  end interface
 
   contains
 
@@ -167,17 +180,19 @@ end interface
 #endif
     end subroutine
 
-    subroutine cuda_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+    subroutine cuda_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, &
+                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, isOurProcessRow
-      real(kind=c_double), intent(in)     :: xf
-      integer(kind=C_intptr_T)            :: a_dev, v_row_dev 
+      logical, intent(in)                 :: isOurProcessRow, useCCL
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, istep
+      integer(kind=C_intptr_T)            :: e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_scale_set_one_store_v_row_double_c(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+      call cuda_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, &
+                                              l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
 #endif
     end subroutine
 
@@ -234,6 +249,19 @@ end interface
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_update_array_element_double_c(array_dev, index, value, my_stream)
+#endif
+    end subroutine
+
+    subroutine cuda_hh_transform_double(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      logical, intent(in)                 :: wantDebug
+      integer(kind=C_intptr_T)            :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
+      integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_hh_transform_double_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
 #endif
     end subroutine
 

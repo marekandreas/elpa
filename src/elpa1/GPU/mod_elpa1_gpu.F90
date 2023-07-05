@@ -80,44 +80,48 @@ module elpa1_gpu
 #endif
   end subroutine
 
-  subroutine gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
+  subroutine gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 
-    integer(kind=C_INT), intent(in)     :: l_rows, isOurProcessRow
+    integer(kind=C_INT), intent(in)     :: l_rows, isOurProcessRowInt
     integer(kind=C_intptr_T)            :: v_row_dev, aux1_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
+    call cuda_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
+    call hip_dot_product_and_assign_double (v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
+    call sycl_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, my_stream)
 #endif
   end subroutine
 
-  subroutine gpu_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+  subroutine gpu_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, & 
+                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 
-    integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, isOurProcessRow
-    real(kind=c_double), intent(in)     :: xf
-    integer(kind=C_intptr_T)            :: a_dev, v_row_dev
+    logical, intent(in)                 :: isOurProcessRow, useCCL
+    integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    integer(kind=C_intptr_T)            :: e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+    call cuda_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, &
+                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+    call hip_set_e_vec_scale_set_one_store_v_row_double (e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, &
+                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_scale_set_one_store_v_row_double(a_dev, v_row_dev, l_rows, l_cols, matrixRows, isOurProcessRow, xf, my_stream)
+    call sycl_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, &
+                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
 #endif
   end subroutine
 
@@ -207,6 +211,36 @@ module elpa1_gpu
     call sycl_update_array_element_double(array_dev, index, value, my_stream)
 #endif
   end subroutine
+
+  subroutine gpu_hh_transform_double(obj, alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
+    use, intrinsic :: iso_c_binding
+    use elpa_abstract_impl
+    ! use elpa_gpu
+    implicit none
+
+    class(elpa_abstract_impl_t), intent(inout)  :: obj
+    logical, intent(in)                 :: wantDebug
+    integer(kind=C_intptr_T)            :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
+    integer(kind=c_intptr_t)            :: my_stream
+
+    if (wantDebug) call obj%timer%start("gpu_hh_transform")
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+    call cuda_hh_transform_double(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    call hip_hh_transform_double(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+    call sycl_hh_transform_double(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
+#endif
+    
+    if (wantDebug) then
+      call obj%timer%stop("gpu_hh_transform")
+      !successGPU = gpu_DeviceSynchronize()
+    endif
+  end subroutine
+
 
 end module
 
