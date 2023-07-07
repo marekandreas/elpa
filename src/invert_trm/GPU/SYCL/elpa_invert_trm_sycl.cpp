@@ -44,7 +44,7 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//    This file was written by A. Marek, MPCDF
+//    This file was written by P. Karpov, MPCDF
 
 #include <stdio.h>
 #include <math.h>
