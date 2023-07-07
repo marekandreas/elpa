@@ -78,7 +78,7 @@ end interface
   end interface
 
   interface
-    subroutine cuda_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, &
+    subroutine cuda_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
                                                   l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream) &
          bind(C, name="cuda_set_e_vec_scale_set_one_store_v_row_double_FromC")
       use, intrinsic :: iso_c_binding
@@ -86,23 +86,25 @@ end interface
 
       logical                             :: isOurProcessRow, useCCL
       integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, istep
-      integer(kind=C_intptr_T), value     :: e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev
+      integer(kind=C_intptr_T), value     :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
   end interface
 
   interface
-    subroutine cuda_store_u_v_in_uv_vu_double_c(vu_stored_rows_dev, uv_stored_cols_dev, & 
-                                          v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, tau_istep_host_or_dev, &
-                                          l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, my_stream) &
+    subroutine cuda_store_u_v_in_uv_vu_double_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
+                                          v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
+                                          useCCL, wantDebug, my_stream) &
          bind(C, name="cuda_store_u_v_in_uv_vu_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols
-      integer(kind=C_intptr_T), value     :: vu_stored_rows_dev, uv_stored_cols_dev, &
-                                             v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, tau_istep_host_or_dev
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      logical                             :: useCCL, wantDebug
+      integer(kind=C_intptr_T), value     :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev,&
+                                             v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
@@ -179,37 +181,40 @@ end interface
 #endif
     end subroutine
 
-    subroutine cuda_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, &
+    subroutine cuda_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
                                                   l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
 
       logical, intent(in)                 :: isOurProcessRow, useCCL
       integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, istep
-      integer(kind=C_intptr_T)            :: e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev
+      integer(kind=C_intptr_T)            :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev, &
+      call cuda_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
                                               l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
 #endif
     end subroutine
 
-    subroutine cuda_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, & 
-                                              v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, tau_istep_host_or_dev, &
-                                              l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, my_stream)
+    subroutine cuda_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
+                                              v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                              l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
+                                              useCCL, wantDebug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols
-      integer(kind=C_intptr_T)            :: vu_stored_rows_dev, uv_stored_cols_dev, & 
-                                             v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, tau_istep_host_or_dev
+      integer(kind=C_INT), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      logical, intent(in)                 :: useCCL, wantDebug
+      integer(kind=C_intptr_T)            :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
+                                             v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_store_u_v_in_uv_vu_double_c(vu_stored_rows_dev, uv_stored_cols_dev, & 
-                                            v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, tau_istep_host_or_dev, &
-                                            l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, my_stream)
+      call cuda_store_u_v_in_uv_vu_double_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
+                                            v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                            l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
+                                            useCCL, wantDebug, my_stream)
 #endif
     end subroutine
 

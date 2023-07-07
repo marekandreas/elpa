@@ -287,13 +287,13 @@ extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int 
 
 //________________________________________________________________
 
-__global__ void cuda_set_e_vec_scale_set_one_store_v_row_double_kernel(double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev, double *xf_host_or_dev, 
+__global__ void cuda_set_e_vec_scale_set_one_store_v_row_double_kernel(double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev, double *tau_dev, double *xf_host_or_dev, 
                                                       int l_rows, int l_cols,  int matrixRows, int istep, bool isOurProcessRow, bool useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
 /*
   if (my_prow == prow(istep-1, nblk, np_rows)) then
-    if (useCCL) then
+    if (.not. useCCL) then
 #if REALCASE == 1
       e_vec(istep-1) = vrl
 #endif
@@ -317,11 +317,17 @@ __global__ void cuda_set_e_vec_scale_set_one_store_v_row_double_kernel(double *e
   ! update a_mat
   a_mat(1:l_rows,l_cols+1) = v_row(1:l_rows)
   call nvtxRangePop()
+
+  if (.not. useCCL) then
+    ! add tau after the end of actuall v_row, to be broadcasted with it
+    v_row(l_rows+1) = tau(istep)
+  endif
 */
 
-  if (useCCL && isOurProcessRow)
+  if (useCCL && tid==0)
     {
-    if (tid==0) e_vec_dev[istep-1-1] = *vrl_dev;
+    if (isOurProcessRow) e_vec_dev[istep-1-1] = *vrl_dev;
+    v_row_dev[l_rows+1-1] = tau_dev[istep-1];
     }
 
   int index_global = tid;
@@ -344,7 +350,7 @@ __global__ void cuda_set_e_vec_scale_set_one_store_v_row_double_kernel(double *e
 
 }
 
-extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_double_FromC(double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev, double *xf_host_or_dev, 
+extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_double_FromC(double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev, double *tau_dev, double *xf_host_or_dev, 
                                               int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
@@ -352,19 +358,17 @@ extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_double_FromC(double *e_
   int istep = *istep_in;
   bool isOurProcessRow = *isOurProcessRow_in;
   bool useCCL = *useCCL_in;
-
-  if (l_rows==0) return;
   
-  int blocks = std::min((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 2147483647);
+  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   dim3 blocksPerGrid = dim3(blocks,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG change to NB
 
   
 #ifdef WITH_GPU_STREAMS
-  cuda_set_e_vec_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev,
+  cuda_set_e_vec_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
                                                                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
 #else
-  cuda_set_e_vec_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, xf_host_or_dev,
+  cuda_set_e_vec_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
                                                                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
 #endif
   cudaError_t cuerr = cudaGetLastError();
@@ -375,12 +379,18 @@ extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_double_FromC(double *e_
 
 //________________________________________________________________
 
-__global__ void cuda_store_u_v_in_uv_vu_double_kernel(double *vu_stored_rows_dev, double *uv_stored_cols_dev, 
-                double *v_row_dev, double *u_row_dev, double *v_col_dev, double *u_col_dev, double* vav_host_or_dev, double *tau_host_or_dev,
-                int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols){
+__global__ void cuda_store_u_v_in_uv_vu_double_kernel(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *v_row_dev, double *u_row_dev,
+                double *v_col_dev, double *u_col_dev, double *tau_dev, double* vav_host_or_dev, double *tau_host_or_dev,
+                int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, bool useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
   double conjg_tau = *tau_host_or_dev; // real (double) case only so far
+
+  // recover tau_dev(istep) after broadcasting
+  if (useCCL && tid==0)
+    {
+    tau_dev[istep-1] = v_row_dev[l_rows+1-1];
+    }
 
 /*
   if (l_rows > 0) then
@@ -414,35 +424,36 @@ __global__ void cuda_store_u_v_in_uv_vu_double_kernel(double *vu_stored_rows_dev
 }
 
 
-extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, 
-                double *v_row_dev, double *u_row_dev, double *v_col_dev, double *u_col_dev, double *vav_host_or_dev, double *tau_host_or_dev,
-                int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, cudaStream_t my_stream){
+extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *v_row_dev, double *u_row_dev,
+                double *v_col_dev, double *u_col_dev, double *tau_dev, double *vav_host_or_dev, double *tau_host_or_dev,
+                int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
   int n_stored_vecs  = *n_stored_vecs_in;
   int max_local_rows = *max_local_rows_in;   
   int max_local_cols = *max_local_cols_in;   
-  //double vav_host = *vav_host_in;
-
+  int istep = *istep_in;   
+  bool useCCL = *useCCL_in;
+  bool wantDebug = *wantDebug_in;
   
-  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, (l_cols+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK);
-  if (blocks==0) return;
-  blocks = std::min(blocks, 2147483647);
+  int blocks = std::max({(l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, (l_cols+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1});
   
   dim3 blocksPerGrid = dim3(blocks,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
   
 #ifdef WITH_GPU_STREAMS
-  cuda_store_u_v_in_uv_vu_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev,
-                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, tau_host_or_dev, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols);
+  cuda_store_u_v_in_uv_vu_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_host_or_dev, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
 #else
-  cuda_store_u_v_in_uv_vu_double_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev,
-                                       v_row_dev, u_row_dev, v_col_dev, u_col_dev, vav_host_or_dev, tau_host_or_dev, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols);
+  cuda_store_u_v_in_uv_vu_double_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_host_or_dev, l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
 #endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_store_u_v_in_uv_vu_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  if (wantDebug){
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing cuda_store_u_v_in_uv_vu_double_kernel: %s\n",cudaGetErrorString(cuerr));
+    }
   }
 }
 
