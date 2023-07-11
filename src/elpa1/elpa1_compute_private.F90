@@ -164,6 +164,20 @@ module elpa1_compute
   public :: elpa_transpose_vectors_ss_complex_single
 #endif
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+  public :: gpu_elpa_transpose_vectors_real_double
+  public :: gpu_elpa_transpose_vectors_ss_real_double
+
+  interface gpu_elpa_transpose_vectors_real
+    module procedure gpu_elpa_transpose_vectors_real_double
+  end interface
+
+  interface gpu_elpa_transpose_vectors_ss_real
+    module procedure gpu_elpa_transpose_vectors_ss_real_double
+  end interface
+
+#endif
+
   contains
 
 ! real double precision first
