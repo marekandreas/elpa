@@ -312,273 +312,273 @@ subroutine ROUTINE_NAME&
 
 end subroutine
 
-#ifdef WITH_NVIDIA_NCCL
+! #ifdef WITH_NVIDIA_NCCL
 
-subroutine gpu_&
-  &ROUTINE_NAME&
-  &MATH_DATATYPE&
-  &_&
-  &PRECISION &
-  (obj, vmat_s_dev, ld_s, ccl_comm_s, comm_s, vmat_t_dev, ld_t, ccl_comm_t, comm_t, &
-   nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, success)
+! subroutine gpu_&
+!   &ROUTINE_NAME&
+!   &MATH_DATATYPE&
+!   &_&
+!   &PRECISION &
+!   (obj, vmat_s_dev, ld_s, ccl_comm_s, comm_s, vmat_t_dev, ld_t, ccl_comm_t, comm_t, &
+!    nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, success)
   
-  !-------------------------------------------------------------------------------
-  ! This is the gpu version of the above routine
-  ! This routine transposes an array of vectors which are distributed in
-  ! communicator comm_s into its transposed form distributed in communicator comm_t.
-  ! There must be an identical copy of vmat_s in every communicator comm_s.
-  ! After this routine, there is an identical copy of vmat_t in every communicator comm_t.
-  !
-  ! vmat_s    original array of vectors
-  ! ld_s      leading dimension of vmat_s
-  ! comm_s    communicator over which vmat_s is distributed
-  ! vmat_t    array of vectors in transposed form
-  ! ld_t      leading dimension of vmat_t
-  ! comm_t    communicator over which vmat_t is distributed
-  ! nvs       global index where to start in vmat_s/vmat_t
-  !           Please note: this is kind of a hint, some values before nvs will be
-  !           accessed in vmat_s/put into vmat_t
-  ! nvr       global length of vmat_s/vmat_t
-  ! nvc       number of columns in vmat_s/vmat_t
-  ! nblk      block size of block cyclic distribution
-  !
-  !-------------------------------------------------------------------------------
+!   !-------------------------------------------------------------------------------
+!   ! This is the gpu version of the above routine
+!   ! This routine transposes an array of vectors which are distributed in
+!   ! communicator comm_s into its transposed form distributed in communicator comm_t.
+!   ! There must be an identical copy of vmat_s in every communicator comm_s.
+!   ! After this routine, there is an identical copy of vmat_t in every communicator comm_t.
+!   !
+!   ! vmat_s    original array of vectors
+!   ! ld_s      leading dimension of vmat_s
+!   ! comm_s    communicator over which vmat_s is distributed
+!   ! vmat_t    array of vectors in transposed form
+!   ! ld_t      leading dimension of vmat_t
+!   ! comm_t    communicator over which vmat_t is distributed
+!   ! nvs       global index where to start in vmat_s/vmat_t
+!   !           Please note: this is kind of a hint, some values before nvs will be
+!   !           accessed in vmat_s/put into vmat_t
+!   ! nvr       global length of vmat_s/vmat_t
+!   ! nvc       number of columns in vmat_s/vmat_t
+!   ! nblk      block size of block cyclic distribution
+!   !
+!   !-------------------------------------------------------------------------------
   
-  use precision
-  use elpa_abstract_impl
-#ifdef WITH_OPENMP_TRADITIONAL
-  use omp_lib
-#endif
-  use elpa_mpi
-
-  implicit none
-  class(elpa_abstract_impl_t), intent(inout) :: obj
-  integer(kind=ik), intent(in)                      :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
-  MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)   :: vmat_s(ld_s,nvc)
-  MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout):: vmat_t(ld_t,nvc)
-
-  MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable  :: aux(:)
-  integer(kind=ik)                                  :: myps, mypt, nps, npt
-  integer(kind=MPI_KIND)                            :: mypsMPI, myptMPI, npsMPI, nptMPI
-  integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl
-  integer(kind=MPI_KIND)                            :: mpierr
-  integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
-  integer(kind=ik)                                  :: auxstride
-  integer(kind=ik), intent(in)                      :: nrThreads
-  integer(kind=ik)                                  :: istat
-  character(200)                                    :: errorMessage
-
-  integer(kind=MPI_KIND)                            :: bcast_request1
-  logical                                           :: useNonBlockingCollectives
-  logical                                           :: useNonBlockingCollectivesRows
-  logical                                           :: useNonBlockingCollectivesCols
-  logical, intent(in)                               :: comm_s_isRows
-  integer(kind=c_int)                               :: non_blocking_collectives_rows, error, &
-                                                        non_blocking_collectives_cols
-  logical                                           :: success
-
-  integer(kind=c_intptr_t), intent(in)              :: ccl_comm_s, ccl_comm_t
-  integer(kind=c_intptr_t)                          :: aux_transpose_dev
-
-  success = .true.
-
-  call obj%timer%start("gpu_elpa_transpose_vectors")
-
-  call obj%get("nbc_row_transpose_vectors", non_blocking_collectives_rows, error)
-  if (error .ne. ELPA_OK) then
-    write(error_unit,*) "Problem setting option for non blocking collectives for_rows in transpose_vectors. Aborting..."
-    success = .false.
-      call obj%timer%stop("&
-          &ROUTINE_NAME&
-      &MATH_DATATYPE&
-      &" // &
-      &PRECISION_SUFFIX &
-    )
-    return
-  endif
-
-  call obj%get("nbc_col_transpose_vectors", non_blocking_collectives_cols, error)
-  if (error .ne. ELPA_OK) then
-    write(error_unit,*) "Problem setting option for non blocking collectives for_cols in transpose_vectors. Aborting..."
-    success = .false.
-      call obj%timer%stop("&
-          &ROUTINE_NAME&
-      &MATH_DATATYPE&
-      &" // &
-      &PRECISION_SUFFIX &
-    )
-    return
-  endif
-
-  if (non_blocking_collectives_rows .eq. 1) then
-    useNonBlockingCollectivesRows = .true.
-  else
-    useNonBlockingCollectivesRows = .false.
-  endif
-
-  if (non_blocking_collectives_cols .eq. 1) then
-    useNonBlockingCollectivesCols = .true.
-  else
-    useNonBlockingCollectivesCols = .false.
-  endif
-
-  if (comm_s_isRows) then
-    useNonBlockingCollectives = useNonBlockingCollectivesRows
-  else
-    useNonBlockingCollectives = useNonBlockingCollectivesCols
-  endif
-
-  ! PETERDEBUG -- move this outside (?) and change mpi to ccl 
-  call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
-  call mpi_comm_size(int(comm_s,kind=MPI_KIND),npsMPI ,mpierr)
-  call mpi_comm_rank(int(comm_t,kind=MPI_KIND),myptMPI, mpierr)
-  call mpi_comm_size(int(comm_t,kind=MPI_KIND),nptMPI ,mpierr)
-  myps = int(mypsMPI,kind=c_int)
-  nps = int(npsMPI,kind=c_int)
-  mypt = int(myptMPI,kind=c_int)
-  npt = int(nptMPI,kind=c_int)
-  call obj%timer%stop("mpi_communication")
-
-  ! The basic idea of this routine is that for every block (in the block cyclic
-  ! distribution), the processor within comm_t which owns the diagonal
-  ! broadcasts its values of vmat_s to all processors within comm_t.
-  ! Of course this has not to be done for every block separately, since
-  ! the communictation pattern repeats in the global matrix after
-  ! the least common multiple of (nps,npt) blocks
-
-  lcm_s_t   = least_common_multiple(nps,npt) ! least common multiple of nps, npt
-
-  nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
-
-  ! Get the number of blocks to be skipped at the begin.
-  ! This must be a multiple of lcm_s_t (else it is getting complicated),
-  ! thus some elements before nvs will be accessed/set.
-
-  nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
-
-  !allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
-  !check_allocate("elpa_transpose_vectors: aux", istat, errorMessage)
-  successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc) * size_of_datatype)
-  check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
-
+!   use precision
+!   use elpa_abstract_impl
 ! #ifdef WITH_OPENMP_TRADITIONAL
-!   !$omp parallel num_threads(nrThreads) &
-!   !$omp default(none) &
-!   !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
-!   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
-!   !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
+!   use omp_lib
+! #endif
+!   use elpa_mpi
+
+!   implicit none
+!   class(elpa_abstract_impl_t), intent(inout) :: obj
+!   integer(kind=ik), intent(in)                      :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
+!   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(in)   :: vmat_s(ld_s,nvc)
+!   MATH_DATATYPE(kind=C_DATATYPE_KIND), intent(inout):: vmat_t(ld_t,nvc)
+
+!   MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable  :: aux(:)
+!   integer(kind=ik)                                  :: myps, mypt, nps, npt
+!   integer(kind=MPI_KIND)                            :: mypsMPI, myptMPI, npsMPI, nptMPI
+!   integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl
+!   integer(kind=MPI_KIND)                            :: mpierr
+!   integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
+!   integer(kind=ik)                                  :: auxstride
+!   integer(kind=ik), intent(in)                      :: nrThreads
+!   integer(kind=ik)                                  :: istat
+!   character(200)                                    :: errorMessage
+
+!   integer(kind=MPI_KIND)                            :: bcast_request1
+!   logical                                           :: useNonBlockingCollectives
+!   logical                                           :: useNonBlockingCollectivesRows
+!   logical                                           :: useNonBlockingCollectivesCols
+!   logical, intent(in)                               :: comm_s_isRows
+!   integer(kind=c_int)                               :: non_blocking_collectives_rows, error, &
+!                                                         non_blocking_collectives_cols
+!   logical                                           :: success
+
+!   integer(kind=c_intptr_t), intent(in)              :: ccl_comm_s, ccl_comm_t
+!   integer(kind=c_intptr_t)                          :: vmat_s_dev, vmat_t_dev, aux_transpose_dev
+
+!   success = .true.
+
+!   call obj%timer%start("gpu_elpa_transpose_vectors")
+
+!   call obj%get("nbc_row_transpose_vectors", non_blocking_collectives_rows, error)
+!   if (error .ne. ELPA_OK) then
+!     write(error_unit,*) "Problem setting option for non blocking collectives for_rows in transpose_vectors. Aborting..."
+!     success = .false.
+!       call obj%timer%stop("&
+!           &ROUTINE_NAME&
+!       &MATH_DATATYPE&
+!       &" // &
+!       &PRECISION_SUFFIX &
+!     )
+!     return
+!   endif
+
+!   call obj%get("nbc_col_transpose_vectors", non_blocking_collectives_cols, error)
+!   if (error .ne. ELPA_OK) then
+!     write(error_unit,*) "Problem setting option for non blocking collectives for_cols in transpose_vectors. Aborting..."
+!     success = .false.
+!       call obj%timer%stop("&
+!           &ROUTINE_NAME&
+!       &MATH_DATATYPE&
+!       &" // &
+!       &PRECISION_SUFFIX &
+!     )
+!     return
+!   endif
+
+!   if (non_blocking_collectives_rows .eq. 1) then
+!     useNonBlockingCollectivesRows = .true.
+!   else
+!     useNonBlockingCollectivesRows = .false.
+!   endif
+
+!   if (non_blocking_collectives_cols .eq. 1) then
+!     useNonBlockingCollectivesCols = .true.
+!   else
+!     useNonBlockingCollectivesCols = .false.
+!   endif
+
+!   if (comm_s_isRows) then
+!     useNonBlockingCollectives = useNonBlockingCollectivesRows
+!   else
+!     useNonBlockingCollectives = useNonBlockingCollectivesCols
+!   endif
+
+!   ! PETERDEBUG -- move this outside (?) and change mpi to ccl 
+!   call obj%timer%start("mpi_communication")
+!   call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
+!   call mpi_comm_size(int(comm_s,kind=MPI_KIND),npsMPI ,mpierr)
+!   call mpi_comm_rank(int(comm_t,kind=MPI_KIND),myptMPI, mpierr)
+!   call mpi_comm_size(int(comm_t,kind=MPI_KIND),nptMPI ,mpierr)
+!   myps = int(mypsMPI,kind=c_int)
+!   nps = int(npsMPI,kind=c_int)
+!   mypt = int(myptMPI,kind=c_int)
+!   npt = int(nptMPI,kind=c_int)
+!   call obj%timer%stop("mpi_communication")
+
+!   ! The basic idea of this routine is that for every block (in the block cyclic
+!   ! distribution), the processor within comm_t which owns the diagonal
+!   ! broadcasts its values of vmat_s to all processors within comm_t.
+!   ! Of course this has not to be done for every block separately, since
+!   ! the communictation pattern repeats in the global matrix after
+!   ! the least common multiple of (nps,npt) blocks
+
+!   lcm_s_t   = least_common_multiple(nps,npt) ! least common multiple of nps, npt
+
+!   nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
+
+!   ! Get the number of blocks to be skipped at the begin.
+!   ! This must be a multiple of lcm_s_t (else it is getting complicated),
+!   ! thus some elements before nvs will be accessed/set.
+
+!   nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
+
+!   !allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
+!   !check_allocate("elpa_transpose_vectors: aux", istat, errorMessage)
+!   successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
+!   check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
+
+! ! #ifdef WITH_OPENMP_TRADITIONAL
+! !   !$omp parallel num_threads(nrThreads) &
+! !   !$omp default(none) &
+! !   !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
+! !   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
+! !   !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
+! ! #ifdef WITH_MPI
+! !   !$omp&       MPI_STATUS_IGNORE, &
+! ! #endif
+! !   !$omp&       useNonBlockingCollectives)
+! ! #endif
+
+!   !gpu_copy_transpose(nvc, nblks_skip, )
+
+!   ! for non-square grid this becomes super inefficient
+!   ! what about 2x1 grid?
+!   ! we could circumvent the problem if it was possible to use nccl from inside the gpu kernel and then rework the whole procedure to one big kernel
+!   ! alternatively we could make aux_transpose_dev bigger by factor lcm_s_t and break main do-loop into 3 parts
+!   ! this would also help for CPU version. but maybe elpa_transpose_vectors is not a bottleneck there.
+!   ! !? work through the cycle once with a pen and paper (or rather do it in a txt file)
+!   do n = 0, lcm_s_t-1
+
+!     ips = mod(n,nps)
+!     ipt = mod(n,npt)
+
+!     if (mypt == ipt) then
+
+!       nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
+!       auxstride = nblk * nblks_comm
+
+!       if (nblks_comm .ne. 0) then
+!         if (myps == ips) then
+
+! ! #ifdef WITH_OPENMP_TRADITIONAL
+! !           !$omp do
+! ! #endif
+
+!           do lc=1,nvc
+!             do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+!               k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+!               ns = (i/nps)*nblk ! local start of block i
+!               nl = min(nvr-i*nblk,nblk) ! length
+!               aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
+!             enddo
+!           enddo
+
+!         endif
+
+! ! #ifdef WITH_OPENMP_TRADITIONAL
+! !         !$omp barrier
+! !         !$omp master
+! ! #endif
+
 ! #ifdef WITH_MPI
-!   !$omp&       MPI_STATUS_IGNORE, &
+!         if (useNonBlockingCollectives) then
+!           call obj%timer%start("mpi_nbc_communication")
+!           call mpi_ibcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
+! #if REALCASE == 1
+!                       MPI_REAL_PRECISION,    &
 ! #endif
-!   !$omp&       useNonBlockingCollectives)
+! #if COMPLEXCASE == 1
+!                       MPI_COMPLEX_PRECISION, &
 ! #endif
-
-  gpu_copy_transpose(nvc, nblks_skip, )
-
-  ! for non-square grid this becomes super inefficient
-  ! what about 2x1 grid?
-  ! we could circumvent the problem if it was possible to use nccl from inside the gpu kernel and then rework the whole procedure to one big kernel
-  ! alternatively we could make aux_transpose_dev bigger by factor lcm_s_t and break main do-loop into 3 parts
-  ! this would also help for CPU version. but maybe elpa_transpose_vectors is not a bottleneck there.
-  ! !? work through the cycle once with a pen and paper (or rather do it in a txt file)
-  do n = 0, lcm_s_t-1
-
-    ips = mod(n,nps)
-    ipt = mod(n,npt)
-
-    if (mypt == ipt) then
-
-      nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
-      auxstride = nblk * nblks_comm
-
-      if (nblks_comm .ne. 0) then
-        if (myps == ips) then
-
-! #ifdef WITH_OPENMP_TRADITIONAL
-!           !$omp do
+!                       int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND), bcast_request1, mpierr)
+!           call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+!           call obj%timer%stop("mpi_nbc_communication")
+!         else
+!           call obj%timer%start("mpi_communication")
+!           call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
+! #if REALCASE == 1
+!                       MPI_REAL_PRECISION,    &
 ! #endif
+! #if COMPLEXCASE == 1
+!                       MPI_COMPLEX_PRECISION, &
+! #endif
+!                       int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND),  mpierr)
+!           call obj%timer%stop("mpi_communication")
+!         endif
+! #endif /* WITH_MPI */
 
-          do lc=1,nvc
-            do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-              k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
-              ns = (i/nps)*nblk ! local start of block i
-              nl = min(nvr-i*nblk,nblk) ! length
-              aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
-            enddo
-          enddo
+! ! #ifdef WITH_OPENMP_TRADITIONAL
+! !         !$omp end master
+! !         !$omp barrier
 
-        endif
+! !         !$omp do
+! ! #endif
 
-! #ifdef WITH_OPENMP_TRADITIONAL
-!         !$omp barrier
-!         !$omp master
+!         do lc=1,nvc
+!           do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+!             k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+!             ns = (i/npt)*nblk ! local start of block i
+!             nl = min(nvr-i*nblk,nblk) ! length
+! #ifdef SKEW_SYMMETRIC_BUILD
+!             vmat_t(ns+1:ns+nl,lc) = - aux(k+1:k+nl)
+! #else
+!             vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)
 ! #endif
 
-#ifdef WITH_MPI
-        if (useNonBlockingCollectives) then
-          call obj%timer%start("mpi_nbc_communication")
-          call mpi_ibcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
-#if REALCASE == 1
-                      MPI_REAL_PRECISION,    &
-#endif
-#if COMPLEXCASE == 1
-                      MPI_COMPLEX_PRECISION, &
-#endif
-                      int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND), bcast_request1, mpierr)
-          call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
-          call obj%timer%stop("mpi_nbc_communication")
-        else
-          call obj%timer%start("mpi_communication")
-          call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),    &
-#if REALCASE == 1
-                      MPI_REAL_PRECISION,    &
-#endif
-#if COMPLEXCASE == 1
-                      MPI_COMPLEX_PRECISION, &
-#endif
-                      int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND),  mpierr)
-          call obj%timer%stop("mpi_communication")
-        endif
-#endif /* WITH_MPI */
+!           enddo
+!         enddo
+!       endif
+!     endif
 
-! #ifdef WITH_OPENMP_TRADITIONAL
-!         !$omp end master
-!         !$omp barrier
+!   enddo ! n = 0, lcm_s_t-1
+! ! #ifdef WITH_OPENMP_TRADITIONAL
+! !   !$omp end parallel
+! ! #endif
+!   deallocate(aux, stat=istat, errmsg=errorMessage)
+!   check_deallocate("elpa_transpose_vectors: aux", istat, errorMessage)
 
-!         !$omp do
+!   call obj%timer%stop("&
+!   &ROUTINE_NAME&
+!   &MATH_DATATYPE&
+!   &" // &
+!   &PRECISION_SUFFIX &
+!   )
+
+! end subroutine
+
 ! #endif
-
-        do lc=1,nvc
-          do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-            k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
-            ns = (i/npt)*nblk ! local start of block i
-            nl = min(nvr-i*nblk,nblk) ! length
-#ifdef SKEW_SYMMETRIC_BUILD
-            vmat_t(ns+1:ns+nl,lc) = - aux(k+1:k+nl)
-#else
-            vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)
-#endif
-
-          enddo
-        enddo
-      endif
-    endif
-
-  enddo ! n = 0, lcm_s_t-1
-! #ifdef WITH_OPENMP_TRADITIONAL
-!   !$omp end parallel
-! #endif
-  deallocate(aux, stat=istat, errmsg=errorMessage)
-  check_deallocate("elpa_transpose_vectors: aux", istat, errorMessage)
-
-  call obj%timer%stop("&
-  &ROUTINE_NAME&
-  &MATH_DATATYPE&
-  &" // &
-  &PRECISION_SUFFIX &
-  )
-
-end subroutine
-
-#endif
