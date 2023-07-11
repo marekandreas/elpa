@@ -1043,18 +1043,33 @@ if (useNonBlockingCollectivesCols) then
     tau(istep) =  v_row(l_rows+1)
 
     ! Transpose Householder Vector v_row -> v_col
-    call nvtxRangePush("elpa_transpose_vectors v_row -> v_col")
-    call elpa_transpose_vectors_&
-        &MATH_DATATYPE&
-        &_&
-        &PRECISION &
-              (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
-               1, istep-1, 1, nblk, max_threads, .true., success)
-    call nvtxRangePop()
-    if (.not.(success)) then
-      write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
-      return
-    endif
+    ! if (useCCL) then ! PETERDEBUG-TEMP uncomment after testing!
+      ! call nvtxRangePush("gpu_elpa_transpose_vectors v_row_dev->v_col_dev")
+      ! call gpu_elpa_transpose_vectors_&
+      !     &MATH_DATATYPE&
+      !     &_&
+      !     &PRECISION &
+      !           (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
+      !           ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., success)
+      ! call nvtxRangePop()
+      ! if (.not.(success)) then
+      !   write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
+      !   return
+      ! endif
+    ! else ! useCCL ! PETERDEBUG-TEMP uncomment after testing!
+      call nvtxRangePush("elpa_transpose_vectors v_row -> v_col")
+      call elpa_transpose_vectors_&
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION &
+                (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
+                1, istep-1, 1, nblk, max_threads, .true., success)
+      call nvtxRangePop()
+      if (.not.(success)) then
+        write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
+        return
+      endif
+    ! endif ! useCCL ! PETERDEBUG-TEMP uncomment after testing!
 
     ! Calculate u = (A + VU**T + UV**T)*v // Dongarra 1987: "y = (A - UV**T - VU**T)*u"
 

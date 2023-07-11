@@ -312,14 +312,15 @@ subroutine ROUTINE_NAME&
 
 end subroutine
 
+#ifdef WITH_NVIDIA_NCCL
 
 subroutine gpu_&
   &ROUTINE_NAME&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
-  (obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, &
-   success)
+  (obj, vmat_s_dev, ld_s, ccl_comm_s, comm_s, vmat_t_dev, ld_t, ccl_comm_t, comm_t, &
+   nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, success)
   
   !-------------------------------------------------------------------------------
   ! This is the gpu version of the above routine
@@ -376,14 +377,12 @@ subroutine gpu_&
                                                         non_blocking_collectives_cols
   logical                                           :: success
 
+  integer(kind=c_intptr_t), intent(in)              :: ccl_comm_s, ccl_comm_t
+  integer(kind=c_intptr_t)                          :: aux_transpose_dev
+
   success = .true.
 
-  call obj%timer%start("&
-          &ROUTINE_NAME&
-  &MATH_DATATYPE&
-  &" // &
-  &PRECISION_SUFFIX &
-  )
+  call obj%timer%start("gpu_elpa_transpose_vectors")
 
   call obj%get("nbc_row_transpose_vectors", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
@@ -429,6 +428,7 @@ subroutine gpu_&
     useNonBlockingCollectives = useNonBlockingCollectivesCols
   endif
 
+  ! PETERDEBUG -- move this outside (?) and change mpi to ccl 
   call obj%timer%start("mpi_communication")
   call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
   call mpi_comm_size(int(comm_s,kind=MPI_KIND),npsMPI ,mpierr)
@@ -438,9 +438,8 @@ subroutine gpu_&
   nps = int(npsMPI,kind=c_int)
   mypt = int(myptMPI,kind=c_int)
   npt = int(nptMPI,kind=c_int)
-
-
   call obj%timer%stop("mpi_communication")
+
   ! The basic idea of this routine is that for every block (in the block cyclic
   ! distribution), the processor within comm_t which owns the diagonal
   ! broadcasts its values of vmat_s to all processors within comm_t.
@@ -458,19 +457,31 @@ subroutine gpu_&
 
   nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
 
-  allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_transpose_vectors: aux", istat, errorMessage)
-#ifdef WITH_OPENMP_TRADITIONAL
-  !$omp parallel num_threads(nrThreads) &
-  !$omp default(none) &
-  !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
-  !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
-  !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
-#ifdef WITH_MPI
-  !$omp&       MPI_STATUS_IGNORE, &
-#endif
-  !$omp&       useNonBlockingCollectives)
-#endif
+  !allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
+  !check_allocate("elpa_transpose_vectors: aux", istat, errorMessage)
+  successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc) * size_of_datatype)
+  check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
+
+! #ifdef WITH_OPENMP_TRADITIONAL
+!   !$omp parallel num_threads(nrThreads) &
+!   !$omp default(none) &
+!   !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
+!   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
+!   !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
+! #ifdef WITH_MPI
+!   !$omp&       MPI_STATUS_IGNORE, &
+! #endif
+!   !$omp&       useNonBlockingCollectives)
+! #endif
+
+  gpu_copy_transpose(nvc, nblks_skip, )
+
+  ! for non-square grid this becomes super inefficient
+  ! what about 2x1 grid?
+  ! we could circumvent the problem if it was possible to use nccl from inside the gpu kernel and then rework the whole procedure to one big kernel
+  ! alternatively we could make aux_transpose_dev bigger by factor lcm_s_t and break main do-loop into 3 parts
+  ! this would also help for CPU version. but maybe elpa_transpose_vectors is not a bottleneck there.
+  ! !? work through the cycle once with a pen and paper (or rather do it in a txt file)
   do n = 0, lcm_s_t-1
 
     ips = mod(n,nps)
@@ -480,28 +491,29 @@ subroutine gpu_&
 
       nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
       auxstride = nblk * nblks_comm
-!      if(nblks_comm==0) cycle
+
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
-!          k = 0
-#ifdef WITH_OPENMP_TRADITIONAL
-          !$omp do
-#endif
+
+! #ifdef WITH_OPENMP_TRADITIONAL
+!           !$omp do
+! #endif
+
           do lc=1,nvc
             do i = nblks_skip+n, nblks_tot-1, lcm_s_t
               k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
               ns = (i/nps)*nblk ! local start of block i
               nl = min(nvr-i*nblk,nblk) ! length
               aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
-!              k = k+nblk
             enddo
           enddo
+
         endif
 
-#ifdef WITH_OPENMP_TRADITIONAL
-        !$omp barrier
-        !$omp master
-#endif
+! #ifdef WITH_OPENMP_TRADITIONAL
+!         !$omp barrier
+!         !$omp master
+! #endif
 
 #ifdef WITH_MPI
         if (useNonBlockingCollectives) then
@@ -530,13 +542,13 @@ subroutine gpu_&
         endif
 #endif /* WITH_MPI */
 
-#ifdef WITH_OPENMP_TRADITIONAL
-        !$omp end master
-        !$omp barrier
+! #ifdef WITH_OPENMP_TRADITIONAL
+!         !$omp end master
+!         !$omp barrier
 
-        !$omp do
-#endif
-!        k = 0
+!         !$omp do
+! #endif
+
         do lc=1,nvc
           do i = nblks_skip+n, nblks_tot-1, lcm_s_t
             k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
@@ -547,16 +559,16 @@ subroutine gpu_&
 #else
             vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)
 #endif
-!            k = k+nblk
+
           enddo
         enddo
       endif
     endif
 
-  enddo
-#ifdef WITH_OPENMP_TRADITIONAL
-  !$omp end parallel
-#endif
+  enddo ! n = 0, lcm_s_t-1
+! #ifdef WITH_OPENMP_TRADITIONAL
+!   !$omp end parallel
+! #endif
   deallocate(aux, stat=istat, errmsg=errorMessage)
   check_deallocate("elpa_transpose_vectors: aux", istat, errorMessage)
 
@@ -568,3 +580,5 @@ subroutine gpu_&
   )
 
 end subroutine
+
+#endif
