@@ -97,6 +97,11 @@ module mod_check_for_gpu
 #endif
 
 
+
+      if (obj%gpu_setup%gpuIsAssigned) then
+        return
+      endif
+
       if (.not.(present(wantDebug))) then
         wantDebugMessage = .false.
       else
@@ -251,6 +256,7 @@ module mod_check_for_gpu
 
         endif ! alreadySET
         obj%gpu_setup%gpuAlreadySET = .true.
+        obj%gpu_setup%gpuIsAssigned =.true.
         !gpuIsInitialized = .true.
 
       else ! useGPUid
@@ -538,6 +544,7 @@ module mod_check_for_gpu
           endif ! numberOfDevices .ne. 0
           !gpuIsInitialized = .true.
         endif !obj%gpu_setup%gpuAlreadySet
+        obj%gpu_setup%gpuIsAssigned = .true.
       endif ! useGPUid
     end function
 end module

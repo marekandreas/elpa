@@ -662,6 +662,7 @@ module elpa_impl
 #endif
 
       self%gpu_setup%gpuAlreadySet=.false.
+      self%gpu_setup%gpuIsAssigned=.false.
 
       error = ELPA_OK
 

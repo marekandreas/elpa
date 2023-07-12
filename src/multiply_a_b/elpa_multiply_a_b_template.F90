@@ -66,6 +66,7 @@
                              check_host_dealloc_gpu_f, check_alloc_gpu_f, check_host_alloc_gpu_f, &
                              check_host_unregister_gpu_f, check_memcpy_gpu_f, check_allocate_f, &
                              check_host_register_gpu_f, check_alloc
+  use mod_query_gpu_usage
   implicit none
 
 #include "../../src/general/precision_kinds.F90"
@@ -104,83 +105,24 @@
   logical                                      :: success
   logical                                      :: successGPU
   logical                                      :: useGPU
-  integer(kind=c_int)                          :: gpu, numGPU
+  integer(kind=c_int)                          :: numGPU
   integer(kind=ik)                             :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=ik)                             :: nblk, matrixRows, matrixCols, error
   integer(kind=c_intptr_t)                     :: aux_dev, b_dev, tmp1_dev
   type(c_ptr)                                  :: aux_host, tmp1_host
   integer(kind=c_intptr_t)                     :: num
   integer(kind=c_intptr_t)                     :: aux_off, b_off
-  integer(kind=c_int)                          :: gpu_multiply_a_b
   integer(kind=c_intptr_t), parameter          :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
                                                             &MATH_DATATYPE
 
   integer(kind=c_intptr_t)                     :: gpuHandle, my_stream
+
   success = .true.
-  gpu_multiply_a_b = 0
-
-  ! GPU settings
-  if (gpu_vendor() == NVIDIA_GPU) then
-    call obj%get("gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_MULITPLY_AB: Problem getting option for GPU. Aborting..."
-      stop 1
-    endif
-    if (gpu .eq. 1) then
-      print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new &
-              & keyword 'nvidia-gpu'"
-      call obj%set("nvidia-gpu",gpu,error)
-      if (error .ne. ELPA_OK) then
-        print *,"ELPA_MULITPLY_AB: Problem setting option for NVIDIA GPU. Aborting..."
-        stop 1
-      endif
-    endif
-
-    call obj%get("nvidia-gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_MULITPLY_AB: Problem getting option for NVIDIA GPU. Aborting..."
-      stop 1
-    endif
-
-  else if (gpu_vendor() == AMD_GPU) then
-    call obj%get("amd-gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_MULITPLY_AB: Problem getting option for AMD GPU. Aborting..."
-      stop 1
-    endif
-  
-  else if (gpu_vendor() == SYCL_GPU) then
-    call obj%get("intel-gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_MULITPLY_AB: Problem getting option for SYCL GPU. Aborting..."
-      success = .false.
-      return
-    endif
-
-  else
-    gpu = 0
-  endif
-
-  call obj%get("gpu_hermitian_multiply",gpu_multiply_a_b, error)
-  if (error .ne. ELPA_OK) then
-    print *,"ELPA_MULITPLY_AB: Problem getting option for gpu_multiply. Aborting..."
+  if (.not.(query_gpu_usage(obj, "ELPA_MULITPLY_AB", useGPU))) then
+    print *,"ELPA_MULITPLY_AB: Problem querrying settings for GPU Aborting..."
     stop 1
-  endif
-
-  if (gpu_multiply_a_b .eq. 1) then
-    useGPU = (gpu == 1)
-  else
-    useGPU = .false.
-  endif
-
-  if (.not.(useGPU)) then
-#ifdef DEVICE_POINTER
-    print *,"ELPA_MULITPLY_AB: You used the interface for device pointers &
-             for hermitian_multiply but did not specify GPU usage!. Aborting..."
-    stop 1
-#endif
   endif
 
   if(useGPU) then
