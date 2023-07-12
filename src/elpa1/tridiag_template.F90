@@ -238,13 +238,14 @@ subroutine tridiag_&
   integer(kind=ik)                              :: string_length
 
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
-  successGPU = cuda_stream_create(obj%gpu_setup%my_stream)
-  if (.not.(successGPU)) then
-    print *,"Cannot create gpu stream handle"
-  endif
-  my_stream = obj%gpu_setup%my_stream
-
-  if (useGPU) useCCL = .true.
+  if (useGPU) then
+    useCCL = .true.
+    successGPU = cuda_stream_create(obj%gpu_setup%my_stream)
+    if (.not.(successGPU)) then
+      print *,"Cannot create gpu stream handle"
+    endif
+    my_stream = obj%gpu_setup%my_stream
+  endif 
 #endif
 
   string_length = 32
@@ -951,7 +952,7 @@ subroutine tridiag_&
         call nvtxRangePop()
       endif ! .not. useGPU 
 
-      if (.not. useCCL) then ! PETERDEBUG-TEMP uncomment after testing
+      if (.not. useCCL) then
         ! add tau after the end of actuall v_row, to be broadcasted with it
         v_row(l_rows+1) = tau(istep)
       endif
@@ -1020,7 +1021,7 @@ subroutine tridiag_&
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
     endif ! useCCL
-#else /* WITH_NVIDIA_NCCL */
+!#else /* WITH_NVIDIA_NCCL */ PETERDEBUG-TEMP -- uncomment after completing elpa_transpose_vectors and testing
 if (useNonBlockingCollectivesCols) then
       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
       ! Broadcast the Householder Vector (and tau) along columns
@@ -1040,7 +1041,9 @@ if (useNonBlockingCollectivesCols) then
 #endif /* WITH_MPI */
 
     !recover tau, which has been broadcasted together with v_row
-    tau(istep) =  v_row(l_rows+1)
+    if (.not. useCCL) then
+      tau(istep) =  v_row(l_rows+1)
+    endif
 
     ! Transpose Householder Vector v_row -> v_col
     ! if (useCCL) then ! PETERDEBUG-TEMP uncomment after testing!
@@ -2168,7 +2171,9 @@ if (useNonBlockingCollectivesCols) then
 #endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
-  success = cuda_stream_destroy(obj%gpu_setup%my_stream)
+  if (useCCL) then
+    success = cuda_stream_destroy(obj%gpu_setup%my_stream)
+  endif
 #endif
 
 !#define WITH_NVIDIA_NCCL /* PETERDEBUG */
