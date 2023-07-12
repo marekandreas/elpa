@@ -178,7 +178,9 @@ The following table gives a list of all supported parameters which can be used t
 
 ## III) List of computational routines ##
 
-The following compute routines are available in *ELPA*: Please have a look at the man pages or  [online doxygen documentation] (http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2023.05.001/html/index.html) for details.
+The following compute routines are available in *ELPA*: Please have a look at the man pages or 
+[online doxygen documentation](https://elpa.mpcdf.mpg.de/documentation/doxygen/ELPA_DOXYGEN_PAGES/ELPA-2023.05.001/html/index.html)
+for details.
 
 
 | Name         | Purpose                                                                 | since API version |
