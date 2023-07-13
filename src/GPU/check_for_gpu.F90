@@ -96,9 +96,10 @@ module mod_check_for_gpu
       integer(kind=ik)                           :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
 #endif
 
-
+      gpuAvailable = .false.
 
       if (obj%gpu_setup%gpuIsAssigned) then
+        gpuAvailable = .true.
         return
       endif
 

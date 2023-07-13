@@ -64,7 +64,7 @@ module mod_query_gpu_usage
        integer(kind=c_int)        :: gpu
        integer(kind=ik)           :: error
        logical                    :: success
-       character(len=*)           :: functionname
+       character(*)               :: functionname
        integer(kind=c_int)        :: gpu_functionname
        logical, intent(out)       :: useGPU
 
@@ -128,7 +128,7 @@ module mod_query_gpu_usage
        endif
 
        if (error .ne. ELPA_OK) then
-         print *,trim(functionname),": Problem getting option for gpu_multiply. Aborting..."
+         print *,trim(functionname),": Problem getting option for gpu. Aborting..."
          success = .false.
          return
        endif
