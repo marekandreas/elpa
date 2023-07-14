@@ -118,12 +118,35 @@
                                                             &MATH_DATATYPE
 
   integer(kind=c_intptr_t)                     :: gpuHandle, my_stream
+  integer(kind=c_int)                          :: gpu_hermitian_multiply
 
   success = .true.
+  useGPU = .false.
+  
   if (.not.(query_gpu_usage(obj, "ELPA_MULITPLY_AB", useGPU))) then
     print *,"ELPA_MULITPLY_AB: Problem querrying settings for GPU Aborting..."
     stop 1
   endif
+
+  ! check whether the above setting should be overriden
+  if (obj%is_set("gpu_hermitian_multiply") == 1) then
+    call obj%get("gpu_hermitian_multiply", gpu_hermitian_multiply, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option for gpu_hermitian_mutltiply. Aborting..."
+      stop 1
+    endif
+    if (useGPU .and. gpu_hermitian_multiply .eq. 0) then
+      useGPU = .false.
+    else if (.not.(useGPU) .and. gpu_hermitian_multiply .eq. 1) then
+      useGPU = .true.
+    else
+    endif
+  else
+    ! no override by user
+    ! keep seeting as found before
+  endif
+
+
 
   if(useGPU) then
     gpuString = "_gpu"
@@ -142,17 +165,17 @@
   matrixRows  = obj%local_nrows
   matrixCols  = obj%local_ncols
 
-  call obj%get("mpi_comm_rows",mpi_comm_rows,error)
+  call obj%get("mpi_comm_rows", mpi_comm_rows, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem getting option for mpi_comm_rows. Aborting..."
     stop 1
   endif
-  call obj%get("mpi_comm_cols",mpi_comm_cols,error)
+  call obj%get("mpi_comm_cols", mpi_comm_cols, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem getting option for mpi_comm_cols. Aborting..."
     stop 1
   endif
-  call obj%get("mpi_comm_parent",mpi_comm_all,error)
+  call obj%get("mpi_comm_parent", mpi_comm_all, error)
   if (error .ne. ELPA_OK) then
     print *,"Problem getting option for mpi_comm_parent. Aborting..."
     stop 1
@@ -197,7 +220,7 @@
     ! copy b to b_dev
 #ifndef DEVICE_POINTER
     num = ldb*ldbCols*size_of_datatype
-    successGPU = gpu_malloc(b_dev,num)
+    successGPU = gpu_malloc(b_dev, num)
     check_alloc_gpu("elpa_mult_at_b: b_dev", successGPU)
 
 #if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)

@@ -104,6 +104,8 @@
 #endif
    use solve_tridi
    use thread_affinity
+
+   use mod_query_gpu_usage
    use, intrinsic :: iso_c_binding
    implicit none
 #include "../general/precision_kinds.F90"
@@ -337,10 +339,28 @@
 
     wantDebug = debug == 1
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     ! check legacy GPU setings
-#define GPU_SOLVER ELPA2
-#include "../GPU/check_legacy_gpu_setting_template.F90"
-#undef GPU_SOLVER
+#ifdef ACTIVATE_SKEW
+    if (.not.(query_gpu_usage(obj, "ELPA2_SKEW", useGPU))) then
+      call obj%timer%stop("elpa_solve_skew_evp_&
+      &MATH_DATATYPE&
+      &_1stage_&
+      &PRECISION&
+      &")
+#else
+    if (.not.(query_gpu_usage(obj, "ELPA2", useGPU))) then
+      call obj%timer%stop("elpa_solve_evp_&
+      &MATH_DATATYPE&
+      &_1stage_&
+      &PRECISION&
+      &")
+#endif
+      write(error_unit,*) "ELPA2: Problem getting options for GPU. Aborting..."
+#include "./elpa1_aborting_template.F90"
+    endif
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) ... */
+
     do_useGPU = .false.
 
     ! get the kernel and check whether it has been set by the user

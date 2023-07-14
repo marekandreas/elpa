@@ -114,11 +114,34 @@
                                                             &MATH_DATATYPE
 
   integer(kind=c_intptr_t)                   :: gpublasHandle, gpusolverHandle, my_stream
+  integer(kind=c_int)                        :: gpu_invert_trm
+
+  success = .true.
+  useGPU = .false.
 
   if (.not.(query_gpu_usage(obj, "ELPA_INVERT_TRM", useGPU))) then
     print *,"ELPA_INVERT_TRM: Problem querrying settings for GPU Aborting..."
     stop 1
   endif
+
+  ! check whether the above setting should be overriden
+  if (obj%is_set("gpu_invert_trm") == 1) then
+    call obj%get("gpu_invert_trm", gpu_invert_trm, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option for gpu_invert_trm. Aborting..."
+      stop 1
+    endif
+    if (useGPU .and. gpu_invert_trm .eq. 0) then
+      useGPU = .false.
+    else if (.not.(useGPU) .and. gpu_invert_trm .eq. 1) then
+      useGPU = .true.
+    else 
+    endif
+  else 
+    ! no override by user
+    ! keep seeting as found before
+  endif
+
 
   if (.not.(useGPU)) then
 #ifdef DEVICE_POINTER

@@ -118,6 +118,9 @@ function elpa_solve_evp_&
    use solve_tridi
    use thread_affinity
    use elpa_utilities, only : error_unit
+
+   use mod_query_gpu_usage
+
    implicit none
 #include "../general/precision_kinds.F90"
    class(elpa_abstract_impl_t), intent(inout)                         :: obj
@@ -277,10 +280,26 @@ function elpa_solve_evp_&
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     ! check legacy GPU setings
-#define GPU_SOLVER ELPA1
-#include "../GPU/check_legacy_gpu_setting_template.F90"
-#undef GPU_SOLVER
+#ifdef ACTIVATE_SKEW
+    if (.not.(query_gpu_usage(obj, "ELPA1_SKEW", useGPU))) then
+      call obj%timer%stop("elpa_solve_skew_evp_&
+      &MATH_DATATYPE&
+      &_1stage_&
+      &PRECISION&
+      &")
+#else
+    if (.not.(query_gpu_usage(obj, "ELPA1", useGPU))) then
+      call obj%timer%stop("elpa_solve_evp_&
+      &MATH_DATATYPE&
+      &_1stage_&
+      &PRECISION&
+      &")
 #endif
+      write(error_unit,*) "ELPA1: Problem getting options for GPU. Aborting..."
+#include "./elpa1_aborting_template.F90"      
+    endif
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) ... */
+
     do_useGPU = .false.     
 
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
