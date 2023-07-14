@@ -164,19 +164,19 @@ module elpa1_compute
   public :: elpa_transpose_vectors_ss_complex_single
 #endif
 
-! #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-!   public :: gpu_elpa_transpose_vectors_real_double
-!   public :: gpu_elpa_transpose_vectors_ss_real_double
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+  public :: gpu_elpa_transpose_vectors_real_double
+  public :: gpu_elpa_transpose_vectors_ss_real_double
 
-!   interface gpu_elpa_transpose_vectors_real
-!     module procedure gpu_elpa_transpose_vectors_real_double
-!   end interface
+  interface gpu_elpa_transpose_vectors_real
+    module procedure gpu_elpa_transpose_vectors_real_double
+  end interface
 
-!   interface gpu_elpa_transpose_vectors_ss_real
-!     module procedure gpu_elpa_transpose_vectors_ss_real_double
-!   end interface
+  interface gpu_elpa_transpose_vectors_ss_real
+    module procedure gpu_elpa_transpose_vectors_ss_real_double
+  end interface
 
-! #endif
+#endif
 
   contains
 
@@ -187,9 +187,9 @@ module elpa1_compute
 #include "../general/precision_macros.h"
 
 
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #define SKEW_SYMMETRIC_BUILD
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
 #include "elpa_reduce_add_vectors.F90"
 #undef DOUBLE_PRECISION
@@ -201,9 +201,9 @@ module elpa1_compute
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
 
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #define SKEW_SYMMETRIC_BUILD
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
 #include "elpa_reduce_add_vectors.F90"
 #undef SINGLE_PRECISION
@@ -215,9 +215,9 @@ module elpa1_compute
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #define SKEW_SYMMETRIC_BUILD
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
 #include "elpa_reduce_add_vectors.F90"
 #undef COMPLEXCASE
@@ -228,9 +228,9 @@ module elpa1_compute
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #define SKEW_SYMMETRIC_BUILD
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
 #include "elpa_reduce_add_vectors.F90"
 #undef COMPLEXCASE
