@@ -120,7 +120,7 @@ subroutine ROUTINE_NAME&
                                                        non_blocking_collectives_cols
   logical                                           :: success
 
-  integer(kind=ik)                                  :: mpi_comm_all, my_mpi_rank, transposed_mpi_rank, message_size
+  integer(kind=ik)                                  :: mpi_comm_all, my_mpi_rank, transposed_mpi_rank, message_size, matrix_order
 
   success = .true.
 
@@ -185,18 +185,40 @@ subroutine ROUTINE_NAME&
   mypt = int(myptMPI,kind=c_int)
   npt = int(nptMPI,kind=c_int)
   call obj%timer%stop("mpi_communication")
-  print *, "PETERDEBUG test 0"
 
   if (nps==npt .and. nvs==1) then
-    print *, "PETERDEBUG test"
     call obj%get("mpi_comm_parent", mpi_comm_all, error)
     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
-
     ld_st = min(ld_s,ld_t)
+    
     if (myps==mypt) then
       vmat_t(1:ld_st,1:nvc) = vmat_s(1:ld_st,1:nvc)
     else
-      transposed_mpi_rank = nps*npt - my_mpi_rank - 1
+      call obj%get("matrix_order", matrix_order, error)
+
+      if (comm_s_isRows .and. matrix_order==COLUMN_MAJOR_ORDER .or. &
+         (.not. comm_s_isRows) .and. matrix_order==ROW_MAJOR_ORDER) then
+        ! my_mpi_rank = myps + mypt*nps
+        if (my_mpi_rank /= myps + mypt*nps) then ! PETERDEBUG - delete the check after testing
+          print *, "ERROR my_mpi_rank /= myps + mypt*nps"
+        endif
+
+        transposed_mpi_rank = mypt + myps*npt
+      else if (comm_s_isRows .and. matrix_order==ROW_MAJOR_ORDER .or. &
+        (.not. comm_s_isRows) .and. matrix_order==COLUMN_MAJOR_ORDER) then
+        ! my_mpi_rank = mypt + myps*npt
+        if (my_mpi_rank /= mypt + myps*npt) then ! PETERDEBUG
+          print *, "ERROR my_mpi_rank /= mypt + myps*npt"
+        endif
+
+        transposed_mpi_rank = myps + mypt*nps
+      else
+        print *, "ERROR: matrix_order not set correctly"
+      endif
+      
+      ! PETERDEBUG-TEMP - delete after testing
+      ! print *, "my_mpi_rank=", my_mpi_rank, ", transposed_mpi_rank=", transposed_mpi_rank
+
       message_size = ld_st*nvc
 
       if (myps>mypt .and. message_size>0) then
@@ -205,7 +227,6 @@ subroutine ROUTINE_NAME&
         call MPI_Recv(vmat_t, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                       int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
       else if (myps<mypt  .and. message_size>0) then
-        transposed_mpi_rank = nps*npt - my_mpi_rank - 1
         call MPI_Recv(vmat_t, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                       int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
         call MPI_Send(vmat_s, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, & 
