@@ -357,7 +357,7 @@
       &")
 #endif
       write(error_unit,*) "ELPA2: Problem getting options for GPU. Aborting..."
-#include "./elpa1_aborting_template.F90"
+#include "./elpa2_aborting_template.F90"
     endif
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) ... */
 
