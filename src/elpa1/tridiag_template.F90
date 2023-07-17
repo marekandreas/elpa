@@ -1046,18 +1046,18 @@ if (useNonBlockingCollectivesCols) then
     endif
 
     ! Transpose Householder Vector v_row -> v_col
-    if (useCCL) then ! PETERDEBUG-TEMP uncomment after testing!
+    if (useCCL) then
       call nvtxRangePush("gpu_elpa_transpose_vectors v_row_dev->v_col_dev")
+#ifdef WITH_NVIDIA_NCCL
       call gpu_elpa_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
           &PRECISION &
-                (obj, v_row, max_local_rows+1, mpi_comm_rows, v_col, max_local_cols, &
-                mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., success)
-                ! (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
-                ! ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., success)
+                (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
+                ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., wantDebug, my_stream, success)
+#endif /* WITH_NVIDIA_NCCL */
       call nvtxRangePop()
-    else ! useCCL ! PETERDEBUG-TEMP uncomment after testing!
+    else
       call nvtxRangePush("elpa_transpose_vectors v_row -> v_col")
       call elpa_transpose_vectors_&
           &MATH_DATATYPE&
@@ -1070,7 +1070,7 @@ if (useNonBlockingCollectivesCols) then
         write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
         return
       endif
-    endif ! useCCL ! PETERDEBUG-TEMP uncomment after testing!
+    endif
 
     ! Calculate u = (A + VU**T + UV**T)*v // Dongarra 1987: "y = (A - UV**T - VU**T)*u"
 
@@ -1518,11 +1518,13 @@ if (useNonBlockingCollectivesCols) then
 #if defined(GPU_NEW)
     if (useGPU) then
       !!! PETERDEBUG: this can be copied in async manner with streams?
-      call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
-      successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
-                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("tridiag: v_col_dev", successGPU)
-      call nvtxRangePop()
+      if (.not. useCCL) then
+        call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
+        successGPU = gpu_memcpy(v_col_dev, int(loc(v_col(1)),kind=c_intptr_t), &
+                      l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+        check_memcpy_gpu("tridiag: v_col_dev", successGPU)
+        call nvtxRangePop()
+      endif ! .not. useCCL
 
       call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
       successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
