@@ -222,7 +222,7 @@ subroutine ROUTINE_NAME&
       
       ! PETERDEBUG-TEMP - delete after testing
       ! print *, "my_mpi_rank=", my_mpi_rank, ", transposed_mpi_rank=", transposed_mpi_rank
-      print *, "my_mpi_rank=", my_mpi_rank, ", nvc=", nvc, ", ld_s=", ld_s, ", ld_t=", ld_t
+      ! print *, "my_mpi_rank=", my_mpi_rank, ", nvc=", nvc, ", ld_s=", ld_s, ", ld_t=", ld_t
 
       message_size = ld_st*nvc
 
@@ -462,10 +462,12 @@ subroutine gpu_&
   logical, intent(in)                               :: wantDebug
   integer(kind=c_intptr_t)                          :: my_stream
 
+  call nvtxRangePush("gpu_elpa_transpose_vectors setup")
   success = .true.
 
-  call obj%timer%start("gpu_elpa_transpose_vectors")
+  if (wantDebug) call obj%timer%start("gpu_elpa_transpose_vectors")
 
+  ! PETERDEBUG: check if moving this outside speeds up the subroutine
   call obj%get("nbc_row_transpose_vectors", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
     write(error_unit,*) "Problem setting option for non blocking collectives for_rows in transpose_vectors. Aborting..."
@@ -525,6 +527,8 @@ subroutine gpu_&
   ! PETERDEBUG
   ! this codepath doesn't work for ELPA2 (because ld_s != ld_t)
   call obj%get("solver", solver, error)
+  call nvtxRangePop()
+
   if (solver==ELPA_SOLVER_1STAGE .and. nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
     call obj%get("mpi_comm_parent", mpi_comm_all, error)
     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
@@ -610,7 +614,7 @@ subroutine gpu_&
 
     endif
 
-    call obj%timer%stop("gpu_elpa_transpose_vectors")
+    if (wantDebug) call obj%timer%stop("gpu_elpa_transpose_vectors")
     return
   endif
 

@@ -405,7 +405,6 @@ subroutine tridiag_&
   ! todo: if something has length max_local_rows, it is actually a column, no?
   ! todo: probably one should read it as v_row = Vector v distributed among rows
 
-  ! allocate v_row 1 element longer to allow store and broadcast tau together with it
   allocate(uv_stored_cols(max_local_cols,2*max_stored_uv), stat=istat, errmsg=errorMessage)
   call check_alloc("tridiag_&
        &MATH_DATATYPE ", "uv_stored_cols", istat, errorMessage)
@@ -424,6 +423,7 @@ subroutine tridiag_&
 #endif
 #endif
 
+    ! allocate v_row 1 element longer to allow store and broadcast tau together with it
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       num = (max_local_rows+1) * size_of_datatype
       successGPU = gpu_malloc_host(v_row_host, num)
@@ -974,7 +974,7 @@ subroutine tridiag_&
 #endif /* GPU_NEW */
 
 #if defined(GPU_NEW)
-      if (useGPU) then      
+      if (useGPU .and. .not. useCCL) then      
         !v_row_dev -> v_row
         !write (nvtx_name, "(A,I0)") "memcpy new D-H v_row_dev->v_row ", l_rows
         nvtx_name = "memcpy new D-H v_row_dev->v_row"
@@ -982,7 +982,7 @@ subroutine tridiag_&
         successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), v_row_dev, (l_rows)*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
         call nvtxRangePop()
-      endif ! useGPU
+      endif ! useGPU .and. .not. useCCL
 #endif /* GPU_NEW */
 
     endif !(my_pcol == pcol(istep, nblk, np_cols))
@@ -990,7 +990,6 @@ subroutine tridiag_&
 !          SAVE_MATR("HH vec stored", na - istep + 1)
 
 #ifdef WITH_MPI
-#if defined(WITH_NVIDIA_NCCL)
     if (useCCL) then
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
@@ -1020,24 +1019,23 @@ subroutine tridiag_&
       endif
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
+    else ! useCCL
+      if (useNonBlockingCollectivesCols) then
+        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+        ! Broadcast the Householder Vector (and tau) along columns
+        call mpi_ibcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                    int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
+                    bcast_request1, mpierr)
+        call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+      else
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_bcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
+                    int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
+                    mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_communication")
+      endif
     endif ! useCCL
-!#else /* WITH_NVIDIA_NCCL */ PETERDEBUG-TEMP -- uncomment after completing elpa_transpose_vectors and testing
-if (useNonBlockingCollectivesCols) then
-      if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-      ! Broadcast the Householder Vector (and tau) along columns
-      call mpi_ibcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                   int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
-                   bcast_request1, mpierr)
-      call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-    else
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_bcast(v_row, int(l_rows+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,    &
-                   int(pcol(istep, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
-                   mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
-    endif
-#endif /* WITH_NVIDIA_NCCL */
 #endif /* WITH_MPI */
 
     !recover tau, which has been broadcasted together with v_row
@@ -1057,7 +1055,7 @@ if (useNonBlockingCollectivesCols) then
                 ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., wantDebug, my_stream, success)
 #endif /* WITH_NVIDIA_NCCL */
       call nvtxRangePop()
-    else
+    else ! useCCL
       call nvtxRangePush("elpa_transpose_vectors v_row -> v_col")
       call elpa_transpose_vectors_&
           &MATH_DATATYPE&
@@ -1070,7 +1068,7 @@ if (useNonBlockingCollectivesCols) then
         write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
         return
       endif
-    endif
+    endif ! useCCL
 
     ! Calculate u = (A + VU**T + UV**T)*v // Dongarra 1987: "y = (A - UV**T - VU**T)*u"
 
@@ -1552,11 +1550,13 @@ if (useNonBlockingCollectivesCols) then
       check_memcpy_gpu("tridiag: u_row_dev", successGPU)
       call nvtxRangePop()
 
-      call nvtxRangePush("memcpy new-2 H-D v_row->v_row_dev")
-      successGPU = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
-                    l_rows * size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("tridiag: v_row_dev", successGPU)
-      call nvtxRangePop()
+      if (.not. useCCL) then
+        call nvtxRangePush("memcpy new-2 H-D v_row->v_row_dev")
+        successGPU = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
+                      l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+        check_memcpy_gpu("tridiag: v_row_dev", successGPU)
+        call nvtxRangePop()
+      endif ! .not. useCCL
     endif
 #endif /* GPU_NEW */
 
