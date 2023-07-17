@@ -112,10 +112,12 @@
   success = .true.
   useGPU = .false.
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (.not.(query_gpu_usage(obj, "ELPA_CHOLESKY", useGPU))) then
     print *,"ELPA_CHOLESKY: Problem querrying settings for GPU Aborting..."
     stop 1
   endif
+#endif
 
   ! check whether the above setting should be overriden
   if (obj%is_set("gpu_cholesky") == 1) then
