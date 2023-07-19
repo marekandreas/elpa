@@ -151,7 +151,7 @@ subroutine tridiag_&
   !integer(kind=ik)                             :: l_cols, l_rows
   integer(kind=ik)                              :: l_cols, l_rows
   integer(kind=ik)                              :: n_stored_vecs
-  integer(kind=ik)                              :: isOurProcessRowInt
+  integer(kind=ik)                              :: isOurProcessRowInt ! PETERDEBUG - get rid of it
   logical                                       :: isOurProcessRow
 
 
@@ -232,6 +232,9 @@ subroutine tridiag_&
   integer(kind=c_intptr_t)                      :: gpuHandle, my_stream
 #ifdef WITH_NVIDIA_NCCL
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
+  integer(kind=ik)                              :: nvs, nvr, nvc, lcm_s_t, nblks_tot, nblks_comm, nblks_skip
+  logical                                       :: isSqareGrid
+  integer(kind=c_intptr_t)                      :: aux_transpose_dev
 #endif
   integer(kind=c_int) :: pointerMode
 
@@ -586,17 +589,25 @@ subroutine tridiag_&
 
     successGPU = gpu_malloc(xf_dev, 1 * size_of_datatype)
     check_alloc_gpu("tridiag: xf_dev", successGPU)
-#endif
 
-#ifdef MORE_GPU_COMPUTE
-    successGPU = gpu_malloc(aux_dev, 2*max_stored_uv * size_of_datatype)
-    check_alloc_gpu("tridiag: aux_dev", successGPU)
+    ! for gpu_transpose_vectors on non-square grids
+    if (np_rows==np_cols) then
+      isSqareGrid = .true.
+    else
+      isSqareGrid = .false.
+      lcm_s_t   = least_common_multiple(np_rows,np_cols)
+      nvs = 1 ! global index where to start in vmat_s/vmat_t
+      nvr  = max_local_rows ! global length of v_col_dev/v_row_dev(without last tau-element)
+      nvc = 1 ! number of columns in 
+      nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
+      ! Get the number of blocks to be skipped at the beginning
+      ! This must be a multiple of lcm_s_t (else it is getting complicated),
+      ! thus some elements before nvs will be accessed/set.
+      nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
     
-    successGPU = gpu_malloc(aux1_dev, 2 * size_of_datatype)
-    check_alloc_gpu("tridiag: aux1_dev", successGPU)
-
-    successGPU = gpu_malloc(aux2_dev, 2 * size_of_datatype)
-    check_alloc_gpu("tridiag: aux2_dev", successGPU)
+      successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
+      check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
+    endif ! isSqareGrid
 #endif
   endif !useGPU
 
@@ -1052,7 +1063,8 @@ subroutine tridiag_&
           &_&
           &PRECISION &
                 (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
-                ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., wantDebug, my_stream, success)
+                ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., aux_transpose_dev, &
+                wantDebug, my_stream, success)
 #endif /* WITH_NVIDIA_NCCL */
       call nvtxRangePop()
     else ! useCCL
@@ -2029,6 +2041,11 @@ subroutine tridiag_&
 
     successGPU = gpu_free(xf_dev)
     check_dealloc_gpu("tridiag: xf_dev", successGPU)
+
+    if (np_rows/=np_cols) then
+      successGPU = gpu_free(aux_transpose_dev)
+      check_dealloc_gpu("tridiag: aux_transpose_dev", successGPU)
+    endif
 #endif
   endif ! useGPU
 

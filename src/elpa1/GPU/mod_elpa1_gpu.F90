@@ -245,6 +245,30 @@ module elpa1_gpu
     endif
   end subroutine
 
+  subroutine gpu_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+                                              lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream)
+    use, intrinsic :: iso_c_binding
+    use precision
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &  
+                                           np_st, ld_st, direction, sign
+    integer(kind=C_intptr_T)            :: aux_transpose_dev, vmat_st_dev
+    integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+    call cuda_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+                                           lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    call hip_transpose_vectors_copy_block_double (aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+                                           lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+    call sycl_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+                                           lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream)
+#endif
+  end subroutine
 
 end module
 

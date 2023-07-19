@@ -153,6 +153,21 @@ end interface
     end subroutine 
   end interface
 
+  interface
+  subroutine cuda_transpose_vectors_copy_block_double_c(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+                                              lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream) &
+          bind(C, name="cuda_transpose_vectors_copy_block_double_FromC")
+    use, intrinsic :: iso_c_binding
+    implicit none
+
+    integer(kind=C_INT), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &
+                                           np_st, ld_st, direction, sign
+    integer(kind=C_intptr_T), value     :: aux_transpose_dev, vmat_st_dev
+    integer(kind=c_intptr_t), value     :: my_stream
+
+  end subroutine 
+end interface
+
   contains
 
   subroutine cuda_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, my_stream)
@@ -268,5 +283,20 @@ end interface
 #endif
     end subroutine
 
+    subroutine cuda_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot,&
+                                                        lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_INT), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &
+                                             np_st, ld_st, direction, sign 
+      integer(kind=c_intptr_t)            :: aux_transpose_dev, vmat_st_dev
+      integer(kind=c_intptr_t)            :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_transpose_vectors_copy_block_double_c(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+                                                      lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream)
+#endif
+    end subroutine
 end module
 

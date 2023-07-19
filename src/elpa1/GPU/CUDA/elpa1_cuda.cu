@@ -66,6 +66,8 @@
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 template <typename T> 
 __device__ T sign(T a, T b) {
     if (b>=0) return fabs(a);
@@ -712,3 +714,92 @@ extern "C" void cuda_hh_transform_double_FromC(double *alpha_dev, double *xnorm_
     }
   }
 }
+
+//________________________________________________________________
+
+__global__ void cuda_transpose_vectors_copy_block_double_kernel(double *aux_transpose_dev, double *vmat_st_dev, 
+                                              int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
+                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, int sign){
+  int tid_x = threadIdx.x + blockIdx.x*blockDim.x;
+
+/*
+  ! direction = 1
+  do lc=1,nvc
+    do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+      k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+      ns = (i/nps)*nblk ! local start of block i
+      nl = min(nvr-i*nblk,nblk) ! length
+      aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
+    enddo
+  enddo
+
+  ! direction = 2
+  do lc=1,nvc
+    do i = nblks_skip+n, nblks_tot-1, lcm_s_t
+      k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+      ns = (i/npt)*nblk ! local start of block i
+      nl = min(nvr-i*nblk,nblk) ! length
+#ifdef SKEW_SYMMETRIC_BUILD
+      vmat_t(ns+1:ns+nl,lc) = - aux(k+1:k+nl)
+#else
+      vmat_t(ns+1:ns+nl,lc) = aux(k+1:k+nl)
+#endif
+    enddo
+  enddo
+*/
+
+  int k, ns, nl;
+  for (int lc=1; lc <= nvc; lc += 1)
+    {
+    for (int i = nblks_skip+n_block; i <= nblks_tot-1; i += lcm_s_t)
+      {
+      k = (i - nblks_skip - n_block)/lcm_s_t * nblk + (lc - 1) * auxstride;
+      ns = (i/np_st)*nblk; // local start of block i
+      nl = MIN(nvr-i*nblk, nblk); // length
+      for (int j=tid_x; j<nl; j+=blockDim.x*gridDim.x) 
+        {
+        if (direction==1) aux_transpose_dev[k+1+j-1] =  vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st];
+        if (direction==2) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st] = sign*aux_transpose_dev[k+1+j-1];
+        }
+      }
+    }
+}
+
+extern "C" void cuda_transpose_vectors_copy_block_double_FromC(double *aux_transpose_dev, double *vmat_st_dev, 
+                                              int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
+                                              int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
+                                              int *direction_in, int* sign_in, cudaStream_t my_stream){
+  int nvc = *nvc_in;   
+  int nvr = *nvr_in;   
+  int n_block = *n_block_in;
+  int nblks_skip = *nblks_skip_in;
+  int nblks_tot = *nblks_tot_in;
+  int lcm_s_t = *lcm_s_t_in;
+  int nblk = *nblk_in;
+  int auxstride = *auxstride_in;
+  int np_st = *np_st_in;
+  int ld_st = *ld_st_in;
+  int direction = *direction_in;
+  int sign = *sign_in;
+
+  int SM_count=32; // PETERDEBUG count and move outside
+  int blocks = SM_count;
+
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(nblk,1,1); 
+
+  
+#ifdef WITH_GPU_STREAMS
+  cuda_transpose_vectors_copy_block_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(aux_transpose_dev, vmat_st_dev, 
+                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign);
+#else
+  cuda_transpose_vectors_copy_block_double_kernel<<<blocks,threadsPerBlock>>>(aux_transpose_dev, vmat_st_dev, 
+                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign);
+#endif
+  cudaError_t cuerr = cudaGetLastError();
+  if (cuerr != cudaSuccess){
+    printf("Error in executing cuda_transpose_vectors_copy_block_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  }
+}
+
+//________________________________________________________________
