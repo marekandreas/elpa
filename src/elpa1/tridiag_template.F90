@@ -589,7 +589,9 @@ subroutine tridiag_&
 
     successGPU = gpu_malloc(xf_dev, 1 * size_of_datatype)
     check_alloc_gpu("tridiag: xf_dev", successGPU)
+#endif
 
+#ifdef WITH_NVIDIA_NCCL
     ! for gpu_transpose_vectors on non-square grids
     if (np_rows==np_cols) then
       isSqareGrid = .true.
@@ -1014,6 +1016,7 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
     if (useCCL .and. np_cols>1) then
+#ifdef WITH_NVIDIA_NCCL
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
 
@@ -1041,6 +1044,7 @@ subroutine tridiag_&
       endif
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
+#endif /* WITH_NVIDIA_NCCL */
     else ! useCCL
       if (useNonBlockingCollectivesCols) then
         if (wantDebug) call obj%timer%start("mpi_nbc_communication")
@@ -2052,7 +2056,9 @@ subroutine tridiag_&
 
     successGPU = gpu_free(xf_dev)
     check_dealloc_gpu("tridiag: xf_dev", successGPU)
+#endif
 
+#ifdef WITH_NVIDIA_NCCL    
     if (np_rows/=np_cols) then
       successGPU = gpu_free(aux_transpose_dev)
       check_dealloc_gpu("tridiag: aux_transpose_dev", successGPU)
