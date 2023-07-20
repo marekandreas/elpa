@@ -619,33 +619,37 @@ subroutine gpu_&
         ! call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),  MPI_REAL_PRECISION,    &
         ! int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND),  mpierr)
 
-        if (wantDebug) call obj%timer%start("nccl_communication")
+        if (nps>1) then
+          if (wantDebug) call obj%timer%start("nccl_communication")
 
-        successGPU = nccl_group_start() 
-        if (.not. successGPU) then 
-          print *,"Error in setting up nccl_group_start!" 
-          stop 1
-        endif 
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("nccl_Bcast aux_transpose_dev", successGPU)
+
+          successGPU = nccl_group_start() 
+          if (.not. successGPU) then 
+            print *,"Error in setting up nccl_group_start!" 
+            stop 1
+          endif 
 
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
-        successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(nblks_comm*nblk*nvc, kind=c_size_t), ncclDouble, &
-                              int(ips, kind=c_int), ccl_comm_s, my_stream)
+          successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(nblks_comm*nblk*nvc, kind=c_size_t), ncclDouble, &
+                                int(ips, kind=c_int), ccl_comm_s, my_stream)
 #endif
-        if (.not. successGPU) then
-          print *,"Error in nccl_Bcast"
-          stop 1
-        endif
+          if (.not. successGPU) then
+            print *,"Error in nccl_Bcast"
+            stop 1
+          endif
 
-        successGPU = nccl_group_end()
-        if (.not. successGPU) then
-          print *,"Error in setting up nccl_group_end!"
-          stop 1
-        endif
-        successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
-        check_stream_synchronize_gpu("nccl_Bcast aux_transpose_dev", successGPU)
+          successGPU = nccl_group_end()
+          if (.not. successGPU) then
+            print *,"Error in setting up nccl_group_end!"
+            stop 1
+          endif
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("nccl_Bcast aux_transpose_dev", successGPU)
 
-        if (wantDebug) call obj%timer%stop("nccl_communication")
-
+          if (wantDebug) call obj%timer%stop("nccl_communication")
+        endif ! (nps>1)
 #ifdef SKEW_SYMMETRIC_BUILD
         sign = -1
 #else

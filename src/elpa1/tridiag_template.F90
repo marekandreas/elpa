@@ -615,6 +615,17 @@ subroutine tridiag_&
   e_vec(:) = 0
   tau(:) = 0
 
+  if (useGPU) then
+    successGPU = gpu_memset(d_vec_dev, 0, na * size_of_datatype)
+    check_memcpy_gpu("tridiag: d_vec_dev", successGPU)
+
+    successGPU = gpu_memset(e_vec_dev, 0, na * size_of_datatype)
+    check_memcpy_gpu("tridiag: e_vec_dev", successGPU)
+
+    successGPU = gpu_memset(tau_dev, 0, na * size_of_datatype)
+    check_memcpy_gpu("tridiag: tau_dev", successGPU)
+  endif
+
   n_stored_vecs = 0
 
   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a_mat
@@ -913,6 +924,10 @@ subroutine tridiag_&
         vrl    = aux1(2)
       endif ! useCCL
 
+      if (istep==65) then
+        print *, "PETERDEBUG-TEMP here"
+      endif
+
       ! Householder transformation
       if (useCCL) then
 #if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
@@ -1001,7 +1016,7 @@ subroutine tridiag_&
 !          SAVE_MATR("HH vec stored", na - istep + 1)
 
 #ifdef WITH_MPI
-    if (useCCL) then
+    if (useCCL .and. np_cols>1) then
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
 
@@ -1013,7 +1028,6 @@ subroutine tridiag_&
         stop 1
       endif 
 
-      offset_dev = (istep-1) * size_of_datatype
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
       successGPU = nccl_Bcast(v_row_dev, v_row_dev, int(l_rows+1, kind=c_size_t), ncclDouble, &
                             int(pcol(istep, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
@@ -1046,7 +1060,7 @@ subroutine tridiag_&
                     mpierr)
         if (wantDebug) call obj%timer%stop("mpi_communication")
       endif
-    endif ! useCCL
+    endif ! useCCL .and. np_cols>1
 #endif /* WITH_MPI */
 
     !recover tau, which has been broadcasted together with v_row
@@ -2073,7 +2087,7 @@ subroutine tridiag_&
                        int(mpi_comm_rows,kind=MPI_KIND), mpierr)
     tmp_real = e_vec
     call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr) !!! PETER: change to MPI_IN_PLACE
+                       int(mpi_comm_rows,kind=MPI_KIND), mpierr) !!! PETERDEBUG: change to MPI_IN_PLACE
     if (wantDebug) call obj%timer%stop("mpi_communication")
   endif
   if (useNonBlockingCollectivesCols) then
