@@ -235,7 +235,7 @@ __global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int
       }
     else
       {
-      atomicAdd(&aux1_dev[0], v_row_dev[l_rows-1]*v_row_dev[l_rows-1]);
+      if (l_rows>0) atomicAdd(&aux1_dev[0], v_row_dev[l_rows-1]*v_row_dev[l_rows-1]);
       aux1_dev[1] = 0;
       }
     }

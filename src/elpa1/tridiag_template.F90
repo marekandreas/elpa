@@ -924,9 +924,6 @@ subroutine tridiag_&
         vrl    = aux1(2)
       endif ! useCCL
 
-      if (istep==65) then
-        print *, "PETERDEBUG-TEMP here"
-      endif
 
       ! Householder transformation
       if (useCCL) then
