@@ -99,6 +99,7 @@ module elpa_impl
      procedure, public :: setup => elpa_setup                   !< a setup method: implemented in elpa_setup
      procedure, public :: destroy => elpa_destroy               !< a destroy method: implemented in elpa_destroy
 
+     procedure, public :: setup_gpu => elpa_setup_gpu           !< setup the GPU usage
      ! KV store
      procedure, public :: is_set => elpa_is_set             !< a method to check whether a key/value pair has been set : implemented
                                                             !< in elpa_is_set
@@ -617,6 +618,97 @@ module elpa_impl
 #endif
 #endif /* ENABLE_AUTOTUNING */
 
+    !> \brief function to setup the GPU usage
+    !> Parameters
+    !> \param   self       class(elpa_impl_t), the allocated ELPA object
+    !> \param   myid       integer, the rank of each MPI process
+    !> \result  error      integer, the error code
+    function elpa_setup_gpu(self, myid) result(error)
+      use mod_query_gpu_usage
+      use elpa_gpu, only : gpublasDefaultPointerMode
+      use cuda_functions
+      use hip_functions
+      use openmp_offload_functions
+      use sycl_functions
+      use elpa_gpu, only : gpu_getdevicecount
+      use precision
+      use elpa_mpi
+      use elpa_omp
+#ifdef WITH_NVIDIA_NCCL
+      use nccl_functions
+#endif
+
+      implicit none
+      class(elpa_impl_t), intent(inout)   :: self
+      logical                             :: useGPU
+
+      integer, intent(in)                 :: myid
+      logical                                    :: success, wantDebugMessage
+      integer(kind=ik)                           :: numberOfDevices
+      integer(kind=ik)                           :: deviceNumber, mpierr, maxNumberOfDevices
+      logical                                    :: gpuAvailable
+      integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
+      !logical, save                              :: alreadySET=.false.
+      integer(kind=ik)                           :: maxThreads, thread
+      integer(kind=c_int)                        :: syclShowOnlyIntelGpus
+      integer(kind=ik)                           :: syclShowAllDevices
+      integer(kind=c_intptr_t)                   :: handle_tmp
+      !integer(kind=c_intptr_t)                   :: stream
+      !logical                                    :: gpuIsInitialized=.false.
+      !character(len=1024)           :: envname
+      character(len=8)                           :: fmt
+      character(len=12)                          :: gpu_string
+#ifdef WITH_NVIDIA_NCCL
+      TYPE(ncclUniqueId)                         :: ncclId
+      integer(kind=c_int)                        :: nprocs
+      integer(kind=c_intptr_t)                   :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols
+      integer(kind=ik)                           :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
+#endif
+
+
+      error = ELPA_ERROR_SETUP
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    ! check legacy GPU setings
+    if (.not.(query_gpu_usage(self, "ELPA_SETUP_GPU", useGPU))) then
+      write(error_unit,*) "ELPA_SETUP_GPU: error when querying gpu settings. Aborting..."
+      error = ELPA_ERROR_SETUP
+      return
+    endif
+#endif
+
+#undef OBJECT
+#define OBJECT self
+#undef ADDITIONAL_OBJECT_CODE
+#include "./GPU/check_for_gpu_template.F90"
+#undef OBJECT
+
+      error = ELPA_OK
+      return
+    end function
+
+
+    !c> /*! \brief C interface for the implementation of the elpa_setup_gpu method
+    !c> *
+    !c> *  \param  elpa_t  handle of the ELPA object which describes the problem to
+    !c> *                  be set up
+    !c> *  \param  myid    integer, rank of each MPI rank
+    !c> *  \result int     error code, which can be queried with elpa_strerr
+    !c> */
+    !c> int elpa_setup_gpu(elpa_t handle);
+    function elpa_setup_gpu_c(handle, myid) result(error) bind(C, name="elpa_setup_gpu")
+      implicit none
+      type(c_ptr), intent(in), value :: handle
+      type(elpa_impl_t), pointer :: self
+      integer(kind=c_int) :: myid
+      integer(kind=c_int) :: error
+
+      call c_f_pointer(handle, self)
+      error = self%setup_gpu(myid)
+    end function
+
+
+
     !> \brief function to setup an ELPA object and to store the MPI communicators internally
     !> Parameters
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
@@ -929,8 +1021,8 @@ module elpa_impl
       endif
 
       if (info .ne. 0) then
-        print *,"ELPA_SETUP ERROR: your provided blacsgrid is not ok!"
-        print *,"BLACS_GRIDINFO returned an error! Aborting..."
+        write(error_unit,*) "ELPA_SETUP ERROR: your provided blacsgrid is not ok!"
+        write(error_unit,*) "BLACS_GRIDINFO returned an error! Aborting..."
         error = ELPA_ERROR_SETUP
         return
       endif
@@ -2053,7 +2145,7 @@ module elpa_impl
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "ELPA_AUTOTUNE_STEP ERROR: This should not happen"
+          write(error_unit,*) "ELPA_AUTOTUNE_STEP ERROR: This should not happen"
 #ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR
@@ -2247,7 +2339,7 @@ module elpa_impl
         type is (elpa_autotune_impl_t)
           ts_impl => tune_state
         class default
-          print *, "ELPA_AUTOTUNE_STEP_WORKER ERROR: This should not happen"
+          write(error_unit,*) "ELPA_AUTOTUNE_STEP_WORKER ERROR: This should not happen"
 #ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR
@@ -2387,6 +2479,8 @@ module elpa_impl
               time_spent(1) = self%autotune_timer%get("accumulator")
             case (ELPA2_AUTOTUNE_BAND_TO_FULL_BLOCKING)
               time_spent(1) = self%autotune_timer%get("accumulator","band_to_full")
+            case (ELPA2_AUTOTUNE_HERMITIAN_MULTIPLY_BLOCKING)
+              time_spent(1) = self%autotune_timer%get("accumulator","hermitian_multiply")
             case (ELPA1_AUTOTUNE_MAX_STORED_ROWS)
               time_spent(1) = self%autotune_timer%get("accumulator","tridi_to_full")
             case (ELPA2_AUTOTUNE_TRIDI_TO_BAND_STRIPEWIDTH)
@@ -2398,7 +2492,7 @@ module elpa_impl
           time_spent(1) = self%autotune_timer%get("accumulator")
         endif
 #else
-        print *, "Cannot do autotuning without detailed timings"
+        write(error_unit,*) "Cannot do autotuning without detailed timings"
 
         ! TODO check this. Do we really want to return only if error is present? And should it be ELPA_OK?
 #ifdef USE_FORTRAN2008
@@ -2416,7 +2510,7 @@ module elpa_impl
         call self%get("mpi_comm_parent", mpi_comm_parent, error2)
         call self%get("num_processes", np_total, error3)
         if ((error2 .ne. ELPA_OK) .or. (error3 .ne. ELPA_OK)) then
-          print *, "Parent communicator is not set properly. Aborting..."
+          write(error_unit,*) "Parent communicator is not set properly. Aborting..."
 #ifdef USE_FORTRAN2008
           if (present(error)) then
             error = ELPA_ERROR_CRITICAL

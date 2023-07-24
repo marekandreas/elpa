@@ -89,6 +89,8 @@ module elpa_api
       procedure(elpa_setup_i),   deferred, public :: setup          !< method to setup an ELPA object
       procedure(elpa_destroy_i), deferred, public :: destroy        !< method to destroy an ELPA object
 
+      procedure(elpa_setup_gpu_i),   deferred, public :: setup_gpu  !< method to setup the GPU usage
+      
       ! key/value store
       generic, public :: set => &                                   !< export a method to set integer/double/float key/values
           elpa_set_integer, &
@@ -407,6 +409,25 @@ module elpa_api
       integer                        :: error
     end function
   end interface
+
+
+  !> \brief abstract definition of the ELPA setup_gpu method 
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t): the ELPA object
+  !> \param   myid        integer: rank of each MPI process
+  !> \result  error       integer : error code, which can be queried with elpa_strerr()
+  abstract interface
+    function elpa_setup_gpu_i(self, myid) result(error)
+      import elpa_t
+      implicit none
+      class(elpa_t), intent(inout)   :: self
+      integer, intent(in)            :: myid
+      integer                        :: error
+    end function
+  end interface
+
+
 
   !> \brief abstract definition of the print_settings method
   !> Parameters

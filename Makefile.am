@@ -123,6 +123,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
+  src/GPU/check_for_gpu_template.F90 \
   src/GPU/vendor_agnostic_general_layer_template.F90 \
   src/GPU/vendor_agnostic_blas_layer_template.F90 \
   src/GPU/vendor_agnostic_solver_layer_template.F90 \
@@ -942,7 +943,7 @@ EXTRA_DIST = \
   remove_xcompiler \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
-  src/GPU/check_legacy_gpu_setting_template.F90 \
+  src/GPU/check_for_gpu_template.F90 \
   src/GPU/vendor_agnostic_general_layer_template.F90 \
   src/GPU/vendor_agnostic_blas_layer_template.F90 \
   src/GPU/vendor_agnostic_solver_layer_template.F90 \

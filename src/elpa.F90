@@ -150,8 +150,11 @@
 !>     print *,"Could not setup ELPA object"
 !>   endif
 !>
-!>   ! settings for GPU
-!>   call elpaInstance%set("gpu", 1, success) ! 1=on, 2=off
+!>   ! settings for GPU: 
+!>   ! supported are the keywords "nvidia-gpu", "amd-gpu" and "intel-gpu"
+!>
+!>   call elpaInstance%set("nvidia-gpu", 1, success) ! 1=on, 2=off
+!>
 !>   ! in case of GPU usage you have the choice whether ELPA
 !>   ! should automatically assign each MPI task to a certain GPU
 !>   ! (this is default) or whether you want to set this assignment
@@ -159,6 +162,11 @@
 !>   ! set assignment your self (only using one task here and assigning it 
 !>   ! to GPU id 1)
 !>   if (my_rank .eq. 0) call elpaInstance%set("use_gpu_id", 1, success)
+!>
+!>   success = elpaInstance%setup_gpu(myMPIrank)
+!>   if (succes /= ELPA_OK) then
+!>     print *,"Could not setup gpu usage"
+!>   endif
 !>
 !>   ! if desired, set tunable run-time options
 !>   ! here we want to use the 2-stage solver
@@ -226,7 +234,10 @@
 !>   elpa_set(handle, "solver", ELPA_SOLVER_2STAGE, &error);
 !>
 !>   /* settings for GPU */
-!>   elpa_set(handle, "gpu", 1, &error);  /* 1=on, 2=off */
+!>   /* supported keywords are "nvidia-gpu", "amd-gpu" and "intel-gpu" */
+!>
+!>   elpa_set(handle, "nvidia-gpu", 1, &error);  /* 1=on, 2=off */
+!>
 !>   /* in case of GPU usage you have the choice whether ELPA
 !>      should automatically assign each MPI task to a certain GPU
 !>      (this is default) or whether you want to set this assignment
@@ -234,6 +245,8 @@
 !>      set assignment your self (only using one task here and assigning it 
 !>      to GPU id 1) */
 !>   if (my_rank == 0) elpa_set(handle, "use_gpu_id", 1, &error);
+!>
+!>   error = elpa_setup_gpu(handle, myMPIrank);
 !>
 !>   /* and set a specific kernel (must be supported on the machine)
 !>      the CALLING order is important: you have FIRST to set the solver to ELPA_SOLVER_2STAGE

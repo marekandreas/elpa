@@ -65,7 +65,7 @@
   use ELPA_utilities, only : local_index, check_deallocate_f, check_dealloc_gpu_f, &
                              check_host_dealloc_gpu_f, check_alloc_gpu_f, check_host_alloc_gpu_f, &
                              check_host_unregister_gpu_f, check_memcpy_gpu_f, check_allocate_f, &
-                             check_host_register_gpu_f, check_alloc
+                             check_host_register_gpu_f, check_alloc, error_unit
   use mod_query_gpu_usage
   implicit none
 
@@ -105,7 +105,7 @@
   logical                                      :: success
   logical                                      :: successGPU
   logical                                      :: useGPU
-  integer(kind=c_int)                          :: numGPU
+  integer(kind=c_int)                          :: numGPU, blocking
   integer(kind=ik)                             :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=ik)                             :: nblk, matrixRows, matrixCols, error
   integer(kind=c_intptr_t)                     :: aux_dev, b_dev, tmp1_dev
@@ -201,11 +201,29 @@
 
   ! Block factor for matrix multiplications, must be a multiple of nblk
 
-  if (na/np_rows <= 256) then
-     nblk_mult = (31/nblk+1)*nblk
-  else
-     nblk_mult = (63/nblk+1)*nblk
-  endif
+
+  if (obj%is_set("blocking_in_multiply") == 1) then
+    call obj%get("blocking_in_multiply", blocking, error)
+    if (error .ne. ELPA_OK) then
+      write(error_unit,*) "ELPA_HERMITIAN_MULTIPLY: Problem in getting keyword 'blocking_in_multiply'. Aborting..."
+      stop 1
+    endif
+    nblk_mult = (blocking/nblk+1) * nblk
+  else ! is_set
+    if (useGPU) then
+      if (na/np_rows <= 256) then
+        nblk_mult = (63/nblk+1)*nblk
+      else
+        nblk_mult = (351/nblk+1)*nblk
+      endif
+    else ! useGPU
+      if (na/np_rows <= 256) then
+        nblk_mult = (31/nblk+1)*nblk
+      else
+        nblk_mult = (63/nblk+1)*nblk
+      endif
+    endif ! useGPU
+  endif ! is_set
 
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
