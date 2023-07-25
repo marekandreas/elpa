@@ -130,7 +130,7 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 #include "assert.h"
 
 program test
-   use elpa 
+   use elpa
    !use test_util
    use test_setup_mpi
    use test_prepare_matrix
@@ -298,7 +298,7 @@ program test
    do_test_analytic_eigenvalues = .false.
    do_test_analytic_eigenvalues_eigenvectors = .false.
    do_test_frank_eigenvalues = .false.
-   do_test_toeplitz_eigenvalues = .false. 
+   do_test_toeplitz_eigenvalues = .false.
 
    do_test_cholesky = .false.
 #if defined(TEST_CHOLESKY)
@@ -328,7 +328,7 @@ program test
        if (mod(nprocs,np_cols) /= 0 ) then
          cycle
        endif
-       
+
 #else
    layout = 'C'
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
@@ -423,7 +423,7 @@ program test
      stop 77
 #endif
 #endif
- 
+
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
                                 np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
@@ -446,12 +446,12 @@ program test
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
-     stop
+     stop 1
 #endif
    endif
 
-	! Allocate the matrices needed for elpa 
-	
+	! Allocate the matrices needed for elpa
+
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
    allocate(z (na_rows,na_cols))
@@ -701,7 +701,7 @@ program test
      do_test_analytic_eigenvalues = .false.
      do_test_analytic_eigenvalues_eigenvectors = .false.
      do_test_frank_eigenvalues = .false.
-     do_test_toeplitz_eigenvalues = .false. 
+     do_test_toeplitz_eigenvalues = .false.
      do_test_cholesky = .false.
    endif
 
@@ -717,7 +717,7 @@ program test
    assert_elpa_ok(error_elpa)
 
 	! Set parameters
-	
+
    call e%set("na", int(na,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("nev", int(nev,kind=c_int), error_elpa)
@@ -801,6 +801,8 @@ program test
 #if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
    call e%set("intel-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
+   call e%set("sycl_show_all_devices", 0, error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
@@ -835,7 +837,7 @@ program test
 #endif
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."
-     stop
+     stop 1
    endif
 
 #if defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM)
@@ -843,24 +845,24 @@ program test
    successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix a on GPU! Aborting..."
-     stop
+     stop 1
    endif
    successGPU = gpu_malloc(q_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix q on GPU! Aborting..."
-     stop
+     stop 1
    endif
    successGPU = gpu_malloc(ev_dev, na*size_of_real_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate vector of eigenvalues on GPU! Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix a to GPU! Aborting..."
-     stop
+     stop 1
    endif
 #endif
 
@@ -869,20 +871,20 @@ program test
    successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix a on GPU! Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_malloc(ev_dev, na*size_of_real_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate vector of eigenvalues on GPU! Aborting..."
-     stop
+     stop 1
    endif
-        
+
    successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix a to GPU! Aborting..."
-     stop
+     stop 1
    endif
 #endif
 
@@ -908,14 +910,14 @@ program test
    successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix a on GPU! Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix a to GPU! Aborting..."
-     stop
+     stop 1
    endif
 #endif /* TEST_CHOLESKY */
 
@@ -941,38 +943,38 @@ program test
    successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix a on GPU! Aborting..."
-     stop
+     stop 1
    endif
    successGPU = gpu_malloc(b_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix b on GPU! Aborting..."
-     stop
+     stop 1
    endif
    successGPU = gpu_malloc(c_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix c on GPU! Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix a to GPU! Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_memcpy(b_dev, c_loc(b), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix b to GPU! Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_memcpy(c_dev, c_loc(c), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix c to GPU! Aborting..."
-     stop
+     stop 1
    endif
 
 
@@ -1058,7 +1060,7 @@ program test
      if (myid == 0) then
        print *, "The settings in the test program want to use ",elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
        print *, "(This might be overriden with some environment settings)"
-       
+
      endif
 #endif /* TEST_SOLVER_2STAGE */
 
@@ -1073,7 +1075,7 @@ program test
 #endif
 
      ! The actual solve step
-	 
+
 #if defined(TEST_EIGENVECTORS)
 #if TEST_QR_DECOMPOSITION == 1
      call e%timer_start("e%eigenvectors_qr()")
@@ -1325,7 +1327,7 @@ program test
      endif
 
 
-   !-----------------------------------------------------------------------------------------------------------------------------     
+   !-----------------------------------------------------------------------------------------------------------------------------
    ! TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -1336,7 +1338,7 @@ program test
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"cannot copy matrix of eigenvectors from GPU to host! Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_memcpy(c_loc(ev), ev_dev, na*&
@@ -1349,7 +1351,7 @@ program test
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"cannot copy vector of eigenvalues from GPU to host! Aborting..."
-     stop
+     stop 1
    endif
 
 #endif /* defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM) */
@@ -1359,7 +1361,7 @@ program test
    successGPU = gpu_memcpy(c_loc(ev), ev_dev, na*size_of_real_datatype, gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"cannot copy vector of eigenvalues from GPU to host! Aborting..."
-     stop
+     stop 1
    endif
 #endif /* TEST_EIGENVALUES  */
 
@@ -1369,7 +1371,7 @@ program test
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"cannot copy matrix of eigenvectors from GPU to host! Aborting..."
-     stop
+     stop 1
    endif
 #endif /* TEST_CHOLESKY */
 
@@ -1378,21 +1380,21 @@ program test
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix a_dev -> a ! Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_memcpy(c_loc(b), b_dev, na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix b_dev -> b ! Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_memcpy(c_loc(c), c_dev, na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
      print *,"Cannot copy matrix c_dev -> c ! Aborting..."
-     stop
+     stop 1
    endif
 #endif /* TEST_HERMITIAN_MULTIPLY */
 
@@ -1400,7 +1402,7 @@ program test
 
      !-----------------------------------------------------------------------------------------------------------------------------
      ! Check the results
-	 
+
      if (do_test_analytic_eigenvalues) then
        status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, &
                                            my_prow, my_pcol, check_all_evals, .false.)
@@ -1477,7 +1479,7 @@ program test
 
    !-----------------------------------------------------------------------------------------------------------------------------
    ! Deallocate
-   
+
 #if TEST_GPU_DEVICE_POINTER_API == 1
 
 #if defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM)
@@ -1485,17 +1487,17 @@ program test
    successGPU = gpu_free(a_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of a_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
    successGPU = gpu_free(q_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of q_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
    successGPU = gpu_free(ev_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of ev_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
 #endif /* defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM) */
 
@@ -1503,13 +1505,13 @@ program test
    successGPU = gpu_free(a_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of a_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
-   
+
    successGPU = gpu_free(ev_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of ev_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
 #endif /* TEST_EIGENVALUES  */
 
@@ -1517,7 +1519,7 @@ program test
    successGPU = gpu_free(a_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of a_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
 #endif /* TEST_CHOLESKY */
 
@@ -1525,19 +1527,19 @@ program test
    successGPU = gpu_free(a_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of a_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_free(b_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of b_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
 
    successGPU = gpu_free(c_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of c_dev on GPU. Aborting..."
-     stop
+     stop 1
    endif
 #endif /* TEST_HERMITIAN_MULTIPLY */
 

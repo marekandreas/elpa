@@ -44,10 +44,6 @@
 //
 //    This file was ported from the NVIDIA version of the component by A. Poeppl, Intel Corporation
 
-#ifndef ELPA_SYCL_IN_PROXY_APP
-#include "config-f90.h"
-#endif
-
 #include <CL/sycl.hpp>
 #include <stdlib.h>
 #include <stdio.h>
@@ -59,11 +55,7 @@
 #include <optional>
 #include <type_traits>
 
-#ifndef ELPA_SYCL_IN_PROXY_APP
-#include "src/GPU/SYCL/syclCommon.hpp"
-#else
 #include "syclCommon.hpp"
-#endif
 
 // Detect complex number template arguments
 namespace {
@@ -78,13 +70,13 @@ inline void reduction_step(T *local_mem, sycl::nd_item<1> &it) {
   if constexpr (wg_size >= step && sg_size < step) {
     int constexpr half_step = step >> 1;
     local_mem[lId] += static_cast<T>(lId < half_step) * local_mem[lId + half_step];
-    it.barrier(sycl::access::fence_space::local_space);
+//    it.barrier(sycl::access::fence_space::local_space);
+    it.barrier();
   }
 }
 
 template <typename T, int wg_size, int sg_size>
 T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
-  it.barrier(sycl::access::fence_space::local_space);
   reduction_step<T, wg_size, sg_size, 1024>(local_mem, it);
   reduction_step<T, wg_size, sg_size,  512>(local_mem, it);
   reduction_step<T, wg_size, sg_size,  256>(local_mem, it);
@@ -101,7 +93,17 @@ T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
   return sycl::group_broadcast(it.get_group(), sg_added_res);
 }
 
-template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction=false>
+
+#ifdef __SYCL_DEVICE_ONLY__
+#define __SYCL_CONSTANT_AS __attribute__((opencl_constant))
+#else
+#define __SYCL_CONSTANT_AS
+#endif
+
+
+const __SYCL_CONSTANT_AS char fmt[] = "idx = %d, q_off = %d\n";
+
+template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction = false>
 void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
   using local_buffer = sycl::local_accessor<T>;
   using sf = sycl::access::fence_space;
@@ -156,6 +158,7 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
 
         if constexpr (is_using_custom_reduction) {
           dotp_s[tid] = q_v2_hh_h_h_off;
+          it.barrier(sf::local_space);
           dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
         } else {
           dotp_res = sycl::reduce_over_group(it.get_group(), q_v2_hh_h_h_off, sycl::plus<>());
