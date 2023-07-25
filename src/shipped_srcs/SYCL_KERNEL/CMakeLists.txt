@@ -10,6 +10,7 @@ add_executable(hh_test
   src/sycl_f_interface.f90
   src/syclCommon.hpp
   src/syclCommon.cpp
+  src/hh_functions.f90
   src/hh_test.f90)
 
 target_compile_options(hh_test PUBLIC -fsycl -fiopenmp)

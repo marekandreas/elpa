@@ -132,7 +132,7 @@ int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
 }
 
 void elpa::gpu::sycl::selectDefaultGpuDevice() {
-  cl::sycl::gpu_selector gpuSelector;
+  auto gpuSelector = cl::sycl::gpu_selector_v;
   cl::sycl::property::queue::in_order io;
   cl::sycl::property_list props(io);
   chosenQueue = std::make_optional<cl::sycl::queue>(gpuSelector, props);

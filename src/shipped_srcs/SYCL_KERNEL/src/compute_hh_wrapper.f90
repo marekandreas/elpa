@@ -180,7 +180,6 @@ module compute_hh_wrapper
         q(i,j:j+nbw-1) = q(i,j:j+nbw-1)-tau(j)*dotp*hh(:,j)
       end do
     end do
-
   end subroutine
 
   ! Householder transformation
@@ -197,18 +196,18 @@ module compute_hh_wrapper
 
     integer :: j
     integer :: i
-    integer :: k
-    complex(c_double) :: dotp
+    integer :: k, kbw
+    complex(c_double) :: dotp, hh_conj
 
     do j = nn,1,-1
       do i = 1,nc
-        dotp = 0
-        do k = j, j+nbw - 1
-          dotp = dotp + q(i, k) * conjg(hh(k-j, j))
+        dotp = 0.0
+        do k = j, j+nbw-1
+          kbw = k - j + 1
+          hh_conj = conjg(hh(kbw,j))
+          dotp = dotp + hh_conj * q(i, k)
         end do
-        do k = j, j+nbw - 1
-          q(i,k) = q(i,k)-tau(j)*dotp*hh(k-j,j)
-        end do
+        q(i,j:j+nbw-1) = q(i,j:j+nbw-1)-tau(j)*dotp*hh(:,j)
       end do
     end do
   end subroutine
