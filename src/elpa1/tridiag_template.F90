@@ -1073,6 +1073,8 @@ subroutine tridiag_&
     if (useCCL) then
       call nvtxRangePush("gpu_elpa_transpose_vectors v_row_dev->v_col_dev")
 #ifdef WITH_NVIDIA_NCCL
+      ccl_comm_rows = obj%gpu_setup%ccl_comm_rows ! PETERDEBUG: define it only once, outside of the loop
+      ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
       call gpu_elpa_transpose_vectors_&
           &MATH_DATATYPE&
           &_&

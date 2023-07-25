@@ -203,7 +203,7 @@ subroutine ROUTINE_NAME&
       if (comm_s_isRows .and. matrix_order==COLUMN_MAJOR_ORDER .or. &
          (.not. comm_s_isRows) .and. matrix_order==ROW_MAJOR_ORDER) then
         ! my_mpi_rank = myps + mypt*nps
-        if (my_mpi_rank /= myps + mypt*nps) then ! PETERDEBUG - delete the check after testing
+        if (my_mpi_rank /= myps + mypt*nps) then ! PETERDEBUG-TEMP - use blacs_pnum instead and delete the check after testing
           print *, "ERROR my_mpi_rank /= myps + mypt*nps"
         endif
 
@@ -447,7 +447,7 @@ subroutine gpu_&
   integer(kind=ik)                                  :: mpi_comm_all, my_mpi_rank, transposed_mpi_rank, message_size, matrix_order
   integer(kind=ik)                                  :: ld_st, solver, sign
 
-  integer(kind=c_intptr_t), intent(in)              :: ccl_comm_s, ccl_comm_t
+  integer(kind=c_intptr_t)                          :: ccl_comm_s, ccl_comm_t
   integer(kind=c_intptr_t)                          :: ccl_comm_all
   integer(kind=c_intptr_t)                          :: vmat_s_dev 
   integer(kind=c_intptr_t)                          :: vmat_t_dev 
@@ -575,8 +575,8 @@ subroutine gpu_&
 
   ! allocate(aux( ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc ), stat=istat, errmsg=errorMessage)
   ! check_allocate("elpa_transpose_vectors: aux", istat, errorMessage)
-  successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
-  check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
+  ! successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
+  ! check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
 
 ! #ifdef WITH_OPENMP_TRADITIONAL
 !   !$omp parallel num_threads(nrThreads) &
