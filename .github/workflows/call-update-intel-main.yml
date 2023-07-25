@@ -2,7 +2,7 @@ name: Update the intel-main branch with the sycl_dev branch
 on:
   # Instruction: Uncomment next 4 lines and change the branch names "master" to be your default performance branch as needed.
   push:
-    branches: [ "intel-main" ]
+    branches: [ "sycl_dev" ]
   pull_request:
     branches: [ "intel-main" ]
   workflow_dispatch:

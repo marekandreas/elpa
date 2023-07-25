@@ -8,16 +8,16 @@ num_ranks=$4
 
 if [[ $arch == "pvc" ]]
 then
-  module load autoconf/2.71 intel-comp-rt/ci-neo-master/025928 intel-nightly/20230310 intel/mkl-nda/nightly-cev-20230314 intel/mpi/2021.8.0
+  module load autoconf/2.71 intel-comp-rt/agama-ci-devel/682.3 intel-nightly/20230706 intel/mkl-nda/xmain-nightly/20230713 intel/mpi/2021.9.0
 elif [[ $arch == "a100" ]]
 then
-  module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.0.0 gnu/10.3.0
+  module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.2.0 gnu/10.3.0
 elif [[ $arch == "h100" ]]
 then
-  module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.0.0 gnu/10.3.0
+  module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.2.0 gnu/10.3.0
 elif [[ $arch == "icx" ]]
 then
-  module load autoconf/2.71 intel-nightly/20230310 intel/mkl-nda/nightly-cev-20230314 intel/mpi/2021.8.0
+  module load autoconf/2.71 intel-nightly/20230706 intel/mkl-nda/xmain-nightly/20230713 intel/mpi/2021.9.0
 else
   echo "Unknown Architecture: $arch"
   exit 1

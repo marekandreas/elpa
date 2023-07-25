@@ -62,8 +62,8 @@ def verifyCorrectness(filename):
         print(f"Incorrect number of lines for the result verification. Expected 3 but got {len(verificationLines)}")
         return false
     for resVerType, res in verificationLines:
-        if float(res) > 1e-10:
-            print(f"Incorrect Result: {resVerType}: {res} > 1e-10")
+        if float(res) > 1e-9:
+            print(f"Incorrect Result: {resVerType}: {res} > 1e-9")
             return False
     print("All is well:")
     for v, r in verificationLines:

@@ -36,10 +36,11 @@ jobs:
             runner: pvc
     uses: intel-sandbox/xcss-workflows/.github/workflows/xe-performance-dashboard.yml@main
     with:
-      application: ELPA
+      application: elpa
       build-script: .github/scripts/build_elpa.sh ${{ matrix.config.arch }} ${{ matrix.problem-size }} ${{ matrix.numbers }} ${{ matrix.config.ranks }}
       run-script: .github/scripts/run_elpa.sh ${{ matrix.config.arch }} ${{ matrix.problem-size }} ${{ matrix.numbers }} ${{ matrix.config.ranks }}
       verify-script: .github/scripts/parseOutput.py -v cpa_results/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
       metrics-script: .github/scripts/parseOutput.py -p -i ${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }} -w ${{ matrix.numbers }}_${{ matrix.problem-size }} cpa_results/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
       slurm-partition: ${{ matrix.config.slurm-partition }}
+      hpcwl-dir: /hpc-wl-automation
       runs-on: ${{ matrix.config.runner }}
