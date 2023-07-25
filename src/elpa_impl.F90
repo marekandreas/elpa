@@ -624,47 +624,55 @@ module elpa_impl
     !> \param   myid       integer, the rank of each MPI process
     !> \result  error      integer, the error code
     function elpa_setup_gpu(self, myid) result(error)
-      use mod_query_gpu_usage
-      use elpa_gpu, only : gpublasDefaultPointerMode
-      use cuda_functions
-      use hip_functions
-      use openmp_offload_functions
-      use sycl_functions
-      use elpa_gpu, only : gpu_getdevicecount
       use precision
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      use mod_query_gpu_usage
+      use elpa_gpu, only : gpublasDefaultPointerMode, gpu_getdevicecount
       use elpa_mpi
       use elpa_omp
+#endif
+#if defined(WITH_NVIDIA_GPU_VERSION)
+      use cuda_functions
+#endif
+#if defined(WITH_AMD_GPU_VERSION)
+      use hip_functions
+#endif
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+      use openmp_offload_functions
+#endif
+#if defined(WITH_SYCL_GPU_VERSION)
+      use sycl_functions
+#endif
 #ifdef WITH_NVIDIA_NCCL
       use nccl_functions
 #endif
 
       implicit none
       class(elpa_impl_t), intent(inout)   :: self
+      integer(kind=ik)                    :: error
+      integer(kind=c_int64_t), intent(in)     :: myid
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+
       logical                             :: useGPU
-
-      integer, intent(in)                 :: myid
-      logical                                    :: success, wantDebugMessage
-      integer(kind=ik)                           :: numberOfDevices
-      integer(kind=ik)                           :: deviceNumber, mpierr, maxNumberOfDevices
-      logical                                    :: gpuAvailable
-      integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
-      !logical, save                              :: alreadySET=.false.
-      integer(kind=ik)                           :: maxThreads, thread
-      integer(kind=c_int)                        :: syclShowOnlyIntelGpus
-      integer(kind=ik)                           :: syclShowAllDevices
-      integer(kind=c_intptr_t)                   :: handle_tmp
-      !integer(kind=c_intptr_t)                   :: stream
-      !logical                                    :: gpuIsInitialized=.false.
-      !character(len=1024)           :: envname
-      character(len=8)                           :: fmt
-      character(len=12)                          :: gpu_string
+      logical                             :: success, wantDebugMessage
+      integer(kind=ik)                    :: numberOfDevices
+      integer(kind=ik)                    :: deviceNumber, mpierr, maxNumberOfDevices
+      logical                             :: gpuAvailable
+      integer(kind=ik)                    ::  mpi_comm_all, use_gpu_id, min_use_gpu_id
+      integer(kind=ik)                    :: maxThreads, thread
+      integer(kind=c_int)                 :: syclShowOnlyIntelGpus
+      integer(kind=ik)                    :: syclShowAllDevices
+      integer(kind=c_intptr_t)            :: handle_tmp
+      character(len=8)                    :: fmt
+      character(len=12)                   :: gpu_string
 #ifdef WITH_NVIDIA_NCCL
-      TYPE(ncclUniqueId)                         :: ncclId
-      integer(kind=c_int)                        :: nprocs
-      integer(kind=c_intptr_t)                   :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols
-      integer(kind=ik)                           :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
+      TYPE(ncclUniqueId)                  :: ncclId
+      integer(kind=c_int)                 :: nprocs
+      integer(kind=c_intptr_t)            :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols
+      integer(kind=ik)                    :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
 #endif
-
+#endif
 
       error = ELPA_ERROR_SETUP
 
@@ -677,11 +685,13 @@ module elpa_impl
     endif
 #endif
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 #undef OBJECT
 #define OBJECT self
 #undef ADDITIONAL_OBJECT_CODE
 #include "./GPU/check_for_gpu_template.F90"
 #undef OBJECT
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
 
       error = ELPA_OK
       return
@@ -692,16 +702,17 @@ module elpa_impl
     !c> *
     !c> *  \param  elpa_t  handle of the ELPA object which describes the problem to
     !c> *                  be set up
-    !c> *  \param  myid    integer, rank of each MPI rank
+    !c> *  \param  myid    integer int64_t, rank of each MPI rank
     !c> *  \result int     error code, which can be queried with elpa_strerr
     !c> */
-    !c> int elpa_setup_gpu(elpa_t handle);
+    !c> #include <stdint.h>
+    !c> int elpa_setup_gpu(elpa_t handle, int64_t myid);
     function elpa_setup_gpu_c(handle, myid) result(error) bind(C, name="elpa_setup_gpu")
       implicit none
       type(c_ptr), intent(in), value :: handle
-      type(elpa_impl_t), pointer :: self
-      integer(kind=c_int) :: myid
-      integer(kind=c_int) :: error
+      type(elpa_impl_t), pointer     :: self
+      integer(kind=c_int64_t)        :: myid
+      integer(kind=c_int)            :: error
 
       call c_f_pointer(handle, self)
       error = self%setup_gpu(myid)

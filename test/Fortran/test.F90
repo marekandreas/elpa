@@ -176,6 +176,7 @@ program test
 
    ! mpi
    TEST_INT_TYPE                       :: myid, nprocs
+   integer(kind=c_int64_t)             :: myid64_t
    TEST_INT_MPI_TYPE                   :: myidMPI, nprocsMPI
    TEST_INT_TYPE                       :: na_cols, na_rows  ! local matrix size
    TEST_INT_TYPE                       :: np_cols, np_rows  ! number of MPI processes per column/row
@@ -807,6 +808,11 @@ program test
 #if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
    call e%set("intel-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
+#endif
+
+#if defined(TEST_NVIDIA_GPU) || defined(TEST_AMD_GPU) || defined(TEST_INTEL_GPU) || defined(TEST_INTEL_GPU_OPENMP) || defined(TEST_INTEL_GPU_SYCL)
+   myid64_t = int(myid,kind=c_int64_t)
+   assert_elpa_ok(e%setup_gpu(myid64_t))
 #endif
 
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)

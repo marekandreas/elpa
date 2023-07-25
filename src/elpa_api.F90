@@ -415,15 +415,16 @@ module elpa_api
   !> Parameters
   !> \details
   !> \param   self        class(elpa_t): the ELPA object
-  !> \param   myid        integer: rank of each MPI process
+  !> \param   myid        integer int64_t: rank of each MPI process
   !> \result  error       integer : error code, which can be queried with elpa_strerr()
   abstract interface
     function elpa_setup_gpu_i(self, myid) result(error)
+      use iso_c_binding
       import elpa_t
       implicit none
-      class(elpa_t), intent(inout)   :: self
-      integer, intent(in)            :: myid
-      integer                        :: error
+      class(elpa_t), intent(inout)        :: self
+      integer(kind=c_int64_t), intent(in) :: myid
+      integer                             :: error
     end function
   end interface
 

@@ -439,7 +439,7 @@
 
     if (useGPU) then
       call obj%timer%start("check_for_gpu")
-      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
+      if (check_for_gpu(obj, int(my_pe, kind=c_int64_t), numberOfGPUDevices, wantDebug=wantDebug)) then
         do_useGPU = .true.
         ! set the neccessary parameters
         call set_gpu_parameters()
