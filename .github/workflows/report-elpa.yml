@@ -16,11 +16,11 @@ jobs:
         config:
           - arch: pvc
             ranks: 1
-            slurm-partition: QZ1J-ICX-PVC
+            slurm-partition: QZ1J-SPR-PVC
             runner: pvc
           - arch: pvc
             ranks: 2
-            slurm-partition: QZ1J-ICX-PVC
+            slurm-partition: QZ1J-SPR-PVC
             runner: pvc
           - arch: pvc
             ranks: 8
