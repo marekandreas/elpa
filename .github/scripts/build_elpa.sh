@@ -6,18 +6,18 @@ num_evs=$2
 numbers=$3
 num_ranks=$4
 
-if [[ $arch == "pvc" ]]
+if [[ $arch == "pvc" ]] || [[ $arch == "pvc-1100" ]]
 then
-  module load autoconf/2.71 intel-comp-rt/agama-ci-devel/682.3 intel-nightly/20230706 intel/mkl-nda/xmain-nightly/20230713 intel/mpi/2021.9.0
+  module load autoconf/2.71 intel-comp-rt/agama-ci-devel intel-nightly intel/mkl-nda/xmain-nightly intel/mpi/2021.9.0
 elif [[ $arch == "a100" ]]
 then
   module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.2.0 gnu/10.3.0
 elif [[ $arch == "h100" ]]
 then
   module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.2.0 gnu/10.3.0
-elif [[ $arch == "icx" ]]
+elif [[ $arch == "spr" ]]
 then
-  module load autoconf/2.71 intel-nightly/20230706 intel/mkl-nda/xmain-nightly/20230713 intel/mpi/2021.9.0
+  module load autoconf/2.71 intel-nightly intel/mkl-nda/xmain-nightly intel/mpi/2021.9.0
 else
   echo "Unknown Architecture: $arch"
   exit 1
@@ -29,7 +29,7 @@ cd $build_folder
 
 ../autogen.sh
 
-if [[ $arch == "pvc" ]]
+if [[ $arch == "pvc" ]] || [[ $arch == "pvc-1100" ]]
 then
   ../configure CC="mpiicc -cc=icx" CXX="mpiicpc -cxx=icpx" FC="mpiifort -fc=ifx" \
     CXXFLAGS="-g -O3 -march=skylake-avx512 -I$(dirname $(dirname $(which icpx)))/linux/include/sycl -fsycl-targets=spir64 -fsycl -qopenmp" \

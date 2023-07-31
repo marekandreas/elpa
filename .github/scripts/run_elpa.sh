@@ -8,9 +8,9 @@ num_ranks=$4
 
 build_folder=build_${numbers}_${arch}_${num_ranks}_${num_evs}
 
-if [[ $arch == "pvc" ]]
+if [[ $arch == "pvc" ]] || [[ $arch == "pvc-1100" ]]
 then
-  module load autoconf/2.71 intel-comp-rt/ci-neo-master/025928 intel-nightly/20230310 intel/mkl-nda/nightly-cev-20230314 intel/mpi/2021.8.0
+  module load autoconf/2.71 intel-comp-rt/ci-neo-master intel-nightly intel/mkl-nda intel/mpi
   export LIBOMPTARGET_LEVEL_ZERO_USE_IMMEDIATE_COMMAND_LIST=all
   export LIBOMPTARGET_LEVEL_ZERO_INTEROP_USE_IMMEDIATE_COMMAND_LIST=1
   export LIBOMPTARGET_LEVEL0_USE_COPY_ENGINE=main
@@ -21,14 +21,13 @@ then
   export I_MPI_OFFLOAD_TOPOLIB=level_zero
 elif [[ $arch == "a100" ]] || [[ $arch == "h100" ]]
 then
-  echo "Loading modules for NVIDIA GPU ${arch}"
   # Only run on a single GPU
   export CUDA_VISIBLE_DEVICES=0
-  module load autoconf/2.71 intel/oneapi/2023.0.0 gnu/10.3.0
+  module load autoconf/2.71 intel/oneapi/2023.2.0 gnu/10.3.0
   module load nvidia/cuda-12.0
-elif [[ $arch == "icx" ]]
+elif [[ $arch == "spr" ]]
 then
-  module load autoconf/2.71 intel-nightly/20230310 intel/mkl-nda/nightly-cev-20230314 intel/mpi/2021.8.0
+  module load autoconf/2.71 intel-nightly intel/mkl-nda intel/mpi
 else
   echo "Unknown Architecture: $1"
   exit 1

@@ -1,4 +1,4 @@
-name: ELPA Xe Performance Dashboard
+name: ELPA Householder Kernel Performance Dashboard
 on:
   - workflow_dispatch
 jobs:
@@ -10,36 +10,26 @@ jobs:
           - real
           - complex
         problem-size:
-          - 20000
+          - 150
+          - 2000
+          - 80000
         config:
-          - arch: pvc-1100
+          - arch: pvc
+            ranks: 1
+            slurm-partition: QZ1J-SPR-PVC
+            runner: pvc
+          - arch: spr
             ranks: 1
             slurm-partition: Q24Q-SPR-PVC
-          - arch: pvc
-            ranks: 1
-            slurm-partition: QZ1J-SPR-PVC
-          - arch: pvc
-            ranks: 2
-            slurm-partition: QZ1J-SPR-PVC
-          - arch: pvc
-            ranks: 8
-            slurm-partition: QZ1B-SPR-4oam-PVC
-          - arch: a100
-            ranks: 2
-            slurm-partition: a100-80G
-          - arch: h100
-            ranks: 2
-            slurm-partition: H100
-          - arch: spr
-            ranks: 224
-            slurm-partition: QZ1J-SPR-PVC
+            runner: pvc
+
     uses: intel-sandbox/xcss-workflows/.github/workflows/xe-performance-dashboard.yml@main
     with:
       application: elpa
-      build-script: .github/scripts/build_elpa.sh ${{ matrix.config.arch }} ${{ matrix.problem-size }} ${{ matrix.numbers }} ${{ matrix.config.ranks }}
-      run-script: .github/scripts/run_elpa.sh ${{ matrix.config.arch }} ${{ matrix.problem-size }} ${{ matrix.numbers }} ${{ matrix.config.ranks }}
+      build-script: .github/scripts/build_hh_kernel.sh
+      run-script: .github/scripts/run_elpa.sh ${{ matrix.config.arch }} ${{ matrix.problem-size }} ${{ matrix.numbers }}
       verify-script: .github/scripts/parseOutput.py -v cpa_results/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
       metrics-script: .github/scripts/parseOutput.py -p -i ${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }} -w ${{ matrix.numbers }}_${{ matrix.problem-size }} cpa_results/elpa_${{ matrix.numbers }}_${{ matrix.config.arch }}_${{ matrix.config.ranks }}_${{ matrix.problem-size }}.txt
       slurm-partition: ${{ matrix.config.slurm-partition }}
       hpcwl-dir: /hpc-wl-automation
-      runs-on: pvc
+      runs-on: ${{ matrix.config.runner }}
