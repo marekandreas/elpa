@@ -10,7 +10,7 @@ build_folder=build_${numbers}_${arch}_${num_ranks}_${num_evs}
 
 if [[ $arch == "pvc" ]] || [[ $arch == "pvc-1100" ]]
 then
-  module load autoconf/2.71 intel-comp-rt/ci-neo-master intel-nightly intel/mkl-nda intel/mpi
+  module load autoconf/2.71 intel-comp-rt/ci-neo-master intel-nightly intel/mkl-nda intel/mpi/2021.10.0
   export LIBOMPTARGET_LEVEL_ZERO_USE_IMMEDIATE_COMMAND_LIST=all
   export LIBOMPTARGET_LEVEL_ZERO_INTEROP_USE_IMMEDIATE_COMMAND_LIST=1
   export LIBOMPTARGET_LEVEL0_USE_COPY_ENGINE=main
@@ -27,7 +27,7 @@ then
   module load nvidia/cuda-12.0
 elif [[ $arch == "spr" ]]
 then
-  module load autoconf/2.71 intel-nightly intel/mkl-nda intel/mpi
+  module load autoconf/2.71 intel-nightly intel/mkl-nda intel/mpi/2021.10.0
 else
   echo "Unknown Architecture: $1"
   exit 1
