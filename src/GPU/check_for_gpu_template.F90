@@ -61,12 +61,20 @@
           wantDebugMessage=.false.
         endif
       endif
+
+      ! myid is given as an argument
 #else
       wantDebugMessage = .false.
+      ! myid must be queried from the OBJECT
+      call OBJECT%get("process_id", myid, error)
+      if (error .ne. ELPA_OK) then
+        write(error_unit,*) "Problem getting option for 'process_id'. Aborting..."
+        stop 1
+      endif
 #endif
 
 
-      call OBJECT%get("mpi_comm_parent",mpi_comm_all, error)
+      call OBJECT%get("mpi_comm_parent", mpi_comm_all, error)
       if (error .ne. ELPA_OK) then
         write(error_unit,*) "Problem getting option for mpi_comm_parent. Aborting..."
         stop 1
@@ -191,12 +199,12 @@
 #endif
         gpuAvailable = .true.
 
-        !if (myid==0) then
-        !  if (wantDebugMessage) then
-        !    print *
-        !    print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
-        !  endif
-        !endif
+        if (myid==0) then
+          if (wantDebugMessage) then
+            print *
+            print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
+          endif
+        endif
 
         success = .true.
         if (.not.(OBJECT%gpu_setup%gpuAlreadySet)) then

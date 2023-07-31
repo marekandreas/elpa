@@ -621,9 +621,8 @@ module elpa_impl
     !> \brief function to setup the GPU usage
     !> Parameters
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
-    !> \param   myid       integer, the rank of each MPI process
     !> \result  error      integer, the error code
-    function elpa_setup_gpu(self, myid) result(error)
+    function elpa_setup_gpu(self) result(error)
       use precision
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -651,7 +650,7 @@ module elpa_impl
       implicit none
       class(elpa_impl_t), intent(inout)   :: self
       integer(kind=ik)                    :: error
-      integer(kind=c_int64_t), intent(in)     :: myid
+      integer(kind=c_int)                 :: myid
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 
       logical                             :: useGPU
@@ -707,15 +706,14 @@ module elpa_impl
     !c> */
     !c> #include <stdint.h>
     !c> int elpa_setup_gpu(elpa_t handle, int64_t myid);
-    function elpa_setup_gpu_c(handle, myid) result(error) bind(C, name="elpa_setup_gpu")
+    function elpa_setup_gpu_c(handle) result(error) bind(C, name="elpa_setup_gpu")
       implicit none
       type(c_ptr), intent(in), value :: handle
       type(elpa_impl_t), pointer     :: self
-      integer(kind=c_int64_t)        :: myid
       integer(kind=c_int)            :: error
 
       call c_f_pointer(handle, self)
-      error = self%setup_gpu(myid)
+      error = self%setup_gpu()
     end function
 
 

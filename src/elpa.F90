@@ -163,7 +163,7 @@
 !>   ! to GPU id 1)
 !>   if (my_rank .eq. 0) call elpaInstance%set("use_gpu_id", 1, success)
 !>
-!>   success = elpaInstance%setup_gpu(myMPIrank)
+!>   success = elpaInstance%setup_gpu()
 !>   if (succes /= ELPA_OK) then
 !>     print *,"Could not setup gpu usage"
 !>   endif
@@ -246,7 +246,7 @@
 !>      to GPU id 1) */
 !>   if (my_rank == 0) elpa_set(handle, "use_gpu_id", 1, &error);
 !>
-!>   error = elpa_setup_gpu(handle, myMPIrank);
+!>   error = elpa_setup_gpu(handle);
 !>
 !>   /* and set a specific kernel (must be supported on the machine)
 !>      the CALLING order is important: you have FIRST to set the solver to ELPA_SOLVER_2STAGE

@@ -72,7 +72,7 @@ module mod_check_for_gpu
       implicit none
 
       class(elpa_abstract_impl_t), intent(inout) :: obj
-      integer(kind=c_int64_t), intent(in)               :: myid
+      integer(kind=c_int), intent(in)            :: myid
       logical, optional, intent(in)              :: wantDebug
       logical                                    :: success, wantDebugMessage
       integer(kind=ik), intent(out)              :: numberOfDevices
