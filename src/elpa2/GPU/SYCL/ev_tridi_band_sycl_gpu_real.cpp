@@ -101,7 +101,7 @@ T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
   return sycl::group_broadcast(it.get_group(), sg_added_res);
 }
 
-template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction=false>
+template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction=true>
 void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
   using local_buffer = sycl::local_accessor<T>;
   using sf = sycl::access::fence_space;
@@ -140,7 +140,7 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
         }
 
         if (tid == 0) {
-            q_s[tid] = q_reserve[reserve_counter];
+            q_s[0] = q_reserve[reserve_counter];
         }
         reserve_counter++;
 
@@ -156,6 +156,7 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
 
         if constexpr (is_using_custom_reduction) {
           dotp_s[tid] = q_v2_hh_h_h_off;
+          it.barrier(sf::local_space);
           dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
         } else {
           dotp_res = sycl::reduce_over_group(it.get_group(), q_v2_hh_h_h_off, sycl::plus<>());
@@ -163,6 +164,7 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
 
         q_v2 -= dotp_res * hh_tau[j - 1] * hh_h_off;
         q_s[tid + 1] = q_v2;
+        it.barrier(sf::local_space);
 
         if ((j == 1) || (tid == it.get_local_range()[0] - 1)) {
           q[q_off] = q_v2;
