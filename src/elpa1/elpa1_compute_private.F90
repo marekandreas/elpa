@@ -166,17 +166,11 @@ module elpa1_compute
 
 #ifdef WITH_NVIDIA_NCCL
   public :: gpu_elpa_transpose_vectors_real_double
-  public :: gpu_elpa_transpose_vectors_ss_real_double
 
   interface gpu_elpa_transpose_vectors_real
     module procedure gpu_elpa_transpose_vectors_real_double
   end interface
-
-  interface gpu_elpa_transpose_vectors_ss_real
-    module procedure gpu_elpa_transpose_vectors_ss_real_double
-  end interface
-
-#endif
+#endif /* WITH_NVIDIA_NCCL */
 
   contains
 
@@ -192,6 +186,9 @@ module elpa1_compute
 #include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
 #include "elpa_reduce_add_vectors.F90"
+#ifdef WITH_NVIDIA_NCCL
+#include "./GPU/elpa_gpu_transpose_vectors_template.F90"
+#endif /* WITH_NVIDIA_NCCL */
 #undef DOUBLE_PRECISION
 #undef REALCASE
 ! single precision

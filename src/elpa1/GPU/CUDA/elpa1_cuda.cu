@@ -719,7 +719,7 @@ extern "C" void cuda_hh_transform_double_FromC(double *alpha_dev, double *xnorm_
 
 __global__ void cuda_transpose_vectors_copy_block_double_kernel(double *aux_transpose_dev, double *vmat_st_dev, 
                                               int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
-                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, int sign){
+                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, bool isSkewsymmetric){
   int tid_x = threadIdx.x + blockIdx.x*blockDim.x;
 
 /*
@@ -748,6 +748,9 @@ __global__ void cuda_transpose_vectors_copy_block_double_kernel(double *aux_tran
   enddo
 */
 
+  int sign = 1;
+  if (isSkewsymmetric) sign = -1;
+
   int k, ns, nl;
   for (int lc=1; lc <= nvc; lc += 1)
     {
@@ -768,7 +771,7 @@ __global__ void cuda_transpose_vectors_copy_block_double_kernel(double *aux_tran
 extern "C" void cuda_transpose_vectors_copy_block_double_FromC(double *aux_transpose_dev, double *vmat_st_dev, 
                                               int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                               int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                              int *direction_in, int* sign_in, cudaStream_t my_stream){
+                                              int *direction_in, bool* isSkewsymmetric_in, bool* wantDebug_in, cudaStream_t my_stream){
   int nvc = *nvc_in;   
   int nvr = *nvr_in;   
   int n_block = *n_block_in;
@@ -780,7 +783,8 @@ extern "C" void cuda_transpose_vectors_copy_block_double_FromC(double *aux_trans
   int np_st = *np_st_in;
   int ld_st = *ld_st_in;
   int direction = *direction_in;
-  int sign = *sign_in;
+  bool isSkewsymmetric = *isSkewsymmetric_in;
+  bool wantDebug = *wantDebug_in;
 
   int SM_count=32; // PETERDEBUG count and move outside
   int blocks = SM_count;
@@ -791,15 +795,16 @@ extern "C" void cuda_transpose_vectors_copy_block_double_FromC(double *aux_trans
   
 #ifdef WITH_GPU_STREAMS
   cuda_transpose_vectors_copy_block_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(aux_transpose_dev, vmat_st_dev, 
-                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign);
+                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric);
 #else
   cuda_transpose_vectors_copy_block_double_kernel<<<blocks,threadsPerBlock>>>(aux_transpose_dev, vmat_st_dev, 
-                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign);
+                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric);
 #endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_transpose_vectors_copy_block_double_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
+  if(wantDebug)
+    {
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess) printf("Error in executing cuda_transpose_vectors_copy_block_double_kernel: %s\n",cudaGetErrorString(cuerr));
+    }
 }
 
 //________________________________________________________________

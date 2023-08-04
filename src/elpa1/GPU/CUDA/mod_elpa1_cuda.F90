@@ -155,13 +155,15 @@ end interface
 
   interface
   subroutine cuda_transpose_vectors_copy_block_double_c(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                              lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream) &
+                                              lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
+                                              isSkewsymmetric, wantDebug, my_stream) &
           bind(C, name="cuda_transpose_vectors_copy_block_double_FromC")
     use, intrinsic :: iso_c_binding
     implicit none
 
     integer(kind=C_INT), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &
-                                           np_st, ld_st, direction, sign
+                                           np_st, ld_st, direction
+    logical                             :: isSkewsymmetric, wantDebug
     integer(kind=C_intptr_T), value     :: aux_transpose_dev, vmat_st_dev
     integer(kind=c_intptr_t), value     :: my_stream
 
@@ -284,18 +286,21 @@ end interface
     end subroutine
 
     subroutine cuda_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot,&
-                                                        lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream)
+                                                        lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
+                                                        isSkewsymmetric, wantDebug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
 
       integer(kind=C_INT), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &
-                                             np_st, ld_st, direction, sign 
+                                             np_st, ld_st, direction
+      logical, intent(in)                 :: isSkewsymmetric, wantDebug 
       integer(kind=c_intptr_t)            :: aux_transpose_dev, vmat_st_dev
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_transpose_vectors_copy_block_double_c(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                      lcm_s_t, nblk, auxstride, np_st, ld_st, direction, sign, my_stream)
+                                                      lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
+                                                      isSkewsymmetric, wantDebug, my_stream)
 #endif
     end subroutine
 end module

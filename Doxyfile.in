@@ -985,7 +985,7 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/src/elpa1/elpa_solve_tridi_impl_public.F90 \
 			@top_srcdir@/src/elpa1/elpa1_trans_ev_template.F90 \
 			@top_srcdir@/src/elpa1/elpa_transpose_vectors_template.F90 \
-			@top_srcdir@/src/elpa1/elpa_transpose_vectors_ss.F90 \
+			@top_srcdir@/src/elpa1/GPU/elpa_gpu_transpose_vectors_template.F90 \
 			@top_srcdir@/src/elpa1/elpa1_auxiliary.F90 \
 			@top_srcdir@/src/elpa1/elpa1_tridiag_template.F90 \
 			@top_srcdir@/src/elpa1/elpa1_tools_template.F90 \

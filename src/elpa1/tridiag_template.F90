@@ -1072,7 +1072,7 @@ subroutine tridiag_&
     ! Transpose Householder Vector v_row -> v_col
     if (useCCL) then
       call nvtxRangePush("gpu_elpa_transpose_vectors v_row_dev->v_col_dev")
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
       ccl_comm_rows = obj%gpu_setup%ccl_comm_rows ! PETERDEBUG: define it only once, outside of the loop
       ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
       call gpu_elpa_transpose_vectors_&
@@ -1081,7 +1081,7 @@ subroutine tridiag_&
           &PRECISION &
                 (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
                 ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., aux_transpose_dev, &
-                wantDebug, my_stream, success)
+                isSkewsymmetric, wantDebug, my_stream, success)
 #endif /* WITH_NVIDIA_NCCL */
       call nvtxRangePop()
     else ! useCCL
@@ -1516,31 +1516,54 @@ subroutine tridiag_&
     endif
 #endif /* WITH_MPI */
     
-    if (isSkewsymmetric) then
-      call elpa_transpose_vectors_ss_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION &
-      (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-        mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
-      if (.not.(success)) then
-        write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting!"
-        return
-      endif
-    else ! isSkewsymmetric
-      call nvtxRangePush("elpa_transpose_vectors u_col->u_row")
-      call elpa_transpose_vectors_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION &
-      (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
-      mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
+    ! Transpose Householder Vector u_col -> u_row
+    if (useCCL) then
+#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
+      call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
+      successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
+                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("tridiag: u_col_dev", successGPU)
       call nvtxRangePop()
-      if (.not.(success)) then
-        write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
-        return
-      endif
-    endif ! isSkewsymmetric
+
+      call nvtxRangePush("gpu_elpa_transpose_vectors u_col_dev->u_row_dev")
+      ccl_comm_rows = obj%gpu_setup%ccl_comm_rows ! PETERDEBUG: define it only once, outside of the loop
+      ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+      call gpu_elpa_transpose_vectors_&
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION &
+                (obj, u_col_dev, max_local_cols, ccl_comm_cols, mpi_comm_cols, u_row_dev, max_local_rows+1, &
+                ccl_comm_rows, mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .true., aux_transpose_dev, &
+                isSkewsymmetric, wantDebug, my_stream, success)
+      call nvtxRangePop()
+#endif /* WITH_NVIDIA_NCCL */
+    else ! useCCL
+      if (isSkewsymmetric) then
+        call elpa_transpose_vectors_ss_&
+        &MATH_DATATYPE&
+        &_&
+        &PRECISION &
+        (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+          mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
+        if (.not.(success)) then
+          write(error_unit,*) "Error in elpa_transpose_vectors_ss. Aborting!"
+          return
+        endif
+      else ! isSkewsymmetric
+        call nvtxRangePush("elpa_transpose_vectors u_col->u_row")
+        call elpa_transpose_vectors_&
+        &MATH_DATATYPE&
+        &_&
+        &PRECISION &
+        (obj, u_col, ubound(u_col,dim=1), mpi_comm_cols, u_row, ubound(u_row,dim=1), &
+        mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., success)
+        call nvtxRangePop()
+        if (.not.(success)) then
+          write(error_unit,*) "Error in elpa_transpose_vectors. Aborting!"
+          return
+        endif
+      endif ! isSkewsymmetric
+    endif ! useCCL
 
 #if defined(GPU_NEW)
     if (useGPU) then
@@ -1551,13 +1574,13 @@ subroutine tridiag_&
                       l_cols * size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("tridiag: v_col_dev", successGPU)
         call nvtxRangePop()
-      endif ! .not. useCCL
 
-      call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
-      successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
-                    l_cols * size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("tridiag: u_col_dev", successGPU)
-      call nvtxRangePop()
+        call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
+        successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
+                      l_cols * size_of_datatype, gpuMemcpyHostToDevice)
+        check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+        call nvtxRangePop()
+      endif ! .not. useCCL
     endif ! useGPU
 #endif
 
@@ -1573,13 +1596,13 @@ subroutine tridiag_&
 
 #if defined(GPU_NEW)
     if (useGPU) then
-      call nvtxRangePush("memcpy new-2 H-D u_row->u_row_dev")
-      successGPU = gpu_memcpy(u_row_dev, int(loc(u_row(1)),kind=c_intptr_t), &
-                    l_rows * size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("tridiag: u_row_dev", successGPU)
-      call nvtxRangePop()
-
       if (.not. useCCL) then
+        call nvtxRangePush("memcpy new-2 H-D u_row->u_row_dev")
+        successGPU = gpu_memcpy(u_row_dev, int(loc(u_row(1)),kind=c_intptr_t), &
+                      l_rows * size_of_datatype, gpuMemcpyHostToDevice)
+        check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+        call nvtxRangePop()
+
         call nvtxRangePush("memcpy new-2 H-D v_row->v_row_dev")
         successGPU = gpu_memcpy(v_row_dev, int(loc(v_row(1)),kind=c_intptr_t), &
                       l_rows * size_of_datatype, gpuMemcpyHostToDevice)
