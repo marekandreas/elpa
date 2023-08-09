@@ -1,0 +1,59 @@
+.TH "elpa_invert_triangular_double_complex" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_invert_triangular \- inverts an upper triangular complex double-precision matrix
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+call elpa%\fBinvert_triangular_double_complex\fP (a, error)
+.sp
+With the definitions of the input and output variables:
+.TP
+datatype ::\fB a\fP ! can also be a device pointer of type(c_ptr)
+The host/device matrix\fB a\fP that should be inverted.
+The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The\fB datatype\fP of the matrix must be "complex(kind=c_double)".
+In case of a GPU build\fB a\fP can be a device pointer of type "type(c_ptr)" to matrix\fB a\fP in the device memory.
+.TP
+integer, optional :: \fB error\fP
+The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3).
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+void\fB elpa_invert_triangular_double_complex\fP(\fBelpa_t\fP handle,\fB datatype\fP *a,\fB int\fP *error);
+.sp
+With the definitions of the input and output variables:
+
+.TP
+elpa_t \fB handle\fP;
+The handle to the ELPA object
+.TP
+datatype \fB *a\fP; // can also be a device pointer
+The host/device matrix that should be inverted.
+The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The\fB datatype\fP must be "double complex".
+In case of a GPU build\fB a\fP can be a device pointer of type "type(c_ptr)" to matrix\fB a\fP in the device memory.
+.TP
+int \fB *error\fP;
+The error code of the function. Should be "ELPA_OK". The error codes can be queried with\fB elpa_strerr\fP(3).
+
+.SH DESCRIPTION
+Inverts an upper triangular complex double-precision matrix.
+The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3),
+and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_invert_triangular_double_complex\fP can be called.
+
+.SH SEE ALSO
+\fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_choleksy\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)
