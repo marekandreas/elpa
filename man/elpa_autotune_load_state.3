@@ -1,8 +1,8 @@
-.TH "elpa_autotune_load_state" 3 "Tue Nov 13 2018" "ELPA" \" -*- nroff -*-
+.TH "elpa_autotune_load_state" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_autotune_load_state \- loadsa state of an ELPA autotuning object
+elpa_autotune_load_state \- loads a state of an ELPA autotuning object
 .br
 
 .SH SYNOPSIS
@@ -14,51 +14,48 @@ class(elpa_t), pointer :: elpa
 class(elpa_autotune_t), pointer :: autotune
 .br
 
-.RI  "call elpa%\fBautotune_load_state\fP (autotune, filename, error)"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-.br
-.br
+call elpa%\fBautotune_load_state\fP (autotune, filename, error)
+.sp
+With the definitions of the input and output variables:
 .TP
-.RI "class(elpa_t)          \fBelpa\f:         an instance of the ELPA object"
-.br
-.RI "class(elpa_autotune_t) \fBautotune\f:     an instance of the ELPA autotune object"
-.br
-.RI "character(*)           \fBfilename\fP:   The filename to be used for loading the settings"
-.br
-.RI "integer, optional      \fBerror\fP:      A error return code"
+class(elpa_t)          :: \fB elpa\fP       
+An instance of the ELPA object
+.TP
+class(elpa_autotune_t) :: \fB autotune\fP   
+An instance of the ELPA autotune object
+.TP
+character(*)           :: \fB filename\fP   
+The filename to be used for loading the settings
+.TP
+integer, optional      :: \fB error\fP      
+An error return code
 .br
 
 .SS C INTERFACE
 #include <elpa/elpa.h>
 .br
 elpa_t handle;
+.br
 elpa_autotune_t autotune_handle;
 
-.br
-.RI "void \fBelpa_autotune_load_state\fP(\fBelpa_t\fP handle, \fBelpa_autotune_t\fP autotune_handle, \fBconst char\fP *filename, \fBint\fP *error):
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-.br
-.br
+void\fB elpa_autotune_load_state\fP(\fBelpa_t\fP handle,\fB elpa_autotune_t\fP autotune_handle,\fB const char\fP *filename,\fB int\fP *error):
+.sp
+With the definitions of the input and output variables:
 .TP
-.RI "elpa_t \fBhandle\fP:                The handle to the ELPA object"
-.br
+elpa_t \fB handle\fP;                
+The handle to the ELPA object
 .TP
-.RI "elpa_autotune_t \fBhandle\fP:       The handle to the ELPA autotune object"
-.br
+elpa_autotune_t \fB handle\fP;       
+The handle to the ELPA autotune object
 .TP
-.RI "const char \fB*filename\fP:         the filename to load the settings"
-.br
-.RI "int \fB*error\fP:                   the error return code"
+const char \fB *filename\fP;         
+The filename to load the settings
 .TP
+int \fB *error\fP;                   
+The error return code
 
 .SH DESCRIPTION
-Loads a previously stored state of an autotune object. With the loaded state the autotunig could be resumed
-.SH "SEE ALSO"
-.br
+Loads a previously stored state of an autotune object. With the loaded, state the autotuning could be resumed.
+
+.SH SEE ALSO
 \fBelpa_autotune_save_state\fP(3)

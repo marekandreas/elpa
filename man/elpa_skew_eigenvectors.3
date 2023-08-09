@@ -1,4 +1,4 @@
-.TH "elpa_skew_eigenvectors" 3 "Thur Nov 7 2019" "ELPA" \" -*- nroff -*-
+.TH "elpa_skew_eigenvectors" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -8,31 +8,39 @@ elpa_skew_eigenvectors \- computes the eigenvalues and (part of) the eigenvector
 .SH SYNOPSIS
 .br
 .SS FORTRAN INTERFACE
-use elpa
+use elpa 
 .br
 class(elpa_t), pointer :: elpa
-.br
 
-.RI  "call elpa%\fBskew_eigenvectors\fP (a, ev, q, error)"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-
-.br
-.RI "class(elpa_t) :: \fBelpa\fP  ! returns an instance of the ELPA object"
-.br
+call elpa%\fBskew_eigenvectors\fP (a, ev, q, error)
+.sp
+With the definitions of the input and output variables:
 .TP
-.RI "datatype :: \fBa\fP"
-The matrix a for which the eigenvalues should be computed. The dimensions of matrix a must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The datatype of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)". The matrix has to be skew-symmetric, this is not checked by the routine.
+class(elpa_t) :: \fB elpa \fP
+An instance of the ELPA object
 .TP
-.RI "datatype :: \fBev\fP"
-The vector ev where the eigenvalues will be stored in \fIascending\fP order. The datatype of the vector ev can be either "real(kind=c_double)", or "real(kind=c_float)", depending of the datatype of the matrix. Note that complex hermitian matrices also have real valued eigenvalues.
-.RI "datatype :: \fBq\fP"
-The storage space for the computed eigenvectors. The dimensions of matrix a must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The datatype of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)". Note, that for a skew-symmetric matrix the eigenvectors are complex. The routines returns separately the real and imaginary parts of the complex eigenvectors. Thus, the storage space has to be of dimension q(#numer_of_rows,2*#number_of_column).
+datatype :: \fB a \fP
+The matrix\fB a\fP for which the eigenvalues should be computed.
+The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The\fB datatype\fP of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)".
+The matrix has to be skew-symmetric, this is not checked by the routine.
 .TP
-.RI "integer, optional :: \fBerror\fP"
-The return error code of the function. Should be "ELPA_OK". The error code can be querried with the function \fBelpa_strerr\fP(3)
+datatype :: \fB ev \fP
+The vector\fB ev\fP where the eigenvalues will be stored in\fI ascending\fP order.
+The number of requested eigenpairs must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The\fB datatype\fP of the vector\fB ev\fP can be either "real(kind=c_double)", or "real(kind=c_float)", depending of the\fB datatype\fP of the matrix.
+\" Note that complex hermitian matrices also have real-valued eigenvalues.
+.TP
+datatype :: \fB q \fP
+The storage space for the computed eigenvectors.
+The number of requested eigenvectors must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The\fB datatype\fP can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)".
+Note, that for a skew-symmetric matrix the eigenvectors are complex.
+The routines returns separately the real and imaginary parts of the complex eigenvectors.
+Thus, the storage space has to be of dimension q(#number_of_rows, 2*#number_of_columns).
+.TP
+integer, optional :: \fB error \fP
+The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function fB elpa_strerr\fP(3)
 
 .br
 .SS C INTERFACE
@@ -41,33 +49,41 @@ The return error code of the function. Should be "ELPA_OK". The error code can b
 elpa_t handle;
 
 .br
-.RI "void \fBelpa_eigenvalues\fP(\fBelpa_t\fP handle, \fBdatatype\fP *a, \fBdatatype\fP *ev, \fBdatatype\fP *q, \fBint\fP *error);"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
+void\fB elpa_eigenvalues\fP(\fBelpa_t\fP handle,\fB datatype\fP *a,\fB datatype\fP *ev,\fB datatype\fP *q,\fB int\fP *error);
+.sp
+With the definitions of the input and output variables:
 
-.br
 .TP
-.RI "elpa_t \fBhandle\fP;"
+elpa_t \fB handle\fP;
 The handle to the ELPA object
 .TP
-.RI "datatype *\fBa\fP;"
-The matrix a for which the eigenvalues should be computed. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex". The matrix has to be symmetric or hermitian, this is not checked by the routine.
+datatype \fB *a\fP;
+The matrix\fB a\fP for which the eigenvalues and eigenvectors should be computed.
+The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The\fB datatype\fP can be one of "double", "float", "double complex", or "float complex".
+The matrix has to be symmetric or hermitian, this is not checked by the routine.
 .TP
-.RI "datatype *\fBev\fP;"
-The storage for the computed eigenvalues. Eigenvalues will be stored in \fIascendig\fP order. The \fBdatatype\fP can be either "double" or "float". Note that the eigenvalues of complex hermitian matrices are also real.
+datatype \fB *ev\fP;
+The storage for the computed eigenvalues.
+The number of requested eigenpairs must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+Eigenvalues will be stored in\fI ascending\fP order.
+The\fB datatype\fP can be either "double" or "float".
+\" Note that the eigenvalues of complex hermitian matrices are also real.
 .TP
-.RI "datatype *\fBq\fP;"
-The storage space for the computed eigenvectors. The dimensions of the matrix must be set \fIBEFORE\fP with the methods \fBelpa_set\fP(3) and \fBelpa_setup\fP(3). The \fBdatatype\fP can be one of "double", "float", "double complex", or "float complex".  Note, that for a skew-symmetric matrix the eigenvectors are complex. The routines returns separately the real and imaginary parts of the complex eigenvectors. Thus, the storage space has to be of dimension q(#numer_of_rows,2*#number_of_column).
+datatype \fB *q\fP;
+The storage space for the computed eigenvectors.
+The number of requested eigenvectors must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The\fB datatype\fP can be one of "double", "float", "double complex", or "float complex".
+Note, that for a skew-symmetric matrix the eigenvectors are complex.
+The routine returns separately the real and imaginary parts of the complex eigenvectors.
+Thus, the storage space has to be of dimension q(#number_of_rows, 2*#number_of_columns).
 
 .TP
-.RI "int *\fBerror\fP;"
-The error code of the function. Should be "ELPA_OK". The error codes can be querried with \fBelpa_strerr\fP(3)
+int \fB *error\fP;
+The error code of the function. Should be "ELPA_OK". The error codes can be queried with \fB elpa_strerr\fP(3).
 
 .SH DESCRIPTION
-Compute the eigenvalues and (parts of) the eigenvector spectrum of a real symmetric or complex hermitian matrix.The functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3), \fBelpa_set\fP(3), and \fBelpa_setup\fP(3) must be called \fIBEFORE\fP \fBelpa_eigenvalues\fP can be called. Especially the number of eigenvectors to be computed can be set with \fPelpa_set\fB(3)
-.br
-.SH "SEE ALSO"
-.br
-\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_skew_eigenvalues\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_cholesky\fP(3) \fBelpa_invert_triangular\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_hermitian_multiply\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)
+Computes the eigenvalues and (part of) the eigenvector spectrum of a real symmetric or complex hermitian matrix. The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_skew_eigenvectors\fP can be called. In particular, the number of the requested eigenpairs, "nev", must be set with\fB elpa_set\fP(3).
+
+.SH SEE ALSO
+\fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_skew_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)
