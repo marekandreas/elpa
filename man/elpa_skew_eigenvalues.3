@@ -22,13 +22,14 @@ class(elpa_t) :: \fB elpa\fP
 An instance of the ELPA object.
 .TP
 datatype :: \fB a\fP
-The matrix\fB a\fP for which the eigenvalues should be computed. The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The matrix\fB a\fP for which the eigenvalues should be computed.
+The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
 The\fB datatype\fP of the matrix can be one of "real(kind=c_double)" or "real(kind=c_float)".
 The matrix has to be skew-symmetric, this is not checked by the routine.
 .TP
 datatype :: \fB ev\fP
 The vector\fB ev\fP where the eigenvalues will be stored in\fI ascending\fP order.
-The\fB datatype\fP of the vector\fB ev\fP can be either "real(kind=c_double)", or "real(kind=c_float)", depending of the\fB datatype\fP of the matrix.
+The\fB datatype\fP of the vector\fB ev\fP can be either "real(kind=c_double)" or "real(kind=c_float)", depending of the\fB datatype\fP of the matrix.
 .TP
 integer, optional :: \fB error\fP
 The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3).
@@ -51,12 +52,13 @@ The handle to the ELPA object
 datatype \fB *a\fP;
 The matrix\fB a\fP for which the eigenvalues should be computed.
 The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype\fP can be one of "double" or "float". The matrix has to be skew-symmetric, this is not checked by the routine.
+The\fB datatype\fP can be one of "double" or "float".
+The matrix has to be skew-symmetric, this is not checked by the routine.
 .TP
 datatype \fB *ev\fP;
 The storage for the computed eigenvalues.
-Eigenvalues will be stored in\fI ascending\fP order. The\fB datatype\fP can be either "double" or "float".
-\" Note that the eigenvalues of complex hermitian matrices are also real.
+Eigenvalues will be stored in\fI ascending\fP order.
+The\fB datatype\fP can be either "double" or "float".
 .TP
 int \fB *error\fP;
 The error code of the function. Should be "ELPA_OK". The error codes can be queried with\fB elpa_strerr\fP(3).
