@@ -11,10 +11,10 @@ then
   module load autoconf/2.71 intel-comp-rt/agama-ci-devel intel-nightly intel/mkl-nda/xmain-nightly intel/mpi/2021.10.0
 elif [[ $arch == "a100" ]]
 then
-  module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.2.0 gnu/10.3.0
+  module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi gnu/10.3.0
 elif [[ $arch == "h100" ]]
 then
-  module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi/2023.2.0 gnu/10.3.0
+  module load autoconf/2.71 nvidia/cuda-12.0 intel/oneapi gnu/10.3.0
 elif [[ $arch == "spr" ]]
 then
   module load autoconf/2.71 intel-nightly intel/mkl-nda/xmain-nightly intel/mpi/2021.10.0

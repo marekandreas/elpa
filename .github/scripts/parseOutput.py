@@ -82,15 +82,22 @@ def getPerformance(filename):
 
 args = readConf()
 
+def getNumTiles(ai):
+    ranks = ai.split("_")[-1]
+    return 2 if ranks > 1 else 1
+
+
 if args.v:
     isCorrect = verifyCorrectness(args.filename)
     sys.exit(0 if isCorrect else 1)
 else:
     time = getPerformance(args.filename)
+    numTiles = getNumTiles(args.i)
     res = {
         "workload" : args.w,
         "input"    : args.i,
-        "value"    : time
+        "value"    : time,
+        "num_tiles": numTiles
     }
     if time != time:
         print("Result not found!")
