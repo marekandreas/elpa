@@ -1525,6 +1525,10 @@ subroutine tridiag_&
       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
       call nvtxRangePop()
 
+! PETERDEBUG-TEMP: delete after testing
+! successGPU = cuda_memcpy(int(loc(a_dev_helper(1,1)),kind=c_intptr_t), &
+! a_dev, lda * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
+
       call nvtxRangePush("gpu_elpa_transpose_vectors u_col_dev->u_row_dev")
       ccl_comm_rows = obj%gpu_setup%ccl_comm_rows ! PETERDEBUG: define it only once, outside of the loop
       ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
@@ -1533,9 +1537,17 @@ subroutine tridiag_&
           &_&
           &PRECISION &
                 (obj, u_col_dev, max_local_cols, ccl_comm_cols, mpi_comm_cols, u_row_dev, max_local_rows+1, &
-                ccl_comm_rows, mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .true., aux_transpose_dev, &
+                ccl_comm_rows, mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., aux_transpose_dev, &
                 isSkewsymmetric, wantDebug, my_stream, success)
       call nvtxRangePop()
+
+! PETERDEBUG-TEMP: delete after testing
+! #if REALCASE == 1 && DOUBLE_PRECISION == 1
+! if (wantDebug .and. na<20) then
+!   call prmat(na, useGPU, u_row, u_row_dev, max_local_rows, 1, nblk, my_prow, my_pcol, np_rows, np_cols, "u_row_dev", istep)
+! endif
+! #endif
+
 #endif /* WITH_NVIDIA_NCCL */
     else ! useCCL
       if (isSkewsymmetric) then
