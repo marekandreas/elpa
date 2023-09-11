@@ -53,7 +53,7 @@
 
 
 
-subroutine gpu_elpa_transpose_vectors_&
+subroutine elpa_gpu_transpose_vectors_&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
@@ -61,32 +61,29 @@ subroutine gpu_elpa_transpose_vectors_&
     nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
   
   !-------------------------------------------------------------------------------
-  ! This is the gpu version of the above routine
+  ! This is the gpu version of the routine elpa_transpose_vectors
   ! This routine transposes an array of vectors which are distributed in
-  ! communicator comm_s into its transposed form distributed in communicator comm_t.
-  ! There must be an identical copy of vmat_s in every communicator comm_s.
-  ! After this routine, there is an identical copy of vmat_t in every communicator comm_t.
+  ! communicator comm_s (ccl_comm_s) into its transposed form distributed in communicator comm_t (ccl_comm_t).
+  ! There must be an identical copy of vmat_s_dev in every communicator comm_s.
+  ! After this routine, there is an identical copy of vmat_t_dev in every communicator comm_t.
   !
-  ! vmat_s    original array of vectors
-  ! ld_s      leading dimension of vmat_s
-  ! comm_s    communicator over which vmat_s is distributed
-  ! vmat_t    array of vectors in transposed form
-  ! ld_t      leading dimension of vmat_t
-  ! comm_t    communicator over which vmat_t is distributed
-  ! nvs       global index where to start in vmat_s/vmat_t
-  !           Please note: this is kind of a hint, some values before nvs will be
-  !           accessed in vmat_s/put into vmat_t
-  ! nvr       global length of vmat_s/vmat_t
-  ! nvc       number of columns in vmat_s/vmat_t
-  ! nblk      block size of block cyclic distribution
+  ! vmat_s_dev  original array of vectors
+  ! ld_s        leading dimension of vmat_s_dev
+  ! comm_s      communicator over which vmat_s is distributed
+  ! vmat_t_dev  array of vectors in transposed form
+  ! ld_t        leading dimension of vmat_t
+  ! comm_t      communicator over which vmat_t_dev is distributed
+  ! nvs         global index where to start in vmat_s_dev/vmat_t_dev
+  !             Please note: this is kind of a hint, some values before nvs will be
+  !             accessed in vmat_s_dev/put into vmat_t_dev
+  ! nvr         global length of vmat_s_dev/vmat_t_dev
+  ! nvc         number of columns in vmat_s_dev/vmat_t_dev
+  ! nblk        block size of block cyclic distribution
   !
   !-------------------------------------------------------------------------------
   
   use precision
   use elpa_abstract_impl
-#ifdef WITH_OPENMP_TRADITIONAL
-  use omp_lib
-#endif
   use elpa_mpi
   use elpa_gpu
   use elpa1_gpu
@@ -94,9 +91,9 @@ subroutine gpu_elpa_transpose_vectors_&
   use cuda_functions
 #endif
   use nccl_functions
-
   implicit none
-  class(elpa_abstract_impl_t), intent(inout) :: obj
+
+  class(elpa_abstract_impl_t), intent(inout)        :: obj
   integer(kind=ik), intent(in)                      :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
 
   integer(kind=ik)                                  :: myps, mypt, nps, npt
@@ -104,7 +101,7 @@ subroutine gpu_elpa_transpose_vectors_&
   integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl
   integer(kind=MPI_KIND)                            :: mpierr
   integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
-  integer(kind=ik)                                  :: auxstride
+  integer(kind=ik)                                  :: aux_stride, aux_size
   integer(kind=ik), intent(in)                      :: nrThreads
   integer(kind=ik)                                  :: istat
   character(200)                                    :: errorMessage
@@ -134,10 +131,10 @@ subroutine gpu_elpa_transpose_vectors_&
   logical, intent(in)                               :: isSkewsymmetric, wantDebug
   integer(kind=c_intptr_t)                          :: my_stream
 
-  success = .true.
+  call nvtxRangePush("elpa_gpu_transpose_vectors setup")
+  if (wantDebug) call obj%timer%start("elpa_gpu_transpose_vectors")
 
-  call nvtxRangePush("gpu_elpa_transpose_vectors setup")
-  if (wantDebug) call obj%timer%start("gpu_elpa_transpose_vectors")
+  success = .true.
 
   ! PETERDEBUG: check if moving this outside speeds up the subroutine
   ! PETERDEBUG -- move this outside (?) and change mpi to ccl 
@@ -156,7 +153,7 @@ subroutine gpu_elpa_transpose_vectors_&
   ! this codepath doesn't work for ELPA2 (because ld_s != ld_t)
   call obj%get("solver", solver, error)
   call nvtxRangePop()
-
+  ! special square grid codepath for ELPA1
   if (solver==ELPA_SOLVER_1STAGE .and. nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
     call obj%get("mpi_comm_parent", mpi_comm_all, error)
     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
@@ -179,7 +176,7 @@ subroutine gpu_elpa_transpose_vectors_&
         ! my_mpi_rank = mypt + myps*npt
         transposed_mpi_rank = myps + mypt*nps
       else
-        print *, "Error in gpu_elpa_transpose_vectors: matrix_order is set incorrectly"
+        print *, "Error in elpa_gpu_transpose_vectors: matrix_order is set incorrectly"
       endif
       
       ! PETERDEBUG-TEMP - delete after testing
@@ -192,7 +189,8 @@ subroutine gpu_elpa_transpose_vectors_&
       ccl_comm_all = obj%gpu_setup%ccl_comm_all 
       successGPU = nccl_group_start() 
       if (.not. successGPU) then 
-        print *,"Error in setting up nccl_group_start!" 
+        print *,"Error in setting up nccl_group_start!"
+        success = .false.
         stop 1
       endif
       
@@ -210,12 +208,14 @@ subroutine gpu_elpa_transpose_vectors_&
 
       if (.not. successGPU) then
         print *,"Error in nccl_Send/nccl_Recv!"
+        success = .false.
         stop 1
       endif
       
       successGPU = nccl_group_end()
       if (.not. successGPU) then
         print *,"Error in setting up nccl_group_end!"
+        success = .false.
         stop 1
       endif
 
@@ -226,7 +226,7 @@ subroutine gpu_elpa_transpose_vectors_&
       endif
     endif
 
-    if (wantDebug) call obj%timer%stop("gpu_elpa_transpose_vectors")
+    if (wantDebug) call obj%timer%stop("elpa_gpu_transpose_vectors")
     return
   endif
 
@@ -255,7 +255,7 @@ subroutine gpu_elpa_transpose_vectors_&
 ! #ifdef WITH_OPENMP_TRADITIONAL
 !   !$omp parallel num_threads(nrThreads) &
 !   !$omp default(none) &
-!   !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
+!   !$omp private(lc, i, k, ns, nl, nblks_comm, aux_stride, ips, ipt, n, bcast_request1) &
 !   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
 !   !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
 ! #ifdef WITH_MPI
@@ -280,13 +280,14 @@ subroutine gpu_elpa_transpose_vectors_&
     if (mypt == ipt) then
 
       nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
-      auxstride = nblk * nblks_comm
+      aux_stride = nblk * nblks_comm
 
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
-          call gpu_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_s_dev, nvc, nvr, n, nblks_skip, nblks_tot, &
-                                                lcm_s_t, nblk, auxstride, nps, ld_st, 1, isSkewsymmetric, wantDebug, my_stream)
+          call gpu_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_s_dev, & 
+                                                nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
+                                                1, isSkewsymmetric, .false., wantDebug, my_stream)
 #endif
         endif ! (myps == ips)
 
@@ -306,7 +307,8 @@ subroutine gpu_elpa_transpose_vectors_&
           endif 
 
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
-          successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(nblks_comm*nblk*nvc, kind=c_size_t), ncclDouble, &
+          aux_size = aux_stride*nvc
+          successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(aux_size, kind=c_size_t), ncclDouble, &
                                 int(ips, kind=c_int), ccl_comm_s, my_stream)
 #endif
           if (.not. successGPU) then
@@ -326,14 +328,15 @@ subroutine gpu_elpa_transpose_vectors_&
         endif ! (nps>1)
 
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
-        call gpu_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_t_dev, nvc, nvr, n, nblks_skip, nblks_tot, & 
-                                              lcm_s_t, nblk, auxstride, npt, ld_st, 2, isSkewsymmetric, wantDebug, my_stream)
+        call gpu_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_t_dev, &
+                                              nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, npt, ld_t, & 
+                                              2, isSkewsymmetric, .false., wantDebug, my_stream)
 #endif
       endif ! (nblks_comm .ne. 0)
     endif ! (mypt == ipt)
 
   enddo ! n = 0, lcm_s_t-1
 
-  if (wantDebug) call obj%timer%stop("gpu_elpa_transpose_vectors")
+  if (wantDebug) call obj%timer%stop("elpa_gpu_transpose_vectors")
 
 end subroutine

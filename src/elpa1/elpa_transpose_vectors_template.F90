@@ -105,7 +105,7 @@ subroutine ROUTINE_NAME&
   integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl
   integer(kind=MPI_KIND)                            :: mpierr
   integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
-  integer(kind=ik)                                  :: auxstride
+  integer(kind=ik)                                  :: aux_stride
   integer(kind=ik), intent(in)                      :: nrThreads
   integer(kind=ik)                                  :: istat
   character(200)                                    :: errorMessage
@@ -270,7 +270,7 @@ subroutine ROUTINE_NAME&
 #ifdef WITH_OPENMP_TRADITIONAL
   !$omp parallel num_threads(nrThreads) &
   !$omp default(none) &
-  !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
+  !$omp private(lc, i, k, ns, nl, nblks_comm, aux_stride, ips, ipt, n, bcast_request1) &
   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
   !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
 #ifdef WITH_MPI
@@ -286,7 +286,7 @@ subroutine ROUTINE_NAME&
     if (mypt == ipt) then ! (mypt == ipt)
 
       nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
-      auxstride = nblk * nblks_comm
+      aux_stride = nblk * nblks_comm
 !      if(nblks_comm==0) cycle
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
@@ -296,7 +296,7 @@ subroutine ROUTINE_NAME&
 #endif
           do lc=1,nvc
             do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-              k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+              k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * aux_stride
               ns = (i/nps)*nblk ! local start of block i
               nl = min(nvr-i*nblk,nblk) ! length
               aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
@@ -346,7 +346,7 @@ subroutine ROUTINE_NAME&
 !        k = 0
         do lc=1,nvc
           do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-            k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+            k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * aux_stride
             ns = (i/npt)*nblk ! local start of block i
             nl = min(nvr-i*nblk,nblk) ! length
 #ifdef SKEW_SYMMETRIC_BUILD

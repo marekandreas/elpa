@@ -245,9 +245,10 @@ module elpa1_gpu
     endif
   end subroutine
 
-  subroutine gpu_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+  subroutine gpu_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, & 
+                                              nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                               lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                              isSkewsymmetric, wantDebug, my_stream)
+                                              isSkewsymmetric, isReduceadd, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
@@ -255,23 +256,26 @@ module elpa1_gpu
     integer(kind=C_INT), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &  
                                            np_st, ld_st, direction
     integer(kind=C_intptr_T)            :: aux_transpose_dev, vmat_st_dev
-    logical, intent(in)                 :: isSkewsymmetric, wantDebug
+    logical, intent(in)                 :: isSkewsymmetric, isReduceadd, wantDebug
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+    call cuda_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, &
+                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                                   lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, wantDebug, my_stream)
+                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_transpose_vectors_copy_block_double (aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+    call hip_transpose_reduceadd_vectors_copy_block_double (aux_transpose_dev, vmat_st_dev, &
+                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                                   lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, wantDebug, my_stream)
+                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_transpose_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, &
+    call sycl_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, &
+                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                                   lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, wantDebug, my_stream)
+                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
 #endif
   end subroutine
 

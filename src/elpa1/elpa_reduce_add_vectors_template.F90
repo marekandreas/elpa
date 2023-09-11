@@ -93,7 +93,7 @@ subroutine elpa_reduce_add_vectors_&
   integer(kind=ik)                                   :: n, lc, k, i, ips, ipt, ns, nl
   integer(kind=MPI_KIND)                             :: mpierr
   integer(kind=ik)                                   :: lcm_s_t, nblks_tot
-  integer(kind=ik)                                   :: auxstride
+  integer(kind=ik)                                   :: aux_stride
   integer(kind=ik), intent(in)                       :: nrThreads
   integer(kind=ik)                                   :: istat
   character(200)                                     :: errorMessage
@@ -136,7 +136,7 @@ subroutine elpa_reduce_add_vectors_&
   !call omp_set_num_threads(nrThreads)
   !$omp parallel &
   !$omp default(none) &
-  !$omp private(ips, ipt, auxstride, lc, i, k, ns, nl) num_threads(nrThreads) &
+  !$omp private(ips, ipt, aux_stride, lc, i, k, ns, nl) num_threads(nrThreads) &
   !$omp shared(nps, npt, lcm_s_t, nblk, vmat_t, vmat_s, myps, mypt, mpierr, obj, &
   !$omp&       comm_t, nblks_tot, aux2, aux1, nvr, nvc)
 #endif
@@ -145,7 +145,7 @@ subroutine elpa_reduce_add_vectors_&
     ips = mod(n,nps)
     ipt = mod(n,npt)
 
-    auxstride = nblk * ((nblks_tot - n + lcm_s_t - 1)/lcm_s_t)
+    aux_stride = nblk * ((nblks_tot - n + lcm_s_t - 1)/lcm_s_t)
 
     if (myps == ips) then
 
@@ -155,7 +155,7 @@ subroutine elpa_reduce_add_vectors_&
 #endif
       do lc=1,nvc
         do i = n, nblks_tot-1, lcm_s_t
-          k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+          k = (i - n)/lcm_s_t * nblk + (lc - 1) * aux_stride
           ns = (i/nps)*nblk ! local start of block i
           nl = min(nvr-i*nblk,nblk) ! length
           aux1(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
@@ -163,7 +163,7 @@ subroutine elpa_reduce_add_vectors_&
         enddo
       enddo
 
-      k = nvc * auxstride
+      k = nvc * aux_stride
 #ifdef WITH_OPENMP_TRADITIONAL
       !$omp barrier
       !$omp master
@@ -198,7 +198,7 @@ subroutine elpa_reduce_add_vectors_&
 #endif
         do lc=1,nvc
           do  i = n, nblks_tot-1, lcm_s_t
-            k = (i - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+            k = (i - n)/lcm_s_t * nblk + (lc - 1) * aux_stride
             ns = (i/npt)*nblk ! local start of block i
             nl = min(nvr-i*nblk,nblk) ! length
             vmat_t(ns+1:ns+nl,lc) = vmat_t(ns+1:ns+nl,lc) + aux2(k+1:k+nl)

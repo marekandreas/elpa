@@ -717,9 +717,9 @@ extern "C" void cuda_hh_transform_double_FromC(double *alpha_dev, double *xnorm_
 
 //________________________________________________________________
 
-__global__ void cuda_transpose_vectors_copy_block_double_kernel(double *aux_transpose_dev, double *vmat_st_dev, 
+__global__ void cuda_transpose_reduceadd_vectors_copy_block_double_kernel(double *aux_transpose_dev, double *vmat_st_dev, 
                                               int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
-                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, bool isSkewsymmetric){
+                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, bool isSkewsymmetric, bool isReduceadd){
   int tid_x = threadIdx.x + blockIdx.x*blockDim.x;
 
 /*
@@ -761,17 +761,18 @@ __global__ void cuda_transpose_vectors_copy_block_double_kernel(double *aux_tran
       nl = MIN(nvr-i*nblk, nblk); // length
       for (int j=tid_x; j<nl; j+=blockDim.x*gridDim.x) 
         {
-        if (direction==1) aux_transpose_dev[k+1+j-1] =  vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st];
-        if (direction==2) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st] = sign*aux_transpose_dev[k+1+j-1];
+        if (direction==1)                 aux_transpose_dev[k+1+j-1]            = vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st];
+        if (direction==2 && !isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st]  = sign*aux_transpose_dev[k+1+j-1];
+        if (direction==2 &&  isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st] += aux_transpose_dev[k+1+j-1];
         }
       }
     }
 }
 
-extern "C" void cuda_transpose_vectors_copy_block_double_FromC(double *aux_transpose_dev, double *vmat_st_dev, 
+extern "C" void cuda_transpose_reduceadd_vectors_copy_block_double_FromC(double *aux_transpose_dev, double *vmat_st_dev, 
                                               int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                               int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                              int *direction_in, bool* isSkewsymmetric_in, bool* wantDebug_in, cudaStream_t my_stream){
+                                              int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, cudaStream_t my_stream){
   int nvc = *nvc_in;   
   int nvr = *nvr_in;   
   int n_block = *n_block_in;
@@ -784,6 +785,7 @@ extern "C" void cuda_transpose_vectors_copy_block_double_FromC(double *aux_trans
   int ld_st = *ld_st_in;
   int direction = *direction_in;
   bool isSkewsymmetric = *isSkewsymmetric_in;
+  bool isReduceadd = *isSkewsymmetric_in;
   bool wantDebug = *wantDebug_in;
 
   int SM_count=32; // PETERDEBUG count and move outside
@@ -794,16 +796,16 @@ extern "C" void cuda_transpose_vectors_copy_block_double_FromC(double *aux_trans
 
   
 #ifdef WITH_GPU_STREAMS
-  cuda_transpose_vectors_copy_block_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(aux_transpose_dev, vmat_st_dev, 
-                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric);
+  cuda_transpose_reduceadd_vectors_copy_block_double_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(aux_transpose_dev, vmat_st_dev, 
+                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric, isReduceadd);
 #else
-  cuda_transpose_vectors_copy_block_double_kernel<<<blocks,threadsPerBlock>>>(aux_transpose_dev, vmat_st_dev, 
-                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric);
+  cuda_transpose_reduceadd_vectors_copy_block_double_kernel<<<blocks,threadsPerBlock>>>(aux_transpose_dev, vmat_st_dev, 
+                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric, isReduceadd);
 #endif
   if(wantDebug)
     {
     cudaError_t cuerr = cudaGetLastError();
-    if (cuerr != cudaSuccess) printf("Error in executing cuda_transpose_vectors_copy_block_double_kernel: %s\n",cudaGetErrorString(cuerr));
+    if (cuerr != cudaSuccess) printf("Error in executing cuda_transpose_reduceadd_vectors_copy_block_double_kernel: %s\n",cudaGetErrorString(cuerr));
     }
 }
 

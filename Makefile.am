@@ -118,9 +118,10 @@ libelpa@SUFFIX@_private_la_SOURCES += \
   src/general/elpa_utilities.F90
 
 EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
-  src/elpa1/elpa_reduce_add_vectors.F90 \
+  src/elpa1/elpa_reduce_add_vectors_template.F90 \
   src/elpa1/elpa_transpose_vectors_template.F90 \
   src/elpa1/GPU/elpa_gpu_transpose_vectors_template.F90 \
+  src/elpa1/GPU/elpa_gpu_reduce_add_vectors_template.F90 \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
@@ -1011,10 +1012,11 @@ EXTRA_DIST = \
   src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
   src/invert_trm/elpa_invert_trm_template.F90 \
-  src/elpa1/elpa_reduce_add_vectors.F90 \
+  src/elpa1/elpa_reduce_add_vectors_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/elpa1/elpa_transpose_vectors_template.F90 \
   src/elpa1/GPU/elpa_gpu_transpose_vectors_template.F90 \
+  src/elpa1/GPU/elpa_gpu_reduce_add_vectors_template.F90 \
   src/elpa2/compute_hh_trafo.F90 \
   src/elpa2/elpa2_bandred_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \

@@ -165,10 +165,15 @@ module elpa1_compute
 #endif
 
 #ifdef WITH_NVIDIA_NCCL
-  public :: gpu_elpa_transpose_vectors_real_double
+  public :: elpa_gpu_transpose_vectors_real_double
+  public :: elpa_gpu_reduce_add_vectors_real_double
 
-  interface gpu_elpa_transpose_vectors_real
-    module procedure gpu_elpa_transpose_vectors_real_double
+  interface elpa_gpu_transpose_vectors_real
+    module procedure elpa_gpu_transpose_vectors_real_double
+  end interface
+
+  interface elpa_gpu_reduce_add_vectors_real
+    module procedure elpa_gpu_reduce_add_vectors_real_double
   end interface
 #endif /* WITH_NVIDIA_NCCL */
 
@@ -185,9 +190,10 @@ module elpa1_compute
 #define SKEW_SYMMETRIC_BUILD
 #include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
-#include "elpa_reduce_add_vectors.F90"
+#include "elpa_reduce_add_vectors_template.F90"
 #ifdef WITH_NVIDIA_NCCL
 #include "./GPU/elpa_gpu_transpose_vectors_template.F90"
+#include "./GPU/elpa_gpu_reduce_add_vectors_template.F90"
 #endif /* WITH_NVIDIA_NCCL */
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -202,7 +208,7 @@ module elpa1_compute
 #define SKEW_SYMMETRIC_BUILD
 #include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
-#include "elpa_reduce_add_vectors.F90"
+#include "elpa_reduce_add_vectors_template.F90"
 #undef SINGLE_PRECISION
 #undef REALCASE
 #endif
@@ -216,7 +222,7 @@ module elpa1_compute
 #define SKEW_SYMMETRIC_BUILD
 #include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
-#include "elpa_reduce_add_vectors.F90"
+#include "elpa_reduce_add_vectors_template.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
@@ -229,7 +235,7 @@ module elpa1_compute
 #define SKEW_SYMMETRIC_BUILD
 #include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
-#include "elpa_reduce_add_vectors.F90"
+#include "elpa_reduce_add_vectors_template.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 
