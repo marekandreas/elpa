@@ -233,6 +233,7 @@ static oneapi::mkl::side sideFromChar(char c) {
   int syclFreeFromC(intptr_t *a) {
     auto &queue = elpa::gpu::sycl::getQueue();
     void * ptr = reinterpret_cast<void *>(*a);
+    queue.wait();
     sycl::free(ptr, queue);
     return 1;
   }

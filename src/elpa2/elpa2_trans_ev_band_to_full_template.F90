@@ -473,8 +473,10 @@ subroutine trans_ev_band_to_full_&
 #endif
 #endif /* CUDA_AWARE_MPI_BAND_TO_FULL */
 
+#ifdef MORE_GPUBLAS
     successGPU = gpu_malloc(tmat_dev,cwy_blocking*cwy_blocking*size_of_datatype)
     check_alloc_gpu("trans_ev_band_to_full: tmat_dev", successGPU)
+#endif
   endif
 
 
@@ -1343,6 +1345,7 @@ subroutine trans_ev_band_to_full_&
 #endif /* MORE_GPUBLAS */
 
         ! needed: as long as not device to device copy
+#ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1370,6 +1373,17 @@ subroutine trans_ev_band_to_full_&
         call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, -ONE, hvm_dev, max_local_rows, tmp_dev, &
                                    n_cols, ONE, q_dev, ldq, gpuHandle)
         call obj%timer%stop("gpublas")
+#else
+        call obj%timer%start("blas")
+        call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
+                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                            int(cwy_blocking,kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND))
+        call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), &
+                            int(n_cols,kind=BLAS_KIND), -ONE, hvm, &
+                            int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp2, int(n_cols,kind=BLAS_KIND), ONE, &
+                            q_mat, int(ldq,kind=BLAS_KIND))
+        call obj%timer%stop("blas")
+#endif
       else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -1387,6 +1401,7 @@ subroutine trans_ev_band_to_full_&
     if (l_rows > 0) then
       if (useGPU) then
         ! needed as long as not device to device copy
+#ifdef MORE_GPUBLAS
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1407,6 +1422,7 @@ subroutine trans_ev_band_to_full_&
         check_memcpy_gpu("trans_ev_band_to_full: tmat_complete -> tmat_dev", successGPU)
 #endif
 
+
         call obj%timer%start("gpublas")
         gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
         call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -1415,6 +1431,17 @@ subroutine trans_ev_band_to_full_&
         call gpublas_PRECISION_GEMM('N', 'N', l_rows, l_cols, n_cols, &
                                     -ONE, hvm_dev, max_local_rows, tmp_dev, n_cols, ONE, q_dev, ldq, gpuHandle)
         call obj%timer%stop("gpublas")
+#else
+        call obj%timer%start("blas")
+        call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
+                            int(n_cols,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, tmat_complete, &
+                            int(cwy_blocking,kind=BLAS_KIND), &
+                            tmp1, int(n_cols,kind=BLAS_KIND))
+        call PRECISION_GEMM('N', 'N', int(l_rows,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), int(n_cols,kind=BLAS_KIND), &
+                            -ONE, hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), tmp1, int(n_cols,kind=BLAS_KIND), ONE, q_mat, &
+                            int(ldq,kind=BLAS_KIND))
+        call obj%timer%stop("blas")
+#endif
       else ! useGPU
         call obj%timer%start("blas")
         call PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', &
@@ -1444,9 +1471,10 @@ subroutine trans_ev_band_to_full_&
     successGPU = gpu_free(tmp2_dev)
     check_dealloc_gpu("trans_ev_band_to_full: tmp2_dev", successGPU)
 #endif
-
+#ifdef MORE_GPUBLAS
     successGPU = gpu_free(tmat_dev)
     check_dealloc_gpu("trans_ev_band_to_full: tmat_dev", successGPU)
+#endif
 
     ! final transfer of q_dev
 #ifdef WITH_GPU_STREAMS

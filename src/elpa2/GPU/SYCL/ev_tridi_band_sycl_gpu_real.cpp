@@ -103,9 +103,14 @@ T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
 
 template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction=true>
 void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
+  // DPC++ & SYCL 1.2.1 is gradually replaced by SYCL2020. This is to keep ELPA compatible with both
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
+  using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
+#else
   using local_buffer = sycl::local_accessor<T>;
-  using sf = sycl::access::fence_space;
+#endif
 
+  using sf = sycl::access::fence_space;
   auto device = elpa::gpu::sycl::getDevice();
   auto &queue = elpa::gpu::sycl::getQueue();
 
