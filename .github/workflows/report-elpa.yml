@@ -37,11 +37,11 @@ jobs:
             slurm-partition: QZ1B-SPR-4oam-PVC
           - arch: a100
             ranks: 2
-            runner: pvc
+            runner: nvidia
             slurm-partition: a100-80G
           - arch: h100
             ranks: 2
-            runner: pvc
+            runner: nvidia
             slurm-partition: H100
 #         - arch: spr
 #           ranks: 224
