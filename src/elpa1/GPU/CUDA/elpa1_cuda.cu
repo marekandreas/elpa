@@ -751,6 +751,8 @@ __global__ void cuda_transpose_reduceadd_vectors_copy_block_double_kernel(double
   int sign = 1;
   if (isSkewsymmetric) sign = -1;
 
+  if (isReduceadd) printf("aux_transpose_dev[0] (before)= %f\n", *aux_transpose_dev); // ! PETERDEBUG: delete after testing
+
   int k, ns, nl;
   for (int lc=1; lc <= nvc; lc += 1)
     {
@@ -763,10 +765,13 @@ __global__ void cuda_transpose_reduceadd_vectors_copy_block_double_kernel(double
         {
         if (direction==1)                 aux_transpose_dev[k+1+j-1]            = vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st];
         if (direction==2 && !isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st]  = sign*aux_transpose_dev[k+1+j-1];
-        if (direction==2 &&  isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st] += aux_transpose_dev[k+1+j-1];
+        if (direction==2 &&  isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st]  = vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st] + aux_transpose_dev[k+1+j-1];
         }
       }
     }
+
+  if (isReduceadd) printf("aux_transpose_dev[0] (after) = %f\n", *aux_transpose_dev); // ! PETERDEBUG: delete after testing
+
 }
 
 extern "C" void cuda_transpose_reduceadd_vectors_copy_block_double_FromC(double *aux_transpose_dev, double *vmat_st_dev, 
@@ -785,7 +790,7 @@ extern "C" void cuda_transpose_reduceadd_vectors_copy_block_double_FromC(double 
   int ld_st = *ld_st_in;
   int direction = *direction_in;
   bool isSkewsymmetric = *isSkewsymmetric_in;
-  bool isReduceadd = *isSkewsymmetric_in;
+  bool isReduceadd = *isReduceadd_in;
   bool wantDebug = *wantDebug_in;
 
   int SM_count=32; // PETERDEBUG count and move outside

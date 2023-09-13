@@ -205,9 +205,9 @@ subroutine elpa_reduce_add_vectors_&
 !            k = k+nblk
           enddo
         enddo
-      endif
+      endif ! (mypt == ipt)
 
-    endif
+    endif ! (myps == ips)
 
   enddo
 #ifdef WITH_OPENMP_TRADITIONAL
