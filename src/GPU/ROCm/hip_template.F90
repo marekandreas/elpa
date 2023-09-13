@@ -52,6 +52,9 @@
   integer(kind=ik) :: hipHostRegisterPortable
   integer(kind=ik) :: hipHostRegisterMapped
 
+  integer(kind=ik) :: rocblasPointerModeDevice
+  integer(kind=ik) :: rocblasPointerModeHost
+
   ! streams
 
   interface
@@ -442,6 +445,11 @@
     end function
   end interface
 
+  interface hip_free
+    module procedure hip_free_intptr
+    module procedure hip_free_cptr
+  end interface
+
   interface
     function hip_free_intptr_c(a) result(istat) &
              bind(C, name="hipFreeFromC")
@@ -457,14 +465,9 @@
              bind(C, name="hipFreeFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      type(c_ptr), value               :: a
+      type(c_ptr), value  :: a
       integer(kind=C_INT)              :: istat
     end function
-  end interface
-
-  interface hip_free
-    module procedure hip_free_intptr
-    module procedure hip_free_cptr
   end interface
 
   interface hip_memcpy
@@ -481,6 +484,11 @@
     module procedure hip_memcpy_async_mixed_to_host
   end interface
 
+  interface hip_malloc
+    module procedure hip_malloc_intptr
+    module procedure hip_malloc_cptr
+  end interface
+
   interface
     function hip_malloc_intptr_c(a, width_height) result(istat) &
              bind(C, name="hipMallocFromC")
@@ -493,6 +501,7 @@
     end function
   end interface
 
+
   interface
     function hip_malloc_cptr_c(a, width_height) result(istat) &
              bind(C, name="hipMallocFromC")
@@ -503,11 +512,6 @@
       integer(kind=c_intptr_t), intent(in), value :: width_height
       integer(kind=C_INT)                         :: istat
     end function
-  end interface
-
-  interface hip_malloc
-    module procedure hip_malloc_intptr
-    module procedure hip_malloc_cptr
   end interface
 
   interface
@@ -1243,6 +1247,388 @@
 !  end interface
 !#endif
 
+  interface
+    function rocblas_pointerModeDevice_c() result(flag) &
+               bind(C, name="rocblasPointerModeDeviceFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int) :: flag
+    end function
+  end interface
+
+  interface
+    function rocblas_pointerModeHost_c() result(flag) &
+               bind(C, name="rocblasPointerModeHostFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int) :: flag
+    end function
+  end interface
+
+  interface
+    subroutine rocblas_getPointerMode_c(rocblasHandle, mode) &
+               bind(C, name="rocblasGetPointerModeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value   :: rocblasHandle
+      integer(kind=c_int)               :: mode
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_setPointerMode_c(rocblasHandle, mode) &
+               bind(C, name="rocblasSetPointerModeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T),value    :: rocblasHandle
+      integer(kind=c_int), value        :: mode
+    end subroutine
+  end interface
+
+  interface rocblas_Ddot
+    module procedure rocblas_Ddot_intptr
+    module procedure rocblas_Ddot_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Ddot_intptr_c(rocblasHandle, length, x, incx, y, incy, z) &
+               bind(C, name="rocblasDdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, z
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Ddot_cptr_c(rocblasHandle, length, x, incx, y, incy, z) &
+               bind(C, name="rocblasDdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      type(c_ptr), value                      :: x, y, z
+    end subroutine
+  end interface
+
+  interface rocblas_Dscal
+    module procedure rocblas_Dscal_intptr
+    module procedure rocblas_Dscal_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Dscal_intptr_c(rocblasHandle, length, alpha, x, incx) &
+               bind(C, name="rocblasDscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      real(kind=C_DOUBLE) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Dscal_cptr_c(rocblasHandle, length, alpha, x, incx) &
+               bind(C, name="rocblasDscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      real(kind=C_DOUBLE) ,value                :: alpha
+      type(c_ptr), value                      :: x
+    end subroutine
+  end interface
+
+  interface rocblas_Daxpy
+    module procedure rocblas_Daxpy_intptr
+    module procedure rocblas_Daxpy_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Daxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="rocblasDscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_DOUBLE) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x, y
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Daxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="rocblasDscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_DOUBLE) ,value                :: alpha
+      type(c_ptr), value                      :: x, y
+    end subroutine
+  end interface
+
+  interface rocblas_Sdot
+    module procedure rocblas_Sdot_intptr
+    module procedure rocblas_Sdot_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Sdot_intptr_c(rocblasHandle, length, x, incx, y, incy, z) &
+               bind(C, name="rocblasSdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, z
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Sdot_cptr_c(rocblasHandle, length, x, incx, y, incy, z) &
+               bind(C, name="rocblasSdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      type(c_ptr), value                      :: x, y, z
+    end subroutine
+  end interface
+
+  interface rocblas_Sscal
+    module procedure rocblas_Sscal_intptr
+    module procedure rocblas_Sscal_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Sscal_intptr_c(rocblasHandle, length, alpha, x, incx) &
+               bind(C, name="rocblasSscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      real(kind=C_FLOAT) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Sscal_cptr_c(rocblasHandle, length, alpha, x, incx) &
+               bind(C, name="rocblasSscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      real(kind=C_FLOAT) ,value                :: alpha
+      type(c_ptr), value                      :: x
+    end subroutine
+  end interface
+
+  interface rocblas_Saxpy
+    module procedure rocblas_Saxpy_intptr
+    module procedure rocblas_Saxpy_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Saxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="rocblasSscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_FLOAT) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x, y
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Saxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="rocblasSscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_FLOAT) ,value                :: alpha
+      type(c_ptr), value                      :: x, y
+    end subroutine
+  end interface
+
+  interface rocblas_Zdot
+    module procedure rocblas_Zdot_intptr
+    module procedure rocblas_Zdot_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Zdot_intptr_c(conj, rocblasHandle, length, x, incx, y, incy, z) &
+               bind(C, name="rocblasZdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: conj
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, z
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Zdot_cptr_c(conj, rocblasHandle, length, x, incx, y, incy, z) &
+               bind(C, name="rocblasZdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: conj
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      type(c_ptr), value                      :: x, y, z
+    end subroutine
+  end interface
+
+  interface rocblas_Zscal
+    module procedure rocblas_Zscal_intptr
+    module procedure rocblas_Zscal_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Zscal_intptr_c(rocblasHandle, length, alpha, x, incx) &
+               bind(C, name="rocblasZscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Zscal_cptr_c(rocblasHandle, length, alpha, x, incx) &
+               bind(C, name="rocblasZscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+      type(c_ptr), value                      :: x
+    end subroutine
+  end interface
+
+  interface rocblas_Zaxpy
+    module procedure rocblas_Zaxpy_intptr
+    module procedure rocblas_Zaxpy_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Zaxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="rocblasZscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x, y
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Zaxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="rocblasZscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+      type(c_ptr), value                      :: x, y
+    end subroutine
+  end interface
+
+  interface rocblas_Cdot
+    module procedure rocblas_Cdot_intptr
+    module procedure rocblas_Cdot_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Cdot_intptr_c(conj, rocblasHandle, length, x, incx, y, incy, z) &
+               bind(C, name="rocblasCdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: conj
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, z
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Cdot_cptr_c(conj, rocblasHandle, length, x, incx, y, incy, z) &
+               bind(C, name="rocblasCdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: conj
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      type(c_ptr), value                      :: x, y, z
+    end subroutine
+  end interface
+
+  interface rocblas_Cscal
+    module procedure rocblas_Cscal_intptr
+    module procedure rocblas_Cscal_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Cscal_intptr_c(rocblasHandle, length, alpha, x, incx) &
+               bind(C, name="rocblasCscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Cscal_cptr_c(rocblasHandle, length, alpha, x, incx) &
+               bind(C, name="rocblasCscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+      type(c_ptr), value                      :: x
+    end subroutine
+  end interface
+
+  interface rocblas_Caxpy
+    module procedure rocblas_Caxpy_intptr
+    module procedure rocblas_Caxpy_cptr
+  end interface
+
+  interface
+    subroutine rocblas_Caxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="rocblasCscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x, y
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Caxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="rocblasCscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+      type(c_ptr), value                      :: x, y
+    end subroutine
+  end interface
+
   contains
 
     function hip_stream_create(hipStream) result(success)
@@ -1462,7 +1848,7 @@
     function hip_free_cptr(a) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
-      type(c_ptr)               :: a
+      type(c_ptr) :: a
       logical                  :: success
 #ifdef WITH_AMD_GPU_VERSION
       success = hip_free_cptr_c(a) /= 0
@@ -2412,6 +2798,364 @@
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_Cgemv_c(rocblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine
+
+    function rocblas_pointerModeDevice() result(flag)
+      use, intrinsic :: iso_c_binding
+      use precision
+      implicit none
+      integer(kind=ik) :: flag
+#ifdef WITH_AMD_GPU_VERSION
+      flag = int(rocblas_pointerModeDevice_c())
+#else
+      flag = 0
+#endif
+    end function
+
+    function rocblas_pointerModeHost() result(flag)
+      use, intrinsic :: iso_c_binding
+      use precision
+      implicit none
+      integer(kind=ik) :: flag
+#ifdef WITH_AMD_GPU_VERSION
+      flag = int(rocblas_pointerModeHost_c())
+#else
+      flag = 0
+#endif
+    end function
+
+    subroutine rocblas_getPointerMode(rocblasHandle, mode)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: mode
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_getPointerMode_c(rocblasHandle, mode)
+#endif
+    end subroutine
+
+    subroutine rocblas_setPointerMode(rocblasHandle, mode)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: mode
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_setPointerMode_c(rocblasHandle, mode)
+#endif
+    end subroutine
+
+
+    subroutine rocblas_Ddot_intptr(rocblasHandle, length, x, incx, y, incy, z)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      integer(kind=c_intptr_t) :: x, y, z
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Ddot_intptr_c(rocblasHandle, length, x, incx, y, incy, z)
+#endif
+    end subroutine
+
+    subroutine rocblas_Ddot_cptr(rocblasHandle, length, x, incx, y, incy, z)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      type(c_ptr)              :: x, y, z
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Ddot_cptr_c(rocblasHandle, length, x, incx, y, incy, z)
+#endif
+    end subroutine
+
+    subroutine rocblas_Dscal_intptr(rocblasHandle, length, alpha, x, incx)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx
+      real(kind=C_DOUBLE) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Dscal_intptr_c(rocblasHandle, length, alpha, x, incx)
+#endif
+    end subroutine
+
+    subroutine rocblas_Dscal_cptr(rocblasHandle, length, alpha, x, incx)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx
+      real(kind=C_DOUBLE) ,value               :: alpha
+      type(c_ptr)              :: x
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Dscal_cptr_c(rocblasHandle, length, alpha, x, incx)
+#endif
+    end subroutine
+
+    subroutine rocblas_Daxpy_intptr(rocblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_DOUBLE) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Daxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine rocblas_Daxpy_cptr(rocblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_DOUBLE) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Daxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
+#endif
+    end subroutine
+
+
+    subroutine rocblas_Sdot_intptr(rocblasHandle, length, x, incx, y, incy, z)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      integer(kind=c_intptr_t) :: x, y, z
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Sdot_intptr_c(rocblasHandle, length, x, incx, y, incy, z)
+#endif
+    end subroutine
+
+    subroutine rocblas_Sdot_cptr(rocblasHandle, length, x, incx, y, incy, z)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      type(c_ptr)              :: x, y, z
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Sdot_cptr_c(rocblasHandle, length, x, incx, y, incy, z)
+#endif
+    end subroutine
+
+    subroutine rocblas_Sscal_intptr(rocblasHandle, length, alpha, x, incx)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx
+      real(kind=C_FLOAT) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Sscal_intptr_c(rocblasHandle, length, alpha, x, incx)
+#endif
+    end subroutine
+
+    subroutine rocblas_Sscal_cptr(rocblasHandle, length, alpha, x, incx)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx
+      real(kind=C_FLOAT) ,value               :: alpha
+      type(c_ptr)              :: x
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Sscal_cptr_c(rocblasHandle, length, alpha, x, incx)
+#endif
+    end subroutine
+
+    subroutine rocblas_Saxpy_intptr(rocblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_FLOAT) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Saxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine rocblas_Saxpy_cptr(rocblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      real(kind=C_FLOAT) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Saxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
+#endif
+    end subroutine
+
+
+    subroutine rocblas_Zdot_intptr(conj, rocblasHandle, length, x, incx, y, incy, z)
+      use, intrinsic :: iso_c_binding
+      implicit none
+       character(1,c_char), value   :: conj
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      integer(kind=c_intptr_t) :: x, y, z
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Zdot_intptr_c(conj,rocblasHandle, length, x, incx, y, incy, z)
+#endif
+    end subroutine
+
+    subroutine rocblas_Zdot_cptr(conj, rocblasHandle, length, x, incx, y, incy, z)
+      use, intrinsic :: iso_c_binding
+      implicit none
+       character(1,c_char), value   :: conj
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      type(c_ptr)              :: x, y, z
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Zdot_cptr_c(conj,rocblasHandle, length, x, incx, y, incy, z)
+#endif
+    end subroutine
+
+    subroutine rocblas_Zscal_intptr(rocblasHandle, length, alpha, x, incx)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Zscal_intptr_c(rocblasHandle, length, alpha, x, incx)
+#endif
+    end subroutine
+
+    subroutine rocblas_Zscal_cptr(rocblasHandle, length, alpha, x, incx)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      type(c_ptr)              :: x
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Zscal_cptr_c(rocblasHandle, length, alpha, x, incx)
+#endif
+    end subroutine
+
+    subroutine rocblas_Zaxpy_intptr(rocblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Zaxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine rocblas_Zaxpy_cptr(rocblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Zaxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
+#endif
+    end subroutine
+
+
+    subroutine rocblas_Cdot_intptr(conj, rocblasHandle, length, x, incx, y, incy, z)
+      use, intrinsic :: iso_c_binding
+      implicit none
+       character(1,c_char), value   :: conj
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      integer(kind=c_intptr_t) :: x, y, z
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Cdot_intptr_c(conj,rocblasHandle, length, x, incx, y, incy, z)
+#endif
+    end subroutine
+
+    subroutine rocblas_Cdot_cptr(conj, rocblasHandle, length, x, incx, y, incy, z)
+      use, intrinsic :: iso_c_binding
+      implicit none
+       character(1,c_char), value   :: conj
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      type(c_ptr)              :: x, y, z
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Cdot_cptr_c(conj,rocblasHandle, length, x, incx, y, incy, z)
+#endif
+    end subroutine
+
+    subroutine rocblas_Cscal_intptr(rocblasHandle, length, alpha, x, incx)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Cscal_intptr_c(rocblasHandle, length, alpha, x, incx)
+#endif
+    end subroutine
+
+    subroutine rocblas_Cscal_cptr(rocblasHandle, length, alpha, x, incx)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
+      type(c_ptr)              :: x
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Cscal_cptr_c(rocblasHandle, length, alpha, x, incx)
+#endif
+    end subroutine
+
+    subroutine rocblas_Caxpy_intptr(rocblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
+      integer(kind=c_intptr_t) :: x, y
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Caxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine rocblas_Caxpy_cptr(rocblasHandle, length, alpha, x, incx, y, incy)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: rocblasHandle
+      integer(kind=c_int)      :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
+      type(c_ptr)              :: x, y
+
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Caxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy)
 #endif
     end subroutine
 

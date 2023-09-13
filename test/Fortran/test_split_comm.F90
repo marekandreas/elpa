@@ -217,18 +217,14 @@ program test
 
 #ifdef WITH_CUDA_AWARE_MPI
 #if TEST_NVIDIA_GPU != 1
-#ifdef WITH_MPI
      call mpi_finalize(mpierr)
-#endif
      stop 77
 #endif
 #ifdef TEST_COMPLEX
-#ifdef WITH_MPI
      call mpi_finalize(mpierr)
-#endif
      stop 77
 #endif
-#endif
+#endif /* WITH_CUDA_AWARE_MPI */
 
    if (elpa_init(CURRENT_API_VERSION) /= ELPA_OK) then
      print *, "ELPA API version not supported"
@@ -261,20 +257,16 @@ program test
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
 
-#ifdef WITH_MPI
    blacs_ok_mpi = int(blacs_ok, kind=INT_MPI_TYPE)
    call mpi_allreduce(MPI_IN_PLACE, blacs_ok_mpi, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(MPI_COMM_WORLD,kind=MPI_KIND), mpierr)
    blacs_ok = int(blacs_ok_mpi, kind=INT_TYPE)
-#endif
 
    if (blacs_ok .eq. 0) then
      if (myid .eq. 0) then
        print *," Ecountered critical error when setting up blacs. Aborting..."
      endif
-#ifdef WITH_MPI
      call mpi_finalize(mpierr)
-#endif
-     stop
+     stop 1
    endif
 
    allocate(a (na_rows,na_cols))
@@ -307,7 +299,6 @@ program test
    assert_elpa_ok(e%setup())
 
 
-
 !   if(myid == 0) print *, "parameters of e"
 !   call e%print_all_parameters()
 !   if(myid == 0) print *, ""
@@ -338,14 +329,18 @@ program test
    deallocate(z)
    deallocate(ev)
 
+   call mpi_comm_free(mpi_sub_commMPI, mpierr)
+   if(mpierr .ne. MPI_SUCCESS) then 
+     print *, "communicator freeing is not successfull", mpierr
+     stop 1
+   endif
+
    call elpa_uninit(error_elpa)
 
-#ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
-#endif
 
-#endif
+#endif /* WITH_MPI */
    call exit(status)
 
 contains

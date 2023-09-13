@@ -150,8 +150,9 @@ program test
 #endif
    use precision_for_tests
 
-#if TEST_GPU_DEVICE_POINTER_API == 1
+#if TEST_GPU_DEVICE_POINTER_API == 1 || TEST_GPU_SET_ID == 1
    use test_gpu
+   use mod_check_for_gpu
 #if TEST_NVIDIA_GPU == 1
    use test_cuda_functions
 #endif
@@ -202,7 +203,6 @@ program test
    type(c_ptr)                         :: a_dev, q_dev, ev_dev, b_dev, c_dev ! q_dev -- eigenvectors (analogous to z)
 #endif
 
-
    logical                             :: check_all_evals, skip_check_correctness
 
 #if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
@@ -215,6 +215,7 @@ program test
 
    type(output_t)                      :: write_to_file
    class(elpa_t), pointer              :: e
+
 #ifdef TEST_ALL_KERNELS
    TEST_INT_TYPE                       :: i
 #endif
@@ -235,6 +236,9 @@ program test
                                           do_test_toeplitz_eigenvalues, do_test_cholesky,   &
                                           do_test_hermitian_multiply
    logical                             :: ignoreError, success, successGPU
+#if TEST_GPU == 1
+   TEST_INT_TYPE                       :: numberOfDevices
+#endif
 #ifdef WITH_OPENMP_TRADITIONAL
    TEST_INT_TYPE                       :: max_threads, threads_caller
 #endif
@@ -450,7 +454,7 @@ program test
 #endif
    endif
 
-	! Allocate the matrices needed for elpa
+   !Allocate the matrices needed for elpa
 
    allocate(a (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
@@ -762,7 +766,7 @@ program test
    call e%set("mpi_comm_cols", int(mpi_comm_cols,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 
-#else
+#else /* SPLIT_COMM_MYSELF */
    call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("process_row", int(my_prow,kind=c_int), error_elpa)
@@ -771,13 +775,16 @@ program test
    assert_elpa_ok(error_elpa)
    call e%set("verbose", 1, error_elpa)
    assert_elpa_ok(error_elpa)
-#endif
-#endif
+#endif /* SPLIT_COMM_MYSELF */
+#endif /* WITH_MPI */
+
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
    call e%set("blacs_context", int(my_blacs_ctxt,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
    call e%set("timings", 1_ik, error_elpa)
+   assert_elpa_ok(error_elpa)
+
    assert_elpa_ok(e%setup())
 
 #ifdef TEST_SOLVER_1STAGE
@@ -806,35 +813,45 @@ program test
 #endif
 
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
-   ! simple test
-   ! Can (and should) fail often
-   gpuID = mod(myid,2)
-   !gpuID = mod(myid,1)
+   if (gpu_vendor() /= no_gpu) then
+      call set_gpu_parameters()
+   else
+      print *,"Cannot set gpu vendor!"
+      stop 1
+   endif
+
+   success = gpu_GetDeviceCount(numberOfDevices)
+   if (.not.(success)) then
+      print *,"Error in gpu_GetDeviceCount. Aborting..."
+      stop 1
+   endif
+   print *,"numberOfDevices=", numberOfDevices
+   gpuID = mod(myid, numberOfDevices)
+
    call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
    ! create device pointers for a,q, ev; copy a to device
-#if TEST_NVIDIA_GPU == 1
-   if (gpu_vendor(NVIDIA_GPU) == NVIDIA_GPU) then
+
+   if (gpu_vendor() /= no_gpu) then
      call set_gpu_parameters()
+   else
+      print *,"Cannot set gpu vendor!"
+      stop 1
    endif
-#endif
-#if TEST_AMD_GPU == 1
-   if (gpu_vendor(AMD_GPU) == AMD_GPU) then
-     call set_gpu_parameters()
-   endif
-#endif
 
    ! Set device
    success = .true.
-#if TEST_NVIDIA_GPU == 1
-   success = cuda_setdevice(gpuID)
+#if TEST_INTEL_GPU_SYCL == 1
+   success = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
+   if (.not.(success)) then
+      print *,"Error in sycl_getcpucount. Aborting..."
+      stop 1
+    endif
 #endif
-#if TEST_AMD_GPU == 1
-   success = hip_setdevice(gpuID)
-#endif
+   success = gpu_setdevice(gpuID)
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."
      stop 1
@@ -1565,15 +1582,35 @@ program test
   deallocate(b, bs)
 #endif
 
+#if defined(WITH_MPI) && defined (SPLIT_COMM_MYSELF)
+   call mpi_comm_free(mpi_comm_rows, mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_free for row communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+
+   call mpi_comm_free(mpi_comm_cols, mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_free for column communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+#endif /* WITH_MPI && SPLIT_COMM_MYSELF */
+
+#ifdef WITH_MPI
+   call blacs_gridexit(my_blacs_ctxt)
+#endif
+
 #ifdef TEST_ALL_LAYOUTS
    end do ! factors
    end do ! layouts
 #endif
+
    call elpa_uninit(error_elpa)
    assert_elpa_ok(error_elpa)
 
 #ifdef WITH_MPI
-   call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
 

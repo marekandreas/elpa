@@ -76,6 +76,7 @@
       use tests_scalapack_interfaces
       use precision_for_tests
       use iso_c_binding
+      use test_util
       implicit none
 #include "../../src/general/precision_kinds.F90"
       integer(kind=BLAS_KIND)             :: status, na_cols, na_rows
@@ -303,6 +304,10 @@
       errmax = err
 #endif /* WITH_MPI */
       if (myid==0) print *,'%Error Orthogonality:',errmax
+      
+      if (is_infinity_or_NaN(errmax)) then
+        status = 1
+      endif
 
       if (nev .ge. 2) then
         if (errmax .gt. tol_orth .or. errmax .eq. 0.0_rk) then
@@ -369,6 +374,7 @@ function check_correctness_evp_numeric_residuals_&
       use tests_blas_interfaces
       use tests_scalapack_interfaces
       use precision_for_tests
+      use test_util
       implicit none
 #include "./test_precision_kinds.F90"
       TEST_INT_TYPE                                 :: status
@@ -565,6 +571,10 @@ function check_correctness_evp_numeric_residuals_&
       errmax = err
 #endif /* WITH_MPI */
       if (myid==0) print *,'Error Orthogonality:',errmax
+
+      if (is_infinity_or_NaN(errmax)) then
+        status = 1
+      endif
 
       if (nev .ge. 2) then
         if (errmax .gt. tol_orth .or. errmax .eq. 0.0_rk) then
@@ -790,6 +800,10 @@ function check_correctness_evp_gen_numeric_residuals_&
      maxerr = 0.0
      maxerr = maxval( (ev(:) - ev_analytic(:))/ev_analytic(:) , 1)
 
+     if (is_infinity_or_NaN(maxerr)) then
+       status = 1
+     endif
+
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
      if (abs(maxerr) .gt. 9.e-10_c_double) then
 #else
@@ -884,6 +898,7 @@ function check_correctness_evp_gen_numeric_residuals_&
       use precision_for_tests
       use tests_blas_interfaces
       use tests_scalapack_interfaces
+      use test_util
       implicit none
 #include "./test_precision_kinds.F90"
       TEST_INT_TYPE                                                     :: status
@@ -972,6 +987,10 @@ function check_correctness_evp_gen_numeric_residuals_&
 
       if (myid .eq. 0) then
         print *," Maximum error of result: ", normmax
+      endif
+
+      if (is_infinity_or_NaN(normmax)) then
+        status = 1
       endif
 
 #if REALCASE == 1
@@ -1082,6 +1101,7 @@ function check_correctness_evp_gen_numeric_residuals_&
       use precision_for_tests
       use tests_blas_interfaces
       use tests_scalapack_interfaces
+      use test_util
       implicit none
 #include "./test_precision_kinds.F90"
       TEST_INT_TYPE                                                   :: status
@@ -1181,6 +1201,10 @@ function check_correctness_evp_gen_numeric_residuals_&
         print *," Maximum error of result: ", normmax
       endif
 
+      if (is_infinity_or_NaN(normmax)) then
+        status = 1
+      endif
+
 #ifdef DOUBLE_PRECISION_REAL
       if (normmax .gt. 9e-10_rk8 ) then
         status = 1
@@ -1253,6 +1277,7 @@ function check_correctness_evp_gen_numeric_residuals_&
       &_f")
       use iso_c_binding
       use precision_for_tests
+      use test_util
       implicit none
 #include "./test_precision_kinds.F90"
       
@@ -1335,6 +1360,10 @@ function check_correctness_evp_gen_numeric_residuals_&
      ! compute a simple error max of eigenvalues
      maxerr = 0.0
      maxerr = maxval( (ev(:) - ev_analytic(:))/ev_analytic(:) , 1)
+
+     if (is_infinity_or_NaN(maxerr)) then
+       status = 1
+     endif
 
 #if defined(DOUBLE_PRECISION_REAL) || defined(DOUBLE_PRECISION_COMPLEX)
      if (maxerr .gt. 8.e-13_c_double) then

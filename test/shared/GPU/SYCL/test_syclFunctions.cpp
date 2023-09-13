@@ -62,3 +62,10 @@
 
 #include "../../../../src/GPU/SYCL/syclFunctions_template.hpp"
 
+extern "C" {
+    int syclFreeVoidPtr(void *ptr) {
+    auto &queue = elpa::gpu::sycl::getQueue();
+    sycl::free(ptr, queue);
+    return 1;
+    }
+}

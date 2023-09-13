@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [19:0:0])
+AC_SUBST([ELPA_SO_VERSION], [20:0:1])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -40,17 +40,17 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20221109, "Current ELPA API version")
-print_current_api_version=20220510
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20231705, "Current ELPA API version")
+print_current_api_version=20231705
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20221109], [Current ELPA autotune version])
-print_current_autotune_version=20220510
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20221109], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20221109, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20231705], [Current ELPA autotune version])
+print_current_autotune_version=20231705
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20231705], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20231705, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1685521972],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1700200688],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -2698,7 +2698,7 @@ fi
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include --default-stream per-thread"
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include "
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
   NVCC="nvcc"
@@ -3024,16 +3024,97 @@ if test x"$use_openmp_gpu_backend"  = x"yes" ; then
   ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED=1
   ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED=1
 fi
+
 AM_CONDITIONAL([WITH_SYCL_GPU_VERSION],[test x"$use_sycl_gpu_backend" = x"yes"])
 if test x"$use_sycl_gpu_backend"  = x"yes" ; then
   AC_DEFINE([WITH_SYCL_GPU_VERSION],[1],[enable INTEL GPU support via SYCL backend])
   #AC_DEFINE([WITH_INTEL_GPU_KERNEL],[1],[INTEL GPU kernel should be build])
+  AC_DEFINE_SUBST(CURRENT_WITH_SYCL_GPU_VERSION, 1, "enable use SYCL GPU in C-headers")
   ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED=1
   ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED=1
+else
+  AC_DEFINE_SUBST(CURRENT_WITH_SYCL_GPU_VERSION, 0, "disable use SYCL GPU in C-headers")
+  ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED=0
+  ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED=0
 fi
 
 AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED])
+
+
+use_gpu_ccl=no
+use_nvidia_nccl=no
+use_amd_rccl=no
+AC_MSG_CHECKING(whether GPU collective communications library should be used)
+AC_ARG_ENABLE([gpu-ccl],
+               [AS_HELP_STRING([--enable-gpu-ccl=[[nccl|rccl]]],
+                               [do use Nvidia NCCL or AMD RCCL communications library, respectively])],
+                               [if test x"$enableval" = x"nccl"; then
+                                  use_nvidia_nccl=yes
+                                  use_gpu_ccl=yes
+                                fi
+                                if test x"$enableval" = x"rccl"; then
+                                  use_amd_rccl=yes
+                                  use_gpu_ccl=yes
+                                fi
+                                if test x"$enableval" = x"yes"; then
+                                  AC_MSG_ERROR([Wrong value! Must be either "nccl" or "rccl" ])
+                                fi
+                                if test x"$enableval" = x"no"; then
+                                  use_cuda_nccl=no
+                                  use_amd_rccl=no
+                                  use_gpu_ccl=no
+                                fi
+                                ],
+              [use_gpu_ccl=no])
+AC_MSG_RESULT([${use_gpu_ccl}])
+
+if test x"$use_nvidia_nccl" = x"yes"; then
+  if test x"$use_cuda_streams" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=nccl is set, you must also use --enable-gpu-streams=nvidia])
+  fi
+  if test x"$need_amd_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=nccl is set, you cannot set --enable-amd-gpu])
+  fi
+  if test x"${enable_openmp}" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=nccl currently not supported in combination with --enable-openmp])
+  fi
+  if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
+    AC_MSG_ERROR([The combination --enable-cuda-aware-mpi and --enable-gpu-ccl=nccl is not supported"])
+  fi
+  AC_DEFINE([WITH_NVIDIA_NCCL],[1],[enable usage of NVIDIA NCCL])
+
+  AC_ARG_WITH([nccl-path],[AS_HELP_STRING([--with-nccl-path=PATH],[prefix where NCCL is installed @<:@default=auto@:>@])],
+              [NCCL_INSTALL_PATH=$withval], [with_cuda=auto])
+
+  #NCCLFAGS="$NCCL_INSTALL_PATH/include "
+  #NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS $NCCLFLAGS"
+
+  AC_LANG_PUSH([C])
+  CXXFLAGS="$CXXFLAGS -I$CUDA_INSTALL_PATH/include -I$NCCL_INSTALL_PATH/include"
+  LDFLAGS="$LDFLAGS -L$NCCL_INSTALL_PATH/lib"
+  dnl check whether we find nccl
+  AC_SEARCH_LIBS([ncclGetVersion],[nccl],[have_nccl=yes],[have_nccl=no])
+  if test x"${have_nccl}" = x"no"; then
+    AC_MSG_ERROR([Could not link NCCL; either set --disable-gpu-ccl=nccl or set the NCCL installation path with --with-nccl-path=])
+  fi
+  AC_LANG_POP([C])
+fi
+AM_CONDITIONAL([WITH_NVIDIA_NCCL],[test x"$use_nvidia_nccl" = x"yes"])
+
+#
+#if test x"$use_hip_streams" = x"yes"; then
+#  if test x"$need_amd_gpu" = x"no"; then
+#    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you must also use --enable-amd-gpu])
+#  fi
+#  if test x"$need_nvidia_gpu" = x"yes"; then
+#    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-nvidia-gpu])
+#  fi
+#  if test x"${enable_openmp}" = x"yes"; then
+#    AC_MSG_ERROR([If --enable-gpu-streams=amd currently not supported in combination with --enable-openmp])
+#  fi
+#  AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
+#fi
 
 
 LT_INIT
@@ -3613,12 +3694,12 @@ fi
 
 #echo " "
 #echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2022.11.001.rc2        *"
+#echo "*  This is the first release candidate of ELPA 2023.05.001.rc1        *"
 #echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2022.11.001                                                   *"
+#echo "*  ELPA 2023.05.001                                                   *"
 #echo "***********************************************************************"
 #echo " "
-#
+
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
   echo "Important message:"

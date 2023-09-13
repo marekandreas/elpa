@@ -62,7 +62,7 @@
 
 #if REALCASE == 1
 
-#include "elpa1_tridiag_template.F90"
+#include "tridiag_template.F90"
 #include "elpa1_trans_ev_template.F90"
 
 ! now comes a dirty hack:
@@ -91,7 +91,7 @@
 
 #if COMPLEXCASE == 1
 
-#include "elpa1_tridiag_template.F90"
+#include "tridiag_template.F90"
 #include "elpa1_trans_ev_template.F90"
 #include "elpa1_tools_template.F90"
 

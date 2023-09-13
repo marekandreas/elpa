@@ -226,7 +226,7 @@ program test
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif
-     stop
+     stop 1
    endif
 
 

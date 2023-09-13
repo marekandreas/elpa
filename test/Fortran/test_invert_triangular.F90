@@ -96,11 +96,6 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #define INT_MPI_TYPE c_int32_t
 #endif
 
-!#define TEST_GPU 0
-!#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
-!#undef TEST_GPU
-!#define TEST_GPU 1
-!#endif
 
 #include "assert.h"
 
@@ -126,6 +121,7 @@ program test
 
 #if TEST_GPU == 1
    use test_gpu
+   use mod_check_for_gpu
 #if TEST_NVIDIA_GPU == 1
    use test_cuda_functions
 #endif
@@ -168,12 +164,17 @@ program test
    type(output_t)                         :: write_to_file
    class(elpa_t), pointer                 :: e
 
-   logical                                :: success, successGPU
-   
+   logical                                :: success
+
 #if TEST_GPU == 1
    type(c_ptr)                            :: a_dev
-TEST_INT_TYPE                             :: gpuID
-   
+   TEST_INT_TYPE                          :: numberOfDevices
+   TEST_INT_TYPE                          :: gpuID
+   logical                                :: successGPU
+#endif
+
+! for gpu_malloc
+#if TEST_GPU == 1
 #if TEST_REAL == 1
 #if TEST_DOUBLE
    integer(kind=c_intptr_t), parameter :: size_of_datatype      = size_of_double_real
@@ -312,6 +313,8 @@ TEST_INT_TYPE                             :: gpuID
    call e%set("debug",1,error_elpa)
    assert_elpa_ok(error_elpa)
 
+   assert_elpa_ok(e%setup())
+
 #if TEST_NVIDIA_GPU == 1
    call e%set("nvidia-gpu", TEST_GPU,error_elpa)
    assert_elpa_ok(error_elpa)
@@ -325,36 +328,37 @@ TEST_INT_TYPE                             :: gpuID
    assert_elpa_ok(error_elpa)
 #endif
 
-#if (TEST_GPU == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
-   ! simple test
-   ! Can (and should) fail often
-   gpuID = mod(myid,2)
-   !gpuID = mod(myid,1)
+
+#if TEST_GPU == 1
+
+#if (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
+   success = gpu_GetDeviceCount(numberOfDevices)
+   if (.not.(success)) then
+      print *,"Error in gpu_GetDeviceCount. Aborting..."
+      stop 1
+   endif
+   print *,"numberOfDevices=", numberOfDevices
+   gpuID = mod(myid, numberOfDevices)   
    call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
 
-#if TEST_GPU == 1
-   ! create device pointers for a,q, ev; copy a to device
-#if TEST_NVIDIA_GPU == 1
-   if (gpu_vendor(NVIDIA_GPU) == NVIDIA_GPU) then
-     call set_gpu_parameters()
+   if (gpu_vendor() /= no_gpu) then
+      call set_gpu_parameters()
+   else 
+      print *,"Cannot set gpu vendor!"
+      stop 1
    endif
-#endif
-#if TEST_AMD_GPU == 1
-   if (gpu_vendor(AMD_GPU) == AMD_GPU) then
-     call set_gpu_parameters()
+
+#if TEST_INTEL_GPU_SYCL == 1 /* temporary fix for SYCL on CPU */
+   success = sycl_getcpucount(numberOfDevices)
+   if (.not.(success)) then
+      print *,"Error in sycl_getcpucount. Aborting..."
+      stop 1
    endif
 #endif
 
-   ! Set device
-   success = .true.
-#if TEST_NVIDIA_GPU == 1
-   success = cuda_setdevice(gpuID)
-#endif
-#if TEST_AMD_GPU == 1
-   success = hip_setdevice(gpuID)
-#endif
+   successGPU = gpu_setdevice(gpuID)
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."
      stop 1
@@ -362,17 +366,13 @@ TEST_INT_TYPE                             :: gpuID
 
    call e%set("gpu_invert_trm", 1, error_elpa)
    assert_elpa_ok(error_elpa)
-   
 #endif /* TEST_GPU */
 
-   assert_elpa_ok(e%setup())
-   call e%set("solver", elpa_solver_2stage, error_elpa)
-   assert_elpa_ok(error_elpa)
 
    !-----------------------------------------------------------------------------------------------------------------------------
    ! TEST_GPU == 1: create device pointer for a_dev; copy a -> a_dev
-   
 #if TEST_GPU == 1
+
    successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
      print *,"Cannot allocate matrix a on GPU! Aborting..."

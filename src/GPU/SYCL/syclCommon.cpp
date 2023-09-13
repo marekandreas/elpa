@@ -55,7 +55,6 @@
 #include <mpi.h>
 #endif
 
-
 static bool deviceCollectionFlag = false;
 
 std::vector<cl::sycl::device> devices;
@@ -92,16 +91,7 @@ void elpa::gpu::sycl::collectCpuDevices() {
   } else {
     deviceCollectionFlag = true;
   }
-
   std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
-  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
-  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
-  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
-  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
-  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
-  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
-  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
-
   // We need to be opinionated about the device selection. Currently, devices are displayed in duplicate, if they are supported
   // by multiple platforms. For now, a first step could be only supporting level zero and Intel GPUs. This will have to be
   // changed later as we move towards generalizing the backend.
@@ -114,7 +104,7 @@ void elpa::gpu::sycl::collectCpuDevices() {
 
 int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
   if (deviceId >= devices.size()){
-    std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
+    std::cerr << "Invalid GPU device ID selected, only " << devices.size() << " devices available." << std::endl;
     return 0;
   }
   cl::sycl::property::queue::in_order io;
@@ -167,7 +157,6 @@ void elpa::gpu::sycl::printGpuInfo() {
     return;
   }
 #endif
-
   std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA GPU Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
   std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
   std::cout << "# GPU devices:     " << devices.size() << std::endl;

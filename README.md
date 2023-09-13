@@ -2,11 +2,11 @@
 
 ## Current Release ##
 
-The current release is ELPA 2022.11.001. The current supported API version
-is 20221109. This release supports the earliest API version 20170403.
-The current version for autotuning is also 20221109 and down to version 20170403 ist supported
+The current release is ELPA 2023.05.001. The current supported API version
+is 20231705. This release supports the earliest API version 20170403.
+The current version for autotuning is also 20231705 and down to version 20170403 ist supported
 for autotuning. When the autotune version is set to a value **below** 20211125 the old autotunig
-implentation is used, and for 20211125 and higher the new implentation is used.
+implementation is used, and for 20211125 and higher the new implementation is used.
 
 [![Build 
 status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://gitlab.mpcdf.mpg.de/elpa/elpa/commits/master)
@@ -57,7 +57,7 @@ GNU Lesser General Public License as published by the Free Software Foundation.
 
 There exist several ways to obtain the *ELPA* library either as sources or pre-compiled packages:
 
-- official release tar-gz sources from the *ELPA* [webpage](https://elpa.mpcdf.mpg.de/elpa-tar-archive/ELPA_TARBALL_ARCHIVE.html)
+- official release tar-gz sources from the *ELPA* [webpage](https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html)
 - from the *ELPA* [git repository](https://gitlab.mpcdf.mpg.de/elpa/elpa)
 - as packaged software for several Linux distributions (e.g. Debian, Fedora, OpenSuse)
 
@@ -83,7 +83,7 @@ Nonetheless, we are grateful if you cite the following publications:
   T.; Heinecke, A.; Bungartz, H.-J.; Lederer, H.
   "The ELPA library: scalable parallel eigenvalue solutions for electronic
   structure theory and computational science",
-  Journal of Physics Condensed Matter, 26 (2014)
+  Journal of Physics Condensed Matter 26, 213201 (2014)
   doi:10.1088/0953-8984/26/21/213201
   
   If you use the GPU version of ELPA:
@@ -96,7 +96,8 @@ Nonetheless, we are grateful if you cite the following publications:
   
   Yu, V.; Moussa, J.; Kus, P.; Marek, A.; Messmer, P.; Yoon, M.; Lederer, H.; Blum, V.
   "GPU-Acceleration of the ELPA2 Distributed Eigensolver for Dense Symmetric and Hermitian Eigenproblems",
-  Computer Physics Communications, 262, 2021
+  Computer Physics Communications 262, 107808 (2021)
+  doi:10.1016/j.cpc.2020.107808
 
   If you use the new API and/or autotuning:
  
@@ -105,10 +106,11 @@ Nonetheless, we are grateful if you cite the following publications:
   Parallel Computing 85, 167-177 (2019)
 
   If you use the new support for skew-symmetric matrices:
-  Benner, P.; Draxl, C.; Marek, A.; Penke C.; Vorwerk, C.;
+
+  Penke C.; Marek, A.; Vorwerk, C.; Draxl, C.; Benner, P.;
   "High Performance Solution of Skew-symmetric Eigenvalue Problems with Applications in Solving the Bethe-Salpeter Eigenvalue Problem",
-  https://arxiv.org/abs/1912.04062, submitted to Parallel Computing
-  
+  Parallel Computing 96, 102639 (2020)
+  doi:10.1016/j.parco.2020.102639
 
 ## Installation of the *ELPA* library
 
@@ -127,7 +129,7 @@ the possible configure options.
 
 ## Using *ELPA*
 
-Please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file, to get a documentation or at the [online](http://elpa.mpcdf.mpg.de/html/Documentation/ELPA-2022.11.001/html/index.html) doxygen documentation, where you find the definition of the interfaces. You might want to have a look at the [PERFORMANCE tuning document](./documentation/PERFORMANCE_TUNING.md) to avoid some usual pitfalls.
+Please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file, to get a documentation or at the [online](https://elpa.mpcdf.mpg.de/documentation/doxygen/ELPA_DOXYGEN_PAGES/ELPA-2023.05.001/html/index.html) doxygen documentation, where you find the definition of the interfaces. You might want to have a look at the [PERFORMANCE tuning document](./documentation/PERFORMANCE_TUNING.md) to avoid some usual pitfalls.
 
 ## Contributing to *ELPA*
 

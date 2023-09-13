@@ -1,8 +1,8 @@
-.TH "elpa_uninit" 3 "Sat Jun 3 2017" "ELPA" \" -*- nroff -*-
+.TH "elpa_uninit" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_uninit \- uninitialize the ELPA library
+elpa_uninit \- uninitializes the ELPA library
 .br
 
 .SH SYNOPSIS
@@ -13,15 +13,12 @@ use elpa
 class(elpa_t), pointer :: elpa
 .br
 
-.RI  "call \fBelpa_uninit\fP (error)"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-
-.br
-.RI "error     integer, optional error code"
-.br
+call\fB elpa_uninit\fP (error)
+.sp
+With the definitions of the input and output variables:
+.TP
+integer, optional :: error 
+The error code
 .br
 
 .br
@@ -31,20 +28,16 @@ class(elpa_t), pointer :: elpa
 elpa_t handle;
 
 .br
-.RI "\fBvoid\fP \fBelpa_uninit\fP (int *error);"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-
-.br
-.br
-.RI "\fBint *\fP    error : the error code"
+\fBvoid elpa_uninit\fP (int *error);
+.sp
+With the definitions of the input and output variables:
+.TP
+int \fB error*\fP;
+The error code
 .br
 
 .SH DESCRIPTION
-Uninitializes the ELPA library after usage. The function \fBelpa_init\fP(3) must have been called \fIBEFORE\fP elpa_uninit can be called.
-.br
-.SH "SEE ALSO"
-.br
-\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_cholesky\fP(3) \fBelpa_invert_triangular\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_hermitian_multiply\fP(3) \fBelpa_setup\fP(3) \fBelpa_deallocate\fP(3)
+Uninitializes the ELPA library after usage. The function\fB elpa_init\fP(3) must have been called\fI BEFORE\fP elpa_uninit can be called.
+
+.SH SEE ALSO
+\fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_setup\fP(3)\fB elpa_deallocate\fP(3)

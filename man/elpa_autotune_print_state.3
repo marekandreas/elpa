@@ -1,4 +1,4 @@
-.TH "elpa_autotune_print_state" 3 "Tue Nov 13 2018" "ELPA" \" -*- nroff -*-
+.TH "elpa_autotune_print_state" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,49 +11,47 @@ elpa_autotune_print_state \- prints the current state of an ELPA autotuning obje
 use elpa
 .br
 class(elpa_t), pointer :: elpa
+.br
 class(elpa_autotune_t), pointer :: autotune
 .br
 
-.RI  "call elpa%\fBautotune_print_state\fP (autotune, error)"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-.br
-.br
+call elpa%\fBautotune_print_state\fP (autotune, error)
+.sp
+With the definitions of the input and output variables:
 .TP
-.RI "class(elpa_t)          \fBelpa\f:         an instance of the ELPA object"
-.br
-.RI "class(elpa_autotune_t) \fBautotune\f:     an instance of the ELPA autotune object"
-.br
-.RI "integer, optional      \fBerror\fP:      A error return code"
+class(elpa_t)          :: \fB elpa\fP       
+An instance of the ELPA object
+.TP
+class(elpa_autotune_t) :: \fB autotune\fP   
+An instance of the ELPA autotune object
+.TP
+integer, optional      :: \fB error\fP      
+An error return code
 .br
 
 .SS C INTERFACE
 #include <elpa/elpa.h>
 .br
 elpa_t handle;
+.br
 elpa_autotune_t autotune_handle;
 
 .br
-.RI "void \fBelpa_autotune_print_state\fP(\fBelpa_t\fP handle, \fBelpa_autotune_t\fP autotune_handle, \fBint\fP *error):
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-.br
-.br
+void\fB elpa_autotune_print_state\fP(\fBelpa_t\fP handle,\fB elpa_autotune_t\fP autotune_handle,\fB int\fP *error):
+.sp
+With the definitions of the input and output variables:
 .TP
-.RI "elpa_t \fBhandle\fP:                The handle to the ELPA object"
-.br
+elpa_t \fB handle\fP;            
+The handle to the ELPA object
 .TP
-.RI "elpa_autotune_t \fBhandle\fP:       The handle to the ELPA autotune object"
-.br
-.RI "int \fB*error\fP:                   the error return code"
+elpa_autotune_t \fB handle\fP;   
+The handle to the ELPA autotune object
 .TP
+int \fB *error\fP;               
+The error return code
 
 .SH DESCRIPTION
-Prints the current state of an autotune object. 
-.SH "SEE ALSO"
-.br
-\fBelpa_autotune_save_state\fP(3) \fBelpa_autotune_load_state\fP(3)
+Prints the current state of an autotune object.
+
+.SH SEE ALSO
+\fBelpa_autotune_save_state\fP(3)\fB elpa_autotune_load_state\fP(3)
