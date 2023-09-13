@@ -638,7 +638,7 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
     successGPU = gpu_malloc(aux2_reduceadd_dev, ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
     check_alloc_gpu("tridiag: aux2_reduceadd_dev", successGPU)
 
-#endif
+#endif /* WITH_NVIDIA_NCCL */
   endif !useGPU
 
   d_vec(:) = 0
@@ -1533,35 +1533,45 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
     ! This is only necessary if u_row has been calculated, i.e. if the
     ! global tile size is smaller than the global remaining matrix
 
-    ! PETERDEBUG: delete after testing
-    print *,"tridiag : my_mpi_rank=",my_mpi_rank,",tile_size=",tile_size,",lcm_s_t=",lcm_s_t,",nblk=",nblk,",nvc=",nvc
+    ! ! PETERDEBUG: delete after testing
+!     if (tile_size < istep-1) then
+!       if (useCCL) then
+! #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
 
-    if (tile_size < istep-1) then
-      if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-        call nvtxRangePush("elpa_gpu_reduce_add_vectors u_row_dev,u_col_dev")  
-        ccl_comm_rows = obj%gpu_setup%ccl_comm_rows ! PETERDEBUG: define it only once, outside of the loop
-        ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-        call elpa_gpu_reduce_add_vectors_&
-        &MATH_DATATYPE&
-        &_&
-        &PRECISION &
-              (obj, u_row_dev, max_local_rows, ccl_comm_rows, mpi_comm_rows, u_col_dev, max_local_cols, &
-              ccl_comm_cols, mpi_comm_cols, istep-1, 1, nblk, max_threads, aux1_reduceadd_dev, aux2_reduceadd_dev, &
-              wantDebug, my_stream, success)
-#endif
-        call nvtxRangePop()
-      else
-        call nvtxRangePush("elpa_reduce_add_vectors u_row,u_col")  
-        call elpa_reduce_add_vectors_&
-        &MATH_DATATYPE&
-        &_&
-        &PRECISION &
-        (obj, u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
-        mpi_comm_cols, istep-1, 1, nblk, max_threads)
-        call nvtxRangePop()
-      endif ! useCCL
-    endif ! (tile_size < istep-1)
+!         call nvtxRangePush("elpa_gpu_reduce_add_vectors u_row_dev,u_col_dev")  
+!         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows ! PETERDEBUG: define it only once, outside of the loop
+!         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+!         call elpa_gpu_reduce_add_vectors_&
+!         &MATH_DATATYPE&
+!         &_&
+!         &PRECISION &
+!               (obj, u_row_dev, max_local_rows, ccl_comm_rows, mpi_comm_rows, u_col_dev, max_local_cols, &
+!               ccl_comm_cols, mpi_comm_cols, istep-1, 1, nblk, max_threads, aux1_reduceadd_dev, aux2_reduceadd_dev, &
+!               wantDebug, my_stream, success)
+! #endif
+!         call nvtxRangePop()
+!       else
+!         call nvtxRangePush("elpa_reduce_add_vectors u_row,u_col")  
+!         call elpa_reduce_add_vectors_&
+!         &MATH_DATATYPE&
+!         &_&
+!         &PRECISION &
+!         (obj, u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
+!         mpi_comm_cols, istep-1, 1, nblk, max_threads)
+!         call nvtxRangePop()
+!       endif ! useCCL
+!     endif ! (tile_size < istep-1)
+
+    if (tile_size < istep-1 .and. .not. useGPU) then
+      call nvtxRangePush("elpa_reduce_add_vectors u_row,u_col")  
+      call elpa_reduce_add_vectors_&
+            &MATH_DATATYPE&
+            &_&
+            &PRECISION &
+            (obj, u_row, ubound(u_row,dim=1), mpi_comm_rows, u_col, ubound(u_col,dim=1), &
+            mpi_comm_cols, istep-1, 1, nblk, max_threads)
+      call nvtxRangePop()
+    endif ! (tile_size < istep-1 .and. .not. useGPU)
 
     ! Sum up all the u_col(:) parts, transpose u_col -> u_row
 
