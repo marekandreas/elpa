@@ -239,6 +239,7 @@ subroutine tridiag_&
   integer(kind=c_int) :: pointerMode
 
   integer(kind=ik)                              :: string_length
+  integer(kind=ik)                              :: mpi_comm_all, my_mpi_rank ! PETERDEBUG: delete after testing
 
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
   if (useGPU) then
@@ -599,7 +600,7 @@ subroutine tridiag_&
       isSqareGrid = .false.
       lcm_s_t   = least_common_multiple(np_rows,np_cols)
       nvs = 1 ! global index where to start in vmat_s/vmat_t
-      nvr  = max_local_rows ! global length of v_col_dev/v_row_dev(without last tau-element)
+      nvr  = na-1 ! global length of v_col_dev/v_row_dev(without last tau-element), max(istep-1)
       nvc = 1 ! number of columns in 
       nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
       ! Get the number of blocks to be skipped at the beginning
@@ -615,14 +616,22 @@ subroutine tridiag_&
     ! keep only the bigger aux array: aux1_reduceadd_dev, omit aux_transpose_dev
     lcm_s_t   = least_common_multiple(np_rows,np_cols)
     nvs = 1 ! global index where to start in vmat_s/vmat_t
-    nvr  = max_local_rows ! global length of v_col_dev/v_row_dev(without last tau-element)
+    nvr  = na-1 ! global length of v_col_dev/v_row_dev(without last tau-element), max(istep-1)
     nvc = 1 ! number of columns in 
     nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
     ! Get the number of blocks to be skipped at the beginning
     ! This must be a multiple of lcm_s_t (else it is getting complicated),
     ! thus some elements before nvs will be accessed/set.
     nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
-    !
+    
+    ! PETERDEBUG: delete after testing
+    call obj%get("mpi_comm_parent", mpi_comm_all, error)
+    call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
+
+    ! PETERDEBUG: delete after testing
+print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc =",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc
+    print *,"tridiag: my_mpi_rank=",my_mpi_rank,",nblks_tot=",nblks_tot,",lcm_s_t=",lcm_s_t,",nblk=",nblk,",nvc=",nvc
+
     successGPU = gpu_malloc(aux1_reduceadd_dev, ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
     check_alloc_gpu("tridiag: aux1_reduceadd_dev", successGPU)
     !
@@ -1124,14 +1133,14 @@ subroutine tridiag_&
     ! thus the result is partly in u_col(:) and partly in u_row(:)
 
     if (.not. useGPU) then
-      call nvtxRangePush("cpu: set u_col,u_row=0")
+      call nvtxRangePush("cpu: set u_col=0")
       u_col(1:l_cols) = 0
       !u_row(1:l_rows) = 0 ! PETERDEBUG: test whether this can be omitted. Yes!
       call nvtxRangePop()
     endif
 
     if (useGPU .and. useCCL) then
-      call nvtxRangePush("gpu-nccl: set u_col_dev,u_row_dev=0")
+      call nvtxRangePush("gpu-nccl: set u_col_dev=0")
       successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
 
@@ -1325,7 +1334,7 @@ subroutine tridiag_&
           ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
           ! this requires altering of the algorithm when later explicitly updating the matrix
           ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
-          ! ??? Peter: understand this
+          ! ??? PETERDEBUG: understand this
           if (wantDebug) call obj%timer%start("gpublas")
           
           call nvtxRangePush("gpuHandle = obj%gpu_setup%gpublasHandleArray(0)")
@@ -1498,7 +1507,8 @@ subroutine tridiag_&
     endif ! useGPU
 
     if (useGPU) then
-      if (l_rows==0) then
+    !if (useGPU .and. .not. useCCL) then ! PETERDEBUG: does this work? NO
+        if (l_rows==0) then
         call nvtxRangePush("cpu: set u_col=0")
         u_col(1:l_cols) = 0
         call nvtxRangePop()
@@ -1506,8 +1516,10 @@ subroutine tridiag_&
 
       if (l_cols==0 .or. mat_vec_as_one_block) then
         if (useCCL) then
+          call nvtxRangePush("gpu: set u_row_dev=0")
           successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype) !PETERDEBUG: should this be moved above first usage of u_row_dev in the main cycle?
           check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+          call nvtxRangePop()
         else ! useCCL
           call nvtxRangePush("cpu: set u_row=0")
           u_row(1:l_rows) = 0
@@ -1520,6 +1532,9 @@ subroutine tridiag_&
     ! on the processors containing the diagonal
     ! This is only necessary if u_row has been calculated, i.e. if the
     ! global tile size is smaller than the global remaining matrix
+
+    ! PETERDEBUG: delete after testing
+    print *,"tridiag : my_mpi_rank=",my_mpi_rank,",tile_size=",tile_size,",lcm_s_t=",lcm_s_t,",nblk=",nblk,",nvc=",nvc
 
     if (tile_size < istep-1) then
       if (useCCL) then

@@ -91,6 +91,7 @@ subroutine elpa_gpu_reduce_add_vectors_&
 
   !MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable   :: aux1(:), aux2(:)
   integer(kind=ik)                                   :: myps, mypt, nps, npt
+  integer(kind=ik)                                   :: mpi_comm_all, my_mpi_rank
   integer(kind=MPI_KIND)                             :: mypsMPI, npsMPI, myptMPI, nptMPI
   integer(kind=ik)                                   :: n, lc, k, i, ips, ipt, ns, nl
   integer(kind=MPI_KIND)                             :: mpierr
@@ -136,7 +137,8 @@ subroutine elpa_gpu_reduce_add_vectors_&
   !   ...
   ! endif
   
-
+  call obj%get("mpi_comm_parent", mpi_comm_all, mpierr)
+  call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
 
 
   ! Look to elpa_transpose_vectors for the basic idea!
@@ -148,19 +150,33 @@ subroutine elpa_gpu_reduce_add_vectors_&
   lcm_s_t   = least_common_multiple(nps,npt) ! least common multiple of nps, npt
 
   nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
-
-  successGPU = gpu_memset(aux1_reduceadd_dev, 0, (((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ) * size_of_datatype)
-  check_memcpy_gpu("tridiag: aux1_reduceadd_dev", successGPU)
-
-  successGPU = gpu_memset(aux2_reduceadd_dev, 0, (((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ) * size_of_datatype)
-  check_memcpy_gpu("tridiag: aux2_reduceadd_dev", successGPU)
   
+  if (((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc > 0) then
+
+    ! PETERDEBUG: delete after testing
+    successGPU = gpu_stream_synchronize(my_stream) 
+    check_stream_synchronize_gpu("check_stream_synchronize_gpu before gpu_memset", successGPU)
+
+    ! PETERDEBUG: delete after testing
+print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc =",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc
+    print *,"reduce1 : my_mpi_rank=",my_mpi_rank,",nblks_tot=",nblks_tot,",lcm_s_t=",lcm_s_t,",nblk=",nblk,",nvc=",nvc
+
+    successGPU = gpu_memset(aux1_reduceadd_dev, 0, (((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ) * size_of_datatype)
+    check_memcpy_gpu("elpa_gpu_reduce_add_vectors: aux1_reduceadd_dev", successGPU)
+
+    successGPU = gpu_memset(aux2_reduceadd_dev, 0, (((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ) * size_of_datatype)
+    check_memcpy_gpu("elpa_gpu_reduce_add_vectors: aux2_reduceadd_dev", successGPU)
+  endif
+
+  print *,"reduce: my_mpi_rank=", my_mpi_rank, ", lcm_s_t=",lcm_s_t ! PETERDEBUG: delete after testing
+
   do n = 0, lcm_s_t-1
     ips = mod(n,nps)
     ipt = mod(n,npt)
 
     aux_stride = nblk * ((nblks_tot - n + lcm_s_t - 1)/lcm_s_t)
-
+    print *,"reduce: my_mpi_rank=", my_mpi_rank, ", aux_stride=",aux_stride ! PETERDEBUG: delete after testing
+    
     if (myps == ips) then
 
 !       do lc=1,nvc
@@ -185,10 +201,35 @@ subroutine elpa_gpu_reduce_add_vectors_&
       ! https://stackoverflow.com/questions/17741574/in-place-mpi-reduce-crashes-with-openmpi
       if (aux_size>0) then
         if (wantDebug) call obj%timer%start("nccl_communication")
+        
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("nccl_Reduce aux1_reduceadd_dev, aux2_reduceadd_dev", successGPU)
+
+        successGPU = nccl_group_start() 
+        if (.not. successGPU) then 
+          print *,"Error in setting up nccl_group_start!" 
+          stop 1
+        endif
+
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
         successGPU = nccl_Reduce(aux1_reduceadd_dev, aux2_reduceadd_dev, int(aux_size, kind=c_size_t), ncclDouble, &
                                  ncclSum, int(ipt,kind=c_int), ccl_comm_t, my_stream)
 #endif
+        
+        if (.not. successGPU) then
+          print *, "Error in nccl_Reduce"
+          stop 1
+        endif
+
+        successGPU = nccl_group_end()
+        if (.not. successGPU) then
+          print *,"Error in setting up nccl_group_end!"
+          stop 1
+        endif
+
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("nccl_Reduce aux1_reduceadd_dev, aux2_reduceadd_dev", successGPU)
+
         if (wantDebug) call obj%timer%stop("nccl_communication")
       endif ! if (aux_size>0)
 
