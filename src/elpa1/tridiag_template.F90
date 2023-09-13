@@ -1133,9 +1133,9 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
     ! thus the result is partly in u_col(:) and partly in u_row(:)
 
     if (.not. useGPU) then
-      call nvtxRangePush("cpu: set u_col=0")
+      call nvtxRangePush("cpu: set u_col,u_row=0")
       u_col(1:l_cols) = 0
-      !u_row(1:l_rows) = 0 ! PETERDEBUG: test whether this can be omitted. Yes!
+      u_row(1:l_rows) = 0
       call nvtxRangePop()
     endif
 
