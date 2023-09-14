@@ -71,6 +71,13 @@ namespace {
     template <class T> struct is_complex_number<std::complex<T>> : public std::true_type {};
 }
 
+template <typename T>
+struct extract_float_type;
+
+template <typename X>
+struct extract_float_type<std::complex<X>> {
+    using type = X;
+};
 template<typename T, int wg_size, int sg_size, int step>
 inline void reduction_step(T *local_mem, sycl::nd_item<1> &it) {
   auto lId = it.get_local_id(0);
@@ -99,6 +106,56 @@ T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
   T local_res = local_mem[it.get_local_id(0)];
   T sg_added_res = sycl::reduce_over_group(it.get_sub_group(), local_res, sycl::plus<>());
   return sycl::group_broadcast(it.get_group(), sg_added_res);
+}
+
+template<typename T, int wg_size, int sg_size, int step>
+inline void reduction_step_complex(T *local_mem, sycl::nd_item<1> &it) {
+  auto lId = it.get_local_id(0);
+  if constexpr (wg_size >= step && sg_size <= step) {
+  //if constexpr (wg_size >= step) {
+    local_mem[lId] += static_cast<T>(lId < step) * local_mem[lId + step];
+    it.barrier(sycl::access::fence_space::local_space);
+  }
+}
+
+template <typename T, int sg_size, int step>
+inline void sg_reduction_step_complex(T *local_mem, T &accu, sycl::nd_item<1> &it) {
+  if constexpr (sg_size >= step) {
+    int constexpr half_step = step >> 1;
+    auto sg = it.get_sub_group();
+    auto sglId = sg.get_local_id();
+    accu += static_cast<T>(sglId < step) * sycl::shift_group_left(sg, accu, half_step);
+  }
+}
+
+template <typename T, int wg_size, int sg_size>
+std::complex<T> parallel_sum_group_complex(sycl::nd_item<1> &it, std::complex<T> *local_mem) {
+  T *local_mem_comps = reinterpret_cast<T *>(local_mem);
+  auto lId = it.get_local_id(0);
+  it.barrier(sycl::access::fence_space::local_space);
+  reduction_step_complex<T, wg_size, sg_size, 1024>(local_mem_comps, it);
+  reduction_step_complex<T, wg_size, sg_size,  512>(local_mem_comps, it);
+  reduction_step_complex<T, wg_size, sg_size,  256>(local_mem_comps, it);
+  reduction_step_complex<T, wg_size, sg_size,  128>(local_mem_comps, it);
+  reduction_step_complex<T, wg_size, sg_size,   64>(local_mem_comps, it);
+  reduction_step_complex<T, wg_size, sg_size,   32>(local_mem_comps, it);
+  reduction_step_complex<T, wg_size, sg_size,   16>(local_mem_comps, it);
+  reduction_step_complex<T, wg_size, sg_size,    8>(local_mem_comps, it);
+  reduction_step_complex<T, wg_size, sg_size,    4>(local_mem_comps, it);
+  reduction_step_complex<T, wg_size, sg_size,    2>(local_mem_comps, it);
+  T accu = local_mem_comps[lId & (sg_size - 1)];
+  sg_reduction_step_complex<T, sg_size, 1024>(local_mem_comps, accu, it);
+  sg_reduction_step_complex<T, sg_size,  512>(local_mem_comps, accu, it);
+  sg_reduction_step_complex<T, sg_size,  256>(local_mem_comps, accu, it);
+  sg_reduction_step_complex<T, sg_size,  128>(local_mem_comps, accu, it);
+  sg_reduction_step_complex<T, sg_size,   64>(local_mem_comps, accu, it);
+  sg_reduction_step_complex<T, sg_size,   32>(local_mem_comps, accu, it);
+  sg_reduction_step_complex<T, sg_size,   16>(local_mem_comps, accu, it);
+  sg_reduction_step_complex<T, sg_size,    8>(local_mem_comps, accu, it);
+  sg_reduction_step_complex<T, sg_size,    4>(local_mem_comps, accu, it);
+  T real = sycl::select_from_group(it.get_sub_group(), accu, 0);
+  T imag = sycl::select_from_group(it.get_sub_group(), accu, 1);
+  return std::complex<T>(real, imag);
 }
 
 template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction=true>
@@ -162,7 +219,12 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
         if constexpr (is_using_custom_reduction) {
           dotp_s[tid] = q_v2_hh_h_h_off;
           it.barrier(sf::local_space);
-          dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
+
+          if constexpr (is_complex_number<T>::value) {
+            dotp_res = parallel_sum_group_complex<typename extract_float_type<T>::type, wg_size, sg_size>(it, dotp_s.get_pointer());
+          } else {
+            dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
+          }
         } else {
           dotp_res = sycl::reduce_over_group(it.get_group(), q_v2_hh_h_h_off, sycl::plus<>());
         }
