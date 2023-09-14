@@ -810,7 +810,7 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #endif
 
           !write (nvtx_name, "(A,I0,A,I0)") "gpublas gemv skinny ", l_rows, "x", 2*n_stored_vecs
-          nvtx_name = "gpublas gemv skinny  v_row_dev=vu_stored_rows_dev*uv_stored_cols_dev"
+          nvtx_name = "gpublas gemv skinny  v_row_dev+=vu_stored_rows_dev*uv_stored_cols_dev"
           call nvtxRangePush(nvtx_name)
 
           ! v_row_dev = vu_stored_rows_dev * uv_stored_cols_dev(l_cols+1,1:2*n_stored_vecs) + v_row_dev
@@ -1506,32 +1506,36 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #endif
     endif ! useGPU
 
-    if (useGPU) then
-    !if (useGPU .and. .not. useCCL) then ! PETERDEBUG: does this work? NO
+    !if (useGPU) then ! PETERDEBUG: this older commented out version can be deleted upon cleanup
+    if (useGPU .and. .not. useCCL) then 
         if (l_rows==0) then
         call nvtxRangePush("cpu: set u_col=0")
         u_col(1:l_cols) = 0
         call nvtxRangePop()
       endif
-
-      if (l_cols==0 .or. mat_vec_as_one_block) then
-        if (useCCL) then
-          call nvtxRangePush("gpu: set u_row_dev=0")
-          successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype) !PETERDEBUG: should this be moved above first usage of u_row_dev in the main cycle?
-          check_memcpy_gpu("tridiag: u_row_dev", successGPU)
-          call nvtxRangePop()
-        else ! useCCL
-          call nvtxRangePush("cpu: set u_row=0")
-          u_row(1:l_rows) = 0
-          call nvtxRangePop()
-        endif ! useCCL
-      endif ! l_cols==0 .or. mat_vec_as_one_block
     endif ! useGPU
+
+    ! PETERDEBUG: this is not needed and can be deleted upon cleanup
+    !   if (l_cols==0 .or. mat_vec_as_one_block) then
+    !     if (useCCL) then
+    !       call nvtxRangePush("gpu: set u_row_dev=0")
+    !       !successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype) !PETERDEBUG: can we delete this?
+    !       !check_memcpy_gpu("tridiag: u_row_dev", successGPU)
+    !       call nvtxRangePop()
+    !     else ! useCCL
+    !       call nvtxRangePush("cpu: set u_row=0")
+    !       !u_row(1:l_rows) = 0 !PETERDEBUG: can we delete this?
+    !       call nvtxRangePop()
+    !     endif ! useCCL
+    !   endif ! l_cols==0 .or. mat_vec_as_one_block
+    !endif ! useGPU
 
     ! Sum up all u_row(:) parts along rows and add them to the u_col(:) parts
     ! on the processors containing the diagonal
     ! This is only necessary if u_row has been calculated, i.e. if the
     ! global tile size is smaller than the global remaining matrix
+    
+    ! in GPU case, u_row_dev=0 up to now, so elpa_reduce_add_vectors is skipped
 
     if (tile_size < istep-1 .and. .not. useGPU) then
       call nvtxRangePush("elpa_reduce_add_vectors u_row,u_col")  
@@ -1550,7 +1554,7 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #ifdef WITH_MPI
       if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-        call nvtxRangePush("nccl_Allreduce u_col_dev")
+        call nvtxRangePush("nccl_Allreduce u_col_dev") ! PETERDEBUG: can we use Bcast instead of Allreauce and not set u_col_dev=0 above?
         successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
         check_stream_synchronize_gpu("nccl_Allreduce u_col_dev", successGPU)
 
