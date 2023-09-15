@@ -896,8 +896,8 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #ifdef WITH_MPI
       if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("nccl_Allreduce aux1_dev", successGPU)
+        !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: cleanup of works without it
+        !check_stream_synchronize_gpu("nccl_Allreduce aux1_dev", successGPU)
 
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows 
         successGPU = nccl_group_start() 
@@ -1045,8 +1045,8 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #ifdef WITH_MPI
     if (useCCL .and. np_cols>1) then
 #ifdef WITH_NVIDIA_NCCL
-      successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here, before nccl_group_start()?
-      check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
+      !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here, before nccl_group_start()?
+      !check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
 
       ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
@@ -1555,8 +1555,8 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
       if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
         call nvtxRangePush("nccl_Allreduce u_col_dev") ! PETERDEBUG: can we use Bcast instead of Allreauce and not set u_col_dev=0 above?
-        successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
-        check_stream_synchronize_gpu("nccl_Allreduce u_col_dev", successGPU)
+        !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
+        !check_stream_synchronize_gpu("nccl_Allreduce u_col_dev", successGPU)
 
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
 
@@ -1719,8 +1719,8 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #ifdef WITH_MPI
     if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-      successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
-      check_stream_synchronize_gpu("nccl_Allreduce vav_dev", successGPU)
+      !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
+      !check_stream_synchronize_gpu("nccl_Allreduce vav_dev", successGPU)
 
       ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 

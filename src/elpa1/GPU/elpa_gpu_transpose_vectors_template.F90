@@ -297,8 +297,8 @@ subroutine elpa_gpu_transpose_vectors_&
         if (nps>1) then
           if (wantDebug) call obj%timer%start("nccl_communication")
 
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("nccl_Bcast aux_transpose_dev", successGPU)
+          !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: delete this if tests work
+          !check_stream_synchronize_gpu("nccl_Bcast aux_transpose_dev", successGPU)
 
           successGPU = nccl_group_start() 
           if (.not. successGPU) then 
