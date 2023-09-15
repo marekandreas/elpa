@@ -58,7 +58,8 @@ subroutine elpa_gpu_transpose_vectors_&
   &_&
   &PRECISION &
   (obj, vmat_s_dev, ld_s, ccl_comm_s, comm_s, vmat_t_dev, ld_t, ccl_comm_t, comm_t, &
-    nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
+    nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, myps, mypt, nps, npt, &
+    aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
   
   !-------------------------------------------------------------------------------
   ! This is the gpu version of the routine elpa_transpose_vectors
@@ -94,15 +95,14 @@ subroutine elpa_gpu_transpose_vectors_&
   implicit none
 
   class(elpa_abstract_impl_t), intent(inout)        :: obj
-  integer(kind=ik), intent(in)                      :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk
+  integer(kind=ik), intent(in)                      :: ld_s, comm_s, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads
+  integer(kind=ik), intent(in)                      :: myps, mypt, nps, npt
 
-  integer(kind=ik)                                  :: myps, mypt, nps, npt
   integer(kind=MPI_KIND)                            :: mypsMPI, myptMPI, npsMPI, nptMPI
   integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl
   integer(kind=MPI_KIND)                            :: mpierr
   integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
   integer(kind=ik)                                  :: aux_stride, aux_size
-  integer(kind=ik), intent(in)                      :: nrThreads
   integer(kind=ik)                                  :: istat
   character(200)                                    :: errorMessage
 
@@ -131,28 +131,26 @@ subroutine elpa_gpu_transpose_vectors_&
   logical, intent(in)                               :: isSkewsymmetric, wantDebug
   integer(kind=c_intptr_t)                          :: my_stream
 
-  call nvtxRangePush("elpa_gpu_transpose_vectors setup")
   if (wantDebug) call obj%timer%start("elpa_gpu_transpose_vectors")
 
   success = .true.
 
-  ! PETERDEBUG: check if moving this outside speeds up the subroutine
-  ! PETERDEBUG -- move this outside (?) and change mpi to ccl 
-  call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
-  call mpi_comm_size(int(comm_s,kind=MPI_KIND),npsMPI ,mpierr)
-  call mpi_comm_rank(int(comm_t,kind=MPI_KIND),myptMPI, mpierr)
-  call mpi_comm_size(int(comm_t,kind=MPI_KIND),nptMPI ,mpierr)
-  myps = int(mypsMPI,kind=c_int)
-  nps = int(npsMPI,kind=c_int)
-  mypt = int(myptMPI,kind=c_int)
-  npt = int(nptMPI,kind=c_int)
-  call obj%timer%stop("mpi_communication")
+  ! ! PETERDEBUG: check if moving this outside speeds up the subroutine
+  ! ! PETERDEBUG -- move this outside (?) and change mpi to ccl 
+  ! if (wantDebug) call obj%timer%start("mpi_communication")
+  ! call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
+  ! call mpi_comm_size(int(comm_s,kind=MPI_KIND),npsMPI ,mpierr)
+  ! call mpi_comm_rank(int(comm_t,kind=MPI_KIND),myptMPI, mpierr)
+  ! call mpi_comm_size(int(comm_t,kind=MPI_KIND),nptMPI ,mpierr)
+  ! myps = int(mypsMPI,kind=c_int)
+  ! nps = int(npsMPI,kind=c_int)
+  ! mypt = int(myptMPI,kind=c_int)
+  ! npt = int(nptMPI,kind=c_int)
+  ! if (wantDebug) call obj%timer%stop("mpi_communication")
 
   ! PETERDEBUG
   ! this codepath doesn't work for ELPA2 (because ld_s != ld_t)
   call obj%get("solver", solver, error)
-  call nvtxRangePop()
   ! special square grid codepath for ELPA1
   if (solver==ELPA_SOLVER_1STAGE .and. nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
     call obj%get("mpi_comm_parent", mpi_comm_all, error)
@@ -179,9 +177,6 @@ subroutine elpa_gpu_transpose_vectors_&
         print *, "Error in elpa_gpu_transpose_vectors: matrix_order is set incorrectly"
       endif
       
-      ! PETERDEBUG-TEMP - delete after testing
-      ! print *, "my_mpi_rank=", my_mpi_rank, ", transposed_mpi_rank=", transposed_mpi_rank
-
       message_size = ld_st*nvc
 
       if (wantDebug) call obj%timer%start("nccl_communication")

@@ -1055,8 +1055,8 @@ subroutine tridiag_&
           &_&
           &PRECISION &
                 (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
-                ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., aux_transpose_dev, &
-                isSkewsymmetric, wantDebug, my_stream, success)
+                ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., my_prow, my_pcol, np_rows, np_cols, &
+                aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
 #endif /* WITH_NVIDIA_NCCL */
       call nvtxRangePop()
     else ! useCCL
@@ -1088,11 +1088,8 @@ subroutine tridiag_&
 
     if (useGPU .and. useCCL) then
       call nvtxRangePush("gpu-nccl: set u_col_dev=0")
-      successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype)
+      successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype) ! PETERDEBUG: omit this, but change gpublas_gemm to u_col_dev=a_dev^T*v_row_dev+0*u_col_dev
       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
-
-      !successGPU = gpu_memset(u_row_dev, 0, l_rows * size_of_datatype) ! PETERDEBUG: test whether this can be omitted. Yes!
-      !check_memcpy_gpu("tridiag: u_row_dev", successGPU) 
       call nvtxRangePop()
     endif
 
@@ -1541,8 +1538,8 @@ subroutine tridiag_&
           &_&
           &PRECISION &
                 (obj, u_col_dev, max_local_cols, ccl_comm_cols, mpi_comm_cols, u_row_dev, max_local_rows+1, &
-                ccl_comm_rows, mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., aux_transpose_dev, &
-                isSkewsymmetric, wantDebug, my_stream, success)
+                ccl_comm_rows, mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., my_pcol, my_prow, np_cols, np_rows, &
+                aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
       call nvtxRangePop()
 #endif /* WITH_NVIDIA_NCCL */
     else ! useCCL
