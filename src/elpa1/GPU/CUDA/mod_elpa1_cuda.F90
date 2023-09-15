@@ -52,12 +52,13 @@ module elpa1_cuda
   public
 
   interface
-  subroutine cuda_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, my_stream) &
+  subroutine cuda_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream) &
          bind(C, name="cuda_dot_product_double_FromC")
     use, intrinsic :: iso_c_binding
     implicit none
 
     integer(kind=C_INT), intent(in)     :: n, incx, incy
+    logical, intent(in)                 :: wantDebug
     integer(kind=C_intptr_T), value     :: x_dev, y_dev, result_dev
     integer(kind=c_intptr_t), value     :: my_stream
 
@@ -65,12 +66,13 @@ module elpa1_cuda
 end interface
 
   interface
-    subroutine cuda_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream) &
+    subroutine cuda_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream) &
            bind(C, name="cuda_dot_product_and_assign_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
       integer(kind=C_INT), intent(in)     :: l_rows, isOurProcessRow
+      logical, intent(in)                 :: wantDebug
       integer(kind=C_intptr_T), value     :: v_row_dev, aux1_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
@@ -79,12 +81,12 @@ end interface
 
   interface
     subroutine cuda_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream) &
+                                                l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream) &
          bind(C, name="cuda_set_e_vec_scale_set_one_store_v_row_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
-      logical                             :: isOurProcessRow, useCCL
+      logical, intent(in)                 :: isOurProcessRow, useCCL, wantDebug
       integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, istep
       integer(kind=C_intptr_T), value     :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_intptr_t), value     :: my_stream
@@ -113,13 +115,14 @@ end interface
   interface
     subroutine cuda_update_matrix_element_add_double_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                                 l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                                isSkewsymmetricInt, my_stream) &
+                                                isSkewsymmetric, wantDebug, my_stream) &
              bind(C, name="cuda_update_matrix_element_add_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
       integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, &
-                                             istep, n_stored_vecs, isSkewsymmetricInt
+                                             istep, n_stored_vecs
+      logical, intent(in)                 :: isSkewsymmetric, wantDebug
       integer(kind=C_intptr_T), value     :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
@@ -173,45 +176,47 @@ end interface
 
   contains
 
-  subroutine cuda_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, my_stream)
+  subroutine cuda_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     implicit none
 
     integer(kind=C_INT), intent(in)     :: n, incx, incy
+    logical, intent(in)                 :: wantDebug
     integer(kind=C_intptr_T)            :: x_dev, y_dev, result_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, my_stream)
+    call cuda_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
 #endif
   end subroutine
 
-    subroutine cuda_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
+    subroutine cuda_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
 
       integer(kind=C_INT), intent(in)     :: l_rows, isOurProcessRow
+      logical, intent(in)                 :: wantDebug
       integer(kind=C_intptr_T)            :: v_row_dev, aux1_dev
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, my_stream)
+      call cuda_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
 #endif
     end subroutine
 
     subroutine cuda_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
+                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
 
-      logical, intent(in)                 :: isOurProcessRow, useCCL
+      logical, intent(in)                 :: isOurProcessRow, useCCL, wantDebug
       integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, istep
       integer(kind=C_intptr_T)            :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                              l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
+                                              l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
 #endif
     end subroutine
 
@@ -238,21 +243,22 @@ end interface
 
     subroutine cuda_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                                 l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                                isSkewsymmetricInt, my_stream)
+                                                isSkewsymmetric, wantDebug, my_stream)
       use, intrinsic :: iso_c_binding
 !      use precision
       implicit none
 !#include "../../../general/precision_kinds.F90"
 
       integer(kind=C_INT), intent(in)     :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, &
-                                             istep, n_stored_vecs, isSkewsymmetricInt
+                                             istep, n_stored_vecs
+      logical, intent(in)                 :: isSkewsymmetric, wantDebug
       integer(kind=C_intptr_T)            :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_update_matrix_element_add_double_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                                 l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                                isSkewsymmetricInt, my_stream)
+                                                isSkewsymmetric, wantDebug, my_stream)
 #endif
     end subroutine
 

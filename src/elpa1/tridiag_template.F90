@@ -846,7 +846,7 @@ subroutine tridiag_&
 
         my_stream = obj%gpu_setup%my_stream
         call nvtxRangePush("kernel: gpu_dot_product_and_assign_double v_row_dev*v_row_dev,aux1_dev")
-        call gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, my_stream)
+        call gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
         call nvtxRangePop()
 
         if (.not. useCCL) then
@@ -985,7 +985,7 @@ subroutine tridiag_&
         call nvtxRangePush("kernel gpu_set_e_vec_scale_set_one_store_v_row")
         isOurProcessRow = (my_prow == prow(istep-1, nblk, np_rows))
         call gpu_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
-                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, my_stream)
+                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
         call nvtxRangePop()
       endif ! useGPU  
 #endif /* GPU_NEW */
@@ -1594,7 +1594,7 @@ subroutine tridiag_&
     ! PETERDEBUG: this part could only be useful if we use NCCL for Allreduce of vav_dev
     if (useGPU) then
       call nvtxRangePush("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
-      call gpu_dot_product_double(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, my_stream)
+      call gpu_dot_product_double(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, my_stream)
       call nvtxRangePop()
     endif ! useGPU
 #endif /* GPU_NEW && WITH_NVIDIA_NCCL */
@@ -1824,7 +1824,7 @@ subroutine tridiag_&
         call nvtxRangePush("kernel: gpu_update_matrix_element_add")
         call gpu_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                              isSkewsymmetric, my_stream) ! double -> PRECISION
+                                              isSkewsymmetric, wantDebug, my_stream) ! double -> PRECISION
         call nvtxRangePop()
 #endif
       else ! useGPU

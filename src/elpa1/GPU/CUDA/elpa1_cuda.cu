@@ -161,10 +161,11 @@ __global__ void cuda_dot_product_double_kernel(int n, double *x_dev, int incx, d
   
 }
 
-extern "C" void cuda_dot_product_double_FromC(int* n_in, double *x_dev, int *incx_in, double *y_dev, int *incy_in, double *result_dev, cudaStream_t my_stream){
+extern "C" void cuda_dot_product_double_FromC(int* n_in, double *x_dev, int *incx_in, double *y_dev, int *incy_in, double *result_dev, bool *wantDebug_in, cudaStream_t my_stream){
   int n = *n_in;   
   int incx = *incx_in;
   int incy = *incy_in;
+  bool wantDebug = *wantDebug_in;
 
   int SM_count=32;
   //cudaDeviceGetAttribute(&SM_count, cudaDevAttrMultiProcessorCount, 0); // PETERDEBUG move this outside, to set_gpu, claim the number only once during GPU setup
@@ -178,11 +179,12 @@ extern "C" void cuda_dot_product_double_FromC(int* n_in, double *x_dev, int *inc
 #else
   cuda_dot_product_double_kernel<<<blocks,threadsPerBlock>>>(n, x_dev, incx, y_dev, incy, result_dev);
 #endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_dot_product_kernel: %s\n",cudaGetErrorString(cuerr));
+  if (wantDebug){
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing cuda_dot_product_kernel: %s\n",cudaGetErrorString(cuerr));
+    }
   }
-
 }
 
 //________________________________________________________________
@@ -241,9 +243,10 @@ __global__ void cuda_dot_product_and_assign_double_kernel(double *v_row_dev, int
     }
 }
 
-extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, double *aux1_dev, cudaStream_t my_stream){
+extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, double *aux1_dev, bool *wantDebug_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int isOurProcessRow = *isOurProcessRow_in;
+  bool wantDebug = *wantDebug_in;
   //double dot_prod = *dot_prod_in;
   //double v_row_last = *v_row_last_in;
 
@@ -273,11 +276,12 @@ extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int 
 #else
   cuda_dot_product_and_assign_double_kernel<<<blocks,threadsPerBlock>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev);
 #endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_dot_product_and_assign_kernel: %s\n",cudaGetErrorString(cuerr));
+  if (wantDebug){
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing cuda_dot_product_and_assign_kernel: %s\n",cudaGetErrorString(cuerr));
+    }
   }
-
 /*
   double dot_prod=0;
   for (int i=0; i<blocks; i++)
@@ -353,14 +357,15 @@ __global__ void cuda_set_e_vec_scale_set_one_store_v_row_double_kernel(double *e
 }
 
 extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_double_FromC(double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev, double *tau_dev, double *xf_host_or_dev, 
-                                              int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in, cudaStream_t my_stream){
+                                              int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
   int matrixRows = *matrixRows_in;
   int istep = *istep_in;
   bool isOurProcessRow = *isOurProcessRow_in;
   bool useCCL = *useCCL_in;
-  
+  bool wantDebug = *wantDebug_in;
+
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   dim3 blocksPerGrid = dim3(blocks,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG change to NB
@@ -373,9 +378,11 @@ extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_double_FromC(double *e_
   cuda_set_e_vec_scale_set_one_store_v_row_double_kernel<<<blocks,threadsPerBlock>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
                                                                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
 #endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_set_e_vec_scale_set_one_store_v_row_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  if (wantDebug){
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing cuda_set_e_vec_scale_set_one_store_v_row_double_kernel: %s\n",cudaGetErrorString(cuerr));
+    }
   }
 }
 
@@ -463,7 +470,7 @@ extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev,
 
 
 __global__ void cuda_update_matrix_element_add_double_kernel(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *a_dev, double *d_vec_dev, 
-                                                            int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric){
+                                                            int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, bool isSkewsymmetric){
   
   const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
   __shared__ double cache[threadsPerBlock];
@@ -536,7 +543,7 @@ __global__ void cuda_update_matrix_element_add_double_kernel(double *vu_stored_r
 
 extern "C" void cuda_update_matrix_element_add_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *a_dev, double *d_vec_dev, 
                                                             int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in, 
-                                                            int* isSkewsymmetric_in, cudaStream_t my_stream){
+                                                            bool* isSkewsymmetric_in, bool *wantDebug_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;
   int matrixRows = *matrixRows_in;
@@ -544,8 +551,8 @@ extern "C" void cuda_update_matrix_element_add_double_FromC(double *vu_stored_ro
   int max_local_cols = *max_local_cols_in;
   int istep = *istep_in;   
   int n_stored_vecs = *n_stored_vecs_in; 
-  int isSkewsymmetric = *isSkewsymmetric_in;   
-
+  bool isSkewsymmetric = *isSkewsymmetric_in;   
+  bool wantDebug = *wantDebug_in;
   
   int blocks = std::min((2*n_stored_vecs+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 32);
   if (n_stored_vecs==0) blocks=1;
@@ -561,9 +568,11 @@ extern "C" void cuda_update_matrix_element_add_double_FromC(double *vu_stored_ro
                                                   l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, 
                                                   isSkewsymmetric);
 #endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_update_matrix_element_add_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  if (wantDebug){
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing cuda_update_matrix_element_add_double_kernel: %s\n",cudaGetErrorString(cuerr));
+    }
   }
 }
 
