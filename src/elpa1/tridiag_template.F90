@@ -896,15 +896,15 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #ifdef WITH_MPI
       if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-        !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: cleanup of works without it
+        !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: cleanup if works without it
         !check_stream_synchronize_gpu("nccl_Allreduce aux1_dev", successGPU)
 
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows 
-        successGPU = nccl_group_start() 
-        if (.not. successGPU) then 
-          print *,"Error in setting up nccl_group_start!" 
-          stop 1
-        endif
+        ! successGPU = nccl_group_start() PETERDEBUG: cleanup if works without it
+        ! if (.not. successGPU) then 
+        !   print *,"Error in setting up nccl_group_start!" 
+        !   stop 1
+        ! endif
 
         successGPU = nccl_Allreduce(aux1_dev, aux1_dev, int(2,kind=c_size_t), ncclDouble, &
                                     ncclSum, ccl_comm_rows, my_stream)
@@ -913,11 +913,11 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
           stop 1
         endif
 
-        successGPU = nccl_group_end()
-        if (.not. successGPU) then
-          print *,"Error in setting up nccl_group_end!"
-          stop 1
-        endif
+        ! successGPU = nccl_group_end()
+        ! if (.not. successGPU) then
+        !   print *,"Error in setting up nccl_group_end!"
+        !   stop 1
+        ! endif
 
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("nccl_Allreduce aux1_dev", successGPU)
@@ -1050,11 +1050,11 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 
       ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
-      successGPU = nccl_group_start() 
-      if (.not. successGPU) then 
-        print *,"Error in setting up nccl_group_start!" 
-        stop 1
-      endif 
+      ! successGPU = nccl_group_start() 
+      ! if (.not. successGPU) then 
+      !   print *,"Error in setting up nccl_group_start!" 
+      !   stop 1
+      ! endif 
 
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
       successGPU = nccl_Bcast(v_row_dev, v_row_dev, int(l_rows+1, kind=c_size_t), ncclDouble, &
@@ -1065,11 +1065,11 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
         stop 1
       endif
 
-      successGPU = nccl_group_end()
-      if (.not. successGPU) then
-        print *,"Error in setting up nccl_group_end!"
-        stop 1
-      endif
+      ! successGPU = nccl_group_end()
+      ! if (.not. successGPU) then
+      !   print *,"Error in setting up nccl_group_end!"
+      !   stop 1
+      ! endif
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
 #endif /* WITH_NVIDIA_NCCL */
@@ -1560,11 +1560,11 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
 
-        successGPU = nccl_group_start() 
-        if (.not. successGPU) then 
-          print *,"Error in setting up nccl_group_start!" 
-          stop 1
-        endif 
+        ! successGPU = nccl_group_start() 
+        ! if (.not. successGPU) then 
+        !   print *,"Error in setting up nccl_group_start!" 
+        !   stop 1
+        ! endif 
 
         successGPU = nccl_Allreduce(u_col_dev, u_col_dev, int(l_cols, kind=c_size_t), ncclDouble, ncclSum, ccl_comm_rows, my_stream)
         if (.not. successGPU) then
@@ -1572,11 +1572,11 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
           stop 1
         endif
 
-        successGPU = nccl_group_end()
-        if (.not. successGPU) then
-          print *,"Error in setting up nccl_group_end!"
-          stop 1
-        endif
+        ! successGPU = nccl_group_end()
+        ! if (.not. successGPU) then
+        !   print *,"Error in setting up nccl_group_end!"
+        !   stop 1
+        ! endif
         successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
         check_stream_synchronize_gpu("nccl_Allreduce u_col_dev", successGPU)
         call nvtxRangePop()
@@ -1724,11 +1724,11 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 
       ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
-      successGPU = nccl_group_start() 
-      if (.not. successGPU) then 
-        print *,"Error in setting up nccl_group_start!" 
-        stop 1
-      endif 
+      ! successGPU = nccl_group_start() 
+      ! if (.not. successGPU) then 
+      !   print *,"Error in setting up nccl_group_start!" 
+      !   stop 1
+      ! endif 
 
       successGPU = nccl_Allreduce(vav_dev, vav_dev, int(1, kind=c_size_t), ncclDouble, ncclSum, ccl_comm_cols, my_stream)
       if (.not. successGPU) then
@@ -1736,11 +1736,11 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
         stop 1
       endif
 
-      successGPU = nccl_group_end()
-      if (.not. successGPU) then
-        print *,"Error in setting up nccl_group_end!"
-        stop 1
-      endif
+      ! successGPU = nccl_group_end()
+      ! if (.not. successGPU) then
+      !   print *,"Error in setting up nccl_group_end!"
+      !   stop 1
+      ! endif
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Allreduce vav_dev", successGPU)
 #endif /* WITH_NVIDIA_NCCL */
