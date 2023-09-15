@@ -297,15 +297,6 @@ subroutine elpa_gpu_transpose_vectors_&
         if (nps>1) then
           if (wantDebug) call obj%timer%start("nccl_communication")
 
-          !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: delete this if tests work
-          !check_stream_synchronize_gpu("nccl_Bcast aux_transpose_dev", successGPU)
-
-          ! successGPU = nccl_group_start() 
-          ! if (.not. successGPU) then 
-          !   print *,"Error in setting up nccl_group_start!" 
-          !   stop 1
-          ! endif 
-
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
           aux_size = aux_stride*nvc
           successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(aux_size, kind=c_size_t), ncclDouble, &
@@ -316,11 +307,6 @@ subroutine elpa_gpu_transpose_vectors_&
             stop 1
           endif
 
-          ! successGPU = nccl_group_end()
-          ! if (.not. successGPU) then
-          !   print *,"Error in setting up nccl_group_end!"
-          !   stop 1
-          ! endif
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("nccl_Bcast aux_transpose_dev", successGPU)
 

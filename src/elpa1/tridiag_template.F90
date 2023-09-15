@@ -171,7 +171,7 @@ subroutine tridiag_&
 
   real(kind=rk)                                 :: vnorm2
   MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), vrl, xf, conjg_tau, dot_prod
-  MATH_DATATYPE(kind=rck), allocatable          :: aux(:) ! 2*max_stored_uv ??? why differet logic for real and complex?
+  MATH_DATATYPE(kind=rck), allocatable          :: aux(:) ! PETERDEBUG: 2*max_stored_uv ??? why differet logic for real and complex?
   character(len=32)                             :: max_stored_uv_string
   character(len=100)                            :: nvtx_name
 !#ifdef MORE_GPU_COMPUTE
@@ -234,23 +234,30 @@ subroutine tridiag_&
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
   integer(kind=ik)                              :: nvs, nvr, nvc, lcm_s_t, nblks_tot, nblks_comm, nblks_skip
   logical                                       :: isSqareGrid
-  integer(kind=c_intptr_t)                      :: aux_transpose_dev, aux1_reduceadd_dev, aux2_reduceadd_dev
+  integer(kind=c_intptr_t)                      :: aux_transpose_dev
 #endif
   integer(kind=c_int) :: pointerMode
 
   integer(kind=ik)                              :: string_length
   integer(kind=ik)                              :: mpi_comm_all, my_mpi_rank ! PETERDEBUG: delete after testing
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL)
   if (useGPU) then
     useCCL = .true.
+  
+    ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
+    ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+
+! PETERDEBUG: this is a temporaty fix unless I implement the streamed version of optimization    
+#if !defined(WITH_GPU_STREAMS)
     successGPU = cuda_stream_create(obj%gpu_setup%my_stream)
     if (.not.(successGPU)) then
       print *,"Cannot create gpu stream handle"
     endif
     my_stream = obj%gpu_setup%my_stream
-  endif 
 #endif
+  endif 
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) */
 
   string_length = 32
   call get_environment_variable("ELPA_max_stored_uv", max_stored_uv_string, string_length, istat)
@@ -611,33 +618,6 @@ subroutine tridiag_&
       successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
       check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
     endif ! isSqareGrid
-    
-    ! PETERDEBUG: move this inside else part of ! isSqareGrid after completion of the respective square grid codepath
-    ! keep only the bigger aux array: aux1_reduceadd_dev, omit aux_transpose_dev
-    lcm_s_t   = least_common_multiple(np_rows,np_cols)
-    nvs = 1 ! global index where to start in vmat_s/vmat_t
-    nvr  = na-1 ! global length of v_col_dev/v_row_dev(without last tau-element), max(istep-1)
-    nvc = 1 ! number of columns in 
-    nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
-    ! Get the number of blocks to be skipped at the beginning
-    ! This must be a multiple of lcm_s_t (else it is getting complicated),
-    ! thus some elements before nvs will be accessed/set.
-    nblks_skip = ((nvs-1)/(nblk*lcm_s_t))*lcm_s_t
-    
-    ! PETERDEBUG: delete after testing
-    call obj%get("mpi_comm_parent", mpi_comm_all, error)
-    call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
-
-    ! PETERDEBUG: delete after testing
-print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc =",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc
-    print *,"tridiag: my_mpi_rank=",my_mpi_rank,",nblks_tot=",nblks_tot,",lcm_s_t=",lcm_s_t,",nblk=",nblk,",nvc=",nvc
-
-    successGPU = gpu_malloc(aux1_reduceadd_dev, ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
-    check_alloc_gpu("tridiag: aux1_reduceadd_dev", successGPU)
-    !
-    successGPU = gpu_malloc(aux2_reduceadd_dev, ((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
-    check_alloc_gpu("tridiag: aux2_reduceadd_dev", successGPU)
-
 #endif /* WITH_NVIDIA_NCCL */
   endif !useGPU
 
@@ -896,28 +876,12 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #ifdef WITH_MPI
       if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-        !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: cleanup if works without it
-        !check_stream_synchronize_gpu("nccl_Allreduce aux1_dev", successGPU)
-
-        ccl_comm_rows = obj%gpu_setup%ccl_comm_rows 
-        ! successGPU = nccl_group_start() PETERDEBUG: cleanup if works without it
-        ! if (.not. successGPU) then 
-        !   print *,"Error in setting up nccl_group_start!" 
-        !   stop 1
-        ! endif
-
         successGPU = nccl_Allreduce(aux1_dev, aux1_dev, int(2,kind=c_size_t), ncclDouble, &
                                     ncclSum, ccl_comm_rows, my_stream)
         if (.not. successGPU) then
           print *,"Error in nccl_Allreduce"
           stop 1
         endif
-
-        ! successGPU = nccl_group_end()
-        ! if (.not. successGPU) then
-        !   print *,"Error in setting up nccl_group_end!"
-        !   stop 1
-        ! endif
 
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("nccl_Allreduce aux1_dev", successGPU)
@@ -1045,16 +1009,6 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #ifdef WITH_MPI
     if (useCCL .and. np_cols>1) then
 #ifdef WITH_NVIDIA_NCCL
-      !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here, before nccl_group_start()?
-      !check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
-
-      ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-
-      ! successGPU = nccl_group_start() 
-      ! if (.not. successGPU) then 
-      !   print *,"Error in setting up nccl_group_start!" 
-      !   stop 1
-      ! endif 
 
 #if REALCASE == 1 && DOUBLE_PRECISION == 1
       successGPU = nccl_Bcast(v_row_dev, v_row_dev, int(l_rows+1, kind=c_size_t), ncclDouble, &
@@ -1065,11 +1019,6 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
         stop 1
       endif
 
-      ! successGPU = nccl_group_end()
-      ! if (.not. successGPU) then
-      !   print *,"Error in setting up nccl_group_end!"
-      !   stop 1
-      ! endif
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
 #endif /* WITH_NVIDIA_NCCL */
@@ -1101,8 +1050,6 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
     if (useCCL) then
       call nvtxRangePush("elpa_gpu_transpose_vectors v_row_dev->v_col_dev")
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-      ccl_comm_rows = obj%gpu_setup%ccl_comm_rows ! PETERDEBUG: define it only once, outside of the loop
-      ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
       call elpa_gpu_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
@@ -1555,16 +1502,6 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
       if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
         call nvtxRangePush("nccl_Allreduce u_col_dev") ! PETERDEBUG: can we use Bcast instead of Allreauce and not set u_col_dev=0 above?
-        !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
-        !check_stream_synchronize_gpu("nccl_Allreduce u_col_dev", successGPU)
-
-        ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-
-        ! successGPU = nccl_group_start() 
-        ! if (.not. successGPU) then 
-        !   print *,"Error in setting up nccl_group_start!" 
-        !   stop 1
-        ! endif 
 
         successGPU = nccl_Allreduce(u_col_dev, u_col_dev, int(l_cols, kind=c_size_t), ncclDouble, ncclSum, ccl_comm_rows, my_stream)
         if (.not. successGPU) then
@@ -1572,11 +1509,6 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
           stop 1
         endif
 
-        ! successGPU = nccl_group_end()
-        ! if (.not. successGPU) then
-        !   print *,"Error in setting up nccl_group_end!"
-        !   stop 1
-        ! endif
         successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
         check_stream_synchronize_gpu("nccl_Allreduce u_col_dev", successGPU)
         call nvtxRangePop()
@@ -1603,19 +1535,7 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
     ! Transpose Householder Vector u_col -> u_row
     if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-      ! call nvtxRangePush("memcpy new-2 H-D u_col->u_col_dev")
-      ! successGPU = gpu_memcpy(u_col_dev, int(loc(u_col(1)),kind=c_intptr_t), &
-      !               l_cols * size_of_datatype, gpuMemcpyHostToDevice)
-      ! check_memcpy_gpu("tridiag: u_col_dev", successGPU)
-      ! call nvtxRangePop()
-
-! PETERDEBUG-TEMP: delete after testing
-! successGPU = cuda_memcpy(int(loc(a_dev_helper(1,1)),kind=c_intptr_t), &
-! a_dev, lda * matrixCols * size_of_datatype, cudaMemcpyDeviceToHost)
-
       call nvtxRangePush("elpa_gpu_transpose_vectors u_col_dev->u_row_dev")
-      ccl_comm_rows = obj%gpu_setup%ccl_comm_rows ! PETERDEBUG: define it only once, outside of the loop
-      ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
       call elpa_gpu_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
@@ -1624,14 +1544,6 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
                 ccl_comm_rows, mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., aux_transpose_dev, &
                 isSkewsymmetric, wantDebug, my_stream, success)
       call nvtxRangePop()
-
-! PETERDEBUG-TEMP: delete after testing
-! #if REALCASE == 1 && DOUBLE_PRECISION == 1
-! if (wantDebug .and. na<20) then
-!   call prmat(na, useGPU, u_row, u_row_dev, max_local_rows, 1, nblk, my_prow, my_pcol, np_rows, np_cols, "u_row_dev", istep)
-! endif
-! #endif
-
 #endif /* WITH_NVIDIA_NCCL */
     else ! useCCL
       if (isSkewsymmetric) then
@@ -1719,28 +1631,12 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
 #ifdef WITH_MPI
     if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-      !successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
-      !check_stream_synchronize_gpu("nccl_Allreduce vav_dev", successGPU)
-
-      ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-
-      ! successGPU = nccl_group_start() 
-      ! if (.not. successGPU) then 
-      !   print *,"Error in setting up nccl_group_start!" 
-      !   stop 1
-      ! endif 
-
       successGPU = nccl_Allreduce(vav_dev, vav_dev, int(1, kind=c_size_t), ncclDouble, ncclSum, ccl_comm_cols, my_stream)
       if (.not. successGPU) then
         print *,"Error in nccl_allreduce"
         stop 1
       endif
 
-      ! successGPU = nccl_group_end()
-      ! if (.not. successGPU) then
-      !   print *,"Error in setting up nccl_group_end!"
-      !   stop 1
-      ! endif
       successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Allreduce vav_dev", successGPU)
 #endif /* WITH_NVIDIA_NCCL */
@@ -2184,13 +2080,6 @@ print *,"tridiag: my_mpi_rank=",my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nb
       successGPU = gpu_free(aux_transpose_dev)
       check_dealloc_gpu("tridiag: aux_transpose_dev", successGPU)
     endif
-    
-    ! PETERDEBUG: move this inside the if (.not. isSqareGrid) upon completion of the respective square grid codepath
-    successGPU = gpu_free(aux1_reduceadd_dev)
-    check_dealloc_gpu("tridiag: aux1_reduceadd_dev", successGPU)
-
-    successGPU = gpu_free(aux2_reduceadd_dev)
-    check_dealloc_gpu("tridiag: aux2_reduceadd_dev", successGPU)
 #endif
   endif ! useGPU
 
