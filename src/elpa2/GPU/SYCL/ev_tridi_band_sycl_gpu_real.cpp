@@ -78,6 +78,8 @@ template <typename X>
 struct extract_float_type<std::complex<X>> {
     using type = X;
 };
+
+
 template<typename T, int wg_size, int sg_size, int step>
 inline void reduction_step(T *local_mem, sycl::nd_item<1> &it) {
   auto lId = it.get_local_id(0);
@@ -112,7 +114,6 @@ template<typename T, int wg_size, int sg_size, int step>
 inline void reduction_step_complex(T *local_mem, sycl::nd_item<1> &it) {
   auto lId = it.get_local_id(0);
   if constexpr (wg_size >= step && sg_size <= step) {
-  //if constexpr (wg_size >= step) {
     local_mem[lId] += static_cast<T>(lId < step) * local_mem[lId + step];
     it.barrier(sycl::access::fence_space::local_space);
   }
@@ -129,7 +130,7 @@ inline void sg_reduction_step_complex(T *local_mem, T &accu, sycl::nd_item<1> &i
 }
 
 template <typename T, int wg_size, int sg_size>
-std::complex<T> parallel_sum_group_complex(sycl::nd_item<1> &it, std::complex<T> *local_mem) {
+__attribute__((flatten)) std::complex<T> parallel_sum_group_complex(sycl::nd_item<1> &it, std::complex<T> *local_mem) {
   T *local_mem_comps = reinterpret_cast<T *>(local_mem);
   auto lId = it.get_local_id(0);
   it.barrier(sycl::access::fence_space::local_space);
@@ -160,12 +161,19 @@ std::complex<T> parallel_sum_group_complex(sycl::nd_item<1> &it, std::complex<T>
 
 template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction=true>
 void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
-  // DPC++ & SYCL 1.2.1 is gradually replaced by SYCL2020. This is to keep ELPA compatible with both
+  // DPC++ & SYCL 1.2.1 is gradually replaced by SYCL2020. This is to keep ELPA compatible with both old and new versions.
 #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
   using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
 #else
   using local_buffer = sycl::local_accessor<T>;
 #endif
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20240000
+  #define GET_POINTER(x) x.get_pointer()
+#else
+  #define GET_POINTER(x) x.template get_multi_ptr<sycl::access::decorated::yes>().get()
+#endif
+
+  std::cout << __INTEL_LLVM_COMPILER << std::endl;
 
   using sf = sycl::access::fence_space;
   auto device = elpa::gpu::sycl::getDevice();
@@ -221,9 +229,9 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
           it.barrier(sf::local_space);
 
           if constexpr (is_complex_number<T>::value) {
-            dotp_res = parallel_sum_group_complex<typename extract_float_type<T>::type, wg_size, sg_size>(it, dotp_s.get_pointer());
+            dotp_res = parallel_sum_group_complex<typename extract_float_type<T>::type, wg_size, sg_size>(it, GET_POINTER(dotp_s));
           } else {
-            dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
+            dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, GET_POINTER(dotp_s));
           }
         } else {
           dotp_res = sycl::reduce_over_group(it.get_group(), q_v2_hh_h_h_off, sycl::plus<>());
