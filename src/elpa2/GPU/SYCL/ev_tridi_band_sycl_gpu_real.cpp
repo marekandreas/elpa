@@ -172,9 +172,6 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
 #else
   #define GET_POINTER(x) x.template get_multi_ptr<sycl::access::decorated::yes>().get()
 #endif
-
-  std::cout << __INTEL_LLVM_COMPILER << std::endl;
-
   using sf = sycl::access::fence_space;
   auto device = elpa::gpu::sycl::getDevice();
   auto &queue = elpa::gpu::sycl::getQueue();
