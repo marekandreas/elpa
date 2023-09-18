@@ -105,9 +105,9 @@ T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
   reduction_step<T, wg_size, sg_size,    4>(local_mem, it);
   reduction_step<T, wg_size, sg_size,    2>(local_mem, it);
 
-  T local_res = local_mem[it.get_local_id(0)];
+  T local_res = local_mem[it.get_local_id(0) & (sg_size - 1)];
   T sg_added_res = sycl::reduce_over_group(it.get_sub_group(), local_res, sycl::plus<>());
-  return sycl::group_broadcast(it.get_group(), sg_added_res);
+  return sycl::select_from_group(it.get_sub_group(), sg_added_res, 0);
 }
 
 template<typename T, int wg_size, int sg_size, int step>
