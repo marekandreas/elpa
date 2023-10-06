@@ -1,8 +1,9 @@
-.TH "elpa_allocate" 3 "Sat Jun 3 2017" "ELPA" \" -*- nroff -*-
+.TH "elpa_allocate" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.ft C
 .ad l
 .nh
 .SH NAME
-elpa_allocate \- allocate an instance of the ELPA library
+.RI "elpa_allocate \- allocates an instance of the ELPA library"
 .br
 
 .SH SYNOPSIS
@@ -13,40 +14,35 @@ use elpa
 class(elpa_t), pointer :: elpa
 .br
 
-.RI  "elpa => \fBelpa_allocate\fP (error)"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
+elpa =>\fB elpa_allocate\fP (error)
+.sp
+With the definitions of the input and output variables:
 
+.TP
+class(elpa_t)     :: \fB elpa\fP  
+Returns an instance of the ELPA object
+.TP
+integer, optional :: \fB error\fP 
+A returned error code 
 .br
-.RI "class(elpa_t)     :: \fBelpa\fP  ! returns an instance of the ELPA object"
-.br
-.RI "integer, optional :: \fBerror\fp ! a returned error code 
-.br
+
 .SS C INTERFACE
 #include <elpa/elpa.h>
 .br
 elpa_t handle;
 
 .br
-.RI "\fBelpa_t\fP handle = \fBelpa_allocate\fP(\fBint\fP *error);"
+\fBelpa_t\fP handle =\fB elpa_allocate\fP(\fBint\fP *error);
+.sp
+With the definitions of the input and output variables:
+.TP
+elpa_t \fB handle\fP;  // returns an handle to the allocated ELPA object
+.TP
+int \fB *error\fP;     // a returned error code
 .br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-
-.br
-.br
-.RI "elpa_t \fBhandle\fP;  // returns an handle to the allocated ELPA object"
-.br
-.RI "int \fB*error\fP;     // a returned error code
-.br
-
 
 .SH DESCRIPTION
-Allocate an ELPA object. The function \fBelpa_init\fP(3) must be called once \fIBEFORE\fP \fBelpa_allocate\fP can be called.
-.br
-.SH "SEE ALSO"
-.br
-\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_cholesky\fP(3) \fBelpa_invert_triangular\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_hermitian_multiply\fP(3) \fBelpa_uninit\fP(3) \fBelpa_deallocate\fP(3)
+Allocate an ELPA object. The function\fB elpa_init\fP(3) must be called once\fI BEFORE\fP\fB elpa_allocate\fP can be called.
+
+.SH SEE ALSO
+\fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)

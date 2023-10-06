@@ -766,7 +766,7 @@ program test
    call e%set("mpi_comm_cols", int(mpi_comm_cols,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 
-#else
+#else /* SPLIT_COMM_MYSELF */
    call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("process_row", int(my_prow,kind=c_int), error_elpa)
@@ -775,8 +775,9 @@ program test
    assert_elpa_ok(error_elpa)
    call e%set("verbose", 1, error_elpa)
    assert_elpa_ok(error_elpa)
-#endif
-#endif
+#endif /* SPLIT_COMM_MYSELF */
+#endif /* WITH_MPI */
+
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
    call e%set("blacs_context", int(my_blacs_ctxt,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
@@ -1583,15 +1584,35 @@ program test
   deallocate(b, bs)
 #endif
 
+#if defined(WITH_MPI) && defined (SPLIT_COMM_MYSELF)
+   call mpi_comm_free(mpi_comm_rows, mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_free for row communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+
+   call mpi_comm_free(mpi_comm_cols, mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_free for column communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+#endif /* WITH_MPI && SPLIT_COMM_MYSELF */
+
+#ifdef WITH_MPI
+   call blacs_gridexit(my_blacs_ctxt)
+#endif
+
 #ifdef TEST_ALL_LAYOUTS
    end do ! factors
    end do ! layouts
 #endif
+
    call elpa_uninit(error_elpa)
    assert_elpa_ok(error_elpa)
 
 #ifdef WITH_MPI
-   call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
 

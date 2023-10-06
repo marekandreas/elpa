@@ -1,8 +1,8 @@
-.TH "elpa_deallocate" 3 "Sat Jun 3 2017" "ELPA" \" -*- nroff -*-
+.TH "elpa_deallocate" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-elpa_deallocate \- deallocate an instance of the ELPA library after usage
+elpa_deallocate \- deallocates an instance of the ELPA library after usage
 .br
 
 .SH SYNOPSIS
@@ -13,40 +13,38 @@ use elpa
 class(elpa_t), pointer :: elpa
 .br
 
-.RI  "call \fBelpa_deallocate\fP (\fBclass(elpa_t)\fP elpa, \fBinteger\fP error)"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
+call\fB elpa_deallocate\fP (elpa, error)
+.sp
+With the definitions of the input and output variables:
 
+.TP
+class(elpa_t)     :: \fB elpa \fP  
+The pointer to the instance of the ELPA library that is to be deallocated
+.TP
+integer, optional :: \fB error \fP 
+The returned error code
 .br
-.RI "class(elpa_t)     :: \fBelpa\fP  ! the pointer to the instance of the ELPA library which should be deallocated"
-.br
-.RI "integer, optional :: \fBerror\fP ! the returned error code"
-.br
-.br
+
 .SS C INTERFACE
 #include <elpa/elpa.h>
 .br
 elpa_t handle;
 
 .br
-.RI "\fBvoid\fP \fBelpa_deallocate\fP(\fBelpa_t\fP handle, \fBint\fP *error^);"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
+\fBvoid\fP\fB elpa_deallocate\fP(\fBelpa_t\fP handle,\fB int\fP *error);
+.sp
+With the definitions of the input and output variables:
 
+.TP
+elpa_t \fB handle\fP; 
+The handle to the ELPA instance which should be deallocated.
+.TP
+int \fB *error\fP;    
+The returned error code
 .br
-.br
-.RI "elpa_t \fBhandle\fP; // the handle to the ELPA instance which should be deallocated."
-.br
-.RI "int \fB*error\fP;    // the returned error code"
-.br
-.br
+
 .SH DESCRIPTION
-Deallocate an ELPA object. The functions \fBelpa_init\fP(3) and \fBelpa_allocate\fP(3) must have been called \fIBEFORE\fP \fBelpa_deallocate\fP can be called.
-.br
-.SH "SEE ALSO"
-.br
-\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_setup\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_cholesky\fP(3) \fBelpa_invert_triangular\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_hermitian_multiply\fP(3) \fBelpa_uninit\fP(3)
+Deallocate an ELPA object. The functions\fB elpa_init\fP(3) and\fB elpa_allocate\fP(3) must have been called\fI BEFORE\fP\fB elpa_deallocate\fP can be called.
+
+.SH SEE ALSO
+\fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_uninit\fP(3)

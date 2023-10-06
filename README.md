@@ -6,7 +6,7 @@ The current release is ELPA 2023.05.001. The current supported API version
 is 20231705. This release supports the earliest API version 20170403.
 The current version for autotuning is also 20231705 and down to version 20170403 ist supported
 for autotuning. When the autotune version is set to a value **below** 20211125 the old autotunig
-implentation is used, and for 20211125 and higher the new implentation is used.
+implementation is used, and for 20211125 and higher the new implementation is used.
 
 [![Build 
 status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://gitlab.mpcdf.mpg.de/elpa/elpa/commits/master)
