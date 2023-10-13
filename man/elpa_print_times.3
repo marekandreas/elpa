@@ -1,0 +1,49 @@
+.TH "elpa_print_times" 3 "Fri Oct 13 2023" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_print_times \- prints the timings of individual ELPA solution steps.
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+call elpa%\fBprint_times\fP (name)
+.sp
+With the definitions of the input and output variables:
+.TP
+class(elpa_t)     \fB elpa\fP    
+An instance of the ELPA object
+.TP
+character(*)   :: \fB name\fP    
+The name of the ELPA procedure for which the timings should be printed.
+.br
+
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+void\fB elpa_print_times\fP(\fBelpa_t\fP handle,\fB char\fP *name);
+.sp
+With the definitions of the input and output variables:
+.TP
+elpa_t\fB handle\fP;    
+The handle to the ELPA object
+.TP
+char\fB  *name\fP;      
+The name of the ELPA procedure for which the timings should be printed.
+
+.SH DESCRIPTION
+Prints the timings of individual ELPA solution steps.
+Can be invoked after the calls to\fB elpa_timer_start\fP and\fB elpa_timer_stop\fP with the same\fB name\fP argument.
+In order timings were printed, the\fB timings\fP parameter should be set to\fB 1\fP by\fB elpa_set\fP.
+
+.SH SEE ALSO
+\fBelpa_timer_start\fP(3)\fB elpa_timer_stop\fP(3)
