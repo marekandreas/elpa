@@ -795,7 +795,7 @@
                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
 #else
             successGPU = gpu_memcpy(tmp2_dev, int(loc(tmp2),kind=c_intptr_t), &
-                                    num, gpuMemcpHostToDevice)
+                                    num, gpuMemcpyHostToDevice)
             check_memcpy_gpu("elpa_mult_at_b: tmp2 to tmp2_dev", successGPU)
 #endif
 #endif /* defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL) */
