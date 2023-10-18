@@ -44,6 +44,8 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
+
+!    This file was written by A. Marek, MPCDF
 #endif
 
 
@@ -121,20 +123,20 @@ module multiply_a_b_gpu
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -149,24 +151,24 @@ endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
-    subroutine gpu_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, & &
+    subroutine gpu_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                         lda, ldaCols, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -178,26 +180,26 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
-    subroutine gpu_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, & &
+    subroutine gpu_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                         lda, ldaCols, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -210,22 +212,22 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -241,22 +243,22 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -270,20 +272,20 @@ endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -298,24 +300,24 @@ endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
-    subroutine gpu_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, & &
+    subroutine gpu_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                         lda, ldaCols, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -327,26 +329,26 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
-    subroutine gpu_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, & &
+    subroutine gpu_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                         lda, ldaCols, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -359,22 +361,22 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -390,22 +392,22 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -419,20 +421,20 @@ endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -447,24 +449,24 @@ endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
-    subroutine gpu_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, & &
+    subroutine gpu_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                         lda, ldaCols, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -476,26 +478,26 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
-    subroutine gpu_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, & &
+    subroutine gpu_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                         lda, ldaCols, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -508,22 +510,22 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -539,22 +541,22 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -568,20 +570,20 @@ endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -596,24 +598,24 @@ endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
-    subroutine gpu_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, & &
+    subroutine gpu_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                         lda, ldaCols, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -625,26 +627,26 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
-    subroutine gpu_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, & &
+    subroutine gpu_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                         lda, ldaCols, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -657,22 +659,22 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
                                                        lda, ldaCols, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
@@ -688,22 +690,22 @@ endif
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
-endif
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
       stop
-endif
+#endif
 
     end subroutine
 
