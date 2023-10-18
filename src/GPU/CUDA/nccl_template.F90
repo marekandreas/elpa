@@ -291,7 +291,7 @@
 
   interface
     function nccl_bcast_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclAllReduceFromC")
+             bind(C, name="ncclBroadcastFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_t), value              :: sendbuff
@@ -307,7 +307,7 @@
 
   interface
     function nccl_bcast_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclAllReduceFromC")
+             bind(C, name="ncclBroadcastFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr), value                           :: sendbuff

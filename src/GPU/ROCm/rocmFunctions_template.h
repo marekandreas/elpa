@@ -1562,8 +1562,11 @@ extern "C" {
 
   void rocblasZscal_elpa_wrapper (BLAS_handle rocblasHandle, int n, double _Complex alpha, double _Complex *X, int incx){
 
-    BLAS_double_complex* X_casted = (BLAS_double_complex*) X;
-    
+#ifndef HIPBLAS
+    const BLAS_double_complex* X_casted = (const BLAS_double_complex*) X;
+#else
+          BLAS_double_complex* X_casted = (      BLAS_double_complex*) X;
+#endif
     BLAS_double_complex alpha_casted = *((BLAS_double_complex*)(&alpha));
 
     BLAS_status status = BLAS_zscal(rocblasHandle, n, &alpha_casted, X_casted, incx);
@@ -1574,9 +1577,11 @@ extern "C" {
 
   void rocblasCscal_elpa_wrapper (BLAS_handle rocblasHandle, int n, float _Complex alpha, float _Complex *X, int incx){
 
-
-    BLAS_float_complex* X_casted = (BLAS_float_complex*) X;
-    
+#ifndef HIPBLAS
+    const BLAS_float_complex* X_casted = (const BLAS_float_complex*) X;
+#else
+          BLAS_float_complex* X_casted = (      BLAS_float_complex*) X;
+#endif
     BLAS_float_complex alpha_casted = *((BLAS_float_complex*)(&alpha));
 
     BLAS_status status = BLAS_cscal(rocblasHandle, n, &alpha_casted, X_casted, incx);

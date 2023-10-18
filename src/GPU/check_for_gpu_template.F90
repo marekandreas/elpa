@@ -87,6 +87,7 @@
       maxThreads=1
 #endif /* WITH_OPENMP_TRADITIONAL */
 
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (.not.(allocated(OBJECT%gpu_setup%cublasHandleArray))) then
         allocate(OBJECT%gpu_setup%cublasHandleArray(0:maxThreads-1))
@@ -175,50 +176,53 @@
 #endif
 #endif
 
-
       if (OBJECT%is_set("use_gpu_id") == 1) then ! useGPUid
-        call OBJECT%get("use_gpu_id", use_gpu_id, error)
-        if (error .ne. ELPA_OK) then
-          write(error_unit,*) "check_for_gpu: cannot querry use_gpu_id. Aborting..."
-          stop 1
-        endif
-
-        if (use_gpu_id == -99) then
-          write(error_unit,*) "Problem you did not set which gpu id this task should use"
-        endif
- 
-        ! check whether gpu ud has been set for each proces
-#ifdef WITH_MPI
-        call mpi_allreduce(use_gpu_id, min_use_gpu_id, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
-
-        if (min_use_gpu_id .lt. 0) then
-          write(error_unit,*) "Not all tasks have set which GPU id should be used! GPU usage switched off!"
-          gpuAvailable = .false.
-          return
-        endif
-#endif
-        gpuAvailable = .true.
-
-        if (myid==0) then
-          if (wantDebugMessage) then
-            print *
-            print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
-          endif
-        endif
-
-        success = .true.
         if (.not.(OBJECT%gpu_setup%gpuAlreadySet)) then
-          deviceNumber = use_gpu_id
+          call OBJECT%get("use_gpu_id", use_gpu_id, error)
+          if (error .ne. ELPA_OK) then
+            write(error_unit,*) "check_for_gpu: cannot querry use_gpu_id. Aborting..."
+            stop 1
+          endif
+
+          if (use_gpu_id == -99) then
+            write(error_unit,*) "Problem you did not set which gpu id this task should use"
+          endif
+ 
+          ! check whether gpu ud has been set for each proces
+#ifdef WITH_MPI
+          call mpi_allreduce(use_gpu_id, min_use_gpu_id, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
+
+          if (min_use_gpu_id .lt. 0) then
+            write(error_unit,*) "Not all tasks have set which GPU id should be used! GPU usage switched off!"
+            gpuAvailable = .false.
+            return
+          endif
+#endif
+          gpuAvailable = .true.
+
+          if (myid==0) then
+            if (wantDebugMessage) then
+              print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
+            endif
+          endif
+
+          success = .true.
+          if (.not.(OBJECT%gpu_setup%gpuAlreadySet)) then
+            deviceNumber = use_gpu_id
 #include "./device_arrays_template.F90"
 
 #include "./handle_creation_template.F90"
 
-        endif ! alreadySET
-        OBJECT%gpu_setup%gpuAlreadySET = .true.
-        OBJECT%gpu_setup%gpuIsAssigned =.true.
-        !gpuIsInitialized = .true.
+          endif ! alreadySET
+          OBJECT%gpu_setup%gpuAlreadySET = .true.
+          OBJECT%gpu_setup%gpuIsAssigned =.true.
+          !gpuIsInitialized = .true.
 
-      else ! useGPUid
+#ifdef WITH_NVIDIA_NCCL
+#include "./ccl_communicators_template.F90"
+#endif
+        endif ! .not.(OBJECT%gpu_setup%gpuAlreadySet)) 
+      else ! useGPUid not set (by user)
 
         ! make sure GPU setup is only done once (per ELPA OBJECTect)
 
@@ -332,7 +336,6 @@
 
             if (myid==0) then
               if (wantDebugMessage) then
-                print *
                 print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
               endif
             endif
@@ -368,142 +371,9 @@
 
 
 #ifdef WITH_NVIDIA_NCCL
-            write(error_unit,*) "Setting up nccl"
-
-
-            ! mpi_comm_all
-            if (myid .eq. 0) then
-              success = nccl_get_unique_id(ncclId) 
-              if (.not.success) then
-                write(error_unit,*) "Error in setting up unique nccl id!"
-                stop 1
-              endif
-            endif
-
-            !broadcast id currently not possible
-            call mpi_comm_size(mpi_comm_all, nprocs, mpierr)
-            call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_all, mpierr)
-            if (mpierr .ne. MPI_SUCCESS) then
-              write(error_unit,*) "Error when sending unique id"
-              stop 1
-            endif
-
-            success = nccl_group_start()
-            if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_start!"
-              stop 1
-            endif
-
-            success = nccl_comm_init_rank(ccl_comm_all, nprocs, ncclId, myid)
-            if (.not.success) then
-              write(error_unit,*) "Error in setting up communicator nccl_comm_all id!"
-              stop 1
-            endif
-
-            success = nccl_group_end()
-            if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_end!"
-              stop 1
-            endif
-
-            OBJECT%gpu_setup%ccl_comm_all = ccl_comm_all
-
-
-            ! mpi_comm_rows
-            call OBJECT%get("mpi_comm_rows",mpi_comm_rows, error)
-            if (error .ne. ELPA_OK) then
-              write(error_unit,*) "Problem getting option for mpi_comm_rows. Aborting..."
-              stop 1
-            endif
-
-            call mpi_comm_rank(mpi_comm_rows, myid_rows, mpierr)
-            if (myid_rows .eq. 0) then
-              success = nccl_get_unique_id(ncclId) 
-              if (.not.success) then
-                write(error_unit,*) "Error in setting up unique nccl id for rows!"
-                stop 1
-              endif
-            endif
-            call mpi_comm_size(mpi_comm_rows, nprows, mpierr)
-            call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_rows, mpierr)
-            if (mpierr .ne. MPI_SUCCESS) then
-              write(error_unit,*) "Error when sending unique id for rows"
-              stop 1
-            endif
-
-            success = nccl_group_start()
-            if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_start!"
-              stop 1
-            endif
-
-            success = nccl_comm_init_rank(ccl_comm_rows, nprows, ncclId, myid_rows)
-            if (.not.success) then
-              write(error_unit,*) "Error in setting up communicator nccl_comm_rows id!"
-              stop 1
-            endif
-
-            success = nccl_group_end()
-            if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_end!"
-              stop 1
-            endif
-
-            OBJECT%gpu_setup%ccl_comm_rows = ccl_comm_rows
-
-
-            ! mpi_comm_cols
-            call OBJECT%get("mpi_comm_cols",mpi_comm_cols, error)
-            if (error .ne. ELPA_OK) then
-              write(error_unit,*) "Problem getting option for mpi_comm_cols. Aborting..."
-              stop 1
-            endif
-
-            call mpi_comm_rank(mpi_comm_cols, myid_cols, mpierr)
-            if (myid_cols .eq. 0) then
-              success = nccl_get_unique_id(ncclId) 
-              if (.not.success) then
-                write(error_unit,*) "Error in setting up unique nccl id for cols!"
-                stop 1
-              endif
-            endif
-            call mpi_comm_size(mpi_comm_cols, npcols, mpierr)
-            call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_cols, mpierr)
-            if (mpierr .ne. MPI_SUCCESS) then
-              write(error_unit,*) "Error when sending unique id for cols"
-              stop 1
-            endif
-
-            success = nccl_group_start()
-            if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_start!"
-              stop 1
-            endif
-
-            success = nccl_comm_init_rank(ccl_comm_cols, npcols, ncclId, myid_cols)
-            if (.not.success) then
-              write(error_unit,*) "Error in setting up communicator nccl_comm_cols id!"
-              stop 1
-            endif
-
-            success = nccl_group_end()
-            if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_end!"
-              stop 1
-            endif
-
-            OBJECT%gpu_setup%ccl_comm_cols = ccl_comm_cols
-
-
-
-
-
-            !success = nccl_comm_destroy(ccl_comm_all)
-            !if (.not.success) then
-            !  write(error_unit,*) "Error in destroying ccl_comm_all!"
-            !  stop 1
-            !endif
+#include "./ccl_communicators_template.F90"
 #endif
+
 #ifdef ADDITIONAL_OBJECT_CODE
             call OBJECT%timer%stop("check_gpu_"//gpu_string)
 #endif

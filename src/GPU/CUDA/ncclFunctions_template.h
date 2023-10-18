@@ -257,6 +257,7 @@ extern "C" {
     ncclResult_t ncclError;
 
     ncclError = ncclBroadcast(sendbuff, recvbuff, count, ncclDatatype, root, ncclComm, cudaStream);
+
     if (ncclError != ncclSuccess) {
       if (ncclError == ncclUnhandledCudaError) {
         errormessage("Error in ncclBroadcast: %s\n", "ncclUnhandledCudaError");

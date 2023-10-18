@@ -117,6 +117,9 @@
 #undef  gpu_copy_PRECISION_tmp2_tmat2
 #undef  gpu_copy_PRECISION_a_tmat1
 #undef  gpu_copy_PRECISION_a_tmatc
+#undef  gpu_copy_PRECISION_a_aux_bc
+#undef  gpu_copy_PRECISION_aux_bc_aux_mat
+#undef  gpu_copy_PRECISION_tmp2_c
 #undef  mkl_offload_PRECISION_GEMM
 #undef  mkl_offload_PRECISION_GEMV
 #undef  mkl_offload_PRECISION_TRMM
@@ -208,6 +211,9 @@
 #define  gpu_copy_PRECISION_tmp2_tmat2 gpu_copy_double_tmp2_tmat2
 #define  gpu_copy_PRECISION_a_tmat1 gpu_copy_double_a_tmat1
 #define  gpu_copy_PRECISION_a_tmatc gpu_copy_double_a_tmatc
+#define  gpu_copy_PRECISION_a_aux_bc gpu_copy_double_a_aux_bc
+#define  gpu_copy_PRECISION_aux_bc_aux_mat gpu_copy_double_aux_bc_aux_mat
+#define  gpu_copy_PRECISION_tmp2_c gpu_copy_double_tmp2_c
 #define  mkl_offload_PRECISION_GEMM mkl_offload_DGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_DGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_DTRMM
@@ -296,6 +302,9 @@
 #define  gpu_copy_PRECISION_tmp2_tmat2 gpu_copy_float_tmp2_tmat2
 #define  gpu_copy_PRECISION_a_tmat1 gpu_copy_float_a_tmat1
 #define  gpu_copy_PRECISION_a_tmatc gpu_copy_float_a_tmatc
+#define  gpu_copy_PRECISION_a_aux_bc gpu_copy_float_a_aux_bc
+#define  gpu_copy_PRECISION_aux_bc_aux_mat gpu_copy_float_aux_bc_aux_mat
+#define  gpu_copy_PRECISION_tmp2_c gpu_copy_float_tmp2_c
 #define  mkl_offload_PRECISION_GEMM mkl_offload_SGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_SGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_STRMM
@@ -396,6 +405,9 @@
 #undef  gpu_copy_PRECISION_tmp2_tmat2
 #undef  gpu_copy_PRECISION_a_tmat1
 #undef  gpu_copy_PRECISION_a_tmatc
+#undef  gpu_copy_PRECISION_a_aux_bc
+#undef  gpu_copy_PRECISION_aux_bc_aux_mat
+#undef  gpu_copy_PRECISION_tmp2_c
 #undef  gpusolver_PRECISION_TRTRI
 #undef  gpusolver_PRECISION_POTRF
 #undef  mkl_offload_PRECISION_GEMM 
@@ -499,6 +511,9 @@
 #define  gpu_copy_PRECISION_tmp2_tmat2 gpu_copy_double_complex_tmp2_tmat2
 #define  gpu_copy_PRECISION_a_tmat1 gpu_copy_double_complex_a_tmat1
 #define  gpu_copy_PRECISION_a_tmatc gpu_copy_double_complex_a_tmatc
+#define  gpu_copy_PRECISION_a_aux_bc gpu_copy_double_complex_a_aux_bc
+#define  gpu_copy_PRECISION_aux_bc_aux_mat gpu_copy_double_complex_aux_bc_aux_mat
+#define  gpu_copy_PRECISION_tmp2_c gpu_copy_double_complex_tmp2_c
 #define  mkl_offload_PRECISION_GEMM mkl_offload_ZGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_ZGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_ZTRMM
@@ -591,6 +606,9 @@
 #define  gpu_copy_PRECISION_tmp2_tmat2 gpu_copy_float_complex_tmp2_tmat2
 #define  gpu_copy_PRECISION_a_tmat1 gpu_copy_float_complex_a_tmat1
 #define  gpu_copy_PRECISION_a_tmatc gpu_copy_float_complex_a_tmatc
+#define  gpu_copy_PRECISION_a_aux_bc gpu_copy_float_complex_a_aux_bc
+#define  gpu_copy_PRECISION_aux_bc_aux_mat gpu_copy_float_complex_aux_bc_aux_mat
+#define  gpu_copy_PRECISION_tmp2_c gpu_copy_float_complex_tmp2_c
 #define  mkl_offload_PRECISION_GEMM mkl_offload_CGEMM
 #define  mkl_offload_PRECISION_GEMV mkl_offload_CGEMV
 #define  mkl_offload_PRECISION_TRMM mkl_offload_CTRMM

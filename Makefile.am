@@ -131,6 +131,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/vendor_agnostic_solver_layer_template.F90 \
   src/GPU/vendor_agnostic_layer_utilities_template.F90 \
   src/GPU/device_arrays_template.F90 \
+  src/GPU/ccl_communicators_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
@@ -951,6 +952,7 @@ EXTRA_DIST = \
   src/GPU/vendor_agnostic_solver_layer_template.F90 \
   src/GPU/vendor_agnostic_layer_utilities_template.F90 \
   src/GPU/device_arrays_template.F90 \
+  src/GPU/ccl_communicators_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
