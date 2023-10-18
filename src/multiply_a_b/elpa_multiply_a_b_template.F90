@@ -619,7 +619,8 @@
           lre = lre_save(n)
           if (lrs <= lre) then
             nvals = lre-lrs+1
-            call gpu_copy_PRECISION_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, my_stream)
+            call gpu_copy_PRECISION_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, &
+                                                   nvals, l_rows, nblk, nblk_mult, my_stream)
             n_aux_bc = n_aux_bc + nvals
           endif
         enddo
