@@ -123,7 +123,6 @@ module multiply_a_b_hip
     end subroutine
   end interface
 
-  contains
   interface
     subroutine hip_copy_float_tmp2_c_intptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, &
                                                                      ldc, ldcCols, my_stream)&
@@ -186,7 +185,6 @@ module multiply_a_b_hip
     end subroutine
   end interface
 
-  contains
   interface
     subroutine hip_copy_double_complex_tmp2_c_intptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, &
                                                                      ldc, ldcCols, my_stream)&
@@ -249,7 +247,6 @@ module multiply_a_b_hip
     end subroutine
   end interface
 
-  contains
   interface
     subroutine hip_copy_float_complex_tmp2_c_intptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, &
                                                                      ldc, ldcCols, my_stream)&
