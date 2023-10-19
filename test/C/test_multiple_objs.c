@@ -45,6 +45,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #ifdef WITH_MPI
 #include <mpi.h>
 #endif
@@ -392,7 +393,7 @@ int main(int argc, char** argv) {
      //barrier after save state, file created from one MPI rank only, but loaded everywhere
      MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
+     sleep(0.1);
      elpa_autotune_load_state(*elpa_handle_ptr, autotune_handle, str, &error_elpa);
      assert_elpa_ok(error_elpa);
 
