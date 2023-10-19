@@ -355,7 +355,7 @@ module multiply_a_b_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_a_aux_bc_intptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
-                                                                  noff, nblk, n, l_rows, lce, ldc, ldcCols, my_stream)
+                                                                  noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
 
     end subroutine
@@ -372,7 +372,7 @@ module multiply_a_b_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_a_aux_bc_cptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
-                                                                  noff, nblk, n, l_rows, lce, ldc, ldcCols, my_stream)
+                                                                  noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
 
     end subroutine
@@ -436,7 +436,7 @@ module multiply_a_b_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_a_aux_bc_intptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
-                                                                  noff, nblk, n, l_rows, lce, ldc, ldcCols, my_stream)
+                                                                  noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
 
     end subroutine
@@ -453,7 +453,7 @@ module multiply_a_b_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_a_aux_bc_cptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
-                                                                  noff, nblk, n, l_rows, lce, ldc, ldcCols, my_stream)
+                                                                  noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
 
     end subroutine
@@ -517,7 +517,7 @@ module multiply_a_b_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_complex_a_aux_bc_intptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
-                                                                  noff, nblk, n, l_rows, lce, ldc, ldcCols, my_stream)
+                                                                  noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
 
     end subroutine
@@ -534,7 +534,7 @@ module multiply_a_b_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_double_complex_a_aux_bc_cptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
-                                                                  noff, nblk, n, l_rows, lce, ldc, ldcCols, my_stream)
+                                                                  noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
 
     end subroutine
@@ -598,7 +598,7 @@ module multiply_a_b_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_complex_a_aux_bc_intptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
-                                                                  noff, nblk, n, l_rows, lce, ldc, ldcCols, my_stream)
+                                                                  noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
 
     end subroutine
@@ -615,7 +615,7 @@ module multiply_a_b_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_float_complex_a_aux_bc_cptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
-                                                                  noff, nblk, n, l_rows, lce, ldc, ldcCols, my_stream)
+                                                                  noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
 
     end subroutine
