@@ -3213,7 +3213,7 @@ AC_ARG_ENABLE([autotune-redistribute-matrix],
 AC_MSG_RESULT([${enable_autotune_redistribute_matrix}])
 if test x"${enable_autotune_redistribute_matrix}" = x"yes" ; then
   if test x"${enable_scalapack_tests}" = x"no"; then
-    AC_MSG_ERROR([Please also set --enable_scalapack_tests in this case])
+    AC_MSG_ERROR([Please also set --enable-scalapack-tests in this case])
   fi
   if test x"${with_mpi}" = x"no"; then
     AC_MSG_ERROR([For this option ELPA must be build with MPI enabled])
