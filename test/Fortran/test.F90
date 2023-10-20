@@ -784,8 +784,11 @@ program test
 #endif
    call e%set("timings", 1_ik, error_elpa)
    assert_elpa_ok(error_elpa)
-
+   
+   ! Setup 
    assert_elpa_ok(e%setup())
+   
+   ! Set solver and ELPA2 kernel 
 
 #ifdef TEST_SOLVER_1STAGE
    call e%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
@@ -1093,6 +1096,7 @@ program test
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #endif
 
+     !_____________________________________________________________________________________________________________________
      ! The actual solve step
 	 
 #if defined(TEST_EIGENVECTORS)
@@ -1101,6 +1105,7 @@ program test
 #else
      call e%timer_start("e%eigenvectors()")
 #endif
+
 #ifdef TEST_SCALAPACK_ALL
      call solve_scalapack_all(na, a, sc_desc, ev, z)
 #elif TEST_SCALAPACK_PART
@@ -1302,7 +1307,7 @@ program test
      assert_elpa_ok(error_elpa)
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      call e%timer_stop("is_already_decomposed=.false.")
-     a = as
+     a = as ! so that the problem can be solved again
      call e%timer_start("is_already_decomposed=.true.")
      call e%generalized_eigenvectors(a, b, ev, z, .true., error_elpa)
      assert_elpa_ok(error_elpa)
@@ -1346,7 +1351,7 @@ program test
      endif
 
 
-   !-----------------------------------------------------------------------------------------------------------------------------     
+   !_____________________________________________________________________________________________________________________     
    ! TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -1419,7 +1424,7 @@ program test
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
-     !-----------------------------------------------------------------------------------------------------------------------------
+     !_____________________________________________________________________________________________________________________
      ! Check the results
 	 
      if (do_test_analytic_eigenvalues) then
@@ -1496,7 +1501,7 @@ program test
    end do ! kernels
 #endif /* TEST_ALL_KERNELS */
 
-   !-----------------------------------------------------------------------------------------------------------------------------
+   !_____________________________________________________________________________________________________________________
    ! Deallocate
    
 #if TEST_GPU_DEVICE_POINTER_API == 1

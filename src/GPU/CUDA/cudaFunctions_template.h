@@ -1492,7 +1492,7 @@ extern "C" {
        printf("error when calling cublasDaxpy\n");
     }
   }
-
+  
   void cublasSaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, float alpha, float *x, int incx, float *y, int incy){
 
     cublasStatus_t status = cublasSaxpy(cudaHandle, n, &alpha, x, incx, y, incy);

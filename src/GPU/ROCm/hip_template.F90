@@ -1420,8 +1420,8 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      real(kind=C_DOUBLE) ,value                :: alpha
+      integer(kind=C_INT), value              :: length, incx, incy
+      real(kind=C_DOUBLE), value              :: alpha
       integer(kind=C_intptr_T), value         :: x, y
     end subroutine
   end interface
@@ -1432,8 +1432,8 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      real(kind=C_DOUBLE) ,value                :: alpha
+      integer(kind=C_INT), value              :: length, incx, incy
+      real(kind=C_DOUBLE), value              :: alpha
       type(c_ptr), value                      :: x, y
     end subroutine
   end interface
