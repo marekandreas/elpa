@@ -659,6 +659,12 @@
         if (c_lower) lce = MIN(local_index(gcol, my_pcol, np_cols, nblk, -1),l_cols)
 
         if (lcs <= lce) then
+          if (.not.useGPU) then 
+              allocate(tmp1(nstor,lcs:lce), tmp2(nstor,lcs:lce), stat=istat, errmsg=errorMessage)
+              call check_alloc("elpa_mult_at_b_&
+              &MATH_DATATYPE ", "tmp1", istat, errorMessage)
+          endif
+
           if (lrs <= lre) then
             if (useGPU) then
 #ifndef MORE_GPU
@@ -712,7 +718,7 @@
             endif ! useGPU
 #else /* MORE_GPU */
               tmp1 = 0
-#endif /* MORE_GPU */                  
+#endif /* MORE_GPU */
           endif ! (lrs <= lre)
 
           ! Sum up the results and send to processor row np
@@ -824,7 +830,11 @@
             tmp2(:,:) = 0.
 #endif /* WITH_MPI */
           endif ! useGPU
-
+          if (.not.useGPU) then
+              deallocate(tmp1, tmp2, stat=istat, errmsg=errorMessage)
+              call check_alloc("elpa_mult_at_b_&
+                &MATH_DATATYPE ", "tmp1", istat, errorMessage)
+          endif
         endif ! (lcs <= lce)
 
         nr_done = nr_done+nstor
@@ -833,8 +843,10 @@
     enddo ! nb = 0, (l_rows_np-1)/nbl
   enddo ! np = 0, np_rows-1
 
-  deallocate(tmp2, stat=istat, errmsg=errorMessage)
-  check_deallocate("elpa_mult_at_b: tmp1, tmp2", istat, errorMessage)
+  if (useGPU) then
+    deallocate(tmp2, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_mult_at_b: tmp1, tmp2", istat, errorMessage)
+   endif
 
   if (useGPU) then
 #if !defined(DEVICE_POINTER)
