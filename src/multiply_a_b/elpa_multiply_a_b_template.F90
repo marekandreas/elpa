@@ -548,6 +548,8 @@
       else ! useGPU
 #endif /* WITH_NVIDIA_NCCL */
 
+#ifdef WITH_MPI
+
 #if defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL)
       if (useGPU) then
         ! copy data to host for Bcast
@@ -569,7 +571,6 @@
 #endif /* defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL) */
 
       ! Broadcast block column
-#ifdef WITH_MPI
       call obj%timer%start("mpi_communication")
 #if REALCASE == 1
       call MPI_Bcast(aux_bc, int(n_aux_bc,kind=MPI_KIND),    &
@@ -582,7 +583,6 @@
                      int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 #endif
       call obj%timer%stop("mpi_communication")
-#endif /* WITH_MPI */
 
 #if defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL)
       if (useGPU) then
@@ -602,6 +602,8 @@
 
       endif !useGPU
 #endif /* defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL) */
+
+#endif /* WITH_MPI */
 
 #ifdef WITH_NVIDIA_NCCL
       endif ! useGPU
@@ -792,6 +794,8 @@
             call mpi_reduce(tmp1, tmp2, int(nstor*(lce-lcs+1),kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                           MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
             call obj%timer%stop("mpi_communication")
+#else
+            tmp2 = tmp1
 #endif
 #if defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL)
             ! copy data to device
