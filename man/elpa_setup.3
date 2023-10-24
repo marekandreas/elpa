@@ -1,4 +1,4 @@
-.TH "elpa_setup" 3 "Sat Jun 3 2017" "ELPA" \" -*- nroff -*-
+.TH "elpa_setup" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -13,14 +13,16 @@ use elpa
 class(elpa_t), pointer :: elpa
 .br
 
-.RI  "success= \fBelpa%setup\fP ()"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
+success = elpa%\fBsetup\fP()
+.sp
+With the definitions of the input and output variables:
 
-.br
-.RI "integer :: \fBsucces\fP  !  the returned error code. Should normally be ELPA_OK. Can be querried with \fBelpa_strerr\fP(3)"
+.TP
+class(elpa_t) :: \fB elpa\fP
+An instance of the ELPA object.
+.TP
+integer :: \fB success\fP  
+The returned error code. Should normally be ELPA_OK. Can be queried with\fB elpa_strerr\fP(3)
 .br
 
 .br
@@ -30,21 +32,19 @@ class(elpa_t), pointer :: elpa
 elpa_t handle;
 
 .br
-.RI "\fBint\fP success = \fBelpa_setup\fP (\fBelpa_t\fP handle);"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
+\fBint\fP success =\fB elpa_setup\fP (\fBelpa_t\fP handle);
+.sp
+With the definitions of the input and output variables:
 
-.br
-.br
-.RI "elpa_t \fBhandle\fP;  // the handle of an ELPA object, obtained before with \fBelpa_allocate\fP(3)"
-.br
-.RI "int \fBsuccess\fP;    // the returned error code. Should normally be ELPA_OK. Can be querried with \fBelpa_strerr\fP(3)"
+.TP
+elpa_t \fB handle\fP;  
+The handle of an ELPA object, obtained before with\fB elpa_allocate\fP(3)
+.TP
+int \fB success\fP;    
+The returned error code. Should normally be ELPA_OK. Can be queried with\fB elpa_strerr\fP(3)
 
 .SH DESCRIPTION
-Setups an ELPA object. \fIPrior\fP to calling  the setup, the functions \fBelpa_init\fP(3), \fBelpa_allocate\fP(3) \fImust have been called\fP and some parameters must have been set with \fBelpa_set\fP(3).
-.br
-.SH "SEE ALSO"
-.br
-\fBelpa2_print_kernels\fP(1) \fBelpa_init\fP(3) \fBelpa_allocate\fP(3) \fBelpa_set\fP(3) \fBelpa_strerr\fP(3) \fBelpa_eigenvalues\fP(3) \fBelpa_eigenvectors\fP(3) \fBelpa_cholesky\fP(3) \fBelpa_invert_triangular\fP(3) \fBelpa_solve_tridiagonal\fP(3) \fBelpa_hermitian_multiply\fP(3) \fBelpa_deallocate\fP(3) \fBelpa_uninit\fP(3)
+Setups an ELPA object.\fI Prior\fP to calling  the setup, the functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3)\fI must have been called\fP and some parameters must have been set with\fB elpa_set\fP(3).
+
+.SH SEE ALSO
+\fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_deallocate\fP(3)\fB elpa_uninit\fP(3)

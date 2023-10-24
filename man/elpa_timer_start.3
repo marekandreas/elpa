@@ -1,0 +1,47 @@
+.TH "elpa_print_times" 3 "Fri Oct 13 2023" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_timer_start \- start the timer for the individual ELPA solution steps.
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+call elpa%\fBtimer_start\fP (name)
+.sp
+With the definitions of the input and output variables:
+.TP
+class(elpa_t)     \fB elpa\fP    
+An instance of the ELPA object
+.TP
+character(*)   :: \fB name\fP    
+The name of the ELPA procedure for which the timings should be recorded.
+.br
+
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+void\fB elpa_timer_start\fP(\fBelpa_t\fP handle,\fB char\fP *name);
+.sp
+With the definitions of the input and output variables:
+.TP
+elpa_t\fB handle\fP;    
+The handle to the ELPA object
+.TP
+char\fB  *name\fP;      
+The name of the ELPA procedure for which the timings should be recorded.
+
+.SH DESCRIPTION
+Starts the timer for the individual ELPA solution steps.
+
+.SH SEE ALSO
+\fB elpa_timer_stop\fP(3) \fBelpa_print_times\fP(3)

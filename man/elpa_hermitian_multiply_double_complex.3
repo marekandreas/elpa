@@ -1,0 +1,129 @@
+.TH "elpa_hermitian_multiply_double_complex" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_hermitian_multiply_double_complex \- performs a "hermitian" multiplication of complex double-precision matrices: C = A**H * B
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+call elpa%\fBhermitian_multiply_double_complex\fP (uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+                                                                  c, nrows_c, ncols_c, error)
+.sp
+With the definitions of the input and output variables:
+.TP
+class(elpa_t) :: \fB elpa\fP
+An instance of the ELPA object.
+.TP
+character*1   :: \fB uplo_a\fP
+Should be set to 'U' if A is upper triangular, 
+to 'L' if A is lower triangular or to anything else if A is a full matrix.
+.TP
+character*1   :: \fB uplo_c\fP
+Should be set to 'U' if only the upper diagonal part of C is needed, 
+to 'L' if only the upper diagonal part of C is needed, 
+or to anything else if the full matrix C is needed.
+.TP
+integer       :: \fB ncb\fP
+The number of columns of the global matrices\fB b\fP and\fB c\fP.
+.TP
+datatype      ::\fB a\fP
+The host/device matrix\fB a\fP.
+The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The\fB datatype\fP of the matrix must be "complex(kind=c_double_complex)".
+In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+.TP
+datatype      :: \fB b\fP
+The host/device matrix\fB b\fP. The dimensions of the matrix are specified by the parameters\fB nrows_b\fP and\fB ncols_b\fP.
+The\fB datatype\fP of the matrix must be "complex(kind=c_double_complex)".
+In case of a GPU build\fB b\fP can be a device pointer to a matrix\fB b\fP in the device memory.
+.TP
+integer       :: \fB nrows_b\fP
+The number of rows of matrix\fB b\fP.
+.TP
+integer       :: \fB ncols_b\fP
+The number of columns of matrix\fB b\fP.
+.TP
+datatype      :: \fB c\fP
+The host/device matrix\fB c\fP. The dimensions of the matrix are specified by the parameters\fB nrows_c\fP and\fB ncols_c\fP.
+The\fB datatype\fP of the matrix must be "complex(kind=c_double_complex)".
+In case of a GPU build\fB c\fP can be a device pointer to a matrix\fB c\fP in the device memory.
+.TP
+integer       :: \fB nrows_c\fP
+The number of rows of matrix\fB c\fP.
+.TP
+integer       :: \fB ncols_c\fP
+The number of columns of matrix\fB c\fP.
+.TP
+integer, optional :: \fB error\fP
+The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+void\fB elpa_hermitian_multiply_double_complex\fP(\fBelpa_t\fP handle,\fB char\fP uplo_a,\fB char\fP uplo_c,\fB int\fP ncb,\fB datatype\fP *a,\fB datatype\fP *b,\fB int\fP nrows_b,\fB int\fP ncols_b,\fB datatype\fP *c,\fB int\fP nrows_c,\fB int\fP ncols_c,\fB int\fP *error);
+.sp
+With the definitions of the input and output variables:
+
+.TP
+elpa_t \fB handle\fP;
+The handle to the ELPA object
+.TP
+char \fB uplo_a\fP;
+Should be set to 'U' if A is upper triangular,
+to 'L' if A is lower triangular or anything else if A is a full matrix.
+.TP
+char \fB uplo_c\fP;
+Should be set to 'U' if only the upper diagonal part of C is needed, 
+to 'L' if only the upper diagonal part of C is needed,
+or to anything else if the full matrix C is needed.
+.TP
+int \fB ncb\fP;
+The number of columns of the global matrices\fB b\fP and \fB c\fP.
+.TP
+datatype \fB *a\fP;
+The host/device matrix\fB a\fP. The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The\fB datatype\fP must be "double complex".
+In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+.TP
+datatype \fB *b\fP;
+The host/device matrix\fB b\fP. The dimensions of the matrix are specified by the parameters\fB nrows_b\fP and\fB ncols_b\fP.
+The\fB datatype\fP must be "double complex".
+In case of a GPU build\fB b\fP can be a device pointer to a matrix\fB b\fP in the device memory.
+.TP
+int \fB nrows_b\fP;
+The number of rows of matrix\fB b\fP.
+.TP
+int\fB ncols_b\fP;
+The number of columns of matrix\fB b\fP.
+.TP
+datatype \fB *c\fP;
+The host/device  matrix\fB c\fP. The dimensions of the matrix are specified by the parameters\fBn rows_c\fP and\fB ncols_c\fP.
+The\fB datatype\fP must be "double complex".
+In case of a GPU build\fB c\fP can be a device pointer to a matrix\fB c\fP in the device memory.
+.TP
+int \fB nrows_c\fP;
+The number of rows of matrix\fB c\fP.
+.TP
+int \fB ncols_c\fP;
+The number of columns of matrix\fB c\fP.
+.TP
+int \fB *error\fP;
+The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
+
+.SH DESCRIPTION
+Performs a "hermitian" multiplication C=A**H * B for complex double-precision matrices.
+The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3),
+and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_hermitian_multiply_double_complex\fP can be called.
+
+.SH SEE ALSO
+\fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)

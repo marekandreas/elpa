@@ -178,6 +178,8 @@ void elpa_eigenvectors_float_complex(elpa_t handle, float complex *a, float *ev,
 #endif		
 	}
 
+
+#ifdef HAVE_SKEWSYMMETRIC
 /*! \brief generic C method for elpa_skew_eigenvectors_double
  *
  *  \details
@@ -233,6 +235,7 @@ void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, 
    elpa_skew_eigenvectors_a_h_a_f(handle, a, ev, q, error);
 #endif		
 	}
+#endif /* HAVE_SKEWSYMMETRIC */
 
 /*! \brief generic C method for elpa_eigenvalues_double
  *
@@ -342,6 +345,7 @@ void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, 
 #endif		
 	}
 
+#ifdef HAVE_SKEWSYMMETRIC
 /*! \brief generic C method for elpa_skew_eigenvalues_double
  *
  *  \details
@@ -395,6 +399,7 @@ void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
    elpa_skew_eigenvalues_a_h_a_f(handle, a, ev, error);
 #endif		
 	}
+#endif /* HAVE_SKEWSYMMETRIC */
 
 /*! \brief generic C method for elpa_cholesky_double
  *

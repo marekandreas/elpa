@@ -1348,7 +1348,7 @@
 
   interface
     subroutine cublas_Daxpy_intptr_c(cublasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="cublasDscal_elpa_wrapper")
+               bind(C, name="cublasDaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -1360,7 +1360,7 @@
 
   interface
     subroutine cublas_Daxpy_cptr_c(cublasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="cublasDscal_elpa_wrapper")
+               bind(C, name="cublasDaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -1433,7 +1433,7 @@
 
   interface
     subroutine cublas_Saxpy_intptr_c(cublasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="cublasSscal_elpa_wrapper")
+               bind(C, name="cublasSaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -1445,7 +1445,7 @@
 
   interface
     subroutine cublas_Saxpy_cptr_c(cublasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="cublasSscal_elpa_wrapper")
+               bind(C, name="cublasSaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -1520,7 +1520,7 @@
 
   interface
     subroutine cublas_Zaxpy_intptr_c(cublasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="cublasZscal_elpa_wrapper")
+               bind(C, name="cublasZaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -1532,7 +1532,7 @@
 
   interface
     subroutine cublas_Zaxpy_cptr_c(cublasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="cublasZscal_elpa_wrapper")
+               bind(C, name="cublasZaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -1607,7 +1607,7 @@
 
   interface
     subroutine cublas_Caxpy_intptr_c(cublasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="cublasCscal_elpa_wrapper")
+               bind(C, name="cublasCaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -1619,7 +1619,7 @@
 
   interface
     subroutine cublas_Caxpy_cptr_c(cublasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="cublasCscal_elpa_wrapper")
+               bind(C, name="cublasCaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle

@@ -425,15 +425,18 @@ int main(int argc, char** argv) {
    elpa_set(handle, "process_col", (int) my_pcol, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
+
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
    elpa_set(handle, "blacs_context", (int) my_blacs_ctxt, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
-   
+   elpa_set(handle, "timings", 1, &error_elpa);
+   assert_elpa_ok(error_elpa);
+
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
 
-   /* Set kernel */
+   /* Set solver and ELPA2 kernel */
 	
 #ifdef TEST_SOLVER_1STAGE
    elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &error_elpa);
@@ -648,8 +651,16 @@ int main(int argc, char** argv) {
      printf("Solver is set to %d \n", value);
    }
       
-   //----------------------------------------------------------------------------------------------------------------------------     
+  //_____________________________________________________________________________________________________________________
 	/* The actual solve step */
+
+#if defined(TEST_EIGENVECTORS)
+#if TEST_QR_DECOMPOSITION == 1
+     elpa_timer_start(handle, "elpa_eigenvectors_qr()");
+#else
+     elpa_timer_start(handle, "elpa_eigenvectors()");
+#endif
+#endif /* TEST_EIGENVECTORS */
 
 #if defined(TEST_EIGENVECTORS)
 #if defined(TEST_EXPLICIT_NAME)
@@ -698,13 +709,19 @@ int main(int argc, char** argv) {
    
 #else /* TEST_EXPLICIT_NAME */
    
-	elpa_eigenvectors(handle, a, ev, z, &error_elpa);
-   assert_elpa_ok(error_elpa);
+	   elpa_eigenvectors(handle, a, ev, z, &error_elpa);
+     assert_elpa_ok(error_elpa);
 #endif /* TEST_EXPLICIT_NAME */
+#if TEST_QR_DECOMPOSITION == 1
+     elpa_timer_stop(handle, "elpa_eigenvectors_qr()");
+#else
+     elpa_timer_stop(handle, "elpa_eigenvectors()");
+#endif
 #endif /* TEST_EIGENVECTORS */
 
    
 #if defined(TEST_EIGENVALUES)
+   elpa_timer_start(handle, "elpa_eigenvalues()");
 #if defined(TEST_EXPLICIT_NAME)
    
 #if defined(TEST_REAL)
@@ -750,12 +767,14 @@ int main(int argc, char** argv) {
 #endif /* TEST_COMPLEX */
    
 #else /* TEST_EXPLICIT_NAME */   
-	elpa_eigenvalues(handle, a, ev, &error_elpa);
+	 elpa_eigenvalues(handle, a, ev, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif /* TEST_EXPLICIT_NAME */
+   elpa_timer_stop(handle, "elpa_eigenvalues()");
 #endif /* TEST_EIGENVALUES */
 
 #if defined(TEST_CHOLESKY)
+   elpa_timer_start(handle, "elpa_cholesky()");
 #if defined(TEST_EXPLICIT_NAME)
    
 #if defined(TEST_REAL)
@@ -805,27 +824,29 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error_elpa);
    
 #endif /* TEST_EXPLICIT_NAME */
+   elpa_timer_stop(handle, "elpa_cholesky()");
 #endif /* TEST_CHOLESKY */
 
 #if defined(TEST_HERMITIAN_MULTIPLY)
+   elpa_timer_start(handle, "elpa_hermitian_multiply()");
 #if defined(TEST_EXPLICIT_NAME)
 
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-	elpa_hermitian_multiply_double(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_double(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #else
-	elpa_hermitian_multiply_double(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_double(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-	elpa_hermitian_multiply_float(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_float(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #else
-	elpa_hermitian_multiply_float(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_float(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
@@ -834,40 +855,48 @@ int main(int argc, char** argv) {
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-	elpa_hermitian_multiply_double_complex(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_double_complex(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #else
-	elpa_hermitian_multiply_double_complex(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_double_complex(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-	elpa_hermitian_multiply_float_complex(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_float_complex(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #else
-	elpa_hermitian_multiply_float_complex(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_float_complex(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_COMPLEX */
 
 #else /* TEST_EXPLICIT_NAME */
-	elpa_hermitian_multiply(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif /* TEST_EXPLICIT_NAME */
+   elpa_timer_stop(handle, "elpa_hermitian_multiply()");
 #endif /* TEST_HERMITIAN_MULTIPLY */
 	
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
+     elpa_timer_start(handle, "elpa_generalized_eigenvectors()");
+#if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
+     elpa_timer_start(handle, "is_already_decomposed=.false.");
+#endif
      elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error_elpa);
      assert_elpa_ok(error_elpa);
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
-     //a = as, so that the problem can be solved again
-     memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE));
+     elpa_timer_stop(handle, "is_already_decomposed=.false.");
+     memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE)); // so that the problem can be solved again
+     elpa_timer_start(handle, "is_already_decomposed=.true.");
      elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error_elpa);
      assert_elpa_ok(error_elpa);
-#endif
-#endif
+     elpa_timer_stop(handle, "is_already_decomposed=.true.");
+#endif /* TEST_GENERALIZED_DECOMP_EIGENPROBLEM */
+     elpa_timer_stop(handle, "elpa_generalized_eigenvectors()");
+#endif /* TEST_GENERALIZED_EIGENPROBLEM */
 	
 #if defined(TEST_SOLVE_TRIDIAGONAL)
      elpa_solve_tridiagonal(handle, d, sd, z, &error_elpa);
@@ -875,7 +904,15 @@ int main(int argc, char** argv) {
      memcpy(ev, d, na*sizeof(EV_TYPE));
 #endif
 
-//----------------------------------------------------------------------------------------------------------------------------     
+#if defined(TEST_EIGENVECTORS)
+#if TEST_QR_DECOMPOSITION == 1
+       elpa_print_times(handle, "elpa_eigenvectors_qr()");
+#else
+       elpa_print_times(handle, "elpa_eigenvectors()");
+#endif
+#endif /* TEST_EIGENVECTORS */
+
+//_____________________________________________________________________________________________________________________
    /* TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host, deallocate device pointers */
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -995,7 +1032,7 @@ int main(int argc, char** argv) {
    
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
    
-   //----------------------------------------------------------------------------------------------------------------------------
+   //_____________________________________________________________________________________________________________________
    /* Check the results */
 
 #if defined(TEST_CHOLESKY)
@@ -1033,7 +1070,7 @@ int main(int argc, char** argv) {
      printf("All ok!\n");
    }
 
-   //----------------------------------------------------------------------------------------------------------------------------
+  //_____________________________________________________________________________________________________________________
    /* Deallocate */
    
    elpa_deallocate(handle, &error_elpa);

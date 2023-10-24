@@ -165,7 +165,7 @@
 
   call obj%get("gpu_hermitian_multiply",gpu_multiply_a_b, error)
   if (error .ne. ELPA_OK) then
-    print *,"ELPA_MULITPLY_AB: Problem getting option for gpu_cholesky. Aborting..."
+    print *,"ELPA_MULITPLY_AB: Problem getting option for gpu_multiply. Aborting..."
     stop 1
   endif
 

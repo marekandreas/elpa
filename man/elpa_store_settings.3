@@ -1,4 +1,4 @@
-.TH "elpa_store_settings" 3 "Tue Nov 13 2018" "ELPA" \" -*- nroff -*-
+.TH "elpa_store_settings" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -13,19 +13,18 @@ use elpa
 class(elpa_t), pointer :: elpa
 .br
 
-.RI  "call elpa%\fBstore_settings\fP (filename, error)"
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-.br
-.br
+call elpa%\fBstore_settings\fP (filename, error)
+.sp
+With the definitions of the input and output variables:
 .TP
-.RI "class(elpa_t)       \fBelpa\f:         returns an instance of the ELPA object"
-.br
-.RI "character(*)        \fBfilename\fP:   The filename to be used for storing the settings"
-.br
-.RI "integer, optinal    \fBerror\fP:      An error return code"
+class(elpa_t)      :: \fB elpa\fP      
+An instance of the ELPA object
+.TP
+character(*)       :: \fB filename\fP  
+The filename to be used for storing the settings
+.TP
+integer, optional  :: \fB error\fP    
+An error return code
 .br
 
 .SS C INTERFACE
@@ -34,25 +33,22 @@ class(elpa_t), pointer :: elpa
 elpa_t handle;
 
 .br
-.RI "void \fBelpa_store_settings\fP(\fBelpa_t\fP handle, \fBconst char\fP *filename, \fBint\fP *error):
-.br
-.RI " "
-.br
-.RI "With the definitions of the input and output variables:"
-.br
-.br
+void\fB elpa_store_settings\fP(\fBelpa_t\fP handle,\fB const char\fP *filename,\fB int\fP *error):
+.sp
+With the definitions of the input and output variables:
 .TP
-.RI "elpa_t \fBhandle\fP:       The handle to the ELPA object"
-.br
+elpa_t \fB handle\fP;          
+The handle to the ELPA object
 .TP
-.RI "const char \fB*filename\fP: the filename to store the settings"
-.br
-.RI "int \fB*error\fP:           the error return code"
+const char \fB *filename\fP;   
+The filename to store the settings
 .TP
+int \fB *error\fP;             
+The error return code
 
 .SH DESCRIPTION
-Stores all the settings of an ELPA object in a human readable form to a file specified via the \fBfilename\fP parameter. The settings can later be restored with the
-\fBelpa_load_settings\fP(3) method. 
-.SH "SEE ALSO"
-.br
+Stores all the settings of an ELPA object in a human readable form to a file specified via the\fB filename\fP parameter. The settings can later be restored with the
+\fBelpa_load_settings\fP(3) method.
+
+.SH SEE ALSO
 \fBelpa_load_setting\fP(3)
