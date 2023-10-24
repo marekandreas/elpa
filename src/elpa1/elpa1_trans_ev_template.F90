@@ -387,6 +387,7 @@ subroutine trans_ev_&
   endif  ! useGPU
 
   do istep = 1, na, blockStep
+    call nvtxRangePush("trans_ev_cycle")
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
     if (ice<ics) cycle
@@ -842,7 +843,8 @@ subroutine trans_ev_&
       nstor = 0
     endif  ! (nstor+nblk>max_stored_rows .or. istep+nblk>na .or. (na/np_rows<=256 .and. nstor>=32))
 
-  enddo ! istep
+    call nvtxRangePop()
+  enddo ! istep = 1, na, blockStep
 
   deallocate(h1, h2, hvb, hvm, stat=istat, errmsg=errorMessage)
   check_deallocate("trans_ev_&
