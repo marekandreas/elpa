@@ -701,11 +701,10 @@ module elpa_impl
     !c> *
     !c> *  \param  elpa_t  handle of the ELPA object which describes the problem to
     !c> *                  be set up
-    !c> *  \param  myid    integer int64_t, rank of each MPI rank
     !c> *  \result int     error code, which can be queried with elpa_strerr
     !c> */
     !c> #include <stdint.h>
-    !c> int elpa_setup_gpu(elpa_t handle, int64_t myid);
+    !c> int elpa_setup_gpu(elpa_t handle);
     function elpa_setup_gpu_c(handle) result(error) bind(C, name="elpa_setup_gpu")
       implicit none
       type(c_ptr), intent(in), value :: handle

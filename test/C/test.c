@@ -436,6 +436,10 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
 
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
+   assert_elpa_ok(elpa_setup_gpu(handle));
+#endif
+
    /* Set solver and ELPA2 kernel */
 	
 #ifdef TEST_SOLVER_1STAGE
