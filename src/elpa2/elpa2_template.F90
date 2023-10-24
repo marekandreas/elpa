@@ -539,8 +539,8 @@ print *,"Device pointer + REDIST"
    ! 2. redistribute aIntern_dummy to aIntern
 
 #ifdef WITH_GPU_STREAMS
-   print *, "elpa2_template: not yet implemented"
-   stop 1
+   !print *, "elpa2_template: not yet implemented"
+   !stop 1
 #endif
 
    successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &
@@ -1598,7 +1598,7 @@ print *,"Device pointer + REDIST"
    !copy qIntern and ev to provided device pointers
 #ifdef WITH_GPU_STREAMS
    print *,"elpa2_template: not yet implemented"
-   stop
+   stop 77
 #endif
    if (present(qExtern)) then
    successGPU = gpu_memcpy(qExtern, c_loc(qIntern(1,1)), obj%local_nrows*obj%local_ncols*size_of_datatype, &

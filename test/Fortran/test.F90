@@ -766,7 +766,7 @@ program test
    call e%set("mpi_comm_cols", int(mpi_comm_cols,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 
-#else
+#else /* SPLIT_COMM_MYSELF */
    call e%set("mpi_comm_parent", int(MPI_COMM_WORLD,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("process_row", int(my_prow,kind=c_int), error_elpa)
@@ -775,16 +775,20 @@ program test
    assert_elpa_ok(error_elpa)
    call e%set("verbose", 1, error_elpa)
    assert_elpa_ok(error_elpa)
-#endif
-#endif
+#endif /* SPLIT_COMM_MYSELF */
+#endif /* WITH_MPI */
+
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
    call e%set("blacs_context", int(my_blacs_ctxt,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
 #endif
    call e%set("timings", 1_ik, error_elpa)
    assert_elpa_ok(error_elpa)
-
+   
+   ! Setup 
    assert_elpa_ok(e%setup())
+   
+   ! Set solver and ELPA2 kernel 
 
 #ifdef TEST_SOLVER_1STAGE
    call e%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
@@ -1088,6 +1092,7 @@ program test
      call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #endif
 
+     !_____________________________________________________________________________________________________________________
      ! The actual solve step
 	 
 #if defined(TEST_EIGENVECTORS)
@@ -1096,6 +1101,7 @@ program test
 #else
      call e%timer_start("e%eigenvectors()")
 #endif
+
 #ifdef TEST_SCALAPACK_ALL
      call solve_scalapack_all(na, a, sc_desc, ev, z)
 #elif TEST_SCALAPACK_PART
@@ -1297,7 +1303,7 @@ program test
      assert_elpa_ok(error_elpa)
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      call e%timer_stop("is_already_decomposed=.false.")
-     a = as
+     a = as ! so that the problem can be solved again
      call e%timer_start("is_already_decomposed=.true.")
      call e%generalized_eigenvectors(a, b, ev, z, .true., error_elpa)
      assert_elpa_ok(error_elpa)
@@ -1341,7 +1347,7 @@ program test
      endif
 
 
-   !-----------------------------------------------------------------------------------------------------------------------------     
+   !_____________________________________________________________________________________________________________________     
    ! TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -1414,7 +1420,7 @@ program test
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
-     !-----------------------------------------------------------------------------------------------------------------------------
+     !_____________________________________________________________________________________________________________________
      ! Check the results
 	 
      if (do_test_analytic_eigenvalues) then
@@ -1491,7 +1497,7 @@ program test
    end do ! kernels
 #endif /* TEST_ALL_KERNELS */
 
-   !-----------------------------------------------------------------------------------------------------------------------------
+   !_____________________________________________________________________________________________________________________
    ! Deallocate
    
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -1579,15 +1585,35 @@ program test
   deallocate(b, bs)
 #endif
 
+#if defined(WITH_MPI) && defined (SPLIT_COMM_MYSELF)
+   call mpi_comm_free(mpi_comm_rows, mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_free for row communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+
+   call mpi_comm_free(mpi_comm_cols, mpierr)
+   if (mpierr .ne. MPI_SUCCESS) then
+     call MPI_ERROR_STRING(mpierr, mpierr_string, mpi_string_length, mpierr2)
+     write(error_unit,*) "MPI ERROR occured during mpi_comm_free for column communicator: ", trim(mpierr_string)
+     stop 1
+   endif
+#endif /* WITH_MPI && SPLIT_COMM_MYSELF */
+
+#ifdef WITH_MPI
+   call blacs_gridexit(my_blacs_ctxt)
+#endif
+
 #ifdef TEST_ALL_LAYOUTS
    end do ! factors
    end do ! layouts
 #endif
+
    call elpa_uninit(error_elpa)
    assert_elpa_ok(error_elpa)
 
 #ifdef WITH_MPI
-   call blacs_gridexit(my_blacs_ctxt)
    call mpi_finalize(mpierr)
 #endif
 

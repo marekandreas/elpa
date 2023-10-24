@@ -1297,6 +1297,24 @@ module elpa_impl
 #endif
     end subroutine
 
+    !c> /*! \brief C interface for the implementation of the elpa_print_times method
+    !c> *
+    !c> *  \param elpa_t handle
+    !c> *  \param  char* name1
+    !c> */
+    !c> void elpa_print_times(elpa_t handle, char* name1);
+    subroutine elpa_print_times_c(handle, name1_p) bind(C, name="elpa_print_times")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+      type(c_ptr), intent(in), value       :: name1_p
+      character(len=elpa_strlen_c(name1_p)), pointer :: name1
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(name1_p, name1)
+
+      call elpa_print_times(self, name1)
+
+    end subroutine
 
     !> \brief function to start the timing of a code region
     !> Parameters
@@ -1310,6 +1328,24 @@ module elpa_impl
 #endif
     end subroutine
 
+    !c> /*! \brief C interface for the implementation of the elpa_timer_start method
+    !c> *
+    !c> *  \param elpa_t handle
+    !c> *  \param  char* name
+    !c> */
+    !c> void elpa_timer_start(elpa_t handle, char* name);
+    subroutine elpa_timer_start_c(handle, name_p) bind(C, name="elpa_timer_start")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+      type(c_ptr), intent(in), value       :: name_p
+      character(len=elpa_strlen_c(name_p)), pointer :: name
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(name_p, name)
+
+      call elpa_timer_start(self, name)
+
+    end subroutine
 
     !> \brief function to stop the timing of a code region
     !> Parameters
@@ -1323,6 +1359,24 @@ module elpa_impl
 #endif
     end subroutine
 
+    !c> /*! \brief C interface for the implementation of the elpa_timer_stop method
+    !c> *
+    !c> *  \param elpa_t handle
+    !c> *  \param  char* name
+    !c> */
+    !c> void elpa_timer_stop(elpa_t handle, char* name);
+    subroutine elpa_timer_stop_c(handle, name_p) bind(C, name="elpa_timer_stop")
+      type(c_ptr), value         :: handle
+      type(elpa_impl_t), pointer :: self
+      type(c_ptr), intent(in), value       :: name_p
+      character(len=elpa_strlen_c(name_p)), pointer :: name
+
+      call c_f_pointer(handle, self)
+      call c_f_pointer(name_p, name)
+
+      call elpa_timer_stop(self, name)
+
+    end subroutine
 
     !> \brief function to destroy an elpa object
     !> Parameters

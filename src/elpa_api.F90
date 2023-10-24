@@ -183,7 +183,7 @@ module elpa_api
       generic, public :: skew_eigenvalues_float => &                !< method skew_eigenvalues for solving the skew-symmetric eigenvalue problem
           elpa_skew_eigenvalues_a_h_a_f, &                !< for (real) float data, can be used with host arrays or
           elpa_skew_eigenvalues_d_ptr_f                    !< GPU device pointers in the GPU version
-#endif
+#endif /* HAVE_SKEWSYMMETRIC */
 
       generic, public :: generalized_eigenvectors => &              !< method eigenvectors for solving the full generalized eigenvalue problem
           elpa_generalized_eigenvectors_d, &                        !< the eigenvalues and (parts of) the eigenvectors are computed

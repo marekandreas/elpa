@@ -162,7 +162,7 @@ void set_max_shared_bytes(const void *func)
 }
 
 template <int bM, class F>
-void launch_NVIDIA_sm80_kernel(F *q, const F *hh, const F *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
+void launch_NVIDIA_sm80_kernel(F *q, const F *hh, const F *hh_tau, const int nev, const int nb, const int ldq, const int ncols, cudaStream_t my_stream)
 {
 //#ifdef WITH_GPU_STREAMS
 //  cudaStream_t streamId = *((cudaStream_t*)my_stream);
@@ -202,7 +202,7 @@ nb        : nbw (==b)
 ncols     : N_R (==n+b-1)
 */
 extern "C" {
-  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream)
+  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols, cudaStream_t my_stream)
   
   {
   
@@ -228,7 +228,7 @@ extern "C" {
       }
   }
 
-  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols, intptr_t my_stream) {
+  void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols, cudaStream_t my_stream) {
   double *q_casted, *hh_casted, *hh_tau_casted;
 
   q_casted = (double*) q;
