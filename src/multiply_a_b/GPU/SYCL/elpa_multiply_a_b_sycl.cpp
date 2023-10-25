@@ -189,7 +189,7 @@ extern "C" void sycl_copy_double_a_aux_bc_FromC(double *a_dev, double *aux_bc_de
 //  aux_bc_dev[(n_aux_bc+1-1)+(i_index-1)] = a_dev[(lrs-1)+(i_index-1)+lda*(noff*nblk+n-1)];
 //}
 
-extern "C" void hip_copy_float_a_aux_bc_FromC(float *a_dev, float *aux_bc_dev, int *n_aux_bc_in, int *nvals_in, int *lrs_in, int *lre_in, int *noff_in, int *nblk_in, int *n_in, int *l_rows_in, int *lda_in, int *ldaCols_in, hipStream_t my_stream) { 
+extern "C" void sycl_copy_float_a_aux_bc_FromC(float *a_dev, float *aux_bc_dev, int *n_aux_bc_in, int *nvals_in, int *lrs_in, int *lre_in, int *noff_in, int *nblk_in, int *n_in, int *l_rows_in, int *lda_in, int *ldaCols_in) { 
 		
   int n_aux_bc = *n_aux_bc_in;   
   int nvals = *nvals_in;
@@ -216,7 +216,7 @@ extern "C" void hip_copy_float_a_aux_bc_FromC(float *a_dev, float *aux_bc_dev, i
 //  aux_bc_dev[(n_aux_bc+1-1)+(i_index-1)] = a_dev[(lrs-1)+(i_index-1)+lda*(noff*nblk+n-1)];
 //}
 
-extern "C" void sycl_copy_double_complex_a_aux_bc_FromC(double _Complex *a_dev, double _Complex *aux_bc_dev, int *n_aux_bc_in, int *nvals_in, int *lrs_in, int *lre_in, int *noff_in, int *nblk_in, int *n_in, int *l_rows_in, int *lda_in, int *ldaCols_in, hipStream_t my_stream) { 
+extern "C" void sycl_copy_double_complex_a_aux_bc_FromC(double _Complex *a_dev, double _Complex *aux_bc_dev, int *n_aux_bc_in, int *nvals_in, int *lrs_in, int *lre_in, int *noff_in, int *nblk_in, int *n_in, int *l_rows_in, int *lda_in, int *ldaCols_in) { 
 		
   int n_aux_bc = *n_aux_bc_in;   
   int nvals = *nvals_in;
@@ -243,7 +243,7 @@ extern "C" void sycl_copy_double_complex_a_aux_bc_FromC(double _Complex *a_dev, 
 //  aux_bc_dev[(n_aux_bc+1-1)+(i_index-1)] = a_dev[(lrs-1)+(i_index-1)+lda*(noff*nblk+n-1)];
 //}
 
-extern "C" void sycl_copy_float_complex_a_aux_bc_FromC(float _Complex *a_dev, float _Complex *aux_bc_dev, int *n_aux_bc_in, int *nvals_in, int *lrs_in, int *lre_in, int *noff_in, int *nblk_in, int *n_in, int *l_rows_in, int *lda_in, int *ldaCols_in, hipStream_t my_stream) { 
+extern "C" void sycl_copy_float_complex_a_aux_bc_FromC(float _Complex *a_dev, float _Complex *aux_bc_dev, int *n_aux_bc_in, int *nvals_in, int *lrs_in, int *lre_in, int *noff_in, int *nblk_in, int *n_in, int *l_rows_in, int *lda_in, int *ldaCols_in) { 
 		
   int n_aux_bc = *n_aux_bc_in;   
   int nvals = *nvals_in;
@@ -351,7 +351,7 @@ extern "C" void sycl_copy_double_complex_aux_bc_aux_mat_FromC(double _Complex *a
 //  aux_mat_dev[(j_index-1)+l_rows*(nstor-1)] = aux_bc_dev[n_aux_bc+(j_index-1)];
 //}
 
-extern "C" void hip_copy_float_complex_aux_bc_aux_mat_FromC(float _Complex *aux_bc_dev, float _Complex *aux_mat_dev, int *lrs_in, int *lre_in, int *nstor_in, int *n_aux_bc_in, int *nvals_in, int *l_rows_in, int *nblk_in, int *nblk_mult_in, hipStream_t my_stream) {
+extern "C" void sycl_copy_float_complex_aux_bc_aux_mat_FromC(float _Complex *aux_bc_dev, float _Complex *aux_mat_dev, int *lrs_in, int *lre_in, int *nstor_in, int *n_aux_bc_in, int *nvals_in, int *l_rows_in, int *nblk_in, int *nblk_mult_in) {
 		
 
 
