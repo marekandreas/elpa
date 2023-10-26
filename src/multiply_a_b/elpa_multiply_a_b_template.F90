@@ -190,32 +190,32 @@
   ! ugly fix until a way to convert xDev into x_dev is working
   !allocate(a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols))
 
-  !c_dev = transfer(cDev, c_dev)
+  c_dev = transfer(cDev, c_dev)
   num = ldc*ldcCols*size_of_datatype
-  successGPU = gpu_malloc(c_dev, num)
-  check_alloc_gpu("elpa_mult_at_b: c_dev", successGPU)
+  !successGPU = gpu_malloc(c_dev, num)
+  !check_alloc_gpu("elpa_mult_at_b: c_dev", successGPU)
 
-  successGPU = gpu_memcpy(c_dev, cDev, num,&
-                gpuMemcpyDeviceToDevice)
-  check_memcpy_gpu("elpa_mult_at_b: cDev to c_dev", successGPU)
+  !successGPU = gpu_memcpy(c_dev, cDev, num,&
+  !              gpuMemcpyDeviceToDevice)
+  !check_memcpy_gpu("elpa_mult_at_b: cDev to c_dev", successGPU)
 
-  !b_dev = transfer(bDev, b_dev)
+  b_dev = transfer(bDev, b_dev)
   num = ldb*ldbCols*size_of_datatype
-  successGPU = gpu_malloc(b_dev, num)
-  check_alloc_gpu("elpa_mult_at_b: b_dev", successGPU)
+  !successGPU = gpu_malloc(b_dev, num)
+  !check_alloc_gpu("elpa_mult_at_b: b_dev", successGPU)
 
   successGPU = gpu_memcpy(b_dev, bDev, num,&
                 gpuMemcpyDeviceToDevice)
   check_memcpy_gpu("elpa_mult_at_b: bDev to b_dev", successGPU)
 
-  !a_dev = transfer(aDev, a_dev)
+  a_dev = transfer(aDev, a_dev)
   num = obj%local_nrows*obj%local_ncols*size_of_datatype
-  successGPU = gpu_malloc(a_dev, num)
-  check_alloc_gpu("elpa_mult_at_b: a_dev", successGPU)
+  !successGPU = gpu_malloc(a_dev, num)
+  !check_alloc_gpu("elpa_mult_at_b: a_dev", successGPU)
 
-  successGPU = gpu_memcpy(a_dev, aDev, num,&
-                  gpuMemcpyDeviceToDevice)
-  check_memcpy_gpu("elpa_mult_at_b: aDev to a", successGPU)
+  !successGPU = gpu_memcpy(a_dev, aDev, num,&
+  !                gpuMemcpyDeviceToDevice)
+  !check_memcpy_gpu("elpa_mult_at_b: aDev to a", successGPU)
 #endif /* DEVICE_POINTER */
 
   if(useGPU) then
@@ -882,16 +882,16 @@
 #endif /* MORE_GPU */
 
 #else /* DEVICE_POINTER */
-    successGPU = gpu_free(b_dev)
-    check_dealloc_gpu("elpa_multiply_a_b: b_dev", successGPU)
+    !successGPU = gpu_free(b_dev)
+    !check_dealloc_gpu("elpa_multiply_a_b: b_dev", successGPU)
 
     num = ldc*ldcCols*size_of_datatype
-    successGPU = gpu_memcpy(cDev, c_dev, num,&
-                  gpuMemcpyDeviceToDevice)
-    check_memcpy_gpu("elpa_mult_at_b: c_dev -> cDev", successGPU)
+    !successGPU = gpu_memcpy(cDev, c_dev, num,&
+    !              gpuMemcpyDeviceToDevice)
+    !check_memcpy_gpu("elpa_mult_at_b: c_dev -> cDev", successGPU)
 
-    successGPU = gpu_free(c_dev)
-    check_dealloc_gpu("elpa_multiply_a_b: c_dev", successGPU)
+    !successGPU = gpu_free(c_dev)
+    !check_dealloc_gpu("elpa_multiply_a_b: c_dev", successGPU)
 #endif /* DEVICE_POINTER */
 
 #if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
@@ -926,8 +926,8 @@
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("elpa_mult_at_b: a_dev", successGPU)
 #else
-    successGPU = gpu_free(a_dev)
-    check_dealloc_gpu("elpa_mult_at_b: a_dev", successGPU)
+    !successGPU = gpu_free(a_dev)
+    !check_dealloc_gpu("elpa_mult_at_b: a_dev", successGPU)
 #endif
   else ! useGPU
     deallocate(aux_mat, stat=istat, errmsg=errorMessage)
