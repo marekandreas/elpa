@@ -146,8 +146,8 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_at_b_d_ptr_real_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
-                                             c, ldc, ldcCols) result(success)
+    function elpa_mult_at_b_d_ptr_real_double_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+                                             cDev, ldc, ldcCols) result(success)
 #include "elpa_multiply_a_b_template.F90"
     end function elpa_mult_at_b_d_ptr_real_double_impl
 #undef DOUBLE_PRECISION
@@ -235,8 +235,8 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_at_b_d_ptr_real_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
-                                             c, ldc, ldcCols) result(success)
+    function elpa_mult_at_b_d_ptr_real_single_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+                                             cDev, ldc, ldcCols) result(success)
 
 #include "elpa_multiply_a_b_template.F90"
 
@@ -328,8 +328,8 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device_pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_ah_b_d_ptr_complex_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
-                                                c, ldc, ldcCols) result(success)
+    function elpa_mult_ah_b_d_ptr_complex_double_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+                                                cDev, ldc, ldcCols) result(success)
 #include "elpa_multiply_a_b_template.F90"
 
     end function elpa_mult_ah_b_d_ptr_complex_double_impl
@@ -422,8 +422,8 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_ah_b_d_ptr_complex_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
-                                                c, ldc, ldcCols) result(success)
+    function elpa_mult_ah_b_d_ptr_complex_single_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+                                                cDev, ldc, ldcCols) result(success)
 
 #include "elpa_multiply_a_b_template.F90"
 

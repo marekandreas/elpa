@@ -589,6 +589,7 @@
   interface cublas_Dgemm
     module procedure cublas_Dgemm_intptr
     module procedure cublas_Dgemm_cptr
+    module procedure cublas_Dgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -615,6 +616,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       real(kind=C_DOUBLE) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine cublas_Dgemm_intptr_cptr_intptr_c(cublasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="cublasDgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
@@ -757,6 +774,7 @@
   interface cublas_Sgemm
     module procedure cublas_Sgemm_intptr
     module procedure cublas_Sgemm_cptr
+    module procedure cublas_Sgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -783,6 +801,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       real(kind=C_FLOAT) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine cublas_Sgemm_intptr_cptr_intptr_c(cublasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="cublasSgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
@@ -925,6 +959,7 @@
   interface cublas_Zgemm
     module procedure cublas_Zgemm_intptr
     module procedure cublas_Zgemm_cptr
+    module procedure cublas_Zgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -951,6 +986,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine cublas_Zgemm_intptr_cptr_intptr_c(cublasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="cublasZgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
@@ -1093,6 +1144,7 @@
   interface cublas_Cgemm
     module procedure cublas_Cgemm_intptr
     module procedure cublas_Cgemm_cptr
+    module procedure cublas_Cgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -1119,6 +1171,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine cublas_Cgemm_intptr_cptr_intptr_c(cublasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="cublasCgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
@@ -2239,9 +2307,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2253,13 +2321,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Dgemm_cptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine cublas_Dgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Dgemm_intptr_cptr_intptr_c(cublasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
@@ -2387,9 +2472,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2401,13 +2486,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Sgemm_cptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine cublas_Sgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Sgemm_intptr_cptr_intptr_c(cublasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
@@ -2535,9 +2637,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2549,13 +2651,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Zgemm_cptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine cublas_Zgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Zgemm_intptr_cptr_intptr_c(cublasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
@@ -2683,9 +2802,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2697,13 +2816,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Cgemm_cptr_c(cublasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine cublas_Cgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Cgemm_intptr_cptr_intptr_c(cublasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 

@@ -813,6 +813,10 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
+#if defined(TEST_NVIDIA_GPU) || defined(TEST_AMD_GPU) || defined(TEST_INTEL_GPU) || defined(TEST_INTEL_GPU_OPENMP) || defined(TEST_INTEL_GPU_SYCL)
+   assert_elpa_ok(e%setup_gpu())
+#endif
+
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    if (gpu_vendor() /= no_gpu) then
       call set_gpu_parameters()
