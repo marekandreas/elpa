@@ -47,7 +47,7 @@
 #include "../../general/sanity.F90"
 #include "../../general/error_checking.inc"
 
-subroutine elpa_gpu_reduce_add_vectors_&
+subroutine elpa_gpu_ccl_reduce_add_vectors_&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
@@ -109,15 +109,22 @@ subroutine elpa_gpu_reduce_add_vectors_&
                                                         &PRECISION&
                                                         &_&
                                                         &MATH_DATATYPE
+  integer(kind=c_int)                                :: ncclDataType
 
   integer(kind=c_intptr_t)                           :: ccl_comm_s, ccl_comm_t
   integer(kind=c_intptr_t)                           :: vmat_s_dev, vmat_t_dev 
   integer(kind=c_intptr_t)                           :: aux1_reduceadd_dev, aux2_reduceadd_dev
   integer(kind=c_intptr_t)                           :: my_stream
 
-  call obj%timer%start("elpa_gpu_reduce_add_vectors")
+  call obj%timer%start("elpa_gpu_ccl_reduce_add_vectors")
   
   success = .true.
+
+#if   REALCASE == 1 && DOUBLE_PRECISION == 1
+  ncclDataType = ncclDouble
+#elif REALCASE == 1 && SINGLE_PRECISION == 1
+  ncclDataType = ncclFloat
+#endif
 
   call obj%timer%start("mpi_communication")
   call mpi_comm_rank(int(comm_s,kind=MPI_KIND), mypsMPI, mpierr)
@@ -162,10 +169,10 @@ print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*n
     print *,"reduce1 : my_mpi_rank=",my_mpi_rank,",nblks_tot=",nblks_tot,",lcm_s_t=",lcm_s_t,",nblk=",nblk,",nvc=",nvc
 
     successGPU = gpu_memset(aux1_reduceadd_dev, 0, (((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ) * size_of_datatype)
-    check_memcpy_gpu("elpa_gpu_reduce_add_vectors: aux1_reduceadd_dev", successGPU)
+    check_memcpy_gpu("elpa_gpu_ccl_reduce_add_vectors: aux1_reduceadd_dev", successGPU)
 
     successGPU = gpu_memset(aux2_reduceadd_dev, 0, (((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ) * size_of_datatype)
-    check_memcpy_gpu("elpa_gpu_reduce_add_vectors: aux2_reduceadd_dev", successGPU)
+    check_memcpy_gpu("elpa_gpu_ccl_reduce_add_vectors: aux2_reduceadd_dev", successGPU)
   endif
 
   print *,"reduce: my_mpi_rank=", my_mpi_rank, ", lcm_s_t=",lcm_s_t ! PETERDEBUG: delete after testing
@@ -189,8 +196,8 @@ print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*n
 !         enddo
 !       enddo
 
-#if REALCASE == 1 && DOUBLE_PRECISION == 1
-          call gpu_transpose_reduceadd_vectors_copy_block_double(aux1_reduceadd_dev, vmat_s_dev, & 
+#if REALCASE == 1
+          call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux1_reduceadd_dev, vmat_s_dev, & 
                                                 nvc, nvr, n, 0, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
                                                 1, isSkewsymmetric, .true., wantDebug, my_stream)
 #endif
@@ -211,8 +218,8 @@ print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*n
           stop 1
         endif
 
-#if REALCASE == 1 && DOUBLE_PRECISION == 1
-        successGPU = nccl_Reduce(aux1_reduceadd_dev, aux2_reduceadd_dev, int(aux_size, kind=c_size_t), ncclDouble, &
+#if REALCASE == 1
+        successGPU = nccl_Reduce(aux1_reduceadd_dev, aux2_reduceadd_dev, int(aux_size, kind=c_size_t), ncclDataType, &
                                  ncclSum, int(ipt,kind=c_int), ccl_comm_t, my_stream)
 #endif
         
@@ -235,8 +242,8 @@ print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*n
 
       
       if (mypt == ipt) then
-#if REALCASE == 1 && DOUBLE_PRECISION == 1
-          call gpu_transpose_reduceadd_vectors_copy_block_double(aux2_reduceadd_dev, vmat_t_dev, & 
+#if REALCASE == 1
+          call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux2_reduceadd_dev, vmat_t_dev, & 
                                                 nvc, nvr, n, 0, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_t, &
                                                 2, isSkewsymmetric, .true., wantDebug, my_stream)
 #endif
@@ -247,7 +254,7 @@ print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*n
   enddo
 
 
-  call obj%timer%stop("elpa_gpu_reduce_add_vectors")
+  call obj%timer%stop("elpa_gpu_ccl_reduce_add_vectors")
 end subroutine
 
 

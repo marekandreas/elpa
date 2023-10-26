@@ -53,7 +53,7 @@
 
 
 
-subroutine elpa_gpu_transpose_vectors_&
+subroutine elpa_gpu_ccl_transpose_vectors_&
   &MATH_DATATYPE&
   &_&
   &PRECISION &
@@ -128,12 +128,19 @@ subroutine elpa_gpu_transpose_vectors_&
                                                        &PRECISION&
                                                        &_&
                                                        &MATH_DATATYPE
+  integer(kind=c_int)                               :: ncclDataType
   logical, intent(in)                               :: isSkewsymmetric, wantDebug
   integer(kind=c_intptr_t)                          :: my_stream
 
-  if (wantDebug) call obj%timer%start("elpa_gpu_transpose_vectors")
+  if (wantDebug) call obj%timer%start("elpa_gpu_ccl_transpose_vectors")
 
   success = .true.
+
+#if   REALCASE == 1 && DOUBLE_PRECISION == 1
+  ncclDataType = ncclDouble
+#elif REALCASE == 1 && SINGLE_PRECISION == 1
+  ncclDataType = ncclFloat
+#endif
 
   ! ! PETERDEBUG: check if moving this outside speeds up the subroutine
   ! ! PETERDEBUG -- move this outside (?) and change mpi to ccl 
@@ -168,13 +175,13 @@ subroutine elpa_gpu_transpose_vectors_&
       if (comm_s_isRows .and. matrix_order==COLUMN_MAJOR_ORDER .or. &
          (.not. comm_s_isRows) .and. matrix_order==ROW_MAJOR_ORDER) then
         ! my_mpi_rank = myps + mypt*nps
-        transposed_mpi_rank = mypt + myps*npt
+        transposed_mpi_rank = mypt + myps*npt ! can be generalized for arbitrary grid mappings using blacs_pnum(icontxt, prow, pcol)
       else if (comm_s_isRows .and. matrix_order==ROW_MAJOR_ORDER .or. &
         (.not. comm_s_isRows) .and. matrix_order==COLUMN_MAJOR_ORDER) then
         ! my_mpi_rank = mypt + myps*npt
         transposed_mpi_rank = myps + mypt*nps
       else
-        print *, "Error in elpa_gpu_transpose_vectors: matrix_order is set incorrectly"
+        print *, "Error in elpa_gpu_ccl_transpose_vectors: matrix_order is set incorrectly"
       endif
       
       message_size = ld_st*nvc
@@ -190,15 +197,16 @@ subroutine elpa_gpu_transpose_vectors_&
       endif
       
       if (myps > mypt .and. message_size > 0) then
+
         successGPU = successGPU .and. &
-                    nccl_Send(vmat_s_dev, int(message_size,kind=c_size_t), ncclDouble, transposed_mpi_rank, ccl_comm_all, my_stream)
+                  nccl_Send(vmat_s_dev, int(message_size,kind=c_size_t), ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
         successGPU = successGPU .and. &
-                    nccl_Recv(vmat_t_dev, int(message_size,kind=c_size_t), ncclDouble, transposed_mpi_rank, ccl_comm_all, my_stream)
+                  nccl_Recv(vmat_t_dev, int(message_size,kind=c_size_t), ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
       else if (myps < mypt .and. message_size > 0) then
         successGPU = successGPU .and. &
-                    nccl_Recv(vmat_t_dev, int(message_size,kind=c_size_t), ncclDouble, transposed_mpi_rank, ccl_comm_all, my_stream)
+                  nccl_Recv(vmat_t_dev, int(message_size,kind=c_size_t), ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
         successGPU = successGPU .and. &
-                    nccl_Send(vmat_s_dev, int(message_size,kind=c_size_t), ncclDouble, transposed_mpi_rank, ccl_comm_all, my_stream)
+                  nccl_Send(vmat_s_dev, int(message_size,kind=c_size_t), ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
       endif
 
       if (.not. successGPU) then
@@ -221,7 +229,7 @@ subroutine elpa_gpu_transpose_vectors_&
       endif
     endif
 
-    if (wantDebug) call obj%timer%stop("elpa_gpu_transpose_vectors")
+    if (wantDebug) call obj%timer%stop("elpa_gpu_ccl_transpose_vectors")
     return
   endif
 
@@ -279,8 +287,8 @@ subroutine elpa_gpu_transpose_vectors_&
 
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
-#if REALCASE == 1 && DOUBLE_PRECISION == 1
-          call gpu_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_s_dev, & 
+#if REALCASE == 1
+          call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_s_dev, & 
                                                 nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
                                                 1, isSkewsymmetric, .false., wantDebug, my_stream)
 #endif
@@ -292,9 +300,9 @@ subroutine elpa_gpu_transpose_vectors_&
         if (nps>1) then
           if (wantDebug) call obj%timer%start("nccl_communication")
 
-#if REALCASE == 1 && DOUBLE_PRECISION == 1
+#if REALCASE == 1
           aux_size = aux_stride*nvc
-          successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(aux_size, kind=c_size_t), ncclDouble, &
+          successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(aux_size, kind=c_size_t), ncclDataType, &
                                 int(ips, kind=c_int), ccl_comm_s, my_stream)
 #endif
           if (.not. successGPU) then
@@ -308,8 +316,8 @@ subroutine elpa_gpu_transpose_vectors_&
           if (wantDebug) call obj%timer%stop("nccl_communication")
         endif ! (nps>1)
 
-#if REALCASE == 1 && DOUBLE_PRECISION == 1
-        call gpu_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_t_dev, &
+#if REALCASE == 1
+        call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_t_dev, &
                                               nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, npt, ld_t, & 
                                               2, isSkewsymmetric, .false., wantDebug, my_stream)
 #endif
@@ -318,6 +326,6 @@ subroutine elpa_gpu_transpose_vectors_&
 
   enddo ! n = 0, lcm_s_t-1
 
-  if (wantDebug) call obj%timer%stop("elpa_gpu_transpose_vectors")
+  if (wantDebug) call obj%timer%stop("elpa_gpu_ccl_transpose_vectors")
 
 end subroutine

@@ -235,6 +235,7 @@ subroutine tridiag_&
   integer(kind=ik)                              :: nvs, nvr, nvc, lcm_s_t, nblks_tot, nblks_comm, nblks_skip
   logical                                       :: isSqareGrid
   integer(kind=c_intptr_t)                      :: aux_transpose_dev
+  integer(kind=c_int)                           :: ncclDataType
 #endif
   integer(kind=c_int) :: pointerMode
 
@@ -247,6 +248,12 @@ subroutine tridiag_&
   
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+  
+#if   REALCASE == 1 && DOUBLE_PRECISION == 1
+    ncclDataType = ncclDouble
+#elif REALCASE == 1 && SINGLE_PRECISION == 1
+    ncclDataType = ncclFloat
+#endif
 
 ! PETERDEBUG: this is a temporaty fix unless I implement the streamed version of optimization    
 #if !defined(WITH_GPU_STREAMS)
@@ -833,7 +840,7 @@ subroutine tridiag_&
         endif ! useGPU
       endif ! (n_stored_vecs > 0 .and. l_rows > 0)
 
-#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
+#if defined(GPU_NEW) && REALCASE == 1
       if (useGPU) then
         if (my_prow == prow(istep-1, nblk, np_rows)) then
           isOurProcessRowInt = 1
@@ -845,8 +852,8 @@ subroutine tridiag_&
         !check_memcpy_gpu("tridiag: aux1_dev", successGPU)
 
         my_stream = obj%gpu_setup%my_stream
-        call nvtxRangePush("kernel: gpu_dot_product_and_assign_double v_row_dev*v_row_dev,aux1_dev")
-        call gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call nvtxRangePush("kernel: gpu_dot_product_and_assign v_row_dev*v_row_dev,aux1_dev")
+        call gpu_dot_product_and_assign_PRECISION(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
         call nvtxRangePop()
 
         if (.not. useCCL) then
@@ -875,8 +882,8 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
       if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-        successGPU = nccl_Allreduce(aux1_dev, aux1_dev, int(2,kind=c_size_t), ncclDouble, &
+#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1
+        successGPU = nccl_Allreduce(aux1_dev, aux1_dev, int(2,kind=c_size_t), ncclDataType, &
                                     ncclSum, ccl_comm_rows, my_stream)
         if (.not. successGPU) then
           print *,"Error in nccl_Allreduce"
@@ -904,7 +911,7 @@ subroutine tridiag_&
 #endif /* WITH_MPI */
 
       if (useCCL) then
-#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
+#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1
         vnorm2_dev = aux1_dev
         vrl_dev = aux1_dev + 1*size_of_datatype
 #endif
@@ -921,10 +928,10 @@ subroutine tridiag_&
 
       ! Householder transformation
       if (useCCL) then
-#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
+#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1
         call nvtxRangePush("gpu_hh_transform")
-        call gpu_hh_transform_double(obj, vrl_dev, vnorm2_dev, xf_dev, tau_dev+(istep-1)*size_of_datatype, & 
-                                     wantDebug, my_stream)
+        call gpu_hh_transform_PRECISION(obj, vrl_dev, vnorm2_dev, xf_dev, tau_dev+(istep-1)*size_of_datatype, & 
+                                        wantDebug, my_stream)
         call nvtxRangePop()
 #endif
       else ! useCCL
@@ -974,7 +981,7 @@ subroutine tridiag_&
         v_row(l_rows+1) = tau(istep)
       endif
 
-#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
+#if defined(GPU_NEW) && REALCASE == 1
       if (useGPU) then
         if (useCCL) then
           xf_host_or_dev = xf_dev
@@ -984,7 +991,7 @@ subroutine tridiag_&
         
         call nvtxRangePush("kernel gpu_set_e_vec_scale_set_one_store_v_row")
         isOurProcessRow = (my_prow == prow(istep-1, nblk, np_rows))
-        call gpu_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
+        call gpu_set_e_vec_scale_set_one_store_v_row_PRECISION(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
                                                   l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
         call nvtxRangePop()
       endif ! useGPU  
@@ -1010,9 +1017,9 @@ subroutine tridiag_&
     if (useCCL .and. np_cols>1) then
 #ifdef WITH_NVIDIA_NCCL
 
-#if REALCASE == 1 && DOUBLE_PRECISION == 1
-      successGPU = nccl_Bcast(v_row_dev, v_row_dev, int(l_rows+1, kind=c_size_t), ncclDouble, &
-                            int(pcol(istep, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
+#if REALCASE == 1
+      successGPU = nccl_Bcast(v_row_dev, v_row_dev, int(l_rows+1, kind=c_size_t), ncclDataType, &
+                              int(pcol(istep, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
 #endif
       if (.not. successGPU) then
         print *,"Error in nccl_Bcast"
@@ -1048,9 +1055,9 @@ subroutine tridiag_&
 
     ! Transpose Householder Vector v_row -> v_col
     if (useCCL) then
-      call nvtxRangePush("elpa_gpu_transpose_vectors v_row_dev->v_col_dev")
-#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-      call elpa_gpu_transpose_vectors_&
+      call nvtxRangePush("elpa_gpu_ccl_transpose_vectors v_row_dev->v_col_dev")
+#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1
+      call elpa_gpu_ccl_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
           &PRECISION &
@@ -1497,10 +1504,11 @@ subroutine tridiag_&
     if (l_cols > 0) then
 #ifdef WITH_MPI
       if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
+#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1
         call nvtxRangePush("nccl_Allreduce u_col_dev") ! PETERDEBUG: can we use Bcast instead of Allreauce and not set u_col_dev=0 above?
 
-        successGPU = nccl_Allreduce(u_col_dev, u_col_dev, int(l_cols, kind=c_size_t), ncclDouble, ncclSum, ccl_comm_rows, my_stream)
+        successGPU = nccl_Allreduce(u_col_dev, u_col_dev, int(l_cols, kind=c_size_t), &
+                                    ncclDataType, ncclSum, ccl_comm_rows, my_stream)
         if (.not. successGPU) then
           print *,"Error in nccl_allreduce"
           stop 1
@@ -1531,9 +1539,9 @@ subroutine tridiag_&
     
     ! Transpose Householder Vector u_col -> u_row
     if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-      call nvtxRangePush("elpa_gpu_transpose_vectors u_col_dev->u_row_dev")
-      call elpa_gpu_transpose_vectors_&
+#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1
+      call nvtxRangePush("elpa_gpu_ccl_transpose_vectors u_col_dev->u_row_dev")
+      call elpa_gpu_ccl_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
           &PRECISION &
@@ -1589,12 +1597,12 @@ subroutine tridiag_&
     endif ! useGPU
 #endif
 
-#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
+#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) && REALCASE == 1
     ! PETERDEBUG: WITH_NVIDIA_NCCL should be renamed to WITH_GPU_CCL
     ! PETERDEBUG: this part could only be useful if we use NCCL for Allreduce of vav_dev
     if (useGPU) then
       call nvtxRangePush("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
-      call gpu_dot_product_double(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, my_stream)
+      call gpu_dot_product_PRECISION(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, my_stream)
       call nvtxRangePop()
     endif ! useGPU
 #endif /* GPU_NEW && WITH_NVIDIA_NCCL */
@@ -1627,8 +1635,8 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
     if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1 && DOUBLE_PRECISION == 1
-      successGPU = nccl_Allreduce(vav_dev, vav_dev, int(1, kind=c_size_t), ncclDouble, ncclSum, ccl_comm_cols, my_stream)
+#if defined(WITH_NVIDIA_NCCL) && REALCASE == 1
+      successGPU = nccl_Allreduce(vav_dev, vav_dev, int(1, kind=c_size_t), ncclDataType, ncclSum, ccl_comm_cols, my_stream)
       if (.not. successGPU) then
         print *,"Error in nccl_allreduce"
         stop 1
@@ -1682,7 +1690,7 @@ subroutine tridiag_&
       call nvtxRangePop()
     endif ! .not. useGPU
 
-#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
+#if defined(GPU_NEW) && REALCASE == 1
     if (useGPU) then
 
       ! kernel: update vu_stored_rows_dev, uv_stored_cols
@@ -1696,10 +1704,10 @@ subroutine tridiag_&
         vav_host_or_dev = int(loc(vav),kind=c_intptr_t)
         tau_istep_host_or_dev = int(loc(tau(istep)), kind=c_intptr_t)
       endif ! useCCL
-      call gpu_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
-                                         v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_istep_host_or_dev, &
-                                         l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, istep, &
-                                         useCCL, wantDebug, my_stream)
+      call gpu_store_u_v_in_uv_vu_PRECISION(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
+                                            v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                            l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, istep, &
+                                            useCCL, wantDebug, my_stream)
       call nvtxRangePop()
     endif ! useGPU
 #endif /* GPU_NEW */
@@ -1819,12 +1827,12 @@ subroutine tridiag_&
     if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
 
       if (useGPU) then
-#if defined(GPU_NEW) && REALCASE == 1 && DOUBLE_PRECISION == 1
+#if defined(GPU_NEW) && REALCASE == 1
         my_stream = obj%gpu_setup%my_stream
         call nvtxRangePush("kernel: gpu_update_matrix_element_add")
-        call gpu_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                              isSkewsymmetric, wantDebug, my_stream) ! double -> PRECISION
+        call gpu_update_matrix_element_add_PRECISION(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+                                            l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+                                            isSkewsymmetric, wantDebug, my_stream)
         call nvtxRangePop()
 #endif
       else ! useGPU
