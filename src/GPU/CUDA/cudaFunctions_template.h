@@ -1485,7 +1485,6 @@ extern "C" {
     }
   }
 
-
   void cublasDaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, double alpha, double *x, int incx, double *y, int incy){
 
     cublasStatus_t status = cublasDaxpy(cudaHandle, n, &alpha, x, incx, y, incy);
@@ -1503,9 +1502,10 @@ extern "C" {
   }
 
   void cublasZaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, double _Complex alpha, double _Complex *x, int incx, double _Complex *y, int incy){
+
     cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
-    cuDoubleComplex* X_casted    =   (cuDoubleComplex*) x;
-    cuDoubleComplex* Y_casted    =   (cuDoubleComplex*) y;
+    cuDoubleComplex* X_casted     = (cuDoubleComplex*) x;
+    cuDoubleComplex* Y_casted     = (cuDoubleComplex*) y;
 
     cublasStatus_t status = cublasZaxpy(cudaHandle, n, &alpha_casted, X_casted, incx, Y_casted, incy);
     if (status != CUBLAS_STATUS_SUCCESS) {
@@ -1513,15 +1513,17 @@ extern "C" {
     }
   }
 
-    void cublasCaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, float _Complex alpha, float _Complex *x, int incx, float _Complex *y, int incy){
+  void cublasCaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, float _Complex alpha, float _Complex *x, int incx, float _Complex *y, int incy){
+
     cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
-    cuFloatComplex* X_casted    =   (cuFloatComplex*) x;
-    cuFloatComplex* Y_casted    =   (cuFloatComplex*) y;
+    cuFloatComplex* X_casted     = (cuFloatComplex*) x;
+    cuFloatComplex* Y_casted     = (cuFloatComplex*) y;
 
     cublasStatus_t status = cublasCaxpy(cudaHandle, n, &alpha_casted, X_casted, incx, Y_casted, incy);
     if (status != CUBLAS_STATUS_SUCCESS) {
        printf("error when calling cublasCaxpy\n");
     }
   }
+
 }
 #endif /* WITH_NVIDIA_GPU_VERSION */

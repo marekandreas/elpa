@@ -65,6 +65,7 @@
   use mod_check_for_gpu
   use elpa_blas_interfaces
   use invert_trm_gpu
+  use mod_query_gpu_usage
 
   implicit none
 #include "../general/precision_kinds.F90"
@@ -96,7 +97,7 @@
   character(20)                              :: gpuString
   logical                                    :: successGPU
   logical                                    :: useGPU
-  integer(kind=c_int)                        :: gpu, numGPU
+  integer(kind=c_int)                        :: numGPU
   integer(kind=c_intptr_t)                   :: tmat1_dev, tmat2_dev, a_dev, tmp1_dev, tmp2_dev
   type(c_ptr)                                :: tmp1_mpi_dev
   MATH_DATATYPE(kind=rck), pointer           :: tmp1_mpi_fortran_ptr(:)
@@ -107,68 +108,42 @@
   integer(kind=c_intptr_t)                   :: a_off, tmat2_off, tmp1_off, tmp2_off
    MATH_DATATYPE(kind=rck), pointer          :: a_mpi_deviceptr(:,:), initializer_ptr(:) !DEB
   integer(kind=c_intptr_t)                   :: num
-  integer(kind=c_int)                        :: gpu_invert_trm
   integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                             &PRECISION&
                                                             &_&
                                                             &MATH_DATATYPE
 
   integer(kind=c_intptr_t)                   :: gpublasHandle, gpusolverHandle, my_stream
+  integer(kind=c_int)                        :: gpu_invert_trm
 
-  ! GPU settings
-  gpu_invert_trm = 0
-  if (gpu_vendor() == NVIDIA_GPU) then
-    call obj%get("gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_INVERT_TRM: Problem getting option for GPU. Aborting..."
-      stop 1
-    endif
-    if (gpu .eq. 1) then
-      print *,"You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new &
-              & keyword 'nvidia-gpu'"
-      call obj%set("nvidia-gpu",gpu,error)
-      if (error .ne. ELPA_OK) then
-        print *,"ELPA_INVERT_TRM: Problem setting option for NVIDIA GPU. Aborting..."
-        stop 1
-      endif
-    endif
+  success = .true.
+  useGPU = .false.
 
-    call obj%get("nvidia-gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_INVERT_TRM: Problem getting option for NVIDIA GPU. Aborting..."
-      stop 1
-    endif
-
-  else if (gpu_vendor() == AMD_GPU) then
-    call obj%get("amd-gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_INVERT_TRM: Problem getting option for AMD GPU. Aborting..."
-      stop 1
-    endif
-  
-  else if (gpu_vendor() == SYCL_GPU) then
-    call obj%get("intel-gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      print *,"ELPA_INVERT_TRM: Problem getting option for SYCL GPU. Aborting..."
-      success = .false.
-      return
-    endif  
-
-  else
-    gpu = 0
-  endif
-
-  call obj%get("gpu_invert_trm",gpu_invert_trm,error)
-  if (error .ne. ELPA_OK) then
-    print *,"ELPA_INVERT_TRM: Problem getting option for gpu_invert_trm. Aborting..."
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+  if (.not.(query_gpu_usage(obj, "ELPA_INVERT_TRM", useGPU))) then
+    print *,"ELPA_INVERT_TRM: Problem querrying settings for GPU Aborting..."
     stop 1
   endif
+#endif
 
-  if (gpu_invert_trm .eq. 1) then
-    useGPU = (gpu == 1)
-  else
-    useGPU = .false.
+  ! check whether the above setting should be overriden
+  if (obj%is_set("gpu_invert_trm") == 1) then
+    call obj%get("gpu_invert_trm", gpu_invert_trm, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option for gpu_invert_trm. Aborting..."
+      stop 1
+    endif
+    if (useGPU .and. gpu_invert_trm .eq. 0) then
+      useGPU = .false.
+    else if (.not.(useGPU) .and. gpu_invert_trm .eq. 1) then
+      useGPU = .true.
+    else 
+    endif
+  else 
+    ! no override by user
+    ! keep seeting as found before
   endif
+
 
   if (.not.(useGPU)) then
 #ifdef DEVICE_POINTER

@@ -65,6 +65,7 @@
   interface gpublas_Dgemm
     module procedure gpublas_Dgemm_intptr
     module procedure gpublas_Dgemm_cptr
+    module procedure gpublas_Dgemm_intptr_cptr_intptr
   end interface
 
   interface gpublas_Dscal
@@ -100,6 +101,7 @@
   interface gpublas_Sgemm
     module procedure gpublas_Sgemm_intptr
     module procedure gpublas_Sgemm_cptr
+    module procedure gpublas_Sgemm_intptr_cptr_intptr
   end interface
 
   interface gpublas_Sscal
@@ -135,6 +137,7 @@
   interface gpublas_Zgemm
     module procedure gpublas_Zgemm_intptr
     module procedure gpublas_Zgemm_cptr
+    module procedure gpublas_Zgemm_intptr_cptr_intptr
   end interface
 
   interface gpublas_Zscal
@@ -170,6 +173,7 @@
   interface gpublas_Cgemm
     module procedure gpublas_Cgemm_intptr
     module procedure gpublas_Cgemm_cptr
+    module procedure gpublas_Cgemm_intptr_cptr_intptr
   end interface
 
   interface gpublas_Cscal
@@ -302,9 +306,9 @@
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE)             :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE)             :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
@@ -347,9 +351,9 @@
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE)             :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE)             :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
@@ -372,6 +376,57 @@
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
           call syclblas_Dgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+    end subroutine 
+
+    subroutine gpublas_Dgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, lda, &
+                                            b, ldb, beta, c, ldc, handle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE)             :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=c_intptr_t)        :: handle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Dgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                           lda, b, ldb, beta, c, ldc, handle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Dgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                            lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_Dgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                   lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Dgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                             lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -703,9 +758,9 @@
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT)              :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT)              :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
@@ -748,9 +803,9 @@
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT)              :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT)              :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
@@ -773,6 +828,57 @@
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
           call syclblas_Sgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+    end subroutine 
+
+    subroutine gpublas_Sgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, lda, &
+                                            b, ldb, beta, c, ldc, handle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT)              :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=c_intptr_t)        :: handle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Sgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                           lda, b, ldb, beta, c, ldc, handle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Sgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                            lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_Sgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                   lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Sgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                             lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -1104,9 +1210,9 @@
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX)  :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
@@ -1149,9 +1255,9 @@
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX)  :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX)  :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
@@ -1174,6 +1280,57 @@
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
           call syclblas_Zgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+    end subroutine 
+
+    subroutine gpublas_Zgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, lda, &
+                                            b, ldb, beta, c, ldc, handle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX)  :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=c_intptr_t)        :: handle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Zgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                           lda, b, ldb, beta, c, ldc, handle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Zgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                            lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_Zgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                   lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Zgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                             lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 
@@ -1505,9 +1662,9 @@
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX)  :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX)  :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
@@ -1550,9 +1707,9 @@
 
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX)  :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX)  :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=c_intptr_t)        :: handle
 
@@ -1575,6 +1732,57 @@
 #ifdef WITH_SYCL_GPU_VERSION
         if (use_gpu_vendor == sycl_gpu) then
           call syclblas_Cgemm_cptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+    end subroutine 
+
+    subroutine gpublas_Cgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, lda, &
+                                            b, ldb, beta, c, ldc, handle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX)  :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=c_intptr_t)        :: handle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Cgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                           lda, b, ldb, beta, c, ldc, handle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Cgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                            lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+        if (use_gpu_vendor == openmp_offload_gpu) then
+          call mkl_openmp_offload_Cgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                   lda, b, ldb, beta, c, ldc, handle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Cgemm_intptr_cptr_intptr(cta, ctb, m, n, k, alpha, a, &
+                                                             lda, b, ldb, beta, c, ldc, handle)
         endif
 #endif
 

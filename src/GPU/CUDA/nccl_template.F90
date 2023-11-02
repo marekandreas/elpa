@@ -1,4 +1,4 @@
-!    Copyright 2014 - 2023, A. Marek
+!    Copyright 2023, A. Marek
 !            
 !    This file is part of ELPA.
 !     
@@ -431,6 +431,46 @@
     end function
   end interface
 
+  interface nccl_reduce
+    module procedure nccl_reduce_intptr
+    module procedure nccl_reduce_cptr
+  end interface
+
+
+  interface
+    function nccl_reduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(istat) &
+             bind(C, name="ncclReduceFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t), value              :: sendbuff
+      integer(kind=C_intptr_t), value              :: recvbuff
+      integer(kind=c_size_t), intent(in), value    :: nrElements
+      integer(kind=C_INT), intent(in), value       :: ncclDatatype
+      integer(kind=C_INT), intent(in), value       :: ncclOp
+      integer(kind=C_INT), intent(in), value       :: root
+      integer(kind=C_intptr_t), value              :: ncclComm
+      integer(kind=C_intptr_t), value              :: cudaStream
+      integer(kind=C_INT)                          :: istat
+    end function
+  end interface
+
+  interface
+    function nccl_reduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(istat) &
+             bind(C, name="ncclAllReduceFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value                           :: sendbuff
+      type(c_ptr), value                           :: recvbuff
+      integer(kind=c_size_t), intent(in), value    :: nrElements
+      integer(kind=C_INT), intent(in), value       :: ncclDatatype
+      integer(kind=C_INT), intent(in), value       :: ncclOp
+      integer(kind=C_INT), intent(in), value       :: root
+      integer(kind=C_intptr_t), value              :: ncclComm
+      integer(kind=C_intptr_t), value              :: cudaStream
+      integer(kind=C_INT)                          :: istat
+    end function
+  end interface
+
   contains
 
 
@@ -600,12 +640,7 @@
       logical                                   :: success
       integer :: i
 #ifdef WITH_NVIDIA_NCCL
-      !print *,"size of uniqueID: ",sizeof(ncclID(1:16))
-      print *,"size of uniqueID: ",sizeof(ncclID)
       success = nccl_get_unique_id_c(ncclId) /= 0
-      !do i =1,128
-      !  print *,"F ",ncclId%str(i)
-      !enddo
 #else 
       success = .true.
 #endif
@@ -845,4 +880,43 @@
 #endif
     end function
 
+    function nccl_reduce_intptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
 
+      integer(kind=C_intptr_t)                  :: sendbuff
+      integer(kind=C_intptr_t)                  :: recvbuff
+      integer(kind=c_size_t)                    :: nrElements
+      integer(kind=c_int)                       :: ncclDatatype
+      integer(kind=c_int)                       :: ncclOp
+      integer(kind=c_int)                       :: root
+      integer(kind=C_intptr_t)                  :: ncclComm
+      integer(kind=C_intptr_t)                  :: cudaStream
+      logical                                   :: success
+#ifdef WITH_NVIDIA_NCCL
+      success = nccl_reduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
+  
+    function nccl_reduce_cptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      type(c_ptr)                               :: sendbuff
+      type(c_ptr)                               :: recvbuff
+      integer(kind=c_size_t)                    :: nrElements
+      integer(kind=c_int)                       :: ncclDatatype
+      integer(kind=c_int)                       :: ncclOp
+      integer(kind=c_int)                       :: root
+      integer(kind=C_intptr_t)                  :: ncclComm
+      integer(kind=C_intptr_t)                  :: cudaStream
+      logical                                   :: success
+#ifdef WITH_NVIDIA_NCCL
+      success = nccl_reduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
+  

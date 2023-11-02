@@ -95,6 +95,10 @@ static int band_to_full_cardinality(elpa_index_t index);
 static int band_to_full_enumerate(elpa_index_t index, int i);
 static int band_to_full_is_valid(elpa_index_t index, int n, int new_value);
 
+static int hermitian_multiply_cardinality(elpa_index_t index);
+static int hermitian_multiply_enumerate(elpa_index_t index, int i);
+static int hermitian_multiply_is_valid(elpa_index_t index, int n, int new_value);
+
 static int stripewidth_real_cardinality(elpa_index_t index);
 static int stripewidth_real_enumerate(elpa_index_t index, int i);
 static int stripewidth_real_is_valid(elpa_index_t index, int n, int new_value);
@@ -382,7 +386,10 @@ static const elpa_index_int_entry_t int_entries[] = {
 	// 2. max_stored_rows
         INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation", default_max_stored_rows, ELPA_AUTOTUNE_EXTENSIVE, ELPA1_AUTOTUNE_MAX_STORED_ROWS, ELPA_AUTOTUNE_DOMAIN_ANY,  ELPA_AUTOTUNE_PART_ELPA1, \
                         max_stored_rows_cardinality, max_stored_rows_enumerate, max_stored_rows_is_valid, NULL, PRINT_YES),
-	// 3. stripewidth
+	// 4. BLOCKING in hermitian_multiply
+        INT_ENTRY("blocking_in_multiply", "Blocking used in hermitian multiply, default", 31, ELPA_AUTOTUNE_EXTENSIVE, ELPA2_AUTOTUNE_HERMITIAN_MULTIPLY_BLOCKING, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ELPA2, \
+                        hermitian_multiply_cardinality, hermitian_multiply_enumerate, hermitian_multiply_is_valid, NULL, PRINT_YES),
+	// 5. stripewidth
         INT_ENTRY("stripewidth_real", "Stripewidth_real, default 48. Must be a multiple of 4", 48, ELPA_AUTOTUNE_EXTENSIVE, ELPA2_AUTOTUNE_TRIDI_TO_BAND_STRIPEWIDTH, ELPA_AUTOTUNE_DOMAIN_REAL,  ELPA_AUTOTUNE_PART_ELPA2, \
                         stripewidth_real_cardinality, stripewidth_real_enumerate, stripewidth_real_is_valid, NULL, PRINT_YES),
         INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_EXTENSIVE, ELPA2_AUTOTUNE_TRIDI_TO_BAND_STRIPEWIDTH, ELPA_AUTOTUNE_DOMAIN_COMPLEX, ELPA_AUTOTUNE_PART_ELPA2, \
@@ -1089,6 +1096,13 @@ static int band_to_full_enumerate(elpa_index_t index, int i) {
 	return i+1;
 }
 
+static int hermitian_multiply_cardinality(elpa_index_t index) {
+	return 4100;
+}
+static int hermitian_multiply_enumerate(elpa_index_t index, int i) {
+	return i+1;
+}
+
 static int internal_nblk_is_valid(elpa_index_t index, int n, int new_value) {
         return (0 <= new_value);
 }
@@ -1124,6 +1138,12 @@ static int band_to_full_is_valid(elpa_index_t index, int n, int new_value) {
 	int max_block=10;
         return (1 <= new_value) && (new_value <= max_block);
 }
+
+static int hermitian_multiply_is_valid(elpa_index_t index, int n, int new_value) {
+	int max_block=4100;
+        return (1 <= new_value) && (new_value <= max_block);
+}
+
 
 static int stripewidth_real_cardinality(elpa_index_t index) {
 	return 17;

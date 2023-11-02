@@ -610,6 +610,7 @@
   interface syclblas_Dgemm
     module procedure syclblas_Dgemm_intptr
     module procedure syclblas_Dgemm_cptr
+    module procedure syclblas_Dgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -636,6 +637,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       real(kind=C_DOUBLE) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Dgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="syclblasDgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: syclblasHandle
     end subroutine
   end interface
@@ -778,6 +795,7 @@
   interface syclblas_Sgemm
     module procedure syclblas_Sgemm_intptr
     module procedure syclblas_Sgemm_cptr
+    module procedure syclblas_Sgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -804,6 +822,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       real(kind=C_FLOAT) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Sgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="syclblasSgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: syclblasHandle
     end subroutine
   end interface
@@ -946,6 +980,7 @@
   interface syclblas_Zgemm
     module procedure syclblas_Zgemm_intptr
     module procedure syclblas_Zgemm_cptr
+    module procedure syclblas_Zgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -972,6 +1007,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Zgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="syclblasZgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: syclblasHandle
     end subroutine
   end interface
@@ -1114,6 +1165,7 @@
   interface syclblas_Cgemm
     module procedure syclblas_Cgemm_intptr
     module procedure syclblas_Cgemm_cptr
+    module procedure syclblas_Cgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -1140,6 +1192,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Cgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="syclblasCgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: syclblasHandle
     end subroutine
   end interface
@@ -1369,7 +1437,7 @@
 
 !  interface
 !    subroutine syclblas_Daxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasDscal_elpa_wrapper")
+!               bind(C, name="syclblasDaxpy_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
@@ -1381,7 +1449,7 @@
 
 !  interface
 !    subroutine syclblas_Daxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasDscal_elpa_wrapper")
+!               bind(C, name="syclblasDaxpy_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
@@ -1454,7 +1522,7 @@
 
 !  interface
 !    subroutine syclblas_Saxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasSscal_elpa_wrapper")
+!               bind(C, name="syclblasSaxpy_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
@@ -1466,7 +1534,7 @@
 
 !  interface
 !    subroutine syclblas_Saxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasSscal_elpa_wrapper")
+!               bind(C, name="syclblasSaxpy_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
@@ -1541,7 +1609,7 @@
 
 !  interface
 !    subroutine syclblas_Zaxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasZscal_elpa_wrapper")
+!               bind(C, name="syclblasZaxpy_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
@@ -1553,7 +1621,7 @@
 
 !  interface
 !    subroutine syclblas_Zaxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasZscal_elpa_wrapper")
+!               bind(C, name="syclblasZaxpy_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
@@ -1628,7 +1696,7 @@
 
 !  interface
 !    subroutine syclblas_Caxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasCscal_elpa_wrapper")
+!               bind(C, name="syclblasCaxpy_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
@@ -1640,7 +1708,7 @@
 
 !  interface
 !    subroutine syclblas_Caxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasCscal_elpa_wrapper")
+!               bind(C, name="syclblasCaxpy_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
@@ -2288,9 +2356,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
@@ -2302,13 +2370,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
       call syclblas_Dgemm_cptr_c(syclblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Dgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
@@ -2436,9 +2521,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
@@ -2450,13 +2535,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
       call syclblas_Sgemm_cptr_c(syclblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Sgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Sgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
@@ -2584,9 +2686,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
@@ -2598,13 +2700,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
       call syclblas_Zgemm_cptr_c(syclblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Zgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Zgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
@@ -2732,9 +2851,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
@@ -2746,13 +2865,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
       call syclblas_Cgemm_cptr_c(syclblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Cgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Cgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
