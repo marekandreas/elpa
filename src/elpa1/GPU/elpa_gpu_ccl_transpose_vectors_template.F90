@@ -129,6 +129,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
                                                        &_&
                                                        &MATH_DATATYPE
   integer(kind=c_int)                               :: ncclDataType
+  integer(kind=ik)                                  :: k_datatype
   logical, intent(in)                               :: isSkewsymmetric, wantDebug
   integer(kind=c_intptr_t)                          :: my_stream
 
@@ -138,8 +139,16 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
 #if   REALCASE == 1 && DOUBLE_PRECISION == 1
   ncclDataType = ncclDouble
+  k_datatype = 1
 #elif REALCASE == 1 && SINGLE_PRECISION == 1
   ncclDataType = ncclFloat
+  k_datatype = 1
+#elif COMPLEXCASE == 1 && DOUBLE_PRECISION == 1
+  ncclDataType = ncclDouble
+  k_datatype = 2
+#elif COMPLEXCASE == 1 && SINGLE_PRECISION == 1
+  ncclDataType = ncclFloat
+  k_datatype = 2
 #endif
 
   ! ! PETERDEBUG: check if moving this outside speeds up the subroutine
@@ -198,15 +207,15 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
       
       if (myps > mypt .and. message_size > 0) then
 
-        successGPU = successGPU .and. &
-                  nccl_Send(vmat_s_dev, int(message_size,kind=c_size_t), ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
-        successGPU = successGPU .and. &
-                  nccl_Recv(vmat_t_dev, int(message_size,kind=c_size_t), ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
+        successGPU = successGPU .and. nccl_Send(vmat_s_dev, int(k_datatype*message_size,kind=c_size_t), &
+                                                ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
+        successGPU = successGPU .and. nccl_Recv(vmat_t_dev, int(k_datatype*message_size,kind=c_size_t), &
+                                                ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
       else if (myps < mypt .and. message_size > 0) then
-        successGPU = successGPU .and. &
-                  nccl_Recv(vmat_t_dev, int(message_size,kind=c_size_t), ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
-        successGPU = successGPU .and. &
-                  nccl_Send(vmat_s_dev, int(message_size,kind=c_size_t), ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
+        successGPU = successGPU .and. nccl_Recv(vmat_t_dev, int(k_datatype*message_size,kind=c_size_t), &
+                                                ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
+        successGPU = successGPU .and. nccl_Send(vmat_s_dev, int(k_datatype*message_size,kind=c_size_t), &
+                                                ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
       endif
 
       if (.not. successGPU) then
@@ -287,11 +296,9 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
-#if REALCASE == 1
           call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_s_dev, & 
                                                 nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
                                                 1, isSkewsymmetric, .false., wantDebug, my_stream)
-#endif
         endif ! (myps == ips)
 
         ! call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),  MPI_REAL_PRECISION,    &
@@ -300,11 +307,10 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
         if (nps>1) then
           if (wantDebug) call obj%timer%start("nccl_communication")
 
-#if REALCASE == 1
           aux_size = aux_stride*nvc
-          successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(aux_size, kind=c_size_t), ncclDataType, &
-                                int(ips, kind=c_int), ccl_comm_s, my_stream)
-#endif
+          successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(k_datatype*aux_size, kind=c_size_t), &
+                                  ncclDataType, int(ips, kind=c_int), ccl_comm_s, my_stream)
+
           if (.not. successGPU) then
             print *,"Error in nccl_Bcast"
             stop 1
@@ -316,11 +322,9 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
           if (wantDebug) call obj%timer%stop("nccl_communication")
         endif ! (nps>1)
 
-#if REALCASE == 1
         call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_t_dev, &
                                               nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, npt, ld_t, & 
                                               2, isSkewsymmetric, .false., wantDebug, my_stream)
-#endif
       endif ! (nblks_comm .ne. 0)
     endif ! (mypt == ipt)
 

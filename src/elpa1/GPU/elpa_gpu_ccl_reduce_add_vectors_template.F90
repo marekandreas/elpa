@@ -110,7 +110,7 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
                                                         &_&
                                                         &MATH_DATATYPE
   integer(kind=c_int)                                :: ncclDataType
-
+  integer(kind=ik)                                   :: k_datatype
   integer(kind=c_intptr_t)                           :: ccl_comm_s, ccl_comm_t
   integer(kind=c_intptr_t)                           :: vmat_s_dev, vmat_t_dev 
   integer(kind=c_intptr_t)                           :: aux1_reduceadd_dev, aux2_reduceadd_dev
@@ -122,8 +122,16 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
 
 #if   REALCASE == 1 && DOUBLE_PRECISION == 1
   ncclDataType = ncclDouble
+  k_datatype = 1
 #elif REALCASE == 1 && SINGLE_PRECISION == 1
   ncclDataType = ncclFloat
+  k_datatype = 1
+#elif COMPLEXCASE == 1 && DOUBLE_PRECISION == 1
+  ncclDataType = ncclDouble
+  k_datatype = 2
+#elif COMPLEXCASE == 1 && SINGLE_PRECISION == 1
+  ncclDataType = ncclFloat
+  k_datatype = 2
 #endif
 
   call obj%timer%start("mpi_communication")
@@ -196,11 +204,10 @@ print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*n
 !         enddo
 !       enddo
 
-#if REALCASE == 1
-          call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux1_reduceadd_dev, vmat_s_dev, & 
+      call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux1_reduceadd_dev, vmat_s_dev, & 
                                                 nvc, nvr, n, 0, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
                                                 1, isSkewsymmetric, .true., wantDebug, my_stream)
-#endif
+
       aux_size = aux_stride * nvc
 
 
@@ -218,10 +225,8 @@ print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*n
           stop 1
         endif
 
-#if REALCASE == 1
-        successGPU = nccl_Reduce(aux1_reduceadd_dev, aux2_reduceadd_dev, int(aux_size, kind=c_size_t), ncclDataType, &
-                                 ncclSum, int(ipt,kind=c_int), ccl_comm_t, my_stream)
-#endif
+        successGPU = nccl_Reduce(aux1_reduceadd_dev, aux2_reduceadd_dev, int(k_datatype*aux_size, kind=c_size_t), &
+                                 ncclDataType, ncclSum, int(ipt,kind=c_int), ccl_comm_t, my_stream)
         
         if (.not. successGPU) then
           print *, "Error in nccl_Reduce"

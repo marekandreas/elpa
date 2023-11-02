@@ -98,9 +98,11 @@ subroutine trans_ev_&
   use elpa_abstract_impl
   use elpa_blas_interfaces
   use elpa_gpu
+#ifdef WITH_NVIDIA_GPU_VERSION
+  use cuda_functions
+#endif
 #ifdef WITH_NVIDIA_NCCL
   use nccl_functions
-  use cuda_functions
 #endif
 
   implicit none
@@ -388,9 +390,9 @@ subroutine trans_ev_&
 
   do istep = 1, na, blockStep
 
-! #ifdef WITH_NVTX PETERDEBUG: 
-!     call nvtxRangePush("trans_ev_cycle")
-! #endif
+#ifdef WITH_NVTX
+    call nvtxRangePush("trans_ev_cycle")
+#endif
 
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
@@ -847,9 +849,9 @@ subroutine trans_ev_&
       nstor = 0
     endif  ! (nstor+nblk>max_stored_rows .or. istep+nblk>na .or. (na/np_rows<=256 .and. nstor>=32))
 
-! #ifdef WITH_NVTX    
-!     call nvtxRangePop()
-! #endif
+#ifdef WITH_NVTX    
+    call nvtxRangePop()
+#endif
     
   enddo ! istep = 1, na, blockStep
 
