@@ -355,32 +355,5 @@ extern "C" {
   }
 
 
-
-  int ncclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, ncclDataType_t ncclDatatype, ncclRedOp_t ncclOp, int root, ncclComm_t ncclComm, cudaStream_t cudaStream) {
-    ncclResult_t ncclError;
-
-    ncclError = ncclReduce(sendbuff, recvbuff, count, ncclDatatype, ncclOp, root, ncclComm, cudaStream);
-    if (ncclError != ncclSuccess) {
-      if (ncclError == ncclUnhandledCudaError) {
-        errormessage("Error in ncclReduce: %s\n", "ncclUnhandledCudaError");
-      } else if (ncclError == ncclSystemError) {
-        errormessage("Error in ncclReduce: %s\n", "ncclSystemError");
-      } else if (ncclError == ncclInternalError) {
-        errormessage("Error in ncclReduce: %s\n", "ncclInternalError");
-      } else if (ncclError == ncclInvalidArgument) {
-        errormessage("Error in ncclReduce: %s\n", "ncclInvalidArguments");
-      } else if (ncclError == ncclInvalidUsage) {
-        errormessage("Error in ncclReduce: %s\n", "ncclInvalidUsage");
-      } else if (ncclNumResults) {
-        errormessage("Error in ncclReduce: %s\n", "ncclNumResults");
-      } else {
-        errormessage("Error in ncclReduce: %s\n", "unknown error");
-      }
-      return 0;
-    }
-    return 1;
-  }
-
-
 }
 #endif
