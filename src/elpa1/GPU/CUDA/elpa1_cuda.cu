@@ -720,8 +720,8 @@ void cuda_update_matrix_element_add_FromC(T *vu_stored_rows_dev, T *uv_stored_co
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_update_matrix_element_add_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                                  l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
+  cuda_update_matrix_element_add_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev,
+                                                  l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs,
                                                   isSkewsymmetric);
 #else
   cuda_update_matrix_element_add_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, 
@@ -921,11 +921,8 @@ void cuda_hh_transform_FromC(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_de
   dim3 blocks = dim3(1,1,1);
   dim3 threadsPerBlock = dim3(1,1,1);
 
-#ifdef WITH_GPU_STREAMS
-  cuda_hh_transform_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug);
-#else
+  // trivial single-thread kernel, streams can't be used here
   cuda_hh_transform_kernel<<<blocks,threadsPerBlock>>>(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug);
-#endif
 
   if (wantDebug){
     cudaError_t cuerr = cudaGetLastError();
