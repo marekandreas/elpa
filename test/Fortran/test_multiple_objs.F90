@@ -268,6 +268,7 @@ program test
    call e1%store_settings("initial_parameters.txt", error_elpa)
    assert_elpa_ok(error_elpa)
 
+   call sleep(5)
 #ifdef WITH_MPI
      ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
