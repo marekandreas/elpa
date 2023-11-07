@@ -290,6 +290,7 @@ int main(int argc, char** argv) {
    elpa_store_settings(elpa_handle_1, "initial_parameters.txt", &error_elpa);
    assert_elpa_ok(error_elpa);
 
+   sleep(5);
 #ifdef WITH_MPI
      // barrier after store settings, file created from one MPI rank only, but loaded everywhere
      MPI_Barrier(MPI_COMM_WORLD);
