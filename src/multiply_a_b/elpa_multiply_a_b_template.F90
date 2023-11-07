@@ -187,22 +187,11 @@
 #else /* DEVICE_POINTER */
   useGPU = .true.
 
-  ! ugly fix until a way to convert xDev into x_dev is working
-  !allocate(a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols))
-
   c_dev = transfer(cDev, c_dev)
   num = ldc*ldcCols*size_of_datatype
-  !successGPU = gpu_malloc(c_dev, num)
-  !check_alloc_gpu("elpa_mult_at_b: c_dev", successGPU)
-
-  !successGPU = gpu_memcpy(c_dev, cDev, num,&
-  !              gpuMemcpyDeviceToDevice)
-  !check_memcpy_gpu("elpa_mult_at_b: cDev to c_dev", successGPU)
 
   b_dev = transfer(bDev, b_dev)
   num = ldb*ldbCols*size_of_datatype
-  !successGPU = gpu_malloc(b_dev, num)
-  !check_alloc_gpu("elpa_mult_at_b: b_dev", successGPU)
 
   successGPU = gpu_memcpy(b_dev, bDev, num,&
                 gpuMemcpyDeviceToDevice)
@@ -210,12 +199,6 @@
 
   a_dev = transfer(aDev, a_dev)
   num = obj%local_nrows*obj%local_ncols*size_of_datatype
-  !successGPU = gpu_malloc(a_dev, num)
-  !check_alloc_gpu("elpa_mult_at_b: a_dev", successGPU)
-
-  !successGPU = gpu_memcpy(a_dev, aDev, num,&
-  !                gpuMemcpyDeviceToDevice)
-  !check_memcpy_gpu("elpa_mult_at_b: aDev to a", successGPU)
 #endif /* DEVICE_POINTER */
 
   if(useGPU) then
