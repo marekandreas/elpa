@@ -226,6 +226,7 @@ subroutine ROUTINE_NAME&
 
       message_size = ld_st*nvc
 
+#ifdef WITH_MPI      
       if (myps>mypt .and. message_size>0) then
         call MPI_Send(vmat_s, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, & ! PETERDEBUG: implement also a non-blocking version with MPI_Isend
                       int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), mpierr)
@@ -237,6 +238,7 @@ subroutine ROUTINE_NAME&
         call MPI_Send(vmat_s, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, & 
                       int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), mpierr)
       endif
+#endif      
     endif
 
     call obj%timer%stop("&
