@@ -137,6 +137,26 @@ __device__ float  elpaDeviceImagPart(float  number) {return 0.0f;}
 __device__ double elpaDeviceImagPart(cuDoubleComplex number) {return number.y;}
 __device__ float  elpaDeviceImagPart(cuComplex       number) {return number.y;}
 
+// Define a helper trait to determine if a type is a pointer
+template <typename T>
+struct is_pointer { static const bool value = false; };
+
+template <typename T>
+struct is_pointer<T*> { static const bool value = true; };
+
+// Device function to convert a pointer to a value
+template <typename T>
+__device__ T convert_to_device(T* x, std::true_type) {
+    return *x;
+}
+
+// Device function to convert a value to a value
+template <typename T>
+__device__ T convert_to_device(T x, std::false_type) {
+    return x;
+}
+
+
 /*
 template <typename T>
 void sycl_copy_a_tmat2_kernel(T *a_dev, T *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, sycl::nd_item<1> it){
@@ -352,6 +372,7 @@ void cuda_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in, int *isOurP
       printf("Error in executing cuda_dot_product_and_assign_kernel: %s\n",cudaGetErrorString(cuerr));
     }
   }
+
 }
 
 extern "C" void cuda_dot_product_and_assign_double_FromC(double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, double *aux1_dev, bool *wantDebug_in, cudaStream_t my_stream){
@@ -372,8 +393,8 @@ extern "C" void cuda_dot_product_and_assign_float_complex_FromC(cuComplex *v_row
 
 //________________________________________________________________
 
-template <typename T, typename T_real>
-__global__ void cuda_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T *xf_host_or_dev, 
+template <typename T, typename T_real, typename T_value_or_pointer>
+__global__ void cuda_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T_value_or_pointer xf_host_or_dev, 
                                                       int l_rows, int l_cols,  int matrixRows, int istep, bool isOurProcessRow, bool useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
@@ -410,6 +431,8 @@ __global__ void cuda_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_de
   endif
 */
 
+  T xf = convert_to_device(xf_host_or_dev, typename std::conditional<std::is_pointer<T_value_or_pointer>::value, std::true_type, std::false_type>::type());
+
   if (useCCL && tid==0)
     {
     if (isOurProcessRow) e_vec_dev[istep-1-1] = elpaDeviceRealPart(*vrl_dev);
@@ -418,7 +441,7 @@ __global__ void cuda_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_de
 
   int index_global = tid;
   while (index_global < l_rows) {
-    v_row_dev[index_global] = elpaDeviceMultiply(v_row_dev[index_global], *xf_host_or_dev);
+    v_row_dev[index_global] = elpaDeviceMultiply(v_row_dev[index_global], xf);
     index_global += blockDim.x * gridDim.x;
   }
 
@@ -451,20 +474,54 @@ void cuda_set_e_vec_scale_set_one_store_v_row_FromC(T_real *e_vec_dev, T *vrl_de
   dim3 blocksPerGrid = dim3(blocks,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG change to NB
 
-  
+  cudaPointerAttributes attributes;
+  cudaError_t error = cudaPointerGetAttributes(&attributes, xf_host_or_dev);
+
+  if (error == cudaSuccess) 
+    {
+    if (attributes.type == cudaMemoryTypeHost) 
+      {
+      T xf_host_value = *xf_host_or_dev;
 #ifdef WITH_GPU_STREAMS
-  cuda_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
+      cuda_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
                                                                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
-#else
-  cuda_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
+#else 
+      cuda_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
                                                                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
 #endif
-  if (wantDebug){
-    cudaError_t cuerr = cudaGetLastError();
-    if (cuerr != cudaSuccess){
-      printf("Error in executing cuda_set_e_vec_scale_set_one_store_v_row_kernel: %s\n",cudaGetErrorString(cuerr));
+      if (wantDebug)
+        {
+        cudaError_t cuerr = cudaGetLastError();
+        if (cuerr != cudaSuccess) printf("Error in executing cuda_set_e_vec_scale_set_one_store_v_row_kernel: %s\n",cudaGetErrorString(cuerr));
+        }
+      }
+    else if (attributes.type == cudaMemoryTypeDevice) 
+      {
+#ifdef WITH_GPU_STREAMS
+      cuda_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
+                                                                                                 l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
+#else
+      cuda_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
+                                                                                    l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
+#endif
+      if (wantDebug)
+        {
+        cudaError_t cuerr = cudaGetLastError();
+        if (cuerr != cudaSuccess) printf("Error in executing cuda_set_e_vec_scale_set_one_store_v_row_kernel: %s\n",cudaGetErrorString(cuerr));
+        }
+      }
+
+    else if (attributes.type == cudaMemoryTypeManaged) 
+      {
+      printf("Error: Pointer is a managed pointer.\n");
+      }
+    } 
+  
+  else 
+    {
+    printf("Error: Pointer is unknown\n");
     }
-  }
+
 }
 
 extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_double_FromC(double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev, double *tau_dev, double *xf_host_or_dev, 
@@ -489,15 +546,17 @@ extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(flo
 
 //________________________________________________________________
 
-// // PETERDEBUG: special case for complex precision!
-template <typename T>
+
+// PETERDEBUG: special case for complex precision!
+template <typename T, typename T_value_or_pointer>
 __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
-                T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T* vav_host_or_dev, T *tau_host_or_dev,
+                T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T_value_or_pointer vav_host_or_dev, T_value_or_pointer tau_host_or_dev,
                 int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, bool useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-  T conjg_tau = *tau_host_or_dev; // first, create a device copy
+  T conjg_tau = convert_to_device(tau_host_or_dev, typename std::conditional<std::is_pointer<T_value_or_pointer>::value, std::true_type, std::false_type>::type());
   conjg_tau = elpaDeviceComplexConjugate(conjg_tau);
+  
   T conjg_tau_v_row_dev, conjg_tau_v_col_dev;
 
   // recover tau_dev(istep) after broadcasting
@@ -505,7 +564,7 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
     {
     tau_dev[istep-1] = v_row_dev[l_rows+1-1];
     }
- 
+
 /*
   // istep
   if (l_rows > 0) then
@@ -526,6 +585,7 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
           aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
 #endif
 */
+  T vav =  convert_to_device(vav_host_or_dev, typename std::conditional<std::is_pointer<T_value_or_pointer>::value, std::true_type, std::false_type>::type());
 
   int i_row = tid;
   while (i_row < l_rows)
@@ -533,7 +593,7 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
     conjg_tau_v_row_dev = elpaDeviceMultiply(conjg_tau, v_row_dev[i_row]);
     vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+0)] = conjg_tau_v_row_dev;
     conjg_tau_v_row_dev = elpaDeviceMultiply(conjg_tau_v_row_dev, elpaDeviceNumber<T>(0.5));
-    vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+1)] =  elpaDeviceSubtract( elpaDeviceMultiply(conjg_tau_v_row_dev, *vav_host_or_dev) , u_row_dev[i_row] );
+    vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+1)] =  elpaDeviceSubtract( elpaDeviceMultiply(conjg_tau_v_row_dev, vav) , u_row_dev[i_row] );
     i_row += blockDim.x * gridDim.x;
     }
 
@@ -543,7 +603,7 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
     conjg_tau_v_col_dev = elpaDeviceMultiply(conjg_tau, v_col_dev[i_col]);
     uv_stored_cols_dev[i_col + max_local_cols*(2*n_stored_vecs+1)] = conjg_tau_v_col_dev;
     conjg_tau_v_col_dev = elpaDeviceMultiply(conjg_tau_v_col_dev, elpaDeviceNumber<T>(0.5));
-    uv_stored_cols_dev[i_col + max_local_cols*(2*n_stored_vecs+0)] = elpaDeviceSubtract( elpaDeviceMultiply(conjg_tau_v_col_dev, *vav_host_or_dev) , u_col_dev[i_col] );
+    uv_stored_cols_dev[i_col + max_local_cols*(2*n_stored_vecs+0)] = elpaDeviceSubtract( elpaDeviceMultiply(conjg_tau_v_col_dev, vav) , u_col_dev[i_col] );
 
     i_col += blockDim.x * gridDim.x;
     }
@@ -582,28 +642,61 @@ void cuda_store_u_v_in_uv_vu_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev,
   dim3 blocksPerGrid = dim3(blocks,1,1);
   dim3 threadsPerBlock = dim3(threads,1,1);
 
-  if (wantDebug){
-    cudaError_t cuerr = cudaGetLastError();
-    if (cuerr != cudaSuccess){
-      printf("Error before executing cuda_store_u_v_in_uv_vu_kernel: %s\n",cudaGetErrorString(cuerr));
-    }
-  }
-  
+  cudaPointerAttributes attributes;
+  cudaError_t error = cudaPointerGetAttributes(&attributes, vav_host_or_dev);
+
+  if (error == cudaSuccess) 
+    {
+    if (attributes.type == cudaMemoryTypeHost) 
+      {
+      T vav_host_value = *vav_host_or_dev;
+      T tau_host_value = *tau_host_or_dev;
 #ifdef WITH_GPU_STREAMS
-  cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+      cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_value, tau_host_value, 
+                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
+#else
+      cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_value, tau_host_value, 
+                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
+#endif
+      if (wantDebug)
+        {
+        cudaError_t cuerr = cudaGetLastError();
+        if (cuerr != cudaSuccess) printf("Error in executing cuda_store_u_v_in_uv_vu_kernel: %s\n",cudaGetErrorString(cuerr));
+        }
+      } 
+    
+    else if (attributes.type == cudaMemoryTypeDevice) 
+      {
+#ifdef WITH_GPU_STREAMS
+      cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
 #else
-  cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+      cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
 #endif
-  if (wantDebug){
-    cudaError_t cuerr = cudaGetLastError();
-    if (cuerr != cudaSuccess){
-      printf("Error in executing cuda_store_u_v_in_uv_vu_kernel: %s\n",cudaGetErrorString(cuerr));
+
+      if (wantDebug)
+        {
+        cudaError_t cuerr = cudaGetLastError();
+        if (cuerr != cudaSuccess) printf("Error in executing cuda_store_u_v_in_uv_vu_kernel: %s\n",cudaGetErrorString(cuerr));
+        }
+      } 
+    
+    else if (attributes.type == cudaMemoryTypeManaged) 
+      {
+      printf("Error: Pointer is a managed pointer.\n");
+      }
+    } 
+  
+  else 
+    {
+    printf("Error: Pointer is unknown\n");
     }
-  }
+
 }
 
 extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *v_row_dev, double *u_row_dev,
