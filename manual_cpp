@@ -64,4 +64,4 @@ check_call_redirect(["cpp", "-P", "-traditional", "-Wall", "-Werror"] + cpp_args
 check_call(args + [tmp_filename])
 
 # cleanup (may be commented out for better debuggability
-#os.remove(tmp_filename) # PETERDEBUG
+os.remove(tmp_filename)
