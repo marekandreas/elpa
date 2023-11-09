@@ -60,7 +60,8 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
-#include <cuda/std/type_traits>
+//#include <cuda/std/type_traits>
+#include <type_traits>
 #include "config-f90.h"
 
 #define MAX_THREADS_PER_BLOCK 1024
@@ -609,7 +610,8 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
     }
 
 
-  if (::cuda::std::is_same_v<T, cuDoubleComplex> || ::cuda::std::is_same_v<T, cuComplex>)
+//  if (::cuda::std::is_same_v<T, cuDoubleComplex> || ::cuda::std::is_same_v<T, cuComplex>)
+  if (std::is_same_v<T, cuDoubleComplex> || std::is_same_v<T, cuComplex>)
     {
     __syncthreads();
     i_col = tid;
