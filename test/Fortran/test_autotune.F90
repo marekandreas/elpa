@@ -314,6 +314,12 @@ program test
      a(:,:) = as(:,:)
      call e%autotune_print_state(tune_state)
      call e%autotune_save_state(tune_state, "saved_state_"//trim(iter_string)//".txt")
+
+#ifdef WITH_MPI
+     ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
+     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+#endif
+
    end do
 
    !! set and print the autotuned-settings
