@@ -346,6 +346,11 @@ int main(int argc, char** argv) {
      printf("The best combination found by the autotuning:\n");
      elpa_autotune_print_best(handle, autotune_handle, &error_elpa);
    }
+#ifdef WITH_MPI
+   // barrier after store settings, file created from one MPI rank only, but loaded everywhere
+   MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
 
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
    elpa_autotune_deallocate(autotune_handle);
