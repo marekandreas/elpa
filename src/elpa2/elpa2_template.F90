@@ -529,7 +529,7 @@
 
    ! still have to point ev
 #endif /* REDISTRIBUTE_MATRIX */
-#else / * DEVICE_POINTER */
+#else /* DEVICE_POINTER */
 #ifdef REDISTRIBUTE_MATRIX
    ! at the moment not redistribute if dptr!!
 #endif /* REDISTRIBUTE_MATRIX */
