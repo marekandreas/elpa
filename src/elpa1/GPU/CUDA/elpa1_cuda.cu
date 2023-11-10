@@ -603,6 +603,7 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
     vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+0)] = conjg_tau_v_row_dev;
     conjg_tau_v_row_dev = elpaDeviceMultiply(conjg_tau_v_row_dev, elpaDeviceNumber<T>(0.5));
     vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+1)] =  elpaDeviceSubtract( elpaDeviceMultiply(conjg_tau_v_row_dev, vav) , u_row_dev[i_row] );
+    
     i_row += blockDim.x * gridDim.x;
     }
 
@@ -621,12 +622,19 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
 //  if (::cuda::std::is_same_v<T, cuDoubleComplex> || ::cuda::std::is_same_v<T, cuComplex>)
   if (std::is_same<T, cuDoubleComplex>::value || std::is_same<T, cuComplex>::value)
     {
-    __syncthreads();
-    i_col = tid;
-    while (i_col < 2*(n_stored_vecs+1)) // whole vector aux_complex_dev has to be copied and not two last elements only because l_cols has changed since last istep
+    int j = tid;
+    while (j < 2*(n_stored_vecs+0)) // whole vector aux_complex_dev has to be copied and not two last elements only because l_cols has changed since last istep
       {
-      aux_complex_dev[i_col] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*i_col]);
-      i_col += blockDim.x * gridDim.x;
+      aux_complex_dev[j] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*j]);
+      j += blockDim.x * gridDim.x;
+      }
+    
+    // two last elements should be treated by the respective threads inorder to avoid sync problems
+    i_col -= blockDim.x * gridDim.x;
+    if (i_col == l_cols-1) 
+      {
+      aux_complex_dev[2*n_stored_vecs+0] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*(2*n_stored_vecs+0)]);
+      aux_complex_dev[2*n_stored_vecs+1] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*(2*n_stored_vecs+1)]);
       }
     }
 
