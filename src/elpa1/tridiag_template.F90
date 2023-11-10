@@ -279,6 +279,7 @@ subroutine tridiag_&
   stop 77 ! PETERDEBUG: delete after testing
 #endif
 
+  ! PETERDEBUG: delete this or make the parameter tunable (maybe it's already tubale?)
   string_length = 32
   call get_environment_variable("ELPA_max_stored_uv", max_stored_uv_string, string_length, istat)
 

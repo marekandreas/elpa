@@ -189,6 +189,9 @@ subroutine ROUTINE_NAME&
   ! PETERDEBUG
   ! this codepath doesn't work for ELPA2
   ! because there nvc>1 and ld_s != ld_t (so, we can't make a contigous-memory MPI_Send call)
+
+  ! TODO: so far, the square grid codepath doesn't work for cholesky -- fix it, along with optimization of Cholesky-GPU
+#if 0
 #if !defined(SKEW_SYMMETRIC_BUILD)
   call obj%get("solver", solver, error)
   if (solver==ELPA_SOLVER_1STAGE .and. nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
@@ -251,6 +254,7 @@ subroutine ROUTINE_NAME&
     return
   endif
 #endif /* !defined(SKEW_SYMMETRIC_BUILD) */     
+#endif /* 0 */
 
   ! The basic idea of this routine is that for every block (in the block cyclic
   ! distribution), the processor within comm_t which owns the diagonal
