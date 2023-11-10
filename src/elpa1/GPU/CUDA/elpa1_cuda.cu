@@ -611,7 +611,7 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
 
 
 //  if (::cuda::std::is_same_v<T, cuDoubleComplex> || ::cuda::std::is_same_v<T, cuComplex>)
-  if (std::is_same_v<T, cuDoubleComplex> || std::is_same_v<T, cuComplex>)
+  if (std::is_same<T, cuDoubleComplex>::value || std::is_same<T, cuComplex>::value)
     {
     __syncthreads();
     i_col = tid;
