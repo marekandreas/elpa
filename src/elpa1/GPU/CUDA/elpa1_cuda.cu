@@ -113,12 +113,20 @@ __device__ cuComplex       elpaDeviceDivide(cuComplex       a, cuComplex       b
 __device__ double elpaDeviceSqrt(double number) { return sqrt (number); }
 __device__ float  elpaDeviceSqrt(float  number) { return sqrtf(number); }
 
-// Specialized atomicAdd for cuDoubleComplex and cuComplex
-__device__ void atomicAdd(cuDoubleComplex* address, cuDoubleComplex val) {
-    atomicAdd(&(address->x), val.x);
-    atomicAdd(&(address->y), val.y);
-}
-__device__ void atomicAdd(cuComplex* address, cuComplex val) {
+// PETERDEBUG: delete after testing
+// // Specialized atomicAdd for cuDoubleComplex and cuComplex
+// __device__ void atomicAdd(cuDoubleComplex* address, cuDoubleComplex val) {
+//     atomicAdd(&(address->x), val.x);
+//     atomicAdd(&(address->y), val.y);
+// }
+// __device__ void atomicAdd(cuComplex* address, cuComplex val) {
+//     atomicAdd(&(address->x), val.x);
+//     atomicAdd(&(address->y), val.y);
+// }
+
+// atomicAdd for cuDoubleComplex and cuComplex
+template<typename T>
+__device__ void atomicAdd(T* address, T val) {
     atomicAdd(&(address->x), val.x);
     atomicAdd(&(address->y), val.y);
 }
