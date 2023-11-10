@@ -189,6 +189,7 @@ subroutine ROUTINE_NAME&
   ! PETERDEBUG
   ! this codepath doesn't work for ELPA2
   ! because there nvc>1 and ld_s != ld_t (so, we can't make a contigous-memory MPI_Send call)
+#if !defined(SKEW_SYMMETRIC_BUILD)
   call obj%get("solver", solver, error)
   if (solver==ELPA_SOLVER_1STAGE .and. nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
     call obj%get("mpi_comm_parent", mpi_comm_all, error)
@@ -249,7 +250,8 @@ subroutine ROUTINE_NAME&
         )
     return
   endif
-      
+#endif /* !defined(SKEW_SYMMETRIC_BUILD) */     
+
   ! The basic idea of this routine is that for every block (in the block cyclic
   ! distribution), the processor within comm_t which owns the diagonal
   ! broadcasts its values of vmat_s to all processors within comm_t.

@@ -234,7 +234,7 @@ subroutine tridiag_&
 #ifdef WITH_NVIDIA_NCCL
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
   integer(kind=ik)                              :: nvs, nvr, nvc, lcm_s_t, nblks_tot, nblks_comm, nblks_skip
-  logical                                       :: isSqareGrid
+  logical                                       :: isSquareGridGPU
   integer(kind=c_intptr_t)                      :: aux_transpose_dev
   integer(kind=c_int)                           :: ncclDataType
   integer(kind=ik)                              :: k_datatype
@@ -624,10 +624,10 @@ subroutine tridiag_&
 
 #ifdef WITH_NVIDIA_NCCL
     ! for gpu_transpose_vectors on non-square grids
-    if (np_rows==np_cols) then
-      isSqareGrid = .true.
+    if (np_rows==np_cols and (.not. isSkewsymmetric)) then
+      isSquareGridGPU = .true.
     else
-      isSqareGrid = .false.
+      isSquareGridGPU = .false.
       lcm_s_t   = least_common_multiple(np_rows,np_cols)
       nvs = 1 ! global index where to start in vmat_s/vmat_t
       nvr  = na-1 ! global length of v_col_dev/v_row_dev(without last tau-element), max(istep-1)
@@ -640,7 +640,7 @@ subroutine tridiag_&
     
       successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
       check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
-    endif ! isSqareGrid
+    endif ! isSquareGridGPU
 #endif /* WITH_NVIDIA_NCCL */
   endif !useGPU
 
@@ -2220,7 +2220,7 @@ subroutine tridiag_&
 #endif
 
 #ifdef WITH_NVIDIA_NCCL
-    if (.not. isSqareGrid) then
+    if (.not. isSquareGridGPU) then
       successGPU = gpu_free(aux_transpose_dev)
       check_dealloc_gpu("tridiag: aux_transpose_dev", successGPU)
     endif
