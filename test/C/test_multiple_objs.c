@@ -307,7 +307,9 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(elpa_handle_2));
 
-   elpa_load_settings(elpa_handle_2, "initial_parameters.txt", &error_elpa);
+   //sleep(5);
+   //elpa_load_settings(elpa_handle_2, "initial_parameters.txt", &error_elpa);
+   //assert_elpa_ok(error_elpa);
 
    elpa_get(elpa_handle_2, "nvidia-gpu", &gpu, &error_elpa);
    assert_elpa_ok(error_elpa);
@@ -400,9 +402,9 @@ int main(int argc, char** argv) {
      //barrier after save state, file created from one MPI rank only, but loaded everywhere
      MPI_Barrier(MPI_COMM_WORLD);
 #endif
-     sleep(0.1);
-     elpa_autotune_load_state(*elpa_handle_ptr, autotune_handle, str, &error_elpa);
-     assert_elpa_ok(error_elpa);
+     //sleep(5);
+     //elpa_autotune_load_state(*elpa_handle_ptr, autotune_handle, str, &error_elpa);
+     //assert_elpa_ok(error_elpa);
 
      if (unfinished == 1) {
        if (myid == 0) {
