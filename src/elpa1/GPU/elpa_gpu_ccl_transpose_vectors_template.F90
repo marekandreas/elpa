@@ -168,7 +168,8 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   ! this codepath doesn't work for ELPA2 (because ld_s != ld_t)
   call obj%get("solver", solver, error)
   ! special square grid codepath for ELPA1
-  if (solver==ELPA_SOLVER_1STAGE .and. (.not. isSkewsymmetric) .and. nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
+  if (solver==ELPA_SOLVER_1STAGE .and. (.not. isSkewsymmetric) .and. & 
+      nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
     call obj%get("mpi_comm_parent", mpi_comm_all, error)
     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
     ld_st = min(ld_s,ld_t)
