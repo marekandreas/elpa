@@ -266,11 +266,13 @@ subroutine tridiag_&
 #endif
  
 #if !defined(WITH_GPU_STREAMS)
-    successGPU = cuda_stream_create(obj%gpu_setup%my_stream)
-    if (.not.(successGPU)) then
-      print *,"Cannot create gpu stream handle"
+    if (useCCL) then
+      successGPU = cuda_stream_create(obj%gpu_setup%my_stream)
+      if (.not.(successGPU)) then
+        print *,"Cannot create gpu stream handle"
+      endif
+      my_stream = obj%gpu_setup%my_stream
     endif
-    my_stream = obj%gpu_setup%my_stream
 #endif
   endif 
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) */
