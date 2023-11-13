@@ -132,18 +132,46 @@ __device__ float  elpaDeviceSqrt(float  number) { return sqrtf(number); }
 //     atomicAdd(&(address->y), val.y);
 // }
 
+
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 600
+static __inline__ __device__ double atomicAdd(double* address, double val)
+{
+    unsigned long long int* address_as_ull =
+                              (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val +
+                               __longlong_as_double(assumed)));
+
+    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+    } while (assumed != old);
+
+    return __longlong_as_double(old);
+}
+#endif
+
+// atomicAdd for cuDoubleComplex and cuComplex
 template<typename T>
 __device__ void atomicAdd(T* address, T val) {
-    // Check if T is a primitive type like double
-    if constexpr (std::is_fundamental<T>::value) { // constexpr is C++17 feature
-        // Perform atomic add directly on the value
-        ::atomicAdd(address, val);
-    } else {
-        // Assuming T is a complex type with .x and .y components
-        atomicAdd(&(address->x), val.x);
-        atomicAdd(&(address->y), val.y);
-    }
+    atomicAdd(&(address->x), val.x);
+    atomicAdd(&(address->y), val.y);
 }
+
+// template<typename T>
+// __device__ void atomicAdd(T* address, T val) {
+//     // Check if T is a primitive type like double
+//     if constexpr (std::is_fundamental<T>::value) { // constexpr is C++17 feature
+//         // Perform atomic add directly on the value
+//         ::atomicAdd(address, val);
+//     } else {
+//         // Assuming T is a complex type with .x and .y components
+//         atomicAdd(&(address->x), val.x);
+//         atomicAdd(&(address->y), val.y);
+//     }
+// }
 
 __device__ double elpaDeviceComplexConjugate(double number) {return number;}
 __device__ float elpaDeviceComplexConjugate(float  number) {return number;}
