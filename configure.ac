@@ -569,9 +569,9 @@ dnl check whether single precision is requested
 AC_MSG_CHECKING(whether ELPA library should contain also single precision functions)
 AC_ARG_ENABLE(single-precision,
               [AS_HELP_STRING([--enable-single-precision],
-                              [build with single precision])],
+                              [build with single precision (default: yes)])],
               [want_single_precision="$enableval"],
-              [want_single_precision="no"])
+              [want_single_precision="yes"])
 AC_MSG_RESULT([${want_single_precision}])
 
 

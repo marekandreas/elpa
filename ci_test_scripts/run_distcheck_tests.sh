@@ -154,8 +154,8 @@ then
       echo "exitCode=\$?" >> ./run_${CLUSTER}_1node_2GPU.sh	
       echo " " >> ./run_${CLUSTER}_1node_2GPU.sh	
       echo "#copy everything back from /tmp/elpa to runner directory" >> ./run_${CLUSTER}_1node_2GPU.sh	
-      echo "cp -r * \$runner_path" >> ./run_${CLUSTER}_1node_2GPU.sh	
-      echo "cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo "#cp -r * \$runner_path" >> ./run_${CLUSTER}_1node_2GPU.sh	
+      echo "#cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node_2GPU.sh	
       echo "exit \$exitCode" >> ./run_${CLUSTER}_1node_2GPU.sh	
       echo " "	
       echo "Job script for the run"	
@@ -200,8 +200,8 @@ then
       echo "exitCode=\$?" >> ./run_${CLUSTER}_1node.sh
       echo " " >> ./run_${CLUSTER}_1node.sh
       echo "#copy everything back from /tmp/elpa to runner directory" >> ./run_${CLUSTER}_1node.sh
-      echo "cp -r * \$runner_path" >> ./run_${CLUSTER}_1node.sh
-      echo "cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node.sh
+      echo "#cp -r * \$runner_path" >> ./run_${CLUSTER}_1node.sh
+      echo "#cd .. && rm -rf /tmp/elpa_\$SLURM_JOB_ID" >> ./run_${CLUSTER}_1node.sh
       echo "exit \$exitCode" >> ./run_${CLUSTER}_1node.sh
       echo " "
       echo "Job script for the run"
