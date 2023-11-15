@@ -277,10 +277,6 @@ subroutine tridiag_&
   endif 
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) */
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-  stop 77 ! PETERDEBUG: delete after testing
-#endif
-
   ! PETERDEBUG: delete this or make the parameter tunable (maybe it's already tubale?)
   string_length = 32
   call get_environment_variable("ELPA_max_stored_uv", max_stored_uv_string, string_length, istat)
@@ -824,7 +820,7 @@ subroutine tridiag_&
                                     ONE, v_row_dev, 1, gpuHandle)
 
 
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
 #ifdef WITH_NVTX
           call nvtxRangePop()
 #endif
@@ -1136,7 +1132,7 @@ subroutine tridiag_&
           &PRECISION &
                 (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
                 1, istep-1, 1, nblk, max_threads, .true., success)
-      if (wantDebug) successGPU = gpu_DeviceSynchronize()
+      if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
@@ -1368,7 +1364,7 @@ subroutine tridiag_&
                                     v_row_dev , 1,                          &
                                     ZERO, u_col_dev, 1, gpuHandle)
               
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
 #ifdef WITH_NVTX
           call nvtxRangePop()
 #endif
@@ -1507,7 +1503,7 @@ subroutine tridiag_&
                                       ONE, uv_stored_cols_dev, max_local_cols,   &
                                       aux_dev, 1, ONE, u_col_dev, 1, gpuHandle)
 
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
 #ifdef WITH_NVTX
           call nvtxRangePop()
 #endif
@@ -1913,7 +1909,7 @@ subroutine tridiag_&
                                       size_of_datatype,  &
                                       max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
                                       size_of_datatype , matrixRows, gpuHandle)
-              if (wantDebug) successGPU = gpu_DeviceSynchronize()
+              if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
               if (wantDebug) call obj%timer%stop("gpublas_gemm")
             endif ! .not. mat_vec_as_one_block
           else ! useGPU
@@ -1953,7 +1949,7 @@ subroutine tridiag_&
         call nvtxRangePop()
 #endif
 
-        if (wantDebug) successGPU = gpu_DeviceSynchronize()
+        if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
         if (wantDebug) call obj%timer%stop("gpublas_gemm")
 
       endif !.not. useGPU or .not. mat_vec_as_one_block

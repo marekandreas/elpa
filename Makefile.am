@@ -56,6 +56,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/GPU/mod_elpa1_gpu.F90 \
   src/elpa1/GPU/CUDA/mod_elpa1_cuda.F90 \
   src/elpa1/GPU/ROCm/mod_elpa1_hip.F90 \
+  src/elpa1/GPU/SYCL/mod_elpa1_sycl.F90 \
   src/elpa2/elpa2_determine_workload.F90 \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
@@ -224,7 +225,17 @@ endif
 
 if WITH_SYCL_GPU_VERSION
   libelpa@SUFFIX@_private_la_CXXFLAGS = $(AM_CXXFLAGS) -Isrc
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/elpa_explicit_name_sycl_gpu.cpp src/GPU/SYCL/syclCommon.cpp src/GPU/SYCL/syclFunctions.cpp src/GPU/SYCL/syclUtils.cpp src/elpa2/GPU/SYCL/ev_tridi_band_sycl_gpu_real.cpp src/invert_trm/GPU/SYCL/elpa_invert_trm_sycl.cpp src/cholesky/GPU/SYCL/elpa_cholesky_sycl.cpp src/multiply_a_b/GPU/SYCL/../SYCL/elpa_multiply_a_b_sycl.cpp
+  libelpa@SUFFIX@_private_la_SOURCES += \
+  src/GPU/SYCL/elpa_index_sycl_gpu.cpp \
+  src/GPU/SYCL/elpa_explicit_name_sycl_gpu.cpp \
+  src/GPU/SYCL/syclCommon.cpp \
+  src/GPU/SYCL/syclFunctions.cpp \
+  src/GPU/SYCL/syclUtils.cpp \
+  src/elpa1/GPU/SYCL/elpa1_sycl.cpp \
+  src/elpa2/GPU/SYCL/ev_tridi_band_sycl_gpu_real.cpp \
+  src/invert_trm/GPU/SYCL/elpa_invert_trm_sycl.cpp \
+  src/cholesky/GPU/SYCL/elpa_cholesky_sycl.cpp \
+  src/multiply_a_b/GPU/SYCL/elpa_multiply_a_b_sycl.cpp
 endif
 
 if WITH_OPENMP_OFFLOAD_GPU_VERSION

@@ -385,13 +385,13 @@ module elpa1_gpu
 #endif
 #ifdef WITH_AMD_GPU_VERSION
     call hip_store_u_v_in_uv_vu_double (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
-                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                       useCCL, wantDebug, my_stream)
+                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
+                                        useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
     call sycl_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
                                         l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                         useCCL, wantDebug, my_stream)
 #endif
@@ -420,9 +420,9 @@ module elpa1_gpu
 #endif
 #ifdef WITH_AMD_GPU_VERSION
     call hip_store_u_v_in_uv_vu_float (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
-                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                       useCCL, wantDebug, my_stream)
+                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
+                                        useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
     call sycl_store_u_v_in_uv_vu_float(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
@@ -455,9 +455,9 @@ module elpa1_gpu
 #endif
 #ifdef WITH_AMD_GPU_VERSION
     call hip_store_u_v_in_uv_vu_double_complex (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
-                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                       useCCL, wantDebug, my_stream)
+                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
+                                        useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
     call sycl_store_u_v_in_uv_vu_double_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
@@ -490,9 +490,9 @@ module elpa1_gpu
 #endif
 #ifdef WITH_AMD_GPU_VERSION
     call hip_store_u_v_in_uv_vu_float_complex (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
-                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                       useCCL, wantDebug, my_stream)
+                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
+                                        useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
     call sycl_store_u_v_in_uv_vu_float_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
