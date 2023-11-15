@@ -268,9 +268,10 @@ program test
    call e1%store_settings("initial_parameters.txt", error_elpa)
    assert_elpa_ok(error_elpa)
 
+   call sleep(2)
 #ifdef WITH_MPI
-     ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
-     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+   ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
+   call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
 #endif
 
    ! try to load parameters into another object
@@ -278,6 +279,11 @@ program test
    assert_elpa_ok(error_elpa)
 
    call set_basic_params(e2, na, nev, na_rows, na_cols, my_prow, my_pcol)
+   call sleep(2)
+#ifdef WITH_MPI
+   ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
+   call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+#endif
    call e2%load_settings("initial_parameters.txt", error_elpa)
    assert_elpa_ok(error_elpa)
 
@@ -334,6 +340,12 @@ program test
      call e_ptr%store_settings("saved_parameters_"//trim(iter_string)//".txt", error_elpa)
      assert_elpa_ok(error_elpa)
 
+     call sleep(2)
+#ifdef WITH_MPI
+     ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
+     call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
+#endif
+
      call e_ptr%timer_start("eigenvectors: iteration "//trim(iter_string))
      call e_ptr%eigenvectors(a, ev, z, error_elpa)
      assert_elpa_ok(error_elpa)
@@ -356,6 +368,7 @@ program test
      ! barrier after save state, file created from one MPI rank only, but loaded everywhere
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
 #endif
+     call sleep(2)
      call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt", error_elpa)
      assert_elpa_ok(error_elpa)
 

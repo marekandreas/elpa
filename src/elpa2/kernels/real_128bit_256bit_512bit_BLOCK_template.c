@@ -1826,7 +1826,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define STEP_SIZE 24
 #define ROW_LENGTH 24
@@ -1837,7 +1837,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #define ROW_LENGTH 48
 #define UPPER_BOUND 40
 #endif
-#endif /*  VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /*  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
@@ -1874,14 +1874,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE  || VEC_SET == NEON_ARCH64_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 20
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 40
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
@@ -1908,14 +1908,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE  || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 32
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
@@ -1943,14 +1943,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 12
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 24
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
@@ -1966,7 +1966,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
       worked_on += ROW_LENGTH;
     }
 
-#if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 
 #undef ROW_LENGTH
 #if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128
@@ -1978,14 +1978,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 
   if (nq-i == ROW_LENGTH)
@@ -2004,14 +2004,14 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #endif
 #endif /*  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE  || VEC_SET == NEON_ARCH64_128 */
 
-#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256
+#if  VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 4
 #endif
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
   if (nq-i == ROW_LENGTH)
     {
@@ -2019,7 +2019,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
       worked_on += ROW_LENGTH;
     }
 
-#endif /* VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE  || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE  || VEC_SET == VSX_SSE || VEC_SET == NEON_ARCH64_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #endif /* BLOCK2 */
 
@@ -8664,7 +8664,7 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef SINGLE_PRECISION_REAL
 #define ROW_LENGTH 32
 #endif
-#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 */
+#endif /* VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == SVE_256 */
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL

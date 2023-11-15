@@ -18,7 +18,7 @@ call elpa%\fBautotune_save_state\fP (autotune, filename, error)
 .sp
 With the definitions of the input and output variables:
 .TP
-class(elpa_t)          :: \fB elpa\fP        
+class(elpa_t)          :: \fB elpa\fP
 An instance of the ELPA object
 .TP
 class(elpa_autotune_t) :: \fB autotune\fP    
@@ -39,7 +39,7 @@ elpa_t handle;
 elpa_autotune_t autotune_handle;
 
 .br
-void\fB elpa_autotune_save_state\fP(\fBelpa_t\fP handle,\fB elpa_autotune_t\fP autotune_handle,\fB const char\fP *filename,\fB int\fP *error):
+void\fB elpa_autotune_save_state\fP(\fBelpa_t\fP handle,\fB elpa_autotune_t\fP autotune_handle,\fB char\fP *filename,\fB int\fP *error);
 .sp
 With the definitions of the input and output variables:
 .TP
@@ -49,7 +49,7 @@ The handle to the ELPA object
 elpa_autotune_t \fB handle\fP;   
 The handle to the ELPA autotune object
 .TP
-const char \fB *filename\fP;     
+char \fB *filename\fP;
 The filename to store the settings
 .TP
 int \fB *error\fP;               

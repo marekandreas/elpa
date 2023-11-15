@@ -102,6 +102,8 @@ inline void elpa_eigenvectors(const elpa_t handle, std::complex<float>  *a, floa
         )(handle, a, ev, q, error)
 #endif
 
+
+#ifdef HAVE_SKEWSYMMETRIC
 /*! \brief generic C method for elpa_skew_eigenvectors
  *
  *  \details
@@ -131,7 +133,7 @@ inline void elpa_skew_eigenvectors(const elpa_t handle, float  *a, float  *ev, f
                   elpa_skew_eigenvectors_a_h_a_f \
         )(handle, a, ev, q, error)
 #endif
-
+#endif /* HAVE_SKEWSYMMETRIC */
 
 /*! \brief generic C method for elpa_generalized_eigenvectors
  *
@@ -223,6 +225,7 @@ inline void elpa_eigenvalues(elpa_t handle, std::complex<float>  *a, float  *ev,
         )(handle, a, ev, error)
 #endif
 
+#ifdef HAVE_SKEWSYMMETRIC
 /*! \brief generic C method for elpa_skew_eigenvalues
  *
  *  \details
@@ -250,6 +253,8 @@ inline void elpa_skew_eigenvalues(elpa_t handle, float  *a, float  *ev, int *err
                   elpa_skew_eigenvalues_a_h_a_f, \
         )(handle, a, ev, error)
 #endif
+#endif /* HAVE_SKEWSYMMETRIC */
+
 
 /*  \brief generic C method for elpa_cholesky
  *

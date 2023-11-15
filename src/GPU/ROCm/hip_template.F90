@@ -589,6 +589,7 @@
   interface rocblas_Dgemm
     module procedure rocblas_Dgemm_intptr
     module procedure rocblas_Dgemm_cptr
+    module procedure rocblas_Dgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -615,6 +616,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       real(kind=C_DOUBLE) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Dgemm_intptr_cptr_intptr_c(rocblasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="rocblasDgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
@@ -757,6 +774,7 @@
   interface rocblas_Sgemm
     module procedure rocblas_Sgemm_intptr
     module procedure rocblas_Sgemm_cptr
+    module procedure rocblas_Sgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -783,6 +801,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       real(kind=C_FLOAT) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Sgemm_intptr_cptr_intptr_c(rocblasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="rocblasSgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
@@ -925,6 +959,7 @@
   interface rocblas_Zgemm
     module procedure rocblas_Zgemm_intptr
     module procedure rocblas_Zgemm_cptr
+    module procedure rocblas_Zgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -951,6 +986,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Zgemm_intptr_cptr_intptr_c(rocblasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="rocblasZgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
@@ -1093,6 +1144,7 @@
   interface rocblas_Cgemm
     module procedure rocblas_Cgemm_intptr
     module procedure rocblas_Cgemm_cptr
+    module procedure rocblas_Cgemm_intptr_cptr_intptr
   end interface
 
   interface
@@ -1119,6 +1171,22 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb,ldc
       complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
       type(c_ptr), value                      :: a, b, c
+      integer(kind=C_intptr_T), value         :: rocblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocblas_Cgemm_intptr_cptr_intptr_c(rocblasHandle, cta, ctb, m, n, k, &
+                                                                      alpha, a, lda, b, ldb, beta, c, ldc) &
+                              bind(C,name="rocblasCgemm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta, ctb
+      integer(kind=C_INT),value               :: m, n, k
+      integer(kind=C_INT), intent(in), value  :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T), value         :: a, c
+      type(c_ptr), value                      :: b
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
@@ -1348,24 +1416,24 @@
 
   interface
     subroutine rocblas_Daxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="rocblasDscal_elpa_wrapper")
+               bind(C, name="rocblasDaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      real(kind=C_DOUBLE) ,value                :: alpha
+      integer(kind=C_INT), value              :: length, incx, incy
+      real(kind=C_DOUBLE), value              :: alpha
       integer(kind=C_intptr_T), value         :: x, y
     end subroutine
   end interface
 
   interface
     subroutine rocblas_Daxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="rocblasDscal_elpa_wrapper")
+               bind(C, name="rocblasDaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      real(kind=C_DOUBLE) ,value                :: alpha
+      integer(kind=C_INT), value              :: length, incx, incy
+      real(kind=C_DOUBLE), value              :: alpha
       type(c_ptr), value                      :: x, y
     end subroutine
   end interface
@@ -1433,7 +1501,7 @@
 
   interface
     subroutine rocblas_Saxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="rocblasSscal_elpa_wrapper")
+               bind(C, name="rocblasSaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
@@ -1445,7 +1513,7 @@
 
   interface
     subroutine rocblas_Saxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="rocblasSscal_elpa_wrapper")
+               bind(C, name="rocblasSaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
@@ -1520,7 +1588,7 @@
 
   interface
     subroutine rocblas_Zaxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="rocblasZscal_elpa_wrapper")
+               bind(C, name="rocblasZaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
@@ -1532,7 +1600,7 @@
 
   interface
     subroutine rocblas_Zaxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="rocblasZscal_elpa_wrapper")
+               bind(C, name="rocblasZaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
@@ -1607,7 +1675,7 @@
 
   interface
     subroutine rocblas_Caxpy_intptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="rocblasCscal_elpa_wrapper")
+               bind(C, name="rocblasCaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
@@ -1619,7 +1687,7 @@
 
   interface
     subroutine rocblas_Caxpy_cptr_c(rocblasHandle, length, alpha, x, incx, y, incy) &
-               bind(C, name="rocblasCscal_elpa_wrapper")
+               bind(C, name="rocblasCaxpy_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
@@ -2239,9 +2307,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
@@ -2253,13 +2321,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_Dgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine rocblas_Dgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_DOUBLE) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: rocblasHandle
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Dgemm_intptr_cptr_intptr_c(rocblasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
@@ -2387,9 +2472,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
@@ -2401,13 +2486,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_Sgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine rocblas_Sgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      real(kind=C_FLOAT) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: rocblasHandle
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Sgemm_intptr_cptr_intptr_c(rocblasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
@@ -2535,9 +2637,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
@@ -2549,13 +2651,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_Zgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine rocblas_Zgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: rocblasHandle
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Zgemm_intptr_cptr_intptr_c(rocblasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 
@@ -2683,9 +2802,9 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha, beta
       integer(kind=C_intptr_T)        :: a, b, c
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
@@ -2697,13 +2816,30 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: cta, ctb
-      integer(kind=C_INT)             :: m,n,k
-      integer(kind=C_INT), intent(in) :: lda,ldb,ldc
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha, beta
       type(c_ptr)                     :: a, b, c
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_Cgemm_cptr_c(rocblasHandle, cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine rocblas_Cgemm_intptr_cptr_intptr(cta, ctb, m, n, k, &
+                                 alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta, ctb
+      integer(kind=C_INT)             :: m, n, k
+      integer(kind=C_INT), intent(in) :: lda, ldb, ldc
+      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha, beta
+      integer(kind=C_intptr_T)        :: a, c
+      type(c_ptr)                     :: b
+      integer(kind=C_intptr_T)        :: rocblasHandle
+#ifdef WITH_AMD_GPU_VERSION
+      call rocblas_Cgemm_intptr_cptr_intptr_c(rocblasHandle, cta, ctb, m, n, k, &
+                                                 alpha, a, lda, b, ldb, beta, c, ldc)
 #endif
     end subroutine
 

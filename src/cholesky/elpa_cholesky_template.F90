@@ -60,6 +60,7 @@
                      !        &PRECISION&
                      !        &_a_tmp1
   use cholesky_gpu
+  use mod_query_gpu_usage
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -91,7 +92,7 @@
   character(20)                              :: gpuString
   logical                                    :: successGPU
   logical                                    :: useGPU
-  integer(kind=c_int)                        :: gpu, numGPU
+  integer(kind=c_int)                        :: numGPU
   integer(kind=c_intptr_t)                   :: num
   integer(kind=c_intptr_t)                   :: tmp1_dev, tmatc_dev, tmatr_dev, a_dev, tmp2_dev
   type(c_ptr)                                :: tmp1_mpi_dev
@@ -99,7 +100,6 @@
   integer(kind=c_intptr_t)                   :: a_off, tmatc_off, tmatr_off
   type(c_ptr)                                :: tmatc_mpi_dev
   MATH_DATATYPE(kind=rck), pointer           :: tmatc_mpi_fortran_ptr(:,:)
-  integer(kind=c_int)                        :: gpu_cholesky
 
   integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                             &PRECISION&
@@ -107,73 +107,35 @@
                                                             &MATH_DATATYPE
 
   integer(kind=c_intptr_t)                   :: gpublasHandle, gpusolverHandle, my_stream
+  integer(kind=c_int)                        :: gpu_cholesky
+
   success = .true.
+  useGPU = .false.
 
-  gpu_cholesky = 0
-  ! GPU settings
-  if (gpu_vendor() == NVIDIA_GPU) then
-    call obj%get("gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for GPU. Aborting..."
-      success = .false.
-      return
-    endif
-    if (gpu .eq. 1) then
-      write(error_unit,*) "You still use the deprecated option 'gpu', consider switching to 'nvidia-gpu'. Will set the new &
-              & keyword 'nvidia-gpu'"
-      call obj%set("nvidia-gpu",gpu,error)
-      if (error .ne. ELPA_OK) then
-        write(error_unit,*) "ELPA_CHOLESKY: Problem setting option for NVIDIA GPU. Aborting..."
-        success = .false.
-        return
-      endif
-    endif
-
-    call obj%get("nvidia-gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for NVIDIA GPU. Aborting..."
-      success = .false.
-      return
-    endif
-
-  else if (gpu_vendor() == AMD_GPU) then
-    call obj%get("amd-gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for AMD GPU. Aborting..."
-      success = .false.
-      return
-    endif
-  else if (gpu_vendor() == SYCL_GPU) then
-    call obj%get("intel-gpu",gpu,error)
-    if (error .ne. ELPA_OK) then
-      write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for SYCL GPU. Aborting..."
-      success = .false.
-      return
-    endif
-  else
-    gpu = 0
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+  if (.not.(query_gpu_usage(obj, "ELPA_CHOLESKY", useGPU))) then
+    print *,"ELPA_CHOLESKY: Problem querrying settings for GPU Aborting..."
+    stop 1
   endif
-
-  call obj%get("gpu_cholesky",gpu_cholesky, error)
-  if (error .ne. ELPA_OK) then
-    write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for gpu_cholesky. Aborting..."
-    success = .false.
-    return
-  endif
-
-  if (gpu_cholesky .eq. 1) then
-    useGPU = (gpu == 1)
-  else
-    useGPU = .false.
-  endif
-
-  if (.not.(useGPU)) then
-#ifdef DEVICE_POINTER
-    write(error_unit,*) "You used the interface for device pointers for elpa_cholesky but did not specify GPU usage!. Aborting..."
-    success = .false.
-    return
 #endif
+
+  ! check whether the above setting should be overriden
+  if (obj%is_set("gpu_cholesky") == 1) then
+    call obj%get("gpu_cholesky", gpu_cholesky, error)
+    if (error .ne. ELPA_OK) then
+      print *,"Problem getting option for gpu_cholesky. Aborting..."
+      stop 1
+    endif
+    if (useGPU .and. gpu_cholesky .eq. 0) then
+      useGPU = .false.
+    else if (.not.(useGPU) .and. gpu_cholesky .eq. 1) then
+      useGPU = .true.
+    else 
+    endif
+  else 
+    ! no override by user 
   endif
+
 
   if(useGPU) then
     gpuString = "_gpu"

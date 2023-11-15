@@ -45,6 +45,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #ifdef WITH_MPI
 #include <mpi.h>
 #endif
@@ -289,9 +290,10 @@ int main(int argc, char** argv) {
    elpa_store_settings(elpa_handle_1, "initial_parameters.txt", &error_elpa);
    assert_elpa_ok(error_elpa);
 
+   sleep(5);
 #ifdef WITH_MPI
-     // barrier after store settings, file created from one MPI rank only, but loaded everywhere
-     MPI_Barrier(MPI_COMM_WORLD);
+   // barrier after store settings, file created from one MPI rank only, but loaded everywhere
+   MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
@@ -305,7 +307,13 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(elpa_handle_2));
 
+#ifdef WITH_MPI
+   // barrier after store settings, file created from one MPI rank only, but loaded everywhere
+   MPI_Barrier(MPI_COMM_WORLD);
+#endif
+   sleep(2);
    elpa_load_settings(elpa_handle_2, "initial_parameters.txt", &error_elpa);
+   assert_elpa_ok(error_elpa);
 
    elpa_get(elpa_handle_2, "nvidia-gpu", &gpu, &error_elpa);
    assert_elpa_ok(error_elpa);
@@ -347,6 +355,12 @@ int main(int argc, char** argv) {
       sprintf(str, "saved_parameters_%d.txt", i);
       elpa_store_settings(*elpa_handle_ptr, str, &error_elpa);
       assert_elpa_ok(error_elpa);
+
+      sleep(5);
+#ifdef WITH_MPI
+      // barrier after store settings, file created from one MPI rank only, but loaded everywhere
+      MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
       /* Solve EV problem */
       elpa_eigenvectors(*elpa_handle_ptr, a, ev, z, &error_elpa);
@@ -392,7 +406,7 @@ int main(int argc, char** argv) {
      //barrier after save state, file created from one MPI rank only, but loaded everywhere
      MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
+     sleep(2);
      elpa_autotune_load_state(*elpa_handle_ptr, autotune_handle, str, &error_elpa);
      assert_elpa_ok(error_elpa);
 

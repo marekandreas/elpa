@@ -124,6 +124,10 @@
 #undef BLAS_sscal
 #undef BLAS_zscal
 #undef BLAS_cscal
+#undef BLAS_daxpy
+#undef BLAS_saxpy
+#undef BLAS_zaxpy
+#undef BLAS_caxpy
 #undef BLAS_set_pointer_mode
 #undef BLAS_get_pointer_mode
 #undef BLAS_pointer_mode_host
@@ -187,6 +191,10 @@
 #define BLAS_sscal hipblasSscal
 #define BLAS_zscal hipblasZscal
 #define BLAS_cscal hipblasCscal
+#define BLAS_daxpy hipblasDaxpy
+#define BLAS_saxpy hipblasSaxpy
+#define BLAS_zaxpy hipblasZaxpy
+#define BLAS_caxpy hipblasCaxpy
 #define BLAS_set_pointer_mode hipblasSetPointerMode
 #define BLAS_get_pointer_mode hipblasGetPointerMode
 #define BLAS_pointer_mode_host HIPBLAS_POINTER_MODE_HOST
@@ -252,6 +260,10 @@
 #define BLAS_sscal rocblas_sscal
 #define BLAS_zscal rocblas_zscal
 #define BLAS_cscal rocblas_cscal
+#define BLAS_daxpy rocblas_daxpy
+#define BLAS_saxpy rocblas_saxpy
+#define BLAS_zaxpy rocblas_zaxpy
+#define BLAS_caxpy rocblas_caxpy
 #define BLAS_set_pointer_mode rocblas_set_pointer_mode
 #define BLAS_get_pointer_mode rocblas_get_pointer_mode
 #define BLAS_pointer_mode_host rocblas_pointer_mode_host
@@ -1590,7 +1602,45 @@ extern "C" {
     }
   }
 
+  void rocblasDaxpy_elpa_wrapper (BLAS_handle rocblasHandle, int n, double alpha, double *x, int incx, double *y, int incy){
 
+    BLAS_status status = BLAS_daxpy(rocblasHandle, n, &alpha, x, incx, y, incy);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasDaxpy\n");
+    }
+  }
+
+  void rocblasSaxpy_elpa_wrapper (BLAS_handle rocblasHandle, int n, float alpha, float *x, int incx, float *y, int incy){
+
+    BLAS_status status = BLAS_saxpy(rocblasHandle, n, &alpha, x, incx, y, incy);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasSaxpy\n");
+    }
+  }
+
+  void rocblasZaxpy_elpa_wrapper (BLAS_handle rocblasHandle, int n, double _Complex alpha, double _Complex *X, int incx, double _Complex *Y, int incy){
+
+    BLAS_double_complex* X_casted    =   (BLAS_double_complex*) X;
+    BLAS_double_complex* Y_casted    =   (BLAS_double_complex*) Y;
+    BLAS_double_complex alpha_casted = *((BLAS_double_complex*)(&alpha));
+
+    BLAS_status status = BLAS_zaxpy(rocblasHandle, n, &alpha_casted, X_casted, incx, Y_casted, incy);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasZaxpy\n");
+    }
+  }
+
+  void rocblasCaxpy_elpa_wrapper (BLAS_handle rocblasHandle, int n, float _Complex alpha, float _Complex *X, int incx, float _Complex *Y, int incy){
+
+    BLAS_float_complex* X_casted    =   (BLAS_float_complex*) X;
+    BLAS_float_complex* Y_casted    =   (BLAS_float_complex*) Y;
+    BLAS_float_complex alpha_casted = *((BLAS_float_complex*)(&alpha));
+
+    BLAS_status status = BLAS_caxpy(rocblasHandle, n, &alpha_casted, X_casted, incx, Y_casted, incy);
+    if (status != BLAS_status_success) {
+       printf("error when calling rocblasCaxpy\n");
+    }
+  }
 
 }
 #endif /* WITH_AMD_GPU_VERSION */
