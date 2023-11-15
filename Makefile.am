@@ -111,9 +111,11 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/mod_distribute_global_column.F90 \
   src/solve_tridi/mod_v_add_s.F90 \
   src/solve_tridi/mod_solve_secular_equation.F90 \
-  src/helpers/mod_thread_affinity.F90 \
-  src/helpers/check_thread_affinity.c \
   src/elpa_index.c
+
+if HAVE_AFFINITY_CHECKING
+libelpa@SUFFIX@_private_la_SOURCES += src/helpers/mod_thread_affinity.F90 src/helpers/check_thread_affinity.c
+endif
 
 libelpa@SUFFIX@_private_la_SOURCES += src/elpa_c_interface.c
 

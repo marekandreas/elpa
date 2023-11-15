@@ -61,6 +61,7 @@ module thread_affinity
   integer(kind=ik) :: process_cpu_id
   integer(kind=ik), allocatable :: cpu_ids(:)
 
+#ifdef HAVE_AFFINITY_CHECKING
   interface
     subroutine get_process_id_c(process_id, pprocess_id) bind(C, name="get_process_id")
       use, intrinsic :: iso_c_binding
@@ -83,6 +84,7 @@ module thread_affinity
       integer(kind=C_INT), value :: cpu_id
     end subroutine
   end interface
+#endif
 
 contains
   subroutine get_thread_affinity(cpu_id)
@@ -90,23 +92,29 @@ contains
     implicit none
     integer(kind=ik), intent(out) :: cpu_id
     integer(kind=C_INT) :: cpu_id_c
+#ifdef HAVE_AFFINITY_CHECKING
     call get_thread_affinity_c(cpu_id_c)
     cpu_id = int(cpu_id_c, kind=ik)
+#endif
   end subroutine
   subroutine get_process_affinity(cpu_id)
     use, intrinsic :: iso_c_binding
     implicit none
     integer(kind=ik), intent(out) :: cpu_id
     integer(kind=C_INT) :: cpu_id_c
+#ifdef HAVE_AFFINITY_CHECKING
     call get_process_affinity_c(cpu_id_c)
     cpu_id = int(cpu_id_c, kind=ik)
+#endif
   end subroutine
   subroutine get_process_id(process_id, pprocess_id)
     use, intrinsic :: iso_c_binding
     implicit none
     integer(kind=ik), intent(out) :: process_id, pprocess_id
     integer(kind=C_INT) :: process_id_c, pprocess_id_c
+#ifdef HAVE_AFFINITY_CHECKING
     call get_process_id_c(process_id_c, pprocess_id_c)
+#endif
     process_id  = int(process_id_c,  kind=ik)
     pprocess_id = int(pprocess_id_c, kind=ik)
   end subroutine

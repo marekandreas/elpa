@@ -600,6 +600,23 @@ if test x"${enable_timings}" = x"yes"; then
 fi
 AM_CONDITIONAL([HAVE_DETAILED_TIMINGS], [test x"$enable_timings" = x"yes"])
 
+AC_ARG_ENABLE([affinity-checking],
+              [AS_HELP_STRING([--disable-affinity-checking],
+                              [allow ELPA to check process and threading affinity, default yes])],
+              [
+               if test x"$enableval" = x"yes"; then
+                 enable_affinity_checking_=yes
+               else
+                 enable_affinity_checking=no
+               fi
+	       ],
+              [enable_affinity_checking=yes])
+
+if test x"${enable_affinity_checking}" = x"yes"; then
+  AC_DEFINE([HAVE_AFFINITY_CHECKING], [1], [Enable affinity checking])
+fi
+AM_CONDITIONAL([HAVE_AFFINITY_CHECKING], [test x"$enable_affinity_checking" = x"yes"])
+
 dnl PAPI for ftimings
 AC_LANG_PUSH([C])
 AC_ARG_WITH([papi],
