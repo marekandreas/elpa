@@ -914,7 +914,12 @@ CLEANFILES = \
 
 clean-local:
 	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
-	-rm -rf validate_*.sh
+	-rm -rf validate_c_version*.sh
+	-rm -rf validate_cpp_version*.sh
+	-rm -rf validate_real_double*.sh
+	-rm -rf validate_real_single*.sh
+	-rm -rf validate_complex_double*.sh
+	-rm -rf validate_complex_single*.sh
 	-rm -rf test_*.sh
 	-rm -rf real_2stage*.sh
 	-rm -rf complex_2stage*.sh
@@ -923,6 +928,8 @@ clean-local:
 	-rm -rf double_instance_onenode*.sh
 	-rm -rf test_*.sh
 	-rm -rf $(generated_headers)
+	-rm -rf *.sh.trs
+	-rm -rf *.sh.log
 
 distclean-local:
 	-rm -rf ./m4
@@ -936,6 +943,18 @@ distclean-local:
 	-rm config-f90.h
 	-rm -rf ./test/.deps
 	-rm -rf elpa/elpa_generated_c_api.h
+	-rm -rf modules/* private_modules/* test_modules/* .fortran_dependencies/*
+	-rm -rf validate_*.sh
+	-rm -rf test_*.sh
+	-rm -rf real_2stage*.sh
+	-rm -rf complex_2stage*.sh
+	-rm -rf single_complex_2stage*.sh
+	-rm -rf single_real_2stage*.sh
+	-rm -rf double_instance_onenode*.sh
+	-rm -rf test_*.sh
+	-rm -rf $(generated_headers)
+	-rm -rf *.sh.trs
+	-rm -rf *.sh.log
 
 EXTRA_DIST = \
   elpa.spec \
