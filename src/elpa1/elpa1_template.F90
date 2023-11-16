@@ -116,7 +116,9 @@ function elpa_solve_evp_&
    use elpa_scalapack_interfaces
 #endif
    use solve_tridi
+#ifdef HAVE_AFFINITY_CHECKING
    use thread_affinity
+#endif
    use elpa_utilities, only : error_unit
 
    use mod_query_gpu_usage
@@ -548,7 +550,8 @@ function elpa_solve_evp_&
      write(error_unit, *) "ELPA1 Problem setting option for output_pinning_information. Aborting..."
 #include "./elpa1_aborting_template.F90"
    endif
-   
+
+#ifdef HAVE_AFFINITY_CHECKING  
    if (pinningInfo .eq. 1) then
      call init_thread_affinity(nrThreads)
 
@@ -556,6 +559,7 @@ function elpa_solve_evp_&
      if (my_pe .eq. 0) call print_thread_affinity(my_pe)
      call cleanup_thread_affinity()
    endif
+#endif
    success = .true.
 
    if (present(qExtern)) then

@@ -103,7 +103,9 @@
    use elpa_scalapack_interfaces
 #endif
    use solve_tridi
+#ifdef HAVE_AFFINITY_CHECKING
    use thread_affinity
+#endif
 
    use mod_query_gpu_usage
    use, intrinsic :: iso_c_binding
@@ -632,6 +634,7 @@
 #include "./elpa2_aborting_template.F90"
    endif
 
+#ifdef HAVE_AFFINITY_CHECKING
    if (pinningInfo .eq. 1) then
      call init_thread_affinity(nrThreads)
 
@@ -639,6 +642,7 @@
      if (my_pe .eq. 0) call print_thread_affinity(my_pe)
      call cleanup_thread_affinity()
    endif
+#endif
 
     success = .true.
 
