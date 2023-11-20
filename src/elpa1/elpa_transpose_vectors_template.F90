@@ -186,11 +186,9 @@ subroutine ROUTINE_NAME&
   npt = int(nptMPI,kind=c_int)
   call obj%timer%stop("mpi_communication")
 
-  ! PETERDEBUG
-  ! this codepath doesn't work for ELPA2
+  ! TODO_23_11
+  ! this codepath doesn't work for ELPA2, Cholesky, maybe smth else. Fix it, along with optimization of Cholesky-GPU
   ! because there nvc>1 and ld_s != ld_t (so, we can't make a contigous-memory MPI_Send call)
-
-  ! TODO: so far, the square grid codepath doesn't work for cholesky -- fix it, along with optimization of Cholesky-GPU
 #if 0
 #if !defined(SKEW_SYMMETRIC_BUILD)
   call obj%get("solver", solver, error)
@@ -207,7 +205,7 @@ subroutine ROUTINE_NAME&
       if (comm_s_isRows .and. matrix_order==COLUMN_MAJOR_ORDER .or. &
          (.not. comm_s_isRows) .and. matrix_order==ROW_MAJOR_ORDER) then
         ! my_mpi_rank = myps + mypt*nps
-        if (my_mpi_rank /= myps + mypt*nps) then ! PETERDEBUG-TEMP - use blacs_pnum instead and delete the check after testing
+        if (my_mpi_rank /= myps + mypt*nps) then ! TODO_23_11 - use blacs_pnum instead and delete the check after testing
           print *, "ERROR my_mpi_rank /= myps + mypt*nps"
         endif
 
@@ -215,7 +213,7 @@ subroutine ROUTINE_NAME&
       else if (comm_s_isRows .and. matrix_order==ROW_MAJOR_ORDER .or. &
         (.not. comm_s_isRows) .and. matrix_order==COLUMN_MAJOR_ORDER) then
         ! my_mpi_rank = mypt + myps*npt
-        if (my_mpi_rank /= mypt + myps*npt) then ! PETERDEBUG
+        if (my_mpi_rank /= mypt + myps*npt) then ! TODO_23_11 - use blacs_pnum instead and delete the check after testing
           print *, "ERROR my_mpi_rank /= mypt + myps*npt"
         endif
 
@@ -224,7 +222,7 @@ subroutine ROUTINE_NAME&
         print *, "ERROR: matrix_order not set correctly"
       endif
       
-      ! PETERDEBUG-TEMP - delete after testing
+      ! TODO_23_11 - delete after implementing and testing
       ! print *, "my_mpi_rank=", my_mpi_rank, ", transposed_mpi_rank=", transposed_mpi_rank
       ! print *, "my_mpi_rank=", my_mpi_rank, ", nvc=", nvc, ", ld_s=", ld_s, ", ld_t=", ld_t
 
@@ -232,7 +230,7 @@ subroutine ROUTINE_NAME&
 
 #ifdef WITH_MPI      
       if (myps>mypt .and. message_size>0) then
-        call MPI_Send(vmat_s, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, & ! PETERDEBUG: implement also a non-blocking version with MPI_Isend
+        call MPI_Send(vmat_s, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, & ! TODO_23_11: implement also a non-blocking version with MPI_Isend
                       int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), mpierr)
         call MPI_Recv(vmat_t, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                       int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)

@@ -54,14 +54,6 @@
 
 #include "../general/sanity.F90"
 
-#define GPU_NEW
-!#define GPU_OLD
-
-#undef MORE_GPU_COMPUTE
-!#undef WITH_NVIDIA_NCCL
-
-!#define CALL_IF_WITH_NVTX(x) #ifdef WITH_NVTX x; #else ; #endif
-
 #undef SAVE_MATR
 #ifdef DOUBLE_PRECISION_REAL
 #define SAVE_MATR(name, iteration) \
@@ -139,7 +131,7 @@ subroutine tridiag_&
 #endif
   real(kind=rk), intent(out)                    :: d_vec(na)
   real(kind=rk), intent(out)                    :: e_vec(na)
-  integer(kind=ik)                              :: max_stored_uv = 16
+  integer(kind=ik)                              :: max_stored_uv = 32 ! TODO_23_11 - make it tunable instead of hard-coded
   logical,          parameter                   :: mat_vec_as_one_block = .true.
 
   ! id in processor row and column and total numbers of processor rows and columns
@@ -150,10 +142,9 @@ subroutine tridiag_&
                                                    max_local_cols
   ! updated after each istep (in the main cycle) to contain number of
   ! local columns and rows of the remaining part of the matrix
-  !integer(kind=ik)                             :: l_cols, l_rows
   integer(kind=ik)                              :: l_cols, l_rows
   integer(kind=ik)                              :: n_stored_vecs
-  integer(kind=ik)                              :: isOurProcessRowInt ! PETERDEBUG - get rid of it
+  integer(kind=ik)                              :: isOurProcessRowInt ! TODO_23_11 - get rid of it
   logical                                       :: isOurProcessRow
 
 
@@ -173,13 +164,12 @@ subroutine tridiag_&
 
   real(kind=rk)                                 :: vnorm2
   MATH_DATATYPE(kind=rck)                       :: vav, x, aux1(2), vrl, xf, conjg_tau, dot_prod
-  MATH_DATATYPE(kind=rck), allocatable          :: aux(:) ! PETERDEBUG: 2*max_stored_uv ??? why differet logic for real and complex?
-  character(len=32)                             :: max_stored_uv_string
-!#ifdef MORE_GPU_COMPUTE
+  MATH_DATATYPE(kind=rck), allocatable          :: aux(:)
+
   integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux_complex_dev, vav_dev, vav_host_or_dev, dot_prod_dev, & 
                                                    xf_dev, xf_host_or_dev, tau_istep_host_or_dev
   integer(kind=c_intptr_t)                      :: vnorm2_dev, vrl_dev ! alias pointers for aux1_dev(1), aux1_dev(2)
-!#endif
+
 #if COMPLEXCASE == 1
   complex(kind=rck)                             :: aux3(1)
 #endif
@@ -242,7 +232,6 @@ subroutine tridiag_&
   integer(kind=c_int) :: pointerMode
 
   integer(kind=ik)                              :: string_length
-  integer(kind=ik)                              :: mpi_comm_all, my_mpi_rank ! PETERDEBUG: delete after testing
 
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL)
   if (useGPU) then
@@ -267,7 +256,7 @@ subroutine tridiag_&
  
 #if !defined(WITH_GPU_STREAMS)
     if (useCCL) then
-      successGPU = cuda_stream_create(obj%gpu_setup%my_stream)
+      successGPU = cuda_stream_create(obj%gpu_setup%my_stream) ! for developing and debugging
       if (.not.(successGPU)) then
         print *,"Cannot create gpu stream handle"
       endif
@@ -276,30 +265,6 @@ subroutine tridiag_&
 #endif
   endif 
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) */
-
-  ! PETERDEBUG: delete this or make the parameter tunable (maybe it's already tubale?)
-  string_length = 32
-  call get_environment_variable("ELPA_max_stored_uv", max_stored_uv_string, string_length, istat)
-
-  ! Check if the variable was found
-  if (istat /= 0) then
-     write(*,*) 'Environment variable ELPA_max_stored_uv not found'
-     write(*,*) 'Using the default value max_stored_uv = 32'
-     max_stored_uv = 32
-  else
-     write(*,*) 'ELPA_max_stored_uv='// max_stored_uv_string
-     ! Convert the value to integer
-     read(max_stored_uv_string, *, iostat=istat) max_stored_uv
-
-     ! Check if the conversion was successful
-     if (istat /= 0) then
-        write(*,*) 'Error converting ELPA_max_stored_uv='// max_stored_uv_string //' to integer'
-        write(*,*) 'Using the default value max_stored_uv = 32'
-        max_stored_uv = 32
-     else
-        write(*,*) 'max_stored_uv value:', max_stored_uv
-     endif
-  endif
 
   allocate(aux(2*max_stored_uv), stat=istat, errmsg=errorMessage)
 
@@ -493,21 +458,17 @@ subroutine tridiag_&
     
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
-      successGPU = gpu_host_register(int(loc(vu_stored_rows),kind=c_intptr_t),num,&
-                  gpuHostRegisterDefault)
+      successGPU = gpu_host_register(int(loc(vu_stored_rows),kind=c_intptr_t), num, gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: vu_stored_rows", successGPU)
 
       num = (max_local_cols * 2*max_stored_uv) * size_of_datatype
-      successGPU = gpu_host_register(int(loc(uv_stored_cols),kind=c_intptr_t),num,&
-                  gpuHostRegisterDefault)
+      successGPU = gpu_host_register(int(loc(uv_stored_cols),kind=c_intptr_t), num, gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: uv_stored_cols", successGPU)
 
       num = (1 * 2*max_stored_uv) * size_of_datatype
-      successGPU = gpu_host_register(int(loc(aux),kind=c_intptr_t),num,&
-                  gpuHostRegisterDefault)
+      successGPU = gpu_host_register(int(loc(aux),kind=c_intptr_t), num, gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: aux", successGPU)
 
-#ifdef GPU_NEW
       num = na * size_of_datatype_real
       successGPU = gpu_host_register(int(loc(d_vec),kind=c_intptr_t), num, gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: d_vec", successGPU)
@@ -535,7 +496,6 @@ subroutine tridiag_&
       num = 1 * size_of_datatype
       successGPU = gpu_host_register(int(loc(xf),kind=c_intptr_t), num, gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: xf", successGPU)
-#endif
     endif ! gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU
   else ! useGPU
 
@@ -592,7 +552,6 @@ subroutine tridiag_&
     successGPU = gpu_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
     check_alloc_gpu("tridiag: uv_stored_cols_dev", successGPU)
 
-#ifdef GPU_NEW
     successGPU = gpu_malloc(d_vec_dev, na * size_of_datatype_real)
     check_alloc_gpu("tridiag: d_vec_dev", successGPU)
 
@@ -619,11 +578,10 @@ subroutine tridiag_&
 
     successGPU = gpu_malloc(xf_dev, 1 * size_of_datatype)
     check_alloc_gpu("tridiag: xf_dev", successGPU)
-#endif
 
 #ifdef WITH_NVIDIA_NCCL
     ! for gpu_transpose_vectors on non-square grids
-    if (np_rows==np_cols and (.not. isSkewsymmetric)) then
+    if (np_rows==np_cols .and. (.not. isSkewsymmetric)) then
       isSquareGridGPU = .true.
     else
       isSquareGridGPU = .false.
@@ -725,36 +683,11 @@ subroutine tridiag_&
 
       ! copy l_cols + 1 column of A to v_row
       if (useGPU) then
-        ! we use v_row on the host at the moment! successGPU = gpu_memcpy(v_row_dev, a_dev + offset_dev, 
-        ! (l_rows)*size_of_PRECISION_real, gpuMemcpyDeviceToDevice)
-
-#ifdef GPU_OLD 
-        offset_dev = l_cols * matrixRows * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        num = l_rows * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize("tridiag a_dev -> v_row", a_dev, offset_dev, &
-                                                     v_row(1:max_local_rows+1), &
-                                                     1,  num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
-#else /* WITH_GPU_STREAMS */
-
-#ifdef WITH_NVTX
-        call nvtxRangePush("memcpy D-H a_dev(:,l_cols+1)->v_row")
-#endif
-        successGPU = gpu_memcpy(int(loc(v_row),kind=c_intptr_t), &
-                                  a_dev + offset_dev, (l_rows)* size_of_datatype, gpuMemcpyDeviceToHost)
-#ifdef WITH_NVTX        
-        call nvtxRangePop()
-#endif
-
-        check_memcpy_gpu("tridiag a_dev 1", successGPU)
-#endif /* WITH_GPU_STREAMS */
-#else /* not GPU_OLD (GPU_NEW) */
 
 #ifdef WITH_NVTX
         call nvtxRangePush("memcpy new D-D a_dev(:,l_cols+1)->v_row_dev")
 #endif
-        ! PETERDEBUG:  create a dev-dev copy kernel or merge it to another kernel
+        ! TODO_23_11:  create a dev-dev copy kernel or merge it to another kernel
         offset_dev = l_cols * matrixRows * size_of_datatype
         successGPU = gpu_memcpy(v_row_dev, a_dev + offset_dev, (l_rows)* size_of_datatype, gpuMemcpyDeviceToDevice)
         check_memcpy_gpu("tridiag a_dev 1", successGPU)
@@ -763,46 +696,12 @@ subroutine tridiag_&
         call nvtxRangePop()
 #endif
 
-#endif /* GPU_OLD  (GPU_NEW) */
-
       else ! useGPU
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
       endif ! useGPU
 
       if (n_stored_vecs > 0 .and. l_rows > 0) then
-        if (useGPU) then ! ??? PETERDEBUG: why this, even cpu gemv is not needed for a cpu-only calcaulations?
-
-
-
-#ifdef GPU_OLD /* ___________________________________________________________________________________*/
-                    ! as on CPU
-!#if REALCASE == 1
-!          aux(1:2*n_stored_vecs) =       uv_stored_cols(l_cols+1,1:2*n_stored_vecs)
-!#endif
-#if COMPLEXCASE == 1
-          aux(1:2*n_stored_vecs) = conjg(uv_stored_cols(l_cols+1,1:2*n_stored_vecs))
-#endif 
-          if (wantDebug) call obj%timer%start("blas")
-#ifdef WITH_NVTX
-          call nvtxRangePush("cpu gemv v_row=vu_stored_rows*uv_stored_cols")
-#endif    
-          ! v_row = vu_stored_rows * uv_stored_cols(l_cols+1,1:2*n_stored_vecs) + v_row
-          call PRECISION_GEMV('N',   &
-                            int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND), &
-                            ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND), &
-#if REALCASE == 1
-                            uv_stored_cols(l_cols+1,1), &
-                            int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND), &
-#endif
-#if COMPLEXCASE == 1
-                            aux, 1_BLAS_KIND,  &
-#endif
-                            ONE, v_row, 1_BLAS_KIND)
-#ifdef WITH_NVTX
-          call nvtxRangePop()
-#endif
-          if (wantDebug) call obj%timer%stop("blas")
-#else /* not GPU_OLD (GPU_NEW) ___________________________________________________________________________________*/
+        if (useGPU) then
           if (wantDebug) call obj%timer%start("gpublas gemv skinny with copying")
 #ifdef WITH_NVTX
           call nvtxRangePush("gpublas gemv skinny  v_row_dev+=vu_stored_rows_dev*uv_stored_cols_dev")
@@ -819,13 +718,11 @@ subroutine tridiag_&
 #endif
                                     ONE, v_row_dev, 1, gpuHandle)
 
-
           if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
 #ifdef WITH_NVTX
           call nvtxRangePop()
 #endif
           if (wantDebug) call obj%timer%stop("gpublas gemv skinny with copying")
-#endif /* GPU_OLD (GPU_NEW) ___________________________________________________________________________________*/
 
         else ! useGPU
 #if COMPLEXCASE == 1
@@ -849,7 +746,6 @@ subroutine tridiag_&
         endif ! useGPU
       endif ! (n_stored_vecs > 0 .and. l_rows > 0)
 
-#if defined(GPU_NEW)
       if (useGPU) then
         if (my_prow == prow(istep-1, nblk, np_rows)) then
           isOurProcessRowInt = 1
@@ -886,7 +782,7 @@ subroutine tridiag_&
 #endif
         endif ! .not. useCCL 
       endif ! useGPU  
-#endif /* GPU_NEW */
+
 
       if (.not. useGPU) then
 #ifdef WITH_NVTX
@@ -935,7 +831,7 @@ subroutine tridiag_&
 #endif /* WITH_MPI */
 
       if (useCCL) then
-#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL)
+#if defined(WITH_NVIDIA_NCCL)
         vnorm2_dev = aux1_dev
         vrl_dev = aux1_dev + 1*size_of_datatype
 #endif
@@ -952,7 +848,7 @@ subroutine tridiag_&
 
       ! Householder transformation
       if (useCCL) then
-#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL)
+#if defined(WITH_NVIDIA_NCCL)
 #ifdef WITH_NVTX
         call nvtxRangePush("gpu_hh_transform")
 #endif
@@ -961,7 +857,7 @@ subroutine tridiag_&
 #ifdef WITH_NVTX
         call nvtxRangePop()
 #endif
-#endif /* defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(WITH_NVIDIA_NCCL) */
       else ! useCCL
 #ifdef WITH_NVTX
         call nvtxRangePush("hh_transform")
@@ -1021,7 +917,7 @@ subroutine tridiag_&
         v_row(l_rows+1) = tau(istep)
       endif
 
-#if defined(GPU_NEW)
+      
       if (useGPU) then
         if (useCCL) then
           xf_host_or_dev = xf_dev
@@ -1039,9 +935,8 @@ subroutine tridiag_&
         call nvtxRangePop()
 #endif
       endif ! useGPU  
-#endif /* GPU_NEW */
 
-#if defined(GPU_NEW)
+
       if (useGPU .and. .not. useCCL) then      
         !v_row_dev -> v_row
 #ifdef WITH_NVTX
@@ -1057,16 +952,13 @@ subroutine tridiag_&
         check_memcpy_gpu("tridiag: v_row_dev -> v_row", successGPU)
 #endif
 
-
 #ifdef WITH_NVTX
         call nvtxRangePop()
 #endif
       endif ! useGPU .and. .not. useCCL
-#endif /* GPU_NEW */
 
     endif !(my_pcol == pcol(istep, nblk, np_cols))
 
-!          SAVE_MATR("HH vec stored", na - istep + 1)
 
 #ifdef WITH_MPI
     if (useCCL .and. np_cols>1) then
@@ -1078,7 +970,7 @@ subroutine tridiag_&
         stop 1
       endif
 
-      successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
+      successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
 #endif /* WITH_NVIDIA_NCCL */
     else ! useCCL
@@ -1162,7 +1054,7 @@ subroutine tridiag_&
 #ifdef WITH_NVTX
       call nvtxRangePush("gpu-nccl: set u_col_dev=0")
 #endif
-      successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype) ! PETERDEBUG: omit this, but change gpublas_gemm to u_col_dev=a_dev^T*v_row_dev+0*u_col_dev
+      successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype) ! TODO_23_11: omit this, but change gpublas_gemm to u_col_dev=a_dev^T*v_row_dev+0*u_col_dev?
       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
 #ifdef WITH_NVTX
       call nvtxRangePop()
@@ -1268,7 +1160,7 @@ subroutine tridiag_&
 #endif /* WITH_OPENMP_TRADITIONAL */
 
 #ifdef WITH_NVTX
-      call nvtxRangePush("cpu-only nested loop") ! 0.5us PETERDEBUG: we can save up to 0,2% (last loop in last GEMM cycle for smallish matrix) of time by just skipping it
+      call nvtxRangePush("cpu-only nested loop")
 #endif
       if (.not. useGPU) then
         do i=0, (istep-2)/tile_size ! iteration over tiles
@@ -1345,11 +1237,10 @@ subroutine tridiag_&
 #endif
 
       if (useGPU) then
-        if (mat_vec_as_one_block) then ! PETERDEBUG: check the alternative path: mat_vec_as_one_block = .false. !!!
+        if (mat_vec_as_one_block) then
           ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
           ! this requires altering of the algorithm when later explicitly updating the matrix
           ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
-          ! ??? PETERDEBUG: understand this
           if (wantDebug) call obj%timer%start("gpublas")
           
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0) ! 0.3-0.5 us
@@ -1533,7 +1424,7 @@ subroutine tridiag_&
 #endif
     endif ! useGPU
 
-    !if (useGPU) then ! PETERDEBUG: this older commented out version can be deleted upon cleanup
+
     if (useGPU .and. .not. useCCL) then 
         if (l_rows==0) then
 #ifdef WITH_NVTX
@@ -1575,7 +1466,7 @@ subroutine tridiag_&
       if (useCCL) then
 #if defined(WITH_NVIDIA_NCCL)
 #ifdef WITH_NVTX
-        call nvtxRangePush("nccl_Allreduce u_col_dev") ! PETERDEBUG: can we use Bcast instead of Allreauce and not set u_col_dev=0 above?
+        call nvtxRangePush("nccl_Allreduce u_col_dev") ! TODO_23_11: can we use Bcast instead of Allreauce and not set u_col_dev=0 above?
 #endif
         successGPU = nccl_Allreduce(u_col_dev, u_col_dev, int(k_datatype*l_cols, kind=c_size_t), &
                                     ncclDataType, ncclSum, ccl_comm_rows, my_stream)
@@ -1584,7 +1475,7 @@ subroutine tridiag_&
           stop 1
         endif
 
-        successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
+        successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need it here and before nccl_group_start()?
         check_stream_synchronize_gpu("nccl_Allreduce u_col_dev", successGPU)
 #ifdef WITH_NVTX
         call nvtxRangePop()
@@ -1658,7 +1549,7 @@ subroutine tridiag_&
       endif ! isSkewsymmetric
     endif ! useCCL
 
-#if defined(GPU_NEW)
+
     if (useGPU .and. .not. useCCL) then
 #ifdef WITH_NVTX
       call nvtxRangePush("memcpy new-2 H-D v_col->v_col_dev")
@@ -1692,11 +1583,9 @@ subroutine tridiag_&
       call nvtxRangePop()
 #endif
     endif ! (useGPU .and. .not. useCCL)
-#endif
 
-#if defined(GPU_NEW) && defined(WITH_NVIDIA_NCCL)
-    ! PETERDEBUG: WITH_NVIDIA_NCCL should be renamed to WITH_GPU_CCL
-    ! PETERDEBUG: this part could only be useful if we use NCCL for Allreduce of vav_dev
+#if defined(WITH_NVIDIA_NCCL)
+    ! TODO_23_11: WITH_NVIDIA_NCCL should be renamed to WITH_GPU_CCL
     if (useGPU .and. useCCL) then
 #ifdef WITH_NVTX
       call nvtxRangePush("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
@@ -1706,9 +1595,9 @@ subroutine tridiag_&
       call nvtxRangePop()
 #endif
     endif ! useGPU
-#endif /* GPU_NEW && WITH_NVIDIA_NCCL */
+#endif /* WITH_NVIDIA_NCCL */
 
-#if defined(GPU_NEW)
+
     if (useGPU .and. .not. useCCL) then
 #ifdef WITH_NVTX
       call nvtxRangePush("memcpy new-2 H-D u_row->u_row_dev")
@@ -1741,7 +1630,7 @@ subroutine tridiag_&
       call nvtxRangePop()
 #endif
     endif ! (useGPU .and. .not. useCCL)
-#endif /* GPU_NEW */
+
 
     ! calculate u**T * v (same as v**T * (A + VU**T + UV**T) * v )
     if (.not. useGPU .or. (useGPU .and. .not. useCCL)) then
@@ -1765,7 +1654,7 @@ subroutine tridiag_&
         stop 1
       endif
 
-      successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG: do we need it here and before nccl_group_start()?
+      successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need it here and before nccl_group_start()?
       check_stream_synchronize_gpu("nccl_Allreduce vav_dev", successGPU)
 #endif /* WITH_NVIDIA_NCCL */
 
@@ -1817,7 +1706,7 @@ subroutine tridiag_&
 #endif
     endif ! .not. useGPU
 
-#if defined(GPU_NEW)
+
     if (useGPU) then
 
       ! kernel: update vu_stored_rows_dev, uv_stored_cols
@@ -1841,7 +1730,6 @@ subroutine tridiag_&
       call nvtxRangePop()
 #endif
     endif ! useGPU
-#endif /* GPU_NEW */
 
 
     ! We have calculated another Householder Vector, number of implicitly stored increased
@@ -1960,7 +1848,6 @@ subroutine tridiag_&
     if (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols)) then
 
       if (useGPU) then
-#if defined(GPU_NEW)
         my_stream = obj%gpu_setup%my_stream
 #ifdef WITH_NVTX
         call nvtxRangePush("kernel: gpu_update_matrix_element_add")
@@ -1971,7 +1858,7 @@ subroutine tridiag_&
 #ifdef WITH_NVTX
         call nvtxRangePop()
 #endif
-#endif
+
       else ! useGPU
         if (n_stored_vecs > 0) then
           ! update a_mat (only one elememt!)
@@ -1998,7 +1885,7 @@ subroutine tridiag_&
 
   enddo ! main cycle over istep=na,3,-1
 
-#ifdef GPU_NEW
+
   if (useGPU) then
     ! copy a_dev -> a_mat for backtransformation
     num = matrixRows * matrixCols * size_of_datatype
@@ -2012,7 +1899,7 @@ subroutine tridiag_&
 #endif
 
   endif ! useGPU
-#endif /* GPU_NEW */
+
 
 #if COMPLEXCASE == 1
   ! Store e_vec(1) and d_vec(1)
@@ -2145,7 +2032,6 @@ subroutine tridiag_&
 #endif /* REALCASE */
 
   if (useGPU) then
-#ifdef GPU_NEW
     offset_dev = 1 * size_of_datatype_real
     ! first and last elements of d_vec are treated separately
     successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), &
@@ -2165,7 +2051,6 @@ subroutine tridiag_&
                               tau_dev + offset_dev, (na-2) * size_of_datatype, gpuMemcpyDeviceToHost)
       check_memcpy_gpu("tridiag: tau", successGPU)
     endif
-#endif
 
     ! todo: should we leave a_mat on the device for further use?
     successGPU = gpu_free(a_dev)
@@ -2189,7 +2074,6 @@ subroutine tridiag_&
     successGPU = gpu_free(uv_stored_cols_dev)
     check_dealloc_gpu("tridiag:uv_stored_cols_dev ", successGPU)
 
-#ifdef GPU_NEW
     successGPU = gpu_free(d_vec_dev)
     check_dealloc_gpu("tridiag: d_vec_dev", successGPU)
 
@@ -2216,7 +2100,6 @@ subroutine tridiag_&
 
     successGPU = gpu_free(xf_dev)
     check_dealloc_gpu("tridiag: xf_dev", successGPU)
-#endif
 
 #ifdef WITH_NVIDIA_NCCL
     if (.not. isSquareGridGPU) then
@@ -2250,7 +2133,7 @@ subroutine tridiag_&
                        int(mpi_comm_rows,kind=MPI_KIND), mpierr)
     tmp_real = e_vec
     call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr) !!! PETERDEBUG: change to MPI_IN_PLACE
+                       int(mpi_comm_rows,kind=MPI_KIND), mpierr) ! TODO_23_11: change to MPI_IN_PLACE, get rid of tmp_real
     if (wantDebug) call obj%timer%stop("mpi_communication")
   endif
   if (useNonBlockingCollectivesCols) then
@@ -2324,7 +2207,6 @@ subroutine tridiag_&
       successGPU = gpu_host_unregister(int(loc(vu_stored_rows),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: vu_stored_rows", successGPU)
 
-#ifdef GPU_NEW
       successGPU = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: d_vec", successGPU)
 
@@ -2348,7 +2230,6 @@ subroutine tridiag_&
 
       successGPU = gpu_host_unregister(int(loc(xf),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: xf", successGPU)
-#endif
     endif
 #endif
   else ! useGPU
@@ -2359,10 +2240,8 @@ subroutine tridiag_&
   deallocate(vu_stored_rows, uv_stored_cols, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: vu_stored_rows, uv_stored_cols", istat, errorMessage)
 
-#ifdef GPU_NEW
   deallocate(aux, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: aux", istat, errorMessage)
-#endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
   if (useCCL) then
@@ -2370,7 +2249,6 @@ subroutine tridiag_&
   endif
 #endif
 
-!#define WITH_NVIDIA_NCCL /* PETERDEBUG */
 
   call obj%timer%stop("tridiag_&
   &MATH_DATATYPE&

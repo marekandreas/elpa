@@ -146,7 +146,7 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
 
   call obj%timer%stop("mpi_communication")
 
-  ! PETERDEBUG: TODO
+  ! TODO_23_11: TODO
   ! ! special square grid codepath for ELPA1
   ! if (solver==ELPA_SOLVER_1STAGE .and. nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
   !   ...
@@ -168,13 +168,13 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
   
   if (((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc > 0) then
 
-    ! PETERDEBUG: delete after testing
+    ! TODO_23_11: delete after testing
     successGPU = gpu_stream_synchronize(my_stream) 
     check_stream_synchronize_gpu("check_stream_synchronize_gpu before gpu_memset", successGPU)
 
-    ! PETERDEBUG: delete after testing
-print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc =",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc
-    print *,"reduce1 : my_mpi_rank=",my_mpi_rank,",nblks_tot=",nblks_tot,",lcm_s_t=",lcm_s_t,",nblk=",nblk,",nvc=",nvc
+    ! TODO_23_11: delete after testing
+! print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc =",((nblks_tot+lcm_s_t-1)/lcm_s_t)*nblk*nvc
+! print *,"reduce1 : my_mpi_rank=",my_mpi_rank,",nblks_tot=",nblks_tot,",lcm_s_t=",lcm_s_t,",nblk=",nblk,",nvc=",nvc
 
     successGPU = gpu_memset(aux1_reduceadd_dev, 0, (((nblks_tot+lcm_s_t-1)/lcm_s_t) * nblk * nvc ) * size_of_datatype)
     check_memcpy_gpu("elpa_gpu_ccl_reduce_add_vectors: aux1_reduceadd_dev", successGPU)
@@ -183,14 +183,14 @@ print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*n
     check_memcpy_gpu("elpa_gpu_ccl_reduce_add_vectors: aux2_reduceadd_dev", successGPU)
   endif
 
-  print *,"reduce: my_mpi_rank=", my_mpi_rank, ", lcm_s_t=",lcm_s_t ! PETERDEBUG: delete after testing
+  ! print *,"reduce: my_mpi_rank=", my_mpi_rank, ", lcm_s_t=",lcm_s_t ! TODO_23_11: delete after testing
 
   do n = 0, lcm_s_t-1
     ips = mod(n,nps)
     ipt = mod(n,npt)
 
     aux_stride = nblk * ((nblks_tot - n + lcm_s_t - 1)/lcm_s_t)
-    print *,"reduce: my_mpi_rank=", my_mpi_rank, ", aux_stride=",aux_stride ! PETERDEBUG: delete after testing
+    ! print *,"reduce: my_mpi_rank=", my_mpi_rank, ", aux_stride=",aux_stride ! TODO_23_11: delete after testing
     
     if (myps == ips) then
 
@@ -211,8 +211,7 @@ print *,"reduce1: my_mpi_rank=", my_mpi_rank,",((nblks_tot+lcm_s_t-1)/lcm_s_t)*n
       aux_size = aux_stride * nvc
 
 
-      ! PETERDEBUG: change to a sinlge aux_  here (and to to MPI_IN_PLACE in the correspoding non-gpu routine)
-      ! https://stackoverflow.com/questions/17741574/in-place-mpi-reduce-crashes-with-openmpi
+      ! TODO_23_11: change to a sinlge aux_  here (and to to MPI_IN_PLACE in the correspoding non-gpu routine)
       if (aux_size>0) then
         if (wantDebug) call obj%timer%start("nccl_communication")
         

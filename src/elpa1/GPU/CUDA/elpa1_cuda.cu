@@ -60,7 +60,6 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
-//#include <cuda/std/type_traits>
 #include <type_traits>
 #include "config-f90.h"
 
@@ -113,17 +112,6 @@ __device__ cuComplex       elpaDeviceDivide(cuComplex       a, cuComplex       b
 __device__ double elpaDeviceSqrt(double number) { return sqrt (number); }
 __device__ float  elpaDeviceSqrt(float  number) { return sqrtf(number); }
 
-// PETERDEBUG: delete after testing
-// // Specialized atomicAdd for cuDoubleComplex and cuComplex
-// __device__ void atomicAdd(cuDoubleComplex* address, cuDoubleComplex val) {
-//     atomicAdd(&(address->x), val.x);
-//     atomicAdd(&(address->y), val.y);
-// }
-// __device__ void atomicAdd(cuComplex* address, cuComplex val) {
-//     atomicAdd(&(address->x), val.x);
-//     atomicAdd(&(address->y), val.y);
-// }
-
 // atomicAdd for cuDoubleComplex and cuComplex
 template<typename T>
 __device__ void atomicAdd(T* address, T val) {
@@ -146,7 +134,7 @@ __device__ float  elpaDeviceImagPart(float  number) {return 0.0f;}
 __device__ double elpaDeviceImagPart(cuDoubleComplex number) {return number.y;}
 __device__ float  elpaDeviceImagPart(cuComplex       number) {return number.y;}
 
-// Define a helper trait to determine if a type is a pointer
+// Define a helper struct to determine if a type is a pointer
 template <typename T>
 struct is_pointer { static const bool value = false; };
 
@@ -165,61 +153,6 @@ __device__ T convert_to_device(T x, std::false_type) {
     return x;
 }
 
-
-/*
-template <typename T>
-void sycl_copy_a_tmat2_kernel(T *a_dev, T *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, sycl::nd_item<1> it){
-
-  int nb_index = it.get_local_id(0) + 1; // range 1..nb
-  int l_col_index = it.get_group(0) + 1; // range 1..l_colx-l_cols-1
-
-  tmat2_dev[nb_index-1 + (l_colx-1 + l_col_index -1) * nblk] = a_dev[l_row1-1 + nb_index-1 + (l_colx-1 + l_col_index -1)  * matrixRows];
-
-}
-
-template <typename T>
-void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-
-  int nblk = *nblk_in;   
-  int matrixRows = *matrixRows_in;
-  int l_cols = *l_cols_in;
-  int l_colx = *l_colx_in;
-  int l_row1 = *l_row1_in;
-  int nb     = *nb_in;
-
-  sycl::range<1> global_range = sycl::range<1>(nb*(l_cols - l_colx + 1));
-  sycl::range<1> local_range  = sycl::range<1>(nb);
-
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
-
-  queue.parallel_for(
-      sycl::nd_range<1>(global_range, local_range),
-      [=](sycl::nd_item<1> it) {
-        sycl_copy_a_tmat2_kernel(a_dev, tmat2_dev, nblk, matrixRows,
-                                        l_colx, l_row1, it);
-      });
-  queue.wait_and_throw();
-
-}
-
-extern "C" void sycl_copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-  sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
-}
-
-extern "C" void sycl_copy_float_a_tmat2_FromC(float *a_dev, float *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-  sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
-}
-
-extern "C" void sycl_copy_double_complex_a_tmat2_FromC(std::complex<double> *a_dev, std::complex<double> *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-  sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
-}
-
-extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev, std::complex<float> *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-  sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
-}
-*/
-
 //________________________________________________________________
 // device syncronization is needed afterwards, e.g. gpu_memcpy
 
@@ -230,6 +163,7 @@ __global__ void cuda_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int
 
   T DeviceZero = elpaDeviceNumber<T>(0.0);
   if (threadIdx.x==0) result_dev[0] = DeviceZero; // clear old value; it's safe because we perform __syncthreads() before atomicAdd
+                                                  // TODO_23_11: actually can be unsafe: merge to the previous kernel
 
   T temp = DeviceZero;
   int i = tid;
@@ -263,11 +197,11 @@ void cuda_dot_product_FromC(int* n_in, T *x_dev, int *incx_in, T *y_dev, int *in
   bool wantDebug = *wantDebug_in;
 
   int SM_count=32;
-  //cudaDeviceGetAttribute(&SM_count, cudaDevAttrMultiProcessorCount, 0); // PETERDEBUG move this outside, to set_gpu, claim the number only once during GPU setup
+  //cudaDeviceGetAttribute(&SM_count, cudaDevAttrMultiProcessorCount, 0); // TODO_23_11: move this outside, to set_gpu, claim the number only once during GPU setup
 
   int blocks = SM_count;
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG: or NB?
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // TODO_23_11: use NB here instead? 
 
 #ifdef WITH_GPU_STREAMS
   cuda_dot_product_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(n, x_dev, incx, y_dev, incy, result_dev);
@@ -365,7 +299,7 @@ void cuda_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in, int *isOurP
   //cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0);
   
   //int blocks = (l_rows+1023)/MAX_THREADS_PER_BLOCK;
-  int blocks = 32; // PETERDEBUG: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
+  int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
   dim3 blocksPerGrid = dim3(blocks,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
@@ -481,7 +415,7 @@ void cuda_set_e_vec_scale_set_one_store_v_row_FromC(T_real *e_vec_dev, T *vrl_de
 
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG change to NB
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // TODO_23_11: change to NB?
 
   cudaPointerAttributes attributes;
   cudaError_t error = cudaPointerGetAttributes(&attributes, xf_host_or_dev);
@@ -550,8 +484,6 @@ extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(flo
 
 //________________________________________________________________
 
-
-// PETERDEBUG: special case for complex precision!
 template <typename T, typename T_value_or_pointer>
 __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
                 T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T_value_or_pointer vav_host_or_dev, T_value_or_pointer tau_host_or_dev,
@@ -614,7 +546,6 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
     }
 
 
-//  if (::cuda::std::is_same_v<T, cuDoubleComplex> || ::cuda::std::is_same_v<T, cuComplex>)
   if (std::is_same<T, cuDoubleComplex>::value || std::is_same<T, cuComplex>::value)
     {
     int j = tid;
@@ -649,7 +580,7 @@ void cuda_store_u_v_in_uv_vu_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev,
   bool useCCL = *useCCL_in;
   bool wantDebug = *wantDebug_in;
   
-  int threads = MAX_THREADS_PER_BLOCK/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
+  int threads = MAX_THREADS_PER_BLOCK/2; // TODO_23_11: the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory. Change to smth else for safety?
   int blocks = std::max({(l_rows+threads-1)/threads, (l_cols+threads-1)/threads, 1});
   
   dim3 blocksPerGrid = dim3(blocks,1,1);
@@ -734,7 +665,6 @@ extern "C" void cuda_store_u_v_in_uv_vu_float_complex_FromC(cuComplex *vu_stored
 
 //________________________________________________________________
 
-// PETERDEBUG: special case for complex precision!
 template <typename T, typename T_real>
 __global__ void cuda_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
                                                       int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, bool isSkewsymmetric){
@@ -766,7 +696,7 @@ __global__ void cuda_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *
     if (isSkewsymmetric) 
       d_vec_dev[istep-1-1] = 0.0;
     else 
-      d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // PETERDEBUG: move this to other kernel for thread safety
+      d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to the previous kernel for thread safety
     }
   if (n_stored_vecs > 0)
     {
@@ -907,8 +837,6 @@ extern "C" void cuda_update_array_element_float_complex_FromC(cuComplex *array_d
 
 //________________________________________________________________
 
-// PETERDEBUG: special case for complex precision!
-// PETERDEBUG: check that this is correct carefully!
 template <typename T>
 __global__ void cuda_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, bool wantDebug_in){
 
@@ -1086,8 +1014,6 @@ __global__ void cuda_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transp
   T sign = elpaDeviceNumber<T>(1.0);
   if (isSkewsymmetric) sign = elpaDeviceNumber<T>(-1.0);
 
-  //if (isReduceadd) printf("aux_transpose_dev[0] (before)= %f\n", *aux_transpose_dev); // ! PETERDEBUG: delete after testing
-
   int k, ns, nl;
   for (int lc=1; lc <= nvc; lc += 1)
     {
@@ -1127,7 +1053,7 @@ void cuda_transpose_reduceadd_vectors_copy_block_FromC(T *aux_transpose_dev, T *
   bool isReduceadd = *isReduceadd_in;
   bool wantDebug = *wantDebug_in;
 
-  int SM_count=32; // PETERDEBUG count and move outside
+  int SM_count=32; // TODO_23_11: claim by function call and move outside
   int blocks = SM_count;
 
   dim3 blocksPerGrid = dim3(blocks,1,1);

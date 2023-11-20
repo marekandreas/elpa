@@ -114,25 +114,6 @@ __device__ hipComplex       elpaDeviceDivide(hipComplex       a, hipComplex     
 __device__ double elpaDeviceSqrt(double number) { return sqrt (number); }
 __device__ float  elpaDeviceSqrt(float  number) { return sqrtf(number); }
 
-// PETERDEBUG: delete after testing
-// // Specialized atomicAdd for hipDoubleComplex and hipComplex
-// __device__ void atomicAdd(hipDoubleComplex* address, hipDoubleComplex val) {
-//     atomicAdd(&(address->x), val.x);
-//     atomicAdd(&(address->y), val.y);
-// }
-// __device__ void atomicAdd(hipComplex* address, hipComplex val) {
-//     atomicAdd(&(address->x), val.x);
-//     atomicAdd(&(address->y), val.y);
-// }
-
-// atomicAdd for hipDoubleComplex and hipComplex
-// template<typename T>
-// __device__ void atomicAdd(T* address, T val) {
-//     atomicAdd(&(address->x), val.x);
-//     atomicAdd(&(address->y), val.y);
-// }
-
-
 #if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 600
 static __inline__ __device__ double atomicAdd(double* address, double val)
 {
@@ -160,18 +141,6 @@ __device__ void atomicAdd(T* address, T val) {
     atomicAdd(&(address->y), val.y);
 }
 
-// template<typename T>
-// __device__ void atomicAdd(T* address, T val) {
-//     // Check if T is a primitive type like double
-//     if constexpr (std::is_fundamental<T>::value) { // constexpr is C++17 feature
-//         // Perform atomic add directly on the value
-//         ::atomicAdd(address, val);
-//     } else {
-//         // Assuming T is a complex type with .x and .y components
-//         atomicAdd(&(address->x), val.x);
-//         atomicAdd(&(address->y), val.y);
-//     }
-// }
 
 __device__ double elpaDeviceComplexConjugate(double number) {return number;}
 __device__ float elpaDeviceComplexConjugate(float  number) {return number;}
@@ -305,11 +274,11 @@ void hip_dot_product_FromC(int* n_in, T *x_dev, int *incx_in, T *y_dev, int *inc
   bool wantDebug = *wantDebug_in;
 
   int SM_count=32;
-  //hipDeviceGetAttribute(&SM_count, hipDeviceAttributeMultiprocessorCount, 0); // PETERDEBUG move this outside, to set_gpu, claim the number only once during GPU setup
+  //hipDeviceGetAttribute(&SM_count, hipDeviceAttributeMultiprocessorCount, 0); // TODO_23_11 move this outside, to set_gpu, claim the number only once during GPU setup
 
   int blocks = SM_count;
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG: or NB?
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // TODO_23_11: or NB?
 
 #ifdef WITH_GPU_STREAMS
   hip_dot_product_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(n, x_dev, incx, y_dev, incy, result_dev);
@@ -407,7 +376,7 @@ void hip_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in, int *isOurPr
   //hipDeviceGetAttribute(&numSMs, hipDeviceAttributeMultiprocessorCount, 0);
   
   //int blocks = (l_rows+1023)/MAX_THREADS_PER_BLOCK;
-  int blocks = 32; // PETERDEBUG: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
+  int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
   dim3 blocksPerGrid = dim3(blocks,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
@@ -523,7 +492,7 @@ void hip_set_e_vec_scale_set_one_store_v_row_FromC(T_real *e_vec_dev, T *vrl_dev
 
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG change to NB
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // TODO_23_11: change to NB?
 
   hipPointerAttribute_t attributes;
   hipError_t error = hipPointerGetAttributes(&attributes, xf_host_or_dev);
@@ -593,8 +562,6 @@ extern "C" void hip_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(floa
 
 //________________________________________________________________
 
-
-// PETERDEBUG: special case for complex precision!
 template <typename T, typename T_value_or_pointer>
 __global__ void hip_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
                 T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T_value_or_pointer vav_host_or_dev, T_value_or_pointer tau_host_or_dev,
@@ -656,8 +623,6 @@ __global__ void hip_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_store
     i_col += blockDim.x * gridDim.x;
     }
 
-
-//  if (::hip::std::is_same_v<T, hipDoubleComplex> || ::hip::std::is_same_v<T, hipComplex>)
   if (std::is_same<T, hipDoubleComplex>::value || std::is_same<T, hipComplex>::value)
     {
     int j = tid;
@@ -778,7 +743,6 @@ extern "C" void hip_store_u_v_in_uv_vu_float_complex_FromC(hipComplex *vu_stored
 
 //________________________________________________________________
 
-// PETERDEBUG: special case for complex precision!
 template <typename T, typename T_real>
 __global__ void hip_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
                                                       int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, bool isSkewsymmetric){
@@ -810,7 +774,7 @@ __global__ void hip_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *u
     if (isSkewsymmetric) 
       d_vec_dev[istep-1-1] = 0.0;
     else 
-      d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // PETERDEBUG: move this to other kernel for thread safety
+      d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to other kernel for thread safety
     }
   if (n_stored_vecs > 0)
     {
@@ -951,8 +915,6 @@ extern "C" void hip_update_array_element_float_complex_FromC(hipComplex *array_d
 
 //________________________________________________________________
 
-// PETERDEBUG: special case for complex precision!
-// PETERDEBUG: check that this is correct carefully!
 template <typename T>
 __global__ void hip_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, bool wantDebug_in){
 
@@ -1130,8 +1092,6 @@ __global__ void hip_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpo
   T sign = elpaDeviceNumber<T>(1.0);
   if (isSkewsymmetric) sign = elpaDeviceNumber<T>(-1.0);
 
-  //if (isReduceadd) printf("aux_transpose_dev[0] (before)= %f\n", *aux_transpose_dev); // ! PETERDEBUG: delete after testing
-
   int k, ns, nl;
   for (int lc=1; lc <= nvc; lc += 1)
     {
@@ -1171,7 +1131,7 @@ void hip_transpose_reduceadd_vectors_copy_block_FromC(T *aux_transpose_dev, T *v
   bool isReduceadd = *isReduceadd_in;
   bool wantDebug = *wantDebug_in;
 
-  int SM_count=32; // PETERDEBUG count and move outside
+  int SM_count=32; // TODO_23_11 count and move outside
   int blocks = SM_count;
 
   dim3 blocksPerGrid = dim3(blocks,1,1);

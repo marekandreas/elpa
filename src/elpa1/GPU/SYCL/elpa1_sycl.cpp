@@ -114,23 +114,12 @@ std::complex<float> elpaDeviceDivide(std::complex<float> a, std::complex<float> 
 double elpaDeviceSqrt(double number) { return sycl::sqrt(number); }
 float elpaDeviceSqrt(float number) { return sycl::sqrt(number); }
 
-// PETERDEBUG: delete after testing
-    
-//atomicAdd(&result_dev[0], cache[0]);
-// sycl::atomic_ref<T, sycl::memory_order_relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum (result_dev[0]);
-// atomic_sum += cache[0];
 
 template <typename T> void atomicAdd(T* address, T val)
   {
   sycl::atomic_ref<T, sycl::memory_order_relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum (*address);
   atomic_sum += val;
   }
-
-// template <>  void atomicAdd<double>(double* address, double val)
-//   {
-//   sycl::atomic_ref<T, sycl::memory_order_relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum (result_dev[0]);
-//   atomic_sum += cache[0];
-//   }
 
 template <>  void atomicAdd(std::complex<double>* address, std::complex<double> val)
   {
@@ -156,23 +145,6 @@ template <>  void atomicAdd(std::complex<float>* address, std::complex<float> va
   atomic_sum_imag += val.imag();
   }
 
-// // Specialized atomicAdd for std::complex<double> and std::complex<float>
-// __device__ void atomicAdd(std::complex<double>* address, std::complex<double> val) {
-//     atomicAdd(&(address->x), val.x);
-//     atomicAdd(&(address->y), val.y);
-// }
-// __device__ void atomicAdd(std::complex<float>* address, std::complex<float> val) {
-//     atomicAdd(&(address->x), val.x);
-//     atomicAdd(&(address->y), val.y);
-// }
-
-//atomicAdd for std::complex<double> and std::complex<float>
-// template<typename T>
-// void atomicAdd(T* address, T val) {
-//     atomicAdd(&(address->x), val.x);
-//     atomicAdd(&(address->y), val.y);
-// }
-
 double elpaDeviceComplexConjugate(double number) {return number;}
 float elpaDeviceComplexConjugate(float  number) {return number;}
 std::complex<double> elpaDeviceComplexConjugate(std::complex<double> number) {return std::conj(number);}
@@ -188,7 +160,7 @@ float  elpaDeviceImagPart(float  number) {return 0.0f;}
 double elpaDeviceImagPart(std::complex<double> number) { return number.imag(); }
 float  elpaDeviceImagPart(std::complex<float>  number) { return number.imag(); }
 
-// Define a helper trait to determine if a type is a pointer
+// Define a helper struct to determine if a type is a pointer
 template <typename T>
 struct is_pointer { static const bool value = false; };
 
@@ -261,11 +233,11 @@ void sycl_dot_product_FromC(int *n_in, T *x_dev, int *incx_in, T *y_dev,
   bool wantDebug = *wantDebug_in;
 
   int SM_count=32;
-  //cudaDeviceGetAttribute(&SM_count, cudaDevAttrMultiProcessorCount, 0); // PETERDEBUG move this outside, to set_gpu, claim the number only once during GPU setup
+  //cudaDeviceGetAttribute(&SM_count, cudaDevAttrMultiProcessorCount, 0); // TODO_23_11 move this outside, to set_gpu, claim the number only once during GPU setup
 
   int blocks = SM_count;
   sycl::range<1> blocksPerGrid   = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // PETERDEBUG: or NB?
+  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // TODO_23_11: or NB?
 
 
   /*
@@ -406,7 +378,7 @@ void sycl_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in,
   //cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0);
   
   //int blocks = (l_rows+1023)/MAX_THREADS_PER_BLOCK;
-  int blocks = 32; // PETERDEBUG: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
+  int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
   
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
   sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK);
@@ -549,7 +521,7 @@ void sycl_set_e_vec_scale_set_one_store_v_row_FromC(
 
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // PETERDEBUG change to NB
+  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // TODO_23_11 change to NB
   
   auto device = elpa::gpu::sycl::getDevice();
   auto &queue = elpa::gpu::sycl::getQueue();
@@ -834,7 +806,6 @@ extern "C" void sycl_store_u_v_in_uv_vu_float_complex_FromC(
 
 //________________________________________________________________
 
-// PETERDEBUG: special case for complex precision!
 template <typename T, typename T_real>
 void sycl_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
                                                       int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, bool isSkewsymmetric,
@@ -867,7 +838,7 @@ void sycl_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_c
   //   if (isSkewsymmetric) 
   //     d_vec_dev[istep-1-1] = 0.0;
   //   else 
-  //     d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // PETERDEBUG: move this to other kernel for thread safety
+  //     d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to other kernel for thread safety
   //   }
   if (n_stored_vecs > 0)
     {
@@ -950,7 +921,7 @@ void sycl_update_matrix_element_add_FromC(
     if (isSkewsymmetric) 
       d_vec_dev[istep-1-1] = 0.0;
     else 
-      d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // PETERDEBUG: move this to other kernel for thread safety
+      d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to other kernel for thread safety
   });
   queue.wait_and_throw();
 
@@ -1083,8 +1054,6 @@ extern "C" void sycl_update_array_element_float_complex_FromC(
 
 //________________________________________________________________
 
-// PETERDEBUG: special case for complex precision!
-// PETERDEBUG: check that this is correct carefully!
 template <typename T>
 void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, bool wantDebug_in){
 
@@ -1285,8 +1254,6 @@ void sycl_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T 
   T sign = elpaDeviceNumber<T>(1.0);
   if (isSkewsymmetric) sign = elpaDeviceNumber<T>(-1.0);
 
-  //if (isReduceadd) printf("aux_transpose_dev[0] (before)= %f\n", *aux_transpose_dev); // ! PETERDEBUG: delete after testing
-
   int k, ns, nl;
   for (int lc=1; lc <= nvc; lc += 1)
     {
@@ -1330,7 +1297,7 @@ void sycl_transpose_reduceadd_vectors_copy_block_FromC(
   bool isReduceadd = *isReduceadd_in;
   bool wantDebug = *wantDebug_in;
 
-  int SM_count=32; // PETERDEBUG count and move outside
+  int SM_count=32; // TODO_23_11 count and move outside
   int blocks = SM_count;
 
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);

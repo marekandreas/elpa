@@ -151,8 +151,8 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   k_datatype = 2
 #endif
 
-  ! ! PETERDEBUG: check if moving this outside speeds up the subroutine
-  ! ! PETERDEBUG -- move this outside (?) and change mpi to ccl 
+  ! ! TODO_23_11: check if moving this outside speeds up the subroutine
+  ! ! TODO_23_11 -- move this outside (?) and change mpi to ccl 
   ! if (wantDebug) call obj%timer%start("mpi_communication")
   ! call mpi_comm_rank(int(comm_s,kind=MPI_KIND),mypsMPI, mpierr)
   ! call mpi_comm_size(int(comm_s,kind=MPI_KIND),npsMPI ,mpierr)
@@ -164,7 +164,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   ! npt = int(nptMPI,kind=c_int)
   ! if (wantDebug) call obj%timer%stop("mpi_communication")
 
-  ! PETERDEBUG
+  ! TODO_23_11
   ! this codepath doesn't work for ELPA2 (because ld_s != ld_t)
   call obj%get("solver", solver, error)
   ! special square grid codepath for ELPA1
