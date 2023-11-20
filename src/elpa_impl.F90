@@ -722,7 +722,9 @@ module elpa_impl
     !> \param   self       class(elpa_impl_t), the allocated ELPA object
     !> \result  error      integer, the error code
     function elpa_setup(self) result(error)
+#ifdef WITH_MPI
       use elpa_scalapack_interfaces
+#endif
       class(elpa_impl_t), intent(inout)   :: self
       integer                             :: error, timings, performance, build_config
 

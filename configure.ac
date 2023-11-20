@@ -569,9 +569,9 @@ dnl check whether single precision is requested
 AC_MSG_CHECKING(whether ELPA library should contain also single precision functions)
 AC_ARG_ENABLE(single-precision,
               [AS_HELP_STRING([--enable-single-precision],
-                              [build with single precision])],
+                              [build with single precision (default: yes)])],
               [want_single_precision="$enableval"],
-              [want_single_precision="no"])
+              [want_single_precision="yes"])
 AC_MSG_RESULT([${want_single_precision}])
 
 
@@ -599,6 +599,23 @@ if test x"${enable_timings}" = x"yes"; then
   AC_DEFINE([HAVE_DETAILED_TIMINGS], [1], [Enable more timing])
 fi
 AM_CONDITIONAL([HAVE_DETAILED_TIMINGS], [test x"$enable_timings" = x"yes"])
+
+AC_ARG_ENABLE([affinity-checking],
+              [AS_HELP_STRING([--disable-affinity-checking],
+                              [allow ELPA to check process and threading affinity, default yes])],
+              [
+               if test x"$enableval" = x"yes"; then
+                 enable_affinity_checking_=yes
+               else
+                 enable_affinity_checking=no
+               fi
+	       ],
+              [enable_affinity_checking=yes])
+
+if test x"${enable_affinity_checking}" = x"yes"; then
+  AC_DEFINE([HAVE_AFFINITY_CHECKING], [1], [Enable affinity checking])
+fi
+AM_CONDITIONAL([HAVE_AFFINITY_CHECKING], [test x"$enable_affinity_checking" = x"yes"])
 
 dnl PAPI for ftimings
 AC_LANG_PUSH([C])

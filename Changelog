@@ -3,6 +3,16 @@ Changelog for next release
 
 - not yet decided
 
+Changelog for ELPA 2023.05.001.rc1
+- Updated / improved documentation and man pages
+- Fixed compilation error on AMD GPUs
+- Fixed SVE 256 compute kernels
+- Allow (currently in parts of ELPA) to use NVIDIA NCCL for device to device
+commpunication
+- Speed up of GPU version of hermitian_multiply by up to an factor of 4
+- Consistent enabling/disabling of SKEW_SYMMETRIC in header files
+
+
 Changelog for ELPA 2023.05.001
 - added CITATION.cff file
 - allow test programs to be run with 1 MPI task
