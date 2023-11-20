@@ -398,7 +398,7 @@ function elpa_solve_evp_&
    ! ev still has to be assigned
 #else
    ! at the moment no redistribute if dptr !!
-#endif 
+#endif /* DEVICE_POINTER */
 #endif /* REDISTRIBUTE_MATRIX */
 
 #ifdef DEVICE_POINTER
@@ -425,16 +425,16 @@ function elpa_solve_evp_&
 #endif
    endif
 
-   ! and associate pointer
-   ! no redistribution happend
-   a => aExtern(1:matrixRows,1:matrixCols)
-   if (present(qExtern)) then
-#ifdef ACTIVATE_SKEW
-     q => qExtern(1:matrixRows,1:2*matrixCols)
-#else
-     q => qExtern(1:matrixRows,1:matrixCols)
-#endif
-   endif
+!   ! and associate pointer
+!   ! no redistribution happend
+!   a => aExtern(1:matrixRows,1:matrixCols)
+!   if (present(qExtern)) then
+!#ifdef ACTIVATE_SKEW
+!     q => qExtern(1:matrixRows,1:2*matrixCols)
+!#else
+!     q => qExtern(1:matrixRows,1:matrixCols)
+!#endif
+!   endif
 
 #else /* REDISTRIBUTE_MATRIX */
 
