@@ -397,15 +397,47 @@ function elpa_solve_evp_&
 #include "../helpers/elpa_redistribute_template.F90"
    ! ev still has to be assigned
 #else
-print *,"Device pointer + REDIST"
-#endif 
+   ! at the moment no redistribute if dptr !!
+#endif /* DEVICE_POINTER */
 #endif /* REDISTRIBUTE_MATRIX */
 
 #ifdef DEVICE_POINTER
 
 #ifdef REDISTRIBUTE_MATRIX
-  ! this case is not yet implemeted
+   doRedistributeMatrix = .false.
+! do the same as if not redistribute!!
+   allocate(aIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+   check_allocate("elpa1_template: aIntern", istat, errorMessage)
+
+   a       => aIntern(1:matrixRows,1:matrixCols)
+
+   allocate(evIntern(1:obj%na), stat=istat, errmsg=errorMessage)
+   check_allocate("elpa1_template: evIntern", istat, errorMessage)
+   ev      => evIntern(1:obj%na)
+
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     allocate(qIntern(1:matrixRows,1:2*matrixCols), stat=istat, errmsg=errorMessage)
+     check_allocate("elpa1_template: qIntern", istat, errorMessage)
 #else
+     allocate(qIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+     check_allocate("elpa1_template: qIntern", istat, errorMessage)
+#endif
+   endif
+
+!   ! and associate pointer
+!   ! no redistribution happend
+!   a => aExtern(1:matrixRows,1:matrixCols)
+!   if (present(qExtern)) then
+!#ifdef ACTIVATE_SKEW
+!     q => qExtern(1:matrixRows,1:2*matrixCols)
+!#else
+!     q => qExtern(1:matrixRows,1:matrixCols)
+!#endif
+!   endif
+
+#else /* REDISTRIBUTE_MATRIX */
+
    allocate(aIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
    check_allocate("elpa1_template: aIntern", istat, errorMessage)
 
@@ -472,6 +504,7 @@ print *,"Device pointer + REDIST"
    evIntern => evExtern(1:obj%na)
 
 #endif /* DEVICE_POINTER */
+
 
 #ifdef REDISTRIBUTE_MATRIX
    if (doRedistributeMatrix) then

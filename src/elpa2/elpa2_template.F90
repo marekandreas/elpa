@@ -531,16 +531,30 @@
 
    ! still have to point ev
 #endif /* REDISTRIBUTE_MATRIX */
-#else
+#else /* DEVICE_POINTER */
 #ifdef REDISTRIBUTE_MATRIX
-print *,"Device pointer + REDIST"
+   ! at the moment not redistribute if dptr!!
 #endif /* REDISTRIBUTE_MATRIX */
-#endif
+#endif /* DEVICE_POINTER */
 
 #ifdef DEVICE_POINTER
 #ifdef REDISTRIBUTE_MATRIX
-  ! this case is not yet implemeted
+   doRedistributeMatrix =.false.
+! do the same as if not redistribute
+   allocate(aIntern(1:matrixRows,1:matrixCols))
+   a       => aIntern(1:matrixRows,1:matrixCols)
+
+   allocate(evIntern(1:obj%na))
+   ev      => evIntern(1:obj%na)
+
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     allocate(qIntern(1:matrixRows,1:2*matrixCols))
 #else
+     allocate(qIntern(1:matrixRows,1:matrixCols))
+#endif
+   endif
+#else /* REDISTRIBUTE_MATRIX */
    allocate(aIntern(1:matrixRows,1:matrixCols))
    a       => aIntern(1:matrixRows,1:matrixCols)
 
@@ -559,11 +573,6 @@ print *,"Device pointer + REDIST"
    ! in case of devcice pointer _AND_ redistribute
    ! 1. copy aExtern to aIntern_dummy
    ! 2. redistribute aIntern_dummy to aIntern
-
-#ifdef WITH_GPU_STREAMS
-   !print *, "elpa2_template: not yet implemented"
-   !stop 1
-#endif
 
    successGPU = gpu_memcpy(c_loc(aIntern(1,1)), aExtern, matrixRows*matrixCols*size_of_datatype, &
                              gpuMemcpyDeviceToHost)
