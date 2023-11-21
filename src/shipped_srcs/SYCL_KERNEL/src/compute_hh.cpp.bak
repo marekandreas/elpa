@@ -44,10 +44,6 @@
 //
 //    This file was ported from the NVIDIA version of the component by A. Poeppl, Intel Corporation
 
-#ifndef ELPA_SYCL_IN_PROXY_APP
-#include "config-f90.h"
-#endif
-
 #include <CL/sycl.hpp>
 #include <stdlib.h>
 #include <stdio.h>
@@ -59,26 +55,13 @@
 #include <optional>
 #include <type_traits>
 
-#ifndef ELPA_SYCL_IN_PROXY_APP
-#include "src/GPU/SYCL/syclCommon.hpp"
-#else
 #include "syclCommon.hpp"
-#endif
 
 // Detect complex number template arguments
 namespace {
     template <class> struct is_complex_number                    : public std::false_type {};
     template <class T> struct is_complex_number<std::complex<T>> : public std::true_type {};
 }
-
-template <typename T>
-struct extract_float_type;
-
-template <typename X>
-struct extract_float_type<std::complex<X>> {
-    using type = X;
-};
-
 
 template<typename T, int wg_size, int sg_size, int step>
 inline void reduction_step(T *local_mem, sycl::nd_item<1> &it) {
@@ -87,13 +70,13 @@ inline void reduction_step(T *local_mem, sycl::nd_item<1> &it) {
   if constexpr (wg_size >= step && sg_size < step) {
     int constexpr half_step = step >> 1;
     local_mem[lId] += static_cast<T>(lId < half_step) * local_mem[lId + half_step];
-    it.barrier(sycl::access::fence_space::local_space);
+//    it.barrier(sycl::access::fence_space::local_space);
+    it.barrier();
   }
 }
 
 template <typename T, int wg_size, int sg_size>
 T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
-  it.barrier(sycl::access::fence_space::local_space);
   reduction_step<T, wg_size, sg_size, 1024>(local_mem, it);
   reduction_step<T, wg_size, sg_size,  512>(local_mem, it);
   reduction_step<T, wg_size, sg_size,  256>(local_mem, it);
@@ -105,74 +88,26 @@ T parallel_sum_group(sycl::nd_item<1> &it, T *local_mem) {
   reduction_step<T, wg_size, sg_size,    4>(local_mem, it);
   reduction_step<T, wg_size, sg_size,    2>(local_mem, it);
 
-  T local_res = local_mem[it.get_local_id(0) & (sg_size - 1)];
+  T local_res = local_mem[it.get_local_id(0)];
   T sg_added_res = sycl::reduce_over_group(it.get_sub_group(), local_res, sycl::plus<>());
-  return sycl::select_from_group(it.get_sub_group(), sg_added_res, 0);
+  return sycl::group_broadcast(it.get_group(), sg_added_res);
 }
 
-template<typename T, int wg_size, int sg_size, int step>
-inline void reduction_step_complex(T *local_mem, sycl::nd_item<1> &it) {
-  auto lId = it.get_local_id(0);
-  if constexpr (wg_size >= step && sg_size <= step) {
-    local_mem[lId] += static_cast<T>(lId < step) * local_mem[lId + step];
-    it.barrier(sycl::access::fence_space::local_space);
-  }
-}
 
-template <typename T, int sg_size, int step>
-inline void sg_reduction_step_complex(T *local_mem, T &accu, sycl::nd_item<1> &it) {
-  if constexpr (sg_size >= step) {
-    int constexpr half_step = step >> 1;
-    auto sg = it.get_sub_group();
-    auto sglId = sg.get_local_id();
-    accu += static_cast<T>(sglId < step) * sycl::shift_group_left(sg, accu, half_step);
-  }
-}
+#ifdef __SYCL_DEVICE_ONLY__
+#define __SYCL_CONSTANT_AS __attribute__((opencl_constant))
+#else
+#define __SYCL_CONSTANT_AS
+#endif
 
-template <typename T, int wg_size, int sg_size>
-__attribute__((flatten)) std::complex<T> parallel_sum_group_complex(sycl::nd_item<1> &it, std::complex<T> *local_mem) {
-  T *local_mem_comps = reinterpret_cast<T *>(local_mem);
-  auto lId = it.get_local_id(0);
-  it.barrier(sycl::access::fence_space::local_space);
-  reduction_step_complex<T, wg_size, sg_size, 1024>(local_mem_comps, it);
-  reduction_step_complex<T, wg_size, sg_size,  512>(local_mem_comps, it);
-  reduction_step_complex<T, wg_size, sg_size,  256>(local_mem_comps, it);
-  reduction_step_complex<T, wg_size, sg_size,  128>(local_mem_comps, it);
-  reduction_step_complex<T, wg_size, sg_size,   64>(local_mem_comps, it);
-  reduction_step_complex<T, wg_size, sg_size,   32>(local_mem_comps, it);
-  reduction_step_complex<T, wg_size, sg_size,   16>(local_mem_comps, it);
-  reduction_step_complex<T, wg_size, sg_size,    8>(local_mem_comps, it);
-  reduction_step_complex<T, wg_size, sg_size,    4>(local_mem_comps, it);
-  reduction_step_complex<T, wg_size, sg_size,    2>(local_mem_comps, it);
-  T accu = local_mem_comps[lId & (sg_size - 1)];
-  sg_reduction_step_complex<T, sg_size, 1024>(local_mem_comps, accu, it);
-  sg_reduction_step_complex<T, sg_size,  512>(local_mem_comps, accu, it);
-  sg_reduction_step_complex<T, sg_size,  256>(local_mem_comps, accu, it);
-  sg_reduction_step_complex<T, sg_size,  128>(local_mem_comps, accu, it);
-  sg_reduction_step_complex<T, sg_size,   64>(local_mem_comps, accu, it);
-  sg_reduction_step_complex<T, sg_size,   32>(local_mem_comps, accu, it);
-  sg_reduction_step_complex<T, sg_size,   16>(local_mem_comps, accu, it);
-  sg_reduction_step_complex<T, sg_size,    8>(local_mem_comps, accu, it);
-  sg_reduction_step_complex<T, sg_size,    4>(local_mem_comps, accu, it);
-  T real = sycl::select_from_group(it.get_sub_group(), accu, 0);
-  T imag = sycl::select_from_group(it.get_sub_group(), accu, 1);
-  return std::complex<T>(real, imag);
-}
 
-template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction=true>
+const __SYCL_CONSTANT_AS char fmt[] = "idx = %d, q_off = %d\n";
+
+template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction = false>
 void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
-  // DPC++ & SYCL 1.2.1 is gradually replaced by SYCL2020. This is to keep ELPA compatible with both old and new versions.
-#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
-  using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
-#else
   using local_buffer = sycl::local_accessor<T>;
-#endif
-#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20240000
-  #define GET_POINTER(x) x.get_pointer()
-#else
-  #define GET_POINTER(x) x.template get_multi_ptr<sycl::access::decorated::yes>().get()
-#endif
   using sf = sycl::access::fence_space;
+
   auto device = elpa::gpu::sycl::getDevice();
   auto &queue = elpa::gpu::sycl::getQueue();
 
@@ -207,7 +142,7 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
         }
 
         if (tid == 0) {
-            q_s[0] = q_reserve[reserve_counter];
+            q_s[tid] = q_reserve[reserve_counter];
         }
         reserve_counter++;
 
@@ -224,19 +159,13 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
         if constexpr (is_using_custom_reduction) {
           dotp_s[tid] = q_v2_hh_h_h_off;
           it.barrier(sf::local_space);
-
-          if constexpr (is_complex_number<T>::value) {
-            dotp_res = parallel_sum_group_complex<typename extract_float_type<T>::type, wg_size, sg_size>(it, GET_POINTER(dotp_s));
-          } else {
-            dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, GET_POINTER(dotp_s));
-          }
+          dotp_res = parallel_sum_group<T, wg_size, sg_size>(it, dotp_s.get_pointer());
         } else {
           dotp_res = sycl::reduce_over_group(it.get_group(), q_v2_hh_h_h_off, sycl::plus<>());
         }
 
         q_v2 -= dotp_res * hh_tau[j - 1] * hh_h_off;
         q_s[tid + 1] = q_v2;
-        it.barrier(sf::local_space);
 
         if ((j == 1) || (tid == it.get_local_range()[0] - 1)) {
           q[q_off] = q_v2;

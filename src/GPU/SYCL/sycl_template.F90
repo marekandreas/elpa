@@ -175,22 +175,13 @@
   end interface
 
   interface
-    function sycl_getdevicecount_c(n, only_gpus) result(istat) &
+    function sycl_getdevicecount_c(n, onlyIntelGpus) result(istat) &
              bind(C, name="syclGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT), intent(out) :: n
-      integer(kind=C_INT), intent(in), value :: only_gpus
-      integer(kind=C_INT)              :: istat
-    end function
-  end interface
-
-  interface
-    function sycl_printdevices_c() result(n) &
-             bind(C, name="syclPrintDevicesFromC")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT) :: n
+      integer(kind=C_INT), intent(out)       :: n
+      integer(kind=C_INT), intent(in), value :: onlyIntelGpus
+      integer(kind=C_INT)                    :: istat
     end function
   end interface
 
@@ -204,6 +195,14 @@
     end function
   end interface
 
+  interface
+    function sycl_printdevices_c() result(n) &
+             bind(C, name="syclPrintDevicesFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT) :: n
+    end function sycl_printdevices_c
+  end interface
 
 !  interface
 !    function sycl_devicesynchronize_c()result(istat) &
@@ -2993,6 +2992,7 @@
       integer(kind=ik) :: flag
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"pointerModeDevice not yet implemented!"
+      flag = 1
       stop 1
 #else
       flag = 0
@@ -3006,6 +3006,7 @@
       integer(kind=ik) :: flag
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"pointerModeHost not yet implemented!"
+      flag = 1
       stop 1
 #else
       flag = 0

@@ -47,7 +47,7 @@
 module mod_check_for_gpu
   contains
     ! TODO: proper cleanup of handles and hanldeArrays
- 
+
     ! check_for_gpu could be called at several places during a run of ELPA
     ! for example in cholesky, invert_trm, multiply and of course the solvers
     ! Thus the following logic is implemented
@@ -101,6 +101,5 @@ module mod_check_for_gpu
 #include "./check_for_gpu_template.F90"
 #undef OBJECT
 #undef ADDITIONAL_OBJECT_CODE
-
     end function
 end module

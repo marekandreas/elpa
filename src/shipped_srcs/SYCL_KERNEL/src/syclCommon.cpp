@@ -44,7 +44,6 @@
 //
 // This file was written by A. Poeppl, Intel Corporation (2022) for MPCDF
 
-#include "config-f90.h"
 
 #include "syclCommon.hpp"
 
@@ -54,6 +53,7 @@
 #ifdef WITH_MPI
 #include <mpi.h>
 #endif
+
 
 static bool deviceCollectionFlag = false;
 
@@ -91,7 +91,16 @@ void elpa::gpu::sycl::collectCpuDevices() {
   } else {
     deviceCollectionFlag = true;
   }
+
   std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
+
   // We need to be opinionated about the device selection. Currently, devices are displayed in duplicate, if they are supported
   // by multiple platforms. For now, a first step could be only supporting level zero and Intel GPUs. This will have to be
   // changed later as we move towards generalizing the backend.
@@ -104,12 +113,15 @@ void elpa::gpu::sycl::collectCpuDevices() {
 
 int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
   if (deviceId >= devices.size()){
-    std::cerr << "Invalid GPU device ID selected, only " << devices.size() << " devices available." << std::endl;
+    std::cerr << "Invalid device ID selected, only " << devices.size() << " devices available." << std::endl;
     return 0;
   }
   cl::sycl::property::queue::in_order io;
   cl::sycl::property_list props(io);
   chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId], props);
+  auto platform = chosenQueue->get_device().get_platform().get_info<cl::sycl::info::platform::name>();
+  auto deviceName = chosenQueue->get_device().get_info<cl::sycl::info::device::name>();
+  std::cout << "Selected device: (" << platform << ") " << deviceName << std::endl;
   return 1;
 }
 
@@ -120,7 +132,7 @@ int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
 }
 
 void elpa::gpu::sycl::selectDefaultGpuDevice() {
-  cl::sycl::gpu_selector gpuSelector;
+  auto gpuSelector = cl::sycl::gpu_selector_v;
   cl::sycl::property::queue::in_order io;
   cl::sycl::property_list props(io);
   chosenQueue = std::make_optional<cl::sycl::queue>(gpuSelector, props);
@@ -157,6 +169,7 @@ void elpa::gpu::sycl::printGpuInfo() {
     return;
   }
 #endif
+
   std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA GPU Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
   std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
   std::cout << "# GPU devices:     " << devices.size() << std::endl;

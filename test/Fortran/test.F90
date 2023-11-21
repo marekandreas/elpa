@@ -332,7 +332,7 @@ program test
        if (mod(nprocs,np_cols) /= 0 ) then
          cycle
        endif
-       
+
 #else
    layout = 'C'
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
@@ -427,7 +427,7 @@ program test
      stop 77
 #endif
 #endif
- 
+
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
                                 np_rows, np_cols, &
                                 na_rows, na_cols, sc_desc, my_blacs_ctxt, info, blacs_ok)
@@ -705,7 +705,7 @@ program test
      do_test_analytic_eigenvalues = .false.
      do_test_analytic_eigenvalues_eigenvectors = .false.
      do_test_frank_eigenvalues = .false.
-     do_test_toeplitz_eigenvalues = .false. 
+     do_test_toeplitz_eigenvalues = .false.
      do_test_cholesky = .false.
    endif
 
@@ -721,7 +721,7 @@ program test
    assert_elpa_ok(error_elpa)
 
 	! Set parameters
-	
+
    call e%set("na", int(na,kind=c_int), error_elpa)
    assert_elpa_ok(error_elpa)
    call e%set("nev", int(nev,kind=c_int), error_elpa)
@@ -784,11 +784,11 @@ program test
 #endif
    call e%set("timings", 1_ik, error_elpa)
    assert_elpa_ok(error_elpa)
-   
-   ! Setup 
+
+   ! Setup
    assert_elpa_ok(e%setup())
-   
-   ! Set solver and ELPA2 kernel 
+
+   ! Set solver and ELPA2 kernel
 
 #ifdef TEST_SOLVER_1STAGE
    call e%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
@@ -811,6 +811,8 @@ program test
 #if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
    call e%set("intel-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
+   call e%set("sycl_show_all_devices", 0, error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 
 #if defined(TEST_NVIDIA_GPU) || defined(TEST_AMD_GPU) || defined(TEST_INTEL_GPU) || defined(TEST_INTEL_GPU_OPENMP) || defined(TEST_INTEL_GPU_SYCL)
@@ -820,7 +822,7 @@ program test
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    if (gpu_vendor() /= no_gpu) then
       call set_gpu_parameters()
-   else 
+   else
       print *,"Cannot set gpu vendor!"
       stop 1
    endif
@@ -842,7 +844,7 @@ program test
 
    if (gpu_vendor() /= no_gpu) then
      call set_gpu_parameters()
-   else 
+   else
       print *,"Cannot set gpu vendor!"
       stop 1
    endif
@@ -901,7 +903,7 @@ program test
      print *,"Cannot allocate vector of eigenvalues on GPU! Aborting..."
      stop 1
    endif
-        
+
    successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyHostToDevice)
    if (.not.(successGPU)) then
@@ -1082,7 +1084,7 @@ program test
      if (myid == 0) then
        print *, "The settings in the test program want to use ",elpa_int_value_to_string(KERNEL_KEY, kernel) // " kernel"
        print *, "(This might be overriden with some environment settings)"
-       
+
      endif
 #endif /* TEST_SOLVER_2STAGE */
 
@@ -1098,7 +1100,7 @@ program test
 
      !_____________________________________________________________________________________________________________________
      ! The actual solve step
-	 
+
 #if defined(TEST_EIGENVECTORS)
 #if TEST_QR_DECOMPOSITION == 1
      call e%timer_start("e%eigenvectors_qr()")
@@ -1351,7 +1353,7 @@ program test
      endif
 
 
-   !_____________________________________________________________________________________________________________________     
+   !_____________________________________________________________________________________________________________________
    ! TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -1426,7 +1428,7 @@ program test
 
      !_____________________________________________________________________________________________________________________
      ! Check the results
-	 
+
      if (do_test_analytic_eigenvalues) then
        status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, &
                                            my_prow, my_pcol, check_all_evals, .false.)
@@ -1503,7 +1505,7 @@ program test
 
    !_____________________________________________________________________________________________________________________
    ! Deallocate
-   
+
 #if TEST_GPU_DEVICE_POINTER_API == 1
 
 #if defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM)
@@ -1531,7 +1533,7 @@ program test
      print *,"cannot free memory of a_dev on GPU. Aborting..."
      stop 1
    endif
-   
+
    successGPU = gpu_free(ev_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of ev_dev on GPU. Aborting..."

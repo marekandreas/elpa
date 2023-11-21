@@ -126,12 +126,14 @@ static oneapi::mkl::side sideFromChar(char c) {
   int syclMemcpyDeviceToDevice = 2000;
 
 
-  void syclPrintGpuInfoFromC() {
+  int syclPrintGpuInfoFromC() {
     elpa::gpu::sycl::printGpuInfo();
+    return 0;
   }
 
-  void syclPrintDevicesFromC() {
+  int syclPrintDevicesFromC() {
     elpa::gpu::sycl::printGpuInfo();
+    return 0;
   }
 
   int syclMemcpyDeviceToDeviceFromC(){
@@ -206,7 +208,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     //stub function
     return 1;
   }
-  
+
   int syclsolverCreateFromC(intptr_t* handle){
     //stub function
     return 1;
@@ -216,7 +218,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     //stub function
     return 1;
   }
-  
+
   int syclMallocFromC(intptr_t *a, size_t elems) {
     auto &queue = elpa::gpu::sycl::getQueue();
     *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, queue));
@@ -233,6 +235,7 @@ static oneapi::mkl::side sideFromChar(char c) {
   int syclFreeFromC(intptr_t *a) {
     auto &queue = elpa::gpu::sycl::getQueue();
     void * ptr = reinterpret_cast<void *>(*a);
+    queue.wait();
     sycl::free(ptr, queue);
     return 1;
   }

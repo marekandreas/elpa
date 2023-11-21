@@ -649,7 +649,7 @@ endif
 
 # Cuda files
 .cu.lo:
-	NVCC="$(NVCC)" libtool --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
+	NVCC="$(NVCC)" $(LIBTOOL) --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
 
 # Assembly files
 LTCCASCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -678,7 +678,7 @@ nobase_nodist_elpa_include_HEADERS = \
   elpa/elpa_generated.h \
   elpa/elpa_generated_c_api.h \
   elpa/elpa_configured_options.h
-  
+
 dist_man_MANS = \
   man/elpa2_print_kernels.1 \
   man/elpa_init.3 \
