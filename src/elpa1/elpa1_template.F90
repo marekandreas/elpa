@@ -270,7 +270,7 @@ function elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
-   &")
+   &") ! "
 
    call obj%get("debug",debug, error)
    if (error .ne. ELPA_OK) then
@@ -592,7 +592,7 @@ function elpa_solve_evp_&
      &MATH_DATATYPE&
      &_1stage_&
      &PRECISION&
-     &")
+     &") ! "
      success = .true.
      return
    endif

@@ -1359,24 +1359,24 @@
   end interface
 
   interface
-    subroutine cublas_Ddot_intptr_c(cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Ddot_intptr_c(cublasHandle, length, x, incx, y, incy, result) &
                bind(C, name="cublasDdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y, z
+      integer(kind=C_INT), value              :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
   interface
-    subroutine cublas_Ddot_cptr_c(cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Ddot_cptr_c(cublasHandle, length, x, incx, y, incy, result) &
                bind(C, name="cublasDdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y, z
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
 
@@ -1444,24 +1444,24 @@
   end interface
 
   interface
-    subroutine cublas_Sdot_intptr_c(cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Sdot_intptr_c(cublasHandle, length, x, incx, y, incy, result) &
                bind(C, name="cublasSdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y, z
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
   interface
-    subroutine cublas_Sdot_cptr_c(cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Sdot_cptr_c(cublasHandle, length, x, incx, y, incy, result) &
                bind(C, name="cublasSdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y, z
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
 
@@ -1529,26 +1529,26 @@
   end interface
 
   interface
-    subroutine cublas_Zdot_intptr_c(conj, cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Zdot_intptr_c(conj, cublasHandle, length, x, incx, y, incy, result) &
                bind(C, name="cublasZdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y, z
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
   interface
-    subroutine cublas_Zdot_cptr_c(conj, cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Zdot_cptr_c(conj, cublasHandle, length, x, incx, y, incy, result) &
                bind(C, name="cublasZdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y, z
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
 
@@ -1616,26 +1616,26 @@
   end interface
 
   interface
-    subroutine cublas_Cdot_intptr_c(conj, cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Cdot_intptr_c(conj, cublasHandle, length, x, incx, y, incy, result) &
                bind(C, name="cublasCdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y, z
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
   interface
-    subroutine cublas_Cdot_cptr_c(conj, cublasHandle, length, x, incx, y, incy, z) &
+    subroutine cublas_Cdot_cptr_c(conj, cublasHandle, length, x, incx, y, incy, result) &
                bind(C, name="cublasCdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
       integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y, z
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
 
@@ -2984,27 +2984,27 @@
     end subroutine
 
 
-    subroutine cublas_Ddot_intptr(cublasHandle, length, x, incx, y, incy, z)
+    subroutine cublas_Ddot_intptr(cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
-
+      integer(kind=c_intptr_t) :: x, y, result
+      
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Ddot_intptr_c(cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Ddot_intptr_c(cublasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
-    subroutine cublas_Ddot_cptr(cublasHandle, length, x, incx, y, incy, z)
+    subroutine cublas_Ddot_cptr(cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Ddot_cptr_c(cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Ddot_cptr_c(cublasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
@@ -3061,27 +3061,27 @@
     end subroutine
 
 
-    subroutine cublas_Sdot_intptr(cublasHandle, length, x, incx, y, incy, z)
+    subroutine cublas_Sdot_intptr(cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Sdot_intptr_c(cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Sdot_intptr_c(cublasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
-    subroutine cublas_Sdot_cptr(cublasHandle, length, x, incx, y, incy, z)
+    subroutine cublas_Sdot_cptr(cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Sdot_cptr_c(cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Sdot_cptr_c(cublasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
@@ -3138,29 +3138,29 @@
     end subroutine
 
 
-    subroutine cublas_Zdot_intptr(conj, cublasHandle, length, x, incx, y, incy, z)
+    subroutine cublas_Zdot_intptr(conj, cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Zdot_intptr_c(conj,cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Zdot_intptr_c(conj,cublasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
-    subroutine cublas_Zdot_cptr(conj, cublasHandle, length, x, incx, y, incy, z)
+    subroutine cublas_Zdot_cptr(conj, cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Zdot_cptr_c(conj,cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Zdot_cptr_c(conj,cublasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
@@ -3217,29 +3217,29 @@
     end subroutine
 
 
-    subroutine cublas_Cdot_intptr(conj, cublasHandle, length, x, incx, y, incy, z)
+    subroutine cublas_Cdot_intptr(conj, cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Cdot_intptr_c(conj,cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Cdot_intptr_c(conj,cublasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
-    subroutine cublas_Cdot_cptr(conj, cublasHandle, length, x, incx, y, incy, z)
+    subroutine cublas_Cdot_cptr(conj, cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cublas_Cdot_cptr_c(conj,cublasHandle, length, x, incx, y, incy, z)
+      call cublas_Cdot_cptr_c(conj,cublasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 

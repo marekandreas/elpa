@@ -2142,7 +2142,7 @@
 #endif
     end subroutine
 
-    subroutine gpublas_Ddot_intptr(gpublasHandle, length, x, incx, y, incy, z)
+    subroutine gpublas_Ddot_intptr(gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2161,17 +2161,17 @@
       implicit none
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      integer(kind=c_intptr_t)          :: x, y, z
-
+      integer(kind=c_intptr_t)          :: x, y, result
+      
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_Ddot_intptr(gpublasHandle, length, x, incx, y, incy, z)
+          call cublas_Ddot_intptr(gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_Ddot_intptr(gpublasHandle, length, x, incx, y, incy, z)
+          call rocblas_Ddot_intptr(gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
@@ -2188,7 +2188,7 @@
 #endif
     end subroutine
 
-    subroutine gpublas_Ddot_cptr(gpublasHandle, length, x, incx, y, incy, z)
+    subroutine gpublas_Ddot_cptr(gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2207,17 +2207,17 @@
       implicit none
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      type(c_ptr)                       :: x, y, z
+      type(c_ptr)                       :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_Ddot_cptr(gpublasHandle, length, x, incx, y, incy, z)
+          call cublas_Ddot_cptr(gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_Ddot_cptr(gpublasHandle, length, x, incx, y, incy, z)
+          call rocblas_Ddot_cptr(gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
@@ -2422,7 +2422,7 @@
         endif
 #endif
     end subroutine
-    subroutine gpublas_Sdot_intptr(gpublasHandle, length, x, incx, y, incy, z)
+    subroutine gpublas_Sdot_intptr(gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2441,17 +2441,17 @@
       implicit none
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      integer(kind=c_intptr_t)          :: x, y, z
+      integer(kind=c_intptr_t)          :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_Sdot_intptr(gpublasHandle, length, x, incx, y, incy, z)
+          call cublas_Sdot_intptr(gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_Sdot_intptr(gpublasHandle, length, x, incx, y, incy, z)
+          call rocblas_Sdot_intptr(gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
@@ -2468,7 +2468,7 @@
 #endif
     end subroutine
 
-    subroutine gpublas_Sdot_cptr(gpublasHandle, length, x, incx, y, incy, z)
+    subroutine gpublas_Sdot_cptr(gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2487,17 +2487,17 @@
       implicit none
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      type(c_ptr)                       :: x, y, z
+      type(c_ptr)                       :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_Sdot_cptr(gpublasHandle, length, x, incx, y, incy, z)
+          call cublas_Sdot_cptr(gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_Sdot_cptr(gpublasHandle, length, x, incx, y, incy, z)
+          call rocblas_Sdot_cptr(gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
@@ -2702,7 +2702,8 @@
         endif
 #endif
     end subroutine
-    subroutine gpublas_Zdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+
+    subroutine gpublas_Zdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2719,20 +2720,20 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      integer(kind=c_intptr_t)          :: x, y, z
+      integer(kind=c_intptr_t)          :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_Zdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+          call cublas_Zdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_Zdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+          call rocblas_Zdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
@@ -2749,7 +2750,7 @@
 #endif
     end subroutine
 
-    subroutine gpublas_Zdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+    subroutine gpublas_Zdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2766,20 +2767,20 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      type(c_ptr)                       :: x, y, z
+      type(c_ptr)                       :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_Zdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+          call cublas_Zdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_Zdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+          call rocblas_Zdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
@@ -2984,7 +2985,9 @@
         endif
 #endif
     end subroutine
-    subroutine gpublas_Cdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+
+    
+    subroutine gpublas_Cdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -3001,20 +3004,20 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      integer(kind=c_intptr_t)          :: x, y, z
+      integer(kind=c_intptr_t)          :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_Cdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+          call cublas_Cdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_Cdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+          call rocblas_Cdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
@@ -3031,7 +3034,7 @@
 #endif
     end subroutine
 
-    subroutine gpublas_Cdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+    subroutine gpublas_Cdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -3048,20 +3051,20 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
-      type(c_ptr)                       :: x, y, z
+      type(c_ptr)                       :: x, y, result
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
-          call cublas_Cdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+          call cublas_Cdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
         if (use_gpu_vendor == amd_gpu) then
-          call rocblas_Cdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, z)
+          call rocblas_Cdot_cptr(conj, gpublasHandle, length, x, incx, y, incy, result)
         endif
 #endif
 

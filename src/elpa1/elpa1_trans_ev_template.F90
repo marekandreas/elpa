@@ -98,6 +98,9 @@ subroutine trans_ev_&
   use elpa_abstract_impl
   use elpa_blas_interfaces
   use elpa_gpu
+#ifdef WITH_NVIDIA_GPU_VERSION
+  use cuda_functions
+#endif
 #ifdef WITH_NVIDIA_NCCL
   use nccl_functions
 #endif
@@ -159,6 +162,14 @@ subroutine trans_ev_&
   integer(kind=c_intptr_t)                      :: gpuHandle, my_stream
 #ifdef WITH_NVIDIA_NCCL
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
+#endif
+
+#if defined (WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
+  successGPU = cuda_stream_create(obj%gpu_setup%my_stream)
+  if (.not.(successGPU)) then
+    print *,"Cannot create gpu stream handle"
+  endif
+  my_stream = obj%gpu_setup%my_stream
 #endif
 
   success = .true.
@@ -378,6 +389,11 @@ subroutine trans_ev_&
   endif  ! useGPU
 
   do istep = 1, na, blockStep
+
+#ifdef WITH_NVTX
+    call nvtxRangePush("trans_ev_cycle")
+#endif
+
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
     if (ice<ics) cycle
@@ -755,31 +771,34 @@ subroutine trans_ev_&
       if (useGPU) then
 #ifndef WITH_CUDA_AWARE_MPI
         ! copy back tmp2 - after reduction...
-#ifdef WITH_GPU_STREAMS
+
 
 #ifdef WITH_NVIDIA_NCCL
         ! no memory copy needed
 #else /* WITH_NVIDIA_NCCL */
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev", successGPU)
 
-        successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
-                      max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
-        check_memcpy_gpu("trans_ev", successGPU)
+#ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("trans_ev", successGPU)
 
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("trans_ev", successGPU)
-        ! synchronize streamsPerThread; maybe not neccessary
-        successGPU = gpu_stream_synchronize()
-        check_stream_synchronize_gpu("trans_ev", successGPU)
-#endif /* WITH_NVIDIA_NCCL */
+          successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
+                        max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+          check_memcpy_gpu("trans_ev", successGPU)
+
+          my_stream = obj%gpu_setup%my_stream
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("trans_ev", successGPU)
+          ! synchronize streamsPerThread; maybe not neccessary
+          successGPU = gpu_stream_synchronize()
+          check_stream_synchronize_gpu("trans_ev", successGPU)
 #else /* WITH_GPU_STREAMS */
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("trans_ev", successGPU)
 #endif /* WITH_GPU_STREAMS */
+#endif /* WITH_NVIDIA_NCCL */
+
 #else /* WITH_CUDA_AWARE_MPI */
         
         tmp_dev = transfer(tmp_mpi_dev, tmp_dev)
@@ -830,7 +849,11 @@ subroutine trans_ev_&
       nstor = 0
     endif  ! (nstor+nblk>max_stored_rows .or. istep+nblk>na .or. (na/np_rows<=256 .and. nstor>=32))
 
-  enddo ! istep
+#ifdef WITH_NVTX    
+    call nvtxRangePop()
+#endif
+    
+  enddo ! istep = 1, na, blockStep
 
   deallocate(h1, h2, hvb, hvm, stat=istat, errmsg=errorMessage)
   check_deallocate("trans_ev_&
@@ -919,6 +942,12 @@ subroutine trans_ev_&
     &: tmat, tmp1, tmp2", istat, errorMessage)
   endif ! useGPU
 
+#if defined (WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
+  successGPU = cuda_stream_destroy(obj%gpu_setup%my_stream)
+  if (.not.(successGPU)) then
+    print *,"Cannot destroy gpu stream handle"
+  endif
+#endif
 
   call obj%timer%stop("trans_ev_&
   &MATH_DATATYPE&
