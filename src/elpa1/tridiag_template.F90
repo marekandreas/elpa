@@ -1723,7 +1723,8 @@ subroutine tridiag_&
         tau_istep_host_or_dev = int(loc(tau(istep)), kind=c_intptr_t)
       endif ! useCCL
       call gpu_store_u_v_in_uv_vu_PRECISION(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
 #ifdef WITH_NVTX

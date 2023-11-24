@@ -240,7 +240,8 @@ end interface
 
   interface
     subroutine cuda_store_u_v_in_uv_vu_double_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream) &
          bind(C, name="cuda_store_u_v_in_uv_vu_double_FromC")
@@ -250,7 +251,8 @@ end interface
       integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
       logical                             :: useCCL, wantDebug
       integer(kind=c_intptr_t), value     :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev,&
-                                             v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev
+                                             v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                             vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
@@ -259,7 +261,8 @@ end interface
 
   interface
     subroutine cuda_store_u_v_in_uv_vu_float_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream) &
          bind(C, name="cuda_store_u_v_in_uv_vu_float_FromC")
@@ -269,7 +272,8 @@ end interface
       integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
       logical                             :: useCCL, wantDebug
       integer(kind=c_intptr_t), value     :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev,&
-                                             v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev
+                                             v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                             vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
@@ -278,7 +282,8 @@ end interface
 
   interface
     subroutine cuda_store_u_v_in_uv_vu_double_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream) &
          bind(C, name="cuda_store_u_v_in_uv_vu_double_complex_FromC")
@@ -288,7 +293,8 @@ end interface
       integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
       logical                             :: useCCL, wantDebug
       integer(kind=c_intptr_t), value     :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev,&
-                                             v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev
+                                             v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                             vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
@@ -297,7 +303,8 @@ end interface
 
   interface
     subroutine cuda_store_u_v_in_uv_vu_float_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream) &
          bind(C, name="cuda_store_u_v_in_uv_vu_float_complex_FromC")
@@ -307,7 +314,8 @@ end interface
       integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
       logical                             :: useCCL, wantDebug
       integer(kind=c_intptr_t), value     :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev,&
-                                             v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev
+                                             v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                             vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine 
@@ -777,7 +785,8 @@ end interface
   !________________________________________________________________
 
   subroutine cuda_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
@@ -786,12 +795,14 @@ end interface
     integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
     logical, intent(in)                 :: useCCL, wantDebug
     integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev
+                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                           vav_host_or_dev, tau_istep_host_or_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
     call cuda_store_u_v_in_uv_vu_double_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
 #endif
@@ -799,7 +810,8 @@ end interface
 
 
   subroutine cuda_store_u_v_in_uv_vu_float(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
@@ -808,12 +820,14 @@ end interface
     integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
     logical, intent(in)                 :: useCCL, wantDebug
     integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev
+                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                           vav_host_or_dev, tau_istep_host_or_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
     call cuda_store_u_v_in_uv_vu_float_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
 #endif
@@ -821,7 +835,8 @@ end interface
 
 
   subroutine cuda_store_u_v_in_uv_vu_double_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
@@ -830,12 +845,14 @@ end interface
     integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
     logical, intent(in)                 :: useCCL, wantDebug
     integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev
+                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                           vav_host_or_dev, tau_istep_host_or_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
     call cuda_store_u_v_in_uv_vu_double_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
 #endif
@@ -843,7 +860,8 @@ end interface
 
 
   subroutine cuda_store_u_v_in_uv_vu_float_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
@@ -852,12 +870,14 @@ end interface
     integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
     logical, intent(in)                 :: useCCL, wantDebug
     integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev
+                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                           vav_host_or_dev, tau_istep_host_or_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
     call cuda_store_u_v_in_uv_vu_float_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
 #endif
