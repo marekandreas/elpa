@@ -120,6 +120,7 @@
 #undef  gpu_copy_PRECISION_a_aux_bc
 #undef  gpu_copy_PRECISION_aux_bc_aux_mat
 #undef  gpu_copy_PRECISION_tmp2_c
+#undef  gpu_copy_and_set_zeros_PRECISION
 #undef  gpu_dot_product_PRECISION
 #undef  gpu_dot_product_and_assign_PRECISION
 #undef  gpu_set_e_vec_scale_set_one_store_v_row_PRECISION
@@ -222,6 +223,7 @@
 #define  gpu_copy_PRECISION_a_aux_bc gpu_copy_double_a_aux_bc
 #define  gpu_copy_PRECISION_aux_bc_aux_mat gpu_copy_double_aux_bc_aux_mat
 #define  gpu_copy_PRECISION_tmp2_c gpu_copy_double_tmp2_c
+#define  gpu_copy_and_set_zeros_PRECISION gpu_copy_and_set_zeros_double
 #define  gpu_dot_product_PRECISION gpu_dot_product_double
 #define  gpu_dot_product_and_assign_PRECISION gpu_dot_product_and_assign_double
 #define  gpu_set_e_vec_scale_set_one_store_v_row_PRECISION gpu_set_e_vec_scale_set_one_store_v_row_double
@@ -321,6 +323,7 @@
 #define  gpu_copy_PRECISION_a_aux_bc gpu_copy_float_a_aux_bc
 #define  gpu_copy_PRECISION_aux_bc_aux_mat gpu_copy_float_aux_bc_aux_mat
 #define  gpu_copy_PRECISION_tmp2_c gpu_copy_float_tmp2_c
+#define  gpu_copy_and_set_zeros_PRECISION gpu_copy_and_set_zeros_float
 #define  gpu_dot_product_PRECISION gpu_dot_product_float
 #define  gpu_dot_product_and_assign_PRECISION gpu_dot_product_and_assign_float
 #define  gpu_set_e_vec_scale_set_one_store_v_row_PRECISION gpu_set_e_vec_scale_set_one_store_v_row_float
@@ -432,6 +435,7 @@
 #undef  gpu_copy_PRECISION_a_aux_bc
 #undef  gpu_copy_PRECISION_aux_bc_aux_mat
 #undef  gpu_copy_PRECISION_tmp2_c
+#undef  gpu_copy_and_set_zeros_PRECISION
 #undef  gpu_dot_product_PRECISION
 #undef  gpu_dot_product_and_assign_PRECISION
 #undef  gpu_set_e_vec_scale_set_one_store_v_row_PRECISION
@@ -546,6 +550,7 @@
 #define  gpu_copy_PRECISION_a_aux_bc gpu_copy_double_complex_a_aux_bc
 #define  gpu_copy_PRECISION_aux_bc_aux_mat gpu_copy_double_complex_aux_bc_aux_mat
 #define  gpu_copy_PRECISION_tmp2_c gpu_copy_double_complex_tmp2_c
+#define  gpu_copy_and_set_zeros_PRECISION gpu_copy_and_set_zeros_double_complex
 #define  gpu_dot_product_PRECISION gpu_dot_product_double_complex
 #define  gpu_dot_product_and_assign_PRECISION gpu_dot_product_and_assign_double_complex
 #define  gpu_set_e_vec_scale_set_one_store_v_row_PRECISION gpu_set_e_vec_scale_set_one_store_v_row_double_complex
@@ -649,6 +654,7 @@
 #define  gpu_copy_PRECISION_a_aux_bc gpu_copy_float_complex_a_aux_bc
 #define  gpu_copy_PRECISION_aux_bc_aux_mat gpu_copy_float_complex_aux_bc_aux_mat
 #define  gpu_copy_PRECISION_tmp2_c gpu_copy_float_complex_tmp2_c
+#define  gpu_copy_and_set_zeros_PRECISION gpu_copy_and_set_zeros_float_complex
 #define  gpu_dot_product_PRECISION gpu_dot_product_float_complex
 #define  gpu_dot_product_and_assign_PRECISION gpu_dot_product_and_assign_float_complex
 #define  gpu_set_e_vec_scale_set_one_store_v_row_PRECISION gpu_set_e_vec_scale_set_one_store_v_row_float_complex

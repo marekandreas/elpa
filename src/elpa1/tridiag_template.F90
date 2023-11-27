@@ -685,12 +685,14 @@ subroutine tridiag_&
       if (useGPU) then
 
 #ifdef WITH_NVTX
-        call nvtxRangePush("memcpy new D-D a_dev(:,l_cols+1)->v_row_dev")
+        call nvtxRangePush("kernel: gpu_copy_and_set_zeros a_dev(:,l_cols+1)->v_row_dev, aux1_dev=0,vav_dev=0")
 #endif
         ! TODO_23_11:  create a dev-dev copy kernel or merge it to another kernel
-        offset_dev = l_cols * matrixRows * size_of_datatype
-        successGPU = gpu_memcpy(v_row_dev, a_dev + offset_dev, (l_rows)* size_of_datatype, gpuMemcpyDeviceToDevice)
-        check_memcpy_gpu("tridiag a_dev 1", successGPU)
+        ! offset_dev = l_cols * matrixRows * size_of_datatype
+        ! successGPU = gpu_memcpy(v_row_dev, a_dev + offset_dev, (l_rows)* size_of_datatype, gpuMemcpyDeviceToDevice)
+        ! check_memcpy_gpu("tridiag a_dev 1", successGPU)
+        call gpu_copy_and_set_zeros_PRECISION(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
+                                         aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
 
 #ifdef WITH_NVTX
         call nvtxRangePop()
@@ -1723,7 +1725,7 @@ subroutine tridiag_&
         tau_istep_host_or_dev = int(loc(tau(istep)), kind=c_intptr_t)
       endif ! useCCL
       call gpu_store_u_v_in_uv_vu_PRECISION(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, aux1_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
                                           vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
