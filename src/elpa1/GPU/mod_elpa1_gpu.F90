@@ -61,106 +61,122 @@ module elpa1_gpu
   contains
 
 
-  subroutine gpu_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                           aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+  subroutine gpu_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                           aux1_dev, vav_dev, d_vec_dev, &
+                                           isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call cuda_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_copy_and_set_zeros_double (v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call hip_copy_and_set_zeros_double (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call sycl_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
   end subroutine
 
 
-  subroutine gpu_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                           aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+  subroutine gpu_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                           aux1_dev, vav_dev, d_vec_dev, &
+                                           isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call cuda_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_copy_and_set_zeros_float (v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call hip_copy_and_set_zeros_float (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call sycl_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
   end subroutine
 
 
-  subroutine gpu_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                           aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+  subroutine gpu_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                           aux1_dev, vav_dev, d_vec_dev, &
+                                           isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call cuda_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_copy_and_set_zeros_double_complex (v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call hip_copy_and_set_zeros_double_complex (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call sycl_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
   end subroutine
 
 
-  subroutine gpu_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                           aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+  subroutine gpu_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                           aux1_dev, vav_dev, d_vec_dev, &
+                                           isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     use precision
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call cuda_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_copy_and_set_zeros_float_complex (v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call hip_copy_and_set_zeros_float_complex (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                        aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call sycl_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                        aux1_dev, vav_dev, d_vec_dev, &
+                                        isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
   end subroutine
 

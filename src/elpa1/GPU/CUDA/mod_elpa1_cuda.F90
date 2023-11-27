@@ -52,15 +52,16 @@ module elpa1_cuda
   public
 
   interface
-    subroutine cuda_copy_and_set_zeros_double_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                              aux1_dev, vav_dev, useCCL, wantDebug, my_stream) &
+    subroutine cuda_copy_and_set_zeros_double_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                              aux1_dev, vav_dev, d_vec_dev, &
+                                              isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream) &
         bind(C, name="cuda_copy_and_set_zeros_double_FromC")
     use, intrinsic :: iso_c_binding
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t), value     :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t), value     :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine
@@ -68,15 +69,16 @@ module elpa1_cuda
 
 
   interface
-    subroutine cuda_copy_and_set_zeros_float_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                              aux1_dev, vav_dev, useCCL, wantDebug, my_stream) &
+    subroutine cuda_copy_and_set_zeros_float_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                              aux1_dev, vav_dev, d_vec_dev, &
+                                              isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream) &
         bind(C, name="cuda_copy_and_set_zeros_float_FromC")
     use, intrinsic :: iso_c_binding
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t), value     :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t), value     :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine
@@ -84,15 +86,16 @@ module elpa1_cuda
 
 
   interface
-    subroutine cuda_copy_and_set_zeros_double_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                              aux1_dev, vav_dev, useCCL, wantDebug, my_stream) &
+    subroutine cuda_copy_and_set_zeros_double_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                              aux1_dev, vav_dev, d_vec_dev, &
+                                              isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream) &
         bind(C, name="cuda_copy_and_set_zeros_double_complex_FromC")
     use, intrinsic :: iso_c_binding
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t), value     :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t), value     :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine
@@ -100,15 +103,16 @@ module elpa1_cuda
 
   
   interface
-    subroutine cuda_copy_and_set_zeros_float_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                              aux1_dev, vav_dev, useCCL, wantDebug, my_stream) &
+    subroutine cuda_copy_and_set_zeros_float_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                              aux1_dev, vav_dev, d_vec_dev, &
+                                              isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream) &
         bind(C, name="cuda_copy_and_set_zeros_float_complex_FromC")
     use, intrinsic :: iso_c_binding
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t), value     :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t), value     :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t), value     :: my_stream
 
     end subroutine
@@ -659,70 +663,78 @@ module elpa1_cuda
   
   !________________________________________________________________
 
-  subroutine cuda_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                            aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+  subroutine cuda_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                            aux1_dev, vav_dev, d_vec_dev, &
+                                            isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_double_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                          aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call cuda_copy_and_set_zeros_double_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                          aux1_dev, vav_dev, d_vec_dev, &
+                                          isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
   end subroutine
 
 
-  subroutine cuda_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                           aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+  subroutine cuda_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                           aux1_dev, vav_dev, d_vec_dev, &
+                                           isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_float_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                         aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call cuda_copy_and_set_zeros_float_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                         aux1_dev, vav_dev, d_vec_dev, &
+                                         isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
   end subroutine
 
 
-  subroutine cuda_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                                    aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+  subroutine cuda_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                                    aux1_dev, vav_dev, d_vec_dev, &
+                                                    isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_double_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                                  aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call cuda_copy_and_set_zeros_double_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                                  aux1_dev, vav_dev, d_vec_dev, &
+                                                  isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
   end subroutine
 
 
-  subroutine cuda_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                                   aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+  subroutine cuda_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                                   aux1_dev, vav_dev, d_vec_dev, &
+                                                   isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
     use, intrinsic :: iso_c_binding
     implicit none
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev
+    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
+    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug
+    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
     integer(kind=c_intptr_t)            :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_float_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                                 aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
+    call cuda_copy_and_set_zeros_float_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                                 aux1_dev, vav_dev, d_vec_dev, &
+                                                 isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
 #endif
   end subroutine
 

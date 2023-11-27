@@ -145,7 +145,7 @@ subroutine tridiag_&
   integer(kind=ik)                              :: l_cols, l_rows
   integer(kind=ik)                              :: n_stored_vecs
   integer(kind=ik)                              :: isOurProcessRowInt ! TODO_23_11 - get rid of it
-  logical                                       :: isOurProcessRow
+  logical                                       :: isOurProcessRow, isOurProcessCol
 
 
   integer(kind=C_intptr_T)                      :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
@@ -167,7 +167,7 @@ subroutine tridiag_&
   MATH_DATATYPE(kind=rck), allocatable          :: aux(:)
 
   integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux_complex_dev, vav_dev, vav_host_or_dev, dot_prod_dev, & 
-                                                   xf_dev, xf_host_or_dev, tau_istep_host_or_dev
+                                                   xf_dev, a_updated_element_dev, xf_host_or_dev, tau_istep_host_or_dev
   integer(kind=c_intptr_t)                      :: vnorm2_dev, vrl_dev ! alias pointers for aux1_dev(1), aux1_dev(2)
 
 #if COMPLEXCASE == 1
@@ -676,29 +676,28 @@ subroutine tridiag_&
     ! Calculate Vector for Householder transformation on all procs
     ! owning column istep
 
+    if (useGPU) then 
+#ifdef WITH_NVTX
+      call nvtxRangePush("kernel: gpu_copy_and_set_zeros a_dev(:,l_cols+1)->v_row_dev, aux1_dev=0,vav_dev=0")
+#endif
+      ! copy l_cols + 1 column of a_dev to v_row_dev
+      isOurProcessRow = (my_prow == prow(istep-1, nblk, np_rows))
+      isOurProcessCol = (my_pcol == pcol(istep-1, nblk, np_cols))
+      call gpu_copy_and_set_zeros_PRECISION(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                            aux1_dev, vav_dev, d_vec_dev, &
+                                            isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
+#ifdef WITH_NVTX
+        call nvtxRangePop()
+#endif
+    endif ! useGPU
+
     if (my_pcol == pcol(istep, nblk, np_cols)) then
 
       ! Get Vector to be transformed; distribute last element and norm of
       ! remaining elements to all procs in current column
 
       ! copy l_cols + 1 column of A to v_row
-      if (useGPU) then
-
-#ifdef WITH_NVTX
-        call nvtxRangePush("kernel: gpu_copy_and_set_zeros a_dev(:,l_cols+1)->v_row_dev, aux1_dev=0,vav_dev=0")
-#endif
-        ! TODO_23_11:  create a dev-dev copy kernel or merge it to another kernel
-        ! offset_dev = l_cols * matrixRows * size_of_datatype
-        ! successGPU = gpu_memcpy(v_row_dev, a_dev + offset_dev, (l_rows)* size_of_datatype, gpuMemcpyDeviceToDevice)
-        ! check_memcpy_gpu("tridiag a_dev 1", successGPU)
-        call gpu_copy_and_set_zeros_PRECISION(v_row_dev, a_dev, l_rows, l_cols, matrixRows, &
-                                         aux1_dev, vav_dev, useCCL, wantDebug, my_stream)
-
-#ifdef WITH_NVTX
-        call nvtxRangePop()
-#endif
-
-      else ! useGPU
+      if (.not. useGPU) then
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
       endif ! useGPU
 
@@ -1810,6 +1809,15 @@ subroutine tridiag_&
 
         if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
         if (wantDebug) call obj%timer%stop("gpublas_gemm")
+        
+        ! copy real(a_dev(l_rows,l_cols)) -> d_vec_dev(istep-1) for correct initial value of d_vec_dev before atomicAdd
+        if ((.not. isSkewsymmetric) .and. &
+            (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols))) then
+          offset_dev = ((l_rows-1) + (l_cols-1)*matrixRows) * size_of_datatype
+          successGPU = gpu_memcpy(d_vec_dev + (istep-2)*size_of_datatype_real, &
+                                  a_dev + offset_dev, 1*size_of_datatype_real, gpuMemcpyDeviceToDevice)
+          check_memcpy_gpu("tridiag a_dev->d_vec_dev", successGPU)
+        endif
 
       endif !.not. useGPU or .not. mat_vec_as_one_block
 
