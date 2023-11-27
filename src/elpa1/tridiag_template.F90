@@ -1739,39 +1739,7 @@ subroutine tridiag_&
     n_stored_vecs = n_stored_vecs+1
 
     ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
-    if (n_stored_vecs == max_stored_uv .or. istep == 3) then
-
-#ifdef GPU_OLD /* this part can be optimized out and omitted, since now we are copying u and v vectors separately to vu and uv on GPU anyway */
-      if (useGPU) then
-#ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        num = max_local_rows * 2 * max_stored_uv * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-              ("tridiag vu_stored_rows -> vu_stored_rows_dev", vu_stored_rows_dev, 0_c_intptr_t, &
-                                                  vu_stored_rows(1:max_local_rows,1:2*max_stored_uv), &
-                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else
-        successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
-                                max_local_rows * 2 * max_stored_uv * size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridiag: vu_stored_rows_dev", successGPU)
-#endif
-
-
-#ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        num = max_local_cols * 2 * max_stored_uv * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-              ("tridiag uv_stored_cols -> uv_stored_cols_dev", uv_stored_cols_dev, 0_c_intptr_t, &
-                                                  uv_stored_cols(1:max_local_cols,1:2*max_stored_uv), &
-                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else
-        successGPU = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
-                                  max_local_cols * 2 * max_stored_uv * size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
-#endif
-
-      endif ! useGPU
-#endif /* GPU_OLD */           
+    if (n_stored_vecs == max_stored_uv .or. istep == 3) then        
       
       if (.not. useGPU .OR. .not. mat_vec_as_one_block) then
         do i = 0, (istep-2)/tile_size
