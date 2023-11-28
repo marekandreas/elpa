@@ -145,7 +145,7 @@ subroutine tridiag_&
   integer(kind=ik)                              :: l_cols, l_rows
   integer(kind=ik)                              :: n_stored_vecs
   integer(kind=ik)                              :: isOurProcessRowInt ! TODO_23_11 - get rid of it
-  logical                                       :: isOurProcessRow, isOurProcessCol
+  logical                                       :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
 
 
   integer(kind=C_intptr_T)                      :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
@@ -681,11 +681,14 @@ subroutine tridiag_&
       call nvtxRangePush("kernel: gpu_copy_and_set_zeros a_dev(:,l_cols+1)->v_row_dev, aux1_dev=0,vav_dev=0")
 #endif
       ! copy l_cols + 1 column of a_dev to v_row_dev
-      isOurProcessRow = (my_prow == prow(istep-1, nblk, np_rows))
-      isOurProcessCol = (my_pcol == pcol(istep-1, nblk, np_cols))
+      isOurProcessRow      = (my_prow == prow(istep-1, nblk, np_rows))
+      isOurProcessCol      = (my_pcol == pcol(istep-1, nblk, np_cols))
+      isOurProcessCol_prev = (my_pcol == pcol(istep  , nblk, np_cols)) ! isOurProcessCol from the previous step
       call gpu_copy_and_set_zeros_PRECISION(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                             aux1_dev, vav_dev, d_vec_dev, &
-                                            isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL, wantDebug, my_stream)
+                                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
+                                            isSkewsymmetric, useCCL, wantDebug, my_stream)
+      if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
 #ifdef WITH_NVTX
         call nvtxRangePop()
 #endif
@@ -696,10 +699,29 @@ subroutine tridiag_&
       ! Get Vector to be transformed; distribute last element and norm of
       ! remaining elements to all procs in current column
 
-      ! copy l_cols + 1 column of A to v_row
-      if (.not. useGPU) then
+!             ! copy l_cols + 1 column of A to v_row
+      if (useGPU) then
+
+#ifdef WITH_NVTX
+        call nvtxRangePush("memcpy new D-D a_dev(:,l_cols+1)->v_row_dev")
+#endif
+        ! TODO_23_11:  create a dev-dev copy kernel or merge it to another kernel
+        offset_dev = l_cols * matrixRows * size_of_datatype
+        successGPU = gpu_memcpy(v_row_dev, a_dev + offset_dev, (l_rows)* size_of_datatype, gpuMemcpyDeviceToDevice)
+        check_memcpy_gpu("tridiag a_dev 1", successGPU)
+
+#ifdef WITH_NVTX
+        call nvtxRangePop()
+#endif
+
+      else ! useGPU
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
       endif ! useGPU
+
+      ! copy l_cols + 1 column of A to v_row
+      ! if (.not. useGPU) then
+      !   v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
+      ! endif ! useGPU
 
       if (n_stored_vecs > 0 .and. l_rows > 0) then
         if (useGPU) then
@@ -1595,7 +1617,7 @@ subroutine tridiag_&
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
-    endif ! useGPU
+    endif ! useGPU .and. useCCL
 #endif /* WITH_NVIDIA_NCCL */
 
 

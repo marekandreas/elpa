@@ -160,10 +160,11 @@ __device__ void set_to_zero_on_device(T x, std::false_type) { return;}
  
 template <typename T, typename T_real>
 __global__ void cuda_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int matrixRows, int istep,
-                                         T *aux1_dev, T *vav_dev, T_real *d_vec_dev, bool isOurProcessRow, bool isOurProcessCol, bool isSkewsymmetric, bool useCCL){
+                                         T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
+                                         bool isOurProcessRow, bool isOurProcessCol, bool isOurProcessCol_prev, bool isSkewsymmetric, bool useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-  if (isOurProcessCol)
+  if (isOurProcessCol_prev)
     {
     // copy v_row to a_dev
     int i_row = tid;
@@ -180,7 +181,7 @@ __global__ void cuda_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int
     aux1_dev[0] = elpaDeviceNumber<T>(0.0);
     if (useCCL) *vav_dev = elpaDeviceNumber<T>(0.0);
 
-    if (isOurProcessRow)
+    if (isOurProcessRow && isOurProcessCol)
       {
       if (isSkewsymmetric) 
         d_vec_dev[istep-1-1] = 0.0;
@@ -192,13 +193,15 @@ __global__ void cuda_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int
 
 template <typename T, typename T_real>
 void cuda_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in, 
-                                   T *aux1_dev, T *vav_dev, T_real *d_vec_dev, bool *isOurProcessRow_in,  bool *isOurProcessCol_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+                                   T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
+                                   bool *isOurProcessRow_in,  bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
   int matrixRows = *matrixRows_in;
   int istep = *istep_in;
   bool isOurProcessRow = *isOurProcessRow_in;
   bool isOurProcessCol = *isOurProcessCol_in;
+  bool isOurProcessCol_prev = *isOurProcessCol_prev_in;
   bool isSkewsymmetric = *isSkewsymmetric_in;
   bool useCCL = *useCCL_in;
   bool wantDebug = *wantDebug_in;
@@ -208,9 +211,9 @@ void cuda_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in, int *
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // TODO_23_11: change to NB?
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_and_set_zeros<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL);
+  cuda_copy_and_set_zeros<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL);
 #else
-  cuda_copy_and_set_zeros<<<blocks,threadsPerBlock>>>            (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol, isSkewsymmetric, useCCL);
+  cuda_copy_and_set_zeros<<<blocks,threadsPerBlock>>>            (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL);
 #endif
 
   if (wantDebug){
@@ -221,26 +224,26 @@ void cuda_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in, int *
 
 extern "C" void cuda_copy_and_set_zeros_double_FromC(double *v_row_dev, double *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
                                                      double *aux1_dev, double *vav_dev, double *d_vec_dev, 
-                                                     bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
-  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
+                                                     bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void cuda_copy_and_set_zeros_float_FromC(float *v_row_dev, float *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
                                                     float *aux1_dev, float *vav_dev, float *d_vec_dev, 
-                                                    bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
-  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
+                                                    bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void cuda_copy_and_set_zeros_double_complex_FromC(cuDoubleComplex *v_row_dev, cuDoubleComplex *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
                                                   cuDoubleComplex *aux1_dev, cuDoubleComplex *vav_dev, double *d_vec_dev, 
-                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
-  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
+                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void cuda_copy_and_set_zeros_float_complex_FromC(cuComplex *v_row_dev, cuComplex *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
                                                   cuComplex *aux1_dev, cuComplex *vav_dev, float *d_vec_dev, 
-                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
-  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
+                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 //________________________________________________________________
