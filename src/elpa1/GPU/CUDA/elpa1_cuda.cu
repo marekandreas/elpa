@@ -149,13 +149,6 @@ __device__ T convert_to_device(T* x, std::true_type) { return *x;}
 template <typename T>
 __device__ T convert_to_device(T x, std::false_type) { return x;}
 
-
-template <typename T>
-__device__ void set_to_zero_on_device(T* x, std::true_type) { *x=elpaDeviceNumber<T>(0.0);}
-
-template <typename T>
-__device__ void set_to_zero_on_device(T x, std::false_type) { return;}
-
 //________________________________________________________________
  
 template <typename T, typename T_real>
