@@ -224,7 +224,7 @@ subroutine tridiag_&
 #ifdef WITH_NVIDIA_NCCL
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
   integer(kind=ik)                              :: nvs, nvr, nvc, lcm_s_t, nblks_tot, nblks_comm, nblks_skip
-  logical                                       :: isSquareGridGPU
+  logical                                       :: isSquareGridGPU = .false.
   integer(kind=c_intptr_t)                      :: aux_transpose_dev
   integer(kind=c_int)                           :: ncclDataType
   integer(kind=ik)                              :: k_datatype
@@ -582,9 +582,10 @@ subroutine tridiag_&
 #ifdef WITH_NVIDIA_NCCL
     ! for gpu_transpose_vectors on non-square grids
     if (np_rows==np_cols .and. (.not. isSkewsymmetric)) then
-      isSquareGridGPU = .true.
-    else
-      isSquareGridGPU = .false.
+      ! isSquareGridGPU = .true. ! TODO_23_11 - switched off for now, add test for arbitrary grid mapping and switch back on
+    endif
+
+    if (.not. isSquareGridGPU) then
       lcm_s_t   = least_common_multiple(np_rows,np_cols)
       nvs = 1 ! global index where to start in vmat_s/vmat_t
       nvr  = na-1 ! global length of v_col_dev/v_row_dev(without last tau-element), max(istep-1)
@@ -1032,7 +1033,7 @@ subroutine tridiag_&
           &PRECISION &
                 (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
                 ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., my_prow, my_pcol, np_rows, np_cols, &
-                aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
+                aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
 #endif /* WITH_NVIDIA_NCCL */
 #ifdef WITH_NVTX
       call nvtxRangePop()
@@ -1535,7 +1536,7 @@ subroutine tridiag_&
           &PRECISION &
                 (obj, u_col_dev, max_local_cols, ccl_comm_cols, mpi_comm_cols, u_row_dev, max_local_rows+1, &
                 ccl_comm_rows, mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., my_pcol, my_prow, np_cols, np_rows, &
-                aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
+                aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
