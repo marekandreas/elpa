@@ -748,7 +748,7 @@ extern "C" void cuda_store_u_v_in_uv_vu_float_FromC(float *vu_stored_rows_dev, f
 }
 
 extern "C" void cuda_store_u_v_in_uv_vu_double_complex_FromC(cuDoubleComplex *vu_stored_rows_dev, cuDoubleComplex *uv_stored_cols_dev, cuDoubleComplex *v_row_dev, cuDoubleComplex *u_row_dev,
-                                                             cuDoubleComplex *v_col_dev, cuDoubleComplex *u_col_dev, cuDoubleComplex *tau_dev, cuDoubleComplex *aux_complex_dev, cuDoubleComplex *aux1_dev, 
+                                                             cuDoubleComplex *v_col_dev, cuDoubleComplex *u_col_dev, cuDoubleComplex *tau_dev, cuDoubleComplex *aux_complex_dev,
                                                              cuDoubleComplex *vav_host_or_dev, cuDoubleComplex *tau_host_or_dev,
                                                              int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
   cuda_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
