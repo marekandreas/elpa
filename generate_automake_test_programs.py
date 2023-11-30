@@ -471,25 +471,52 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
 
 
 #invert_triangular with GPU
-gpu_combined_flag = {
-    0: "-DTEST_GPU=0",
-    1: "-DTEST_GPU=1",
+language_flag = {
+    "Fortran": "",
 }
-for lang, p, d, g, api_name in product(sorted(language_flag.keys()), 
-                             sorted(prec_flag.keys()), 
-                             sorted(domain_flag.keys()),
-                             sorted(gpu_flag.keys()), 
-                             sorted(explicit_name_flag.keys())):
+
+gpu_flag = {
+    "GPU_OFF": "-DTEST_NVIDIA_GPU=0 -DTEST_INTEL_GPU=0 -DTEST_AMD_GPU=0 -DTEST_OPENMP_OFFLOAD_GPU=0 -DTEST_INTEL_GPU_OPENMP=0 -DTEST_INTEL_GPU_SYCL=0",
+    "NVIDIA_GPU_ON": "-DTEST_NVIDIA_GPU=1",
+    "AMD_GPU_ON": "-DTEST_AMD_GPU=1",
+    "OPENMP_OFFLOAD_GPU_ON": "-DTEST_INTEL_GPU_OPENMP=1",
+    "SYCL_GPU_ON": "-DTEST_INTEL_GPU_SYCL=1",
+}
+#"INTEL_GPU_ON": "-DTEST_INTEL_GPU=1"
+gpu_id_flag = {
+    0: "-DTEST_GPU_SET_ID=0",
+    1: "-DTEST_GPU_SET_ID=1",
+}
+
+device_pointer_flag = {
+    0: "-DTEST_GPU_DEVICE_POINTER_API=0",
+    1: "-DTEST_GPU_DEVICE_POINTER_API=1",
+}
+
+explicit_name_flag = {
+        "explicit": "-DTEST_EXPLICIT_NAME",
+        "implicit": ""
+}
+for lang, g, gid, deviceptr, p, d, api_name in product(sorted(language_flag.keys()),
+                                                   sorted(gpu_flag.keys()),
+                                                   sorted(gpu_id_flag.keys()),
+                                                   sorted(device_pointer_flag.keys()),
+                                                   sorted(prec_flag.keys()),
+                                                   sorted(domain_flag.keys()),
+                                                   sorted(explicit_name_flag.keys())):
+
     endifs = 0
     
-    use_gpu = 0
-    if (g!="GPU_OFF"): use_gpu=1
-    
-    # exclude some test combinations
-    
-    if use_gpu==1 and api_name!="explicit":
+         
+    if gid == 1 and (g == "GPU_OFF" ):
         continue
-    
+
+    if deviceptr == 1 and (gid == 0 ):
+        continue
+
+    if deviceptr == 1 and (api_name != "explicit"):
+        continue
+
     # conditional cases
     
     if (g == "NVIDIA_GPU_ON"):
@@ -522,10 +549,14 @@ for lang, p, d, g, api_name in product(sorted(language_flag.keys()),
         endifs += 1
     
     if (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON"):
-      gpu_suffix="gpu_api_"
+      gpu_suffix="gpu_"
+      if (gid):
+        gpu_suffix="gpu_id_"
+      if (deviceptr):
+        gpu_suffix="gpu_api_"
     else:
       gpu_suffix=""
-            
+
     name = "validate{langsuffix}_{d}_{p}_{gpu_suffix}{api_name}invert_triangular".format(
         langsuffix=language_flag[lang], 
         d=d, p=p, gpu_suffix=gpu_suffix,
@@ -558,13 +589,21 @@ for lang, p, d, g, api_name in product(sorted(language_flag.keys()),
     else:
         raise Exception("Unknown language")
 
-    print("  " + " \\\n  ".join([
+    if (explicit_name_flag[api_name] == "-DTEST_EXPLICIT_NAME"):
+      print("  " + " \\\n  ".join([
         domain_flag[d],
         prec_flag[p],
         gpu_flag[g], 
-        explicit_name_flag[api_name],
-        gpu_combined_flag[use_gpu] ]))
-    
+        gpu_id_flag[gid],
+        device_pointer_flag[deviceptr],
+        explicit_name_flag[api_name]]))
+    else:
+      print("  " + " \\\n  ".join([
+        domain_flag[d],
+        prec_flag[p],
+        gpu_flag[g], 
+        gpu_id_flag[gid],
+        device_pointer_flag[deviceptr]]))
     print("endif\n" * endifs)
 
     

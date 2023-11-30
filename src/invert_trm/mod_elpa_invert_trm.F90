@@ -84,7 +84,7 @@ module elpa_invert_trm
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
     function elpa_invert_trm_a_h_a_real_double_impl(obj, a) result(success)
-#include "./elpa_invert_trm_template.F90"
+#include "./invert_trm_template.F90"
      end function elpa_invert_trm_a_h_a_real_double_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -103,13 +103,13 @@ module elpa_invert_trm
 !> \param     - obj%mpi_comm_rows MPI communicator for rows
 !> \param     - obj%mpi_comm_cols MPI communicator for columns
 !> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted, of type(c_ptr), lives on GPU
+!> \param  aDev(lda,matrixCols)   Distributed matrix which should be inverted, of type(c_ptr), lives on GPU
 !>                                Distribution is like in Scalapack.
 !>                                Only upper triangle needs to be set.
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
-    function elpa_invert_trm_d_ptr_real_double_impl(obj, a) result(success)
-#include "./elpa_invert_trm_template.F90"
+    function elpa_invert_trm_d_ptr_real_double_impl(obj, aDev) result(success)
+#include "./invert_trm_template.F90"
      end function elpa_invert_trm_d_ptr_real_double_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
@@ -139,7 +139,7 @@ module elpa_invert_trm
 !> \result succes                 logical, reports success or failure
 
     function elpa_invert_trm_a_h_a_real_single_impl(obj, a) result(success)
-#include "./elpa_invert_trm_template.F90"
+#include "./invert_trm_template.F90"
     end function elpa_invert_trm_a_h_a_real_single_impl
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -162,14 +162,14 @@ module elpa_invert_trm
 !> \param     - obj%mpi_comm_rows MPI communicator for rows
 !> \param     - obj%mpi_comm_cols MPI communicator for columns
 !> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted, of type(c_ptr), lives on GPU
+!> \param  aDev(lda,matrixCols)   Distributed matrix which should be inverted, of type(c_ptr), lives on GPU
 !>                                Distribution is like in Scalapack.
 !>                                Only upper triangle needs to be set.
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
 
-    function elpa_invert_trm_d_ptr_real_single_impl(obj, a) result(success)
-#include "./elpa_invert_trm_template.F90"
+    function elpa_invert_trm_d_ptr_real_single_impl(obj, aDev) result(success)
+#include "./invert_trm_template.F90"
     end function elpa_invert_trm_d_ptr_real_single_impl
 #undef SINGLE_PRECISION
 #undef REALCASE
@@ -197,7 +197,7 @@ module elpa_invert_trm
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
      function elpa_invert_trm_a_h_a_complex_double_impl(obj, a) result(success)
-#include "./elpa_invert_trm_template.F90"
+#include "./invert_trm_template.F90"
     end function elpa_invert_trm_a_h_a_complex_double_impl
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -218,13 +218,13 @@ module elpa_invert_trm
 !> \param     - obj%mpi_comm_rows MPI communicator for rows
 !> \param     - obj%mpi_comm_cols MPI communicator for columns
 !> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted, of type(c_ptr), lives on GPU
+!> \param  aDev(lda,matrixCols)   Distributed matrix which should be inverted, of type(c_ptr), lives on GPU
 !>                                Distribution is like in Scalapack.
 !>                                Only upper triangle needs to be set.
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
-     function elpa_invert_trm_d_ptr_complex_double_impl(obj, a) result(success)
-#include "./elpa_invert_trm_template.F90"
+     function elpa_invert_trm_d_ptr_complex_double_impl(obj, aDev) result(success)
+#include "./invert_trm_template.F90"
     end function elpa_invert_trm_d_ptr_complex_double_impl
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -253,7 +253,7 @@ module elpa_invert_trm
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
     function elpa_invert_trm_a_h_a_complex_single_impl(obj, a) result(success)
-#include "./elpa_invert_trm_template.F90"
+#include "./invert_trm_template.F90"
     end function elpa_invert_trm_a_h_a_complex_single_impl
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
@@ -275,13 +275,13 @@ module elpa_invert_trm
 !> \param     - obj%mpi_comm_rows MPI communicator for rows
 !> \param     - obj%mpi_comm_cols MPI communicator for columns
 !> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted, of type(c_ptr), lives on GPU
+!> \param  aDev(lda,matrixCols)   Distributed matrix which should be inverted, of type(c_ptr), lives on GPU
 !>                                Distribution is like in Scalapack.
 !>                                Only upper triangle needs to be set.
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
-    function elpa_invert_trm_d_ptr_complex_single_impl(obj, a) result(success)
-#include "./elpa_invert_trm_template.F90"
+    function elpa_invert_trm_d_ptr_complex_single_impl(obj, aDev) result(success)
+#include "./invert_trm_template.F90"
     end function elpa_invert_trm_d_ptr_complex_single_impl
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE

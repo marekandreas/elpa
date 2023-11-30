@@ -181,7 +181,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/general/sanity.F90 \
   src/general/error_checking.inc \
   src/cholesky/elpa_cholesky_template.F90 \
-  src/invert_trm/elpa_invert_trm_template.F90 \
+  src/invert_trm/invert_trm_template.F90 \
   src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/general/elpa_ssr2_template.F90 \
@@ -1069,7 +1069,7 @@ EXTRA_DIST = \
   src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
   src/multiply_a_b/GPU/SYCL/mod_multiply_a_b_sycl.F90 \
   src/multiply_a_b/GPU/OpenMP/mod_multiply_a_b_openmp_offload.F90 \
-  src/invert_trm/elpa_invert_trm_template.F90 \
+  src/invert_trm/invert_trm_template.F90 \
   src/elpa1/elpa_reduce_add_vectors_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/elpa1/elpa_transpose_vectors_template.F90 \
