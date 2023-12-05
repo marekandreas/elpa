@@ -134,7 +134,7 @@ static __inline__ __device__ double atomicAdd(double* address, double val)
 }
 #endif
 
-// atomicAdd for cuDoubleComplex and cuComplex
+// atomicAdd for hipDoubleComplex and hipComplex
 template<typename T>
 __device__ void atomicAdd(T* address, T val) {
     atomicAdd(&(address->x), val.x);
@@ -166,83 +166,113 @@ struct is_pointer<T*> { static const bool value = true; };
 
 // Device function to convert a pointer to a value
 template <typename T>
-__device__ T convert_to_device(T* x, std::true_type) {
-    return *x;
-}
+__device__ T convert_to_device(T* x, std::true_type) {return *x;}
 
 // Device function to convert a value to a value
 template <typename T>
-__device__ T convert_to_device(T x, std::false_type) {
-    return x;
+__device__ T convert_to_device(T x, std::false_type) {return x;}
+
+//________________________________________________________________
+ 
+template <typename T, typename T_real>
+__global__ void hip_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int matrixRows, int istep,
+                                         T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
+                                         bool isOurProcessRow, bool isOurProcessCol, bool isOurProcessCol_prev, bool isSkewsymmetric, bool useCCL){
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
+
+  if (isOurProcessCol_prev)
+    {
+    // copy v_row to a_dev
+    int i_row = tid;
+    while (i_row < l_rows) 
+      {
+      v_row_dev[i_row] = a_dev[i_row + matrixRows*l_cols];
+      i_row += blockDim.x * gridDim.x;
+      }
+    }
+
+  // set zeros for aux1_dev and vav_dev to be summed with atomicAdd
+  if (tid==0)
+    {
+    aux1_dev[0] = elpaDeviceNumber<T>(0.0);
+    if (useCCL) *vav_dev = elpaDeviceNumber<T>(0.0);
+
+    if (isOurProcessRow && isOurProcessCol)
+      {
+      if (isSkewsymmetric) 
+        d_vec_dev[istep-1-1] = 0.0;
+      else 
+        d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]);
+      }
+    }
 }
 
-
-/*
-template <typename T>
-void sycl_copy_a_tmat2_kernel(T *a_dev, T *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, sycl::nd_item<1> it){
-
-  int nb_index = it.get_local_id(0) + 1; // range 1..nb
-  int l_col_index = it.get_group(0) + 1; // range 1..l_colx-l_cols-1
-
-  tmat2_dev[nb_index-1 + (l_colx-1 + l_col_index -1) * nblk] = a_dev[l_row1-1 + nb_index-1 + (l_colx-1 + l_col_index -1)  * matrixRows];
-
-}
-
-template <typename T>
-void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-
-  int nblk = *nblk_in;   
+template <typename T, typename T_real>
+void hip_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in, 
+                                   T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
+                                   bool *isOurProcessRow_in,  bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+  int l_rows = *l_rows_in;   
+  int l_cols = *l_cols_in;   
   int matrixRows = *matrixRows_in;
-  int l_cols = *l_cols_in;
-  int l_colx = *l_colx_in;
-  int l_row1 = *l_row1_in;
-  int nb     = *nb_in;
+  int istep = *istep_in;
+  bool isOurProcessRow = *isOurProcessRow_in;
+  bool isOurProcessCol = *isOurProcessCol_in;
+  bool isOurProcessCol_prev = *isOurProcessCol_prev_in;
+  bool isSkewsymmetric = *isSkewsymmetric_in;
+  bool useCCL = *useCCL_in;
+  bool wantDebug = *wantDebug_in;
 
-  sycl::range<1> global_range = sycl::range<1>(nb*(l_cols - l_colx + 1));
-  sycl::range<1> local_range  = sycl::range<1>(nb);
+  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // TODO_23_11: change to NB?
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+#ifdef WITH_GPU_STREAMS
+  hip_copy_and_set_zeros<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL);
+#else
+  hip_copy_and_set_zeros<<<blocks,threadsPerBlock>>>            (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL);
+#endif
 
-  queue.parallel_for(
-      sycl::nd_range<1>(global_range, local_range),
-      [=](sycl::nd_item<1> it) {
-        sycl_copy_a_tmat2_kernel(a_dev, tmat2_dev, nblk, matrixRows,
-                                        l_colx, l_row1, it);
-      });
-  queue.wait_and_throw();
-
+  if (wantDebug){
+    hipError_t hiperr = hipGetLastError();
+    if (hiperr != hipSuccess) printf("Error in executing hip_copy_and_set_zeros: %s\n",hipGetErrorString(hiperr));
+  }
 }
 
-extern "C" void sycl_copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-  sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
+extern "C" void hip_copy_and_set_zeros_double_FromC(double *v_row_dev, double *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
+                                                     double *aux1_dev, double *vav_dev, double *d_vec_dev, 
+                                                     bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+  hip_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_a_tmat2_FromC(float *a_dev, float *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-  sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
+extern "C" void hip_copy_and_set_zeros_float_FromC(float *v_row_dev, float *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
+                                                    float *aux1_dev, float *vav_dev, float *d_vec_dev, 
+                                                    bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+  hip_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
-extern "C" void sycl_copy_double_complex_a_tmat2_FromC(std::complex<double> *a_dev, std::complex<double> *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-  sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
+extern "C" void hip_copy_and_set_zeros_double_complex_FromC(hipDoubleComplex *v_row_dev, hipDoubleComplex *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
+                                                  hipDoubleComplex *aux1_dev, hipDoubleComplex *vav_dev, double *d_vec_dev, 
+                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+  hip_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev, std::complex<float> *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
-  sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
+extern "C" void hip_copy_and_set_zeros_float_complex_FromC(hipComplex *v_row_dev, hipComplex *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
+                                                  hipComplex *aux1_dev, hipComplex *vav_dev, float *d_vec_dev, 
+                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+  hip_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
-*/
 
 //________________________________________________________________
 // device syncronization is needed afterwards, e.g. gpu_memcpy
+// the kernel used only in (R)CCL codepath
+// result_dev[0] must be initialized to zero before calling the kernel
 
 template <typename T>
 __global__ void hip_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev){
   __shared__ T cache[MAX_THREADS_PER_BLOCK]; // extra space of fixed size is reserved for a speedup
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-  T DeviceZero = elpaDeviceNumber<T>(0.0);
-  if (threadIdx.x==0) result_dev[0] = DeviceZero; // clear old value; it's safe because we perform __syncthreads() before atomicAdd
-
-  T temp = DeviceZero;
+  T temp = elpaDeviceNumber<T>(0.0);
   int i = tid;
   while (i < n) {
     temp = elpaDeviceAdd(temp, elpaDeviceMultiply(elpaDeviceComplexConjugate(x_dev[i*incx]), y_dev[i*incy])); // temp += x_dev[i*incx] * y_dev[i*incy];
@@ -286,9 +316,9 @@ void hip_dot_product_FromC(int* n_in, T *x_dev, int *incx_in, T *y_dev, int *inc
   hip_dot_product_kernel<<<blocks,threadsPerBlock>>>(n, x_dev, incx, y_dev, incy, result_dev);
 #endif
   if (wantDebug){
-    hipError_t cuerr = hipGetLastError();
-    if (cuerr != hipSuccess){
-      printf("Error in executing hip_dot_product_kernel: %s\n",hipGetErrorString(cuerr));
+    hipError_t hiperr = hipGetLastError();
+    if (hiperr != hipSuccess){
+      printf("Error in executing hip_dot_product_kernel: %s\n",hipGetErrorString(hiperr));
     }
   }
 }
@@ -327,10 +357,8 @@ __global__ void hip_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int 
     aux1(2) = 0.
   }
 */
-  T DeviceZero = elpaDeviceNumber<T>(0.0);
-  if (threadIdx.x==0) aux1_dev[0] = DeviceZero; // clear old value; it's safe because we perform __syncthreads() before atomicAdd
 
-  T temp = DeviceZero;
+  T temp = elpaDeviceNumber<T>(0.0);
   int index_global = tid;
   while (index_global < l_rows-1) {
     temp = elpaDeviceAdd(temp, elpaDeviceMultiply(elpaDeviceComplexConjugate(v_row_dev[index_global]), v_row_dev[index_global])); // temp += v_row_dev[index_global]*v_row_dev[index_global];
@@ -361,7 +389,7 @@ __global__ void hip_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int 
     else
       {
       if (l_rows>0) atomicAdd(&aux1_dev[0], elpaDeviceMultiply(elpaDeviceComplexConjugate(v_row_dev[l_rows-1]), v_row_dev[l_rows-1]));
-      aux1_dev[1] = DeviceZero;
+      aux1_dev[1] = elpaDeviceNumber<T>(0.0);
       }
     }
 }
@@ -387,9 +415,9 @@ void hip_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in, int *isOurPr
 #endif
 
   if (wantDebug){
-    hipError_t cuerr = hipGetLastError();
-    if (cuerr != hipSuccess){
-      printf("Error in executing hip_dot_product_and_assign_kernel: %s\n",hipGetErrorString(cuerr));
+    hipError_t hiperr = hipGetLastError();
+    if (hiperr != hipSuccess){
+      printf("Error in executing hip_dot_product_and_assign_kernel: %s\n",hipGetErrorString(hiperr));
     }
   }
 
@@ -511,8 +539,8 @@ void hip_set_e_vec_scale_set_one_store_v_row_FromC(T_real *e_vec_dev, T *vrl_dev
 #endif
       if (wantDebug)
         {
-        hipError_t cuerr = hipGetLastError();
-        if (cuerr != hipSuccess) printf("Error in executing hip_set_e_vec_scale_set_one_store_v_row_kernel: %s\n",hipGetErrorString(cuerr));
+        hipError_t hiperr = hipGetLastError();
+        if (hiperr != hipSuccess) printf("Error in executing hip_set_e_vec_scale_set_one_store_v_row_kernel: %s\n",hipGetErrorString(hiperr));
         }
       }
     else if (attributes.memoryType == hipMemoryTypeDevice) 
@@ -526,8 +554,8 @@ void hip_set_e_vec_scale_set_one_store_v_row_FromC(T_real *e_vec_dev, T *vrl_dev
 #endif
       if (wantDebug)
         {
-        hipError_t cuerr = hipGetLastError();
-        if (cuerr != hipSuccess) printf("Error in executing hip_set_e_vec_scale_set_one_store_v_row_kernel: %s\n",hipGetErrorString(cuerr));
+        hipError_t hiperr = hipGetLastError();
+        if (hiperr != hipSuccess) printf("Error in executing hip_set_e_vec_scale_set_one_store_v_row_kernel: %s\n",hipGetErrorString(hiperr));
         }
       }
 
@@ -683,8 +711,8 @@ void hip_store_u_v_in_uv_vu_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev, 
 #endif
       if (wantDebug)
         {
-        hipError_t cuerr = hipGetLastError();
-        if (cuerr != hipSuccess) printf("Error in executing hip_store_u_v_in_uv_vu_kernel: %s\n",hipGetErrorString(cuerr));
+        hipError_t hiperr = hipGetLastError();
+        if (hiperr != hipSuccess) printf("Error in executing hip_store_u_v_in_uv_vu_kernel: %s\n",hipGetErrorString(hiperr));
         }
       } 
     
@@ -702,8 +730,8 @@ void hip_store_u_v_in_uv_vu_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev, 
 
       if (wantDebug)
         {
-        hipError_t cuerr = hipGetLastError();
-        if (cuerr != hipSuccess) printf("Error in executing hip_store_u_v_in_uv_vu_kernel: %s\n",hipGetErrorString(cuerr));
+        hipError_t hiperr = hipGetLastError();
+        if (hiperr != hipSuccess) printf("Error in executing hip_store_u_v_in_uv_vu_kernel: %s\n",hipGetErrorString(hiperr));
         }
       } 
     
@@ -769,13 +797,6 @@ __global__ void hip_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *u
 #endif
 */
 
-  if (threadIdx.x==0)
-    { 
-    if (isSkewsymmetric) 
-      d_vec_dev[istep-1-1] = 0.0;
-    else 
-      d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to other kernel for thread safety
-    }
   if (n_stored_vecs > 0)
     {
 
@@ -838,9 +859,9 @@ void hip_update_matrix_element_add_FromC(T *vu_stored_rows_dev, T *uv_stored_col
                                                   isSkewsymmetric);
 #endif
   if (wantDebug){
-    hipError_t cuerr = hipGetLastError();
-    if (cuerr != hipSuccess){
-      printf("Error in executing hip_update_matrix_element_add_kernel: %s\n",hipGetErrorString(cuerr));
+    hipError_t hiperr = hipGetLastError();
+    if (hiperr != hipSuccess){
+      printf("Error in executing hip_update_matrix_element_add_kernel: %s\n",hipGetErrorString(hiperr));
     }
   }
 }
@@ -891,9 +912,9 @@ void hip_update_array_element_FromC(T *array_dev, int *index_in, T *value_in, hi
 #else
   hip_update_array_element_kernel<<<blocks,threadsPerBlock>>>(array_dev, index, value);
 #endif
-  hipError_t cuerr = hipGetLastError();
-  if (cuerr != hipSuccess){
-    printf("Error in executing hip_update_array_element_kernel: %s\n",hipGetErrorString(cuerr));
+  hipError_t hiperr = hipGetLastError();
+  if (hiperr != hipSuccess){
+    printf("Error in executing hip_update_array_element_kernel: %s\n",hipGetErrorString(hiperr));
   }
 }
 
@@ -1032,9 +1053,9 @@ void hip_hh_transform_FromC(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev
   hip_hh_transform_kernel<<<blocks,threadsPerBlock>>>(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug);
 
   if (wantDebug){
-    hipError_t cuerr = hipGetLastError();
-    if (cuerr != hipSuccess){
-      printf("Error in executing hip_hh_transform_kernel: %s\n",hipGetErrorString(cuerr));
+    hipError_t hiperr = hipGetLastError();
+    if (hiperr != hipSuccess){
+      printf("Error in executing hip_hh_transform_kernel: %s\n",hipGetErrorString(hiperr));
     }
   }
 }
@@ -1147,8 +1168,8 @@ void hip_transpose_reduceadd_vectors_copy_block_FromC(T *aux_transpose_dev, T *v
 #endif
   if(wantDebug)
     {
-    hipError_t cuerr = hipGetLastError();
-    if (cuerr != hipSuccess) printf("Error in executing hip_transpose_reduceadd_vectors_copy_block_kernel: %s\n",hipGetErrorString(cuerr));
+    hipError_t hiperr = hipGetLastError();
+    if (hiperr != hipSuccess) printf("Error in executing hip_transpose_reduceadd_vectors_copy_block_kernel: %s\n",hipGetErrorString(hiperr));
     }
 }
 
