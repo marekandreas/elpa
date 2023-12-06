@@ -43,8 +43,8 @@ contains
 
 
     call random_seed(put=seed)
-    call random_number_complex(hh, nc, nr)
-    call random_number_complex(evec1, nbw, nn)
+    call random_number_complex(evec1, nc, nr)
+    call random_number_complex(hh, nbw, nn)
 
 
     ! Normalize
@@ -213,18 +213,19 @@ contains
     implicit none
 
     complex (kind=c_double), intent(inout) :: array(:,:)
+    complex (kind=c_double) :: tmp
     integer, intent(in), value :: dim1, dim2
     real (kind=c_double) :: realc, imagc
     integer :: i, j
 
     do i = 1, dim1
-    do j = 1, dim2
-    call random_number(realc)
-    call random_number(imagc)
-    array(i,j) = cmplx(realc, imagc, c_double)
+      do j = 1, dim2
+        call random_number(realc)
+        call random_number(imagc)
+        tmp = cmplx(realc, imagc, c_double)
+        array(i, j) = tmp
+      end do
     end do
-    end do
-
   end subroutine random_number_complex
 
 end module
