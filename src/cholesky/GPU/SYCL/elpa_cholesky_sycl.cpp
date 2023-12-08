@@ -68,10 +68,10 @@ void sycl_copy_a_tmatc_kernel(T *a_dev, T *tmatc_dev, const int l_cols, const in
 
   int ii_index = it.get_local_id(0) + 1; // range 1..nblk
   int jj_index = it.get_group(0) + 1;    // range 1..l_cols-l_colx+1
-  
+
   if constexpr (std::is_same<T, std::complex<float>>::value || std::is_same<T, std::complex<double>>::value) {
     tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = std::conj(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
-  } 
+  }
   else {
     tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] =           a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
   }
@@ -80,7 +80,7 @@ void sycl_copy_a_tmatc_kernel(T *a_dev, T *tmatc_dev, const int l_cols, const in
 template <typename T>
 void sycl_copy_a_tmatc_FromC(T *a_dev, T *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
 
-  int nblk = *nblk_in;   
+  int nblk = *nblk_in;
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
@@ -88,9 +88,9 @@ void sycl_copy_a_tmatc_FromC(T *a_dev, T *tmatc_dev, int *nblk_in, int *matrixRo
 
   sycl::range<1> global_range = sycl::range<1>(nblk*(l_cols - l_colx + 1));
   sycl::range<1> local_range  = sycl::range<1>(nblk);
-  
+
   auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+  auto queue = elpa::gpu::sycl::getQueue();
 
   queue.parallel_for(
     sycl::nd_range<1>(global_range, local_range),

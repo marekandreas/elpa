@@ -55,10 +55,19 @@
 #include <mpi.h>
 #endif
 
+class device_selection {
+  public:
+    int deviceId;
+    cl::sycl::queue queue;
+
+    device_selection(int deviceId, cl::sycl::queue queue)
+      : deviceId(deviceId), queue(queue) {}
+};
+
 static bool deviceCollectionFlag = false;
 
 std::vector<cl::sycl::device> devices;
-std::optional<cl::sycl::queue> chosenQueue;
+std::optional<device_selection> chosenQueue;
 
 void elpa::gpu::sycl::collectGpuDevices(bool onlyGpus) {
   if (deviceCollectionFlag) {
@@ -107,9 +116,16 @@ int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
     std::cerr << "Invalid GPU device ID selected, only " << devices.size() << " devices available." << std::endl;
     return 0;
   }
-  cl::sycl::property::queue::in_order io;
-  cl::sycl::property_list props(io);
-  chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId], props);
+  if (!chosenQueue || chosenQueue->deviceId != deviceId) {
+    cl::sycl::property::queue::in_order io;
+    cl::sycl::property_list props(io);
+    auto dev = devices[deviceId];
+    std::cout << " - Device #" << deviceId << ": "
+      << dev.get_platform().get_info<cl::sycl::info::platform::name>() << " -> "
+      << dev.get_info<cl::sycl::info::device::name>() << " ("
+      << dev.get_info<cl::sycl::info::device::max_compute_units>() << " EUs)";
+    chosenQueue = std::make_optional<device_selection>(deviceId, cl::sycl::queue(devices[deviceId], props));
+  }
   return 1;
 }
 
@@ -120,24 +136,23 @@ int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
 }
 
 void elpa::gpu::sycl::selectDefaultGpuDevice() {
-  cl::sycl::gpu_selector gpuSelector;
   cl::sycl::property::queue::in_order io;
   cl::sycl::property_list props(io);
-  chosenQueue = std::make_optional<cl::sycl::queue>(gpuSelector, props);
+  chosenQueue = std::make_optional<device_selection>(0, cl::sycl::queue(cl::sycl::gpu_selector_v, props));
 }
 
-cl::sycl::queue & elpa::gpu::sycl::getQueue() {
+cl::sycl::queue elpa::gpu::sycl::getQueue() {
   if (!chosenQueue) {
     elpa::gpu::sycl::selectDefaultGpuDevice();
   }
-  return *chosenQueue;
+  return chosenQueue->queue;
 }
 
 cl::sycl::device elpa::gpu::sycl::getDevice() {
   if (!chosenQueue) {
     elpa::gpu::sycl::selectDefaultGpuDevice();
   }
-  return chosenQueue->get_device();
+  return chosenQueue->queue.get_device();
 }
 
 size_t elpa::gpu::sycl::getNumDevices() {

@@ -220,7 +220,7 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   int syclMallocFromC(intptr_t *a, size_t elems) {
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, queue));
     char *bytes = reinterpret_cast<char *>(*a);
     if (*a) {
@@ -233,7 +233,7 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   int syclFreeFromC(intptr_t *a) {
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     void * ptr = reinterpret_cast<void *>(*a);
     queue.wait();
     sycl::free(ptr, queue);
@@ -243,7 +243,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
 
   int syclMemcpyFromC(void *dst, void *src, size_t size, int direction) {
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     bool isFailed = false;
     using sycl::usm::alloc;
     if (isCPU == 1) {
@@ -327,7 +327,7 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   int syclMemsetFromC(void *mem, int32_t val, size_t size) {
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     if (isCPU == 1) {
       if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::host) {
         std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen CPU queue." << std::endl;
@@ -345,7 +345,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasDgemm_elpa_wrapper(intptr_t *handle, char cta, char ctb, int m, int n, int k, double alpha, void *a, int lda, void *b, int ldb, double beta, void *c, int ldc) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -361,7 +361,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasSgemm_elpa_wrapper(intptr_t *handle, char cta, char ctb, int m, int n, int k, float alpha, void *a, int lda, void *b, int ldb, float beta, void *c, int ldc) {
     // handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -377,7 +377,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasZgemm_elpa_wrapper(intptr_t *handle, char cta, char ctb, int m, int n, int k, std::complex<double> alpha, void *a, int lda, void *b, int ldb, std::complex<double> beta, void *c, int ldc) {
     // handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -393,7 +393,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasCgemm_elpa_wrapper(intptr_t *handle, char cta, char ctb, int m, int n, int k, std::complex<float> alpha, void *a, int lda, void *b, int ldb, std::complex<float> beta, void *c, int ldc) {
     // handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -411,7 +411,7 @@ static oneapi::mkl::side sideFromChar(char c) {
   //
   void syclblasDtrtri_elpa_wrapper(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     //using oneapi::mkl::blas::column_major::gemm;
     auto up = uploFromChar(uplo);
     auto di = diagFromChar(diag);
@@ -422,7 +422,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasStrtri_elpa_wrapper(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     //using oneapi::mkl::blas::column_major::gemm;
     auto up = uploFromChar(uplo);
     auto di = diagFromChar(diag);
@@ -433,7 +433,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasZtrtri_elpa_wrapper(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     //using oneapi::mkl::blas::column_major::gemm;
     auto up = uploFromChar(uplo);
     auto di = diagFromChar(diag);
@@ -444,7 +444,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasCtrtri_elpa_wrapper(intptr_t *handle, char uplo, char diag, int n, void *a, int lda, int info) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     //using oneapi::mkl::blas::column_major::gemm;
     auto up = uploFromChar(uplo);
     auto di = diagFromChar(diag);
@@ -456,7 +456,7 @@ static oneapi::mkl::side sideFromChar(char c) {
   // different API!!
   void syclblasDpotrf_elpa_wrapper(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     using oneapi::mkl::lapack::potrf;
     auto up = uploFromChar(uplo);
     //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
@@ -465,7 +465,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasSpotrf_elpa_wrapper(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     using oneapi::mkl::lapack::potrf;
     auto up = uploFromChar(uplo);
     //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
@@ -474,7 +474,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasZpotrf_elpa_wrapper(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     using oneapi::mkl::lapack::potrf;
     auto up = uploFromChar(uplo);
     //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
@@ -483,7 +483,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasCpotrf_elpa_wrapper(intptr_t *handle, char uplo, int n, void *a, int lda, int info) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     using oneapi::mkl::lapack::potrf;
     auto up = uploFromChar(uplo);
     //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
@@ -492,7 +492,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasDcopy_elpa_wrapper(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t n_, incx_, incy_;
     n_ = (std::int64_t) n;
     incx_ = (std::int64_t) incx;
@@ -503,7 +503,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasScopy_elpa_wrapper(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t n_, incx_, incy_;
     n_ = (std::int64_t) n;
     incx_ = (std::int64_t) incx;
@@ -514,7 +514,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasZcopy_elpa_wrapper(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t n_, incx_, incy_;
     n_ = (std::int64_t) n;
     incx_ = (std::int64_t) incx;
@@ -525,7 +525,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasCcopy_elpa_wrapper(intptr_t *handle, int n, void *x, int incx, void *y, int incy) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t n_, incx_, incy_;
     n_ = (std::int64_t) n;
     incx_ = (std::int64_t) incx;
@@ -536,7 +536,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasDtrmm_elpa_wrapper(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, ldb_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -552,7 +552,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasStrmm_elpa_wrapper(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, ldb_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -568,7 +568,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasZtrmm_elpa_wrapper(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<double> alpha, void *a, int lda, void *b, int ldb) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, ldb_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -584,7 +584,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasCtrmm_elpa_wrapper(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<float> alpha, void *a, int lda, void *b, int ldb) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, ldb_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -600,7 +600,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasDtrsm_elpa_wrapper(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, ldb_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -616,7 +616,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasStrsm_elpa_wrapper(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, ldb_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -632,7 +632,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasZtrsm_elpa_wrapper(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<double> alpha, void *a, int lda, void *b, int ldb) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, ldb_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -648,7 +648,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasCtrsm_elpa_wrapper(intptr_t *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<float> alpha, void *a, int lda, void *b, int ldb) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, ldb_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -666,7 +666,7 @@ static oneapi::mkl::side sideFromChar(char c) {
   //
   void syclblasDgemv_elpa_wrapper(intptr_t *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, incx_, incy_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -680,7 +680,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasSgemv_elpa_wrapper(intptr_t *handle, char cta, int m, int n, float alpha, void *a, int lda, void *x, int incx, float beta, void *y, int incy) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, incx_, incy_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -694,7 +694,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasZgemv_elpa_wrapper(intptr_t *handle, char cta, int m, int n, std::complex<double> alpha, void *a, int lda, void *x, int incx, std::complex<double> beta, void *y, int incy) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, incx_, incy_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;
@@ -708,7 +708,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   void syclblasCgemv_elpa_wrapper(intptr_t *handle, char cta, int m, int n, std::complex<float> alpha, void *a, int lda, void *x, int incx, std::complex<float> beta, void *y, int incy) {
     //handle not needed
-    auto &queue = elpa::gpu::sycl::getQueue();
+    auto queue = elpa::gpu::sycl::getQueue();
     std::int64_t m_, n_, lda_, incx_, incy_;
     m_ = (std::int64_t) m;
     n_ = (std::int64_t) n;

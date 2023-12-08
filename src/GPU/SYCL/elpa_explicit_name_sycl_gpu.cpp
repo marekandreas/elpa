@@ -55,7 +55,7 @@ extern "C" {
 
   int is_device_ptr(void *a_void_ptr) {
 
-    sycl::queue q{sycl::default_selector()};
+    sycl::queue q{sycl::default_selector_v};
     sycl::usm::alloc a_void_ptr_alloc = sycl::get_pointer_type(a_void_ptr, q.get_context());
 
     if (a_void_ptr_alloc==sycl::usm::alloc::host)

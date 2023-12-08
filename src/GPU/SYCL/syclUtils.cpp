@@ -62,7 +62,7 @@
 template<typename T> void launch_my_pack_c_sycl_kernel(const int row_count, const int n_offset, const int max_idx,
                                                         const int stripe_width, const int a_dim2, const int stripe_count,
                                                         const int l_nev, T *a, T *row_group) {
-  sycl::queue &queue = elpa::gpu::sycl::getQueue();
+  sycl::queue queue = elpa::gpu::sycl::getQueue();
   int const maxWgSize = queue.get_device().get_info<sycl::info::device::max_work_group_size>();
   int wgSize = stripe_width > maxWgSize ? maxWgSize : stripe_width;
   sycl::range<2> rLocal = sycl::range<2>(1, wgSize);
@@ -103,7 +103,7 @@ extern "C" void launch_my_pack_c_sycl_kernel_complex_double(const int row_count,
 }
 
 template<typename T> void launch_extract_hh_tau_c_sycl_kernel(T *bcast_buffer, T *hh_tau, int const nbw, int const n, int const is_zero) {
-  sycl::queue &queue = elpa::gpu::sycl::getQueue();
+  sycl::queue queue = elpa::gpu::sycl::getQueue();
   int const maxWgSize = queue.get_device().get_info<sycl::info::device::max_work_group_size>();
   int numWorkItems = (1 + (n-1)/maxWgSize) * maxWgSize;
   sycl::range<1> rGlobal(numWorkItems);
@@ -146,7 +146,7 @@ extern "C" void launch_extract_hh_tau_c_sycl_kernel_complex_double(std::complex<
 template<typename T> void launch_my_unpack_c_sycl_kernel(int const row_count, int const n_offset, int const max_idx,
                                                           int const stripe_width, int const a_dim2, int const stripe_count,
                                                           int const l_nev, T *row_group, T* a) {
-  sycl::queue &queue = elpa::gpu::sycl::getQueue();
+  sycl::queue queue = elpa::gpu::sycl::getQueue();
   int const maxWgSize = queue.get_device().get_info<sycl::info::device::max_work_group_size>();
   int wgSize = stripe_width > maxWgSize ? maxWgSize : stripe_width;
   sycl::range<2> rLocal = sycl::range<2>(1, wgSize);

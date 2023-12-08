@@ -75,7 +75,7 @@ void sycl_copy_a_tmat2_kernel(T *a_dev, T *tmat2_dev, const int nblk, const int 
 template <typename T>
 void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
 
-  int nblk = *nblk_in;   
+  int nblk = *nblk_in;
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
@@ -86,7 +86,7 @@ void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRo
   sycl::range<1> local_range  = sycl::range<1>(nb);
 
   auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+  auto queue = elpa::gpu::sycl::getQueue();
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
@@ -129,7 +129,7 @@ void sycl_copy_tmp2_tmat2_kernel(T *tmp2_dev, T *tmat2_dev, const int nblk, cons
 template <typename T>
 void sycl_copy_tmp2_tmat2_FromC(T *tmp2_dev, T *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
 
-  int nblk   = *nblk_in;   
+  int nblk   = *nblk_in;
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
 
@@ -137,7 +137,7 @@ void sycl_copy_tmp2_tmat2_FromC(T *tmp2_dev, T *tmat2_dev, int *nblk_in, int *l_
   sycl::range<1> local_range  = sycl::range<1>(nb);
 
   auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+  auto queue = elpa::gpu::sycl::getQueue();
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
@@ -180,7 +180,7 @@ void sycl_copy_a_tmat1_kernel(T *a_dev, T *tmat1_dev, const int l_rows, const in
 template <typename T>
 void sycl_copy_a_tmat1_FromC(T *a_dev, T *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, intptr_t my_stream){
 
-  int l_rows = *l_rows_in;   
+  int l_rows = *l_rows_in;
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
   int l_row1 = *l_row1_in;
@@ -188,9 +188,9 @@ void sycl_copy_a_tmat1_FromC(T *a_dev, T *tmat1_dev, int *l_rows_in, int *matrix
 
   sycl::range<1> global_range = sycl::range<1>(nb*(l_row1 - 1));
   sycl::range<1> local_range  = sycl::range<1>(nb);
-  
+
   auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+  auto queue = elpa::gpu::sycl::getQueue();
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
@@ -240,9 +240,9 @@ void sycl_copy_tmp1_tmp2_FromC(T *tmp1_dev, T *tmp2_dev, int *nblk_in, int *nb_i
 
   sycl::range<1> global_range = sycl::range<1>(nb*nb);
   sycl::range<1> local_range  = sycl::range<1>(nb);
-  
+
   auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+  auto queue = elpa::gpu::sycl::getQueue();
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
@@ -291,9 +291,9 @@ void sycl_copy_a_tmp1_FromC(T *a_dev, T *tmp1_dev, int *l_row1_in, int *l_col1_i
 
   sycl::range<1> global_range = sycl::range<1>(nb*nb);
   sycl::range<1> local_range  = sycl::range<1>(nb);
-  
+
   auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+  auto queue = elpa::gpu::sycl::getQueue();
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),

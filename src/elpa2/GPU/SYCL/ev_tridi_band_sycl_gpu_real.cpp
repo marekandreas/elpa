@@ -178,7 +178,7 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
 #endif
   using sf = sycl::access::fence_space;
   auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+  auto queue = elpa::gpu::sycl::getQueue();
 
   int constexpr q_reserve_size = wg_size;
 

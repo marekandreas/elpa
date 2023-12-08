@@ -64,7 +64,7 @@ namespace sycl {
   size_t getNumDevices();
   size_t getNumCpuDevices();
   cl::sycl::device getDevice();
-  cl::sycl::queue & getQueue();
+  cl::sycl::queue getQueue();
 
 }
 }
