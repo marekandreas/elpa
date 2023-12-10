@@ -3,6 +3,12 @@
 For more details and recent updates please visit the online [issue system](https://gitlab.mpcdf.mpg.de/elpa/elpa/issues)
 Issues which are not mentioned in a newer release are (considered as) solved.
 
+### ELPA 2023.11.001 release ###
+Fixed compilation for skew-symmetric case
+
+### ELPA 2023.05.001 release ###
+Currently no known issues
+
 ### ELPA 2022.05.001 release ###
 Currently no known issues
 

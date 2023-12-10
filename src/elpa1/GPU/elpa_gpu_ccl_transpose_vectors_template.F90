@@ -177,9 +177,13 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
     
     if (myps==mypt) then
       ! vmat_t(1:ld_st,1:nvc) = vmat_s(1:ld_st,1:nvc)
+#ifdef WITH_NVTX
       call nvtxRangePush("memcpy new D-D vmat_s_dev->vmat_t_dev")
+#endif
       successGPU = gpu_memcpy(vmat_t_dev, vmat_s_dev, (ld_st*nvc)* size_of_datatype, gpuMemcpyDeviceToDevice)
+#ifdef WITH_NVTX
       call nvtxRangePop()
+#endif
     else
       call obj%get("matrix_order", matrix_order, error)
 
