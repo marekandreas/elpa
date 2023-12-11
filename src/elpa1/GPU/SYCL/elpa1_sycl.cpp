@@ -780,7 +780,7 @@ void sycl_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev
     }
 
 
-  if (std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value)
+  if ((std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value) && l_cols>0)
     {
     int j = tid;
     while (j < 2*(n_stored_vecs+0)) // whole vector aux_complex_dev has to be copied and not two last elements only because l_cols has changed since last istep

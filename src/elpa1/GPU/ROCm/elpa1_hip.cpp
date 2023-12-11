@@ -651,7 +651,7 @@ __global__ void hip_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_store
     i_col += blockDim.x * gridDim.x;
     }
 
-  if (std::is_same<T, hipDoubleComplex>::value || std::is_same<T, hipComplex>::value)
+  if ((std::is_same<T, hipDoubleComplex>::value || std::is_same<T, hipComplex>::value) && l_cols>0)
     {
     int j = tid;
     while (j < 2*(n_stored_vecs+0)) // whole vector aux_complex_dev has to be copied and not two last elements only because l_cols has changed since last istep
