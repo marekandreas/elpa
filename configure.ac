@@ -1752,7 +1752,7 @@ if test x"${enableval}" = x"yes" ; then
   enableval="no"
 fi
 
-AC_MSG_CHECKING(whether obsolete --enable-nvidia-gpu has been provided)
+AC_MSG_CHECKING(whether obsolete --enable-nvidia-sm80-gpu has been provided)
 AC_ARG_ENABLE([nvidia-sm80-gpu],
                 AS_HELP_STRING([--enable-nvidia-sm80-gpu],
 			       [OBSOLETE FLAG: do use nvidia-sm80-gpu kernels for ELPA 2stage (please use --enable-nvidia-sm80-gpu-kernels]),
@@ -2877,20 +2877,24 @@ AC_ARG_ENABLE([gpu-streams],
                use_hip_streams=no
 	       use_gpu_streams=no
 	       if test x"$enable_openmp" = x"no"; then
-	         if test x"$need_nvidia_gpu" = x"yes"; then
-                                    use_cuda_streams=yes
-                                    use_gpu_streams=yes
-                 fi
-                 if test x"$need_amd_gpu" = x"yes"; then
-                   use_hip_streams=yes
-                   use_gpu_streams=yes
-                 fi
-		fi
+		 if test x"$enable_cuda_aware_mpi" = x"no"; then
+	           if test x"$need_nvidia_gpu" = x"yes"; then
+                     use_cuda_streams=yes
+                     use_gpu_streams=yes
+                   fi
+                   if test x"$need_amd_gpu" = x"yes"; then
+                     use_hip_streams=yes
+                     use_gpu_streams=yes
+                   fi
+		 fi
+	       fi
 	       ])
 AC_MSG_RESULT([${use_gpu_streams}])
 if test x"$enable_openmp" = x"no"; then
-  if test x"$relied_on_default" = x"yes"; then
-    AC_MSG_NOTICE([Streaming has ben enabled since you relied on the default action])
+  if test x"$enable_cuda_aware_mpi" = x"no"; then
+    if test x"$relied_on_default" = x"yes"; then
+      AC_MSG_NOTICE([Streaming has ben enabled since you relied on the default action])
+    fi
   fi
 fi
 
@@ -2910,12 +2914,12 @@ if test x"$use_cuda_streams" = x"yes"; then
     echo " has not been tested is officially not yet supported! Use at your own risk!"
     echo "---------------------------------------------------------------------------"
   fi
-  if test x"${with_cusolver}" = x"yes"; then
-    echo "---------------------------------------------------------------------------"
-    echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
-    echo " has not been tested is officially not yet supported! Use at your own risk!"
-    echo "---------------------------------------------------------------------------"
-  fi
+  #if test x"${with_cusolver}" = x"yes"; then
+  #  echo "---------------------------------------------------------------------------"
+  #  echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
+  #  echo " has not been tested is officially not yet supported! Use at your own risk!"
+  #  echo "---------------------------------------------------------------------------"
+  #fi
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 
 fi

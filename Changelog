@@ -4,6 +4,7 @@ Changelog for next release
 - not yet decided
 
 Changelog for ELPA 2023.05.001
+- enable gpu-streams per default for NVIDIA and AMD GPUs
 - Updated / improved documentation and man pages
 - Fixed compilation error on AMD GPUs
 - Fixed SVE 256 compute kernels
