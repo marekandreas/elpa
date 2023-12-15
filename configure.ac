@@ -2876,18 +2876,22 @@ AC_ARG_ENABLE([gpu-streams],
                use_cuda_streams=no
                use_hip_streams=no
 	       use_gpu_streams=no
-	       if test x"$need_nvidia_gpu" = x"yes"; then
-                                  use_cuda_streams=yes
-                                  use_gpu_streams=yes
-               fi
-               if test x"$need_amd_gpu" = x"yes"; then
-                 use_hip_streams=yes
-                 use_gpu_streams=yes
-               fi
+	       if test x"$enable_openmp" = x"no"; then
+	         if test x"$need_nvidia_gpu" = x"yes"; then
+                                    use_cuda_streams=yes
+                                    use_gpu_streams=yes
+                 fi
+                 if test x"$need_amd_gpu" = x"yes"; then
+                   use_hip_streams=yes
+                   use_gpu_streams=yes
+                 fi
+		fi
 	       ])
 AC_MSG_RESULT([${use_gpu_streams}])
-if test x"$relied_on_default" = x"yes"; then
-  AC_MSG_NOTICE([Streaming has ben enabled since you relied on the default action])
+if test x"$enable_openmp" = x"no"; then
+  if test x"$relied_on_default" = x"yes"; then
+    AC_MSG_NOTICE([Streaming has ben enabled since you relied on the default action])
+  fi
 fi
 
 if test x"$use_cuda_streams" = x"yes"; then
