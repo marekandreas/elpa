@@ -59,7 +59,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   &PRECISION &
   (obj, vmat_s_dev, ld_s, ccl_comm_s, comm_s, vmat_t_dev, ld_t, ccl_comm_t, comm_t, &
     nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, myps, mypt, nps, npt, &
-    aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
+    aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
   
   !-------------------------------------------------------------------------------
   ! This is the gpu version of the routine elpa_transpose_vectors
@@ -130,7 +130,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
                                                        &MATH_DATATYPE
   integer(kind=c_int)                               :: ncclDataType
   integer(kind=ik)                                  :: k_datatype
-  logical, intent(in)                               :: isSkewsymmetric, wantDebug
+  logical, intent(in)                               :: isSkewsymmetric, isSquareGridGPU, wantDebug
   integer(kind=c_intptr_t)                          :: my_stream
 
   if (wantDebug) call obj%timer%start("elpa_gpu_ccl_transpose_vectors")
@@ -166,19 +166,24 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
   ! TODO_23_11
   ! this codepath doesn't work for ELPA2 (because ld_s != ld_t)
-  call obj%get("solver", solver, error)
+  ! call obj%get("solver", solver, error)
   ! special square grid codepath for ELPA1
-  if (solver==ELPA_SOLVER_1STAGE .and. (.not. isSkewsymmetric) .and. & 
-      nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
+  ! if (solver==ELPA_SOLVER_1STAGE .and. (.not. isSkewsymmetric) .and. & 
+  !     nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
+  if (isSquareGridGPU) then
     call obj%get("mpi_comm_parent", mpi_comm_all, error)
     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
     ld_st = min(ld_s,ld_t)
     
     if (myps==mypt) then
       ! vmat_t(1:ld_st,1:nvc) = vmat_s(1:ld_st,1:nvc)
+#ifdef WITH_NVTX
       call nvtxRangePush("memcpy new D-D vmat_s_dev->vmat_t_dev")
+#endif
       successGPU = gpu_memcpy(vmat_t_dev, vmat_s_dev, (ld_st*nvc)* size_of_datatype, gpuMemcpyDeviceToDevice)
+#ifdef WITH_NVTX
       call nvtxRangePop()
+#endif
     else
       call obj%get("matrix_order", matrix_order, error)
 

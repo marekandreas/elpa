@@ -145,7 +145,7 @@ subroutine tridiag_&
   integer(kind=ik)                              :: l_cols, l_rows
   integer(kind=ik)                              :: n_stored_vecs
   integer(kind=ik)                              :: isOurProcessRowInt ! TODO_23_11 - get rid of it
-  logical                                       :: isOurProcessRow
+  logical                                       :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
 
 
   integer(kind=C_intptr_T)                      :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
@@ -167,7 +167,7 @@ subroutine tridiag_&
   MATH_DATATYPE(kind=rck), allocatable          :: aux(:)
 
   integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux_complex_dev, vav_dev, vav_host_or_dev, dot_prod_dev, & 
-                                                   xf_dev, xf_host_or_dev, tau_istep_host_or_dev
+                                                   xf_dev, a_updated_element_dev, xf_host_or_dev, tau_istep_host_or_dev
   integer(kind=c_intptr_t)                      :: vnorm2_dev, vrl_dev ! alias pointers for aux1_dev(1), aux1_dev(2)
 
 #if COMPLEXCASE == 1
@@ -224,7 +224,7 @@ subroutine tridiag_&
 #ifdef WITH_NVIDIA_NCCL
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
   integer(kind=ik)                              :: nvs, nvr, nvc, lcm_s_t, nblks_tot, nblks_comm, nblks_skip
-  logical                                       :: isSquareGridGPU
+  logical                                       :: isSquareGridGPU = .false.
   integer(kind=c_intptr_t)                      :: aux_transpose_dev
   integer(kind=c_int)                           :: ncclDataType
   integer(kind=ik)                              :: k_datatype
@@ -582,9 +582,10 @@ subroutine tridiag_&
 #ifdef WITH_NVIDIA_NCCL
     ! for gpu_transpose_vectors on non-square grids
     if (np_rows==np_cols .and. (.not. isSkewsymmetric)) then
-      isSquareGridGPU = .true.
-    else
-      isSquareGridGPU = .false.
+      ! isSquareGridGPU = .true. ! TODO_23_11 - switched off for now, add test for arbitrary grid mapping and switch back on
+    endif
+
+    if (.not. isSquareGridGPU) then
       lcm_s_t   = least_common_multiple(np_rows,np_cols)
       nvs = 1 ! global index where to start in vmat_s/vmat_t
       nvr  = na-1 ! global length of v_col_dev/v_row_dev(without last tau-element), max(istep-1)
@@ -676,27 +677,50 @@ subroutine tridiag_&
     ! Calculate Vector for Householder transformation on all procs
     ! owning column istep
 
+    if (useGPU) then 
+#ifdef WITH_NVTX
+      call nvtxRangePush("kernel: gpu_copy_and_set_zeros a_dev(:,l_cols+1)->v_row_dev, aux1_dev=0,vav_dev=0")
+#endif
+      ! copy l_cols + 1 column of a_dev to v_row_dev
+      isOurProcessRow      = (my_prow == prow(istep-1, nblk, np_rows))
+      isOurProcessCol      = (my_pcol == pcol(istep-1, nblk, np_cols))
+      isOurProcessCol_prev = (my_pcol == pcol(istep  , nblk, np_cols)) ! isOurProcessCol from the previous step
+      call gpu_copy_and_set_zeros_PRECISION(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                            aux1_dev, vav_dev, d_vec_dev, &
+                                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
+                                            isSkewsymmetric, useCCL, wantDebug, my_stream)
+      if (gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+#ifdef WITH_NVTX
+        call nvtxRangePop()
+#endif
+    endif ! useGPU
+
     if (my_pcol == pcol(istep, nblk, np_cols)) then
 
       ! Get Vector to be transformed; distribute last element and norm of
       ! remaining elements to all procs in current column
 
+!             ! copy l_cols + 1 column of A to v_row
+      ! if (useGPU) then
+
+! #ifdef WITH_NVTX
+!         call nvtxRangePush("memcpy new D-D a_dev(:,l_cols+1)->v_row_dev")
+! #endif
+!         ! TODO_23_11:  create a dev-dev copy kernel or merge it to another kernel
+!         offset_dev = l_cols * matrixRows * size_of_datatype
+!         successGPU = gpu_memcpy(v_row_dev, a_dev + offset_dev, (l_rows)* size_of_datatype, gpuMemcpyDeviceToDevice)
+!         check_memcpy_gpu("tridiag a_dev 1", successGPU)
+
+! #ifdef WITH_NVTX
+!         call nvtxRangePop()
+! #endif
+
+!       else ! useGPU
+!         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
+!       endif ! useGPU
+
       ! copy l_cols + 1 column of A to v_row
-      if (useGPU) then
-
-#ifdef WITH_NVTX
-        call nvtxRangePush("memcpy new D-D a_dev(:,l_cols+1)->v_row_dev")
-#endif
-        ! TODO_23_11:  create a dev-dev copy kernel or merge it to another kernel
-        offset_dev = l_cols * matrixRows * size_of_datatype
-        successGPU = gpu_memcpy(v_row_dev, a_dev + offset_dev, (l_rows)* size_of_datatype, gpuMemcpyDeviceToDevice)
-        check_memcpy_gpu("tridiag a_dev 1", successGPU)
-
-#ifdef WITH_NVTX
-        call nvtxRangePop()
-#endif
-
-      else ! useGPU
+      if (.not. useGPU) then
         v_row(1:l_rows) = a_mat(1:l_rows,l_cols+1)
       endif ! useGPU
 
@@ -1009,7 +1033,7 @@ subroutine tridiag_&
           &PRECISION &
                 (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
                 ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., my_prow, my_pcol, np_rows, np_cols, &
-                aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
+                aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
 #endif /* WITH_NVIDIA_NCCL */
 #ifdef WITH_NVTX
       call nvtxRangePop()
@@ -1512,7 +1536,7 @@ subroutine tridiag_&
           &PRECISION &
                 (obj, u_col_dev, max_local_cols, ccl_comm_cols, mpi_comm_cols, u_row_dev, max_local_rows+1, &
                 ccl_comm_rows, mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., my_pcol, my_prow, np_cols, np_rows, &
-                aux_transpose_dev, isSkewsymmetric, wantDebug, my_stream, success)
+                aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
@@ -1594,7 +1618,7 @@ subroutine tridiag_&
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
-    endif ! useGPU
+    endif ! useGPU .and. useCCL
 #endif /* WITH_NVIDIA_NCCL */
 
 
@@ -1723,7 +1747,8 @@ subroutine tridiag_&
         tau_istep_host_or_dev = int(loc(tau(istep)), kind=c_intptr_t)
       endif ! useCCL
       call gpu_store_u_v_in_uv_vu_PRECISION(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_istep_host_or_dev, &
+                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
+                                          vav_host_or_dev, tau_istep_host_or_dev, &
                                           l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, istep, &
                                           useCCL, wantDebug, my_stream)
 #ifdef WITH_NVTX
@@ -1736,39 +1761,7 @@ subroutine tridiag_&
     n_stored_vecs = n_stored_vecs+1
 
     ! If the limit of max_stored_uv is reached, calculate A + VU**T + UV**T
-    if (n_stored_vecs == max_stored_uv .or. istep == 3) then
-
-#ifdef GPU_OLD /* this part can be optimized out and omitted, since now we are copying u and v vectors separately to vu and uv on GPU anyway */
-      if (useGPU) then
-#ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        num = max_local_rows * 2 * max_stored_uv * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-              ("tridiag vu_stored_rows -> vu_stored_rows_dev", vu_stored_rows_dev, 0_c_intptr_t, &
-                                                  vu_stored_rows(1:max_local_rows,1:2*max_stored_uv), &
-                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else
-        successGPU = gpu_memcpy(vu_stored_rows_dev, int(loc(vu_stored_rows(1,1)),kind=c_intptr_t), &
-                                max_local_rows * 2 * max_stored_uv * size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridiag: vu_stored_rows_dev", successGPU)
-#endif
-
-
-#ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        num = max_local_cols * 2 * max_stored_uv * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-              ("tridiag uv_stored_cols -> uv_stored_cols_dev", uv_stored_cols_dev, 0_c_intptr_t, &
-                                                  uv_stored_cols(1:max_local_cols,1:2*max_stored_uv), &
-                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else
-        successGPU = gpu_memcpy(uv_stored_cols_dev, int(loc(uv_stored_cols(1,1)),kind=c_intptr_t), &
-                                  max_local_cols * 2 * max_stored_uv * size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("tridiag: uv_stored_cols_dev", successGPU)
-#endif
-
-      endif ! useGPU
-#endif /* GPU_OLD */           
+    if (n_stored_vecs == max_stored_uv .or. istep == 3) then        
       
       if (.not. useGPU .OR. .not. mat_vec_as_one_block) then
         do i = 0, (istep-2)/tile_size
@@ -1839,6 +1832,15 @@ subroutine tridiag_&
 
         if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
         if (wantDebug) call obj%timer%stop("gpublas_gemm")
+        
+        ! copy real(a_dev(l_rows,l_cols)) -> d_vec_dev(istep-1) for correct initial value of d_vec_dev before atomicAdd
+        if ((.not. isSkewsymmetric) .and. &
+            (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols))) then
+          offset_dev = ((l_rows-1) + (l_cols-1)*matrixRows) * size_of_datatype
+          successGPU = gpu_memcpy(d_vec_dev + (istep-2)*size_of_datatype_real, &
+                                  a_dev + offset_dev, 1*size_of_datatype_real, gpuMemcpyDeviceToDevice)
+          check_memcpy_gpu("tridiag a_dev->d_vec_dev", successGPU)
+        endif
 
       endif !.not. useGPU or .not. mat_vec_as_one_block
 

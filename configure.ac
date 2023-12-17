@@ -1752,7 +1752,7 @@ if test x"${enableval}" = x"yes" ; then
   enableval="no"
 fi
 
-AC_MSG_CHECKING(whether obsolete --enable-nvidia-gpu has been provided)
+AC_MSG_CHECKING(whether obsolete --enable-nvidia-sm80-gpu has been provided)
 AC_ARG_ENABLE([nvidia-sm80-gpu],
                 AS_HELP_STRING([--enable-nvidia-sm80-gpu],
 			       [OBSOLETE FLAG: do use nvidia-sm80-gpu kernels for ELPA 2stage (please use --enable-nvidia-sm80-gpu-kernels]),
@@ -2850,10 +2850,11 @@ fi
 use_cuda_streams=no
 use_hip_streams=no
 use_gpu_streams=no
+relied_on_default=no
 AC_MSG_CHECKING(whether GPU streams should be used)
 AC_ARG_ENABLE([gpu-streams],
                [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
-			       [do use Nvidia or AMD GPU version with Cuda or HIP streams, respectively])],
+			       [do use Nvidia or AMD GPU version with Cuda or HIP streams, respectively: default yes])],
                                [if test x"$enableval" = x"nvidia"; then
 				  use_cuda_streams=yes
 				  use_gpu_streams=yes
@@ -2871,8 +2872,31 @@ AC_ARG_ENABLE([gpu-streams],
 				  use_gpu_streams=no
                                 fi
 				],
-              [use_gpu_streams=no])
+              [relied_on_default=yes
+               use_cuda_streams=no
+               use_hip_streams=no
+	       use_gpu_streams=no
+	       if test x"$enable_openmp" = x"no"; then
+		 if test x"$enable_cuda_aware_mpi" = x"no"; then
+	           if test x"$need_nvidia_gpu" = x"yes"; then
+                     use_cuda_streams=yes
+                     use_gpu_streams=yes
+                   fi
+                   if test x"$need_amd_gpu" = x"yes"; then
+                     use_hip_streams=yes
+                     use_gpu_streams=yes
+                   fi
+		 fi
+	       fi
+	       ])
 AC_MSG_RESULT([${use_gpu_streams}])
+if test x"$enable_openmp" = x"no"; then
+  if test x"$enable_cuda_aware_mpi" = x"no"; then
+    if test x"$relied_on_default" = x"yes"; then
+      AC_MSG_NOTICE([Streaming has ben enabled since you relied on the default action])
+    fi
+  fi
+fi
 
 if test x"$use_cuda_streams" = x"yes"; then
   if test x"$need_nvidia_gpu" = x"no"; then
@@ -2890,14 +2914,34 @@ if test x"$use_cuda_streams" = x"yes"; then
     echo " has not been tested is officially not yet supported! Use at your own risk!"
     echo "---------------------------------------------------------------------------"
   fi
-  if test x"${with_cusolver}" = x"yes"; then
-    echo "---------------------------------------------------------------------------"
-    echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
-    echo " has not been tested is officially not yet supported! Use at your own risk!"
-    echo "---------------------------------------------------------------------------"
-  fi
+  #if test x"${with_cusolver}" = x"yes"; then
+  #  echo "---------------------------------------------------------------------------"
+  #  echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
+  #  echo " has not been tested is officially not yet supported! Use at your own risk!"
+  #  echo "---------------------------------------------------------------------------"
+  #fi
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 
+fi
+
+if test x"$need_nvidia_gpu" = x"yes"; then
+  if test x"$use_cuda_streams" = x"no"; then
+    echo ""
+    echo ""
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo "   PERFORMANCE DEGRADATION DETECTED:"
+    echo ""
+    echo " You want to build ELPA for NVIDIA GPUs but did not configure to use streams "
+    echo " this will work but performance will be far from optimal!"
+    echo " This setting is NOT recommended"
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo ""
+    echo ""
+    echo ""
+    AC_MSG_NOTICE([If --enable-nvidia-gpu is set, we recommend --enable-gpu-streams-nvidia])
+  fi
 fi
 
 if test x"$use_hip_streams" = x"yes"; then
@@ -2913,6 +2957,25 @@ if test x"$use_hip_streams" = x"yes"; then
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 fi
 
+if test x"$need_amd_gpu" = x"yes"; then
+  if test x"$use_hip_streams" = x"no"; then
+    echo ""
+    echo ""
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo "   PERFORMANCE DEGRADATION DETECTED:"
+    echo ""
+    echo " You want to build ELPA for AMD GPUs but did not configure to use streams "
+    echo " this will work but performance will be far from optimal!"
+    echo " This setting is NOT recommended"
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo ""
+    echo ""
+    echo ""
+    AC_MSG_NOTICE([If --enable-amd-gpu is set, we recommend --enable-gpu-streams-amd])
+  fi
+fi
 
 m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AM_CONDITIONAL([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[test x"$use_[]elpa_m4_kernel[]" = x"yes"])
@@ -3709,14 +3772,14 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-echo " "
-echo "***********************************************************************"
-echo "*  This is the first release candidate of ELPA 2023.11.001.rc1        *"
-echo "*  There might be still some changes until the final release of       *"
-echo "*  ELPA 2023.11.001                                                   *"
-echo "***********************************************************************"
-echo " "
-
+#echo " "
+#echo "***********************************************************************"
+#echo "*  This is the first release candidate of ELPA 2023.11.001.rc1        *"
+#echo "*  There might be still some changes until the final release of       *"
+#echo "*  ELPA 2023.11.001                                                   *"
+#echo "***********************************************************************"
+#echo " "
+#
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
   echo "Important message:"

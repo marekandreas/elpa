@@ -48,6 +48,45 @@
 
       if (OBJECT%gpu_setup%gpuIsAssigned) then
         gpuAvailable = .true.
+
+        ! print warning if NVIDIA or AMD without streams
+#ifdef WITH_NVIDIA_GPU_VERSION
+#ifndef WITH_GPU_STREAMS
+#ifdef ADDITIONAL_OBJECT_CODE
+        write(error_unit,*) "You use the NVIDIA-GPUs without enabling nvidia-gpu streams at build time!"
+        write(error_unit,*) "This does mean reduced performace!"
+        write(*,*) "You use the NVIDIA-GPUs without enabling nvidia-gpu streams at build time!"
+        write(*,*) "This does mean reduced performace!"
+#else /* ADDITIONAL_OBJECT_CODE */
+        ! myid is given as argument
+        if (myid .eq. 0) then
+          write(error_unit,*) "You use the NVIDIA-GPUs without enabling nvidia-gpu streams at build time!"
+          write(error_unit,*) "This does mean reduced performace!"
+          write(*,*) "You use the NVIDIA-GPUs without enabling nvidia-gpu streams at build time!"
+          write(*,*) "This does mean reduced performace!"
+        endif
+#endif /* ADDITIONAL_OBJECT_CODE */
+#endif /* WITH_GPU_STREAMS */
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
+#ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_GPU_STREAMS
+#ifdef ADDITIONAL_OBJECT_CODE
+        write(error_unit,*) "You use the AMD-GPUs without enabling amd-gpu streams at build time!"
+        write(error_unit,*) "This does mean reduced performace!"
+        write(*,*) "You use the AMD-GPUs without enabling amd-gpu streams at build time!"
+        write(*,*) "This does mean reduced performace!"
+#else /* ADDITIONAL_OBJECT_CODE */
+        ! myid is given as argument
+        if (myid .eq. 0) then
+          write(error_unit,*) "You use the AMD-GPUs without enabling amd-gpu streams at build time!"
+          write(error_unit,*) "This does mean reduced performace!"
+          write(*,*) "You use the AMD-GPUs without enabling amd-gpu streams at build time!"
+          write(*,*) "This does mean reduced performace!"
+        endif
+#endif /* ADDITIONAL_OBJECT_CODE */
+#endif /* WITH_GPU_STREAMS */
+#endif /* WITH_AMD_GPU_VERSION */
         return
       endif
 
@@ -383,3 +422,43 @@
         OBJECT%gpu_setup%gpuIsAssigned = .true.
       endif ! useGPUid
 
+      if (gpuAvailable) then
+        ! print warning if NVIDIA or AMD without streams
+#ifdef WITH_NVIDIA_GPU_VERSION
+#ifndef WITH_GPU_STREAMS
+#ifdef ADDITIONAL_OBJECT_CODE
+        write(error_unit,*) "You use the NVIDIA-GPUs without enabling nvidia-gpu streams at build time!"
+        write(error_unit,*) "This does mean reduced performace!"
+        write(*,*) "You use the NVIDIA-GPUs without enabling nvidia-gpu streams at build time!"
+        write(*,*) "This does mean reduced performace!"
+#else /* ADDITIONAL_OBJECT_CODE */
+        ! myid is given as argument
+        if (myid .eq. 0) then
+          write(error_unit,*) "You use the NVIDIA-GPUs without enabling nvidia-gpu streams at build time!"
+          write(error_unit,*) "This does mean reduced performace!"
+          write(*,*) "You use the NVIDIA-GPUs without enabling nvidia-gpu streams at build time!"
+          write(*,*) "This does mean reduced performace!"
+        endif
+#endif /* ADDITIONAL_OBJECT_CODE */
+#endif /* WITH_GPU_STREAMS */
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
+#ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_GPU_STREAMS
+#ifdef ADDITIONAL_OBJECT_CODE
+        write(error_unit,*) "You use the AMD-GPUs without enabling amd-gpu streams at build time!"
+        write(error_unit,*) "This does mean reduced performace!"
+        write(*,*) "You use the AMD-GPUs without enabling amd-gpu streams at build time!"
+        write(*,*) "This does mean reduced performace!"
+#else /* ADDITIONAL_OBJECT_CODE */
+        ! myid is given as argument
+        if (myid .eq. 0) then
+          write(error_unit,*) "You use the AMD-GPUs without enabling amd-gpu streams at build time!"
+          write(error_unit,*) "This does mean reduced performace!"
+          write(*,*) "You use the AMD-GPUs without enabling amd-gpu streams at build time!"
+          write(*,*) "This does mean reduced performace!"
+        endif
+#endif /* ADDITIONAL_OBJECT_CODE */
+#endif /* WITH_GPU_STREAMS */
+#endif /* WITH_AMD_GPU_VERSION */
+      endif

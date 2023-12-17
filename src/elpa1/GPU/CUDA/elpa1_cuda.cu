@@ -143,29 +143,117 @@ struct is_pointer<T*> { static const bool value = true; };
 
 // Device function to convert a pointer to a value
 template <typename T>
-__device__ T convert_to_device(T* x, std::true_type) {
-    return *x;
-}
+__device__ T convert_to_device(T* x, std::true_type) { return *x;}
 
 // Device function to convert a value to a value
 template <typename T>
-__device__ T convert_to_device(T x, std::false_type) {
-    return x;
+__device__ T convert_to_device(T x, std::false_type) { return x;}
+
+//________________________________________________________________
+ 
+template <typename T, typename T_real>
+__global__ void cuda_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int matrixRows, int istep,
+                                         T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
+                                         bool isOurProcessRow, bool isOurProcessCol, bool isOurProcessCol_prev, bool isSkewsymmetric, bool useCCL){
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
+
+  if (isOurProcessCol_prev)
+    {
+    // copy v_row to a_dev
+    int i_row = tid;
+    while (i_row < l_rows) 
+      {
+      v_row_dev[i_row] = a_dev[i_row + matrixRows*l_cols];
+      i_row += blockDim.x * gridDim.x;
+      }
+    }
+
+  // set zeros for aux1_dev and vav_dev to be summed with atomicAdd
+  if (tid==0)
+    {
+    aux1_dev[0] = elpaDeviceNumber<T>(0.0);
+    if (useCCL) *vav_dev = elpaDeviceNumber<T>(0.0);
+
+    if (isOurProcessRow && isOurProcessCol)
+      {
+      if (isSkewsymmetric) 
+        d_vec_dev[istep-1-1] = 0.0;
+      else 
+        d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]);
+      }
+    }
+}
+
+template <typename T, typename T_real>
+void cuda_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in, 
+                                   T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
+                                   bool *isOurProcessRow_in,  bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+  int l_rows = *l_rows_in;   
+  int l_cols = *l_cols_in;   
+  int matrixRows = *matrixRows_in;
+  int istep = *istep_in;
+  bool isOurProcessRow = *isOurProcessRow_in;
+  bool isOurProcessCol = *isOurProcessCol_in;
+  bool isOurProcessCol_prev = *isOurProcessCol_prev_in;
+  bool isSkewsymmetric = *isSkewsymmetric_in;
+  bool useCCL = *useCCL_in;
+  bool wantDebug = *wantDebug_in;
+
+  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // TODO_23_11: change to NB?
+
+#ifdef WITH_GPU_STREAMS
+  cuda_copy_and_set_zeros<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL);
+#else
+  cuda_copy_and_set_zeros<<<blocks,threadsPerBlock>>>            (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL);
+#endif
+
+  if (wantDebug){
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess) printf("Error in executing cuda_copy_and_set_zeros: %s\n",cudaGetErrorString(cuerr));
+  }
+}
+
+extern "C" void cuda_copy_and_set_zeros_double_FromC(double *v_row_dev, double *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
+                                                     double *aux1_dev, double *vav_dev, double *d_vec_dev, 
+                                                     bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
+}
+
+extern "C" void cuda_copy_and_set_zeros_float_FromC(float *v_row_dev, float *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
+                                                    float *aux1_dev, float *vav_dev, float *d_vec_dev, 
+                                                    bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
+}
+
+extern "C" void cuda_copy_and_set_zeros_double_complex_FromC(cuDoubleComplex *v_row_dev, cuDoubleComplex *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
+                                                  cuDoubleComplex *aux1_dev, cuDoubleComplex *vav_dev, double *d_vec_dev, 
+                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
+}
+
+extern "C" void cuda_copy_and_set_zeros_float_complex_FromC(cuComplex *v_row_dev, cuComplex *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
+                                                  cuComplex *aux1_dev, cuComplex *vav_dev, float *d_vec_dev, 
+                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
+  cuda_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 //________________________________________________________________
 // device syncronization is needed afterwards, e.g. gpu_memcpy
+// the kernel used only in NCCL codepath
+// result_dev[0] must be initialized to zero before calling the kernel
 
 template <typename T>
 __global__ void cuda_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev){
   __shared__ T cache[MAX_THREADS_PER_BLOCK]; // extra space of fixed size is reserved for a speedup
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-  T DeviceZero = elpaDeviceNumber<T>(0.0);
-  if (threadIdx.x==0) result_dev[0] = DeviceZero; // clear old value; it's safe because we perform __syncthreads() before atomicAdd
+  // T DeviceZero = elpaDeviceNumber<T>(0.0);
+  //if (threadIdx.x==0) result_dev[0] = DeviceZero; // clear old value; it's safe because we perform __syncthreads() before atomicAdd
                                                   // TODO_23_11: actually can be unsafe: merge to the previous kernel
 
-  T temp = DeviceZero;
+  T temp = elpaDeviceNumber<T>(0.0);
   int i = tid;
   while (i < n) {
     temp = elpaDeviceAdd(temp, elpaDeviceMultiply(elpaDeviceComplexConjugate(x_dev[i*incx]), y_dev[i*incy])); // temp += x_dev[i*incx] * y_dev[i*incy];
@@ -233,6 +321,7 @@ extern "C" void cuda_dot_product_float_complex_FromC (int* n_in, cuComplex *x_de
 }
 
 //________________________________________________________________
+// aux1_dev[0] must be initialized to zero before calling the kernel
 
 template <typename T>
 __global__ void cuda_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev){
@@ -250,10 +339,10 @@ __global__ void cuda_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int
     aux1(2) = 0.
   }
 */
-  T DeviceZero = elpaDeviceNumber<T>(0.0);
-  if (threadIdx.x==0) aux1_dev[0] = DeviceZero; // clear old value; it's safe because we perform __syncthreads() before atomicAdd
+  
+  //if (threadIdx.x==0) aux1_dev[0] = DeviceZero; // clear old value; it's safe because we perform __syncthreads() before atomicAdd
 
-  T temp = DeviceZero;
+  T temp = elpaDeviceNumber<T>(0.0);
   int index_global = tid;
   while (index_global < l_rows-1) {
     temp = elpaDeviceAdd(temp, elpaDeviceMultiply(elpaDeviceComplexConjugate(v_row_dev[index_global]), v_row_dev[index_global])); // temp += v_row_dev[index_global]*v_row_dev[index_global];
@@ -284,7 +373,7 @@ __global__ void cuda_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int
     else
       {
       if (l_rows>0) atomicAdd(&aux1_dev[0], elpaDeviceMultiply(elpaDeviceComplexConjugate(v_row_dev[l_rows-1]), v_row_dev[l_rows-1]));
-      aux1_dev[1] = DeviceZero;
+      aux1_dev[1] = elpaDeviceNumber<T>(0.0);
       }
     }
 }
@@ -394,11 +483,11 @@ __global__ void cuda_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_de
     }
     
   int i_row = tid;
-  while (i_row < l_rows) {
+  while (i_row < l_rows) 
+    {
     a_dev[i_row + matrixRows*l_cols] = v_row_dev[i_row];
     i_row += blockDim.x * gridDim.x;
-  }
-
+    }
 
 }
 
@@ -486,7 +575,8 @@ extern "C" void cuda_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(flo
 
 template <typename T, typename T_value_or_pointer>
 __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
-                T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T_value_or_pointer vav_host_or_dev, T_value_or_pointer tau_host_or_dev,
+                T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev,
+                T_value_or_pointer vav_host_or_dev, T_value_or_pointer tau_host_or_dev,
                 int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, bool useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
@@ -546,7 +636,7 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
     }
 
 
-  if (std::is_same<T, cuDoubleComplex>::value || std::is_same<T, cuComplex>::value)
+  if ((std::is_same<T, cuDoubleComplex>::value || std::is_same<T, cuComplex>::value) && l_cols>0)
     {
     int j = tid;
     while (j < 2*(n_stored_vecs+0)) // whole vector aux_complex_dev has to be copied and not two last elements only because l_cols has changed since last istep
@@ -563,7 +653,6 @@ __global__ void cuda_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stor
       aux_complex_dev[2*n_stored_vecs+1] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*(2*n_stored_vecs+1)]);
       }
     }
-
 }
 
 
@@ -597,11 +686,13 @@ void cuda_store_u_v_in_uv_vu_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev,
       T tau_host_value = *tau_host_or_dev;
 #ifdef WITH_GPU_STREAMS
       cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
-                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_value, tau_host_value, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev,
+                                       vav_host_value, tau_host_value, 
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
 #else
       cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
-                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_value, tau_host_value, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev,
+                                       vav_host_value, tau_host_value, 
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
 #endif
       if (wantDebug)
@@ -615,11 +706,13 @@ void cuda_store_u_v_in_uv_vu_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev,
       {
 #ifdef WITH_GPU_STREAMS
       cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
-                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev,
+                                       vav_host_or_dev, tau_host_or_dev, 
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
 #else
       cuda_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
-                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev,
+                                       vav_host_or_dev, tau_host_or_dev, 
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
 #endif
 
@@ -639,26 +732,31 @@ void cuda_store_u_v_in_uv_vu_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev,
 }
 
 extern "C" void cuda_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *v_row_dev, double *u_row_dev,
-                                                     double *v_col_dev, double *u_col_dev, double *tau_dev, double *aux_complex_dev, double *vav_host_or_dev, double *tau_host_or_dev,
+                                                     double *v_col_dev, double *u_col_dev, double *tau_dev, double *aux_complex_dev,
+                                                     double *vav_host_or_dev, double *tau_host_or_dev,
                                                      int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
-  cuda_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
+  cuda_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev,
+                                vav_host_or_dev, tau_host_or_dev, 
                                 l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void cuda_store_u_v_in_uv_vu_float_FromC(float *vu_stored_rows_dev, float *uv_stored_cols_dev, float *v_row_dev, float *u_row_dev,
-                                                    float *v_col_dev, float *u_col_dev, float *tau_dev, float *aux_complex_dev, float *vav_host_or_dev, float *tau_host_or_dev,
+                                                    float *v_col_dev, float *u_col_dev, float *tau_dev, float *aux_complex_dev,
+                                                    float *vav_host_or_dev, float *tau_host_or_dev,
                                                     int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
   cuda_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void cuda_store_u_v_in_uv_vu_double_complex_FromC(cuDoubleComplex *vu_stored_rows_dev, cuDoubleComplex *uv_stored_cols_dev, cuDoubleComplex *v_row_dev, cuDoubleComplex *u_row_dev,
-                                                             cuDoubleComplex *v_col_dev, cuDoubleComplex *u_col_dev, cuDoubleComplex *tau_dev, cuDoubleComplex *aux_complex_dev, cuDoubleComplex *vav_host_or_dev, cuDoubleComplex *tau_host_or_dev,
+                                                             cuDoubleComplex *v_col_dev, cuDoubleComplex *u_col_dev, cuDoubleComplex *tau_dev, cuDoubleComplex *aux_complex_dev,
+                                                             cuDoubleComplex *vav_host_or_dev, cuDoubleComplex *tau_host_or_dev,
                                                              int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
   cuda_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void cuda_store_u_v_in_uv_vu_float_complex_FromC(cuComplex *vu_stored_rows_dev, cuComplex *uv_stored_cols_dev, cuComplex *v_row_dev, cuComplex *u_row_dev,
-                                                            cuComplex *v_col_dev, cuComplex *u_col_dev, cuComplex *tau_dev, cuComplex *aux_complex_dev, cuComplex *vav_host_or_dev, cuComplex *tau_host_or_dev,
+                                                            cuComplex *v_col_dev, cuComplex *u_col_dev, cuComplex *tau_dev, cuComplex *aux_complex_dev, 
+                                                            cuComplex *vav_host_or_dev, cuComplex *tau_host_or_dev,
                                                             int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, cudaStream_t my_stream){
   cuda_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
@@ -691,13 +789,13 @@ __global__ void cuda_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *
 #endif
 */
 
-  if (threadIdx.x==0)
-    { 
-    if (isSkewsymmetric) 
-      d_vec_dev[istep-1-1] = 0.0;
-    else 
-      d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to the previous kernel for thread safety
-    }
+  // if (threadIdx.x==0)
+  //   { 
+  //   if (isSkewsymmetric) 
+  //     d_vec_dev[istep-1-1] = 0.0;
+  //   else 
+  //     d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to the previous kernel for thread safety
+  //   }
   if (n_stored_vecs > 0)
     {
 
