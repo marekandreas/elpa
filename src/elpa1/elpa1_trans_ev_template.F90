@@ -517,7 +517,7 @@ subroutine trans_ev_&
         num = hvm_ubnd * nstor * size_of_datatype
         call gpu_memcpy_async_and_stream_synchronize &
             ("tridiag hvm1 -> hvm_dev", hvm_dev, 0_c_intptr_t, &
-                                                 hvm1(max_local_rows*max_stored_rows), &
+                                                 hvm1(1:max_local_rows*max_stored_rows), &
                                                  1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 
 
