@@ -765,7 +765,7 @@ subroutine trans_ev_&
           num = max_local_cols * max_stored_rows * size_of_datatype
           call gpu_memcpy_async_and_stream_synchronize &
             ("tridiag tmp1 -> tmp_dev", tmp_dev, 0_c_intptr_t, &
-                                                 tmp1(1:max_local_cols*max_stored_rows), &
+                                                 tmp2(1:max_local_cols*max_stored_rows), &
                                                  1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else /* WITH_GPU_STREAMS */
         successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2(1)),kind=c_intptr_t),  &
