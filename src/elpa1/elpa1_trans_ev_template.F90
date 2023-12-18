@@ -374,7 +374,7 @@ subroutine trans_ev_&
     num = ldq * matrixCols * size_of_datatype
     call gpu_memcpy_async_and_stream_synchronize &
             ("tridiag q_mat -> q_dev", q_dev, 0_c_intptr_t, &
-                                                 q_mat(1:lqd,1:matrixCols), &
+                                                 q_mat(1:ldq,1:matrixCols), &
                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else
     successGPU = gpu_memcpy(q_dev, int(loc(q_mat(1,1)),kind=c_intptr_t), &
