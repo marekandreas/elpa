@@ -108,7 +108,7 @@
       real(kind=REAL_DATATYPE), allocatable       :: z_p(:,:)
 #endif
 
-      integer(kind=ik)                            :: i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
+      integer(kind=ik)                            :: i, j, k, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
                                                      l_rqm, ns, info
       integer(kind=BLAS_KIND)                     :: infoBLAS
       integer(kind=ik)                            :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
@@ -822,24 +822,31 @@
             ncnt = MIN(max_strip,nqcols1-ns) ! number of columns in this strip
 
             ! Get partial result from (output) Q
-
+!$omp PARALLEL DO &
+!$omp default(none) &
+!$omp private(i, j, k) &
+!$omp SHARED(ns, q, l_rqs, l_rqe, l_col_out, idxq1, qtmp2, l_rows, ncnt)
             do i = 1, ncnt
-              qtmp2(1:l_rows,i) = q(l_rqs:l_rqe,l_col_out(idxq1(i+ns)))
+              j = idxq1(i+ns)
+              k = l_col_out(j)
+              qtmp2(1:l_rows,i) = q(l_rqs:l_rqe, k)
             enddo
-
+!$OMP END PARALLEL DO
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with upper half of Q:
-
+!$omp PARALLEL DO &
+!$omp private(i, j, k, tmp)
             do i = 1, ncnt
+              do k = 1, nnzu
               j = idx(idxq1(i+ns))
               ! Calculate the j-th eigenvector of the deflated system
               ! See above why we are doing it this way!
-              tmp(1:nnzu) = d1u(1:nnzu)-dbase(j)
-              call v_add_s_&
-              &PRECISION&
-              &(obj,tmp,nnzu,ddiff(j))
-              ev(1:nnzu,i) = zu(1:nnzu) / tmp(1:nnzu) * ev_scale(j)
+                tmp(k) = d1u(k) - dbase(j)
+                tmp(k) = tmp(k) + ddiff(j)
+                ev(k,i) = zu(k) / tmp(k) * ev_scale(j)
             enddo
+            enddo
+!$OMP END PARALLEL DO
 
             if (useGPU) then
               !TODO: it should be enough to copy l_rows x ncnt
@@ -903,16 +910,19 @@
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
 
+!$omp PARALLEL DO &
+!$omp private(i, j, k, tmp)
             do i = 1, ncnt
+              do k = 1, nnzl
               j = idx(idxq1(i+ns))
               ! Calculate the j-th eigenvector of the deflated system
               ! See above why we are doing it this way!
-              tmp(1:nnzl) = d1l(1:nnzl)-dbase(j)
-              call v_add_s_&
-              &PRECISION&
-              &(obj,tmp,nnzl,ddiff(j))
-              ev(1:nnzl,i) = zl(1:nnzl) / tmp(1:nnzl) * ev_scale(j)
+                tmp(k) = d1l(k) - dbase(j)
+                tmp(k) = tmp(k) + ddiff(j)
+                ev(k,i) = zl(k) / tmp(k) * ev_scale(j)
             enddo
+            enddo
+!$OMP END PARALLEL DO
 
             if (useGPU) then
               !TODO the previous loop could be possible to do on device and thus
@@ -990,9 +1000,14 @@
 
              ! Put partial result into (output) Q
 
+!$omp PARALLEL DO &
+!$omp default(none) &
+!$omp private(i) &
+!$omp SHARED(ns, l_rqs, l_rqe, l_col_out, idxq1, qtmp2, l_rows, ncnt)
             do i = 1, ncnt
               q(l_rqs:l_rqe,l_col_out(idxq1(i+ns))) = qtmp2(1:l_rows,i)
             enddo
+!$OMP END PARALLEL DO
 
           enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
         enddo    !do np = 1, npc_n
