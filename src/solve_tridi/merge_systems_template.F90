@@ -837,7 +837,7 @@
 !$omp PARALLEL DO &
 !$omp default(none) &
 !$omp private(i, j, k, tmp) &
-!$omp shared(ncnt, nnzu, idx, idxq1, ns, d1u, dbase, ddiff, zu, evscale, ev)
+!$omp shared(ncnt, nnzu, idx, idxq1, ns, d1u, dbase, ddiff, zu, ev_scale, ev)
             do i = 1, ncnt
               do k = 1, nnzu
               j = idx(idxq1(i+ns))
