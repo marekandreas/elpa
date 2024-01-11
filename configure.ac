@@ -2589,7 +2589,7 @@ fi
 AC_MSG_CHECKING(whether NVIDIA cusolver library should be used)
 AC_ARG_WITH([cusolver],
             [AS_HELP_STRING([--with-cusolver],
-                            [Use Nvidia cusolver library, disabled by default])],
+                            [Use Nvidia cusolver library, enabled by default])],
             [
                if test x"$withval" = x"yes"; then
                  with_cusolver=yes
@@ -2597,8 +2597,17 @@ AC_ARG_WITH([cusolver],
                  with_cusolver=no
                fi
 	     ],
-            [with_cusolver="no"])
+            [with_cusolver="yes"])
 AC_MSG_RESULT([${with_cusolver}])
+if test x"${with_cusolver}" = x"no"; then
+if test x"${need_nvidia_gpu}" = x"yes"; then
+  AC_MSG_WARN([-------------------------------------------------------------------------])
+  AC_MSG_WARN([])
+  AC_MSG_WARN([Not using cusolver might lead to performance drops it is not recommended!])
+  AC_MSG_WARN([])
+  AC_MSG_WARN([-------------------------------------------------------------------------])
+fi
+fi
 
 #already done with kernel ?
 if test x"${need_amd_gpu}" = x"yes"; then
@@ -2890,12 +2899,12 @@ if test x"$use_cuda_streams" = x"yes"; then
     echo " has not been tested is officially not yet supported! Use at your own risk!"
     echo "---------------------------------------------------------------------------"
   fi
-  if test x"${with_cusolver}" = x"yes"; then
-    echo "---------------------------------------------------------------------------"
-    echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
-    echo " has not been tested is officially not yet supported! Use at your own risk!"
-    echo "---------------------------------------------------------------------------"
-  fi
+  #if test x"${with_cusolver}" = x"yes"; then
+  #  echo "---------------------------------------------------------------------------"
+  #  echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
+  #  echo " has not been tested is officially not yet supported! Use at your own risk!"
+  #  echo "---------------------------------------------------------------------------"
+  #fi
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 
 fi
