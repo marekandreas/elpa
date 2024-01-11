@@ -572,7 +572,7 @@
 !$omp default(none) &
 !$omp private(i) &
 !$omp SHARED(na1, my_proc, n_procs,  &
-!$OMP d1,dbase, ddiff, z, ev_scale, obj)
+!$OMP d1, dbase, ddiff, z, ev_scale, obj)
 
 #endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
@@ -585,7 +585,7 @@
 !         ev_scale_val = ev_scale(i)
           call add_tmp_&
           &PRECISION&
-          &(obj, d1, dbase, ddiff, z, ev_scale(i), na1,i)
+          &(obj, d1, dbase, ddiff, z, ev_scale(i), na1, i)
 !         ev_scale(i) = ev_scale_val
         enddo
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -835,7 +835,9 @@
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with upper half of Q:
 !$omp PARALLEL DO &
-!$omp private(i, j, k, tmp)
+!$omp default(none) &
+!$omp private(i, j, k, tmp) &
+!$omp shared(ncnt, nnzu, idx, idxq1, ns, d1u, dbase, ddiff, zu, evscale, ev)
             do i = 1, ncnt
               do k = 1, nnzu
               j = idx(idxq1(i+ns))
@@ -1003,7 +1005,7 @@
 !$omp PARALLEL DO &
 !$omp default(none) &
 !$omp private(i) &
-!$omp SHARED(ns, l_rqs, l_rqe, l_col_out, idxq1, qtmp2, l_rows, ncnt)
+!$omp SHARED(q, ns, l_rqs, l_rqe, l_col_out, idxq1, qtmp2, l_rows, ncnt)
             do i = 1, ncnt
               q(l_rqs:l_rqe,l_col_out(idxq1(i+ns))) = qtmp2(1:l_rows,i)
             enddo
