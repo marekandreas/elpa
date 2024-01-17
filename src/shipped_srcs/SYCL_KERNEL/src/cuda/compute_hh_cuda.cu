@@ -3,9 +3,6 @@
 #include "cuda_runtime.h"
 
 // Try CUDA 11 warp reduce
-#undef CUDART_VERSION
-#define CUDART_VERSION 10
-
 #if (CUDART_VERSION >= 9000)
 template <typename T, unsigned int blk> __device__ void warp_shfl_reduce_real(volatile T *s_block)
 {

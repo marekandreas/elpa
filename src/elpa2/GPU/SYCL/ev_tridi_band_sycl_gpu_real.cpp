@@ -86,7 +86,11 @@ inline void reduction_step(T *local_mem, sycl::nd_item<1> &it) {
 
   if constexpr (wg_size >= step && sg_size < step) {
     int constexpr half_step = step >> 1;
-    local_mem[lId] += static_cast<T>(lId < half_step) * local_mem[lId + half_step];
+    if constexpr (step == wg_size) {
+      local_mem[lId] += (lId < half_step) ? local_mem[lId + half_step] : 0;
+    } else {
+      local_mem[lId] += static_cast<T>(lId < half_step) * local_mem[lId + half_step];
+    }
     it.barrier(sycl::access::fence_space::local_space);
   }
 }
