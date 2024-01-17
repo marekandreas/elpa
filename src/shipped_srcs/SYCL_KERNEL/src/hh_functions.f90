@@ -1,12 +1,13 @@
 module hh_functions
   implicit none
 contains
-  subroutine perform_hh_test_complex(nbw, nn, nr, nc)
+  subroutine perform_hh_test_complex(nbw, nn, nr, nc, useCuda)
     use compute_hh_wrapper
     use omp_lib, only: omp_get_wtime
     use iso_c_binding, only: c_double,c_intptr_t
     implicit none
 
+    logical, intent(in), value :: useCuda
     integer, intent(in), value :: nbw
     integer, intent(in), value :: nn
     integer, intent(in), value :: nr
@@ -105,12 +106,17 @@ contains
 
   end subroutine perform_hh_test_complex
 
-  subroutine perform_hh_test_real(nbw, nn, nr, nc)
+  subroutine perform_hh_test_real(nbw, nn, nr, nc, useCuda)
     use compute_hh_wrapper
+#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+    use compute_hh_wrapper_cuda
+#endif
     use omp_lib, only: omp_get_wtime
     use iso_c_binding, only: c_double,c_intptr_t
     implicit none
 
+
+    logical, intent(in), value :: useCuda
     integer, intent(in), value :: nbw
     integer, intent(in), value :: nn
     integer, intent(in), value :: nr
@@ -147,18 +153,26 @@ contains
 
 
     print *, "start gpu test"
-    call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)
+    if (useCuda) then
+#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+      call compute_hh_cuda_gpu(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#else
+        stop
+#endif
+    else
+      call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)
+    endif
     print *, "end gpu test"
 
     ! Normalize
     do i = 1,nc
-    dotp = dot_product(evec1(i,:),evec1(i,:))
-    evec1(i,:) = evec1(i,:)/sqrt(abs(dotp))
+      dotp = dot_product(evec1(i,:),evec1(i,:))
+      evec1(i,:) = evec1(i,:)/sqrt(abs(dotp))
     end do
 
     do i = 1,nn
-    dotp = dot_product(hh(:,i),hh(:,i))
-    hh(:,i) = hh(:,i)/sqrt(abs(dotp))
+      dotp = dot_product(hh(:,i),hh(:,i))
+      hh(:,i) = hh(:,i)/sqrt(abs(dotp))
     end do
 
     evec2(:,:) = evec1
@@ -183,7 +197,15 @@ contains
       double precision :: gpu_start, gpu_finish, init_time, transfer_time, compute_time
 
       gpu_start = omp_get_wtime()
-      call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      if (useCuda) then
+#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+        call compute_hh_cuda_gpu(nn,nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+#else
+        stop
+#endif
+      else
+        call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      endif
       gpu_finish = omp_get_wtime()
 
       write(*,"(2X,A)") "GPU version finished"
