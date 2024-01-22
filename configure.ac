@@ -2586,29 +2586,6 @@ if test x"${need_nvidia_sm80_gpu}" = x"yes"; then
   fi
 fi
 
-AC_MSG_CHECKING(whether NVIDIA cusolver library should be used)
-AC_ARG_WITH([cusolver],
-            [AS_HELP_STRING([--with-cusolver],
-                            [Use Nvidia cusolver library, enabled by default])],
-            [
-               if test x"$withval" = x"yes"; then
-                 with_cusolver=yes
-               else
-                 with_cusolver=no
-               fi
-	     ],
-            [with_cusolver="yes"])
-AC_MSG_RESULT([${with_cusolver}])
-if test x"${with_cusolver}" = x"no"; then
-if test x"${need_nvidia_gpu}" = x"yes"; then
-  AC_MSG_WARN([-------------------------------------------------------------------------])
-  AC_MSG_WARN([])
-  AC_MSG_WARN([Not using cusolver might lead to performance drops it is not recommended!])
-  AC_MSG_WARN([])
-  AC_MSG_WARN([-------------------------------------------------------------------------])
-fi
-fi
-
 #already done with kernel ?
 if test x"${need_amd_gpu}" = x"yes"; then
   use_real_amd_gpu=yes
@@ -2747,13 +2724,13 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
     AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   fi
 
-  if test x"${with_cusolver}" = x"yes"; then
-    AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
-    if test x"${have_cusolver}" = x"no"; then
-      AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
-    fi
-    AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
-  fi
+  #if test x"${with_cusolver}" = x"yes"; then
+  #  AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
+  #  if test x"${have_cusolver}" = x"no"; then
+  #    AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+  #  fi
+  #  AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
+  #fi
   AC_LANG_POP([C])
 fi
 
@@ -2921,6 +2898,50 @@ if test x"$use_hip_streams" = x"yes"; then
   fi
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 fi
+
+AC_MSG_CHECKING(whether NVIDIA cusolver library should be used)
+AC_ARG_WITH([cusolver],
+            [AS_HELP_STRING([--with-cusolver],
+                            [Use Nvidia cusolver library, enabled by default])],
+            [
+               if test x"$withval" = x"yes"; then
+                 with_cusolver=yes
+               else
+                 with_cusolver=no
+               fi
+	     ],
+            [with_cusolver="yes"])
+AC_MSG_RESULT([${with_cusolver}])
+if test x"${with_cusolver}" = x"no"; then
+if test x"${need_nvidia_gpu}" = x"yes"; then
+  AC_MSG_WARN([-------------------------------------------------------------------------])
+  AC_MSG_WARN([])
+  AC_MSG_WARN([Not using cusolver might lead to performance drops it is not recommended!])
+  AC_MSG_WARN([])
+  AC_MSG_WARN([-------------------------------------------------------------------------])
+fi
+fi
+if test x"${with_cusolver}" = x"yes"; then
+  if test x"${use_cuda_streams}" = x"no"; then
+    AC_MSG_ERROR([You cannot use cusolver and NOT CUDA streams; Please activate both or diable cusolver])
+  fi
+fi
+if test x"${with_rocsolver}" = x"yes"; then
+  if test x"${use_hip_streams}" = x"no"; then
+    AC_MSG_ERROR([You cannot use rocsolver and NOT HIP streams; Please activate both or diable rocsolver])
+  fi
+fi
+
+if test x"${with_cusolver}" = x"yes"; then
+  AC_LANG_PUSH([C])
+  AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
+  if test x"${have_cusolver}" = x"no"; then
+    AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+  fi
+  AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
+  AC_LANG_POP([C])
+fi
+
 
 
 m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
