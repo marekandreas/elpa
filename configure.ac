@@ -2632,19 +2632,19 @@ if test x"${need_amd_gpu}" = x"yes"; then
     AC_DEFINE([WITH_HIPCUB], [1], [use hipcub library in some kernels])
   fi
 fi
-AC_MSG_CHECKING(whether AMD rocsolver library should be used)
-AC_ARG_WITH([rocsolver],
-            [AS_HELP_STRING([--with-rocsolver],
-                            [Use AMD rocsolver library, disabled by default])],
-            [
-               if test x"$withval" = x"yes"; then
-                 with_rocsolver=yes
-               else
-                 with_rocsolver=no
-               fi
-	     ],
-            [with_rocsolver="no"])
-AC_MSG_RESULT([${with_rocsolver}])
+#AC_MSG_CHECKING(whether AMD rocsolver library should be used)
+#AC_ARG_WITH([rocsolver],
+#            [AS_HELP_STRING([--with-rocsolver],
+#                            [Use AMD rocsolver library, disabled by default])],
+#            [
+#               if test x"$withval" = x"yes"; then
+#                 with_rocsolver=yes
+#               else
+#                 with_rocsolver=no
+#               fi
+#	     ],
+#            [with_rocsolver="no"])
+#AC_MSG_RESULT([${with_rocsolver}])
 
 
 use_openmp_gpu_backend=no
@@ -2724,13 +2724,6 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
     AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   fi
 
-  #if test x"${with_cusolver}" = x"yes"; then
-  #  AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
-  #  if test x"${have_cusolver}" = x"no"; then
-  #    AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
-  #  fi
-  #  AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
-  #fi
   AC_LANG_POP([C])
 fi
 
@@ -2876,12 +2869,6 @@ if test x"$use_cuda_streams" = x"yes"; then
     echo " has not been tested is officially not yet supported! Use at your own risk!"
     echo "---------------------------------------------------------------------------"
   fi
-  #if test x"${with_cusolver}" = x"yes"; then
-  #  echo "---------------------------------------------------------------------------"
-  #  echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
-  #  echo " has not been tested is officially not yet supported! Use at your own risk!"
-  #  echo "---------------------------------------------------------------------------"
-  #fi
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 
 fi
@@ -2899,8 +2886,10 @@ if test x"$use_hip_streams" = x"yes"; then
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 fi
 
-AC_MSG_CHECKING(whether NVIDIA cusolver library should be used)
-AC_ARG_WITH([cusolver],
+
+if test x"$need_nvidia_gpu" = x"yes"; then
+  AC_MSG_CHECKING(whether NVIDIA cusolver library should be used)
+  AC_ARG_WITH([cusolver],
             [AS_HELP_STRING([--with-cusolver],
                             [Use Nvidia cusolver library, enabled by default])],
             [
@@ -2911,24 +2900,50 @@ AC_ARG_WITH([cusolver],
                fi
 	     ],
             [with_cusolver="yes"])
-AC_MSG_RESULT([${with_cusolver}])
-if test x"${with_cusolver}" = x"no"; then
-if test x"${need_nvidia_gpu}" = x"yes"; then
-  AC_MSG_WARN([-------------------------------------------------------------------------])
-  AC_MSG_WARN([])
-  AC_MSG_WARN([Not using cusolver might lead to performance drops it is not recommended!])
-  AC_MSG_WARN([])
-  AC_MSG_WARN([-------------------------------------------------------------------------])
-fi
-fi
-if test x"${with_cusolver}" = x"yes"; then
-  if test x"${use_cuda_streams}" = x"no"; then
-    AC_MSG_ERROR([You cannot use cusolver and NOT CUDA streams; Please activate both or diable cusolver])
+  AC_MSG_RESULT([${with_cusolver}])
+  if test x"${with_cusolver}" = x"no"; then
+    if test x"${need_nvidia_gpu}" = x"yes"; then
+      AC_MSG_WARN([-------------------------------------------------------------------------])
+      AC_MSG_WARN([])
+      AC_MSG_WARN([Not using cusolver might lead to performance drops it is not recommended!])
+      AC_MSG_WARN([])
+      AC_MSG_WARN([-------------------------------------------------------------------------])
+    fi
+  fi
+  if test x"${with_cusolver}" = x"yes"; then
+    if test x"${use_cuda_streams}" = x"no"; then
+      AC_MSG_ERROR([You cannot use cusolver and NOT CUDA streams; Please activate both or diable cusolver])
+    fi
   fi
 fi
-if test x"${with_rocsolver}" = x"yes"; then
-  if test x"${use_hip_streams}" = x"no"; then
-    AC_MSG_ERROR([You cannot use rocsolver and NOT HIP streams; Please activate both or diable rocsolver])
+
+if test x"$need_amd_gpu" = x"yes"; then
+  AC_MSG_CHECKING(whether AMD rocsolver library should be used)
+  AC_ARG_WITH([rocsolver],
+            [AS_HELP_STRING([--with-rocsolver],
+                            [Use AMD rocsolver library, enabled by default])],
+            [
+               if test x"$withval" = x"yes"; then
+                 with_rocsolver=yes
+               else
+                 with_rocsolver=no
+               fi
+	     ],
+            [with_rocsolver="yes"])
+  AC_MSG_RESULT([${with_rocsolver}])
+  if test x"${with_rocsolver}" = x"no"; then
+    if test x"${need_amd_gpu}" = x"yes"; then
+      AC_MSG_WARN([-------------------------------------------------------------------------])
+      AC_MSG_WARN([])
+      AC_MSG_WARN([Not using rocsolver might lead to performance drops it is not recommended!])
+      AC_MSG_WARN([])
+      AC_MSG_WARN([-------------------------------------------------------------------------])
+    fi
+  fi
+  if test x"${with_rocsolver}" = x"yes"; then
+    if test x"${use_hip_streams}" = x"no"; then
+      AC_MSG_ERROR([You cannot use rocsolver and NOT HIP streams; Please activate both or diable rocsolver])
+    fi
   fi
 fi
 
