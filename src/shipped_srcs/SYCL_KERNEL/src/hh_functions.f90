@@ -3,6 +3,9 @@ module hh_functions
 contains
   subroutine perform_hh_test_complex(nbw, nn, nr, nc, useCuda)
     use compute_hh_wrapper
+#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+    use compute_hh_wrapper_cuda
+#endif
     use omp_lib, only: omp_get_wtime
     use iso_c_binding, only: c_double,c_intptr_t
     implicit none
@@ -39,7 +42,15 @@ contains
     seed(:) = 20191015
 
     print *, "warm up GPU"
-    call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)
+    if (useCuda) then
+#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+      call compute_hh_cuda_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#else
+      stop
+#endif
+    else
+      call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)
+    endif
     print *, "...done."
 
 
@@ -81,7 +92,15 @@ contains
       double precision :: gpu_start, gpu_finish, init_time, transfer_time, compute_time
 
       gpu_start = omp_get_wtime()
-      call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      if (useCuda) then
+  #ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+        call compute_hh_cuda_gpu_complex(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+  #else
+        stop
+  #endif
+      else
+        call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      endif
       gpu_finish = omp_get_wtime()
 
       write(*,"(2X,A)") "GPU version finished"
@@ -157,7 +176,7 @@ contains
 #ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
       call compute_hh_cuda_gpu(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
 #else
-        stop
+      stop
 #endif
     else
       call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)

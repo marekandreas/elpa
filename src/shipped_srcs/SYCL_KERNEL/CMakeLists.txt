@@ -18,18 +18,26 @@ find_package(OpenMP REQUIRED Fortran)
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build")
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Release Debug RelWithDebInfo MinSizeRel)
 
-set(GPU_BACKEND INTEL CACHE STRING "Select which GPU to target - Intel (INTEL), or NVIDIA (SYCL & CUDA)")
-set_property(CACHE GPU_BACKEND PROPERTY STRINGS INTEL NVIDIA)
+option(ENABLE_AMD_SYCL_BACKEND "Should the AMD SYCL backend be targeted? If so, make sure ROCM is in the environment" OFF)
 
-if (GPU_BACKEND STREQUAL "NVIDIA")
+include(CheckLanguage)
+check_language(CUDA)
+
+if (NOT CMAKE_CUDA_COMPILER STREQUAL "NOTFOUND")
+  message(STATUS "NVIDIA CUDA found: ${CMAKE_CUDA_COMPILER}")
   enable_language(CUDA)
   set_target_properties(hh_test PROPERTIES CUDA_ARCHITECTURES "all-major")
   target_sources(hh_test PRIVATE
     src/cuda/compute_hh_cuda.cu
+    src/cuda/compute_hh_cuda_complex_wrapper.cu
     src/cuda/compute_hh_wrapper_cuda.f90
     src/cuda/cuda_c_interface.cu
     src/cuda/cuda_f_interface.f90
+    src/cuda/config-f90.h
   )
+
+  get_filename_component(CUDA_COMPILER_TMP ${CMAKE_CUDA_COMPILER} DIRECTORY)
+  get_filename_component(CUDA_COMPILER_FOLDER ${CUDA_COMPILER_TMP}/.. ABSOLUTE)
 endif()
 
 # Explicitly add the fortran main function
@@ -43,20 +51,30 @@ target_compile_options(hh_test PRIVATE
 )
 
 
-if (GPU_BACKEND STREQUAL "INTEL")
-  message(STATUS "Compiler options for SPIR-V")
+if (NOT CMAKE_CUDA_COMPILER STREQUAL "NOTFOUND")
+  target_compile_definitions(hh_test PRIVATE ENABLE_REFERENCE_CUDA_IMPLEMENTATION)
+  if (ENABLE_AMD_SYCL_BACKEND)
+    message(STATUS "Configuring a fat binary with SYCL (NVIDIA, AMD and Intel) and CUDA")
+    message(STATUS "Make sure ROCm is actually installed! The Configure script doesn't check this")
+    target_compile_options(hh_test PRIVATE
+      $<$<COMPILE_LANGUAGE:CXX>:-fsycl -fsycl-targets=amdgcn-amd-amdhsa,nvptx64-nvidia-cuda,spir64>
+      $<$<COMPILE_LANGUAGE:CXX>: -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=gfx90a>
+    )
+  else()
+    message(STATUS "Configuring a fat binary with SYCL (NVIDIA and Intel) and CUDA")
+    target_compile_options(hh_test PRIVATE
+      $<$<COMPILE_LANGUAGE:CXX>:-fsycl -fsycl-targets=nvptx64-nvidia-cuda,spir64>
+    )
+  endif()
+  target_compile_options(hh_test PRIVATE
+    $<$<COMPILE_LANGUAGE:CXX>: --cuda-path=${CUDA_COMPILER_FOLDER} -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_80>
+  )
+else()
+  message(STATUS "No CUDA found.")
+  message(STATUS "Configuring a binary with SYCL (Intel) only")
   target_compile_options(hh_test PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-fsycl>
   )
-elseif(GPU_BACKEND STREQUAL "NVIDIA")
-  message(STATUS "Compiler options for NVIDIA PTX")
-  target_compile_definitions(hh_test PRIVATE ENABLE_REFERENCE_CUDA_IMPLEMENTATION)
-  target_compile_options(hh_test PRIVATE
-    $<$<COMPILE_LANGUAGE:CXX>:-fsycl -fsycl-targets=nvptx64-nvidia-cuda>
-    $<$<COMPILE_LANGUAGE:CXX>:--cuda-path=/opt/hpc_software/compilers/nvidia/cuda-12.0 -fsycl-targets=nvptx64-nvidia-cuda -Xsycl-target-backend --cuda-gpu-arch=sm_80>
-  )
-else()
-  message(SEND_ERROR "Unsupported Backend: ${GPU_BACKEND}")
 endif()
 
 target_compile_definitions(hh_test PUBLIC ELPA_SYCL_IN_PROXY_APP)
@@ -67,12 +85,15 @@ set_target_properties(hh_test PROPERTIES Fortran_MODULE_DIRECTORY ${PROJECT_BINA
 
 target_link_libraries(hh_test PRIVATE ${OpenMP_Fortran_LIBRARIES})
 
-if (GPU_BACKEND STREQUAL "INTEL")
-  message(STATUS "Linker options for SPIR-V")
-  target_link_libraries(hh_test PUBLIC -fsycl -lpthread -lm -ldl -lifcore)
-elseif(GPU_BACKEND STREQUAL "NVIDIA")
-  message(STATUS "Linker options for NVIDIA PTX")
-  target_link_libraries(hh_test PUBLIC --cuda-path=/opt/hpc_software/compilers/nvidia/cuda-12.0 -fsycl -fsycl-targets=nvptx64-nvidia-cuda -Xsycl-target-backend --cuda-gpu-arch=sm_80 -lpthread -lm -ldl -lifcore)
+if (NOT CMAKE_CUDA_COMPILER STREQUAL "NOTFOUND")
+  if (ENABLE_AMD_SYCL_BACKEND)
+    target_link_libraries(hh_test PUBLIC -fsycl -fsycl-targets=amdgcn-amd-amdhsa,nvptx64-nvidia-cuda,spir64)
+    target_link_libraries(hh_test PUBLIC -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=gfx90a)
+  else()
+    target_link_libraries(hh_test PUBLIC -fsycl -fsycl-targets=nvptx64-nvidia-cuda,spir64)
+  endif()
+  target_link_libraries(hh_test PUBLIC --cuda-path=${CUDA_COMPILER_FOLDER} -Xsycl-target-backend=nvptx64-nvidia-cuda --cuda-gpu-arch=sm_80)
+  target_link_libraries(hh_test PUBLIC -lpthread -lm -ldl -lifcore)
 else()
-  message(SEND_ERROR "Unsupported Backend: ${GPU_BACKEND}")
+  target_link_libraries(hh_test PUBLIC -fsycl -lpthread -lm -ldl -lifcore)
 endif()

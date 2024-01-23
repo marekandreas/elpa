@@ -77,6 +77,20 @@ module cuda_f_interface
     end subroutine
   end interface
 
+  interface
+    subroutine compute_hh_cuda_gpu_complex_kernel(q,hh,hh_tau,nev,nb,ldq,ncols) bind(c)
+      use iso_c_binding, only: c_intptr_t,c_int
+      implicit none
+      integer(c_int), value :: nev ! (N_C)
+      integer(c_int), value :: nb ! (b==nbw)
+      integer(c_int), value :: ldq ! (leading dimension of q)
+      integer(c_int), value :: ncols ! (n)
+      integer(c_intptr_t), value :: q ! (X)
+      integer(c_intptr_t), value :: hh_tau ! (tau)
+      integer(c_intptr_t), value :: hh ! (v)
+    end subroutine
+  end interface
+
   contains
 
     subroutine gpu_init()
