@@ -190,7 +190,7 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
     local_buffer q_s(sycl::range(nb+1), h);
     local_buffer dotp_s(sycl::range(nb+1), h);
 
-    h.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(32)]] {
+    h.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) /*[[intel::reqd_sub_group_size(32)]]*/ {
       int tid = it.get_local_id(0);
       int local_range = it.get_local_range(0);
 
