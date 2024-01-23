@@ -2829,6 +2829,7 @@ fi
 use_cuda_streams=no
 use_hip_streams=no
 use_gpu_streams=no
+use_gpu_streams_per_default=no
 AC_MSG_CHECKING(whether GPU streams should be used)
 AC_ARG_ENABLE([gpu-streams],
                [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
@@ -2850,8 +2851,22 @@ AC_ARG_ENABLE([gpu-streams],
 				  use_gpu_streams=no
                                 fi
 				],
-              [use_gpu_streams=no])
+              [use_gpu_streams_per_default=yes])
+if test x"$use_gpu_streams_per_default" = x"yes"; then
+  use_gpu_streams=yes
+fi
 AC_MSG_RESULT([${use_gpu_streams}])
+
+if test x"$use_gpu_streams" = x"yes"; then
+  if test x"$use_gpu_streams_per_default" = x"yes"; then
+    if test x"$need_nvidia_gpu" = x"yes"; then
+      use_cuda_streams=yes
+    fi
+    if test x"$need_amd_gpu" = x"yes"; then
+      use_hip_streams=yes
+    fi
+  fi
+fi
 
 if test x"$use_cuda_streams" = x"yes"; then
   if test x"$need_nvidia_gpu" = x"no"; then
