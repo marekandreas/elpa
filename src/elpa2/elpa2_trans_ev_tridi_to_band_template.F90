@@ -982,10 +982,10 @@ subroutine trans_ev_tridi_to_band_&
               check_memcpy_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
 
               successGPU = gpu_stream_synchronize(my_stream)
-              check_stream_syncronize_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
+              check_stream_synchronize_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
               ! synchronize streamsPerThread; maybe not neccessary
               successGPU = gpu_stream_synchronize()
-              check_stream_syncronize_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
+              check_stream_synchronize_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
 
 #else
               successGPU =  gpu_memcpy(c_loc(row_group_mpi_fortran_ptr(1,row_group_size)), &
