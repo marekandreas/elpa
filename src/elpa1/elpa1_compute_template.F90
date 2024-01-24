@@ -63,7 +63,7 @@
 #if REALCASE == 1
 
 #include "tridiag_template.F90"
-#include "elpa1_trans_ev_template.F90"
+#include "trans_ev_template.F90"
 
 ! now comes a dirty hack:
 ! the file elpa1_solve_tridi_real_template.F90 must be included twice
@@ -92,7 +92,7 @@
 #if COMPLEXCASE == 1
 
 #include "tridiag_template.F90"
-#include "elpa1_trans_ev_template.F90"
+#include "trans_ev_template.F90"
 #include "elpa1_tools_template.F90"
 
 #define ALREADY_DEFINED 1

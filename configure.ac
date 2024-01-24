@@ -1,4 +1,4 @@
-AC_PREREQ([2.69])
+AC_PREREQ([2.71])
 
 # The version is set in elpa.spec, to have a single point of reference
 AC_INIT([elpa],m4_esyscmd_s([awk '/^ *Version:/ {print $2;}' elpa.spec]), [elpa-library@mpcdf.mpg.de])
