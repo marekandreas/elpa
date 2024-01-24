@@ -978,14 +978,15 @@ EXCLUDE                = @top_srcdir@/src/GPU/check_for_gpu.F90 \
 			@top_srcdir@/src/cholesky/mod_cholesky_cuda.F90 \
 			@top_srcdir@/src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu \
 			@top_srcdir@/src/elpa1/elpa1_compute_template.F90 \
-			@top_srcdir@/src/elpa1/elpa_reduce_add_vectors.F90 \
+			@top_srcdir@/src/elpa1/elpa_reduce_add_vectors_template.F90 \
 			@top_srcdir@/src/elpa1/elpa1_merge_systems_real_template.F90 \
 			@top_srcdir@/src/elpa1/elpa1_compute_private.F90 \
 			@top_srcdir@/src/elpa1/elpa1_template.F90 \
 			@top_srcdir@/src/elpa1/elpa_solve_tridi_impl_public.F90 \
 			@top_srcdir@/src/elpa1/elpa1_trans_ev_template.F90 \
-			@top_srcdir@/src/elpa1/elpa_transpose_vectors.F90 \
-			@top_srcdir@/src/elpa1/elpa_transpose_vectors_ss.F90 \
+			@top_srcdir@/src/elpa1/elpa_transpose_vectors_template.F90 \
+			@top_srcdir@/src/elpa1/GPU/elpa_gpu_ccl_transpose_vectors_template.F90 \
+			@top_srcdir@/src/elpa1/GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90 \
 			@top_srcdir@/src/elpa1/elpa1_auxiliary.F90 \
 			@top_srcdir@/src/elpa1/elpa1_tridiag_template.F90 \
 			@top_srcdir@/src/elpa1/elpa1_tools_template.F90 \

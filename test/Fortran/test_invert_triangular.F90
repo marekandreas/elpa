@@ -96,6 +96,13 @@ error: define exactly one of TEST_SINGLE or TEST_DOUBLE
 #define INT_MPI_TYPE c_int32_t
 #endif
 
+#define TEST_GPU 0
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
+#undef TEST_GPU
+#define TEST_GPU 1
+#endif
+
+
 
 #include "assert.h"
 
@@ -165,12 +172,14 @@ program test
    class(elpa_t), pointer                 :: e
 
    logical                                :: success
+   logical                                :: successGPU
 
-#if TEST_GPU == 1
+#if TEST_GPU_DEVICE_POINTER_API == 1
    type(c_ptr)                            :: a_dev
+#endif
+#if TEST_GPU_SET_ID == 1
    TEST_INT_TYPE                          :: numberOfDevices
    TEST_INT_TYPE                          :: gpuID
-   logical                                :: successGPU
 #endif
 
 ! for gpu_malloc
@@ -193,6 +202,7 @@ program test
 #endif
 #endif
 #endif /* TEST_GPU == 1 */
+
 
    call read_input_parameters(na, nev, nblk, write_to_file)
    call setup_mpi(myid, nprocs)
@@ -328,21 +338,11 @@ program test
    assert_elpa_ok(error_elpa)
 #endif
 
+#if defined(TEST_NVIDIA_GPU) || defined(TEST_AMD_GPU) || defined(TEST_INTEL_GPU) || defined(TEST_INTEL_GPU_OPENMP) || defined(TEST_INTEL_GPU_SYCL)
+   assert_elpa_ok(e%setup_gpu())
+#endif 
 
-#if TEST_GPU == 1
-
-#if (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
-   success = gpu_GetDeviceCount(numberOfDevices)
-   if (.not.(success)) then
-      print *,"Error in gpu_GetDeviceCount. Aborting..."
-      stop 1
-   endif
-   print *,"numberOfDevices=", numberOfDevices
-   gpuID = mod(myid, numberOfDevices)   
-   call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
-   assert_elpa_ok(error_elpa)
-#endif
-
+#if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
    if (gpu_vendor() /= no_gpu) then
       call set_gpu_parameters()
    else 
@@ -350,28 +350,42 @@ program test
       stop 1
    endif
 
-#if TEST_INTEL_GPU_SYCL == 1 /* temporary fix for SYCL on CPU */
-   success = sycl_getcpucount(numberOfDevices)
+   success = gpu_GetDeviceCount(numberOfDevices)
+   if (.not.(success)) then
+      print *,"Error in gpu_GetDeviceCount. Aborting..."
+      stop 1
+   endif
+   gpuID = mod(myid, numberOfDevices)
+
+   call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)
+   assert_elpa_ok(error_elpa)
+#endif
+
+#if TEST_GPU_DEVICE_POINTER_API == 1
+   ! create device pointers for a,q, ev; copy a to device
+     
+   if (gpu_vendor() /= no_gpu) then
+     call set_gpu_parameters()
+   else 
+      print *,"Cannot set gpu vendor!"
+      stop 1
+   endif
+
+   ! Set device 
+   success = .true.        
+#if TEST_INTEL_GPU_SYCL == 1
+   success = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
    if (.not.(success)) then
       print *,"Error in sycl_getcpucount. Aborting..."
       stop 1
-   endif
+    endif
 #endif
 
-   successGPU = gpu_setdevice(gpuID)
+   success = gpu_setdevice(gpuID)
    if (.not.(success)) then
      print *,"Cannot set GPU device. Aborting..."
      stop 1
    endif
-
-   call e%set("gpu_invert_trm", 1, error_elpa)
-   assert_elpa_ok(error_elpa)
-#endif /* TEST_GPU */
-
-
-   !-----------------------------------------------------------------------------------------------------------------------------
-   ! TEST_GPU == 1: create device pointer for a_dev; copy a -> a_dev
-#if TEST_GPU == 1
 
    successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
    if (.not.(successGPU)) then
@@ -386,69 +400,86 @@ program test
      stop 1
    endif
    
-#endif /* TEST_GPU */
+#endif /* TEST_GPU_DEVICE_POINTER_API */
 
    !-----------------------------------------------------------------------------------------------------------------------------
    ! The actual solve step
+   call e%timer_start("e%triangular")
+
 #ifdef TEST_EXPLICIT_NAME
+   if (myid == 0) then
      print *,"Inverting with TEST_EXPLICIT_NAME"
+   endif
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
-#if (TEST_GPU == 1)
+#if (TEST_GPU_DEVICE_POINTER_API == 1)
+   if (myid == 0) then
      print *, "Inverting with device API"
-     call e%invert_triangular_double(a_dev, error_elpa)
-     assert_elpa_ok(error_elpa)
+   endif
+   call e%invert_triangular_double(a_dev, error_elpa)
+   assert_elpa_ok(error_elpa)
 #else
-     call e%invert_triangular_double(a, error_elpa)
-     assert_elpa_ok(error_elpa)
+   call e%invert_triangular_double(a, error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
-#if (TEST_GPU == 1)
+#if (TEST_GPU_DEVICE_POINTER_API == 1)
+   if (myid == 0) then
      print *, "Inverting with device API"
-     call e%invert_triangular_float(a_dev, error_elpa)
-     assert_elpa_ok(error_elpa)
+   endif
+   call e%invert_triangular_float(a_dev, error_elpa)
+   assert_elpa_ok(error_elpa)
 #else
-     call e%invert_triangular_float(a, error_elpa)
-     assert_elpa_ok(error_elpa)
+   call e%invert_triangular_float(a, error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_REAL */
 
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
-#if (TEST_GPU == 1)
+#if (TEST_GPU_DEVICE_POINTER_API == 1)
+   if (myid == 0) then
      print *, "Inverting with device API"
-     call e%invert_triangular_double_complex(a_dev, error_elpa)
-     assert_elpa_ok(error_elpa)
+   endif
+   call e%invert_triangular_double_complex(a_dev, error_elpa)
+   assert_elpa_ok(error_elpa)
 #else
-     call e%invert_triangular_double_complex(a, error_elpa)
-     assert_elpa_ok(error_elpa)
+   call e%invert_triangular_double_complex(a, error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
-#if (TEST_GPU == 1)
+#if (TEST_GPU_DEVICE_POINTER_API == 1)
+   if (myid == 0) then
      print *, "Inverting with device API"
-     call e%invert_triangular_float_complex(a_dev, error_elpa)
-     assert_elpa_ok(error_elpa)
+   endif
+   call e%invert_triangular_float_complex(a_dev, error_elpa)
+   assert_elpa_ok(error_elpa)
 #else
-     call e%invert_triangular_float_complex(a, error_elpa)
-     assert_elpa_ok(error_elpa)
+   call e%invert_triangular_float_complex(a, error_elpa)
+   assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_COMPLEX */
 
 #else /* TEST_EXPLICIT_NAME */
-   print *, "Inverting without TEST_EXPLICIT_NAME"
+   if (myid == 0) then
+     print *, "Inverting without TEST_EXPLICIT_NAME"
+   endif
    call e%invert_triangular (a, error_elpa)
    assert_elpa_ok(error_elpa)
 #endif /* TEST_EXPLICIT_NAME */
+
+   call e%timer_stop("e%triangular")
+
 
    !call print_matrix(myid, na_rows, a, "a_inverted")
 
    !-----------------------------------------------------------------------------------------------------------------------------     
    ! TEST_GPU == 1: copy for testing from device to host, deallocate device pointers
-#if TEST_GPU == 1
+#if TEST_GPU_DEVICE_POINTER_API == 1
 
    ! copy for testing
    successGPU = gpu_memcpy(c_loc(a), a_dev, na_rows*na_cols*size_of_datatype, &
@@ -465,8 +496,11 @@ program test
      stop 1
    endif
 
-#endif /* TEST_GPU */
+#endif /* TEST_GPU_DEVICE_POINTER_API */
 
+   if (myid .eq. 0) then
+     call e%print_times("e%triangular")
+   endif
    !-----------------------------------------------------------------------------------------------------------------------------
    ! Check the results
    
@@ -488,7 +522,9 @@ program test
    call elpa_uninit(error_elpa)
 
 
-   print *, "Done!"
+   if (myid == 0) then
+     print *, "Done!"
+   endif
 
 #ifdef WITH_MPI
    call blacs_gridexit(my_blacs_ctxt)

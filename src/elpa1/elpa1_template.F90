@@ -116,7 +116,9 @@ function elpa_solve_evp_&
    use elpa_scalapack_interfaces
 #endif
    use solve_tridi
+#ifdef HAVE_AFFINITY_CHECKING
    use thread_affinity
+#endif
    use elpa_utilities, only : error_unit
 
    use mod_query_gpu_usage
@@ -268,7 +270,7 @@ function elpa_solve_evp_&
    &MATH_DATATYPE&
    &_1stage_&
    &PRECISION&
-   &")
+   &") ! "
 
    call obj%get("debug",debug, error)
    if (error .ne. ELPA_OK) then
@@ -395,15 +397,47 @@ function elpa_solve_evp_&
 #include "../helpers/elpa_redistribute_template.F90"
    ! ev still has to be assigned
 #else
-print *,"Device pointer + REDIST"
-#endif 
+   ! at the moment no redistribute if dptr !!
+#endif /* DEVICE_POINTER */
 #endif /* REDISTRIBUTE_MATRIX */
 
 #ifdef DEVICE_POINTER
 
 #ifdef REDISTRIBUTE_MATRIX
-  ! this case is not yet implemeted
+   doRedistributeMatrix = .false.
+! do the same as if not redistribute!!
+   allocate(aIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+   check_allocate("elpa1_template: aIntern", istat, errorMessage)
+
+   a       => aIntern(1:matrixRows,1:matrixCols)
+
+   allocate(evIntern(1:obj%na), stat=istat, errmsg=errorMessage)
+   check_allocate("elpa1_template: evIntern", istat, errorMessage)
+   ev      => evIntern(1:obj%na)
+
+   if (present(qExtern)) then
+#ifdef ACTIVATE_SKEW
+     allocate(qIntern(1:matrixRows,1:2*matrixCols), stat=istat, errmsg=errorMessage)
+     check_allocate("elpa1_template: qIntern", istat, errorMessage)
 #else
+     allocate(qIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+     check_allocate("elpa1_template: qIntern", istat, errorMessage)
+#endif
+   endif
+
+!   ! and associate pointer
+!   ! no redistribution happend
+!   a => aExtern(1:matrixRows,1:matrixCols)
+!   if (present(qExtern)) then
+!#ifdef ACTIVATE_SKEW
+!     q => qExtern(1:matrixRows,1:2*matrixCols)
+!#else
+!     q => qExtern(1:matrixRows,1:matrixCols)
+!#endif
+!   endif
+
+#else /* REDISTRIBUTE_MATRIX */
+
    allocate(aIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
    check_allocate("elpa1_template: aIntern", istat, errorMessage)
 
@@ -471,6 +505,7 @@ print *,"Device pointer + REDIST"
 
 #endif /* DEVICE_POINTER */
 
+
 #ifdef REDISTRIBUTE_MATRIX
    if (doRedistributeMatrix) then
 #endif
@@ -515,7 +550,8 @@ print *,"Device pointer + REDIST"
      write(error_unit, *) "ELPA1 Problem setting option for output_pinning_information. Aborting..."
 #include "./elpa1_aborting_template.F90"
    endif
-   
+
+#ifdef HAVE_AFFINITY_CHECKING  
    if (pinningInfo .eq. 1) then
      call init_thread_affinity(nrThreads)
 
@@ -523,6 +559,7 @@ print *,"Device pointer + REDIST"
      if (my_pe .eq. 0) call print_thread_affinity(my_pe)
      call cleanup_thread_affinity()
    endif
+#endif
    success = .true.
 
    if (present(qExtern)) then
@@ -555,7 +592,7 @@ print *,"Device pointer + REDIST"
      &MATH_DATATYPE&
      &_1stage_&
      &PRECISION&
-     &")
+     &") ! "
      success = .true.
      return
    endif

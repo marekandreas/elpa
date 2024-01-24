@@ -164,109 +164,168 @@ module elpa1_compute
   public :: elpa_transpose_vectors_ss_complex_single
 #endif
 
-  contains
+#ifdef WITH_NVIDIA_NCCL
+  public :: elpa_gpu_ccl_transpose_vectors_real_double
+  public :: elpa_gpu_ccl_reduce_add_vectors_real_double
+  public :: elpa_gpu_ccl_transpose_vectors_complex_double
+  public :: elpa_gpu_ccl_reduce_add_vectors_complex_double
 
-! real double precision first
-#define DOUBLE_PRECISION_REAL 1
-#define REALCASE 1
-#define DOUBLE_PRECISION 1
-#include "../general/precision_macros.h"
-
-
-#include "elpa_transpose_vectors.F90"
-#define SKEW_SYMMETRIC_BUILD
-#include "elpa_transpose_vectors.F90"
-#undef SKEW_SYMMETRIC_BUILD
-#include "elpa_reduce_add_vectors.F90"
-#undef DOUBLE_PRECISION
-#undef REALCASE
-! single precision
 #ifdef WANT_SINGLE_PRECISION_REAL
-
-#define REALCASE 1
-#define SINGLE_PRECISION 1
-#include "../general/precision_macros.h"
-
-#include "elpa_transpose_vectors.F90"
-#define SKEW_SYMMETRIC_BUILD
-#include "elpa_transpose_vectors.F90"
-#undef SKEW_SYMMETRIC_BUILD
-#include "elpa_reduce_add_vectors.F90"
-#undef SINGLE_PRECISION
-#undef REALCASE
+  public :: elpa_gpu_ccl_transpose_vectors_real_single
+  public :: elpa_gpu_ccl_reduce_add_vectors_real_single
 #endif
 
-! double precision
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+  public :: elpa_gpu_ccl_transpose_vectors_complex_single
+  public :: elpa_gpu_ccl_reduce_add_vectors_complex_single
+#endif
+#endif /* WITH_NVIDIA_NCCL */
 
+  contains
+
+!________________________________________________________________
+! elpa_transpose_vectors_template.F90
+! elpa_reduce_add_vectors_template.F90
+
+! real double precision
+!#define DOUBLE_PRECISION_REAL 1
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "elpa_transpose_vectors_template.F90"
+#define SKEW_SYMMETRIC_BUILD
+#include "elpa_transpose_vectors_template.F90"
+#undef SKEW_SYMMETRIC_BUILD
+#include "elpa_reduce_add_vectors_template.F90"
+#undef DOUBLE_PRECISION
+#undef REALCASE
+
+! real single precision
+#ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "elpa_transpose_vectors_template.F90"
+#define SKEW_SYMMETRIC_BUILD
+#include "elpa_transpose_vectors_template.F90"
+#undef SKEW_SYMMETRIC_BUILD
+#include "elpa_reduce_add_vectors_template.F90"
+#undef SINGLE_PRECISION
+#undef REALCASE
+#endif /* WANT_SINGLE_PRECISION_REAL */
+
+! complex double precision
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #define SKEW_SYMMETRIC_BUILD
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
-#include "elpa_reduce_add_vectors.F90"
+#include "elpa_reduce_add_vectors_template.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
+! complex single precision
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #define SKEW_SYMMETRIC_BUILD
-#include "elpa_transpose_vectors.F90"
+#include "elpa_transpose_vectors_template.F90"
 #undef SKEW_SYMMETRIC_BUILD
-#include "elpa_reduce_add_vectors.F90"
+#include "elpa_reduce_add_vectors_template.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
-
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
+
+!________________________________________________________________
+! ./GPU/elpa_gpu_ccl_transpose_vectors_template.F90
+! ./GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90
+
+#ifdef WITH_NVIDIA_NCCL
+
+! real double precision
+!#define DOUBLE_PRECISION_REAL 1
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "./GPU/elpa_gpu_ccl_transpose_vectors_template.F90"
+#include "./GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
+
+! real single precision
+#ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "./GPU/elpa_gpu_ccl_transpose_vectors_template.F90"
+#include "./GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90"
+#undef REALCASE
+#undef SINGLE_PRECISION
+#endif /* WANT_SINGLE_PRECISION_REAL */
+
+! complex double precision
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "./GPU/elpa_gpu_ccl_transpose_vectors_template.F90"
+#include "./GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90"
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
+
+! complex single precision
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "./GPU/elpa_gpu_ccl_transpose_vectors_template.F90"
+#include "./GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90"
+#undef COMPLEXCASE
+#undef SINGLE_PRECISION
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
+
+#endif /* WITH_NVIDIA_NCCL */
+
+!________________________________________________________________
+! elpa1_compute_template.F90
 
 ! real double precision
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa1_compute_template.F90"
-
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
 ! real single precision
 #if defined(WANT_SINGLE_PRECISION_REAL)
-
 #define REALCASE 1
 #define SINGLE_PRECISION 1
-
 #include "../general/precision_macros.h"
 #include "elpa1_compute_template.F90"
-
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
 ! complex double precision
-
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa1_compute_template.F90"
-
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
 ! complex single precision
 #if defined(WANT_SINGLE_PRECISION_COMPLEX)
-
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa1_compute_template.F90"
-
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
-
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 end module elpa1_compute

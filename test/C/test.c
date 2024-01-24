@@ -660,9 +660,9 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_EIGENVECTORS)
 #if TEST_QR_DECOMPOSITION == 1
-     elpa_timer_start(handle, "elpa_eigenvectors_qr()");
+     elpa_timer_start(handle, (char*) "elpa_eigenvectors_qr()");
 #else
-     elpa_timer_start(handle, "elpa_eigenvectors()");
+     elpa_timer_start(handle, (char*) "elpa_eigenvectors()");
 #endif
 #endif /* TEST_EIGENVECTORS */
 
@@ -716,15 +716,15 @@ int main(int argc, char** argv) {
      assert_elpa_ok(error_elpa);
 #endif /* TEST_EXPLICIT_NAME */
 #if TEST_QR_DECOMPOSITION == 1
-     elpa_timer_stop(handle, "elpa_eigenvectors_qr()");
+     elpa_timer_stop(handle, (char*) "elpa_eigenvectors_qr()");
 #else
-     elpa_timer_stop(handle, "elpa_eigenvectors()");
+     elpa_timer_stop(handle, (char*) "elpa_eigenvectors()");
 #endif
 #endif /* TEST_EIGENVECTORS */
 
 
 #if defined(TEST_EIGENVALUES)
-   elpa_timer_start(handle, "elpa_eigenvalues()");
+   elpa_timer_start(handle, (char*) "elpa_eigenvalues()");
 #if defined(TEST_EXPLICIT_NAME)
 
 #if defined(TEST_REAL)
@@ -773,11 +773,11 @@ int main(int argc, char** argv) {
 	 elpa_eigenvalues(handle, a, ev, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif /* TEST_EXPLICIT_NAME */
-   elpa_timer_stop(handle, "elpa_eigenvalues()");
+   elpa_timer_stop(handle, (char*) "elpa_eigenvalues()");
 #endif /* TEST_EIGENVALUES */
 
 #if defined(TEST_CHOLESKY)
-   elpa_timer_start(handle, "elpa_cholesky()");
+   elpa_timer_start(handle, (char*) "elpa_cholesky()");
 #if defined(TEST_EXPLICIT_NAME)
 
 #if defined(TEST_REAL)
@@ -827,11 +827,11 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error_elpa);
 
 #endif /* TEST_EXPLICIT_NAME */
-   elpa_timer_stop(handle, "elpa_cholesky()");
+   elpa_timer_stop(handle, (char*) "elpa_cholesky()");
 #endif /* TEST_CHOLESKY */
 
 #if defined(TEST_HERMITIAN_MULTIPLY)
-   elpa_timer_start(handle, "elpa_hermitian_multiply()");
+   elpa_timer_start(handle, (char*) "elpa_hermitian_multiply()");
 #if defined(TEST_EXPLICIT_NAME)
 
 #if defined(TEST_REAL)
@@ -880,25 +880,25 @@ int main(int argc, char** argv) {
 	 elpa_hermitian_multiply(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif /* TEST_EXPLICIT_NAME */
-   elpa_timer_stop(handle, "elpa_hermitian_multiply()");
+   elpa_timer_stop(handle, (char*) "elpa_hermitian_multiply()");
 #endif /* TEST_HERMITIAN_MULTIPLY */
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-     elpa_timer_start(handle, "elpa_generalized_eigenvectors()");
+     elpa_timer_start(handle, (char*) "elpa_generalized_eigenvectors()");
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
      elpa_timer_start(handle, "is_already_decomposed=.false.");
 #endif
      elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error_elpa);
      assert_elpa_ok(error_elpa);
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
-     elpa_timer_stop(handle, "is_already_decomposed=.false.");
+     elpa_timer_stop(handle, (char*) "is_already_decomposed=.false.");
      memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE)); // so that the problem can be solved again
-     elpa_timer_start(handle, "is_already_decomposed=.true.");
+     elpa_timer_start(handle, (char*) "is_already_decomposed=.true.");
      elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error_elpa);
      assert_elpa_ok(error_elpa);
-     elpa_timer_stop(handle, "is_already_decomposed=.true.");
+     elpa_timer_stop(handle, (char*) "is_already_decomposed=.true.");
 #endif /* TEST_GENERALIZED_DECOMP_EIGENPROBLEM */
-     elpa_timer_stop(handle, "elpa_generalized_eigenvectors()");
+     elpa_timer_stop(handle, (char*) "elpa_generalized_eigenvectors()");
 #endif /* TEST_GENERALIZED_EIGENPROBLEM */
 
 #if defined(TEST_SOLVE_TRIDIAGONAL)
@@ -909,9 +909,9 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_EIGENVECTORS)
 #if TEST_QR_DECOMPOSITION == 1
-       elpa_print_times(handle, "elpa_eigenvectors_qr()");
+       elpa_print_times(handle, (char*) "elpa_eigenvectors_qr()");
 #else
-       elpa_print_times(handle, "elpa_eigenvectors()");
+       elpa_print_times(handle, (char*) "elpa_eigenvectors()");
 #endif
 #endif /* TEST_EIGENVECTORS */
 

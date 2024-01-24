@@ -66,10 +66,6 @@
           call OBJECT%timer%start("create_handle")
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
-            !print *,"Creating handle for thread:",thread
-            !success = cublas_create(handle_tmp)
-            !OBJECT%gpu_setup%cublasHandleArray(thread) = handle_tmp
-            !OBJECT%gpu_setup%gpublasHandleArray(thread) = handle_tmp
             success = cublas_create(OBJECT%gpu_setup%cublasHandleArray(thread))
             OBJECT%gpu_setup%gpublasHandleArray(thread) = OBJECT%gpu_setup%cublasHandleArray(thread)
 
@@ -78,9 +74,6 @@
                                        gpublasDefaultPointerMode)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-            !success = rocblas_create(handle_tmp)
-            !OBJECT%gpu_setup%rocblasHandleArray(thread) = handle_tmp
-            !OBJECT%gpu_setup%gpublasHandleArray(thread) = handle_tmp
             success = rocblas_create(OBJECT%gpu_setup%rocblasHandleArray(thread))
             OBJECT%gpu_setup%gpublasHandleArray(thread) = OBJECT%gpu_setup%rocblasHandleArray(thread)
 #endif
@@ -141,6 +134,8 @@
             !endif
           !enddo
           OBJECT%gpu_setup%rocsolverHandleArray(:) = OBJECT%gpu_setup%rocblasHandleArray(:)
+          OBJECT%gpu_setup%gpusolverHandleArray(:) = OBJECT%gpu_setup%rocsolverHandleArray(:)
+
 #endif
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION

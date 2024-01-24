@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [20:0:1])
+AC_SUBST([ELPA_SO_VERSION], [21:0:2])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -45,12 +45,12 @@ print_current_api_version=20231705
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20231705], [Current ELPA autotune version])
-print_current_autotune_version=20231705
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20231705], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20231705, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20232311], [Current ELPA autotune version])
+print_current_autotune_version=20232311
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20232311], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20232311, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1700200688],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1716473596],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -599,6 +599,23 @@ if test x"${enable_timings}" = x"yes"; then
   AC_DEFINE([HAVE_DETAILED_TIMINGS], [1], [Enable more timing])
 fi
 AM_CONDITIONAL([HAVE_DETAILED_TIMINGS], [test x"$enable_timings" = x"yes"])
+
+AC_ARG_ENABLE([affinity-checking],
+              [AS_HELP_STRING([--disable-affinity-checking],
+                              [allow ELPA to check process and threading affinity, default yes])],
+              [
+               if test x"$enableval" = x"yes"; then
+                 enable_affinity_checking_=yes
+               else
+                 enable_affinity_checking=no
+               fi
+	       ],
+              [enable_affinity_checking=yes])
+
+if test x"${enable_affinity_checking}" = x"yes"; then
+  AC_DEFINE([HAVE_AFFINITY_CHECKING], [1], [Enable affinity checking])
+fi
+AM_CONDITIONAL([HAVE_AFFINITY_CHECKING], [test x"$enable_affinity_checking" = x"yes"])
 
 dnl PAPI for ftimings
 AC_LANG_PUSH([C])
@@ -1735,7 +1752,7 @@ if test x"${enableval}" = x"yes" ; then
   enableval="no"
 fi
 
-AC_MSG_CHECKING(whether obsolete --enable-nvidia-gpu has been provided)
+AC_MSG_CHECKING(whether obsolete --enable-nvidia-sm80-gpu has been provided)
 AC_ARG_ENABLE([nvidia-sm80-gpu],
                 AS_HELP_STRING([--enable-nvidia-sm80-gpu],
 			       [OBSOLETE FLAG: do use nvidia-sm80-gpu kernels for ELPA 2stage (please use --enable-nvidia-sm80-gpu-kernels]),
@@ -2833,10 +2850,11 @@ fi
 use_cuda_streams=no
 use_hip_streams=no
 use_gpu_streams=no
+relied_on_default=no
 AC_MSG_CHECKING(whether GPU streams should be used)
 AC_ARG_ENABLE([gpu-streams],
                [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
-			       [do use Nvidia or AMD GPU version with Cuda or HIP streams, respectively])],
+			       [do use Nvidia or AMD GPU version with Cuda or HIP streams, respectively: default yes])],
                                [if test x"$enableval" = x"nvidia"; then
 				  use_cuda_streams=yes
 				  use_gpu_streams=yes
@@ -2854,8 +2872,31 @@ AC_ARG_ENABLE([gpu-streams],
 				  use_gpu_streams=no
                                 fi
 				],
-              [use_gpu_streams=no])
+              [relied_on_default=yes
+               use_cuda_streams=no
+               use_hip_streams=no
+	       use_gpu_streams=no
+	       if test x"$enable_openmp" = x"no"; then
+		 if test x"$enable_cuda_aware_mpi" = x"no"; then
+	           if test x"$need_nvidia_gpu" = x"yes"; then
+                     use_cuda_streams=yes
+                     use_gpu_streams=yes
+                   fi
+                   if test x"$need_amd_gpu" = x"yes"; then
+                     use_hip_streams=yes
+                     use_gpu_streams=yes
+                   fi
+		 fi
+	       fi
+	       ])
 AC_MSG_RESULT([${use_gpu_streams}])
+if test x"$enable_openmp" = x"no"; then
+  if test x"$enable_cuda_aware_mpi" = x"no"; then
+    if test x"$relied_on_default" = x"yes"; then
+      AC_MSG_NOTICE([Streaming has ben enabled since you relied on the default action])
+    fi
+  fi
+fi
 
 if test x"$use_cuda_streams" = x"yes"; then
   if test x"$need_nvidia_gpu" = x"no"; then
@@ -2873,14 +2914,34 @@ if test x"$use_cuda_streams" = x"yes"; then
     echo " has not been tested is officially not yet supported! Use at your own risk!"
     echo "---------------------------------------------------------------------------"
   fi
-  if test x"${with_cusolver}" = x"yes"; then
-    echo "---------------------------------------------------------------------------"
-    echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
-    echo " has not been tested is officially not yet supported! Use at your own risk!"
-    echo "---------------------------------------------------------------------------"
-  fi
+  #if test x"${with_cusolver}" = x"yes"; then
+  #  echo "---------------------------------------------------------------------------"
+  #  echo " The combination --enable-cusolver and --enable-gpu-streams=nvidia   "
+  #  echo " has not been tested is officially not yet supported! Use at your own risk!"
+  #  echo "---------------------------------------------------------------------------"
+  #fi
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 
+fi
+
+if test x"$need_nvidia_gpu" = x"yes"; then
+  if test x"$use_cuda_streams" = x"no"; then
+    echo ""
+    echo ""
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo "   PERFORMANCE DEGRADATION DETECTED:"
+    echo ""
+    echo " You want to build ELPA for NVIDIA GPUs but did not configure to use streams "
+    echo " this will work but performance will be far from optimal!"
+    echo " This setting is NOT recommended"
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo ""
+    echo ""
+    echo ""
+    AC_MSG_NOTICE([If --enable-nvidia-gpu is set, we recommend --enable-gpu-streams-nvidia])
+  fi
 fi
 
 if test x"$use_hip_streams" = x"yes"; then
@@ -2896,6 +2957,25 @@ if test x"$use_hip_streams" = x"yes"; then
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 fi
 
+if test x"$need_amd_gpu" = x"yes"; then
+  if test x"$use_hip_streams" = x"no"; then
+    echo ""
+    echo ""
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo "   PERFORMANCE DEGRADATION DETECTED:"
+    echo ""
+    echo " You want to build ELPA for AMD GPUs but did not configure to use streams "
+    echo " this will work but performance will be far from optimal!"
+    echo " This setting is NOT recommended"
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo ""
+    echo ""
+    echo ""
+    AC_MSG_NOTICE([If --enable-amd-gpu is set, we recommend --enable-gpu-streams-amd])
+  fi
+fi
 
 m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AM_CONDITIONAL([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[test x"$use_[]elpa_m4_kernel[]" = x"yes"])
@@ -3694,12 +3774,12 @@ fi
 
 #echo " "
 #echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2023.05.001.rc1        *"
+#echo "*  This is the first release candidate of ELPA 2023.11.001.rc1        *"
 #echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2023.05.001                                                   *"
+#echo "*  ELPA 2023.11.001                                                   *"
 #echo "***********************************************************************"
 #echo " "
-
+#
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
   echo "Important message:"

@@ -105,7 +105,7 @@ subroutine ROUTINE_NAME&
   integer(kind=ik)                                  :: n, lc, k, i, ips, ipt, ns, nl
   integer(kind=MPI_KIND)                            :: mpierr
   integer(kind=ik)                                  :: lcm_s_t, nblks_tot, nblks_comm, nblks_skip
-  integer(kind=ik)                                  :: auxstride
+  integer(kind=ik)                                  :: aux_stride
   integer(kind=ik), intent(in)                      :: nrThreads
   integer(kind=ik)                                  :: istat
   character(200)                                    :: errorMessage
@@ -118,6 +118,9 @@ subroutine ROUTINE_NAME&
   integer(kind=c_int)                               :: non_blocking_collectives_rows, error, &
                                                        non_blocking_collectives_cols
   logical                                           :: success
+
+  integer(kind=ik)                                  :: mpi_comm_all, my_mpi_rank, transposed_mpi_rank, message_size, matrix_order
+  integer(kind=ik)                                  :: ld_st, solver
 
   success = .true.
 
@@ -181,9 +184,76 @@ subroutine ROUTINE_NAME&
   nps = int(npsMPI,kind=c_int)
   mypt = int(myptMPI,kind=c_int)
   npt = int(nptMPI,kind=c_int)
-
-
   call obj%timer%stop("mpi_communication")
+
+  ! TODO_23_11
+  ! this codepath doesn't work for ELPA2, Cholesky, maybe smth else. Fix it, along with optimization of Cholesky-GPU
+  ! because there nvc>1 and ld_s != ld_t (so, we can't make a contigous-memory MPI_Send call)
+#if 0
+#if !defined(SKEW_SYMMETRIC_BUILD)
+  call obj%get("solver", solver, error)
+  if (solver==ELPA_SOLVER_1STAGE .and. nps==npt .and. nvs==1  .and. .not. (nvc>1 .and. ld_s /= ld_t)) then
+    call obj%get("mpi_comm_parent", mpi_comm_all, error)
+    call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
+    ld_st = min(ld_s,ld_t)
+    
+    if (myps==mypt) then
+      vmat_t(1:ld_st,1:nvc) = vmat_s(1:ld_st,1:nvc)
+    else
+      call obj%get("matrix_order", matrix_order, error)
+
+      if (comm_s_isRows .and. matrix_order==COLUMN_MAJOR_ORDER .or. &
+         (.not. comm_s_isRows) .and. matrix_order==ROW_MAJOR_ORDER) then
+        ! my_mpi_rank = myps + mypt*nps
+        if (my_mpi_rank /= myps + mypt*nps) then ! TODO_23_11 - use blacs_pnum instead and delete the check after testing
+          print *, "ERROR my_mpi_rank /= myps + mypt*nps"
+        endif
+
+        transposed_mpi_rank = mypt + myps*npt
+      else if (comm_s_isRows .and. matrix_order==ROW_MAJOR_ORDER .or. &
+        (.not. comm_s_isRows) .and. matrix_order==COLUMN_MAJOR_ORDER) then
+        ! my_mpi_rank = mypt + myps*npt
+        if (my_mpi_rank /= mypt + myps*npt) then ! TODO_23_11 - use blacs_pnum instead and delete the check after testing
+          print *, "ERROR my_mpi_rank /= mypt + myps*npt"
+        endif
+
+        transposed_mpi_rank = myps + mypt*nps
+      else
+        print *, "ERROR: matrix_order not set correctly"
+      endif
+      
+      ! TODO_23_11 - delete after implementing and testing
+      ! print *, "my_mpi_rank=", my_mpi_rank, ", transposed_mpi_rank=", transposed_mpi_rank
+      ! print *, "my_mpi_rank=", my_mpi_rank, ", nvc=", nvc, ", ld_s=", ld_s, ", ld_t=", ld_t
+
+      message_size = ld_st*nvc
+
+#ifdef WITH_MPI      
+      if (myps>mypt .and. message_size>0) then
+        call MPI_Send(vmat_s, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, & ! TODO_23_11: implement also a non-blocking version with MPI_Isend
+                      int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), mpierr)
+        call MPI_Recv(vmat_t, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                      int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+      else if (myps<mypt  .and. message_size>0) then
+        call MPI_Recv(vmat_t, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                      int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+        call MPI_Send(vmat_s, int(message_size,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, & 
+                      int(transposed_mpi_rank,kind=MPI_KIND), 0, int(mpi_comm_all, kind=MPI_KIND), mpierr)
+      endif
+#endif      
+    endif
+
+    call obj%timer%stop("&
+        &ROUTINE_NAME&
+        &MATH_DATATYPE&
+        &" // &
+        &PRECISION_SUFFIX &
+        )
+    return
+  endif
+#endif /* !defined(SKEW_SYMMETRIC_BUILD) */     
+#endif /* 0 */
+
   ! The basic idea of this routine is that for every block (in the block cyclic
   ! distribution), the processor within comm_t which owns the diagonal
   ! broadcasts its values of vmat_s to all processors within comm_t.
@@ -206,7 +276,7 @@ subroutine ROUTINE_NAME&
 #ifdef WITH_OPENMP_TRADITIONAL
   !$omp parallel num_threads(nrThreads) &
   !$omp default(none) &
-  !$omp private(lc, i, k, ns, nl, nblks_comm, auxstride, ips, ipt, n, bcast_request1) &
+  !$omp private(lc, i, k, ns, nl, nblks_comm, aux_stride, ips, ipt, n, bcast_request1) &
   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
   !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
 #ifdef WITH_MPI
@@ -219,10 +289,10 @@ subroutine ROUTINE_NAME&
     ips = mod(n,nps)
     ipt = mod(n,npt)
 
-    if (mypt == ipt) then
+    if (mypt == ipt) then ! (mypt == ipt)
 
       nblks_comm = (nblks_tot-nblks_skip-n+lcm_s_t-1)/lcm_s_t
-      auxstride = nblk * nblks_comm
+      aux_stride = nblk * nblks_comm
 !      if(nblks_comm==0) cycle
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
@@ -232,14 +302,14 @@ subroutine ROUTINE_NAME&
 #endif
           do lc=1,nvc
             do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-              k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+              k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * aux_stride
               ns = (i/nps)*nblk ! local start of block i
               nl = min(nvr-i*nblk,nblk) ! length
               aux(k+1:k+nl) = vmat_s(ns+1:ns+nl,lc)
 !              k = k+nblk
             enddo
           enddo
-        endif
+        endif ! (myps == ips)
 
 #ifdef WITH_OPENMP_TRADITIONAL
         !$omp barrier
@@ -282,7 +352,7 @@ subroutine ROUTINE_NAME&
 !        k = 0
         do lc=1,nvc
           do i = nblks_skip+n, nblks_tot-1, lcm_s_t
-            k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * auxstride
+            k = (i - nblks_skip - n)/lcm_s_t * nblk + (lc - 1) * aux_stride
             ns = (i/npt)*nblk ! local start of block i
             nl = min(nvr-i*nblk,nblk) ! length
 #ifdef SKEW_SYMMETRIC_BUILD
@@ -294,7 +364,7 @@ subroutine ROUTINE_NAME&
           enddo
         enddo
       endif
-    endif
+    endif ! (mypt == ipt)
 
   enddo
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -311,4 +381,3 @@ subroutine ROUTINE_NAME&
   )
 
 end subroutine
-
