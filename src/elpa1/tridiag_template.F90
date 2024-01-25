@@ -325,18 +325,29 @@ subroutine tridiag_&
   endif
 
 
-  if (wantDebug) call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
-  call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
-  call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
-  call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+  !mpi_comm_all    = obj%mpi_setup%mpi_comm_parent
+  !mpi_comm_cols   = obj%mpi_setup%mpi_comm_cols
+  !mpi_comm_rows   = obj%mpi_setup%mpi_comm_rows
+
+  my_prow = obj%mpi_setup%myRank_comm_rows
+  my_pcol = obj%mpi_setup%myRank_comm_cols
+
+  np_rows = obj%mpi_setup%nRanks_comm_rows
+  np_cols = obj%mpi_setup%nRanks_comm_cols
 
 
-  my_prow = int(my_prowMPI, kind=c_int)
-  np_rows = int(np_rowsMPI, kind=c_int)
-  my_pcol = int(my_pcolMPI, kind=c_int)
-  np_cols = int(np_colsMPI, kind=c_int)
-  if (wantDebug) call obj%timer%stop("mpi_communication")
+  !if (wantDebug) call obj%timer%start("mpi_communication")
+  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
+  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+
+  !my_prow = int(my_prowMPI, kind=c_int)
+  !np_rows = int(np_rowsMPI, kind=c_int)
+  !my_pcol = int(my_pcolMPI, kind=c_int)
+  !np_cols = int(np_colsMPI, kind=c_int)
+  !if (wantDebug) call obj%timer%stop("mpi_communication")
 
   ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
   ! seems that tile is a square submatrix, consisting by several blocks

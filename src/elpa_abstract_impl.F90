@@ -51,6 +51,7 @@ module elpa_abstract_impl
   use elpa_api
   use elpa_generated_fortran_interfaces
   use elpa_gpu_setup
+  use elpa_mpi_setup
 
 #ifdef HAVE_DETAILED_TIMINGS
   use ftimings
@@ -81,6 +82,7 @@ module elpa_abstract_impl
     logical             :: eigenvalues_only
 
     type(elpa_gpu_setup_t) :: gpu_setup
+    type(elpa_mpi_setup_t) :: mpi_setup
     contains
       procedure, public :: elpa_set_integer                      !< private methods to implement the setting of an integer/float/double key/value pair
       procedure, public :: elpa_set_float
