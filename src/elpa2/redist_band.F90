@@ -120,23 +120,32 @@ subroutine redist_band_&
     useNonBlockingCollectivesAll = .false.
   endif
 
-  call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
-  call mpi_comm_size(int(mpi_comm_all,kind=MPI_KIND), n_pesMPI, mpierr)
+  my_pe   = obj%mpi_setup%myRank_comm_parent
+  my_prow = obj%mpi_setup%myRank_comm_rows
+  my_pcol = obj%mpi_setup%myRank_comm_cols
 
-  call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
-  call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
-  call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
-  call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI, mpierr)
+  np_rows = obj%mpi_setup%nRanks_comm_rows
+  np_cols = obj%mpi_setup%nRanks_comm_cols
 
-  my_pe = int(my_peMPI,kind=c_int)
-  n_pes = int(n_pesMPI,kind=c_int)
-  my_prow = int(my_prowMPI,kind=c_int)
-  np_rows = int(np_rowsMPI,kind=c_int)
-  my_pcol = int(my_pcolMPI,kind=c_int)
-  np_cols = int(np_colsMPI,kind=c_int)
+  n_pes  = obj%mpi_setup%nRanks_comm_parent
 
-  call obj%timer%stop("mpi_communication")
+  !call obj%timer%start("mpi_communication")
+  !call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_peMPI, mpierr)
+  !call mpi_comm_size(int(mpi_comm_all,kind=MPI_KIND), n_pesMPI, mpierr)
+
+  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
+  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
+  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI, mpierr)
+
+  !my_pe = int(my_peMPI,kind=c_int)
+  !n_pes = int(n_pesMPI,kind=c_int)
+  !my_prow = int(my_prowMPI,kind=c_int)
+  !np_rows = int(np_rowsMPI,kind=c_int)
+  !my_pcol = int(my_pcolMPI,kind=c_int)
+  !np_cols = int(np_colsMPI,kind=c_int)
+
+  !call obj%timer%stop("mpi_communication")
 
   ! Get global_id mapping 2D procssor coordinates to global id
   

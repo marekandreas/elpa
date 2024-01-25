@@ -218,35 +218,46 @@
   matrixRows  = obj%local_nrows
   matrixCols  = obj%local_ncols
 
-  call obj%get("mpi_comm_rows", mpi_comm_rows, error)
-  if (error .ne. ELPA_OK) then
-    print *,"Problem getting option for mpi_comm_rows. Aborting..."
-    stop 1
-  endif
-  call obj%get("mpi_comm_cols", mpi_comm_cols, error)
-  if (error .ne. ELPA_OK) then
-    print *,"Problem getting option for mpi_comm_cols. Aborting..."
-    stop 1
-  endif
-  call obj%get("mpi_comm_parent", mpi_comm_all, error)
-  if (error .ne. ELPA_OK) then
-    print *,"Problem getting option for mpi_comm_parent. Aborting..."
-    stop 1
-  endif
+  !call obj%get("mpi_comm_rows", mpi_comm_rows, error)
+  !if (error .ne. ELPA_OK) then
+  !  print *,"Problem getting option for mpi_comm_rows. Aborting..."
+  !  stop 1
+  !endif
+  !call obj%get("mpi_comm_cols", mpi_comm_cols, error)
+  !if (error .ne. ELPA_OK) then
+  !  print *,"Problem getting option for mpi_comm_cols. Aborting..."
+  !  stop 1
+  !endif
+  !call obj%get("mpi_comm_parent", mpi_comm_all, error)
+  !if (error .ne. ELPA_OK) then
+  !  print *,"Problem getting option for mpi_comm_parent. Aborting..."
+  !  stop 1
+  !endif
 
-  call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
-  call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
-  call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
-  call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
-  call mpi_comm_rank(int(mpi_comm_all, kind=MPI_KIND) ,myidMPI ,mpierr)
+  mpi_comm_all    = obj%mpi_setup%mpi_comm_parent
+  mpi_comm_cols   = obj%mpi_setup%mpi_comm_cols
+  mpi_comm_rows   = obj%mpi_setup%mpi_comm_rows
 
-  my_prow = int(my_prowMPI,kind=c_int)
-  np_rows = int(np_rowsMPI,kind=c_int)
-  my_pcol = int(my_pcolMPI,kind=c_int)
-  np_cols = int(np_colsMPI,kind=c_int)
-  myid    = int(myidMPI,kind=c_int)
-  call obj%timer%stop("mpi_communication")
+  myid    = obj%mpi_setup%myRank_comm_parent
+  my_prow = obj%mpi_setup%myRank_comm_rows
+  my_pcol = obj%mpi_setup%myRank_comm_cols
+
+  np_rows = obj%mpi_setup%nRanks_comm_rows
+  np_cols = obj%mpi_setup%nRanks_comm_cols
+
+  !call obj%timer%start("mpi_communication")
+  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
+  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
+  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
+  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
+  !call mpi_comm_rank(int(mpi_comm_all, kind=MPI_KIND) ,myidMPI ,mpierr)
+
+  !my_prow = int(my_prowMPI,kind=c_int)
+  !np_rows = int(np_rowsMPI,kind=c_int)
+  !my_pcol = int(my_pcolMPI,kind=c_int)
+  !np_cols = int(np_colsMPI,kind=c_int)
+  !myid    = int(myidMPI,kind=c_int)
+  !call obj%timer%stop("mpi_communication")
 
   l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
   l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
