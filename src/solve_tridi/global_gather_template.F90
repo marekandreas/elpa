@@ -69,6 +69,7 @@ subroutine global_gather_&
   np_cols = int(np_colsMPI,kind=c_int)
 
   call obj%timer%stop("mpi_communication")
+
 #else
 #endif
   if (npc_n==1 .and. np_rows==1) return ! nothing to do

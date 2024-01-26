@@ -61,6 +61,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
   src/GPU/mod_gpu_setup.F90 \
+  src/general/mod_mpi_setup.F90 \
   src/GPU/check_for_gpu.F90 \
   src/GPU/mod_vendor_agnostic_layer.F90 \
   src/GPU/mod_vendor_agnostic_general_layer.F90 \
@@ -1051,7 +1052,7 @@ EXTRA_DIST = \
   src/elpa1/elpa1_template.F90 \
   src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
-  src/elpa1/elpa1_trans_ev_template.F90 \
+  src/elpa1/trans_ev_template.F90 \
   src/elpa1/tridiag_template.F90 \
   src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/elpa_cholesky_template.F90 \

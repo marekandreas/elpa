@@ -1,4 +1,6 @@
 #if 0
+!    Copyright 2023, A. Marek, MPCDF
+!
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
@@ -42,59 +44,38 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
-!
-!
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
-!
-! Copyright of the original code rests with the authors inside the ELPA
-! consortium. The copyright of any additional modifications shall rest
-! with their original authors, but shall adhere to the licensing terms
-! distributed along with the original code in the file "COPYING".
-!
-! Author: Andreas Marek, MPCDF
 #endif
 
-#include "../general/sanity.F90"
 
-#if REALCASE == 1
-#include "../general/error_checking.inc"
-#endif
+#include "config-f90.h"
+module elpa_mpi_setup
+  !use precision
+  use iso_c_binding
 
-#if REALCASE == 1
+  type :: elpa_mpi_setup_t
+    logical                        :: useMPI
 
-#include "tridiag_template.F90"
-#include "trans_ev_template.F90"
+    integer(kind=c_int)            :: mpi_comm_parent, mpi_comm_cols, mpi_comm_rows
+    integer(kind=c_int)            :: mpi_comm_parentExternal, mpi_comm_colsExternal, mpi_comm_rowsExternal
 
-! now comes a dirty hack:
-! the file elpa1_solve_tridi_real_template.F90 must be included twice
-! for the legacy and for the new API. In the new API, however, some routines
-! must be named "..._impl"
+    integer(kind=c_int)            :: nRanks_comm_parent
+    integer(kind=c_int)            :: nRanks_comm_rows
+    integer(kind=c_int)            :: nRanks_comm_cols
 
-#ifdef DOUBLE_PRECISION_REAL
-#define PRECISION_AND_SUFFIX double
-#else
-#define PRECISION_AND_SUFFIX single
-#endif
-!#include "elpa1_solve_tridi_real_template.F90"
-#undef PRECISION_AND_SUFFIX
-#ifdef DOUBLE_PRECISION_REAL
-#define PRECISION_AND_SUFFIX  double_impl
-#else
-#define PRECISION_AND_SUFFIX  single_impl
-#endif
-#include "../solve_tridi/solve_tridi_template.F90"
-#undef PRECISION_AND_SUFFIX
-!#include "elpa1_merge_systems_real_template.F90"
-#include "elpa1_tools_template.F90"
+    integer(kind=c_int)            :: myRank_comm_parent
+    integer(kind=c_int)            :: myRank_comm_rows
+    integer(kind=c_int)            :: myRank_comm_cols
+    
+    integer(kind=c_int)            :: nRanksExternal_comm_parent
+    integer(kind=c_int)            :: nRanksExternal_comm_rows
+    integer(kind=c_int)            :: nRanksExternal_comm_cols
 
-#endif
+    integer(kind=c_int)            :: myRankExternal_comm_parent
+    integer(kind=c_int)            :: myRankExternal_comm_rows
+    integer(kind=c_int)            :: myRankExternal_comm_cols
 
-#if COMPLEXCASE == 1
 
-#include "tridiag_template.F90"
-#include "trans_ev_template.F90"
-#include "elpa1_tools_template.F90"
+  end type
 
-#define ALREADY_DEFINED 1
+end module
 
-#endif

@@ -4,6 +4,7 @@ Changelog for next release
 - not yet decided
 
 Changelog for ELPA 2023.11.001
+- enable gpu-streams per default for NVIDIA and AMD GPUs
 - Updated / improved documentation and man pages
 - Fixed compilation error on AMD GPUs
 - Fixed SVE 256 compute kernels
@@ -14,7 +15,6 @@ commpunication
 - significantly faster ELPA 2stage solver on Intel GPUs
 - Consistent enabling/disabling of SKEW_SYMMETRIC in header files
 - new setup_gpu API function
-
 
 Changelog for ELPA 2023.05.001
 - added CITATION.cff file

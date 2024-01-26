@@ -194,6 +194,8 @@ subroutine trans_ev_band_to_full_&
   logical                                        :: useNonBlockingCollectivesRows
   integer(kind=c_int)                            :: non_blocking_collectives_rows, non_blocking_collectives_cols
   logical                                        :: success
+  integer(kind=MPI_KIND), allocatable            :: ibreq(:)
+  integer(kind=ik)                               :: nblocks, bc_counter
   integer(kind=c_intptr_t)                       :: gpuHandle, my_stream
 
   success = .true.
@@ -263,17 +265,23 @@ subroutine trans_ev_band_to_full_&
 #endif
 
 
-  call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
-  call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
-  call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
-  call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
+  my_prow = obj%mpi_setup%myRank_comm_rows
+  my_pcol = obj%mpi_setup%myRank_comm_cols
 
-  my_prow = int(my_prowMPI,kind=c_int)
-  my_pcol = int(my_pcolMPI,kind=c_int)
-  np_rows = int(np_rowsMPI,kind=c_int)
-  np_cols = int(np_colsMPI,kind=c_int)
-  call obj%timer%stop("mpi_communication")
+  np_rows = obj%mpi_setup%nRanks_comm_rows
+  np_cols = obj%mpi_setup%nRanks_comm_cols
+
+  !call obj%timer%start("mpi_communication")
+  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
+  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
+  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
+  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
+
+  !my_prow = int(my_prowMPI,kind=c_int)
+  !my_pcol = int(my_pcolMPI,kind=c_int)
+  !np_rows = int(np_rowsMPI,kind=c_int)
+  !np_cols = int(np_colsMPI,kind=c_int)
+  !call obj%timer%stop("mpi_communication")
 
   max_blocks_row = ((na -1)/nblk)/np_rows + 1 ! Rows of a_mat
   max_blocks_col = ((nqc-1)/nblk)/np_cols + 1 ! Columns of q_mat!
@@ -566,6 +574,9 @@ subroutine trans_ev_band_to_full_&
 
     nb = 0
     ns = 0
+    bc_counter=0
+    nblocks = n_cols/nblk;
+    allocate(ibreq(0:nblocks-1))
 
     do lc = 1, n_cols
       ncol = (istep-1)*cwy_blocking + nbw + lc ! absolute column number of householder Vector
@@ -581,12 +592,10 @@ subroutine trans_ev_band_to_full_&
       if (lc==n_cols .or. mod(ncol,nblk)==0) then
 #ifdef WITH_MPI
         if (useNonBlockingCollectivesCols) then
-          call obj%timer%start("mpi_nbc_communication")
           call mpi_ibcast(hvb(ns+1), int(nb-ns,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,&
                          int(pcol(ncol, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), &
-                         bcast_request1, mpierr)
-          call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
-          call obj%timer%stop("mpi_nbc_communication")
+                         ibreq(bc_counter), mpierr)
+          bc_counter = bc_counter + 1  
         else
           call obj%timer%start("mpi_communication")
           call mpi_bcast(hvb(ns+1), int(nb-ns,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,&
@@ -598,6 +607,15 @@ subroutine trans_ev_band_to_full_&
         ns = nb
       endif
     enddo ! lc
+
+#ifdef  WITH_MPI
+  if(useNonBlockingCollectivesCols) then
+    call obj%timer%start("mpi_nbc_communication")
+    call mpi_waitall(nblocks, ibreq, MPI_STATUSES_IGNORE, mpierr)
+    call obj%timer%stop("mpi_nbc_communication")
+  endif
+#endif
+  deallocate(ibreq)
 
     ! Expand compressed Householder vectors into matrix hvm
 
@@ -715,7 +733,7 @@ subroutine trans_ev_band_to_full_&
 #endif /* MORE_GPUBLAS */
           call obj%timer%start("mpi_nbc_communication")
           call mpi_iallreduce(t_tmp, t_tmp2, int(cwy_blocking*nbw,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
+                         MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
           call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
           call obj%timer%stop("mpi_nbc_communication")
 
@@ -1287,7 +1305,7 @@ subroutine trans_ev_band_to_full_&
 #else
       successGPU = gpu_memcpy(tmp_dev, int(loc(tmp2),kind=c_intptr_t), &
                               l_cols*n_cols*size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp1", successGPU)
+      check_memcpy_gpu("trans_ev_band_to_full: tmp_dev -> tmp2", successGPU)
 #endif
 #endif /* MORE_GPUBLAS */
 
