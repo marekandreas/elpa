@@ -190,14 +190,14 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
     local_buffer q_s(sycl::range(nb+1), h);
     local_buffer dotp_s(sycl::range(nb+1), h);
 
-    h.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) /*[[intel::reqd_sub_group_size(32)]]*/ {
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wcuda-compat"
+    h.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) [[intel::reqd_sub_group_size(sg_size)]] {
       int tid = it.get_local_id(0);
-      int local_range = it.get_local_range(0);
 
       int j = ncols;
       int reserve_counter = q_reserve_size;
       int q_off =     it.get_group(0) + ldq * (j + tid - 1);
-      int q_off_res = it.get_group(0) + ldq * (j       - 1);
       int h_off = tid + (j - 1) * nb;
 
       q_s[tid] = q[q_off];
@@ -247,17 +247,16 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
         }
 
         q_off -= ldq;
-        q_off_res -= ldq;
         h_off -= nb;
       }
     });
+    #pragma clang diagnostic pop
   });
   queue.wait_and_throw();
 }
 
-template <typename T>
-void launch_compute_hh_trafo_c_sycl_kernel(T *q, const T *hh, const T *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
-  int const sg_size = 32;
+template <typename T, int sg_size>
+void launch_compute_hh_trafo_c_sycl_kernel_sg(T *q, const T *hh, const T *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
   switch (nb) {
     case 1024: compute_hh_trafo_c_sycl_kernel<T, 1024, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
     case 512:  compute_hh_trafo_c_sycl_kernel<T, 512, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
@@ -271,6 +270,29 @@ void launch_compute_hh_trafo_c_sycl_kernel(T *q, const T *hh, const T *hh_tau, c
     case 2:    compute_hh_trafo_c_sycl_kernel<T, 2, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
     case 1:    compute_hh_trafo_c_sycl_kernel<T, 1, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
     default:   abort();
+  }
+}
+
+template <typename T>
+void launch_compute_hh_trafo_c_sycl_kernel(T *q, const T *hh, const T *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
+  static int chosen_sg_size;
+
+  if (chosen_sg_size == 0) {
+    auto device = elpa::gpu::sycl::getDevice();
+    auto sg_sizes = device.get_info<sycl::info::device::sub_group_sizes>();
+    if (std::find(sg_sizes.begin(), sg_sizes.end(), 32) != sg_sizes.end()) chosen_sg_size = 32;
+    else if (std::find(sg_sizes.begin(), sg_sizes.end(), 64) != sg_sizes.end()) chosen_sg_size = 64;
+    else chosen_sg_size = sg_sizes[sg_sizes.size() - 1];
+  }
+  switch (chosen_sg_size) {
+    case 128: launch_compute_hh_trafo_c_sycl_kernel_sg<T, 128>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+    case  64: launch_compute_hh_trafo_c_sycl_kernel_sg<T,  64>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+    case  32: launch_compute_hh_trafo_c_sycl_kernel_sg<T,  32>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+    case  16: launch_compute_hh_trafo_c_sycl_kernel_sg<T,  16>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+    case   8: launch_compute_hh_trafo_c_sycl_kernel_sg<T,   8>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+    case   4: launch_compute_hh_trafo_c_sycl_kernel_sg<T,   4>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+    case   2: launch_compute_hh_trafo_c_sycl_kernel_sg<T,   2>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+    default: abort();
   }
 }
 
