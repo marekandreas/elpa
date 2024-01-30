@@ -61,6 +61,9 @@
                      !        &_a_tmp1
   use cholesky_gpu
   use mod_query_gpu_usage
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
+  use cuda_functions ! for NVTX labels
+#endif
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -427,6 +430,11 @@
 #endif
 
   do n = 1, na, nblk
+
+#ifdef WITH_NVTX
+    call nvtxRangePush("do n = 1, na, nblk")
+#endif
+
     ! Calculate first local row and column of the still remaining matrix
     ! on the local processor
 
@@ -447,12 +455,18 @@
           call obj%timer%start("gpusolver")
           gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = (l_row1-1 + (l_col1-1)*matrixRows) * size_of_datatype
+#ifdef WITH_NVTX
+          call nvtxRangePush("gpusolver_POTRF last")
+#endif
           call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info, gpusolverHandle)
           if (info .ne. 0) then
             write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF 1"
             success = .false.
             return
           endif
+#ifdef WITH_NVTX
+          call nvtxRangePop() ! gpusolver_POTRF last
+#endif
           call obj%timer%stop("gpusolver")
 #else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
 
@@ -512,7 +526,7 @@
 #if COMPLEXCASE == 1
             &: Error in zpotrf: ",info
 #endif
-            success = .false.
+            success = .false. ! "
             return
           endif ! info
 #else /* DEVICE_POINTER */
@@ -571,7 +585,7 @@
 #if COMPLEXCASE == 1
             &: Error in zpotrf: ",info
 #endif
-            success = .false.
+            success = .false. ! "
             return
           endif ! info
 #endif /* DEVICE_POINTER */
@@ -601,14 +615,20 @@
 #if COMPLEXCASE == 1
             &: Error in zpotrf: ",info
 #endif
-            success = .false.
+            success = .false. ! "
             return
           endif
 
         endif
       endif ! useGPU
+      
+#ifdef WITH_NVTX
+      call nvtxRangePop() ! do n = 1, na, nblk
+#endif      
       exit ! Loop
     endif ! (n+nblk > na) 
+
+    ! This is not the last step
 
     if (my_prow==prow(n, nblk, np_rows)) then
 
@@ -619,16 +639,25 @@
           call obj%timer%start("gpusolver")
           gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = (l_row1-1 + (l_col1-1)*matrixRows) * size_of_datatype
+#ifdef WITH_NVTX
+          call nvtxRangePush("gpusolver_POTRF")
+#endif
           call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info, gpusolverHandle)
           if (info .ne. 0) then
             write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF 2"
             success = .false.
             return
           endif
+#ifdef WITH_NVTX
+          call nvtxRangePop() ! gpusolver_POTRF
+#endif
           call obj%timer%stop("gpusolver")
 #else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
 #ifndef DEVICE_POINTER
           call obj%timer%start("blas")
+#ifdef WITH_NVTX
+          call nvtxRangePush("memcpy D-H a_dev->a")
+#endif
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -648,10 +677,20 @@
                        matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
 #endif
+#ifdef WITH_NVTX
+          call nvtxRangePop() ! memcpy D-H a_dev->a
+#endif
 
+#ifdef WITH_NVTX
+          call nvtxRangePush("POTRF")
+#endif
           call PRECISION_POTRF('U', int(nblk,kind=BLAS_KIND), a(l_row1,l_col1), &
                                int(matrixRows,kind=BLAS_KIND) , infoBLAS )
           info = int(infoBLAS,kind=ik)
+#ifdef WITH_NVTX
+          call nvtxRangePop() !  POTRF
+#endif
+
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -683,7 +722,7 @@
 #if COMPLEXCASE == 1
             &: Error in zpotrf: ",info
 #endif
-            success = .false.
+            success = .false. ! "
             return
           endif ! info
 #else /* DEVICE_POINTER */
@@ -742,7 +781,7 @@
 #if COMPLEXCASE == 1
             &: Error in zpotrf: ",info
 #endif
-            success = .false.
+            success = .false. ! "
             return
           endif ! info
 
@@ -774,7 +813,7 @@
             &: Error in zpotrf 2: ",info
 
 #endif
-            success = .false.
+            success = .false. ! "
             return
           endif ! useGPU
         endif
@@ -899,8 +938,15 @@
         gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
         if (l_cols-l_colx+1 > 0) then
           a_off = (l_row1-1 + (l_colx-1)*matrixRows) * size_of_datatype
+#ifdef WITH_NVTX
+          call nvtxRangePush("gpublas trsm")
+#endif          
           call gpublas_PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', nblk, l_cols-l_colx+1, ONE, &
                             tmp2_dev, nblk, a_dev+a_off, matrixRows, gpublasHandle)
+          if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+#ifdef WITH_NVTX
+          call nvtxRangePop() ! gpublas trsm
+#endif                             
         endif
         call obj%timer%stop("gpublas")
 
@@ -1041,7 +1087,7 @@
         check_memcpy_gpu("elpa_cholesky: tmatc to tmatc_dev", successGPU)
 #endif
       !endif
-    endif
+    endif ! useGPU
 !#endif
 #endif /* WITH_MPI */
 
@@ -1097,7 +1143,11 @@
                               gpuMemcpyDeviceToHost)
       check_memcpy_gpu("elpa_cholesky: tmatr_dev to tmatr", successGPU)
 #endif
-    endif
+    endif ! useGPU
+
+#ifdef WITH_NVTX
+    call nvtxRangePush("elpa_transpose_vectors")
+#endif
 
     call elpa_transpose_vectors_&
     &MATH_DATATYPE&
@@ -1110,6 +1160,10 @@
       write(error_unit,*) "Error in elpa_transpose_vectors. Aborting..."
       return
     endif
+
+#ifdef WITH_NVTX
+    call nvtxRangePop() ! elpa_transpose_vectors
+#endif
 
     if (useGPU) then
       num = l_rows*nblk*size_of_datatype
@@ -1147,9 +1201,16 @@
         tmatr_off = (lrs-1 + (1-1)*l_rows) * size_of_datatype
         tmatc_off = (lcs-1 + (1-1)*l_cols) * size_of_datatype
         a_off = (lrs-1 + (lcs-1)*matrixRows) * size_of_datatype
+#ifdef WITH_NVTX
+        call nvtxRangePush("gpublas gemm")
+#endif
         call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, lre-lrs+1, lce-lcs+1, nblk, &
                             -ONE, tmatr_dev+tmatr_off, l_rows, tmatc_dev+tmatc_off, l_cols, ONE, &
                             a_dev+a_off, matrixRows, gpublasHandle)
+        if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! gpublas gemm
+#endif
         call obj%timer%stop("gpublas")
       enddo
     else !useGPU
@@ -1176,6 +1237,10 @@
         call obj%timer%stop("blas")
       enddo
     endif ! useGPU
+
+#ifdef WITH_NVTX
+    call nvtxRangePop() ! do n = 1, na, nblk
+#endif
 
   enddo ! n = 1, na, nblk
 

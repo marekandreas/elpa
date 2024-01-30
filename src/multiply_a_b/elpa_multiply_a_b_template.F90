@@ -80,6 +80,9 @@
 #ifdef WITH_GPU_STREAMS
   use elpa_gpu_util
 #endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+  use cuda_functions ! for NVTX labels
+#endif
 #ifdef WITH_NVIDIA_NCCL
   use nccl_functions
 #endif
@@ -430,6 +433,10 @@
   ! Build up the result matrix by processor rows
   do np = 0, np_rows-1
 
+#ifdef WITH_NVTX
+       call nvtxRangePush("do np = 0, np_rows-1")
+#endif
+
     ! In this turn, procs of row np assemble the result
 
     l_rows_np = local_index(na, np, np_rows, nblk, -1) ! local rows on receiving processors
@@ -453,13 +460,17 @@
     ! Loop over the blocks on row np
     do nb = 0, (l_rows_np-1)/nblk
 
+#ifdef WITH_NVTX
+       call nvtxRangePush("do nb = 0, (l_rows_np-1)/nblk")
+#endif
+
       goff  = nb*np_rows + np ! Global offset in blocks corresponding to nb
 
       ! Get the processor column which owns this block (A is transposed, so we need the column)
       ! and the offset in blocks within this column.
       ! The corresponding block column in A is then broadcast to all for multiplication with B
 
-      np_bc = MOD(goff,np_cols)
+      np_bc = MOD(goff,np_cols) ! "bc"=block column
       noff = goff/np_cols
       n_aux_bc = 0
 
@@ -838,7 +849,15 @@
         nr_done = nr_done+nstor
         nstor=0
       endif ! (nstor==nblk_mult .or. nb*nblk+nblk >= l_rows_np)
+    
+#ifdef WITH_NVTX
+       call nvtxRangePop() ! do nb = 0, (l_rows_np-1)/nblk
+#endif
     enddo ! nb = 0, (l_rows_np-1)/nbl
+
+#ifdef WITH_NVTX
+       call nvtxRangePop() ! do np = 0, np_rows-1
+#endif
   enddo ! np = 0, np_rows-1
 
   if (useGPU) then

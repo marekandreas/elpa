@@ -59,7 +59,40 @@
 #include <stdlib.h>
 #include <math.h>
 #include <complex.h>
+#include <stdbool.h>
 #include "../helpers/scalapack_interfaces.h"
+
+#ifdef WITH_NVTX
+#include <nvToolsExt.h>
+#endif
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+#include <cublas_v2.h>
+#include <curand.h>
+#include <cublas_api.h>
+
+#define gpuErrCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      exit(code);
+   }
+}
+
+#define cublasErrCheck(ans) { cublasAssert((ans), __FILE__, __LINE__); }
+inline void cublasAssert(cublasStatus_t code, const char *file, int line)
+{
+   if (code != CUBLAS_STATUS_SUCCESS) 
+   {
+      fprintf(stderr,"CUBLASassert: %d %s %d\n", code, file, line);
+      exit(code);
+   }
+}
+
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
 
 #ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define C_INT_TYPE_PTR long int*

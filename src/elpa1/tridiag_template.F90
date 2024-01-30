@@ -108,7 +108,7 @@ subroutine tridiag_&
   use elpa_gpu_util
   use elpa1_gpu
 #ifdef WITH_NVIDIA_GPU_VERSION
-  use cuda_functions
+  use cuda_functions ! for NVTX labels
 #endif
 #ifdef WITH_NVIDIA_NCCL
   use nccl_functions

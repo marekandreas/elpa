@@ -335,9 +335,11 @@ program test
 
 #else
    layout = 'C'
+  ! PETERDEBUG
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
+  !np_cols = 1
 #endif
 
    np_rows = nprocs/np_cols
@@ -420,7 +422,7 @@ program test
      stop 77
 #endif
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-#ifdef WITH_GPU_STREAMS
+#if !defined(WITH_GPU_STREAMS)
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif

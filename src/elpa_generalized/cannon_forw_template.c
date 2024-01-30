@@ -52,7 +52,7 @@
 //    the original distribution, the GNU Lesser General Public License.
 //
 // Author: Valeriy Manin (Bergische Universität Wuppertal)
-// integreated into the ELPA library Pavel Kus, Andeas Marek (MPCDF)
+// integrated into the ELPA library Pavel Kus, Andeas Marek (MPCDF)
 
 #ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
 #define C_INT_TYPE_PTR long int*
@@ -73,6 +73,8 @@
 #define MPI_KIND c_int
 #endif
 
+// PETERDEBUG
+//#define GPU_CANNON
 
 // it seems, that we need those two levels of indirection to correctly expand macros
 #define cannons_reduction_impl_expand2(SUFFIX) cannons_reduction_##SUFFIX
@@ -119,7 +121,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    MPI_Request request_A_Send;
    MPI_Request request_U_Recv; 
    MPI_Request request_U_Send;
-      
+
    na = a_desc[2];
    nblk = a_desc[4];
    na_rows = numroc_(&na, &nblk, &my_prow, &zero, &np_rows);
@@ -203,12 +205,31 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    M_T = malloc(na_rows*na_cols*sizeof(math_type));
    for(i = 0; i < na_rows*na_cols; i++)
       M[i] = 0; 
-        
+
+   int useGPU = 0;
+#ifdef GPU_CANNON
+   cublasHandle_t handle;
+   cublasCreate(&handle);
+   useGPU = 1;
+   
+    double *Buf_to_receive_A_dev, *Res_ptr_dev;
+    double *Buf_to_send_U, *U_local_start_dev;
+    gpuErrCheck( cudaMalloc(&Buf_to_receive_A_dev, ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
+    gpuErrCheck( cudaMalloc(&U_local_start_dev, ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
+#endif
+
    ////////////////////////////////////////////////////////////// initial reordering of A ///////////////////////////////////////////////////////////////////////////////////////// 
    
    // here we assume, that np_rows < np_cols; then I will send to the number of processors equal to <ratio> with the "leap" equal to np_rows; the same holds for receive  
-   if(ratio != 1)
+   if(ratio != 1) {
+#ifdef WITH_NVTX
+       nvtxRangePushA("LACPY");
+#endif    
       C_LACPY("A", &na_rows, &na_cols, A, &na_rows, Buf_to_send_A, &na_rows);   // copy my buffer to send
+#ifdef WITH_NVTX
+      nvtxRangePop();
+#endif
+   }
    Size_receive_A = 0; 
    
    // receive from different processors and place in my buffer for calculation;
@@ -430,12 +451,14 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
             rows_in_block_U = rows_in_buffer;
          }
          if ((rows_in_block_A > 0)&&(cols_in_block > 0)) {
+            nvtxRangePushA("GEMM_1");
             if (j == 1) {
                C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
 	    }
             else { 
                C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
 	    }
+            nvtxRangePop();
          }
          U_local_start = U_local_start + rows_in_block_U*cols_in_block;
          curr_col_loc_res = curr_col_loc_res + nblk;
@@ -525,12 +548,14 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          rows_in_block_U = rows_in_buffer; 
       }
       if ((rows_in_block_A > 0)&&(cols_in_block > 0)) {
+         nvtxRangePushA("GEMM_2");
          if (j == 1) {
             C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &dzero, Res_ptr, &na_rows);
 	 }
          else { 
             C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &done, Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &done, Res_ptr, &na_rows);
          }
+         nvtxRangePop();
       }
       U_local_start = U_local_start + rows_in_block_U*cols_in_block;
       curr_col_loc_res = curr_col_loc_res + nblk;
@@ -539,9 +564,14 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    }  
    
    ///////////////////// Now M has an upper part of A*U(-1) ///////////////////////////////////////////////
-   
+#ifdef WITH_NVTX
+   nvtxRangePushA("PTRAN");
+#endif 
    C_PTRAN(&na, &na, &done, M, &one, &one, a_desc, &dzero, M_T, &one, &one, a_desc);     // now M_T has lower part of U(-H)*A 
- 
+#ifdef WITH_NVTX
+   nvtxRangePop();
+#endif 
+
    ////////////////////////////////////////////////// start algorithm to find lower part of U(-H)*A*U(-1) //////////////////////////
            
    /////////////////////////////////////////////////////////////// initial reordering of A ////////////////////////////////////////////////
@@ -855,13 +885,16 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                else {
                   rows_in_block_U_curr = cols_in_buffer_A - ii*nblk;  
                }
+
+               nvtxRangePushA("GEMM_3");
                if ((j == 1)&&(ii == 0)) {
                   C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
 	       }
                else { 
                   C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
                }
-
+               nvtxRangePop();
+               
                LDA_A_new = LDA_A_new - nblk;
       
                U_local_start_curr = U_local_start_curr + rows_in_block_U_curr; 
@@ -981,12 +1014,15 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
             else {
                rows_in_block_U_curr = cols_in_buffer_A - ii*nblk;  
             }
+
+            nvtxRangePushA("GEMM_4");
             if ((j == 1)&&(ii == 0)) {
                C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dzero, Res_ptr, &na_rows); 
 	    }
             else { 
                C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &done, A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &done, Res_ptr, &na_rows);
 	    }
+            nvtxRangePop();
 
             LDA_A_new = LDA_A_new - nblk;
               
@@ -1002,9 +1038,21 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       rows_in_block_U = rows_in_block_U + ratio*nblk;
    }
    
+#ifdef WITH_NVTX
+   nvtxRangePushA("PTRAN");
+#endif 
    C_PTRAN(&na, &na, &done, Res, &one, &one, a_desc, &dzero, M, &one, &one, a_desc);
+#ifdef WITH_NVTX
+   nvtxRangePop();
+#endif
+
+#ifdef WITH_NVTX
+   nvtxRangePushA("PLACPY");
+#endif 
    C_PLACPY("U", &na, &na, M, &one, &one, a_desc, Res, &one, &one, a_desc);
-      
+#ifdef WITH_NVTX
+   nvtxRangePop();
+#endif      
 
    free(Buf_to_send_A);
    free(Buf_to_receive_A);
