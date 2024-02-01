@@ -57,7 +57,9 @@ test_type_flag = {
     "eigenvalues":        "-DTEST_EIGENVALUES",
     "solve_tridiagonal":  "-DTEST_SOLVE_TRIDIAGONAL",
     "cholesky":           "-DTEST_CHOLESKY",
-    "hermitian_multiply": "-DTEST_HERMITIAN_MULTIPLY",
+    "hermitian_multiply_full": "-DTEST_HERMITIAN_MULTIPLY_FULL",
+    "hermitian_multiply_upper": "-DTEST_HERMITIAN_MULTIPLY_UPPER",
+    "hermitian_multiply_lower": "-DTEST_HERMITIAN_MULTIPLY_LOWER",
     "generalized":        "-DTEST_GENERALIZED_EIGENPROBLEM",
     "generalized_decomp": "-DTEST_GENERALIZED_DECOMP_EIGENPROBLEM",
 }
@@ -128,10 +130,10 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if lang!="Fortran" and (m == "frank" or lay == "all_layouts"):
         continue
 
-    if lang!="Fortran" and (api_name == "explicit") and (gid != deviceptr) and (t != "eigenvectors") and (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply"):
+    if lang!="Fortran" and (api_name == "explicit") and (gid != deviceptr) and (t != "eigenvectors") and (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_lower"):
         continue
        
-    if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply")):
+    if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_upper")):
         continue
 
     # not implemented in the test.c file yet
@@ -186,10 +188,10 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if (lang != "Fortran" and ((t=="solve_tridiagonal" and m!="toeplitz") or (t!="solve_tridiagonal" and m=="toeplitz"))): 
         continue
         
-    if (t == "hermitian_multiply" and (s == "2stage")):
+    if ((t == "hermitian_multiply_full" or t == "hermitian_multiply_upper" or t == "hermitian_multiply_lower") and (s == "2stage")):
         continue
 
-    if (t == "hermitian_multiply" and (m == "toeplitz")):
+    if ((t == "hermitian_multiply_full" or t == "hermitian_multiply_upper" or t == "hermitian_multiply_lower") and (m == "toeplitz")):
         continue
 
     # qr only for 2stage real

@@ -1097,17 +1097,23 @@ function check_correctness_evp_gen_numeric_residuals_&
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    & (transa_NH, na, a, b, c, na_rows, sc_desc, myid) result(status) 
+    & (transa_NH, na, a, b, c, na_rows, sc_desc, myid, nblk, np_rows, np_cols, my_prow, my_pcol, &
+       isUpper, isLower) result(status) 
       use precision_for_tests
       use tests_blas_interfaces
       use tests_scalapack_interfaces
       use test_util
       implicit none
 #include "./test_precision_kinds.F90"
+      logical, intent(in), optional                                   :: isUpper, isLower
+
+      TEST_INT_TYPE, intent(in), optional                             :: nblk, np_rows, np_cols, &
+                                                                         my_prow, my_pcol
       TEST_INT_TYPE                                                   :: status
 	  character*1                                                     :: transa_NH, transa_NTC
       TEST_INT_TYPE, intent(in)                                       :: na, myid, na_rows
-      MATH_DATATYPE(kind=rck), intent(in)                             :: a(:,:), b(:,:), c(:,:)
+      MATH_DATATYPE(kind=rck)                                         :: a(:,:), c(:,:)
+      MATH_DATATYPE(kind=rck), intent(in)                             :: b(:,:)
       MATH_DATATYPE(kind=rck), dimension(size(a,dim=1),size(a,dim=2)) :: tmp1, tmp2
 #if COMPLEXCASE == 1
       real(kind=rk), dimension(2*size(a,dim=1),size(a,dim=2))         :: tmp1_real
@@ -1115,35 +1121,13 @@ function check_correctness_evp_gen_numeric_residuals_&
       real(kind=rck)                                                  :: norm, normmax
 
 
+      TEST_INT_TYPE                                                   :: rowLocal, colLocal, ii, jj
       TEST_INT_TYPE                                                   :: sc_desc(:)
       real(kind=rck)                                                  :: err, errmax
       TEST_INT_MPI_TYPE                                               :: mpierr
 
       status = 0
       tmp1(:,:) = ZERO
-
-! #if REALCASE == 1
-      ! ! tmp1 = a**T
-! #ifdef WITH_MPI
-      ! call p&
-            ! &BLAS_CHAR&
-            ! &tran(na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
-! #else /* WITH_MPI */
-      ! tmp1 = transpose(a)
-! #endif /* WITH_MPI */
-
-! #endif /* REALCASE == 1 */
-
-! #if COMPLEXCASE == 1
-      ! ! tmp1 = a**H
-! #ifdef WITH_MPI
-      ! call p&
-            ! &BLAS_CHAR&
-            ! &tranc(na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, ZERO, tmp1, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
-! #else /* WITH_MPI */
-      ! tmp1 = transpose(conjg(a))
-! #endif /* WITH_MPI */
-! #endif /* COMPLEXCASE == 1 */
 
    transa_NTC = "N"
    if (transa_NH .eq. "H") then
@@ -1154,7 +1138,51 @@ function check_correctness_evp_gen_numeric_residuals_&
 #endif
    endif
    
-   ! tmp2 = tmp1 * b
+   if (present(isUpper)) then
+     if (isUpper) then
+       ! a should only be upper triangular
+
+       ! do a dirty hack set lower half to zero
+       do ii=1, na
+         do jj=1, ii-1
+           if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
+                                                    colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                    int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                    int(my_pcol,kind=c_int) ) ) then
+             a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+
+             ! and remove garbage in c
+             c(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+           endif
+         enddo
+       enddo
+     endif ! isUpper
+   endif ! present (isUpper)
+
+   if (present(isLower)) then
+     if (isLower) then
+       ! a should only be lower triangular
+
+       ! do a dirty hack set upper half to zero
+       do ii=1, na
+         do jj=ii+1, na
+           if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
+                                                    colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                    int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                    int(my_pcol,kind=c_int) ) ) then
+             a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+
+
+             ! and remove garber in c
+             c(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+
+           endif
+         enddo
+       enddo
+     endif ! isLower
+   endif ! present(isLower)
+
+   ! tmp2 = a * b
 #ifdef WITH_MPI
    call p&
          &BLAS_CHAR&
@@ -1165,8 +1193,45 @@ function check_correctness_evp_gen_numeric_residuals_&
         &gemm(transa_NTC,"N", na, na, na, ONE, a, na, b, na, ZERO, tmp2, na)
 #endif
 
-      ! compare tmp2 with c
-      tmp2(:,:) = tmp2(:,:) - c(:,:)
+   if (present(isUpper)) then
+     if (isUpper) then
+       ! tmp2 should only be upper triangular
+
+       ! do a dirty hack set lower half to zero
+       do ii=1, na
+         do jj=1, ii-1
+           if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
+                                                    colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                    int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                    int(my_pcol,kind=c_int) ) ) then
+             tmp2(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+           endif
+         enddo
+       enddo
+     endif ! isUpper
+   endif ! present (isUpper)
+
+   if (present(isLower)) then
+     if (isLower) then
+       ! a should only be lower triangular
+       ! do a dirty hack set upper half to zero
+       do ii=1, na
+         do jj=ii+1, na
+           if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
+                                                    colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                    int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                    int(my_pcol,kind=c_int) ) ) then
+             tmp2(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+           endif
+         enddo
+       enddo
+     endif ! isLower
+   endif ! present(isLower)
+
+
+
+   ! compare tmp2 with c
+   tmp2(:,:) = tmp2(:,:) - c(:,:)
 
 #ifdef WITH_MPI
       ! dirty hack: the last argument should be a real array, but is not referenced

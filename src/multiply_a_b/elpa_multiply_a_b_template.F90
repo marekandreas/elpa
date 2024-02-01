@@ -837,6 +837,7 @@
 
         nr_done = nr_done+nstor
         nstor=0
+        aux_mat(:,:) = 0
       endif ! (nstor==nblk_mult .or. nb*nblk+nblk >= l_rows_np)
     enddo ! nb = 0, (l_rows_np-1)/nbl
   enddo ! np = 0, np_rows-1
