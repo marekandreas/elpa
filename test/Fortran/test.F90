@@ -1691,7 +1691,7 @@ program test
    deallocate(z)
    deallocate(ev)
 
-#ifdef TEST_HERMITIAN_MULTIPLY_FULL
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_LOWER) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) 
    deallocate(b)
    deallocate(c)
 #endif
