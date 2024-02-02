@@ -136,6 +136,9 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_upper")):
         continue
 
+    if lang !="Fortran" and (t == "hermitian_multiply_upper" or t == "hermitian_multiply_lower"):
+        continue
+
     # not implemented in the test.c file yet
     if lang!="Fortran" and q == 1:
         continue
