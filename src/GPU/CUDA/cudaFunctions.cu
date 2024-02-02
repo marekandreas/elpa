@@ -64,6 +64,9 @@
 #include <complex.h>
 #include <cublas_v2.h>
 
+// for cublasLtHeuristicsCacheSetCapacity()
+#include <cublas_api.h>
+#include <cublasLt.h>
 
 #ifdef WITH_NVIDIA_CUSOLVER
 #include <cusolverDn.h>

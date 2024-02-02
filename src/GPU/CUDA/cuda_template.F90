@@ -55,6 +55,20 @@
   integer(kind=ik) :: cublasPointerModeDevice
   integer(kind=ik) :: cublasPointerModeHost
 
+  ! check versions
+
+  interface
+    function cublas_get_version_c(cudaHandle, version) result(istat) &
+             bind(C, name="cublasGetVersionFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value  :: cudaHandle
+      integer(kind=C_INT)              :: version
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
   ! streams
 
   interface
@@ -1698,6 +1712,19 @@
   end interface
 
   contains
+
+    function cublas_get_version(cublasHandle, version) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: cublasHandle
+      integer(kind=C_INT)                       :: version
+      logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cublas_get_version_c(cublasHandle, version) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
     function cuda_stream_create(cudaStream) result(success)
       use, intrinsic :: iso_c_binding
