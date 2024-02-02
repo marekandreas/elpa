@@ -1121,7 +1121,8 @@ function check_correctness_evp_gen_numeric_residuals_&
       real(kind=rck)                                                  :: norm, normmax
 
 
-      TEST_INT_TYPE                                                   :: rowLocal, colLocal, ii, jj
+      integer(kind=c_int)                                             :: rowLocal, colLocal
+      TEST_INT_TYPE                                                   :: ii, jj
       TEST_INT_TYPE                                                   :: sc_desc(:)
       real(kind=rck)                                                  :: err, errmax
       TEST_INT_MPI_TYPE                                               :: mpierr
