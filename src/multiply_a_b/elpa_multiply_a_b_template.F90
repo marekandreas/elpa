@@ -837,7 +837,19 @@
 
         nr_done = nr_done+nstor
         nstor=0
-        aux_mat(:,:) = 0
+        if (useGPU) then
+          num = l_rows*nblk_mult*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
+          successGPU = gpu_memset_async(aux_mat_dev, 0, num, my_stream)
+          check_memcpy_gpu("hermitian_multiply: aux_mat_dev", successGPU)
+#else
+          successGPU = gpu_memset(aux_mat_dev, 0, num)
+          check_memcpy_gpu("hermitian_multiply: aux_mat_dev", successGPU)
+#endif
+        else
+          aux_mat(:,:) = 0
+        endif
       endif ! (nstor==nblk_mult .or. nb*nblk+nblk >= l_rows_np)
     enddo ! nb = 0, (l_rows_np-1)/nbl
   enddo ! np = 0, np_rows-1
