@@ -265,17 +265,23 @@ subroutine trans_ev_band_to_full_&
 #endif
 
 
-  call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
-  call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
-  call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
-  call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
+  my_prow = obj%mpi_setup%myRank_comm_rows
+  my_pcol = obj%mpi_setup%myRank_comm_cols
 
-  my_prow = int(my_prowMPI,kind=c_int)
-  my_pcol = int(my_pcolMPI,kind=c_int)
-  np_rows = int(np_rowsMPI,kind=c_int)
-  np_cols = int(np_colsMPI,kind=c_int)
-  call obj%timer%stop("mpi_communication")
+  np_rows = obj%mpi_setup%nRanks_comm_rows
+  np_cols = obj%mpi_setup%nRanks_comm_cols
+
+  !call obj%timer%start("mpi_communication")
+  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI ,mpierr)
+  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI ,mpierr)
+  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI ,mpierr)
+  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI ,mpierr)
+
+  !my_prow = int(my_prowMPI,kind=c_int)
+  !my_pcol = int(my_pcolMPI,kind=c_int)
+  !np_rows = int(np_rowsMPI,kind=c_int)
+  !np_cols = int(np_colsMPI,kind=c_int)
+  !call obj%timer%stop("mpi_communication")
 
   max_blocks_row = ((na -1)/nblk)/np_rows + 1 ! Rows of a_mat
   max_blocks_col = ((nqc-1)/nblk)/np_cols + 1 ! Columns of q_mat!

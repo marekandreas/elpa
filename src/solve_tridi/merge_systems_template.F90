@@ -144,6 +144,7 @@
 
       call obj%timer%start("merge_systems" // PRECISION_SUFFIX)
       success = .true.
+
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
       call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
@@ -156,6 +157,7 @@
       np_cols = int(np_colsMPI,kind=c_int)
 
       call obj%timer%stop("mpi_communication")
+
 
       ! If my processor column isn't in the requested set, do nothing
 

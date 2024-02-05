@@ -728,10 +728,11 @@ module elpa_impl
       class(elpa_impl_t), intent(inout)   :: self
       integer                             :: error, timings, performance, build_config
 
+      integer                             :: np_total, np_rows, np_cols, mpi_comm_parent, mpi_comm_cols, &
+                                             mpi_comm_rows, my_id, process_row, process_col
 #ifdef WITH_MPI
-      integer                             :: mpi_comm_parent, mpi_comm_rows, mpi_comm_cols, np_rows, np_cols, my_id, &
-                                             process_row, process_col, mpi_string_length, &
-                                             present_np_rows, present_np_cols, np_total, np_rows_tmp, np_cols_tmp
+      integer                             :: mpi_string_length, &
+                                             present_np_rows, present_np_cols, np_rows_tmp, np_cols_tmp
       integer(kind=MPI_KIND)              :: mpierr, mpierr2, my_idMPI, np_totalMPI, process_rowMPI, process_colMPI
       integer(kind=MPI_KIND)              :: mpi_comm_rowsMPI, mpi_comm_colsMPI, np_rowsMPI, np_colsMPI, &
                                              mpi_string_lengthMPI, my_pcolMPI, my_prowMPI, providedMPI
@@ -763,6 +764,34 @@ module elpa_impl
       endif
 #endif
 
+      self%mpi_setup%useMPI = .false.
+#ifdef WITH_MPI
+      self%mpi_setup%useMPI = .true.
+#endif
+      self%mpi_setup%mpi_comm_parent = -9999
+      self%mpi_setup%mpi_comm_cols   = -9999
+      self%mpi_setup%mpi_comm_rows   = -9999
+
+      self%mpi_setup%mpi_comm_parentExternal = -9999
+      self%mpi_setup%mpi_comm_colsExternal   = -9999
+      self%mpi_setup%mpi_comm_rowsExternal   = -9999
+
+      self%mpi_setup%nRanks_comm_parent = -9999
+      self%mpi_setup%nRanks_comm_rows   = -9999
+      self%mpi_setup%nRanks_comm_cols   = -9999
+
+      self%mpi_setup%nRanksExternal_comm_parent = -9999
+      self%mpi_setup%nRanksExternal_comm_rows   = -9999
+      self%mpi_setup%nRanksExternal_comm_cols   = -9999
+
+      self%mpi_setup%myRank_comm_parent = -9999
+      self%mpi_setup%myRank_comm_rows   = -9999
+      self%mpi_setup%myRank_comm_cols   = -9999
+
+      self%mpi_setup%myRankExternal_comm_parent = -9999
+      self%mpi_setup%myRankExternal_comm_rows   = -9999
+      self%mpi_setup%myRankExternal_comm_cols   = -9999
+
       self%gpu_setup%gpuAlreadySet=.false.
       self%gpu_setup%gpuIsAssigned=.false.
 
@@ -781,15 +810,19 @@ module elpa_impl
         call self%get("mpi_comm_parent", mpi_comm_parent, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
 
+        self%mpi_setup%mpi_comm_parent = mpi_comm_parent
+
         call mpi_comm_rank(int(mpi_comm_parent,kind=MPI_KIND), my_idMPI, mpierr)
         my_id = int(my_idMPI, kind=c_int)
         call self%set("process_id", my_id, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%myRank_comm_parent = my_id
 
         call mpi_comm_size(int(mpi_comm_parent,kind=MPI_KIND), np_totalMPI, mpierr)
         np_total = int(np_totalMPI,kind=c_int)
         call self%set("num_processes", np_total, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%nRanks_comm_parent = np_total
       else ! mpi_comm_parent == 1
         if (self%from_legacy_api .ne. 1) then
           write(error_unit,*) MPI_CONSISTENCY_MSG
@@ -881,9 +914,12 @@ module elpa_impl
 
         call self%set("mpi_comm_rows", mpi_comm_rows, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%mpi_comm_rows = mpi_comm_rows
+
 
         call self%set("mpi_comm_cols", mpi_comm_cols, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%mpi_comm_cols = mpi_comm_cols
 
         ! remember that we created those communicators and we need to free them later
         self%communicators_owned = 1
@@ -899,9 +935,11 @@ module elpa_impl
 
         call self%get("mpi_comm_rows", mpi_comm_rows, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%mpi_comm_rows = mpi_comm_rows
 
         call self%get("mpi_comm_cols", mpi_comm_cols, error)
         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%mpi_comm_cols = mpi_comm_cols
 
 !        ! get the sizes and return maybe an error
 !#ifdef WITH_MPI
@@ -925,11 +963,13 @@ module elpa_impl
         process_row = int(process_rowMPI,kind=c_int)
         call self%set("process_row", process_row, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%myRank_comm_rows = process_row
 
         call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), process_colMPI, mpierr)
         process_col = int(process_colMPI,kind=c_int)
         call self%set("process_col", process_col, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%myRank_comm_cols = process_col
 
 
         ! remember that we DID NOT created those communicators and we WILL NOT free them later
@@ -967,6 +1007,7 @@ module elpa_impl
         call self%set("num_process_rows", np_rows, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       endif ! self%is_set("num_process_rows") == 1
+      self%mpi_setup%nRanks_comm_rows = np_rows
 
       call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
       np_cols = int(np_colsMPI, kind=c_int)
@@ -990,6 +1031,7 @@ module elpa_impl
         call self%set("num_process_cols", np_cols, error)
         if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
       endif
+      self%mpi_setup%nRanks_comm_cols = np_cols
 
       if (self%from_legacy_api .ne. 1) then
         if (np_total .ne. np_rows * np_cols) then
@@ -1006,6 +1048,8 @@ module elpa_impl
 
       my_prow = int(my_prowMPI, kind=c_int)
       my_pcol = int(my_pcolMPI, kind=c_int)
+      self%mpi_setup%myRank_comm_rows = my_prow
+      self%mpi_setup%myRank_comm_cols = my_pcol
 
       call self%get("na", na, error)
       if (check_elpa_set(error, ELPA_ERROR_SETUP)) return
@@ -1071,6 +1115,79 @@ module elpa_impl
 #endif
       endif
 #endif
+      ! Check whether all the mpi_setup variables have been set
+      if (self%mpi_setup%mpi_comm_parent .eq. -9999) then
+        call self%get("mpi_comm_parent", mpi_comm_parent, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
+        self%mpi_setup%mpi_comm_parent = mpi_comm_parent
+      endif
+      if (self%mpi_setup%mpi_comm_rows .eq. -9999) then
+        call self%get("mpi_comm_rows", mpi_comm_rows, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
+        self%mpi_setup%mpi_comm_rows = mpi_comm_rows
+      endif
+      if (self%mpi_setup%mpi_comm_cols .eq. -9999) then
+        call self%get("mpi_comm_rows", mpi_comm_cols, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+
+        self%mpi_setup%mpi_comm_rows = mpi_comm_cols
+      endif
+
+      if (self%mpi_setup%myRank_comm_parent .eq. -9999) then
+        call self%get("process_id", my_id, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%myRank_comm_parent = my_id
+      endif
+      if (self%mpi_setup%myRank_comm_rows .eq. -9999) then
+        call self%get("process_row", process_row, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%myRank_comm_rows = process_row
+      endif
+      if (self%mpi_setup%myRank_comm_cols .eq. -9999) then
+        call self%get("process_col", process_col, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%myRank_comm_cols = process_col
+      endif
+#ifdef WITH_MPI
+      if (self%mpi_setup%nRanks_comm_parent .eq. -9999) then
+        call self%get("mpi_comm_parent", mpi_comm_parent, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        call mpi_comm_size(int(mpi_comm_parent,kind=MPI_KIND), np_totalMPI, mpierr)
+        self%mpi_setup%nRanks_comm_parent = int(np_totalMPI,kind=c_int)
+      endif
+      if (self%mpi_setup%nRanks_comm_rows .eq. -9999) then
+        call self%get("mpi_comm_rows", mpi_comm_rows, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+        self%mpi_setup%nRanks_comm_rows = int(np_rowsMPI,kind=c_int)
+      endif
+      if (self%mpi_setup%nRanks_comm_cols .eq. -9999) then
+        call self%get("mpi_comm_cols", mpi_comm_cols, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+        self%mpi_setup%nRanks_comm_cols = int(np_colsMPI,kind=c_int)
+      endif
+#else /* WITH_MPI */
+      if (self%mpi_setup%nRanks_comm_parent .eq. -9999) then
+        call self%get("num_processes", np_total, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%nRanks_comm_parent = np_total
+      endif
+      if (self%mpi_setup%nRanks_comm_rows .eq. -9999) then
+        call self%get("num_process_rows", np_rows, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%nRanks_comm_rows = np_rows
+      endif
+      if (self%mpi_setup%nRanks_comm_cols .eq. -9999) then
+        call self%get("num_process_cols", np_cols, error)
+        if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+        self%mpi_setup%nRanks_comm_cols = np_cols
+      endif
+#endif /* WITH_MPI */
+
+
     end function
 
 

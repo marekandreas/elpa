@@ -66,7 +66,6 @@ subroutine global_product_&
   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI, mpierr)
   np_cols = int(np_colsMPI,kind=c_int)
 
-  !!my_pcol = int(my_pcolMPI,kind=c_int)
   call obj%timer%stop("mpi_communication")
 #endif
 
