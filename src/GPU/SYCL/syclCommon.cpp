@@ -135,11 +135,17 @@ int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
   return 1;
 }
 
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
+#define GPU_SELECTOR cl::sycl::gpu_selector()
+#else
+#define GPU_SELECTOR cl::sycl::gpu_selector_v
+#endif
 void elpa::gpu::sycl::selectDefaultGpuDevice() {
   cl::sycl::property::queue::in_order io;
   cl::sycl::property_list props(io);
-  chosenQueue = std::make_optional<device_selection>(0, cl::sycl::queue(cl::sycl::gpu_selector_v, props));
+  chosenQueue = std::make_optional<device_selection>(0, cl::sycl::queue(GPU_SELECTOR, props));
 }
+#undef GPU_SELECTOR
 
 cl::sycl::queue elpa::gpu::sycl::getQueue() {
   if (!chosenQueue) {
