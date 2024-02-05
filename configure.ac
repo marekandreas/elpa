@@ -2941,7 +2941,7 @@ if test x"$use_hip_streams" = x"yes"; then
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 fi
 
-with_cusolver=no
+
 if test x"$need_nvidia_gpu" = x"yes"; then
   if test x"$use_gpu_streams" = x"yes"; then
     AC_MSG_CHECKING(whether NVIDIA cusolver library should be used (since streams are activated))
@@ -2974,7 +2974,7 @@ if test x"$need_nvidia_gpu" = x"yes"; then
   fi
 fi
 
-with_rocsolver=no
+
 if test x"$need_amd_gpu" = x"yes"; then
   if test x"$use_hip_streams" = x"yes"; then
     AC_MSG_CHECKING(whether AMD rocsolver library should be used (since streams are activated))
