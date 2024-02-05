@@ -1210,7 +1210,7 @@
           &PRECISION &
                 (obj, tmatc_dev, ubound(tmatc,dim=1), ccl_comm_cols, mpi_comm_cols, &
                       tmatr_dev, ubound(tmatr,dim=1), ccl_comm_rows, mpi_comm_rows, &
-                n, na, nblk, nblk, nrThreads, .false., my_prow, my_pcol, np_rows, np_cols, &
+                n, na, nblk, nblk, nrThreads, .false., my_pcol, my_prow, np_cols, np_rows, &
                 aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
 #endif /* WITH_NVIDIA_NCCL */
 
