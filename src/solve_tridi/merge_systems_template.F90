@@ -257,11 +257,11 @@
       z = z/sqrt(2.0_rk)
       rho = 2.0_rk*beta
       ! Calculate index for merging both systems by ascending eigenvalues
-      call obj%timer%start("blas")
+      call obj%timer%start("lapack")
       call PRECISION_LAMRG( int(nm,kind=BLAS_KIND), int(na-nm,kind=BLAS_KIND), d, &
                             1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
       idx(:) = int(idxBLAS(:),kind=ik)
-      call obj%timer%stop("blas")
+      call obj%timer%stop("lapack")
 
       ! Calculate the allowable deflation tolerance
 
@@ -423,10 +423,10 @@
         if (na1==1) then
           d(1) = d1(1) + rho*z1(1)**2 ! solve secular equation
         else ! na1==2
-          call obj%timer%start("blas")
+          call obj%timer%start("lapack")
           call PRECISION_LAED5(1_BLAS_KIND, d1, z1, qtrans(1,1), rho, d(1))
           call PRECISION_LAED5(2_BLAS_KIND, d1, z1, qtrans(1,2), rho, d(2))
-          call obj%timer%stop("blas")
+          call obj%timer%stop("lapack")
           call transform_columns_&
           &PRECISION&
           &(obj, idx1(1), idx1(2), na, tmp, l_rqs, l_rqe, q, &
@@ -439,11 +439,11 @@
         d(na1+1:na) = d2(1:na2)
 
         ! Calculate arrangement of all eigenvalues  in output
-        call obj%timer%start("blas")
+        call obj%timer%start("lapack")
         call PRECISION_LAMRG( int(na1,kind=BLAS_KIND), int(na-na1,kind=BLAS_KIND), d, &
                               1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
         idx(:) = int(idxBLAS(:),kind=ik)
-        call obj%timer%stop("blas")
+        call obj%timer%stop("lapack")
         ! Rearrange eigenvalues
 
         tmp = d
@@ -486,11 +486,11 @@
 !!$OMP DO
 !#endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
-          call obj%timer%start("blas")
+          call obj%timer%start("lapack")
           call PRECISION_LAED4(int(na1,kind=BLAS_KIND), int(i,kind=BLAS_KIND), d1, z1, delta, &
                                rho, s, infoBLAS) ! s is not used!
           info = int(infoBLAS,kind=ik)
-          call obj%timer%stop("blas")
+          call obj%timer%stop("lapack")
           if (info/=0) then
             ! If DLAED4 fails (may happen especially for LAPACK versions before 3.2)
             ! use the more stable bisection algorithm in solve_secular_equation
@@ -607,12 +607,12 @@
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
-        call obj%timer%start("blas")
+        call obj%timer%start("lapack")
         ! Calculate arrangement of all eigenvalues  in output
         call PRECISION_LAMRG(int(na1,kind=BLAS_KIND), int(na-na1,kind=BLAS_KIND), d, &
                              1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
         idx(:) = int(idxBLAS(:),kind=ik)
-        call obj%timer%stop("blas")
+        call obj%timer%stop("lapack")
         ! Rearrange eigenvalues
         tmp = d
         do i=1,na

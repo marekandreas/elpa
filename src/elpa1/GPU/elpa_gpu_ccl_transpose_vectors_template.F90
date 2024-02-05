@@ -246,7 +246,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
     if (wantDebug) call obj%timer%stop("elpa_gpu_ccl_transpose_vectors")
     return
-  endif
+  endif ! isSquareGridGPU
 
   ! The basic idea of this routine is that for every block (in the block cyclic
   ! distribution), the processor within comm_t which owns the diagonal

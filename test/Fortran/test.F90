@@ -834,7 +834,7 @@ program test
       print *,"Error in gpu_GetDeviceCount. Aborting..."
       stop 1
    endif
-   print *,"numberOfDevices=", numberOfDevices
+   !print *,"numberOfDevices=", numberOfDevices
    gpuID = mod(myid, numberOfDevices)
 
    call e%set("use_gpu_id", int(gpuID,kind=c_int), error_elpa)

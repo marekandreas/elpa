@@ -63,8 +63,8 @@ subroutine ROUTINE_NAME&
 &MATH_DATATYPE&
 &_&
 &PRECISION &
-(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, &
- success)
+(obj, vmat_s, ld_s, comm_s, vmat_t, ld_t, comm_t, & 
+ nvs, nvr, nvc, nblk, nrThreads, comm_s_isRows, success)
 
 !-------------------------------------------------------------------------------
 ! This routine transposes an array of vectors which are distributed in

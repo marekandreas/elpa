@@ -600,7 +600,7 @@ subroutine tridiag_&
       lcm_s_t   = least_common_multiple(np_rows,np_cols)
       nvs = 1 ! global index where to start in vmat_s/vmat_t
       nvr  = na-1 ! global length of v_col_dev/v_row_dev(without last tau-element), max(istep-1)
-      nvc = 1 ! number of columns in 
+      nvc = 1 ! number of columns in v_col_dev/v_row_dev
       nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
       ! Get the number of blocks to be skipped at the beginning
       ! This must be a multiple of lcm_s_t (else it is getting complicated),
@@ -609,7 +609,7 @@ subroutine tridiag_&
     
       successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
       check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
-    endif ! isSquareGridGPU
+    endif ! .not. isSquareGridGPU
 #endif /* WITH_NVIDIA_NCCL */
   endif !useGPU
 
@@ -1177,7 +1177,7 @@ subroutine tridiag_&
 !$omp parallel &
 !$omp num_threads(max_threads) &
 !$omp default(none) &
-!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end) &
+!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end, my_stream, num) &
 !$omp shared(obj, gpuHandle, useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, offset_dev, &
 !$omp&       max_local_cols, max_local_rows, wantDebug, l_rows_per_tile, l_cols_per_tile, &
