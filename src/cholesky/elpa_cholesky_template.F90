@@ -1146,7 +1146,7 @@
     endif ! useGPU
 #endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
 
-#if defined(WITH_CUDA_AWARE_MPI_2) || defined(WITH_NVIDIA_NCCL)
+#if defined(WITH_CUDA_AWARE_MPI_2)
     if (useGPU) then
       num = l_cols*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -1161,10 +1161,10 @@
       check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
 #endif
     endif
-#endif /* defined(WITH_CUDA_AWARE_MPI_2) || defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(WITH_CUDA_AWARE_MPI_2) */
 
 #else /* WITH_MPI */
-    if (useGPU) then
+    if (useGPU  .and. .not. useCCL) then
       num = l_cols*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
