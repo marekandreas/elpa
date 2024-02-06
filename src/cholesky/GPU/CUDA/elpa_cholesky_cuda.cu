@@ -60,6 +60,29 @@
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
+__global__ void cuda_check_device_info_kernel(int *info_dev){
+  // if (*info_dev != 0){
+  //   printf("Error in executing check_device_info_kerne: %d\n", *info_dev);
+  // }
+}
+
+extern "C" void cuda_check_device_info_FromC(int *info_dev, cudaStream_t my_stream){
+
+  dim3 blocks = dim3(1,1,1);
+  dim3 threadsPerBlock = dim3(1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_check_device_info_kernel<<<blocks,threadsPerBlock, 0, my_stream>>>(info_dev);
+#else
+  cuda_check_device_info_kernel<<<blocks,threadsPerBlock>>>(info_dev);
+#endif
+  cudaError_t cuerr = cudaGetLastError();
+  if (cuerr != cudaSuccess){
+    printf("Error in executing check_device_info_kernel: %s\n",cudaGetErrorString(cuerr));
+  }
+}
+
+
 __global__ void cuda_copy_double_a_tmatc_kernel(double *a_dev, double *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1, const int nblk){
 
   int ii_index    = threadIdx.x +1; // range 1..nblk

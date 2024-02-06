@@ -107,6 +107,7 @@
   integer(kind=c_int)                        :: numGPU
   integer(kind=c_intptr_t)                   :: num
   integer(kind=c_intptr_t)                   :: tmp1_dev, tmatc_dev, tmatr_dev, a_dev, tmp2_dev
+  integer(kind=c_intptr_t)                   :: info_dev
   type(c_ptr)                                :: tmp1_mpi_dev
   MATH_DATATYPE(kind=rck), pointer           :: tmp1_mpi_fortran_ptr(:,:)
   integer(kind=c_intptr_t)                   :: a_off, tmatc_off, tmatr_off
@@ -322,6 +323,9 @@
 
 
   if (useGPU) then
+    successGPU = gpu_malloc(info_dev, 1*sizeof(c_int))
+    check_alloc_gpu("elpa_cholesky: info_dev", successGPU)
+
     successGPU = gpu_malloc(tmp1_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmp1_dev", successGPU)
 
@@ -519,12 +523,19 @@
 #ifdef WITH_NVTX
           call nvtxRangePush("gpusolver_POTRF last")
 #endif
-          call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info, gpusolverHandle)
-          if (info .ne. 0) then
-            write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF 1"
-            success = .false.
-            return
-          endif
+
+! PETERDEBUG: generalize to all precisions, then to AMD, (OpenMP-offload, Intel?)
+#if defined(DOUBLE_PRECISION) &&  REALCASE == 1
+          call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
+          my_stream = obj%gpu_setup%my_stream
+          call gpu_check_device_info(info_dev, my_stream)
+#endif
+          ! PETERDEBUG
+          ! if (info .ne. 0) then
+          !   write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF last"
+          !   success = .false.
+          !   return
+          ! endif
 #ifdef WITH_NVTX
           call nvtxRangePop() ! gpusolver_POTRF last
 #endif
@@ -538,7 +549,7 @@
           my_stream = obj%gpu_setup%my_stream
 
           call gpu_memcpy_async_and_stream_synchronize &
-          ("elpa_choleksky: a to a_dev", a_dev, 0_c_intptr_t, &
+          ("elpa_choleksky: a_dev to a", a_dev, 0_c_intptr_t, &
                                           a(1:obj%local_nrows,1:obj%local_ncols), &
                                           1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
@@ -665,12 +676,18 @@
 #ifdef WITH_NVTX
           call nvtxRangePush("gpusolver_POTRF")
 #endif
-          call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info, gpusolverHandle)
-          if (info .ne. 0) then
-            write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF 2"
-            success = .false.
-            return
-          endif
+
+#if defined(DOUBLE_PRECISION) &&  REALCASE == 1
+          call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
+          my_stream = obj%gpu_setup%my_stream
+          call gpu_check_device_info(info_dev, my_stream)
+#endif
+          ! PETERDEBUG
+          ! if (info .ne. 0) then
+          !   write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF"
+          !   success = .false.
+          !   return
+          ! endif
 #ifdef WITH_NVTX
           call nvtxRangePop() ! gpusolver_POTRF
 #endif
@@ -795,8 +812,8 @@
 #endif
             success = .false. ! "
             return
-          endif ! useGPU
-        endif
+          endif ! info/=0
+        endif ! useGPU
  
         if (useGPU) then
           my_stream = obj%gpu_setup%my_stream
@@ -1304,6 +1321,9 @@
   
   call obj%timer%start("deallocate")
   if (useGPU) then
+    successGPU = gpu_free(info_dev)
+    check_dealloc_gpu("elpa_cholesky: info_dev", successGPU)
+
     successGPU = gpu_free(tmp1_dev)
     check_dealloc_gpu("elpa_cholesky: tmp1_dev", successGPU)
 
@@ -1404,7 +1424,7 @@
           check_stream_synchronize_gpu("elpa_cholesky: memset", successGPU)
 #else
           successGPU = gpu_memset(a_dev+offset, 0, num)
-          check_memcpy_gpu("elpa_cholesky: memset tmp1_dev", successGPU)
+          check_memcpy_gpu("elpa_cholesky: memset a_dev", successGPU)
 #endif
 !#else /* DEVICE_POINTER */
 !          !offset = (l_row1-1 + matrixRows * (l_col1-1)) * size_of_datatype

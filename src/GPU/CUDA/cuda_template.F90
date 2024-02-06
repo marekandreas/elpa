@@ -574,14 +574,13 @@
   end interface
 
   interface
-    subroutine cusolver_Dpotrf_c(cusolverHandle, uplo, n, a, lda, info) &
+    subroutine cusolver_Dpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev) &
                               bind(C,name="cusolverDpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: a_dev, info_dev
       integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
@@ -2290,16 +2289,15 @@
 #endif
     end subroutine
 
-    subroutine cusolver_Dpotrf(uplo, n, a, lda, info, cusolverHandle)
+    subroutine cusolver_Dpotrf(uplo, n, a_dev, lda, info_dev, cusolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=C_intptr_T)        :: cusolverHandle
 #ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Dpotrf_c(cusolverHandle, uplo, n, a, lda, info)
+      call cusolver_Dpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev)
 #endif
     end subroutine
 
