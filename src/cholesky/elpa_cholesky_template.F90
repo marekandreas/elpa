@@ -922,12 +922,12 @@
 #endif 
         if (.not.successGPU) then
           print *,"Error in nccl_reduce"
-          stop
+          stop 1
         endif
         successGPU = nccl_group_end()
         if (.not.successGPU) then
           print *,"Error in setting up nccl_group_end!"
-          stop
+          stop 1
         endif
         call obj%timer%stop("gpu_nccl")
 #endif /* WITH_NVIDIA_NCCL */
@@ -1089,14 +1089,19 @@
       my_stream = obj%gpu_setup%my_stream
       ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
       call obj%timer%start("gpu_nccl")
+      successGPU = nccl_group_start()
+      if (.not.successGPU) then
+        print *,"Error in setting up nccl_group_start!"
+        stop 1
+      endif
+#ifdef WITH_NVTX
+      call nvtxRangePush("do i=1,nblk nccl_bcast(tmatc_dev+offset_i)")
+#endif 
+
       do i=1,nblk
         if (l_cols-l_colx+1 > 0) then
-          successGPU = nccl_group_start()
-          if (.not.successGPU) then
-            print *,"Error in setting up nccl_group_start!"
-            stop
-          endif
           offset = ((l_colx-1) + (i-1) * l_cols ) * size_of_datatype
+
           successGPU = nccl_bcast(tmatc_dev+offset, tmatc_dev+offset, &
 #if REALCASE == 1
                        int(l_cols-l_colx+1,kind=c_size_t), &
@@ -1124,15 +1129,21 @@
 
           if (.not.successGPU) then
             print *,"Error in nccl_reduce"
-            stop
+            stop 1
           endif
-          successGPU = nccl_group_end()
-          if (.not.successGPU) then
-            print *,"Error in setting up nccl_group_end!"
-            stop
-          endif
+
         endif ! (l_cols-l_colx+1 > 0)
       enddo
+
+#ifdef WITH_NVTX
+      call nvtxRangePop() !  do i=1,nblk nccl_bcast(tmatc_dev+offset_i)
+#endif 
+      successGPU = nccl_group_end()
+      if (.not.successGPU) then
+        print *,"Error in setting up nccl_group_end!"
+        stop 1
+      endif
+
       call obj%timer%stop("gpu_nccl")
 #endif /* WITH_NVIDIA_NCCL */
 #endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
