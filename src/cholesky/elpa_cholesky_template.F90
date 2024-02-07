@@ -830,7 +830,7 @@
       endif ! (my_pcol==pcol(n, nblk, np_cols))
 
 #ifdef WITH_MPI
-      if (useGPU) then
+      if (useGPU .and. .not. useCCL) then
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -843,7 +843,7 @@
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_cholesky: tmp1_dev to tmp1", successGPU)
 #endif /* WITH_GPU_STREAMS */
-      endif
+      endif ! (useGPU .and. .not. useCCL)
 
       if (useGPU) then
 #if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL)
@@ -888,8 +888,11 @@
         successGPU = nccl_group_start()
         if (.not.successGPU) then
           print *,"Error in setting up nccl_group_start!"
-          stop
+          stop 1
         endif
+#ifdef WITH_NVTX
+        call nvtxRangePush("nccl_bcast tmp1_dev")
+#endif        
         successGPU = nccl_bcast(tmp1_dev, tmp1_dev, &
 #if REALCASE == 1
                        int(nblk*(nblk+1)/2,kind=c_size_t), &
@@ -914,7 +917,9 @@
 #endif
 #endif /* COMPLEXCASE */
                        int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
-
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! nccl_bcast tmp1_dev"
+#endif 
         if (.not.successGPU) then
           print *,"Error in nccl_reduce"
           stop
