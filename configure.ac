@@ -2719,6 +2719,14 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   if test x"${have_cublas}" = x"no"; then
     AC_MSG_ERROR([Could not link cublas; try to set the cuda-path or disable Nvidia GPU support])
   fi
+
+  dnl check whether we find cublasLt. It's needed for cublasLtHeuristicsCacheSetCapacity(), which however exists only in cublasLt ver >= 11.11.3.6
+  AC_SEARCH_LIBS([cublasLtHeuristicsCacheSetCapacity],[cublasLt],[have_cublasLt=yes],[have_cublasLt=no])
+  if test x"${have_cublasLt}" = x"no"; then
+    AC_MSG_WARN([Could not find cublasLtHeuristicsCacheSetCapacity() or couldn't link cublasLt])
+  fi
+
+  dnl check whether we find cudart
   AC_SEARCH_LIBS([cudaMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
   if test x"${have_cudart}" = x"no"; then
     AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
