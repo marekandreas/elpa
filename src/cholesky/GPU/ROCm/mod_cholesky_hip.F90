@@ -61,6 +61,18 @@ module cholesky_hip
     end subroutine 
   end interface
 
+
+  interface
+    subroutine hip_accumulate_device_info_c(info_abs_dev, info_new_dev, my_stream)&
+             bind(C, name="hip_accumulate_device_info_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: info_abs_dev, info_new_dev
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine 
+  end interface
+
+
   interface
     subroutine hip_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
              bind(C, name="hip_copy_double_a_tmatc_FromC")
@@ -71,6 +83,7 @@ module cholesky_hip
       integer(kind=C_intptr_T), value  :: my_stream
     end subroutine 
   end interface
+
 
   interface
     subroutine hip_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
@@ -94,6 +107,7 @@ module cholesky_hip
     end subroutine 
   end interface
 
+
   interface
     subroutine hip_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
              bind(C, name="hip_copy_float_complex_a_tmatc_FromC")
@@ -107,6 +121,7 @@ module cholesky_hip
 
   contains
 
+
     subroutine hip_check_device_info(info_dev, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -117,8 +132,19 @@ module cholesky_hip
 #ifdef WITH_AMD_GPU_VERSION
       call hip_check_device_info_c(info_dev, my_stream)
 #endif
-
     end subroutine  
+
+    subroutine hip_accumulate_device_info(info_abs_dev, info_new_dev, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_T)        :: info_abs_dev, info_new_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_accumulate_device_info_c(info_abs_dev, info_new_dev, my_stream)
+#endif
+    end subroutine
 
     subroutine hip_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -131,8 +157,8 @@ module cholesky_hip
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
-
     end subroutine
+
 
     subroutine hip_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -145,8 +171,8 @@ module cholesky_hip
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
-
     end subroutine
+
 
     subroutine hip_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -159,8 +185,8 @@ module cholesky_hip
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_double_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
-
     end subroutine
+
 
     subroutine hip_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -173,7 +199,6 @@ module cholesky_hip
 #ifdef WITH_AMD_GPU_VERSION
       call hip_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
-
     end subroutine
 
 end module

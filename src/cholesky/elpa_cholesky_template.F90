@@ -107,7 +107,7 @@
   integer(kind=c_int)                        :: numGPU
   integer(kind=c_intptr_t)                   :: num
   integer(kind=c_intptr_t)                   :: tmp1_dev, tmatc_dev, tmatr_dev, a_dev, tmp2_dev
-  integer(kind=c_intptr_t)                   :: info_dev
+  integer(kind=c_intptr_t)                   :: info_dev, info_abs_accumulated_dev
   type(c_ptr)                                :: tmp1_mpi_dev
   MATH_DATATYPE(kind=rck), pointer           :: tmp1_mpi_fortran_ptr(:,:)
   integer(kind=c_intptr_t)                   :: a_off, tmatc_off, tmatr_off
@@ -323,8 +323,16 @@
 
 
   if (useGPU) then
+#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)    
     successGPU = gpu_malloc(info_dev, 1*sizeof(c_int))
     check_alloc_gpu("elpa_cholesky: info_dev", successGPU)
+
+    successGPU = gpu_malloc(info_abs_accumulated_dev, 1*sizeof(c_int))
+    check_alloc_gpu("elpa_cholesky: info_abs_accumulated_dev", successGPU)
+    
+    successGPU = gpu_memset(info_abs_accumulated_dev, 0, 1*sizeof(c_int))
+    check_memcpy_gpu("elpa_cholesky: memset info_abs_accumulated_dev", successGPU)
+#endif
 
     successGPU = gpu_malloc(tmp1_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmp1_dev", successGPU)
@@ -525,17 +533,12 @@
 #endif
 
 ! PETERDEBUG: generalize to all precisions, then to AMD, (OpenMP-offload, Intel?)
-#if defined(DOUBLE_PRECISION) &&  REALCASE == 1
+#if defined(DOUBLE_PRECISION) &&  REALCASE == 1 && defined(WITH_NVIDIA_CUSOLVER)
           call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
           my_stream = obj%gpu_setup%my_stream
-          call gpu_check_device_info(info_dev, my_stream)
+          if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
+          call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
-          ! PETERDEBUG
-          ! if (info .ne. 0) then
-          !   write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF last"
-          !   success = .false.
-          !   return
-          ! endif
 #ifdef WITH_NVTX
           call nvtxRangePop() ! gpusolver_POTRF last
 #endif
@@ -677,10 +680,11 @@
           call nvtxRangePush("gpusolver_POTRF")
 #endif
 
-#if defined(DOUBLE_PRECISION) &&  REALCASE == 1
+#if defined(DOUBLE_PRECISION) &&  REALCASE == 1 && defined(WITH_NVIDIA_CUSOLVER)
           call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
           my_stream = obj%gpu_setup%my_stream
-          call gpu_check_device_info(info_dev, my_stream)
+          if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
+          call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
           ! PETERDEBUG
           ! if (info .ne. 0) then
@@ -1335,8 +1339,17 @@
   
   call obj%timer%start("deallocate")
   if (useGPU) then
+
+#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
+    my_stream = obj%gpu_setup%my_stream
+    call gpu_check_device_info(info_abs_accumulated_dev, my_stream)
+    
     successGPU = gpu_free(info_dev)
     check_dealloc_gpu("elpa_cholesky: info_dev", successGPU)
+
+    successGPU = gpu_free(info_abs_accumulated_dev)
+    check_dealloc_gpu("elpa_cholesky: info_abs_accumulated_dev", successGPU)
+#endif
 
     successGPU = gpu_free(tmp1_dev)
     check_dealloc_gpu("elpa_cholesky: tmp1_dev", successGPU)

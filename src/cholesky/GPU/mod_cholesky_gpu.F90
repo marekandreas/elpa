@@ -77,11 +77,32 @@ module cholesky_gpu
       call hip_check_device_info(info_dev, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_check_device_info(info_dev, my_stream)
+      print *,"gpu_check_device_info not implemented for sycl"
+      stop 1
 #endif
-
     end subroutine
 
+
+    subroutine gpu_accumulate_device_info(info_abs_dev, info_new_dev, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_T)        :: info_abs_dev, info_new_dev
+      integer(kind=C_intptr_T)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_accumulate_device_info(info_abs_dev, info_new_dev, my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_accumulate_device_info(info_abs_dev, info_new_dev, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      print *,"gpu_accumulate_device_info not implemented for sycl"
+      stop 1
+#endif
+    end subroutine
+
+    
     subroutine gpu_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -99,8 +120,8 @@ module cholesky_gpu
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
-
     end subroutine
+
 
     subroutine gpu_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -119,8 +140,8 @@ module cholesky_gpu
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
-
     end subroutine
+
 
     subroutine gpu_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -139,8 +160,8 @@ module cholesky_gpu
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
-
     end subroutine
+
 
     subroutine gpu_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -159,7 +180,6 @@ module cholesky_gpu
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
 #endif
-
     end subroutine
 
 end module
