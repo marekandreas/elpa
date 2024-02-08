@@ -2752,13 +2752,6 @@ if test x"${need_amd_gpu}" = x"yes" ; then
   #if test x"${have_cudart}" = x"no"; then
   #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
   #fi
-  if test x"${with_rocsolver}" = x"yes"; then
-    AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
-    if test x"${have_rocsolver}" = x"no"; then
-      AC_MSG_ERROR([Could not link rocsolver; try to set the hip-path or disable AMD GPU support])
-    fi
-    AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
-  fi
   AC_LANG_POP([C])
 fi
 
@@ -3011,11 +3004,19 @@ if test x"${with_cusolver}" = x"yes"; then
   AC_LANG_PUSH([C])
   AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
   if test x"${have_cusolver}" = x"no"; then
-    AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+    AC_MSG_ERROR([Could not link cusolver; try to set the cuda-path or disable Nvidia GPU support])
   fi
   AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
   AC_LANG_POP([C])
 fi
+
+if test x"${with_rocsolver}" = x"yes"; then
+    AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
+    if test x"${have_rocsolver}" = x"no"; then
+      AC_MSG_ERROR([Could not link rocsolver; try to set the hip-path or disable AMD GPU support])
+    fi
+    AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
+  fi
 
 
 if test x"$need_amd_gpu" = x"yes"; then
@@ -3034,7 +3035,7 @@ if test x"$need_amd_gpu" = x"yes"; then
     echo ""
     echo ""
     echo ""
-    AC_MSG_NOTICE([If --enable-amd-gpu is set, we recommend --enable-gpu-streams-amd])
+    AC_MSG_NOTICE([If --enable-amd-gpu is set, we recommend --enable-gpu-streams=amd])
   fi
 fi
 
