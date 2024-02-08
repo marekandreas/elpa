@@ -55,6 +55,15 @@
   integer(kind=ik) :: cublasPointerModeDevice
   integer(kind=ik) :: cublasPointerModeHost
 
+  interface
+    function cuda_get_last_error_c() result(istat) &
+            bind(C, name="cudaGetLastErrorFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)      :: istat
+    end function
+  end interface
+
   ! streams
 
   interface
@@ -1697,6 +1706,17 @@
   end interface
 
   contains
+
+    function cuda_get_last_error() result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_get_last_error_c() /= 0
+#else
+      success = .true.
+#endif
+    end function
 
     function cuda_stream_create(cudaStream) result(success)
       use, intrinsic :: iso_c_binding

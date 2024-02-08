@@ -69,5 +69,6 @@
 #include <cusolverDn.h>
 #endif
 
+#ifdef WITH_NVIDIA_GPU_VERSION
 #include "./cudaFunctions_template.h"
-
+#endif

@@ -285,6 +285,52 @@
 #endif
     end subroutine
 
+    function gpu_get_last_error() result(success)
+      use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
+      use cuda_functions
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+
+      logical                                         :: success
+
+      success = .true.
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_get_last_error()
+      endif
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_get_last_error()
+      endif
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"gpu_get_last_error not implemented for openmp offload"
+        stop 1
+      endif
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"gpu_get_last_error not implemented for sycl"
+        stop 1
+      endif
+#endif
+
+    end function
+    
 
     function gpu_stream_synchronize(stream) result(success)
       use, intrinsic :: iso_c_binding

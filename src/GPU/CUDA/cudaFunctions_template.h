@@ -62,8 +62,22 @@
 #endif
 
 
-#ifdef WITH_NVIDIA_GPU_VERSION
 extern "C" {
+       
+  int cudaGetLastErrorFromC() {
+    cudaError_t status = cudaGetLastError();
+    
+    if (status == cudaSuccess) {
+      return 1;
+    }
+    else{
+      printf("Error in executing  cudaGetLastErrorFrom: %s\n", cudaGetErrorString(status));
+      errormessage("Error in cudaGetLastError: %s\n", "unknown error");
+      return 0;
+    }
+
+  }   
+
   int cudaStreamCreateFromC(cudaStream_t *cudaStream) {
     //*stream = (intptr_t) malloc(sizeof(cudaStream_t));
 
@@ -1527,4 +1541,4 @@ extern "C" {
   }
 
 }
-#endif /* WITH_NVIDIA_GPU_VERSION */
+
