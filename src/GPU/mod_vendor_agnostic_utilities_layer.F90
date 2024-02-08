@@ -53,7 +53,7 @@ module elpa_gpu_util
   use iso_c_binding
 
 #include "../general/error_checking.inc"
-#include "./vendor_agnostic_layer_utilities_template.F90"
+#include "./vendor_agnostic_utilities_layer_template.F90"
 
 end module
 
