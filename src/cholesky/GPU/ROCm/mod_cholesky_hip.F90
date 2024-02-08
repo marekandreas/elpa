@@ -50,6 +50,17 @@ module cholesky_hip
   implicit none
 
   public
+
+    interface
+    subroutine hip_check_device_info_c(info_dev,  my_stream)&
+            bind(C, name="hip_check_device_info_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: info_dev
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine 
+  end interface
+
   interface
     subroutine hip_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
              bind(C, name="hip_copy_double_a_tmatc_FromC")
@@ -95,6 +106,19 @@ module cholesky_hip
   end interface
 
   contains
+
+    subroutine hip_check_device_info(info_dev, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_intptr_T)        :: info_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_check_device_info_c(info_dev, my_stream)
+#endif
+
+    end subroutine  
 
     subroutine hip_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding

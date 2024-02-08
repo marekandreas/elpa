@@ -61,10 +61,35 @@
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
+__global__ void hip_check_device_info_kernel(int *info_dev){
+  // if (*info_dev != 0){
+  //   printf("Error in executing check_device_info_kerne: %d\n", *info_dev);
+  // }
+}
+
+
+extern "C" void hip_check_device_info_FromC(int *info_dev, hipStream_t my_stream){
+
+  dim3 blocks = dim3(1,1,1);
+  dim3 threadsPerBlock = dim3(1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  hipLaunchKernelGGL(hip_check_device_info_kernel, blocks, threadsPerBlock, 0, my_stream, info_dev);
+#else
+  hipLaunchKernelGGL(hip_check_device_info_kernel, blocks, threadsPerBlock, 0, 0,  info_dev);
+#endif
+
+  hipError_t hiperr = hipGetLastError();
+  if (hiperr != hipSuccess){
+    printf("Error in executing check_device_info_kernel: %s\n", hipGetErrorString(hiperr));
+  }
+}
+
 #ifdef NEW_KERNEL
 #define BLK_X_DIM            32
 #define BLK_Y_DIM            4
 #define TRANS_COALESCED      1
+
 
 template <typename T>
 __global__ void hip_copy_a_tmatc_kernel(
