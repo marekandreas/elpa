@@ -289,8 +289,21 @@
 
 // hipStream_t elpa_hip_stm;
 
-#ifdef WITH_AMD_GPU_VERSION
 extern "C" {
+
+  int hipGetLastErrorFromC() {
+    hipError_t status = hipGetLastError();
+    
+    if (status == hipSuccess) {
+      return 1;
+    }
+    else{
+      printf("Error in executing  hipGetLastErrorFrom: %s\n", hipGetErrorString(status));
+      errormessage("Error in hipGetLastError: %s\n", "unknown error");
+      return 0;
+    }
+  }
+  
   int hipStreamCreateFromC(hipStream_t *rocblasStream) {
     //*stream = (intptr_t) malloc(sizeof(hipStream_t));
 
@@ -1643,4 +1656,3 @@ extern "C" {
   }
 
 }
-#endif /* WITH_AMD_GPU_VERSION */

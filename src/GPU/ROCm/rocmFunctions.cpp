@@ -67,5 +67,6 @@
 #include <rocsolver.h>
 #endif
 
+#ifdef WITH_AMD_GPU_VERSION
 #include "./rocmFunctions_template.h"
-
+#endif

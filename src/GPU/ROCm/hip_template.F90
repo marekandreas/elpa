@@ -55,6 +55,15 @@
   integer(kind=ik) :: rocblasPointerModeDevice
   integer(kind=ik) :: rocblasPointerModeHost
 
+  interface
+    function hip_get_last_error_c() result(istat) &
+            bind(C, name="hipGetLastErrorFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)      :: istat
+    end function
+  end interface
+
   ! streams
 
   interface
@@ -1698,6 +1707,17 @@
   end interface
 
   contains
+
+    function hip_get_last_error() result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      logical                                   :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_get_last_error_c() /= 0
+#else
+      success = .true.
+#endif
+    end function
 
     function hip_stream_create(hipStream) result(success)
       use, intrinsic :: iso_c_binding
