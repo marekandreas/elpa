@@ -885,11 +885,7 @@
         call obj%timer%start("gpu_nccl")
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-        successGPU = nccl_group_start()
-        if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_start!"
-          stop 1
-        endif
+
 #ifdef WITH_NVTX
         call nvtxRangePush("nccl_bcast tmp1_dev")
 #endif        
@@ -924,11 +920,10 @@
           print *,"Error in nccl_reduce"
           stop 1
         endif
-        successGPU = nccl_group_end()
-        if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_end!"
-          stop 1
-        endif
+
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_cholesky: nccl_bcast", successGPU)
+
         call obj%timer%stop("gpu_nccl")
 #endif /* WITH_NVIDIA_NCCL */
 
@@ -1143,6 +1138,9 @@
         print *,"Error in setting up nccl_group_end!"
         stop 1
       endif
+
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("elpa_cholesky: nccl_bcast", successGPU)
 
       call obj%timer%stop("gpu_nccl")
 #endif /* WITH_NVIDIA_NCCL */
