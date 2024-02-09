@@ -148,6 +148,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \
+  src/GPU/CUDA/cusolverFunctions_template.h \
   src/GPU/CUDA/nccl_template.F90 \
   src/GPU/CUDA/ncclFunctions_template.h \
   src/GPU/ROCm/hip_template.F90 \
@@ -1018,6 +1019,7 @@ EXTRA_DIST = \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \
+  src/GPU/CUDA/cusolverFunctions_template.h \
   src/GPU/CUDA/nccl_template.F90 \
   src/GPU/CUDA/ncclFunctions_template.h \
   src/GPU/CUDA/cuUtils_template.cu \

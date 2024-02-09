@@ -64,11 +64,20 @@
 #include <complex.h>
 #include <cublas_v2.h>
 
+#define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
-#ifdef WITH_NVIDIA_CUSOLVER
-#include <cusolverDn.h>
+#ifdef DEBUG_CUDA
+#define debugmessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
+#else
+#define debugmessage(x, ...)
 #endif
+
 
 #ifdef WITH_NVIDIA_GPU_VERSION
 #include "./cudaFunctions_template.h"
+#endif
+
+#ifdef WITH_NVIDIA_CUSOLVER
+#include <cusolverDn.h>
+#include "./cusolverFunctions_template.h"
 #endif
