@@ -2837,7 +2837,7 @@ fi
 use_cuda_streams=no
 use_hip_streams=no
 use_gpu_streams=no
-#relied_on_default=no
+relied_on_default=no
 AC_MSG_CHECKING(whether GPU streams should be used)
 AC_ARG_ENABLE([gpu-streams],
                [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
@@ -2863,7 +2863,7 @@ AC_ARG_ENABLE([gpu-streams],
                use_cuda_streams=no
                use_hip_streams=no
 	       use_gpu_streams=no
-	       if test x"$enable_openmp" = x"no"; then
+	       #if test x"$enable_openmp" = x"no"; then
 		 if test x"$enable_cuda_aware_mpi" = x"no"; then
 	           if test x"$need_nvidia_gpu" = x"yes"; then
                      use_cuda_streams=yes
@@ -2874,16 +2874,16 @@ AC_ARG_ENABLE([gpu-streams],
                      use_gpu_streams=yes
                    fi
 		 fi
-	       fi
+	       #fi
 	       ])
 AC_MSG_RESULT([${use_gpu_streams}])
-if test x"$enable_openmp" = x"no"; then
+#if test x"$enable_openmp" = x"no"; then
   if test x"$enable_cuda_aware_mpi" = x"no"; then
     if test x"$relied_on_default" = x"yes"; then
       AC_MSG_NOTICE([Streaming has ben enabled since you relied on the default action])
     fi
   fi
-fi
+#fi
 
 if test x"$use_gpu_streams" = x"yes"; then
   if test x"$use_gpu_streams_per_default" = x"yes"; then
@@ -2949,6 +2949,7 @@ if test x"$use_hip_streams" = x"yes"; then
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 fi
 
+with_cusolver=no
 if test x"$need_nvidia_gpu" = x"yes"; then
   if test x"$use_gpu_streams" = x"yes"; then
     AC_MSG_CHECKING(whether NVIDIA cusolver library should be used (since streams are activated))
@@ -2962,12 +2963,7 @@ if test x"$need_nvidia_gpu" = x"yes"; then
                    with_cusolver=no
                  fi
 	      ],
-              [relied_on_cusolver_default="yes"])
-    if test x"${relied_on_cusolver_default}" = x"yes"; then
-      with_cusolver=yes
-    fi
-
-
+              [with_cusolver="yes"])
     AC_MSG_RESULT([${with_cusolver}])
     if test x"${with_cusolver}" = x"no"; then
       if test x"${need_nvidia_gpu}" = x"yes"; then
@@ -2986,6 +2982,7 @@ if test x"$need_nvidia_gpu" = x"yes"; then
   fi
 fi
 
+with_rocsolver=no
 if test x"$need_amd_gpu" = x"yes"; then
   if test x"$use_hip_streams" = x"yes"; then
     AC_MSG_CHECKING(whether AMD rocsolver library should be used (since streams are activated))
@@ -2999,11 +2996,7 @@ if test x"$need_amd_gpu" = x"yes"; then
                  with_rocsolver=no
                fi
 	     ],
-            [relied_on_roxsolver_default="yes"])
-    if test x"${relied_on_cusolver_default}" = x"yes"; then
-      with_rocsolver=yes
-    fi
-
+            [with_rocsolver="yes"])
     AC_MSG_RESULT([${with_rocsolver}])
     if test x"${with_rocsolver}" = x"no"; then
       if test x"${need_amd_gpu}" = x"yes"; then

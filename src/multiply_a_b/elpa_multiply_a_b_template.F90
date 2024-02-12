@@ -64,6 +64,7 @@
 #define MORE_GPU
 #endif
 
+#undef MORE_GPU
   use elpa1_compute
   use elpa_mpi
   use precision
@@ -645,6 +646,8 @@
       endif ! useGPU
 #endif /* WITH_NVIDIA_NCCL */
 
+#else /* WITH_MPI */
+
 #endif /* WITH_MPI */
       ! Insert what we got in aux_mat
 
@@ -887,7 +890,15 @@
 #endif /* defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL) */
 
 #else /* WITH_MPI */
+
+#ifdef MORE_GPU
+            num = nstor*(lce-lcs+1)*size_of_datatype
+            successGPU = gpu_memcpy(tmp2_dev, tmp1_dev, &
+                                    num, gpuMemcpyDeviceToDevice)
+            check_memcpy_gpu("elpa_mult_at_b: tmp2 to tmp2_dev", successGPU)
+#else /* MORE_GPU */
             tmp2 = tmp1
+#endif /* MORE_GPU */
 #endif /* WITH_MPI */
 
           else ! useGPU
