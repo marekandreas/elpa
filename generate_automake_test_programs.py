@@ -133,7 +133,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if lang!="Fortran" and (api_name == "explicit") and (gid != deviceptr) and (t != "eigenvectors") and (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_lower"):
         continue
        
-    if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_upper")):
+    if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_lower")):
         continue
 
     if lang !="Fortran" and (t == "hermitian_multiply_upper" or t == "hermitian_multiply_lower"):
