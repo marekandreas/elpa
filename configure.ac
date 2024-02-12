@@ -2837,7 +2837,7 @@ fi
 use_cuda_streams=no
 use_hip_streams=no
 use_gpu_streams=no
-relied_on_default=no
+#relied_on_default=no
 AC_MSG_CHECKING(whether GPU streams should be used)
 AC_ARG_ENABLE([gpu-streams],
                [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
@@ -2963,7 +2963,7 @@ if test x"$need_nvidia_gpu" = x"yes"; then
                  fi
 	      ],
               [relied_on_cusolver_default="yes"])
-    if test x"${relied_on_cusolver_default" = x"yes", then
+    if test x"${relied_on_cusolver_default}" = x"yes"; then
       with_cusolver=yes
     fi
 
@@ -3000,7 +3000,7 @@ if test x"$need_amd_gpu" = x"yes"; then
                fi
 	     ],
             [relied_on_roxsolver_default="yes"])
-    if test x"${relied_on_cusolver_default" = x"yes", then
+    if test x"${relied_on_cusolver_default}" = x"yes"; then
       with_rocsolver=yes
     fi
 
