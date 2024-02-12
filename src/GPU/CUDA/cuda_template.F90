@@ -119,17 +119,6 @@
     end function
   end interface
 
-  interface
-    function cusolver_set_stream_c(cusolverHandle, cudaStream) result(istat) &
-             bind(C, name="cusolverSetStreamFromC")
-      use, intrinsic :: iso_c_binding
-      implicit none
-
-      integer(kind=C_intptr_T), value  :: cusolverHandle
-      integer(kind=C_intptr_T), value  :: cudaStream
-      integer(kind=C_INT)              :: istat
-    end function
-  end interface
 
   ! functions to set and query the GPU devices
   interface
@@ -148,26 +137,6 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value :: cudaHandle
-      integer(kind=C_INT)      :: istat
-    end function
-  end interface
-
-  interface
-    function cusolver_create_c(cusolverHandle) result(istat) &
-             bind(C, name="cusolverCreateFromC")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_intptr_T) :: cusolverHandle
-      integer(kind=C_INT)      :: istat
-    end function
-  end interface
-
-  interface
-    function cusolver_destroy_c(cusolverHandle) result(istat) &
-             bind(C, name="cusolverDestroyFromC")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_intptr_T), value :: cusolverHandle
       integer(kind=C_INT)      :: istat
     end function
   end interface
@@ -522,24 +491,55 @@
       integer(kind=C_INT)                         :: istat
     end function
   end interface
+  
+  interface cuda_free_host
+    module procedure cuda_free_host_intptr
+    module procedure cuda_free_host_cptr
+  end interface
 
   interface
-    function cuda_free_host_c(a) result(istat) &
+    function cuda_free_host_intptr_c(a) result(istat) &
              bind(C, name="cudaFreeHostFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      type(c_ptr), value               :: a
+      integer(kind=c_intptr_t), value  :: a
       integer(kind=C_INT)              :: istat
+    end function
+  end interface
+  
+  interface
+  function cuda_free_host_cptr_c(a) result(istat) &
+           bind(C, name="cudaFreeHostFromC")
+    use, intrinsic :: iso_c_binding
+    implicit none
+    type(c_ptr), value               :: a
+    integer(kind=c_int)              :: istat
+  end function
+end interface
+
+  interface cuda_malloc_host
+    module procedure cuda_malloc_host_intptr
+    module procedure cuda_malloc_host_cptr
+  end interface
+  
+  interface
+    function cuda_malloc_host_intptr_c(a, width_height) result(istat) &
+             bind(C, name="cudaMallocHostFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t)                    :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
+      integer(kind=c_int)                         :: istat
     end function
   end interface
 
   interface
-    function cuda_malloc_host_c(a, width_height) result(istat) &
+    function cuda_malloc_host_cptr_c(a, width_height) result(istat) &
              bind(C, name="cudaMallocHostFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr)                    :: a
-      integer(kind=c_intptr_t), intent(in), value   :: width_height
+      integer(kind=c_intptr_t), intent(in), value :: width_height
       integer(kind=C_INT)                         :: istat
     end function
   end interface
@@ -569,30 +569,6 @@
     end function
   end interface
 
-  interface
-    subroutine cusolver_Dtrtri_c(cusolverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="cusolverDtrtri_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: cusolverHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine cusolver_Dpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev) &
-                              bind(C,name="cusolverDpotrf_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a_dev, info_dev
-      integer(kind=C_intptr_T), value           :: cusolverHandle
-    end subroutine
-  end interface
 
   interface cublas_Dgemm
     module procedure cublas_Dgemm_intptr
@@ -753,31 +729,6 @@
     end subroutine
   end interface
 
-  interface
-    subroutine cusolver_Strtri_c(cusolverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="cusolverStrtri_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: cusolverHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine cusolver_Spotrf_c(cusolverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="cusolverSpotrf_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: cusolverHandle
-    end subroutine
-  end interface
 
   interface cublas_Sgemm
     module procedure cublas_Sgemm_intptr
@@ -938,32 +889,6 @@
     end subroutine
   end interface
 
-  interface
-    subroutine cusolver_Ztrtri_c(cusolverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="cusolverZtrtri_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: cusolverHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine cusolver_Zpotrf_c(cusolverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="cusolverZpotrf_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: cusolverHandle
-    end subroutine
-  end interface
-
   interface cublas_Zgemm
     module procedure cublas_Zgemm_intptr
     module procedure cublas_Zgemm_cptr
@@ -1120,32 +1045,6 @@
       complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha, beta
       integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: cublasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine cusolver_Ctrtri_c(cusolverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="cusolverCtrtri_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: cusolverHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine cusolver_Cpotrf_c(cusolverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="cusolverCpotrf_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
 
@@ -1755,21 +1654,6 @@
 #endif
     end function
 
-    function cusolver_set_stream(cusolverHandle, cudaStream) result(success)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_intptr_t)                  :: cusolverHandle
-      integer(kind=C_intptr_t)                  :: cudaStream
-      logical                                   :: success
-
-#ifdef WITH_NVIDIA_CUSOLVER
-      success = cusolver_set_stream_c(cusolverHandle, cudaStream) /= 0
-#else
-      success = .true.
-#endif
-    end function
-
-
     function cuda_stream_synchronize(cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -1827,30 +1711,6 @@
       logical                    :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
       success = cublas_destroy_c(cublasHandle) /= 0
-#else
-      success = .true.
-#endif
-    end function
-
-    function cusolver_create(cusolverHandle) result(success)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_intptr_t)                  :: cusolverHandle
-      logical                                   :: success
-#ifdef WITH_NVIDIA_CUSOLVER
-      success = cusolver_create_c(cusolverHandle) /= 0
-#else
-      success = .true.
-#endif
-    end function
-
-    function cusolver_destroy(cusolverHandle) result(success)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_intptr_t)                  :: cusolverHandle
-      logical                                   :: success
-#ifdef WITH_NVIDIA_CUSOLVER
-      success = cusolver_destroy_c(cusolverHandle) /= 0
 #else
       success = .true.
 #endif
@@ -1944,26 +1804,51 @@
 #endif
     end function
 
-    function cuda_malloc_host(a, width_height) result(success)
+    function cuda_malloc_host_intptr(a, width_height) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t)                  :: a
+      integer(kind=c_intptr_t), intent(in)      :: width_height
+      logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_malloc_host_intptr_c(a, width_height) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function cuda_malloc_host_cptr(a, width_height) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr)                               :: a
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
-      success = cuda_malloc_host_c(a, width_height) /= 0
+      success = cuda_malloc_host_cptr_c(a, width_height) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function cuda_free_host(a) result(success)
+    function cuda_free_host_intptr(a) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: a
+      logical                  :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_free_host_intptr_c(a) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function cuda_free_host_cptr(a) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr)                   :: a
       logical                  :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
-      success = cuda_free_host_c(a) /= 0
+      success = cuda_free_host_cptr_c(a) /= 0
 #else
       success = .true.
 #endif
@@ -1974,7 +1859,7 @@
       implicit none
       integer(kind=c_intptr_t)                :: a
       integer(kind=ik)                        :: val
-      integer(kind=c_intptr_t), intent(in)      :: size
+      integer(kind=c_intptr_t), intent(in)    :: size
       integer(kind=C_INT)                     :: istat
       logical :: success
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -2296,31 +2181,6 @@
 #endif
     end function
 
-    subroutine cusolver_Dtrtri(uplo, diag, n, a, lda, info, cusolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: cusolverHandle
-#ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Dtrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-
-    subroutine cusolver_Dpotrf(uplo, n, a_dev, lda, info_dev, cusolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a_dev, info_dev
-      integer(kind=C_intptr_T)        :: cusolverHandle
-#ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Dpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev)
-#endif
-    end subroutine
-
     subroutine cublas_Dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2460,31 +2320,6 @@
 #endif
     end subroutine
 
-    subroutine cusolver_Strtri(uplo, diag, n, a, lda, info, cusolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: cusolverHandle
-#ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Strtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-
-    subroutine cusolver_Spotrf(uplo, n, a, lda, info, cusolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: cusolverHandle
-#ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Spotrf_c(cusolverHandle, uplo, n, a, lda, info)
-#endif
-    end subroutine
 
     subroutine cublas_Sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
       use, intrinsic :: iso_c_binding
@@ -2625,32 +2460,6 @@
 #endif
     end subroutine
 
-    subroutine cusolver_Ztrtri(uplo, diag, n, a, lda, info, cusolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: cusolverHandle
-#ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Ztrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-
-    subroutine cusolver_Zpotrf(uplo, n, a, lda, info, cusolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: cusolverHandle
-#ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Zpotrf_c(cusolverHandle, uplo, n, a, lda, info)
-#endif
-    end subroutine
-
     subroutine cublas_Zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2787,32 +2596,6 @@
       integer(kind=C_intptr_T)        :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Zgemv_c(cublasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
-#endif
-    end subroutine
-
-    subroutine cusolver_Ctrtri(uplo, diag, n, a, lda, info, cusolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: cusolverHandle
-#ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Ctrtri_c(cusolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-
-    subroutine cusolver_Cpotrf(uplo, n, a, lda, info, cusolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: cusolverHandle
-#ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Cpotrf_c(cusolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 

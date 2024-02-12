@@ -69,6 +69,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/mod_vendor_agnostic_solver_layer.F90 \
   src/GPU/mod_vendor_agnostic_utilities_layer.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
+  src/GPU/CUDA/mod_cusolver.F90 \
   src/GPU/CUDA/mod_nccl.F90 \
   src/GPU/ROCm/mod_hip.F90 \
   src/GPU/OpenMP/mod_openmp_offload.F90 \
@@ -147,6 +148,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
+  src/GPU/CUDA/cusolver_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \
   src/GPU/CUDA/cusolverFunctions_template.h \
   src/GPU/CUDA/nccl_template.F90 \
@@ -1018,6 +1020,7 @@ EXTRA_DIST = \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
+  src/GPU/CUDA/cusolver_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \
   src/GPU/CUDA/cusolverFunctions_template.h \
   src/GPU/CUDA/nccl_template.F90 \

@@ -55,6 +55,55 @@
 
 extern "C" {
 
+  cudaDataType getCudaDataType(char dataType) {
+    if      (dataType=='D') return CUDA_R_64F;
+    else if (dataType=='S') return CUDA_R_32F;
+    else if (dataType=='Z') return CUDA_C_64F;
+    else if (dataType=='C') return CUDA_C_32F;
+    else {
+      errormessage("Error in getCudaDataType: unknown data type, %s\n", "aborting");
+      return CUDA_R_64F;
+    }
+  }
+
+  void cusolverPrintError(cusolverStatus_t status){
+    switch (status){
+      case CUSOLVER_STATUS_SUCCESS:
+          printf("cusolverStatus=CUSOLVER_STATUS_SUCCESS\n");
+          break;
+      case CUSOLVER_STATUS_NOT_INITIALIZED:
+          printf("cusolverStatus=CUSOLVER_STATUS_NOT_INITIALIZED\n");
+          break;
+      case CUSOLVER_STATUS_ALLOC_FAILED:
+          printf("cusolverStatus=CUSOLVER_STATUS_ALLOC_FAILED\n");
+          break;
+      case CUSOLVER_STATUS_INVALID_VALUE:
+          printf("cusolverStatus=CUSOLVER_STATUS_INVALID_VALUE\n");
+          break;
+      case CUSOLVER_STATUS_ARCH_MISMATCH:
+          printf("cusolverStatus=CUSOLVER_STATUS_ARCH_MISMATCH\n");
+          break;
+      case CUSOLVER_STATUS_MAPPING_ERROR:
+          printf("cusolverStatus=CUSOLVER_STATUS_MAPPING_ERROR\n");
+          break;
+      case CUSOLVER_STATUS_EXECUTION_FAILED:
+          printf("cusolverStatus=CUSOLVER_STATUS_EXECUTION_FAILED\n");
+          break;
+      case CUSOLVER_STATUS_INTERNAL_ERROR:
+          printf("cusolverStatus=CUSOLVER_STATUS_INTERNAL_ERROR\n");
+          break;
+      case CUSOLVER_STATUS_MATRIX_TYPE_NOT_SUPPORTED:
+          printf("cusolverStatus=CUSOLVER_STATUS_MATRIX_TYPE_NOT_SUPPORTED\n");
+          break;
+      case CUSOLVER_STATUS_NOT_SUPPORTED:
+          printf("cusolverStatus=CUSOLVER_STATUS_NOT_SUPPORTED\n");
+          break;
+      default:
+          printf("Unknown cusolverStatus status: %d\n", status);
+    }
+  }
+
+
   int cusolverSetStreamFromC(cusolverDnHandle_t cusolver_handle, cudaStream_t cudaStream) {
     //cusolverStatus_t status = cusolverDnSetStream(*((cusolverDnHandle_t*)cusolver_handle), *((cudaStream_t*)stream));
     cusolverStatus_t status = cusolverDnSetStream(cusolver_handle, cudaStream);
@@ -158,18 +207,8 @@ extern "C" {
     //status = cusolverDnXtrtri(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_R_64F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
     status = cusolverDnXtrtri(cudaHandle, fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_R_64F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
 
-    if (status == CUSOLVER_STATUS_SUCCESS) {
-    } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
-      printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
-    } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
-      printf("status = CUSOLVER_STATUS_NOT_SUPPORTED\n");
-    } else if (status == CUSOLVER_STATUS_INVALID_VALUE) {
-      printf("status = CUSOLVER_STATUS_INVALID_VALUE\n");
-    } else if (status == CUSOLVER_STATUS_INTERNAL_ERROR) {
-      printf("status = CUSOLVER_STATUS_INTERNAL_ERROR\n"); 
-    } else {
-      printf("status = UNKNOWN\n");
-    }
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
 
     //cuerr = cudaDeviceSynchronize();
     //if (cuerr != cudaSuccess) {
@@ -234,18 +273,8 @@ extern "C" {
     //status = cusolverDnXtrtri(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_R_32F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
     status = cusolverDnXtrtri(cudaHandle, fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_R_32F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
 
-    if (status == CUSOLVER_STATUS_SUCCESS) {
-    } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
-      printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
-    } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
-      printf("status = CUSOLVER_STATUS_NOT_SUPPORTED\n");
-    } else if (status == CUSOLVER_STATUS_INVALID_VALUE) {
-      printf("status = CUSOLVER_STATUS_INVALID_VALUE\n");
-    } else if (status == CUSOLVER_STATUS_INTERNAL_ERROR) {
-      printf("status = CUSOLVER_STATUS_INTERNAL_ERROR\n"); 
-    } else {
-      printf("status = UNKNOWN\n");
-    }
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
 
     //cuerr = cudaDeviceSynchronize();
     //if (cuerr != cudaSuccess) {
@@ -311,18 +340,8 @@ extern "C" {
     //status = cusolverDnXtrtri(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_C_64F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
     status = cusolverDnXtrtri(cudaHandle, fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_C_64F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
 
-    if (status == CUSOLVER_STATUS_SUCCESS) {
-    } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
-      printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
-    } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
-      printf("status = CUSOLVER_STATUS_NOT_SUPPORTED\n");
-    } else if (status == CUSOLVER_STATUS_INVALID_VALUE) {
-      printf("status = CUSOLVER_STATUS_INVALID_VALUE\n");
-    } else if (status == CUSOLVER_STATUS_INTERNAL_ERROR) {
-      printf("status = CUSOLVER_STATUS_INTERNAL_ERROR\n"); 
-    } else {
-      printf("status = UNKNOWN\n");
-    }
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
 
     //cuerr = cudaDeviceSynchronize();
     //if (cuerr != cudaSuccess) {
@@ -388,18 +407,8 @@ extern "C" {
     //status = cusolverDnXtrtri(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_C_32F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
     status = cusolverDnXtrtri(cudaHandle, fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_C_32F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
 
-    if (status == CUSOLVER_STATUS_SUCCESS) {
-    } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
-      printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
-    } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
-      printf("status = CUSOLVER_STATUS_NOT_SUPPORTED\n");
-    } else if (status == CUSOLVER_STATUS_INVALID_VALUE) {
-      printf("status = CUSOLVER_STATUS_INVALID_VALUE\n");
-    } else if (status == CUSOLVER_STATUS_INTERNAL_ERROR) {
-      printf("status = CUSOLVER_STATUS_INTERNAL_ERROR\n"); 
-    } else {
-      printf("status = UNKNOWN\n");
-    }
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
 
     //cuerr = cudaDeviceSynchronize();
     //if (cuerr != cudaSuccess) {
@@ -450,8 +459,6 @@ extern "C" {
       errormessage("Error in cusolverDnDpotrf_buffer_size %s \n","aborting");
     }
 
-    printf("d_lwork: %d\n", d_lwork); // PETERDEBUG
-
     cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
     //cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
     if (cuerr != cudaSuccess) {
@@ -464,18 +471,8 @@ extern "C" {
     //status = cusolverDnDpotrf(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, devInfo);
     status = cusolverDnDpotrf(cudaHandle, fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, info_dev);
 
-    if (status == CUSOLVER_STATUS_SUCCESS) {
-    } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
-      printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
-    } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
-      printf("status = CUSOLVER_STATUS_NOT_SUPPORTED\n");
-    } else if (status == CUSOLVER_STATUS_INVALID_VALUE) {
-      printf("status = CUSOLVER_STATUS_INVALID_VALUE\n");
-    } else if (status == CUSOLVER_STATUS_INTERNAL_ERROR) {
-      printf("status = CUSOLVER_STATUS_INTERNAL_ERROR\n"); 
-    } else {
-      printf("status = UNKNOWN\n");
-    }
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
 
     //cuerr = cudaDeviceSynchronize();
     //if (cuerr != cudaSuccess) {
@@ -533,18 +530,8 @@ extern "C" {
     //status = cusolverDnSpotrf(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, devInfo);
     status = cusolverDnSpotrf(cudaHandle, fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, devInfo);
 
-    if (status == CUSOLVER_STATUS_SUCCESS) {
-    } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
-      printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
-    } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
-      printf("status = CUSOLVER_STATUS_NOT_SUPPORTED\n");
-    } else if (status == CUSOLVER_STATUS_INVALID_VALUE) {
-      printf("status = CUSOLVER_STATUS_INVALID_VALUE\n");
-    } else if (status == CUSOLVER_STATUS_INTERNAL_ERROR) {
-      printf("status = CUSOLVER_STATUS_INTERNAL_ERROR\n"); 
-    } else {
-      printf("status = UNKNOWN\n");
-    }
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
 
     //cuerr = cudaDeviceSynchronize();
     //if (cuerr != cudaSuccess) {
@@ -603,18 +590,8 @@ extern "C" {
     //status = cusolverDnZpotrf(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
     status = cusolverDnZpotrf(cudaHandle, fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
 
-    if (status == CUSOLVER_STATUS_SUCCESS) {
-    } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
-      printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
-    } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
-      printf("status = CUSOLVER_STATUS_NOT_SUPPORTED\n");
-    } else if (status == CUSOLVER_STATUS_INVALID_VALUE) {
-      printf("status = CUSOLVER_STATUS_INVALID_VALUE\n");
-    } else if (status == CUSOLVER_STATUS_INTERNAL_ERROR) {
-      printf("status = CUSOLVER_STATUS_INTERNAL_ERROR\n"); 
-    } else {
-      printf("status = UNKNOWN\n");
-    }
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
 
     //cuerr = cudaDeviceSynchronize();
     //if (cuerr != cudaSuccess) {
@@ -674,18 +651,8 @@ extern "C" {
     //status = cusolverDnCpotrf(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
     status = cusolverDnCpotrf(cudaHandle, fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
 
-    if (status == CUSOLVER_STATUS_SUCCESS) {
-    } else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
-      printf("status = CUSOLVER_STATUS_NOT_INITIALIZED\n");
-    } else if (status == CUSOLVER_STATUS_NOT_SUPPORTED) {
-      printf("status = CUSOLVER_STATUS_NOT_SUPPORTED\n");
-    } else if (status == CUSOLVER_STATUS_INVALID_VALUE) {
-      printf("status = CUSOLVER_STATUS_INVALID_VALUE\n");
-    } else if (status == CUSOLVER_STATUS_INTERNAL_ERROR) {
-      printf("status = CUSOLVER_STATUS_INTERNAL_ERROR\n"); 
-    } else {
-      printf("status = UNKNOWN\n");
-    }
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
 
     //cuerr = cudaDeviceSynchronize();
     //if (cuerr != cudaSuccess) {
@@ -709,5 +676,97 @@ extern "C" {
     }
   }
 
-}
 
+//_________________________________________________________________________________________________
+// cusolverXpotrf
+
+void cusolverXpotrf_bufferSize_elpa_wrapper(cusolverDnHandle_t cusolverHandle, char uplo, int n, char dataType, intptr_t A, int lda, 
+                                            size_t *workspaceInBytesOnDevice, size_t *workspaceInBytesOnHost){
+
+    cusolverStatus_t status;
+    cudaDataType cuda_data_type =  getCudaDataType(dataType);
+
+    status = cusolverDnXpotrf_bufferSize(cusolverHandle, NULL, fill_mode_new_api(uplo), (int64_t) n, cuda_data_type, (void *) A, (int64_t) lda, 
+                                         cuda_data_type, workspaceInBytesOnDevice, workspaceInBytesOnHost);
+    
+    if (status != CUSOLVER_STATUS_SUCCESS){
+      cusolverPrintError(status);
+      errormessage("Error in cusolverDnXpotrf_bufferSize %s \n", "aborting");
+    }
+  }
+
+
+void cusolverXpotrf_elpa_wrapper(cusolverDnHandle_t cusolverHandle, char uplo, int n, char dataType, intptr_t A, int lda, 
+                                 intptr_t buffer_dev , size_t *workspaceInBytesOnDevice, 
+                                 intptr_t buffer_host, size_t *workspaceInBytesOnHost, int *info_dev){
+
+    cusolverStatus_t status;
+    cudaDataType cuda_data_type =  getCudaDataType(dataType);
+
+    status = cusolverDnXpotrf(cusolverHandle, NULL, fill_mode_new_api(uplo), (int64_t) n, cuda_data_type, (void *) A, (int64_t) lda, cuda_data_type,
+                              (void *) buffer_dev , *workspaceInBytesOnDevice,
+                              (void *) buffer_host, *workspaceInBytesOnHost, info_dev);
+    
+    if (status != CUSOLVER_STATUS_SUCCESS){
+      cusolverPrintError(status);
+      errormessage("Error in cusolverDnXpotrf %s \n", "aborting");
+    }
+  }
+
+} // extern C
+
+
+
+/*
+template <typename T>
+void cusolverXpotrf_elpa_wrapper(cusolverDnHandle_t cusolverHandle, cublasFillMode_t uplo, int64_t n, T *A, int64_t lda, 
+                                 void *bufferOnDevice, size_t *workspaceInBytesOnDevice, 
+                                 void *bufferOnHost  , size_t *workspaceInBytesOnHost, int *info_dev){
+    cusolverStatus_t status;
+    cudaDataType cuda_data_type =  getCudaDataType<T>();
+
+    status = cusolverDnXpotrf(cusolverHandle, NULL, uplo, n, cuda_data_type, (void *) A, lda, cuda_data_type,
+                              bufferOnDevice, *workspaceInBytesOnDevice, bufferOnHost, *workspaceInBytesOnHost, info_dev);
+    if (status != CUSOLVER_STATUS_SUCCESS) {
+      errormessage("Error in cusolverDnXpotrf %s \n", "aborting");
+    }
+  }
+
+extern "C" {
+  void cusolverXDpotrf_elpa_wrapper (cusolverDnHandle_t cusolverHandle, char uplo, int n, double *A, int lda, 
+                                     void *bufferOnDevice, size_t *workspaceInBytesOnDevice, 
+                                     void *bufferOnHost  , size_t *workspaceInBytesOnHostint, int *info_dev) {
+    cusolverXpotrf_elpa_wrapper (cusolverHandle, fill_mode_new_api(uplo), n, A, lda, bufferOnDevice, workspaceInBytesOnDevice, bufferOnHost, workspaceInBytesOnHostint, info_dev);
+  }
+  void cusolverXSpotrf_elpa_wrapper (cusolverDnHandle_t cusolverHandle, char uplo, int n, float  *A, int lda, 
+                                     void *bufferOnDevice, size_t *workspaceInBytesOnDevice, 
+                                     void *bufferOnHost  , size_t *workspaceInBytesOnHostint, int *info_dev) {
+    cusolverXpotrf_elpa_wrapper (cusolverHandle, fill_mode_new_api(uplo), n, A, lda, bufferOnDevice, workspaceInBytesOnDevice, bufferOnHost, workspaceInBytesOnHostint, info_dev);
+  }
+  void cusolverXZpotrf_elpa_wrapper (cusolverDnHandle_t cusolverHandle, char uplo, int n, cuDoubleComplex *A, int lda, 
+                                     void *bufferOnDevice, size_t *workspaceInBytesOnDevice, 
+                                     void *bufferOnHost  , size_t *workspaceInBytesOnHostint, int *info_dev) {
+    cusolverXpotrf_elpa_wrapper (cusolverHandle, fill_mode_new_api(uplo), n, A, lda, bufferOnDevice, workspaceInBytesOnDevice, bufferOnHost, workspaceInBytesOnHostint, info_dev);
+  }
+  void cusolverXCpotrf_elpa_wrapper (cusolverDnHandle_t cusolverHandle, char uplo, int n, cuFloatComplex  *A, int lda, 
+                                     void *bufferOnDevice, size_t *workspaceInBytesOnDevice, 
+                                     void *bufferOnHost  , size_t *workspaceInBytesOnHostint, int *info_dev) {
+    cusolverXpotrf_elpa_wrapper (cusolverHandle, fill_mode_new_api(uplo), n, A, lda, bufferOnDevice, workspaceInBytesOnDevice, bufferOnHost, workspaceInBytesOnHostint, info_dev);
+  }
+}
+*/
+
+// ________________________________________
+// PETERDEBUG - cpp
+
+template<typename T>
+cudaDataType getCudaDataType() {
+    if      (std::is_same<T, double         >::value) return CUDA_R_64F;
+    else if (std::is_same<T, float          >::value) return CUDA_R_32F;
+    else if (std::is_same<T, cuDoubleComplex>::value) return CUDA_C_64F;
+    else if (std::is_same<T, cuFloatComplex>::value ) return CUDA_C_32F;
+    else {
+      errormessage("Error in cusolverXpotrf_bufferSize_elpa_wrapper: unknown data type, %s\n", "aborting");
+      return CUDA_R_64F;
+    }
+  }

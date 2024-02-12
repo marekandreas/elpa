@@ -55,6 +55,7 @@
 #undef  BLAS_TRANS_OR_CONJ
 #undef  BLAS_CHAR
 #undef  BLAS_CHAR_AND_SY_OR_HE
+#undef  PRECISION_CHAR
 #undef  PRECISION
 #undef  SPECIAL_COMPLEX_DATATYPE
 #undef  PRECISION_STR
@@ -166,7 +167,8 @@
 #define  REAL_DATATYPE rk8
 #define  C_REAL_DATATYPE c_double
 #define  BLAS_CHAR D
-#define BLAS_CHAR_AND_SY_OR_HE DSY
+#define  BLAS_CHAR_AND_SY_OR_HE DSY
+#define  PRECISION_CHAR 'D'
 #define  SPECIAL_COMPLEX_DATATYPE ck8
 
 #define  PRECISION_TRTRI DTRTRI
@@ -267,6 +269,7 @@
 #define  C_REAL_DATATYPE c_float
 #define  BLAS_CHAR S
 #define  BLAS_CHAR_AND_SY_OR_HE SSY
+#define  PRECISION_CHAR 'S'
 #define  SPECIAL_COMPLEX_DATATYPE ck4
 
 #define  PRECISION_TRTRI STRTRI
@@ -365,6 +368,7 @@
 #undef  BLAS_TRANS_OR_CONJ
 #undef  BLAS_CHAR
 #undef  BLAS_CHAR_AND_SY_OR_HE
+#undef  PRECISION_CHAR
 #undef  PRECISION
 #undef COMPLEX_DATATYPE
 
@@ -488,6 +492,7 @@
 #define COMPLEX_DATATYPE CK8
 #define BLAS_CHAR Z
 #define BLAS_CHAR_AND_SY_OR_HE ZHE
+#define PRECISION_CHAR 'Z'
 #define REAL_DATATYPE RK8
 #define C_REAL_DATATYPE c_double
 
@@ -592,6 +597,7 @@
 #define COMPLEX_DATATYPE CK4
 #define BLAS_CHAR C
 #define BLAS_CHAR_AND_SY_OR_HE CHE
+#define PRECISION_CHAR 'C'
 #define REAL_DATATYPE RK4
 #define C_REAL_DATATYPE c_float
 

@@ -122,6 +122,16 @@
     module procedure gpu_free_cptr
   end interface
 
+  interface gpu_malloc_host
+    module procedure gpu_malloc_host_intptr
+    module procedure gpu_malloc_host_cptr
+  end interface
+
+  interface gpu_free_host
+    module procedure gpu_free_host_intptr
+    module procedure gpu_free_host_cptr
+  end interface
+
   interface gpu_vendor
     module procedure gpu_vendor_internal
     module procedure gpu_vendor_external_tests
@@ -536,7 +546,52 @@
 #endif
     end function
 
-    function gpu_malloc_host(array, elements) result(success)
+    function gpu_malloc_host_intptr(array, elements) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      integer(kind=c_intptr_t)             :: array
+      integer(kind=c_intptr_t), intent(in) :: elements
+      logical                              :: success
+
+      success = .false.
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_malloc_host_intptr(array, elements)
+      endif
+#ifdef WITH_AMD_GPU_VERSION
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_malloc_host_intptr(array, elements)
+      endif
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"not yet implemented: malloc_host"
+        stop 1
+      endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"not yet implemented: malloc_host"
+        stop 1
+      endif
+#endif
+    end function
+
+    function gpu_malloc_host_cptr(array, elements) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
 
@@ -558,11 +613,11 @@
       success = .false.
 
       if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_malloc_host(array, elements)
+        success = cuda_malloc_host_cptr(array, elements)
       endif
 #ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        success = hip_malloc_host(array, elements)
+        success = hip_malloc_host_cptr(array, elements)
       endif
 #endif
 
@@ -1290,7 +1345,52 @@
 
     end function
 
-    function gpu_free_host(a) result(success)
+    function gpu_free_host_intptr(a) result(success)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      integer(kind=c_intptr_t), value          :: a
+
+      logical :: success
+
+      success = .false.
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cuda_free_host_intptr(a)
+      endif
+
+#ifdef WITH_AMD_GPU_VERSION
+      if (use_gpu_vendor == amd_gpu) then
+        success = hip_free_host_intptr(a)
+      endif
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"not yet implemented: host_free"
+        stop 1
+      endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"not yet implemented: host_free"
+        stop 1
+      endif
+#endif
+    end function
+
+    function gpu_free_host_cptr(a) result(success)
       use, intrinsic :: iso_c_binding
       use cuda_functions
 #ifdef WITH_AMD_GPU_VERSION
@@ -1311,12 +1411,12 @@
       success = .false.
 
       if (use_gpu_vendor == nvidia_gpu) then
-        success = cuda_free_host(a)
+        success = cuda_free_host_cptr(a)
       endif
 
 #ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        success = hip_free_host(a)
+        success = hip_free_host_cptr(a)
       endif
 #endif
 

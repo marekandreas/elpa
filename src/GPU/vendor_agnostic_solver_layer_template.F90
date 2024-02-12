@@ -392,3 +392,85 @@
 #endif
     end subroutine
 
+    ! Xpotrf_bufferSize
+
+    subroutine gpusolver_Xpotrf_bufferSize(cusolverHandle, uplo, n, dataType, a_dev, lda, &
+                                           workspaceInBytesOnDevice, workspaceInBytesOnHost)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      integer(kind=c_intptr_t)       :: cusolverHandle
+      character(1, c_char), value    :: uplo, dataType
+      integer(kind=c_int)            :: n, lda
+      integer(kind=c_intptr_t)       :: a_dev
+      integer(kind=c_size_t)         :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cusolver_Xpotrf_bufferSize(cusolverHandle, uplo, n, dataType, a_dev, lda, &
+                                        workspaceInBytesOnDevice, workspaceInBytesOnHost)
+      endif
+#ifdef WITH_AMD_GPU_VERSION
+! not yet available in roc
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+! not yet available in openmp offload
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+! not yet available in mkl
+#endif
+    end subroutine
+
+    ! Xpotrf
+
+    subroutine gpusolver_Xpotrf(cusolverHandle, uplo, n, dataType, a_dev, lda, &
+                                buffer_dev , workspaceInBytesOnDevice, &
+                                buffer_host, workspaceInBytesOnHost, info_dev)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      integer(kind=c_intptr_t)       :: cusolverHandle
+      character(1, c_char), value    :: uplo, dataType
+      integer(kind=c_int)            :: n, lda
+      integer(kind=c_intptr_t)       :: a_dev, buffer_dev, info_dev
+      integer(kind=c_intptr_t)       :: buffer_host
+      integer(kind=c_size_t)         :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+
+      if (use_gpu_vendor == nvidia_gpu) then
+        call cusolver_Xpotrf(cusolverHandle, uplo, n, dataType, a_dev, lda, &
+                             buffer_dev , workspaceInBytesOnDevice, &
+                             buffer_host, workspaceInBytesOnHost, info_dev)
+      endif
+#ifdef WITH_AMD_GPU_VERSION
+! not yet available in roc
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+! not yet available in openmp offload
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+! not yet available in mkl
+#endif
+    end subroutine
