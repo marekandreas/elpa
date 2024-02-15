@@ -1177,7 +1177,7 @@ subroutine tridiag_&
 !$omp parallel &
 !$omp num_threads(max_threads) &
 !$omp default(none) &
-!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end) &
+!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end, my_stream, num) &
 !$omp shared(obj, gpuHandle, useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, offset_dev, &
 !$omp&       max_local_cols, max_local_rows, wantDebug, l_rows_per_tile, l_cols_per_tile, &

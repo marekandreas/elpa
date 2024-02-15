@@ -53,6 +53,7 @@ module elpa_blas_gpu
   use elpa_general_gpu, only : use_gpu_vendor, nvidia_gpu, amd_gpu, intel_gpu, openmp_offload_gpu, sycl_gpu, no_gpu, &
                                gpu_vendor
 
+  public
 #include "./vendor_agnostic_blas_layer_template.F90"
 
 end module

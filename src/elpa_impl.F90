@@ -2663,6 +2663,8 @@ module elpa_impl
               time_spent(1) = self%autotune_timer%get("accumulator","band_to_full")
             case (ELPA2_AUTOTUNE_HERMITIAN_MULTIPLY_BLOCKING)
               time_spent(1) = self%autotune_timer%get("accumulator","hermitian_multiply")
+            case (ELPA2_AUTOTUNE_CHOLESKY_BLOCKING)
+              time_spent(1) = self%autotune_timer%get("accumulator","cholesky")
             case (ELPA1_AUTOTUNE_MAX_STORED_ROWS)
               time_spent(1) = self%autotune_timer%get("accumulator","tridi_to_full")
             case (ELPA2_AUTOTUNE_TRIDI_TO_BAND_STRIPEWIDTH)
