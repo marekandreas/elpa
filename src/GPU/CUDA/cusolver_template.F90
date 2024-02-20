@@ -147,40 +147,37 @@
   end interface
 
   interface
-    subroutine cusolver_Spotrf_c(cusolverHandle, uplo, n, a, lda, info) &
+    subroutine cusolver_Spotrf_c(cusolverHandle, uplo, n, a, lda, info_dev) &
                               bind(C,name="cusolverSpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: a, info_dev
       integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine cusolver_Zpotrf_c(cusolverHandle, uplo, n, a, lda, info) &
+    subroutine cusolver_Zpotrf_c(cusolverHandle, uplo, n, a, lda, info_dev) &
                               bind(C,name="cusolverZpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: a, info_dev
       integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine cusolver_Cpotrf_c(cusolverHandle, uplo, n, a, lda, info) &
+    subroutine cusolver_Cpotrf_c(cusolverHandle, uplo, n, a, lda, info_dev) &
                               bind(C,name="cusolverCpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: a, info_dev
       integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
@@ -331,42 +328,39 @@
 #endif
     end subroutine
 
-    subroutine cusolver_Spotrf(uplo, n, a, lda, info, cusolverHandle)
+    subroutine cusolver_Spotrf(uplo, n, a, lda, info_dev, cusolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: a, info_dev
       integer(kind=C_intptr_T)        :: cusolverHandle
 #ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Spotrf_c(cusolverHandle, uplo, n, a, lda, info)
+      call cusolver_Spotrf_c(cusolverHandle, uplo, n, a, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine cusolver_Zpotrf(uplo, n, a, lda, info, cusolverHandle)
+    subroutine cusolver_Zpotrf(uplo, n, a, lda, info_dev, cusolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: a, info_dev
       integer(kind=C_intptr_T)        :: cusolverHandle
 #ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Zpotrf_c(cusolverHandle, uplo, n, a, lda, info)
+      call cusolver_Zpotrf_c(cusolverHandle, uplo, n, a, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine cusolver_Cpotrf(uplo, n, a, lda, info, cusolverHandle)
+    subroutine cusolver_Cpotrf(uplo, n, a, lda, info_dev, cusolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: a, info_dev
       integer(kind=C_intptr_T)        :: cusolverHandle
 #ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Cpotrf_c(cusolverHandle, uplo, n, a, lda, info)
+      call cusolver_Cpotrf_c(cusolverHandle, uplo, n, a, lda, info_dev)
 #endif
     end subroutine
 

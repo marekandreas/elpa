@@ -439,17 +439,6 @@ extern "C" {
     cusolverStatus_t status;
     cudaError_t cuerr;
 
-//     int info_gpu = 0;
-
-//     int *devInfo = NULL; 
-//     cuerr = cudaMalloc((void**)&devInfo, sizeof(int));
-//     if (cuerr != cudaSuccess) {
-//       errormessage("Error in cusolver_Dpotrf devInfo: %s\n",cudaGetErrorString(cuerr));
-//     }
-// #ifdef DEBUG_CUDA
-//     printf("CUDA Malloc,  pointer address: %p, size: %d \n", &devInfo);
-// #endif
-
     double *d_work = NULL;
     int d_lwork = 0;
 
@@ -460,7 +449,6 @@ extern "C" {
     }
 
     cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
-    //cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
     if (cuerr != cudaSuccess) {
       errormessage("Error in cusolver_Dpotrf d_work: %s\n",cudaGetErrorString(cuerr));
     }
@@ -468,52 +456,25 @@ extern "C" {
     printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 #endif
 
-    //status = cusolverDnDpotrf(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, devInfo);
     status = cusolverDnDpotrf(cudaHandle, fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, info_dev);
 
     if (status != CUSOLVER_STATUS_SUCCESS)
       cusolverPrintError(status);
 
-    //cuerr = cudaDeviceSynchronize();
-    //if (cuerr != cudaSuccess) {
-    //  errormessage("Error in cusolver_Dtrtri: cudaDeviceSynchronize: %s\n",cudaGetErrorString(cuerr));
-    //}
 
-    // cuerr = cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost);
-    // if (cuerr != cudaSuccess) {
-    //   errormessage("Error in cusolver_Dpotrf info_gpu: %s\n",cudaGetErrorString(cuerr));
-    // }
-
-    // *info = info_gpu;
     cuerr = cudaFree(d_work);
     if (cuerr != cudaSuccess) {
       errormessage("Error in cusolver_Dpotrf cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
     }
-
-    // cuerr = cudaFree(devInfo);
-    // if (cuerr != cudaSuccess) {
-    //   errormessage("Error in cusolver_Dpotrf cuda_free(devInfo): %s\n",cudaGetErrorString(cuerr));
-    // }
   }
 
-  void cusolverSpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, float *A, int lda, int *info) {
+  void cusolverSpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, float *A, int lda, int *info_dev) {
     cusolverStatus_t status;
-
-    int info_gpu = 0;
-
-    int *devInfo = NULL; 
-    cudaError_t cuerr = cudaMalloc((void**)&devInfo, sizeof(int));
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cusolver_Spotrf devInfo: %s\n",cudaGetErrorString(cuerr));
-    }
-#ifdef DEBUG_CUDA
-    printf("CUDA Malloc,  pointer address: %p, size: %d \n", &devInfo);
-#endif
+    cudaError_t cuerr;
 
     float *d_work = NULL;
     int d_lwork = 0;
 
-    //status = cusolverDnSpotrf_bufferSize(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo),  n, A, lda, &d_lwork);
     status = cusolverDnSpotrf_bufferSize(cudaHandle, fill_mode_new_api(uplo),  n, A, lda, &d_lwork);
     if (status != CUSOLVER_STATUS_SUCCESS) {
       errormessage("Error in cusolverDnSpotrf_buffer_size %s \n","aborting");
@@ -527,53 +488,25 @@ extern "C" {
     printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 #endif
 
-    //status = cusolverDnSpotrf(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, devInfo);
-    status = cusolverDnSpotrf(cudaHandle, fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, devInfo);
+    status = cusolverDnSpotrf(cudaHandle, fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, info_dev);
 
     if (status != CUSOLVER_STATUS_SUCCESS)
       cusolverPrintError(status);
 
-    //cuerr = cudaDeviceSynchronize();
-    //if (cuerr != cudaSuccess) {
-    //  errormessage("Error in cusolver_Dtrtri: cudaDeviceSynchronize: %s\n",cudaGetErrorString(cuerr));
-    //}
-
-    cuerr = cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost);
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cusolver_Spotrf info_gpu: %s\n",cudaGetErrorString(cuerr));
-    }
-
-    *info = info_gpu;
     cuerr = cudaFree(d_work);
     if (cuerr != cudaSuccess) {
       errormessage("Error in cusolver_Spotrf cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
     }
-
-    cuerr = cudaFree(devInfo);
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cusolver_Spotrf cuda_free(devInfo): %s\n",cudaGetErrorString(cuerr));
-    }
   }
 
-  void cusolverZpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, double _Complex *A, int lda, int *info) {
+  void cusolverZpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, double _Complex *A, int lda, int *info_dev) {
     cusolverStatus_t status;
-
-    int info_gpu = 0;
-
-    int *devInfo = NULL; 
-    cudaError_t cuerr = cudaMalloc((void**)&devInfo, sizeof(int));
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cusolver_Zpotrf devInfo: %s\n",cudaGetErrorString(cuerr));
-    }
-#ifdef DEBUG_CUDA
-    printf("CUDA Malloc,  pointer address: %p, size: %d \n", &devInfo);
-#endif
+    cudaError_t cuerr;
 
     cuDoubleComplex *d_work = NULL;
     int d_lwork = 0;
     cuDoubleComplex* A_casted = (cuDoubleComplex*) A;
 
-    //status = cusolverDnZpotrf_bufferSize(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo),  n, A_casted, lda, &d_lwork);
     status = cusolverDnZpotrf_bufferSize(cudaHandle, fill_mode_new_api(uplo),  n, A_casted, lda, &d_lwork);
     if (status != CUSOLVER_STATUS_SUCCESS) {
       errormessage("Error in cusolverDnZpotrf_buffer_size %s \n","aborting");
@@ -587,60 +520,31 @@ extern "C" {
     printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 #endif
 
-    //status = cusolverDnZpotrf(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
-    status = cusolverDnZpotrf(cudaHandle, fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
+    status = cusolverDnZpotrf(cudaHandle, fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, info_dev);
 
     if (status != CUSOLVER_STATUS_SUCCESS)
       cusolverPrintError(status);
 
-    //cuerr = cudaDeviceSynchronize();
-    //if (cuerr != cudaSuccess) {
-    //  errormessage("Error in cusolver_Dtrtri: cudaDeviceSynchronize: %s\n",cudaGetErrorString(cuerr));
-    //}
-
-    cuerr = cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost);
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cusolver_Zpotrf info_gpu: %s\n",cudaGetErrorString(cuerr));
-    }
-
-    *info = info_gpu;
     cuerr = cudaFree(d_work);
     if (cuerr != cudaSuccess) {
       errormessage("Error in cusolver_Zpotrf cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
     }
-
-    cuerr = cudaFree(devInfo);
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cusolver_Zpotrf cuda_free(devInfo): %s\n",cudaGetErrorString(cuerr));
-    }
   }
 
-  void cusolverCpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, float _Complex *A, int lda, int *info) {
+  void cusolverCpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, float _Complex *A, int lda, int *info_dev) {
     cusolverStatus_t status;
-
-    int info_gpu = 0;
-
-    int *devInfo = NULL; 
-    cudaError_t cuerr = cudaMalloc((void**)&devInfo, sizeof(int));
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cusolver_Cpotrf devInfo: %s\n",cudaGetErrorString(cuerr));
-    }
-#ifdef DEBUG_CUDA
-    printf("CUDA Malloc,  pointer address: %p, size: %d \n", &devInfo);
-#endif
+    cudaError_t cuerr;
 
     cuFloatComplex *d_work = NULL;
     int d_lwork = 0;
     cuFloatComplex* A_casted = (cuFloatComplex*) A;
 
-    //status = cusolverDnCpotrf_bufferSize(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo),  n, A_casted, lda, &d_lwork);
     status = cusolverDnCpotrf_bufferSize(cudaHandle, fill_mode_new_api(uplo),  n, A_casted, lda, &d_lwork);
     if (status != CUSOLVER_STATUS_SUCCESS) {
       errormessage("Error in cusolverDnCpotrf_buffer_size %s \n","aborting");
     }
 
     cuerr = cudaMalloc((void**) &d_work, sizeof(cuFloatComplex) * d_lwork);
-    //cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork is already in bytes
     if (cuerr != cudaSuccess) {
       errormessage("Error in cusolver_Cpotrf d_work: %s\n",cudaGetErrorString(cuerr));
     }
@@ -648,31 +552,14 @@ extern "C" {
     printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 #endif
 
-    //status = cusolverDnCpotrf(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
-    status = cusolverDnCpotrf(cudaHandle, fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
+    status = cusolverDnCpotrf(cudaHandle, fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, info_dev);
 
     if (status != CUSOLVER_STATUS_SUCCESS)
       cusolverPrintError(status);
 
-    //cuerr = cudaDeviceSynchronize();
-    //if (cuerr != cudaSuccess) {
-    //  errormessage("Error in cusolver_Dtrtri: cudaDeviceSynchronize: %s\n",cudaGetErrorString(cuerr));
-    //}
-
-    cuerr = cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost);
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cusolver_Cpotrf info_gpu: %s\n",cudaGetErrorString(cuerr));
-    }
-
-    *info = info_gpu;
     cuerr = cudaFree(d_work);
     if (cuerr != cudaSuccess) {
       errormessage("Error in cusolver_Cpotrf cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
-    }
-
-    cuerr = cudaFree(devInfo);
-    if (cuerr != cudaSuccess) {
-      errormessage("Error in cusolver_Cpotrf cuda_free(devInfo): %s\n",cudaGetErrorString(cuerr));
     }
   }
 
