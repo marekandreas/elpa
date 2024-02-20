@@ -63,10 +63,12 @@
 
 #include "config-f90.h"
 
-#ifdef WITH_AMD_ROCSOLVER
-#include <rocsolver.h>
-#endif
 
 #ifdef WITH_AMD_GPU_VERSION
 #include "./rocmFunctions_template.h"
+#endif
+
+#ifdef WITH_AMD_ROCSOLVER
+#include <rocsolver.h>
+#include "./rocsolverFunctions_template.h"
 #endif

@@ -41,21 +41,19 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! Author: Andreas Marek, MPCDF
-! This file is the generated version. Do NOT edit
+! Author: Peter Karpov, MPCDF
 
 
 #include "config-f90.h"
 
-module hip_functions
+module rocsolver_functions
   use, intrinsic :: iso_c_binding
   use precision
-  use rocsolver_functions
   implicit none
 
   public
 
 
-#include "./hip_template.F90"
+#include "./rocsolver_template.F90"
 
-end module hip_functions
+end module rocsolver_functions

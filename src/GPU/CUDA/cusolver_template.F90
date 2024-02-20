@@ -78,7 +78,7 @@
     end function
   end interface
 
-  ! ?trtri
+  ! cusolver_?trtri
 
   interface
     subroutine cusolver_Dtrtri_c(cusolverHandle, uplo, diag, n, a, lda, info) &
@@ -132,7 +132,7 @@
     end subroutine
   end interface
 
-  ! ?potrf
+  ! cusolver_?potrf
 
   interface
     subroutine cusolver_Dpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev) &
@@ -182,7 +182,7 @@
     end subroutine
   end interface
 
-  ! Xpotrf_buffereSize
+  ! cusolver_Xpotrf_buffereSize
   
   interface
     subroutine cusolver_Xpotrf_bufferSize_c(cusolverHandle, uplo, n, dataType, a_dev, lda, &
@@ -198,7 +198,7 @@
     end subroutine
   end interface
 
-  ! Xpotrf
+  ! cusolver_Xpotrf
   
   interface
     subroutine cusolver_Xpotrf_c(cusolverHandle, uplo, n, dataType, a_dev, lda, &
@@ -260,7 +260,7 @@
 #endif
     end function
 
-    ! ?trtri
+    ! cusolver_?trtri
 
     subroutine cusolver_Dtrtri(uplo, diag, n, a, lda, info, cusolverHandle)
       use, intrinsic :: iso_c_binding
@@ -314,7 +314,7 @@
 #endif
     end subroutine
 
-    ! ?potrf
+    ! cusolver_?potrf
 
     subroutine cusolver_Dpotrf(uplo, n, a_dev, lda, info_dev, cusolverHandle)
       use, intrinsic :: iso_c_binding
@@ -364,7 +364,7 @@
 #endif
     end subroutine
 
-    ! Xpotrf_buffereSize
+    ! cusolver_Xpotrf_buffereSize
 
     subroutine cusolver_Xpotrf_bufferSize(cusolverHandle, uplo, n, dataType, a_dev, lda, &
                                            workspaceInBytesOnDevice, workspaceInBytesOnHost)
@@ -381,7 +381,7 @@
 #endif
     end subroutine
 
-    ! Xpotrf_buffereSize
+    ! cusolver_Xpotrf_buffereSize
 
     subroutine cusolver_Xpotrf(cusolverHandle, uplo, n, dataType, a_dev, lda, &
                                buffer_dev , workspaceInBytesOnDevice, &

@@ -508,8 +508,6 @@
   gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
   call gpusolver_Xpotrf_bufferSize(gpusolverHandle, 'U', nblk, PRECISION_CHAR, a_dev, matrixRows, &
                                    workspaceInBytesOnDevice, workspaceInBytesOnHost)
-  ! PETERDEBUG
-  print *, "workspaceInBytesOnDevice, workspaceInBytesOnHost = ", workspaceInBytesOnDevice, workspaceInBytesOnHost
 
   successGPU = gpu_malloc(gpusolver_buffer_dev, workspaceInBytesOnDevice)
   check_alloc_gpu("elpa_cholesky: gpusolver_buffer_dev", successGPU)
@@ -551,25 +549,20 @@
 #endif
 
 !PETERDEBUG: generalize to all precisions, then to AMD, (OpenMP-offload, Intel?)
-#if defined(DOUBLE_PRECISION) &&  REALCASE == 1 && defined(WITH_NVIDIA_CUSOLVER)
+#if defined(WITH_AMD_ROCSOLVER) && defined(DOUBLE_PRECISION) &&  REALCASE == 1
           call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
           my_stream = obj%gpu_setup%my_stream
           if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
-! #if defined(WITH_NVIDIA_CUSOLVER)
-!           ! PETERDEBUG: delete after checking gpusolver_Xpotrf_bufferSize
-!           ! call gpusolver_Xpotrf_bufferSize(gpusolverHandle, 'U', na-n+1, PRECISION_CHAR, a_dev, matrixRows, &
-!           !                                 workspaceInBytesOnDevice, workspaceInBytesOnHost)
-!           ! print *, "last workspaceInBytesOnDevice, workspaceInBytesOnHost = ", workspaceInBytesOnDevice, workspaceInBytesOnHost
-
-!           call gpusolver_Xpotrf(gpusolverHandle, 'U', na-n+1, PRECISION_CHAR, a_dev+a_off, matrixRows, &
-!                                 gpusolver_buffer_dev , workspaceInBytesOnDevice, &
-!                                 gpusolver_buffer_host, workspaceInBytesOnHost, info_dev)
-!           my_stream = obj%gpu_setup%my_stream
-!           !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
-!           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
-! #endif
+#if defined(WITH_NVIDIA_CUSOLVER)
+          call gpusolver_Xpotrf(gpusolverHandle, 'U', na-n+1, PRECISION_CHAR, a_dev+a_off, matrixRows, &
+                                gpusolver_buffer_dev , workspaceInBytesOnDevice, &
+                                gpusolver_buffer_host, workspaceInBytesOnHost, info_dev)
+          my_stream = obj%gpu_setup%my_stream
+          !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
+          call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
+#endif
 #ifdef WITH_NVTX
           call nvtxRangePop() ! gpusolver_POTRF last
 #endif
@@ -712,25 +705,20 @@
 #endif
 
 ! PETERDEBUG
-#if defined(DOUBLE_PRECISION) &&  REALCASE == 1 && defined(WITH_NVIDIA_CUSOLVER)
+#if defined(WITH_AMD_ROCSOLVER) && defined(DOUBLE_PRECISION) &&  REALCASE == 1
           call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
           my_stream = obj%gpu_setup%my_stream
           if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
-! #if defined(WITH_NVIDIA_CUSOLVER)
-!           ! PETERDEBUG: delete after checking gpusolver_Xpotrf_bufferSize
-!           ! call gpusolver_Xpotrf_bufferSize(gpusolverHandle, 'U', nblk, PRECISION_CHAR, a_dev, matrixRows, &
-!           !                                 workspaceInBytesOnDevice, workspaceInBytesOnHost)
-!           ! print *, "workspaceInBytesOnDevice, workspaceInBytesOnHost = ", workspaceInBytesOnDevice, workspaceInBytesOnHost
-          
-!           call gpusolver_Xpotrf(gpusolverHandle, 'U', nblk, PRECISION_CHAR, a_dev+a_off, matrixRows, &
-!                                 gpusolver_buffer_dev , workspaceInBytesOnDevice, &
-!                                 gpusolver_buffer_host, workspaceInBytesOnHost, info_dev)
-!           my_stream = obj%gpu_setup%my_stream
-!           !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
-!           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
-! #endif
+#if defined(WITH_NVIDIA_CUSOLVER)         
+          call gpusolver_Xpotrf(gpusolverHandle, 'U', nblk, PRECISION_CHAR, a_dev+a_off, matrixRows, &
+                                gpusolver_buffer_dev , workspaceInBytesOnDevice, &
+                                gpusolver_buffer_host, workspaceInBytesOnHost, info_dev)
+          my_stream = obj%gpu_setup%my_stream
+          !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
+          call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
+#endif
           ! PETERDEBUG
           ! if (info .ne. 0) then
           !   write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF"
