@@ -505,15 +505,19 @@
 #endif /* DEVICE_POINTER */
 
 #if defined(WITH_NVIDIA_CUSOLVER)
-  gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
-  call gpusolver_Xpotrf_bufferSize(gpusolverHandle, 'U', nblk, PRECISION_CHAR, a_dev, matrixRows, &
-                                   workspaceInBytesOnDevice, workspaceInBytesOnHost)
+  if (useGPU) then
+    gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
+    call gpusolver_Xpotrf_bufferSize(gpusolverHandle, 'U', nblk, PRECISION_CHAR, a_dev, matrixRows, &
+                                    workspaceInBytesOnDevice, workspaceInBytesOnHost)
 
-  successGPU = gpu_malloc(gpusolver_buffer_dev, workspaceInBytesOnDevice)
-  check_alloc_gpu("elpa_cholesky: gpusolver_buffer_dev", successGPU)
+    successGPU = gpu_malloc(gpusolver_buffer_dev, workspaceInBytesOnDevice)
+    check_alloc_gpu("elpa_cholesky: gpusolver_buffer_dev", successGPU)
 
-  successGPU = gpu_malloc_host(gpusolver_buffer_host, workspaceInBytesOnHost)
-  check_host_alloc_gpu("elpa_cholesky: gpusolver_buffer_host", successGPU)
+    if (workspaceInBytesOnHost > 0) then
+      successGPU = gpu_malloc_host(gpusolver_buffer_host, workspaceInBytesOnHost)
+      check_host_alloc_gpu("elpa_cholesky: gpusolver_buffer_host", successGPU)
+    endif
+  endif
 #endif
 
   call obj%timer%stop("prepare")
@@ -1380,11 +1384,13 @@
 #endif
 
 #if defined(WITH_NVIDIA_CUSOLVER)
-  successGPU = gpu_free(gpusolver_buffer_dev)
-  check_dealloc_gpu("elpa_cholesky: gpusolver_buffer_dev", successGPU)
+    successGPU = gpu_free(gpusolver_buffer_dev)
+    check_dealloc_gpu("elpa_cholesky: gpusolver_buffer_dev", successGPU)
 
-  successGPU = gpu_free_host(gpusolver_buffer_host)
-  check_host_dealloc_gpu("elpa_cholesky: gpusolver_buffer_host", successGPU)
+    if (workspaceInBytesOnHost > 0) then
+      successGPU = gpu_free_host(gpusolver_buffer_host)
+      check_host_dealloc_gpu("elpa_cholesky: gpusolver_buffer_host", successGPU)
+    endif
 #endif
 
     successGPU = gpu_free(tmp1_dev)
