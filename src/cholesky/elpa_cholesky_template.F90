@@ -548,8 +548,7 @@
           call nvtxRangePush("gpusolver_POTRF last")
 #endif
 
-!PETERDEBUG: generalize to all precisions, then to AMD, (OpenMP-offload, Intel?)
-#if defined(WITH_AMD_ROCSOLVER) && defined(DOUBLE_PRECISION) &&  REALCASE == 1
+#if defined(WITH_AMD_ROCSOLVER)
           call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
           my_stream = obj%gpu_setup%my_stream
           if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
@@ -563,6 +562,7 @@
           !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
+
 #ifdef WITH_NVTX
           call nvtxRangePop() ! gpusolver_POTRF last
 #endif
@@ -704,8 +704,7 @@
           call nvtxRangePush("gpusolver_POTRF")
 #endif
 
-! PETERDEBUG
-#if defined(WITH_AMD_ROCSOLVER) && defined(DOUBLE_PRECISION) &&  REALCASE == 1
+#if defined(WITH_AMD_ROCSOLVER)
           call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
           my_stream = obj%gpu_setup%my_stream
           if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
@@ -719,15 +718,11 @@
           !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
-          ! PETERDEBUG
-          ! if (info .ne. 0) then
-          !   write(error_unit,*) "elpa_cholesky: error in gpusolver_POTRF"
-          !   success = .false.
-          !   return
-          ! endif
+
 #ifdef WITH_NVTX
           call nvtxRangePop() ! gpusolver_POTRF
 #endif
+
           call obj%timer%stop("gpusolver")
 #else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
           call obj%timer%start("lapack")

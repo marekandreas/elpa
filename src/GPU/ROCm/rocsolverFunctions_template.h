@@ -50,6 +50,7 @@
 //
 // This file was written by P. Karpov, MPCDF
 
+extern "C" {
 
 // not needed for ROCM; rocmsolver users rocblas handle 
 //  int rocsolverSetStreamFromC(intptr_t rocsolver_handle, intptr_t stream) {
@@ -347,17 +348,7 @@
 
   void rocsolverDpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, double *A, int lda, int *info_dev) {
     BLAS_status  status;
-
-//     int info_gpu = 0;
-
-//     int *devInfo = NULL;
-//     hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
-//     if (hiperr != hipSuccess) {
-//       errormessage("Error in rocsolver_Dpotrf devInfo: %s\n",hipGetErrorString(hiperr));
-//     }
-// #ifdef DEBUG_AMD
-//     printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
-// #endif
+    hipError_t hiperr;
 
 //    double *d_work = NULL;
 //    int d_lwork = 0;
@@ -383,36 +374,16 @@
       errormessage("Error in rocsolver_Dpotrf %s\n",hipGetErrorString(hiperr));
     }
 
-    // hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
-    // if (hiperr != hipSuccess) {
-    //   errormessage("Error in rocsolver_Dpotrf info_gpu: %s\n",hipGetErrorString(hiperr));
-    // }
-
-    // *info = info_gpu;
     //cuerr = cudaFree(d_work);
     //if (cuerr != cudaSuccess) {
     //  errormessage("Error in cusolver_Dpotrf cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
     //}
 
-    // hiperr = hipFree(devInfo);
-    // if (hiperr != hipSuccess) {
-    //   errormessage("Error in rocsolver_Dpotrf hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
-    // }
   }
 
-  void rocsolverSpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, float *A, int lda, int *info) {
+  void rocsolverSpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, float *A, int lda, int *info_dev) {
     BLAS_status status;
-
-    int info_gpu = 0;
-
-    int *devInfo = NULL;
-    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
-    if (hiperr != hipSuccess) {
-      errormessage("Error in rocsolver_Spotrf devInfo: %s\n",hipGetErrorString(hiperr));
-    }
-#ifdef DEBUG_AMD
-    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
-#endif
+    hipError_t hiperr;
 
 //    double *d_work = NULL;
 //    int d_lwork = 0;
@@ -432,42 +403,21 @@
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
 
-    status = rocsolver_spotrf(rocblasHandle, hip_fill_mode(uplo), n, A, lda, devInfo);
+    status = rocsolver_spotrf(rocblasHandle, hip_fill_mode(uplo), n, A, lda, info_dev);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Spotrf %s\n",hipGetErrorString(hiperr));
     }
 
-    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
-    if (hiperr != hipSuccess) {
-      errormessage("Error in rocsolver_Spotrf info_gpu: %s\n",hipGetErrorString(hiperr));
-    }
-
-    *info = info_gpu;
     //cuerr = cudaFree(d_work);
     //if (cuerr != cudaSuccess) {
     //  errormessage("Error in cusolver_Dpotrf cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
     //}
-
-    hiperr = hipFree(devInfo);
-    if (hiperr != hipSuccess) {
-      errormessage("Error in rocsolver_Spotrf hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
-    }
   }
 
-  void rocsolverZpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, double _Complex *A, int lda, int *info) {
+  void rocsolverZpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, double _Complex *A, int lda, int *info_dev) {
     BLAS_status status;
-
-    int info_gpu = 0;
-
-    int *devInfo = NULL;
-    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
-    if (hiperr != hipSuccess) {
-      errormessage("Error in rocsolver_Zpotrf devInfo: %s\n",hipGetErrorString(hiperr));
-    }
-#ifdef DEBUG_AMD
-    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
-#endif
+    hipError_t hiperr;
 
     BLAS_double_complex* A_casted = (      BLAS_double_complex*) A;
 
@@ -489,43 +439,22 @@
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
 
-    status = rocsolver_zpotrf(rocblasHandle, hip_fill_mode(uplo), n, A_casted, lda, devInfo);
+    status = rocsolver_zpotrf(rocblasHandle, hip_fill_mode(uplo), n, A_casted, lda, info_dev);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Zpotrf %s\n",hipGetErrorString(hiperr));
     }
 
-    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
-    if (hiperr != hipSuccess) {
-      errormessage("Error in rocsolver_Zpotrf info_gpu: %s\n",hipGetErrorString(hiperr));
-    }
-
-    *info = info_gpu;
     //cuerr = cudaFree(d_work);
     //if (cuerr != cudaSuccess) {
     //  errormessage("Error in cusolver_Zpotrf cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
     //}
-
-    hiperr = hipFree(devInfo);
-    if (hiperr != hipSuccess) {
-      errormessage("Error in rocsolver_Zpotrf hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
-    }
   }
 
 
-  void rocsolverCpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, float _Complex *A, int lda, int *info) {
+  void rocsolverCpotrf_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, int n, float _Complex *A, int lda, int *info_dev) {
     BLAS_status status;
-
-    int info_gpu = 0;
-
-    int *devInfo = NULL;
-    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
-    if (hiperr != hipSuccess) {
-      errormessage("Error in rocsolver_Cpotrf devInfo: %s\n",hipGetErrorString(hiperr));
-    }
-#ifdef DEBUG_AMD
-    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
-#endif
+    hipError_t hiperr;
 
     BLAS_float_complex* A_casted = (      BLAS_float_complex*) A;
 
@@ -547,25 +476,16 @@
 //    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 //#endif
 
-    status = rocsolver_cpotrf(rocblasHandle, hip_fill_mode(uplo), n, A_casted, lda, devInfo);
+    status = rocsolver_cpotrf(rocblasHandle, hip_fill_mode(uplo), n, A_casted, lda, info_dev);
 
     if (status != BLAS_status_success ) {
       errormessage("Error in rocsolver_Cpotrf %s\n",hipGetErrorString(hiperr));
     }
 
-    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
-    if (hiperr != hipSuccess) {
-      errormessage("Error in rocsolver_Cpotrf info_gpu: %s\n",hipGetErrorString(hiperr));
-    }
-
-    *info = info_gpu;
     //cuerr = cudaFree(d_work);
     //if (cuerr != cudaSuccess) {
     //  errormessage("Error in cusolver_Cpotrf cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
     //}
-
-    hiperr = hipFree(devInfo);
-    if (hiperr != hipSuccess) {
-      errormessage("Error in rocsolver_Cpotrf hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
-    }
   }
+
+}

@@ -132,53 +132,49 @@
   ! rocsolver_?potrf
 
   interface
-    subroutine rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a, lda, info) &
+    subroutine rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev) &
                               bind(C,name="rocsolverDpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: a, info_dev
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a, lda, info) &
+    subroutine rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev) &
                               bind(C,name="rocsolverSpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: a, info_dev
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a, lda, info) &
+    subroutine rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev) &
                               bind(C,name="rocsolverZpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: a, info_dev
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a, lda, info) &
+    subroutine rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev) &
                               bind(C,name="rocsolverCpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
+      integer(kind=C_intptr_T), value           :: a, info_dev
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
@@ -279,54 +275,50 @@
 
     ! rocsolver_?potrf
 
-    subroutine rocsolver_Dpotrf(uplo, n, a, lda, info, rocsolverHandle)
+    subroutine rocsolver_Dpotrf(uplo, n, a, lda, info_dev, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: a, info_dev
       integer(kind=C_intptr_T)        :: rocsolverHandle
 #ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
+      call rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine rocsolver_Spotrf(uplo, n, a, lda, info, rocsolverHandle)
+    subroutine rocsolver_Spotrf(uplo, n, a, lda, info_dev, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: a, info_dev
       integer(kind=C_intptr_T)        :: rocsolverHandle
 #ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a, lda, info)
+      call rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine rocsolver_Zpotrf(uplo, n, a, lda, info, rocsolverHandle)
+    subroutine rocsolver_Zpotrf(uplo, n, a, lda, info_dev, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: a, info_dev
       integer(kind=C_intptr_T)        :: rocsolverHandle
 #ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
+      call rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine rocsolver_Cpotrf(uplo, n, a, lda, info, rocsolverHandle)
+    subroutine rocsolver_Cpotrf(uplo, n, a, lda, info_dev, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: a, info_dev
       integer(kind=C_intptr_T)        :: rocsolverHandle
 #ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
+      call rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev)
 #endif
     end subroutine
