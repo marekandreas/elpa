@@ -3011,11 +3011,13 @@ if test x"${with_cusolver}" = x"yes"; then
 fi
 
 if test x"${with_rocsolver}" = x"yes"; then
+    AC_LANG_PUSH([C])
     AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
     if test x"${have_rocsolver}" = x"no"; then
       AC_MSG_ERROR([Could not link rocsolver; try to set the hip-path or disable AMD GPU support])
     fi
     AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
+  AC_LANG_POP([C])
   fi
 
 
