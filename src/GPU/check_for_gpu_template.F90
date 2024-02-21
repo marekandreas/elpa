@@ -88,7 +88,7 @@
 #endif /* WITH_GPU_STREAMS */
 #endif /* WITH_AMD_GPU_VERSION */
         return
-      endif
+      endif ! (OBJECT%gpu_setup%gpuIsAssigned)
 
 #ifdef ADDITIONAL_OBJECT_CODE
       if (.not.(present(wantDebug))) then
@@ -421,6 +421,17 @@
         endif !OBJECT%gpu_setup%gpuAlreadySet
         OBJECT%gpu_setup%gpuIsAssigned = .true.
       endif ! useGPUid
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = gpublas_get_version(OBJECT%gpu_setup%cublasHandleArray(0), cublas_version)
+      if (.not.(success)) then
+        write(error_unit,*) "error in gpublas_get_version"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "CUBLAS version: ", cublas_version
+      endif
+#endif
 
       if (gpuAvailable) then
         ! print warning if NVIDIA or AMD without streams

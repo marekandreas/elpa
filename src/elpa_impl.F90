@@ -627,7 +627,7 @@ module elpa_impl
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       use mod_query_gpu_usage
-      use elpa_gpu, only : gpublasDefaultPointerMode, gpu_getdevicecount
+      use elpa_gpu, only : gpublasDefaultPointerMode, gpu_getdevicecount, gpublas_get_version
       use elpa_mpi
       use elpa_omp
 #endif
@@ -660,6 +660,7 @@ module elpa_impl
       logical                             :: gpuAvailable
       integer(kind=ik)                    ::  mpi_comm_all, use_gpu_id, min_use_gpu_id
       integer(kind=ik)                    :: maxThreads, thread
+      integer(kind=c_int)                 :: cublas_version
       integer(kind=c_int)                 :: syclShowOnlyIntelGpus
       integer(kind=ik)                    :: syclShowAllDevices
       integer(kind=c_intptr_t)            :: handle_tmp
@@ -2662,6 +2663,8 @@ module elpa_impl
               time_spent(1) = self%autotune_timer%get("accumulator","band_to_full")
             case (ELPA2_AUTOTUNE_HERMITIAN_MULTIPLY_BLOCKING)
               time_spent(1) = self%autotune_timer%get("accumulator","hermitian_multiply")
+            case (ELPA2_AUTOTUNE_CHOLESKY_BLOCKING)
+              time_spent(1) = self%autotune_timer%get("accumulator","cholesky")
             case (ELPA1_AUTOTUNE_MAX_STORED_ROWS)
               time_spent(1) = self%autotune_timer%get("accumulator","tridi_to_full")
             case (ELPA2_AUTOTUNE_TRIDI_TO_BAND_STRIPEWIDTH)

@@ -56,6 +56,18 @@
   integer(kind=ik) :: cublasPointerModeHost
 
   interface
+    function cublas_get_version_c(cudaHandle, version) result(istat) &
+             bind(C, name="cublasGetVersionFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value  :: cudaHandle
+      integer(kind=C_INT)              :: version
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+  interface
     function cuda_get_last_error_c() result(istat) &
             bind(C, name="cudaGetLastErrorFromC")
       use, intrinsic :: iso_c_binding
@@ -1606,6 +1618,19 @@ end interface
 
   contains
 
+    function cublas_get_version(cublasHandle, version) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: cublasHandle
+      integer(kind=C_INT)                       :: version
+      logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cublas_get_version_c(cublasHandle, version) /= 0
+#else
+      success = .true.
+#endif
+    end function
+      
     function cuda_get_last_error() result(success)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -1613,7 +1638,7 @@ end interface
 #ifdef WITH_NVIDIA_GPU_VERSION
       success = cuda_get_last_error_c() /= 0
 #else
-      success = .true.
+        success = .true.
 #endif
     end function
 

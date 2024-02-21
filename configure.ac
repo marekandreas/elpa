@@ -2719,6 +2719,14 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   if test x"${have_cublas}" = x"no"; then
     AC_MSG_ERROR([Could not link cublas; try to set the cuda-path or disable Nvidia GPU support])
   fi
+
+  dnl check whether we find cublasLt. It's needed for cublasLtHeuristicsCacheSetCapacity(), which however exists only in cublasLt ver >= 11.11.3.6
+  AC_SEARCH_LIBS([cublasLtHeuristicsCacheSetCapacity],[cublasLt],[have_cublasLt=yes],[have_cublasLt=no])
+  if test x"${have_cublasLt}" = x"no"; then
+    AC_MSG_WARN([Could not find cublasLtHeuristicsCacheSetCapacity() or couldn't link cublasLt])
+  fi
+
+  dnl check whether we find cudart
   AC_SEARCH_LIBS([cudaMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
   if test x"${have_cudart}" = x"no"; then
     AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
@@ -2848,7 +2856,7 @@ AC_ARG_ENABLE([gpu-streams],
                use_cuda_streams=no
                use_hip_streams=no
 	       use_gpu_streams=no
-	       if test x"$enable_openmp" = x"no"; then
+	       #if test x"$enable_openmp" = x"no"; then
 		 if test x"$enable_cuda_aware_mpi" = x"no"; then
 	           if test x"$need_nvidia_gpu" = x"yes"; then
                      use_cuda_streams=yes
@@ -2859,16 +2867,16 @@ AC_ARG_ENABLE([gpu-streams],
                      use_gpu_streams=yes
                    fi
 		 fi
-	       fi
+	       #fi
 	       ])
 AC_MSG_RESULT([${use_gpu_streams}])
-if test x"$enable_openmp" = x"no"; then
+#if test x"$enable_openmp" = x"no"; then
   if test x"$enable_cuda_aware_mpi" = x"no"; then
     if test x"$relied_on_default" = x"yes"; then
       AC_MSG_NOTICE([Streaming has ben enabled since you relied on the default action])
     fi
   fi
-fi
+#fi
 
 if test x"$use_gpu_streams" = x"yes"; then
   if test x"$use_gpu_streams_per_default" = x"yes"; then
@@ -2948,7 +2956,10 @@ if test x"$need_nvidia_gpu" = x"yes"; then
                    with_cusolver=no
                  fi
 	      ],
-              [with_cusolver="yes"])
+              [relied_on_default_cusolver="yes"])
+    if test x"${relied_on_default_cusolver}" = x"yes"; then
+      with_cusolver=yes
+    fi
     AC_MSG_RESULT([${with_cusolver}])
     if test x"${with_cusolver}" = x"no"; then
       if test x"${need_nvidia_gpu}" = x"yes"; then
@@ -3243,6 +3254,11 @@ if test x"$use_nvidia_nccl" = x"yes"; then
     AC_MSG_ERROR([Could not link NCCL; either set --disable-gpu-ccl=nccl or set the NCCL installation path with --with-nccl-path=])
   fi
   AC_LANG_POP([C])
+
+  if test x"$with_mpi" = x"no"; then
+    AC_MSG_ERROR([Since --enable-gpu-ccl=nccl is set you must also specify --with-mpi=yes"])
+  fi
+
 fi
 AM_CONDITIONAL([WITH_NVIDIA_NCCL],[test x"$use_nvidia_nccl" = x"yes"])
 

@@ -188,8 +188,9 @@ program test
    ! The Matrix
    MATRIX_TYPE, allocatable, target    :: a(:,:)
    MATRIX_TYPE, allocatable            :: as(:,:)
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) || defined(TEST_HERMITIAN_MULTIPLY_LOWER)
    MATRIX_TYPE, allocatable, target    :: b(:,:), c(:,:)
+   logical                             :: isUpper, isLower
 #endif
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
    MATRIX_TYPE, allocatable            :: b(:,:), bs(:,:)
@@ -275,6 +276,8 @@ program test
 #endif
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
 
+
+
 #ifdef TEST_ALL_LAYOUTS
 #ifdef BUILD_FUGAKU
    layouts(1) = 'C'
@@ -309,7 +312,7 @@ program test
    do_test_cholesky = .true.
 #endif
    do_test_hermitian_multiply = .false.
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) || defined(TEST_HERMITIAN_MULTIPLY_LOWER)
    do_test_hermitian_multiply = .true.
 #endif
 
@@ -461,7 +464,7 @@ program test
    allocate(z (na_rows,na_cols))
    allocate(ev(na))
 
-#ifdef TEST_HERMITIAN_MULTIPLY
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) || defined(TEST_HERMITIAN_MULTIPLY_LOWER)
    allocate(b (na_rows,na_cols))
    allocate(c (na_rows,na_cols))
 #endif
@@ -494,7 +497,7 @@ program test
 #else /* TEST_EIGENVECTORS */
     if (nev .ge. 1) then
       call prepare_matrix_random(na, myid, sc_desc, a, z, as)
-#ifndef TEST_HERMITIAN_MULTIPLY
+#if !defined(TEST_HERMITIAN_MULTIPLY_FULL) && !defined(TEST_HERMITIAN_MULTIPLY_UPPER) && !defined(TEST_HERMITIAN_MULTIPLY_LOWER)
       do_test_numeric_residual = .true.
 #endif
    else
@@ -550,7 +553,7 @@ program test
 
    do_test_numeric_residual = .false.
    do_test_analytic_eigenvalues_eigenvectors = .false.
-#ifndef TEST_HERMITIAN_MULTIPLY
+#if !defined(TEST_HERMITIAN_MULTIPLY_FULL) && !defined(TEST_HERMITIAN_MULTIPLY_UPPER) && !defined(TEST_HERMITIAN_MULTIPLY_LOWER)
    do_test_analytic_eigenvalues = .true.
 #endif
 #if defined(TEST_EIGENVECTORS)
@@ -635,7 +638,7 @@ program test
 
     do_test_analytic_eigenvalues = .false.
     do_test_analytic_eigenvalues_eigenvectors = .false.
-#ifndef TEST_HERMITIAN_MULTIPLY
+#if !defined(TEST_HERMITIAN_MULTIPLY_FULL) && !defined(TEST_HERMITIAN_MULTIPLY_UPPER) && !defined(TEST_HERMITIAN_MULTIPLY_LOWER)
     do_test_frank_eigenvalues = .true.
 #endif
     do_test_toeplitz_eigenvalues = .false.
@@ -647,7 +650,7 @@ program test
 
     do_test_analytic_eigenvalues = .false.
     do_test_analytic_eigenvalues_eigenvectors = .false.
-#ifndef TEST_HERMITIAN_MULTIPLY
+#if !defined(TEST_HERMITIAN_MULTIPLY_FULL) && !defined(TEST_HERMITIAN_MULTIPLY_UPPER) && !defined(TEST_HERMITIAN_MULTIPLY_LOWER)
     do_test_frank_eigenvalues = .true.
 #endif
     do_test_toeplitz_eigenvalues = .false.
@@ -655,7 +658,7 @@ program test
    else
     do_test_analytic_eigenvalues = .false.
     do_test_analytic_eigenvalues_eigenvectors = .false.
-#ifndef TEST_HERMITIAN_MULTIPLY
+#if !defined(TEST_HERMITIAN_MULTIPLY_FULL) && !defined(TEST_HERMITIAN_MULTIPLY_UPPER) && !defined(TEST_HERMITIAN_MULTIPLY_LOWER)
     do_test_frank_eigenvalues = .true.
 #endif
     do_test_toeplitz_eigenvalues = .false.
@@ -670,10 +673,11 @@ program test
 #endif
 
 
-#ifdef TEST_HERMITIAN_MULTIPLY
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) || defined(TEST_HERMITIAN_MULTIPLY_LOWER)
 #ifdef TEST_REAL
 
 #ifdef TEST_DOUBLE
+  
    b(:,:) = 2.0_c_double * a(:,:)
    c(:,:) = 0.0_c_double
 #else
@@ -687,15 +691,15 @@ program test
 
 #ifdef TEST_DOUBLE
    b(:,:) = 2.0_c_double * a(:,:)
-   c(:,:) = (0.0_c_double, 0.0_c_double)
+   c(:,:) = (1.0_c_double, 1.0_c_double)
 #else
    b(:,:) = 2.0_c_float * a(:,:)
-   c(:,:) = (0.0_c_float, 0.0_c_float)
+   c(:,:) = (1.0_c_float, 1.0_c_float)
 #endif
 
 #endif /* TEST_COMPLEX */
 
-#endif /* TEST_HERMITIAN_MULTIPLY */
+#endif /* TEST_HERMITIAN_MULTIPLY_FULL || defined(TEST_HERMITIAN_MULTIPLY_UPPER) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) */
 
 ! if the test is used for (repeated) performacne tests, one might want to skip the checking
 ! of the results, which might be time-consuming and not necessary.
@@ -945,7 +949,7 @@ program test
    endif
 #endif /* TEST_CHOLESKY */
 
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) || defined(TEST_HERMITIAN_MULTIPLY_LOWER)
 #if TEST_NVIDIA_GPU == 1
    call e%set("nvidia-gpu", TEST_GPU, error_elpa)
    assert_elpa_ok(error_elpa)
@@ -1002,7 +1006,7 @@ program test
    endif
 
 
-#endif /* TEST_HERMITIAN_MULTIPLY */
+#endif /* TEST_HERMITIAN_MULTIPLY_FULL || defined(TEST_HERMITIAN_MULTIPLY_UPPER) || defined(TEST_HERMITIAN_MULTIPLY_LOWER)*/
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
@@ -1260,8 +1264,8 @@ program test
      call e%timer_stop("e%cholesky()")
 #endif /* TEST_CHOLESKY */
 
-#if defined(TEST_HERMITIAN_MULTIPLY)
-     call e%timer_start("e%hermitian_multiply()")
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
+     call e%timer_start("e%hermitian_multiply_full()")
 #if TEST_GPU_DEVICE_POINTER_API == 1
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
@@ -1297,8 +1301,88 @@ program test
                                int(na_cols,kind=c_int), error_elpa)
      assert_elpa_ok(error_elpa)
 #endif /* TEST_GPU_DEVICE_POINTER_API */
-     call e%timer_stop("e%hermitian_multiply()")
-#endif /* TEST_HERMITIAN_MULTIPLY */
+     call e%timer_stop("e%hermitian_multiply_full()")
+#endif /* TEST_HERMITIAN_MULTIPLY_FULL */
+
+#if defined(TEST_HERMITIAN_MULTIPLY_UPPER)
+     call e%timer_start("e%hermitian_multiply_upper()")
+#if TEST_GPU_DEVICE_POINTER_API == 1
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+     call e%hermitian_multiply_double('U','U', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif
+#if defined(TEST_SINGLE)
+     call e%hermitian_multiply_float('U','U', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif
+#endif /* TEST_REAL */
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+     call e%hermitian_multiply_double_complex('U','U', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif
+#if defined(TEST_SINGLE)
+     call e%hermitian_multiply_float_complex('U','U', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif
+#endif /* TEST_COMPLEX */
+#else /* TEST_GPU_DEVICE_POINTER_API */
+     call e%hermitian_multiply('U','U', int(na,kind=c_int), a, b, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif /* TEST_GPU_DEVICE_POINTER_API */
+     call e%timer_stop("e%hermitian_multiply_upper()")
+#endif /* TEST_HERMITIAN_MULTIPLY_UPPER */
+
+#if defined(TEST_HERMITIAN_MULTIPLY_LOWER)
+     call e%timer_start("e%hermitian_multiply_lower()")
+#if TEST_GPU_DEVICE_POINTER_API == 1
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+     call e%hermitian_multiply_double('L','L', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif
+#if defined(TEST_SINGLE)
+     call e%hermitian_multiply_float('L','L', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif
+#endif /* TEST_REAL */
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+     call e%hermitian_multiply_double_complex('L','L', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif
+#if defined(TEST_SINGLE)
+     call e%hermitian_multiply_float_complex('L','L', int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif
+#endif /* TEST_COMPLEX */
+#else /* TEST_GPU_DEVICE_POINTER_API */
+     call e%hermitian_multiply('L','L', int(na,kind=c_int), a, b, int(na_rows,kind=c_int), &
+                               int(na_cols,kind=c_int), c, int(na_rows,kind=c_int),        &
+                               int(na_cols,kind=c_int), error_elpa)
+     assert_elpa_ok(error_elpa)
+#endif /* TEST_GPU_DEVICE_POINTER_API */
+     call e%timer_stop("e%hermitian_multiply_lower()")
+#endif /* TEST_HERMITIAN_MULTIPLY_LOWER */
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
      call e%timer_start("e%generalized_eigenvectors()")
@@ -1343,8 +1427,14 @@ program test
 #ifdef TEST_CHOLESKY
        call e%print_times("e%cholesky()")
 #endif
-#ifdef TEST_HERMITIAN_MULTIPLY
-       call e%print_times("e%hermitian_multiply()")
+#ifdef TEST_HERMITIAN_MULTIPLY_FULL
+       call e%print_times("e%hermitian_multiply_full()")
+#endif
+#ifdef TEST_HERMITIAN_MULTIPLY_UPPER
+       call e%print_times("e%hermitian_multiply_upper()")
+#endif
+#ifdef TEST_HERMITIAN_MULTIPLY_LOWER
+       call e%print_times("e%hermitian_multiply_lower()")
 #endif
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
       call e%print_times("e%generalized_eigenvectors()")
@@ -1401,7 +1491,7 @@ program test
    endif
 #endif /* TEST_CHOLESKY */
 
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) || defined(TEST_HERMITIAN_MULTIPLY_LOWER)
    successGPU = gpu_memcpy(c_loc(a), a_dev, na_rows*na_cols*size_of_datatype, &
                            gpuMemcpyDeviceToHost)
    if (.not.(successGPU)) then
@@ -1422,7 +1512,7 @@ program test
      print *,"Cannot copy matrix c_dev -> c ! Aborting..."
      stop 1
    endif
-#endif /* TEST_HERMITIAN_MULTIPLY */
+#endif /* TEST_HERMITIAN_MULTIPLY_FULL || TEST_HERMITIAN_MULTIPLY_UPPER || defined(TEST_HERMITIAN_MULTIPLY_LOWER) */
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
@@ -1465,9 +1555,31 @@ program test
        call check_status(status, myid)
      endif
 
-#ifdef TEST_HERMITIAN_MULTIPLY
+#ifdef TEST_HERMITIAN_MULTIPLY_FULL
      if (do_test_hermitian_multiply) then
        status = check_correctness_hermitian_multiply("H", na, a, b, c, na_rows, sc_desc, myid )
+       call check_status(status, myid)
+     endif
+#endif
+
+#ifdef TEST_HERMITIAN_MULTIPLY_UPPER
+     if (do_test_hermitian_multiply) then
+       isUpper = .true.
+       isLower = .false.
+       status = check_correctness_hermitian_multiply("H", na, a, b, c, na_rows, sc_desc, myid, &
+                                                     nblk, np_rows, np_cols, my_prow, my_pcol, &
+                                                     isUpper, isLower )
+       call check_status(status, myid)
+     endif
+#endif
+
+#ifdef TEST_HERMITIAN_MULTIPLY_LOWER
+     if (do_test_hermitian_multiply) then
+       isUpper = .false.
+       isLower = .true.
+       status = check_correctness_hermitian_multiply("H", na, a, b, c, na_rows, sc_desc, myid, &
+                                                     nblk, np_rows, np_cols, my_prow, my_pcol, &
+                                                     isUpper, isLower )
        call check_status(status, myid)
      endif
 #endif
@@ -1549,7 +1661,7 @@ program test
    endif
 #endif /* TEST_CHOLESKY */
 
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_UPPER)
    successGPU = gpu_free(a_dev)
    if (.not.(successGPU)) then
      print *,"cannot free memory of a_dev on GPU. Aborting..."
@@ -1567,7 +1679,7 @@ program test
      print *,"cannot free memory of c_dev on GPU. Aborting..."
      stop 1
    endif
-#endif /* TEST_HERMITIAN_MULTIPLY */
+#endif /* TEST_HERMITIAN_MULTIPLY_FULL */
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
@@ -1579,7 +1691,7 @@ program test
    deallocate(z)
    deallocate(ev)
 
-#ifdef TEST_HERMITIAN_MULTIPLY
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_LOWER) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) 
    deallocate(b)
    deallocate(c)
 #endif

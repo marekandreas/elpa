@@ -194,6 +194,61 @@
 
   contains
 
+
+      function gpublas_get_version(handle, version) result(success)
+      use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
+      use cuda_functions
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+
+      integer(kind=c_intptr_t), intent(in)  :: handle
+      integer(kind=c_int),      intent(out) :: version
+      logical                               :: success
+
+
+      success = .true.
+#ifdef WITH_NVIDIA_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
+      if (use_gpu_vendor == nvidia_gpu) then
+        success = cublas_get_version(handle, version)
+      endif
+#endif
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
+      if (use_gpu_vendor == amd_gpu) then
+        print *,"gpublasGetVersion not implemented for amd"
+        stop 1
+      endif
+#endif
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      if (use_gpu_vendor == openmp_offload_gpu) then
+        print *,"gpublasGetVersion not implemented for openmp offload"
+        stop 1
+      endif
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        print *,"gpublasGetVersion not implemented for sycl"
+        stop 1
+      endif
+#endif
+
+    end function
+
+
     function gpublas_set_stream(handle, stream) result(success)
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION

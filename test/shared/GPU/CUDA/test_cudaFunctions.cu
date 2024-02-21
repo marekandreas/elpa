@@ -61,9 +61,14 @@
 #include <alloca.h>
 #include <stdint.h>
 #include <complex.h>
+
 #ifdef WITH_NVIDIA_GPU_VERSION
 #include <cublas_v2.h>
+// for cublasLtHeuristicsCacheSetCapacity()
+#include <cublas_api.h>
+#include <cublasLt.h>
 #endif
+
 #ifdef WITH_NVIDIA_CUSOLVER
 #include <cusolverDn.h>
 #endif

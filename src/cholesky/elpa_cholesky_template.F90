@@ -121,6 +121,7 @@
 
   integer(kind=c_intptr_t)                   :: gpublasHandle, gpusolverHandle, my_stream, offset
   integer(kind=c_int)                        :: gpu_cholesky
+  integer(kind=ik)                           :: blocking
 #ifdef WITH_NVIDIA_NCCL
   integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols
   integer(kind=ik)                           :: nvs, nvr, nvc, lcm_s_t, nblks_tot, nblks_comm, nblks_skip
@@ -239,25 +240,6 @@
   nblk       = obj%nblk
   matrixCols = obj%local_ncols
 
-  !call obj%get("mpi_comm_parent", mpi_comm_all, error)
-  !if (error .ne. ELPA_OK) then
-  !  write(error_unit,*) "ELPA_CHOLESKY: Error getting option for mpi_comm_all. Aborting..."
-  !  success = .false.
-  !  return
-  !endif
-  !call obj%get("mpi_comm_rows",mpi_comm_rows,error )
-  !if (error .ne. ELPA_OK) then
-  !  write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for mpi_comm_rows. Aborting..."
-  !  success = .false.
-  !  return
-  !endif
-  !call obj%get("mpi_comm_cols",mpi_comm_cols,error)
-  !if (error .ne. ELPA_OK) then
-  !  write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for mpi_comm_cols. Aborting..."
-  !  success = .false.
-  !  return
-  !endif
-
   call obj%get("debug",debug,error)
   if (error .ne. ELPA_OK) then
     write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for debug settings. Aborting..."
@@ -281,29 +263,34 @@
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
 
-  !call obj%timer%start("mpi_communication")
-  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
-  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
-  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
-  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
-  !call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), myidMPI, mpierr)
-
-
-  !my_prow = int(my_prowMPI, kind=c_int)
-  !np_rows = int(np_rowsMPI, kind=c_int)
-  !my_pcol = int(my_pcolMPI, kind=c_int)
-  !np_cols = int(np_colsMPI, kind=c_int)
-  !myid    = int(myidMPI,kind=c_int)
-  !call obj%timer%stop("mpi_communication")
   success = .true.
 
   ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
   call obj%timer%start("prepare")
 
-  !TODO: optimize tile size!
+  if (obj%is_set("blocking_in_cholesky") == 1) then
+    call obj%get("blocking_in_cholesky", blocking, error)
+    if (error .ne. ELPA_OK) then
+      write(error_unit,*) "ELPA_CHOLESKY: Problem in getting keyword 'blocking_in_cholesky'. Aborting..."
+      stop 1
+    endif
+  else
+    if (useGPU) then
+      blocking = 1024
+    else
+      blocking = 128
+    endif
+    call obj%set("blocking_in_cholesky", blocking, error)
+    if (error .ne. ELPA_OK) then
+      write(error_unit,*) "ELPA_CHOLESKY: Problem in setting keyword 'blocking_in_cholesky'. Aborting..."
+      stop 1
+    endif
+  endif 
+
+
   tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
-  tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
+  tile_size = ((blocking*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
 
   l_rows_tile = tile_size/np_rows ! local rows of a tile
   l_cols_tile = tile_size/np_cols ! local cols of a tile

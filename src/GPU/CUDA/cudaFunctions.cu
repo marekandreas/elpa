@@ -65,6 +65,10 @@
 #include <type_traits>
 #include <cublas_v2.h>
 
+// for cublasLtHeuristicsCacheSetCapacity()
+#include <cublas_api.h>
+#include <cublasLt.h>
+
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 #ifdef DEBUG_CUDA
@@ -77,6 +81,7 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
 #include "./cudaFunctions_template.h"
 #endif
+
 
 #ifdef WITH_NVIDIA_CUSOLVER
 #include <cusolverDn.h>
