@@ -335,11 +335,9 @@ program test
 
 #else
    layout = 'C'
-  ! PETERDEBUG
    do np_cols = NINT(SQRT(REAL(nprocs))),2,-1
       if(mod(nprocs,np_cols) == 0 ) exit
    enddo
-  !np_cols = 1
 #endif
 
    np_rows = nprocs/np_cols
