@@ -297,13 +297,14 @@ __global__ void hip_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int 
 }
 
 template <typename T>
-void hip_dot_product_FromC(int* n_in, T *x_dev, int *incx_in, T *y_dev, int *incy_in, T *result_dev, bool *wantDebug_in, hipStream_t my_stream){
+void hip_dot_product_FromC(int* n_in, T *x_dev, int *incx_in, T *y_dev, int *incy_in, T *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   int n = *n_in;   
   int incx = *incx_in;
   int incy = *incy_in;
   bool wantDebug = *wantDebug_in;
+  int SM_count = *SM_count_in;
 
-  int SM_count=32;
+  //int SM_count=32;
   //hipDeviceGetAttribute(&SM_count, hipDeviceAttributeMultiprocessorCount, 0); // TODO_23_11 move this outside, to set_gpu, claim the number only once during GPU setup
 
   int blocks = SM_count;
@@ -323,20 +324,20 @@ void hip_dot_product_FromC(int* n_in, T *x_dev, int *incx_in, T *y_dev, int *inc
   }
 }
 
-extern "C" void hip_dot_product_double_FromC(int* n_in, double *x_dev, int *incx_in, double *y_dev, int *incy_in, double *result_dev, bool *wantDebug_in, hipStream_t my_stream){
-  hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, my_stream);
+extern "C" void hip_dot_product_double_FromC(int* n_in, double *x_dev, int *incx_in, double *y_dev, int *incy_in, double *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+  hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
-extern "C" void hip_dot_product_float_FromC (int* n_in, float  *x_dev, int *incx_in, float  *y_dev, int *incy_in, float  *result_dev, bool *wantDebug_in, hipStream_t my_stream){
-  hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, my_stream);
+extern "C" void hip_dot_product_float_FromC (int* n_in, float  *x_dev, int *incx_in, float  *y_dev, int *incy_in, float  *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+  hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
-extern "C" void hip_dot_product_double_complex_FromC(int* n_in, hipDoubleComplex *x_dev, int *incx_in, hipDoubleComplex *y_dev, int *incy_in, hipDoubleComplex *result_dev, bool *wantDebug_in, hipStream_t my_stream){
-  hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, my_stream);
+extern "C" void hip_dot_product_double_complex_FromC(int* n_in, hipDoubleComplex *x_dev, int *incx_in, hipDoubleComplex *y_dev, int *incy_in, hipDoubleComplex *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+  hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
-extern "C" void hip_dot_product_float_complex_FromC (int* n_in, hipComplex *x_dev, int *incx_in, hipComplex *y_dev, int *incy_in, hipComplex *result_dev, bool *wantDebug_in, hipStream_t my_stream){
-  hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, my_stream);
+extern "C" void hip_dot_product_float_complex_FromC (int* n_in, hipComplex *x_dev, int *incx_in, hipComplex *y_dev, int *incy_in, hipComplex *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+  hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
 //________________________________________________________________
@@ -1136,7 +1137,7 @@ template <typename T>
 void hip_transpose_reduceadd_vectors_copy_block_FromC(T *aux_transpose_dev, T *vmat_st_dev, 
                                               int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                               int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                              int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, hipStream_t my_stream){
+                                              int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   int nvc = *nvc_in;   
   int nvr = *nvr_in;   
   int n_block = *n_block_in;
@@ -1152,7 +1153,8 @@ void hip_transpose_reduceadd_vectors_copy_block_FromC(T *aux_transpose_dev, T *v
   bool isReduceadd = *isReduceadd_in;
   bool wantDebug = *wantDebug_in;
 
-  int SM_count=32; // TODO_23_11 count and move outside
+  int SM_count = *SM_count_in;
+  //int SM_count=32; // TODO_23_11 count and move outside
   int blocks = SM_count;
 
   dim3 blocksPerGrid = dim3(blocks,1,1);
@@ -1176,29 +1178,29 @@ void hip_transpose_reduceadd_vectors_copy_block_FromC(T *aux_transpose_dev, T *v
 extern "C" void hip_transpose_reduceadd_vectors_copy_block_double_FromC(double *aux_transpose_dev, double *vmat_st_dev, 
                                                                         int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                                                         int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                                                        int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, hipStream_t my_stream){
-  hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, my_stream);
+                                                                        int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+  hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void hip_transpose_reduceadd_vectors_copy_block_float_FromC(float *aux_transpose_dev, float *vmat_st_dev, 
                                                                        int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                                                        int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                                                       int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, hipStream_t my_stream){
-  hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, my_stream);
+                                                                       int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+  hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void hip_transpose_reduceadd_vectors_copy_block_double_complex_FromC(hipDoubleComplex *aux_transpose_dev, hipDoubleComplex *vmat_st_dev, 
                                                                         int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                                                         int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                                                        int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, hipStream_t my_stream){
-  hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, my_stream);
+                                                                        int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+  hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void hip_transpose_reduceadd_vectors_copy_block_float_complex_FromC(hipComplex *aux_transpose_dev, hipComplex *vmat_st_dev, 
                                                                         int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                                                         int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                                                        int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, hipStream_t my_stream){
-  hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, my_stream);
+                                                                        int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+  hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
 //________________________________________________________________

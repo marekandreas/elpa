@@ -290,6 +290,54 @@
 // hipStream_t elpa_hip_stm;
 
 #ifdef WITH_AMD_GPU_VERSION
+
+extern "C" {
+  int hipDeviceGetAttributeFromC(int *value, int attribute) {
+
+    hipDeviceAttribute_t attr;
+    switch(attribute) {
+      case 0:
+        attr = hipDeviceAttributeMaxThreadsPerBlock;
+        break;
+      case 1:
+        attr = hipDeviceAttributeMaxBlockDimX;
+        break;
+      case 2:
+        attr = hipDeviceAttributeMaxBlockDimY;
+        break;
+      case 3:
+        attr = hipDeviceAttributeMaxBlockDimZ;
+        break;
+      case 4:
+        attr = hipDeviceAttributeMaxGridDimX;
+        break;
+      case 5:
+        attr = hipDeviceAttributeMaxGridDimY;
+        break;
+      case 6:
+        attr = hipDeviceAttributeMaxGridDimZ;
+        break;
+      case 7:
+        attr = hipDeviceAttributeWarpSize;
+        break;
+      case 8:
+	//only for ROCm 6.x fix this
+        //attr = hipDeviceAttributeMultiProcessorCount;
+        break;
+    }
+    hipError_t status = hipDeviceGetAttribute(value, attr, 0);
+    if (status == hipSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in hipDeviceGetAttribute: %s\n", "unknown error");
+      return 0;
+    }
+
+  }
+}
+
+
 extern "C" {
   int hipStreamCreateFromC(hipStream_t *rocblasStream) {
     //*stream = (intptr_t) malloc(sizeof(hipStream_t));

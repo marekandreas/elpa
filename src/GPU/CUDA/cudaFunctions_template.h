@@ -61,6 +61,55 @@
 #define debugmessage(x, ...)
 #endif
 
+#ifdef WITH_NVIDIA_GPU_VERSION
+extern "C" {
+  int cudaDeviceGetAttributeFromC(int *value, int attribute) {
+
+    cudaDeviceAttr attr;
+    switch(attribute) {
+      case 0:
+	attr = cudaDevAttrMaxThreadsPerBlock;
+	break;
+      case 1:
+	attr = cudaDevAttrMaxBlockDimX;
+	break;
+      case 2:
+	attr = cudaDevAttrMaxBlockDimY;
+	break;
+      case 3:
+	attr = cudaDevAttrMaxBlockDimZ;
+	break;
+      case 4:
+	attr = cudaDevAttrMaxGridDimX;
+	break;
+      case 5:
+	attr = cudaDevAttrMaxGridDimY;
+	break;
+      case 6:
+	attr = cudaDevAttrMaxGridDimZ;
+	break;
+      case 7:
+	attr = cudaDevAttrWarpSize;
+	break;
+      case 8:
+	attr = cudaDevAttrMultiProcessorCount;
+	break;
+
+    }
+    cudaError_t status = cudaDeviceGetAttribute(value, attr, 0);
+    if (status == cudaSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in cudaDeviceGetAttribute: %s\n", "unknown error");
+      return 0;
+    }
+   	
+  }
+}
+#endif
+
+
 
 #ifdef WITH_NVIDIA_GPU_VERSION
 extern "C" {

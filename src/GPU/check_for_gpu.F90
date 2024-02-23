@@ -95,7 +95,7 @@ module mod_check_for_gpu
       integer(kind=c_intptr_t)                   :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols
       integer(kind=ik)                           :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
 #endif
-
+      integer(kind=ik)                           :: attribute, value
 #define OBJECT obj
 #define ADDITIONAL_OBJECT_CODE
 #include "./check_for_gpu_template.F90"
