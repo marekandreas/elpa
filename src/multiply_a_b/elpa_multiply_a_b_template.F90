@@ -64,7 +64,6 @@
 #define MORE_GPU
 #endif
 
-#undef MORE_GPU
   use elpa1_compute
   use elpa_mpi
   use precision
