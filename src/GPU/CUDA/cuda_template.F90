@@ -55,7 +55,19 @@
   integer(kind=ik) :: cublasPointerModeDevice
   integer(kind=ik) :: cublasPointerModeHost
 
-  ! check versions
+
+  interface
+    function cuda_device_get_attributes_c(value, attribute) result(istat) &
+             bind(C, name="cudaDeviceGetAttributeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_INT), value  :: attribute
+      integer(kind=C_INT)         :: value
+      integer(kind=C_INT)         :: istat
+    end function
+  end interface
+
 
   interface
     function cublas_get_version_c(cudaHandle, version) result(istat) &
@@ -193,8 +205,8 @@
              bind(C, name="cudaGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT), intent(out) :: n
-      integer(kind=C_INT)              :: istat
+      integer(kind=C_INT), intent(out)         :: n
+      integer(kind=C_INT)                      :: istat
     end function
   end interface
 
@@ -1389,7 +1401,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
@@ -1463,7 +1475,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
@@ -1474,7 +1486,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
@@ -1549,7 +1561,7 @@
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
@@ -1561,7 +1573,7 @@
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
@@ -1636,7 +1648,7 @@
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
@@ -1648,7 +1660,7 @@
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
@@ -1712,6 +1724,18 @@
   end interface
 
   contains
+
+    function cuda_device_get_attributes(value, attribute) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)                       :: value, attribute
+      logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_device_get_attributes_c(value, attribute) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
     function cublas_get_version(cublasHandle, version) result(success)
       use, intrinsic :: iso_c_binding
@@ -3017,7 +3041,7 @@
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
       integer(kind=c_intptr_t) :: x, y, result
-      
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Ddot_intptr_c(cublasHandle, length, x, incx, y, incy, result)
 #endif
