@@ -654,7 +654,7 @@ module elpa_impl
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 
       logical                             :: useGPU
-      logical                             :: success, wantDebugMessage
+      logical                             :: success
       integer(kind=ik)                    :: numberOfDevices
       integer(kind=ik)                    :: deviceNumber, mpierr, maxNumberOfDevices
       logical                             :: gpuAvailable
@@ -673,7 +673,9 @@ module elpa_impl
       integer(kind=ik)                    :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
 #endif
 #endif
-
+      integer(kind=ik)                    :: attribute, value
+      integer(kind=ik)                    :: debug
+      logical                             :: wantDebugMessage
       error = ELPA_ERROR_SETUP
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -685,10 +687,19 @@ module elpa_impl
     endif
 #endif
 
+      if (self%is_set("debug") == 1) then
+         call self%get("debug",debug, error)
+         print *,"debug ",debug
+         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+         if (debug .eq. 1) then
+           wantDebugMessage = .true.
+         endif
+      endif
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 #undef OBJECT
 #define OBJECT self
 #undef ADDITIONAL_OBJECT_CODE
+
 #include "./GPU/check_for_gpu_template.F90"
 #undef OBJECT
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */

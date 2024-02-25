@@ -55,12 +55,39 @@
   integer(kind=ik) :: rocblasPointerModeDevice
   integer(kind=ik) :: rocblasPointerModeHost
 
+
   interface
-    function hip_get_last_error_c() result(istat) &
-            bind(C, name="hipGetLastErrorFromC")
+    function hip_device_get_attributes_c(value, attribute) result(istat) &
+             bind(C, name="hipDeviceGetAttributeFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT)      :: istat
+
+      integer(kind=C_INT), value  :: attribute
+      integer(kind=C_INT)         :: value
+      integer(kind=C_INT)         :: istat
+    end function
+  end interface
+
+
+!  interface
+!    function rocblas_get_version_c(rocblasHandle, version) result(istat) &
+!             bind(C, name="rocblasGetVersionFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!
+!      integer(kind=C_intptr_T), value  :: rocblasHandle
+!      integer(kind=C_INT)              :: version
+!      integer(kind=C_INT)              :: istat
+!    end function
+!  end interface
+
+
+  interface
+    function hip_get_last_error_c() result(istat) &
+             bind(C, name="hipGetLastErrorFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int)              :: istat
     end function
   end interface
 
@@ -119,7 +146,6 @@
     end function
   end interface
 
-  ! functions to set and query the GPU devices
   interface
     function rocblas_create_c(hipHandle) result(istat) &
              bind(C, name="rocblasCreateFromC")
@@ -140,6 +166,7 @@
     end function
   end interface
 
+  ! functions to set and query the GPU devices
   interface
     function hip_setdevice_c(n) result(istat) &
              bind(C, name="hipSetDeviceFromC")
@@ -156,8 +183,8 @@
              bind(C, name="hipGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT), intent(out) :: n
-      integer(kind=C_INT)              :: istat
+      integer(kind=C_INT), intent(out)         :: n
+      integer(kind=C_INT)                      :: istat
     end function
   end interface
 
@@ -478,7 +505,6 @@
     end function
   end interface
 
-
   interface
     function hip_malloc_cptr_c(a, width_height) result(istat) &
              bind(C, name="hipMallocFromC")
@@ -495,7 +521,6 @@
     module procedure hip_free_host_intptr
     module procedure hip_free_host_cptr
   end interface
-
   interface
     function hip_free_host_intptr_c(a) result(istat) &
              bind(C, name="hipFreeHostFromC")
@@ -520,7 +545,6 @@
     module procedure hip_malloc_host_intptr
     module procedure hip_malloc_host_cptr
   end interface
-
   interface
     function hip_malloc_host_intptr_c(a, width_height) result(istat) &
              bind(C, name="hipMallocHostFromC")
@@ -538,7 +562,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr)                    :: a
-      integer(kind=c_intptr_t), intent(in), value   :: width_height
+      integer(kind=c_intptr_t), intent(in), value :: width_height
       integer(kind=C_INT)                         :: istat
     end function
   end interface
@@ -618,6 +642,7 @@
     end subroutine
   end interface
 
+
   interface rocblas_Dcopy
     module procedure rocblas_Dcopy_intptr
     module procedure rocblas_Dcopy_cptr
@@ -646,6 +671,7 @@
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
+
 
   interface rocblas_Dtrmm
     module procedure rocblas_Dtrmm_intptr
@@ -679,6 +705,7 @@
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
+
 
   interface rocblas_Dtrsm
     module procedure rocblas_Dtrsm_intptr
@@ -777,6 +804,7 @@
     end subroutine
   end interface
 
+
   interface rocblas_Scopy
     module procedure rocblas_Scopy_intptr
     module procedure rocblas_Scopy_cptr
@@ -805,6 +833,7 @@
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
+
 
   interface rocblas_Strmm
     module procedure rocblas_Strmm_intptr
@@ -838,6 +867,7 @@
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
+
 
   interface rocblas_Strsm
     module procedure rocblas_Strsm_intptr
@@ -936,6 +966,7 @@
     end subroutine
   end interface
 
+
   interface rocblas_Zcopy
     module procedure rocblas_Zcopy_intptr
     module procedure rocblas_Zcopy_cptr
@@ -964,6 +995,7 @@
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
+
 
   interface rocblas_Ztrmm
     module procedure rocblas_Ztrmm_intptr
@@ -997,6 +1029,7 @@
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
+
 
   interface rocblas_Ztrsm
     module procedure rocblas_Ztrsm_intptr
@@ -1095,6 +1128,7 @@
     end subroutine
   end interface
 
+
   interface rocblas_Ccopy
     module procedure rocblas_Ccopy_intptr
     module procedure rocblas_Ccopy_cptr
@@ -1123,6 +1157,7 @@
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
+
 
   interface rocblas_Ctrmm
     module procedure rocblas_Ctrmm_intptr
@@ -1156,6 +1191,7 @@
       integer(kind=C_intptr_T), value         :: rocblasHandle
     end subroutine
   end interface
+
 
   interface rocblas_Ctrsm
     module procedure rocblas_Ctrsm_intptr
@@ -1212,7 +1248,7 @@
 !      character(kind=C_CHAR,len=1) :: name(*)
 !    end subroutine
 !  end interface
-!
+
 !  interface nvtxRangePop
 !    subroutine nvtxRangePop() bind(C, name='nvtxRangePop')
 !    end subroutine
@@ -1257,32 +1293,34 @@
     end subroutine
   end interface
 
+
   interface rocblas_Ddot
     module procedure rocblas_Ddot_intptr
     module procedure rocblas_Ddot_cptr
   end interface
 
   interface
-    subroutine rocblas_Ddot_intptr_c(rocblasHandle, length, x, incx, y, incy, z) &
+    subroutine rocblas_Ddot_intptr_c(rocblasHandle, length, x, incx, y, incy, result) &
                bind(C, name="rocblasDdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y, z
+      integer(kind=C_INT), value              :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
   interface
-    subroutine rocblas_Ddot_cptr_c(rocblasHandle, length, x, incx, y, incy, z) &
+    subroutine rocblas_Ddot_cptr_c(rocblasHandle, length, x, incx, y, incy, result) &
                bind(C, name="rocblasDdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y, z
+      integer(kind=C_INT), value              :: length, incx, incy
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
+
 
   interface rocblas_Dscal
     module procedure rocblas_Dscal_intptr
@@ -1313,6 +1351,7 @@
     end subroutine
   end interface
 
+
   interface rocblas_Daxpy
     module procedure rocblas_Daxpy_intptr
     module procedure rocblas_Daxpy_cptr
@@ -1324,8 +1363,8 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT), value              :: length, incx, incy
-      real(kind=C_DOUBLE), value              :: alpha
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_DOUBLE) ,value                :: alpha
       integer(kind=C_intptr_T), value         :: x, y
     end subroutine
   end interface
@@ -1336,8 +1375,8 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT), value              :: length, incx, incy
-      real(kind=C_DOUBLE), value              :: alpha
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_DOUBLE) ,value                :: alpha
       type(c_ptr), value                      :: x, y
     end subroutine
   end interface
@@ -1348,26 +1387,27 @@
   end interface
 
   interface
-    subroutine rocblas_Sdot_intptr_c(rocblasHandle, length, x, incx, y, incy, z) &
+    subroutine rocblas_Sdot_intptr_c(rocblasHandle, length, x, incx, y, incy, result) &
                bind(C, name="rocblasSdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y, z
+      integer(kind=C_INT), value              :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
   interface
-    subroutine rocblas_Sdot_cptr_c(rocblasHandle, length, x, incx, y, incy, z) &
+    subroutine rocblas_Sdot_cptr_c(rocblasHandle, length, x, incx, y, incy, result) &
                bind(C, name="rocblasSdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y, z
+      integer(kind=C_INT), value              :: length, incx, incy
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
+
 
   interface rocblas_Sscal
     module procedure rocblas_Sscal_intptr
@@ -1397,6 +1437,7 @@
       type(c_ptr), value                      :: x
     end subroutine
   end interface
+
 
   interface rocblas_Saxpy
     module procedure rocblas_Saxpy_intptr
@@ -1433,28 +1474,29 @@
   end interface
 
   interface
-    subroutine rocblas_Zdot_intptr_c(conj, rocblasHandle, length, x, incx, y, incy, z) &
+    subroutine rocblas_Zdot_intptr_c(conj, rocblasHandle, length, x, incx, y, incy, result) &
                bind(C, name="rocblasZdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y, z
+      integer(kind=C_INT), value              :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
   interface
-    subroutine rocblas_Zdot_cptr_c(conj, rocblasHandle, length, x, incx, y, incy, z) &
+    subroutine rocblas_Zdot_cptr_c(conj, rocblasHandle, length, x, incx, y, incy, result) &
                bind(C, name="rocblasZdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y, z
+      integer(kind=C_INT), value              :: length, incx, incy
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
+
 
   interface rocblas_Zscal
     module procedure rocblas_Zscal_intptr
@@ -1484,6 +1526,7 @@
       type(c_ptr), value                      :: x
     end subroutine
   end interface
+
 
   interface rocblas_Zaxpy
     module procedure rocblas_Zaxpy_intptr
@@ -1520,28 +1563,29 @@
   end interface
 
   interface
-    subroutine rocblas_Cdot_intptr_c(conj, rocblasHandle, length, x, incx, y, incy, z) &
+    subroutine rocblas_Cdot_intptr_c(conj, rocblasHandle, length, x, incx, y, incy, result) &
                bind(C, name="rocblasCdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      integer(kind=C_intptr_T), value         :: x, y, z
+      integer(kind=C_INT), value              :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
 
   interface
-    subroutine rocblas_Cdot_cptr_c(conj, rocblasHandle, length, x, incx, y, incy, z) &
+    subroutine rocblas_Cdot_cptr_c(conj, rocblasHandle, length, x, incx, y, incy, result) &
                bind(C, name="rocblasCdot_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: rocblasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
-      type(c_ptr), value                      :: x, y, z
+      integer(kind=C_INT), value              :: length, incx, incy
+      type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
+
 
   interface rocblas_Cscal
     module procedure rocblas_Cscal_intptr
@@ -1571,6 +1615,7 @@
       type(c_ptr), value                      :: x
     end subroutine
   end interface
+
 
   interface rocblas_Caxpy
     module procedure rocblas_Caxpy_intptr
@@ -1603,6 +1648,31 @@
 
   contains
 
+    function hip_device_get_attributes(value, attribute) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)                       :: value, attribute
+      logical                                   :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_device_get_attributes_c(value, attribute) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function rocblas_get_version(rocblasHandle, version) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: rocblasHandle
+      integer(kind=C_INT)                       :: version
+      logical                                   :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = rocblas_get_version_c(rocblasHandle, version) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
     function hip_get_last_error() result(success)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -1610,7 +1680,7 @@
 #ifdef WITH_AMD_GPU_VERSION
       success = hip_get_last_error_c() /= 0
 #else
-      success = .true.
+        success = .true.
 #endif
     end function
 
@@ -1650,6 +1720,7 @@
       success = .true.
 #endif
     end function
+
 
     function hip_stream_synchronize(hipStream) result(success)
       use, intrinsic :: iso_c_binding
@@ -1856,7 +1927,7 @@
       implicit none
       integer(kind=c_intptr_t)                :: a
       integer(kind=ik)                        :: val
-      integer(kind=c_intptr_t), intent(in)      :: size
+      integer(kind=c_intptr_t), intent(in)    :: size
       integer(kind=C_INT)                     :: istat
       logical :: success
 #ifdef WITH_AMD_GPU_VERSION
@@ -2780,28 +2851,27 @@
 #endif
     end subroutine
 
-
-    subroutine rocblas_Ddot_intptr(rocblasHandle, length, x, incx, y, incy, z)
+    subroutine rocblas_Ddot_intptr(rocblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: rocblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_AMD_GPU_VERSION
-      call rocblas_Ddot_intptr_c(rocblasHandle, length, x, incx, y, incy, z)
+      call rocblas_Ddot_intptr_c(rocblasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
-    subroutine rocblas_Ddot_cptr(rocblasHandle, length, x, incx, y, incy, z)
+    subroutine rocblas_Ddot_cptr(rocblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: rocblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_AMD_GPU_VERSION
-      call rocblas_Ddot_cptr_c(rocblasHandle, length, x, incx, y, incy, z)
+      call rocblas_Ddot_cptr_c(rocblasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
@@ -2857,28 +2927,27 @@
 #endif
     end subroutine
 
-
-    subroutine rocblas_Sdot_intptr(rocblasHandle, length, x, incx, y, incy, z)
+    subroutine rocblas_Sdot_intptr(rocblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: rocblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_AMD_GPU_VERSION
-      call rocblas_Sdot_intptr_c(rocblasHandle, length, x, incx, y, incy, z)
+      call rocblas_Sdot_intptr_c(rocblasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
-    subroutine rocblas_Sdot_cptr(rocblasHandle, length, x, incx, y, incy, z)
+    subroutine rocblas_Sdot_cptr(rocblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: rocblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_AMD_GPU_VERSION
-      call rocblas_Sdot_cptr_c(rocblasHandle, length, x, incx, y, incy, z)
+      call rocblas_Sdot_cptr_c(rocblasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
@@ -2934,30 +3003,29 @@
 #endif
     end subroutine
 
-
-    subroutine rocblas_Zdot_intptr(conj, rocblasHandle, length, x, incx, y, incy, z)
+    subroutine rocblas_Zdot_intptr(conj, rocblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: rocblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_AMD_GPU_VERSION
-      call rocblas_Zdot_intptr_c(conj,rocblasHandle, length, x, incx, y, incy, z)
+      call rocblas_Zdot_intptr_c(conj,rocblasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
-    subroutine rocblas_Zdot_cptr(conj, rocblasHandle, length, x, incx, y, incy, z)
+    subroutine rocblas_Zdot_cptr(conj, rocblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: rocblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_AMD_GPU_VERSION
-      call rocblas_Zdot_cptr_c(conj,rocblasHandle, length, x, incx, y, incy, z)
+      call rocblas_Zdot_cptr_c(conj,rocblasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
@@ -3013,30 +3081,29 @@
 #endif
     end subroutine
 
-
-    subroutine rocblas_Cdot_intptr(conj, rocblasHandle, length, x, incx, y, incy, z)
+    subroutine rocblas_Cdot_intptr(conj, rocblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: rocblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_AMD_GPU_VERSION
-      call rocblas_Cdot_intptr_c(conj,rocblasHandle, length, x, incx, y, incy, z)
+      call rocblas_Cdot_intptr_c(conj,rocblasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 
-    subroutine rocblas_Cdot_cptr(conj, rocblasHandle, length, x, incx, y, incy, z)
+    subroutine rocblas_Cdot_cptr(conj, rocblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: rocblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_AMD_GPU_VERSION
-      call rocblas_Cdot_cptr_c(conj,rocblasHandle, length, x, incx, y, incy, z)
+      call rocblas_Cdot_cptr_c(conj,rocblasHandle, length, x, incx, y, incy, result)
 #endif
     end subroutine
 

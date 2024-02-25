@@ -261,18 +261,54 @@
 #endif
 #include "hip/hip_runtime_api.h"
 
-
-#define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
-
-#ifdef DEBUG_HIP
-#define debugmessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
-#else
-#define debugmessage(x, ...)
-#endif
-
 // hipStream_t elpa_hip_stm;
 
 extern "C" {
+  int hipDeviceGetAttributeFromC(int *value, int attribute) {
+
+    hipDeviceAttribute_t attr;
+    switch(attribute) {
+      case 0:
+        attr = hipDeviceAttributeMaxThreadsPerBlock;
+        break;
+      case 1:
+        attr = hipDeviceAttributeMaxBlockDimX;
+        break;
+      case 2:
+        attr = hipDeviceAttributeMaxBlockDimY;
+        break;
+      case 3:
+        attr = hipDeviceAttributeMaxBlockDimZ;
+        break;
+      case 4:
+        attr = hipDeviceAttributeMaxGridDimX;
+        break;
+      case 5:
+        attr = hipDeviceAttributeMaxGridDimY;
+        break;
+      case 6:
+        attr = hipDeviceAttributeMaxGridDimZ;
+        break;
+      case 7:
+        attr = hipDeviceAttributeWarpSize;
+        break;
+      case 8:
+	      //only for ROCm 6.x fix this // TODO
+        //attr = hipDeviceAttributeMultiProcessorCount;
+        break;
+    }
+
+    hipError_t status = hipDeviceGetAttribute(value, attr, 0);
+    if (status == hipSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in hipDeviceGetAttribute: %s\n", "unknown error");
+      return 0;
+    }
+
+  }
+
 
   int hipGetLastErrorFromC() {
     hipError_t status = hipGetLastError();

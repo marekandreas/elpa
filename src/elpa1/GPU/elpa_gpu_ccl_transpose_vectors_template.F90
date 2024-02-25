@@ -87,7 +87,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   use elpa_abstract_impl
   use elpa_mpi
   use elpa_gpu
-  use elpa1_gpu
+  use tridiag_gpu
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions
 #endif
@@ -132,7 +132,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   integer(kind=ik)                                  :: k_datatype
   logical, intent(in)                               :: isSkewsymmetric, isSquareGridGPU, wantDebug
   integer(kind=c_intptr_t)                          :: my_stream
-
+  integer(kind=c_int)                               :: sm_count
   if (wantDebug) call obj%timer%start("elpa_gpu_ccl_transpose_vectors")
 
   success = .true.
@@ -302,9 +302,11 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
+          !sm_count = 32
+          sm_count = obj%gpu_setup%gpuSMcount
           call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_s_dev, & 
                                                 nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
-                                                1, isSkewsymmetric, .false., wantDebug, my_stream)
+                                                1, isSkewsymmetric, .false., wantDebug, sm_count, my_stream)
         endif ! (myps == ips)
 
         ! call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),  MPI_REAL_PRECISION,    &
@@ -327,10 +329,11 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
           if (wantDebug) call obj%timer%stop("nccl_communication")
         endif ! (nps>1)
-
+        !sm_count = 32
+        sm_count = obj%gpu_setup%gpuSMcount
         call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_t_dev, &
                                               nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, npt, ld_t, & 
-                                              2, isSkewsymmetric, .false., wantDebug, my_stream)
+                                              2, isSkewsymmetric, .false., wantDebug, sm_count, my_stream)
       endif ! (nblks_comm .ne. 0)
     endif ! (mypt == ipt)
 

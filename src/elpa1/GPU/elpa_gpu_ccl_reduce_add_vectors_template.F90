@@ -80,7 +80,7 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
   use elpa_abstract_impl
   use elpa_mpi
   use elpa_gpu
-  use elpa1_gpu
+  use tridiag_gpu
   use nccl_functions
   implicit none
 
@@ -115,6 +115,7 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
   integer(kind=c_intptr_t)                           :: vmat_s_dev, vmat_t_dev 
   integer(kind=c_intptr_t)                           :: aux1_reduceadd_dev, aux2_reduceadd_dev
   integer(kind=c_intptr_t)                           :: my_stream
+  integer(kind=ik)                                   :: sm_count
 
   call obj%timer%start("elpa_gpu_ccl_reduce_add_vectors")
   
@@ -203,10 +204,11 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
 ! !          k = k+nblk
 !         enddo
 !       enddo
-
+      !sm_count = 32
+      sm_count = obj%gpu_setup%gpuSMcount
       call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux1_reduceadd_dev, vmat_s_dev, & 
                                                 nvc, nvr, n, 0, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
-                                                1, isSkewsymmetric, .true., wantDebug, my_stream)
+                                                1, isSkewsymmetric, .true., wantDebug, sm_count, my_stream)
 
       aux_size = aux_stride * nvc
 
@@ -246,10 +248,12 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
 
       
       if (mypt == ipt) then
+              !sm_count = 32
 #if REALCASE == 1
+          sm_count = obj%gpu_setup%gpuSMcount
           call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux2_reduceadd_dev, vmat_t_dev, & 
                                                 nvc, nvr, n, 0, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_t, &
-                                                2, isSkewsymmetric, .true., wantDebug, my_stream)
+                                                2, isSkewsymmetric, .true., wantDebug, sm_count, my_stream)
 #endif
       endif ! if (mypt == ipt)
 
