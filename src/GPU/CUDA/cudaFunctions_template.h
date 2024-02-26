@@ -107,11 +107,7 @@ extern "C" {
    	
   }
 }
-#endif
 
-
-
-#ifdef WITH_NVIDIA_GPU_VERSION
 extern "C" {
   
   int cublasGetVersionFromC(cublasHandle_t cudaHandle, int *version) {

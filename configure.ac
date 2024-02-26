@@ -2749,11 +2749,53 @@ if test x"${need_amd_gpu}" = x"yes" ; then
     if test x"${have_hipblas}" = x"no"; then
       AC_MSG_ERROR([Could not link hipblas; try to set the hip-path or disable AMD GPU support])
     fi
+    #dnl check for API version
+    AC_MSG_CHECKING(whether rocblas API v3 should be uses)
+    AC_LANG_PUSH([C++])
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+      #include "rocblas/rocblas.h"
+      int main(int argc, char **argv) {
+       hipblasHandle_t rocblasHandle;
+	 int m, n, lda, ldb; 
+	 float alpha, *A, *B;
+         hipblasStatus_t status = hipblasDtrmm(rocblasHandle, HIPBLAS_SIDE_LEFT, HIPBLAS_FILL_MODE_LOWER, HIPBLAS_OP_N, HIPBLAS_DIAG_UNIT, m, n, &alpha, A, lda, B, ldb, B, ldb);
+        return 0;
+      }
+    ])],
+    [can_compile_rocblas_api_v3=yes],
+    [can_compile_rocblas_api_v3=no]
+    )
+    AC_LANG_POP([C++])
+    AC_MSG_RESULT([${can_compile_rocblas_api_v3}])
+    if test x"${can_compile_rocblas_api_v3}" = x"yes"; then
+      AC_DEFINE([HAVE_ROCBLAS_API_V3],[1],[use rocblas API v3])
+    fi
   else
     #dnl check whether we find rocblas
     AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
     if test x"${have_rocblas}" = x"no"; then
       AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
+    fi
+    #dnl check for API version
+    AC_MSG_CHECKING(whether rocblas API v3 should be uses)
+    AC_LANG_PUSH([C++])
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+      #include "rocblas/rocblas.h"
+      int main(int argc, char **argv) {
+         rocblas_handle rocblasHandle;
+	 int m, n, lda, ldb; 
+	 float alpha, *A, *B;
+         rocblas_status status = rocblas_strmm(rocblasHandle, rocblas_side_left, rocblas_fill_lower, rocblas_operation_none, rocblas_diagonal_unit, m, n, &alpha, A, lda, B, ldb, B, ldb);
+        return 0;
+      }
+    ])],
+    [can_compile_rocblas_api_v3=yes],
+    [can_compile_rocblas_api_v3=no]
+    )
+    AC_LANG_POP([C++])
+    AC_MSG_RESULT([${can_compile_rocblas_api_v3}])
+    if test x"${can_compile_rocblas_api_v3}" = x"yes"; then
+      AC_DEFINE([HAVE_ROCBLAS_API_V3],[1],[use rocblas API v3])
     fi
   fi
   #AC_SEARCH_LIBS([hipMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])

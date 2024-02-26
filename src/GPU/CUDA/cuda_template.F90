@@ -70,12 +70,12 @@
 
 
   interface
-    function cublas_get_version_c(cudaHandle, version) result(istat) &
+    function cublas_get_version_c(cublasHandle, version) result(istat) &
              bind(C, name="cublasGetVersionFromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
-      integer(kind=C_intptr_T), value  :: cudaHandle
+      integer(kind=C_intptr_T), value  :: cublasHandle
       integer(kind=C_INT)              :: version
       integer(kind=C_INT)              :: istat
     end function

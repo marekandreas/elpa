@@ -70,12 +70,12 @@
 
 
 !  interface
-!    function cublas_get_version_c(cudaHandle, version) result(istat) &
-!             bind(C, name="cublasGetVersionFromC")
+!    function syclblas_get_version_c(syclblasHandle, version) result(istat) &
+!             bind(C, name="syclblasGetVersionFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !
-!      integer(kind=C_intptr_T), value  :: cudaHandle
+!      integer(kind=C_intptr_T), value  :: syclblasHandle
 !      integer(kind=C_INT)              :: version
 !      integer(kind=C_INT)              :: istat
 !    end function
@@ -1758,14 +1758,14 @@
 !#endif
 !    end function
 
-!    function cublas_get_version(cublasHandle, version) result(success)
+!    function syclblas_get_version(syclblasHandle, version) result(success)
 !      use, intrinsic :: iso_c_binding
 !      implicit none
-!      integer(kind=C_intptr_t)                  :: cublasHandle
+!      integer(kind=C_intptr_t)                  :: syclblasHandle
 !      integer(kind=C_INT)                       :: version
 !      logical                                   :: success
 !#ifdef WITH_SYCL_GPU_VERSION
-!      success = cublas_get_version_c(cublasHandle, version) /= 0
+!      success = syclblas_get_version_c(syclblasHandle, version) /= 0
 !#else
 !      success = .true.
 !#endif
