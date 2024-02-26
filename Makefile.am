@@ -1111,8 +1111,8 @@ EXTRA_DIST = \
   src/elpa2/qr/elpa_qrkernels_template.F90 \
   src/elpa2/qr/qr_utils_template.F90 \
   src/elpa2/redist_band.F90 \
-  src/elpa_generalized/cannon_forw_template.c \
-  src/elpa_generalized/cannon_back_template.c \
+  src/elpa_generalized/cannon_forw_template.h \
+  src/elpa_generalized/cannon_back_template.h \
   src/elpa_index.h \
   src/fortran_constants.h \
   src/general/map_global_to_local.F90 \

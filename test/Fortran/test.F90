@@ -419,14 +419,16 @@ program test
 #endif
      stop 77
 #endif
-#if defined(TEST_GENERALIZED_EIGENPROBLEM)
-#if !defined(WITH_GPU_STREAMS)
-#ifdef WITH_MPI
-     call mpi_finalize(mpierr)
-#endif
-     stop 77
-#endif
-#endif
+
+! PETERDEBUG: delete since now streams are per default?
+! #if defined(TEST_GENERALIZED_EIGENPROBLEM)
+! #if defined(WITH_GPU_STREAMS) 
+! #ifdef WITH_MPI
+!      call mpi_finalize(mpierr)
+! #endif
+!      stop 77
+! #endif
+! #endif
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
                                 np_rows, np_cols, &

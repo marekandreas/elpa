@@ -66,6 +66,15 @@
 #include <nvToolsExt.h>
 #endif
 
+#ifdef WITH_NVTX
+#define NVTX_RANGE_PUSH(msg) nvtxRangePushA(msg)
+#define NVTX_RANGE_POP() nvtxRangePop()
+#else
+// Do nothing if WITH_NVTX is not defined
+#define NVTX_RANGE_PUSH(msg) ((void)0)
+#define NVTX_RANGE_POP() ((void)0)
+#endif
+
 #ifdef WITH_NVIDIA_GPU_VERSION
 #include <cublas_v2.h>
 #include <curand.h>
@@ -81,15 +90,32 @@ inline void gpuAssert(cudaError_t code, const char *file, int line)
    }
 }
 
+const char* cublasGetErrorString(cublasStatus_t status) {
+    switch (status) {
+        case CUBLAS_STATUS_SUCCESS:           return "CUBLAS_STATUS_SUCCESS";
+        case CUBLAS_STATUS_NOT_INITIALIZED:   return "CUBLAS_STATUS_NOT_INITIALIZED";
+        case CUBLAS_STATUS_ALLOC_FAILED:      return "CUBLAS_STATUS_ALLOC_FAILED";
+        case CUBLAS_STATUS_INVALID_VALUE:     return "CUBLAS_STATUS_INVALID_VALUE";
+        case CUBLAS_STATUS_ARCH_MISMATCH:     return "CUBLAS_STATUS_ARCH_MISMATCH";
+        case CUBLAS_STATUS_MAPPING_ERROR:     return "CUBLAS_STATUS_MAPPING_ERROR";
+        case CUBLAS_STATUS_EXECUTION_FAILED:  return "CUBLAS_STATUS_EXECUTION_FAILED";
+        case CUBLAS_STATUS_INTERNAL_ERROR:    return "CUBLAS_STATUS_INTERNAL_ERROR";
+        case CUBLAS_STATUS_NOT_SUPPORTED:     return "CUBLAS_STATUS_NOT_SUPPORTED";
+        case CUBLAS_STATUS_LICENSE_ERROR:     return "CUBLAS_STATUS_LICENSE_ERROR";
+        default: return "Unknown cuBLAS status";
+    }
+}
+
 #define cublasErrCheck(ans) { cublasAssert((ans), __FILE__, __LINE__); }
-inline void cublasAssert(cublasStatus_t code, const char *file, int line)
+inline void cublasAssert(cublasStatus_t status, const char *file, int line)
 {
-   if (code != CUBLAS_STATUS_SUCCESS) 
+   if (status != CUBLAS_STATUS_SUCCESS) 
    {
-      fprintf(stderr,"CUBLASassert: %d %s %d\n", code, file, line);
-      exit(code);
+      fprintf(stderr,"CUBLASassert: status=%d, %s, %s, line %d\n", status, cublasGetErrorString(status), file, line);
+      exit(status);
    }
 }
+
 
 #endif /* WITH_NVIDIA_GPU_VERSION */
 
@@ -157,9 +183,11 @@ inline void cublasAssert(cublasStatus_t code, const char *file, int line)
 
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
+#define cublasXgemm cublasDgemm
 #include "../general/precision_macros.h"
-#include "cannon_forw_template.c"
-#include "cannon_back_template.c"
+#include "cannon_forw_template.h"
+#include "cannon_back_template.h"
+#undef cublasXgemm
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -204,9 +232,11 @@ void cannons_triang_rectangular_c_d(double* U, double* B, int local_rowsCast, in
 
 #define REALCASE 1
 #define SINGLE_PRECISION 1
+#define cublasXgemm cublasSgemm
 #include "../general/precision_macros.h"
-#include "cannon_forw_template.c"
-#include "cannon_back_template.c"
+#include "cannon_forw_template.h"
+#include "cannon_back_template.h"
+#undef cublasXgemm
 #undef SINGLE_PRECISION
 #undef REALCASE
 
@@ -251,9 +281,11 @@ void cannons_triang_rectangular_c_f(float* U, float* B, int local_rowsCast, int 
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
+#define cublasXgemm cublasZgemm
 #include "../general/precision_macros.h"
-#include "cannon_forw_template.c"
-#include "cannon_back_template.c"
+#include "cannon_forw_template.h"
+#include "cannon_back_template.h"
+#undef cublasXgemm
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
 
@@ -296,9 +328,11 @@ void cannons_triang_rectangular_c_dc(double complex* U, double complex* B, int l
 
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
+#define cublasXgemm cublasCgemm
 #include "../general/precision_macros.h"
-#include "cannon_forw_template.c"
-#include "cannon_back_template.c"
+#include "cannon_forw_template.h"
+#include "cannon_back_template.h"
+#undef cublasXgemm
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
 

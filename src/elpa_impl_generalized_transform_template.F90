@@ -149,6 +149,11 @@
 
      if(use_cannon == 1) then
        call self%get("cannon_buffer_size",BuffLevelInt,error)
+       ! PETERDEBUG
+       ! if (useGPU) then
+       !   BuffLevelInt = 0
+       ! warning cannon_buffer_size>0 is not supported with GPU!
+       ! endif
        call self%timer_start("cannons_reduction")
        ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
        tmp = 0.0_rck
