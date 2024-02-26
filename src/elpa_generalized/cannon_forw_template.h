@@ -485,8 +485,10 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       startPos = (curr_col_loc_buf + nblk)*curr_col_loc_buf/2;
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      gpuErrCheck( cudaMemcpy(Buf_to_send_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
-      gpuErrCheck( cudaMemcpy(Buf_to_send_U_dev, Buf_to_send_U, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
+      if (useGPU == 1){
+         gpuErrCheck( cudaMemcpy(Buf_to_send_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
+         gpuErrCheck( cudaMemcpy(Buf_to_send_U_dev, Buf_to_send_U, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
+      }
 #endif
 
       if (useGPU == 1){
@@ -636,8 +638,10 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
 
 #ifdef WITH_NVIDIA_GPU_VERSION
+   if (useGPU == 1){
       gpuErrCheck( cudaMemcpy(Buf_to_receive_A_dev, Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
       gpuErrCheck( cudaMemcpy(Buf_to_receive_U_dev, Buf_to_receive_U, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
+   }
 #endif
 
    if (useGPU == 1){
@@ -1020,10 +1024,12 @@ printf("\n");
 
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      gpuErrCheck( cudaMemcpy(Buf_to_send_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
-      // PETERDEBUG: do we need U_to_calc_dev?
-      gpuErrCheck( cudaMemcpy(Buf_to_send_U_dev, U_to_calc, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
-      gpuErrCheck( cudaMemset(M_dev, 0, na_rows*na_cols*sizeof(math_type)) );
+      if (useGPU == 1){
+         gpuErrCheck( cudaMemcpy(Buf_to_send_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
+         // PETERDEBUG: do we need U_to_calc_dev?
+         gpuErrCheck( cudaMemcpy(Buf_to_send_U_dev, U_to_calc, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
+         gpuErrCheck( cudaMemset(M_dev, 0, na_rows*na_cols*sizeof(math_type)) );
+      }
 #endif
 
       if (useGPU == 1){
@@ -1127,7 +1133,7 @@ printf("\n");
 
                if (useGPU == 1){
 #ifdef WITH_NVIDIA_GPU_VERSION
-                  A_local_start = Buf_to_send_A_dev + A_local_index;
+                  A_local_start_dev = Buf_to_send_A_dev + A_local_index;
                   U_local_start_curr_dev = U_local_start_curr_dev + rows_in_block_U_curr;
 #endif
                }
@@ -1140,7 +1146,15 @@ printf("\n");
             }
          }
       
-         U_local_start = U_local_start + rows_in_block_U*cols_in_block;
+         if (useGPU == 1){
+#ifdef WITH_NVIDIA_GPU_VERSION
+            U_local_start_dev = U_local_start_dev + rows_in_block_U*cols_in_block;
+#endif
+         }
+         else {
+            U_local_start = U_local_start + rows_in_block_U*cols_in_block;
+         }
+
          curr_col_loc_res = curr_col_loc_res + nblk; 
          rows_in_block_U = rows_in_block_U + ratio*nblk;
       }
@@ -1215,9 +1229,11 @@ printf("\n");
    }
 
 #ifdef WITH_NVIDIA_GPU_VERSION
+   if (useGPU == 1){
       gpuErrCheck( cudaMemcpy(Buf_to_receive_A_dev, Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
       // PETERDEBUG change Buf_to_receive_U_dev to U_to_calc_dev below?
       gpuErrCheck( cudaMemcpy(Buf_to_receive_U_dev, U_to_calc, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
+   }
 #endif
 
    if (useGPU == 1){
@@ -1290,7 +1306,7 @@ printf("\n");
          {
             if ((ii+1)*nblk <= cols_in_buffer_A) {
                rows_in_block_U_curr = nblk; 
-	    }
+	         }
             else {
                rows_in_block_U_curr = cols_in_buffer_A - ii*nblk;  
             }

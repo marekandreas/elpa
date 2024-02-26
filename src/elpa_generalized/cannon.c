@@ -81,7 +81,7 @@
 #include <cublas_api.h>
 
 #define gpuErrCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line)
+static inline void gpuAssert(cudaError_t code, const char *file, int line)
 {
    if (code != cudaSuccess) 
    {
@@ -107,7 +107,7 @@ const char* cublasGetErrorString(cublasStatus_t status) {
 }
 
 #define cublasErrCheck(ans) { cublasAssert((ans), __FILE__, __LINE__); }
-inline void cublasAssert(cublasStatus_t status, const char *file, int line)
+static inline void cublasAssert(cublasStatus_t status, const char *file, int line)
 {
    if (status != CUBLAS_STATUS_SUCCESS) 
    {
