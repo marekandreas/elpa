@@ -310,6 +310,36 @@ extern "C" {
   }
 
 
+  int rocblasGetVersionFromC(BLAS_handle rocblasHandle, int *version) {
+    char *buf, size_t len;
+
+    hipError_t status = rocblas_get_version_string_size(&len)
+    if (status != hipSuccess) {
+      printf("Error in executing  hipGetLastErrorFrom: %s\n", hipGetErrorString(status));
+      errormessage("Error in rocblas_get_version_string_size: %s\n", "unknown error");
+      return 0;
+    }
+
+    hipError_t status = rocblas_get_version_string(buf, len);
+    if (status == hipSuccess) {
+      int major, minor, patch;
+
+      if (sscanf(versionString, "%d.%d.%d", &major, &minor, &patch) == 3) {
+        //printf("Major: %d, Minor: %d, Patch: %d\n", major, minor, patch);
+        *version = major * 10000 + minor * 100 + patch;
+      } else {
+        printf("Error parsing version string.\n");
+      }
+      return 1;
+    }
+    else{
+      printf("Error in executing  hipGetLastErrorFrom: %s\n", hipGetErrorString(status));
+      errormessage("Error in rocblas_get_version_string: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
+
   int hipGetLastErrorFromC() {
     hipError_t status = hipGetLastError();
     

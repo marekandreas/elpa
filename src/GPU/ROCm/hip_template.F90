@@ -69,17 +69,17 @@
   end interface
 
 
-!  interface
-!    function rocblas_get_version_c(rocblasHandle, version) result(istat) &
-!             bind(C, name="rocblasGetVersionFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!
-!      integer(kind=C_intptr_T), value  :: rocblasHandle
-!      integer(kind=C_INT)              :: version
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
+  interface
+    function rocblas_get_version_c(rocblasHandle, version) result(istat) &
+             bind(C, name="rocblasGetVersionFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value  :: rocblasHandle
+      integer(kind=C_INT)              :: version
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
 
 
   interface

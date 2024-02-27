@@ -62,6 +62,14 @@
 #include <stdint.h>
 #include <complex.h>
 
+#define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
+
+#ifdef DEBUG_CUDA
+#define debugmessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
+#else
+#define debugmessage(x, ...)
+#endif
+
 
 #ifdef WITH_AMD_GPU_VERSION
 #include "../../../../src/GPU/ROCm/rocmFunctions_template.h"
