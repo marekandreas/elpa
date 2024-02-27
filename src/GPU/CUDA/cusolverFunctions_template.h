@@ -601,6 +601,5 @@ void cusolverXpotrf_elpa_wrapper(cusolverDnHandle_t cusolverHandle, char uplo, i
       errormessage("Error in cusolverDnXpotrf %s \n", "aborting");
     }
   }
-#endif
 
 } // extern "C"
