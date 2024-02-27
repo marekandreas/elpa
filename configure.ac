@@ -3018,6 +3018,10 @@ if test x"${with_cusolver}" = x"yes"; then
   if test x"${have_cusolver}" = x"no"; then
     AC_MSG_ERROR([Could not link cusolver; try to set the cuda-path or disable Nvidia GPU support])
   fi
+  AC_SEARCH_LIBS(cusolverDnXpotrf],[cusolver],[uptodate_cusolver=yes],[uptodate_cusolver=no])
+  if test x"${uptodate_cusolver}" = x"no"; then
+    AC_MSG_ERROR([cusolver version is too old, use at least CUDA 11.1 or disable cusolver])
+  fi
   AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
   AC_LANG_POP([C])
 fi
