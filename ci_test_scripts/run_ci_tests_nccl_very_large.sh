@@ -187,6 +187,7 @@ then
       echo "Submission exited with exitCode $exitCode"
     fi
 
+    cat ./ELPA_CI_2gpu.out.*
     #if (( $exitCode > 0 ))
     #then
       cat ./ELPA_CI_2gpu.err.*
