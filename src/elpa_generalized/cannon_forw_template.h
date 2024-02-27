@@ -742,11 +742,6 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    nvtxRangePop();
 #endif 
 
-// PETERDEBUG delete after testing
-printf("my_prow = %d, my_pcol = %d, M: ", my_prow, my_pcol);
-for(int i = 0; i < na_rows*na_cols; i++) printf("%f ", M[i]);
-printf("\n");
-
    ////////////////////////////////////////////////// start algorithm to find lower part of U^(-H)*A*U^(-1) //////////////////////////
            
    /////////////////////////////////////////////////////////////// initial reordering of A ////////////////////////////////////////////////
@@ -1183,13 +1178,6 @@ printf("\n");
    nvtxRangePop(); // loop j<np_rows"
 #endif
 
-// PETERDEBUG: delete after testing
-#ifdef WITH_NVIDIA_GPU_VERSION
-   if (useGPU == 1) gpuErrCheck( cudaMemcpy(Res, M_dev, na_rows*na_cols*sizeof(math_type), cudaMemcpyDeviceToHost) );
-#endif
-printf("my_prow = %d, my_pcol = %d, Res ", my_prow, my_pcol);
-for(int i = 0; i < na_rows*na_cols; i++) printf("%f ", Res[i]); // For floating-point numbers
-printf("\n");
 
    /////// do the last multiplication //////////////
    if(ToStore < np_rows - 1)
@@ -1368,10 +1356,6 @@ printf("\n");
 #ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU == 1) gpuErrCheck( cudaMemcpy(Res, M_dev, na_rows*na_cols*sizeof(math_type), cudaMemcpyDeviceToHost) );
 #endif
-
-printf("my_prow = %d, my_pcol = %d, Res-final ", my_prow, my_pcol);
-for(int i = 0; i < na_rows*na_cols; i++) printf("%f ", Res[i]); // For floating-point numbers
-printf("\n");
 
 #ifdef WITH_NVTX
    nvtxRangePushA("PTRAN");
