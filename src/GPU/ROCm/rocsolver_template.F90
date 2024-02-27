@@ -42,6 +42,8 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! Author: Peter Karpov, MPCDF
+! This file is the generated version. Do NOT edit
+
 
 !  interface
 !    function rocsolver_set_stream_c(rocsolverHandle, hipStream) result(istat) &
@@ -75,7 +77,7 @@
 !    end function
 !  end interface
 
-  ! rocsolver_?trtri
+  ! rocsolver_?trtri_c
 
   interface
     subroutine rocsolver_Dtrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info) &
@@ -129,57 +131,93 @@
     end subroutine
   end interface
 
-  ! rocsolver_?potrf
+  ! rocsolver_?potrf_c
 
   interface
-    subroutine rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev) &
+    subroutine rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a_dev, lda, info_dev) &
                               bind(C,name="rocsolverDpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a, info_dev
+      integer(kind=C_intptr_T), value           :: a_dev, info_dev
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev) &
+    subroutine rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a_dev, lda, info_dev) &
                               bind(C,name="rocsolverSpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a, info_dev
+      integer(kind=C_intptr_T), value           :: a_dev, info_dev
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev) &
+    subroutine rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a_dev, lda, info_dev) &
                               bind(C,name="rocsolverZpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a, info_dev
+      integer(kind=C_intptr_T), value           :: a_dev, info_dev
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev) &
+    subroutine rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a_dev, lda, info_dev) &
                               bind(C,name="rocsolverCpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a, info_dev
+      integer(kind=C_intptr_T), value           :: a_dev, info_dev
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
 
+  ! rocsolver_Xpotrf_buffereSize_c
+
+!  interface
+!    subroutine rocsolver_Xpotrf_bufferSize_c(rocsolverHandle, uplo, n, dataType, a_dev, lda, &
+!                                            workspaceInBytesOnDevice, workspaceInBytesOnHost) &
+!                                            bind(C,name="rocsolverXpotrf_bufferSize_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=c_intptr_t), value          :: rocsolverHandle
+!      character(1, c_char), value              :: uplo, dataType
+!      integer(kind=c_int), intent(in), value   :: n, lda
+!      integer(kind=c_intptr_t), value          :: a_dev
+!      integer(kind=c_size_t)                   :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+!    end subroutine
+!  end interface
+
+  ! rocsolver_Xpotrf_c
+
+!  interface
+!    subroutine rocsolver_Xpotrf_c(rocsolverHandle, uplo, n, dataType, a_dev, lda, &
+!                                 buffer_dev , workspaceInBytesOnDevice, &
+!                                 buffer_host, workspaceInBytesOnHost, info_dev) &
+!                                 bind(C,name="rocsolverXpotrf_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=c_intptr_t), value          :: rocsolverHandle
+!      character(1, c_char), value              :: uplo, dataType
+!      integer(kind=c_int), intent(in), value   :: n, lda
+!      integer(kind=c_intptr_t), value          :: a_dev, buffer_dev, info_dev
+!      integer(kind=c_intptr_t), value          :: buffer_host
+!      integer(kind=c_size_t)                   :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+!    end subroutine
+!  end interface
+
+
   contains
+
 
 !    function rocsolver_set_stream(rocsolverHandle, hipStream) result(success)
 !      use, intrinsic :: iso_c_binding
@@ -206,7 +244,7 @@
 !      success = .true.
 !#endif
 !    end function
-!
+
 !    function rocsolver_destroy(rocsolverHandle) result(success)
 !      use, intrinsic :: iso_c_binding
 !      implicit none
@@ -275,50 +313,90 @@
 
     ! rocsolver_?potrf
 
-    subroutine rocsolver_Dpotrf(uplo, n, a, lda, info_dev, rocsolverHandle)
+    subroutine rocsolver_Dpotrf(uplo, n, a_dev, lda, info_dev, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=C_intptr_T)        :: rocsolverHandle
 #ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev)
+      call rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a_dev, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine rocsolver_Spotrf(uplo, n, a, lda, info_dev, rocsolverHandle)
+    subroutine rocsolver_Spotrf(uplo, n, a_dev, lda, info_dev, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=C_intptr_T)        :: rocsolverHandle
 #ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev)
+      call rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a_dev, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine rocsolver_Zpotrf(uplo, n, a, lda, info_dev, rocsolverHandle)
+    subroutine rocsolver_Zpotrf(uplo, n, a_dev, lda, info_dev, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=C_intptr_T)        :: rocsolverHandle
 #ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev)
+      call rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a_dev, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine rocsolver_Cpotrf(uplo, n, a, lda, info_dev, rocsolverHandle)
+    subroutine rocsolver_Cpotrf(uplo, n, a_dev, lda, info_dev, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=C_intptr_T)        :: rocsolverHandle
 #ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a, lda, info_dev)
+      call rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a_dev, lda, info_dev)
 #endif
     end subroutine
+
+    ! rocsolver_Xpotrf_bufferSize
+
+!    subroutine rocsolver_Xpotrf_bufferSize(rocsolverHandle, uplo, n, dataType, a_dev, lda, &
+!                                           workspaceInBytesOnDevice, workspaceInBytesOnHost)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=c_intptr_t)        :: rocsolverHandle
+!      character(1, c_char), value     :: uplo, dataType
+!      integer(kind=c_int)             :: n, lda
+!      integer(kind=c_intptr_t)        :: a_dev
+!      integer(kind=c_size_t)          :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+!
+!#ifdef WITH_AMD_ROCSOLVER
+!      call rocsolver_Xpotrf_bufferSize_c(rocsolverHandle, uplo, n, dataType, a_dev, lda, &
+!                                        workspaceInBytesOnDevice, workspaceInBytesOnHost)
+!#endif
+!    end subroutine
+
+    ! rocsolver_Xpotrf
+
+!    subroutine rocsolver_Xpotrf(rocsolverHandle, uplo, n, dataType, a_dev, lda, &
+!                               buffer_dev , workspaceInBytesOnDevice, &
+!                               buffer_host, workspaceInBytesOnHost, info_dev)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=c_intptr_t)        :: rocsolverHandle
+!      character(1, c_char), value     :: uplo, dataType
+!      integer(kind=c_int)             :: n, lda
+!      integer(kind=c_intptr_t)        :: a_dev, buffer_dev, info_dev
+!      integer(kind=c_intptr_t)        :: buffer_host
+!      integer(kind=c_size_t)          :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+!
+!#ifdef WITH_AMD_ROCSOLVER
+!      call rocsolver_Xpotrf_c(rocsolverHandle, uplo, n, dataType, a_dev, lda, &
+!                             buffer_dev , workspaceInBytesOnDevice, &
+!                             buffer_host, workspaceInBytesOnHost, info_dev)
+!#endif
+!    end subroutine
+
