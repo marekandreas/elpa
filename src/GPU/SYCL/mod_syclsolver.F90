@@ -41,19 +41,18 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! Author: Andreas Marek, MPCDF
+! Author: Peter Karpov, MPCDF
 
 
 #include "config-f90.h"
 
-module sycl_functions
+module syclsolver_functions
   use, intrinsic :: iso_c_binding
   use precision
-  use syclsolver_functions
   implicit none
 
   public
 
-#include "./sycl_template.F90"
+#include "./syclsolver_template.F90"
 
-end module sycl_functions
+end module syclsolver_functions

@@ -74,7 +74,9 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/ROCm/mod_hip.F90 \
   src/GPU/ROCm/mod_rocsolver.F90 \
   src/GPU/OpenMP/mod_openmp_offload.F90 \
+  src/GPU/OpenMP/mod_openmp_offload_solver.F90 \
   src/GPU/SYCL/mod_sycl.F90 \
+  src/GPU/SYCL/mod_syclsolver.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
   src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
@@ -161,6 +163,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/OpenMP/openmp_offload_template.F90 \
   src/GPU/OpenMP/openmp_offload_solver_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \
+  src/GPU/SYCL/syclsolver_template.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
@@ -1038,6 +1041,7 @@ EXTRA_DIST = \
   src/GPU/OpenMP/openmp_offload_template.F90 \
   src/GPU/OpenMP/openmp_offload_solver_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \
+  src/GPU/SYCL/syclsolver_template.F90 \
   src/GPU/SYCL/syclUtils.cpp \
   src/GPU/SYCL/syclCommon.cpp \
   src/GPU/SYCL/syclFunctions.cpp \
