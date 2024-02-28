@@ -218,10 +218,16 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    for(i = 0; i < na_rows*na_cols; i++)
       M[i] = 0; 
 
+   // PETERDEBUG
+   printf("size of Buf_to_send/receive_A = %d\n", ratio*Buf_cols*Buf_rows);
+   printf("size of Buf_to_send/receive_U = %d\n", Size_U_stored);
+   printf("size of M = %d\n", na_rows*na_cols);
+
    int useGPU = 0; // PETERDEBUG pass this as a parameter
 #ifdef WITH_NVIDIA_GPU_VERSION
-   math_type *Buf_to_send_A_dev, *Buf_to_receive_A_dev;
-   math_type *Buf_to_send_U_dev, *Buf_to_receive_U_dev;
+   //math_type *Buf_to_send_A_dev, *Buf_to_receive_A_dev;
+   math_type *Buf_to_send_receive_A_dev;
+   math_type *Buf_to_send_receive_U_dev;
    math_type *M_dev;
 
    math_type *U_local_start_dev, *Res_ptr_dev; // pointers for first PxGEMM
@@ -229,25 +235,21 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
    cublasHandle_t handle; // pass handle as a parameter instead!
    cublasCreate(&handle);
-   useGPU = 1; // PETERDEBUG pass this as a parameter
+   useGPU = 0; // PETERDEBUG pass this as a parameter
    if (useGPU == 1){
-      // printf("ratio = %d\n", ratio); // PETERDEBUG: cleanup comments
-      printf("size of Buf_to_send_A_dev = %d\n", ratio*Buf_cols*Buf_rows);
-      printf("size of Buf_to_receive_A_dev = %d\n", ratio*Buf_cols*Buf_rows);
-      printf("size of Buf_to_send_U_dev = %d\n", Size_U_stored);
-      printf("size of Buf_to_receive_U_dev = %d\n", Size_U_stored);
+      // printf("ratio = %d\n", ratio); // PETERDEBUG: cleanup comments and prints
+      printf("size of Buf_to_send_receive_A_dev = %d\n", ratio*Buf_cols*Buf_rows);
+      printf("size of Buf_to_send_receive_U_dev = %d\n", Size_U_stored);
       printf("size of M_dev = %d\n", na_rows*na_cols);
 
-      gpuErrCheck( cudaMalloc((void **)&Buf_to_send_A_dev   , ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
-      gpuErrCheck( cudaMalloc((void **)&Buf_to_receive_A_dev, ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
-      gpuErrCheck( cudaMalloc((void **)&Buf_to_send_U_dev   , Size_U_stored*sizeof(math_type)) );
-      gpuErrCheck( cudaMalloc((void **)&Buf_to_receive_U_dev, Size_U_stored*sizeof(math_type)) );
-      gpuErrCheck( cudaMalloc((void **)&M_dev, na_rows*na_cols*sizeof(math_type)) );
+      gpuErrCheck( cudaMalloc((void **)&Buf_to_send_receive_A_dev   , ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
       //gpuErrCheck( cudaMalloc((void **)&Buf_to_receive_A_dev, ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
-      //gpuErrCheck( cudaMalloc((void **)&U_local_start_dev, ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
-      //gpuErrCheck( cudaMalloc(&Res_ptr_dev, ??? rows_in_block_A*cols_in_block*sizeof(math_type)) );
+      gpuErrCheck( cudaMalloc((void **)&Buf_to_send_receive_U_dev   , Size_U_stored*sizeof(math_type)) );
+      //gpuErrCheck( cudaMalloc((void **)&Buf_to_receive_U_dev, Size_U_stored*sizeof(math_type)) );
+      gpuErrCheck( cudaMalloc((void **)&M_dev, na_rows*na_cols*sizeof(math_type)) );
    }
 #endif
+   printf("useGPU=%d\n", useGPU);
 
    ////////////////////////////////////////////////////////////// initial reordering of A ///////////////////////////////////////////////////////////////////////////////////////// 
 #ifdef WITH_NVTX
@@ -276,9 +278,12 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       if(ratio != 1)   // if grid is not square
       {
          if(pcol_where_to_send_A != my_pcol)
-         {
-            MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) (na_cols*na_rows) , MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) pcol_where_to_send_A, (C_INT_MPI_TYPE) zero, 
-                         Buf_A        , (C_INT_MPI_TYPE) (na_rows*Buf_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) pcol_from_where_to_receive_A, (C_INT_MPI_TYPE) zero, 
+         {  
+            C_INT_MPI_TYPE send_recv_tag = 0;
+            MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) (na_cols*na_rows) , MPI_MATH_DATATYPE_PRECISION_C, 
+                        (C_INT_MPI_TYPE) pcol_where_to_send_A        , send_recv_tag, 
+                         Buf_A        , (C_INT_MPI_TYPE) (na_rows*Buf_cols), MPI_MATH_DATATYPE_PRECISION_C, 
+                        (C_INT_MPI_TYPE) pcol_from_where_to_receive_A, send_recv_tag, 
                          row_comm, &status);
             MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A_nowMPI);
             Size_receive_A_now = (C_INT_TYPE) Size_receive_A_nowMPI;
@@ -317,9 +322,18 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          if(my_prow > 0)
          {
             C_LACPY("A", &na_rows, &na_cols, A, &na_rows, Buf_to_send_A, &na_rows);   // copy A to Buf_to_send_A
-            MPI_Sendrecv(Buf_to_send_A   , (C_INT_MPI_TYPE) (na_cols*na_rows) , MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) pcol_where_to_send_A        , (C_INT_MPI_TYPE) zero, 
-                         Buf_to_receive_A, (C_INT_MPI_TYPE) (na_rows*Buf_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) pcol_from_where_to_receive_A, (C_INT_MPI_TYPE) zero, 
+            MPI_Sendrecv(Buf_to_send_A   , (C_INT_MPI_TYPE) (na_cols*na_rows) , MPI_MATH_DATATYPE_PRECISION_C, 
+                        (C_INT_MPI_TYPE) pcol_where_to_send_A        , (C_INT_MPI_TYPE) zero, 
+                         Buf_to_receive_A, (C_INT_MPI_TYPE) (na_rows*Buf_cols), MPI_MATH_DATATYPE_PRECISION_C, 
+                        (C_INT_MPI_TYPE) pcol_from_where_to_receive_A, (C_INT_MPI_TYPE) zero, 
                          row_comm, &status);
+            // PETERDEBUG
+            // printf("MPI_Sendrecv A: send_count=%d, recv_count=%d\n", (C_INT_MPI_TYPE) (na_cols*na_rows), (C_INT_MPI_TYPE) (na_rows*Buf_cols));
+            // MPI_Sendrecv(Buf_to_send_A   , (na_cols*na_rows) , MPI_MATH_DATATYPE_PRECISION_C, 
+            //              pcol_where_to_send_A        ,  zero, 
+            //              Buf_to_receive_A,  na_rows*Buf_cols, MPI_MATH_DATATYPE_PRECISION_C, 
+            //              pcol_from_where_to_receive_A, zero, 
+            //              row_comm, &status);            
             MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_AMPI);
             Size_receive_A = (C_INT_TYPE) Size_receive_AMPI;
             Size_receive_A = Size_receive_A/na_rows;       // how many columns of A I have received
@@ -399,7 +413,35 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    if (where_to_send_U != my_prow)
    {   
       // send and receive in the col_comm
-      MPI_Sendrecv(Buf_to_send_U, (C_INT_MPI_TYPE) Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_U, (C_INT_MPI_TYPE) zero, Buf_to_receive_U, (C_INT_MPI_TYPE) (Buf_rows*na_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_U, (C_INT_MPI_TYPE) zero, col_comm, &status); 
+      printf("Size_U_stored=%d, Size_send_U=%d, Seize_receive_U=%d\n", (C_INT_MPI_TYPE)Size_U_stored, (C_INT_MPI_TYPE)Size_send_U, (C_INT_MPI_TYPE)(Buf_rows*na_cols)); // PETERDEBUG
+      printf("where_to_send_U=%d, from_where_to_receive_U=%d\n", where_to_send_U, from_where_to_receive_U); // PETERDEBUG
+      C_INT_MPI_TYPE send_recv_tag = 1;
+      
+      MPI_Sendrecv(Buf_to_send_U   , (C_INT_MPI_TYPE) Size_send_U       , MPI_MATH_DATATYPE_PRECISION_C, 
+                  (C_INT_MPI_TYPE) where_to_send_U        , send_recv_tag,
+                   Buf_to_receive_U, (C_INT_MPI_TYPE) (Buf_rows*na_cols), MPI_MATH_DATATYPE_PRECISION_C,
+                  (C_INT_MPI_TYPE) from_where_to_receive_U, send_recv_tag,
+                  col_comm, &status);
+      
+     // PETERDEBUG
+      // MPI_Sendrecv(Buf_to_send_U   ,  Size_send_U/2       , MPI_C_DOUBLE_COMPLEX, 
+      //              where_to_send_U        , send_recv_tag,
+      //              Buf_to_receive_U,  (Buf_rows*na_cols)/2, MPI_C_DOUBLE_COMPLEX,
+      //              from_where_to_receive_U, send_recv_tag,
+      //              col_comm, &status);
+      // Non-blocking send operation
+      int send_count=Size_send_U;
+      int recv_count=(Buf_rows*na_cols);
+      printf("send_count=%d, recv_count=%d\n", send_count, recv_count);
+      MPI_Isend(Buf_to_send_U, send_count, MPI_MATH_DATATYPE_PRECISION_C, 
+               where_to_send_U, send_recv_tag, col_comm, &status);
+      printf("MPI_Isend done\n");
+      // Blocking receive operation
+      MPI_Recv(Buf_to_receive_U, recv_count, MPI_C_DOUBLE_COMPLEX, 
+               from_where_to_receive_U, send_recv_tag, col_comm, &status);
+      
+      // send_recv_tag++; // PETERDEBUG
+      printf("MPI_Sendrecv done\n");
       MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_UMPI); // find out how many elements I have received
       Size_receive_U = (C_INT_TYPE) Size_receive_UMPI;
    }
@@ -486,14 +528,14 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (useGPU == 1){
-         gpuErrCheck( cudaMemcpy(Buf_to_send_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
-         gpuErrCheck( cudaMemcpy(Buf_to_send_U_dev, Buf_to_send_U, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
+         gpuErrCheck( cudaMemcpy(Buf_to_send_receive_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
+         gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, Buf_to_send_U, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
       }
 #endif
 
       if (useGPU == 1){
 #ifdef WITH_NVIDIA_GPU_VERSION
-         U_local_start_dev = Buf_to_send_U_dev + startPos;
+         U_local_start_dev = Buf_to_send_receive_U_dev + startPos;
          Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
 #endif
       }
@@ -544,7 +586,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 #ifdef WITH_NVIDIA_GPU_VERSION
                cublasStatus_t status = cublasXgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 
                                        rows_in_block_A, cols_in_block, rows_in_block_U, &dOne, 
-                                       Buf_to_send_A_dev, na_rows, 
+                                       Buf_to_send_receive_A_dev, na_rows, 
                                        U_local_start_dev, rows_in_block_U, &beta, 
                                        Res_ptr_dev, na_rows);
                cublasErrCheck(status);
@@ -639,14 +681,14 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
 #ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU == 1){
-      gpuErrCheck( cudaMemcpy(Buf_to_receive_A_dev, Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
-      gpuErrCheck( cudaMemcpy(Buf_to_receive_U_dev, Buf_to_receive_U, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
+      gpuErrCheck( cudaMemcpy(Buf_to_send_receive_A_dev, Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
+      gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, Buf_to_receive_U, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
    }
 #endif
 
    if (useGPU == 1){
 #ifdef WITH_NVIDIA_GPU_VERSION
-      U_local_start_dev = Buf_to_receive_U_dev + startPos;
+      U_local_start_dev = Buf_to_send_receive_U_dev + startPos;
       Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
 #endif
    }
@@ -695,7 +737,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 #ifdef WITH_NVIDIA_GPU_VERSION
             cublasStatus_t status = cublasXgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 
                                     rows_in_block_A, cols_in_block, rows_in_block_U, &dOne, 
-                                    Buf_to_receive_A_dev, na_rows, 
+                                    Buf_to_send_receive_A_dev, na_rows, 
                                     U_local_start_dev, rows_in_block_U, &beta, 
                                     Res_ptr_dev, na_rows);
             cublasErrCheck(status);
@@ -820,7 +862,12 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       {
          if(pcol_where_to_send_A != my_pcol)   // if I need to send and receive on this step
          {
-            MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) pcol_where_to_send_A, (C_INT_MPI_TYPE) zero, Buf_A, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) pcol_from_where_to_receive_A, (C_INT_MPI_TYPE) zero, row_comm, &status);
+            MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, 
+                        (C_INT_MPI_TYPE) pcol_where_to_send_A, (C_INT_MPI_TYPE) zero, 
+                         Buf_A, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, 
+                        (C_INT_MPI_TYPE) pcol_from_where_to_receive_A, (C_INT_MPI_TYPE) zero, 
+                         row_comm, &status);
+
             MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_A_nowMPI);
             Size_receive_A_now = (C_INT_TYPE) Size_receive_A_nowMPI;
 
@@ -892,9 +939,19 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       else    // if grid is square
       {
          if(my_prow > 0)
-         {
-            MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) pcol_where_to_send_A, (C_INT_MPI_TYPE) zero, Buf_to_receive_A, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) pcol_from_where_to_receive_A, (C_INT_MPI_TYPE) zero, row_comm, &status);
+         {  
+            // PETERDEBUG
+            // printf("MPI_Sendrecv A: send_count=%d, recv_count=%d\n", (C_INT_MPI_TYPE) Size_send_A, (C_INT_MPI_TYPE) Size_U_stored);
+            
+            MPI_Sendrecv(Buf_to_send_A, (C_INT_MPI_TYPE) Size_send_A, MPI_MATH_DATATYPE_PRECISION_C, 
+                        (C_INT_MPI_TYPE) pcol_where_to_send_A, (C_INT_MPI_TYPE) zero, 
+                         Buf_to_receive_A, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, 
+                        (C_INT_MPI_TYPE) pcol_from_where_to_receive_A, (C_INT_MPI_TYPE) zero, 
+                         row_comm, &status);
+                         
             MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_AMPI);
+            printf("MPI_Sendrecv A-2: done\n"); // PETERDEBUG
+
             Size_receive_A = (C_INT_TYPE) Size_receive_AMPI;
 
             cols_in_buffer_A = (C_INT_TYPE)Buf_to_receive_A[Size_receive_A-1];
@@ -1020,16 +1077,16 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (useGPU == 1){
-         gpuErrCheck( cudaMemcpy(Buf_to_send_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
+         gpuErrCheck( cudaMemcpy(Buf_to_send_receive_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
          // PETERDEBUG: do we need U_to_calc_dev?
-         gpuErrCheck( cudaMemcpy(Buf_to_send_U_dev, U_to_calc, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
+         gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, U_to_calc, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
          gpuErrCheck( cudaMemset(M_dev, 0, na_rows*na_cols*sizeof(math_type)) );
       }
 #endif
 
       if (useGPU == 1){
 #ifdef WITH_NVIDIA_GPU_VERSION
-         U_local_start_dev = Buf_to_send_U_dev;
+         U_local_start_dev = Buf_to_send_receive_U_dev;
 #endif
       }
       else {
@@ -1069,7 +1126,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
          if (useGPU == 1){
 #ifdef WITH_NVIDIA_GPU_VERSION
-            A_local_start_dev = Buf_to_send_A_dev + A_local_index;
+            A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
             Res_ptr_dev = M_dev + curr_col_loc_res*na_rows + curr_row_loc_res; // we reuse M_dev buffer instead of introducing Res_dev
 #endif
          }
@@ -1128,7 +1185,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
                if (useGPU == 1){
 #ifdef WITH_NVIDIA_GPU_VERSION
-                  A_local_start_dev = Buf_to_send_A_dev + A_local_index;
+                  A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
                   U_local_start_curr_dev = U_local_start_curr_dev + rows_in_block_U_curr;
 #endif
                }
@@ -1218,15 +1275,15 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
 #ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU == 1){
-      gpuErrCheck( cudaMemcpy(Buf_to_receive_A_dev, Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
+      gpuErrCheck( cudaMemcpy(Buf_to_send_receive_A_dev, Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
       // PETERDEBUG change Buf_to_receive_U_dev to U_to_calc_dev below?
-      gpuErrCheck( cudaMemcpy(Buf_to_receive_U_dev, U_to_calc, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
+      gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, U_to_calc, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
    }
 #endif
 
    if (useGPU == 1){
 #ifdef WITH_NVIDIA_GPU_VERSION
-      U_local_start_dev = Buf_to_receive_U_dev;
+      U_local_start_dev = Buf_to_send_receive_U_dev;
 #endif
    }
    else {
@@ -1266,7 +1323,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
       if (useGPU == 1){
 #ifdef WITH_NVIDIA_GPU_VERSION
-         A_local_start_dev = Buf_to_receive_A_dev + A_local_index;
+         A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
          Res_ptr_dev = M_dev + curr_col_loc_res*na_rows + curr_row_loc_res; // we reuse M_dev buffer instead of introducing Res_dev
 #endif
       }
@@ -1326,7 +1383,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
             
             if (useGPU == 1){
 #ifdef WITH_NVIDIA_GPU_VERSION
-               A_local_start_dev = Buf_to_receive_A_dev + A_local_index;
+               A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
                U_local_start_curr_dev = U_local_start_curr_dev + rows_in_block_U_curr;
 #endif
             }
@@ -1375,10 +1432,10 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
 #ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU == 1){
-      gpuErrCheck( cudaFree(Buf_to_send_A_dev) );
-      gpuErrCheck( cudaFree(Buf_to_receive_A_dev) );
-      gpuErrCheck( cudaFree(Buf_to_send_U_dev) );
-      gpuErrCheck( cudaFree(Buf_to_receive_U_dev) );
+      gpuErrCheck( cudaFree(Buf_to_send_receive_A_dev) );
+      //gpuErrCheck( cudaFree(Buf_to_send_receive_A_dev) );
+      gpuErrCheck( cudaFree(Buf_to_send_receive_U_dev) );
+      //gpuErrCheck( cudaFree(Buf_to_receive_U_dev) );
       gpuErrCheck( cudaFree(M_dev) );
    }
 #endif

@@ -126,9 +126,11 @@ static inline void cublasAssert(cublasStatus_t status, const char *file, int lin
 #define BLAS_KIND c_int64_t
 #else
 #define C_INT_TYPE_PTR int*
-#define C_INT_TYPE int
+//#define C_INT_TYPE int
+#define C_INT_TYPE long int /* PETERDEBUG */
 #define BLAS_KIND c_int
 #endif
+
 #ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
 #define C_INT_MPI_TYPE_PTR long int*
 #define C_INT_MPI_TYPE long int
