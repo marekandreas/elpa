@@ -61,9 +61,82 @@
 #define debugmessage(x, ...)
 #endif
 
-
 #ifdef WITH_NVIDIA_GPU_VERSION
 extern "C" {
+  int cudaDeviceGetAttributeFromC(int *value, int attribute) {
+
+    cudaDeviceAttr attr;
+    switch(attribute) {
+      case 0:
+	attr = cudaDevAttrMaxThreadsPerBlock;
+	break;
+      case 1:
+	attr = cudaDevAttrMaxBlockDimX;
+	break;
+      case 2:
+	attr = cudaDevAttrMaxBlockDimY;
+	break;
+      case 3:
+	attr = cudaDevAttrMaxBlockDimZ;
+	break;
+      case 4:
+	attr = cudaDevAttrMaxGridDimX;
+	break;
+      case 5:
+	attr = cudaDevAttrMaxGridDimY;
+	break;
+      case 6:
+	attr = cudaDevAttrMaxGridDimZ;
+	break;
+      case 7:
+	attr = cudaDevAttrWarpSize;
+	break;
+      case 8:
+	attr = cudaDevAttrMultiProcessorCount;
+	break;
+
+    }
+    cudaError_t status = cudaDeviceGetAttribute(value, attr, 0);
+    if (status == cudaSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in cudaDeviceGetAttribute: %s\n", "unknown error");
+      return 0;
+    }
+   	
+  }
+}
+
+extern "C" {
+  
+  int cublasGetVersionFromC(cublasHandle_t cudaHandle, int *version) {
+    cublasStatus_t status = cublasGetVersion(cudaHandle, version);
+    if (status == CUBLAS_STATUS_SUCCESS) {
+      if (*version >= 111103 && *version < 120304)
+        {
+        // https://docs.nvidia.com/cuda/archive//11.8.0/cuda-toolkit-release-notes/index.html
+        // https://docs.nvidia.com/cuda/archive//12.3.1/cuda-toolkit-release-notes/index.html
+        // Heuristics caching for the repeated CUBLAS operations was introduced in CUDA 11.8.0 and improved in CUDA 12.3.1
+        // Between these versions, the caching signigicantly decreases the performance of cublas Gemm, Gemv
+        // so we switch the caching off for these versions
+#if defined(CUBLAS_VERSION) && CUBLAS_VERSION >= 111103
+        cublasLtHeuristicsCacheSetCapacity(0);
+#endif
+        }
+
+      return 1;
+    }
+    else if (status == CUBLAS_STATUS_INVALID_VALUE) {
+      errormessage("Error in cublasGetVersion: %s\n", "the provided storage for library version number is not initialized (NULL)");
+      return 0;
+    }
+    else{
+      errormessage("Error in cublasGetVersion: %s\n", "unknown error");
+      return 0;
+    }
+  }
+
   int cudaStreamCreateFromC(cudaStream_t *cudaStream) {
     //*stream = (intptr_t) malloc(sizeof(cudaStream_t));
 

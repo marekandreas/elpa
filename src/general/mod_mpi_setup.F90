@@ -1,5 +1,5 @@
 #if 0
-!    Copyright 2021, A. Marek, MPCDF
+!    Copyright 2023, A. Marek, MPCDF
 !
 !    This file is part of ELPA.
 !
@@ -48,13 +48,34 @@
 
 
 #include "config-f90.h"
-module elpa_blas_gpu
+module elpa_mpi_setup
+  !use precision
   use iso_c_binding
-  use elpa_general_gpu, only : use_gpu_vendor, nvidia_gpu, amd_gpu, intel_gpu, openmp_offload_gpu, sycl_gpu, no_gpu, &
-                               gpu_vendor
 
-  public
-#include "./vendor_agnostic_blas_layer_template.F90"
+  type :: elpa_mpi_setup_t
+    logical                        :: useMPI
+
+    integer(kind=c_int)            :: mpi_comm_parent, mpi_comm_cols, mpi_comm_rows
+    integer(kind=c_int)            :: mpi_comm_parentExternal, mpi_comm_colsExternal, mpi_comm_rowsExternal
+
+    integer(kind=c_int)            :: nRanks_comm_parent
+    integer(kind=c_int)            :: nRanks_comm_rows
+    integer(kind=c_int)            :: nRanks_comm_cols
+
+    integer(kind=c_int)            :: myRank_comm_parent
+    integer(kind=c_int)            :: myRank_comm_rows
+    integer(kind=c_int)            :: myRank_comm_cols
+    
+    integer(kind=c_int)            :: nRanksExternal_comm_parent
+    integer(kind=c_int)            :: nRanksExternal_comm_rows
+    integer(kind=c_int)            :: nRanksExternal_comm_cols
+
+    integer(kind=c_int)            :: myRankExternal_comm_parent
+    integer(kind=c_int)            :: myRankExternal_comm_rows
+    integer(kind=c_int)            :: myRankExternal_comm_cols
+
+
+  end type
 
 end module
 

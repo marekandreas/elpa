@@ -3,7 +3,7 @@ Changelog for next release
 
 - not yet decided
 
-Changelog for ELPA 2023.05.001
+Changelog for ELPA 2023.11.001
 - enable gpu-streams per default for NVIDIA and AMD GPUs
 - Updated / improved documentation and man pages
 - Fixed compilation error on AMD GPUs
@@ -12,10 +12,9 @@ Changelog for ELPA 2023.05.001
 commpunication
 - Speed up of GPU version of hermitian_multiply by up to an factor of 4
 - significantly faster full-to-tridiagonal step in ELPA 1stage GPU
-- significatnly faster ELPA 2stage solver on Intel GPUs
+- significantly faster ELPA 2stage solver on Intel GPUs
 - Consistent enabling/disabling of SKEW_SYMMETRIC in header files
 - new setup_gpu API function
-
 
 Changelog for ELPA 2023.05.001
 - added CITATION.cff file

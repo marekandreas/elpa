@@ -108,7 +108,7 @@
       real(kind=REAL_DATATYPE), allocatable       :: z_p(:,:)
 #endif
 
-      integer(kind=ik)                            :: i, j, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
+      integer(kind=ik)                            :: i, j, k, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
                                                      l_rqm, ns, info
       integer(kind=BLAS_KIND)                     :: infoBLAS
       integer(kind=ik)                            :: l_rnm, nnzu, nnzl, ndef, ncnt, max_local_cols, &
@@ -144,6 +144,7 @@
 
       call obj%timer%start("merge_systems" // PRECISION_SUFFIX)
       success = .true.
+
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
       call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
@@ -156,6 +157,7 @@
       np_cols = int(np_colsMPI,kind=c_int)
 
       call obj%timer%stop("mpi_communication")
+
 
       ! If my processor column isn't in the requested set, do nothing
 
@@ -255,11 +257,11 @@
       z = z/sqrt(2.0_rk)
       rho = 2.0_rk*beta
       ! Calculate index for merging both systems by ascending eigenvalues
-      call obj%timer%start("blas")
+      call obj%timer%start("lapack")
       call PRECISION_LAMRG( int(nm,kind=BLAS_KIND), int(na-nm,kind=BLAS_KIND), d, &
                             1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
       idx(:) = int(idxBLAS(:),kind=ik)
-      call obj%timer%stop("blas")
+      call obj%timer%stop("lapack")
 
       ! Calculate the allowable deflation tolerance
 
@@ -421,10 +423,10 @@
         if (na1==1) then
           d(1) = d1(1) + rho*z1(1)**2 ! solve secular equation
         else ! na1==2
-          call obj%timer%start("blas")
+          call obj%timer%start("lapack")
           call PRECISION_LAED5(1_BLAS_KIND, d1, z1, qtrans(1,1), rho, d(1))
           call PRECISION_LAED5(2_BLAS_KIND, d1, z1, qtrans(1,2), rho, d(2))
-          call obj%timer%stop("blas")
+          call obj%timer%stop("lapack")
           call transform_columns_&
           &PRECISION&
           &(obj, idx1(1), idx1(2), na, tmp, l_rqs, l_rqe, q, &
@@ -437,11 +439,11 @@
         d(na1+1:na) = d2(1:na2)
 
         ! Calculate arrangement of all eigenvalues  in output
-        call obj%timer%start("blas")
+        call obj%timer%start("lapack")
         call PRECISION_LAMRG( int(na1,kind=BLAS_KIND), int(na-na1,kind=BLAS_KIND), d, &
                               1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
         idx(:) = int(idxBLAS(:),kind=ik)
-        call obj%timer%stop("blas")
+        call obj%timer%stop("lapack")
         ! Rearrange eigenvalues
 
         tmp = d
@@ -484,11 +486,11 @@
 !!$OMP DO
 !#endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
-          call obj%timer%start("blas")
+          call obj%timer%start("lapack")
           call PRECISION_LAED4(int(na1,kind=BLAS_KIND), int(i,kind=BLAS_KIND), d1, z1, delta, &
                                rho, s, infoBLAS) ! s is not used!
           info = int(infoBLAS,kind=ik)
-          call obj%timer%stop("blas")
+          call obj%timer%stop("lapack")
           if (info/=0) then
             ! If DLAED4 fails (may happen especially for LAPACK versions before 3.2)
             ! use the more stable bisection algorithm in solve_secular_equation
@@ -572,7 +574,7 @@
 !$omp default(none) &
 !$omp private(i) &
 !$omp SHARED(na1, my_proc, n_procs,  &
-!$OMP d1,dbase, ddiff, z, ev_scale, obj)
+!$OMP d1, dbase, ddiff, z, ev_scale, obj)
 
 #endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
@@ -585,7 +587,7 @@
 !         ev_scale_val = ev_scale(i)
           call add_tmp_&
           &PRECISION&
-          &(obj, d1, dbase, ddiff, z, ev_scale(i), na1,i)
+          &(obj, d1, dbase, ddiff, z, ev_scale(i), na1, i)
 !         ev_scale(i) = ev_scale_val
         enddo
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -605,12 +607,12 @@
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
-        call obj%timer%start("blas")
+        call obj%timer%start("lapack")
         ! Calculate arrangement of all eigenvalues  in output
         call PRECISION_LAMRG(int(na1,kind=BLAS_KIND), int(na-na1,kind=BLAS_KIND), d, &
                              1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
         idx(:) = int(idxBLAS(:),kind=ik)
-        call obj%timer%stop("blas")
+        call obj%timer%stop("lapack")
         ! Rearrange eigenvalues
         tmp = d
         do i=1,na
@@ -822,24 +824,33 @@
             ncnt = MIN(max_strip,nqcols1-ns) ! number of columns in this strip
 
             ! Get partial result from (output) Q
-
+!$omp PARALLEL DO &
+!$omp default(none) &
+!$omp private(i, j, k) &
+!$omp SHARED(ns, q, l_rqs, l_rqe, l_col_out, idxq1, qtmp2, l_rows, ncnt)
             do i = 1, ncnt
-              qtmp2(1:l_rows,i) = q(l_rqs:l_rqe,l_col_out(idxq1(i+ns)))
+              j = idxq1(i+ns)
+              k = l_col_out(j)
+              qtmp2(1:l_rows,i) = q(l_rqs:l_rqe, k)
             enddo
-
+!$OMP END PARALLEL DO
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with upper half of Q:
-
+!$omp PARALLEL DO &
+!$omp default(none) &
+!$omp private(i, j, k, tmp) &
+!$omp shared(ncnt, nnzu, idx, idxq1, ns, d1u, dbase, ddiff, zu, ev_scale, ev)
             do i = 1, ncnt
+              do k = 1, nnzu
               j = idx(idxq1(i+ns))
               ! Calculate the j-th eigenvector of the deflated system
               ! See above why we are doing it this way!
-              tmp(1:nnzu) = d1u(1:nnzu)-dbase(j)
-              call v_add_s_&
-              &PRECISION&
-              &(obj,tmp,nnzu,ddiff(j))
-              ev(1:nnzu,i) = zu(1:nnzu) / tmp(1:nnzu) * ev_scale(j)
+                tmp(k) = d1u(k) - dbase(j)
+                tmp(k) = tmp(k) + ddiff(j)
+                ev(k,i) = zu(k) / tmp(k) * ev_scale(j)
             enddo
+            enddo
+!$OMP END PARALLEL DO
 
             if (useGPU) then
               !TODO: it should be enough to copy l_rows x ncnt
@@ -903,16 +914,19 @@
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
 
+!$omp PARALLEL DO &
+!$omp private(i, j, k, tmp)
             do i = 1, ncnt
+              do k = 1, nnzl
               j = idx(idxq1(i+ns))
               ! Calculate the j-th eigenvector of the deflated system
               ! See above why we are doing it this way!
-              tmp(1:nnzl) = d1l(1:nnzl)-dbase(j)
-              call v_add_s_&
-              &PRECISION&
-              &(obj,tmp,nnzl,ddiff(j))
-              ev(1:nnzl,i) = zl(1:nnzl) / tmp(1:nnzl) * ev_scale(j)
+                tmp(k) = d1l(k) - dbase(j)
+                tmp(k) = tmp(k) + ddiff(j)
+                ev(k,i) = zl(k) / tmp(k) * ev_scale(j)
             enddo
+            enddo
+!$OMP END PARALLEL DO
 
             if (useGPU) then
               !TODO the previous loop could be possible to do on device and thus
@@ -990,9 +1004,14 @@
 
              ! Put partial result into (output) Q
 
+!$omp PARALLEL DO &
+!$omp default(none) &
+!$omp private(i) &
+!$omp SHARED(q, ns, l_rqs, l_rqe, l_col_out, idxq1, qtmp2, l_rows, ncnt)
             do i = 1, ncnt
               q(l_rqs:l_rqe,l_col_out(idxq1(i+ns))) = qtmp2(1:l_rows,i)
             enddo
+!$OMP END PARALLEL DO
 
           enddo   !ns = 0, nqcols1-1, max_strip ! strimining loop
         enddo    !do np = 1, npc_n

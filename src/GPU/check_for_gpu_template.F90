@@ -88,7 +88,8 @@
 #endif /* WITH_GPU_STREAMS */
 #endif /* WITH_AMD_GPU_VERSION */
         return
-      endif
+      endif ! (OBJECT%gpu_setup%gpuIsAssigned)
+
 
 #ifdef ADDITIONAL_OBJECT_CODE
       if (.not.(present(wantDebug))) then
@@ -103,7 +104,7 @@
 
       ! myid is given as an argument
 #else
-      wantDebugMessage = .false.
+      !wantDebugMessage = .false.
       ! myid must be queried from the OBJECT
       call OBJECT%get("process_id", myid, error)
       if (error .ne. ELPA_OK) then
@@ -111,7 +112,6 @@
         stop 1
       endif
 #endif
-
 
       call OBJECT%get("mpi_comm_parent", mpi_comm_all, error)
       if (error .ne. ELPA_OK) then
@@ -214,7 +214,6 @@
       endif
 #endif
 #endif
-
       if (OBJECT%is_set("use_gpu_id") == 1) then ! useGPUid
         if (.not.(OBJECT%gpu_setup%gpuAlreadySet)) then
           call OBJECT%get("use_gpu_id", use_gpu_id, error)
@@ -222,7 +221,6 @@
             write(error_unit,*) "check_for_gpu: cannot querry use_gpu_id. Aborting..."
             stop 1
           endif
-
           if (use_gpu_id == -99) then
             write(error_unit,*) "Problem you did not set which gpu id this task should use"
           endif
@@ -329,18 +327,6 @@
             stop 1
           endif
 
-!#ifdef  WITH_INTEL_GPU_VERSION
-!        gpuAvailable = .false.
-!        numberOfDevices = -1
-!
-!        numberOfDevices = 1
-!        write(error_unit,*) "Manually setting",numberOfDevices," of GPUs"
-!        if (numberOfDevices .ge. 1) then
-!          gpuAvailable = .true.
-!        endif
-!#endif
-
-
 #ifdef WITH_SYCL_GPU_VERSION
         ! special case: maybe we want to run the sycl code path on cpu ?
         if (numberOfDevices .eq. 0) then
@@ -378,6 +364,8 @@
                 print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
               endif
             endif
+
+            OBJECT%gpu_setup%gpusPerNode = numberOfDevices
 
             fmt = '(I5.5)'
 
@@ -421,6 +409,240 @@
         endif !OBJECT%gpu_setup%gpuAlreadySet
         OBJECT%gpu_setup%gpuIsAssigned = .true.
       endif ! useGPUid
+
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = gpublas_get_version(OBJECT%gpu_setup%cublasHandleArray(0), cublas_version)
+      if (.not.(success)) then
+        write(error_unit,*) "error in gpublas_get_version"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "CUBLAS version: ", cublas_version
+      endif
+      ! store
+      OBJECT%gpu_setup%cublasVersion = cublas_version
+      OBJECT%gpu_setup%gpublasVersion = cublas_version
+#endif
+
+!#ifdef WITH_AMD_GPU_VERSION
+!      success = gpublas_get_version(OBJECT%gpu_setup%cublasHandleArray(0), cublas_version)
+!      if (.not.(success)) then
+!        write(error_unit,*) "error in gpublas_get_version"
+!        stop 1
+!      endif
+!      if (myid == 0 .and. wantDebugMessage) then
+!        write(error_unit,*) "CUBLAS version: ", cublas_version
+!      endif
+!      ! store
+!      OBJECT%gpu_setup%cublasVersion = cublas_version
+!      OBJECT%gpu_setup%gpublasVersion = cublas_versio
+!#endif
+
+! query device properties
+#ifdef WITH_NVIDIA_GPU_VERSION
+      ! ThreadsPerBlock
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxThreadsPerBlock
+      success = cuda_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in cuda_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "NVIDIA maxThreadsPerBlock: ", value
+      endif
+      OBJECT%gpu_setup%nvidiaMaxThreadsPerBlock = value
+      OBJECT%gpu_setup%gpuMaxThreadsPerBlock    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimX
+      success = cuda_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in cuda_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "NVIDIA MaxBLockDimX: ", value
+      endif
+      OBJECT%gpu_setup%nvidiaDevMaxBlockDimX = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimX    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimY
+      success = cuda_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in cuda_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "NVIDIA MaxBLockDimY: ", value
+      endif
+      OBJECT%gpu_setup%nvidiaDevMaxBlockDimY = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimY    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimZ
+      success = cuda_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in cuda_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "NVIDIA MaxBLockDimZ: ", value
+      endif
+      OBJECT%gpu_setup%nvidiaDevMaxBlockDimZ = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimZ    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimX
+      success = cuda_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in cuda_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "NVIDIA MaxGridDimX: ", value
+      endif
+      OBJECT%gpu_setup%nvidiaDevMaxGridDimX = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimX    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimY
+      success = cuda_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in cuda_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "NVIDIA MaxGridDimY: ", value
+      endif
+      OBJECT%gpu_setup%nvidiaDevMaxGridDimY = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimY    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimZ
+      success = cuda_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in cuda_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "NVIDIA MaxGridDimZ: ", value
+      endif
+      OBJECT%gpu_setup%nvidiaDevMaxGridDimZ = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimZ    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMultiProcessorCount
+      success = cuda_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in cuda_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "NVIDIA SM count: ", value
+      endif
+      OBJECT%gpu_setup%nvidiaSMcount  = value
+      OBJECT%gpu_setup%gpuSMcount     = value
+
+#endif /* WITH_NVIDIA_GPU_VERSION */
+
+#ifdef WITH_AMD_GPU_VERSION
+      ! ThreadsPerBlock
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxThreadsPerBlock
+      success = hip_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in hip_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "HIP maxThreadsPerBlock: ", value
+      endif
+      OBJECT%gpu_setup%amdMaxThreadsPerBlock = value
+      OBJECT%gpu_setup%gpuMaxThreadsPerBlock = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimX
+      success = hip_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in hip_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "HIP MaxBLockDimX: ", value
+      endif
+      OBJECT%gpu_setup%amdDevMaxBlockDimX = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimX = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimY
+      success = hip_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in hip_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "HIP MaxBLockDimY: ", value
+      endif
+      OBJECT%gpu_setup%amdDevMaxBlockDimY = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimY = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimZ
+      success = hip_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in hip_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "HIP MaxBLockDimZ: ", value
+      endif
+      OBJECT%gpu_setup%amdDevMaxBlockDimZ = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimZ = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimX
+      success = hip_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in hip_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "HIP MaxGridDimX: ", value
+      endif
+      OBJECT%gpu_setup%amdDevMaxGridDimX = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimX    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimY
+      success = hip_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in hip_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "HIP MaxGridDimY: ", value
+      endif
+      OBJECT%gpu_setup%amdDevMaxGridDimY = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimY = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimZ
+      success = hip_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in hip_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "HIP MaxGridDimZ: ", value
+      endif
+      OBJECT%gpu_setup%amdDevMaxGridDimZ = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimZ    = value
+
+      ! only for ROCm 6.x fix this
+
+      !attribute = OBJECT%gpu_setup%gpuDevAttrMultiProcessorCount
+      !success = hip_device_get_attributes(value, attribute)
+      !if (.not.(success)) then
+      !  write(error_unit,*) "error in hip_device_get_attributes"
+      !  stop 1
+      !endif
+      !if (myid == 0 .and. wantDebugMessage) then
+      !  write(error_unit,*) "HIP SM count: ", value
+      !endif
+      !OBJECT%gpu_setup%amdSMcount  = value
+      !OBJECT%gpu_setup%gpuSMcount  = value
+      OBJECT%gpu_setup%amdSMcount  = 32
+      OBJECT%gpu_setup%gpuSMcount  = 32
+
+#endif /* WITH_AMD_GPU_VERSION */
 
       if (gpuAvailable) then
         ! print warning if NVIDIA or AMD without streams

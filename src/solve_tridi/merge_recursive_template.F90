@@ -50,6 +50,7 @@ recursive subroutine merge_recursive_&
 
    my_pcol = int(my_pcolMPI,kind=c_int)
    call obj%timer%stop("mpi_communication")
+
 #endif
 
    if (nprocs<=1) then

@@ -198,7 +198,7 @@ int main(int argc, char** argv) {
 
    /* The Matrix */
    MATRIX_TYPE *a, *as;
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
    MATRIX_TYPE *b, *c;
 #endif
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
@@ -353,7 +353,7 @@ int main(int argc, char** argv) {
    is_skewsymmetric=0;
    PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
 
-#ifdef TEST_HERMITIAN_MULTIPLY
+#ifdef TEST_HERMITIAN_MULTIPLY_FULL
 	b  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	c  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, b, z, c, is_skewsymmetric); // b=c
@@ -606,7 +606,7 @@ int main(int argc, char** argv) {
       }
 #endif /* TEST_CHOLESKY */
 
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
    elpa_set(handle, "gpu_hermitian_multiply", 1, &error_elpa);
    assert_elpa_ok(error_elpa);
 
@@ -646,7 +646,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "Error in gpuMemcpy(c_dev, c)\n");
       exit(1);
       }
-#endif /* TEST_HERMITIAN_MULTIPLY */
+#endif /* TEST_HERMITIAN_MULTIPLY_FULL */
 
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 1 */
 
@@ -830,7 +830,7 @@ int main(int argc, char** argv) {
    elpa_timer_stop(handle, (char*) "elpa_cholesky()");
 #endif /* TEST_CHOLESKY */
 
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
    elpa_timer_start(handle, (char*) "elpa_hermitian_multiply()");
 #if defined(TEST_EXPLICIT_NAME)
 
@@ -881,7 +881,7 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error_elpa);
 #endif /* TEST_EXPLICIT_NAME */
    elpa_timer_stop(handle, (char*) "elpa_hermitian_multiply()");
-#endif /* TEST_HERMITIAN_MULTIPLY */
+#endif /* TEST_HERMITIAN_MULTIPLY_FULL */
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
      elpa_timer_start(handle, (char*) "elpa_generalized_eigenvectors()");
@@ -993,7 +993,7 @@ int main(int argc, char** argv) {
       }
 #endif /* TEST_CHOLESKY */
 
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
    // copy for testing
    successGPU = gpuMemcpy((intptr_t *) a, (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
    if (!successGPU){
@@ -1031,7 +1031,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "Error in gpuFree(c_dev)\n");
       exit(1);
       }
-#endif /* TEST_HERMITIAN_MULTIPLY */
+#endif /* TEST_HERMITIAN_MULTIPLY_FULL */
 
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
 
@@ -1042,7 +1042,7 @@ int main(int argc, char** argv) {
 	status = CHECK_CORRECTNESS_CHOLESKY(na, a, as, na_rows, na_cols, sc_desc, myid);
 #endif
 
-#if defined(TEST_HERMITIAN_MULTIPLY)
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
    status = CHECK_CORRECTNESS_HERMITIAN_MULTIPLY('H', na, a, b, c, na_rows, na_cols, sc_desc, myid);
 #endif
 
@@ -1086,7 +1086,7 @@ int main(int argc, char** argv) {
    free(as);
    free(ev);
 
-#ifdef TEST_HERMITIAN_MULTIPLY
+#ifdef TEST_HERMITIAN_MULTIPLY_FULL
 	free(b);
 	free(c);
 #endif

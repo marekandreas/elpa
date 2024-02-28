@@ -47,6 +47,7 @@
 
 !> \brief Fortran module which exports the MPI functions to ELPA
 module elpa_mpi
+  use elpa_mpi_setup
 #ifndef WITH_MPI
   use elpa_mpi_stubs
 #else

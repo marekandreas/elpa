@@ -114,6 +114,7 @@ module test_analytic
   TEST_INT_TYPE, parameter, private  :: ANALYTIC_EIGENVECTORS = 1
   TEST_INT_TYPE, parameter, private  :: ANALYTIC_EIGENVALUES = 2
 
+  private map_global_array_index_to_local_index
   contains
 
   function decompose(num, decomposition) result(possible)

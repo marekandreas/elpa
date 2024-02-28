@@ -106,7 +106,7 @@ subroutine tridiag_&
   use elpa_blas_interfaces
   use elpa_gpu
   use elpa_gpu_util
-  use elpa1_gpu
+  use tridiag_gpu
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions
 #endif
@@ -231,7 +231,7 @@ subroutine tridiag_&
 #endif
   integer(kind=c_int) :: pointerMode
 
-  integer(kind=ik)                              :: string_length
+  integer(kind=ik)                              :: string_length, sm_count
 
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL)
   if (useGPU) then
@@ -325,18 +325,29 @@ subroutine tridiag_&
   endif
 
 
-  if (wantDebug) call obj%timer%start("mpi_communication")
-  call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
-  call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
-  call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
-  call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+  !mpi_comm_all    = obj%mpi_setup%mpi_comm_parent
+  !mpi_comm_cols   = obj%mpi_setup%mpi_comm_cols
+  !mpi_comm_rows   = obj%mpi_setup%mpi_comm_rows
+
+  my_prow = obj%mpi_setup%myRank_comm_rows
+  my_pcol = obj%mpi_setup%myRank_comm_cols
+
+  np_rows = obj%mpi_setup%nRanks_comm_rows
+  np_cols = obj%mpi_setup%nRanks_comm_cols
 
 
-  my_prow = int(my_prowMPI, kind=c_int)
-  np_rows = int(np_rowsMPI, kind=c_int)
-  my_pcol = int(my_pcolMPI, kind=c_int)
-  np_cols = int(np_colsMPI, kind=c_int)
-  if (wantDebug) call obj%timer%stop("mpi_communication")
+  !if (wantDebug) call obj%timer%start("mpi_communication")
+  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
+  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
+
+
+  !my_prow = int(my_prowMPI, kind=c_int)
+  !np_rows = int(np_rowsMPI, kind=c_int)
+  !my_pcol = int(my_pcolMPI, kind=c_int)
+  !np_cols = int(np_colsMPI, kind=c_int)
+  !if (wantDebug) call obj%timer%stop("mpi_communication")
 
   ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
   ! seems that tile is a square submatrix, consisting by several blocks
@@ -1166,7 +1177,7 @@ subroutine tridiag_&
 !$omp parallel &
 !$omp num_threads(max_threads) &
 !$omp default(none) &
-!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end) &
+!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end, my_stream, num) &
 !$omp shared(obj, gpuHandle, useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, offset_dev, &
 !$omp&       max_local_cols, max_local_rows, wantDebug, l_rows_per_tile, l_cols_per_tile, &
@@ -1614,7 +1625,10 @@ subroutine tridiag_&
 #ifdef WITH_NVTX
       call nvtxRangePush("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
 #endif
-      call gpu_dot_product_PRECISION(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, my_stream)
+      sm_count = obj%gpu_setup%gpuSMcount
+      !sm_count=32
+      call gpu_dot_product_PRECISION(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, sm_count, my_stream)
+      !call gpu_dot_product_PRECISION(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, my_stream)
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
