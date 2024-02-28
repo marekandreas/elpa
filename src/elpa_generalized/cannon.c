@@ -62,6 +62,28 @@
 #include <stdbool.h>
 #include "../helpers/scalapack_interfaces.h"
 
+#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
+#define C_INT_TYPE_PTR long int*
+#define C_INT_TYPE long int
+#define BLAS_KIND c_int64_t
+#else
+#define C_INT_TYPE_PTR int*
+//#define C_INT_TYPE int
+#define C_INT_TYPE long int /* PETERDEBUG */
+#define BLAS_KIND c_int
+#endif
+
+#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
+#define C_INT_MPI_TYPE_PTR long int*
+#define C_INT_MPI_TYPE long int
+#define MPI_KIND c_int64_t
+#else
+#define C_INT_MPI_TYPE_PTR int*
+#define C_INT_MPI_TYPE int
+#define MPI_KIND c_int
+#endif
+
+
 #ifdef WITH_NVTX
 #include <nvToolsExt.h>
 #endif
@@ -115,31 +137,7 @@ static inline void cublasAssert(cublasStatus_t status, const char *file, int lin
       exit(status);
    }
 }
-
-
 #endif /* WITH_NVIDIA_GPU_VERSION */
-
-
-#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
-#define C_INT_TYPE_PTR long int*
-#define C_INT_TYPE long int
-#define BLAS_KIND c_int64_t
-#else
-#define C_INT_TYPE_PTR int*
-//#define C_INT_TYPE int
-#define C_INT_TYPE long int /* PETERDEBUG */
-#define BLAS_KIND c_int
-#endif
-
-#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
-#define C_INT_MPI_TYPE_PTR long int*
-#define C_INT_MPI_TYPE long int
-#define MPI_KIND c_int64_t
-#else
-#define C_INT_MPI_TYPE_PTR int*
-#define C_INT_MPI_TYPE int
-#define MPI_KIND c_int
-#endif
 
 
 

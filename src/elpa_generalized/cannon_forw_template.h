@@ -252,9 +252,8 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    printf("useGPU=%d\n", useGPU);
 
    ////////////////////////////////////////////////////////////// initial reordering of A ///////////////////////////////////////////////////////////////////////////////////////// 
-#ifdef WITH_NVTX
-      nvtxRangePushA("initial reordering of A");
-#endif 
+
+   NVTX_RANGE_PUSH("initial reordering of A");
 
    // here we assume, that np_rows < np_cols; then I will send to the number of processors equal to <ratio> with the "leap" equal to np_rows; the same holds for receive  
    if(ratio != 1) {
@@ -346,14 +345,11 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       }
    }
 
-#ifdef WITH_NVTX
-      nvtxRangePop(); // initial reordering of A
-#endif
+   NVTX_RANGE_POP(); // initial reordering of A
 
    ////////////////////////////////////////////////////////////// initial reordering of U //////////////////////////////////////////////////////
-#ifdef WITH_NVTX
-      nvtxRangePushA("initial reordering of U");
-#endif 
+
+   NVTX_RANGE_PUSH("initial reordering of U");
 
    // form array to send by block-columns
    num_of_iters = ceil((math_type)na_cols/(math_type)nblk);             // number my of block-columns
@@ -453,10 +449,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    Size_U_skewed = Size_receive_U; 
    Curr_pos_in_U_stored = Size_U_skewed;
 
-
-#ifdef WITH_NVTX
-      nvtxRangePop(); // initial reordering of U
-#endif
+   NVTX_RANGE_POP(); // initial reordering of U
 
   ///////////////////////////////////////////////////// main loop  for first PxGEMM M=A*U^(-1) /////////////////////////////////////////////////////
 
@@ -465,9 +458,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    where_to_send_U = (my_prow - 1 + np_rows)%np_rows;
    from_where_to_receive_U = (my_prow + 1)%np_rows;
    
-#ifdef WITH_NVTX
-   nvtxRangePushA("loop j<np_rows");
-#endif
+   NVTX_RANGE_PUSH("loop j<np_rows");
    for(j = 1; j < np_rows; j++)
    {
       // at this moment I need to send to neighbour what I have in the "received" arrays; that is why exchange pointers of the "received" and "send" arrays
@@ -544,9 +535,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          Res_ptr = &M[curr_col_loc_res*na_rows];
       }
 
-#ifdef WITH_NVTX
-   nvtxRangePushA("loop i<num_of_blocks_in_U_buffer");
-#endif
+      NVTX_RANGE_PUSH("loop i<num_of_blocks_in_U_buffer");
       for (i = 0; i < num_of_blocks_in_U_buffer; i++)
       { 
          curr_col_glob = (curr_col_loc_res/nblk)*nblk*np_cols + my_pcol*nblk;
@@ -574,9 +563,8 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          }
 
          if ((rows_in_block_A > 0)&&(cols_in_block > 0)) {
-#ifdef WITH_NVTX
-            nvtxRangePushA("GEMM_1");
-#endif
+
+            NVTX_RANGE_PUSH("GEMM_1");
             // Res_ptr = Buf_to_send_A*U_local_start + beta*Res_ptr
             // M = Buf_to_send_A*Buf_to_send_U + beta*M
             math_type beta = 1.0;
@@ -596,9 +584,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &dOne, 
                Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &beta, Res_ptr, &na_rows);
             }
-#ifdef WITH_NVTX
-            nvtxRangePop(); // GEMM_1
-#endif
+            NVTX_RANGE_POP(); // GEMM_1
          }
 
          curr_col_loc_res = curr_col_loc_res + nblk;
@@ -616,9 +602,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          }
          
       }
-#ifdef WITH_NVTX
-   nvtxRangePop(); // loop i<num_of_blocks_in_U_buffer
-#endif
+      NVTX_RANGE_POP(); // loop i<num_of_blocks_in_U_buffer
 
       MPI_Wait(&request_A_Send, &status);
       MPI_Wait(&request_A_Recv, &status);
@@ -641,9 +625,8 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          SizesU[j-1] = Size_receive_U; 
       }
    }
-#ifdef WITH_NVTX
-   nvtxRangePop(); // loop j<np_rows
-#endif
+   NVTX_RANGE_POP(); // loop j<np_rows
+
 
    /////// do the last multiplication //////////////
    rows_in_buffer = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-1];
@@ -948,7 +931,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                          Buf_to_receive_A, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, 
                         (C_INT_MPI_TYPE) pcol_from_where_to_receive_A, (C_INT_MPI_TYPE) zero, 
                          row_comm, &status);
-                         
+
             MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_AMPI);
             printf("MPI_Sendrecv A-2: done\n"); // PETERDEBUG
 

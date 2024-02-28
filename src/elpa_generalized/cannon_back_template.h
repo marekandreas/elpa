@@ -53,25 +53,7 @@
 //
 // Author: Valeriy Manin (Bergische Universität Wuppertal)
 // integreated into the ELPA library Pavel Kus, Andeas Marek (MPCDF)
-
-#ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
-#define C_INT_TYPE_PTR long int*
-#define C_INT_TYPE long int
-#define BLAS_KIND c_int64_t
-#else
-#define C_INT_TYPE_PTR int*
-#define C_INT_TYPE int
-#define BLAS_KIND c_int
-#endif
-#ifdef HAVE_64BIT_INTEGER_MPI_SUPPORT
-#define C_INT_MPI_TYPE_PTR long int*
-#define C_INT_MPI_TYPE long int
-#define MPI_KIND c_int64_t
-#else
-#define C_INT_MPI_TYPE_PTR int*
-#define C_INT_MPI_TYPE int
-#define MPI_KIND c_int
-#endif
+// ported to GPU by Peter Karpov (MPCDF)
 
 // it seems, that we need those two levels of indirection to correctly expand macros
 #define cannons_triang_rectangular_impl_expand2(SUFFIX) cannons_triang_rectangular_##SUFFIX
@@ -82,7 +64,8 @@
 #define cannons_triang_rectangular_c_impl_expand1(SUFFIX) cannons_triang_rectangular_c_impl_expand2(SUFFIX)
 #define cannons_triang_rectangular_c_impl cannons_triang_rectangular_c_impl_expand1(ELPA_IMPL_SUFFIX)
 
-void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol, C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTR b_desc, math_type *Res, MPI_Comm row_comm, MPI_Comm col_comm)
+void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol, 
+                                     C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTR b_desc, math_type *Res, MPI_Comm row_comm, MPI_Comm col_comm)
 {
    // Cannons algorithm, Non-blocking version
    // Input: 
@@ -94,10 +77,12 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
    // col_comm: communicator along columns
    // This function will be used for a backtransformation
   
-   C_INT_TYPE na, nb, nblk, width, na_rows, na_cols, nb_cols, cols_in_buffer_U_my_initial, cols_in_buffer_U, rows_in_buffer_U, Size_receive_U_now, rows_in_buffer_U_now, cols_in_buffer_U_now, rows_in_buffer_U_my_initial;
+   C_INT_TYPE na, nb, nblk, width, na_rows, na_cols, nb_cols, Size_receive_U_now,
+              cols_in_buffer_U_my_initial, cols_in_buffer_U, rows_in_buffer_U, rows_in_buffer_U_now, cols_in_buffer_U_now, rows_in_buffer_U_my_initial;
 
    C_INT_MPI_TYPE Size_receive_U_nowMPI, Size_receive_UMPI, Size_receive_BMPI;
-   C_INT_TYPE i, j, Size_send_U, Size_receive_U, Size_send_B, Size_receive_B, intNumber, Buf_rows, Buf_cols_U, Buf_cols_B, curr_rows, num_of_iters, cols_in_buffer, rows_in_block, curr_col_loc, cols_in_block, num_of_blocks_in_U_buffer, col_of_origin_U, b_rows_mult, b_cols_mult; 
+   C_INT_TYPE i, j, Size_send_U, Size_receive_U, Size_send_B, Size_receive_B, intNumber, Buf_rows, Buf_cols_U, Buf_cols_B, curr_rows, 
+              num_of_iters, cols_in_buffer, rows_in_block, curr_col_loc, cols_in_block, num_of_blocks_in_U_buffer, col_of_origin_U, b_rows_mult, b_cols_mult; 
    
    math_type *Buf_to_send_U, *Buf_to_receive_U, *Buf_to_send_B, *Buf_to_receive_B, *Buf_U, *PosBuff;
   
@@ -111,8 +96,8 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
 
    C_INT_TYPE one = 1;
    C_INT_TYPE zero = 0; 
-   math_type done = 1.0;
-   math_type dzero = 0.0;
+   math_type dOne = 1.0;
+   math_type dZero = 0.0;
       
    na = U_desc[2];
    nblk = U_desc[4]; 
@@ -175,7 +160,9 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
      Res[i] = 0; 
     
    /////////////////////////////////////////////////////////////// initial reordering of U ///////////////////////////////////////////////////////////////////////////////////////// 
-      
+   
+   NVTX_RANGE_PUSH("initial reordering of U");
+
    // here we assume, that np_rows < np_cols; then I will send to the number of processors equal to <ratio> with the "leap" equal to np_rows; the same holds for receive  
    if((ratio != 1)||(my_prow != 0))   // if grid is rectangular or my_prow is not 0
       Buf_pos = Buf_to_send_U;     // I will copy to the send buffer
@@ -340,9 +327,13 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       Buf_to_receive_U[Size_receive_U + 1] = rows_in_buffer_U;
       Size_receive_U = Size_receive_U + 2;
    }
-      
+   
+   NVTX_RANGE_POP(); // initial reordering of U
+
    ////////////////////////////////////////////////////////////// initial reordering of B ///////////////////////////////////////////////////////////////////////////////////////// 
    
+   NVTX_RANGE_PUSH("initial reordering of B");
+
    if(my_pcol > 0)
    {
       where_to_send_B = (my_prow - my_pcol + np_cols)%np_rows;                   // shift = my_pcol
@@ -370,12 +361,16 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       Size_receive_B = na_rows; 
    }   
    
+   NVTX_RANGE_POP(); // initial reordering of B
+
    //////////////////////////////////////////////////////////////////////// main loop ////////////////////////////////////////////////////////////////////////////////
+   
    where_to_send_U = (my_pcol - 1 + np_cols)%np_cols;
    from_where_to_receive_U = (my_pcol + 1)%np_cols;
    where_to_send_B = (my_prow - 1 + np_rows)%np_rows;
    from_where_to_receive_B = (my_prow + 1)%np_rows;    
 
+   NVTX_RANGE_PUSH("loop i<np_rows");
    for(i = 1; i < np_rows; i++)
    {
       // at this moment I need to send to neighbour what I have in the "received" arrays; that is why change pointers of the "received" and "send" arrays
@@ -391,12 +386,17 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       Size_send_B = Size_receive_B;                   
         
       ///// shift for U ////////////////////////////////////////////////////////////
+
       MPI_Isend(Buf_to_send_U, (C_INT_MPI_TYPE) Size_send_U, MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_U, 0, row_comm, &request_U_Send); 
       MPI_Irecv(Buf_to_receive_U, (C_INT_MPI_TYPE) (ratio*Size_U_stored), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_U, 0, row_comm, &request_U_Recv);      
+      
       ///// shift for B /////////////////////////////////////////////      
+      
       MPI_Isend(Buf_to_send_B, (C_INT_MPI_TYPE) (Size_send_B*nb_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) where_to_send_B, 0, col_comm, &request_B_Send); 
       MPI_Irecv(Buf_to_receive_B, (C_INT_MPI_TYPE) (Buf_rows*nb_cols), MPI_MATH_DATATYPE_PRECISION_C, (C_INT_MPI_TYPE) from_where_to_receive_B, 0, col_comm, &request_B_Recv);      
+      
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
+
       cols_in_buffer_U = (C_INT_TYPE)Buf_to_send_U[Size_receive_U-2];
       rows_in_buffer_U = (C_INT_TYPE)Buf_to_send_U[Size_receive_U-1];
       //find minimal proc. column among those procs. who contributed in the current U buffer
@@ -418,6 +418,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       
       U_local_start = Buf_to_send_U;
       
+      NVTX_RANGE_PUSH("loop j<num_of_blocks_in_U_buffer");
       for(j = 0; j < num_of_blocks_in_U_buffer; j++)
       {
          curr_rows = (j+1)*nblk;
@@ -429,12 +430,18 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
          else
             b_rows_mult = cols_in_buffer_U - j*nblk;
          
-         if(Size_receive_B!=0) C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &done, U_local_start, &curr_rows, B_local_start, &Size_receive_B, &done, Res, &na_rows); 
-  
+         NVTX_RANGE_PUSH("GEMM");
+         if(Size_receive_B!=0) C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &dOne, 
+                                       U_local_start, &curr_rows, 
+                                       B_local_start, &Size_receive_B, &dOne, 
+                                       Res, &na_rows);
+         NVTX_RANGE_POP();
+
          U_local_start = U_local_start + nblk*curr_rows; 
          B_local_start = B_local_start + nblk; 
       }
-      
+      NVTX_RANGE_POP(); // loop j<num_of_blocks_in_U_buffer
+
       MPI_Wait(&request_U_Send, &status);
       MPI_Wait(&request_U_Recv, &status);
       MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_UMPI); // find out how many elements I have received 
@@ -446,13 +453,14 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       if (nb_cols!=0) Size_receive_B = (C_INT_TYPE) Size_receive_BMPI / nb_cols; // how many rows I have received
       else Size_receive_B=0; // can happen only if nb_cols=Size_receive_BMPI=0
 
-   }         
-   
+   }   
+   NVTX_RANGE_POP(); // loop i<np_rows
+
    // last iteration 
    cols_in_buffer_U = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-2];
    rows_in_buffer_U = (C_INT_TYPE)Buf_to_receive_U[Size_receive_U-1];
    //find minimal proc. column among those procs. who contributed in the current U buffer
-   proc_col_min = np_cols; 
+   proc_col_min = np_cols;
    for(j = 0; j < ratio; j++)
    {
       col_of_origin_U = (my_pcol + my_prow + np_rows - 1 + j*np_rows)%np_cols;
@@ -470,6 +478,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       
    U_local_start = Buf_to_receive_U;  
    
+   NVTX_RANGE_PUSH("loop j<num_of_blocks_in_U_buffer");
    for(j = 0; j < num_of_blocks_in_U_buffer; j++)
    {
       curr_rows = (j+1)*nblk;
@@ -481,12 +490,18 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       else
          b_rows_mult = cols_in_buffer_U - j*nblk;
       
-      if(Size_receive_B!=0) C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &done, U_local_start, &curr_rows, B_local_start, &Size_receive_B, &done, Res, &na_rows); 
+      NVTX_RANGE_PUSH("GEMM_last");
+      if(Size_receive_B!=0) C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &dOne,
+                                    U_local_start, &curr_rows, 
+                                    B_local_start, &Size_receive_B, &dOne, 
+                                    Res, &na_rows); 
+      NVTX_RANGE_POP();
 
       U_local_start = U_local_start + nblk*curr_rows; 
       B_local_start = B_local_start + nblk;
    }
-   
+   NVTX_RANGE_POP(); // loop j<num_of_blocks_in_U_buffer
+
    free(Buf_to_send_U);
    free(Buf_to_receive_U);
    free(Buf_to_send_B);
