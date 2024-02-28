@@ -44,6 +44,8 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
+!
+! This file is the generated version. Do NOT edit
 #endif
 
 
@@ -295,6 +297,7 @@
 #endif
     end subroutine
 
+    
     function gpu_get_last_error() result(success)
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION

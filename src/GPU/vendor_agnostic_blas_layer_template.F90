@@ -44,6 +44,8 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
+!
+! This file is the generated version. Do NOT edit
 #endif
 
 
@@ -245,9 +247,7 @@
         stop 1
       endif
 #endif
-
     end function
-
 
     function gpublas_set_stream(handle, stream) result(success)
       use, intrinsic :: iso_c_binding
@@ -2217,7 +2217,7 @@
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       integer(kind=c_intptr_t)          :: x, y, result
-      
+
 #ifdef WITH_NVIDIA_GPU_VERSION
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_Ddot_intptr(gpublasHandle, length, x, incx, y, incy, result)
@@ -2757,7 +2757,6 @@
         endif
 #endif
     end subroutine
-
     subroutine gpublas_Zdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
@@ -2775,7 +2774,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value         :: conj
+      character(1,C_CHAR),value       :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       integer(kind=c_intptr_t)          :: x, y, result
@@ -2822,7 +2821,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value         :: conj
+      character(1,C_CHAR),value       :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       type(c_ptr)                       :: x, y, result
@@ -3040,8 +3039,6 @@
         endif
 #endif
     end subroutine
-
-    
     subroutine gpublas_Cdot_intptr(conj, gpublasHandle, length, x, incx, y, incy, result)
 
       use, intrinsic :: iso_c_binding
@@ -3059,7 +3056,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value         :: conj
+      character(1,C_CHAR),value       :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       integer(kind=c_intptr_t)          :: x, y, result
@@ -3106,7 +3103,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value         :: conj
+      character(1,C_CHAR),value       :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       type(c_ptr)                       :: x, y, result
