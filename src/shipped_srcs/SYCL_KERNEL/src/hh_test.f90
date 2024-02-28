@@ -9,7 +9,7 @@ program hh_test
 
   character(10) :: arg
   integer            :: backend, numberType
-  integer, parameter :: syclBe = 1, cudaBe = 2, realNt = 3, complexNt = 4, invalidConfig = 5
+  integer, parameter :: syclBe = 1, cudaBe = 2, rocmBe = 3, realNt = 4, complexNt = 5, invalidConfig = 6
   integer            :: nbw       ! Length of Householder vectors (b==nbw)
   integer            :: nn        ! Length of eigenvectors (n)
   integer            :: nr        ! (N_R==n+b-1)
@@ -72,10 +72,12 @@ program hh_test
       backend = cudaBe
     else if (index(arg, "S") > 0) then
       backend = syclBe
+    else if (index(arg, "R") > 0) then
+      backend = rocmBe
     else
       write(*,"(2X,A)") "################################################"
-      write(*,"(2X,A)") "##  Incorrect Backend for Arg #4              ##"
-      write(*,"(2X,A)") "##  Arg#4: Backend: N -> CUDA, S -> SYCL      ##"
+      write(*,"(2X,A)") "##  Incorrect Backend (BE) for Arg #4         ##"
+      write(*,"(2X,A)") "##  Arg#4: BE: N -> CUDA, R -> ROCm S -> SYCL ##"
       write(*,"(2X,A)") "################################################"
       stop
     endif
@@ -88,15 +90,17 @@ program hh_test
     write(*,"(2X,A,A10)") "| DT : ",arg
 
     if (backend == syclBe .and. numberType == realNt) then
-      call perform_hh_test_real(nbw, nn, nr, nc, .false.)
+      call perform_hh_test_real(nbw, nn, nr, nc, syclBe)
     else if (backend == syclBe .and. numberType == complexNt) then
-      call perform_hh_test_complex(nbw, nn, nr, nc, .false.)
+      call perform_hh_test_complex(nbw, nn, nr, nc, syclBe)
     else if (backend == cudaBe .and. numberType == realNt) then
-      call perform_hh_test_real(nbw, nn, nr, nc, .true.)
+      call perform_hh_test_real(nbw, nn, nr, nc, cudaBe)
     else if (backend == cudaBe .and. numberType == complexNt) then
-      print *, "Not implemented yet, using SYCL!"
-      call perform_hh_test_complex(nbw, nn, nr, nc, .true.)
-      print *, "Not implemented"
+      call perform_hh_test_complex(nbw, nn, nr, nc, cudaBe)
+    else if (backend == rocmBe .and. numberType == realNt) then
+      call perform_hh_test_real(nbw, nn, nr, nc, rocmBe)
+    else if (backend == rocmBe .and. numberType == complexNt) then
+      call perform_hh_test_complex(nbw, nn, nr, nc, rocmBe)
     endif
 
   else
@@ -106,8 +110,9 @@ program hh_test
     write(*,"(2X,A)") "##         (must be 2^n, n = 1,2,...,10)      ##"
     write(*,"(2X,A)") "##  Arg#2: Length of eigenvectors             ##"
     write(*,"(2X,A)") "##  Arg#3: Datatype: R -> Real C -> Complex   ##"
-    write(*,"(2X,A)") "##  Arg#4: Backend: N -> CUDA, S -> SYCL      ##"
-    write(*,"(2X,A)") "##         ONLY use CUDA with NVIDIA GPUs!    ##"
+    write(*,"(2X,A)") "##  Arg#4: Backend: S -> SYCL (all GPUs)      ##"
+    write(*,"(2X,A)") "##                  N -> CUDA (NVIDIA GPUs)   ##"
+    write(*,"(2X,A)") "##                  R -> ROCm (AMD GPUs)      ##"
     write(*,"(2X,A)") "################################################"
     stop
   end if

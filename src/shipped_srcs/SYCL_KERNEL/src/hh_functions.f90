@@ -1,8 +1,34 @@
+
+#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+#define USE_COMPUTE_HH_WRAPPER_CUDA use compute_hh_wrapper_cuda
+#define COMPUTE_HH_CUDA_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) \
+   call compute_hh_cuda_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#define COMPUTE_HH_CUDA_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) \
+   call compute_hh_cuda_gpu(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#else
+#define USE_COMPUTE_HH_WRAPPER_CUDA
+#define COMPUTE_HH_CUDA_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) stop
+#define COMPUTE_HH_CUDA_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) stop
+#endif
+
+#ifdef ENABLE_REFERENCE_ROCM_IMPLEMENTATION
+#define COMPUTE_HH_ROCM_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) \
+   call compute_hh_rocm_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#define COMPUTE_HH_ROCM_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) \
+   call compute_hh_rocm_gpu(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#else
+#define COMPUTE_HH_ROCM_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) stop
+#define COMPUTE_HH_ROCM_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) stop
+#endif
+
 module hh_functions
   implicit none
 contains
-  subroutine perform_hh_test_complex(nbw, nn, nr, nc, useCuda)
+  subroutine perform_hh_test_complex(nbw, nn, nr, nc, backend)
     use compute_hh_wrapper
+#ifdef ENABLE_REFERENCE_ROCM_IMPLEMENTATION
+    use compute_hh_wrapper_rocm
+#endif
 #ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
     use compute_hh_wrapper_cuda
 #endif
@@ -10,11 +36,13 @@ contains
     use iso_c_binding, only: c_double,c_intptr_t
     implicit none
 
-    logical, intent(in), value :: useCuda
     integer, intent(in), value :: nbw
     integer, intent(in), value :: nn
     integer, intent(in), value :: nr
     integer, intent(in), value :: nc
+    integer, intent(in), value :: backend
+
+    integer, parameter :: syclBe = 1, cudaBe = 2, rocmBe = 3
 
     integer :: n_rand
     integer :: i
@@ -42,14 +70,12 @@ contains
     seed(:) = 20191015
 
     print *, "warm up GPU"
-    if (useCuda) then
-#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
-      call compute_hh_cuda_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
-#else
-      stop
-#endif
+    if (backend == cudaBe) then
+      COMPUTE_HH_CUDA_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+    elseif (backend == rocmBe) then
+      COMPUTE_HH_ROCM_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
     else
-      call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)
+      call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
     endif
     print *, "...done."
 
@@ -92,12 +118,10 @@ contains
       double precision :: gpu_start, gpu_finish, init_time, transfer_time, compute_time
 
       gpu_start = omp_get_wtime()
-      if (useCuda) then
-  #ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
-        call compute_hh_cuda_gpu_complex(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
-  #else
-        stop
-  #endif
+      if (backend == cudaBe) then
+        COMPUTE_HH_CUDA_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      elseif (backend == rocmBe) then
+        COMPUTE_HH_ROCM_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
       else
         call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
       endif
@@ -111,7 +135,6 @@ contains
       print '("Total Time GPU = ",f8.4," seconds.")', gpu_finish - gpu_start
     end block
 
-
     ! Compare results
     err = maxval(abs(evec1-evec2))
 
@@ -122,11 +145,14 @@ contains
     deallocate(evec2)
     deallocate(hh)
     deallocate(tau)
-
   end subroutine perform_hh_test_complex
 
-  subroutine perform_hh_test_real(nbw, nn, nr, nc, useCuda)
+
+  subroutine perform_hh_test_real(nbw, nn, nr, nc, backend)
     use compute_hh_wrapper
+#ifdef ENABLE_REFERENCE_ROCM_IMPLEMENTATION
+    use compute_hh_wrapper_rocm
+#endif
 #ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
     use compute_hh_wrapper_cuda
 #endif
@@ -134,12 +160,13 @@ contains
     use iso_c_binding, only: c_double,c_intptr_t
     implicit none
 
-
-    logical, intent(in), value :: useCuda
     integer, intent(in), value :: nbw
     integer, intent(in), value :: nn
     integer, intent(in), value :: nr
     integer, intent(in), value :: nc
+    integer, intent(in), value :: backend
+
+    integer, parameter :: syclBe = 1, cudaBe = 2, rocmBe = 3
 
     integer :: n_rand
     integer :: i
@@ -170,14 +197,11 @@ contains
     call random_number(hh)
     call random_number(evec1)
 
-
     print *, "start gpu test"
-    if (useCuda) then
-#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
-      call compute_hh_cuda_gpu(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
-#else
-      stop
-#endif
+    if (backend == cudaBe) then
+      COMPUTE_HH_CUDA_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+    elseif (backend == rocmBe) then
+      COMPUTE_HH_ROCM_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
     else
       call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)
     endif
@@ -216,12 +240,10 @@ contains
       double precision :: gpu_start, gpu_finish, init_time, transfer_time, compute_time
 
       gpu_start = omp_get_wtime()
-      if (useCuda) then
-#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
-        call compute_hh_cuda_gpu(nn,nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
-#else
-        stop
-#endif
+      if (backend == cudaBe) then
+        COMPUTE_HH_CUDA_GPU(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      elseif (backend == rocmBe) then
+        COMPUTE_HH_ROCM_GPU(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
       else
         call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
       endif
@@ -246,8 +268,8 @@ contains
     deallocate(evec2)
     deallocate(hh)
     deallocate(tau)
-
   end subroutine perform_hh_test_real
+
 
   subroutine random_number_complex(array, dim1, dim2)
     use iso_c_binding, only: c_double
