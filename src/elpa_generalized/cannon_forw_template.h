@@ -224,6 +224,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    printf("size of M = %d\n", na_rows*na_cols);
 
    int useGPU = 0; // PETERDEBUG pass this as a parameter
+   int wantDebug = 0; // PETERDEBUG pass this as a parameter
 #ifdef WITH_NVIDIA_GPU_VERSION
    //math_type *Buf_to_send_A_dev, *Buf_to_receive_A_dev;
    math_type *Buf_to_send_receive_A_dev;
@@ -235,7 +236,8 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
    cublasHandle_t handle; // pass handle as a parameter instead!
    cublasCreate(&handle);
-   useGPU = 0; // PETERDEBUG pass this as a parameter
+   useGPU = 1; // PETERDEBUG pass this as a parameter
+   wantDebug = 1; // PETERDEBUG pass this as a parameter
    if (useGPU == 1){
       // printf("ratio = %d\n", ratio); // PETERDEBUG: cleanup comments and prints
       printf("size of Buf_to_send_receive_A_dev = %d\n", ratio*Buf_cols*Buf_rows);
@@ -578,6 +580,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                                        U_local_start_dev, rows_in_block_U, &beta, 
                                        Res_ptr_dev, na_rows);
                cublasErrCheck(status);
+               if (wantDebug) cudaDeviceSynchronize();
 #endif      
             }
             else { // (useGPU == 1)
@@ -724,6 +727,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                                     U_local_start_dev, rows_in_block_U, &beta, 
                                     Res_ptr_dev, na_rows);
             cublasErrCheck(status);
+            if (wantDebug) cudaDeviceSynchronize();
 #endif 
          }
          else { 
@@ -1155,6 +1159,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                                        U_local_start_curr_dev, rows_in_block_U, &beta, 
                                        Res_ptr_dev, na_rows);
                cublasErrCheck(status);
+               if (wantDebug) cudaDeviceSynchronize();
 #endif 
                }
                else {
@@ -1353,6 +1358,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                                     U_local_start_curr_dev, rows_in_block_U, &beta, 
                                     Res_ptr_dev, na_rows);
             cublasErrCheck(status);
+            if (wantDebug) cudaDeviceSynchronize();
 #endif 
             }
             else {
