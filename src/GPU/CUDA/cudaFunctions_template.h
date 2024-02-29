@@ -53,8 +53,8 @@
 #endif
 
 extern "C" {
-  int cudaDeviceGetAttributeFromC(int *value, int attribute) {
 
+  int cudaDeviceGetAttributeFromC(int *value, int attribute) {
     cudaDeviceAttr attr;
     switch(attribute) {
       case 0:
@@ -94,7 +94,6 @@ extern "C" {
       errormessage("Error in cudaDeviceGetAttribute: %s\n", "unknown error");
       return 0;
     }
-   	
   }
 
 

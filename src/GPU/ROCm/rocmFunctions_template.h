@@ -257,15 +257,15 @@
 #ifdef HIPBLAS
 #include "hipblas.h"
 #else
-#include "rocblas.h"
+#include "rocblas/rocblas.h"
 #endif
 #include "hip/hip_runtime_api.h"
 
 // hipStream_t elpa_hip_stm;
 
 extern "C" {
-  int hipDeviceGetAttributeFromC(int *value, int attribute) {
 
+  int hipDeviceGetAttributeFromC(int *value, int attribute) {
     hipDeviceAttribute_t attr;
     switch(attribute) {
       case 0:
@@ -306,37 +306,44 @@ extern "C" {
       errormessage("Error in hipDeviceGetAttribute: %s\n", "unknown error");
       return 0;
     }
-
   }
 
 
   int rocblasGetVersionFromC(BLAS_handle rocblasHandle, int *version) {
-    char *buf, size_t len;
+    char *buf;
+    size_t len;
+    hipError_t status;
 
-    hipError_t status = rocblas_get_version_string_size(&len)
+#ifdef HIPBLAS
+    errormessage("Error in rocblasGetVersionFromC: %s\n", "HIPBLAS does not support rocblas_get_version_string");
+    return 1;
+#else
+    status = rocblas_get_version_string_size(&len);
     if (status != hipSuccess) {
       printf("Error in executing  hipGetLastErrorFrom: %s\n", hipGetErrorString(status));
       errormessage("Error in rocblas_get_version_string_size: %s\n", "unknown error");
       return 0;
     }
 
-    hipError_t status = rocblas_get_version_string(buf, len);
+    status = rocblas_get_version_string(buf, len);
     if (status == hipSuccess) {
       int major, minor, patch;
 
-      if (sscanf(versionString, "%d.%d.%d", &major, &minor, &patch) == 3) {
+      if (sscanf(buf, "%d.%d.%d", &major, &minor, &patch) == 3) {
         //printf("Major: %d, Minor: %d, Patch: %d\n", major, minor, patch);
         *version = major * 10000 + minor * 100 + patch;
+         return 1;
       } else {
         printf("Error parsing version string.\n");
+        return 0;
       }
-      return 1;
     }
     else{
       printf("Error in executing  hipGetLastErrorFrom: %s\n", hipGetErrorString(status));
       errormessage("Error in rocblas_get_version_string: %s\n", "unknown error");
       return 0;
     }
+#endif
   }
 
 
@@ -897,16 +904,25 @@ extern "C" {
   void rocblasDtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, const double *A,
                                int lda, double *B, int ldb){
-
+#ifdef HAVE_ROCBLAS_API_V3
+    BLAS_status status = BLAS_dtrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb, B, ldb);
+#else
     BLAS_status status = BLAS_dtrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
+#endif
   }
 
   void rocblasStrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float alpha, const float *A,
                                int lda, float *B, int ldb){
+#ifdef HAVE_ROCBLAS_API_V3
+    BLAS_status status = BLAS_strmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb, B, ldb);
+#else
     BLAS_status status = BLAS_strmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
+#endif
   }
 
   void rocblasZtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
@@ -921,8 +937,13 @@ extern "C" {
           BLAS_double_complex* A_casted = (      BLAS_double_complex*) A;
 #endif
     BLAS_double_complex* B_casted = (BLAS_double_complex*) B;
+#ifdef HAVE_ROCBLAS_API_V3
+    BLAS_status status = BLAS_ztrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb, B_casted, ldb);
+#else
     BLAS_status status = BLAS_ztrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
+#endif
   }
 
   void rocblasCtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
@@ -937,8 +958,13 @@ extern "C" {
           BLAS_float_complex* A_casted = (      BLAS_float_complex*) A;
 #endif
     BLAS_float_complex* B_casted = (BLAS_float_complex*) B;
+#ifdef HAVE_ROCBLAS_API_V3
+    BLAS_status status = BLAS_ctrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb, B_casted, ldb);
+#else
     BLAS_status status = BLAS_ctrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
+#endif
   }
 
 

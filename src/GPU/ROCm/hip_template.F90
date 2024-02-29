@@ -1680,7 +1680,7 @@
 #ifdef WITH_AMD_GPU_VERSION
       success = hip_get_last_error_c() /= 0
 #else
-        success = .true.
+      success = .true.
 #endif
     end function
 
