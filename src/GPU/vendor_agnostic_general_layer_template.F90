@@ -297,7 +297,7 @@
 #endif
     end subroutine
 
-    
+
     function gpu_get_last_error() result(success)
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -343,7 +343,7 @@
 #endif
 
     end function
-    
+
 
     function gpu_stream_synchronize(stream) result(success)
       use, intrinsic :: iso_c_binding
@@ -592,6 +592,7 @@
         stop 1
       endif
 #endif
+
     end function
 
     function gpu_malloc_host_cptr(array, elements) result(success)
@@ -1380,17 +1381,16 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: host_free"
-        stop 1
+        success = openmp_offload_free_cptr(a)
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_free"
-        stop 1
+        success = sycl_free_cptr(a)
       endif
 #endif
+
     end function
 
     function gpu_free_host_cptr(a) result(success)

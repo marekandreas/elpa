@@ -1680,7 +1680,7 @@
 !#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 !      success = openmp_offload_get_last_error_c() /= 0
 !#else
-!        success = .true.
+!      success = .true.
 !#endif
 !    end function
 

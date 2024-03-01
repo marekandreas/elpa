@@ -2774,7 +2774,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       integer(kind=c_intptr_t)          :: x, y, result
@@ -3056,7 +3056,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       integer(kind=c_intptr_t)          :: x, y, result

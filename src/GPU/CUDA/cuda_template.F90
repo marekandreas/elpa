@@ -1680,7 +1680,7 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
       success = cuda_get_last_error_c() /= 0
 #else
-        success = .true.
+      success = .true.
 #endif
     end function
 
