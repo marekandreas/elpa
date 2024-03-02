@@ -68,9 +68,11 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/mod_vendor_agnostic_blas_layer.F90 \
   src/GPU/mod_vendor_agnostic_solver_layer.F90 \
   src/GPU/mod_vendor_agnostic_layer_utilities.F90 \
+  src/GPU/mod_vendor_agnostic_ccl_layer.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
   src/GPU/CUDA/mod_nccl.F90 \
   src/GPU/ROCm/mod_hip.F90 \
+  src/GPU/ROCm/mod_rccl.F90 \
   src/GPU/OpenMP/mod_openmp_offload.F90 \
   src/GPU/SYCL/mod_sycl.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
@@ -142,6 +144,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/vendor_agnostic_blas_layer_template.F90 \
   src/GPU/vendor_agnostic_solver_layer_template.F90 \
   src/GPU/vendor_agnostic_layer_utilities_template.F90 \
+  src/GPU/vendor_agnostic_ccl_layer_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/ccl_communicators_template.F90 \
   src/GPU/handle_creation_template.F90 \
@@ -151,6 +154,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/CUDA/nccl_template.F90 \
   src/GPU/CUDA/ncclFunctions_template.h \
   src/GPU/ROCm/hip_template.F90 \
+  src/GPU/ROCm/rccl_template.F90 \
   src/GPU/ROCm/rocmFunctions_template.h \
   src/GPU/OpenMP/openmp_offload_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \
@@ -254,6 +258,10 @@ if WITH_NVIDIA_NCCL
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/ncclFunctions.cpp
 endif
 
+if WITH_AMD_RCCL
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/rcclFunctions.cpp
+endif
+
 if WITH_AMD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += \
   src/GPU/ROCm/elpa_index_amd_gpu.cpp  \
@@ -267,6 +275,8 @@ if WITH_AMD_GPU_VERSION
   src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp \
   src/multiply_a_b/GPU/ROCm/elpa_multiply_a_b_hip.cpp
 endif
+
+
 
 if !WITH_MPI
   libelpa@SUFFIX@_private_la_SOURCES += src/helpers/mod_time_c.F90
@@ -1012,6 +1022,7 @@ EXTRA_DIST = \
   src/GPU/vendor_agnostic_blas_layer_template.F90 \
   src/GPU/vendor_agnostic_solver_layer_template.F90 \
   src/GPU/vendor_agnostic_layer_utilities_template.F90 \
+  src/GPU/vendor_agnostic_ccl_layer_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/ccl_communicators_template.F90 \
   src/GPU/handle_creation_template.F90 \
@@ -1023,6 +1034,8 @@ EXTRA_DIST = \
   src/GPU/CUDA/cuUtils_template.cu \
   src/GPU/ROCm/hip_template.F90 \
   src/GPU/ROCm/rocmFunctions_template.h \
+  src/GPU/ROCm/rccl_template.F90 \
+  src/GPU/ROCm/rcclFunctions_template.h \
   src/GPU/ROCm/hipUtils_template.cpp \
   src/GPU/OpenMP/openmp_offload_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \

@@ -47,6 +47,11 @@
 #include "../../general/sanity.F90"
 #include "../../general/error_checking.inc"
 
+#undef USE_CCL_REDUCE_ADD
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#define USE_CCL_REDUCE_ADD
+#endif
+
 subroutine elpa_gpu_ccl_reduce_add_vectors_&
 &MATH_DATATYPE&
 &_&
@@ -81,7 +86,9 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
   use elpa_mpi
   use elpa_gpu
   use tridiag_gpu
-  use nccl_functions
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+  use elpa_ccl_gpu
+#endif
   implicit none
 
   class(elpa_abstract_impl_t), intent(inout)         :: obj
@@ -109,7 +116,7 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
                                                         &PRECISION&
                                                         &_&
                                                         &MATH_DATATYPE
-  integer(kind=c_int)                                :: ncclDataType
+  integer(kind=c_int)                                :: cclDataType
   integer(kind=ik)                                   :: k_datatype
   integer(kind=c_intptr_t)                           :: ccl_comm_s, ccl_comm_t
   integer(kind=c_intptr_t)                           :: vmat_s_dev, vmat_t_dev 
@@ -122,16 +129,16 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
   success = .true.
 
 #if   REALCASE == 1 && DOUBLE_PRECISION == 1
-  ncclDataType = ncclDouble
+  cclDataType = cclDouble
   k_datatype = 1
 #elif REALCASE == 1 && SINGLE_PRECISION == 1
-  ncclDataType = ncclFloat
+  cclDataType = cclFloat
   k_datatype = 1
 #elif COMPLEXCASE == 1 && DOUBLE_PRECISION == 1
-  ncclDataType = ncclDouble
+  cclDataType = cclDouble
   k_datatype = 2
 #elif COMPLEXCASE == 1 && SINGLE_PRECISION == 1
-  ncclDataType = ncclFloat
+  cclDataType = cclFloat
   k_datatype = 2
 #endif
 
@@ -220,21 +227,21 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("nccl_Reduce aux1_reduceadd_dev, aux2_reduceadd_dev", successGPU)
 
-        successGPU = nccl_group_start() 
+        successGPU = ccl_group_start()
         if (.not. successGPU) then 
           print *,"Error in setting up nccl_group_start!" 
           stop 1
         endif
 
-        successGPU = nccl_Reduce(aux1_reduceadd_dev, aux2_reduceadd_dev, int(k_datatype*aux_size, kind=c_size_t), &
-                                 ncclDataType, ncclSum, int(ipt,kind=c_int), ccl_comm_t, my_stream)
+        successGPU = ccl_Reduce(aux1_reduceadd_dev, aux2_reduceadd_dev, int(k_datatype*aux_size, kind=c_size_t), &
+                                 cclDataType, cclSum, int(ipt,kind=c_int), ccl_comm_t, my_stream)
         
         if (.not. successGPU) then
           print *, "Error in nccl_Reduce"
           stop 1
         endif
 
-        successGPU = nccl_group_end()
+        successGPU = ccl_group_end()
         if (.not. successGPU) then
           print *,"Error in setting up nccl_group_end!"
           stop 1
