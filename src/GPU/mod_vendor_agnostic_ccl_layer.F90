@@ -1,4 +1,5 @@
-!    Copyright 2014 - 2023, A. Marek
+#if 0
+!    Copyright 2021, A. Marek, MPCDF
 !
 !    This file is part of ELPA.
 !
@@ -17,6 +18,9 @@
 !      and
 !    - IBM Deutschland GmbH
 !
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of
+!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -40,21 +44,21 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
-!
-! Author: Andreas Marek, MPCDF
-! This file is the generated version. Do NOT edit
+#endif
 
 
 #include "config-f90.h"
-
-module nccl_functions
-  use, intrinsic :: iso_c_binding
-  use precision
-  implicit none
-
-  public
+module elpa_ccl_gpu
+  use iso_c_binding
 #ifdef WITH_NVIDIA_NCCL
-#include "./nccl_template.F90"
+  use nccl_functions
 #endif
+#ifdef WITH_AMD_RCCL
+  use rccl_functions
+#endif
+ 
+  public
+#include "./vendor_agnostic_ccl_layer_template.F90"
 
-end module nccl_functions
+end module
+

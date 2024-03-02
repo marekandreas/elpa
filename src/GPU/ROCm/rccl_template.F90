@@ -65,8 +65,8 @@
 
 
   interface
-    function nccl_redOp_ncclSum_c() result(flag) &
-             bind(C, name="ncclRedOpSumFromC")
+    function rccl_redOp_ncclSum_c() result(flag) &
+             bind(C, name="rcclRedOpSumFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -74,8 +74,8 @@
   end interface
 
   interface
-    function nccl_redOp_ncclMax_c() result(flag) &
-             bind(C, name="ncclRedOpMaxFromC")
+    function rccl_redOp_ncclMax_c() result(flag) &
+             bind(C, name="rcclRedOpMaxFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -83,8 +83,8 @@
   end interface
 
   interface
-    function nccl_redOp_ncclMin_c() result(flag) &
-             bind(C, name="ncclRedOpMinFromC")
+    function rccl_redOp_ncclMin_c() result(flag) &
+             bind(C, name="rcclRedOpMinFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -92,8 +92,8 @@
   end interface
 
   interface
-    function nccl_redOp_ncclAvg_c() result(flag) &
-             bind(C, name="ncclRedOpAvgFromC")
+    function rccl_redOp_ncclAvg_c() result(flag) &
+             bind(C, name="rcclRedOpAvgFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -101,8 +101,8 @@
   end interface
 
   interface
-    function nccl_redOp_ncclProd_c() result(flag) &
-             bind(C, name="ncclRedOpProdFromC")
+    function rccl_redOp_ncclProd_c() result(flag) &
+             bind(C, name="rcclRedOpProdFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -110,8 +110,8 @@
   end interface
 
   interface
-    function nccl_dataType_ncclInt_c() result(flag) &
-             bind(C, name="ncclDataTypeNcclIntFromC")
+    function rccl_dataType_ncclInt_c() result(flag) &
+             bind(C, name="rcclDataTypeNcclIntFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -119,8 +119,8 @@
   end interface
 
   interface
-    function nccl_dataType_ncclInt32_c() result(flag) &
-             bind(C, name="ncclDataTypeNcclInt32FromC")
+    function rccl_dataType_ncclInt32_c() result(flag) &
+             bind(C, name="rcclDataTypeNcclInt32FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -128,8 +128,8 @@
   end interface
 
   interface
-    function nccl_dataType_ncclInt64_c() result(flag) &
-             bind(C, name="ncclDataTypeNcclInt64FromC")
+    function rccl_dataType_ncclInt64_c() result(flag) &
+             bind(C, name="rcclDataTypeNcclInt64FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -137,8 +137,8 @@
   end interface
 
   interface
-    function nccl_dataType_ncclFloat_c() result(flag) &
-             bind(C, name="ncclDataTypeNcclFloatFromC")
+    function rccl_dataType_ncclFloat_c() result(flag) &
+             bind(C, name="rcclDataTypeNcclFloatFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -146,8 +146,8 @@
   end interface
 
   interface
-    function nccl_dataType_ncclFloat32_c() result(flag) &
-             bind(C, name="ncclDataTypeNcclFloat32FromC")
+    function rccl_dataType_ncclFloat32_c() result(flag) &
+             bind(C, name="rcclDataTypeNcclFloat32FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -155,8 +155,8 @@
   end interface
 
   interface
-    function nccl_dataType_ncclFloat64_c() result(flag) &
-             bind(C, name="ncclDataTypeNcclFloat64FromC")
+    function rccl_dataType_ncclFloat64_c() result(flag) &
+             bind(C, name="rcclDataTypeNcclFloat64FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -164,8 +164,8 @@
   end interface
 
   interface
-    function nccl_dataType_ncclDouble_c() result(flag) &
-             bind(C, name="ncclDataTypeNcclDoubleFromC")
+    function rccl_dataType_ncclDouble_c() result(flag) &
+             bind(C, name="rcclDataTypeNcclDoubleFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
@@ -173,8 +173,8 @@
   end interface
 
   interface  
-    function nccl_group_start_c() result(istat) &
-             bind(C, name="ncclGroupStartFromC")
+    function rccl_group_start_c() result(istat) &
+             bind(C, name="rcclGroupStartFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT)      :: istat
@@ -183,8 +183,8 @@
 
 
   interface  
-    function nccl_group_end_c() result(istat) &
-             bind(C, name="ncclGroupEndFromC")
+    function rccl_group_end_c() result(istat) &
+             bind(C, name="rcclGroupEndFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT)      :: istat
@@ -192,8 +192,8 @@
   end interface
   
   interface
-    function nccl_get_unique_id_c(ncclId) result(istat) &
-             bind(C, name="ncclGetUniqueIdFromC")
+    function rccl_get_unique_id_c(ncclId) result(istat) &
+             bind(C, name="rcclGetUniqueIdFromC")
       use, intrinsic :: iso_c_binding
       import :: ncclUniqueId
       implicit none
@@ -206,8 +206,8 @@
   end interface
 
   interface
-    function nccl_comm_init_rank_c(ncclComm, nRanks, ncclId, myRank) result(istat) &
-             bind(C, name="ncclCommInitRankFromC")
+    function rccl_comm_init_rank_c(ncclComm, nRanks, ncclId, myRank) result(istat) &
+             bind(C, name="rcclCommInitRankFromC")
       use, intrinsic :: iso_c_binding
       import :: ncclUniqueId
       implicit none
@@ -225,8 +225,8 @@
    
   ! only for version >=2.13  
   !interface
-  !  function nccl_comm_finalize_c(ncclComm) result(istat) &
-  !           bind(C, name="ncclCommFinalizeFromC")
+  !  function rccl_comm_finalize_c(ncclComm) result(istat) &
+  !           bind(C, name="rcclCommFinalizeFromC")
   !    use, intrinsic :: iso_c_binding
   !    implicit none
   !    integer(kind=C_intptr_T), value :: ncclComm
@@ -235,8 +235,8 @@
   !end interface
       
   interface
-    function nccl_comm_destroy_c(ncclComm) result(istat) &
-             bind(C, name="ncclCommDestroyFromC")
+    function rccl_comm_destroy_c(ncclComm) result(istat) &
+             bind(C, name="rcclCommDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value :: ncclComm
@@ -244,15 +244,15 @@
     end function                                
   end interface
 
-  interface nccl_Allreduce
-    module procedure nccl_allreduce_intptr
-    module procedure nccl_allreduce_cptr
+  interface rccl_Allreduce
+    module procedure rccl_allreduce_intptr
+    module procedure rccl_allreduce_cptr
   end interface
 
 
   interface
-    function nccl_allreduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclAllReduceFromC")
+    function rccl_allreduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclAllReduceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_t), value              :: sendbuff
@@ -267,8 +267,8 @@
   end interface
 
   interface
-    function nccl_allreduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclAllReduceFromC")
+    function rccl_allreduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclAllReduceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr), value                           :: sendbuff
@@ -282,15 +282,15 @@
     end function
   end interface
 
-  interface nccl_reduce
-    module procedure nccl_reduce_intptr
-    module procedure nccl_reduce_cptr
+  interface rccl_reduce
+    module procedure rccl_reduce_intptr
+    module procedure rccl_reduce_cptr
   end interface
 
 
   interface
-    function nccl_reduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclReduceFromC")
+    function rccl_reduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclReduceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_t), value              :: sendbuff
@@ -306,8 +306,8 @@
   end interface
 
   interface
-    function nccl_reduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclReduceFromC")
+    function rccl_reduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclReduceFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr), value                           :: sendbuff
@@ -322,15 +322,15 @@
     end function
   end interface
 
-  interface nccl_Bcast
-    module procedure nccl_Bcast_intptr
-    module procedure nccl_Bcast_cptr
+  interface rccl_Bcast
+    module procedure rccl_Bcast_intptr
+    module procedure rccl_Bcast_cptr
   end interface
 
 
   interface
-    function nccl_bcast_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclBroadcastFromC")
+    function rccl_bcast_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclBroadcastFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_t), value              :: sendbuff
@@ -345,8 +345,8 @@
   end interface
 
   interface
-    function nccl_bcast_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclBroadcastFromC")
+    function rccl_bcast_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclBroadcastFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr), value                           :: sendbuff
@@ -360,14 +360,14 @@
     end function
   end interface
 
-  interface nccl_Send
-    module procedure nccl_Send_intptr
-    module procedure nccl_Send_cptr
+  interface rccl_Send
+    module procedure rccl_Send_intptr
+    module procedure rccl_Send_cptr
   end interface
 
   interface
-    function nccl_send_intptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclSendFromC")
+    function rccl_send_intptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclSendFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_t), value              :: sendbuff
@@ -381,8 +381,8 @@
   end interface
 
   interface
-    function nccl_send_cptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclSendFromC")
+    function rccl_send_cptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclSendFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr), value                           :: sendbuff
@@ -395,14 +395,14 @@
     end function
   end interface
 
-  interface nccl_Recv
-    module procedure nccl_Recv_intptr
-    module procedure nccl_Recv_cptr
+  interface rccl_Recv
+    module procedure rccl_Recv_intptr
+    module procedure rccl_Recv_cptr
   end interface
 
   interface
-    function nccl_recv_intptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclRecvFromC")
+    function rccl_recv_intptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclRecvFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_t), value              :: recvbuff
@@ -416,8 +416,8 @@
   end interface
 
   interface
-    function nccl_recv_cptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(istat) &
-             bind(C, name="ncclRecvFromC")
+    function rccl_recv_cptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(istat) &
+             bind(C, name="rcclRecvFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr), value                           :: recvbuff
@@ -433,163 +433,163 @@
   contains
 
 
-    function nccl_redOp_ncclSum() result(flag)
+    function rccl_redOp_ncclSum() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_redOp_ncclSum_c())
+      flag = int(rccl_redOp_ncclSum_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_redOp_ncclMax() result(flag)
+    function rccl_redOp_ncclMax() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_redOp_ncclMax_c())
+      flag = int(rccl_redOp_ncclMax_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_redOp_ncclMin() result(flag)
+    function rccl_redOp_ncclMin() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_redOp_ncclMin_c())
+      flag = int(rccl_redOp_ncclMin_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_redOp_ncclAvg() result(flag)
+    function rccl_redOp_ncclAvg() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_redOp_ncclAvg_c())
+      flag = int(rccl_redOp_ncclAvg_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_redOp_ncclProd() result(flag)
+    function rccl_redOp_ncclProd() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_redOp_ncclProd_c())
+      flag = int(rccl_redOp_ncclProd_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_dataType_ncclInt() result(flag)
+    function rccl_dataType_ncclInt() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_dataType_ncclInt_c())
+      flag = int(rccl_dataType_ncclInt_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_dataType_ncclInt32() result(flag)
+    function rccl_dataType_ncclInt32() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_dataType_ncclInt32_c())
+      flag = int(rccl_dataType_ncclInt32_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_dataType_ncclInt64() result(flag)
+    function rccl_dataType_ncclInt64() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_dataType_ncclInt64_c())
+      flag = int(rccl_dataType_ncclInt64_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_dataType_ncclFloat() result(flag)
+    function rccl_dataType_ncclFloat() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_dataType_ncclFloat_c())
+      flag = int(rccl_dataType_ncclFloat_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_dataType_ncclFloat32() result(flag)
+    function rccl_dataType_ncclFloat32() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_dataType_ncclFloat32_c())
+      flag = int(rccl_dataType_ncclFloat32_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_dataType_ncclFloat64() result(flag)
+    function rccl_dataType_ncclFloat64() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_dataType_ncclFloat64_c())
+      flag = int(rccl_dataType_ncclFloat64_c())
 #else
       flag = 0
 #endif
     end function
 
-    function nccl_dataType_ncclDouble() result(flag)
+    function rccl_dataType_ncclDouble() result(flag)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
 #ifdef WITH_NVIDIA_NCCL
-      flag = int(nccl_dataType_ncclDouble_c())
+      flag = int(rccl_dataType_ncclDouble_c())
 #else
       flag = 0
 #endif
     end function
 
 
-    function nccl_group_start() result(success)
+    function rccl_group_start() result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_group_start_c() /= 0
+      success = rccl_group_start_c() /= 0
 #else
       success = .true.
 #endif
     end function
 
 
-    function nccl_group_end() result(success)
+    function rccl_group_end() result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_group_end_c() /= 0
+      success = rccl_group_end_c() /= 0
 #else
       success = .true.
 #endif
     end function
     
-    function nccl_get_unique_id(ncclId) result(success)
+    function rccl_get_unique_id(ncclId) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       !integer(kind=C_intptr_t)                  :: ncclId(16)
@@ -599,14 +599,14 @@
       logical                                   :: success
       integer :: i
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_get_unique_id_c(ncclId) /= 0
+      success = rccl_get_unique_id_c(ncclId) /= 0
 #else 
       success = .true.
 #endif
     end function
   
     
-    function nccl_comm_init_rank(ncclComm, nRanks, ncclId, myRank) result(success)
+    function rccl_comm_init_rank(ncclComm, nRanks, ncclId, myRank) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T)                  :: ncclComm
@@ -619,38 +619,38 @@
       logical                                   :: success
 
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_comm_init_rank_c(ncclComm, nRanks, ncclId, myRank) /= 0
+      success = rccl_comm_init_rank_c(ncclComm, nRanks, ncclId, myRank) /= 0
 #else 
       success = .true.
 #endif
     end function
  
 ! only for version >= 2.13    
-!    function nccl_comm_finalize(ncclComm) result(success)
+!    function rccl_comm_finalize(ncclComm) result(success)
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_t)                  :: ncclComm
 !      logical                                   :: success
 !#ifdef WITH_NVIDIA_NCCL
-!      success = nccl_comm_finalize_c(ncclComm) /= 0
+!      success = rccl_comm_finalize_c(ncclComm) /= 0
 !#else
 !      success = .true.
 !#endif
 !    end function
   
-    function nccl_comm_destroy(ncclComm) result(success)
+    function rccl_comm_destroy(ncclComm) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_t)                  :: ncclComm
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_comm_destroy_c(ncclComm) /= 0
+      success = rccl_comm_destroy_c(ncclComm) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function nccl_allreduce_intptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) result(success)
+    function rccl_allreduce_intptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -663,13 +663,13 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_allreduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) /= 0
+      success = rccl_allreduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function nccl_allreduce_cptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) result(success)
+    function rccl_allreduce_cptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -682,13 +682,13 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_allreduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) /= 0
+      success = rccl_allreduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function nccl_reduce_intptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(success)
+    function rccl_reduce_intptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -702,13 +702,13 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_reduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) /= 0
+      success = rccl_reduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function nccl_reduce_cptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(success)
+    function rccl_reduce_cptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -722,13 +722,13 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_reduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) /= 0
+      success = rccl_reduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function nccl_bcast_intptr(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(success)
+    function rccl_bcast_intptr(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -741,13 +741,13 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_bcast_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) /= 0
+      success = rccl_bcast_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function nccl_bcast_cptr(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(success)
+    function rccl_bcast_cptr(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -760,13 +760,13 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_bcast_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) /= 0
+      success = rccl_bcast_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function nccl_send_intptr(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(success)
+    function rccl_send_intptr(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -778,13 +778,13 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_send_intptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
+      success = rccl_send_intptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function nccl_send_cptr(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(success)
+    function rccl_send_cptr(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -796,13 +796,13 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_send_cptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
+      success = rccl_send_cptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function nccl_recv_intptr(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(success)
+    function rccl_recv_intptr(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -814,13 +814,13 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_recv_intptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
+      success = rccl_recv_intptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif
     end function
   
-    function nccl_recv_cptr(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(success)
+    function rccl_recv_cptr(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -832,7 +832,7 @@
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
 #ifdef WITH_NVIDIA_NCCL
-      success = nccl_recv_cptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
+      success = rccl_recv_cptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
 #else
       success = .true.
 #endif

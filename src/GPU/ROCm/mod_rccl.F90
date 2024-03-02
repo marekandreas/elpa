@@ -47,14 +47,15 @@
 
 #include "config-f90.h"
 
-module nccl_functions
+module rccl_functions
   use, intrinsic :: iso_c_binding
   use precision
   implicit none
 
   public
-#ifdef WITH_NVIDIA_NCCL
-#include "./nccl_template.F90"
+
+#ifdef WITH_AMD_RCCL
+#include "./rccl_template.F90"
 #endif
 
-end module nccl_functions
+end module rccl_functions

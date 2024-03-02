@@ -164,7 +164,7 @@ module elpa1_compute
   public :: elpa_transpose_vectors_ss_complex_single
 #endif
 
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
   public :: elpa_gpu_ccl_transpose_vectors_real_double
   public :: elpa_gpu_ccl_reduce_add_vectors_real_double
   public :: elpa_gpu_ccl_transpose_vectors_complex_double
@@ -179,7 +179,7 @@ module elpa1_compute
   public :: elpa_gpu_ccl_transpose_vectors_complex_single
   public :: elpa_gpu_ccl_reduce_add_vectors_complex_single
 #endif
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* WITH_NVIDIA_NCCL || WITH_AMD_RCCL */
 
   contains
 
@@ -244,7 +244,7 @@ module elpa1_compute
 ! ./GPU/elpa_gpu_ccl_transpose_vectors_template.F90
 ! ./GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90
 
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 
 ! real double precision
 !#define DOUBLE_PRECISION_REAL 1
@@ -287,7 +287,7 @@ module elpa1_compute
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* WITH_NVIDIA_NCCL || WITH_AMD_RCCL */
 
 !________________________________________________________________
 ! elpa1_compute_template.F90

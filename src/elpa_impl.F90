@@ -643,8 +643,8 @@ module elpa_impl
 #if defined(WITH_SYCL_GPU_VERSION)
       use sycl_functions
 #endif
-#ifdef WITH_NVIDIA_NCCL
-      use nccl_functions
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+      use elpa_ccl_gpu
 #endif
 
       implicit none
@@ -666,7 +666,7 @@ module elpa_impl
       integer(kind=c_intptr_t)            :: handle_tmp
       character(len=8)                    :: fmt
       character(len=12)                   :: gpu_string
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
       TYPE(ncclUniqueId)                  :: ncclId
       integer(kind=c_int)                 :: nprocs
       integer(kind=c_intptr_t)            :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols

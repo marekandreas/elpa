@@ -44,6 +44,12 @@
 
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
+
+#undef USE_CCL_CHOLESKY
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#define USE_CCL_CHOLESKY
+#endif
+
   use elpa1_compute
   use elpa_utilities
   use elpa_mpi
@@ -64,8 +70,8 @@
 #ifdef WITH_GPU_STREAMS
   use elpa_gpu_util
 #endif
-#ifdef WITH_NVIDIA_NCCL
-  use nccl_functions
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+  use elpa_ccl_gpu
 #endif
   implicit none
 #include "../general/precision_kinds.F90"
@@ -116,7 +122,7 @@
 
   integer(kind=c_intptr_t)                   :: gpublasHandle, gpusolverHandle, my_stream, offset
   integer(kind=c_int)                        :: gpu_cholesky
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
   integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols
 #endif
   integer(kind=ik)                           :: blocking
@@ -740,7 +746,7 @@
       endif
 
       if (useGPU) then
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY)
         call obj%timer%start("mpi_communication")
 
         call MPI_Bcast(tmp1, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
@@ -753,7 +759,7 @@
                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
         call obj%timer%stop("mpi_communication")
-#else /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#else /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
 !#ifdef WITH_CUDA_AWARE_MPI_2
 !        tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
 !        ! and associate a fortran pointer
@@ -775,16 +781,16 @@
 !
 !        call obj%timer%stop("mpi_cuda_communication")
 !#endif /* WITH_CUDA_AWARE_MPI_2 */
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_CHOLESKY
         call obj%timer%start("gpu_nccl")
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-        successGPU = nccl_group_start()
+        successGPU = ccl_group_start()
         if (.not.successGPU) then
           print *,"Error in setting up nccl_group_start!"
           stop
         endif
-        successGPU = nccl_bcast(tmp1_dev, tmp1_dev, &
+        successGPU = ccl_bcast(tmp1_dev, tmp1_dev, &
 #if REALCASE == 1
                        int(nblk*(nblk+1)/2,kind=c_size_t), &
 #endif
@@ -793,18 +799,18 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                       ncclDouble, &
+                       cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                       ncclFloat, &
+                       cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                       ncclDouble, &
+                       cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                       ncclFloat, &
+                       cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
                        int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
@@ -813,15 +819,15 @@
           print *,"Error in nccl_reduce"
           stop
         endif
-        successGPU = nccl_group_end()
+        successGPU = ccl_group_end()
         if (.not.successGPU) then
           print *,"Error in setting up nccl_group_end!"
           stop
         endif
         call obj%timer%stop("gpu_nccl")
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_CHOLESKY */
 
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
       else ! useGPU
         call obj%timer%start("mpi_communication")
 
@@ -837,7 +843,7 @@
         call obj%timer%stop("mpi_communication")
       endif ! useGPU
 
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) 
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) 
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -852,7 +858,7 @@
         check_memcpy_gpu("elpa_cholesky: tmp1 to tmp1_dev", successGPU)
 #endif
       endif
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
 
 #endif /* WITH_MPI */
 
@@ -916,7 +922,7 @@
     endif ! useGPU
 
 #ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) 
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) 
     if (useGPU) then
       if (l_cols-l_colx+1 > 0) then
         num = l_cols*nblk*size_of_datatype
@@ -933,10 +939,10 @@
 #endif
       endif
     endif
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
 
     if (useGPU) then
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY)
       do i=1,nblk
         call obj%timer%start("mpi_communication")
         if (l_cols-l_colx+1>0) then
@@ -946,7 +952,7 @@
 
         call obj%timer%stop("mpi_communication")
       enddo
-#else /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#else /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
 !#ifdef WITH_CUDA_AWARE_MPI_2
 !      tmatc_mpi_dev = transfer(tmatc_dev, tmatc_mpi_dev)
 !      ! and associate a fortran pointer
@@ -967,19 +973,19 @@
 !        call obj%timer%stop("mpi_cuda_communication")
 !      enddo
 !#endif /* WITH_CUDA_AWARE_MPI_2 */
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_CHOLESKY
       my_stream = obj%gpu_setup%my_stream
       ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
       call obj%timer%start("gpu_nccl")
       do i=1,nblk
         if (l_cols-l_colx+1 > 0) then
-          successGPU = nccl_group_start()
+          successGPU = ccl_group_start()
           if (.not.successGPU) then
             print *,"Error in setting up nccl_group_start!"
             stop
           endif
           offset = ((l_colx-1) + (i-1) * l_cols ) * size_of_datatype
-          successGPU = nccl_bcast(tmatc_dev+offset, tmatc_dev+offset, &
+          successGPU = ccl_bcast(tmatc_dev+offset, tmatc_dev+offset, &
 #if REALCASE == 1
                        int(l_cols-l_colx+1,kind=c_size_t), &
 #endif
@@ -988,18 +994,18 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                       ncclDouble, &
+                       cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                       ncclFloat, &
+                       cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                       ncclDouble, &
+                       cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                       ncclFloat, &
+                       cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
                        int(prow(n, nblk, np_rows),kind=c_int), ccl_comm_rows, my_stream)
@@ -1008,7 +1014,7 @@
             print *,"Error in nccl_reduce"
             stop
           endif
-          successGPU = nccl_group_end()
+          successGPU = ccl_group_end()
           if (.not.successGPU) then
             print *,"Error in setting up nccl_group_end!"
             stop
@@ -1016,8 +1022,8 @@
         endif ! (l_cols-l_colx+1 > 0)
       enddo
       call obj%timer%stop("gpu_nccl")
-#endif /* WITH_NVIDIA_NCCL */
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* USE_CCL_CHOLESKY */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
     else ! useGPU
       do i=1,nblk
         call obj%timer%start("mpi_communication")
@@ -1030,7 +1036,7 @@
       enddo
     endif ! useGPU
 
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY)
     !TODO: is this needed ? GUESS NOT
     if (useGPU) then
       !if (l_cols-l_colx+1 > 0) then
@@ -1048,9 +1054,9 @@
 #endif
       !endif
     endif
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
 
-#if defined(WITH_CUDA_AWARE_MPI_2) || defined(WITH_NVIDIA_NCCL)
+#if defined(WITH_CUDA_AWARE_MPI_2) || defined(USE_CCL_CHOLESKY)
     if (useGPU) then
       num = l_cols*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -1065,7 +1071,7 @@
       check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
 #endif
     endif
-#endif /* defined(WITH_CUDA_AWARE_MPI_2) || defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(WITH_CUDA_AWARE_MPI_2) || defined(USE_CCL_CHOLESKY) */
 
 #else /* WITH_MPI */
     if (useGPU) then
