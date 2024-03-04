@@ -1,11 +1,13 @@
-!    Copyright 2023, P. Karpov
+#if 0
+!    Copyright 2024, A. Marek, MPCDF
 !
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -15,7 +17,6 @@
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
-!
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -39,64 +40,76 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
-!
-! This file was written by P. Karpov, MPCDF
+
+!    This file was written by A. Marek, MPCDF
+#endif
 
 
 #include "config-f90.h"
+
+! This file is auto-generated. Do NOT edit
+
 module cholesky_sycl
   use, intrinsic :: iso_c_binding
   use precision
+
   implicit none
 
   public
+
   interface
-    subroutine sycl_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
-             bind(C, name="sycl_copy_double_a_tmatc_FromC")
+    subroutine sycl_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, &
+                                                             l_colx, l_row1, my_stream)&
+                                                     bind(C, name="sycl_copy_double_a_tmatc_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmatc_dev
       integer(kind=c_int), intent(in)  :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=c_intptr_t), value  :: my_stream
-    end subroutine 
+    end subroutine
   end interface
 
   interface
-    subroutine sycl_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
-             bind(C, name="sycl_copy_float_a_tmatc_FromC")
+    subroutine sycl_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, &
+                                                             l_colx, l_row1, my_stream)&
+                                                     bind(C, name="sycl_copy_float_a_tmatc_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmatc_dev
       integer(kind=c_int), intent(in)  :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=c_intptr_t), value  :: my_stream
-    end subroutine 
+    end subroutine
   end interface
 
   interface
-    subroutine sycl_copy_double_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
-             bind(C, name="sycl_copy_double_complex_a_tmatc_FromC")
+    subroutine sycl_copy_double_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, &
+                                                             l_colx, l_row1, my_stream)&
+                                                     bind(C, name="sycl_copy_double_complex_a_tmatc_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmatc_dev
       integer(kind=c_int), intent(in)  :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=c_intptr_t), value  :: my_stream
-    end subroutine 
+    end subroutine
   end interface
 
   interface
-    subroutine sycl_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)&
-             bind(C, name="sycl_copy_float_complex_a_tmatc_FromC")
+    subroutine sycl_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, &
+                                                             l_colx, l_row1, my_stream)&
+                                                     bind(C, name="sycl_copy_float_complex_a_tmatc_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: a_dev, tmatc_dev
       integer(kind=c_int), intent(in)  :: nblk, matrixRows, l_cols, l_colx, l_row1
       integer(kind=c_intptr_t), value  :: my_stream
-    end subroutine 
+    end subroutine
   end interface
+
 
   contains
 
-    subroutine sycl_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+    subroutine sycl_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
+                                                            l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -105,12 +118,14 @@ module cholesky_sycl
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+      call sycl_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
+                                                          l_row1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+    subroutine sycl_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
+                                                            l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -119,12 +134,14 @@ module cholesky_sycl
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+      call sycl_copy_float_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
+                                                          l_row1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+    subroutine sycl_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
+                                                            l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -133,12 +150,14 @@ module cholesky_sycl
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+      call sycl_copy_double_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
+                                                          l_row1, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+    subroutine sycl_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
+                                                            l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -147,10 +166,10 @@ module cholesky_sycl
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+      call sycl_copy_float_complex_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
+                                                          l_row1, my_stream)
 #endif
 
     end subroutine
 
 end module
-

@@ -57,12 +57,25 @@
 
 
 !  interface
-!    function cublas_get_version_c(cudaHandle, version) result(istat) &
-!             bind(C, name="cublasGetVersionFromC")
+!    function openmp_offload_device_get_attributes_c(value, attribute) result(istat) &
+!             bind(C, name="openmpOffloadDeviceGetAttributeFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !
-!      integer(kind=C_intptr_T), value  :: cudaHandle
+!      integer(kind=C_INT), value  :: attribute
+!      integer(kind=C_INT)         :: value
+!      integer(kind=C_INT)         :: istat
+!    end function
+!  end interface
+
+
+!  interface
+!    function mkl_openmp_offload_get_version_c(mkl_openmp_offloadHandle, version) result(istat) &
+!             bind(C, name="mkl_openmp_offloadGetVersionFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!
+!      integer(kind=C_intptr_T), value  :: mkl_openmp_offloadHandle
 !      integer(kind=C_INT)              :: version
 !      integer(kind=C_INT)              :: istat
 !    end function
@@ -1712,14 +1725,26 @@
 
   contains
 
-!    function cublas_get_version(cublasHandle, version) result(success)
+!    function openmp_offload_device_get_attributes(value, attribute) result(success)
 !      use, intrinsic :: iso_c_binding
 !      implicit none
-!      integer(kind=C_intptr_t)                  :: cublasHandle
+!      integer(kind=C_INT)                       :: value, attribute
+!      logical                                   :: success
+!#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+!      success = openmp_offload_device_get_attributes_c(value, attribute) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
+
+!    function mkl_openmp_offload_get_version(mkl_openmp_offloadHandle, version) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_t)                  :: mkl_openmp_offloadHandle
 !      integer(kind=C_INT)                       :: version
 !      logical                                   :: success
 !#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-!      success = cublas_get_version_c(cublasHandle, version) /= 0
+!      success = mkl_openmp_offload_get_version_c(mkl_openmp_offloadHandle, version) /= 0
 !#else
 !      success = .true.
 !#endif
