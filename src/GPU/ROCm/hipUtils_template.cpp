@@ -204,7 +204,7 @@ extern "C" void launch_my_pack_c_hip_kernel_complex_single(const int row_count, 
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
 #ifdef WITH_GPU_STREAMS
-    hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
+    hipStream_t elpa_hip_stm = (hipStream_t)my_stream;
 #endif
 
     for (int i_off = 0; i_off < stripe_width / blocksize; i_off++)
@@ -267,7 +267,7 @@ extern "C" void launch_extract_hh_tau_c_hip_kernel_complex_single(hipFloatComple
     hipError_t err;
     int grid_size = 1 + (n - 1) / MAX_BLOCK_SIZE;
 #ifdef WITH_GPU_STREAMS
-    hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
+    hipStream_t elpa_hip_stm = (hipStream_t)my_stream;
 #endif
 
 #if REALCASE == 1
@@ -328,7 +328,7 @@ extern "C" void launch_my_unpack_c_hip_kernel_complex_single(const int row_count
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
 #ifdef WITH_GPU_STREAMS
-    hipStream_t elpa_hip_stm = *((hipStream_t*)my_stream);
+    hipStream_t elpa_hip_stm = (hipStream_t)my_stream;
 #endif
 
     for (int i_off = 0; i_off < stripe_width / blocksize; i_off++)
