@@ -200,8 +200,8 @@
 #ifdef WITH_SYCL_GPU_VERSION
       use sycl_functions
 #endif
-#ifdef WITH_NVIDIA_NCCL
-      use nccl_functions
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+      use elpa_ccl_gpu
 #endif
       implicit none
 
@@ -227,24 +227,6 @@
       endif
 #endif
 
-#ifdef WITH_NVIDIA_NCCL
-      if (use_gpu_vendor == nvidia_gpu) then
-        ncclSum = nccl_redOp_ncclSum()
-        ncclMax = nccl_redOp_ncclMax()
-        ncclMin = nccl_redOp_ncclMin()
-        ncclAvg = nccl_redOp_ncclAvg()
-        ncclProd = nccl_redOp_ncclProd()
-
-        ncclInt = nccl_dataType_ncclInt()
-        ncclInt32 = nccl_dataType_ncclInt32()
-        ncclInt64 = nccl_dataType_ncclInt64()
-        ncclFloat = nccl_dataType_ncclFloat()
-        ncclFloat32 = nccl_dataType_ncclFloat32()
-        ncclFloat64 = nccl_dataType_ncclFloat64()
-        ncclDouble = nccl_dataType_ncclDouble()
-      endif
-#endif
-
 #ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
         hipMemcpyHostToDevice   = hip_memcpyHostToDevice()
@@ -259,6 +241,29 @@
         gpuHostRegisterMapped   = hipHostRegisterMapped
         hipHostRegisterDefault  = hip_hostRegisterDefault()
         gpuHostRegisterDefault  = hipHostRegisterDefault
+      endif
+#endif
+
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#ifdef WITH_NVIDIA_NCCL
+      if (use_gpu_vendor == nvidia_gpu) then
+#endif
+#ifdef WITH_AMD_RCCL
+      if (use_gpu_vendor == amd_gpu) then
+#endif
+        cclSum  = ccl_redOp_cclSum()
+        cclMax  = ccl_redOp_cclMax()
+        cclMin  = ccl_redOp_cclMin()
+        cclAvg  = ccl_redOp_cclAvg()
+        cclProd = ccl_redOp_cclProd()
+
+        cclInt     = ccl_dataType_cclInt()
+        cclInt32   = ccl_dataType_cclInt32()
+        cclInt64   = ccl_dataType_cclInt64()
+        cclFloat   = ccl_dataType_cclFloat()
+        cclFloat32 = ccl_dataType_cclFloat32()
+        cclFloat64 = ccl_dataType_cclFloat64()
+        cclDouble  = ccl_dataType_cclDouble()
       endif
 #endif
 
@@ -431,7 +436,7 @@
 
       implicit none
 
-      integer(kind=ik)              :: n
+      integer(kind=c_int)           :: n
       logical                       :: success
 
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -487,8 +492,8 @@
 
       implicit none
 
-      integer(kind=ik), intent(in)  :: n
-      logical                       :: success
+      integer(kind=c_int), intent(in) :: n
+      logical                         :: success
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then
@@ -1177,7 +1182,7 @@
 
       implicit none
       integer(kind=c_intptr_t)             :: a
-      integer(kind=ik)                     :: val
+      integer(kind=c_int)                  :: val
       integer(kind=c_intptr_t), intent(in) :: size
       integer(kind=C_INT)                  :: istat
 
@@ -1224,7 +1229,7 @@
 
       implicit none
       integer(kind=c_intptr_t)             :: a
-      integer(kind=ik)                     :: val
+      integer(kind=c_int)                  :: val
       integer(kind=c_intptr_t), intent(in) :: size
       integer(kind=C_INT)                  :: istat
       integer(kind=c_intptr_t), intent(in) :: stream

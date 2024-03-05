@@ -84,7 +84,7 @@
 
 !  interface
 !    function openmp_offload_get_last_error_c() result(istat) &
-!             bind(C, name="openmp_offloadGetLastErrorFromC")
+!             bind(C, name="openmpOffloadGetLastErrorFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=c_int)              :: istat

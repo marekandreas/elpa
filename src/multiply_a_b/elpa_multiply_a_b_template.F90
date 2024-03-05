@@ -54,10 +54,17 @@
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
 
-#ifdef WITH_NVIDIA_NCCL
+#undef USE_CCL_MULTIPLY
+#if defined(WITH_NIVIDA_NCCL) || defined(WITH_AMD_RCCL)
+#define USE_CCL_MULTIPLY
+#endif
+
+
+
+#ifdef USE_CCL_MULTIPLY
 #define MORE_GPU
 #endif
-#ifndef WITH_NVIDIA_NCCL
+#ifndef USE_CCL_MULTIPLY
 #define MORE_GPU
 #endif
 #ifdef DEVICE_POINTER
@@ -85,6 +92,9 @@
 #endif
 #ifdef WITH_NVIDIA_NCCL
   use nccl_functions
+#endif
+#ifdef WITH_AMD_RCCL
+  use rccl_functions
 #endif
   use multiply_a_b_gpu
   implicit none
@@ -154,7 +164,7 @@
   integer(kind=c_intptr_t)                     :: gpuHandle, my_stream
   integer(kind=c_int)                          :: gpu_hermitian_multiply
 
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
 #endif
 #ifdef DEVICE_POINTER
@@ -551,17 +561,27 @@
 
 #ifdef WITH_MPI
 ! NCCL only with MPI
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_MULTIPLY
       if (useGPU) then
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+#ifdef WITH_NIVIDA_NCCL
         successGPU = nccl_group_start()
+#endif
+#ifdef WITH_AMD_RCCL
+        successGPU = rccl_group_start()
+#endif
         if (.not.successGPU) then
           print *,"Error in setting up nccl_group_start!"
           stop
         endif
+#ifdef WITH_NIVIDA_NCCL
         successGPU = nccl_bcast(aux_bc_dev, aux_bc_dev, &
+#endif
+#ifdef WITH_AMD_RCCL
+        successGPU = rccl_bcast(aux_bc_dev, aux_bc_dev, &
+#endif
 #if REALCASE == 1
                          int(n_aux_bc,kind=c_size_t), &
 #endif
@@ -590,16 +610,21 @@
           print *,"Error in nccl_reduce"
           stop
         endif
+#ifdef WITH_NIVIDA_NCCL
         successGPU = nccl_group_end()
+#endif
+#ifdef WITH_AMD_RCCL
+        successGPU = rccl_group_end()
+#endif
         if (.not.successGPU) then
           print *,"Error in setting up nccl_group_end!"
           stop
         endif
 #endif /* WITH_GPU_STREAMS */
       else ! useGPU
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_MULTIPLY */
 
-#if defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL)
+#if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
       if (useGPU) then
         ! copy data to host for Bcast
         num = l_rows*nblk*size_of_datatype
@@ -617,7 +642,7 @@
 #endif
 
       endif
-#endif /* defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
 
       ! Broadcast block column
       call obj%timer%start("mpi_communication")
@@ -633,7 +658,7 @@
 #endif
       call obj%timer%stop("mpi_communication")
 
-#if defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL)
+#if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
       if (useGPU) then
         ! copy data back to device
         num = l_rows*nblk*size_of_datatype
@@ -650,11 +675,11 @@
 #endif
 
       endif !useGPU
-#endif /* defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_MULTIPLY
       endif ! useGPU
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_MULTIPLY */
 
 #else /* WITH_MPI */
 
@@ -713,14 +738,14 @@
         if (c_lower) lce = MIN(local_index(gcol, my_pcol, np_cols, nblk, -1),l_cols)
 
         if (lcs <= lce) then
-#if defined(MORE_GPU) && defined(WITH_NVIDIA_NCCL)
+#if defined(MORE_GPU) && defined(USE_CCL_MULTIPLY)
           if (.not.useGPU) then
 #endif
               ! introduce 1-based indexing
               allocate(tmp1(nstor,1:lce-lcs+1), tmp2(nstor,1:lce-lcs+1), stat=istat, errmsg=errorMessage)
               call check_alloc("elpa_mult_at_b_&
               &MATH_DATATYPE ", "tmp1", istat, errorMessage)
-#if defined(MORE_GPU) && defined(WITH_NVIDIA_NCCL)
+#if defined(MORE_GPU) && defined(USE_CCL_MULTIPLY)
           endif
 #endif
 
@@ -811,16 +836,26 @@
           if (useGPU) then
 #ifdef WITH_MPI
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_MULTIPLY
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
+#ifdef WITH_NIVIDA_NCCL
             successGPU = nccl_group_start()
+#endif
+#ifdef WITH_AMD_RCCL
+            successGPU = rccl_group_start()
+#endif
             if (.not.successGPU) then
               print *,"Error in setting up nccl_group_start!"
               stop
             endif
+#ifdef WITH_NIVIDA_NCCL
             successGPU = nccl_reduce(tmp1_dev, tmp2_dev, &
+#endif
+#ifdef WITH_AMD_RCCL
+            successGPU = rccl_reduce(tmp1_dev, tmp2_dev, &
+#endif
 #if REALCASE == 1
                          int(nstor*(lce-lcs+1),kind=c_size_t), &
 #endif
@@ -850,16 +885,21 @@
               print *,"Error in nccl_reduce"
               stop
             endif
+#ifdef WITH_NIVIDA_NCCL
             successGPU = nccl_group_end()
+#endif
+#ifdef WITH_AMD_NCCL
+            successGPU = rccl_group_end()
+#endif
             if (.not.successGPU) then
               print *,"Error in setting up nccl_group_end!"
               stop
             endif
 #endif /* WITH_GPU_STREAMS */
 
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_MULTIPLY */
 
-#if defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL)
+#if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
             ! copy data to host
             num = nstor*(lce-lcs+1)*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -873,17 +913,17 @@
                             tmp1_dev, num, gpuMemcpyDeviceToHost)
             check_memcpy_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
 #endif
-#endif /* defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
 
-#if !defined(WITH_NVIDIA_NCCL)
+#if !defined(USE_CCL_MULTIPLY)
             ! communication already done before with NCCL
             call obj%timer%start("mpi_communication")
             call mpi_reduce(tmp1, tmp2, int(nstor*(lce-lcs+1),kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                           MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
             call obj%timer%stop("mpi_communication")
-#endif /* !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(USE_CCL_MULTIPLY) */
 
-#if defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL)
+#if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
             ! copy data to device
             num = nstor*(lce-lcs+1)*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -897,7 +937,7 @@
                                     num, gpuMemcpyHostToDevice)
             check_memcpy_gpu("elpa_mult_at_b: tmp2 to tmp2_dev", successGPU)
 #endif
-#endif /* defined(MORE_GPU) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
 
 #else /* WITH_MPI */
 
@@ -952,13 +992,13 @@
             !tmp2(:,:) = 0.
 #endif /* WITH_MPI */
           endif ! useGPU
-#if defined(MORE_GPU) && defined(WITH_NVIDIA_NCCL)
+#if defined(MORE_GPU) && defined(USE_CCL_MULTIPLY)
           if (.not.useGPU) then
 #endif
               deallocate(tmp1, tmp2, stat=istat, errmsg=errorMessage)
               call check_alloc("elpa_mult_at_b_&
                 &MATH_DATATYPE ", "tmp1", istat, errorMessage)
-#if defined(MORE_GPU) && defined(WITH_NVIDIA_NCCL)
+#if defined(MORE_GPU) && defined(USE_CCL_MULTIPLY)
           endif
 #endif
         endif ! (lcs <= lce)

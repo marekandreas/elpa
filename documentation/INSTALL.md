@@ -453,9 +453,9 @@ A doxygen documentation can be created with the `--enable-doxygen-doc` configure
 
 ### 2.7 Some examples ###
 
-#### 2.7.1 Intel cores supporting AVX2 (Hasell and newer) ####
+#### 2.7.1 Intel cores supporting AVX2 (Haswell and newer) ####
 
-We recommend that you build ELPA with the Intel compiler (if available) for the Fortran part, but
+It is possible to build ELPA with the Intel compiler (if available) for the Fortran part, but
 with GNU compiler for the C part.
 
 1. Building with Intel Fortran compiler and GNU C compiler:
@@ -496,7 +496,7 @@ FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_intel_C_compiler ./
 
 #### 2.7.2 Intel cores supporting AVX-512 (Skylake and newer) ####
 
-We recommend that you build ELPA with the Intel compiler (if available) for the Fortran part, but
+It is possible to build ELPA with the Intel compiler (if available) for the Fortran part, but
 with GNU compiler for the C part.
 
 1. Building with Intel Fortran compiler and GNU C compiler:

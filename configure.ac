@@ -2751,7 +2751,7 @@ if test x"${need_amd_gpu}" = x"yes" ; then
       AC_MSG_ERROR([Could not link hipblas; try to set the hip-path or disable AMD GPU support])
     fi
     #dnl check for API version
-    AC_MSG_CHECKING(whether rocblas API v3 should be uses)
+    AC_MSG_CHECKING(whether rocblas API v3 should be used)
     AC_LANG_PUSH([C++])
     AC_COMPILE_IFELSE([AC_LANG_SOURCE([
       #include "rocblas/rocblas.h"
@@ -3243,7 +3243,10 @@ fi
 AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED])
 
-
+#############################################################
+#
+# nccl
+############################################################
 use_gpu_ccl=no
 use_nvidia_nccl=no
 use_amd_rccl=no
@@ -3308,6 +3311,46 @@ if test x"$use_nvidia_nccl" = x"yes"; then
 
 fi
 AM_CONDITIONAL([WITH_NVIDIA_NCCL],[test x"$use_nvidia_nccl" = x"yes"])
+
+
+if test x"$use_amd_rccl" = x"yes"; then
+  if test x"$use_hip_streams" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=rccl is set, you must also use --enable-gpu-streams=amd])
+  fi
+  if test x"$need_nvidia_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=rccl is set, you cannot set --enable-nvidia-gpu])
+  fi
+  if test x"${enable_openmp}" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=rccl currently not supported in combination with --enable-openmp])
+  fi
+  if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
+    AC_MSG_ERROR([The combination --enable-cuda-aware-mpi and --enable-gpu-ccl=rccl is not supported"])
+  fi
+  AC_DEFINE([WITH_AMD_RCCL],[1],[enable usage of AMD RCCL])
+
+  #needed ?
+  #AC_ARG_WITH([rccl-path],[AS_HELP_STRING([--with-rccl-path=PATH],[prefix where RCCL is installed @<:@default=auto@:>@])],
+  #            [RCCL_INSTALL_PATH=$withval], [with_cuda=auto])
+
+  AC_LANG_PUSH([C])
+  #needed?
+  #CXXFLAGS="$CXXFLAGS -I$CUDA_INSTALL_PATH/include -I$NCCL_INSTALL_PATH/include"
+  #needed?
+  #LDFLAGS="$LDFLAGS -L$NCCL_INSTALL_PATH/lib"
+  dnl check whether we find nccl
+  AC_SEARCH_LIBS([ncclGetVersion],[rccl],[have_rccl=yes],[have_rccl=no])
+  if test x"${have_rccl}" = x"no"; then
+    AC_MSG_ERROR([Could not link RCCL; either set --disable-gpu-ccl=rccl or set the RCCL installation path with --with-rccl-path=])
+  fi
+  AC_LANG_POP([C])
+
+  if test x"$with_mpi" = x"no"; then
+    AC_MSG_ERROR([Since --enable-gpu-ccl=rccl is set you must also specify --with-mpi=yes"])
+  fi
+
+fi
+AM_CONDITIONAL([WITH_AMD_RCCL],[test x"$use_amd_rccl" = x"yes"])
+
 
 #
 #if test x"$use_hip_streams" = x"yes"; then

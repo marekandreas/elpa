@@ -255,7 +255,7 @@
           OBJECT%gpu_setup%gpuIsAssigned =.true.
           !gpuIsInitialized = .true.
 
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #include "./ccl_communicators_template.F90"
 #endif
         endif ! .not.(OBJECT%gpu_setup%gpuAlreadySet)) 
@@ -397,7 +397,7 @@
             OBJECT%gpu_setup%gpuAlreadySet = .true.
 
 
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #include "./ccl_communicators_template.F90"
 #endif
 
