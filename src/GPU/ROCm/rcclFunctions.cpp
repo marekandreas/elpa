@@ -1,5 +1,5 @@
 //
-//    Copyright 2021, A. Marek
+//    Copyright 2022, A. Marek
 //
 //    This file is part of ELPA.
 //
@@ -60,20 +60,9 @@
 #include <time.h>
 #include <alloca.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <complex.h>
+#include <rccl/rccl.h>
 
-#ifdef HIPBLAS
-#ifdef WITH_AMD_ROCSOLVER
-#include <hipsolver/hipsolver.h>
-#endif
-#else /* HIPBLAS */
-#ifdef WITH_AMD_ROCSOLVER
-#include <rocsolver.h>
-#endif
-#endif
+#include "./rcclFunctions_template.h"
 
-#ifdef WITH_AMD_GPU_VERSION
-
-#include "../../../../src/GPU/ROCm/rocmFunctions_template.h"
-
-#endif /* WITH_AMD_GPU_VERSION */

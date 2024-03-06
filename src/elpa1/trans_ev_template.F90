@@ -88,6 +88,11 @@
 !> \param useGPU      If true,  GPU version of the subroutine will be used
 !>
 
+#undef USE_CCL_TRANS_EV
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#define USE_CCL_TRANS_EV
+#endif
+
 subroutine trans_ev_&
 &MATH_DATATYPE&
 &_&
@@ -102,8 +107,8 @@ subroutine trans_ev_&
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions
 #endif
-#ifdef WITH_NVIDIA_NCCL
-  use nccl_functions
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+  use elpa_ccl_gpu
 #endif
 
   implicit none
@@ -161,13 +166,13 @@ subroutine trans_ev_&
   integer(kind=c_int)                           :: non_blocking_collectives_rows, non_blocking_collectives_cols
   logical                                       :: success
   integer(kind=c_intptr_t)                      :: gpuHandle, my_stream
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
 #endif
 
 
 ! NCCL requires streams
-!#if defined (WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
+!#if defined (USE_CCL_TRANS_EV) && !defined(WITH_GPU_STREAMS)
 !  successGPU = cuda_stream_create(obj%gpu_setup%my_stream)
 !  if (.not.(successGPU)) then
 !    print *,"Cannot create gpu stream handle"
@@ -603,16 +608,16 @@ subroutine trans_ev_&
         ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
         ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
 #ifdef WITH_GPU_STREAMS
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_TRANS_EV
        ! no memory transfers needed
-#else /* WITH_NVIDIA_NCCL */
+#else /* USE_CCL_TRANS_EV */
         my_stream = obj%gpu_setup%my_stream
         num = max_local_cols * max_stored_rows * size_of_datatype
         call gpu_memcpy_async_and_stream_synchronize &
             ("tridiag tmp_dev -> tmp1", tmp_dev, 0_c_intptr_t, &
                                                  tmp1(1:max_local_cols*max_stored_rows), &
                                                  1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_TRANS_EV */
 #else /* WITH_GPU_STREAMS */
         successGPU = gpu_memcpy(int(loc(tmp1(1)),kind=c_intptr_t), tmp_dev,  &
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyDeviceToHost)
@@ -634,15 +639,15 @@ subroutine trans_ev_&
         call obj%timer%start("mpi_nbc_communication")
 #ifndef WITH_CUDA_AWARE_MPI
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_TRANS_EV
         if (useGPU) then
           ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-          successGPU = nccl_group_start()
+          successGPU = ccl_group_start()
           if (.not.successGPU) then
             print *,"Error in setting up nccl_group_start!"
             stop
           endif
-          successGPU = nccl_Allreduce(tmp_dev, tmp_dev, &
+          successGPU = ccl_Allreduce(tmp_dev, tmp_dev, &
 #if REALCASE == 1
                                       int(nstor*l_cols,kind=c_size_t), &
 #endif
@@ -651,27 +656,27 @@ subroutine trans_ev_&
 #endif
 #if REALCASE == 1
 #if DOUBLE_PRECISION == 1
-                                   ncclDouble, &
+                                   cclDouble, &
 #endif
 #if SINGLE_PRECISION == 1
-                                   ncclFloat, &
+                                   cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #if DOUBLE_PRECISION == 1
-                                   ncclDouble, &
+                                   cclDouble, &
 #endif
 #if SINGLE_PRECISION == 1
-                                   ncclFloat, &
+                                   cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
-                                   ncclSum, ccl_comm_rows, my_stream)
+                                   cclSum, ccl_comm_rows, my_stream)
 
           if (.not.successGPU) then
             print *,"Error in nccl_allreduce"
             stop
           endif
-          successGPU = nccl_group_end()
+          successGPU = ccl_group_end()
           if (.not.successGPU) then
             print *,"Error in setting up nccl_group_end!"
             stop
@@ -682,10 +687,10 @@ subroutine trans_ev_&
           call mpi_iallreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
         endif ! useGPU
-#else /* WITH_NVIDIA_NCCL */
+#else /* USE_CCL_TRANS_EV */
         call mpi_iallreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_TRANS_EV */
 
 #else /* WITH_CUDA_AWARE_MPI */
         call mpi_iallreduce(mpi_in_place, tmp_mpi, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
@@ -697,16 +702,16 @@ subroutine trans_ev_&
         call obj%timer%start("mpi_communication")
 #ifndef WITH_CUDA_AWARE_MPI
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_TRANS_EV
         if (useGPU) then
           ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-          success = nccl_group_start()
+          success = ccl_group_start()
           if (.not.success) then
             print *,"Error in setting up nccl_group_start!"
             stop
           endif
 
-          success = nccl_Allreduce(tmp_dev, tmp_dev, &
+          success = ccl_Allreduce(tmp_dev, tmp_dev, &
 #if REALCASE == 1
                                    int(nstor*l_cols,kind=c_size_t), &
 #endif
@@ -715,27 +720,27 @@ subroutine trans_ev_&
 #endif
 #if REALCASE == 1
 #if DOUBLE_PRECISION == 1
-                                   ncclDouble, &
+                                   cclDouble, &
 #endif
 #if SINGLE_PRECISION == 1
-                                   ncclFloat, &
+                                   cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #if DOUBLE_PRECISION == 1
-                                   ncclDouble, &
+                                   cclDouble, &
 #endif
 #if SINGLE_PRECISION == 1
-                                   ncclFloat, &
+                                   cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
-                                   ncclSum, ccl_comm_rows, my_stream)
+                                   cclSum, ccl_comm_rows, my_stream)
 
           if (.not.success) then
             print *,"Error in nccl_allreduce"
             stop
           endif
-          success = nccl_group_end()
+          success = ccl_group_end()
           if (.not.success) then
             print *,"Error in setting up nccl_group_end!"
             stop
@@ -746,10 +751,10 @@ subroutine trans_ev_&
           call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
         endif ! useGPU
-#else /* WITH_NVIDIA_NCCL */
+#else /* USE_CCL_TRANS_EV */
         call mpi_allreduce(tmp1, tmp2, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_TRANS_EV */
 
 #else /* WITH_CUDA_AWARE_MPI */
         call mpi_allreduce(mpi_in_place, tmp_mpi, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
@@ -763,9 +768,9 @@ subroutine trans_ev_&
         ! copy back tmp2 - after reduction...
 
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_TRANS_EV
         ! no memory copy needed
-#else /* WITH_NVIDIA_NCCL */
+#else /* USE_CCL_TRANS_EV */
 
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -779,7 +784,7 @@ subroutine trans_ev_&
                       max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("trans_ev", successGPU)
 #endif /* WITH_GPU_STREAMS */
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_TRANS_EV */
 
 #else /* WITH_CUDA_AWARE_MPI */
         
@@ -915,7 +920,7 @@ subroutine trans_ev_&
     &: tmat, tmp1, tmp2", istat, errorMessage)
   endif ! useGPU
 
-!#if defined (WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
+!#if defined (USE_CCL_TRANS_EV) && !defined(WITH_GPU_STREAMS)
 !  successGPU = cuda_stream_destroy(obj%gpu_setup%my_stream)
 !  if (.not.(successGPU)) then
 !    print *,"Cannot destroy gpu stream handle"

@@ -1,4 +1,5 @@
-!    Copyright 2014 - 2023, A. Marek
+#if 0
+!    Copyright 2021, A. Marek, MPCDF
 !
 !    This file is part of ELPA.
 !
@@ -17,6 +18,9 @@
 !      and
 !    - IBM Deutschland GmbH
 !
+!    This particular source code file contains additions, changes and
+!    enhancements authored by Intel Corporation which is not part of
+!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -40,20 +44,16 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
-!
-! Author: Andreas Marek, MPCDF
+#endif
 
 
 #include "config-f90.h"
-
-module cuda_functions
-  use, intrinsic :: iso_c_binding
+module elpa_gpu_util
   use precision
-  use cusolver_functions
-  implicit none
+  use iso_c_binding
 
-  public
+#include "../general/error_checking.inc"
+#include "./vendor_agnostic_utilities_layer_template.F90"
 
-#include "./cuda_template.F90"
+end module
 
-end module cuda_functions

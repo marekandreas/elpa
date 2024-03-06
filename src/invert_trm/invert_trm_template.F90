@@ -50,6 +50,20 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 
+#undef INVERT_TRM_GPU_SOLVER
+#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
+#define INVERT_TRM_GPU_SOLVER
+#endif
+#if defined(WITH_AMD_ROCSOLVER)
+#ifndef WITH_AMD_HIPSOLVER_API
+! at the moment {X}trtri not available in hipsolver, only in pure rocsolver
+#define INVERT_TRM_GPU_SOLVER
+#error "AAAA"
+#endif
+#endif
+
+
+
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
 #include "config-f90.h"
@@ -80,7 +94,7 @@
   integer(kind=ik)                           :: mpi_comm_all
 #ifdef DEVICE_POINTER
   type(c_ptr)                                :: aDev
-#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(INVERT_TRM_GPU_SOLVER)
   MATH_DATATYPE(kind=rck), allocatable       :: a_tmp(:,:)
 #endif
 #else /* DEVICE_POINTER */
@@ -349,7 +363,7 @@
     ! associate with a_dev
     a_dev = transfer(aDev, a_dev)
 
-#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(INVERT_TRM_GPU_SOLVER)
     ! allocate a_tmp
     allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_invert_trm: a_tmp", istat, errorMessage)
@@ -359,7 +373,7 @@
                     gpuHostRegisterDefault)
     check_host_register_gpu("elpa_invert_trm: a_tmp", successGPU)
 #endif
-#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER */
+#endif /* !defined(INVERT_TRM_GPU_SOLVER) */
 #endif /* DEVICE_POINTER */
 
   endif ! useGPU
@@ -441,7 +455,7 @@
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
 
-#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
+#if defined(INVERT_TRM_GPU_SOLVER)
           call obj%timer%start("gpusolver")
           gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = ((l_row1-1) + (l_col1-1)*matrixRows) * size_of_datatype
@@ -453,7 +467,7 @@
           endif
           call obj%timer%stop("gpusolver")
          
-#else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
+#else /* defined(INVERT_TRM_GPU_SOLVER) */
          
           ! still have to use cpu blas -> a generic GPU implementation would be needed
 #ifndef DEVICE_POINTER
@@ -492,7 +506,7 @@
           call obj%timer%stop("lapack")
 #else /* DEVICE_POINTER */
 
-#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(INVERT_TRM_GPU_SOLVER)
           call obj%timer%start("lapack")
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -527,9 +541,9 @@
           check_memcpy_gpu("invert_trm: memcpy a -> a_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
           call obj%timer%stop("lapack")
-#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER */
+#endif /* !defined(INVERT_TRM_GPU_SOLVER) */
 #endif /* DEVICE_POINTER */
-#endif /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
+#endif /* defined(INVERT_TRM_GPU_SOLVER) */
 
         else ! useGPU
           call obj%timer%start("blas")
@@ -1097,7 +1111,7 @@
 
 #else /* DEVICE_POINTER */
 
-#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(INVERT_TRM_GPU_SOLVER)
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_invert_trm: a_tmp", successGPU)
@@ -1105,7 +1119,7 @@
 
     deallocate(a_tmp, stat=istat, errmsg=errorMessage)
     check_deallocate("elpa_invert_trm: a_tmp", istat, errorMessage)
-#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER */
+#endif /* defined(INVERT_TRM_GPU_SOLVER) */
 #endif /* DEVICE_POINTER */
 
     !successGPU = gpu_host_unregister(int(loc(b),kind=c_intptr_t))

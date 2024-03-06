@@ -328,9 +328,10 @@
 #ifdef WITH_SYCL_GPU_VERSION
       use sycl_functions
 #endif
-#ifdef WITH_NVIDIA_NCCL
-      use nccl_functions
-#endif
+!#ifdef WITH_NVIDIA_NCCL
+!      use nccl_functions
+!#endif
+      use elpa_ccl_gpu
       implicit none
 
 #ifdef WITH_NVIDIA_GPU_VERSION

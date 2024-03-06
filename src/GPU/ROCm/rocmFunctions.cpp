@@ -63,9 +63,5 @@
 
 #include "config-f90.h"
 
-#ifdef WITH_AMD_ROCSOLVER
-#include <rocsolver.h>
-#endif
-
 #include "./rocmFunctions_template.h"
 

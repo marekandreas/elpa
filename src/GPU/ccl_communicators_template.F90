@@ -44,10 +44,10 @@
 ! This file was written by A. Marek, MPCDF
 #endif
 
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
             ! mpi_comm_all
             if (myid .eq. 0) then
-              success = nccl_get_unique_id(ncclId)
+              success = ccl_get_unique_id(ncclId)
               if (.not.success) then
                 write(error_unit,*) "Error in setting up unique nccl id!"
                 stop 1
@@ -68,12 +68,14 @@
               stop 1
             endif
 
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
             success = nccl_comm_init_rank(ccl_comm_all, nprocs, ncclId, myid)
             if (.not.success) then
               write(error_unit,*) "Error in setting up communicator nccl_comm_all id!"
               stop 1
             endif
-            success = nccl_group_end()
+#endif
+            success = ccl_group_end()
             if (.not.success) then
               write(error_unit,*) "Error in setting up nccl_group_end!"
               stop 1
@@ -91,7 +93,7 @@
 
             call mpi_comm_rank(mpi_comm_rows, myid_rows, mpierr)
             if (myid_rows .eq. 0) then
-              success = nccl_get_unique_id(ncclId)
+              success = ccl_get_unique_id(ncclId)
               if (.not.success) then
                 write(error_unit,*) "Error in setting up unique nccl id for rows!"
                 stop 1
@@ -103,19 +105,21 @@
               write(error_unit,*) "Error when sending unique id for rows"
               stop 1
             endif
-            success = nccl_group_start()
+            success = ccl_group_start()
             if (.not.success) then
               write(error_unit,*) "Error in setting up nccl_group_start!"
               stop 1
             endif
 
-            success = nccl_comm_init_rank(ccl_comm_rows, nprows, ncclId, myid_rows)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+            success = ccl_comm_init_rank(ccl_comm_rows, nprows, ncclId, myid_rows)
             if (.not.success) then
               write(error_unit,*) "Error in setting up communicator nccl_comm_rows id!"
               stop 1
             endif
+#endif
 
-            success = nccl_group_end()
+            success = ccl_group_end()
             if (.not.success) then
               write(error_unit,*) "Error in setting up nccl_group_end!"
               stop 1
@@ -132,11 +136,13 @@
             endif
             call mpi_comm_rank(mpi_comm_cols, myid_cols, mpierr)
             if (myid_cols .eq. 0) then
-              success = nccl_get_unique_id(ncclId)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+              success = ccl_get_unique_id(ncclId)
               if (.not.success) then
                 write(error_unit,*) "Error in setting up unique nccl id for cols!"
                 stop 1
               endif
+#endif
             endif
             call mpi_comm_size(mpi_comm_cols, npcols, mpierr)
             call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_cols, mpierr)
@@ -145,19 +151,21 @@
               stop 1
             endif
 
-            success = nccl_group_start()
+            success = ccl_group_start()
             if (.not.success) then
               write(error_unit,*) "Error in setting up nccl_group_start!"
               stop 1
             endif
 
-            success = nccl_comm_init_rank(ccl_comm_cols, npcols, ncclId, myid_cols)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+            success = ccl_comm_init_rank(ccl_comm_cols, npcols, ncclId, myid_cols)
             if (.not.success) then
               write(error_unit,*) "Error in setting up communicator nccl_comm_cols id!"
               stop 1
             endif
+#endif
 
-            success = nccl_group_end()
+            success = ccl_group_end()
             if (.not.success) then
               write(error_unit,*) "Error in setting up nccl_group_end!"
               stop 1
@@ -170,4 +178,3 @@
             !  stop 1
             !endif
 #endif
-

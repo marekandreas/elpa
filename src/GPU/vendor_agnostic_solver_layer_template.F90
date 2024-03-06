@@ -73,9 +73,11 @@
         call cusolver_Dtrtri(uplo, diag, n, a, lda, info, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Dtrtri(uplo, diag, n, a, lda, info, handle)
       endif
+#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -159,9 +161,11 @@
         call cusolver_Strtri(uplo, diag, n, a, lda, info, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Strtri(uplo, diag, n, a, lda, info, handle)
       endif
+#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -220,7 +224,7 @@
 !      endif
 #endif
     end subroutine
-
+  
     subroutine gpusolver_Ztrtri(uplo, diag, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -245,9 +249,11 @@
         call cusolver_Ztrtri(uplo, diag, n, a, lda, info, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Ztrtri(uplo, diag, n, a, lda, info, handle)
       endif
+#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -306,7 +312,7 @@
 !      endif
 #endif
     end subroutine
-
+  
     subroutine gpusolver_Ctrtri(uplo, diag, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -331,9 +337,11 @@
         call cusolver_Ctrtri(uplo, diag, n, a, lda, info, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Ctrtri(uplo, diag, n, a, lda, info, handle)
       endif
+#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION

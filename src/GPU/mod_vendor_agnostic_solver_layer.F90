@@ -56,4 +56,3 @@ module elpa_solver_gpu
 #include "./vendor_agnostic_solver_layer_template.F90"
 
 end module
-

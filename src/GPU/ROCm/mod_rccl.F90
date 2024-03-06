@@ -42,18 +42,20 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! Author: Andreas Marek, MPCDF
+! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
 
-module cuda_functions
+module rccl_functions
   use, intrinsic :: iso_c_binding
   use precision
-  use cusolver_functions
   implicit none
 
   public
 
-#include "./cuda_template.F90"
+#ifdef WITH_AMD_RCCL
+#include "./rccl_template.F90"
+#endif
 
-end module cuda_functions
+end module rccl_functions
