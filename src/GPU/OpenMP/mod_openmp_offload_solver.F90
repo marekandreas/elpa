@@ -41,19 +41,18 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! Author: Andreas Marek, MPCDF
+! Author: Peter Karpov, MPCDF
 
 
 #include "config-f90.h"
 
-module cuda_functions
+module openmp_offload_solver_functions
   use, intrinsic :: iso_c_binding
   use precision
-  use cusolver_functions
   implicit none
 
   public
 
-#include "./cuda_template.F90"
+#include "./openmp_offload_solver_template.F90"
 
-end module cuda_functions
+end module openmp_offload_solver_functions

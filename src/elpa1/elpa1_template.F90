@@ -970,6 +970,15 @@ function elpa_solve_evp_&
 
    nullify(q_actual)
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+   successGPU = gpu_get_last_error()
+   if (.not.successGPU) then
+    print *,"elpa1_template: GPU error detected via gpu_get_last_error(). Aborting..."
+    print *,"Rerun the program with the debug option e.g. 'export ELPA_DEFAULT_debug=1'"
+    stop 1
+  endif
+#endif
+
 #ifdef ACTIVATE_SKEW
    call obj%timer%stop("elpa_solve_skew_evp_&
 #else

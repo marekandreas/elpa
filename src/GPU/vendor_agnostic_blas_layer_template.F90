@@ -44,6 +44,8 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
+!
+! This file is the generated version. Do NOT edit
 #endif
 
 
@@ -194,6 +196,7 @@
 
   contains
 
+
       function gpublas_get_version(handle, version) result(success)
       use, intrinsic :: iso_c_binding
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -214,6 +217,7 @@
       integer(kind=c_intptr_t), intent(in)  :: handle
       integer(kind=c_int),      intent(out) :: version
       logical                               :: success
+
       success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
@@ -242,7 +246,6 @@
         stop 1
       endif
 #endif
-
     end function
 
     function gpublas_set_stream(handle, stream) result(success)
@@ -2770,7 +2773,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       integer(kind=c_intptr_t)          :: x, y, z
@@ -2817,7 +2820,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       type(c_ptr)                       :: x, y, z
@@ -3052,7 +3055,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       integer(kind=c_intptr_t)          :: x, y, z
@@ -3099,7 +3102,7 @@
 #endif
 
       implicit none
-      character(1,C_CHAR),value       :: conj
+      character(1,C_CHAR),value         :: conj
       integer(kind=c_intptr_t)          :: gpublasHandle
       integer(kind=c_int)               :: length, incx, incy
       type(c_ptr)                       :: x, y, z

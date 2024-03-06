@@ -423,7 +423,7 @@ program test
      stop 77
 #endif
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-#ifdef WITH_GPU_STREAMS
+#if !defined(WITH_GPU_STREAMS)
 #ifdef WITH_MPI
      call mpi_finalize(mpierr)
 #endif

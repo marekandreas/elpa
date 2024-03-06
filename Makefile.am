@@ -67,14 +67,18 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/mod_vendor_agnostic_general_layer.F90 \
   src/GPU/mod_vendor_agnostic_blas_layer.F90 \
   src/GPU/mod_vendor_agnostic_solver_layer.F90 \
-  src/GPU/mod_vendor_agnostic_layer_utilities.F90 \
+  src/GPU/mod_vendor_agnostic_utilities_layer.F90 \
   src/GPU/mod_vendor_agnostic_ccl_layer.F90 \
   src/GPU/CUDA/mod_cuda.F90 \
+  src/GPU/CUDA/mod_cusolver.F90 \
   src/GPU/CUDA/mod_nccl.F90 \
   src/GPU/ROCm/mod_hip.F90 \
+  src/GPU/ROCm/mod_rocsolver.F90 \
   src/GPU/ROCm/mod_rccl.F90 \
   src/GPU/OpenMP/mod_openmp_offload.F90 \
+  src/GPU/OpenMP/mod_openmp_offload_solver.F90 \
   src/GPU/SYCL/mod_sycl.F90 \
+  src/GPU/SYCL/mod_syclsolver.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
   src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
@@ -143,21 +147,27 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/vendor_agnostic_general_layer_template.F90 \
   src/GPU/vendor_agnostic_blas_layer_template.F90 \
   src/GPU/vendor_agnostic_solver_layer_template.F90 \
-  src/GPU/vendor_agnostic_layer_utilities_template.F90 \
+  src/GPU/vendor_agnostic_utilities_layer_template.F90 \
   src/GPU/vendor_agnostic_ccl_layer_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/ccl_communicators_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
+  src/GPU/CUDA/cusolver_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \
+  src/GPU/CUDA/cusolverFunctions_template.h \
   src/GPU/CUDA/nccl_template.F90 \
   src/GPU/CUDA/ncclFunctions_template.h \
   src/GPU/ROCm/hip_template.F90 \
+  src/GPU/ROCm/rocsolver_template.F90 \
   src/GPU/ROCm/rccl_template.F90 \
   src/GPU/ROCm/rocmFunctions_template.h \
+  src/GPU/ROCm/rocsolverFunctions_template.h \
   src/GPU/OpenMP/openmp_offload_template.F90 \
+  src/GPU/OpenMP/openmp_offload_solver_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \
+  src/GPU/SYCL/syclsolver_template.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
@@ -1021,24 +1031,30 @@ EXTRA_DIST = \
   src/GPU/vendor_agnostic_general_layer_template.F90 \
   src/GPU/vendor_agnostic_blas_layer_template.F90 \
   src/GPU/vendor_agnostic_solver_layer_template.F90 \
-  src/GPU/vendor_agnostic_layer_utilities_template.F90 \
+  src/GPU/vendor_agnostic_utilities_layer_template.F90 \
   src/GPU/vendor_agnostic_ccl_layer_template.F90 \
   src/GPU/device_arrays_template.F90 \
   src/GPU/ccl_communicators_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/CUDA/cuda_template.F90 \
+  src/GPU/CUDA/cusolver_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \
+  src/GPU/CUDA/cusolverFunctions_template.h \
   src/GPU/CUDA/nccl_template.F90 \
   src/GPU/CUDA/ncclFunctions_template.h \
   src/GPU/CUDA/cuUtils_template.cu \
   src/GPU/ROCm/hip_template.F90 \
+  src/GPU/ROCm/rocsolver_template.F90 \
   src/GPU/ROCm/rocmFunctions_template.h \
+  src/GPU/ROCm/rocsolverFunctions_template.h \
   src/GPU/ROCm/rccl_template.F90 \
   src/GPU/ROCm/rcclFunctions_template.h \
   src/GPU/ROCm/hipUtils_template.cpp \
   src/GPU/OpenMP/openmp_offload_template.F90 \
+  src/GPU/OpenMP/openmp_offload_solver_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \
+  src/GPU/SYCL/syclsolver_template.F90 \
   src/GPU/SYCL/syclUtils.cpp \
   src/GPU/SYCL/syclCommon.cpp \
   src/GPU/SYCL/syclFunctions.cpp \

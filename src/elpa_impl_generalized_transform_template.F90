@@ -55,6 +55,9 @@
             &ELPA_IMPL_SUFFIX&
             &(self, a, b, is_already_decomposed, error)
      use precision
+#if defined (WITH_NVIDIA_GPU_VERSION) && defined (WITH_NVTX)
+    use cuda_functions ! for NVTX labels
+#endif
      implicit none
 #include "general/precision_kinds.F90"
      class(elpa_impl_t)  :: self
@@ -93,6 +96,10 @@
      call self%timer_start("transform_generalized()")
      call self%get("cannon_for_generalized",use_cannon,error)
 
+#ifdef WITH_NVTX
+     call nvtxRangePush("transform_generalized")
+#endif
+
 #if !defined(WITH_MPI)
      if ((my_p == 0) .and. firstCall) then
        write(*,*) "Cannons algorithm can only be used with MPI"
@@ -115,17 +122,30 @@
      if(error .NE. ELPA_OK) return
 
      if (.not. is_already_decomposed) then
-       ! B = U^T*U, B<-U
+#ifdef WITH_NVTX
+       call nvtxRangePush("cholesky: B = U^T*U, B <- U")
+#endif
+       ! B = U^T*U, B <- U
        call self%elpa_cholesky_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &(b, error)
        if(error .NE. ELPA_OK) return
+#ifdef WITH_NVTX
+       call nvtxRangePop()
+#endif
+
+#ifdef WITH_NVTX
+       call nvtxRangePush("invert_trm: B <- inv(U)")
+#endif
        ! B <- inv(U)
        call self%elpa_invert_trm_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &(b, error)
        if(error .NE. ELPA_OK) return
      end if
+#ifdef WITH_NVTX
+     call nvtxRangePop()
+#endif
 
      if(use_cannon == 1) then
        call self%get("cannon_buffer_size",BuffLevelInt,error)
@@ -133,11 +153,17 @@
        ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
        tmp = 0.0_rck
 #ifdef WITH_MPI
+#ifdef WITH_NVTX
+    call nvtxRangePush("cannons_reduction")
+#endif
        call cannons_reduction_&
          &ELPA_IMPL_SUFFIX&
          &(a, b, self%local_nrows, self%local_ncols, &
            int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=MPI_KIND),                    &
            int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND))
+#ifdef WITH_NVTX
+    call nvtxRangePop()
+#endif
 #endif
        call self%timer_stop("cannons_reduction")
 
@@ -145,19 +171,34 @@
 
      else  ! do not use cannon algorithm, use elpa hermitian multiply and scalapack instead
        ! tmp <- inv(U^T) * A (we have to use temporary variable)
+#ifdef WITH_NVTX
+    call nvtxRangePush("hermitian_multiply: tmp <- inv(U^T) * A")
+#endif
        call self%elpa_hermitian_multiply_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
                                  self%local_nrows, self%local_ncols, error)
        if(error .NE. ELPA_OK) return
+#ifdef WITH_NVTX
+       call nvtxRangePop()
+#endif
 
        ! A <- inv(U)^T * A
+#ifdef WITH_NVTX
+    call nvtxRangePush("copy: tmp -> a")
+#endif
        a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+#ifdef WITH_NVTX
+    call nvtxRangePop()
+#endif
 
        ! A <- inv(U)^T * A * inv(U)
        ! For this multiplication we do not have internal function in ELPA,
        ! so we have to call scalapack
        call self%timer_start("scalapack multiply A * inv(U)")
+#ifdef WITH_NVTX
+       call nvtxRangePush("scalapack multiply A * inv(U)")
+#endif
 #ifdef WITH_MPI
        call p&
            &BLAS_CHAR&
@@ -169,10 +210,17 @@
            &trmm("R", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%na,kind=BLAS_KIND), &
                  ONE, b, int(self%na,kind=BLAS_KIND), a, int(self%na,kind=BLAS_KIND))
 #endif
+#ifdef WITH_NVTX
+       call nvtxRangePop()
+#endif
        call self%timer_stop("scalapack multiply A * inv(U)")
      endif ! use_cannon
 
      !write(*, *) my_prow, my_pcol, "A(2,3)", a(2,3)
+
+#ifdef WITH_NVTX
+     call nvtxRangePop() ! transform_generalized
+#endif
 
      call self%timer_stop("transform_generalized()")
     end subroutine
@@ -181,13 +229,16 @@
     subroutine elpa_transform_back_generalized_&
             &ELPA_IMPL_SUFFIX&
             &(self, b, q, error)
-        implicit none
+#ifdef WITH_NVIDIA_GPU_VERSION
+     use cuda_functions ! for NVTX labels
+#endif
+     implicit none
 #include "general/precision_kinds.F90"
-        class(elpa_impl_t)  :: self
+     class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=rck) :: b(self%local_nrows, *), q(self%local_nrows, *)
+     MATH_DATATYPE(kind=rck) :: b(self%local_nrows, *), q(self%local_nrows, *)
 #else
-      MATH_DATATYPE(kind=rck) :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+     MATH_DATATYPE(kind=rck) :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
      integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
      integer(kind=MPI_KIND) :: mpierr, my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
@@ -217,6 +268,10 @@
      call self%timer_start("transform_back_generalized()")
      call self%get("cannon_for_generalized",use_cannon,error)
 
+#ifdef WITH_NVTX
+     call nvtxRangePush("transform_back_generalized")
+#endif
+
 #if !defined(WITH_MPI)
      use_cannon = 0
 #endif
@@ -231,6 +286,9 @@
 
      if(use_cannon == 1) then
        call self%timer_start("cannons_triang_rectangular")
+#ifdef WITH_NVTX
+       call nvtxRangePush("cannons_triang_rectangular")
+#endif  
 #ifdef WITH_MPI
        call cannons_triang_rectangular_&
          &ELPA_IMPL_SUFFIX&
@@ -238,11 +296,17 @@
            int(sc_desc,kind=BLAS_KIND), int(sc_desc_ev,kind=BLAS_KIND), tmp,  &
            int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND) );
 #endif
+#ifdef WITH_NVTX
+       call nvtxRangePop()
+#endif 
        call self%timer_stop("cannons_triang_rectangular")
 
        q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
      else
        call self%timer_start("scalapack multiply inv(U) * Q")
+#ifdef WITH_NVTX
+       call nvtxRangePush("scalapack multiply: Q <- inv(U) * Q")
+#endif       
 #ifdef WITH_MPI
        ! Q <- inv(U) * Q
        call p&
@@ -255,8 +319,15 @@
            &trmm("L", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%nev,kind=BLAS_KIND), &
                  ONE, b, int(self%na,kind=BLAS_KIND), q, int(self%na,kind=BLAS_KIND))
 #endif
+#ifdef WITH_NVTX
+       call nvtxRangePop()
+#endif  
        call self%timer_stop("scalapack multiply inv(U) * Q")
      endif
+
+#ifdef WITH_NVTX
+     call nvtxRangePop() ! transform_back_generalized
+#endif
      call self%timer_stop("transform_back_generalized()")
 
     end subroutine
