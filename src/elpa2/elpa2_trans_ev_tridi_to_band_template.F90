@@ -988,10 +988,10 @@ subroutine trans_ev_tridi_to_band_&
               check_memcpy_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
 
               successGPU = gpu_stream_synchronize(my_stream)
-              check_stream_syncronize_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
+              check_stream_synchronize_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
               ! synchronize streamsPerThread; maybe not neccessary
               successGPU = gpu_stream_synchronize()
-              check_stream_syncronize_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
+              check_stream_synchronize_gpu("tridi_to_band: row_dev -> row_group_dev", successGPU)
 
 #else
               successGPU =  gpu_memcpy(c_loc(row_group_mpi_fortran_ptr(1,row_group_size)), &
@@ -2673,7 +2673,7 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU = gpu_stream_synchronize(my_stream)
                   check_stream_synchronize_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
 
-                  successGPU =  gpu_memcpy_async( aIntern_dev+dev_offset , int(loc(top_border_recv_buffer(1,i)),kind=c_intptr_t),  &
+                  successGPU =  gpu_memcpy_async( aIntern_dev+dev_offset , int(loc(top_border_recv_buffer(1,i)),kind=c_intptr_t), &
                                              stripe_width*top_msg_length* size_of_datatype,      &
                                              gpuMemcpyHostToDevice, my_stream)
                   check_memcpy_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
@@ -2823,7 +2823,8 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU = gpu_stream_synchronize(my_stream)
                   check_stream_synchronize_gpu("tridi_to_band: top_border_recv_buffer -> aIntern_dev", successGPU)
 
-                  successGPU =  gpu_memcpy_async( int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
+                  successGPU =  gpu_memcpy_async( int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), &
+                                            aIntern_dev + dev_offset, &
                                             stripe_width * bottom_msg_length * size_of_datatype,      &
                                             gpuMemcpyDeviceToHost, my_stream)
                   check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
@@ -2979,7 +2980,8 @@ subroutine trans_ev_tridi_to_band_&
                   check_stream_synchronize_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
 
 #else
-                  successGPU =  gpu_memcpy( int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
+                  successGPU =  gpu_memcpy( int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), &
+                                            aIntern_dev + dev_offset, &
                                             stripe_width * bottom_msg_length * size_of_datatype,      &
                                             gpuMemcpyDeviceToHost)
                   check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
@@ -3169,7 +3171,8 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU = gpu_stream_synchronize(my_stream)
                   check_stream_synchronize_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
 
-                  successGPU =  gpu_memcpy_async(int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
+                  successGPU =  gpu_memcpy_async(int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), &
+                                               aIntern_dev + dev_offset,  &
                                                stripe_width*bottom_msg_length* size_of_datatype,  &
                                                gpuMemcpyDeviceToHost, my_stream)
                   check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
@@ -3351,7 +3354,7 @@ subroutine trans_ev_tridi_to_band_&
                   successGPU = gpu_stream_synchronize()
                   check_stream_synchronize_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)
 #else
-                  successGPU =  gpu_memcpy(int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset,  &
+                  successGPU =  gpu_memcpy(int(loc(bottom_border_send_buffer(1,i)),kind=c_intptr_t), aIntern_dev + dev_offset, &
                                            stripe_width*bottom_msg_length* size_of_datatype,  &
                                            gpuMemcpyDeviceToHost)
                   check_memcpy_gpu("tridi_to_band: aIntern_dev -> bottom_border_send_buffer", successGPU)

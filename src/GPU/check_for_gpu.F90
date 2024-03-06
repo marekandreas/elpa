@@ -55,12 +55,11 @@ module mod_check_for_gpu
     ! if NOT the first call to check_for_gpu will set the MPI GPU relation and then
     ! _SET_ use_gpu_id such that subsequent calls abide this setting
     function check_for_gpu(obj, myid, numberOfDevices, wantDebug) result(gpuAvailable)
-      use elpa_gpu, only : gpublasDefaultPointerMode
+      use elpa_gpu, only : gpublasDefaultPointerMode, gpu_getdevicecount, gpublas_get_version
       use cuda_functions
       use hip_functions
       use openmp_offload_functions
       use sycl_functions
-      use elpa_gpu, only : gpu_getdevicecount
       use precision
       use elpa_mpi
       use elpa_omp
@@ -81,6 +80,7 @@ module mod_check_for_gpu
       integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
       !logical, save                              :: alreadySET=.false.
       integer(kind=ik)                           :: maxThreads, thread
+      integer(kind=c_int)                        :: cublas_version
       integer(kind=c_int)                        :: syclShowOnlyIntelGpus
       integer(kind=ik)                           :: syclShowAllDevices
       integer(kind=c_intptr_t)                   :: handle_tmp
@@ -95,7 +95,7 @@ module mod_check_for_gpu
       integer(kind=c_intptr_t)                   :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols
       integer(kind=ik)                           :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
 #endif
-
+      integer(kind=ik)                           :: attribute, value
 #define OBJECT obj
 #define ADDITIONAL_OBJECT_CODE
 #include "./check_for_gpu_template.F90"

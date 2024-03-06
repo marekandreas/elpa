@@ -55,6 +55,19 @@
   integer(kind=ik) :: mkl_openmp_offloadPointerModeDevice
   integer(kind=ik) :: mkl_openmp_offloadPointerModeHost
 
+
+!  interface
+!    function cublas_get_version_c(cudaHandle, version) result(istat) &
+!             bind(C, name="cublasGetVersionFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!
+!      integer(kind=C_intptr_T), value  :: cudaHandle
+!      integer(kind=C_INT)              :: version
+!      integer(kind=C_INT)              :: istat
+!    end function
+!  end interface
+
 !  ! streams
 !
 !  interface
@@ -179,8 +192,8 @@
              bind(C, name="openmpOffloadGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT), intent(out) :: n
-      integer(kind=C_INT)              :: istat
+      integer(kind=C_INT), intent(out)         :: n
+      integer(kind=C_INT)                      :: istat
     end function
   end interface
 
@@ -1359,24 +1372,24 @@
   end interface
 
 !  interface
-!    subroutine mkl_openmp_offload_Ddot_intptr_c(mkl_openmp_offloadHandle, length, x, incx, y, incy, z) &
+!    subroutine mkl_openmp_offload_Ddot_intptr_c(mkl_openmp_offloadHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="mkl_openmp_offloadDdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      integer(kind=C_intptr_T), value         :: x, y, result
 !    end subroutine
 !  end interface
 
 !  interface
-!    subroutine mkl_openmp_offload_Ddot_cptr_c(mkl_openmp_offloadHandle, length, x, incx, y, incy, z) &
+!    subroutine mkl_openmp_offload_Ddot_cptr_c(mkl_openmp_offloadHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="mkl_openmp_offloadDdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      type(c_ptr), value                      :: x, y, result
 !    end subroutine
 !  end interface
 
@@ -1444,24 +1457,24 @@
   end interface
 
 !  interface
-!    subroutine mkl_openmp_offload_Sdot_intptr_c(mkl_openmp_offloadHandle, length, x, incx, y, incy, z) &
+!    subroutine mkl_openmp_offload_Sdot_intptr_c(mkl_openmp_offloadHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="mkl_openmp_offloadSdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      integer(kind=C_intptr_T), value         :: x, y, result
 !    end subroutine
 !  end interface
 
 !  interface
-!    subroutine mkl_openmp_offload_Sdot_cptr_c(mkl_openmp_offloadHandle, length, x, incx, y, incy, z) &
+!    subroutine mkl_openmp_offload_Sdot_cptr_c(mkl_openmp_offloadHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="mkl_openmp_offloadSdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      type(c_ptr), value                      :: x, y, result
 !    end subroutine
 !  end interface
 
@@ -1529,26 +1542,26 @@
   end interface
 
 !  interface
-!    subroutine mkl_openmp_offload_Zdot_intptr_c(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z) &
+!    subroutine mkl_openmp_offload_Zdot_intptr_c(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="mkl_openmp_offloadZdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      character(1,C_CHAR),value               :: conj
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      integer(kind=C_intptr_T), value         :: x, y, result
 !    end subroutine
 !  end interface
 
 !  interface
-!    subroutine mkl_openmp_offload_Zdot_cptr_c(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z) &
+!    subroutine mkl_openmp_offload_Zdot_cptr_c(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="mkl_openmp_offloadZdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      character(1,C_CHAR),value               :: conj
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      type(c_ptr), value                      :: x, y, result
 !    end subroutine
 !  end interface
 
@@ -1616,26 +1629,26 @@
   end interface
 
 !  interface
-!    subroutine mkl_openmp_offload_Cdot_intptr_c(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z) &
+!    subroutine mkl_openmp_offload_Cdot_intptr_c(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="mkl_openmp_offloadCdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      character(1,C_CHAR),value               :: conj
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      integer(kind=C_intptr_T), value         :: x, y, result
 !    end subroutine
 !  end interface
 
 !  interface
-!    subroutine mkl_openmp_offload_Cdot_cptr_c(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z) &
+!    subroutine mkl_openmp_offload_Cdot_cptr_c(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="mkl_openmp_offloadCdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      character(1,C_CHAR),value               :: conj
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      type(c_ptr), value                      :: x, y, result
 !    end subroutine
 !  end interface
 
@@ -1698,6 +1711,19 @@
 !  end interface
 
   contains
+
+!    function cublas_get_version(cublasHandle, version) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_t)                  :: cublasHandle
+!      integer(kind=C_INT)                       :: version
+!      logical                                   :: success
+!#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+!      success = cublas_get_version_c(cublasHandle, version) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
 
 !    function openmp_offload_stream_create(openmpOffloadStream) result(success)
 !      use, intrinsic :: iso_c_binding
@@ -2944,6 +2970,7 @@
       integer(kind=ik) :: flag
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"pointerModeDevice not yet implemented!"
+      flag = 1
       stop 1
 #else
       flag = 0
@@ -2957,6 +2984,7 @@
       integer(kind=ik) :: flag
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"pointerModeHost not yet implemented!"
+      flag = 1
       stop 1
 #else
       flag = 0
@@ -2988,12 +3016,12 @@
     end subroutine
 
 
-    subroutine mkl_openmp_offload_Ddot_intptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
+    subroutine mkl_openmp_offload_Ddot_intptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3001,12 +3029,12 @@
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_Ddot_cptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
+    subroutine mkl_openmp_offload_Ddot_cptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3071,12 +3099,12 @@
     end subroutine
 
 
-    subroutine mkl_openmp_offload_Sdot_intptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
+    subroutine mkl_openmp_offload_Sdot_intptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3084,12 +3112,12 @@
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_Sdot_cptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
+    subroutine mkl_openmp_offload_Sdot_cptr(mkl_openmp_offloadHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3154,13 +3182,13 @@
     end subroutine
 
 
-    subroutine mkl_openmp_offload_Zdot_intptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
+    subroutine mkl_openmp_offload_Zdot_intptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3168,13 +3196,13 @@
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_Zdot_cptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
+    subroutine mkl_openmp_offload_Zdot_cptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3239,13 +3267,13 @@
     end subroutine
 
 
-    subroutine mkl_openmp_offload_Cdot_intptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
+    subroutine mkl_openmp_offload_Cdot_intptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3253,13 +3281,13 @@
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_Cdot_cptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, z)
+    subroutine mkl_openmp_offload_Cdot_cptr(conj, mkl_openmp_offloadHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: mkl_openmp_offloadHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"{X}DOT not yet implemented!"

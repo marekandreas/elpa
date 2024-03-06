@@ -111,12 +111,12 @@ module elpa_cholesky
 !> \param     - obj%mpi_comm_rows MPI communicator for rows
 !> \param     - obj%mpi_comm_cols MPI communicator for columns
 !> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted as type(c_ptr) living on device
+!> \param  aDev(lda,matrixCols)   Distributed matrix which should be inverted as type(c_ptr) living on device
 !>                                Distribution is like in Scalapack.
 !>                                Only upper triangle needs to be set.
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
-   function elpa_cholesky_d_ptr_real_double_impl (obj, a) result(success)
+   function elpa_cholesky_d_ptr_real_double_impl (obj, aDev) result(success)
 #include "./elpa_cholesky_template.F90"
 
     end function elpa_cholesky_d_ptr_real_double_impl
@@ -173,12 +173,12 @@ module elpa_cholesky
 !> \param     - obj%mpi_comm_rows MPI communicator for rows
 !> \param     - obj%mpi_comm_cols MPI communicator for columns
 !> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted as type(c_ptr) living on a device
+!> \param  aDev(lda,matrixCols)   Distributed matrix which should be inverted as type(c_ptr) living on a device
 !>                                Distribution is like in Scalapack.
 !>                                Only upper triangle needs to be set.
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
-   function elpa_cholesky_d_ptr_real_single_impl(obj, a) result(success)
+   function elpa_cholesky_d_ptr_real_single_impl(obj, aDev) result(success)
 #include "./elpa_cholesky_template.F90"
 
     end function elpa_cholesky_d_ptr_real_single_impl
@@ -233,12 +233,12 @@ module elpa_cholesky
 !> \param     - obj%mpi_comm_rows MPI communicator for rows
 !> \param     - obj%mpi_comm_cols MPI communicator for columns
 !> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted as type(c_ptr) living on a device
+!> \param  aDev(lda,matrixCols)   Distributed matrix which should be inverted as type(c_ptr) living on a device
 !>                                Distribution is like in Scalapack.
 !>                                Only upper triangle needs to be set.
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
-    function elpa_cholesky_d_ptr_complex_double_impl(obj, a) result(success)
+    function elpa_cholesky_d_ptr_complex_double_impl(obj, aDev) result(success)
 
 #include "./elpa_cholesky_template.F90"
 
@@ -294,12 +294,12 @@ module elpa_cholesky
 !> \param     - obj%mpi_comm_rows MPI communicator for rows
 !> \param     - obj%mpi_comm_cols MPI communicator for columns
 !> \param     - obj%wantDebug     logical, more debug information on failure
-!> \param  a(lda,matrixCols)      Distributed matrix which should be inverted, as type(c_ptr) living on device
+!> \param  aDev(lda,matrixCols)   Distributed matrix which should be inverted, as type(c_ptr) living on device
 !>                                Distribution is like in Scalapack.
 !>                                Only upper triangle needs to be set.
 !>                                The lower triangle is not referenced.
 !> \result succes                 logical, reports success or failure
-    function elpa_cholesky_d_ptr_complex_single_impl(obj, a) result(success)
+    function elpa_cholesky_d_ptr_complex_single_impl(obj, aDev) result(success)
 
 #include "./elpa_cholesky_template.F90"
 

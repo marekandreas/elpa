@@ -55,6 +55,32 @@
   integer(kind=ik) :: syclblasPointerModeDevice
   integer(kind=ik) :: syclblasPointerModeHost
 
+
+!  interface
+!    function sycl_device_get_attributes_c(value, attribute) result(istat) &
+!             bind(C, name="syclDeviceGetAttributeFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!
+!      integer(kind=C_INT), value  :: attribute
+!      integer(kind=C_INT)         :: value
+!      integer(kind=C_INT)         :: istat
+!    end function
+!  end interface
+
+
+!  interface
+!    function syclblas_get_version_c(syclblasHandle, version) result(istat) &
+!             bind(C, name="syclblasGetVersionFromC")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!
+!      integer(kind=C_intptr_T), value  :: syclblasHandle
+!      integer(kind=C_INT)              :: version
+!      integer(kind=C_INT)              :: istat
+!    end function
+!  end interface
+
 !  ! streams
 !
 !  interface
@@ -175,13 +201,22 @@
   end interface
 
   interface
-    function sycl_getdevicecount_c(n, onlyIntelGpus) result(istat) &
+    function sycl_getdevicecount_c(n, onlyIntelgpus) result(istat) &
              bind(C, name="syclGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT), intent(out)       :: n
-      integer(kind=C_INT), intent(in), value :: onlyIntelGpus
-      integer(kind=C_INT)                    :: istat
+      integer(kind=C_INT), intent(out)         :: n
+      integer(kind=C_INT), intent(in), value :: onlyIntelgpus
+      integer(kind=C_INT)                      :: istat
+    end function
+  end interface
+
+  interface
+    function sycl_printdevices_c() result(n) &
+             bind(C, name="syclPrintDevicesFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT) :: n
     end function
   end interface
 
@@ -195,14 +230,6 @@
     end function
   end interface
 
-  interface
-    function sycl_printdevices_c() result(n) &
-             bind(C, name="syclPrintDevicesFromC")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT) :: n
-    end function sycl_printdevices_c
-  end interface
 
 !  interface
 !    function sycl_devicesynchronize_c()result(istat) &
@@ -1379,24 +1406,24 @@
   end interface
 
 !  interface
-!    subroutine syclblas_Ddot_intptr_c(syclblasHandle, length, x, incx, y, incy, z) &
+!    subroutine syclblas_Ddot_intptr_c(syclblasHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="syclblasDdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      integer(kind=C_intptr_T), value         :: x, y, result
 !    end subroutine
 !  end interface
 
 !  interface
-!    subroutine syclblas_Ddot_cptr_c(syclblasHandle, length, x, incx, y, incy, z) &
+!    subroutine syclblas_Ddot_cptr_c(syclblasHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="syclblasDdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      type(c_ptr), value                      :: x, y, result
 !    end subroutine
 !  end interface
 
@@ -1464,24 +1491,24 @@
   end interface
 
 !  interface
-!    subroutine syclblas_Sdot_intptr_c(syclblasHandle, length, x, incx, y, incy, z) &
+!    subroutine syclblas_Sdot_intptr_c(syclblasHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="syclblasSdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      integer(kind=C_intptr_T), value         :: x, y, result
 !    end subroutine
 !  end interface
 
 !  interface
-!    subroutine syclblas_Sdot_cptr_c(syclblasHandle, length, x, incx, y, incy, z) &
+!    subroutine syclblas_Sdot_cptr_c(syclblasHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="syclblasSdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      type(c_ptr), value                      :: x, y, result
 !    end subroutine
 !  end interface
 
@@ -1549,26 +1576,26 @@
   end interface
 
 !  interface
-!    subroutine syclblas_Zdot_intptr_c(conj, syclblasHandle, length, x, incx, y, incy, z) &
+!    subroutine syclblas_Zdot_intptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="syclblasZdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      character(1,C_CHAR),value               :: conj
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      integer(kind=C_intptr_T), value         :: x, y, result
 !    end subroutine
 !  end interface
 
 !  interface
-!    subroutine syclblas_Zdot_cptr_c(conj, syclblasHandle, length, x, incx, y, incy, z) &
+!    subroutine syclblas_Zdot_cptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="syclblasZdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      character(1,C_CHAR),value               :: conj
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      type(c_ptr), value                      :: x, y, result
 !    end subroutine
 !  end interface
 
@@ -1636,26 +1663,26 @@
   end interface
 
 !  interface
-!    subroutine syclblas_Cdot_intptr_c(conj, syclblasHandle, length, x, incx, y, incy, z) &
+!    subroutine syclblas_Cdot_intptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="syclblasCdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      character(1,C_CHAR),value               :: conj
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      integer(kind=C_intptr_T), value         :: x, y, result
 !    end subroutine
 !  end interface
 
 !  interface
-!    subroutine syclblas_Cdot_cptr_c(conj, syclblasHandle, length, x, incx, y, incy, z) &
+!    subroutine syclblas_Cdot_cptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
 !               bind(C, name="syclblasCdot_elpa_wrapper")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !      character(1,C_CHAR),value               :: conj
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, z
+!      integer(kind=C_INT), value              :: length, incx, incy
+!      type(c_ptr), value                      :: x, y, result
 !    end subroutine
 !  end interface
 
@@ -1718,6 +1745,31 @@
 !  end interface
 
   contains
+
+!    function sycl_device_get_attributes(value, attribute) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_INT)                       :: value, attribute
+!      logical                                   :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = sycl_device_get_attributes_c(value, attribute) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
+
+!    function syclblas_get_version(syclblasHandle, version) result(success)
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_t)                  :: syclblasHandle
+!      integer(kind=C_INT)                       :: version
+!      logical                                   :: success
+!#ifdef WITH_SYCL_GPU_VERSION
+!      success = syclblas_get_version_c(syclblasHandle, version) /= 0
+!#else
+!      success = .true.
+!#endif
+!    end function
 
 !    function sycl_stream_create(syclStream) result(success)
 !      use, intrinsic :: iso_c_binding
@@ -3038,12 +3090,12 @@
     end subroutine
 
 
-    subroutine syclblas_Ddot_intptr(syclblasHandle, length, x, incx, y, incy, z)
+    subroutine syclblas_Ddot_intptr(syclblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3051,12 +3103,12 @@
 #endif
     end subroutine
 
-    subroutine syclblas_Ddot_cptr(syclblasHandle, length, x, incx, y, incy, z)
+    subroutine syclblas_Ddot_cptr(syclblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3121,12 +3173,12 @@
     end subroutine
 
 
-    subroutine syclblas_Sdot_intptr(syclblasHandle, length, x, incx, y, incy, z)
+    subroutine syclblas_Sdot_intptr(syclblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3134,12 +3186,12 @@
 #endif
     end subroutine
 
-    subroutine syclblas_Sdot_cptr(syclblasHandle, length, x, incx, y, incy, z)
+    subroutine syclblas_Sdot_cptr(syclblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3204,13 +3256,13 @@
     end subroutine
 
 
-    subroutine syclblas_Zdot_intptr(conj, syclblasHandle, length, x, incx, y, incy, z)
+    subroutine syclblas_Zdot_intptr(conj, syclblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3218,13 +3270,13 @@
 #endif
     end subroutine
 
-    subroutine syclblas_Zdot_cptr(conj, syclblasHandle, length, x, incx, y, incy, z)
+    subroutine syclblas_Zdot_cptr(conj, syclblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3289,13 +3341,13 @@
     end subroutine
 
 
-    subroutine syclblas_Cdot_intptr(conj, syclblasHandle, length, x, incx, y, incy, z)
+    subroutine syclblas_Cdot_intptr(conj, syclblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      integer(kind=c_intptr_t) :: x, y, z
+      integer(kind=c_intptr_t) :: x, y, result
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
@@ -3303,13 +3355,13 @@
 #endif
     end subroutine
 
-    subroutine syclblas_Cdot_cptr(conj, syclblasHandle, length, x, incx, y, incy, z)
+    subroutine syclblas_Cdot_cptr(conj, syclblasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
        character(1,c_char), value   :: conj
       integer(kind=c_intptr_t) :: syclblasHandle
       integer(kind=c_int)      :: length, incx, incy
-      type(c_ptr)              :: x, y, z
+      type(c_ptr)              :: x, y, result
 
 #ifdef WITH_SYCL_GPU_VERSION
       print *,"{X}DOT not yet implemented!"
