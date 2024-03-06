@@ -1392,7 +1392,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_free_cptr(a)
+        success = sycl_free_intptr(a)
       endif
 #endif
 

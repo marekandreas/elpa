@@ -111,7 +111,7 @@
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: info
       integer(kind=c_intptr_t)        :: handle
 
       if (use_gpu_vendor == nvidia_gpu) then
@@ -199,7 +199,7 @@
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: info
       integer(kind=c_intptr_t)        :: handle
 
       if (use_gpu_vendor == nvidia_gpu) then
@@ -287,7 +287,7 @@
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: info
       integer(kind=c_intptr_t)        :: handle
 
       if (use_gpu_vendor == nvidia_gpu) then
@@ -375,7 +375,7 @@
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
+      integer(kind=c_intptr_t)        :: info
       integer(kind=c_intptr_t)        :: handle
 
       if (use_gpu_vendor == nvidia_gpu) then
@@ -401,3 +401,42 @@
 #endif
     end subroutine
 
+    !! TODO I just added this subroutine to that the linker would be happy!
+    subroutine gpusolver_Xpotrf_bufferSize(gpusolverHandle, uplo, n, dataType, a_dev, lda, &
+                                           workspaceInBytesOnDevice, workspaceInBytesOnHost)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      implicit none
+      integer(kind=c_intptr_t)        :: gpusolverHandle
+      character(1, c_char), value     :: uplo, dataType
+      integer(kind=c_int)             :: n, lda
+      integer(kind=c_intptr_t)        :: a_dev
+      integer(kind=c_size_t)          :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+
+#ifdef WITH_NVIDIA_CUSOLVER
+      call cusolver_Xpotrf_bufferSize_c(gpusolverHandle, uplo, n, dataType, a_dev, lda, &
+                                        workspaceInBytesOnDevice, workspaceInBytesOnHost)
+#endif
+    end subroutine
+
+    ! cusolver_Xpotrf
+
+    subroutine gpusolver_Xpotrf(gpusolverHandle, uplo, n, dataType, a_dev, lda, &
+                               buffer_dev , workspaceInBytesOnDevice, &
+                               buffer_host, workspaceInBytesOnHost, info_dev)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+      implicit none
+      integer(kind=c_intptr_t)        :: gpusolverHandle
+      character(1, c_char), value     :: uplo, dataType
+      integer(kind=c_int)             :: n, lda
+      integer(kind=c_intptr_t)        :: a_dev, buffer_dev, info_dev
+      integer(kind=c_intptr_t)        :: buffer_host
+      integer(kind=c_size_t)          :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+
+#ifdef WITH_NVIDIA_CUSOLVER
+      call cusolver_Xpotrf_c(gpusolverHandle, uplo, n, dataType, a_dev, lda, &
+                             buffer_dev , workspaceInBytesOnDevice, &
+                             buffer_host, workspaceInBytesOnHost, info_dev)
+#endif
+    end subroutine
