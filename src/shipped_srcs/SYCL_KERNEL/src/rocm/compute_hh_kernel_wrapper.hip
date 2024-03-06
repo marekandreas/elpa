@@ -1,6 +1,6 @@
 // TODO: license
 
-#define WITH_HIPCUB
+//#define WITH_HIPCUB
 // These two are actually not really header files, but symlinks to their respective versions in ELPA.
 // This allows the proxy application to stay current while not requireing any changes to the original files.
 #include "compute_hh_kernel_complex.hpp"
