@@ -79,6 +79,7 @@
 
   ! rocsolver_?trtri_c
 
+#ifndef WITH_AMD_HIPSOLVER_API
   interface
     subroutine rocsolver_Dtrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info) &
                               bind(C,name="rocsolverDtrtri_elpa_wrapper")
@@ -91,7 +92,9 @@
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
+#endif
 
+#ifndef WITH_AMD_HIPSOLVER_API
   interface
     subroutine rocsolver_Strtri_c(rocsolverHandle, uplo, diag, n, a, lda, info) &
                               bind(C,name="rocsolverStrtri_elpa_wrapper")
@@ -104,7 +107,9 @@
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
+#endif
 
+#ifndef WITH_AMD_HIPSOLVER_API
   interface
     subroutine rocsolver_Ztrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info) &
                               bind(C,name="rocsolverZtrtri_elpa_wrapper")
@@ -117,7 +122,9 @@
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
+#endif
 
+#ifndef WITH_AMD_HIPSOLVER_API
   interface
     subroutine rocsolver_Ctrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info) &
                               bind(C,name="rocsolverCtrtri_elpa_wrapper")
@@ -130,6 +137,7 @@
       integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
+#endif
 
   ! rocsolver_?potrf_c
 
@@ -259,6 +267,7 @@
 
     ! rocsolver_?trtri
 
+#ifndef WITH_AMD_HIPSOLVER_API
     subroutine rocsolver_Dtrtri(uplo, diag, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -271,7 +280,9 @@
       call rocsolver_Dtrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
+#endif
 
+#ifndef WITH_AMD_HIPSOLVER_API
     subroutine rocsolver_Strtri(uplo, diag, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -284,7 +295,9 @@
       call rocsolver_Strtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
+#endif
 
+#ifndef WITH_AMD_HIPSOLVER_API
     subroutine rocsolver_Ztrtri(uplo, diag, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -297,7 +310,9 @@
       call rocsolver_Ztrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
+#endif
 
+#ifndef WITH_AMD_HIPSOLVER_API
     subroutine rocsolver_Ctrtri(uplo, diag, n, a, lda, info, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -310,6 +325,7 @@
       call rocsolver_Ctrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
 #endif
     end subroutine
+#endif
 
     ! rocsolver_?potrf
 

@@ -69,17 +69,27 @@
   end interface
 
 
-!  interface
-!    function rocblas_get_version_c(rocblasHandle, version) result(istat) &
-!             bind(C, name="rocblasGetVersionFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!
-!      integer(kind=C_intptr_T), value  :: rocblasHandle
-!      integer(kind=C_INT)              :: version
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
+  interface
+    function rocblas_get_version_c(rocblasHandle, version) result(istat) &
+             bind(C, name="rocblasGetVersionFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value  :: rocblasHandle
+      integer(kind=C_INT)              :: version
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+
+  interface
+    function hip_get_last_error_c() result(istat) &
+             bind(C, name="hipGetLastErrorFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int)              :: istat
+    end function
+  end interface
 
   ! streams
 
@@ -136,18 +146,6 @@
     end function
   end interface
 
-!  interface
-!    function rocsolver_set_stream_c(rocsolverHandle, hipStream) result(istat) &
-!             bind(C, name="rocsolverSetStreamFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!
-!      integer(kind=C_intptr_T), value  :: rocsolverHandle
-!      integer(kind=C_intptr_T), value  :: hipStream
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
-
   ! functions to set and query the GPU devices
   interface
     function rocblas_create_c(hipHandle) result(istat) &
@@ -168,26 +166,6 @@
       integer(kind=C_INT)      :: istat
     end function
   end interface
-
-!  interface
-!    function rocsolver_create_c(rocsolverHandle) result(istat) &
-!             bind(C, name="rocsolverCreateFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T) :: rocsolverHandle
-!      integer(kind=C_INT)      :: istat
-!    end function
-!  end interface
-!
-!  interface
-!    function rocsolver_destroy_c(rocsolverHandle) result(istat) &
-!             bind(C, name="rocsolverDestroyFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value :: rocsolverHandle
-!      integer(kind=C_INT)      :: istat
-!    end function
-!  end interface
 
   interface
     function hip_setdevice_c(n) result(istat) &
@@ -540,8 +518,22 @@
     end function
   end interface
 
+  interface hip_free_host
+    module procedure hip_free_host_intptr
+    module procedure hip_free_host_cptr
+  end interface
   interface
-    function hip_free_host_c(a) result(istat) &
+    function hip_free_host_intptr_c(a) result(istat) &
+             bind(C, name="hipFreeHostFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t), value  :: a
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+  interface
+    function hip_free_host_cptr_c(a) result(istat) &
              bind(C, name="hipFreeHostFromC")
       use, intrinsic :: iso_c_binding
       implicit none
@@ -549,18 +541,33 @@
       integer(kind=C_INT)              :: istat
     end function
   end interface
-
+ 
+  interface hip_malloc_host
+    module procedure hip_malloc_host_intptr
+    module procedure hip_malloc_host_cptr
+  end interface
   interface
-    function hip_malloc_host_c(a, width_height) result(istat) &
+    function hip_malloc_host_intptr_c(a, width_height) result(istat) &
              bind(C, name="hipMallocHostFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      type(c_ptr)                    :: a
-      integer(kind=c_intptr_t), intent(in), value   :: width_height
+      integer(kind=c_intptr_t)                    :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
       integer(kind=C_INT)                         :: istat
     end function
   end interface
 
+  interface
+    function hip_malloc_host_cptr_c(a, width_height) result(istat) &
+             bind(C, name="hipMallocHostFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                    :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
+      integer(kind=C_INT)                         :: istat
+    end function
+  end interface
+ 
   interface
     function hip_memset_c(a, val, size) result(istat) &
              bind(C, name="hipMemsetFromC")
@@ -584,34 +591,6 @@
       integer(kind=C_INT)                        :: istat
       integer(kind=c_intptr_t), value            :: hipStream
     end function
-  end interface
-
-#ifndef WITH_AMD_HIPSOLVER_API
-  interface
-    subroutine rocsolver_Dtrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="rocsolverDtrtri_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: rocsolverHandle
-    end subroutine
-  end interface
-#endif
-
-  interface
-    subroutine rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="rocsolverDpotrf_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: rocsolverHandle
-    end subroutine
   end interface
 
   interface rocblas_Dgemm
@@ -770,34 +749,6 @@
       real(kind=C_DOUBLE) , value              :: alpha, beta
       integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: rocblasHandle
-    end subroutine
-  end interface
-
-#ifndef WITH_AMD_HIPSOLVER_API
-  interface
-    subroutine rocsolver_Strtri_c(rocsolverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="rocsolverStrtri_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: rocsolverHandle
-    end subroutine
-  end interface
-#endif
-
-  interface
-    subroutine rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="rocsolverSpotrf_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
 
@@ -960,34 +911,6 @@
     end subroutine
   end interface
 
-#ifndef WITH_AMD_HIPSOLVER_API
-  interface
-    subroutine rocsolver_Ztrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="rocsolverZtrtri_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: rocsolverHandle
-    end subroutine
-  end interface
-#endif
-
-  interface
-    subroutine rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="rocsolverZpotrf_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: rocsolverHandle
-    end subroutine
-  end interface
-
   interface rocblas_Zgemm
     module procedure rocblas_Zgemm_intptr
     module procedure rocblas_Zgemm_cptr
@@ -1144,34 +1067,6 @@
       complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha, beta
       integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: rocblasHandle
-    end subroutine
-  end interface
-
-#ifndef WITH_AMD_HIPSOLVER_API
-  interface
-    subroutine rocsolver_Ctrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info) &
-                              bind(C,name="rocsolverCtrtri_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo, diag
-      integer(kind=C_INT64_T), intent(in),value :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: rocsolverHandle
-    end subroutine
-  end interface
-#endif
-
-  interface
-    subroutine rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a, lda, info) &
-                              bind(C,name="rocsolverCpotrf_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value                 :: uplo
-      integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a
-      integer(kind=C_INT)                       :: info
-      integer(kind=C_intptr_T), value           :: rocsolverHandle
     end subroutine
   end interface
 
@@ -1745,18 +1640,29 @@
 #endif
     end function
 
-!    function rocblas_get_version(rocblasHandle, version) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t)                  :: rocblasHandle
-!      integer(kind=C_INT)                       :: version
-!      logical                                   :: success
-!#ifdef WITH_AMD_GPU_VERSION
-!      success = rocblas_get_version_c(rocblasHandle, version) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function rocblas_get_version(rocblasHandle, version) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: rocblasHandle
+      integer(kind=C_INT)                       :: version
+      logical                                   :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = rocblas_get_version_c(rocblasHandle, version) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function hip_get_last_error() result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      logical                                   :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_get_last_error_c() /= 0
+#else
+      success = .true.
+#endif
+    end function
 
     function hip_stream_create(hipStream) result(success)
       use, intrinsic :: iso_c_binding
@@ -1984,26 +1890,51 @@
 #endif
     end function
 
-    function hip_malloc_host(a, width_height) result(success)
+    function hip_malloc_host_intptr(a, width_height) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t)                  :: a
+      integer(kind=c_intptr_t), intent(in)      :: width_height
+      logical                                   :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_malloc_host_intptr_c(a, width_height) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function hip_malloc_host_cptr(a, width_height) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr)                               :: a
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_malloc_host_c(a, width_height) /= 0
+      success = hip_malloc_host_cptr_c(a, width_height) /= 0
 #else
       success = .true.
 #endif
     end function
 
-    function hip_free_host(a) result(success)
+    function hip_free_host_intptr(a) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: a
+      logical                  :: success
+#ifdef WITH_AMD_GPU_VERSION
+      success = hip_free_host_intptr_c(a) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function hip_free_host_cptr(a) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       type(c_ptr)                   :: a
       logical                  :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_free_host_c(a) /= 0
+      success = hip_free_host_cptr_c(a) /= 0
 #else
       success = .true.
 #endif
@@ -2336,34 +2267,6 @@
 #endif
     end function
 
-#ifndef WITH_AMD_HIPSOLVER_API
-    subroutine rocsolver_Dtrtri(uplo, diag, n, a, lda, info, rocsolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: rocsolverHandle
-#ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Dtrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-#endif
-
-    subroutine rocsolver_Dpotrf(uplo, n, a, lda, info, rocsolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: rocsolverHandle
-#ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Dpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
-#endif
-    end subroutine
-
     subroutine rocblas_Dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2500,34 +2403,6 @@
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_Dgemv_c(rocblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
-#endif
-    end subroutine
-
-#ifndef WITH_AMD_HIPSOLVER_API
-    subroutine rocsolver_Strtri(uplo, diag, n, a, lda, info, rocsolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: rocsolverHandle
-#ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Strtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-#endif
-
-    subroutine rocsolver_Spotrf(uplo, n, a, lda, info, rocsolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: rocsolverHandle
-#ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Spotrf_c(rocsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
@@ -2670,34 +2545,6 @@
 #endif
     end subroutine
 
-#ifndef WITH_AMD_HIPSOLVER_API
-    subroutine rocsolver_Ztrtri(uplo, diag, n, a, lda, info, rocsolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: rocsolverHandle
-#ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Ztrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-#endif
-
-    subroutine rocsolver_Zpotrf(uplo, n, a, lda, info, rocsolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: rocsolverHandle
-#ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Zpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
-#endif
-    end subroutine
-
     subroutine rocblas_Zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, rocblasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2834,34 +2681,6 @@
       integer(kind=C_intptr_T)        :: rocblasHandle
 #ifdef WITH_AMD_GPU_VERSION
       call rocblas_Zgemv_c(rocblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
-#endif
-    end subroutine
-
-#ifndef WITH_AMD_HIPSOLVER_API
-    subroutine rocsolver_Ctrtri(uplo, diag, n, a, lda, info, rocsolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo, diag
-      integer(kind=C_INT64_T)         :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: rocsolverHandle
-#ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Ctrtri_c(rocsolverHandle, uplo, diag, n, a, lda, info)
-#endif
-    end subroutine
-#endif
-
-    subroutine rocsolver_Cpotrf(uplo, n, a, lda, info, rocsolverHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: uplo
-      integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a
-      integer(kind=c_int)             :: info
-      integer(kind=C_intptr_T)        :: rocsolverHandle
-#ifdef WITH_AMD_ROCSOLVER
-      call rocsolver_Cpotrf_c(rocsolverHandle, uplo, n, a, lda, info)
 #endif
     end subroutine
 
