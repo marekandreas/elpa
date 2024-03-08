@@ -2,6 +2,13 @@ Changelog for next release
 
 
 - not yet decided
+Changelog for ELPA 2024.03.001
+- fix bug in hermitian_mutliply which had been introduced in 2023.11.001
+- PoC RCCL support for AMD GPUs, only for experienced users
+- significantly faster cholesky decomposition step
+- Automatic setting for cublas caching: with CUDA > 12.x a slow down had been
+  observed since cublas assumed problematic caching values
+- Autoconf >= 2.71 required for building ELPA
 
 Changelog for ELPA 2023.11.001
 - enable gpu-streams per default for NVIDIA and AMD GPUs
