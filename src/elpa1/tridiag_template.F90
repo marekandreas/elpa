@@ -54,6 +54,11 @@
 
 #include "../general/sanity.F90"
 
+#undef USE_CCL_TRIDIAG
+#if defined(WITH_NIVIDA_NCCL) || defined(WITH_AMD_RCCL)
+#define USE_CCL_TRIDIAG
+#endif
+
 #undef SAVE_MATR
 #ifdef DOUBLE_PRECISION_REAL
 #define SAVE_MATR(name, iteration) \
@@ -108,10 +113,13 @@ subroutine tridiag_&
   use elpa_gpu_util
   use tridiag_gpu
 #ifdef WITH_NVIDIA_GPU_VERSION
-  use cuda_functions
+  use cuda_functions ! for NVTX labels
 #endif
 #ifdef WITH_NVIDIA_NCCL
   use nccl_functions
+#endif
+#ifdef WITH_AMD_RCCL
+  use rccl_functions
 #endif
 
   implicit none
@@ -221,19 +229,19 @@ subroutine tridiag_&
   logical                                       :: success
 
   integer(kind=c_intptr_t)                      :: gpuHandle, my_stream
-#ifdef WITH_NVIDIA_NCCL
+#if defined(USE_CCL_TRIDIAG)
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
   integer(kind=ik)                              :: nvs, nvr, nvc, lcm_s_t, nblks_tot, nblks_comm, nblks_skip
   logical                                       :: isSquareGridGPU = .false.
   integer(kind=c_intptr_t)                      :: aux_transpose_dev
-  integer(kind=c_int)                           :: ncclDataType
+  integer(kind=c_int)                           :: cclDataType
   integer(kind=ik)                              :: k_datatype
 #endif
   integer(kind=c_int) :: pointerMode
 
   integer(kind=ik)                              :: string_length, sm_count
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL)
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG)
   if (useGPU) then
     useCCL = .true.
   
@@ -241,16 +249,16 @@ subroutine tridiag_&
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
   
 #if   REALCASE == 1 && DOUBLE_PRECISION == 1
-  ncclDataType = ncclDouble
+  cclDataType = cclDouble
   k_datatype = 1
 #elif REALCASE == 1 && SINGLE_PRECISION == 1
-  ncclDataType = ncclFloat
+  cclDataType = cclFloat
   k_datatype = 1
 #elif COMPLEXCASE == 1 && DOUBLE_PRECISION == 1
-  ncclDataType = ncclDouble
+  cclDataType = cclDouble
   k_datatype = 2
 #elif COMPLEXCASE == 1 && SINGLE_PRECISION == 1
-  ncclDataType = ncclFloat
+  cclDataType = cclFloat
   k_datatype = 2
 #endif
  
@@ -264,7 +272,7 @@ subroutine tridiag_&
     endif
 #endif
   endif 
-#endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG) */
 
   allocate(aux(2*max_stored_uv), stat=istat, errmsg=errorMessage)
 
@@ -590,7 +598,7 @@ subroutine tridiag_&
     successGPU = gpu_malloc(xf_dev, 1 * size_of_datatype)
     check_alloc_gpu("tridiag: xf_dev", successGPU)
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_TRIDIAG
     ! for gpu_transpose_vectors on non-square grids
     if (np_rows==np_cols .and. (.not. isSkewsymmetric)) then
       ! isSquareGridGPU = .true. ! TODO_23_11 - switched off for now, add test for arbitrary grid mapping and switch back on
@@ -600,7 +608,7 @@ subroutine tridiag_&
       lcm_s_t   = least_common_multiple(np_rows,np_cols)
       nvs = 1 ! global index where to start in vmat_s/vmat_t
       nvr  = na-1 ! global length of v_col_dev/v_row_dev(without last tau-element), max(istep-1)
-      nvc = 1 ! number of columns in 
+      nvc = 1 ! number of columns in v_col_dev/v_row_dev
       nblks_tot = (nvr+nblk-1)/nblk ! number of blocks corresponding to nvr
       ! Get the number of blocks to be skipped at the beginning
       ! This must be a multiple of lcm_s_t (else it is getting complicated),
@@ -609,8 +617,8 @@ subroutine tridiag_&
     
       successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
       check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
-    endif ! isSquareGridGPU
-#endif /* WITH_NVIDIA_NCCL */
+    endif ! .not. isSquareGridGPU
+#endif /* USE_CCL_TRIDIAG */
   endif !useGPU
 
   d_vec(:) = 0
@@ -837,17 +845,17 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
       if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL)
-        successGPU = nccl_Allreduce(aux1_dev, aux1_dev, int(k_datatype*2, kind=c_size_t), &
-                                    ncclDataType, ncclSum, ccl_comm_rows, my_stream)
+#if defined(USE_CCL_TRIDIAG)
+        successGPU = ccl_Allreduce(aux1_dev, aux1_dev, int(k_datatype*2, kind=c_size_t), &
+                                    cclDataType, cclSum, ccl_comm_rows, my_stream)
         if (.not. successGPU) then
-          print *,"Error in nccl_Allreduce"
+          print *,"Error in ccl_Allreduce"
           stop 1
         endif
 
         successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("nccl_Allreduce aux1_dev", successGPU)
-#endif /* WITH_NVIDIA_NCCL */
+        check_stream_synchronize_gpu("ccl_Allreduce aux1_dev", successGPU)
+#endif /* USE_CCL_TRIDIAG */
       else ! useCCL
 
         if (useNonBlockingCollectivesRows) then
@@ -866,7 +874,7 @@ subroutine tridiag_&
 #endif /* WITH_MPI */
 
       if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL)
+#if defined(USE_CCL_TRIDIAG)
         vnorm2_dev = aux1_dev
         vrl_dev = aux1_dev + 1*size_of_datatype
 #endif
@@ -883,7 +891,7 @@ subroutine tridiag_&
 
       ! Householder transformation
       if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL)
+#if defined(USE_CCL_TRIDIAG)
 #ifdef WITH_NVTX
         call nvtxRangePush("gpu_hh_transform")
 #endif
@@ -892,7 +900,7 @@ subroutine tridiag_&
 #ifdef WITH_NVTX
         call nvtxRangePop()
 #endif
-#endif /* defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(USE_CCL_TRIDIAG) */
       else ! useCCL
 #ifdef WITH_NVTX
         call nvtxRangePush("hh_transform")
@@ -997,17 +1005,17 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
     if (useCCL .and. np_cols>1) then
-#ifdef WITH_NVIDIA_NCCL
-      successGPU = nccl_Bcast(v_row_dev, v_row_dev, int(k_datatype*(l_rows+1), kind=c_size_t), ncclDataType, &
+#ifdef USE_CCL_TRIDIAG
+      successGPU = ccl_Bcast(v_row_dev, v_row_dev, int(k_datatype*(l_rows+1), kind=c_size_t), cclDataType, &
                               int(pcol(istep, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
       if (.not. successGPU) then
-        print *,"Error in nccl_Bcast"
+        print *,"Error in ccl_Bcast"
         stop 1
       endif
 
-      successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need it here and before nccl_group_start()?
-      check_stream_synchronize_gpu("nccl_Bcast v_row_dev", successGPU)
-#endif /* WITH_NVIDIA_NCCL */
+      successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need ccl_group_start() here and before ?
+      check_stream_synchronize_gpu("ccl_Bcast v_row_dev", successGPU)
+#endif /* USE_CCL_TRIDIAG */
     else ! useCCL
       if (useNonBlockingCollectivesCols) then
         if (wantDebug) call obj%timer%start("mpi_nbc_communication")
@@ -1037,7 +1045,7 @@ subroutine tridiag_&
 #ifdef WITH_NVTX
       call nvtxRangePush("elpa_gpu_ccl_transpose_vectors v_row_dev->v_col_dev")
 #endif
-#if defined(WITH_NVIDIA_NCCL)
+#if defined(USE_CCL_TRIDIAG)
       call elpa_gpu_ccl_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
@@ -1045,7 +1053,7 @@ subroutine tridiag_&
                 (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
                 ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., my_prow, my_pcol, np_rows, np_cols, &
                 aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_TRIDIAG */
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
@@ -1087,7 +1095,7 @@ subroutine tridiag_&
 
     if (useGPU .and. useCCL) then
 #ifdef WITH_NVTX
-      call nvtxRangePush("gpu-nccl: set u_col_dev=0")
+      call nvtxRangePush("gpu-ccl: set u_col_dev=0")
 #endif
       successGPU = gpu_memset(u_col_dev, 0, l_cols * size_of_datatype) ! TODO_23_11: omit this, but change gpublas_gemm to u_col_dev=a_dev^T*v_row_dev+0*u_col_dev?
       check_memcpy_gpu("tridiag: u_col_dev", successGPU)
@@ -1499,23 +1507,23 @@ subroutine tridiag_&
     if (l_cols > 0) then
 #ifdef WITH_MPI
       if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL)
+#if defined(USE_CCL_TRIDIAG)
 #ifdef WITH_NVTX
-        call nvtxRangePush("nccl_Allreduce u_col_dev") ! TODO_23_11: can we use Bcast instead of Allreauce and not set u_col_dev=0 above?
+        call nvtxRangePush("ccl_Allreduce u_col_dev") ! TODO_23_11: can we use Bcast instead of Allreauce and not set u_col_dev=0 above?
 #endif
-        successGPU = nccl_Allreduce(u_col_dev, u_col_dev, int(k_datatype*l_cols, kind=c_size_t), &
-                                    ncclDataType, ncclSum, ccl_comm_rows, my_stream)
+        successGPU = ccl_Allreduce(u_col_dev, u_col_dev, int(k_datatype*l_cols, kind=c_size_t), &
+                                    cclDataType, cclSum, ccl_comm_rows, my_stream)
         if (.not. successGPU) then
-          print *,"Error in nccl_allreduce"
+          print *,"Error in ccl_allreduce"
           stop 1
         endif
 
-        successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need it here and before nccl_group_start()?
-        check_stream_synchronize_gpu("nccl_Allreduce u_col_dev", successGPU)
+        successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need it here and before ccl_group_start()?
+        check_stream_synchronize_gpu("ccl_Allreduce u_col_dev", successGPU)
 #ifdef WITH_NVTX
         call nvtxRangePop()
 #endif
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_TRIDIAG */
 
       else ! useCCL
           if (useNonBlockingCollectivesRows) then
@@ -1537,7 +1545,7 @@ subroutine tridiag_&
     
     ! Transpose Householder Vector u_col -> u_row
     if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL)
+#if defined(USE_CCL_TRIDIAG)
 #ifdef WITH_NVTX
       call nvtxRangePush("elpa_gpu_ccl_transpose_vectors u_col_dev->u_row_dev")
 #endif
@@ -1551,7 +1559,7 @@ subroutine tridiag_&
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_TRIDIAG */
     else ! useCCL
       if (isSkewsymmetric) then
         call elpa_transpose_vectors_ss_&
@@ -1619,8 +1627,7 @@ subroutine tridiag_&
 #endif
     endif ! (useGPU .and. .not. useCCL)
 
-#if defined(WITH_NVIDIA_NCCL)
-    ! TODO_23_11: WITH_NVIDIA_NCCL should be renamed to WITH_GPU_CCL
+#if defined(USE_CCL_TRIDIAG)
     if (useGPU .and. useCCL) then
 #ifdef WITH_NVTX
       call nvtxRangePush("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
@@ -1633,7 +1640,7 @@ subroutine tridiag_&
       call nvtxRangePop()
 #endif
     endif ! useGPU .and. useCCL
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_TRIDIAG */
 
 
     if (useGPU .and. .not. useCCL) then
@@ -1684,17 +1691,17 @@ subroutine tridiag_&
 
 #ifdef WITH_MPI
     if (useCCL) then
-#if defined(WITH_NVIDIA_NCCL)
-      successGPU = nccl_Allreduce(vav_dev, vav_dev, int(k_datatype*1, kind=c_size_t), &
-                                  ncclDataType, ncclSum, ccl_comm_cols, my_stream)
+#if defined(USE_CCL_TRIDIAG)
+      successGPU = ccl_Allreduce(vav_dev, vav_dev, int(k_datatype*1, kind=c_size_t), &
+                                 cclDataType, cclSum, ccl_comm_cols, my_stream)
       if (.not. successGPU) then
-        print *,"Error in nccl_allreduce"
+        print *,"Error in ccl_allreduce"
         stop 1
       endif
 
-      successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need it here and before nccl_group_start()?
-      check_stream_synchronize_gpu("nccl_Allreduce vav_dev", successGPU)
-#endif /* WITH_NVIDIA_NCCL */
+      successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need it here and before ccl_group_start()?
+      check_stream_synchronize_gpu("ccl_Allreduce vav_dev", successGPU)
+#endif /* USE_CCL_TRIDIAG */
 
     else ! useCCL
       if (useNonBlockingCollectivesCols) then
@@ -2117,7 +2124,7 @@ subroutine tridiag_&
     successGPU = gpu_free(xf_dev)
     check_dealloc_gpu("tridiag: xf_dev", successGPU)
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_TRIDIAG
     if (.not. isSquareGridGPU) then
       successGPU = gpu_free(aux_transpose_dev)
       check_dealloc_gpu("tridiag: aux_transpose_dev", successGPU)
@@ -2259,7 +2266,7 @@ subroutine tridiag_&
   deallocate(aux, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: aux", istat, errorMessage)
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) && !defined(WITH_GPU_STREAMS)
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG) && !defined(WITH_GPU_STREAMS)
   if (useCCL) then
     success = cuda_stream_destroy(obj%gpu_setup%my_stream)
   endif

@@ -2,13 +2,13 @@
 
 ## 0. Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2023.11.001**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2024.03.001.rc1**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
 As anounced, with the the release 2021.11.001 the **legacy interface has been removed**.
 
-The release of ELPA 2023.11.001 does not change the API and ABI compared to the release 2022.11.001.
+The release of ELPA 2024.03.001.rc1 does not change the API and ABI compared to the release 2022.11.001.
 
 ## 1. How to install *ELPA* ##
 
@@ -453,9 +453,9 @@ A doxygen documentation can be created with the `--enable-doxygen-doc` configure
 
 ### 2.7 Some examples ###
 
-#### 2.7.1 Intel cores supporting AVX2 (Hasell and newer) ####
+#### 2.7.1 Intel cores supporting AVX2 (Haswell and newer) ####
 
-We recommend that you build ELPA with the Intel compiler (if available) for the Fortran part, but
+It is possible to build ELPA with the Intel compiler (if available) for the Fortran part, but
 with GNU compiler for the C part.
 
 1. Building with Intel Fortran compiler and GNU C compiler:
@@ -496,7 +496,7 @@ FC=mpi_wrapper_for_intel_Fortran_compiler CC=mpi_wrapper_for_intel_C_compiler ./
 
 #### 2.7.2 Intel cores supporting AVX-512 (Skylake and newer) ####
 
-We recommend that you build ELPA with the Intel compiler (if available) for the Fortran part, but
+It is possible to build ELPA with the Intel compiler (if available) for the Fortran part, but
 with GNU compiler for the C part.
 
 1. Building with Intel Fortran compiler and GNU C compiler:

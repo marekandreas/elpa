@@ -58,6 +58,26 @@ module cholesky_cuda
   public
 
   interface
+    subroutine cuda_check_device_info_c(info_dev,  my_stream)&
+                 bind(C, name="cuda_check_device_info_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t), value  :: info_dev
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+  interface
+    subroutine cuda_accumulate_device_info_c(info_abs_dev, info_new_dev, my_stream)&
+                 bind(C, name="cuda_accumulate_device_info_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t), value  :: info_abs_dev, info_new_dev
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+  interface
     subroutine cuda_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, &
                                                              l_colx, l_row1, my_stream)&
                                                      bind(C, name="cuda_copy_double_a_tmatc_FromC")
@@ -105,7 +125,33 @@ module cholesky_cuda
     end subroutine
   end interface
 
+
   contains
+
+    subroutine cuda_check_device_info(info_dev, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_intptr_t)        :: info_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_check_device_info_c(info_dev, my_stream)
+#endif
+    end subroutine
+
+    subroutine cuda_accumulate_device_info(info_abs_dev, info_new_dev, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_intptr_t)        :: info_abs_dev, info_new_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_accumulate_device_info_c(info_abs_dev, info_new_dev, my_stream)
+#endif
+    end subroutine
+
     subroutine cuda_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
                                                             l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -121,6 +167,7 @@ module cholesky_cuda
 #endif
 
     end subroutine
+
     subroutine cuda_copy_float_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
                                                             l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -136,6 +183,7 @@ module cholesky_cuda
 #endif
 
     end subroutine
+
     subroutine cuda_copy_double_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
                                                             l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -151,6 +199,7 @@ module cholesky_cuda
 #endif
 
     end subroutine
+
     subroutine cuda_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, &
                                                             l_row1, my_stream)
       use, intrinsic :: iso_c_binding
@@ -166,4 +215,5 @@ module cholesky_cuda
 #endif
 
     end subroutine
+
 end module

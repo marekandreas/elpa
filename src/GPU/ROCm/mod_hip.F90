@@ -50,6 +50,7 @@
 module hip_functions
   use, intrinsic :: iso_c_binding
   use precision
+  use rocsolver_functions
   implicit none
 
   public

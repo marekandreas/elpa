@@ -17,6 +17,7 @@ config.h.in~
 config.sub
 config.sub~
 configure
+configure~
 depcomp
 install-sh
 install-sh~

@@ -51,7 +51,10 @@
 #include "../../general/sanity.F90"
 #include "../../general/error_checking.inc"
 
-
+#undef USE_CCL_TRANSPOSE
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#define USE_CCL_TRANSPOSE
+#endif
 
 subroutine elpa_gpu_ccl_transpose_vectors_&
   &MATH_DATATYPE&
@@ -88,10 +91,15 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   use elpa_mpi
   use elpa_gpu
   use tridiag_gpu
-#ifdef WITH_NVIDIA_GPU_VERSION
-  use cuda_functions
+!#ifdef WITH_NVIDIA_GPU_VERSION
+!  use cuda_functions
+!#endif
+!#ifdef WITH_AMD_GPU_VERSION
+!  use hip_functions
+!#endif
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+  use elpa_ccl_gpu
 #endif
-  use nccl_functions
   implicit none
 
   class(elpa_abstract_impl_t), intent(inout)        :: obj
@@ -128,7 +136,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
                                                        &PRECISION&
                                                        &_&
                                                        &MATH_DATATYPE
-  integer(kind=c_int)                               :: ncclDataType
+  integer(kind=c_int)                               :: cclDataType
   integer(kind=ik)                                  :: k_datatype
   logical, intent(in)                               :: isSkewsymmetric, isSquareGridGPU, wantDebug
   integer(kind=c_intptr_t)                          :: my_stream
@@ -138,16 +146,16 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   success = .true.
 
 #if   REALCASE == 1 && DOUBLE_PRECISION == 1
-  ncclDataType = ncclDouble
+  cclDataType = cclDouble
   k_datatype = 1
 #elif REALCASE == 1 && SINGLE_PRECISION == 1
-  ncclDataType = ncclFloat
+  cclDataType = cclFloat
   k_datatype = 1
 #elif COMPLEXCASE == 1 && DOUBLE_PRECISION == 1
-  ncclDataType = ncclDouble
+  cclDataType = cclDouble
   k_datatype = 2
 #elif COMPLEXCASE == 1 && SINGLE_PRECISION == 1
-  ncclDataType = ncclFloat
+  cclDataType = cclFloat
   k_datatype = 2
 #endif
 
@@ -204,7 +212,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
       if (wantDebug) call obj%timer%start("nccl_communication")
 
       ccl_comm_all = obj%gpu_setup%ccl_comm_all 
-      successGPU = nccl_group_start() 
+      successGPU = ccl_group_start()
       if (.not. successGPU) then 
         print *,"Error in setting up nccl_group_start!"
         success = .false.
@@ -213,15 +221,15 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
       
       if (myps > mypt .and. message_size > 0) then
 
-        successGPU = successGPU .and. nccl_Send(vmat_s_dev, int(k_datatype*message_size,kind=c_size_t), &
-                                                ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
-        successGPU = successGPU .and. nccl_Recv(vmat_t_dev, int(k_datatype*message_size,kind=c_size_t), &
-                                                ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
+        successGPU = successGPU .and. ccl_Send(vmat_s_dev, int(k_datatype*message_size,kind=c_size_t), &
+                                                cclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
+        successGPU = successGPU .and. ccl_Recv(vmat_t_dev, int(k_datatype*message_size,kind=c_size_t), &
+                                                cclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
       else if (myps < mypt .and. message_size > 0) then
-        successGPU = successGPU .and. nccl_Recv(vmat_t_dev, int(k_datatype*message_size,kind=c_size_t), &
-                                                ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
-        successGPU = successGPU .and. nccl_Send(vmat_s_dev, int(k_datatype*message_size,kind=c_size_t), &
-                                                ncclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
+        successGPU = successGPU .and. ccl_Recv(vmat_t_dev, int(k_datatype*message_size,kind=c_size_t), &
+                                                cclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
+        successGPU = successGPU .and. ccl_Send(vmat_s_dev, int(k_datatype*message_size,kind=c_size_t), &
+                                                cclDataType, transposed_mpi_rank, ccl_comm_all, my_stream)
       endif
 
       if (.not. successGPU) then
@@ -230,7 +238,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
         stop 1
       endif
       
-      successGPU = nccl_group_end()
+      successGPU = ccl_group_end()
       if (.not. successGPU) then
         print *,"Error in setting up nccl_group_end!"
         success = .false.
@@ -246,7 +254,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
     if (wantDebug) call obj%timer%stop("elpa_gpu_ccl_transpose_vectors")
     return
-  endif
+  endif ! isSquareGridGPU
 
   ! The basic idea of this routine is that for every block (in the block cyclic
   ! distribution), the processor within comm_t which owns the diagonal
@@ -316,8 +324,8 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
           if (wantDebug) call obj%timer%start("nccl_communication")
 
           aux_size = aux_stride*nvc
-          successGPU = nccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(k_datatype*aux_size, kind=c_size_t), &
-                                  ncclDataType, int(ips, kind=c_int), ccl_comm_s, my_stream)
+          successGPU = ccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(k_datatype*aux_size, kind=c_size_t), &
+                                  cclDataType, int(ips, kind=c_int), ccl_comm_s, my_stream)
 
           if (.not. successGPU) then
             print *,"Error in nccl_Bcast"

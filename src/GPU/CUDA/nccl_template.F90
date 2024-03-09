@@ -1,4 +1,4 @@
-!    Copyright 2023, A. Marek
+!    Copyright 2024, A. Marek
 !            
 !    This file is part of ELPA.
 !     
@@ -45,25 +45,24 @@
 ! This file is the generated version. Do NOT edit
     
              
-  integer(kind=c_int) :: ncclSum
-  integer(kind=c_int) :: ncclMax
-  integer(kind=c_int) :: ncclMin
-  integer(kind=c_int) :: ncclAvg
-  integer(kind=c_int) :: ncclProd
+  !integer(kind=c_int) :: ncclSum
+  !integer(kind=c_int) :: ncclMax
+  !integer(kind=c_int) :: ncclMin
+  !integer(kind=c_int) :: ncclAvg
+  !integer(kind=c_int) :: ncclProd
 
-  integer(kind=c_int) :: ncclInt
-  integer(kind=c_int) :: ncclInt32
-  integer(kind=c_int) :: ncclInt64
-  integer(kind=c_int) :: ncclFloat
-  integer(kind=c_int) :: ncclFloat32
-  integer(kind=c_int) :: ncclFloat64
-  integer(kind=c_int) :: ncclDouble
+  !integer(kind=c_int) :: ncclInt
+  !integer(kind=c_int) :: ncclInt32
+  !integer(kind=c_int) :: ncclInt64
+  !integer(kind=c_int) :: ncclFloat
+  !integer(kind=c_int) :: ncclFloat32
+  !integer(kind=c_int) :: ncclFloat64
+  !integer(kind=c_int) :: ncclDouble
 
-  !type, BIND(C,name="ncclUniqueId") :: uniqueId_c
   type, BIND(C) ::ncclUniqueId
-  !type :: uniqueId_c
     CHARACTER(KIND=C_CHAR) :: str(128)
-   end type
+  end type
+
 
   interface
     function nccl_redOp_ncclSum_c() result(flag) &
@@ -283,7 +282,7 @@
     end function
   end interface
 
-  interface nccl_Reduce
+  interface nccl_reduce
     module procedure nccl_reduce_intptr
     module procedure nccl_reduce_cptr
   end interface
@@ -430,7 +429,6 @@
       integer(kind=C_INT)                          :: istat
     end function
   end interface
-
 
   contains
 
@@ -689,8 +687,7 @@
       success = .true.
 #endif
     end function
-  
- 
+
     function nccl_reduce_intptr(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -730,7 +727,7 @@
       success = .true.
 #endif
     end function
-    
+  
     function nccl_bcast_intptr(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -840,4 +837,3 @@
       success = .true.
 #endif
     end function
-  

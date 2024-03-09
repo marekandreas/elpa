@@ -62,8 +62,14 @@
 #include <stdint.h>
 #include <complex.h>
 
+#ifdef HIPBLAS
+#ifdef WITH_AMD_ROCSOLVER
+#include <hipsolver/hipsolver.h>
+#endif
+#else /* HIPBLAS */
 #ifdef WITH_AMD_ROCSOLVER
 #include <rocsolver.h>
+#endif
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION

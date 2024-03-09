@@ -50,11 +50,28 @@
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 
+#undef INVERT_TRM_GPU_SOLVER
+#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
+#define INVERT_TRM_GPU_SOLVER
+#endif
+#if defined(WITH_AMD_ROCSOLVER)
+#ifndef WITH_AMD_HIPSOLVER_API
+! at the moment {X}trtri not available in hipsolver, only in pure rocsolver
+#define INVERT_TRM_GPU_SOLVER
+#endif
+#endif
+
+
+
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
 #include "config-f90.h"
 #include "../general/precision_macros.h"
 
+#undef USE_CCL_INVERT
+#if defined(WITH_NIVIDA_NCCL) || defined(WITH_AMD_RCCL)
+#define USE_CCL_INVERT
+#endif
 
   use precision
   use elpa1_compute
@@ -64,8 +81,8 @@
   use elpa_gpu
   use mod_check_for_gpu
   use elpa_blas_interfaces
-#ifdef WITH_NVIDIA_NCCL
-  use nccl_functions
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+  use elpa_ccl_gpu
 #endif
 #ifdef WITH_GPU_STREAMS
   use elpa_gpu_util
@@ -80,7 +97,7 @@
   integer(kind=ik)                           :: mpi_comm_all
 #ifdef DEVICE_POINTER
   type(c_ptr)                                :: aDev
-#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(INVERT_TRM_GPU_SOLVER)
   MATH_DATATYPE(kind=rck), allocatable       :: a_tmp(:,:)
 #endif
 #else /* DEVICE_POINTER */
@@ -124,7 +141,7 @@
   integer(kind=c_intptr_t)                   :: gpublasHandle, gpusolverHandle, my_stream
   integer(kind=c_int)                        :: gpu_invert_trm
 
-#ifdef WITH_NVIDIA_NCCL
+#if defined(USE_CCL_INVERT)
   integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols, offset
 #endif
 
@@ -349,7 +366,7 @@
     ! associate with a_dev
     a_dev = transfer(aDev, a_dev)
 
-#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(INVERT_TRM_GPU_SOLVER)
     ! allocate a_tmp
     allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_invert_trm: a_tmp", istat, errorMessage)
@@ -359,7 +376,7 @@
                     gpuHostRegisterDefault)
     check_host_register_gpu("elpa_invert_trm: a_tmp", successGPU)
 #endif
-#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER */
+#endif /* !defined(INVERT_TRM_GPU_SOLVER) */
 #endif /* DEVICE_POINTER */
 
   endif ! useGPU
@@ -441,7 +458,7 @@
       if (my_pcol==pcol(n, nblk, np_cols)) then
         if (useGPU) then
 
-#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
+#if defined(INVERT_TRM_GPU_SOLVER)
           call obj%timer%start("gpusolver")
           gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = ((l_row1-1) + (l_col1-1)*matrixRows) * size_of_datatype
@@ -453,7 +470,7 @@
           endif
           call obj%timer%stop("gpusolver")
          
-#else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
+#else /* defined(INVERT_TRM_GPU_SOLVER) */
          
           ! still have to use cpu blas -> a generic GPU implementation would be needed
 #ifndef DEVICE_POINTER
@@ -492,7 +509,7 @@
           call obj%timer%stop("lapack")
 #else /* DEVICE_POINTER */
 
-#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(INVERT_TRM_GPU_SOLVER)
           call obj%timer%start("lapack")
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -527,9 +544,9 @@
           check_memcpy_gpu("invert_trm: memcpy a -> a_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
           call obj%timer%stop("lapack")
-#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER */
+#endif /* !defined(INVERT_TRM_GPU_SOLVER) */
 #endif /* DEVICE_POINTER */
-#endif /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
+#endif /* defined(INVERT_TRM_GPU_SOLVER) */
 
         else ! useGPU
           call obj%timer%start("blas")
@@ -581,7 +598,7 @@
       endif ! my_pcol==pcol(n, nblk, np_cols)
 
 #ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -598,14 +615,14 @@
 #endif /* WITH_GPU_STREAMS */
 
       endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */ 
+#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */ 
 
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
       call obj%timer%start("mpi_communication")
       call MPI_Bcast(tmp1, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
                      int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
       call obj%timer%stop("mpi_communication")
-#else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */
+#else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
       if (useGPU) then
 #ifdef WITH_CUDA_AWARE_MPI
         tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev) 
@@ -622,15 +639,15 @@
         if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
 #endif /* WITH_CUDA_AWARE_MPI */
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_GPU_NCCL
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-        successGPU = nccl_group_start()
+        successGPU = ccl_group_start()
         if (.not.successGPU) then
           print *,"Error in setting up nccl_group_start!"
           stop
         endif
-        successGPU = nccl_bcast(tmp1_dev, tmp1_dev, &
+        successGPU = ccl_bcast(tmp1_dev, tmp1_dev, &
 #if REALCASE == 1
                          int(nb*(nb+1)/2,kind=c_size_t), &
 #endif
@@ -639,18 +656,18 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                         ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                         ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                         ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                         ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
                          int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
@@ -659,22 +676,22 @@
             print *,"Error in nccl_reduce"
             stop
           endif
-          successGPU = nccl_group_end()
+          successGPU = ccl_group_end()
           if (.not.successGPU) then
             print *,"Error in setting up nccl_group_end!"
             stop
           endif
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_INVERT */
         else ! useGPU
           call obj%timer%start("mpi_communication")
           call MPI_Bcast(tmp1, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
                      int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
         endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
 
 
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
       if ((useGPU)) then  
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -690,7 +707,7 @@
         check_memcpy_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
       endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */ 
+#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */ 
 #endif /* WITH_MPI */
       
       if (useGPU) then
@@ -765,7 +782,7 @@
       endif
 
 #ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
       if (useGPU) then
         num = l_rows*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -781,11 +798,11 @@
         check_memcpy_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
 #endif /* WITH_GPU_STREAMS */
       endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
       do i=1,nb
         call obj%timer%start("mpi_communication")
         call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
@@ -794,7 +811,7 @@
 
         call obj%timer%stop("mpi_communication")
       enddo
-#else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */
+#else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
       if (useGPU) then
 #ifdef WITH_CUDA_AWARE_MPI
         tmat1_mpi_dev = transfer(tmat1_dev, tmat1_mpi_dev)
@@ -814,17 +831,17 @@
         call obj%timer%stop("mpi_cuda_communication")
 #endif
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_INVERT
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
         do i=1,nb
           offset = (1-1 + l_rows*(i-1)) * size_of_datatype
-          successGPU = nccl_group_start()
+          successGPU = ccl_group_start()
           if (.not.successGPU) then
             print *,"Error in setting up nccl_group_start!"
             stop
           endif
-          successGPU = nccl_bcast(tmat1_dev + offset, tmat1_dev + offset, &
+          successGPU = ccl_bcast(tmat1_dev + offset, tmat1_dev + offset, &
 #if REALCASE == 1
                          int(l_row1-1,kind=c_size_t), &
 #endif
@@ -833,18 +850,18 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                         ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                         ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                         ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                         ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
                          int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
@@ -853,13 +870,13 @@
             print *,"Error in nccl_reduce"
             stop
           endif
-          successGPU = nccl_group_end()
+          successGPU = ccl_group_end()
           if (.not.successGPU) then
             print *,"Error in setting up nccl_group_end!"
             stop
           endif
         enddo ! i=1,nb
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_INVERT */
       else ! useGPU
         do i=1,nb
           call obj%timer%start("mpi_communication")
@@ -870,11 +887,11 @@
           call obj%timer%stop("mpi_communication")
         enddo
       endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
       if (useGPU) then
         ! cuda aware MPI here
         num = l_rows*nblk*size_of_datatype
@@ -891,12 +908,12 @@
         check_memcpy_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
       endif
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
 #endif /* WITH_MPI */
     endif ! (l_row1>1)
 
 #ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
     if (useGPU) then
       
       if (l_cols-l_col1+1 > 0) then
@@ -941,7 +958,7 @@
 #endif /* WITH_GPU_STREAMS */
       endif ! l_cols-l_col1+1 > 0
     endif ! useGPU
-#else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */
+#else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
     if (useGPU) then
 #ifdef WITH_CUDA_AWARE_MPI
       tmat2_mpi_dev = transfer(tmat2_dev, tmat2_mpi_dev)     
@@ -959,17 +976,17 @@
       call obj%timer%stop("mpi_cuda_communication")
 #endif /* WITH_CUDA_AWARE_MPI */
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_INVERT
       if (l_cols-l_col1+1 > 0) then
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-        successGPU = nccl_group_start()
+        successGPU = ccl_group_start()
         if (.not.successGPU) then
           print *,"Error in setting up nccl_group_start!"
           stop
         endif
         offset = (1-1 + nblk*(l_col1-1)) * size_of_datatype
-        successGPU = nccl_bcast(tmat2_dev+offset, tmat2_dev+offset, &
+        successGPU = ccl_bcast(tmat2_dev+offset, tmat2_dev+offset, &
 #if REALCASE == 1
                            int((l_cols-l_col1+1)*nblk,kind=c_size_t), &
 #endif
@@ -978,18 +995,18 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                           ncclDouble, &
+                           cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                           ncclFloat, &
+                           cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                           ncclDouble, &
+                           cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                           ncclFloat, &
+                           cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
                            int(prow(n, nblk, np_rows),kind=c_int), ccl_comm_rows, my_stream)
@@ -998,13 +1015,13 @@
           print *,"Error in nccl_reduce"
           stop
         endif
-        successGPU = nccl_group_end()
+        successGPU = ccl_group_end()
         if (.not.successGPU) then
           print *,"Error in setting up nccl_group_end!"
           stop
         endif
       endif ! l_cols-l_col1+1 > 0
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_INVERT */
     else ! useGPU
       call obj%timer%start("mpi_communication")
       if (l_cols-l_col1+1 > 0) then
@@ -1014,7 +1031,7 @@
 
       call obj%timer%stop("mpi_communication")
     endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
 #endif /* WITH_MPI */
 
     if (useGPU) then
@@ -1097,7 +1114,7 @@
 
 #else /* DEVICE_POINTER */
 
-#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(INVERT_TRM_GPU_SOLVER)
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_invert_trm: a_tmp", successGPU)
@@ -1105,7 +1122,7 @@
 
     deallocate(a_tmp, stat=istat, errmsg=errorMessage)
     check_deallocate("elpa_invert_trm: a_tmp", istat, errorMessage)
-#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER */
+#endif /* defined(INVERT_TRM_GPU_SOLVER) */
 #endif /* DEVICE_POINTER */
 
     !successGPU = gpu_host_unregister(int(loc(b),kind=c_intptr_t))
