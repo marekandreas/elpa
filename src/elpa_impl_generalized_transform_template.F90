@@ -70,10 +70,9 @@ subroutine elpa_transform_generalized_&
   logical                :: is_already_decomposed
   integer                :: sc_desc(SC_DESC_LEN)
   integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-  integer(kind=MPI_KIND) :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
+  integer(kind=MPI_KIND) :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
   integer(kind=ik)       :: BuffLevelInt
   integer(kind=c_int)    :: use_cannon, debug, gpu
-  integer(kind=MPI_KIND) :: mpierr
   logical                :: wantDebug, useGPU
   logical, save          :: firstCall = .true.
 
@@ -255,7 +254,8 @@ subroutine elpa_transform_back_generalized_&
   integer                :: error
   integer                :: sc_desc(SC_DESC_LEN)
   integer                :: sc_desc_ev(SC_DESC_LEN)
-  integer(kind=ik)       :: use_cannon
+  integer(kind=c_int)    :: use_cannon, debug, gpu
+  logical                :: wantDebug, useGPU
 
   MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
 
@@ -275,8 +275,14 @@ subroutine elpa_transform_back_generalized_&
   my_pcol = int(my_pcolMPI,kind=c_int)
   np_cols = int(np_colsMPI,kind=c_int)
 
-  call self%timer_start("transform_back_generalized()")
   call self%get("cannon_for_generalized",use_cannon,error)
+  call self%get("debug", debug, error)
+  call self%get("gpu", gpu, error)
+  
+  wantDebug = (debug == 1)
+  useGPU = (gpu == 1)
+
+  call self%timer_start("transform_back_generalized()")
 
 #ifdef WITH_NVTX
   call nvtxRangePush("transform_back_generalized")
@@ -304,7 +310,7 @@ subroutine elpa_transform_back_generalized_&
       &ELPA_IMPL_SUFFIX&
       &(b, q, self%local_nrows, self%local_ncols, &
         int(sc_desc,kind=BLAS_KIND), int(sc_desc_ev,kind=BLAS_KIND), tmp,  &
-        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND) )
+        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), wantDebug, useGPU)
 #endif
 #ifdef WITH_NVTX
     call nvtxRangePop()

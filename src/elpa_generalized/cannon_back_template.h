@@ -66,7 +66,8 @@
 
 void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_rows, C_INT_TYPE np_cols, 
                                      C_INT_TYPE my_prow, C_INT_TYPE my_pcol, C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTR B_desc, 
-                                     math_type *Res, MPI_Comm row_comm, MPI_Comm col_comm)
+                                     math_type *Res, MPI_Comm row_comm, MPI_Comm col_comm,
+                                     bool wantDebug, bool useGPU)
 {
    // Cannons algorithm, Non-blocking version
    // Input: 
@@ -167,8 +168,6 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
    printf("size of Buf_to_send/receive_B = %d\n", Buf_cols_B*Buf_rows);
    printf("size of R = %d\n", na_rows*nb_cols);
 
-   int useGPU = 0; // PETERDEBUG pass this as a parameter
-   int wantDebug = 0; // PETERDEBUG pass this as a parameter
 #ifdef WITH_NVIDIA_GPU_VERSION
    math_type *Buf_to_send_receive_U_dev;
    math_type *Buf_to_send_receive_B_dev;
@@ -178,9 +177,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
 
    cublasHandle_t handle; // pass handle as a parameter instead!
    cublasCreate(&handle);
-   useGPU = 1; // PETERDEBUG pass this as a parameter
-   wantDebug = 1; // PETERDEBUG pass this as a parameter
-   if (useGPU == 1){
+   if (useGPU){
 
       gpuErrCheck( cudaMalloc((void **)&Buf_to_send_receive_U_dev, ratio*Size_U_stored*sizeof(math_type)) );
       gpuErrCheck( cudaMalloc((void **)&Buf_to_send_receive_B_dev, Buf_cols_B*Buf_rows*sizeof(math_type)) );
@@ -441,7 +438,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       
       num_of_blocks_in_U_buffer = ceil((math_type)cols_in_buffer_U/(math_type)nblk); 
 
-      if (useGPU == 1){
+      if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
          gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, Buf_to_send_U, ratio*Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
          gpuErrCheck( cudaMemcpy(Buf_to_send_receive_B_dev, Buf_to_send_B, Buf_cols_B*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
@@ -473,7 +470,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
             NVTX_RANGE_PUSH("GEMM");
             // Res = U_local_start*B_local_start
             // Res = Buf_to_send_U*Buf_to_send_B
-            if (useGPU == 1){
+            if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
                // !!! MEMSET Res_dev to zero ???
                cublasStatus_t status = cublasXgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 
@@ -494,7 +491,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
             NVTX_RANGE_POP();
          }
 
-         if (useGPU == 1) {
+         if (useGPU) {
 #ifdef WITH_NVIDIA_GPU_VERSION
             U_local_start_dev += nblk*curr_rows; 
             B_local_start_dev += nblk;
@@ -536,7 +533,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       
    num_of_blocks_in_U_buffer = ceil((math_type)cols_in_buffer_U/(math_type)nblk);
 
-      if (useGPU == 1){
+      if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
          gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, Buf_to_receive_U, ratio*Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
          gpuErrCheck( cudaMemcpy(Buf_to_send_receive_B_dev, Buf_to_receive_B, Buf_cols_B*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
@@ -568,7 +565,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
          NVTX_RANGE_PUSH("GEMM_last");
          // Res = U_local_start*B_local_start
          // Res = Buf_to_receive_U*Buf_to_receive_B
-         if (useGPU == 1){
+         if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
          // !!! MEMSET Res_dev to zero ???
          cublasStatus_t status = cublasXgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 
@@ -589,7 +586,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
          NVTX_RANGE_POP();
       }
 
-      if (useGPU == 1) {
+      if (useGPU) {
 #ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev += nblk*curr_rows; 
          B_local_start_dev += nblk;
@@ -604,7 +601,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
    NVTX_RANGE_POP(); // loop j<num_of_blocks_in_U_buffer
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-   if (useGPU == 1) {
+   if (useGPU) {
       gpuErrCheck( cudaMemcpy(Res, Res_dev, na_rows*nb_cols*sizeof(math_type), cudaMemcpyDeviceToHost) );
       gpuErrCheck( cudaFree(Buf_to_send_receive_U_dev) );
       gpuErrCheck( cudaFree(Buf_to_send_receive_B_dev) );
@@ -622,7 +619,9 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
 
 
 void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, int local_rowsCast, int local_colsCast,
-                                    C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTR B_desc, math_type *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm)
+                                       C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTR B_desc, math_type *Res, 
+                                       C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+                                       bool wantDebug, bool useGPU)
 {
   C_INT_TYPE local_rows, local_cols;
 
@@ -650,6 +649,7 @@ void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, int local_row
   // What we usually call row_comm in elpa, is thus passed to col_comm parameter of the function and vice versa
   // (order is swapped in the following call)
   // It is a bit unfortunate, maybe it should be changed in the Cannon algorithm to comply with ELPA standard notation?
-  cannons_triang_rectangular_impl(U, B, np_rows, np_cols, my_prow, my_pcol, U_desc, B_desc, Res, c_col_comm, c_row_comm);
+  cannons_triang_rectangular_impl(U, B, np_rows, np_cols, my_prow, my_pcol, U_desc, B_desc, Res, c_col_comm, c_row_comm,
+                                  wantDebug, useGPU);
 }
 
