@@ -44,6 +44,12 @@
 
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
+
+#undef USE_CCL_CHOLESKY
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#define USE_CCL_CHOLESKY
+#endif
+
   use elpa1_compute
   use elpa_utilities
   use elpa_mpi
@@ -64,8 +70,8 @@
 #ifdef WITH_GPU_STREAMS
   use elpa_gpu_util
 #endif
-#ifdef WITH_NVIDIA_NCCL
-  use nccl_functions
+#if defined(USE_CCL_CHOLESKY)
+  use elpa_ccl_gpu
 #endif
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
@@ -121,7 +127,8 @@
 
   integer(kind=c_intptr_t)                   :: gpublasHandle, gpusolverHandle, my_stream, offset
   integer(kind=c_int)                        :: gpu_cholesky
-#ifdef WITH_NVIDIA_NCCL
+  integer(kind=ik)                           :: blocking
+#if defined(USE_CCL_CHOLESKY)
   integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols
   integer(kind=ik)                           :: nvs, nvr, nvc, lcm_s_t, nblks_tot, nblks_comm, nblks_skip
   logical                                    :: isSquareGridGPU = .false.
@@ -180,14 +187,14 @@
     gpuString = ""
   endif
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL)
+#if defined(USE_CCL_CHOLESKY)
   if (useGPU) then
     useCCL = .true.
   
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
   endif 
-#endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVIDIA_NCCL) */
+#endif /* defined(USE_CCL_CHOLESKY) */
   
   call obj%timer%start("elpa_cholesky_&
   &MATH_DATATYPE&
@@ -239,25 +246,6 @@
   nblk       = obj%nblk
   matrixCols = obj%local_ncols
 
-  !call obj%get("mpi_comm_parent", mpi_comm_all, error)
-  !if (error .ne. ELPA_OK) then
-  !  write(error_unit,*) "ELPA_CHOLESKY: Error getting option for mpi_comm_all. Aborting..."
-  !  success = .false.
-  !  return
-  !endif
-  !call obj%get("mpi_comm_rows",mpi_comm_rows,error )
-  !if (error .ne. ELPA_OK) then
-  !  write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for mpi_comm_rows. Aborting..."
-  !  success = .false.
-  !  return
-  !endif
-  !call obj%get("mpi_comm_cols",mpi_comm_cols,error)
-  !if (error .ne. ELPA_OK) then
-  !  write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for mpi_comm_cols. Aborting..."
-  !  success = .false.
-  !  return
-  !endif
-
   call obj%get("debug",debug,error)
   if (error .ne. ELPA_OK) then
     write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for debug settings. Aborting..."
@@ -281,29 +269,34 @@
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
 
-  !call obj%timer%start("mpi_communication")
-  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
-  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
-  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
-  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
-  !call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), myidMPI, mpierr)
-
-
-  !my_prow = int(my_prowMPI, kind=c_int)
-  !np_rows = int(np_rowsMPI, kind=c_int)
-  !my_pcol = int(my_pcolMPI, kind=c_int)
-  !np_cols = int(np_colsMPI, kind=c_int)
-  !myid    = int(myidMPI,kind=c_int)
-  !call obj%timer%stop("mpi_communication")
   success = .true.
 
   ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
 
   call obj%timer%start("prepare")
 
-  !TODO: optimize tile size!
+  if (obj%is_set("blocking_in_cholesky") == 1) then
+    call obj%get("blocking_in_cholesky", blocking, error)
+    if (error .ne. ELPA_OK) then
+      write(error_unit,*) "ELPA_CHOLESKY: Problem in getting keyword 'blocking_in_cholesky'. Aborting..."
+      stop 1
+    endif
+  else
+    if (useGPU) then
+      blocking = 1024
+    else
+      blocking = 128
+    endif
+    call obj%set("blocking_in_cholesky", blocking, error)
+    if (error .ne. ELPA_OK) then
+      write(error_unit,*) "ELPA_CHOLESKY: Problem in setting keyword 'blocking_in_cholesky'. Aborting..."
+      stop 1
+    endif
+  endif 
+
+
   tile_size = nblk*least_common_multiple(np_rows,np_cols) ! minimum global tile size
-  tile_size = ((128*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
+  tile_size = ((blocking*max(np_rows,np_cols)-1)/tile_size+1)*tile_size ! make local tiles at least 128 wide
 
   l_rows_tile = tile_size/np_rows ! local rows of a tile
   l_cols_tile = tile_size/np_cols ! local cols of a tile
@@ -422,7 +415,7 @@
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_CHOLESKY
     ! for gpu_transpose_vectors on non-square grids
     if (np_rows==np_cols .and. (.not. isSkewsymmetric)) then
       ! isSquareGridGPU = .true. ! TODO_23_11 - switched off for now, add test for arbitrary grid mapping and switch back on
@@ -442,7 +435,7 @@
       successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
       check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
     endif ! .not. isSquareGridGPU
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_CHOLESKY */
 
   allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_cholesky: tmp1", istat, errorMessage)
@@ -882,7 +875,7 @@
       endif ! (useGPU .and. .not. useCCL)
 
       if (useGPU) then
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY)
         call obj%timer%start("mpi_communication")
 
         call MPI_Bcast(tmp1, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
@@ -895,37 +888,16 @@
                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
         call obj%timer%stop("mpi_communication")
-#else /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
-!#ifdef WITH_CUDA_AWARE_MPI_2
-!        tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev)
-!        ! and associate a fortran pointer
-!        call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk,nblk])
-!        if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
-!        successGPU = gpu_devicesynchronize()
-!        check_memcpy_gpu("cholesky: device_synchronize", successGPU)
-!        if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
-!        call obj%timer%start("mpi_cuda_communication")
-!
-!        call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nblk*(nblk+1)/2,kind=MPI_KIND),      &
-!#if REALCASE == 1
-!                    MPI_REAL_PRECISION,         &
-!#endif
-!#if COMPLEXCASE == 1
-!                    MPI_COMPLEX_PRECISION,      &
-!#endif
-!                    int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-!
-!        call obj%timer%stop("mpi_cuda_communication")
-!#endif /* WITH_CUDA_AWARE_MPI_2 */
-#ifdef WITH_NVIDIA_NCCL
-        call obj%timer%start("gpu_nccl")
+#else /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
+#ifdef USE_CCL_CHOLESKY
+        call obj%timer%start("gpu_ccl")
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
 #ifdef WITH_NVTX
-        call nvtxRangePush("nccl_bcast tmp1_dev")
+        call nvtxRangePush("ccl_bcast tmp1_dev")
 #endif        
-        successGPU = nccl_bcast(tmp1_dev, tmp1_dev, &
+        successGPU = ccl_bcast(tmp1_dev, tmp1_dev, &
 #if REALCASE == 1
                        int(nblk*(nblk+1)/2,kind=c_size_t), &
 #endif
@@ -934,36 +906,36 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                       ncclDouble, &
+                       cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                       ncclFloat, &
+                       cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                       ncclDouble, &
+                       cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                       ncclFloat, &
+                       cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
                        int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
 #ifdef WITH_NVTX
-        call nvtxRangePop() ! nccl_bcast tmp1_dev"
+        call nvtxRangePop() ! ccl_bcast tmp1_dev"
 #endif 
         if (.not.successGPU) then
-          print *,"Error in nccl_reduce"
+          print *,"Error in ccl_reduce"
           stop 1
         endif
 
         successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("elpa_cholesky: nccl_bcast", successGPU)
+        check_stream_synchronize_gpu("elpa_cholesky: ccl_bcast", successGPU)
 
-        call obj%timer%stop("gpu_nccl")
-#endif /* WITH_NVIDIA_NCCL */
+        call obj%timer%stop("gpu_ccl")
+#endif /* USE_CCL_CHOLESKY */
 
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
       else ! useGPU
         call obj%timer%start("mpi_communication")
 
@@ -979,7 +951,7 @@
         call obj%timer%stop("mpi_communication")
       endif ! useGPU
 
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) 
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) 
       if (useGPU) then
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -994,7 +966,7 @@
         check_memcpy_gpu("elpa_cholesky: tmp1 to tmp1_dev", successGPU)
 #endif
       endif
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
 
 #endif /* WITH_MPI */
 
@@ -1065,7 +1037,7 @@
     endif ! useGPU
 
 #ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) 
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) 
     if (useGPU) then
       if (l_cols-l_colx+1 > 0) then
         num = l_cols*nblk*size_of_datatype
@@ -1082,10 +1054,10 @@
 #endif
       endif
     endif
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
 
     if (useGPU) then
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY)
       do i=1,nblk
         call obj%timer%start("mpi_communication")
         if (l_cols-l_colx+1>0) then
@@ -1095,7 +1067,7 @@
 
         call obj%timer%stop("mpi_communication")
       enddo
-#else /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#else /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
 !#ifdef WITH_CUDA_AWARE_MPI_2
 !      tmatc_mpi_dev = transfer(tmatc_dev, tmatc_mpi_dev)
 !      ! and associate a fortran pointer
@@ -1116,24 +1088,24 @@
 !        call obj%timer%stop("mpi_cuda_communication")
 !      enddo
 !#endif /* WITH_CUDA_AWARE_MPI_2 */
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_CHOLESKY
       my_stream = obj%gpu_setup%my_stream
       ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-      call obj%timer%start("gpu_nccl")
-      successGPU = nccl_group_start()
+      call obj%timer%start("gpu_ccl")
+      successGPU = ccl_group_start()
       if (.not.successGPU) then
-        print *,"Error in setting up nccl_group_start!"
+        print *,"Error in setting up ccl_group_start!"
         stop 1
       endif
 #ifdef WITH_NVTX
-      call nvtxRangePush("do i=1,nblk nccl_bcast(tmatc_dev+offset_i)")
+      call nvtxRangePush("do i=1,nblk ccl_bcast(tmatc_dev+offset_i)")
 #endif 
 
       do i=1,nblk
         if (l_cols-l_colx+1 > 0) then
           offset = ((l_colx-1) + (i-1) * l_cols ) * size_of_datatype
 
-          successGPU = nccl_bcast(tmatc_dev+offset, tmatc_dev+offset, &
+          successGPU = ccl_bcast(tmatc_dev+offset, tmatc_dev+offset, &
 #if REALCASE == 1
                        int(l_cols-l_colx+1,kind=c_size_t), &
 #endif
@@ -1142,24 +1114,24 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                       ncclDouble, &
+                       cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                       ncclFloat, &
+                       cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                       ncclDouble, &
+                       cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                       ncclFloat, &
+                       cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
                        int(prow(n, nblk, np_rows),kind=c_int), ccl_comm_rows, my_stream)
 
           if (.not.successGPU) then
-            print *,"Error in nccl_reduce"
+            print *,"Error in ccl_reduce"
             stop 1
           endif
 
@@ -1167,20 +1139,20 @@
       enddo
 
 #ifdef WITH_NVTX
-      call nvtxRangePop() !  do i=1,nblk nccl_bcast(tmatc_dev+offset_i)
+      call nvtxRangePop() !  do i=1,nblk ccl_bcast(tmatc_dev+offset_i)
 #endif 
-      successGPU = nccl_group_end()
+      successGPU = ccl_group_end()
       if (.not.successGPU) then
-        print *,"Error in setting up nccl_group_end!"
+        print *,"Error in setting up ccl_group_end!"
         stop 1
       endif
 
       successGPU = gpu_stream_synchronize(my_stream)
-      check_stream_synchronize_gpu("elpa_cholesky: nccl_bcast", successGPU)
+      check_stream_synchronize_gpu("elpa_cholesky: ccl_bcast", successGPU)
 
-      call obj%timer%stop("gpu_nccl")
-#endif /* WITH_NVIDIA_NCCL */
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+      call obj%timer%stop("gpu_ccl")
+#endif /* USE_CCL_CHOLESKY */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
     else ! useGPU
       do i=1,nblk
         call obj%timer%start("mpi_communication")
@@ -1193,7 +1165,7 @@
       enddo
     endif ! useGPU
 
-#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL)
+#if !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY)
     !TODO: is this needed ? GUESS NOT
     if (useGPU) then
       !if (l_cols-l_colx+1 > 0) then
@@ -1211,24 +1183,8 @@
 #endif
       !endif
     endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(WITH_NVIDIA_NCCL) */
+#endif /* !defined(WITH_CUDA_AWARE_MPI_2) && !defined(USE_CCL_CHOLESKY) */
 
-#if defined(WITH_CUDA_AWARE_MPI_2)
-    if (useGPU) then
-      num = l_cols*nblk*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-      my_stream = obj%gpu_setup%my_stream
-      call gpu_memcpy_async_and_stream_synchronize &
-      ("elpa_choleksky: tmatc_dev -> tmatc", tmatc_dev, 0_c_intptr_t, &
-                                       tmatc(1:l_cols,1:nblk), &
-                                       1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
-#else
-      successGPU = gpu_memcpy(int(loc(tmatc),kind=c_intptr_t), tmatc_dev, num, &
-                              gpuMemcpyDeviceToHost)
-      check_memcpy_gpu("elpa_cholesky: tmatc_dev to tmatc", successGPU)
-#endif
-    endif
-#endif /* defined(WITH_CUDA_AWARE_MPI_2) */
 
 #else /* WITH_MPI */
     if (useGPU  .and. .not. useCCL) then
@@ -1250,7 +1206,7 @@
 
     if (useGPU .and. .not. useCCL) then
 
-      ! not needed if transpose vec NCCL
+      ! not needed if transpose vec CCL
       num = l_rows*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
@@ -1270,7 +1226,7 @@
 #ifdef WITH_NVTX
       call nvtxRangePush("elpa_gpu_ccl_transpose_vectors tmatc_dev->tmatr_dev")
 #endif
-#if defined(WITH_NVIDIA_NCCL)
+#if defined(USE_CCL_CHOLESKY)
       call elpa_gpu_ccl_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
@@ -1279,13 +1235,12 @@
                       tmatr_dev, ubound(tmatr,dim=1), ccl_comm_rows, mpi_comm_rows, &
                 n, na, nblk, nblk, nrThreads, .false., my_pcol, my_prow, np_cols, np_rows, &
                 aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
-#endif /* WITH_NVIDIA_NCCL */
+#endif /* USE_CCL_CHOLESKY */
 
 #ifdef WITH_NVTX
       call nvtxRangePop() !  elpa_gpu_ccl_transpose_vectors tmatc_dev->tmatr_dev
 #endif   
     else ! useCCL
-    !TODO: transpose vec NCCL -> PETR
 #ifdef WITH_NVTX
       call nvtxRangePush("elpa_transpose_vectors")
 #endif
@@ -1303,7 +1258,6 @@
 
     if (useGPU .and. .not. useCCL) then
 
-    !TODO: transpose vec NCCL
       num = l_rows*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
@@ -1405,7 +1359,7 @@
     successGPU = gpu_free(tmatr_dev)
     check_dealloc_gpu("elpa_cholesky: tmatr_dev", successGPU)
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef USE_CCL_CHOLESKY
     if (.not. isSquareGridGPU) then
       successGPU = gpu_free(aux_transpose_dev)
       check_dealloc_gpu("tridiag: aux_transpose_dev", successGPU)

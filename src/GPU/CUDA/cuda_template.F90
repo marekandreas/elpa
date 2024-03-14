@@ -55,12 +55,39 @@
   integer(kind=ik) :: cublasPointerModeDevice
   integer(kind=ik) :: cublasPointerModeHost
 
+
   interface
-    function cuda_get_last_error_c() result(istat) &
-            bind(C, name="cudaGetLastErrorFromC")
+    function cuda_device_get_attributes_c(value, attribute) result(istat) &
+             bind(C, name="cudaDeviceGetAttributeFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT)      :: istat
+
+      integer(kind=C_INT), value  :: attribute
+      integer(kind=C_INT)         :: value
+      integer(kind=C_INT)         :: istat
+    end function
+  end interface
+
+
+  interface
+    function cublas_get_version_c(cublasHandle, version) result(istat) &
+             bind(C, name="cublasGetVersionFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value  :: cublasHandle
+      integer(kind=C_INT)              :: version
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+
+  interface
+    function cuda_get_last_error_c() result(istat) &
+             bind(C, name="cudaGetLastErrorFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int)              :: istat
     end function
   end interface
 
@@ -119,8 +146,6 @@
     end function
   end interface
 
-
-  ! functions to set and query the GPU devices
   interface
     function cublas_create_c(cudaHandle) result(istat) &
              bind(C, name="cublasCreateFromC")
@@ -141,6 +166,7 @@
     end function
   end interface
 
+  ! functions to set and query the GPU devices
   interface
     function cuda_setdevice_c(n) result(istat) &
              bind(C, name="cudaSetDeviceFromC")
@@ -157,8 +183,8 @@
              bind(C, name="cudaGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_INT), intent(out) :: n
-      integer(kind=C_INT)              :: istat
+      integer(kind=C_INT), intent(out)         :: n
+      integer(kind=C_INT)                      :: istat
     end function
   end interface
 
@@ -479,7 +505,6 @@
     end function
   end interface
 
-
   interface
     function cuda_malloc_cptr_c(a, width_height) result(istat) &
              bind(C, name="cudaMallocFromC")
@@ -491,12 +516,11 @@
       integer(kind=C_INT)                         :: istat
     end function
   end interface
-  
+
   interface cuda_free_host
     module procedure cuda_free_host_intptr
     module procedure cuda_free_host_cptr
   end interface
-
   interface
     function cuda_free_host_intptr_c(a) result(istat) &
              bind(C, name="cudaFreeHostFromC")
@@ -506,22 +530,21 @@
       integer(kind=C_INT)              :: istat
     end function
   end interface
-  
+
   interface
-  function cuda_free_host_cptr_c(a) result(istat) &
-           bind(C, name="cudaFreeHostFromC")
-    use, intrinsic :: iso_c_binding
-    implicit none
-    type(c_ptr), value               :: a
-    integer(kind=c_int)              :: istat
-  end function
-end interface
+    function cuda_free_host_cptr_c(a) result(istat) &
+             bind(C, name="cudaFreeHostFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value               :: a
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
 
   interface cuda_malloc_host
     module procedure cuda_malloc_host_intptr
     module procedure cuda_malloc_host_cptr
   end interface
-  
   interface
     function cuda_malloc_host_intptr_c(a, width_height) result(istat) &
              bind(C, name="cudaMallocHostFromC")
@@ -529,7 +552,7 @@ end interface
       implicit none
       integer(kind=c_intptr_t)                    :: a
       integer(kind=c_intptr_t), intent(in), value :: width_height
-      integer(kind=c_int)                         :: istat
+      integer(kind=C_INT)                         :: istat
     end function
   end interface
 
@@ -568,7 +591,6 @@ end interface
       integer(kind=c_intptr_t), value            :: cudaStream
     end function
   end interface
-
 
   interface cublas_Dgemm
     module procedure cublas_Dgemm_intptr
@@ -620,6 +642,7 @@ end interface
     end subroutine
   end interface
 
+
   interface cublas_Dcopy
     module procedure cublas_Dcopy_intptr
     module procedure cublas_Dcopy_cptr
@@ -648,6 +671,7 @@ end interface
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
+
 
   interface cublas_Dtrmm
     module procedure cublas_Dtrmm_intptr
@@ -681,6 +705,7 @@ end interface
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
+
 
   interface cublas_Dtrsm
     module procedure cublas_Dtrsm_intptr
@@ -728,7 +753,6 @@ end interface
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
-
 
   interface cublas_Sgemm
     module procedure cublas_Sgemm_intptr
@@ -780,6 +804,7 @@ end interface
     end subroutine
   end interface
 
+
   interface cublas_Scopy
     module procedure cublas_Scopy_intptr
     module procedure cublas_Scopy_cptr
@@ -808,6 +833,7 @@ end interface
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
+
 
   interface cublas_Strmm
     module procedure cublas_Strmm_intptr
@@ -841,6 +867,7 @@ end interface
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
+
 
   interface cublas_Strsm
     module procedure cublas_Strsm_intptr
@@ -939,6 +966,7 @@ end interface
     end subroutine
   end interface
 
+
   interface cublas_Zcopy
     module procedure cublas_Zcopy_intptr
     module procedure cublas_Zcopy_cptr
@@ -967,6 +995,7 @@ end interface
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
+
 
   interface cublas_Ztrmm
     module procedure cublas_Ztrmm_intptr
@@ -1000,6 +1029,7 @@ end interface
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
+
 
   interface cublas_Ztrsm
     module procedure cublas_Ztrsm_intptr
@@ -1098,6 +1128,7 @@ end interface
     end subroutine
   end interface
 
+
   interface cublas_Ccopy
     module procedure cublas_Ccopy_intptr
     module procedure cublas_Ccopy_cptr
@@ -1126,6 +1157,7 @@ end interface
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
+
 
   interface cublas_Ctrmm
     module procedure cublas_Ctrmm_intptr
@@ -1159,6 +1191,7 @@ end interface
       integer(kind=C_intptr_T), value         :: cublasHandle
     end subroutine
   end interface
+
 
   interface cublas_Ctrsm
     module procedure cublas_Ctrsm_intptr
@@ -1260,6 +1293,7 @@ end interface
     end subroutine
   end interface
 
+
   interface cublas_Ddot
     module procedure cublas_Ddot_intptr
     module procedure cublas_Ddot_cptr
@@ -1282,10 +1316,11 @@ end interface
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
+
 
   interface cublas_Dscal
     module procedure cublas_Dscal_intptr
@@ -1315,6 +1350,7 @@ end interface
       type(c_ptr), value                      :: x
     end subroutine
   end interface
+
 
   interface cublas_Daxpy
     module procedure cublas_Daxpy_intptr
@@ -1356,7 +1392,7 @@ end interface
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
@@ -1367,10 +1403,11 @@ end interface
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
+
 
   interface cublas_Sscal
     module procedure cublas_Sscal_intptr
@@ -1400,6 +1437,7 @@ end interface
       type(c_ptr), value                      :: x
     end subroutine
   end interface
+
 
   interface cublas_Saxpy
     module procedure cublas_Saxpy_intptr
@@ -1442,7 +1480,7 @@ end interface
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
@@ -1454,10 +1492,11 @@ end interface
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
+
 
   interface cublas_Zscal
     module procedure cublas_Zscal_intptr
@@ -1487,6 +1526,7 @@ end interface
       type(c_ptr), value                      :: x
     end subroutine
   end interface
+
 
   interface cublas_Zaxpy
     module procedure cublas_Zaxpy_intptr
@@ -1529,7 +1569,7 @@ end interface
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       integer(kind=C_intptr_T), value         :: x, y, result
     end subroutine
   end interface
@@ -1541,10 +1581,11 @@ end interface
       implicit none
       character(1,C_CHAR),value               :: conj
       integer(kind=C_intptr_T), value         :: cublasHandle
-      integer(kind=C_INT),value               :: length, incx, incy
+      integer(kind=C_INT), value              :: length, incx, incy
       type(c_ptr), value                      :: x, y, result
     end subroutine
   end interface
+
 
   interface cublas_Cscal
     module procedure cublas_Cscal_intptr
@@ -1574,6 +1615,7 @@ end interface
       type(c_ptr), value                      :: x
     end subroutine
   end interface
+
 
   interface cublas_Caxpy
     module procedure cublas_Caxpy_intptr
@@ -1605,6 +1647,31 @@ end interface
   end interface
 
   contains
+
+    function cuda_device_get_attributes(value, attribute) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)                       :: value, attribute
+      logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cuda_device_get_attributes_c(value, attribute) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function cublas_get_version(cublasHandle, version) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: cublasHandle
+      integer(kind=C_INT)                       :: version
+      logical                                   :: success
+#ifdef WITH_NVIDIA_GPU_VERSION
+      success = cublas_get_version_c(cublasHandle, version) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
     function cuda_get_last_error() result(success)
       use, intrinsic :: iso_c_binding
@@ -1653,6 +1720,7 @@ end interface
       success = .true.
 #endif
     end function
+
 
     function cuda_stream_synchronize(cudaStream) result(success)
       use, intrinsic :: iso_c_binding
@@ -2320,7 +2388,6 @@ end interface
 #endif
     end subroutine
 
-
     subroutine cublas_Sgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2784,14 +2851,13 @@ end interface
 #endif
     end subroutine
 
-
     subroutine cublas_Ddot_intptr(cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: cublasHandle
       integer(kind=c_int)      :: length, incx, incy
       integer(kind=c_intptr_t) :: x, y, result
-      
+
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Ddot_intptr_c(cublasHandle, length, x, incx, y, incy, result)
 #endif
@@ -2860,7 +2926,6 @@ end interface
       call cublas_Daxpy_cptr_c(cublasHandle, length, alpha, x, incx, y, incy)
 #endif
     end subroutine
-
 
     subroutine cublas_Sdot_intptr(cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
@@ -2937,7 +3002,6 @@ end interface
       call cublas_Saxpy_cptr_c(cublasHandle, length, alpha, x, incx, y, incy)
 #endif
     end subroutine
-
 
     subroutine cublas_Zdot_intptr(conj, cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding
@@ -3016,7 +3080,6 @@ end interface
       call cublas_Zaxpy_cptr_c(cublasHandle, length, alpha, x, incx, y, incy)
 #endif
     end subroutine
-
 
     subroutine cublas_Cdot_intptr(conj, cublasHandle, length, x, incx, y, incy, result)
       use, intrinsic :: iso_c_binding

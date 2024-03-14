@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [21:0:2])
+AC_SUBST([ELPA_SO_VERSION], [21:1:2])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -40,17 +40,17 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20231705, "Current ELPA API version")
-print_current_api_version=20231705
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20241103, "Current ELPA API version")
+print_current_api_version=20241103
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20232311], [Current ELPA autotune version])
-print_current_autotune_version=20232311
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20232311], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20232311, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241103], [Current ELPA autotune version])
+print_current_autotune_version=20241103
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241103], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20241103, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1716473596],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1725776247],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -2632,20 +2632,6 @@ if test x"${need_amd_gpu}" = x"yes"; then
     AC_DEFINE([WITH_HIPCUB], [1], [use hipcub library in some kernels])
   fi
 fi
-#AC_MSG_CHECKING(whether AMD rocsolver library should be used)
-#AC_ARG_WITH([rocsolver],
-#            [AS_HELP_STRING([--with-rocsolver],
-#                            [Use AMD rocsolver library, disabled by default])],
-#            [
-#               if test x"$withval" = x"yes"; then
-#                 with_rocsolver=yes
-#               else
-#                 with_rocsolver=no
-#               fi
-#	     ],
-#            [with_rocsolver="no"])
-#AC_MSG_RESULT([${with_rocsolver}])
-
 
 use_openmp_gpu_backend=no
 use_sycl_gpu_backend=no
@@ -2699,10 +2685,17 @@ if test x"${need_intel_gpu}" = x"yes" ; then
   test -n "$ARFLAGS" || ARFLAGS="cru"
 fi
 
+#############################################################################################
+#
+# [Nvidia|AMD|Intel] compilers + blas
+#
+#############################################################################################
+
 if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
   CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include "
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
+  CFLAGS="$CFLAGS -I$CUDA_INSTALL_PATH/include"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
   NVCC="nvcc"
   AC_SUBST(NVCC)
@@ -2719,6 +2712,14 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   if test x"${have_cublas}" = x"no"; then
     AC_MSG_ERROR([Could not link cublas; try to set the cuda-path or disable Nvidia GPU support])
   fi
+
+  dnl check whether we find cublasLt. It's needed for cublasLtHeuristicsCacheSetCapacity(), which however exists only in cublasLt ver >= 11.11.3.6
+  AC_SEARCH_LIBS([cublasLtHeuristicsCacheSetCapacity],[cublasLt],[have_cublasLt=yes],[have_cublasLt=no])
+  if test x"${have_cublasLt}" = x"no"; then
+    AC_MSG_WARN([Could not find cublasLtHeuristicsCacheSetCapacity() or couldn't link cublasLt])
+  fi
+
+  dnl check whether we find cudart
   AC_SEARCH_LIBS([cudaMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
   if test x"${have_cudart}" = x"no"; then
     AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
@@ -2741,17 +2742,55 @@ if test x"${need_amd_gpu}" = x"yes" ; then
     if test x"${have_hipblas}" = x"no"; then
       AC_MSG_ERROR([Could not link hipblas; try to set the hip-path or disable AMD GPU support])
     fi
+    #dnl check for API version
+    AC_MSG_CHECKING(whether rocblas API v3 should be used)
+    AC_LANG_PUSH([C++])
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+      #include "rocblas/rocblas.h"
+      int main(int argc, char **argv) {
+       hipblasHandle_t rocblasHandle;
+	 int m, n, lda, ldb; 
+	 float alpha, *A, *B;
+         hipblasStatus_t status = hipblasDtrmm(rocblasHandle, HIPBLAS_SIDE_LEFT, HIPBLAS_FILL_MODE_LOWER, HIPBLAS_OP_N, HIPBLAS_DIAG_UNIT, m, n, &alpha, A, lda, B, ldb, B, ldb);
+        return 0;
+      }
+    ])],
+    [can_compile_rocblas_api_v3=yes],
+    [can_compile_rocblas_api_v3=no]
+    )
+    AC_LANG_POP([C++])
+    AC_MSG_RESULT([${can_compile_rocblas_api_v3}])
+    if test x"${can_compile_rocblas_api_v3}" = x"yes"; then
+      AC_DEFINE([HAVE_ROCBLAS_API_V3],[1],[use rocblas API v3])
+    fi
   else
     #dnl check whether we find rocblas
     AC_SEARCH_LIBS([rocblas_dgemm],[rocblas],[have_rocblas=yes],[have_rocblas=no])
     if test x"${have_rocblas}" = x"no"; then
       AC_MSG_ERROR([Could not link rocblas; try to set the hip-path or disable AMD GPU support])
     fi
+    #dnl check for API version
+    AC_MSG_CHECKING(whether rocblas API v3 should be used)
+    AC_LANG_PUSH([C++])
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+      #include "rocblas/rocblas.h"
+      int main(int argc, char **argv) {
+         rocblas_handle rocblasHandle;
+	 int m, n, lda, ldb; 
+	 float alpha, *A, *B;
+         rocblas_status status = rocblas_strmm(rocblasHandle, rocblas_side_left, rocblas_fill_lower, rocblas_operation_none, rocblas_diagonal_unit, m, n, &alpha, A, lda, B, ldb, B, ldb);
+        return 0;
+      }
+    ])],
+    [can_compile_rocblas_api_v3=yes],
+    [can_compile_rocblas_api_v3=no]
+    )
+    AC_LANG_POP([C++])
+    AC_MSG_RESULT([${can_compile_rocblas_api_v3}])
+    if test x"${can_compile_rocblas_api_v3}" = x"yes"; then
+      AC_DEFINE([HAVE_ROCBLAS_API_V3],[1],[use rocblas API v3])
+    fi
   fi
-  #AC_SEARCH_LIBS([hipMemcpy],[cudart],[have_cudart=yes],[have_cudart=no])
-  #if test x"${have_cudart}" = x"no"; then
-  #  AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
-  #fi
   AC_LANG_POP([C])
 fi
 
@@ -2764,6 +2803,15 @@ if test x"${need_intel_gpu}" = x"yes" ; then
   fi
   AC_LANG_POP([C])
 fi
+
+#TODO mklGPUBLAS
+
+##########################################################################################
+#
+# GPU memory debugging
+#
+##########################################################################################
+
 
 AC_MSG_CHECKING(whether NVIDIA GPU memory debugging should be enabled)
 AC_ARG_ENABLE([NVIDIA-gpu-memory-debug],
@@ -2779,6 +2827,15 @@ AC_MSG_RESULT([${enable_nvidia_gpu_memory_debug}])
 if test x"${enable_nvidia_gpu_memory_debug}" = x"yes" ; then
   AC_DEFINE([DEBUG_CUDA],[1],[enable CUDA debugging])
 fi
+
+#TODO AMD memory debugging
+#TODO Intel memory debugging
+
+################################################################################################
+#
+# GPU aware MPI
+#
+###############################################################################################
 
 use_cuda_aware_mpi=no
 if test x"${need_nvidia_gpu}" = x"yes"; then
@@ -2819,6 +2876,15 @@ if test x"${need_nvidia_gpu}" = x"yes"; then
   fi
 fi
 
+#TODO: AMD
+#TODO: intel
+
+##########################################################################################
+#
+#  GPU streams
+#
+##########################################################################################
+
 use_cuda_streams=no
 use_hip_streams=no
 use_gpu_streams=no
@@ -2848,7 +2914,7 @@ AC_ARG_ENABLE([gpu-streams],
                use_cuda_streams=no
                use_hip_streams=no
 	       use_gpu_streams=no
-	       if test x"$enable_openmp" = x"no"; then
+	       #if test x"$enable_openmp" = x"no"; then
 		 if test x"$enable_cuda_aware_mpi" = x"no"; then
 	           if test x"$need_nvidia_gpu" = x"yes"; then
                      use_cuda_streams=yes
@@ -2859,16 +2925,16 @@ AC_ARG_ENABLE([gpu-streams],
                      use_gpu_streams=yes
                    fi
 		 fi
-	       fi
+	       #fi
 	       ])
 AC_MSG_RESULT([${use_gpu_streams}])
-if test x"$enable_openmp" = x"no"; then
+#if test x"$enable_openmp" = x"no"; then
   if test x"$enable_cuda_aware_mpi" = x"no"; then
     if test x"$relied_on_default" = x"yes"; then
       AC_MSG_NOTICE([Streaming has ben enabled since you relied on the default action])
     fi
   fi
-fi
+#fi
 
 if test x"$use_gpu_streams" = x"yes"; then
   if test x"$use_gpu_streams_per_default" = x"yes"; then
@@ -2933,94 +2999,6 @@ if test x"$use_hip_streams" = x"yes"; then
   #fi
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 fi
-
-
-if test x"$need_nvidia_gpu" = x"yes"; then
-  if test x"$use_gpu_streams" = x"yes"; then
-    AC_MSG_CHECKING(whether NVIDIA cusolver library should be used (since streams are activated))
-    AC_ARG_WITH([cusolver],
-              [AS_HELP_STRING([--with-cusolver],
-                              [Use Nvidia cusolver library, enabled by default])],
-              [
-                 if test x"$withval" = x"yes"; then
-                   with_cusolver=yes
-                 else
-                   with_cusolver=no
-                 fi
-	      ],
-              [with_cusolver="yes"])
-    AC_MSG_RESULT([${with_cusolver}])
-    if test x"${with_cusolver}" = x"no"; then
-      if test x"${need_nvidia_gpu}" = x"yes"; then
-        AC_MSG_WARN([-------------------------------------------------------------------------])
-        AC_MSG_WARN([])
-        AC_MSG_WARN([Not using cusolver might lead to performance drops, it is not recommended!])
-        AC_MSG_WARN([])
-        AC_MSG_WARN([-------------------------------------------------------------------------])
-      fi
-    fi
-    if test x"${with_cusolver}" = x"yes"; then
-      if test x"${use_cuda_streams}" = x"no"; then
-        AC_MSG_ERROR([You cannot use cusolver and NOT CUDA streams; Please activate both or diable cusolver])
-      fi
-    fi
-  fi
-fi
-
-
-if test x"$need_amd_gpu" = x"yes"; then
-  if test x"$use_hip_streams" = x"yes"; then
-    AC_MSG_CHECKING(whether AMD rocsolver library should be used (since streams are activated))
-    AC_ARG_WITH([rocsolver],
-            [AS_HELP_STRING([--with-rocsolver],
-                            [Use AMD rocsolver library, enabled by default])],
-            [
-               if test x"$withval" = x"yes"; then
-                 with_rocsolver=yes
-               else
-                 with_rocsolver=no
-               fi
-	     ],
-            [with_rocsolver="yes"])
-    AC_MSG_RESULT([${with_rocsolver}])
-    if test x"${with_rocsolver}" = x"no"; then
-      if test x"${need_amd_gpu}" = x"yes"; then
-        AC_MSG_WARN([-------------------------------------------------------------------------])
-        AC_MSG_WARN([])
-        AC_MSG_WARN([Not using rocsolver might lead to performance drops, it is not recommended!])
-        AC_MSG_WARN([])
-        AC_MSG_WARN([-------------------------------------------------------------------------])
-      fi
-    fi
-    if test x"${with_rocsolver}" = x"yes"; then
-      if test x"${use_hip_streams}" = x"no"; then
-        AC_MSG_ERROR([You cannot use rocsolver and NOT HIP streams; Please activate both or diable rocsolver])
-      fi
-    fi
-  fi
-fi
-
-if test x"${with_cusolver}" = x"yes"; then
-  AC_LANG_PUSH([C])
-  AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
-  if test x"${have_cusolver}" = x"no"; then
-    AC_MSG_ERROR([Could not link cusolver; try to set the path to cusolver.so or disable it: --with-cusolver=no])
-  fi
-  AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
-  AC_LANG_POP([C])
-fi
-
-if test x"${with_rocsolver}" = x"yes"; then
-    AC_LANG_PUSH([C])
-    AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
-    if test x"${have_rocsolver}" = x"no"; then
-      AC_MSG_ERROR([Could not link rocsolver; try to set the path to rocsolver.so or disable it: --with-rocsolver=no])
-    fi
-    AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
-  AC_LANG_POP([C])
-  fi
-
-
 if test x"$need_amd_gpu" = x"yes"; then
   if test x"$use_hip_streams" = x"no"; then
     echo ""
@@ -3037,10 +3015,119 @@ if test x"$need_amd_gpu" = x"yes"; then
     echo ""
     echo ""
     echo ""
-    AC_MSG_NOTICE([If --enable-amd-gpu is set, we recommend --enable-gpu-streams=amd])
+    AC_MSG_NOTICE([If --enable-amd-gpu is set, we recommend --enable-gpu-streams-amd])
   fi
 fi
 
+#TODO: Intel streams
+#
+
+##################################################################################################
+#
+# [cu|roc]Solver
+#
+##################################################################################################
+if test x"$need_nvidia_gpu" = x"yes"; then
+  if test x"$use_gpu_streams" = x"yes"; then
+    AC_MSG_CHECKING(whether NVIDIA cusolver library should be used (since streams are activated))
+    AC_ARG_WITH([cusolver],
+              [AS_HELP_STRING([--with-cusolver],
+                              [Use Nvidia cusolver library, enabled by default])],
+              [
+                 if test x"$withval" = x"yes"; then
+                   with_cusolver=yes
+                 else
+                   with_cusolver=no
+                 fi
+	      ],
+              [relied_on_default_cusolver="yes"])
+    if test x"${relied_on_default_cusolver}" = x"yes"; then
+      with_cusolver=yes
+    fi
+    AC_MSG_RESULT([${with_cusolver}])
+    if test x"${with_cusolver}" = x"no"; then
+      if test x"${need_nvidia_gpu}" = x"yes"; then
+        AC_MSG_WARN([-------------------------------------------------------------------------])
+        AC_MSG_WARN([])
+        AC_MSG_WARN([Not using cusolver might lead to performance drops, it is not recommended!])
+        AC_MSG_WARN([])
+        AC_MSG_WARN([-------------------------------------------------------------------------])
+      fi
+    fi
+    if test x"${with_cusolver}" = x"yes"; then
+      if test x"${use_cuda_streams}" = x"no"; then
+        AC_MSG_ERROR([You cannot use cusolver and NOT CUDA streams; Please activate both or diable cusolver])
+      fi
+    fi
+  fi
+  if test x"${with_cusolver}" = x"yes"; then
+    AC_LANG_PUSH([C])
+    AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
+    if test x"${have_cusolver}" = x"no"; then
+      AC_MSG_ERROR([Could not link cusolver;  try to set the path to cusolver.so or disable it: --with-cusolver=no])
+    fi
+    AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
+    AC_LANG_POP([C])
+  fi
+fi
+
+if test x"$need_amd_gpu" = x"yes"; then
+  if test x"$use_hip_streams" = x"yes"; then
+    AC_MSG_CHECKING(whether AMD rocsolver library should be used (since streams are activated))
+    AC_ARG_WITH([rocsolver],
+            [AS_HELP_STRING([--with-rocsolver],
+                            [Use AMD rocsolver library, enabled by default])],
+            [
+               if test x"$withval" = x"yes"; then
+                 with_rocsolver=yes
+               else
+                 with_rocsolver=no
+               fi
+	     ],
+            [relied_on_default_rocsolver="yes"])
+    if test x"${relied_on_default_rocsolver}" = x"yes"; then
+      with_rocsolver=yes
+    fi
+    AC_MSG_RESULT([${with_rocsolver}])
+    if test x"${with_rocsolver}" = x"no"; then
+      if test x"${need_amd_gpu}" = x"yes"; then
+        AC_MSG_WARN([-------------------------------------------------------------------------])
+        AC_MSG_WARN([])
+        AC_MSG_WARN([Not using rocsolver might lead to performance drops, it is not recommended!])
+        AC_MSG_WARN([])
+        AC_MSG_WARN([-------------------------------------------------------------------------])
+      fi
+    fi
+    if test x"${with_rocsolver}" = x"yes"; then
+      if test x"${use_hip_streams}" = x"no"; then
+        AC_MSG_ERROR([You cannot use rocsolver and NOT HIP streams; Please activate both or diable rocsolver])
+      fi
+    fi
+  fi
+  if test x"${with_rocsolver}" = x"yes"; then
+    AC_LANG_PUSH([C])
+    if test x"${use_hipblas}" = x"yes"; then
+      AC_SEARCH_LIBS([hipsolverDpotrf],[hipsolver],[have_rocsolver=yes],[have_rocsolver=no])
+      hip_solver_api=yes
+    else
+      AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
+    fi
+    if test x"${have_rocsolver}" = x"no"; then
+      AC_MSG_ERROR([Could not link rocsolver;  try to set the path to rocsolver.so or disable it: --with-rocsolver=no])
+    fi
+    AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
+    AC_DEFINE([WITH_AMD_HIPSOLVER_API],[1],[enable AMD hipsolver])
+    AC_LANG_POP([C])
+  fi
+fi
+
+#TODO: Intel solver
+
+##################################################################################################
+#
+# kernels
+#
+##################################################################################################
 m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AM_CONDITIONAL([WITH_]m4_toupper(elpa_m4_kernel)[_KERNEL],[test x"$use_[]elpa_m4_kernel[]" = x"yes"])
   if test x"$use_[]elpa_m4_kernel[]" = x"yes" ; then
@@ -3186,6 +3273,11 @@ AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED])
 
 
+#############################################################
+#
+# nccl
+#
+############################################################
 use_gpu_ccl=no
 use_nvidia_nccl=no
 use_amd_rccl=no
@@ -3243,22 +3335,50 @@ if test x"$use_nvidia_nccl" = x"yes"; then
     AC_MSG_ERROR([Could not link NCCL; either set --disable-gpu-ccl=nccl or set the NCCL installation path with --with-nccl-path=])
   fi
   AC_LANG_POP([C])
+
+  if test x"$with_mpi" = x"no"; then
+    AC_MSG_ERROR([Since --enable-gpu-ccl=nccl is set you must also specify --with-mpi=yes"])
+  fi
+
 fi
 AM_CONDITIONAL([WITH_NVIDIA_NCCL],[test x"$use_nvidia_nccl" = x"yes"])
 
-#
-#if test x"$use_hip_streams" = x"yes"; then
-#  if test x"$need_amd_gpu" = x"no"; then
-#    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you must also use --enable-amd-gpu])
-#  fi
-#  if test x"$need_nvidia_gpu" = x"yes"; then
-#    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-nvidia-gpu])
-#  fi
-#  if test x"${enable_openmp}" = x"yes"; then
-#    AC_MSG_ERROR([If --enable-gpu-streams=amd currently not supported in combination with --enable-openmp])
-#  fi
-#  AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
-#fi
+if test x"$use_amd_rccl" = x"yes"; then
+  if test x"$use_hip_streams" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=rccl is set, you must also use --enable-gpu-streams=amd])
+  fi
+  if test x"$need_nvidia_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=rccl is set, you cannot set --enable-nvidia-gpu])
+  fi
+  if test x"${enable_openmp}" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=rccl currently not supported in combination with --enable-openmp])
+  fi
+  if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
+    AC_MSG_ERROR([The combination --enable-cuda-aware-mpi and --enable-gpu-ccl=rccl is not supported"])
+  fi
+  AC_DEFINE([WITH_AMD_RCCL],[1],[enable usage of AMD RCCL])
+
+  #needed ?
+  #AC_ARG_WITH([rccl-path],[AS_HELP_STRING([--with-rccl-path=PATH],[prefix where RCCL is installed @<:@default=auto@:>@])],
+  #            [RCCL_INSTALL_PATH=$withval], [with_cuda=auto])
+
+  AC_LANG_PUSH([C])
+  #needed?
+  #CXXFLAGS="$CXXFLAGS -I$CUDA_INSTALL_PATH/include -I$NCCL_INSTALL_PATH/include"
+  #needed?
+  #LDFLAGS="$LDFLAGS -L$NCCL_INSTALL_PATH/lib"
+  dnl check whether we find nccl
+  AC_SEARCH_LIBS([ncclGetVersion],[rccl],[have_rccl=yes],[have_rccl=no])
+  if test x"${have_rccl}" = x"no"; then
+    AC_MSG_ERROR([Could not link RCCL; either set --disable-gpu-ccl=rccl or set the RCCL installation path with --with-rccl-path=])
+  fi
+  AC_LANG_POP([C])
+
+  if test x"$with_mpi" = x"no"; then
+    AC_MSG_ERROR([Since --enable-gpu-ccl=rccl is set you must also specify --with-mpi=yes"])
+  fi
+fi
+AM_CONDITIONAL([WITH_AMD_RCCL],[test x"$use_amd_rccl" = x"yes"])
 
 
 LT_INIT
@@ -3836,14 +3956,14 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2023.11.001.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2023.11.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
-#
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2024.03.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2024.03.001                                                   *"
+echo "***********************************************************************"
+echo " "
+
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
   echo "Important message:"

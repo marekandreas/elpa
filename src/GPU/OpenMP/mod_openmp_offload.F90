@@ -42,7 +42,6 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! Author: Andreas Marek, MPCDF
-! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
@@ -50,6 +49,7 @@
 module openmp_offload_functions
   use, intrinsic :: iso_c_binding
   use precision
+  use openmp_offload_solver_functions
   implicit none
 
   public

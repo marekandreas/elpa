@@ -627,7 +627,7 @@ module elpa_impl
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       use mod_query_gpu_usage
-      use elpa_gpu, only : gpublasDefaultPointerMode, gpu_getdevicecount
+      use elpa_gpu, only : gpublasDefaultPointerMode, gpu_getdevicecount, gpublas_get_version
       use elpa_mpi
       use elpa_omp
 #endif
@@ -643,8 +643,8 @@ module elpa_impl
 #if defined(WITH_SYCL_GPU_VERSION)
       use sycl_functions
 #endif
-#ifdef WITH_NVIDIA_NCCL
-      use nccl_functions
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+      use elpa_ccl_gpu
 #endif
 
       implicit none
@@ -654,25 +654,28 @@ module elpa_impl
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 
       logical                             :: useGPU
-      logical                             :: success, wantDebugMessage
+      logical                             :: success
       integer(kind=ik)                    :: numberOfDevices
       integer(kind=ik)                    :: deviceNumber, mpierr, maxNumberOfDevices
       logical                             :: gpuAvailable
       integer(kind=ik)                    ::  mpi_comm_all, use_gpu_id, min_use_gpu_id
       integer(kind=ik)                    :: maxThreads, thread
+      integer(kind=c_int)                 :: cublas_version
       integer(kind=c_int)                 :: syclShowOnlyIntelGpus
       integer(kind=ik)                    :: syclShowAllDevices
       integer(kind=c_intptr_t)            :: handle_tmp
       character(len=8)                    :: fmt
       character(len=12)                   :: gpu_string
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
       TYPE(ncclUniqueId)                  :: ncclId
       integer(kind=c_int)                 :: nprocs
       integer(kind=c_intptr_t)            :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols
       integer(kind=ik)                    :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
 #endif
 #endif
-
+      integer(kind=ik)                    :: attribute, value
+      integer(kind=ik)                    :: debug
+      logical                             :: wantDebugMessage
       error = ELPA_ERROR_SETUP
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -684,10 +687,19 @@ module elpa_impl
     endif
 #endif
 
+      if (self%is_set("debug") == 1) then
+         call self%get("debug",debug, error)
+         print *,"debug ",debug
+         if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+         if (debug .eq. 1) then
+           wantDebugMessage = .true.
+         endif
+      endif
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 #undef OBJECT
 #define OBJECT self
 #undef ADDITIONAL_OBJECT_CODE
+
 #include "./GPU/check_for_gpu_template.F90"
 #undef OBJECT
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
@@ -2662,6 +2674,8 @@ module elpa_impl
               time_spent(1) = self%autotune_timer%get("accumulator","band_to_full")
             case (ELPA2_AUTOTUNE_HERMITIAN_MULTIPLY_BLOCKING)
               time_spent(1) = self%autotune_timer%get("accumulator","hermitian_multiply")
+            case (ELPA2_AUTOTUNE_CHOLESKY_BLOCKING)
+              time_spent(1) = self%autotune_timer%get("accumulator","cholesky")
             case (ELPA1_AUTOTUNE_MAX_STORED_ROWS)
               time_spent(1) = self%autotune_timer%get("accumulator","tridi_to_full")
             case (ELPA2_AUTOTUNE_TRIDI_TO_BAND_STRIPEWIDTH)

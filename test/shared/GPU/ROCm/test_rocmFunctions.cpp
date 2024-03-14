@@ -62,12 +62,18 @@
 #include <stdint.h>
 #include <complex.h>
 
-
-#ifdef WITH_AMD_GPU_VERSION
-#include "../../../../src/GPU/ROCm/rocmFunctions_template.h"
+#ifdef HIPBLAS
+#ifdef WITH_AMD_ROCSOLVER
+#include <hipsolver/hipsolver.h>
 #endif
-
+#else /* HIPBLAS */
 #ifdef WITH_AMD_ROCSOLVER
 #include <rocsolver.h>
-#include "../../../../src/GPU/ROCm/rocsolverFunctions_template.h"
 #endif
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+
+#include "../../../../src/GPU/ROCm/rocmFunctions_template.h"
+
+#endif /* WITH_AMD_GPU_VERSION */

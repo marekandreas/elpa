@@ -567,6 +567,8 @@ extern "C" {
 //_________________________________________________________________________________________________
 // cusolverXpotrf
 
+// Introduced with CUDA 11.1 (CUDA_VERSION >= 11010)
+
 void cusolverXpotrf_bufferSize_elpa_wrapper(cusolverDnHandle_t cusolverHandle, char uplo, int n, char dataType, intptr_t A, int lda, 
                                             size_t *workspaceInBytesOnDevice, size_t *workspaceInBytesOnHost){
 
@@ -575,7 +577,7 @@ void cusolverXpotrf_bufferSize_elpa_wrapper(cusolverDnHandle_t cusolverHandle, c
 
     status = cusolverDnXpotrf_bufferSize(cusolverHandle, NULL, fill_mode_new_api(uplo), (int64_t) n, cuda_data_type, (void *) A, (int64_t) lda, 
                                          cuda_data_type, workspaceInBytesOnDevice, workspaceInBytesOnHost);
-    
+
     if (status != CUSOLVER_STATUS_SUCCESS){
       cusolverPrintError(status);
       errormessage("Error in cusolverDnXpotrf_bufferSize %s \n", "aborting");

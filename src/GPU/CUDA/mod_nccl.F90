@@ -42,7 +42,6 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! Author: Andreas Marek, MPCDF
-! This file is the generated version. Do NOT edit
 
 
 #include "config-f90.h"
@@ -53,7 +52,8 @@ module nccl_functions
   implicit none
 
   public
-
+#ifdef WITH_NVIDIA_NCCL
 #include "./nccl_template.F90"
+#endif
 
 end module nccl_functions

@@ -44,6 +44,8 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
+!
+! This file is the generated version. Do NOT edit
 #endif
 
 
@@ -73,9 +75,11 @@
         call cusolver_Dtrtri(uplo, diag, n, a, lda, info, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Dtrtri(uplo, diag, n, a, lda, info, handle)
       endif
+#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -158,9 +162,11 @@
         call cusolver_Strtri(uplo, diag, n, a, lda, info, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Strtri(uplo, diag, n, a, lda, info, handle)
       endif
+#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -177,7 +183,7 @@
 #endif
     end subroutine
 
-    subroutine gpusolver_Spotrf(uplo, n, a, lda, info_dev, handle)
+    subroutine gpusolver_Spotrf(uplo, n, a_dev, lda, info_dev, handle)
       use, intrinsic :: iso_c_binding
       use cuda_functions
 #ifdef WITH_AMD_GPU_VERSION
@@ -193,28 +199,28 @@
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=c_intptr_t)        :: handle
 
       if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_Spotrf(uplo, n, a, lda, info_dev, handle)
+        call cusolver_Spotrf(uplo, n, a_dev, lda, info_dev, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_Spotrf(uplo, n, a, lda, info_dev, handle)
+        call rocsolver_Spotrf(uplo, n, a_dev, lda, info_dev, handle)
       endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_Spotrf(uplo, n, a, lda, info_dev, handle)
+        call mkl_openmp_offload_Spotrf(uplo, n, a_dev, lda, info_dev, handle)
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
 !      if (use_gpu_vendor == sycl_gpu) then
-!        call mkl_sycl_Spotrf(uplo, n, a, lda, info, handle)
+!        call mkl_sycl_Spotrf(uplo, n, a_dev, lda, info_dev, handle)
 !      endif
 #endif
     end subroutine
@@ -243,9 +249,11 @@
         call cusolver_Ztrtri(uplo, diag, n, a, lda, info, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Ztrtri(uplo, diag, n, a, lda, info, handle)
       endif
+#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -262,7 +270,7 @@
 #endif
     end subroutine
 
-    subroutine gpusolver_Zpotrf(uplo, n, a, lda, info_dev, handle)
+    subroutine gpusolver_Zpotrf(uplo, n, a_dev, lda, info_dev, handle)
       use, intrinsic :: iso_c_binding
       use cuda_functions
 #ifdef WITH_AMD_GPU_VERSION
@@ -278,28 +286,28 @@
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=c_intptr_t)        :: handle
 
       if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_Zpotrf(uplo, n, a, lda, info_dev, handle)
+        call cusolver_Zpotrf(uplo, n, a_dev, lda, info_dev, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_Zpotrf(uplo, n, a, lda, info_dev, handle)
+        call rocsolver_Zpotrf(uplo, n, a_dev, lda, info_dev, handle)
       endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_Zpotrf(uplo, n, a, lda, info_dev, handle)
+        call mkl_openmp_offload_Zpotrf(uplo, n, a_dev, lda, info_dev, handle)
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
 !      if (use_gpu_vendor == sycl_gpu) then
-!        call mkl_sycl_Zpotrf(uplo, n, a, lda, info, handle)
+!        call mkl_sycl_Zpotrf(uplo, n, a_dev, lda, info_dev, handle)
 !      endif
 #endif
     end subroutine
@@ -328,9 +336,11 @@
         call cusolver_Ctrtri(uplo, diag, n, a, lda, info, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
+#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Ctrtri(uplo, diag, n, a, lda, info, handle)
       endif
+#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -347,7 +357,7 @@
 #endif
     end subroutine
 
-    subroutine gpusolver_Cpotrf(uplo, n, a, lda, info_dev, handle)
+    subroutine gpusolver_Cpotrf(uplo, n, a_dev, lda, info_dev, handle)
       use, intrinsic :: iso_c_binding
       use cuda_functions
 #ifdef WITH_AMD_GPU_VERSION
@@ -363,28 +373,28 @@
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=c_intptr_t)        :: handle
 
       if (use_gpu_vendor == nvidia_gpu) then
-        call cusolver_Cpotrf(uplo, n, a, lda, info_dev, handle)
+        call cusolver_Cpotrf(uplo, n, a_dev, lda, info_dev, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
       if (use_gpu_vendor == amd_gpu) then
-        call rocsolver_Cpotrf(uplo, n, a, lda, info_dev, handle)
+        call rocsolver_Cpotrf(uplo, n, a_dev, lda, info_dev, handle)
       endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
-        call mkl_openmp_offload_Cpotrf(uplo, n, a, lda, info_dev, handle)
+        call mkl_openmp_offload_Cpotrf(uplo, n, a_dev, lda, info_dev, handle)
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
 ! not yet available in mkl
 !      if (use_gpu_vendor == sycl_gpu) then
-!        call mkl_sycl_Cpotrf(uplo, n, a, lda, info, handle)
+!        call mkl_sycl_Cpotrf(uplo, n, a_dev, lda, info_dev, handle)
 !      endif
 #endif
     end subroutine
@@ -471,3 +481,4 @@
 ! not yet available in mkl
 #endif
     end subroutine
+

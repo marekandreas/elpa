@@ -50,7 +50,25 @@
 //
 // This file was written by A. Marek, MPCDF
 
+#include <stdio.h>
+#include <math.h>
+#include <stdio.h>
 
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <alloca.h>
+#include <stdint.h>
+#include <complex.h>
+
+#include "config-f90.h"
+
+#undef SOLVER_status_success
+#undef SOLVER_status
+#undef SOLVER_handle
+#undef SOLVER_FILL_MODE
+#undef SOLVER_double_complex
+#undef SOLVER_float_complex
 #undef BLAS_status
 #undef BLAS_handle
 //#undef BLAS_float_complex
@@ -81,6 +99,10 @@
 #undef BLAS_sgemv
 #undef BLAS_zgemv
 #undef BLAS_cgemv
+#undef BLAS_dpotrf
+#undef BLAS_spotrf
+#undef BLAS_cpotrf
+#undef BLAS_zpotrf
 #undef BLAS_operation
 #undef BLAS_operation_none
 #undef BLAS_operation_transpose
@@ -118,6 +140,12 @@
 #undef BLAS_pointer_mode
 
 #ifdef HIPBLAS
+#define SOLVER_status hipsolverStatus_t
+#define SOLVER_status_success HIPSOLVER_STATUS_SUCCESS
+#define SOLVER_FILL_MODE hipsolver_fill_mode
+#define SOLVER_handle hipsolverHandle_t
+#define SOLVER_double_complex hipDoubleComplex
+#define SOLVER_float_complex hipFloatComplex
 #define BLAS hipblas
 #define BLAS_status hipblasStatus_t
 #define BLAS_handle hipblasHandle_t
@@ -148,6 +176,10 @@
 #define BLAS_zgemv hipblasZgemv
 #define BLAS_dgemv hipblasDgemv
 #define BLAS_sgemv hipblasSgemv
+#define BLAS_dpotrf hipsolverDpotrf
+#define BLAS_spotrf hipsolverSpotrf
+#define BLAS_zpotrf hipsolverZpotrf
+#define BLAS_cpotrf hipsolverCpotrf
 #define BLAS_operation hipblasOperation_t
 #define BLAS_operation_none HIPBLAS_OP_N
 #define BLAS_operation_transpose HIPBLAS_OP_T
@@ -186,6 +218,12 @@
 //#define BLAS_float_complex hipblas_float_complex
 //#define BLAS_set_stream hipblas_set_stream
 #else /* HIPBLAS */
+#define SOLVER_status rocblas_status
+#define SOLVER_status_success rocblas_status_success
+#define SOLVER_FILL_MODE hip_fill_mode
+#define SOLVER_handle rocblas_handle
+#define SOLVER_double_complex rocblas_double_complex 
+#define SOLVER_float_complex rocblas_float_complex
 #define BLAS rocblas
 #define BLAS_status rocblas_status
 #define BLAS_handle rocblas_handle
@@ -217,6 +255,10 @@
 #define BLAS_zgemv rocblas_zgemv
 #define BLAS_dgemv rocblas_dgemv
 #define BLAS_sgemv rocblas_sgemv
+#define BLAS_dpotrf rocsolver_dpotrf
+#define BLAS_spotrf rocsolver_spotrf
+#define BLAS_zpotrf rocsolver_zpotrf
+#define BLAS_cpotrf rocsolver_cpotrf
 #define BLAS_operation rocblas_operation
 #define BLAS_operation_none rocblas_operation_none
 #define BLAS_operation_transpose rocblas_operation_transpose
@@ -255,10 +297,16 @@
 #endif /* HIPBLAS */
 
 #ifdef HIPBLAS
-#include "hipblas.h"
-#else
-#include "rocblas.h"
+#include <hipblas/hipblas.h>
+#ifdef WITH_AMD_ROCSOLVER
+#include <hipsolver/hipsolver.h>
 #endif
+#else /* HIPBLAS */
+#include "rocblas/rocblas.h"
+#ifdef WITH_AMD_ROCSOLVER
+#include <rocsolver.h>
+#endif
+#endif /* HIPBLAS */
 #include "hip/hip_runtime_api.h"
 
 
@@ -272,8 +320,93 @@
 
 // hipStream_t elpa_hip_stm;
 
+#ifdef WITH_AMD_GPU_VERSION
 extern "C" {
+  int hipDeviceGetAttributeFromC(int *value, int attribute) {
 
+    hipDeviceAttribute_t attr;
+    switch(attribute) {
+      case 0:
+        attr = hipDeviceAttributeMaxThreadsPerBlock;
+        break;
+      case 1:
+        attr = hipDeviceAttributeMaxBlockDimX;
+        break;
+      case 2:
+        attr = hipDeviceAttributeMaxBlockDimY;
+        break;
+      case 3:
+        attr = hipDeviceAttributeMaxBlockDimZ;
+        break;
+      case 4:
+        attr = hipDeviceAttributeMaxGridDimX;
+        break;
+      case 5:
+        attr = hipDeviceAttributeMaxGridDimY;
+        break;
+      case 6:
+        attr = hipDeviceAttributeMaxGridDimZ;
+        break;
+      case 7:
+        attr = hipDeviceAttributeWarpSize;
+        break;
+      case 8:
+       //only for ROCm 6.x fix this
+        //attr = hipDeviceAttributeMultiProcessorCount;
+        break;
+    }
+    hipError_t status = hipDeviceGetAttribute(value, attr, 0);
+    if (status == hipSuccess) {
+      return 1;
+    }
+    else{
+      errormessage("Error in hipDeviceGetAttribute: %s\n", "unknown error");
+      return 0;
+    }
+
+  }
+}
+
+extern "C" {
+  int rocblasGetVersionFromC(BLAS_handle rocblasHandle, int *version) {
+    char *buf;
+    size_t len;
+    hipError_t status;
+
+#ifdef HIPBLAS
+    errormessage("Error in rocblasGetVersionFromC: %s\n", "HIPBLAS does not support rocblas_get_version_string");
+    return 1;
+#else
+    status = rocblas_get_version_string_size(&len);
+    if (status != hipSuccess) {
+      printf("Error in executing  hipGetLastErrorFrom: %s\n", hipGetErrorString(status));
+      errormessage("Error in rocblas_get_version_string_size: %s\n", "unknown error");
+      return 0;
+    }
+
+    status = rocblas_get_version_string(buf, len);
+    if (status == hipSuccess) {
+      int major, minor, patch;
+
+      if (sscanf(buf, "%d.%d.%d", &major, &minor, &patch) == 3) {
+        //printf("Major: %d, Minor: %d, Patch: %d\n", major, minor, patch);
+        *version = major * 10000 + minor * 100 + patch;
+         return 1;
+      } else {
+        printf("Error parsing version string.\n");
+        return 0;
+      }
+    }
+    else{
+      printf("Error in executing  hipGetLastErrorFrom: %s\n", hipGetErrorString(status));
+      errormessage("Error in rocblas_get_version_string: %s\n", "unknown error");
+      return 0;
+    }
+#endif
+  }
+}
+
+extern "C" {
   int hipGetLastErrorFromC() {
     hipError_t status = hipGetLastError();
     
@@ -286,7 +419,9 @@ extern "C" {
       return 0;
     }
   }
-  
+}
+
+extern "C" {
   int hipStreamCreateFromC(hipStream_t *rocblasStream) {
     //*stream = (intptr_t) malloc(sizeof(hipStream_t));
 
@@ -357,6 +492,23 @@ extern "C" {
     }
   }
 
+#ifdef WITH_AMD_ROCSOLVER
+// not needed for ROCM; rocmsolver users rocblas handle 
+//  int rocsolverSetStreamFromC(intptr_t rocsolver_handle, intptr_t stream) {
+//    rocsolverStatus_t status = rocsolverDnSetStream(*((cusolverDnHandle_t*)cusolver_handle), *((cudaStream_t*)stream));
+//    if (status == CUSOLVER_STATUS_SUCCESS) {
+//      return 1;
+//    }
+//    else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
+//      errormessage("Error in cusolverDnSetStream: %s\n", "the CUDA Runtime initialization failed");
+//      return 0;
+//    }
+//    else{
+//      errormessage("Error in cusolverDnSetStream: %s\n", "unknown error");
+//      return 0;
+//    }
+//  }
+#endif
 
   int hipMemcpy2dAsyncFromC(intptr_t *dest, size_t dpitch, intptr_t *src, size_t spitch, size_t width, size_t height, int dir, hipStream_t rocblasStream) {
 
@@ -433,6 +585,46 @@ extern "C" {
 #endif
   }
 
+
+#ifdef WITH_AMD_ROCSOLVER
+// not needed for rocm
+//  int cusolverCreateFromC(intptr_t *cusolver_handle) {
+//    *cusolver_handle = (intptr_t) malloc(sizeof(cusolverDnHandle_t));
+//    cusolverStatus_t status = cusolverDnCreate((cusolverDnHandle_t*) *cusolver_handle);
+//    if (status == CUSOLVER_STATUS_SUCCESS) {
+////       printf("all OK\n");
+//      return 1;
+//    }
+//    else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
+//      errormessage("Error in cusolverCreate: %s\n", "the CUDA Runtime initialization failed");
+//      return 0;
+//    }
+//    else if (status == CUSOLVER_STATUS_ALLOC_FAILED) {
+//      errormessage("Error in cusolverCreate: %s\n", "the resources could not be allocated");
+//      return 0;
+//    }
+//    else{
+//      errormessage("Error in cusolverCreate: %s\n", "unknown error");
+//      return 0;
+//    }
+//  }
+//  int cusolverDestroyFromC(intptr_t *cusolver_handle) {
+//    cusolverStatus_t status = cusolverDnDestroy(*((cusolverDnHandle_t*) *cusolver_handle));
+//    *cusolver_handle = (intptr_t) NULL;
+//    if (status == CUSOLVER_STATUS_SUCCESS) {
+////       printf("all OK\n");
+//      return 1;
+//    }
+//    else if (status == CUSOLVER_STATUS_NOT_INITIALIZED) {
+//      errormessage("Error in cusolverDestroy: %s\n", "the library has not been initialized");
+//      return 0;
+//    }
+//    else{
+//      errormessage("Error in cusolverDestroy: %s\n", "unknown error");
+//      return 0;
+//    }
+//  }
+#endif /* WITH_AMD_ROCSOLVER */
 
   int hipSetDeviceFromC(int n) {
 
@@ -628,6 +820,21 @@ extern "C" {
     }
   }
 
+#ifdef WITH_AMD_HIPSOLVER_API
+  hipsolverFillMode_t hipsolver_fill_mode(char uplo) {
+    if (uplo == 'L' || uplo == 'l') {
+      return HIPSOLVER_FILL_MODE_LOWER;
+    }
+    else if(uplo == 'U' || uplo == 'u') {
+      return HIPSOLVER_FILL_MODE_UPPER;
+    }
+    else {
+      errormessage("Error when transfering %c to hipsolverFillMode_t\n", uplo);
+      // or abort?
+      return HIPSOLVER_FILL_MODE_LOWER;
+    }
+  } 
+#endif
 
   BLAS_fill hip_fill_mode(char uplo) {
     if (uplo == 'L' || uplo == 'l') {
@@ -670,6 +877,484 @@ extern "C" {
       return BLAS_diagonal_non_unit;
     }
   }
+
+#ifdef WITH_AMD_ROCSOLVER
+
+#ifndef WITH_AMD_HIPSOLVER_API
+  // sadly nor Xtrtri function in current HIPSOLVER
+  void rocsolverDtrtri_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, char diag, int64_t n, double *A, int64_t lda, int *info) {
+    BLAS_status status;
+
+    int info_gpu = 0;
+
+    int *devInfo = NULL;
+    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Dtrtri devInfo: %s\n",hipGetErrorString(hiperr));
+    }
+#ifdef DEBUG_AMD
+    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
+#endif
+
+//    double *d_work = NULL, *h_work=NULL;
+//    size_t d_lwork = 0;
+//    size_t h_lwork = 0;
+//    status = cusolverDnXtrtri_bufferSize(*((cusolverDnHandle_t*)handle), hip_fill_mode(uplo), hip_diag_type(diag), n, CUDA_R_64F, A, lda, &d_lwork, &h_lwork);
+//    if (status != CUSOLVER_STATUS_SUCCESS) {
+//      errormessage("Error in cusolverDnDtrtri_buffer_size %s \n","aborting");
+//    }
+//
+//    if (h_lwork != 0) {
+//      errormessage("Error in cusolver_Dtrtri host work array needed of size=: %d\n",h_lwork);
+//    }
+//
+//    //cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
+//    cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
+//    if (cuerr != cudaSuccess) {
+//      errormessage("Error in cusolver_Dtrtri d_work: %s\n",cudaGetErrorString(cuerr));
+//    }
+//#ifdef DEBUG_CUDA
+//    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
+//#endif
+    status = rocsolver_dtrtri(rocblasHandle, hip_fill_mode(uplo), hip_diag_type(diag), n, A, lda, devInfo);
+
+    if (status != BLAS_status_success ) {
+      errormessage("Error in rocsolver_Dtrtri %s\n",hipGetErrorString(hiperr));
+    }
+
+    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Dtrtri info_gpu: %s\n",hipGetErrorString(hiperr));
+    }
+
+    *info = info_gpu;
+    //hiperr = hipFree(d_work);
+    //if (cuerr != cudaSuccess) {
+    //  errormessage("Error in cusolver_Dtrtri cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
+    //}
+
+    hiperr = hipFree(devInfo);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Dtrtri hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+
+  void rocsolverStrtri_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, char diag, int64_t n, float *A, int64_t lda, int *info) {
+    BLAS_status status;
+
+    int info_gpu = 0;
+
+    int *devInfo = NULL;
+    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Dtrtri devInfo: %s\n",hipGetErrorString(hiperr));
+    }
+#ifdef DEBUG_AMD
+    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
+#endif
+
+//    double *d_work = NULL, *h_work=NULL;
+//    size_t d_lwork = 0;
+//    size_t h_lwork = 0;
+//    status = cusolverDnXtrtri_bufferSize(*((cusolverDnHandle_t*)handle), hip_fill_mode(uplo), hip_diag_type(diag), n, CUDA_R_64F, A, lda, &d_lwork, &h_lwork);
+//    if (status != CUSOLVER_STATUS_SUCCESS) {
+//      errormessage("Error in cusolverDnDtrtri_buffer_size %s \n","aborting");
+//    }
+//
+//    if (h_lwork != 0) {
+//      errormessage("Error in cusolver_Dtrtri host work array needed of size=: %d\n",h_lwork);
+//    }
+//
+//    //cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
+//    cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
+//    if (cuerr != cudaSuccess) {
+//      errormessage("Error in cusolver_Dtrtri d_work: %s\n",cudaGetErrorString(cuerr));
+//    }
+//#ifdef DEBUG_CUDA
+//    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
+//#endif
+    status = rocsolver_strtri(rocblasHandle, hip_fill_mode(uplo), hip_diag_type(diag), n, A, lda, devInfo);
+
+    if (status != BLAS_status_success ) {
+      errormessage("Error in rocsolver_Strtri %s\n",hipGetErrorString(hiperr));
+    }
+
+    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Strtri info_gpu: %s\n",hipGetErrorString(hiperr));
+    }
+
+    *info = info_gpu;
+    //hiperr = hipFree(d_work);
+    //if (cuerr != cudaSuccess) {
+    //  errormessage("Error in cusolver_Strtri cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
+    //}
+
+    hiperr = hipFree(devInfo);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Strtri hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+
+  void rocsolverZtrtri_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, char diag, int64_t n, double _Complex *A, int64_t lda, int *info) {
+    BLAS_status status;
+
+    int info_gpu = 0;
+
+    BLAS_double_complex* A_casted = (      BLAS_double_complex*) A;
+
+    int *devInfo = NULL;
+    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Ztrtri devInfo: %s\n",hipGetErrorString(hiperr));
+    }
+#ifdef DEBUG_AMD
+    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
+#endif
+
+//    double *d_work = NULL, *h_work=NULL;
+//    size_t d_lwork = 0;
+//    size_t h_lwork = 0;
+//    status = cusolverDnXtrtri_bufferSize(*((cusolverDnHandle_t*)handle), hip_fill_mode(uplo), hip_diag_type(diag), n, CUDA_R_64F, A, lda, &d_lwork, &h_lwork);
+//    if (status != CUSOLVER_STATUS_SUCCESS) {
+//      errormessage("Error in cusolverDnDtrtri_buffer_size %s \n","aborting");
+//    }
+//
+//    if (h_lwork != 0) {
+//      errormessage("Error in cusolver_Dtrtri host work array needed of size=: %d\n",h_lwork);
+//    }
+//
+//    //cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
+//    cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
+//    if (cuerr != cudaSuccess) {
+//      errormessage("Error in cusolver_Dtrtri d_work: %s\n",cudaGetErrorString(cuerr));
+//    }
+//#ifdef DEBUG_CUDA
+//    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
+//#endif
+    status = rocsolver_ztrtri(rocblasHandle, hip_fill_mode(uplo), hip_diag_type(diag), n, A_casted, lda, devInfo);
+
+    if (status != BLAS_status_success ) {
+      errormessage("Error in rocsolver_Ztrtri %s\n",hipGetErrorString(hiperr));
+    }
+
+    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Ztrtri info_gpu: %s\n",hipGetErrorString(hiperr));
+    }
+
+    *info = info_gpu;
+    //hiperr = hipFree(d_work);
+    //if (cuerr != cudaSuccess) {
+    //  errormessage("Error in cusolver_Strtri cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
+    //}
+
+    hiperr = hipFree(devInfo);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Ztrtri hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+
+  void rocsolverCtrtri_elpa_wrapper (BLAS_handle rocblasHandle, char uplo, char diag, int64_t n, float _Complex *A, int64_t lda, int *info) {
+    BLAS_status status;
+
+    int info_gpu = 0;
+
+    BLAS_float_complex* A_casted = (      BLAS_float_complex*) A;
+
+    int *devInfo = NULL;
+    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Ctrtri devInfo: %s\n",hipGetErrorString(hiperr));
+    }
+#ifdef DEBUG_AMD
+    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
+#endif
+
+//    double *d_work = NULL, *h_work=NULL;
+//    size_t d_lwork = 0;
+//    size_t h_lwork = 0;
+//    status = cusolverDnXtrtri_bufferSize(*((cusolverDnHandle_t*)handle), hip_fill_mode(uplo), hip_diag_type(diag), n, CUDA_R_64F, A, lda, &d_lwork, &h_lwork);
+//    if (status != CUSOLVER_STATUS_SUCCESS) {
+//      errormessage("Error in cusolverDnDtrtri_buffer_size %s \n","aborting");
+//    }
+//
+//    if (h_lwork != 0) {
+//      errormessage("Error in cusolver_Dtrtri host work array needed of size=: %d\n",h_lwork);
+//    }
+//
+//    //cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
+//    cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
+//    if (cuerr != cudaSuccess) {
+//      errormessage("Error in cusolver_Dtrtri d_work: %s\n",cudaGetErrorString(cuerr));
+//    }
+//#ifdef DEBUG_CUDA
+//    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
+//#endif
+    status = rocsolver_ctrtri(rocblasHandle, hip_fill_mode(uplo), hip_diag_type(diag), n, A_casted, lda, devInfo);
+
+    if (status != BLAS_status_success ) {
+      errormessage("Error in rocsolver_Ctrtri %s\n",hipGetErrorString(hiperr));
+    }
+
+    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Ctrtri info_gpu: %s\n",hipGetErrorString(hiperr));
+    }
+
+    *info = info_gpu;
+    //hiperr = hipFree(d_work);
+    //if (cuerr != cudaSuccess) {
+    //  errormessage("Error in cusolver_Ctrtri cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
+    //}
+
+    hiperr = hipFree(devInfo);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Ctrtri hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+#endif /* WITH_AMD_HIPSOLVER_API */
+
+  void rocsolverDpotrf_elpa_wrapper (SOLVER_handle rocsolverHandle, char uplo, int n, double *A, int lda, int *info) {
+    SOLVER_status  status;
+
+    int info_gpu = 0;
+
+    int *devInfo = NULL;
+    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Dpotrf devInfo: %s\n",hipGetErrorString(hiperr));
+    }
+#ifdef DEBUG_AMD
+    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
+#endif
+
+#ifdef WITH_AMD_HIPSOLVER_API
+    double *d_work = NULL;
+    int d_lwork = 0;
+
+    status = hipsolverDnDpotrf_bufferSize(*((SOLVER_handle*)rocsolverHandle), SOLVER_FILL_MODE(uplo),  n, A, lda, &d_lwork);
+
+    if (status != HIPSOLVER_STATUS_SUCCESS) {
+      errormessage("Error in hipsolverDnDpotrf_buffer_size %s \n","aborting");
+    }
+
+    hiperr = hipMalloc((void**) &d_work, sizeof(double) * d_lwork);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipsolver_Dpotrf d_work: %s\n",hipGetErrorString(hiperr));
+    }
+#endif /* WITH_AMD_HIPSOLVER_API */
+
+#ifdef WITH_AMD_HIPSOLVER_API
+    status = BLAS_dpotrf(rocsolverHandle, SOLVER_FILL_MODE(uplo), n, A, lda, d_work, d_lwork, devInfo);
+#else
+    status = BLAS_dpotrf(rocsolverHandle, SOLVER_FILL_MODE(uplo), n, A, lda, devInfo);
+#endif
+
+    if (status != SOLVER_status_success ) {
+      errormessage("Error in rocsolver_Dpotrf %s\n",hipGetErrorString(hiperr));
+    }
+
+    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Dpotrf info_gpu: %s\n",hipGetErrorString(hiperr));
+    }
+
+    *info = info_gpu;
+#ifdef WITH_AMD_HIPSOLVER_API
+    hiperr = hipFree(d_work);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipsolver_Dpotrf hip_free(d_work): %s\n",hipGetErrorString(hiperr));
+    }
+#endif
+
+    hiperr = hipFree(devInfo);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Dpotrf hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+
+  void rocsolverSpotrf_elpa_wrapper (SOLVER_handle rocsolverHandle, char uplo, int n, float *A, int lda, int *info) {
+    SOLVER_status status;
+
+    int info_gpu = 0;
+
+    int *devInfo = NULL;
+    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Spotrf devInfo: %s\n",hipGetErrorString(hiperr));
+    }
+#ifdef DEBUG_AMD
+    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
+#endif
+
+#ifdef WITH_AMD_HIPSOLVER_API
+    float *d_work = NULL;
+    int d_lwork = 0;
+
+    status = hipsolverDnSpotrf_bufferSize(*((SOLVER_handle*)rocsolverHandle), SOLVER_FILL_MODE(uplo),  n, A, lda, &d_lwork);
+    if (status != HIPSOLVER_STATUS_SUCCESS) {
+      errormessage("Error in hipsolverDnSpotrf_buffer_size %s \n","aborting");
+    }
+
+    hiperr = hipMalloc((void**) &d_work, sizeof(double) * d_lwork);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipsolver_Spotrf d_work: %s\n",hipGetErrorString(hiperr));
+    }
+#endif /* WITH_AMD_HIPSOLVER_API */
+
+#ifdef WITH_AMD_HIPSOLVER_API
+    status = BLAS_spotrf(rocsolverHandle, SOLVER_FILL_MODE(uplo), n, A, lda, d_work, d_lwork, devInfo);
+#else
+    status = BLAS_spotrf(rocsolverHandle, SOLVER_FILL_MODE(uplo), n, A, lda, devInfo);
+#endif
+    if (status != SOLVER_status_success ) {
+      errormessage("Error in rocsolver_Spotrf %s\n",hipGetErrorString(hiperr));
+    }
+
+    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Spotrf info_gpu: %s\n",hipGetErrorString(hiperr));
+    }
+
+    *info = info_gpu;
+#ifdef WITH_AMD_HIPSOLVER_API
+    hiperr = hipFree(d_work);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipsolver_Spotrf hip_free(d_work): %s\n",hipGetErrorString(hiperr));
+    }
+#endif
+
+    hiperr = hipFree(devInfo);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Spotrf hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+
+  void rocsolverZpotrf_elpa_wrapper (SOLVER_handle rocsolverHandle, char uplo, int n, double _Complex *A, int lda, int *info) {
+    SOLVER_status status;
+
+    int info_gpu = 0;
+
+    int *devInfo = NULL;
+    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Zpotrf devInfo: %s\n",hipGetErrorString(hiperr));
+    }
+#ifdef DEBUG_AMD
+    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
+#endif
+
+    SOLVER_double_complex* A_casted = (      SOLVER_double_complex*) A;
+
+
+#ifdef WITH_AMD_HIPSOLVER_API
+    SOLVER_double_complex *d_work = NULL;
+    int d_lwork = 0;
+
+    status = hipsolverDnZpotrf_bufferSize(*((SOLVER_handle*)rocsolverHandle), SOLVER_FILL_MODE(uplo),  n, A_casted, lda, &d_lwork);
+
+    if (status != HIPSOLVER_STATUS_SUCCESS) {
+      errormessage("Error in hipsolverDnZpotrf_buffer_size %s \n","aborting");
+    }
+
+    hiperr = hipMalloc((void**) &d_work, sizeof(double) * d_lwork);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipsolver_Zpotrf d_work: %s\n",hipGetErrorString(hiperr));
+    }
+#endif /* WITH_AMD_HIPSOLVER_API */
+
+#ifdef WITH_AMD_HIPSOLVER_API
+    status = BLAS_zpotrf(rocsolverHandle, SOLVER_FILL_MODE(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
+#else
+    status = BLAS_zpotrf(rocsolverHandle, SOLVER_FILL_MODE(uplo), n, A_casted, lda, devInfo);
+#endif
+    if (status != SOLVER_status_success ) {
+      errormessage("Error in rocsolver_Zpotrf %s\n",hipGetErrorString(hiperr));
+    }
+
+    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Zpotrf info_gpu: %s\n",hipGetErrorString(hiperr));
+    }
+
+    *info = info_gpu;
+#ifdef WITH_AMD_HIPSOLVER_API
+    hiperr = hipFree(d_work);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipsolver_Zpotrf hip_free(d_work): %s\n",hipGetErrorString(hiperr));
+    }
+#endif
+
+    hiperr = hipFree(devInfo);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Zpotrf hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+
+
+  void rocsolverCpotrf_elpa_wrapper (SOLVER_handle rocsolverHandle, char uplo, int n, float _Complex *A, int lda, int *info) {
+    SOLVER_status status;
+
+    int info_gpu = 0;
+
+    int *devInfo = NULL;
+    hipError_t hiperr = hipMalloc((void**)&devInfo, sizeof(int));
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Cpotrf devInfo: %s\n",hipGetErrorString(hiperr));
+    }
+#ifdef DEBUG_AMD
+    printf("HIP Malloc,  pointer address: %p, size: %d \n", &devInfo);
+#endif
+
+    SOLVER_float_complex* A_casted = (      SOLVER_float_complex*) A;
+
+#ifdef WITH_AMD_HIPSOLVER_API
+    SOLVER_float_complex *d_work = NULL;
+    int d_lwork = 0;
+
+    status = hipsolverDnCpotrf_bufferSize(*((SOLVER_handle*)rocsolverHandle), SOLVER_FILL_MODE(uplo),  n, A_casted, lda, &d_lwork);
+
+    if (status != HIPSOLVER_STATUS_SUCCESS) {
+      errormessage("Error in hipsolverDnCpotrf_buffer_size %s \n","aborting");
+    }
+
+    hiperr = hipMalloc((void**) &d_work, sizeof(double) * d_lwork);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipsolver_Zpotrf d_work: %s\n",hipGetErrorString(hiperr));
+    }
+#endif /* WITH_AMD_HIPSOLVER_API */
+
+#ifdef WITH_AMD_HIPSOLVER_API
+    status = BLAS_cpotrf(rocsolverHandle, SOLVER_FILL_MODE(uplo), n, A_casted, lda, d_work, d_lwork, devInfo);
+#else
+    status = BLAS_cpotrf(rocsolverHandle, SOLVER_FILL_MODE(uplo), n, A_casted, lda, devInfo);
+#endif
+
+    if (status != SOLVER_status_success ) {
+      errormessage("Error in rocsolver_Cpotrf %s\n",hipGetErrorString(hiperr));
+    }
+
+    hiperr = hipMemcpy(&info_gpu, devInfo, sizeof(int), hipMemcpyDeviceToHost);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Cpotrf info_gpu: %s\n",hipGetErrorString(hiperr));
+    }
+
+    *info = info_gpu;
+#ifdef WITH_AMD_HIPSOLVER_API
+    hiperr = hipFree(d_work);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in hipsolver_Cpotrf hip_free(d_work): %s\n",hipGetErrorString(hiperr));
+    }
+#endif
+
+    hiperr = hipFree(devInfo);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Cpotrf hip_free(devInfo): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+
+#endif /* WITH_AMD_ROCSOLVER */
 
 
   void rocblasDgemv_elpa_wrapper (BLAS_handle rocblasHandle, char trans, int m, int n, double alpha,
@@ -831,16 +1516,25 @@ extern "C" {
   void rocblasDtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, const double *A,
                                int lda, double *B, int ldb){
-
+#ifdef HAVE_ROCBLAS_API_V3
+    BLAS_status status = BLAS_dtrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb, B, ldb);
+#else
     BLAS_status status = BLAS_dtrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
+#endif
   }
 
   void rocblasStrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
                                int m, int n, float alpha, const float *A,
                                int lda, float *B, int ldb){
+#ifdef HAVE_ROCBLAS_API_V3
+    BLAS_status status = BLAS_strmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb, B, ldb);
+#else
     BLAS_status status = BLAS_strmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha, A, lda, B, ldb);
+#endif
   }
 
   void rocblasZtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
@@ -855,8 +1549,13 @@ extern "C" {
           BLAS_double_complex* A_casted = (      BLAS_double_complex*) A;
 #endif
     BLAS_double_complex* B_casted = (BLAS_double_complex*) B;
+#ifdef HAVE_ROCBLAS_API_V3
+    BLAS_status status = BLAS_ztrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb, B_casted, ldb);
+#else
     BLAS_status status = BLAS_ztrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
+#endif
   }
 
   void rocblasCtrmm_elpa_wrapper (BLAS_handle rocblasHandle, char side, char uplo, char transa, char diag,
@@ -871,8 +1570,13 @@ extern "C" {
           BLAS_float_complex* A_casted = (      BLAS_float_complex*) A;
 #endif
     BLAS_float_complex* B_casted = (BLAS_float_complex*) B;
+#ifdef HAVE_ROCBLAS_API_V3
+    BLAS_status status = BLAS_ctrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
+                hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb, B_casted, ldb);
+#else
     BLAS_status status = BLAS_ctrmm(rocblasHandle, hip_side_mode(side), hip_fill_mode(uplo), hip_operation(transa),
                 hip_diag_type(diag), m, n, &alpha_casted, A_casted, lda, B_casted, ldb);
+#endif
   }
 
 
@@ -1052,11 +1756,11 @@ extern "C" {
 
   void rocblasZscal_elpa_wrapper (BLAS_handle rocblasHandle, int n, double _Complex alpha, double _Complex *X, int incx){
 
-// #ifndef HIPBLAS
-//     const BLAS_double_complex* X_casted = (const BLAS_double_complex*) X;
-// #else
+//#ifndef HIPBLAS
+//    const BLAS_double_complex* X_casted = (const BLAS_double_complex*) X;
+//#else
           BLAS_double_complex* X_casted = (      BLAS_double_complex*) X;
-// #endif
+//#endif
     BLAS_double_complex alpha_casted = *((BLAS_double_complex*)(&alpha));
 
     BLAS_status status = BLAS_zscal(rocblasHandle, n, &alpha_casted, X_casted, incx);
@@ -1067,11 +1771,11 @@ extern "C" {
 
   void rocblasCscal_elpa_wrapper (BLAS_handle rocblasHandle, int n, float _Complex alpha, float _Complex *X, int incx){
 
-// #ifndef HIPBLAS
-//     const BLAS_float_complex* X_casted = (const BLAS_float_complex*) X;
-// #else
+//#ifndef HIPBLAS
+//    const BLAS_float_complex* X_casted = (const BLAS_float_complex*) X;
+//#else
           BLAS_float_complex* X_casted = (      BLAS_float_complex*) X;
-// #endif
+//#endif
     BLAS_float_complex alpha_casted = *((BLAS_float_complex*)(&alpha));
 
     BLAS_status status = BLAS_cscal(rocblasHandle, n, &alpha_casted, X_casted, incx);
@@ -1121,3 +1825,4 @@ extern "C" {
   }
 
 }
+#endif /* WITH_AMD_GPU_VERSION */

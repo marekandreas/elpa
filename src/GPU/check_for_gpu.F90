@@ -55,17 +55,17 @@ module mod_check_for_gpu
     ! if NOT the first call to check_for_gpu will set the MPI GPU relation and then
     ! _SET_ use_gpu_id such that subsequent calls abide this setting
     function check_for_gpu(obj, myid, numberOfDevices, wantDebug) result(gpuAvailable)
-      use elpa_gpu, only : gpublasDefaultPointerMode
+      use elpa_gpu, only : gpublasDefaultPointerMode, gpu_getdevicecount, gpublas_get_version
       use cuda_functions
       use hip_functions
       use openmp_offload_functions
       use sycl_functions
-      use elpa_gpu, only : gpu_getdevicecount
       use precision
       use elpa_mpi
       use elpa_omp
-#ifdef WITH_NVIDIA_NCCL
-      use nccl_functions
+
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+      use elpa_ccl_gpu
 #endif
       use elpa_abstract_impl
       use ELPA_utilities, only : error_unit
@@ -81,6 +81,7 @@ module mod_check_for_gpu
       integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
       !logical, save                              :: alreadySET=.false.
       integer(kind=ik)                           :: maxThreads, thread
+      integer(kind=c_int)                        :: cublas_version
       integer(kind=c_int)                        :: syclShowOnlyIntelGpus
       integer(kind=ik)                           :: syclShowAllDevices
       integer(kind=c_intptr_t)                   :: handle_tmp
@@ -89,13 +90,13 @@ module mod_check_for_gpu
       !character(len=1024)           :: envname
       character(len=8)                           :: fmt
       character(len=12)                          :: gpu_string
-#ifdef WITH_NVIDIA_NCCL
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
       TYPE(ncclUniqueId)                         :: ncclId
       integer(kind=c_int)                        :: nprocs
       integer(kind=c_intptr_t)                   :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols
       integer(kind=ik)                           :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
 #endif
-
+      integer(kind=ik)                           :: attribute, value
 #define OBJECT obj
 #define ADDITIONAL_OBJECT_CODE
 #include "./check_for_gpu_template.F90"

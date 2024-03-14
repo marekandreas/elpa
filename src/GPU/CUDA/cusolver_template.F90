@@ -42,6 +42,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! Author: Peter Karpov, MPCDF
+! This file is the generated version. Do NOT edit
 
 
   interface
@@ -56,7 +57,6 @@
     end function
   end interface
 
-
   interface
     function cusolver_create_c(cusolverHandle) result(istat) &
              bind(C, name="cusolverCreateFromC")
@@ -66,7 +66,6 @@
       integer(kind=C_INT)      :: istat
     end function
   end interface
-
 
   interface
     function cusolver_destroy_c(cusolverHandle) result(istat) &
@@ -78,7 +77,7 @@
     end function
   end interface
 
-  ! cusolver_?trtri
+  ! cusolver_?trtri_c
 
   interface
     subroutine cusolver_Dtrtri_c(cusolverHandle, uplo, diag, n, a, lda, info) &
@@ -132,7 +131,7 @@
     end subroutine
   end interface
 
-  ! cusolver_?potrf
+  ! cusolver_?potrf_c
 
   interface
     subroutine cusolver_Dpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev) &
@@ -147,43 +146,43 @@
   end interface
 
   interface
-    subroutine cusolver_Spotrf_c(cusolverHandle, uplo, n, a, lda, info_dev) &
+    subroutine cusolver_Spotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev) &
                               bind(C,name="cusolverSpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a, info_dev
+      integer(kind=C_intptr_T), value           :: a_dev, info_dev
       integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine cusolver_Zpotrf_c(cusolverHandle, uplo, n, a, lda, info_dev) &
+    subroutine cusolver_Zpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev) &
                               bind(C,name="cusolverZpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a, info_dev
+      integer(kind=C_intptr_T), value           :: a_dev, info_dev
       integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
 
   interface
-    subroutine cusolver_Cpotrf_c(cusolverHandle, uplo, n, a, lda, info_dev) &
+    subroutine cusolver_Cpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev) &
                               bind(C,name="cusolverCpotrf_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value                 :: uplo
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a, info_dev
+      integer(kind=C_intptr_T), value           :: a_dev, info_dev
       integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
 
-  ! cusolver_Xpotrf_buffereSize
-  
+  ! cusolver_Xpotrf_buffereSize_c
+
   interface
     subroutine cusolver_Xpotrf_bufferSize_c(cusolverHandle, uplo, n, dataType, a_dev, lda, &
                                             workspaceInBytesOnDevice, workspaceInBytesOnHost) &
@@ -198,8 +197,8 @@
     end subroutine
   end interface
 
-  ! cusolver_Xpotrf
-  
+  ! cusolver_Xpotrf_c
+
   interface
     subroutine cusolver_Xpotrf_c(cusolverHandle, uplo, n, dataType, a_dev, lda, &
                                  buffer_dev , workspaceInBytesOnDevice, &
@@ -234,7 +233,6 @@
 #endif
     end function
 
-
     function cusolver_create(cusolverHandle) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -246,7 +244,6 @@
       success = .true.
 #endif
     end function
-
 
     function cusolver_destroy(cusolverHandle) result(success)
       use, intrinsic :: iso_c_binding
@@ -328,43 +325,43 @@
 #endif
     end subroutine
 
-    subroutine cusolver_Spotrf(uplo, n, a, lda, info_dev, cusolverHandle)
+    subroutine cusolver_Spotrf(uplo, n, a_dev, lda, info_dev, cusolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=C_intptr_T)        :: cusolverHandle
 #ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Spotrf_c(cusolverHandle, uplo, n, a, lda, info_dev)
+      call cusolver_Spotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine cusolver_Zpotrf(uplo, n, a, lda, info_dev, cusolverHandle)
+    subroutine cusolver_Zpotrf(uplo, n, a_dev, lda, info_dev, cusolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=C_intptr_T)        :: cusolverHandle
 #ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Zpotrf_c(cusolverHandle, uplo, n, a, lda, info_dev)
+      call cusolver_Zpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev)
 #endif
     end subroutine
 
-    subroutine cusolver_Cpotrf(uplo, n, a, lda, info_dev, cusolverHandle)
+    subroutine cusolver_Cpotrf(uplo, n, a_dev, lda, info_dev, cusolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value       :: uplo
       integer(kind=C_INT)             :: n, lda
-      integer(kind=c_intptr_t)        :: a, info_dev
+      integer(kind=c_intptr_t)        :: a_dev, info_dev
       integer(kind=C_intptr_T)        :: cusolverHandle
 #ifdef WITH_NVIDIA_CUSOLVER
-      call cusolver_Cpotrf_c(cusolverHandle, uplo, n, a, lda, info_dev)
+      call cusolver_Cpotrf_c(cusolverHandle, uplo, n, a_dev, lda, info_dev)
 #endif
     end subroutine
 
-    ! cusolver_Xpotrf_buffereSize
+    ! cusolver_Xpotrf_bufferSize
 
     subroutine cusolver_Xpotrf_bufferSize(cusolverHandle, uplo, n, dataType, a_dev, lda, &
                                            workspaceInBytesOnDevice, workspaceInBytesOnHost)
@@ -375,13 +372,14 @@
       integer(kind=c_int)             :: n, lda
       integer(kind=c_intptr_t)        :: a_dev
       integer(kind=c_size_t)          :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+
 #ifdef WITH_NVIDIA_CUSOLVER
       call cusolver_Xpotrf_bufferSize_c(cusolverHandle, uplo, n, dataType, a_dev, lda, &
                                         workspaceInBytesOnDevice, workspaceInBytesOnHost)
 #endif
     end subroutine
 
-    ! cusolver_Xpotrf_buffereSize
+    ! cusolver_Xpotrf
 
     subroutine cusolver_Xpotrf(cusolverHandle, uplo, n, dataType, a_dev, lda, &
                                buffer_dev , workspaceInBytesOnDevice, &
@@ -401,3 +399,4 @@
                              buffer_host, workspaceInBytesOnHost, info_dev)
 #endif
     end subroutine
+
