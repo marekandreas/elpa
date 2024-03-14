@@ -68,8 +68,7 @@
 #define BLAS_KIND c_int64_t
 #else
 #define C_INT_TYPE_PTR int*
-//#define C_INT_TYPE int
-#define C_INT_TYPE long int /* PETERDEBUG */
+#define C_INT_TYPE int
 #define BLAS_KIND c_int
 #endif
 
@@ -193,7 +192,8 @@ static inline void cublasAssert(cublasStatus_t status, const char *file, int lin
 
 /*
 !f> interface
-!f>   subroutine cannons_reduction_d(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
+!f>   subroutine cannons_reduction_d(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm, &
+!f>                                  wantDebug, useGPU) &
 !f>                             bind(C, name="cannons_reduction_c_d")
 !f>     use precision
 !f>     use, intrinsic :: iso_c_binding
@@ -203,12 +203,14 @@ static inline void cublasAssert(cublasStatus_t status, const char *file, int lin
 !f>     integer(kind=BLAS_KIND)       :: a_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
 !f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm, ToStore
+!f>     logical                       :: wantDebug, useGPU
 !f>   end subroutine
 !f> end interface
 
 */
 void cannons_reduction_c_d(double* A, double* U, int local_rowsCast, int local_colsCast, C_INT_TYPE_PTR a_desc,
-                           double *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
+                           double *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+                           bool wantDebug, bool useGPU);
 
 /*
 !f> interface
@@ -242,7 +244,8 @@ void cannons_triang_rectangular_c_d(double* U, double* B, int local_rowsCast, in
 
 /*
 !f> interface
-!f>   subroutine cannons_reduction_f(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
+!f>   subroutine cannons_reduction_f(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm,&
+!f>                                  wantDebug, useGPU) &
 !f>                             bind(C, name="cannons_reduction_c_f")
 !f>     use precision
 !f>     use, intrinsic :: iso_c_binding
@@ -253,11 +256,13 @@ void cannons_triang_rectangular_c_d(double* U, double* B, int local_rowsCast, in
 !f>     integer(kind=BLAS_KIND)       :: a_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
 !f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm, ToStore
+!f>     logical                       :: wantDebug, useGPU
 !f>   end subroutine
 !f> end interface
 */
 void cannons_reduction_c_f(float* A, float* U, int local_rowsCast, int local_colsCast, C_INT_TYPE_PTR a_desc,
-                           float *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
+                           float *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+                           bool wantDebug, bool useGPU);
 
 /*
 !f> interface
@@ -291,7 +296,8 @@ void cannons_triang_rectangular_c_f(float* U, float* B, int local_rowsCast, int 
 
 /*
 !f> interface
-!f>   subroutine cannons_reduction_dc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
+!f>   subroutine cannons_reduction_dc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm, &
+!f>                                   wantDebug, useGPU) &
 !f>                             bind(C, name="cannons_reduction_c_dc")
 !f>     use precision
 !f>     use, intrinsic :: iso_c_binding
@@ -301,11 +307,13 @@ void cannons_triang_rectangular_c_f(float* U, float* B, int local_rowsCast, int 
 !f>     integer(kind=BLAS_KIND)       :: a_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
 !f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm, ToStore
+!f>     logical                       :: wantDebug, useGPU
 !f>   end subroutine
 !f> end interface
 */
 void cannons_reduction_c_dc(double complex* A, double complex* U, int local_rowsCast, int local_colsCasr, C_INT_TYPE_PTR a_desc,
-                            double complex *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
+                            double complex *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+                            bool wantDebug, bool useGPU);
 
 /*
 !f> interface
@@ -338,7 +346,8 @@ void cannons_triang_rectangular_c_dc(double complex* U, double complex* B, int l
 
 /*
 !f> interface
-!f>   subroutine cannons_reduction_fc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm) &
+!f>   subroutine cannons_reduction_fc(A, U, local_rowsCast, local_colsCast, a_desc, Res, toStore, row_comm, col_comm, &
+!f>                                   wantDebug, useGPU) &
 !f>                             bind(C, name="cannons_reduction_c_fc")
 !f>     use precision
 !f>     use, intrinsic :: iso_c_binding
@@ -349,12 +358,14 @@ void cannons_triang_rectangular_c_dc(double complex* U, double complex* B, int l
 !f>     integer(kind=BLAS_KIND)       :: a_desc(9)
 !f>     integer(kind=c_int),value     :: local_rowsCast, local_colsCast
 !f>     integer(kind=MPI_KIND),value  :: row_comm, col_comm, ToStore
+!f>     logical                       :: wantDebug, useGPU
 !f>   end subroutine
 !f> end interface
 */
 
 void cannons_reduction_c_fc(float complex* A, float complex* U, int local_rowsCast, int local_colsCast, C_INT_TYPE_PTR a_desc,
-                         float complex *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm);
+                            float complex *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+                            bool wantDebug, bool useGPU);
 
 /*
 !f> interface

@@ -71,31 +71,39 @@
      integer                :: sc_desc(SC_DESC_LEN)
      integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
      integer(kind=MPI_KIND) :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
-     integer(kind=ik)       :: BuffLevelInt, use_cannon
+     integer(kind=ik)       :: BuffLevelInt
+     integer(kind=c_int)    :: use_cannon, debug, gpu
      integer(kind=MPI_KIND) :: mpierr
+     logical                :: wantDebug, useGPU
      logical, save          :: firstCall = .true.
 
      MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
 
-     call self%get("mpi_comm_rows",mpi_comm_rows,error)
-     call self%get("mpi_comm_cols",mpi_comm_cols,error)
-     call self%get("mpi_comm_parent", mpi_comm_all,error)
+     call self%get("mpi_comm_rows"  , mpi_comm_rows, error)
+     call self%get("mpi_comm_cols"  , mpi_comm_cols, error)
+     call self%get("mpi_comm_parent", mpi_comm_all , error)
 
-     call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_pMPI, mpierr)
-     call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND),my_prowMPI, mpierr)
-     call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND),np_rowsMPI, mpierr)
-     call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND),my_pcolMPI, mpierr)
-     call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND),np_colsMPI, mpierr)
+     call mpi_comm_rank(int(mpi_comm_all ,kind=MPI_KIND), my_pMPI   , mpierr)
+     call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
+     call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
+     call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
+     call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
 
-     my_p = int(my_pMPI, kind=c_int)
+     my_p    = int(my_pMPI   , kind=c_int)
      my_prow = int(my_prowMPI, kind=c_int)
      np_rows = int(np_rowsMPI, kind=c_int)
      my_pcol = int(my_pcolMPI, kind=c_int)
      np_cols = int(np_colsMPI, kind=c_int)
+     
+     call self%get("cannon_for_generalized", use_cannon, error)
+     call self%get("debug", debug, error)
+     call self%get("gpu", gpu, error)
+     
+     wantDebug = (debug == 1)
+     useGPU = (gpu == 1)
 
      call self%timer_start("transform_generalized()")
-     call self%get("cannon_for_generalized",use_cannon,error)
-
+     
 #ifdef WITH_NVTX
      call nvtxRangePush("transform_generalized")
 #endif
@@ -148,12 +156,11 @@
 #endif
 
      if(use_cannon == 1) then
-       call self%get("cannon_buffer_size",BuffLevelInt,error)
-       ! PETERDEBUG
-       ! if (useGPU) then
-       !   BuffLevelInt = 0
-       ! warning cannon_buffer_size>0 is not supported with GPU!
-       ! endif
+       call self%get("cannon_buffer_size", BuffLevelInt, error)
+       if (useGPU) then
+         write(*,*) "Warning: cannon_buffer_size>0 is not supported with GPUs. Setting cannon_buffer_size=0"
+         BuffLevelInt = 0
+       endif
        call self%timer_start("cannons_reduction")
        ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
        tmp = 0.0_rck
@@ -164,8 +171,8 @@
        call cannons_reduction_&
          &ELPA_IMPL_SUFFIX&
          &(a, b, self%local_nrows, self%local_ncols, &
-           int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=MPI_KIND),                    &
-           int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND))
+           int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=MPI_KIND),   &
+           int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), wantDebug, useGPU)
 #ifdef WITH_NVTX
     call nvtxRangePop()
 #endif

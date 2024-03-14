@@ -88,15 +88,18 @@
 #include "../helpers/lapack_interfaces.h"
 #include "../helpers/scalapack_interfaces.h"
 
-void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol,
-                         C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_MPI_TYPE ToStore, MPI_Comm row_comm, MPI_Comm col_comm)
+void cannons_reduction_impl(math_type* A, math_type* U, 
+                            C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol,
+                            C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_MPI_TYPE ToStore, 
+                            MPI_Comm row_comm, MPI_Comm col_comm,
+                            bool wantDebug, bool useGPU) // cublasHandle_t gpublasHandle) 
 {
    // Input matrices: 
       // - A: full matrix
       // - U: upper triangular matrix U^(-1)
    // Output matrix: 
       // - Res = U^(-H)*A*U^(-1), where U^(-H) := (U^(-1))^H
-   // ToStore = cannon_buffer_size, Increasing the buffer size might make it faster, but costs memory. By default cannon_buffer_size=0
+   // ToStore = cannon_buffer_size. Increasing the buffer size might make it faster, but costs memory. By default cannon_buffer_size=0
             // GPU port supports only ToStore=0
    // row_comm: communicator along rows
    // col_comm: communicator along columns
@@ -223,8 +226,6 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    printf("size of Buf_to_send/receive_U = %d\n", Size_U_stored);
    printf("size of M = %d\n", na_rows*na_cols);
 
-   int useGPU = 0; // PETERDEBUG pass this as a parameter
-   int wantDebug = 0; // PETERDEBUG pass this as a parameter
 #ifdef WITH_NVIDIA_GPU_VERSION
    //math_type *Buf_to_send_A_dev, *Buf_to_receive_A_dev;
    math_type *Buf_to_send_receive_A_dev;
@@ -234,11 +235,9 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    math_type *U_local_start_dev, *Res_ptr_dev; // pointers for first PxGEMM
    math_type *A_local_start_dev, *U_local_start_curr_dev; // pointers for second PxGEMM
 
-   cublasHandle_t handle; // pass handle as a parameter instead!
-   cublasCreate(&handle);
-   useGPU = 1; // PETERDEBUG pass this as a parameter
-   wantDebug = 1; // PETERDEBUG pass this as a parameter
-   if (useGPU == 1){
+   cublasHandle_t gpublasHandle; // pass gpublasHandle as a parameter instead!
+   cublasCreate(&gpublasHandle);
+   if (useGPU){
       // printf("ratio = %d\n", ratio); // PETERDEBUG: cleanup comments and prints
       printf("size of Buf_to_send_receive_A_dev = %d\n", ratio*Buf_cols*Buf_rows);
       printf("size of Buf_to_send_receive_U_dev = %d\n", Size_U_stored);
@@ -251,7 +250,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       gpuErrCheck( cudaMalloc((void **)&M_dev, na_rows*na_cols*sizeof(math_type)) );
    }
 #endif
-   printf("useGPU=%d\n", useGPU);
+   printf("useGPU=%d\n", useGPU); // PETERDEBUG
 
    ////////////////////////////////////////////////////////////// initial reordering of A ///////////////////////////////////////////////////////////////////////////////////////// 
 
@@ -492,13 +491,13 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       startPos = (curr_col_loc_buf + nblk)*curr_col_loc_buf/2;
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      if (useGPU == 1){
+      if (useGPU){
          gpuErrCheck( cudaMemcpy(Buf_to_send_receive_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
          gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, Buf_to_send_U, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
       }
 #endif
 
-      if (useGPU == 1){
+      if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev = Buf_to_send_receive_U_dev + startPos;
          Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
@@ -544,9 +543,9 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
             math_type beta = 1.0;
             if (j == 1) beta = 0.0;
 
-            if (useGPU == 1){
+            if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
-               cublasStatus_t status = cublasXgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 
+               cublasStatus_t status = cublasXgemm(gpublasHandle, CUBLAS_OP_N, CUBLAS_OP_N, 
                                        rows_in_block_A, cols_in_block, rows_in_block_U, &dOne, 
                                        Buf_to_send_receive_A_dev, na_rows, 
                                        U_local_start_dev, rows_in_block_U, &beta, 
@@ -555,7 +554,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                if (wantDebug) cudaDeviceSynchronize();
 #endif      
             }
-            else { // (useGPU == 1)
+            else {
                C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &dOne, 
                Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &beta, Res_ptr, &na_rows);
             }
@@ -565,7 +564,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          curr_col_loc_res = curr_col_loc_res + nblk;
          curr_col_loc_buf = curr_col_loc_buf + nblk;
          
-         if (useGPU == 1) {
+         if (useGPU) {
 #ifdef WITH_NVIDIA_GPU_VERSION
             U_local_start_dev = U_local_start_dev + rows_in_block_U*cols_in_block;
             Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
@@ -638,13 +637,13 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-   if (useGPU == 1){
+   if (useGPU){
       gpuErrCheck( cudaMemcpy(Buf_to_send_receive_A_dev, Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
       gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, Buf_to_receive_U, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
    }
 #endif
 
-   if (useGPU == 1){
+   if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
       U_local_start_dev = Buf_to_send_receive_U_dev + startPos;
       Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
@@ -691,9 +690,9 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          math_type beta = 1.0;
          if (j == 1) beta = 0.0;
 
-         if (useGPU == 1){
+         if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
-            cublasStatus_t status = cublasXgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 
+            cublasStatus_t status = cublasXgemm(gpublasHandle, CUBLAS_OP_N, CUBLAS_OP_N, 
                                     rows_in_block_A, cols_in_block, rows_in_block_U, &dOne, 
                                     Buf_to_send_receive_A_dev, na_rows, 
                                     U_local_start_dev, rows_in_block_U, &beta, 
@@ -714,7 +713,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       curr_col_loc_res = curr_col_loc_res + nblk;
       curr_col_loc_buf = curr_col_loc_buf + nblk;
 
-      if (useGPU == 1) {
+      if (useGPU) {
 #ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev = U_local_start_dev + rows_in_block_U*cols_in_block;
          Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
@@ -731,7 +730,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 #endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-   if (useGPU == 1) gpuErrCheck( cudaMemcpy(M, M_dev, na_rows*na_cols*sizeof(math_type), cudaMemcpyDeviceToHost) );
+   if (useGPU) gpuErrCheck( cudaMemcpy(M, M_dev, na_rows*na_cols*sizeof(math_type), cudaMemcpyDeviceToHost) );
 #endif
    
    ///////////////////// Now M has an upper part of A*U^(-1) ///////////////////////////////////////////////
@@ -1035,7 +1034,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      if (useGPU == 1){
+      if (useGPU){
          gpuErrCheck( cudaMemcpy(Buf_to_send_receive_A_dev, Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
          // PETERDEBUG: do we need U_to_calc_dev?
          gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, U_to_calc, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
@@ -1043,7 +1042,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       }
 #endif
 
-      if (useGPU == 1){
+      if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev = Buf_to_send_receive_U_dev;
 #endif
@@ -1083,7 +1082,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          }
          A_local_index = curr_row_loc_A;
 
-         if (useGPU == 1){
+         if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
             A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
             Res_ptr_dev = M_dev + curr_col_loc_res*na_rows + curr_row_loc_res; // we reuse M_dev buffer instead of introducing Res_dev
@@ -1098,7 +1097,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          LDA_A_new = LDA_A;
          if ((rows_in_block > 0)&&(cols_in_block > 0))
          {
-            if (useGPU == 1){
+            if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
                U_local_start_curr_dev = U_local_start_dev;
 #endif
@@ -1123,9 +1122,9 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                math_type beta = 1.0;
                if (j==1 && ii==0) beta = 0.0;
 
-               if (useGPU == 1){
+               if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
-               cublasStatus_t status = cublasXgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 
+               cublasStatus_t status = cublasXgemm(gpublasHandle, CUBLAS_OP_N, CUBLAS_OP_N, 
                                        rows_in_block, cols_in_block, rows_in_block_U_curr, &dOne, 
                                        A_local_start_dev, LDA_A, 
                                        U_local_start_curr_dev, rows_in_block_U, &beta, 
@@ -1143,7 +1142,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
                LDA_A_new = LDA_A_new - nblk;
                A_local_index = A_local_index - LDA_A + LDA_A*nblk + LDA_A_new;
 
-               if (useGPU == 1){
+               if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
                   A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
                   U_local_start_curr_dev = U_local_start_curr_dev + rows_in_block_U_curr;
@@ -1158,7 +1157,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
             }
          }
       
-         if (useGPU == 1){
+         if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
             U_local_start_dev = U_local_start_dev + rows_in_block_U*cols_in_block;
 #endif
@@ -1234,14 +1233,14 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    }
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-   if (useGPU == 1){
+   if (useGPU){
       gpuErrCheck( cudaMemcpy(Buf_to_send_receive_A_dev, Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), cudaMemcpyHostToDevice) );
       // PETERDEBUG change Buf_to_receive_U_dev to U_to_calc_dev below?
       gpuErrCheck( cudaMemcpy(Buf_to_send_receive_U_dev, U_to_calc, Size_U_stored*sizeof(math_type), cudaMemcpyHostToDevice) );
    }
 #endif
 
-   if (useGPU == 1){
+   if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
       U_local_start_dev = Buf_to_send_receive_U_dev;
 #endif
@@ -1281,7 +1280,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
  
       A_local_index = curr_row_loc_A;
 
-      if (useGPU == 1){
+      if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
          A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
          Res_ptr_dev = M_dev + curr_col_loc_res*na_rows + curr_row_loc_res; // we reuse M_dev buffer instead of introducing Res_dev
@@ -1297,7 +1296,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
       
       if ((rows_in_block > 0) &&(cols_in_block > 0))
       {
-         if (useGPU == 1){
+         if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
             U_local_start_curr_dev = U_local_start_dev;
 #endif
@@ -1322,9 +1321,9 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
             math_type beta = 1.0;
             if (j==1 && ii==0) beta = 0.0;
 
-            if (useGPU == 1){
+            if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
-            cublasStatus_t status = cublasXgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 
+            cublasStatus_t status = cublasXgemm(gpublasHandle, CUBLAS_OP_N, CUBLAS_OP_N, 
                                     rows_in_block, cols_in_block, rows_in_block_U_curr, &dOne, 
                                     A_local_start_dev, LDA_A, 
                                     U_local_start_curr_dev, rows_in_block_U, &beta, 
@@ -1342,7 +1341,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
             LDA_A_new = LDA_A_new - nblk;
             A_local_index = A_local_index - (LDA_A - rows_in_block) + LDA_A*nblk + LDA_A_new - rows_in_block; 
             
-            if (useGPU == 1){
+            if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
                A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
                U_local_start_curr_dev = U_local_start_curr_dev + rows_in_block_U_curr;
@@ -1357,7 +1356,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
          }
       }
 
-      if (useGPU == 1){
+      if (useGPU){
 #ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev = U_local_start_dev + rows_in_block_U*cols_in_block;
 #endif
@@ -1372,7 +1371,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-   if (useGPU == 1) gpuErrCheck( cudaMemcpy(Res, M_dev, na_rows*na_cols*sizeof(math_type), cudaMemcpyDeviceToHost) );
+   if (useGPU) gpuErrCheck( cudaMemcpy(Res, M_dev, na_rows*na_cols*sizeof(math_type), cudaMemcpyDeviceToHost) );
 #endif
 
 #ifdef WITH_NVTX
@@ -1392,7 +1391,7 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 #endif
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-   if (useGPU == 1){
+   if (useGPU){
       gpuErrCheck( cudaFree(Buf_to_send_receive_A_dev) );
       //gpuErrCheck( cudaFree(Buf_to_send_receive_A_dev) );
       gpuErrCheck( cudaFree(Buf_to_send_receive_U_dev) );
@@ -1415,7 +1414,9 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
 }
 
 void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rowsCast, int local_colsCast,
-                         C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm)
+                              C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_MPI_TYPE ToStore,
+                              C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+                              bool wantDebug, bool useGPU)
 {
   C_INT_TYPE local_rows, local_cols;
   local_rows = (C_INT_TYPE) local_rowsCast;
@@ -1451,6 +1452,7 @@ void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rowsCast, in
   // B1 B2 B3 B4
   // C1 C2 C3 C4
   // In ELPA, {B1, B2, B3, B4} belong to the same col_comm, in cannon they belong to the same row_comm
-  cannons_reduction_impl(A, U, np_rows, np_cols, my_prow, my_pcol, a_desc, Res, ToStore, c_col_comm, c_row_comm);
+  cannons_reduction_impl(A, U, np_rows, np_cols, my_prow, my_pcol, 
+                         a_desc, Res, ToStore, c_col_comm, c_row_comm, wantDebug, useGPU);
 }
 
