@@ -1,4 +1,4 @@
-.TH "elpa_get_communicators" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.TH "elpa_get_communicators" 3 "Wed Mar 13 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,7 +11,7 @@ elpa_get_communicators \- splits the global MPI communicator mpi_comm_global com
 use elpa1
 
 .br
-success =\fB elpa_get_communicators\fP (mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols)
+status =\fB elpa_get_communicators\fP (mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols)
 
 .TP
 integer, intent(in)   :: \fB mpi_comm_global\fP  
@@ -29,14 +29,14 @@ Communicator for communication within rows of processes
 integer, intent(out)  :: \fB mpi_comm_cols\fP    
 Communicator for communication within columns of processes
 .TP
-integer               :: \fB success\fP          
+integer               :: \fB status\fP
 Return value indicating success or failure of the underlying MPI_COMM_SPLIT function
 
 .SS C INTERFACE
 #include "elpa_generated.h
 
 .br
-success =\fB elpa_get_communicators\fP (int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
+status =\fB elpa_get_communicators\fP (int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
 
 .TP
 int \fB mpi_comm_global\fP;   
@@ -54,7 +54,7 @@ Pointer to the communicator for communication within rows of processes
 int \fB *mpi_comm_cols\fP;    
 Pointer to the communicator for communication within columns of processes
 .TP
-int  \fB success\fP;          
+int  \fB status\fP;
 Return value indicating success or failure of the underlying MPI_COMM_SPLIT function
 
 
