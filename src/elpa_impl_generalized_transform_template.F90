@@ -66,15 +66,16 @@ subroutine elpa_transform_generalized_&
 #else
   MATH_DATATYPE(kind=rck) :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols)
 #endif
-  integer                :: error
-  logical                :: is_already_decomposed
-  integer                :: sc_desc(SC_DESC_LEN)
-  integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-  integer(kind=MPI_KIND) :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
-  integer(kind=ik)       :: BuffLevelInt
-  integer(kind=c_int)    :: use_cannon, debug, gpu
-  logical                :: wantDebug, useGPU
-  logical, save          :: firstCall = .true.
+  integer                  :: error
+  logical                  :: is_already_decomposed
+  integer                  :: sc_desc(SC_DESC_LEN)
+  integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
+  integer(kind=ik)         :: BuffLevelInt
+  integer(kind=c_int)      :: use_cannon, debug, gpu
+  logical                  :: wantDebug, useGPU
+  integer(kind=c_intptr_t) :: gpublasHandle
+  logical, save            :: firstCall = .true.
 
   MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
 
@@ -167,11 +168,12 @@ subroutine elpa_transform_generalized_&
 #ifdef WITH_NVTX
     call nvtxRangePush("cannons_reduction")
 #endif
+    gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
     call cannons_reduction_&
       &ELPA_IMPL_SUFFIX&
       &(a, b, self%local_nrows, self%local_ncols, &
         int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=MPI_KIND),   &
-        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), wantDebug, useGPU)
+        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), wantDebug, useGPU, gpublasHandle)
 #ifdef WITH_NVTX
     call nvtxRangePop()
 #endif
@@ -249,15 +251,16 @@ subroutine elpa_transform_back_generalized_&
 #else
   MATH_DATATYPE(kind=rck) :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
-  integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-  integer(kind=MPI_KIND) :: mpierr, my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
-  integer                :: error
-  integer                :: sc_desc(SC_DESC_LEN)
-  integer                :: sc_desc_ev(SC_DESC_LEN)
-  integer(kind=c_int)    :: use_cannon, debug, gpu
-  logical                :: wantDebug, useGPU
+  integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=MPI_KIND)   :: mpierr, my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
+  integer                  :: error
+  integer                  :: sc_desc(SC_DESC_LEN)
+  integer                  :: sc_desc_ev(SC_DESC_LEN)
+  integer(kind=c_int)      :: use_cannon, debug, gpu
+  logical                  :: wantDebug, useGPU
+  integer(kind=c_intptr_t) :: gpublasHandle
 
-  MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
+  MATH_DATATYPE(kind=rck)  :: tmp(self%local_nrows, self%local_ncols)
 
   call self%get("mpi_comm_rows",mpi_comm_rows,error)
   call self%get("mpi_comm_cols",mpi_comm_cols,error)
@@ -306,11 +309,12 @@ subroutine elpa_transform_back_generalized_&
     call nvtxRangePush("cannons_triang_rectangular")
 #endif
 #ifdef WITH_MPI
+    gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
     call cannons_triang_rectangular_&
       &ELPA_IMPL_SUFFIX&
       &(b, q, self%local_nrows, self%local_ncols, &
         int(sc_desc,kind=BLAS_KIND), int(sc_desc_ev,kind=BLAS_KIND), tmp,  &
-        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), wantDebug, useGPU)
+        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), wantDebug, useGPU, gpublasHandle)
 #endif
 #ifdef WITH_NVTX
     call nvtxRangePop()

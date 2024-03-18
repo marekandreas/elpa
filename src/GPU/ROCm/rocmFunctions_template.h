@@ -1474,6 +1474,66 @@ extern "C" {
                 m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
   }
 
+  void rocblasDgemm_elpa_wrapper_intptr_handle (intptr_t* rocblasHandle, char transa, char transb, int m, int n, int k,
+                               double alpha, const double *A, int lda,
+                               const double *B, int ldb, double beta,
+                               double *C, int ldc) {
+
+    BLAS_status status = BLAS_dgemm((BLAS_handle) *rocblasHandle, hip_operation(transa), hip_operation(transb),
+                m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+  }
+
+  void rocblasSgemm_elpa_wrapper_intptr_handle (intptr_t* rocblasHandle, char transa, char transb, int m, int n, int k,
+                               float alpha, const float *A, int lda,
+                               const float *B, int ldb, float beta,
+                               float *C, int ldc) {
+
+    BLAS_status status = BLAS_sgemm((BLAS_handle) *rocblasHandle, hip_operation(transa), hip_operation(transb),
+                m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+  }
+
+  void rocblasZgemm_elpa_wrapper_intptr_handle (intptr_t* rocblasHandle, char transa, char transb, int m, int n, int k,
+                               double _Complex alpha, const double _Complex *A, int lda,
+                               const double _Complex *B, int ldb, double _Complex beta,
+                               double _Complex *C, int ldc) {
+
+    BLAS_double_complex alpha_casted = *((BLAS_double_complex*)(&alpha));
+    BLAS_double_complex beta_casted = *((BLAS_double_complex*)(&beta));
+
+#ifndef HIPBLAS
+    const BLAS_double_complex* A_casted = (const BLAS_double_complex*) A;
+    const BLAS_double_complex* B_casted = (const BLAS_double_complex*) B;
+#else
+          BLAS_double_complex* A_casted = (      BLAS_double_complex*) A;
+          BLAS_double_complex* B_casted = (      BLAS_double_complex*) B;
+#endif
+    BLAS_double_complex* C_casted = (BLAS_double_complex*) C;
+
+    BLAS_status status = BLAS_zgemm((BLAS_handle) *rocblasHandle, hip_operation(transa), hip_operation(transb),
+                m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
+  }
+
+  void rocblasCgemm_elpa_wrapper_intptr_handle (intptr_t* rocblasHandle, char transa, char transb, int m, int n, int k,
+                               float _Complex alpha, const float _Complex *A, int lda,
+                               const float _Complex *B, int ldb, float _Complex beta,
+                               float _Complex *C, int ldc) {
+
+    BLAS_float_complex alpha_casted = *((BLAS_float_complex*)(&alpha));
+    BLAS_float_complex beta_casted = *((BLAS_float_complex*)(&beta));
+
+#ifndef HIPBLAS
+    const BLAS_float_complex* A_casted = (const BLAS_float_complex*) A;
+    const BLAS_float_complex* B_casted = (const BLAS_float_complex*) B;
+#else
+          BLAS_float_complex* A_casted = (      BLAS_float_complex*) A;
+          BLAS_float_complex* B_casted = (      BLAS_float_complex*) B;
+#endif
+    BLAS_float_complex* C_casted = (BLAS_float_complex*) C;
+
+    BLAS_status status = BLAS_cgemm((BLAS_handle) *rocblasHandle, hip_operation(transa), hip_operation(transb),
+                m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
+  }
+
 
   // todo: new CUBLAS API diverged from standard BLAS api for these functions
   // todo: it provides out-of-place (and apparently more efficient) implementation
