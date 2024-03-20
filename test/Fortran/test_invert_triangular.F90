@@ -155,7 +155,7 @@ program test
 
    ! blacs
    character(len=1)                       :: layout
-   TEST_INT_TYPE                          :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
+   TEST_INT_TYPE                          :: my_blacs_ctxt, sc_desc(9), info, blacs_ok
 
    ! The Matrix
    MATRIX_TYPE, allocatable, target       :: a(:,:), as(:,:)
@@ -171,7 +171,6 @@ program test
    type(output_t)                         :: write_to_file
    class(elpa_t), pointer                 :: e
 
-   logical                                :: success
    logical                                :: successGPU
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -350,8 +349,8 @@ program test
       stop 1
    endif
 
-   success = gpu_GetDeviceCount(numberOfDevices)
-   if (.not.(success)) then
+   successGPU = gpu_GetDeviceCount(numberOfDevices)
+   if (.not.(successGPU)) then
       print *,"Error in gpu_GetDeviceCount. Aborting..."
       stop 1
    endif
@@ -372,17 +371,17 @@ program test
    endif
 
    ! Set device 
-   success = .true.        
+   successGPU = .true.        
 #if TEST_INTEL_GPU_SYCL == 1
-   success = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
-   if (.not.(success)) then
+   successGPU = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
+   if (.not.(successGPU)) then
       print *,"Error in sycl_getcpucount. Aborting..."
       stop 1
     endif
 #endif
 
-   success = gpu_setdevice(gpuID)
-   if (.not.(success)) then
+   successGPU = gpu_setdevice(gpuID)
+   if (.not.(successGPU)) then
      print *,"Cannot set GPU device. Aborting..."
      stop 1
    endif

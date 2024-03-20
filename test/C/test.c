@@ -436,10 +436,6 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(handle));
 
-#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
-   assert_elpa_ok(elpa_setup_gpu(handle));
-#endif
-
    /* Set solver and ELPA2 kernel */
 
 #ifdef TEST_SOLVER_1STAGE
@@ -518,6 +514,10 @@ int main(int argc, char** argv) {
    printf("gpuID: %i\n", gpuID);
    elpa_set(handle, "use_gpu_id", gpuID, &error_elpa);
    assert_elpa_ok(error_elpa);
+#endif
+
+#if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
+   assert_elpa_ok(elpa_setup_gpu(handle));
 #endif
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -908,11 +908,13 @@ int main(int argc, char** argv) {
 #endif
 
 #if defined(TEST_EIGENVECTORS)
+     if (myid == 0) {
 #if TEST_QR_DECOMPOSITION == 1
        elpa_print_times(handle, (char*) "elpa_eigenvectors_qr()");
 #else
        elpa_print_times(handle, (char*) "elpa_eigenvectors()");
 #endif
+     }
 #endif /* TEST_EIGENVECTORS */
 
 //_____________________________________________________________________________________________________________________
