@@ -60,39 +60,41 @@ module tridiag_sycl
   interface
     subroutine sycl_copy_and_set_zeros_double_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                                   aux1_dev, vav_dev, d_vec_dev, &
-                                                  isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                                  wantDebug, my_stream) &
+                                                  isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
+                                                  isSkewsymmetric_int, useCCL_int, wantDebug_int, &
+                                                  my_stream) &
                                                   bind(C, name="sycl_copy_and_set_zeros_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
-      logical, intent(in)              :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
-      logical, intent(in)              :: isSkewsymmetric, useCCL, wantDebug
-      integer(kind=C_INT)              :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_intptr_t), value  :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, sm_count, my_stream) &
+    subroutine sycl_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug_int, sm_count, my_stream) &
                                                   bind(C, name="sycl_dot_product_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: x_dev, y_dev, result_dev
+      integer(kind=c_intptr_t), value  :: x_dev, y_dev, result_dev
       integer(kind=c_int), intent(in)  :: n, incx, incy, sm_count
-      logical, intent(in) :: wantDebug
+      integer(kind=c_int), intent(in)  :: wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream) &
+    subroutine sycl_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, &
+                                                  wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_dot_product_and_assign_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: v_row_dev, aux1_dev
-      integer(kind=c_int), intent(in)  :: l_rows, isOurProcessRow
-      logical, intent(in) :: wantDebug
+      integer(kind=c_intptr_t), value  :: v_row_dev, aux1_dev
+      integer(kind=c_int), intent(in)  :: l_rows
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -100,13 +102,13 @@ module tridiag_sycl
   interface
     subroutine sycl_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, &
                                      tau_dev, xf_host_or_dev, &
-                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream) &
+                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow_int, useCCL_int, wantDebug_int, my_stream) &
                                      bind(C, name="sycl_set_e_vec_scale_set_one_store_v_row_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
+      integer(kind=c_intptr_t), value  :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, istep
-      logical, intent(in) :: isOurProcessRow, useCCL, wantDebug
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -116,15 +118,15 @@ module tridiag_sycl
                                                   v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
                                                   vav_host_or_dev, tau_istep_host_or_dev, &
                                                   l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                                  useCCL, wantDebug, my_stream) &
+                                                  useCCL_int, wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_store_u_v_in_uv_vu_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
-      integer(kind=C_intptr_T), value  :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
-      integer(kind=C_intptr_T), value  :: vav_host_or_dev, tau_istep_host_or_dev
+      integer(kind=c_intptr_t), value  :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
+      integer(kind=c_intptr_t), value  :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
+      integer(kind=c_intptr_t), value  :: vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
-      logical, intent(in)              :: useCCL, wantDebug
+      integer(kind=c_int), intent(in)  :: useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -132,14 +134,14 @@ module tridiag_sycl
   interface
     subroutine sycl_update_matrix_element_add_double_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                             isSkewsymmetric, wantDebug, my_stream) &
+                                             isSkewsymmetric_int, wantDebug_int, my_stream) &
                                              bind(C, name="sycl_update_matrix_element_add_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
+      integer(kind=c_intptr_t), value  :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
       integer(kind=c_int), intent(in)  :: istep, n_stored_vecs
-      logical, intent(in)              :: isSkewsymmetric, wantDebug
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -149,7 +151,7 @@ module tridiag_sycl
                                                   bind(C, name="sycl_update_array_element_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: array_dev
+      integer(kind=c_intptr_t), value  :: array_dev
       integer(kind=c_int), intent(in)  :: index
       integer(kind=c_intptr_t)         :: value
       integer(kind=c_intptr_t), value  :: my_stream
@@ -157,12 +159,12 @@ module tridiag_sycl
   end interface
 
   interface
-    subroutine sycl_hh_transform_double_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream) &
+    subroutine sycl_hh_transform_double_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_hh_transform_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
-      logical                          :: wantDebug
+      integer(kind=c_intptr_t), value  :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
+      integer(kind=c_int), intent(in)  :: wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -171,14 +173,14 @@ module tridiag_sycl
     subroutine sycl_transpose_reduceadd_vectors_copy_block_double_c(aux_transpose_dev, vmat_st_dev, &
                                                   nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                                   lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, sm_count, my_stream) &
+                                                  isSkewsymmetric_int, isReduceadd_int, wantDebug_int, sm_count, my_stream) &
                                                   bind(C, name="sycl_transpose_reduceadd_vectors_copy_block_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: aux_transpose_dev, vmat_st_dev
-      logical                          :: isSkewsymmetric, isReduceadd, wantDebug
+      integer(kind=c_intptr_T), value  :: aux_transpose_dev, vmat_st_dev
       integer(kind=c_int), intent(in)  :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
       integer(kind=c_int), intent(in)  :: np_st, ld_st, direction, sm_count
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, isReduceadd_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -186,39 +188,41 @@ module tridiag_sycl
   interface
     subroutine sycl_copy_and_set_zeros_float_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                                   aux1_dev, vav_dev, d_vec_dev, &
-                                                  isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                                  wantDebug, my_stream) &
+                                                  isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
+                                                  isSkewsymmetric_int, useCCL_int, wantDebug_int, &
+                                                  my_stream) &
                                                   bind(C, name="sycl_copy_and_set_zeros_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
-      logical, intent(in)              :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
-      logical, intent(in)              :: isSkewsymmetric, useCCL, wantDebug
-      integer(kind=C_INT)              :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_intptr_t), value  :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_dot_product_float_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, sm_count, my_stream) &
+    subroutine sycl_dot_product_float_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug_int, sm_count, my_stream) &
                                                   bind(C, name="sycl_dot_product_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: x_dev, y_dev, result_dev
+      integer(kind=c_intptr_t), value  :: x_dev, y_dev, result_dev
       integer(kind=c_int), intent(in)  :: n, incx, incy, sm_count
-      logical, intent(in) :: wantDebug
+      integer(kind=c_int), intent(in)  :: wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_dot_product_and_assign_float_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream) &
+    subroutine sycl_dot_product_and_assign_float_c(v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, &
+                                                  wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_dot_product_and_assign_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: v_row_dev, aux1_dev
-      integer(kind=c_int), intent(in)  :: l_rows, isOurProcessRow
-      logical, intent(in) :: wantDebug
+      integer(kind=c_intptr_t), value  :: v_row_dev, aux1_dev
+      integer(kind=c_int), intent(in)  :: l_rows
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -226,13 +230,13 @@ module tridiag_sycl
   interface
     subroutine sycl_set_e_vec_scale_set_one_store_v_row_float_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, &
                                      tau_dev, xf_host_or_dev, &
-                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream) &
+                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow_int, useCCL_int, wantDebug_int, my_stream) &
                                      bind(C, name="sycl_set_e_vec_scale_set_one_store_v_row_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
+      integer(kind=c_intptr_t), value  :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, istep
-      logical, intent(in) :: isOurProcessRow, useCCL, wantDebug
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -242,15 +246,15 @@ module tridiag_sycl
                                                   v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
                                                   vav_host_or_dev, tau_istep_host_or_dev, &
                                                   l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                                  useCCL, wantDebug, my_stream) &
+                                                  useCCL_int, wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_store_u_v_in_uv_vu_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
-      integer(kind=C_intptr_T), value  :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
-      integer(kind=C_intptr_T), value  :: vav_host_or_dev, tau_istep_host_or_dev
+      integer(kind=c_intptr_t), value  :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
+      integer(kind=c_intptr_t), value  :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
+      integer(kind=c_intptr_t), value  :: vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
-      logical, intent(in)              :: useCCL, wantDebug
+      integer(kind=c_int), intent(in)  :: useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -258,14 +262,14 @@ module tridiag_sycl
   interface
     subroutine sycl_update_matrix_element_add_float_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                             isSkewsymmetric, wantDebug, my_stream) &
+                                             isSkewsymmetric_int, wantDebug_int, my_stream) &
                                              bind(C, name="sycl_update_matrix_element_add_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
+      integer(kind=c_intptr_t), value  :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
       integer(kind=c_int), intent(in)  :: istep, n_stored_vecs
-      logical, intent(in)              :: isSkewsymmetric, wantDebug
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -275,7 +279,7 @@ module tridiag_sycl
                                                   bind(C, name="sycl_update_array_element_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: array_dev
+      integer(kind=c_intptr_t), value  :: array_dev
       integer(kind=c_int), intent(in)  :: index
       integer(kind=c_intptr_t)         :: value
       integer(kind=c_intptr_t), value  :: my_stream
@@ -283,12 +287,12 @@ module tridiag_sycl
   end interface
 
   interface
-    subroutine sycl_hh_transform_float_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream) &
+    subroutine sycl_hh_transform_float_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_hh_transform_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
-      logical                          :: wantDebug
+      integer(kind=c_intptr_t), value  :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
+      integer(kind=c_int), intent(in)  :: wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -297,14 +301,14 @@ module tridiag_sycl
     subroutine sycl_transpose_reduceadd_vectors_copy_block_float_c(aux_transpose_dev, vmat_st_dev, &
                                                   nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                                   lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, sm_count, my_stream) &
+                                                  isSkewsymmetric_int, isReduceadd_int, wantDebug_int, sm_count, my_stream) &
                                                   bind(C, name="sycl_transpose_reduceadd_vectors_copy_block_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: aux_transpose_dev, vmat_st_dev
-      logical                          :: isSkewsymmetric, isReduceadd, wantDebug
+      integer(kind=c_intptr_T), value  :: aux_transpose_dev, vmat_st_dev
       integer(kind=c_int), intent(in)  :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
       integer(kind=c_int), intent(in)  :: np_st, ld_st, direction, sm_count
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, isReduceadd_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -312,39 +316,41 @@ module tridiag_sycl
   interface
     subroutine sycl_copy_and_set_zeros_double_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                                   aux1_dev, vav_dev, d_vec_dev, &
-                                                  isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                                  wantDebug, my_stream) &
+                                                  isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
+                                                  isSkewsymmetric_int, useCCL_int, wantDebug_int, &
+                                                  my_stream) &
                                                   bind(C, name="sycl_copy_and_set_zeros_double_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
-      logical, intent(in)              :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
-      logical, intent(in)              :: isSkewsymmetric, useCCL, wantDebug
-      integer(kind=C_INT)              :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_intptr_t), value  :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_dot_product_double_complex_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, sm_count, my_stream) &
+    subroutine sycl_dot_product_double_complex_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug_int, sm_count, my_stream) &
                                                   bind(C, name="sycl_dot_product_double_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: x_dev, y_dev, result_dev
+      integer(kind=c_intptr_t), value  :: x_dev, y_dev, result_dev
       integer(kind=c_int), intent(in)  :: n, incx, incy, sm_count
-      logical, intent(in) :: wantDebug
+      integer(kind=c_int), intent(in)  :: wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_dot_product_and_assign_double_complex_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream) &
+    subroutine sycl_dot_product_and_assign_double_complex_c(v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, &
+                                                  wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_dot_product_and_assign_double_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: v_row_dev, aux1_dev
-      integer(kind=c_int), intent(in)  :: l_rows, isOurProcessRow
-      logical, intent(in) :: wantDebug
+      integer(kind=c_intptr_t), value  :: v_row_dev, aux1_dev
+      integer(kind=c_int), intent(in)  :: l_rows
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -352,13 +358,13 @@ module tridiag_sycl
   interface
     subroutine sycl_set_e_vec_scale_set_one_store_v_row_double_complex_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, &
                                      tau_dev, xf_host_or_dev, &
-                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream) &
+                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow_int, useCCL_int, wantDebug_int, my_stream) &
                                      bind(C, name="sycl_set_e_vec_scale_set_one_store_v_row_double_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
+      integer(kind=c_intptr_t), value  :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, istep
-      logical, intent(in) :: isOurProcessRow, useCCL, wantDebug
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -368,15 +374,15 @@ module tridiag_sycl
                                                   v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
                                                   vav_host_or_dev, tau_istep_host_or_dev, &
                                                   l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                                  useCCL, wantDebug, my_stream) &
+                                                  useCCL_int, wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_store_u_v_in_uv_vu_double_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
-      integer(kind=C_intptr_T), value  :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
-      integer(kind=C_intptr_T), value  :: vav_host_or_dev, tau_istep_host_or_dev
+      integer(kind=c_intptr_t), value  :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
+      integer(kind=c_intptr_t), value  :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
+      integer(kind=c_intptr_t), value  :: vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
-      logical, intent(in)              :: useCCL, wantDebug
+      integer(kind=c_int), intent(in)  :: useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -384,14 +390,14 @@ module tridiag_sycl
   interface
     subroutine sycl_update_matrix_element_add_double_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                             isSkewsymmetric, wantDebug, my_stream) &
+                                             isSkewsymmetric_int, wantDebug_int, my_stream) &
                                              bind(C, name="sycl_update_matrix_element_add_double_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
+      integer(kind=c_intptr_t), value  :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
       integer(kind=c_int), intent(in)  :: istep, n_stored_vecs
-      logical, intent(in)              :: isSkewsymmetric, wantDebug
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -401,7 +407,7 @@ module tridiag_sycl
                                                   bind(C, name="sycl_update_array_element_double_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: array_dev
+      integer(kind=c_intptr_t), value  :: array_dev
       integer(kind=c_int), intent(in)  :: index
       integer(kind=c_intptr_t)         :: value
       integer(kind=c_intptr_t), value  :: my_stream
@@ -409,12 +415,12 @@ module tridiag_sycl
   end interface
 
   interface
-    subroutine sycl_hh_transform_double_complex_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream) &
+    subroutine sycl_hh_transform_double_complex_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_hh_transform_double_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
-      logical                          :: wantDebug
+      integer(kind=c_intptr_t), value  :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
+      integer(kind=c_int), intent(in)  :: wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -423,14 +429,14 @@ module tridiag_sycl
     subroutine sycl_transpose_reduceadd_vectors_copy_block_double_complex_c(aux_transpose_dev, vmat_st_dev, &
                                                   nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                                   lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, sm_count, my_stream) &
+                                                  isSkewsymmetric_int, isReduceadd_int, wantDebug_int, sm_count, my_stream) &
                                                   bind(C, name="sycl_transpose_reduceadd_vectors_copy_block_double_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: aux_transpose_dev, vmat_st_dev
-      logical                          :: isSkewsymmetric, isReduceadd, wantDebug
+      integer(kind=c_intptr_T), value  :: aux_transpose_dev, vmat_st_dev
       integer(kind=c_int), intent(in)  :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
       integer(kind=c_int), intent(in)  :: np_st, ld_st, direction, sm_count
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, isReduceadd_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -438,39 +444,41 @@ module tridiag_sycl
   interface
     subroutine sycl_copy_and_set_zeros_float_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                                   aux1_dev, vav_dev, d_vec_dev, &
-                                                  isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                                  wantDebug, my_stream) &
+                                                  isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
+                                                  isSkewsymmetric_int, useCCL_int, wantDebug_int, &
+                                                  my_stream) &
                                                   bind(C, name="sycl_copy_and_set_zeros_float_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
-      logical, intent(in)              :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
-      logical, intent(in)              :: isSkewsymmetric, useCCL, wantDebug
-      integer(kind=C_INT)              :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_intptr_t), value  :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_dot_product_float_complex_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, sm_count, my_stream) &
+    subroutine sycl_dot_product_float_complex_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug_int, sm_count, my_stream) &
                                                   bind(C, name="sycl_dot_product_float_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: x_dev, y_dev, result_dev
+      integer(kind=c_intptr_t), value  :: x_dev, y_dev, result_dev
       integer(kind=c_int), intent(in)  :: n, incx, incy, sm_count
-      logical, intent(in) :: wantDebug
+      integer(kind=c_int), intent(in)  :: wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_dot_product_and_assign_float_complex_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream) &
+    subroutine sycl_dot_product_and_assign_float_complex_c(v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, &
+                                                  wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_dot_product_and_assign_float_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: v_row_dev, aux1_dev
-      integer(kind=c_int), intent(in)  :: l_rows, isOurProcessRow
-      logical, intent(in) :: wantDebug
+      integer(kind=c_intptr_t), value  :: v_row_dev, aux1_dev
+      integer(kind=c_int), intent(in)  :: l_rows
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -478,13 +486,13 @@ module tridiag_sycl
   interface
     subroutine sycl_set_e_vec_scale_set_one_store_v_row_float_complex_c(e_vec_dev, vrl_dev, a_dev, v_row_dev, &
                                      tau_dev, xf_host_or_dev, &
-                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream) &
+                                     l_rows, l_cols, matrixRows, istep, isOurProcessRow_int, useCCL_int, wantDebug_int, my_stream) &
                                      bind(C, name="sycl_set_e_vec_scale_set_one_store_v_row_float_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
+      integer(kind=c_intptr_t), value  :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, istep
-      logical, intent(in) :: isOurProcessRow, useCCL, wantDebug
+      integer(kind=c_int), intent(in)  :: isOurProcessRow_int, useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -494,15 +502,15 @@ module tridiag_sycl
                                                   v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
                                                   vav_host_or_dev, tau_istep_host_or_dev, &
                                                   l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                                  useCCL, wantDebug, my_stream) &
+                                                  useCCL_int, wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_store_u_v_in_uv_vu_float_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
-      integer(kind=C_intptr_T), value  :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
-      integer(kind=C_intptr_T), value  :: vav_host_or_dev, tau_istep_host_or_dev
+      integer(kind=c_intptr_t), value  :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
+      integer(kind=c_intptr_t), value  :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
+      integer(kind=c_intptr_t), value  :: vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
-      logical, intent(in)              :: useCCL, wantDebug
+      integer(kind=c_int), intent(in)  :: useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -510,14 +518,14 @@ module tridiag_sycl
   interface
     subroutine sycl_update_matrix_element_add_float_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                             isSkewsymmetric, wantDebug, my_stream) &
+                                             isSkewsymmetric_int, wantDebug_int, my_stream) &
                                              bind(C, name="sycl_update_matrix_element_add_float_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
+      integer(kind=c_intptr_t), value  :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
       integer(kind=c_int), intent(in)  :: istep, n_stored_vecs
-      logical, intent(in)              :: isSkewsymmetric, wantDebug
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -527,7 +535,7 @@ module tridiag_sycl
                                                   bind(C, name="sycl_update_array_element_float_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: array_dev
+      integer(kind=c_intptr_t), value  :: array_dev
       integer(kind=c_int), intent(in)  :: index
       integer(kind=c_intptr_t)         :: value
       integer(kind=c_intptr_t), value  :: my_stream
@@ -535,12 +543,12 @@ module tridiag_sycl
   end interface
 
   interface
-    subroutine sycl_hh_transform_float_complex_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream) &
+    subroutine sycl_hh_transform_float_complex_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug_int, my_stream) &
                                                   bind(C, name="sycl_hh_transform_float_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
-      logical                          :: wantDebug
+      integer(kind=c_intptr_t), value  :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
+      integer(kind=c_int), intent(in)  :: wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -549,19 +557,20 @@ module tridiag_sycl
     subroutine sycl_transpose_reduceadd_vectors_copy_block_float_complex_c(aux_transpose_dev, vmat_st_dev, &
                                                   nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                                   lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, sm_count, my_stream) &
+                                                  isSkewsymmetric_int, isReduceadd_int, wantDebug_int, sm_count, my_stream) &
                                                   bind(C, name="sycl_transpose_reduceadd_vectors_copy_block_float_complex_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: aux_transpose_dev, vmat_st_dev
-      logical                          :: isSkewsymmetric, isReduceadd, wantDebug
+      integer(kind=c_intptr_T), value  :: aux_transpose_dev, vmat_st_dev
       integer(kind=c_int), intent(in)  :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
       integer(kind=c_int), intent(in)  :: np_st, ld_st, direction, sm_count
+      integer(kind=c_int), intent(in)  :: isSkewsymmetric_int, isReduceadd_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   contains
+
     subroutine sycl_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep,  &
                                                  aux1_dev, vav_dev, d_vec_dev, &
                                                  isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
@@ -569,17 +578,32 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, istep
       logical, intent(in)             :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
       logical, intent(in)             :: isSkewsymmetric, useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_intptr_t)        :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
+      integer(kind=c_int)             :: isSkewsymmetric_int, useCCL_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      isOurProcessCol_int = 0
+      isOurProcessCol_prev_int = 0
+      isSkewsymmetric_int = 0
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (isOurProcessCol) isOurProcessCol_int = 1
+      if (isOurProcessCol_prev) isOurProcessCol_prev_int = 1
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_and_set_zeros_double_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                             aux1_dev, vav_dev, d_vec_dev, &
-                                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                            isSkewsymmetric, useCCL, wantDebug, my_stream)
+                                            isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
+                                            isSkewsymmetric_int, useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -588,28 +612,39 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: n, incx, incy, sm_count
+      integer(kind=c_int), intent(in) :: n, incx, incy, sm_count
       logical, intent(in)             :: wantDebug
       integer(kind=C_intptr_T)        :: x_dev, y_dev, result_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: wantDebug_int
+
+      wantDebug_int = 0
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, sm_count, my_stream)
+      call sycl_dot_product_double_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug_int, sm_count, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+    subroutine sycl_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRow, aux1_dev, &
+                                                                     wantDebug, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, isOurProcessRow
-      logical, intent(in)             :: wantDebug
-      integer(kind=C_intptr_T)        :: v_row_dev, aux1_dev
+      integer(kind=c_int), intent(in) :: l_rows
+      logical, intent(in)             :: isOurProcessRow, wantDebug
+      integer(kind=c_intptr_t)        :: v_row_dev, aux1_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+      call sycl_dot_product_and_assign_double_c(v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -620,15 +655,23 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, istep
       logical, intent(in)             :: isOurProcessRow, useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
+      integer(kind=c_intptr_t)        :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, useCCL_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_set_e_vec_scale_set_one_store_v_row_double_c(e_vec_dev, vrl_dev, a_dev, &
                                        v_row_dev, tau_dev, xf_host_or_dev, &
-                                       l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
+                                       l_rows, l_cols, matrixRows, istep, isOurProcessRow_int, useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -641,19 +684,25 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      integer(kind=c_intptr_t)        :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
+      integer(kind=c_intptr_t)        :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
+      integer(kind=c_intptr_t)        :: vav_host_or_dev, tau_istep_host_or_dev
       logical, intent(in)             :: useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
-      integer(kind=C_intptr_T)        :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
-      integer(kind=C_intptr_T)        :: vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: useCCL_int, wantDebug_int
+
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_store_u_v_in_uv_vu_double_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
                                        vav_host_or_dev, tau_istep_host_or_dev, &
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                       useCCL, wantDebug, my_stream)
+                                       useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -664,16 +713,22 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
-      integer(kind=C_INT), intent(in) :: istep, n_stored_vecs
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
+      integer(kind=c_int), intent(in) :: istep, n_stored_vecs
+      integer(kind=c_intptr_t)        :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       logical, intent(in)             :: isSkewsymmetric, wantDebug
-      integer(kind=C_intptr_T)        :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isSkewsymmetric_int, wantDebug_int
+
+      isSkewsymmetric_int = 0
+      wantDebug_int = 0
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_update_matrix_element_add_double_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev,  &
                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                       isSkewsymmetric, wantDebug, my_stream)
+                                       isSkewsymmetric_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -682,8 +737,8 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: index
-      integer(kind=C_intptr_T)        :: array_dev
+      integer(kind=c_int), intent(in) :: index
+      integer(kind=c_intptr_t)        :: array_dev
       integer(kind=c_intptr_t)        :: value
       integer(kind=c_intptr_t)        :: my_stream
 
@@ -697,12 +752,16 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
+      integer(kind=c_intptr_t)        :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
       logical, intent(in)             :: wantDebug
-      integer(kind=C_intptr_T)        :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: wantDebug_int
+
+      wantDebug_int = 0
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_hh_transform_double_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
+      call sycl_hh_transform_double_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -714,17 +773,25 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
-      integer(kind=C_INT), intent(in) :: np_st, ld_st, direction, sm_count
+      integer(kind=c_int), intent(in) :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
+      integer(kind=c_int), intent(in) :: np_st, ld_st, direction, sm_count
+      integer(kind=c_intptr_t)        :: aux_transpose_dev, vmat_st_dev
       logical, intent(in)             :: isSkewsymmetric, isReduceadd, wantDebug
-      integer(kind=C_intptr_T)        :: aux_transpose_dev, vmat_st_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isSkewsymmetric_int, isReduceadd_int, wantDebug_int
+
+      isSkewsymmetric_int = 0
+      isReduceadd_int = 0
+      wantDebug_int = 0
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (isReduceadd) isReduceadd_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_transpose_reduceadd_vectors_copy_block_double_c(aux_transpose_dev, vmat_st_dev, &
                                           nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                           lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                          isSkewsymmetric, isReduceadd, wantDebug, sm_count, my_stream)
+                                          isSkewsymmetric_int, isReduceadd_int, wantDebug_int, sm_count, my_stream)
 #endif
 
     end subroutine
@@ -735,17 +802,32 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, istep
       logical, intent(in)             :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
       logical, intent(in)             :: isSkewsymmetric, useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_intptr_t)        :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
+      integer(kind=c_int)             :: isSkewsymmetric_int, useCCL_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      isOurProcessCol_int = 0
+      isOurProcessCol_prev_int = 0
+      isSkewsymmetric_int = 0
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (isOurProcessCol) isOurProcessCol_int = 1
+      if (isOurProcessCol_prev) isOurProcessCol_prev_int = 1
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_and_set_zeros_float_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                             aux1_dev, vav_dev, d_vec_dev, &
-                                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                            isSkewsymmetric, useCCL, wantDebug, my_stream)
+                                            isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
+                                            isSkewsymmetric_int, useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -754,28 +836,39 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: n, incx, incy, sm_count
+      integer(kind=c_int), intent(in) :: n, incx, incy, sm_count
       logical, intent(in)             :: wantDebug
       integer(kind=C_intptr_T)        :: x_dev, y_dev, result_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: wantDebug_int
+
+      wantDebug_int = 0
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_dot_product_float_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, sm_count, my_stream)
+      call sycl_dot_product_float_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug_int, sm_count, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_dot_product_and_assign_float(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+    subroutine sycl_dot_product_and_assign_float(v_row_dev, l_rows, isOurProcessRow, aux1_dev, &
+                                                                     wantDebug, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, isOurProcessRow
-      logical, intent(in)             :: wantDebug
-      integer(kind=C_intptr_T)        :: v_row_dev, aux1_dev
+      integer(kind=c_int), intent(in) :: l_rows
+      logical, intent(in)             :: isOurProcessRow, wantDebug
+      integer(kind=c_intptr_t)        :: v_row_dev, aux1_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_dot_product_and_assign_float_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+      call sycl_dot_product_and_assign_float_c(v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -786,15 +879,23 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, istep
       logical, intent(in)             :: isOurProcessRow, useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
+      integer(kind=c_intptr_t)        :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, useCCL_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_set_e_vec_scale_set_one_store_v_row_float_c(e_vec_dev, vrl_dev, a_dev, &
                                        v_row_dev, tau_dev, xf_host_or_dev, &
-                                       l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
+                                       l_rows, l_cols, matrixRows, istep, isOurProcessRow_int, useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -807,19 +908,25 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      integer(kind=c_intptr_t)        :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
+      integer(kind=c_intptr_t)        :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
+      integer(kind=c_intptr_t)        :: vav_host_or_dev, tau_istep_host_or_dev
       logical, intent(in)             :: useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
-      integer(kind=C_intptr_T)        :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
-      integer(kind=C_intptr_T)        :: vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: useCCL_int, wantDebug_int
+
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_store_u_v_in_uv_vu_float_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
                                        vav_host_or_dev, tau_istep_host_or_dev, &
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                       useCCL, wantDebug, my_stream)
+                                       useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -830,16 +937,22 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
-      integer(kind=C_INT), intent(in) :: istep, n_stored_vecs
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
+      integer(kind=c_int), intent(in) :: istep, n_stored_vecs
+      integer(kind=c_intptr_t)        :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       logical, intent(in)             :: isSkewsymmetric, wantDebug
-      integer(kind=C_intptr_T)        :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isSkewsymmetric_int, wantDebug_int
+
+      isSkewsymmetric_int = 0
+      wantDebug_int = 0
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_update_matrix_element_add_float_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev,  &
                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                       isSkewsymmetric, wantDebug, my_stream)
+                                       isSkewsymmetric_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -848,8 +961,8 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: index
-      integer(kind=C_intptr_T)        :: array_dev
+      integer(kind=c_int), intent(in) :: index
+      integer(kind=c_intptr_t)        :: array_dev
       integer(kind=c_intptr_t)        :: value
       integer(kind=c_intptr_t)        :: my_stream
 
@@ -863,12 +976,16 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
+      integer(kind=c_intptr_t)        :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
       logical, intent(in)             :: wantDebug
-      integer(kind=C_intptr_T)        :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: wantDebug_int
+
+      wantDebug_int = 0
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_hh_transform_float_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
+      call sycl_hh_transform_float_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -880,17 +997,25 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
-      integer(kind=C_INT), intent(in) :: np_st, ld_st, direction, sm_count
+      integer(kind=c_int), intent(in) :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
+      integer(kind=c_int), intent(in) :: np_st, ld_st, direction, sm_count
+      integer(kind=c_intptr_t)        :: aux_transpose_dev, vmat_st_dev
       logical, intent(in)             :: isSkewsymmetric, isReduceadd, wantDebug
-      integer(kind=C_intptr_T)        :: aux_transpose_dev, vmat_st_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isSkewsymmetric_int, isReduceadd_int, wantDebug_int
+
+      isSkewsymmetric_int = 0
+      isReduceadd_int = 0
+      wantDebug_int = 0
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (isReduceadd) isReduceadd_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_transpose_reduceadd_vectors_copy_block_float_c(aux_transpose_dev, vmat_st_dev, &
                                           nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                           lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                          isSkewsymmetric, isReduceadd, wantDebug, sm_count, my_stream)
+                                          isSkewsymmetric_int, isReduceadd_int, wantDebug_int, sm_count, my_stream)
 #endif
 
     end subroutine
@@ -901,17 +1026,32 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, istep
       logical, intent(in)             :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
       logical, intent(in)             :: isSkewsymmetric, useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_intptr_t)        :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
+      integer(kind=c_int)             :: isSkewsymmetric_int, useCCL_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      isOurProcessCol_int = 0
+      isOurProcessCol_prev_int = 0
+      isSkewsymmetric_int = 0
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (isOurProcessCol) isOurProcessCol_int = 1
+      if (isOurProcessCol_prev) isOurProcessCol_prev_int = 1
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_and_set_zeros_double_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                             aux1_dev, vav_dev, d_vec_dev, &
-                                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                            isSkewsymmetric, useCCL, wantDebug, my_stream)
+                                            isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
+                                            isSkewsymmetric_int, useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -920,28 +1060,39 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: n, incx, incy, sm_count
+      integer(kind=c_int), intent(in) :: n, incx, incy, sm_count
       logical, intent(in)             :: wantDebug
       integer(kind=C_intptr_T)        :: x_dev, y_dev, result_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: wantDebug_int
+
+      wantDebug_int = 0
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_dot_product_double_complex_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, sm_count, my_stream)
+      call sycl_dot_product_double_complex_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug_int, sm_count, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_dot_product_and_assign_double_complex(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+    subroutine sycl_dot_product_and_assign_double_complex(v_row_dev, l_rows, isOurProcessRow, aux1_dev, &
+                                                                     wantDebug, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, isOurProcessRow
-      logical, intent(in)             :: wantDebug
-      integer(kind=C_intptr_T)        :: v_row_dev, aux1_dev
+      integer(kind=c_int), intent(in) :: l_rows
+      logical, intent(in)             :: isOurProcessRow, wantDebug
+      integer(kind=c_intptr_t)        :: v_row_dev, aux1_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_dot_product_and_assign_double_complex_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+      call sycl_dot_product_and_assign_double_complex_c(v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -952,15 +1103,23 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, istep
       logical, intent(in)             :: isOurProcessRow, useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
+      integer(kind=c_intptr_t)        :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, useCCL_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_set_e_vec_scale_set_one_store_v_row_double_complex_c(e_vec_dev, vrl_dev, a_dev, &
                                        v_row_dev, tau_dev, xf_host_or_dev, &
-                                       l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
+                                       l_rows, l_cols, matrixRows, istep, isOurProcessRow_int, useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -973,19 +1132,25 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      integer(kind=c_intptr_t)        :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
+      integer(kind=c_intptr_t)        :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
+      integer(kind=c_intptr_t)        :: vav_host_or_dev, tau_istep_host_or_dev
       logical, intent(in)             :: useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
-      integer(kind=C_intptr_T)        :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
-      integer(kind=C_intptr_T)        :: vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: useCCL_int, wantDebug_int
+
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_store_u_v_in_uv_vu_double_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
                                        vav_host_or_dev, tau_istep_host_or_dev, &
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                       useCCL, wantDebug, my_stream)
+                                       useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -996,16 +1161,22 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
-      integer(kind=C_INT), intent(in) :: istep, n_stored_vecs
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
+      integer(kind=c_int), intent(in) :: istep, n_stored_vecs
+      integer(kind=c_intptr_t)        :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       logical, intent(in)             :: isSkewsymmetric, wantDebug
-      integer(kind=C_intptr_T)        :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isSkewsymmetric_int, wantDebug_int
+
+      isSkewsymmetric_int = 0
+      wantDebug_int = 0
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_update_matrix_element_add_double_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev,  &
                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                       isSkewsymmetric, wantDebug, my_stream)
+                                       isSkewsymmetric_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -1014,8 +1185,8 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: index
-      integer(kind=C_intptr_T)        :: array_dev
+      integer(kind=c_int), intent(in) :: index
+      integer(kind=c_intptr_t)        :: array_dev
       integer(kind=c_intptr_t)        :: value
       integer(kind=c_intptr_t)        :: my_stream
 
@@ -1029,12 +1200,16 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
+      integer(kind=c_intptr_t)        :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
       logical, intent(in)             :: wantDebug
-      integer(kind=C_intptr_T)        :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: wantDebug_int
+
+      wantDebug_int = 0
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_hh_transform_double_complex_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
+      call sycl_hh_transform_double_complex_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -1046,17 +1221,25 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
-      integer(kind=C_INT), intent(in) :: np_st, ld_st, direction, sm_count
+      integer(kind=c_int), intent(in) :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
+      integer(kind=c_int), intent(in) :: np_st, ld_st, direction, sm_count
+      integer(kind=c_intptr_t)        :: aux_transpose_dev, vmat_st_dev
       logical, intent(in)             :: isSkewsymmetric, isReduceadd, wantDebug
-      integer(kind=C_intptr_T)        :: aux_transpose_dev, vmat_st_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isSkewsymmetric_int, isReduceadd_int, wantDebug_int
+
+      isSkewsymmetric_int = 0
+      isReduceadd_int = 0
+      wantDebug_int = 0
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (isReduceadd) isReduceadd_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_transpose_reduceadd_vectors_copy_block_double_complex_c(aux_transpose_dev, vmat_st_dev, &
                                           nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                           lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                          isSkewsymmetric, isReduceadd, wantDebug, sm_count, my_stream)
+                                          isSkewsymmetric_int, isReduceadd_int, wantDebug_int, sm_count, my_stream)
 #endif
 
     end subroutine
@@ -1067,17 +1250,32 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, istep
       logical, intent(in)             :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
       logical, intent(in)             :: isSkewsymmetric, useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_intptr_t)        :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
+      integer(kind=c_int)             :: isSkewsymmetric_int, useCCL_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      isOurProcessCol_int = 0
+      isOurProcessCol_prev_int = 0
+      isSkewsymmetric_int = 0
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (isOurProcessCol) isOurProcessCol_int = 1
+      if (isOurProcessCol_prev) isOurProcessCol_prev_int = 1
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_and_set_zeros_float_complex_c(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                             aux1_dev, vav_dev, d_vec_dev, &
-                                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                            isSkewsymmetric, useCCL, wantDebug, my_stream)
+                                            isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
+                                            isSkewsymmetric_int, useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -1086,28 +1284,39 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: n, incx, incy, sm_count
+      integer(kind=c_int), intent(in) :: n, incx, incy, sm_count
       logical, intent(in)             :: wantDebug
       integer(kind=C_intptr_T)        :: x_dev, y_dev, result_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: wantDebug_int
+
+      wantDebug_int = 0
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_dot_product_float_complex_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, sm_count, my_stream)
+      call sycl_dot_product_float_complex_c(n, x_dev, incx, y_dev, incy, result_dev, wantDebug_int, sm_count, my_stream)
 #endif
 
     end subroutine
 
-    subroutine sycl_dot_product_and_assign_float_complex(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+    subroutine sycl_dot_product_and_assign_float_complex(v_row_dev, l_rows, isOurProcessRow, aux1_dev, &
+                                                                     wantDebug, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, isOurProcessRow
-      logical, intent(in)             :: wantDebug
-      integer(kind=C_intptr_T)        :: v_row_dev, aux1_dev
+      integer(kind=c_int), intent(in) :: l_rows
+      logical, intent(in)             :: isOurProcessRow, wantDebug
+      integer(kind=c_intptr_t)        :: v_row_dev, aux1_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_dot_product_and_assign_float_complex_c(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+      call sycl_dot_product_and_assign_float_complex_c(v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -1118,15 +1327,23 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, istep
       logical, intent(in)             :: isOurProcessRow, useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
+      integer(kind=c_intptr_t)        :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isOurProcessRow_int, useCCL_int, wantDebug_int
+
+      isOurProcessRow_int = 0
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (isOurProcessRow) isOurProcessRow_int = 1
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_set_e_vec_scale_set_one_store_v_row_float_complex_c(e_vec_dev, vrl_dev, a_dev, &
                                        v_row_dev, tau_dev, xf_host_or_dev, &
-                                       l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
+                                       l_rows, l_cols, matrixRows, istep, isOurProcessRow_int, useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -1139,19 +1356,25 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
+      integer(kind=c_intptr_t)        :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
+      integer(kind=c_intptr_t)        :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
+      integer(kind=c_intptr_t)        :: vav_host_or_dev, tau_istep_host_or_dev
       logical, intent(in)             :: useCCL, wantDebug
-      integer(kind=C_intptr_T)        :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev
-      integer(kind=C_intptr_T)        :: v_col_dev, u_col_dev, tau_dev, aux_complex_dev
-      integer(kind=C_intptr_T)        :: vav_host_or_dev, tau_istep_host_or_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: useCCL_int, wantDebug_int
+
+      useCCL_int = 0
+      wantDebug_int = 0
+      if (useCCL) useCCL_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_store_u_v_in_uv_vu_float_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
                                        vav_host_or_dev, tau_istep_host_or_dev, &
                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                       useCCL, wantDebug, my_stream)
+                                       useCCL_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -1162,16 +1385,22 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
-      integer(kind=C_INT), intent(in) :: istep, n_stored_vecs
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
+      integer(kind=c_int), intent(in) :: istep, n_stored_vecs
+      integer(kind=c_intptr_t)        :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       logical, intent(in)             :: isSkewsymmetric, wantDebug
-      integer(kind=C_intptr_T)        :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isSkewsymmetric_int, wantDebug_int
+
+      isSkewsymmetric_int = 0
+      wantDebug_int = 0
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_update_matrix_element_add_float_complex_c(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev,  &
                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                       isSkewsymmetric, wantDebug, my_stream)
+                                       isSkewsymmetric_int, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -1180,8 +1409,8 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: index
-      integer(kind=C_intptr_T)        :: array_dev
+      integer(kind=c_int), intent(in) :: index
+      integer(kind=c_intptr_t)        :: array_dev
       integer(kind=c_intptr_t)        :: value
       integer(kind=c_intptr_t)        :: my_stream
 
@@ -1195,12 +1424,16 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
+      integer(kind=c_intptr_t)        :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
       logical, intent(in)             :: wantDebug
-      integer(kind=C_intptr_T)        :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: wantDebug_int
+
+      wantDebug_int = 0
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_hh_transform_float_complex_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
+      call sycl_hh_transform_float_complex_c(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug_int, my_stream)
 #endif
 
     end subroutine
@@ -1212,17 +1445,25 @@ module tridiag_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(kind=C_INT), intent(in) :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
-      integer(kind=C_INT), intent(in) :: np_st, ld_st, direction, sm_count
+      integer(kind=c_int), intent(in) :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride
+      integer(kind=c_int), intent(in) :: np_st, ld_st, direction, sm_count
+      integer(kind=c_intptr_t)        :: aux_transpose_dev, vmat_st_dev
       logical, intent(in)             :: isSkewsymmetric, isReduceadd, wantDebug
-      integer(kind=C_intptr_T)        :: aux_transpose_dev, vmat_st_dev
       integer(kind=c_intptr_t)        :: my_stream
+      integer(kind=c_int)             :: isSkewsymmetric_int, isReduceadd_int, wantDebug_int
+
+      isSkewsymmetric_int = 0
+      isReduceadd_int = 0
+      wantDebug_int = 0
+      if (isSkewsymmetric) isSkewsymmetric_int = 1
+      if (isReduceadd) isReduceadd_int = 1
+      if (wantDebug) wantDebug_int = 1
 
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_transpose_reduceadd_vectors_copy_block_float_complex_c(aux_transpose_dev, vmat_st_dev, &
                                           nvc, nvr, n_block, nblks_skip, nblks_tot, &
                                           lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                          isSkewsymmetric, isReduceadd, wantDebug, sm_count, my_stream)
+                                          isSkewsymmetric_int, isReduceadd_int, wantDebug_int, sm_count, my_stream)
 #endif
 
     end subroutine

@@ -477,7 +477,7 @@ __global__ void cuda_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_de
     index_global += blockDim.x * gridDim.x;
   }
 
-  if (isOurProcessRow && index_global - blockDim.x*gridDim.x == l_rows-1) // last element
+  if (isOurProcessRow && (index_global - blockDim.x*gridDim.x == l_rows-1)) // last element
     {
     v_row_dev[l_rows-1] = elpaDeviceNumber<T>(1.0);
     }
