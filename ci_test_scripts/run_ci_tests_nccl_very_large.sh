@@ -138,6 +138,7 @@ then
     cp $HOME/runners/job_script_templates/run_${CLUSTER}_4node_nccl_very_large_4GPU.sh .
     echo "if \[ \$SLURM_PROCID -eq 0 \]" >> ./run_${CLUSTER}_4node_nccl_very_large_4GPU.sh
     echo "then" >> ./run_${CLUSTER}_4node_nccl_very_large_4GPU.sh
+    echo "echo SLURM_NODELIST: \$SLURM_NODELIST" >> ./run_${CLUSTER}_4node_nccl_very_large_4GPU.sh
     echo "echo \"process \$SLURM_PROCID running configure\"" >> ./run_${CLUSTER}_4node_nccl_very_large_4GPU.sh
     echo "#decouple from SLURM (maybe this could be removed)" >> ./run_${CLUSTER}_4node_nccl_very_large_4GPU.sh
     echo "export _save_SLURM_MPI_TYPE=\$SLURM_MPI_TYPE" >> ./run_${CLUSTER}_4node_nccl_very_large_4GPU.sh
