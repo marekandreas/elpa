@@ -91,12 +91,9 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   use elpa_mpi
   use elpa_gpu
   use tridiag_gpu
-!#ifdef WITH_NVIDIA_GPU_VERSION
-!  use cuda_functions
-!#endif
-!#ifdef WITH_AMD_GPU_VERSION
-!  use hip_functions
-!#endif
+#ifdef WITH_NVIDIA_GPU_VERSION
+  use cuda_functions ! for NVTX labels
+#endif
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
   use elpa_ccl_gpu
 #endif
