@@ -894,9 +894,6 @@
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
-        successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG -> add sync after gpu_copy_PRECISION_a_tmp1
-        check_stream_synchronize_gpu("elpa_cholesky: ccl_bcast", successGPU) ! before ccl_bcast
-
 #ifdef WITH_NVTX
         call nvtxRangePush("ccl_bcast tmp1_dev")
 #endif        
@@ -975,7 +972,7 @@
 
       if (useGPU) then
         my_stream = obj%gpu_setup%my_stream
-        call gpu_copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nblk, my_stream) ! PETERDEBUG: why this copy needed?
+        call gpu_copy_PRECISION_tmp1_tmp2 (tmp1_dev, tmp2_dev, nblk, nblk, my_stream)
       else ! useGPU
         nc = 0
         do i=1,nblk
