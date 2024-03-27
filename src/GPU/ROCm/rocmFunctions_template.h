@@ -103,17 +103,16 @@ extern "C" {
 #else
     char *buf;
     size_t len;
-    hipError_t status;
+    BLAS_status status;
 
     status = rocblas_get_version_string_size(&len);
-    if (status != hipSuccess) {
-      printf("Error in executing  hipGetLastErrorFrom: %s\n", hipGetErrorString(status));
+    if (status != BLAS_status_success) {
       errormessage("Error in rocblas_get_version_string_size: %s\n", "unknown error");
       return 0;
     }
 
     status = rocblas_get_version_string(buf, len);
-    if (status == hipSuccess) {
+    if (status == BLAS_status_success) {
       int major, minor, patch;
 
       if (sscanf(buf, "%d.%d.%d", &major, &minor, &patch) == 3) {
@@ -126,7 +125,6 @@ extern "C" {
       }
     }
     else{
-      printf("Error in executing  hipGetLastErrorFrom: %s\n", hipGetErrorString(status));
       errormessage("Error in rocblas_get_version_string: %s\n", "unknown error");
       return 0;
     }
@@ -484,22 +482,6 @@ extern "C" {
       return BLAS_operation_none;
     }
   }
-
-#ifdef WITH_AMD_HIPSOLVER_API
-  hipsolverFillMode_t hipsolver_fill_mode(char uplo) {
-    if (uplo == 'L' || uplo == 'l') {
-      return HIPSOLVER_FILL_MODE_LOWER;
-    }
-    else if(uplo == 'U' || uplo == 'u') {
-      return HIPSOLVER_FILL_MODE_UPPER;
-    }
-    else {
-      errormessage("Error when transfering %c to hipsolverFillMode_t\n", uplo);
-      // or abort?
-      return HIPSOLVER_FILL_MODE_LOWER;
-    }
-  } 
-#endif
 
   BLAS_fill hip_fill_mode(char uplo) {
     if (uplo == 'L' || uplo == 'l') {

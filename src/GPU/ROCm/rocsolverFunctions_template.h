@@ -52,6 +52,22 @@
 
 extern "C" {
 
+#ifdef HIPBLAS
+  hipsolverFillMode_t hipsolver_fill_mode(char uplo) {
+    if (uplo == 'L' || uplo == 'l') {
+      return HIPSOLVER_FILL_MODE_LOWER;
+    }
+    else if(uplo == 'U' || uplo == 'u') {
+      return HIPSOLVER_FILL_MODE_UPPER;
+    }
+    else {
+      errormessage("Error when transfering %c to hipsolverFillMode_t\n", uplo);
+      // or abort?
+      return HIPSOLVER_FILL_MODE_LOWER;
+    }
+  } 
+#endif
+
 // not needed for ROCM; rocmsolver users rocblas handle 
 //  int rocsolverSetStreamFromC(intptr_t rocsolver_handle, intptr_t stream) {
 //    rocsolverStatus_t status = rocsolverDnSetStream(*((cusolverDnHandle_t*)cusolver_handle), *((cudaStream_t*)stream));

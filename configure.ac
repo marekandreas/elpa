@@ -3108,6 +3108,7 @@ if test x"$need_amd_gpu" = x"yes"; then
     AC_LANG_PUSH([C])
     if test x"${use_hipblas}" = x"yes"; then
       AC_SEARCH_LIBS([hipsolverDpotrf],[hipsolver],[have_rocsolver=yes],[have_rocsolver=no])
+      AC_DEFINE([WITH_AMD_HIPSOLVER_API],[1],[enable AMD hipsolver])
       hip_solver_api=yes
     else
       AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
@@ -3116,7 +3117,6 @@ if test x"$need_amd_gpu" = x"yes"; then
       AC_MSG_ERROR([Could not link rocsolver; try to set the hip-path or disable AMD GPU support])
     fi
     AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
-    AC_DEFINE([WITH_AMD_HIPSOLVER_API],[1],[enable AMD hipsolver])
     AC_LANG_POP([C])
   fi
 fi

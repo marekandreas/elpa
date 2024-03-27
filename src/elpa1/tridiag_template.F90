@@ -115,11 +115,8 @@ subroutine tridiag_&
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions ! for NVTX labels
 #endif
-#ifdef WITH_NVIDIA_NCCL
-  use nccl_functions
-#endif
-#ifdef WITH_AMD_RCCL
-  use rccl_functions
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+  use elpa_ccl_gpu
 #endif
 
   implicit none
