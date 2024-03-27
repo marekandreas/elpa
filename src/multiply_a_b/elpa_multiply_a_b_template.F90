@@ -55,7 +55,7 @@
 #include "../general/error_checking.inc"
 
 #undef USE_CCL_MULTIPLY
-#if defined(WITH_NIVIDA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #define USE_CCL_MULTIPLY
 #endif
 

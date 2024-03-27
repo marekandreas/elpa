@@ -55,7 +55,7 @@
 #include "../general/sanity.F90"
 
 #undef USE_CCL_TRIDIAG
-#if defined(WITH_NIVIDA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #define USE_CCL_TRIDIAG
 #endif
 
