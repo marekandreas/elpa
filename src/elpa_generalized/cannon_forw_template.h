@@ -92,7 +92,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
                             C_INT_TYPE np_rows, C_INT_TYPE np_cols, C_INT_TYPE my_prow, C_INT_TYPE my_pcol,
                             C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_MPI_TYPE ToStore, 
                             MPI_Comm row_comm, MPI_Comm col_comm,
-                            bool wantDebug, bool useGPU, intptr_t *gpublasHandle)
+                            int wantDebug, int useGPU, intptr_t *gpublasHandle)
 {
    // Input matrices: 
       // - A: full matrix
@@ -221,15 +221,6 @@ void cannons_reduction_impl(math_type* A, math_type* U,
    for(i = 0; i < na_rows*na_cols; i++)
       M[i] = 0; 
 
-   // PETERDEBUG
-   printf("size of Buf_to_send/receive_A = %d\n", ratio*Buf_cols*Buf_rows);
-   printf("size of Buf_to_send/receive_U = %d\n", Size_U_stored);
-   printf("size of M = %d\n", na_rows*na_cols);
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-  set_gpu_parameters(&gpuMemcpyHostToDevice, &gpuMemcpyDeviceToHost);
-
-   //math_type *Buf_to_send_A_dev, *Buf_to_receive_A_dev;
    math_type *Buf_to_send_receive_A_dev;
    math_type *Buf_to_send_receive_U_dev;
    math_type *M_dev;
@@ -238,17 +229,12 @@ void cannons_reduction_impl(math_type* A, math_type* U,
    math_type *A_local_start_dev, *U_local_start_curr_dev; // pointers for second PxGEMM
 
    if (useGPU){
-      // printf("ratio = %d\n", ratio); // PETERDEBUG: cleanup comments and prints
-      printf("size of Buf_to_send_receive_A_dev = %d\n", ratio*Buf_cols*Buf_rows);
-      printf("size of Buf_to_send_receive_U_dev = %d\n", Size_U_stored);
-      printf("size of M_dev = %d\n", na_rows*na_cols);
+      set_gpu_parameters(&gpuMemcpyHostToDevice, &gpuMemcpyDeviceToHost);
 
       gpuErrCheck( gpuMalloc((intptr_t *)&Buf_to_send_receive_A_dev   , ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
       gpuErrCheck( gpuMalloc((intptr_t *)&Buf_to_send_receive_U_dev   , Size_U_stored*sizeof(math_type)) );
       gpuErrCheck( gpuMalloc((intptr_t *)&M_dev, na_rows*na_cols*sizeof(math_type)) );
    }
-#endif
-   printf("useGPU=%d\n", useGPU); // PETERDEBUG
 
    ////////////////////////////////////////////////////////////// initial reordering of A ///////////////////////////////////////////////////////////////////////////////////////// 
 
@@ -400,15 +386,11 @@ void cannons_reduction_impl(math_type* A, math_type* U,
    if (where_to_send_U != my_prow)
    {   
       // send and receive in the col_comm
-      printf("Size_U_stored=%d, Size_send_U=%d, Seize_receive_U=%d\n", (C_INT_MPI_TYPE)Size_U_stored, (C_INT_MPI_TYPE)Size_send_U, (C_INT_MPI_TYPE)(Buf_rows*na_cols)); // PETERDEBUG
-      printf("where_to_send_U=%d, from_where_to_receive_U=%d\n", where_to_send_U, from_where_to_receive_U); // PETERDEBUG
-      
       MPI_Sendrecv(Buf_to_send_U   , (C_INT_MPI_TYPE) Size_send_U       , MPI_MATH_DATATYPE_PRECISION_C, 
                   (C_INT_MPI_TYPE) where_to_send_U        , (C_INT_MPI_TYPE) zero,
                    Buf_to_receive_U, (C_INT_MPI_TYPE) (Buf_rows*na_cols), MPI_MATH_DATATYPE_PRECISION_C,
                   (C_INT_MPI_TYPE) from_where_to_receive_U, (C_INT_MPI_TYPE) zero,
                   col_comm, &status);
-      printf("MPI_Sendrecv done\n"); // PETERDEBUG
       MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_UMPI); // find out how many elements I have received
       Size_receive_U = (C_INT_TYPE) Size_receive_UMPI;
    }
@@ -488,18 +470,14 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       
       startPos = (curr_col_loc_buf + nblk)*curr_col_loc_buf/2;
 
-#ifdef WITH_NVIDIA_GPU_VERSION
       if (useGPU){
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_A_dev, (intptr_t *)Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), gpuMemcpyHostToDevice) );
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_U_dev, (intptr_t *)Buf_to_send_U, Size_U_stored*sizeof(math_type), gpuMemcpyHostToDevice) );
       }
-#endif
 
       if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev = Buf_to_send_receive_U_dev + startPos;
          Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
-#endif
       }
       else {
          U_local_start = &Buf_to_send_U[startPos];
@@ -542,14 +520,12 @@ void cannons_reduction_impl(math_type* A, math_type* U,
             if (j == 1) beta = 0.0;
 
             if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
                gpublasXgemm(gpublasHandle, 'N', 'N', 
                             rows_in_block_A, cols_in_block, rows_in_block_U, dOne, 
                             Buf_to_send_receive_A_dev, na_rows, 
                             U_local_start_dev, rows_in_block_U, beta, 
                             Res_ptr_dev, na_rows);
-               if (wantDebug) gpuDeviceSynchronize();
-#endif      
+               if (wantDebug) gpuDeviceSynchronize();    
             }
             else {
                C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &dOne, 
@@ -562,10 +538,8 @@ void cannons_reduction_impl(math_type* A, math_type* U,
          curr_col_loc_buf = curr_col_loc_buf + nblk;
          
          if (useGPU) {
-#ifdef WITH_NVIDIA_GPU_VERSION
             U_local_start_dev = U_local_start_dev + rows_in_block_U*cols_in_block;
             Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
-#endif   
          }
          else {
             U_local_start = U_local_start + rows_in_block_U*cols_in_block;
@@ -632,19 +606,14 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       
    startPos = (curr_col_loc_buf + nblk)*curr_col_loc_buf/2;
 
-
-#ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU){
       gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_A_dev, (intptr_t *)Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), gpuMemcpyHostToDevice) );
       gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_U_dev, (intptr_t *)Buf_to_receive_U, Size_U_stored*sizeof(math_type), gpuMemcpyHostToDevice) );
    }
-#endif
 
    if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
       U_local_start_dev = Buf_to_send_receive_U_dev + startPos;
       Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
-#endif
    }
    else {
       U_local_start = &Buf_to_receive_U[startPos];
@@ -688,14 +657,12 @@ void cannons_reduction_impl(math_type* A, math_type* U,
          if (j == 1) beta = 0.0;
 
          if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
             gpublasXgemm(gpublasHandle, 'N', 'N', 
                           rows_in_block_A, cols_in_block, rows_in_block_U, dOne, 
                           Buf_to_send_receive_A_dev, na_rows, 
                           U_local_start_dev, rows_in_block_U, beta, 
                           Res_ptr_dev, na_rows);
             if (wantDebug) gpuDeviceSynchronize();
-#endif 
          }
          else { 
             C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &dOne, 
@@ -710,10 +677,8 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       curr_col_loc_buf = curr_col_loc_buf + nblk;
 
       if (useGPU) {
-#ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev = U_local_start_dev + rows_in_block_U*cols_in_block;
          Res_ptr_dev = M_dev + curr_col_loc_res*na_rows;
-#endif
       }
       else {
          U_local_start = U_local_start + rows_in_block_U*cols_in_block;
@@ -725,9 +690,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
    nvtxRangePop(); // loop-last i<num_of_blocks_in_U_buffer
 #endif
 
-#ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU) gpuErrCheck( gpuMemcpy((intptr_t *)M, (intptr_t *)M_dev, na_rows*na_cols*sizeof(math_type), gpuMemcpyDeviceToHost) );
-#endif
    
    ///////////////////// Now M has an upper part of A*U^(-1) ///////////////////////////////////////////////
 #ifdef WITH_NVTX
@@ -894,9 +857,6 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       {
          if(my_prow > 0)
          {  
-            // PETERDEBUG
-            // printf("MPI_Sendrecv A: send_count=%d, recv_count=%d\n", (C_INT_MPI_TYPE) Size_send_A, (C_INT_MPI_TYPE) Size_U_stored);
-            
             MPI_Sendrecv(Buf_to_send_A   , (C_INT_MPI_TYPE) Size_send_A  , MPI_MATH_DATATYPE_PRECISION_C, 
                         (C_INT_MPI_TYPE) pcol_where_to_send_A        , (C_INT_MPI_TYPE) zero, 
                          Buf_to_receive_A, (C_INT_MPI_TYPE) Size_U_stored, MPI_MATH_DATATYPE_PRECISION_C, 
@@ -904,7 +864,6 @@ void cannons_reduction_impl(math_type* A, math_type* U,
                          row_comm, &status);
 
             MPI_Get_count(&status, MPI_MATH_DATATYPE_PRECISION_C, &Size_receive_AMPI);
-            printf("MPI_Sendrecv A-2: done\n"); // PETERDEBUG
 
             Size_receive_A = (C_INT_TYPE) Size_receive_AMPI;
 
@@ -1028,20 +987,15 @@ void cannons_reduction_impl(math_type* A, math_type* U,
          rows_in_block_U = ratio*nblk;
       }
 
-
-#ifdef WITH_NVIDIA_GPU_VERSION
       if (useGPU){
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_A_dev, (intptr_t *)Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), gpuMemcpyHostToDevice) );
          // PETERDEBUG: do we need U_to_calc_dev?
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_U_dev, (intptr_t *)U_to_calc, Size_U_stored*sizeof(math_type), gpuMemcpyHostToDevice) );
          gpuErrCheck( gpuMemset((intptr_t *)M_dev, 0, na_rows*na_cols*sizeof(math_type)) );
       }
-#endif
 
       if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev = Buf_to_send_receive_U_dev;
-#endif
       }
       else {
          U_local_start = U_to_calc;
@@ -1079,10 +1033,8 @@ void cannons_reduction_impl(math_type* A, math_type* U,
          A_local_index = curr_row_loc_A;
 
          if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
             A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
             Res_ptr_dev = M_dev + curr_col_loc_res*na_rows + curr_row_loc_res; // we reuse M_dev buffer instead of introducing Res_dev
-#endif
          }
          else {
             A_local_start = &Buf_to_send_A[A_local_index];
@@ -1094,9 +1046,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
          if ((rows_in_block > 0)&&(cols_in_block > 0))
          {
             if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
                U_local_start_curr_dev = U_local_start_dev;
-#endif
             }
             else {
                U_local_start_curr = U_local_start; 
@@ -1119,14 +1069,12 @@ void cannons_reduction_impl(math_type* A, math_type* U,
                if (j==1 && ii==0) beta = 0.0;
 
                if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
                gpublasXgemm(gpublasHandle, 'N', 'N', 
                             rows_in_block, cols_in_block, rows_in_block_U_curr, dOne, 
                             A_local_start_dev, LDA_A, 
                             U_local_start_curr_dev, rows_in_block_U, beta, 
                             Res_ptr_dev, na_rows);
                if (wantDebug) gpuDeviceSynchronize();
-#endif 
                }
                else {
                   C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &dOne, 
@@ -1138,10 +1086,8 @@ void cannons_reduction_impl(math_type* A, math_type* U,
                A_local_index = A_local_index - LDA_A + LDA_A*nblk + LDA_A_new;
 
                if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
                   A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
                   U_local_start_curr_dev = U_local_start_curr_dev + rows_in_block_U_curr;
-#endif
                }
                else {
                   A_local_start = &Buf_to_send_A[A_local_index];
@@ -1153,9 +1099,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
          }
       
          if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
             U_local_start_dev = U_local_start_dev + rows_in_block_U*cols_in_block;
-#endif
          }
          else {
             U_local_start = U_local_start + rows_in_block_U*cols_in_block;
@@ -1227,18 +1171,14 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       rows_in_block_U = ratio*nblk;
    }
 
-#ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU){
       gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_A_dev, (intptr_t *)Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), gpuMemcpyHostToDevice) );
       // PETERDEBUG change Buf_to_receive_U_dev to U_to_calc_dev below?
       gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_U_dev, (intptr_t *)U_to_calc, Size_U_stored*sizeof(math_type), gpuMemcpyHostToDevice) );
    }
-#endif
 
    if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
       U_local_start_dev = Buf_to_send_receive_U_dev;
-#endif
    }
    else {
       U_local_start = U_to_calc;
@@ -1276,10 +1216,8 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       A_local_index = curr_row_loc_A;
 
       if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
          A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
          Res_ptr_dev = M_dev + curr_col_loc_res*na_rows + curr_row_loc_res; // we reuse M_dev buffer instead of introducing Res_dev
-#endif
       }
       else { 
          A_local_start = &Buf_to_receive_A[A_local_index];
@@ -1292,9 +1230,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       if ((rows_in_block > 0) &&(cols_in_block > 0))
       {
          if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
             U_local_start_curr_dev = U_local_start_dev;
-#endif
          }
          else {
             U_local_start_curr = U_local_start;
@@ -1317,14 +1253,12 @@ void cannons_reduction_impl(math_type* A, math_type* U,
             if (j==1 && ii==0) beta = 0.0;
 
             if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
             gpublasXgemm(gpublasHandle, 'N', 'N', 
                           rows_in_block, cols_in_block, rows_in_block_U_curr, dOne, 
                           A_local_start_dev, LDA_A, 
                           U_local_start_curr_dev, rows_in_block_U, beta, 
                           Res_ptr_dev, na_rows);
-            if (wantDebug) gpuDeviceSynchronize();
-#endif 
+            if (wantDebug) gpuDeviceSynchronize(); 
             }
             else {
                C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &dOne, 
@@ -1336,10 +1270,8 @@ void cannons_reduction_impl(math_type* A, math_type* U,
             A_local_index = A_local_index - (LDA_A - rows_in_block) + LDA_A*nblk + LDA_A_new - rows_in_block; 
             
             if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
                A_local_start_dev = Buf_to_send_receive_A_dev + A_local_index;
                U_local_start_curr_dev = U_local_start_curr_dev + rows_in_block_U_curr;
-#endif
             }
             else {
                A_local_start = &Buf_to_receive_A[A_local_index];
@@ -1351,9 +1283,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       }
 
       if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev = U_local_start_dev + rows_in_block_U*cols_in_block;
-#endif
       }     
       else { 
          U_local_start = U_local_start + rows_in_block_U*cols_in_block;
@@ -1363,10 +1293,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       rows_in_block_U = rows_in_block_U + ratio*nblk;
    }
 
-
-#ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU) gpuErrCheck( gpuMemcpy((intptr_t *)Res, (intptr_t *)M_dev, na_rows*na_cols*sizeof(math_type), gpuMemcpyDeviceToHost) );
-#endif
 
 #ifdef WITH_NVTX
    nvtxRangePushA("PTRAN");
@@ -1384,13 +1311,11 @@ void cannons_reduction_impl(math_type* A, math_type* U,
    nvtxRangePop();
 #endif
 
-#ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU){
       gpuErrCheck( gpuFree((intptr_t *)Buf_to_send_receive_A_dev) );
       gpuErrCheck( gpuFree((intptr_t *)Buf_to_send_receive_U_dev) );
       gpuErrCheck( gpuFree((intptr_t *)M_dev) );
    }
-#endif
 
    free(Buf_to_send_A);
    free(Buf_to_receive_A);
@@ -1408,43 +1333,46 @@ void cannons_reduction_impl(math_type* A, math_type* U,
 void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rowsCast, int local_colsCast,
                               C_INT_TYPE_PTR a_desc, math_type *Res, C_INT_MPI_TYPE ToStore,
                               C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
-                              bool wantDebug, bool useGPU, intptr_t *gpublasHandle)
+                              int wantDebug, int useGPU, intptr_t *gpublasHandle)
 {
-  C_INT_TYPE local_rows, local_cols;
-  local_rows = (C_INT_TYPE) local_rowsCast;
-  local_cols = (C_INT_TYPE) local_colsCast;
+   C_INT_TYPE local_rows, local_cols;
+   local_rows = (C_INT_TYPE) local_rowsCast;
+   local_cols = (C_INT_TYPE) local_colsCast;
 
-  MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
-  MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
+   MPI_Comm c_row_comm = MPI_Comm_f2c(row_comm);
+   MPI_Comm c_col_comm = MPI_Comm_f2c(col_comm);
 
 
-  C_INT_TYPE my_prow, my_pcol, np_rows, np_cols;
-  C_INT_MPI_TYPE my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI;
+   C_INT_TYPE my_prow, my_pcol, np_rows, np_cols;
+   C_INT_MPI_TYPE my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI;
 
-  MPI_Comm_rank(c_row_comm, &my_prowMPI);
-  MPI_Comm_size(c_row_comm, &np_rowsMPI);
-  MPI_Comm_rank(c_col_comm, &my_pcolMPI);
-  MPI_Comm_size(c_col_comm, &np_colsMPI);
+   MPI_Comm_rank(c_row_comm, &my_prowMPI);
+   MPI_Comm_size(c_row_comm, &np_rowsMPI);
+   MPI_Comm_rank(c_col_comm, &my_pcolMPI);
+   MPI_Comm_size(c_col_comm, &np_colsMPI);
 
-  my_prow = (C_INT_TYPE) my_prowMPI;
-  my_pcol = (C_INT_TYPE) my_pcolMPI;
-  np_rows = (C_INT_TYPE) np_rowsMPI;
-  np_cols = (C_INT_TYPE) np_colsMPI;
+   my_prow = (C_INT_TYPE) my_prowMPI;
+   my_pcol = (C_INT_TYPE) my_pcolMPI;
+   np_rows = (C_INT_TYPE) np_rowsMPI;
+   np_cols = (C_INT_TYPE) np_colsMPI;
 
-  // BEWARE
-  // in the cannons algorithm, column and row communicators are exchanged
-  // What we usually call row_comm in elpa, is thus passed to col_comm parameter of the function and vice versa
-  // (order is swapped in the following call)
-  // It is a bit unfortunate, maybe it should be changed in the Cannon algorithm to comply with ELPA standard notation?
-  
-  // ELPA convention  : col_comm means that the data is sent in the direction, where  my_pcol changes (my_prow=const). Size of col_comm is np_cols
-  // cannon convention: col_comm means that the data is sent in the direction, wheree my_pcol=const (my_prow changes). Size of col_comm is np_rows
-  // Example of 2D process grid: 
-  // A1 A2 A3 A4
-  // B1 B2 B3 B4
-  // C1 C2 C3 C4
-  // In ELPA, {B1, B2, B3, B4} belong to the same col_comm, in cannon they belong to the same row_comm
-  cannons_reduction_impl(A, U, np_rows, np_cols, my_prow, my_pcol, 
-                         a_desc, Res, ToStore, c_col_comm, c_row_comm, wantDebug, useGPU, gpublasHandle);
+   printf("wantDebug=%d\n", wantDebug); // PETERDEBUG
+   printf("useGPU=%d\n", useGPU); // PETERDEBUG
+
+   // BEWARE
+   // in the cannons algorithm, column and row communicators are exchanged
+   // What we usually call row_comm in elpa, is thus passed to col_comm parameter of the function and vice versa
+   // (order is swapped in the following call)
+   // It is a bit unfortunate, maybe it should be changed in the Cannon algorithm to comply with ELPA standard notation?
+   
+   // ELPA convention  : col_comm means that the data is sent in the direction, where  my_pcol changes (my_prow=const). Size of col_comm is np_cols
+   // cannon convention: col_comm means that the data is sent in the direction, wheree my_pcol=const (my_prow changes). Size of col_comm is np_rows
+   // Example of 2D process grid: 
+   // A1 A2 A3 A4
+   // B1 B2 B3 B4
+   // C1 C2 C3 C4
+   // In ELPA, {B1, B2, B3, B4} belong to the same col_comm, in cannon they belong to the same row_comm
+   cannons_reduction_impl(A, U, np_rows, np_cols, my_prow, my_pcol, 
+                           a_desc, Res, ToStore, c_col_comm, c_row_comm, wantDebug, useGPU, gpublasHandle);
 }
 

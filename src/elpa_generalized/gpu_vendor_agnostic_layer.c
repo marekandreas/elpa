@@ -55,9 +55,9 @@
 #include <alloca.h>
 #include <complex.h>
 
-#include "./gpu_vendor_agnostic_layer.h"
-
 #include "config-f90.h"
+
+#include "./gpu_vendor_agnostic_layer.h"
 
 void set_gpu_parameters(int* gpuMemcpyHostToDevice, int* gpuMemcpyDeviceToHost){
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -106,6 +106,7 @@ int gpuSetDevice(int n){
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif
+  return -1;
 }
 
 int gpuMalloc(intptr_t *a, size_t width_height) {
@@ -121,6 +122,7 @@ int gpuMalloc(intptr_t *a, size_t width_height) {
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif
+  return -1;
 }
 
 int gpuFree(intptr_t *a) {
@@ -131,12 +133,12 @@ int gpuFree(intptr_t *a) {
   return hipFreeFromC(a);
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-  //return syclFreeFromC(a);
-  return syclFreeVoidPtr(a);
+  return syclFreeFromC(a);
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif
+  return -1;
 }
 
 int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir){
@@ -152,13 +154,8 @@ int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir){
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif
+  return -1;
 }
-
-#ifdef WITH_SYCL_GPU_VERSION
-int syclGetCpuCount(int numberOfDevices) {
-  return syclGetCpuCountFromC(&numberOfDevices);
-}
-#endif
 
 int gpuDeviceSynchronize(){
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -203,14 +200,14 @@ void gpublasDgemm(intptr_t* gpuHandle, char transa, char transb, int m, int n, i
   rocblasDgemm_elpa_wrapper_intptr_handle(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-  syclblasDgemm_elpa_wrapper(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); // for SYCL handle is not needed
+  syclblasDgemm_elpa_wrapper(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); // for SYCL, handle is not needed
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-  mklOpenmpOffloadDgemmFromC(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); // for OpenMP offload handle is not needed
+  mklOpenmpOffloadDgemmFromC(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); // for OpenMP, offload handle is not needed
 #endif
 }
 
-void gpublasSgemm (intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+void gpublasSgemm(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
                               float alpha, const float *A, int lda,
                               const float *B, int ldb, float beta,
                               float *C, int ldc) {
@@ -221,14 +218,14 @@ void gpublasSgemm (intptr_t* gpuHandle, char transa, char transb, int m, int n, 
   rocblasSgemm_elpa_wrapper_intptr_handle(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-  syclblasSgemm_elpa_wrapper(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); // for SYCL handle is not needed
+  syclblasSgemm_elpa_wrapper(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
   mklOpenmpOffloadSgemmFromC(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 #endif
 }
 
-void gpublasZgemm (intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+void gpublasZgemm(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
                               double _Complex alpha, const double _Complex *A, int lda,
                               const double _Complex *B, int ldb, double _Complex beta,
                               double _Complex *C, int ldc) {
@@ -239,14 +236,14 @@ void gpublasZgemm (intptr_t* gpuHandle, char transa, char transb, int m, int n, 
   rocblasZgemm_elpa_wrapper_intptr_handle(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-  syclblasZgemm_elpa_wrapper(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); // for SYCL handle is not needed
+  syclblasZgemm_elpa_wrapper(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
   mklOpenmpOffloadZgemmFromC(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 #endif
 }
 
-void gpublasCgemm (intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+void gpublasCgemm(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
                                float _Complex alpha, const float _Complex *A, int lda,
                                const float _Complex *B, int ldb, float _Complex beta,
                                float _Complex *C, int ldc) {
@@ -257,7 +254,7 @@ void gpublasCgemm (intptr_t* gpuHandle, char transa, char transb, int m, int n, 
   rocblasCgemm_elpa_wrapper_intptr_handle(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-  syclblasCgemm_elpa_wrapper(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); // for SYCL handle is not needed
+  syclblasCgemm_elpa_wrapper(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
   mklOpenmpOffloadZgemmFromC(gpuHandle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);

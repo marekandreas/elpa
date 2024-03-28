@@ -67,7 +67,7 @@
 void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_rows, C_INT_TYPE np_cols, 
                                      C_INT_TYPE my_prow, C_INT_TYPE my_pcol, C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTR B_desc, 
                                      math_type *Res, MPI_Comm row_comm, MPI_Comm col_comm,
-                                     bool wantDebug, bool useGPU, intptr_t *gpublasHandle)
+                                     int wantDebug, int useGPU, intptr_t *gpublasHandle)
 {
    // Cannons algorithm, Non-blocking version
    // Input: 
@@ -163,12 +163,6 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
    for(i = 0; i < na_rows*nb_cols; i++)
      Res[i] = 0;
 
-   // PETERDEBUG
-   printf("size of Buf_to_send/receive_U = %d\n", ratio*Size_U_stored);
-   printf("size of Buf_to_send/receive_B = %d\n", Buf_cols_B*Buf_rows);
-   printf("size of R = %d\n", na_rows*nb_cols);
-
-#ifdef WITH_NVIDIA_GPU_VERSION
    math_type *Buf_to_send_receive_U_dev;
    math_type *Buf_to_send_receive_B_dev;
    math_type *Res_dev;
@@ -180,8 +174,6 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       gpuErrCheck( gpuMalloc((intptr_t *)&Buf_to_send_receive_B_dev, Buf_cols_B*Buf_rows*sizeof(math_type)) );
       gpuErrCheck( gpuMalloc((intptr_t *)&Res_dev, na_rows*nb_cols*sizeof(math_type)) );
    }
-#endif
-   printf("useGPU=%d\n", useGPU); // PETERDEBUG
 
    /////////////////////////////////////////////////////////////// initial reordering of U ///////////////////////////////////////////////////////////////////////////////////////// 
    
@@ -436,14 +428,12 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       num_of_blocks_in_U_buffer = ceil((math_type)cols_in_buffer_U/(math_type)nblk); 
 
       if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_U_dev, (intptr_t *)Buf_to_send_U, ratio*Size_U_stored*sizeof(math_type), gpuMemcpyHostToDevice) );
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_B_dev, (intptr_t *)Buf_to_send_B, Buf_cols_B*Buf_rows*sizeof(math_type), gpuMemcpyHostToDevice) );
 
          U_local_start_dev = Buf_to_send_receive_U_dev;
          if (col_of_origin_U >= my_prow) B_local_start_dev = Buf_to_send_receive_B_dev;
          else                            B_local_start_dev = Buf_to_send_receive_B_dev + nblk;
-#endif
       }
       else {
          U_local_start = Buf_to_send_U;
@@ -468,15 +458,12 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
             // Res = U_local_start*B_local_start
             // Res = Buf_to_send_U*Buf_to_send_B
             if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
-               // !!! MEMSET Res_dev to zero ???
                gpublasXgemm(gpublasHandle, 'N', 'N',
                             curr_rows, nb_cols, b_rows_mult, dOne, 
                             U_local_start_dev, curr_rows, 
                             B_local_start_dev, Size_receive_B, dOne, 
                             Res_dev, na_rows);
-               if (wantDebug) gpuDeviceSynchronize();
-#endif      
+               if (wantDebug) gpuDeviceSynchronize();     
             }
             else {
                C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &dOne, 
@@ -488,10 +475,8 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
          }
 
          if (useGPU) {
-#ifdef WITH_NVIDIA_GPU_VERSION
             U_local_start_dev += nblk*curr_rows; 
-            B_local_start_dev += nblk;
-#endif   
+            B_local_start_dev += nblk;  
          }
          else {
             U_local_start += nblk*curr_rows; 
@@ -530,14 +515,12 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
    num_of_blocks_in_U_buffer = ceil((math_type)cols_in_buffer_U/(math_type)nblk);
 
       if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_U_dev, (intptr_t *)Buf_to_receive_U, ratio*Size_U_stored*sizeof(math_type), gpuMemcpyHostToDevice) );
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_B_dev, (intptr_t *)Buf_to_receive_B, Buf_cols_B*Buf_rows*sizeof(math_type), gpuMemcpyHostToDevice) );
          
          U_local_start_dev = Buf_to_send_receive_U_dev;
          if (col_of_origin_U >= my_prow) B_local_start_dev = Buf_to_send_receive_B_dev;
-         else                            B_local_start_dev = Buf_to_send_receive_B_dev + nblk;  
-#endif
+         else                            B_local_start_dev = Buf_to_send_receive_B_dev + nblk;
       }
       else {
          U_local_start = Buf_to_receive_U;
@@ -562,15 +545,12 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
          // Res = U_local_start*B_local_start
          // Res = Buf_to_receive_U*Buf_to_receive_B
          if (useGPU){
-#ifdef WITH_NVIDIA_GPU_VERSION
-         // !!! MEMSET Res_dev to zero ???
          gpublasXgemm(gpublasHandle, 'N', 'N',
                        curr_rows, nb_cols, b_rows_mult, dOne, 
                        U_local_start_dev, curr_rows, 
                        B_local_start_dev, Size_receive_B, dOne, 
                        Res_dev, na_rows);
-         if (wantDebug) gpuDeviceSynchronize();
-#endif      
+         if (wantDebug) gpuDeviceSynchronize();    
          }
          else {
             C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &dOne,
@@ -582,10 +562,8 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       }
 
       if (useGPU) {
-#ifdef WITH_NVIDIA_GPU_VERSION
          U_local_start_dev += nblk*curr_rows; 
          B_local_start_dev += nblk;
-#endif   
       }
       else {
          U_local_start += nblk*curr_rows; 
@@ -595,14 +573,12 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
    }
    NVTX_RANGE_POP(); // loop j<num_of_blocks_in_U_buffer
 
-#ifdef WITH_NVIDIA_GPU_VERSION
    if (useGPU) {
       gpuErrCheck( gpuMemcpy((intptr_t *)Res, (intptr_t *)Res_dev, na_rows*nb_cols*sizeof(math_type), gpuMemcpyDeviceToHost) );
       gpuErrCheck( gpuFree((intptr_t *)Buf_to_send_receive_U_dev) );
       gpuErrCheck( gpuFree((intptr_t *)Buf_to_send_receive_B_dev) );
       gpuErrCheck( gpuFree((intptr_t *)Res_dev) );
    }
-#endif
 
    free(Buf_to_send_U);
    free(Buf_to_receive_U);
@@ -616,7 +592,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
 void cannons_triang_rectangular_c_impl(math_type* U, math_type* B, int local_rowsCast, int local_colsCast,
                                        C_INT_TYPE_PTR U_desc, C_INT_TYPE_PTR B_desc, math_type *Res, 
                                        C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
-                                       bool wantDebug, bool useGPU, intptr_t *gpublasHandle)
+                                       int wantDebug, int useGPU, intptr_t *gpublasHandle)
 {
   C_INT_TYPE local_rows, local_cols;
 

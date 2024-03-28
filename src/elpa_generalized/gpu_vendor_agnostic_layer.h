@@ -48,25 +48,97 @@
 #pragma once
 #include <stdint.h> // for intptr_t
 
-
-// #ifdef WITH_NVIDIA_GPU_VERSION
-// int cudaMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir);
-// #endif 
-// #ifdef WITH_AMD_GPU_VERSION
-// int hipMemcpyFromC (intptr_t *dest, intptr_t *src, size_t count, int dir);
-// #endif
-// #ifdef WITH_SYCL_GPU_VERSION
-// int syclMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir);
-// #endif
-// #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-// #error "openmp_offload missing"
-// #endif
-
 #ifdef __cplusplus
-extern "C" {    
+extern "C" {
 #endif
-    
-void set_gpu_parameters();
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+int cudaMemcpyHostToDeviceFromC();
+int cudaMemcpyDeviceToHostFromC();
+int cudaGetDeviceCountFromC(int *count);
+int cudaSetDeviceFromC(int n);
+int cudaMallocFromC(intptr_t *a, size_t width_height);
+int cudaFreeFromC(intptr_t *a);
+int cudaMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir);
+int cudaDeviceSynchronizeFromC();
+int cudaMemsetFromC(intptr_t *a, int value, size_t count);
+void cublasDgemm_elpa_wrapper_intptr_handle(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              double alpha, const double *A, int lda,
+                              const double *B, int ldb, double beta,
+                              double *C, int ldc);
+void cublasSgemm_elpa_wrapper_intptr_handle(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              float alpha, const float *A, int lda,
+                              const float *B, int ldb, float beta,
+                              float *C, int ldc);                        
+void cublasZgemm_elpa_wrapper_intptr_handle(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              double _Complex alpha, const double _Complex *A, int lda,
+                              const double _Complex *B, int ldb, double _Complex beta,
+                              double _Complex *C, int ldc);
+void cublasCgemm_elpa_wrapper_intptr_handle(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                               float _Complex alpha, const float _Complex *A, int lda,
+                               const float _Complex *B, int ldb, float _Complex beta,
+                               float _Complex *C, int ldc);
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+int hipMemcpyHostToDeviceFromC();
+int hipMemcpyDeviceToHostFromC();
+int hipGetDeviceCountFromC(int *count);
+int hipSetDeviceFromC(int n);
+int hipMallocFromC(intptr_t *a, size_t width_height);
+int hipFreeFromC(intptr_t *a);
+int hipMemcpyFromC (intptr_t *dest, intptr_t *src, size_t count, int dir);
+int hipDeviceSynchronizeFromC();
+int hipMemsetFromC(intptr_t *a, int value, size_t count);
+void rocblasDgemm_elpa_wrapper_intptr_handle(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              double alpha, const double *A, int lda,
+                              const double *B, int ldb, double beta,
+                              double *C, int ldc);
+void rocblasSgemm_elpa_wrapper_intptr_handle(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              float alpha, const float *A, int lda,
+                              const float *B, int ldb, float beta,
+                              float *C, int ldc);
+void rocblasZgemm_elpa_wrapper_intptr_handle(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              double _Complex alpha, const double _Complex *A, int lda,
+                              const double _Complex *B, int ldb, double _Complex beta,
+                              double _Complex *C, int ldc);
+void rocblasCgemm_elpa_wrapper_intptr_handle(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                               float _Complex alpha, const float _Complex *A, int lda,
+                               const float _Complex *B, int ldb, float _Complex beta,
+                               float _Complex *C, int ldc);
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+int syclMemcpyHostToDeviceFromC();
+int syclMemcpyDeviceToHostFromC();
+int syclGetDeviceCountFromC(int *count);
+int syclSetDeviceFromC(int n);
+int syclMallocFromC(intptr_t *a, size_t width_height);
+int syclFreeFromC(intptr_t *a);
+int syclMemcpyFromC(intptr_t *dest, intptr_t *src, size_t count, int dir);
+int syclDeviceSynchronizeFromC();
+int syclMemsetFromC(intptr_t *a, int value, size_t count);
+void syclblasDgemm_elpa_wrapper(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              double alpha, const double *A, int lda,
+                              const double *B, int ldb, double beta,
+                              double *C, int ldc);
+void syclblasSgemm_elpa_wrapper(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              float alpha, const float *A, int lda,
+                              const float *B, int ldb, float beta,
+                              float *C, int ldc);
+void syclblasZgemm_elpa_wrapper(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              double _Complex alpha, const double _Complex *A, int lda,
+                              const double _Complex *B, int ldb, double _Complex beta,
+                              double _Complex *C, int ldc);
+void syclblasCgemm_elpa_wrapper(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                               float _Complex alpha, const float _Complex *A, int lda,
+                               const float _Complex *B, int ldb, float _Complex beta,
+                               float _Complex *C, int ldc);
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+#error "openmp_offload missing"
+#endif
+
+
+void set_gpu_parameters(int* gpuMemcpyHostToDevice, int* gpuMemcpyDeviceToHost);
 
 int gpuGetDeviceCount(int *count);
 int gpuSetDevice(int n); 
@@ -82,6 +154,26 @@ int syclGetCpuCount(int numberOfDevices);
 int gpuDeviceSynchronize();
 
 int gpuMemset(intptr_t *a, int value, size_t count);
+
+void gpublasDgemm(intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              double alpha, const double *A, int lda,
+                              const double *B, int ldb, double beta,
+                              double *C, int ldc);
+
+void gpublasSgemm (intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              float alpha, const float *A, int lda,
+                              const float *B, int ldb, float beta,
+                              float *C, int ldc);
+
+void gpublasZgemm (intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                              double _Complex alpha, const double _Complex *A, int lda,
+                              const double _Complex *B, int ldb, double _Complex beta,
+                              double _Complex *C, int ldc);
+
+void gpublasCgemm (intptr_t* gpuHandle, char transa, char transb, int m, int n, int k,
+                               float _Complex alpha, const float _Complex *A, int lda,
+                               const float _Complex *B, int ldb, float _Complex beta,
+                               float _Complex *C, int ldc);
 
 #ifdef __cplusplus
 }    

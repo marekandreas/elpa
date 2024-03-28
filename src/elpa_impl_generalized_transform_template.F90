@@ -73,7 +73,7 @@ subroutine elpa_transform_generalized_&
   integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
   integer(kind=ik)         :: BuffLevelInt
   integer(kind=c_int)      :: use_cannon, debug, gpu
-  logical                  :: wantDebug, useGPU
+  logical(kind=c_bool)     :: useGPU
   integer(kind=c_intptr_t) :: gpublasHandle
   logical, save            :: firstCall = .true.
 
@@ -99,8 +99,8 @@ subroutine elpa_transform_generalized_&
   call self%get("debug", debug, error)
   call self%get("gpu", gpu, error)
   
-  wantDebug = (debug == 1)
   useGPU = (gpu == 1)
+  gpublasHandle=0
 
   call self%timer_start("transform_generalized()")
      
@@ -168,12 +168,15 @@ subroutine elpa_transform_generalized_&
 #ifdef WITH_NVTX
     call nvtxRangePush("cannons_reduction")
 #endif
-    gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
+    if (useGPU) then
+      gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
+    endif 
+    
     call cannons_reduction_&
       &ELPA_IMPL_SUFFIX&
       &(a, b, self%local_nrows, self%local_ncols, &
         int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=MPI_KIND),   &
-        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), wantDebug, useGPU, gpublasHandle)
+        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), debug, gpu, gpublasHandle)
 #ifdef WITH_NVTX
     call nvtxRangePop()
 #endif
@@ -257,7 +260,7 @@ subroutine elpa_transform_back_generalized_&
   integer                  :: sc_desc(SC_DESC_LEN)
   integer                  :: sc_desc_ev(SC_DESC_LEN)
   integer(kind=c_int)      :: use_cannon, debug, gpu
-  logical                  :: wantDebug, useGPU
+  logical(kind=c_bool)     :: useGPU
   integer(kind=c_intptr_t) :: gpublasHandle
 
   MATH_DATATYPE(kind=rck)  :: tmp(self%local_nrows, self%local_ncols)
@@ -282,8 +285,8 @@ subroutine elpa_transform_back_generalized_&
   call self%get("debug", debug, error)
   call self%get("gpu", gpu, error)
   
-  wantDebug = (debug == 1)
   useGPU = (gpu == 1)
+  gpublasHandle=0
 
   call self%timer_start("transform_back_generalized()")
 
@@ -309,12 +312,15 @@ subroutine elpa_transform_back_generalized_&
     call nvtxRangePush("cannons_triang_rectangular")
 #endif
 #ifdef WITH_MPI
-    gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
+    if (useGPU) then
+      gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
+    endif
+
     call cannons_triang_rectangular_&
       &ELPA_IMPL_SUFFIX&
       &(b, q, self%local_nrows, self%local_ncols, &
         int(sc_desc,kind=BLAS_KIND), int(sc_desc_ev,kind=BLAS_KIND), tmp,  &
-        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), wantDebug, useGPU, gpublasHandle)
+        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), debug, gpu, gpublasHandle)
 #endif
 #ifdef WITH_NVTX
     call nvtxRangePop()
