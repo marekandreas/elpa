@@ -925,7 +925,7 @@
         call nvtxRangePop() ! ccl_bcast tmp1_dev"
 #endif 
         if (.not.successGPU) then
-          print *,"Error in ccl_reduce"
+          print *,"Error in ccl_bcast"
           stop 1
         endif
 

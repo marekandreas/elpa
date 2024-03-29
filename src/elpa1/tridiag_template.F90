@@ -55,7 +55,7 @@
 #include "../general/sanity.F90"
 
 #undef USE_CCL_TRIDIAG
-#if defined(WITH_NIVIDA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #define USE_CCL_TRIDIAG
 #endif
 
@@ -115,11 +115,8 @@ subroutine tridiag_&
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions ! for NVTX labels
 #endif
-#ifdef WITH_NVIDIA_NCCL
-  use nccl_functions
-#endif
-#ifdef WITH_AMD_RCCL
-  use rccl_functions
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+  use elpa_ccl_gpu
 #endif
 
   implicit none
@@ -152,7 +149,6 @@ subroutine tridiag_&
   ! local columns and rows of the remaining part of the matrix
   integer(kind=ik)                              :: l_cols, l_rows
   integer(kind=ik)                              :: n_stored_vecs
-  integer(kind=ik)                              :: isOurProcessRowInt ! TODO_23_11 - get rid of it
   logical                                       :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
 
 
@@ -790,17 +786,13 @@ subroutine tridiag_&
       endif ! (n_stored_vecs > 0 .and. l_rows > 0)
 
       if (useGPU) then
-        if (my_prow == prow(istep-1, nblk, np_rows)) then
-          isOurProcessRowInt = 1
-        else
-          isOurProcessRowInt = 0
-        end if
-
+        isOurProcessRow = (my_prow == prow(istep-1, nblk, np_rows))
+        
         my_stream = obj%gpu_setup%my_stream
 #ifdef WITH_NVTX
         call nvtxRangePush("kernel: gpu_dot_product_and_assign v_row_dev*v_row_dev,aux1_dev")
 #endif
-        call gpu_dot_product_and_assign_PRECISION(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call gpu_dot_product_and_assign_PRECISION(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
 #ifdef WITH_NVTX
         call nvtxRangePop()
 #endif
@@ -1633,9 +1625,7 @@ subroutine tridiag_&
       call nvtxRangePush("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
 #endif
       sm_count = obj%gpu_setup%gpuSMcount
-      !sm_count=32
       call gpu_dot_product_PRECISION(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, sm_count, my_stream)
-      !call gpu_dot_product_PRECISION(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, my_stream)
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
