@@ -2,6 +2,7 @@ Changelog for next release
 
 
 - not yet decided
+
 Changelog for ELPA 2024.03.001
 - fix bug in hermitian_mutliply which had been introduced in 2023.11.001
 - PoC RCCL support for AMD GPUs, only for experienced users
