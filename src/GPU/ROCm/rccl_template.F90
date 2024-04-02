@@ -437,7 +437,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_redOp_ncclSum_c())
 #else
       flag = 0
@@ -448,7 +448,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_redOp_ncclMax_c())
 #else
       flag = 0
@@ -459,7 +459,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_redOp_ncclMin_c())
 #else
       flag = 0
@@ -470,7 +470,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_redOp_ncclAvg_c())
 #else
       flag = 0
@@ -481,7 +481,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_redOp_ncclProd_c())
 #else
       flag = 0
@@ -492,7 +492,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_dataType_ncclInt_c())
 #else
       flag = 0
@@ -503,7 +503,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_dataType_ncclInt32_c())
 #else
       flag = 0
@@ -514,7 +514,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_dataType_ncclInt64_c())
 #else
       flag = 0
@@ -525,7 +525,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_dataType_ncclFloat_c())
 #else
       flag = 0
@@ -536,7 +536,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_dataType_ncclFloat32_c())
 #else
       flag = 0
@@ -547,7 +547,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_dataType_ncclFloat64_c())
 #else
       flag = 0
@@ -558,7 +558,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik) :: flag
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       flag = int(rccl_dataType_ncclDouble_c())
 #else
       flag = 0
@@ -570,7 +570,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_group_start_c() /= 0
 #else
       success = .true.
@@ -582,7 +582,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_group_end_c() /= 0
 #else
       success = .true.
@@ -598,7 +598,7 @@
       !character(len=128)                        :: ncclId
       logical                                   :: success
       integer :: i
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_get_unique_id_c(ncclId) /= 0
 #else 
       success = .true.
@@ -618,7 +618,7 @@
       integer(kind=c_int)                       :: myRank
       logical                                   :: success
 
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_comm_init_rank_c(ncclComm, nRanks, ncclId, myRank) /= 0
 #else 
       success = .true.
@@ -631,7 +631,7 @@
 !      implicit none
 !      integer(kind=C_intptr_t)                  :: ncclComm
 !      logical                                   :: success
-!#ifdef WITH_NVIDIA_NCCL
+!#ifdef WITH_AMD_RCCL
 !      success = rccl_comm_finalize_c(ncclComm) /= 0
 !#else
 !      success = .true.
@@ -643,7 +643,7 @@
       implicit none
       integer(kind=C_intptr_t)                  :: ncclComm
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_comm_destroy_c(ncclComm) /= 0
 #else
       success = .true.
@@ -662,7 +662,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_allreduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) /= 0
 #else
       success = .true.
@@ -681,7 +681,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_allreduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, ncclComm, cudaStream) /= 0
 #else
       success = .true.
@@ -701,7 +701,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_reduce_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) /= 0
 #else
       success = .true.
@@ -721,7 +721,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_reduce_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, ncclOp, root, ncclComm, cudaStream) /= 0
 #else
       success = .true.
@@ -740,7 +740,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_bcast_intptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) /= 0
 #else
       success = .true.
@@ -759,7 +759,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_bcast_cptr_c(sendbuff, recvbuff, nrElements, ncclDatatype, root, ncclComm, cudaStream) /= 0
 #else
       success = .true.
@@ -777,7 +777,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_send_intptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
 #else
       success = .true.
@@ -795,7 +795,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_send_cptr_c(sendbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
 #else
       success = .true.
@@ -813,7 +813,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_recv_intptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
 #else
       success = .true.
@@ -831,7 +831,7 @@
       integer(kind=C_intptr_t)                  :: ncclComm
       integer(kind=C_intptr_t)                  :: cudaStream
       logical                                   :: success
-#ifdef WITH_NVIDIA_NCCL
+#ifdef WITH_AMD_RCCL
       success = rccl_recv_cptr_c(recvbuff, nrElements, ncclDatatype, peer, ncclComm, cudaStream) /= 0
 #else
       success = .true.

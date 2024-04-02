@@ -1620,10 +1620,11 @@ void elpa_index_print_int_parameter(elpa_index_t index, char* buff, int i)
 {
         int value = index->int_options.values[i];
         sprintf(buff, "%s = ", int_entries[i].base.name);
+        size_t used_length = strlen(buff);
         if (int_entries[i].to_string) {
-                sprintf(buff, "%s%d -> %s\n", buff, value, int_entries[i].to_string(value));
+                sprintf(buff + used_length, "%d -> %s\n", value, int_entries[i].to_string(value));
         } else {
-                sprintf(buff, "%s%d\n", buff, value);
+                sprintf(buff + used_length, "%d\n", value);
         }
 }
 
@@ -1943,7 +1944,8 @@ int elpa_index_print_settings(elpa_index_t index, char *file_name) {
                         } else
                                 out = &out_nowhere;
                         elpa_index_print_int_parameter(index, buff, i);
-                        sprintf(*out, "%s%s", *out, buff);
+                        size_t used_length = strlen(*out);
+                        sprintf(*out + used_length, "%s", buff);
                 }
                 int output_to_file = (strlen(file_name) > 0);
                 if(output_to_file) {

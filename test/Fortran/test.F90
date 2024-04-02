@@ -183,7 +183,7 @@ program test
    TEST_INT_MPI_TYPE                   :: mpierr, blacs_ok_mpi
 
    ! blacs
-   TEST_INT_TYPE                       :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
+   TEST_INT_TYPE                       :: my_blacs_ctxt, sc_desc(9), info, blacs_ok
 
    ! The Matrix
    MATRIX_TYPE, allocatable, target    :: a(:,:)
@@ -236,7 +236,7 @@ program test
                                           do_test_frank_eigenvalues,  &
                                           do_test_toeplitz_eigenvalues, do_test_cholesky,   &
                                           do_test_hermitian_multiply
-   logical                             :: ignoreError, success, successGPU
+   logical                             :: ignoreError, successGPU
 #if TEST_GPU == 1
    TEST_INT_TYPE                       :: numberOfDevices
 #endif
@@ -823,8 +823,8 @@ program test
       stop 1
    endif
 
-   success = gpu_GetDeviceCount(numberOfDevices)
-   if (.not.(success)) then
+   successGPU = gpu_GetDeviceCount(numberOfDevices)
+   if (.not.(successGPU)) then
       print *,"Error in gpu_GetDeviceCount. Aborting..."
       stop 1
    endif
@@ -846,16 +846,16 @@ program test
    endif
 
    ! Set device
-   success = .true.
+   successGPU = .true.
 #if TEST_INTEL_GPU_SYCL == 1
-   success = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
-   if (.not.(success)) then
+   successGPU = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
+   if (.not.(successGPU)) then
       print *,"Error in sycl_getcpucount. Aborting..."
       stop 1
     endif
 #endif
-   success = gpu_setdevice(gpuID)
-   if (.not.(success)) then
+   successGPU = gpu_setdevice(gpuID)
+   if (.not.(successGPU)) then
      print *,"Cannot set GPU device. Aborting..."
      stop 1
    endif

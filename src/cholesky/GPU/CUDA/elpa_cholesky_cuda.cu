@@ -78,6 +78,8 @@ extern "C" void cuda_check_device_info_FromC(int *info_dev, cudaStream_t my_stre
 #else
   cuda_check_device_info_kernel<<<blocks,threadsPerBlock>>>(info_dev);
 #endif
+
+  cudaDeviceSynchronize();
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
     printf("Error in executing check_device_info_kernel: %s\n",cudaGetErrorString(cuerr));

@@ -55,7 +55,7 @@
 #include "../general/error_checking.inc"
 
 #undef USE_CCL_MULTIPLY
-#if defined(WITH_NIVIDA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #define USE_CCL_MULTIPLY
 #endif
 
@@ -90,11 +90,8 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions ! for NVTX labels
 #endif
-#ifdef WITH_NVIDIA_NCCL
-  use nccl_functions
-#endif
-#ifdef WITH_AMD_RCCL
-  use rccl_functions
+#if defined(USE_CCL_MULTIPLY)
+  use elpa_ccl_gpu
 #endif
   use multiply_a_b_gpu
   implicit none
@@ -164,7 +161,7 @@
   integer(kind=c_intptr_t)                     :: gpuHandle, my_stream
   integer(kind=c_int)                          :: gpu_hermitian_multiply
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(USE_CCL_MULTIPLY)
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
 #endif
 #ifdef DEVICE_POINTER
@@ -560,28 +557,21 @@
       enddo
 
 #ifdef WITH_MPI
-! NCCL only with MPI
+! CCL only with MPI
 #ifdef USE_CCL_MULTIPLY
       if (useGPU) then
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-#ifdef WITH_NIVIDA_NCCL
-        successGPU = nccl_group_start()
-#endif
-#ifdef WITH_AMD_RCCL
-        successGPU = rccl_group_start()
-#endif
+        successGPU = ccl_group_start()
+
         if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_start!"
-          stop
+          print *,"Error in setting up ccl_group_start!"
+          stop 1
         endif
-#ifdef WITH_NIVIDA_NCCL
-        successGPU = nccl_bcast(aux_bc_dev, aux_bc_dev, &
-#endif
-#ifdef WITH_AMD_RCCL
-        successGPU = rccl_bcast(aux_bc_dev, aux_bc_dev, &
-#endif
+
+        successGPU = ccl_bcast(aux_bc_dev, aux_bc_dev, &
+
 #if REALCASE == 1
                          int(n_aux_bc,kind=c_size_t), &
 #endif
@@ -590,35 +580,31 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                         ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                         ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                        ncclDouble, &
+                        cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                        ncclFloat, &
+                        cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
                         int(np_bc,kind=c_int), ccl_comm_cols, my_stream)
 
         if (.not.successGPU) then
-          print *,"Error in nccl_reduce"
-          stop
+          print *,"Error in ccl_bcast"
+          stop 1
         endif
-#ifdef WITH_NIVIDA_NCCL
-        successGPU = nccl_group_end()
-#endif
-#ifdef WITH_AMD_RCCL
-        successGPU = rccl_group_end()
-#endif
+
+        successGPU = ccl_group_end()
         if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_end!"
-          stop
+          print *,"Error in setting up ccl_group_end!"
+          stop 1
         endif
 #endif /* WITH_GPU_STREAMS */
       else ! useGPU
@@ -840,22 +826,15 @@
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-#ifdef WITH_NIVIDA_NCCL
-            successGPU = nccl_group_start()
-#endif
-#ifdef WITH_AMD_RCCL
-            successGPU = rccl_group_start()
-#endif
+
+            successGPU = ccl_group_start()
             if (.not.successGPU) then
-              print *,"Error in setting up nccl_group_start!"
-              stop
+              print *,"Error in setting up ccl_group_start!"
+              stop 1
             endif
-#ifdef WITH_NIVIDA_NCCL
-            successGPU = nccl_reduce(tmp1_dev, tmp2_dev, &
-#endif
-#ifdef WITH_AMD_RCCL
-            successGPU = rccl_reduce(tmp1_dev, tmp2_dev, &
-#endif
+
+            successGPU = ccl_reduce(tmp1_dev, tmp2_dev, &
+
 #if REALCASE == 1
                          int(nstor*(lce-lcs+1),kind=c_size_t), &
 #endif
@@ -864,36 +843,32 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                         ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                         ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                        ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                        ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
-                        ncclSum, int(np,kind=c_int), ccl_comm_rows, my_stream)
+                         cclSum, int(np,kind=c_int), ccl_comm_rows, my_stream)
 
 
             if (.not.successGPU) then
-              print *,"Error in nccl_reduce"
-              stop
+              print *,"Error in ccl_reduce"
+              stop 1
             endif
-#ifdef WITH_NIVIDA_NCCL
-            successGPU = nccl_group_end()
-#endif
-#ifdef WITH_AMD_NCCL
-            successGPU = rccl_group_end()
-#endif
+
+            successGPU = ccl_group_end()
             if (.not.successGPU) then
-              print *,"Error in setting up nccl_group_end!"
-              stop
+              print *,"Error in setting up ccl_group_end!"
+              stop 1
             endif
 #endif /* WITH_GPU_STREAMS */
 
@@ -916,7 +891,7 @@
 #endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
 
 #if !defined(USE_CCL_MULTIPLY)
-            ! communication already done before with NCCL
+            ! communication already done before with CCL
             call obj%timer%start("mpi_communication")
             call mpi_reduce(tmp1, tmp2, int(nstor*(lce-lcs+1),kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                           MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)

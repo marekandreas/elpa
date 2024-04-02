@@ -86,6 +86,7 @@ extern "C" void hip_check_device_info_FromC(int *info_dev, hipStream_t my_stream
   hipLaunchKernelGGL(hip_check_device_info_kernel, blocks, threadsPerBlock, 0, 0,  info_dev);
 #endif
 
+  hipDeviceSynchronize();
   hipError_t hiperr = hipGetLastError();
   if (hiperr != hipSuccess){
     printf("Error in executing check_device_info_kernel: %s\n", hipGetErrorString(hiperr));
