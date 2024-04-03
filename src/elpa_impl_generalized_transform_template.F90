@@ -66,14 +66,16 @@ subroutine elpa_transform_generalized_&
 #else
   MATH_DATATYPE(kind=rck) :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols)
 #endif
-  integer                :: error
-  logical                :: is_already_decomposed
-  integer                :: sc_desc(SC_DESC_LEN)
-  integer(kind=ik)       :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-  integer(kind=MPI_KIND) :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
-  integer(kind=ik)       :: BuffLevelInt, use_cannon
-  integer(kind=MPI_KIND) :: mpierr
-  logical, save          :: firstCall = .true.
+  integer                  :: error
+  logical                  :: is_already_decomposed
+  integer                  :: sc_desc(SC_DESC_LEN)
+  integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
+  integer(kind=ik)         :: BuffLevelInt
+  integer(kind=c_int)      :: use_cannon, debug, gpu
+  logical                  :: useGPU
+  integer(kind=c_intptr_t) :: gpublasHandle
+  logical, save            :: firstCall = .true.
 
   MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
 
@@ -93,9 +95,15 @@ subroutine elpa_transform_generalized_&
   my_pcol = int(my_pcolMPI, kind=c_int)
   np_cols = int(np_colsMPI, kind=c_int)
 
-  call self%timer_start("transform_generalized()")
-  call self%get("cannon_for_generalized",use_cannon,error)
+  call self%get("cannon_for_generalized", use_cannon, error)
+  call self%get("debug", debug, error)
+  call self%get("gpu", gpu, error)
 
+  useGPU = (gpu == 1)
+  gpublasHandle=0
+  
+  call self%timer_start("transform_generalized()")
+  
 #ifdef WITH_NVTX
   call nvtxRangePush("transform_generalized")
 #endif
@@ -174,9 +182,9 @@ subroutine elpa_transform_generalized_&
     a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
 
   else ! (use_cannon == 1), do not use cannon algorithm, use elpa hermitian multiply and scalapack instead
-    ! tmp <- inv(U^T) * A (we have to use temporary variable)
+    ! tmp <- B * A = inv(U^T) * A (we have to use temporary variable)
 #ifdef WITH_NVTX
-    call nvtxRangePush("hermitian_multiply: tmp <- inv(U^T) * A")
+    call nvtxRangePush("hermitian_multiply: tmp <- B*A  = inv(U^T) * A")
 #endif
     call self%elpa_hermitian_multiply_a_h_a_&
         &ELPA_IMPL_SUFFIX&
@@ -187,39 +195,65 @@ subroutine elpa_transform_generalized_&
     call nvtxRangePop()
 #endif
 
-    ! A <- inv(U)^T * A
-#ifdef WITH_NVTX
-    call nvtxRangePush("copy: tmp -> a")
+    ! A <- tmp * inv(U) = inv(U)^T * A * inv(U)
+    ! For this (non-transposed) multiplication we do not have internal function in ELPA,
+    ! so we have to call scalapack (in CPU case) or transpose + hermitian_multiply (in GPU case)
+
+    if (useGPU) then
+      ! A <- tmp^T
+      call p&
+            &BLAS_CHAR&
+#if REALCASE == 1
+            &tran&
 #endif
-    a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+#if COMPLEXCASE == 1
+            &tranc&
+#endif          
+            &(self%na, self%na, ONE , tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
+                                ZERO,   a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+
+      ! tmp <- A^T * inv(U) = (tmp^T)^T * inv(U)
+      call self%elpa_hermitian_multiply_a_h_a_&
+            &ELPA_IMPL_SUFFIX&
+            &('F','U', self%na, a, b, self%local_nrows, self%local_ncols, tmp, &
+            self%local_nrows, self%local_ncols, error)
+      if(error .NE. ELPA_OK) return
+      
+      ! a <- tmp
+      a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+    else ! useGPU
+
+      ! A <- inv(U)^T * A
 #ifdef WITH_NVTX
-    call nvtxRangePop()
+      call nvtxRangePush("copy: tmp -> a")
+#endif
+      a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+#ifdef WITH_NVTX
+      call nvtxRangePop()
 #endif
 
-    ! A <- inv(U)^T * A * inv(U)
-    ! if (useGPU) then
-    ! else ! useGPU
-    ! For this multiplication we do not have internal function in ELPA,
-    ! so we have to call scalapack
-    call self%timer_start("scalapack multiply A * inv(U)")
+      call self%timer_start("scalapack multiply A * inv(U)")
 #ifdef WITH_NVTX
-    call nvtxRangePush("scalapack multiply A * inv(U)")
+      call nvtxRangePush("scalapack multiply A * inv(U)")
 #endif
 #ifdef WITH_MPI
-    call p&
-        &BLAS_CHAR&
-        &trmm("R", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%na,kind=BLAS_KIND), &
-              ONE, b, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
-              a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
-#else
-    call BLAS_CHAR&
-        &trmm("R", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%na,kind=BLAS_KIND), &
-              ONE, b, int(self%na,kind=BLAS_KIND), a, int(self%na,kind=BLAS_KIND))
-#endif
+      call p&
+            &BLAS_CHAR&
+            &trmm("R", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%na,kind=BLAS_KIND), &
+                  ONE, b, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
+                       a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+#else /* WITH_MPI */
+      call BLAS_CHAR&
+            &trmm("R", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%na,kind=BLAS_KIND), &
+                  ONE, b, int(self%na,kind=BLAS_KIND), a, int(self%na,kind=BLAS_KIND))
+#endif /* WITH_MPI */
+
 #ifdef WITH_NVTX
-    call nvtxRangePop()
+      call nvtxRangePop()
 #endif
-    call self%timer_stop("scalapack multiply A * inv(U)")
+      call self%timer_stop("scalapack multiply A * inv(U)")
+    endif ! useGPU
+
   endif ! (use_cannon == 1)
 
   !write(*, *) my_prow, my_pcol, "A(2,3)", a(2,3)
