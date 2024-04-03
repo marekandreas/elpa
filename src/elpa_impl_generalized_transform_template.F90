@@ -200,6 +200,8 @@ subroutine elpa_transform_generalized_&
     ! so we have to call scalapack (in CPU case) or transpose + hermitian_multiply (in GPU case)
 
     if (useGPU) then
+      call self%timer_start("PxTRAN")
+
       ! A <- tmp^T
       call p&
             &BLAS_CHAR&
@@ -212,6 +214,8 @@ subroutine elpa_transform_generalized_&
             &(self%na, self%na, ONE , tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
                                 ZERO,   a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
 
+      call self%timer_stop("PxTRAN")
+      
       ! tmp <- A^T * inv(U) = (tmp^T)^T * inv(U)
       call self%elpa_hermitian_multiply_a_h_a_&
             &ELPA_IMPL_SUFFIX&
