@@ -438,7 +438,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
                (C_INT_MPI_TYPE) from_where_to_receive_U, (C_INT_MPI_TYPE) zero, col_comm, &request_U_Recv); 
       
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
-      rows_in_buffer = (int)Buf_to_send_U[Size_receive_U-1]; // PETERDEBUG ???
+      rows_in_buffer = (int)Buf_to_send_U[Size_receive_U-1]; // copied above: *Buf_pos = (math_type)rows_in_buffer;
       row_origin_U = (my_pcol + my_prow + np_cols + j - 1)%np_rows;
       
       if((my_pcol >= my_prow)&&(my_pcol >= row_origin_U))   // if I and sender are from the upper part of grid
@@ -952,7 +952,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       }
       
       ///// multiplication ////////////////////////////////////////////////////////////////////////////////////////////
-      rows_in_buffer_U = (C_INT_TYPE)U_to_calc[Size_receive_U-1]; // PETERDEBUG ???
+      rows_in_buffer_U = (C_INT_TYPE)U_to_calc[Size_receive_U-1];
       row_of_origin_U = (my_pcol + my_prow + np_cols + j - 1)%np_rows;
       if (my_pcol >= row_of_origin_U) {
          cols_in_buffer_U = na_cols;
@@ -960,7 +960,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       else {
          cols_in_buffer_U = na_cols - nblk;
       }
-      cols_in_buffer_A = (C_INT_TYPE)Buf_to_send_A[Size_receive_A-2]; // PETERDEBUG ???
+      cols_in_buffer_A = (C_INT_TYPE)Buf_to_send_A[Size_receive_A-2];
       rows_in_buffer_A = (C_INT_TYPE)Buf_to_send_A[Size_receive_A-1];
       // find the minimal pcol among those who have sent A for this iteration
       col_of_origin_A = np_cols; 
@@ -989,7 +989,6 @@ void cannons_reduction_impl(math_type* A, math_type* U,
 
       if (useGPU){
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_A_dev, (intptr_t *)Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), gpuMemcpyHostToDevice) );
-         // PETERDEBUG: do we need U_to_calc_dev?
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_U_dev, (intptr_t *)U_to_calc, Size_U_stored*sizeof(math_type), gpuMemcpyHostToDevice) );
          gpuErrCheck( gpuMemset((intptr_t *)M_dev, 0, na_rows*na_cols*sizeof(math_type)) );
       }
@@ -1137,7 +1136,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
    /////// do the last multiplication //////////////
    if(ToStore < np_rows - 1)
       U_to_calc = Buf_to_receive_U;
-   rows_in_buffer_U = (C_INT_TYPE)U_to_calc[Size_receive_U-1]; // PETERDEBUG ???
+   rows_in_buffer_U = (C_INT_TYPE)U_to_calc[Size_receive_U-1];
    row_of_origin_U = (my_pcol + my_prow + np_cols + j - 1)%np_rows;     
    if (my_pcol >= row_of_origin_U) {
       cols_in_buffer_U = na_cols;
@@ -1145,7 +1144,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
    else {
       cols_in_buffer_U = na_cols - nblk;
    }
-   cols_in_buffer_A = (C_INT_TYPE)Buf_to_receive_A[Size_receive_A-2];  // PETERDEBUG ???
+   cols_in_buffer_A = (C_INT_TYPE)Buf_to_receive_A[Size_receive_A-2];
    rows_in_buffer_A = (C_INT_TYPE)Buf_to_receive_A[Size_receive_A-1];
    // find the minimal pcol among those who have sent A for this iteration
    col_of_origin_A = np_cols; 
@@ -1173,7 +1172,6 @@ void cannons_reduction_impl(math_type* A, math_type* U,
 
    if (useGPU){
       gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_A_dev, (intptr_t *)Buf_to_receive_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), gpuMemcpyHostToDevice) );
-      // PETERDEBUG change Buf_to_receive_U_dev to U_to_calc_dev below?
       gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_U_dev, (intptr_t *)U_to_calc, Size_U_stored*sizeof(math_type), gpuMemcpyHostToDevice) );
    }
 
@@ -1355,9 +1353,6 @@ void cannons_reduction_c_impl(math_type* A, math_type* U, int local_rowsCast, in
    my_pcol = (C_INT_TYPE) my_pcolMPI;
    np_rows = (C_INT_TYPE) np_rowsMPI;
    np_cols = (C_INT_TYPE) np_colsMPI;
-
-   printf("wantDebug=%d\n", wantDebug); // PETERDEBUG
-   printf("useGPU=%d\n", useGPU); // PETERDEBUG
 
    // BEWARE
    // in the cannons algorithm, column and row communicators are exchanged

@@ -55,6 +55,7 @@ subroutine elpa_transform_generalized_&
             &ELPA_IMPL_SUFFIX&
             &(self, a, b, is_already_decomposed, error)
   use precision
+  use mod_query_gpu_usage
 #if defined (WITH_NVIDIA_GPU_VERSION) && defined (WITH_NVTX)
   use cuda_functions ! for NVTX labels
 #endif
@@ -72,8 +73,8 @@ subroutine elpa_transform_generalized_&
   integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
   integer(kind=ik)         :: BuffLevelInt
-  integer(kind=c_int)      :: use_cannon, debug, gpu
-  logical(kind=c_bool)     :: useGPU
+  integer(kind=c_int)      :: use_cannon, debug, gpu_cannon
+  logical                  :: useGPU
   integer(kind=c_intptr_t) :: gpublasHandle
   logical, save            :: firstCall = .true.
 
@@ -94,13 +95,21 @@ subroutine elpa_transform_generalized_&
   np_rows = int(np_rowsMPI, kind=c_int)
   my_pcol = int(my_pcolMPI, kind=c_int)
   np_cols = int(np_colsMPI, kind=c_int)
-  
+
   call self%get("cannon_for_generalized", use_cannon, error)
   call self%get("debug", debug, error)
-  call self%get("gpu", gpu, error)
-  
-  useGPU = (gpu == 1)
+
+  if (.not.(query_gpu_usage(self, "Generalized_transform", useGPU))) then
+    write(error_unit,*) "Generalized transform: Problem getting options for GPU. Aborting..."
+    error = ELPA_ERROR
+    return
+  endif
+
+  gpu_cannon = 0
   gpublasHandle=0
+  if (useGPU) then
+    call self%get("gpu_cannon", gpu_cannon, error)
+  endif
 
   call self%timer_start("transform_generalized()")
      
@@ -155,10 +164,10 @@ subroutine elpa_transform_generalized_&
   call nvtxRangePop()
 #endif
 
-  if(use_cannon == 1) then
+  if (use_cannon == 1) then
     call self%get("cannon_buffer_size", BuffLevelInt, error)
-    if (useGPU) then
-      write(*,*) "Warning: cannon_buffer_size>0 is not supported with GPUs. Setting cannon_buffer_size=0"
+    if (gpu_cannon==1 .and. BuffLevelInt>0) then
+      write(*,*) "Warning: cannon_buffer_size>0 is not supported with GPUs. Using cannon_buffer_size=0"
       BuffLevelInt = 0
     endif
     call self%timer_start("cannons_reduction")
@@ -176,7 +185,7 @@ subroutine elpa_transform_generalized_&
       &ELPA_IMPL_SUFFIX&
       &(a, b, self%local_nrows, self%local_ncols, &
         int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=MPI_KIND),   &
-        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), debug, gpu, gpublasHandle)
+        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), debug, gpu_cannon, gpublasHandle)
 #ifdef WITH_NVTX
     call nvtxRangePop()
 #endif
@@ -243,6 +252,7 @@ end subroutine
 subroutine elpa_transform_back_generalized_&
         &ELPA_IMPL_SUFFIX&
         &(self, b, q, error)
+  use mod_query_gpu_usage
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions ! for NVTX labels
 #endif
@@ -259,8 +269,8 @@ subroutine elpa_transform_back_generalized_&
   integer                  :: error
   integer                  :: sc_desc(SC_DESC_LEN)
   integer                  :: sc_desc_ev(SC_DESC_LEN)
-  integer(kind=c_int)      :: use_cannon, debug, gpu
-  logical(kind=c_bool)     :: useGPU
+  integer(kind=c_int)      :: use_cannon, debug, gpu_cannon
+  logical                  :: useGPU
   integer(kind=c_intptr_t) :: gpublasHandle
 
   MATH_DATATYPE(kind=rck)  :: tmp(self%local_nrows, self%local_ncols)
@@ -283,10 +293,18 @@ subroutine elpa_transform_back_generalized_&
 
   call self%get("cannon_for_generalized",use_cannon,error)
   call self%get("debug", debug, error)
-  call self%get("gpu", gpu, error)
   
-  useGPU = (gpu == 1)
+  if (.not.(query_gpu_usage(self, "elpa_transform_back_generalized", useGPU))) then
+    write(error_unit,*) "elpa_transform_back_generalized: Problem getting options for GPU. Aborting..."
+    error = ELPA_ERROR
+    return
+  endif
+
+  gpu_cannon = 0
   gpublasHandle=0
+  if (useGPU) then
+    call self%get("gpu_cannon", gpu_cannon, error)
+  endif
 
   call self%timer_start("transform_back_generalized()")
 
@@ -320,7 +338,7 @@ subroutine elpa_transform_back_generalized_&
       &ELPA_IMPL_SUFFIX&
       &(b, q, self%local_nrows, self%local_ncols, &
         int(sc_desc,kind=BLAS_KIND), int(sc_desc_ev,kind=BLAS_KIND), tmp,  &
-        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), debug, gpu, gpublasHandle)
+        int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), debug, gpu_cannon, gpublasHandle)
 #endif
 #ifdef WITH_NVTX
     call nvtxRangePop()
