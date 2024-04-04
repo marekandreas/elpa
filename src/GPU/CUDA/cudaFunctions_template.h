@@ -52,7 +52,9 @@
 // This file was written by A. Marek, MPCDF
 #endif
 
-extern "C" {
+#ifdef __cplusplus
+extern "C" {    
+#endif
 
   int cudaDeviceGetAttributeFromC(int *value, int attribute) {
     cudaDeviceAttr attr;
@@ -564,7 +566,6 @@ extern "C" {
     }
   }
 
-
   void cublasDgemm_elpa_wrapper (cublasHandle_t cudaHandle, char transa, char transb, int m, int n, int k,
                                double alpha, const double *A, int lda,
                                const double *B, int ldb, double beta,
@@ -631,6 +632,68 @@ extern "C" {
     }
   }
 
+  void cublasDgemm_elpa_wrapper_intptr_handle (intptr_t* cudaHandle, char transa, char transb, int m, int n, int k,
+                               double alpha, const double *A, int lda,
+                               const double *B, int ldb, double beta,
+                               double *C, int ldc) {
+
+    cublasStatus_t status = cublasDgemm((cublasHandle_t) *cudaHandle, operation_new_api(transa), operation_new_api(transb),
+                m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDgemm\n");
+    }
+  }
+
+
+  void cublasSgemm_elpa_wrapper_intptr_handle (intptr_t* cudaHandle, char transa, char transb, int m, int n, int k,
+                               float alpha, const float *A, int lda,
+                               const float *B, int ldb, float beta,
+                               float *C, int ldc) {
+
+    cublasStatus_t status = cublasSgemm((cublasHandle_t) *cudaHandle, operation_new_api(transa), operation_new_api(transb),
+                m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasSgemm\n");
+    }
+  }
+
+  void cublasZgemm_elpa_wrapper_intptr_handle (intptr_t* cudaHandle, char transa, char transb, int m, int n, int k,
+                               double _Complex alpha, const double _Complex *A, int lda,
+                               const double _Complex *B, int ldb, double _Complex beta,
+                               double _Complex *C, int ldc) {
+
+    cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
+    cuDoubleComplex beta_casted = *((cuDoubleComplex*)(&beta));
+
+    const cuDoubleComplex* A_casted = (const cuDoubleComplex*) A;
+    const cuDoubleComplex* B_casted = (const cuDoubleComplex*) B;
+    cuDoubleComplex* C_casted = (cuDoubleComplex*) C;
+
+    cublasStatus_t status = cublasZgemm((cublasHandle_t) *cudaHandle, operation_new_api(transa), operation_new_api(transb),
+                m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZgemm\n");
+    }
+  }
+
+  void cublasCgemm_elpa_wrapper_intptr_handle (intptr_t* cudaHandle, char transa, char transb, int m, int n, int k,
+                               float _Complex alpha, const float _Complex *A, int lda,
+                               const float _Complex *B, int ldb, float _Complex beta,
+                               float _Complex *C, int ldc) {
+
+    cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
+    cuFloatComplex beta_casted = *((cuFloatComplex*)(&beta));
+
+    const cuFloatComplex* A_casted = (const cuFloatComplex*) A;
+    const cuFloatComplex* B_casted = (const cuFloatComplex*) B;
+    cuFloatComplex* C_casted = (cuFloatComplex*) C;
+
+    cublasStatus_t status =  cublasCgemm((cublasHandle_t) *cudaHandle, operation_new_api(transa), operation_new_api(transb),
+                m, n, k, &alpha_casted, A_casted, lda, B_casted, ldb, &beta_casted, C_casted, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCgemm\n");
+    }
+  }
 
   // todo: new CUBLAS API diverged from standard BLAS api for these functions
   // todo: it provides out-of-place (and apparently more efficient) implementation
@@ -951,5 +1014,7 @@ extern "C" {
     }
   }
 
-}
+#ifdef __cplusplus
+}    
+#endif
 

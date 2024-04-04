@@ -116,26 +116,26 @@ module ELPA_utilities
 
     if (mod(iblk,num_procs) == my_proc) then
 
-    ! block is local, always return local row/col number
+      ! block is local, always return local row/col number
 
-    local_index = (iblk/num_procs)*nblk + mod(idx-1,nblk) + 1
+      local_index = (iblk/num_procs)*nblk + mod(idx-1,nblk) + 1
 
     else
 
-    ! non local block
+      ! non local block
 
-    if (iflag == 0) then
+      if (iflag == 0) then
 
         local_index = 0
 
-    else
+      else
 
         local_index = (iblk/num_procs)*nblk
 
         if (mod(iblk,num_procs) > my_proc) local_index = local_index + nblk
 
         if (iflag>0) local_index = local_index + 1
-    endif
+      endif
     endif
 
  end function local_index

@@ -3049,7 +3049,7 @@ if test x"$need_nvidia_gpu" = x"yes"; then
       if test x"${need_nvidia_gpu}" = x"yes"; then
         AC_MSG_WARN([-------------------------------------------------------------------------])
         AC_MSG_WARN([])
-        AC_MSG_WARN([Not using cusolver might lead to performance drops it is not recommended!])
+        AC_MSG_WARN([Not using cusolver might lead to performance drops, it is not recommended!])
         AC_MSG_WARN([])
         AC_MSG_WARN([-------------------------------------------------------------------------])
       fi
@@ -3064,7 +3064,7 @@ if test x"$need_nvidia_gpu" = x"yes"; then
     AC_LANG_PUSH([C])
     AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
     if test x"${have_cusolver}" = x"no"; then
-      AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+      AC_MSG_ERROR([Could not link cusolver;  try to set the path to cusolver.so or disable it: --with-cusolver=no])
     fi
     AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
     AC_LANG_POP([C])
@@ -3093,7 +3093,7 @@ if test x"$need_amd_gpu" = x"yes"; then
       if test x"${need_amd_gpu}" = x"yes"; then
         AC_MSG_WARN([-------------------------------------------------------------------------])
         AC_MSG_WARN([])
-        AC_MSG_WARN([Not using rocsolver might lead to performance drops it is not recommended!])
+        AC_MSG_WARN([Not using rocsolver might lead to performance drops, it is not recommended!])
         AC_MSG_WARN([])
         AC_MSG_WARN([-------------------------------------------------------------------------])
       fi
@@ -3114,7 +3114,7 @@ if test x"$need_amd_gpu" = x"yes"; then
       AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
     fi
     if test x"${have_rocsolver}" = x"no"; then
-      AC_MSG_ERROR([Could not link rocsolver; try to set the hip-path or disable AMD GPU support])
+      AC_MSG_ERROR([Could not link rocsolver;  try to set the path to rocsolver.so or disable it: --with-rocsolver=no])
     fi
     AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
     AC_LANG_POP([C])
