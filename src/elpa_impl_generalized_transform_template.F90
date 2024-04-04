@@ -99,11 +99,14 @@ subroutine elpa_transform_generalized_&
   call self%get("cannon_for_generalized", use_cannon, error)
   call self%get("debug", debug, error)
 
+  useGPU = .false.
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (.not.(query_gpu_usage(self, "Generalized_transform", useGPU))) then
     write(error_unit,*) "Generalized transform: Problem getting options for GPU. Aborting..."
     error = ELPA_ERROR
     return
   endif
+#endif
 
   gpu_cannon = 0
   gpublasHandle=0
@@ -293,12 +296,15 @@ subroutine elpa_transform_back_generalized_&
 
   call self%get("cannon_for_generalized",use_cannon,error)
   call self%get("debug", debug, error)
-  
+
+  useGPU = .false.
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (.not.(query_gpu_usage(self, "elpa_transform_back_generalized", useGPU))) then
     write(error_unit,*) "elpa_transform_back_generalized: Problem getting options for GPU. Aborting..."
     error = ELPA_ERROR
     return
   endif
+#endif
 
   gpu_cannon = 0
   gpublasHandle=0
