@@ -73,7 +73,7 @@ subroutine elpa_transform_generalized_&
   integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
   integer(kind=ik)         :: BuffLevelInt
-  integer(kind=c_int)      :: use_cannon, debug, gpu_cannon
+  integer(kind=c_int)      :: cannon_for_generalized, pxtrmm_for_generalized, debug, gpu_cannon
   logical                  :: useGPU
   integer(kind=c_intptr_t) :: gpublasHandle
   logical, save            :: firstCall = .true.
@@ -96,7 +96,8 @@ subroutine elpa_transform_generalized_&
   my_pcol = int(my_pcolMPI, kind=c_int)
   np_cols = int(np_colsMPI, kind=c_int)
 
-  call self%get("cannon_for_generalized", use_cannon, error)
+  call self%get("cannon_for_generalized", cannon_for_generalized, error)
+  call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
   call self%get("debug", debug, error)
 
   if (.not.(query_gpu_usage(self, "Generalized_transform", useGPU))) then
@@ -109,13 +110,13 @@ subroutine elpa_transform_generalized_&
   gpublasHandle=0
   if (useGPU) then
     call self%get("gpu_cannon", gpu_cannon, error)
+
+    pxtrmm_for_generalized = 0 ! default for GPU
+    if (self%is_set("pxtrmm_for_generalized") == 1) then ! if user enforces pxtrmm, use it
+      call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
+    endif
   endif
 
-  call self%timer_start("transform_generalized()")
-     
-#ifdef WITH_NVTX
-  call nvtxRangePush("transform_generalized")
-#endif
 
 #if !defined(WITH_MPI)
   if ((my_p == 0) .and. firstCall) then
@@ -123,17 +124,23 @@ subroutine elpa_transform_generalized_&
     write(*,*) "Switching to elpa Hermitian and scalapack"
     firstCall = .false.
   end if
-  use_cannon = 0
+  cannon_for_generalized = 0
 #endif
 
-  if (mod(np_cols, np_rows) /= 0) then
-    if ((my_p == 0) .and. firstCall) then
-      write(*,*) "To use Cannons algorithm, np_cols must be a multiple of np_rows."
-      write(*,*) "Switching to elpa Hermitian and scalapack"
-      firstCall = .false.
-    endif
-    use_cannon = 0
+if (mod(np_cols, np_rows) /= 0) then
+  if ((my_p == 0) .and. firstCall) then
+    write(*,*) "To use Cannons algorithm, np_cols must be a multiple of np_rows."
+    write(*,*) "Switching to elpa Hermitian and scalapack"
+    firstCall = .false.
   endif
+  cannon_for_generalized = 0
+endif
+
+  call self%timer_start("transform_generalized()")
+
+#ifdef WITH_NVTX
+  call nvtxRangePush("transform_generalized")
+#endif
 
   error = self%construct_scalapack_descriptor(sc_desc, .false.)
   if(error .NE. ELPA_OK) return
@@ -169,7 +176,7 @@ subroutine elpa_transform_generalized_&
 
   endif ! (.not. is_already_decomposed)
 
-  if (use_cannon == 1) then
+  if (cannon_for_generalized == 1) then
     call self%get("cannon_buffer_size", BuffLevelInt, error)
     if (gpu_cannon==1 .and. BuffLevelInt>0) then
       write(*,*) "Warning: cannon_buffer_size>0 is not supported with GPUs. Using cannon_buffer_size=0"
@@ -199,7 +206,7 @@ subroutine elpa_transform_generalized_&
 
     a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
 
-  else ! (use_cannon == 1), do not use cannon algorithm, use elpa hermitian multiply and scalapack instead
+  else ! (cannon_for_generalized == 1), do not use cannon algorithm, use elpa hermitian multiply and scalapack instead
     ! tmp <- B * A = inv(U^T) * A (we have to use temporary variable)
 #ifdef WITH_NVTX
     call nvtxRangePush("hermitian_multiply: tmp <- B*A  = inv(U^T) * A")
@@ -217,34 +224,7 @@ subroutine elpa_transform_generalized_&
     ! For this (non-transposed) multiplication we do not have internal function in ELPA,
     ! so we have to call scalapack (in CPU case) or transpose + hermitian_multiply (in GPU case)
 
-    if (useGPU) then
-      call self%timer_start("PxTRAN")
-
-      ! A <- tmp^T
-      call p&
-            &BLAS_CHAR&
-#if REALCASE == 1
-            &tran&
-#endif
-#if COMPLEXCASE == 1
-            &tranc&
-#endif          
-            &(self%na, self%na, ONE , tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
-                                ZERO,   a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
-
-      call self%timer_stop("PxTRAN")
-      
-      ! tmp <- A^T * inv(U) = (tmp^T)^T * inv(U)
-      call self%elpa_hermitian_multiply_a_h_a_&
-            &ELPA_IMPL_SUFFIX&
-            &('F','U', self%na, a, b, self%local_nrows, self%local_ncols, tmp, &
-            self%local_nrows, self%local_ncols, error)
-      if(error .NE. ELPA_OK) return
-      
-      ! a <- tmp
-      a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
-    else ! useGPU
-
+    if (pxtrmm_for_generalized == 1) then
       ! A <- inv(U)^T * A
 #ifdef WITH_NVTX
       call nvtxRangePush("copy: tmp -> a")
@@ -274,9 +254,40 @@ subroutine elpa_transform_generalized_&
       call nvtxRangePop()
 #endif
       call self%timer_stop("scalapack multiply A * inv(U)")
+    
+    else ! (pxtrmm_for_generalized == 1)
+
+      print *, "Using PxTRAN for transform_generalized" ! PETERDEBUG
+      call self%timer_start("PxTRAN")
+
+      ! A <- tmp^T
+      call p&
+            &BLAS_CHAR&
+#if REALCASE == 1
+            &tran&
+#endif
+#if COMPLEXCASE == 1
+            &tranc&
+#endif
+            &(self%na, self%na, ONE , tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
+                                ZERO,   a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+
+      call self%timer_stop("PxTRAN")
+      
+      ! tmp <- A^T * inv(U) = (tmp^T)^T * inv(U)
+      call self%elpa_hermitian_multiply_a_h_a_&
+            &ELPA_IMPL_SUFFIX&
+            &('F','F', self%na, a, b, self%local_nrows, self%local_ncols, tmp, &
+            self%local_nrows, self%local_ncols, error)
+      if(error .NE. ELPA_OK) return
+      
+      ! a <- tmp
+      call self%timer_start("copy")
+      a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+      call self%timer_stop("copy")
     endif ! useGPU
 
-  endif ! (use_cannon == 1)
+  endif ! (cannon_for_generalized == 1)
 
   !write(*, *) my_prow, my_pcol, "A(2,3)", a(2,3)
 
@@ -308,7 +319,7 @@ subroutine elpa_transform_back_generalized_&
   integer                  :: error
   integer                  :: sc_desc(SC_DESC_LEN)
   integer                  :: sc_desc_ev(SC_DESC_LEN)
-  integer(kind=c_int)      :: use_cannon, debug, gpu_cannon
+  integer(kind=c_int)      :: cannon_for_generalized, pxtrmm_for_generalized, debug, gpu_cannon
   logical                  :: useGPU
   integer(kind=c_intptr_t) :: gpublasHandle
 
@@ -330,7 +341,8 @@ subroutine elpa_transform_back_generalized_&
   my_pcol = int(my_pcolMPI,kind=c_int)
   np_cols = int(np_colsMPI,kind=c_int)
 
-  call self%get("cannon_for_generalized",use_cannon,error)
+  call self%get("cannon_for_generalized", cannon_for_generalized, error)
+  call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
   call self%get("debug", debug, error)
   
   if (.not.(query_gpu_usage(self, "elpa_transform_back_generalized", useGPU))) then
@@ -343,6 +355,11 @@ subroutine elpa_transform_back_generalized_&
   gpublasHandle=0
   if (useGPU) then
     call self%get("gpu_cannon", gpu_cannon, error)
+
+    pxtrmm_for_generalized = 0 ! default for GPU
+    if (self%is_set("pxtrmm_for_generalized") == 1) then ! if user enforces pxtrmm, use it
+      call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
+    endif
   endif
 
   call self%timer_start("transform_back_generalized()")
@@ -352,18 +369,18 @@ subroutine elpa_transform_back_generalized_&
 #endif
 
 #if !defined(WITH_MPI)
-  use_cannon = 0
+  cannon_for_generalized = 0
 #endif
 
   if (mod(np_cols, np_rows) /= 0) then
-    use_cannon = 0
+    cannon_for_generalized = 0
   endif
 
   error = self%construct_scalapack_descriptor(sc_desc, .false.)
   error = self%construct_scalapack_descriptor(sc_desc_ev, .true.)
   if(error .NE. ELPA_OK) return
 
-  if (use_cannon == 1) then
+  if (cannon_for_generalized == 1) then
     call self%timer_start("cannons_triang_rectangular")
 #ifdef WITH_NVTX
     call nvtxRangePush("cannons_triang_rectangular")
@@ -386,31 +403,65 @@ subroutine elpa_transform_back_generalized_&
 
     q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
 
-  else ! (use_cannon == 1)
-
-    call self%timer_start("scalapack multiply inv(U) * Q")
+  else ! (cannon_for_generalized == 1)
+  
+    if (pxtrmm_for_generalized == 1) then
+      call self%timer_start("scalapack multiply inv(U) * Q")
 #ifdef WITH_NVTX
-    call nvtxRangePush("scalapack multiply: Q <- inv(U) * Q")
+      call nvtxRangePush("scalapack multiply: Q <- inv(U) * Q")
 #endif
 
 #ifdef WITH_MPI
-    ! Q <- inv(U) * Q
-    call p&
-        &BLAS_CHAR&
-        &trmm("L", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%nev,kind=BLAS_KIND), &
-              ONE, b, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND),  &
-              q, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+      ! Q <- inv(U) * Q
+      call p&
+          &BLAS_CHAR&
+          &trmm("L", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%nev,kind=BLAS_KIND), &
+                ONE, b, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND),  &
+                q, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
 #else
-    call BLAS_CHAR&
-        &trmm("L", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%nev,kind=BLAS_KIND), &
-              ONE, b, int(self%na,kind=BLAS_KIND), q, int(self%na,kind=BLAS_KIND))
+      call BLAS_CHAR&
+          &trmm("L", "U", "N", "N", int(self%na,kind=BLAS_KIND), int(self%nev,kind=BLAS_KIND), &
+                ONE, b, int(self%na,kind=BLAS_KIND), q, int(self%na,kind=BLAS_KIND))
 #endif
 
 #ifdef WITH_NVTX
-    call nvtxRangePop()
+      call nvtxRangePop()
 #endif  
-    call self%timer_stop("scalapack multiply inv(U) * Q")
-  endif ! (use_cannon == 1)
+      call self%timer_stop("scalapack multiply inv(U) * Q")
+    
+    else ! (pxtrmm_for_generalized == 1)
+
+      print *, "Using PxTRAN for transform_back_generalized" ! PETERDEBUG
+      call self%timer_start("PxTRAN")
+
+      ! PETERDEBUG: tmp is not needed for the other codepath -- we can make it allocatable and not waste memory
+      ! tmp <- b^T 
+      call p&
+            &BLAS_CHAR&
+#if REALCASE == 1
+            &tran&
+#endif
+#if COMPLEXCASE == 1
+            &tranc&
+#endif
+            &(self%na, self%na, ONE , b  , 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
+                                ZERO, tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+
+      call self%timer_stop("PxTRAN")
+      
+      ! b <- tmp^T Q = inv(U) Q
+      call self%elpa_hermitian_multiply_a_h_a_&
+            &ELPA_IMPL_SUFFIX&
+            &('F','F', self%na, tmp, q, self%local_nrows, self%local_ncols, b, &
+            self%local_nrows, self%local_ncols, error)
+      if(error .NE. ELPA_OK) return
+      
+      ! q <- b
+      call self%timer_start("copy")
+      q(1:self%local_nrows, 1:self%local_ncols) = b(1:self%local_nrows, 1:self%local_ncols)
+      call self%timer_stop("copy")
+    endif ! (pxtrmm_for_generalized == 1)
+  endif ! (cannon_for_generalized == 1)
 
 #ifdef WITH_NVTX
   call nvtxRangePop() ! transform_back_generalized
