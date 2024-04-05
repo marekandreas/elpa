@@ -177,7 +177,7 @@ __device__ T convert_to_device(T x, std::false_type) {return x;}
 template <typename T, typename T_real>
 __global__ void hip_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int matrixRows, int istep,
                                          T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
-                                         bool isOurProcessRow, bool isOurProcessCol, bool isOurProcessCol_prev, bool isSkewsymmetric, bool useCCL){
+                                         int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, int isSkewsymmetric, int useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
   if (isOurProcessCol_prev)
@@ -210,17 +210,17 @@ __global__ void hip_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int 
 template <typename T, typename T_real>
 void hip_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in, 
                                    T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
-                                   bool *isOurProcessRow_in,  bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                   int *isOurProcessRow_in,  int *isOurProcessCol_in, int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
   int matrixRows = *matrixRows_in;
   int istep = *istep_in;
-  bool isOurProcessRow = *isOurProcessRow_in;
-  bool isOurProcessCol = *isOurProcessCol_in;
-  bool isOurProcessCol_prev = *isOurProcessCol_prev_in;
-  bool isSkewsymmetric = *isSkewsymmetric_in;
-  bool useCCL = *useCCL_in;
-  bool wantDebug = *wantDebug_in;
+  int isOurProcessRow = *isOurProcessRow_in;
+  int isOurProcessCol = *isOurProcessCol_in;
+  int isOurProcessCol_prev = *isOurProcessCol_prev_in;
+  int isSkewsymmetric = *isSkewsymmetric_in;
+  int useCCL = *useCCL_in;
+  int wantDebug = *wantDebug_in;
 
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   dim3 blocksPerGrid = dim3(blocks,1,1);
@@ -240,25 +240,25 @@ void hip_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in, int *l
 
 extern "C" void hip_copy_and_set_zeros_double_FromC(double *v_row_dev, double *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
                                                      double *aux1_dev, double *vav_dev, double *d_vec_dev, 
-                                                     bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                     int *isOurProcessRow_in, int *isOurProcessCol_in, int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_copy_and_set_zeros_float_FromC(float *v_row_dev, float *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
                                                     float *aux1_dev, float *vav_dev, float *d_vec_dev, 
-                                                    bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                    int *isOurProcessRow_in, int *isOurProcessCol_in, int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_copy_and_set_zeros_double_complex_FromC(hipDoubleComplex *v_row_dev, hipDoubleComplex *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
                                                   hipDoubleComplex *aux1_dev, hipDoubleComplex *vav_dev, double *d_vec_dev, 
-                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                  int *isOurProcessRow_in, int *isOurProcessCol_in, int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_copy_and_set_zeros_float_complex_FromC(hipComplex *v_row_dev, hipComplex *a_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *istep_in,
                                                   hipComplex *aux1_dev, hipComplex *vav_dev, float *d_vec_dev, 
-                                                  bool *isOurProcessRow_in, bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                  int *isOurProcessRow_in, int *isOurProcessCol_in, int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -297,11 +297,11 @@ __global__ void hip_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int 
 }
 
 template <typename T>
-void hip_dot_product_FromC(int* n_in, T *x_dev, int *incx_in, T *y_dev, int *incy_in, T *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+void hip_dot_product_FromC(int* n_in, T *x_dev, int *incx_in, T *y_dev, int *incy_in, T *result_dev, int *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   int n = *n_in;   
   int incx = *incx_in;
   int incy = *incy_in;
-  bool wantDebug = *wantDebug_in;
+  int wantDebug = *wantDebug_in;
   int SM_count = *SM_count_in;
 
   //int SM_count=32;
@@ -324,19 +324,19 @@ void hip_dot_product_FromC(int* n_in, T *x_dev, int *incx_in, T *y_dev, int *inc
   }
 }
 
-extern "C" void hip_dot_product_double_FromC(int* n_in, double *x_dev, int *incx_in, double *y_dev, int *incy_in, double *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+extern "C" void hip_dot_product_double_FromC(int* n_in, double *x_dev, int *incx_in, double *y_dev, int *incy_in, double *result_dev, int *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
-extern "C" void hip_dot_product_float_FromC (int* n_in, float  *x_dev, int *incx_in, float  *y_dev, int *incy_in, float  *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+extern "C" void hip_dot_product_float_FromC (int* n_in, float  *x_dev, int *incx_in, float  *y_dev, int *incy_in, float  *result_dev, int *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
-extern "C" void hip_dot_product_double_complex_FromC(int* n_in, hipDoubleComplex *x_dev, int *incx_in, hipDoubleComplex *y_dev, int *incy_in, hipDoubleComplex *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+extern "C" void hip_dot_product_double_complex_FromC(int* n_in, hipDoubleComplex *x_dev, int *incx_in, hipDoubleComplex *y_dev, int *incy_in, hipDoubleComplex *result_dev, int *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
-extern "C" void hip_dot_product_float_complex_FromC (int* n_in, hipComplex *x_dev, int *incx_in, hipComplex *y_dev, int *incy_in, hipComplex *result_dev, bool *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+extern "C" void hip_dot_product_float_complex_FromC (int* n_in, hipComplex *x_dev, int *incx_in, hipComplex *y_dev, int *incy_in, hipComplex *result_dev, int *wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   hip_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
@@ -396,10 +396,10 @@ __global__ void hip_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int 
 }
 
 template <typename T>
-void hip_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, T *aux1_dev, bool *wantDebug_in, hipStream_t my_stream){
+void hip_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, T *aux1_dev, int *wantDebug_in, hipStream_t my_stream){
   int l_rows = *l_rows_in;   
   int isOurProcessRow = *isOurProcessRow_in;
-  bool wantDebug = *wantDebug_in;
+  int wantDebug = *wantDebug_in;
 
   //int numSMs;
   //hipDeviceGetAttribute(&numSMs, hipDeviceAttributeMultiprocessorCount, 0);
@@ -424,19 +424,19 @@ void hip_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in, int *isOurPr
 
 }
 
-extern "C" void hip_dot_product_and_assign_double_FromC(double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, double *aux1_dev, bool *wantDebug_in, hipStream_t my_stream){
+extern "C" void hip_dot_product_and_assign_double_FromC(double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, double *aux1_dev, int *wantDebug_in, hipStream_t my_stream){
   hip_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
-extern "C" void hip_dot_product_and_assign_float_FromC(float *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, float *aux1_dev, bool *wantDebug_in, hipStream_t my_stream){
+extern "C" void hip_dot_product_and_assign_float_FromC(float *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, float *aux1_dev, int *wantDebug_in, hipStream_t my_stream){
   hip_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
-extern "C" void hip_dot_product_and_assign_double_complex_FromC(hipDoubleComplex *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, hipDoubleComplex *aux1_dev, bool *wantDebug_in, hipStream_t my_stream){
+extern "C" void hip_dot_product_and_assign_double_complex_FromC(hipDoubleComplex *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, hipDoubleComplex *aux1_dev, int *wantDebug_in, hipStream_t my_stream){
   hip_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
-extern "C" void hip_dot_product_and_assign_float_complex_FromC(hipComplex *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, hipComplex *aux1_dev, bool *wantDebug_in, hipStream_t my_stream){
+extern "C" void hip_dot_product_and_assign_float_complex_FromC(hipComplex *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, hipComplex *aux1_dev, int *wantDebug_in, hipStream_t my_stream){
   hip_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
@@ -444,7 +444,7 @@ extern "C" void hip_dot_product_and_assign_float_complex_FromC(hipComplex *v_row
 
 template <typename T, typename T_real, typename T_value_or_pointer>
 __global__ void hip_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T_value_or_pointer xf_host_or_dev, 
-                                                      int l_rows, int l_cols,  int matrixRows, int istep, bool isOurProcessRow, bool useCCL){
+                                                      int l_rows, int l_cols,  int matrixRows, int istep, int isOurProcessRow, int useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
 /*
@@ -494,7 +494,7 @@ __global__ void hip_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev
     index_global += blockDim.x * gridDim.x;
   }
 
-  if (isOurProcessRow && index_global - blockDim.x*gridDim.x == l_rows-1) // last element
+  if (isOurProcessRow && (index_global - blockDim.x*gridDim.x == l_rows-1)) // last element
     {
     v_row_dev[l_rows-1] = elpaDeviceNumber<T>(1.0);
     }
@@ -510,14 +510,14 @@ __global__ void hip_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev
 
 template <typename T, typename T_real>
 void hip_set_e_vec_scale_set_one_store_v_row_FromC(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T *xf_host_or_dev, 
-                                                    int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                    int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, int *isOurProcessRow_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
   int matrixRows = *matrixRows_in;
   int istep = *istep_in;
-  bool isOurProcessRow = *isOurProcessRow_in;
-  bool useCCL = *useCCL_in;
-  bool wantDebug = *wantDebug_in;
+  int isOurProcessRow = *isOurProcessRow_in;
+  int useCCL = *useCCL_in;
+  int wantDebug = *wantDebug_in;
 
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   dim3 blocksPerGrid = dim3(blocks,1,1);
@@ -570,22 +570,22 @@ void hip_set_e_vec_scale_set_one_store_v_row_FromC(T_real *e_vec_dev, T *vrl_dev
 }
 
 extern "C" void hip_set_e_vec_scale_set_one_store_v_row_double_FromC(double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev, double *tau_dev, double *xf_host_or_dev, 
-                                                                      int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                                      int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, int *isOurProcessRow_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_set_e_vec_scale_set_one_store_v_row_float_FromC(float *e_vec_dev, float *vrl_dev, float *a_dev, float *v_row_dev, float *tau_dev, float *xf_host_or_dev, 
-                                                                     int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                                     int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, int *isOurProcessRow_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_set_e_vec_scale_set_one_store_v_row_double_complex_FromC(double *e_vec_dev, hipDoubleComplex *vrl_dev, hipDoubleComplex *a_dev, hipDoubleComplex *v_row_dev, hipDoubleComplex *tau_dev, hipDoubleComplex *xf_host_or_dev, 
-                                                                               int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                                               int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, int *isOurProcessRow_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(float *e_vec_dev, hipComplex *vrl_dev, hipComplex *a_dev, hipComplex *v_row_dev, hipComplex *tau_dev, hipComplex *xf_host_or_dev, 
-                                                                              int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                                              int *l_rows_in, int *l_cols_in,  int *matrixRows_in, int *istep_in, int *isOurProcessRow_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -594,7 +594,7 @@ extern "C" void hip_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(floa
 template <typename T, typename T_value_or_pointer>
 __global__ void hip_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
                 T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T_value_or_pointer vav_host_or_dev, T_value_or_pointer tau_host_or_dev,
-                int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, bool useCCL){
+                int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, int useCCL){
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
   T conjg_tau = convert_to_device(tau_host_or_dev, typename std::conditional<std::is_pointer<T_value_or_pointer>::value, std::true_type, std::false_type>::type());
@@ -676,15 +676,15 @@ __global__ void hip_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_store
 template <typename T>
 void hip_store_u_v_in_uv_vu_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
                 T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T *vav_host_or_dev, T *tau_host_or_dev,
-                int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
   int n_stored_vecs  = *n_stored_vecs_in;
   int max_local_rows = *max_local_rows_in;   
   int max_local_cols = *max_local_cols_in;   
   int istep = *istep_in;   
-  bool useCCL = *useCCL_in;
-  bool wantDebug = *wantDebug_in;
+  int useCCL = *useCCL_in;
+  int wantDebug = *wantDebug_in;
   
   int threads = MAX_THREADS_PER_BLOCK/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
   int blocks = std::max({(l_rows+threads-1)/threads, (l_cols+threads-1)/threads, 1});
@@ -747,26 +747,26 @@ void hip_store_u_v_in_uv_vu_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev, 
 
 extern "C" void hip_store_u_v_in_uv_vu_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *v_row_dev, double *u_row_dev,
                                                      double *v_col_dev, double *u_col_dev, double *tau_dev, double *aux_complex_dev, double *vav_host_or_dev, double *tau_host_or_dev,
-                                                     int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                     int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
                                 l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_store_u_v_in_uv_vu_float_FromC(float *vu_stored_rows_dev, float *uv_stored_cols_dev, float *v_row_dev, float *u_row_dev,
                                                     float *v_col_dev, float *u_col_dev, float *tau_dev, float *aux_complex_dev, float *vav_host_or_dev, float *tau_host_or_dev,
-                                                    int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                    int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_store_u_v_in_uv_vu_double_complex_FromC(hipDoubleComplex *vu_stored_rows_dev, hipDoubleComplex *uv_stored_cols_dev, hipDoubleComplex *v_row_dev, hipDoubleComplex *u_row_dev,
                                                              hipDoubleComplex *v_col_dev, hipDoubleComplex *u_col_dev, hipDoubleComplex *tau_dev, hipDoubleComplex *aux_complex_dev, hipDoubleComplex *vav_host_or_dev, hipDoubleComplex *tau_host_or_dev,
-                                                             int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                             int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_store_u_v_in_uv_vu_float_complex_FromC(hipComplex *vu_stored_rows_dev, hipComplex *uv_stored_cols_dev, hipComplex *v_row_dev, hipComplex *u_row_dev,
                                                             hipComplex *v_col_dev, hipComplex *u_col_dev, hipComplex *tau_dev, hipComplex *aux_complex_dev, hipComplex *vav_host_or_dev, hipComplex *tau_host_or_dev,
-                                                            int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, bool *useCCL_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                            int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *useCCL_in, int *wantDebug_in, hipStream_t my_stream){
   hip_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -774,7 +774,7 @@ extern "C" void hip_store_u_v_in_uv_vu_float_complex_FromC(hipComplex *vu_stored
 
 template <typename T, typename T_real>
 __global__ void hip_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
-                                                      int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, bool isSkewsymmetric){
+                                                      int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric){
   
   const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
   __shared__ T cache[threadsPerBlock];
@@ -834,7 +834,7 @@ __global__ void hip_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *u
 template <typename T, typename T_real>
 void hip_update_matrix_element_add_FromC(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
                                           int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in, 
-                                          bool* isSkewsymmetric_in, bool *wantDebug_in, hipStream_t my_stream){
+                                          int* isSkewsymmetric_in, int *wantDebug_in, hipStream_t my_stream){
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;
   int matrixRows = *matrixRows_in;
@@ -842,8 +842,8 @@ void hip_update_matrix_element_add_FromC(T *vu_stored_rows_dev, T *uv_stored_col
   int max_local_cols = *max_local_cols_in;
   int istep = *istep_in;   
   int n_stored_vecs = *n_stored_vecs_in; 
-  bool isSkewsymmetric = *isSkewsymmetric_in;   
-  bool wantDebug = *wantDebug_in;
+  int isSkewsymmetric = *isSkewsymmetric_in;   
+  int wantDebug = *wantDebug_in;
   
   int blocks = std::min((2*n_stored_vecs+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 32);
   if (n_stored_vecs==0) blocks=1;
@@ -869,25 +869,25 @@ void hip_update_matrix_element_add_FromC(T *vu_stored_rows_dev, T *uv_stored_col
 
 extern "C" void hip_update_matrix_element_add_double_FromC(double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *a_dev, double *d_vec_dev, 
                                                             int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in, 
-                                                            bool* isSkewsymmetric_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                            int* isSkewsymmetric_in, int *wantDebug_in, hipStream_t my_stream){
   hip_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_update_matrix_element_add_float_FromC(float *vu_stored_rows_dev, float *uv_stored_cols_dev, float *a_dev, float *d_vec_dev, 
                                                            int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in, 
-                                                           bool* isSkewsymmetric_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                           int* isSkewsymmetric_in, int *wantDebug_in, hipStream_t my_stream){
   hip_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_update_matrix_element_add_double_complex_FromC(hipDoubleComplex *vu_stored_rows_dev, hipDoubleComplex *uv_stored_cols_dev, hipDoubleComplex *a_dev, double *d_vec_dev, 
                                                                     int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in, 
-                                                                    bool* isSkewsymmetric_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                                    int* isSkewsymmetric_in, int *wantDebug_in, hipStream_t my_stream){
   hip_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
 extern "C" void hip_update_matrix_element_add_float_complex_FromC(hipComplex *vu_stored_rows_dev, hipComplex *uv_stored_cols_dev, hipComplex *a_dev, float *d_vec_dev, 
                                                                    int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in, 
-                                                                   bool* isSkewsymmetric_in, bool *wantDebug_in, hipStream_t my_stream){
+                                                                   int* isSkewsymmetric_in, int *wantDebug_in, hipStream_t my_stream){
   hip_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
@@ -938,7 +938,7 @@ extern "C" void hip_update_array_element_float_complex_FromC(hipComplex *array_d
 //________________________________________________________________
 
 template <typename T>
-__global__ void hip_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, bool wantDebug_in){
+__global__ void hip_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, int wantDebug_in){
 
 /*
 #if complexcase == 1
@@ -1044,8 +1044,8 @@ __global__ void hip_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev
 }
 
 template <typename T>
-void hip_hh_transform_FromC(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, int *index_in, bool *wantDebug_in, hipStream_t my_stream){
-  bool wantDebug = *wantDebug_in;
+void hip_hh_transform_FromC(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, int *index_in, int *wantDebug_in, hipStream_t my_stream){
+  int wantDebug = *wantDebug_in;
 
   dim3 blocks = dim3(1,1,1);
   dim3 threadsPerBlock = dim3(1,1,1);
@@ -1061,19 +1061,19 @@ void hip_hh_transform_FromC(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev
   }
 }
 
-extern "C" void hip_hh_transform_double_FromC(double *alpha_dev, double *xnorm_sq_dev, double *xf_dev, double *tau_dev, int *index_in, bool *wantDebug_in, hipStream_t my_stream){
+extern "C" void hip_hh_transform_double_FromC(double *alpha_dev, double *xnorm_sq_dev, double *xf_dev, double *tau_dev, int *index_in, int *wantDebug_in, hipStream_t my_stream){
   hip_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
-extern "C" void hip_hh_transform_float_FromC(float *alpha_dev, float *xnorm_sq_dev, float *xf_dev, float *tau_dev, int *index_in, bool *wantDebug_in, hipStream_t my_stream){
+extern "C" void hip_hh_transform_float_FromC(float *alpha_dev, float *xnorm_sq_dev, float *xf_dev, float *tau_dev, int *index_in, int *wantDebug_in, hipStream_t my_stream){
   hip_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
-extern "C" void hip_hh_transform_double_complex_FromC(hipDoubleComplex *alpha_dev, hipDoubleComplex *xnorm_sq_dev, hipDoubleComplex *xf_dev, hipDoubleComplex *tau_dev, int *index_in, bool *wantDebug_in, hipStream_t my_stream){
+extern "C" void hip_hh_transform_double_complex_FromC(hipDoubleComplex *alpha_dev, hipDoubleComplex *xnorm_sq_dev, hipDoubleComplex *xf_dev, hipDoubleComplex *tau_dev, int *index_in, int *wantDebug_in, hipStream_t my_stream){
   hip_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
-extern "C" void hip_hh_transform_float_complex_FromC(hipComplex *alpha_dev, hipComplex *xnorm_sq_dev, hipComplex *xf_dev, hipComplex *tau_dev, int *index_in, bool *wantDebug_in, hipStream_t my_stream){
+extern "C" void hip_hh_transform_float_complex_FromC(hipComplex *alpha_dev, hipComplex *xnorm_sq_dev, hipComplex *xf_dev, hipComplex *tau_dev, int *index_in, int *wantDebug_in, hipStream_t my_stream){
   hip_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
@@ -1082,7 +1082,7 @@ extern "C" void hip_hh_transform_float_complex_FromC(hipComplex *alpha_dev, hipC
 template <typename T>
 __global__ void hip_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *vmat_st_dev, 
                                               int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
-                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, bool isSkewsymmetric, bool isReduceadd){
+                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, int isSkewsymmetric, int isReduceadd){
   int tid_x = threadIdx.x + blockIdx.x*blockDim.x;
 
 /*
@@ -1137,7 +1137,7 @@ template <typename T>
 void hip_transpose_reduceadd_vectors_copy_block_FromC(T *aux_transpose_dev, T *vmat_st_dev, 
                                               int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                               int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                              int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+                                              int *direction_in, int* isSkewsymmetric_in, int* isReduceadd_in, int* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   int nvc = *nvc_in;   
   int nvr = *nvr_in;   
   int n_block = *n_block_in;
@@ -1149,9 +1149,9 @@ void hip_transpose_reduceadd_vectors_copy_block_FromC(T *aux_transpose_dev, T *v
   int np_st = *np_st_in;
   int ld_st = *ld_st_in;
   int direction = *direction_in;
-  bool isSkewsymmetric = *isSkewsymmetric_in;
-  bool isReduceadd = *isReduceadd_in;
-  bool wantDebug = *wantDebug_in;
+  int isSkewsymmetric = *isSkewsymmetric_in;
+  int isReduceadd = *isReduceadd_in;
+  int wantDebug = *wantDebug_in;
 
   int SM_count = *SM_count_in;
   //int SM_count=32; // TODO_23_11 count and move outside
@@ -1178,28 +1178,28 @@ void hip_transpose_reduceadd_vectors_copy_block_FromC(T *aux_transpose_dev, T *v
 extern "C" void hip_transpose_reduceadd_vectors_copy_block_double_FromC(double *aux_transpose_dev, double *vmat_st_dev, 
                                                                         int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                                                         int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                                                        int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+                                                                        int *direction_in, int* isSkewsymmetric_in, int* isReduceadd_in, int* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void hip_transpose_reduceadd_vectors_copy_block_float_FromC(float *aux_transpose_dev, float *vmat_st_dev, 
                                                                        int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                                                        int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                                                       int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+                                                                       int *direction_in, int* isSkewsymmetric_in, int* isReduceadd_in, int* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void hip_transpose_reduceadd_vectors_copy_block_double_complex_FromC(hipDoubleComplex *aux_transpose_dev, hipDoubleComplex *vmat_st_dev, 
                                                                         int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                                                         int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                                                        int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+                                                                        int *direction_in, int* isSkewsymmetric_in, int* isReduceadd_in, int* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void hip_transpose_reduceadd_vectors_copy_block_float_complex_FromC(hipComplex *aux_transpose_dev, hipComplex *vmat_st_dev, 
                                                                         int *nvc_in, int *nvr_in,  int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, 
                                                                         int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in, 
-                                                                        int *direction_in, bool* isSkewsymmetric_in, bool* isReduceadd_in, bool* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
+                                                                        int *direction_in, int* isSkewsymmetric_in, int* isReduceadd_in, int* wantDebug_in, int *SM_count_in, hipStream_t my_stream){
   hip_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 

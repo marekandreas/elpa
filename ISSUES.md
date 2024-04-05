@@ -3,7 +3,7 @@
 For more details and recent updates please visit the online [issue system](https://gitlab.mpcdf.mpg.de/elpa/elpa/issues)
 Issues which are not mentioned in a newer release are (considered as) solved.
 
-### ELPA 2024.03.001.rc1 release ###
+### ELPA 2024.03.001 release ###
 Fixed compilation for skew-symmetric case
 Corrected hermitian_multiply step
 

@@ -73,11 +73,6 @@
 #define MPI_KIND c_int
 #endif
 
-// PETERDEBUG
-#ifdef WITH_NVIDIA_GPU_VERSION
-#define GPU_CANNON
-#endif
-
 // it seems, that we need those two levels of indirection to correctly expand macros
 #define cannons_reduction_impl_expand2(SUFFIX) cannons_reduction_##SUFFIX
 #define cannons_reduction_impl_expand1(SUFFIX) cannons_reduction_impl_expand2(SUFFIX)
@@ -211,18 +206,6 @@ void cannons_reduction_impl(math_type* A, math_type* U, C_INT_TYPE np_rows, C_IN
    M_T = malloc(na_rows*na_cols*sizeof(math_type));
    for(i = 0; i < na_rows*na_cols; i++)
       M[i] = 0; 
-
-   int useGPU = 0;
-#ifdef GPU_CANNON
-   cublasHandle_t handle;
-   cublasCreate(&handle);
-   useGPU = 1;
-  
-   double *Buf_to_receive_A_dev, *Res_ptr_dev;
-   double *Buf_to_send_U_dev, *U_local_start_dev;
-   // gpuErrCheck( cudaMalloc(&Buf_to_receive_A_dev, ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
-   // gpuErrCheck( cudaMalloc(&U_local_start_dev, ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
-#endif
 
    ////////////////////////////////////////////////////////////// initial reordering of A ///////////////////////////////////////////////////////////////////////////////////////// 
    

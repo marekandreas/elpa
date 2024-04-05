@@ -69,7 +69,7 @@
 #include "../general/precision_macros.h"
 
 #undef USE_CCL_INVERT
-#if defined(WITH_NIVIDA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #define USE_CCL_INVERT
 #endif
 
@@ -639,7 +639,7 @@
         if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
 #endif /* WITH_CUDA_AWARE_MPI */
 
-#ifdef USE_GPU_NCCL
+#ifdef USE_CCL_INVERT
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
         successGPU = ccl_group_start()

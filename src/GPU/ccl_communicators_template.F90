@@ -62,22 +62,22 @@
               stop 1
             endif
 
-            success = nccl_group_start()
+            success = ccl_group_start()
             if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_start!"
+              write(error_unit,*) "Error in setting up ccl_group_start!"
               stop 1
             endif
 
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
-            success = nccl_comm_init_rank(ccl_comm_all, nprocs, ncclId, myid)
+            success = ccl_comm_init_rank(ccl_comm_all, nprocs, ncclId, myid)
             if (.not.success) then
-              write(error_unit,*) "Error in setting up communicator nccl_comm_all id!"
+              write(error_unit,*) "Error in setting up communicator ccl_comm_all id!"
               stop 1
             endif
 #endif
             success = ccl_group_end()
             if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_end!"
+              write(error_unit,*) "Error in setting up ccl_group_end!"
               stop 1
             endif
 
@@ -107,7 +107,7 @@
             endif
             success = ccl_group_start()
             if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_start!"
+              write(error_unit,*) "Error in setting up ccl_group_start!"
               stop 1
             endif
 
@@ -121,7 +121,7 @@
 
             success = ccl_group_end()
             if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_end!"
+              write(error_unit,*) "Error in setting up ccl_group_end!"
               stop 1
             endif
 
@@ -153,7 +153,7 @@
 
             success = ccl_group_start()
             if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_start!"
+              write(error_unit,*) "Error in setting up ccl_group_start!"
               stop 1
             endif
 
@@ -167,12 +167,12 @@
 
             success = ccl_group_end()
             if (.not.success) then
-              write(error_unit,*) "Error in setting up nccl_group_end!"
+              write(error_unit,*) "Error in setting up ccl_group_end!"
               stop 1
             endif
             OBJECT%gpu_setup%ccl_comm_cols = ccl_comm_cols
 
-            !success = nccl_comm_destroy(ccl_comm_all)
+            !success = ccl_comm_destroy(ccl_comm_all)
             !if (.not.success) then
             !  write(error_unit,*) "Error in destroying ccl_comm_all!"
             !  stop 1

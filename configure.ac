@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [21:1:2])
+AC_SUBST([ELPA_SO_VERSION], [21:2:2])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -3108,6 +3108,7 @@ if test x"$need_amd_gpu" = x"yes"; then
     AC_LANG_PUSH([C])
     if test x"${use_hipblas}" = x"yes"; then
       AC_SEARCH_LIBS([hipsolverDpotrf],[hipsolver],[have_rocsolver=yes],[have_rocsolver=no])
+      AC_DEFINE([WITH_AMD_HIPSOLVER_API],[1],[enable AMD hipsolver])
       hip_solver_api=yes
     else
       AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
@@ -3116,7 +3117,6 @@ if test x"$need_amd_gpu" = x"yes"; then
       AC_MSG_ERROR([Could not link rocsolver; try to set the hip-path or disable AMD GPU support])
     fi
     AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
-    AC_DEFINE([WITH_AMD_HIPSOLVER_API],[1],[enable AMD hipsolver])
     AC_LANG_POP([C])
   fi
 fi
@@ -3956,13 +3956,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-echo " "
-echo "***********************************************************************"
-echo "*  This is the first release candidate of ELPA 2024.03.001.rc1        *"
-echo "*  There might be still some changes until the final release of       *"
-echo "*  ELPA 2024.03.001                                                   *"
-echo "***********************************************************************"
-echo " "
+#echo " "
+#echo "***********************************************************************"
+#echo "*  This is the first release candidate of ELPA 2024.03.001.rc1        *"
+#echo "*  There might be still some changes until the final release of       *"
+#echo "*  ELPA 2024.03.001                                                   *"
+#echo "***********************************************************************"
+#echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

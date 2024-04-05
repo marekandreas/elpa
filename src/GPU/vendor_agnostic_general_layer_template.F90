@@ -1386,13 +1386,13 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
-        success = openmp_offload_free_cptr(a)
+        success = openmp_offload_free_intptr(a)
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_free_cptr(a)
+        success = sycl_free_intptr(a)
       endif
 #endif
 
