@@ -216,10 +216,8 @@ void cannons_reduction_impl(math_type* A, math_type* U,
    Buf_to_receive_U = malloc(Size_U_stored*sizeof(math_type));
    if(ratio != 1)
       Buf_A = malloc(Buf_cols*Buf_rows*sizeof(math_type));   // in this case we will receive data into initial buffer and after place block-columns to the needed positions of buffer for calculation
-   M   = malloc(na_rows*na_cols*sizeof(math_type));
+   M   = calloc(na_rows*na_cols, sizeof(math_type));
    M_T = malloc(na_rows*na_cols*sizeof(math_type));
-   for(i = 0; i < na_rows*na_cols; i++)
-      M[i] = 0; 
 
    math_type *Buf_to_send_receive_A_dev;
    math_type *Buf_to_send_receive_U_dev;
@@ -234,6 +232,7 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       gpuErrCheck( gpuMalloc((intptr_t *)&Buf_to_send_receive_A_dev   , ratio*Buf_cols*Buf_rows*sizeof(math_type)) );
       gpuErrCheck( gpuMalloc((intptr_t *)&Buf_to_send_receive_U_dev   , Size_U_stored*sizeof(math_type)) );
       gpuErrCheck( gpuMalloc((intptr_t *)&M_dev, na_rows*na_cols*sizeof(math_type)) );
+      gpuErrCheck( gpuMemset((intptr_t *)M_dev, 0, na_rows*na_cols*sizeof(math_type)) );
    }
 
    ////////////////////////////////////////////////////////////// initial reordering of A ///////////////////////////////////////////////////////////////////////////////////////// 
@@ -514,22 +513,19 @@ void cannons_reduction_impl(math_type* A, math_type* U,
          if ((rows_in_block_A > 0)&&(cols_in_block > 0)) {
 
             NVTX_RANGE_PUSH("GEMM_1");
-            // Res_ptr = Buf_to_send_A*U_local_start + beta*Res_ptr
-            // M = Buf_to_send_A*Buf_to_send_U + beta*M
-            math_type beta = 1.0;
-            if (j == 1) beta = 0.0;
-
+            // Res_ptr = Buf_to_send_A*U_local_start + Res_ptr
+            // M = Buf_to_send_A*Buf_to_send_U + M
             if (useGPU){
                gpublasXgemm(gpublasHandle, 'N', 'N', 
                             rows_in_block_A, cols_in_block, rows_in_block_U, dOne, 
                             Buf_to_send_receive_A_dev, na_rows, 
-                            U_local_start_dev, rows_in_block_U, beta, 
+                            U_local_start_dev, rows_in_block_U, dOne, 
                             Res_ptr_dev, na_rows);
-               if (wantDebug) gpuDeviceSynchronize();    
+               if (wantDebug) gpuDeviceSynchronize();
             }
             else {
                C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &dOne, 
-               Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &beta, Res_ptr, &na_rows);
+               Buf_to_send_A, &na_rows, U_local_start, &rows_in_block_U, &dOne, Res_ptr, &na_rows);
             }
             NVTX_RANGE_POP(); // GEMM_1
          }
@@ -651,22 +647,19 @@ void cannons_reduction_impl(math_type* A, math_type* U,
 #ifdef WITH_NVTX
          nvtxRangePushA("GEMM_1_last");
 #endif
-         // Res_ptr = Buf_to_receive_A*U_local_start + beta*Res_ptr
-         // M = Buf_to_receive_A*Buf_to_recieve_U + beta*M
-         math_type beta = 1.0;
-         if (j == 1) beta = 0.0;
-
+         // Res_ptr = Buf_to_receive_A*U_local_start + Res_ptr
+         // M = Buf_to_receive_A*Buf_to_recieve_U + M
          if (useGPU){
             gpublasXgemm(gpublasHandle, 'N', 'N', 
                           rows_in_block_A, cols_in_block, rows_in_block_U, dOne, 
                           Buf_to_send_receive_A_dev, na_rows, 
-                          U_local_start_dev, rows_in_block_U, beta, 
+                          U_local_start_dev, rows_in_block_U, dOne, 
                           Res_ptr_dev, na_rows);
             if (wantDebug) gpuDeviceSynchronize();
          }
          else { 
             C_GEMM("N", "N", &rows_in_block_A, &cols_in_block, &rows_in_block_U, &dOne, 
-            Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &beta, Res_ptr, &na_rows);
+            Buf_to_receive_A, &na_rows, U_local_start, &rows_in_block_U, &dOne, Res_ptr, &na_rows);
          }
 #ifdef WITH_NVTX
          nvtxRangePop();
@@ -913,7 +906,11 @@ void cannons_reduction_impl(math_type* A, math_type* U,
    where_to_send_U = (my_prow - 1 + np_rows)%np_rows;
    from_where_to_receive_U = (my_prow + 1)%np_rows;
    Curr_pos_in_U_stored = Size_U_skewed;
-  
+   
+   if (useGPU) {
+      gpuErrCheck( gpuMemset((intptr_t *)M_dev, 0, na_rows*na_cols*sizeof(math_type)) ); // Reset the buffer
+   }
+
 #ifdef WITH_NVTX
    nvtxRangePushA("loop j<np_rows");
 #endif
@@ -990,7 +987,6 @@ void cannons_reduction_impl(math_type* A, math_type* U,
       if (useGPU){
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_A_dev, (intptr_t *)Buf_to_send_A, ratio*Buf_cols*Buf_rows*sizeof(math_type), gpuMemcpyHostToDevice) );
          gpuErrCheck( gpuMemcpy((intptr_t *)Buf_to_send_receive_U_dev, (intptr_t *)U_to_calc, Size_U_stored*sizeof(math_type), gpuMemcpyHostToDevice) );
-         gpuErrCheck( gpuMemset((intptr_t *)M_dev, 0, na_rows*na_cols*sizeof(math_type)) );
       }
 
       if (useGPU){
@@ -1062,22 +1058,19 @@ void cannons_reduction_impl(math_type* A, math_type* U,
                }
 
                NVTX_RANGE_PUSH("GEMM_2");
-               // Res_ptr = A_local_start*U_local_start_curr + beta*Res_ptr
-               // Res = Buf_to_send_A*Buf_to_send_U + beta*Res
-               math_type beta = 1.0;
-               if (j==1 && ii==0) beta = 0.0;
-
+               // Res_ptr = A_local_start*U_local_start_curr + Res_ptr
+               // Res = Buf_to_send_A*Buf_to_send_U + Res
                if (useGPU){
                gpublasXgemm(gpublasHandle, 'N', 'N', 
                             rows_in_block, cols_in_block, rows_in_block_U_curr, dOne, 
                             A_local_start_dev, LDA_A, 
-                            U_local_start_curr_dev, rows_in_block_U, beta, 
+                            U_local_start_curr_dev, rows_in_block_U, dOne, 
                             Res_ptr_dev, na_rows);
                if (wantDebug) gpuDeviceSynchronize();
                }
                else {
                   C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &dOne, 
-                          A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &beta, Res_ptr, &na_rows);
+                          A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dOne, Res_ptr, &na_rows);
                }
                NVTX_RANGE_POP();
 
@@ -1245,22 +1238,19 @@ void cannons_reduction_impl(math_type* A, math_type* U,
             }
 
             NVTX_RANGE_PUSH("GEMM_2_last");
-            // Res_ptr = A_local_start*U_local_start_curr + beta*Res_ptr
-            // Res = Buf_to_send_A*Buf_to_send_U + beta*Res
-            math_type beta = 1.0;
-            if (j==1 && ii==0) beta = 0.0;
-
+            // Res_ptr = A_local_start*U_local_start_curr + Res_ptr
+            // Res = Buf_to_send_A*Buf_to_send_U + Res
             if (useGPU){
             gpublasXgemm(gpublasHandle, 'N', 'N', 
                           rows_in_block, cols_in_block, rows_in_block_U_curr, dOne, 
                           A_local_start_dev, LDA_A, 
-                          U_local_start_curr_dev, rows_in_block_U, beta, 
+                          U_local_start_curr_dev, rows_in_block_U, dOne, 
                           Res_ptr_dev, na_rows);
-            if (wantDebug) gpuDeviceSynchronize(); 
+            if (wantDebug) gpuDeviceSynchronize();
             }
             else {
                C_GEMM("N", "N", &rows_in_block, &cols_in_block, &rows_in_block_U_curr, &dOne, 
-                       A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &beta, Res_ptr, &na_rows);
+                       A_local_start, &LDA_A, U_local_start_curr, &rows_in_block_U, &dOne, Res_ptr, &na_rows);
             }
             NVTX_RANGE_POP();
 
