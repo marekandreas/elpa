@@ -1,3 +1,6 @@
+//
+//    Copyright 2022, A. Marek
+//
 //    This file is part of ELPA.
 //
 //    The ELPA library was originally created by the ELPA consortium,
@@ -42,51 +45,25 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-// This file was written by A. Poeppl, Intel Corporation (2022) for MPCDF
+//
+// --------------------------------------------------------------------------------------------------
+//
+// This file was written by A. Marek, MPCDF and Alexander Pöppl, Intel Corporation
+#include "config-f90.h"
 
-#ifndef SYCL_COMMON_HPP
-#define SYCL_COMMON_HPP
+#include <stdio.h>
+#include <math.h>
+#include <stdio.h>
 
-#pragma once
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <alloca.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <complex.h>
 
-#include <CL/sycl.hpp>
+#include "oneapi/ccl.hpp"
 
-#ifdef WITH_INTEL_ONECCL
-#include <oneapi/ccl.hpp>
-#endif
+#include "onecclFunctions_template.h"
 
-namespace elpa {
-namespace gpu {
-namespace sycl {
-
-  void collectGpuDevices(bool onlyGpus);
-  void collectCpuDevices();
-  void printGpuInfo();
-  int selectGpuDevice(int deviceNum);
-  int selectCpuDevice(int deviceNum);
-  void selectDefaultGpuDevice();
-  size_t getNumDevices();
-  size_t getNumCpuDevices();
-  cl::sycl::device getDevice();
-  cl::sycl::queue getQueue();
-
-  
-
-#ifdef WITH_INTEL_ONECCL
-  // oneCCL deals with objects rather than opaque handles. Thus, ELPA becomes responsible for keeping them.
-  // To keep the interface uniform, ELPA mostly deals with pointers. Where possible, I use them, but in some
-  // cases, memoizing the values is necessary.
-
-  using cclKvsHandle = ccl::shared_ptr_class<ccl::kvs>;
-  void registerKvs(void *kvsAddr, cclKvsHandle kvs);
-  std::optional<cclKvsHandle> retrieveKvs(void *kvsAddress);
-
-  ccl::device& getCclDevice();
-  ccl::context& getCclContext();
-  ccl::stream& getCclStream();
-#endif
-
-}
-}
-}
-#endif

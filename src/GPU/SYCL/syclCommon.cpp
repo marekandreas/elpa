@@ -50,18 +50,34 @@
 
 #include <vector>
 #include <optional>
+#include <unordered_map>
 
 #ifdef WITH_MPI
 #include <mpi.h>
 #endif
 
-class device_selection {
-  public:
+#ifdef WITH_INTEL_ONECCL
+#include <oneapi/ccl.hpp>    
+#endif
+
+
+struct device_selection {
     int deviceId;
     cl::sycl::queue queue;
+#ifdef WITH_INTEL_ONECCL
+    ccl::device cclDevice;
+    ccl::context cclContext;
+    ccl::stream cclStream;
+#endif
 
     device_selection(int deviceId, cl::sycl::queue queue)
-      : deviceId(deviceId), queue(queue) {}
+      : deviceId(deviceId), queue(queue),
+#ifdef WITH_INTEL_ONECCL
+        cclDevice(ccl::create_device(queue.get_device())),
+        cclContext(ccl::create_context(queue.get_context())),
+        cclStream(ccl::create_stream(queue))
+#endif
+    {}
 };
 
 static bool deviceCollectionFlag = false;
@@ -69,7 +85,13 @@ static bool deviceCollectionFlag = false;
 std::vector<cl::sycl::device> devices;
 std::optional<device_selection> chosenQueue;
 
-void elpa::gpu::sycl::collectGpuDevices(bool onlyGpus) {
+namespace egs = elpa::gpu::sycl;
+
+#ifdef WITH_INTEL_ONECCL
+std::unordered_map<void *, egs::cclKvsHandle> kvsMap;
+#endif
+
+void egs::collectGpuDevices(bool onlyGpus) {
   if (deviceCollectionFlag) {
     return;
   } else {
@@ -94,7 +116,7 @@ void elpa::gpu::sycl::collectGpuDevices(bool onlyGpus) {
   }
 }
 
-void elpa::gpu::sycl::collectCpuDevices() {
+void egs::collectCpuDevices() {
   if (deviceCollectionFlag) {
     return;
   } else {
@@ -111,7 +133,7 @@ void elpa::gpu::sycl::collectCpuDevices() {
   }
 }
 
-int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
+int egs::selectGpuDevice(int deviceId) {
   if (deviceId >= devices.size()){
     std::cerr << "Invalid GPU device ID selected, only " << devices.size() << " devices available." << std::endl;
     return 0;
@@ -123,15 +145,15 @@ int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
     std::cout << " - Device #" << deviceId << ": "
       << dev.get_platform().get_info<cl::sycl::info::platform::name>() << " -> "
       << dev.get_info<cl::sycl::info::device::name>() << " ("
-      << dev.get_info<cl::sycl::info::device::max_compute_units>() << " EUs)";
+      << dev.get_info<cl::sycl::info::device::max_compute_units>() << " EUs)" << std::endl;
     chosenQueue = std::make_optional<device_selection>(deviceId, cl::sycl::queue(devices[deviceId], props));
   }
   return 1;
 }
 
-int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
+int egs::selectCpuDevice(int deviceId) {
   collectCpuDevices();
-  elpa::gpu::sycl::selectGpuDevice(deviceId);
+  egs::selectGpuDevice(deviceId);
   return 1;
 }
 
@@ -140,37 +162,37 @@ int elpa::gpu::sycl::selectCpuDevice(int deviceId) {
 #else
 #define GPU_SELECTOR cl::sycl::gpu_selector_v
 #endif
-void elpa::gpu::sycl::selectDefaultGpuDevice() {
+void egs::selectDefaultGpuDevice() {
   cl::sycl::property::queue::in_order io;
   cl::sycl::property_list props(io);
   chosenQueue = std::make_optional<device_selection>(0, cl::sycl::queue(GPU_SELECTOR, props));
 }
 #undef GPU_SELECTOR
 
-cl::sycl::queue elpa::gpu::sycl::getQueue() {
+cl::sycl::queue egs::getQueue() {
   if (!chosenQueue) {
-    elpa::gpu::sycl::selectDefaultGpuDevice();
+    egs::selectDefaultGpuDevice();
   }
   return chosenQueue->queue;
 }
 
-cl::sycl::device elpa::gpu::sycl::getDevice() {
+cl::sycl::device egs::getDevice() {
   if (!chosenQueue) {
-    elpa::gpu::sycl::selectDefaultGpuDevice();
+    egs::selectDefaultGpuDevice();
   }
   return chosenQueue->queue.get_device();
 }
 
-size_t elpa::gpu::sycl::getNumDevices() {
+size_t egs::getNumDevices() {
   return devices.size();
 }
 
-size_t elpa::gpu::sycl::getNumCpuDevices() {
+size_t egs::getNumCpuDevices() {
   collectCpuDevices();
   return devices.size();
 }
 
-void elpa::gpu::sycl::printGpuInfo() {
+void egs::printGpuInfo() {
 #ifdef WITH_MPI
   int mpiRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -192,3 +214,37 @@ void elpa::gpu::sycl::printGpuInfo() {
   }
   std::cout << "~~~~~~~~~~~~~~~~ END ELPA GPU Info ~~~~~~~~~~~~~~~~~~~" << std::endl;
 }
+
+#ifdef WITH_INTEL_ONECCL
+ccl::device& egs::getCclDevice() {
+  if (!chosenQueue) {
+    egs::selectDefaultGpuDevice();
+  }
+  return chosenQueue->cclDevice;
+}
+
+ccl::context& egs::getCclContext() {
+  if (!chosenQueue) {
+    egs::selectDefaultGpuDevice();
+  }
+  return chosenQueue->cclContext;
+}
+
+ccl::stream& egs::getCclStream() {
+  if (!chosenQueue) {
+    egs::selectDefaultGpuDevice();
+  }
+  return chosenQueue->cclStream;
+}
+
+std::optional<egs::cclKvsHandle> egs::retrieveKvs(void *kvsAddress) {
+  if (kvsMap.find(kvsAddress) != kvsMap.end()) {
+    return kvsMap[kvsAddress];
+  }
+  return std::nullopt;
+}
+
+void egs::registerKvs(void *kvsAddr, egs::cclKvsHandle kvs) {
+  kvsMap.insert({kvsAddr, kvs});
+}
+#endif
