@@ -87,6 +87,9 @@
 #ifdef WITH_GPU_STREAMS
   use elpa_gpu_util
 #endif
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
+  use cuda_functions ! for NVTX labels
+#endif
   use invert_trm_gpu
   use mod_query_gpu_usage
 
@@ -443,6 +446,9 @@
   ns = ((na-1)/nblk)*nblk + 1
 
   do n = ns,1,-nblk
+#ifdef WITH_NVTX
+    call nvtxRangePush("do n = ns,1,-nblk")
+#endif
 
     l_row1 = local_index(n, my_prow, np_rows, nblk, +1)
     l_col1 = local_index(n, my_pcol, np_cols, nblk, +1)
@@ -459,6 +465,9 @@
         if (useGPU) then
 
 #if defined(INVERT_TRM_GPU_SOLVER)
+#ifdef WITH_NVTX
+          call nvtxRangePush("gpusolver_TRTRI")
+#endif
           call obj%timer%start("gpusolver")
           gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = ((l_row1-1) + (l_col1-1)*matrixRows) * size_of_datatype
@@ -469,7 +478,9 @@
             stop 1
           endif
           call obj%timer%stop("gpusolver")
-         
+#ifdef WITH_NVTX
+          call nvtxRangePop() ! gpusolver_TRTRI
+#endif         
 #else /* defined(INVERT_TRM_GPU_SOLVER) */
          
           ! still have to use cpu blas -> a generic GPU implementation would be needed
@@ -644,7 +655,7 @@
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
         successGPU = ccl_group_start()
         if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_start!"
+          print *,"Error in setting up ccl_group_start!"
           stop
         endif
         successGPU = ccl_bcast(tmp1_dev, tmp1_dev, &
@@ -673,12 +684,12 @@
                          int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
 
           if (.not.successGPU) then
-            print *,"Error in nccl_reduce"
+            print *,"Error in ccl_bcast"
             stop
           endif
           successGPU = ccl_group_end()
           if (.not.successGPU) then
-            print *,"Error in setting up nccl_group_end!"
+            print *,"Error in setting up ccl_group_end!"
             stop
           endif
 #endif /* USE_CCL_INVERT */
@@ -726,9 +737,14 @@
         if (l_cols-l_colx+1 > 0) then
           a_off = (l_row1 -1 + (l_colx-1)*matrixRows) * size_of_datatype
 
+#ifdef WITH_NVTX
+          call nvtxRangePush("gpublas_TRMM")
+#endif
           call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, ONE, tmp2_dev, &
                                       nblk, a_dev+a_off, matrixRows, gpublasHandle)
-        
+#ifdef WITH_NVTX
+          call nvtxRangePop()! gpublas_TRMM
+#endif
         endif
         call obj%timer%stop("gpublas")
 
@@ -832,6 +848,9 @@
 #endif
 
 #ifdef USE_CCL_INVERT
+#ifdef WITH_NVTX
+        call nvtxRangePush("ccl_bcast_group tmat1_dev")
+#endif
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
         do i=1,nb
@@ -876,6 +895,9 @@
             stop
           endif
         enddo ! i=1,nb
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! ccl_bcast_group 
+#endif
 #endif /* USE_CCL_INVERT */
       else ! useGPU
         do i=1,nb
@@ -1069,7 +1091,10 @@
 
       call obj%timer%stop("blas")
     endif ! useGPU
-  enddo
+#ifdef WITH_NVTX
+    call nvtxRangePop() ! do n = ns,1,-nblk
+#endif
+  enddo ! n = ns,1,-nblk
 
 #ifndef DEVICE_POINTER
   if (useGPU) then
