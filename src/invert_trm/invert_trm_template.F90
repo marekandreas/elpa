@@ -366,8 +366,15 @@
     check_host_register_gpu("elpa_invert_trm: a", successGPU)
 #endif
 #else /* DEVICE_POINTER */
+
+#ifdef WITH_NVTX
+    call nvtxRangePush("transfer(aDev, a_dev)")
+#endif
     ! associate with a_dev
     a_dev = transfer(aDev, a_dev)
+#ifdef WITH_NVTX
+    call nvtxRangePop() ! transfer(aDev, a_dev)")
+#endif
 
 #if !defined(INVERT_TRM_GPU_SOLVER)
     ! allocate a_tmp
@@ -384,6 +391,9 @@
 
   endif ! useGPU
 
+#ifdef WITH_NVTX
+  call nvtxRangePush("allocate tmp1, tmp2, tmat1, tmat2")
+#endif
 
   allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_invert_trm: tmp1", istat, errorMessage)
@@ -391,17 +401,26 @@
   allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_invert_trm: tmp2", istat, errorMessage)
 
-  tmp1 = 0
-  tmp2 = 0
-
   allocate(tmat1(l_rows,nblk), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_invert_trm: tmat1", istat, errorMessage)
 
   allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
 
+#ifdef WITH_NVTX
+  call nvtxRangePop() ! allocate tmp1, tmp2, tmat1, tmat2
+#endif
+
+#ifdef WITH_NVTX
+  call nvtxRangePush("set to zero: tmp1, tmp2, tmat1, tmat2")
+#endif
+  tmp1 = 0
+  tmp2 = 0
   tmat1 = 0
   tmat2 = 0
+#ifdef WITH_NVTX
+  call nvtxRangePop() ! set to zero: tmp1, tmp2, tmat1, tmat2
+#endif
 
 #ifdef WITH_GPU_STREAMS
   if (useGPU) then
@@ -480,7 +499,7 @@
           call obj%timer%stop("gpusolver")
 #ifdef WITH_NVTX
           call nvtxRangePop() ! gpusolver_TRTRI
-#endif         
+#endif   
 #else /* defined(INVERT_TRM_GPU_SOLVER) */
          
           ! still have to use cpu blas -> a generic GPU implementation would be needed
@@ -851,15 +870,17 @@
 #ifdef WITH_NVTX
         call nvtxRangePush("ccl_bcast_group tmat1_dev")
 #endif
+        successGPU = ccl_group_start()
+        if (.not. successGPU) then
+          print *, "Error in setting up nccl_group_start!"
+          stop
+        endif
+
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
         do i=1,nb
           offset = (1-1 + l_rows*(i-1)) * size_of_datatype
-          successGPU = ccl_group_start()
-          if (.not.successGPU) then
-            print *,"Error in setting up nccl_group_start!"
-            stop
-          endif
+
           successGPU = ccl_bcast(tmat1_dev + offset, tmat1_dev + offset, &
 #if REALCASE == 1
                          int(l_row1-1,kind=c_size_t), &
@@ -885,18 +906,19 @@
 #endif /* COMPLEXCASE */
                          int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
 
-          if (.not.successGPU) then
-            print *,"Error in nccl_reduce"
-            stop
-          endif
-          successGPU = ccl_group_end()
-          if (.not.successGPU) then
-            print *,"Error in setting up nccl_group_end!"
+          if (.not. successGPU) then
+            print *,"Error in ccl_bcast"
             stop
           endif
         enddo ! i=1,nb
+
+        successGPU = ccl_group_end()
+        if (.not. successGPU) then
+          print *, "Error in setting up ccl_group_end!"
+          stop
+        endif
 #ifdef WITH_NVTX
-        call nvtxRangePop() ! ccl_bcast_group 
+        call nvtxRangePop() ! ccl_bcast_group tmat1_dev
 #endif
 #endif /* USE_CCL_INVERT */
       else ! useGPU
