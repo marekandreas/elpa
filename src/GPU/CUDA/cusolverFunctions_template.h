@@ -195,9 +195,13 @@ extern "C" {
       errormessage("Error in cusolver_Dtrtri host work array needed of size=: %d\n",h_lwork);
     }
 
+#if CUSOLVER_VERSION < 11601
     // temporary workaround for cusolverDnXtrtri_bufferSize bug
     // https://docs.nvidia.com/cuda/archive/12.4.0/cuda-toolkit-release-notes/index.html#cusolver-release-12-4
     d_lwork *= 8;
+
+    // the problem is fixed in CUDA 12.4.1 (cuSOLVER 11.6.1.9)
+#endif
 
     //cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
     cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
@@ -265,9 +269,9 @@ extern "C" {
       errormessage("Error in cusolver_Strtri host work array needed of size=: %d\n",h_lwork);
     }
 
-    // temporary workaround for cusolverDnXtrtri_bufferSize bug
-    // https://docs.nvidia.com/cuda/archive/12.4.0/cuda-toolkit-release-notes/index.html#cusolver-release-12-4
+#if CUSOLVER_VERSION < 11601
     d_lwork *= 4;
+#endif
 
     //cuerr = cudaMalloc((void**) &d_work, sizeof(float) * d_lwork);
     cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
@@ -336,9 +340,9 @@ extern "C" {
       errormessage("Error in cusolver_Ztrtri host work array needed of size=: %d\n",h_lwork);
     }
 
-    // temporary workaround for cusolverDnXtrtri_bufferSize bug
-    // https://docs.nvidia.com/cuda/archive/12.4.0/cuda-toolkit-release-notes/index.html#cusolver-release-12-4
+#if CUSOLVER_VERSION < 11601
     d_lwork *= 16;
+#endif
 
     //cuerr = cudaMalloc((void**) &d_work, sizeof(double _Complex) * d_lwork);
     cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork in bytes
@@ -407,9 +411,9 @@ extern "C" {
       errormessage("Error in cusolver_Ctrtri host work array needed of size=: %d\n",h_lwork);
     }
 
-    // temporary workaround for cusolverDnXtrtri_bufferSize bug
-    // https://docs.nvidia.com/cuda/archive/12.4.0/cuda-toolkit-release-notes/index.html#cusolver-release-12-4
+#if CUSOLVER_VERSION < 11601
     d_lwork *= 8;
+#endif
 
     //cuerr = cudaMalloc((void**) &d_work, sizeof(float _Complex) * d_lwork);
     cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
