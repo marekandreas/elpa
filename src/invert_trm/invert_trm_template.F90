@@ -652,8 +652,7 @@
       endif ! my_pcol==pcol(n, nblk, np_cols)
 
 #ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
-      if (useGPU) then
+      if (useGPU .and. .not. useCCL) then
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -667,32 +666,27 @@
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_invert_trm: tmp1_dev to tmp1", successGPU)
 #endif /* WITH_GPU_STREAMS */
+      endif ! (useGPU .and. .not. useCCL)
 
-      endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */ 
 
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
-      call obj%timer%start("mpi_communication")
-      call MPI_Bcast(tmp1, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
-                     int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-      call obj%timer%stop("mpi_communication")
-#else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
-      if (useGPU) then
-#ifdef WITH_CUDA_AWARE_MPI
-        tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev) 
-        ! and associate a fortran pointer
-        call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk*nblk])
-        if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
-        successGPU = gpu_devicesynchronize()
-        check_memcpy_gpu("invert_trm: device_synchronize", successGPU)
-        if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
+! #ifdef WITH_CUDA_AWARE_MPI
+!       if (useGPU) then
+!         tmp1_mpi_dev = transfer(tmp1_dev, tmp1_mpi_dev) 
+!         ! and associate a fortran pointer
+!         call c_f_pointer(tmp1_mpi_dev, tmp1_mpi_fortran_ptr, [nblk*nblk])
+!         if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
+!         successGPU = gpu_devicesynchronize()
+!         check_memcpy_gpu("invert_trm: device_synchronize", successGPU)
+!         if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
 
-        if (wantDebug) call obj%timer%start("cuda_mpi_communication")
-        call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
-                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-        if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
-#endif /* WITH_CUDA_AWARE_MPI */
+!         if (wantDebug) call obj%timer%start("cuda_mpi_communication")
+!         call MPI_Bcast(tmp1_mpi_fortran_ptr, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
+!                        int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+!         if (wantDebug) call obj%timer%stop("cuda_mpi_communication")
+!       endif ! useGPU
+! #endif /* WITH_CUDA_AWARE_MPI */
 
+      if (useCCL) then
 #ifdef USE_CCL_INVERT
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
@@ -700,23 +694,20 @@
         successGPU = ccl_bcast(tmp1_dev, tmp1_dev, k_datatype*int(nb*(nb+1)/2,kind=c_size_t), &
                                cclDataType, int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
 
-        if (.not.successGPU) then
+        if (.not. successGPU) then
           print *,"Error in ccl_bcast"
           stop 1
         endif
-
 #endif /* USE_CCL_INVERT */
-        else ! useGPU
+
+      else ! useCCL
           call obj%timer%start("mpi_communication")
           call MPI_Bcast(tmp1, int(nb*(nb+1)/2,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION,       &
                      int(pcol(n, nblk, np_cols),kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
-        endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
+      endif ! useCCL
 
-
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
-      if ((useGPU)) then  
+      if (useGPU .and. .not. useCCL) then  
         num = nblk*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -730,8 +721,7 @@
                               gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
-      endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */ 
+      endif ! (useGPU .and. .not. useCCL)
 #endif /* WITH_MPI */
       
       if (useGPU) then
@@ -811,8 +801,7 @@
       endif
 
 #ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
-      if (useGPU) then
+      if (useGPU .and. .not. useCCL) then
         num = l_rows*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -826,48 +815,30 @@
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
 #endif /* WITH_GPU_STREAMS */
-      endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
-#endif /* WITH_MPI */
+      endif ! (useGPU .and. .not. useCCL)
 
-#ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
-#ifdef WITH_NVTX
-      call nvtxRangePush("MPI_Bcast group tmat1_dev")
-#endif
-      call obj%timer%start("mpi_communication")
-      ! do i=1,nb ! PETERDEBUG: cleanup
-      !   call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-      !                  int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
-      !                  int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-      ! enddo
-      call MPI_Bcast(tmat1(1,1), int(l_rows*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                int(pcol(n, nblk, np_cols),kind=MPI_KIND), &
-                int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-      call obj%timer%stop("mpi_communication")
-#ifdef WITH_NVTX
-      call nvtxRangePop() ! MPI_Bcast group tmat1_dev
-#endif
-#else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
-      if (useGPU) then
-#ifdef WITH_CUDA_AWARE_MPI
-        tmat1_mpi_dev = transfer(tmat1_dev, tmat1_mpi_dev)
-        ! and associate a fortran pointer
-        call c_f_pointer(tmat1_mpi_dev, tmat1_mpi_fortran_ptr, [l_rows,nblk])
-        if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
-        successGPU = gpu_devicesynchronize()
-        check_memcpy_gpu("invert_trm: device_synchronize", successGPU)
-        if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
-        call obj%timer%start("mpi_cuda_communication")
-        do i=1,nb
-          call MPI_Bcast(tmat1_mpi_fortran_ptr(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
-                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
-        enddo
-        call obj%timer%stop("mpi_cuda_communication")
-#endif
+! #ifdef WITH_CUDA_AWARE_MPI
+!       if (useGPU) then
+!         tmat1_mpi_dev = transfer(tmat1_dev, tmat1_mpi_dev)
+!         ! and associate a fortran pointer
+!         call c_f_pointer(tmat1_mpi_dev, tmat1_mpi_fortran_ptr, [l_rows,nblk])
+!         if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
+!         successGPU = gpu_devicesynchronize()
+!         check_memcpy_gpu("invert_trm: device_synchronize", successGPU)
+!         if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
+!         call obj%timer%start("mpi_cuda_communication")
+!         do i=1,nb
+!           call MPI_Bcast(tmat1_mpi_fortran_ptr(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+!                        int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
+!                        int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
+!         enddo
+!         call obj%timer%stop("mpi_cuda_communication")
+!      endif ! useGPU
+! #endif
+
+      if (useCCL) then
 #ifdef USE_CCL_INVERT
 #ifdef WITH_NVTX
         call nvtxRangePush("ccl_bcast_group tmat1_dev")
@@ -901,28 +872,27 @@
         call nvtxRangePop() ! ccl_bcast_group tmat1_dev
 #endif
 #endif /* USE_CCL_INVERT */
-      else ! useGPU
+      else ! useCCL
+
 #ifdef WITH_NVTX
-        call nvtxRangePush("MPI_Bcast group tmat1_dev")
+        call nvtxRangePush("MPI_Bcast tmat1_dev")
 #endif
         call obj%timer%start("mpi_communication")
-        do i=1,nb
-          call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
-                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-        enddo
+        ! do i=1,nb ! PETERDEBUG: cleanup
+        !   call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+        !                  int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
+        !                  int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+        ! enddo
+        call MPI_Bcast(tmat1(1,1), int(l_rows*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                  int(pcol(n, nblk, np_cols),kind=MPI_KIND), &
+                  int(mpi_comm_cols,kind=MPI_KIND), mpierr)
         call obj%timer%stop("mpi_communication")
-        
 #ifdef WITH_NVTX
-        call nvtxRangePop() ! MPI_Bcast group tmat1_dev
+        call nvtxRangePop() ! MPI_Bcast tmat1_dev
 #endif
-      endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
-#endif /* WITH_MPI */
+      endif ! useCCL
 
-#ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
-      if (useGPU) then
+      if (useGPU .and. .not. useCCL) then
         ! cuda aware MPI here
         num = l_rows*nblk*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -937,16 +907,33 @@
                               gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
-      endif
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
+      endif ! (useGPU .and. .not. useCCL)
+
 #endif /* WITH_MPI */
     endif ! (l_row1>1)
 
-#ifdef WITH_MPI
-#if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
-    if (useGPU) then
+! #ifdef WITH_CUDA_AWARE_MPI
+!     if (useGPU) then
+!       tmat2_mpi_dev = transfer(tmat2_dev, tmat2_mpi_dev)     
+!       call c_f_pointer(tmat2_mpi_dev, tmat2_mpi_fortran_ptr, [nblk,l_cols])
       
-      if (l_cols-l_col1+1 > 0) then
+!       if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
+!       successGPU = gpu_devicesynchronize()
+!       check_memcpy_gpu("invert_trm: device_synchronize", successGPU)
+!       if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
+!       call obj%timer%start("mpi_cuda_communication")
+!       if (l_cols-l_col1+1 > 0) &
+!         call MPI_Bcast(tmat2_mpi_fortran_ptr(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), & 
+!                        MPI_MATH_DATATYPE_PRECISION, int(prow(n, nblk, np_rows),kind=MPI_KIND), & 
+!                        int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+!       call obj%timer%stop("mpi_cuda_communication")
+!     endif ! useGPU
+! #endif /* WITH_CUDA_AWARE_MPI */
+
+#ifdef WITH_MPI
+    if (l_cols-l_col1+1 > 0) then
+
+      if (useGPU .and. .not. useCCL) then
         num = nblk*l_cols*size_of_datatype
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -960,19 +947,32 @@
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_invert_trm: tmat2_dev to tmat2", successGPU)
 #endif /* WITH_GPU_STREAMS */
-      endif
-    endif ! useGPU
+      endif ! (useGPU .and. .not. useCCL)
 
-    call obj%timer%start("mpi_communication")
-    if (l_cols-l_col1+1 > 0) then
-      call MPI_Bcast(tmat2(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                   int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-    endif
+      if (useCCL) then
+#ifdef USE_CCL_INVERT
+        my_stream = obj%gpu_setup%my_stream
+        ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
+        offset = (1-1 + nblk*(l_col1-1)) * size_of_datatype
 
-    call obj%timer%stop("mpi_communication")
+        successGPU = ccl_bcast(tmat2_dev+offset, tmat2_dev+offset, int(k_datatype*(l_cols-l_col1+1)*nblk,kind=c_size_t), &
+                               cclDataType, int(prow(n, nblk, np_rows),kind=c_int), ccl_comm_rows, my_stream)
 
-    if (useGPU) then
-      if (l_cols-l_col1+1 > 0) then
+        if (.not. successGPU) then
+          print *,"Error in ccl_bcast"
+          stop 1
+        endif
+#endif /* USE_CCL_INVERT */
+      else ! useCCL
+
+        call obj%timer%start("mpi_communication")
+        call MPI_Bcast(tmat2(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                    int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        call obj%timer%stop("mpi_communication")
+
+      endif ! useCCL
+
+      if (useGPU .and. .not. useCCL) then
         num = nblk*l_cols*size_of_datatype
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -986,51 +986,9 @@
                                 gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_invert_trm: tmat2 to tmat2_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
-      endif ! l_cols-l_col1+1 > 0
-    endif ! useGPU
-#else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
-    if (useGPU) then
-#ifdef WITH_CUDA_AWARE_MPI
-      tmat2_mpi_dev = transfer(tmat2_dev, tmat2_mpi_dev)     
-      call c_f_pointer(tmat2_mpi_dev, tmat2_mpi_fortran_ptr, [nblk,l_cols])
-      
-      if (wantDebug) call obj%timer%start("cuda_aware_device_synchronize")
-      successGPU = gpu_devicesynchronize()
-      check_memcpy_gpu("invert_trm: device_synchronize", successGPU)
-      if (wantDebug) call obj%timer%stop("cuda_aware_device_synchronize")
-      call obj%timer%start("mpi_cuda_communication")
-      if (l_cols-l_col1+1 > 0) &
-        call MPI_Bcast(tmat2_mpi_fortran_ptr(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), & 
-                       MPI_MATH_DATATYPE_PRECISION, int(prow(n, nblk, np_rows),kind=MPI_KIND), & 
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-      call obj%timer%stop("mpi_cuda_communication")
-#endif /* WITH_CUDA_AWARE_MPI */
+      endif ! (useGPU .and. .not. useCCL)
 
-#ifdef USE_CCL_INVERT
-      if (l_cols-l_col1+1 > 0) then
-        my_stream = obj%gpu_setup%my_stream
-        ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-        offset = (1-1 + nblk*(l_col1-1)) * size_of_datatype
-
-        successGPU = ccl_bcast(tmat2_dev+offset, tmat2_dev+offset, int(k_datatype*(l_cols-l_col1+1)*nblk,kind=c_size_t), &
-                               cclDataType, int(prow(n, nblk, np_rows),kind=c_int), ccl_comm_rows, my_stream)
-
-        if (.not.successGPU) then
-          print *,"Error in ccl_bcast"
-          stop 1
-        endif
-      endif ! l_cols-l_col1+1 > 0
-#endif /* USE_CCL_INVERT */
-    else ! useGPU
-      call obj%timer%start("mpi_communication")
-      if (l_cols-l_col1+1 > 0) then
-        call MPI_Bcast(tmat2(1,l_col1), int((l_cols-l_col1+1)*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                   int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-      endif
-
-      call obj%timer%stop("mpi_communication")
-    endif ! useGPU
-#endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
+    endif ! (l_cols-l_col1+1 > 0)
 #endif /* WITH_MPI */
 
     if (useGPU) then
