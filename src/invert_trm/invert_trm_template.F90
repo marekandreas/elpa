@@ -148,8 +148,6 @@
   integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols, offset
 #endif
 
-
-
   success = .true.
   useGPU = .false.
 
@@ -838,14 +836,22 @@
 
 #ifdef WITH_MPI
 #if !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT)
-      do i=1,nb
-        call obj%timer%start("mpi_communication")
-        call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                       int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
-                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-
-        call obj%timer%stop("mpi_communication")
-      enddo
+#ifdef WITH_NVTX
+      call nvtxRangePush("MPI_Bcast group tmat1_dev")
+#endif
+      call obj%timer%start("mpi_communication")
+      ! do i=1,nb ! PETERDEBUG: cleanup
+      !   call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+      !                  int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
+      !                  int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+      ! enddo
+      call MPI_Bcast(tmat1(1,1), int(l_rows*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                int(pcol(n, nblk, np_cols),kind=MPI_KIND), &
+                int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+      call obj%timer%stop("mpi_communication")
+#ifdef WITH_NVTX
+      call nvtxRangePop() ! MPI_Bcast group tmat1_dev
+#endif
 #else /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
       if (useGPU) then
 #ifdef WITH_CUDA_AWARE_MPI
@@ -922,14 +928,20 @@
 #endif
 #endif /* USE_CCL_INVERT */
       else ! useGPU
+#ifdef WITH_NVTX
+        call nvtxRangePush("MPI_Bcast group tmat1_dev")
+#endif
+        call obj%timer%start("mpi_communication")
         do i=1,nb
-          call obj%timer%start("mpi_communication")
           call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                        int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
                        int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-
-          call obj%timer%stop("mpi_communication")
         enddo
+        call obj%timer%stop("mpi_communication")
+        
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! MPI_Bcast group tmat1_dev
+#endif
       endif ! useGPU
 #endif /* !defined(WITH_CUDA_AWARE_MPI) && !defined(USE_CCL_INVERT) */
 #endif /* WITH_MPI */
