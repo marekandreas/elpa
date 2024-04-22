@@ -134,7 +134,6 @@
 
   type(c_ptr)                                :: tmp2_mpi_dev, a_mpi_dev
   integer(kind=c_intptr_t)                   :: a_off, tmat2_off, tmp1_off, tmp2_off
-   MATH_DATATYPE(kind=rck), pointer          :: a_mpi_deviceptr(:,:), initializer_ptr(:) !DEB
   integer(kind=c_intptr_t)                   :: num
   integer(kind=c_intptr_t), parameter        :: size_of_datatype = size_of_&
                                                             &PRECISION&
@@ -146,11 +145,14 @@
 
 #if defined(USE_CCL_INVERT)
   integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols, offset
+  integer(kind=c_int)                        :: cclDataType
+  integer(kind=ik)                           :: k_datatype
 #endif
+  logical                                    :: useCCL
 
   success = .true.
   useGPU = .false.
-
+  
 #if !defined(DEVICE_POINTER)
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -194,6 +196,30 @@
   else
     gpuString = ""
   endif
+
+  useCCL = .false.
+#if defined(USE_CCL_INVERT)
+  if (useGPU) then
+    useCCL = .true.
+  
+    ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
+    ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+  
+#if   REALCASE == 1 && defined(DOUBLE_PRECISION)
+    cclDataType = cclDouble
+    k_datatype = 1
+#elif REALCASE == 1 && defined(SINGLE_PRECISION)
+    cclDataType = cclFloat
+    k_datatype = 1
+#elif COMPLEXCASE == 1 && defined(DOUBLE_PRECISION)
+    cclDataType = cclDouble
+    k_datatype = 2
+#elif COMPLEXCASE == 1 && defined(SINGLE_PRECISION)
+    cclDataType = cclFloat
+    k_datatype = 2
+#endif
+  endif ! useGPU
+#endif /* defined(USE_CCL_INVERT) */
 
   call obj%timer%start("elpa_invert_trm_&
   &MATH_DATATYPE&
@@ -670,45 +696,15 @@
 #ifdef USE_CCL_INVERT
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-        successGPU = ccl_group_start()
-        if (.not.successGPU) then
-          print *,"Error in setting up ccl_group_start!"
-          stop
-        endif
-        successGPU = ccl_bcast(tmp1_dev, tmp1_dev, &
-#if REALCASE == 1
-                         int(nb*(nb+1)/2,kind=c_size_t), &
-#endif
-#if COMPLEXCASE == 1
-                         int(2*nb*(nb+1)/2,kind=c_size_t), &
-#endif
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION
-                         cclDouble, &
-#endif
-#ifdef SINGLE_PRECISION
-                         cclFloat, &
-#endif
-#endif /* REALCASE */
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION
-                         cclDouble, &
-#endif
-#ifdef SINGLE_PRECISION
-                         cclFloat, &
-#endif
-#endif /* COMPLEXCASE */
-                         int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
+        
+        successGPU = ccl_bcast(tmp1_dev, tmp1_dev, k_datatype*int(nb*(nb+1)/2,kind=c_size_t), &
+                               cclDataType, int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
 
-          if (.not.successGPU) then
-            print *,"Error in ccl_bcast"
-            stop
-          endif
-          successGPU = ccl_group_end()
-          if (.not.successGPU) then
-            print *,"Error in setting up ccl_group_end!"
-            stop
-          endif
+        if (.not.successGPU) then
+          print *,"Error in ccl_bcast"
+          stop 1
+        endif
+
 #endif /* USE_CCL_INVERT */
         else ! useGPU
           call obj%timer%start("mpi_communication")
@@ -878,8 +874,8 @@
 #endif
         successGPU = ccl_group_start()
         if (.not. successGPU) then
-          print *, "Error in setting up nccl_group_start!"
-          stop
+          print *, "Error in setting up ccl_group_start!"
+          stop 1
         endif
 
         my_stream = obj%gpu_setup%my_stream
@@ -887,41 +883,19 @@
         do i=1,nb
           offset = (1-1 + l_rows*(i-1)) * size_of_datatype
 
-          successGPU = ccl_bcast(tmat1_dev + offset, tmat1_dev + offset, &
-#if REALCASE == 1
-                         int(l_row1-1,kind=c_size_t), &
-#endif
-#if COMPLEXCASE == 1
-                         int(2*(l_row1-1),kind=c_size_t), &
-#endif
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION
-                         cclDouble, &
-#endif
-#ifdef SINGLE_PRECISION
-                         cclFloat, &
-#endif
-#endif /* REALCASE */
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION
-                         cclDouble, &
-#endif
-#ifdef SINGLE_PRECISION
-                         cclFloat, &
-#endif
-#endif /* COMPLEXCASE */
-                         int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
+          successGPU = ccl_bcast(tmat1_dev + offset, tmat1_dev + offset, int(k_datatype*(l_row1-1),kind=c_size_t), cclDatatype, &
+                                 int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
 
           if (.not. successGPU) then
             print *,"Error in ccl_bcast"
-            stop
+            stop 1
           endif
         enddo ! i=1,nb
 
         successGPU = ccl_group_end()
         if (.not. successGPU) then
           print *, "Error in setting up ccl_group_end!"
-          stop
+          stop 1
         endif
 #ifdef WITH_NVTX
         call nvtxRangePop() ! ccl_bcast_group tmat1_dev
@@ -1036,45 +1010,14 @@
       if (l_cols-l_col1+1 > 0) then
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-        successGPU = ccl_group_start()
-        if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_start!"
-          stop
-        endif
         offset = (1-1 + nblk*(l_col1-1)) * size_of_datatype
-        successGPU = ccl_bcast(tmat2_dev+offset, tmat2_dev+offset, &
-#if REALCASE == 1
-                           int((l_cols-l_col1+1)*nblk,kind=c_size_t), &
-#endif
-#if COMPLEXCASE == 1
-                           int(2*(l_cols-l_col1+1)*nblk,kind=c_size_t), &
-#endif
-#if REALCASE == 1
-#ifdef DOUBLE_PRECISION
-                           cclDouble, &
-#endif
-#ifdef SINGLE_PRECISION
-                           cclFloat, &
-#endif
-#endif /* REALCASE */
-#if COMPLEXCASE == 1
-#ifdef DOUBLE_PRECISION
-                           cclDouble, &
-#endif
-#ifdef SINGLE_PRECISION
-                           cclFloat, &
-#endif
-#endif /* COMPLEXCASE */
-                           int(prow(n, nblk, np_rows),kind=c_int), ccl_comm_rows, my_stream)
+
+        successGPU = ccl_bcast(tmat2_dev+offset, tmat2_dev+offset, int(k_datatype*(l_cols-l_col1+1)*nblk,kind=c_size_t), &
+                               cclDataType, int(prow(n, nblk, np_rows),kind=c_int), ccl_comm_rows, my_stream)
 
         if (.not.successGPU) then
-          print *,"Error in nccl_reduce"
-          stop
-        endif
-        successGPU = ccl_group_end()
-        if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_end!"
-          stop
+          print *,"Error in ccl_bcast"
+          stop 1
         endif
       endif ! l_cols-l_col1+1 > 0
 #endif /* USE_CCL_INVERT */
