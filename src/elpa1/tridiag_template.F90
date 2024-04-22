@@ -237,7 +237,7 @@ subroutine tridiag_&
 
   integer(kind=ik)                              :: string_length, sm_count
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG)
+#if defined(USE_CCL_TRIDIAG)
   if (useGPU) then
     useCCL = .true.
   
@@ -258,7 +258,7 @@ subroutine tridiag_&
   k_datatype = 2
 #endif
  
-#if !defined(WITH_GPU_STREAMS)
+#if defined(WITH_NVIDIA_GPU_VERSION) && !defined(WITH_GPU_STREAMS)
     if (useCCL) then
       successGPU = cuda_stream_create(obj%gpu_setup%my_stream) ! for developing and debugging
       if (.not.(successGPU)) then
@@ -267,8 +267,8 @@ subroutine tridiag_&
       my_stream = obj%gpu_setup%my_stream
     endif
 #endif
-  endif 
-#endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG) */
+  endif ! useGPU
+#endif /* defined(USE_CCL_TRIDIAG) */
 
   allocate(aux(2*max_stored_uv), stat=istat, errmsg=errorMessage)
 
