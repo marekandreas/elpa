@@ -210,7 +210,7 @@
     call obj%timer%stop("check_for_gpu")
   else ! useGPU
   endif ! useGPU
-  
+
   useCCL = .false.
 #if defined(USE_CCL_INVERT)
   if (useGPU) then
@@ -384,10 +384,10 @@
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: a_dev", successGPU)
 #ifdef WITH_GPU_STREAMS
-    successGPU = gpu_host_register(int(loc(a),kind=c_intptr_t), &
-                    matrixRows*matrixCols * size_of_datatype,&
-                    gpuHostRegisterDefault)
-    check_host_register_gpu("elpa_invert_trm: a", successGPU)
+    ! successGPU = gpu_host_register(int(loc(a),kind=c_intptr_t), &
+    !                 matrixRows*matrixCols * size_of_datatype,&
+    !                 gpuHostRegisterDefault)
+    ! check_host_register_gpu("elpa_invert_trm: a", successGPU)
 #endif
 #else /* DEVICE_POINTER */
 
@@ -1068,8 +1068,8 @@
     check_dealloc_gpu("elpa_invert_trm: a_dev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
-    successGPU = gpu_host_unregister(int(loc(a),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_invert_trm: a", successGPU)
+    ! successGPU = gpu_host_unregister(int(loc(a),kind=c_intptr_t))
+    ! check_host_unregister_gpu("elpa_invert_trm: a", successGPU)
 #endif
 
 #else /* DEVICE_POINTER */
@@ -1085,8 +1085,6 @@
 #endif /* defined(INVERT_TRM_GPU_SOLVER) */
 #endif /* DEVICE_POINTER */
 
-    !successGPU = gpu_host_unregister(int(loc(b),kind=c_intptr_t))
-    !check_host_unregister_gpu("elpa_multiply_a_b: b", successGPU)
   endif ! useGPU
 
 #ifdef WITH_GPU_STREAMS
