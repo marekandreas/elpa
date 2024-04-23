@@ -150,6 +150,10 @@
 #endif
   logical                                    :: useCCL
 
+#ifdef WITH_NVTX
+  call nvtxRangePush("invert_trm")
+#endif
+
   success = .true.
   useGPU = .false.
   
@@ -246,22 +250,6 @@
   nblk       = obj%nblk
   matrixCols = obj%local_ncols
 
-  !call obj%get("mpi_comm_parent", mpi_comm_all, error)
-  !if (error .ne. ELPA_OK) then
-  !  print *,"ELPA_INVERT_TRM: Error getting option for mpi_comm_all. Aborting..."
-  !  stop 1
-  !endif
-  !call obj%get("mpi_comm_rows", mpi_comm_rows, error)
-  !if (error .ne. ELPA_OK) then
-  !  print *,"ELPA_INVERT_TRM: Error getting option for mpi_comm_rows. Aborting..."
-  !  stop 1
-  !endif
-  !call obj%get("mpi_comm_cols", mpi_comm_cols, error)
-  !if (error .ne. ELPA_OK) then
-  !  print *,"ELPA_INVERT_TRM: Error getting option for mpi_comm_cols. Aborting..."
-  !  stop 1
-  !endif
-
   call obj%get("debug", debug, error)
   if (error .ne. ELPA_OK) then
     print *,"ELPA_INVERT_TRM: Error getting option for debug. Aborting..."
@@ -284,65 +272,32 @@
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
 
-
-
-
-  !call obj%timer%start("mpi_communication")
-  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
-  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
-  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
-  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
-  !call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), myidMPI, mpierr)
-
-  !my_prow = int(my_prowMPI,kind=c_int)
-  !np_rows = int(np_rowsMPI,kind=c_int)
-  !my_pcol = int(my_pcolMPI,kind=c_int)
-  !np_cols = int(np_colsMPI,kind=c_int)
-  !myid    = int(myidMPI,kind=c_int)
-  !call obj%timer%stop("mpi_communication")
-
-
   success = .true.
 
   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
 
   if (useGPU) then
-    successGPU = gpu_malloc(tmp1_dev, nblk*nblk*size_of_datatype)
+    successGPU = gpu_malloc(tmp1_dev, nblk*(nblk+1)/2*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmp1_dev", successGPU)
-
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-
-    successGPU = gpu_memset_async(tmp1_dev, 0, nblk*nblk*size_of_datatype, my_stream)
-    check_memcpy_gpu("elpa_invert_trm: memset tmp1_dev", successGPU)
-
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-#else
-    successGPU = gpu_memset(tmp1_dev, 0, nblk*nblk*size_of_datatype)
-    check_memcpy_gpu("elpa_invert_trm: memset tmp1_dev", successGPU)
-#endif
 
     successGPU = gpu_malloc(tmp2_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmp2_dev", successGPU)
 
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
+! #ifdef WITH_GPU_STREAMS ! PETERDEBUG: cleanup
+!     my_stream = obj%gpu_setup%my_stream
+!     successGPU = gpu_stream_synchronize(my_stream)
+!     check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
 
-    successGPU = gpu_memset_async(tmp2_dev, 0, nblk*nblk*size_of_datatype, my_stream)
-    check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
+!     successGPU = gpu_memset_async(tmp2_dev, 0, nblk*nblk*size_of_datatype, my_stream)
+!     check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
 
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-#else
-    successGPU = gpu_memset(tmp2_dev, 0, nblk*nblk*size_of_datatype)
-    check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
-#endif
+!     successGPU = gpu_stream_synchronize(my_stream)
+!     check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
+! #else
+!     successGPU = gpu_memset(tmp2_dev, 0, nblk*nblk*size_of_datatype)
+!     check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
+! #endif
 
     successGPU = gpu_malloc(tmat1_dev, l_rows*nblk*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
@@ -419,7 +374,7 @@
   call nvtxRangePush("allocate tmp1, tmp2, tmat1, tmat2")
 #endif
 
-  allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
+  allocate(tmp1(nblk*(nblk+1)/2), stat=istat, errmsg=errorMessage)
   check_allocate("elpa_invert_trm: tmp1", istat, errorMessage)
 
   allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
@@ -438,8 +393,8 @@
 #ifdef WITH_NVTX
   call nvtxRangePush("set to zero: tmp1, tmp2, tmat1, tmat2")
 #endif
-  tmp1 = 0
-  tmp2 = 0
+  !tmp1 = 0 ! PETERDEBUG: cleanup
+  !tmp2 = 0
   tmat1 = 0
   tmat2 = 0
 #ifdef WITH_NVTX
@@ -449,7 +404,7 @@
 #ifdef WITH_GPU_STREAMS
   if (useGPU) then
     successGPU = gpu_host_register(int(loc(tmp1),kind=c_intptr_t), &
-                    nblk*nblk * size_of_datatype,&
+                    nblk*(nblk+1)/2 * size_of_datatype, &
                     gpuHostRegisterDefault)
     check_host_register_gpu("elpa_invert_trm: tmp1", successGPU)
 
@@ -653,16 +608,14 @@
 
 #ifdef WITH_MPI
       if (useGPU .and. .not. useCCL) then
-        num = nblk*nblk*size_of_datatype
+        num = nblk*(nblk+1)/2
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
-      
         call gpu_memcpy_async_and_stream_synchronize &
-          ("elpa_invert_trm: tmp1_dev to tmp1", tmp1_dev, 0_c_intptr_t, &
-                                          tmp1(1:nblk*nblk), &
-                                          1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+              ("elpa_invert_trm: tmp1_dev to tmp1", tmp1_dev, 0_c_intptr_t, tmp1(1:num), &
+                1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), tmp1_dev, num, &
+        successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), tmp1_dev, num*size_of_datatype, &
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_invert_trm: tmp1_dev to tmp1", successGPU)
 #endif /* WITH_GPU_STREAMS */
@@ -688,6 +641,7 @@
 
       if (useCCL) then
 #ifdef USE_CCL_INVERT
+        call obj%timer%start("ccl_bcast")
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
         
@@ -698,6 +652,7 @@
           print *,"Error in ccl_bcast"
           stop 1
         endif
+        call obj%timer%stop("ccl_bcast")
 #endif /* USE_CCL_INVERT */
 
       else ! useCCL
@@ -708,16 +663,14 @@
       endif ! useCCL
 
       if (useGPU .and. .not. useCCL) then  
-        num = nblk*nblk*size_of_datatype
+        num = nblk*(nblk+1)/2
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
-
         call gpu_memcpy_async_and_stream_synchronize &
-          ("elpa_invert_trm: tmp1 to tmp1_dev", tmp1_dev, 0_c_intptr_t, &
-                                          tmp1(1:nblk*nblk), &
-                                          1, num, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
+              ("elpa_invert_trm: tmp1 to tmp1_dev", tmp1_dev, 0_c_intptr_t, tmp1(1:num), &
+                1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num, &
+        successGPU = gpu_memcpy(tmp1_dev, int(loc(tmp1),kind=c_intptr_t), num*size_of_datatype, &
                               gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_invert_trm: tmp1 to tmp1_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
@@ -802,16 +755,16 @@
 
 #ifdef WITH_MPI
       if (useGPU .and. .not. useCCL) then
-        num = l_rows*nblk*size_of_datatype
+        num = l_rows*nblk
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
 
         call gpu_memcpy_async_and_stream_synchronize &
           ("elpa_invert_trm: tmat1_dev to tmat1", tmat1_dev, 0_c_intptr_t, &
                                           tmat1(1:l_rows,1:nblk), &
-                                          1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+                                          1, 1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(int(loc(tmat1),kind=c_intptr_t), tmat1_dev, num, &
+        successGPU = gpu_memcpy(int(loc(tmat1),kind=c_intptr_t), tmat1_dev, num*size_of_datatype, &
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_invert_trm: tmat1_dev to tmat1", successGPU)
 #endif /* WITH_GPU_STREAMS */
@@ -840,6 +793,7 @@
 
       if (useCCL) then
 #ifdef USE_CCL_INVERT
+        call obj%timer%start("ccl_bcast")
 #ifdef WITH_NVTX
         call nvtxRangePush("ccl_bcast_group tmat1_dev")
 #endif
@@ -871,6 +825,7 @@
 #ifdef WITH_NVTX
         call nvtxRangePop() ! ccl_bcast_group tmat1_dev
 #endif
+        call obj%timer%stop("ccl_bcast")
 #endif /* USE_CCL_INVERT */
       else ! useCCL
 
@@ -894,16 +849,15 @@
 
       if (useGPU .and. .not. useCCL) then
         ! cuda aware MPI here
-        num = l_rows*nblk*size_of_datatype
+        num = l_rows*nblk
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
 
         call gpu_memcpy_async_and_stream_synchronize &
-          ("elpa_invert_trm: tmat1 to tmat1_dev", tmat1_dev, 0_c_intptr_t, &
-                                          tmat1(1:l_rows,1:nblk), &
-                                          1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
+            ("elpa_invert_trm: tmat1 to tmat1_dev", tmat1_dev, 0_c_intptr_t, tmat1(1:l_rows,1:nblk), &
+              1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(tmat1_dev, int(loc(tmat1),kind=c_intptr_t), num, &
+        successGPU = gpu_memcpy(tmat1_dev, int(loc(tmat1),kind=c_intptr_t), num*size_of_datatype, &
                               gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_invert_trm: tmat1 to tmat1_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
@@ -934,16 +888,15 @@
     if (l_cols-l_col1+1 > 0) then
 
       if (useGPU .and. .not. useCCL) then
-        num = nblk*l_cols*size_of_datatype
+        num = nblk*l_cols
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
 
         call gpu_memcpy_async_and_stream_synchronize &
-          ("elpa_invert_trm: tmat2_dev to tmat2", tmat2_dev, 0_c_intptr_t, &
-                                          tmat2(1:nblk,1:l_cols), &
-                                          1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+            ("elpa_invert_trm: tmat2_dev to tmat2", tmat2_dev, 0_c_intptr_t, tmat2(1:nblk,1:l_cols), &
+              1, 1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(int(loc(tmat2),kind=c_intptr_t), tmat2_dev, num, &
+        successGPU = gpu_memcpy(int(loc(tmat2),kind=c_intptr_t), tmat2_dev, num*size_of_datatype, &
                               gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_invert_trm: tmat2_dev to tmat2", successGPU)
 #endif /* WITH_GPU_STREAMS */
@@ -951,6 +904,7 @@
 
       if (useCCL) then
 #ifdef USE_CCL_INVERT
+        call obj%timer%start("ccl_bcast")
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
         offset = (1-1 + nblk*(l_col1-1)) * size_of_datatype
@@ -962,6 +916,7 @@
           print *,"Error in ccl_bcast"
           stop 1
         endif
+        call obj%timer%stop("ccl_bcast")
 #endif /* USE_CCL_INVERT */
       else ! useCCL
 
@@ -973,16 +928,15 @@
       endif ! useCCL
 
       if (useGPU .and. .not. useCCL) then
-        num = nblk*l_cols*size_of_datatype
+        num = nblk*l_cols
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
 
         call gpu_memcpy_async_and_stream_synchronize &
-          ("elpa_invert_trm: tmat2 to tmat2_dev", tmat2_dev, 0_c_intptr_t, &
-                                          tmat2(1:nblk,1:l_cols), &
-                                          1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
+            ("elpa_invert_trm: tmat2 to tmat2_dev", tmat2_dev, 0_c_intptr_t, tmat2(1:nblk,1:l_cols), &
+              1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(tmat2_dev, int(loc(tmat2),kind=c_intptr_t), num, &
+        successGPU = gpu_memcpy(tmat2_dev, int(loc(tmat2),kind=c_intptr_t), num*size_of_datatype, &
                                 gpuMemcpyHostToDevice)
         check_memcpy_gpu("elpa_invert_trm: tmat2 to tmat2_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
@@ -1034,17 +988,15 @@
 #ifndef DEVICE_POINTER
   if (useGPU) then
     ! copy results back
-    num = matrixRows*matrixCols* size_of_datatype
+    num = matrixRows*matrixCols
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
-
     call gpu_memcpy_async_and_stream_synchronize &
-      ("elpa_invert_trm: a to a_dev", a_dev, 0_c_intptr_t, &
-                                      a(1:matrixRows,1:matrixCols), &
-                                      1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+          ("elpa_invert_trm: a to a_dev", a_dev, 0_c_intptr_t, a(1:matrixRows,1:matrixCols), &
+            1, 1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
-    successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev,  &
-                       matrixRows*matrixCols* size_of_datatype, gpuMemcpyDeviceToHost)
+    successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev, &
+                            num*size_of_datatype, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("elpa_invert_trm: memcpy a-> d_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
   endif ! useGPU
@@ -1102,6 +1054,10 @@
 
   deallocate(tmp1, tmp2, tmat1, tmat2, stat=istat, errmsg=errorMessage)
   check_deallocate("elpa_invert_trm: tmp1, tmp2, tmat1, tmat2", istat, errorMessage)
+
+#ifdef WITH_NVTX
+  call nvtxRangePop() ! invert_trm
+#endif
 
   call obj%timer%stop("elpa_invert_trm_&
   &MATH_DATATYPE&
