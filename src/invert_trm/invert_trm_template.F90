@@ -197,6 +197,20 @@
     gpuString = ""
   endif
 
+  if (useGPU) then
+    call obj%timer%start("check_for_gpu")
+    if (check_for_gpu(obj, myid, numGPU, .TRUE.)) then
+       ! set the neccessary parameters       
+      call set_gpu_parameters()
+    else
+      print *,"ELPA_INVERT_TRM: GPUs are requested but not detected! Aborting..."
+      success = .false.
+      return
+    endif
+    call obj%timer%stop("check_for_gpu")
+  else ! useGPU
+  endif ! useGPU
+  
   useCCL = .false.
 #if defined(USE_CCL_INVERT)
   if (useGPU) then
@@ -292,20 +306,6 @@
 
   l_rows = local_index(na, my_prow, np_rows, nblk, -1) ! Local rows of a
   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a
-
-  if (useGPU) then
-    call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(obj, myid, numGPU, .TRUE.)) then
-       ! set the neccessary parameters       
-      call set_gpu_parameters()
-    else
-      print *,"ELPA_INVERT_TRM: GPUs are requested but not detected! Aborting..."
-      success = .false.
-      return
-    endif
-    call obj%timer%stop("check_for_gpu")
-  else ! useGPU
-  endif ! useGPU
 
   if (useGPU) then
     successGPU = gpu_malloc(tmp1_dev, nblk*nblk*size_of_datatype)
