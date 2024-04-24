@@ -284,56 +284,11 @@
     successGPU = gpu_malloc(tmp2_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmp2_dev", successGPU)
 
-! #ifdef WITH_GPU_STREAMS ! PETERDEBUG: cleanup
-!     my_stream = obj%gpu_setup%my_stream
-!     successGPU = gpu_stream_synchronize(my_stream)
-!     check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-
-!     successGPU = gpu_memset_async(tmp2_dev, 0, nblk*nblk*size_of_datatype, my_stream)
-!     check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
-
-!     successGPU = gpu_stream_synchronize(my_stream)
-!     check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-! #else
-!     successGPU = gpu_memset(tmp2_dev, 0, nblk*nblk*size_of_datatype)
-!     check_memcpy_gpu("elpa_invert_trm: memset tmp2_dev", successGPU)
-! #endif
-
     successGPU = gpu_malloc(tmat1_dev, l_rows*nblk*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmat1_dev", successGPU)
 
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-
-    successGPU = gpu_memset_async(tmat1_dev, 0, l_rows*nblk*size_of_datatype, my_stream)
-    check_memcpy_gpu("elpa_invert_trm: memset tmat1_dev", successGPU)
-
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-#else
-    successGPU = gpu_memset(tmat1_dev, 0, l_rows*nblk*size_of_datatype)
-    check_memcpy_gpu("elpa_invert_trm: memset tmat1_dev", successGPU)
-#endif
-
     successGPU = gpu_malloc(tmat2_dev, nblk*l_cols*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmat2_dev", successGPU)
-
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-
-    successGPU = gpu_memset_async(tmat2_dev, 0, nblk*l_cols*size_of_datatype, my_stream)
-    check_memcpy_gpu("elpa_invert_trm: memset tmat2_dev", successGPU)
-
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_invert_trm: memset", successGPU)
-#else
-    successGPU = gpu_memset(tmat2_dev, 0, nblk*l_cols*size_of_datatype)
-    check_memcpy_gpu("elpa_invert_trm: memset tmat2_dev", successGPU)
-#endif
 
 #ifndef DEVICE_POINTER
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols*size_of_datatype)
@@ -390,16 +345,6 @@
   call nvtxRangePop() ! allocate tmp1, tmp2, tmat1, tmat2
 #endif
 
-#ifdef WITH_NVTX
-  call nvtxRangePush("set to zero: tmp1, tmp2, tmat1, tmat2")
-#endif
-  !tmp1 = 0 ! PETERDEBUG: cleanup
-  !tmp2 = 0
-  tmat1 = 0
-  tmat2 = 0
-#ifdef WITH_NVTX
-  call nvtxRangePop() ! set to zero: tmp1, tmp2, tmat1, tmat2
-#endif
 
 #ifdef WITH_GPU_STREAMS
   if (useGPU) then
@@ -833,7 +778,7 @@
         call nvtxRangePush("MPI_Bcast tmat1_dev")
 #endif
         call obj%timer%start("mpi_communication")
-        ! do i=1,nb ! PETERDEBUG: cleanup
+        ! do i=1,nb
         !   call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
         !                  int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
         !                  int(mpi_comm_cols,kind=MPI_KIND), mpierr)
