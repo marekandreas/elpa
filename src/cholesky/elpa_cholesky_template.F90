@@ -628,7 +628,7 @@
           my_stream = obj%gpu_setup%my_stream
 
           call gpu_memcpy_async_and_stream_synchronize &
-          ("elpa_cholesky: a_tmp to a_dev", a_dev, 0_c_intptr_t, &
+          ("elpa_cholesky: a_dev to a_tmp", a_dev, 0_c_intptr_t, &
                                           a_tmp(1:obj%local_nrows,1:obj%local_ncols), &
                                           1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else /* WITH_GPU_STREAMS */
@@ -1348,7 +1348,7 @@
 
   call obj%timer%stop("loop2")
 
-  call obj%timer%start("copy1")
+  call obj%timer%start("memcpy")
 #ifndef DEVICE_POINTER
   if (useGPU) then
     num = matrixRows*matrixCols
@@ -1364,7 +1364,7 @@
   endif
 #else /* DEVICE_POINTER */
 #endif /* DEVICE_POINTER */
-    call obj%timer%stop("copy1")
+    call obj%timer%stop("memcpy")
 
   call obj%timer%start("cleanup")
 #ifndef DEVICE_POINTER
