@@ -142,17 +142,13 @@ subroutine elpa_transform_generalized_&
   if(error .NE. ELPA_OK) return
 
   if (.not. is_already_decomposed) then
-#ifdef WITH_NVTX
-    call nvtxRangePush("cholesky: B = U^T*U, B <- U")
-#endif
+
     ! B = U^T*U, B <- U
     call self%elpa_cholesky_a_h_a_&
         &ELPA_IMPL_SUFFIX&
         &(b, error)
     if(error .NE. ELPA_OK) return
-#ifdef WITH_NVTX
-    call nvtxRangePop()
-#endif
+
 
     ! B <- inv(U)
     call self%elpa_invert_trm_a_h_a_&
