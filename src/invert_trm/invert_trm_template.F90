@@ -780,7 +780,7 @@
       else ! useCCL
 
 #ifdef WITH_NVTX
-        call nvtxRangePush("MPI_Bcast tmat1_dev")
+        call nvtxRangePush("MPI_Bcast tmat1")
 #endif
         call obj%timer%start("mpi_communication")
         ! do i=1,nb
@@ -793,7 +793,7 @@
                   int(mpi_comm_cols,kind=MPI_KIND), mpierr)
         call obj%timer%stop("mpi_communication")
 #ifdef WITH_NVTX
-        call nvtxRangePop() ! MPI_Bcast tmat1_dev
+        call nvtxRangePop() ! MPI_Bcast tmat1
 #endif
       endif ! useCCL
 
