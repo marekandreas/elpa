@@ -353,65 +353,17 @@
     check_memcpy_gpu("elpa_cholesky: memset info_abs_accumulated_dev", successGPU)
 #endif
 
-    successGPU = gpu_malloc(tmp1_dev, nblk*nblk*size_of_datatype)
+    successGPU = gpu_malloc(tmp1_dev, nblk*(nblk+1)/2*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmp1_dev", successGPU)
-
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_memset_async(tmp1_dev, 0, nblk*nblk*size_of_datatype, my_stream)
-    check_memcpy_gpu("elpa_cholesky: memset tmp1_dev", successGPU)
-
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_cholesky: memset", successGPU)
-#else
-    successGPU = gpu_memset(tmp1_dev, 0, nblk*nblk*size_of_datatype)
-    check_memcpy_gpu("elpa_cholesky: memset tmp1_dev", successGPU)
-#endif
 
     successGPU = gpu_malloc(tmp2_dev, nblk*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmp2_dev", successGPU)
 
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_memset_async(tmp2_dev, 0, nblk*nblk*size_of_datatype, my_stream)
-    check_memcpy_gpu("elpa_cholesky: memset tmp2_dev", successGPU)
-
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_cholesky: memset", successGPU)
-#else
-    successGPU = gpu_memset(tmp2_dev, 0, nblk*nblk*size_of_datatype)
-    check_memcpy_gpu("elpa_cholesky: memset tmp2_dev", successGPU)
-#endif
-
     successGPU = gpu_malloc(tmatc_dev, l_cols*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmatc_dev", successGPU)
 
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_memset_async(tmatc_dev, 0, l_cols*nblk*size_of_datatype, my_stream)
-    check_memcpy_gpu("elpa_cholesky: memset tmatc_dev", successGPU)
-
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_cholesky: memset", successGPU)
-#else
-    successGPU = gpu_memset(tmatc_dev, 0, l_cols*nblk*size_of_datatype)
-    check_memcpy_gpu("elpa_cholesky: memset tmatc_dev", successGPU)
-#endif
-
     successGPU = gpu_malloc(tmatr_dev, l_rows*nblk*size_of_datatype)
     check_alloc_gpu("elpa_cholesky: tmatr_dev", successGPU)
-
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_memset_async(tmatr_dev, 0, l_rows*nblk*size_of_datatype, my_stream)
-    check_memcpy_gpu("elpa_cholesky: memset tmatr_dev", successGPU)
-
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_cholesky: memset", successGPU)
-#else
-    successGPU = gpu_memset(tmatr_dev, 0, l_rows*nblk*size_of_datatype)
-    check_memcpy_gpu("elpa_cholesky: memset tmatr_dev", successGPU)
-#endif
 
 #ifndef DEVICE_POINTER
     successGPU = gpu_malloc(a_dev, matrixRows*matrixCols*size_of_datatype)
@@ -479,23 +431,11 @@
   call nvtxRangePop() ! allocate tmp1, tmp2, tmatr, tmatc
 #endif
 
-#ifdef WITH_NVTX
-  call nvtxRangePush("set to zero: tmp1, tmp2, tmat1, tmat2")
-#endif
-
-  tmp1 = 0
-  tmp2 = 0
-  tmatr = 0
-  tmatc = 0
-
-#ifdef WITH_NVTX
-  call nvtxRangePop() ! set to zero: tmp1, tmp2, tmat1, tmat2
-#endif
 
 #ifdef WITH_GPU_STREAMS
   if (useGPU) then
     successGPU = gpu_host_register(int(loc(tmp1),kind=c_intptr_t), &
-                    nblk*nblk * size_of_datatype, gpuHostRegisterDefault)
+                    nblk*(nblk+1)/2 * size_of_datatype, gpuHostRegisterDefault)
     check_host_register_gpu("elpa_cholesky: tmp1", successGPU)
 
     successGPU = gpu_host_register(int(loc(tmp2),kind=c_intptr_t), &
@@ -879,7 +819,7 @@
 
 #ifdef WITH_MPI
       if (useGPU .and. .not. useCCL) then
-        num = nblk*nblk
+        num = nblk*(nblk+1)/2
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -926,7 +866,7 @@
       endif ! useCCL
 
       if (useGPU .and. .not. useCCL) then
-        num = nblk*nblk
+        num = nblk*(nblk+1)/2
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
