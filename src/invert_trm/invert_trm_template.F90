@@ -143,12 +143,12 @@
   integer(kind=c_intptr_t)                   :: gpublasHandle, gpusolverHandle, my_stream
   integer(kind=c_int)                        :: gpu_invert_trm
 
+  logical                                    :: useCCL
 #if defined(USE_CCL_INVERT)
   integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols, offset
   integer(kind=c_int)                        :: cclDataType
   integer(kind=ik)                           :: k_datatype
 #endif
-  logical                                    :: useCCL
 
 #ifdef WITH_NVTX
   call nvtxRangePush("invert_trm")
@@ -156,7 +156,8 @@
 
   success = .true.
   useGPU = .false.
-  
+  useCCL = .false.
+
 #if !defined(DEVICE_POINTER)
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -215,7 +216,6 @@
   else ! useGPU
   endif ! useGPU
 
-  useCCL = .false.
 #if defined(USE_CCL_INVERT)
   if (useGPU) then
     useCCL = .true.
@@ -592,11 +592,13 @@
         
         successGPU = ccl_bcast(tmp1_dev, tmp1_dev, k_datatype*int(nb*(nb+1)/2,kind=c_size_t), &
                                cclDataType, int(pcol(n, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
-
         if (.not. successGPU) then
           print *,"Error in ccl_bcast"
           stop 1
         endif
+
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: ccl_bcast", successGPU)
         call obj%timer%stop("ccl_bcast")
 #endif /* USE_CCL_INVERT */
 
@@ -767,6 +769,9 @@
           print *, "Error in setting up ccl_group_end!"
           stop 1
         endif
+
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: ccl_bcast", successGPU)
 #ifdef WITH_NVTX
         call nvtxRangePop() ! ccl_bcast_group tmat1_dev
 #endif
@@ -856,11 +861,13 @@
 
         successGPU = ccl_bcast(tmat2_dev+offset, tmat2_dev+offset, int(k_datatype*(l_cols-l_col1+1)*nblk,kind=c_size_t), &
                                cclDataType, int(prow(n, nblk, np_rows),kind=c_int), ccl_comm_rows, my_stream)
-
         if (.not. successGPU) then
           print *,"Error in ccl_bcast"
           stop 1
         endif
+
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_invert_trm: ccl_bcast", successGPU)
         call obj%timer%stop("ccl_bcast")
 #endif /* USE_CCL_INVERT */
       else ! useCCL
