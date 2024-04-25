@@ -119,10 +119,10 @@ __device__ void atomicAdd(T* address, T val) {
     atomicAdd(&(address->y), val.y);
 }
 
-__device__ double elpaDeviceComplexConjugate(double number) {return number;}
-__device__ float elpaDeviceComplexConjugate(float  number) {return number;}
-__device__ cuDoubleComplex elpaDeviceComplexConjugate(cuDoubleComplex number) {number.y = -number.y; return number;}
-__device__ cuComplex elpaDeviceComplexConjugate(cuComplex number) {number.y = -number.y; return number;}
+__forceinline__ __device__ double elpaDeviceComplexConjugate(double number) {return number;}
+__forceinline__ __device__ float elpaDeviceComplexConjugate(float  number) {return number;}
+__forceinline__ __device__ cuDoubleComplex elpaDeviceComplexConjugate(cuDoubleComplex number) {number.y = -number.y; return number;}
+__forceinline__ __device__ cuComplex elpaDeviceComplexConjugate(cuComplex number) {number.y = -number.y; return number;}
 
 __device__ double elpaDeviceRealPart(double number) {return number;}
 __device__ float  elpaDeviceRealPart(float  number) {return number;}
