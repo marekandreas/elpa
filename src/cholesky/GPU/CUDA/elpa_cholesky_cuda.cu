@@ -59,7 +59,32 @@
 #include <assert.h>
 #include "config-f90.h"
 
+#define MAX_THREADS_PER_BLOCK 1024
+
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
+
+// construct a generic /float/cuDoubleComplex/cuFloatComplex from a double
+// template <typename T> __device__ T elpaDeviceNumber(double number);
+// template <> __device__ double elpaDeviceNumber<double>(double number) {return number;}
+// template <> __device__ float  elpaDeviceNumber<float> (double number) {return (float) number;}
+// template <> __device__ cuDoubleComplex elpaDeviceNumber<cuDoubleComplex>(double number) { return make_cuDoubleComplex(number , 0.0 );}
+// template <> __device__ cuComplex       elpaDeviceNumber<cuComplex>      (double number) { return make_cuFloatComplex ((float) number, 0.0f);}
+
+
+// construct a generic /float/cuDoubleComplex/cuFloatComplex from a double
+// template <typename T>  __device__ T elpaDeviceNumber2(double number);
+// template <typename T>  __device__ double elpaDeviceNumber2<double>(double number) {return number;}
+// template <typename T>  __device__ float  elpaDeviceNumber2<float> (double number) {return (float) number;}
+// template <typename T>  __device__ cuDoubleComplex elpaDeviceNumber2<cuDoubleComplex>(double number) { return make_cuDoubleComplex(number , 0.0 );}
+// template <typename T>  __device__ cuComplex       elpaDeviceNumber2<cuComplex>      (double number) { return make_cuFloatComplex ((float) number, 0.0f);}
+
+// PETERDEBUG -- is it possible to inline this?
+template <typename T>  __device__ T elpaDeviceNumber2(double number);
+template <>  __device__ double elpaDeviceNumber2<double>(double number) {return number;}
+template <>  __device__ float  elpaDeviceNumber2<float> (double number) {return (float) number;}
+template <>  __device__ cuDoubleComplex elpaDeviceNumber2<cuDoubleComplex>(double number) { return make_cuDoubleComplex(number , 0.0 );}
+template <>  __device__ cuComplex       elpaDeviceNumber2<cuComplex>      (double number) { return make_cuFloatComplex ((float) number, 0.0f);}
+
 
 __forceinline__ __device__ double elpaDeviceComplexConjugate(double number) {return number;}
 __forceinline__ __device__ float elpaDeviceComplexConjugate(float  number) {return number;}
@@ -167,3 +192,110 @@ extern "C" void cuda_copy_float_complex_a_tmatc_FromC(cuFloatComplex *a_dev, cuF
 }
 
 //________________________________________________________________
+
+
+__forceinline__ __device__ int pcol(int I_gl, int nblk, int np_cols){
+  // C-style 0-based indexing in assumed
+  return (I_gl/nblk)%np_cols;
+}
+
+__forceinline__ __device__ int local_index(int I_gl, int my_proc, int num_procs, int nblk){
+
+//  local_index: returns the local index for a given global index
+//               If the global index has no local index on the
+//               processor my_proc, return next local index after that row/col
+//               C-style 0-based indexing in assumed
+//  Parameters
+//
+//  I_gl        Global index
+//  my_proc     Processor row/column for which to calculate the local index
+//  num_procs   Total number of processors along row/column
+//  nblk        Blocksize
+//
+// Behavior corresponds to Fortran's local_index() with iflag> 0 : Return next local index after that row/col
+//
+// L_block_gl = I_gl/nblk; // global ordinal number of the nblk-block among other blocks
+// l_block_loc = L_block_gl/num_procs =  I_gl/(num_procs*nblk); // local ordinal number of the nblk-block among other blocks
+// x = I_gl%nblk; // local coordinate within the block
+// local_index = l_block*nblk + x;
+
+  if ((I_gl/nblk)%num_procs == my_proc) // (L_block_gl%num_procs == my_proc), block is local
+    {
+    return I_gl/(num_procs*nblk)* nblk + I_gl%nblk; // local_index = l_block_loc * nblk + x
+    }
+  else if ((I_gl/nblk)%num_procs < my_proc) // block is non-local
+    {
+    return I_gl/(num_procs*nblk)* nblk;
+    }
+  else // ((I_gl/nblk)%num_procs > my_proc)
+    {
+    return (I_gl/(num_procs*nblk) + 1)* nblk;
+    }
+}
+
+
+template <typename T>
+__global__ void cuda_set_a_lower_to_zero_kernel (T *a_dev, int na, int matrixRows, int my_pcol, int np_cols, int my_prow, int np_rows, int nblk) {
+
+  int J_gl_0 = blockIdx.x; // 0..nblk-1
+  int di_loc_0 = threadIdx.x; // 0..MAX_THREADS_PER_BLOCK-1
+
+  T Zero = elpaDeviceNumber2<T>(0.0);
+
+  for (int J_gl = J_gl_0; J_gl < na; J_gl += gridDim.x)
+    {
+    if (my_pcol == pcol(J_gl, nblk, np_cols))
+      {
+      // Calculate local column and row indices of the first element below the diagonal (that has to be set to zero)
+      int l_col1 = local_index(J_gl  , my_pcol, np_cols, nblk);
+      int l_row1 = local_index(J_gl+1, my_prow, np_rows, nblk); // I_gl = J_gl + 1
+
+      // Calculate the offset and number of elements to zero out
+      //int offset = l_row1 + matrixRows*l_col1;
+      //int num = (matrixRows - l_row1);
+
+      // Set to zero in the GPU memory
+      for (int di_loc=di_loc_0; di_loc < (matrixRows-l_row1); di_loc += blockDim.x) a_dev[(l_row1+di_loc) + matrixRows*l_col1] = Zero;
+      }
+    }
+}
+
+template <typename T>
+void cuda_set_a_lower_to_zero(T *a_dev, int *na_in, int *matrixRows_in, int *my_pcol_in, int *np_cols_in, int *my_prow_in, int *np_rows_in, int *nblk_in, int *wantDebug_in, cudaStream_t my_stream){
+  int na = *na_in;
+  int matrixRows = *matrixRows_in;
+  int my_pcol = *my_pcol_in;
+  int np_cols = *np_cols_in;
+  int my_prow = *my_prow_in;
+  int np_rows = *np_rows_in;
+  int nblk = *nblk_in;
+  int wantDebug = *wantDebug_in;
+
+  dim3 blocks = dim3(nblk,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_set_a_lower_to_zero_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk);
+#else
+  cuda_set_a_lower_to_zero_kernel<<<blocks,threadsPerBlock>>>(a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk);
+#endif
+
+  if (wantDebug)
+    {
+    cudaDeviceSynchronize();
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing set_a_lower_to_zero_kernel: %s\n",cudaGetErrorString(cuerr));
+    }
+  }
+}
+
+extern "C" void cuda_set_a_lower_to_zero_FromC(char dataType, intptr_t a_dev, int *na_in, int *matrixRows_in, 
+                                                      int *my_pcol_in, int *np_cols_in, int *my_prow_in, int *np_rows_in, 
+                                                      int *nblk_in, int *wantDebug_in, cudaStream_t my_stream){
+
+  if (dataType=='D') cuda_set_a_lower_to_zero<double>((double *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);
+  if (dataType=='S') cuda_set_a_lower_to_zero<float> ((float *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);
+  if (dataType=='Z') cuda_set_a_lower_to_zero<cuDoubleComplex>((cuDoubleComplex *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);
+  if (dataType=='C') cuda_set_a_lower_to_zero<cuFloatComplex> ((cuFloatComplex *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);
+}
