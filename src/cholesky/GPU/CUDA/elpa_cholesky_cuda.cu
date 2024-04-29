@@ -91,6 +91,45 @@ __forceinline__ __device__ float elpaDeviceComplexConjugate(float  number) {retu
 __forceinline__ __device__ cuDoubleComplex elpaDeviceComplexConjugate(cuDoubleComplex number) {number.y = -number.y; return number;}
 __forceinline__ __device__ cuFloatComplex elpaDeviceComplexConjugate(cuFloatComplex number) {number.y = -number.y; return number;}
 
+__forceinline__ __device__ int pcol(int I_gl, int nblk, int np_cols){
+  // C-style 0-based indexing in assumed
+  return (I_gl/nblk)%np_cols;
+}
+
+__forceinline__ __device__ int local_index(int I_gl, int my_proc, int num_procs, int nblk){
+
+//  local_index: returns the local index for a given global index
+//               If the global index has no local index on the
+//               processor my_proc, return next local index after that row/col
+//               C-style 0-based indexing in assumed
+//  Parameters
+//
+//  I_gl        Global index
+//  my_proc     Processor row/column for which to calculate the local index
+//  num_procs   Total number of processors along row/column
+//  nblk        Blocksize
+//
+// Behavior corresponds to Fortran's local_index() with iflag> 0 : Return next local index after that row/col
+//
+// L_block_gl = I_gl/nblk; // global ordinal number of the nblk-block among other blocks
+// l_block_loc = L_block_gl/num_procs =  I_gl/(num_procs*nblk); // local ordinal number of the nblk-block among other blocks
+// x = I_gl%nblk; // local coordinate within the block
+// local_index = l_block*nblk + x;
+
+  if ((I_gl/nblk)%num_procs == my_proc) // (L_block_gl%num_procs == my_proc), block is local
+    {
+    return I_gl/(num_procs*nblk)* nblk + I_gl%nblk; // local_index = l_block_loc * nblk + x
+    }
+  else if ((I_gl/nblk)%num_procs < my_proc) // block is non-local
+    {
+    return I_gl/(num_procs*nblk)* nblk;
+    }
+  else // ((I_gl/nblk)%num_procs > my_proc)
+    {
+    return (I_gl/(num_procs*nblk) + 1)* nblk;
+    }
+}
+
 //________________________________________________________________
 
 __global__ void cuda_check_device_info_kernel(int *info_dev){
@@ -192,46 +231,6 @@ extern "C" void cuda_copy_float_complex_a_tmatc_FromC(cuFloatComplex *a_dev, cuF
 }
 
 //________________________________________________________________
-
-
-__forceinline__ __device__ int pcol(int I_gl, int nblk, int np_cols){
-  // C-style 0-based indexing in assumed
-  return (I_gl/nblk)%np_cols;
-}
-
-__forceinline__ __device__ int local_index(int I_gl, int my_proc, int num_procs, int nblk){
-
-//  local_index: returns the local index for a given global index
-//               If the global index has no local index on the
-//               processor my_proc, return next local index after that row/col
-//               C-style 0-based indexing in assumed
-//  Parameters
-//
-//  I_gl        Global index
-//  my_proc     Processor row/column for which to calculate the local index
-//  num_procs   Total number of processors along row/column
-//  nblk        Blocksize
-//
-// Behavior corresponds to Fortran's local_index() with iflag> 0 : Return next local index after that row/col
-//
-// L_block_gl = I_gl/nblk; // global ordinal number of the nblk-block among other blocks
-// l_block_loc = L_block_gl/num_procs =  I_gl/(num_procs*nblk); // local ordinal number of the nblk-block among other blocks
-// x = I_gl%nblk; // local coordinate within the block
-// local_index = l_block*nblk + x;
-
-  if ((I_gl/nblk)%num_procs == my_proc) // (L_block_gl%num_procs == my_proc), block is local
-    {
-    return I_gl/(num_procs*nblk)* nblk + I_gl%nblk; // local_index = l_block_loc * nblk + x
-    }
-  else if ((I_gl/nblk)%num_procs < my_proc) // block is non-local
-    {
-    return I_gl/(num_procs*nblk)* nblk;
-    }
-  else // ((I_gl/nblk)%num_procs > my_proc)
-    {
-    return (I_gl/(num_procs*nblk) + 1)* nblk;
-    }
-}
 
 
 template <typename T>

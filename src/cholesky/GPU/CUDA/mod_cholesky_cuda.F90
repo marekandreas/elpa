@@ -138,6 +138,7 @@ module cholesky_cuda
     end subroutine
   end interface
 
+
   contains
 
     subroutine cuda_check_device_info(info_dev, my_stream)
