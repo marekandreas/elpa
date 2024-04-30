@@ -345,6 +345,9 @@
   call nvtxRangePop() ! allocate tmp1, tmp2, tmat1, tmat2
 #endif
 
+  if (.not. useGPU) then
+    tmp2 = 0
+  endif
 
 #ifdef WITH_GPU_STREAMS
   if (useGPU) then
