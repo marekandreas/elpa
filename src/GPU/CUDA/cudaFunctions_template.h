@@ -107,7 +107,7 @@ extern "C" {
         // https://docs.nvidia.com/cuda/archive//11.8.0/cuda-toolkit-release-notes/index.html
         // https://docs.nvidia.com/cuda/archive//12.3.1/cuda-toolkit-release-notes/index.html
         // Heuristics caching for the repeated CUBLAS operations was introduced in CUDA 11.8.0 and improved in CUDA 12.3.1
-        // Between these versions, the caching signigicantly decreases the performance of cublas Gemm, Gemv
+        // Between these versions, the caching significantly decreases the performance of cublas Gemm, Gemv
         // so we switch the caching off for these versions
 #if defined(CUBLAS_VERSION) && CUBLAS_VERSION >= 111103
         cublasLtHeuristicsCacheSetCapacity(0);
