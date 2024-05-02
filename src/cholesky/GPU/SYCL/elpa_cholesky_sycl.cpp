@@ -54,68 +54,70 @@
 #include <time.h>
 #include <alloca.h>
 #include <stdint.h>
-#include "config-f90.h"
 #include <complex>
 #include <type_traits>
+#include "config-f90.h"
 
 #include <CL/sycl.hpp>
 #include "src/GPU/SYCL/syclCommon.hpp"
+
+#include "../../../GPU/common_device_functions.h"
 
 #define MAX_THREADS_PER_BLOCK 1024
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 // PETERDEBUG -- is it possible to inline this?
-template <typename T>  T elpaDeviceNumber2(double number);
-template <>  double elpaDeviceNumber2<double>(double number) {return number;}
-template <>  float  elpaDeviceNumber2<float> (double number) {return (float) number;}
-template <> std::complex<double> elpaDeviceNumber2<std::complex<double>>(double number) {return std::complex<double>(number, 0.0);}
-template <> std::complex<float>  elpaDeviceNumber2<std::complex<float>> (double number) {return std::complex<float>((float)number, 0.0f);}
+// template <typename T>  T elpaDeviceNumber2(double number);
+// template <>  double elpaDeviceNumber2<double>(double number) {return number;}
+// template <>  float  elpaDeviceNumber2<float> (double number) {return (float) number;}
+// template <> std::complex<double> elpaDeviceNumber2<std::complex<double>>(double number) {return std::complex<double>(number, 0.0);}
+// template <> std::complex<float>  elpaDeviceNumber2<std::complex<float>> (double number) {return std::complex<float>((float)number, 0.0f);}
 
-inline double elpaDeviceComplexConjugate(double number) {return number;}
-inline float elpaDeviceComplexConjugate(float  number) {return number;}
-inline std::complex<double> elpaDeviceComplexConjugate(std::complex<double> number) {return std::conj(number);}
-inline std::complex<float>  elpaDeviceComplexConjugate(std::complex<float> number)  {return std::conj(number);}
+// inline double elpaDeviceComplexConjugate(double number) {return number;}
+// inline float elpaDeviceComplexConjugate(float  number) {return number;}
+// inline std::complex<double> elpaDeviceComplexConjugate(std::complex<double> number) {return std::conj(number);}
+// inline std::complex<float>  elpaDeviceComplexConjugate(std::complex<float> number)  {return std::conj(number);}
 
-inline int pcol(int I_gl, int nblk, int np_cols) {
-  // C-style 0-based indexing in assumed
-  return (I_gl/nblk)%np_cols;
-}
+// inline int pcol(int I_gl, int nblk, int np_cols) {
+//   // C-style 0-based indexing in assumed
+//   return (I_gl/nblk)%np_cols;
+// }
 
-inline int local_index(int I_gl, int my_proc, int num_procs,
-                                int nblk) {
+// inline int local_index(int I_gl, int my_proc, int num_procs,
+//                                 int nblk) {
 
-//  local_index: returns the local index for a given global index
-//               If the global index has no local index on the
-//               processor my_proc, return next local index after that row/col
-//               C-style 0-based indexing in assumed
-//  Parameters
-//
-//  I_gl        Global index
-//  my_proc     Processor row/column for which to calculate the local index
-//  num_procs   Total number of processors along row/column
-//  nblk        Blocksize
-//
-// Behavior corresponds to Fortran's local_index() with iflag> 0 : Return next local index after that row/col
-//
-// L_block_gl = I_gl/nblk; // global ordinal number of the nblk-block among other blocks
-// l_block_loc = L_block_gl/num_procs =  I_gl/(num_procs*nblk); // local ordinal number of the nblk-block among other blocks
-// x = I_gl%nblk; // local coordinate within the block
-// local_index = l_block*nblk + x;
+// //  local_index: returns the local index for a given global index
+// //               If the global index has no local index on the
+// //               processor my_proc, return next local index after that row/col
+// //               C-style 0-based indexing in assumed
+// //  Parameters
+// //
+// //  I_gl        Global index
+// //  my_proc     Processor row/column for which to calculate the local index
+// //  num_procs   Total number of processors along row/column
+// //  nblk        Blocksize
+// //
+// // Behavior corresponds to Fortran's local_index() with iflag> 0 : Return next local index after that row/col
+// //
+// // L_block_gl = I_gl/nblk; // global ordinal number of the nblk-block among other blocks
+// // l_block_loc = L_block_gl/num_procs =  I_gl/(num_procs*nblk); // local ordinal number of the nblk-block among other blocks
+// // x = I_gl%nblk; // local coordinate within the block
+// // local_index = l_block*nblk + x;
 
-  if ((I_gl/nblk)%num_procs == my_proc) // (L_block_gl%num_procs == my_proc), block is local
-    {
-    return I_gl/(num_procs*nblk)* nblk + I_gl%nblk; // local_index = l_block_loc * nblk + x
-    }
-  else if ((I_gl/nblk)%num_procs < my_proc) // block is non-local
-    {
-    return I_gl/(num_procs*nblk)* nblk;
-    }
-  else // ((I_gl/nblk)%num_procs > my_proc)
-    {
-    return (I_gl/(num_procs*nblk) + 1)* nblk;
-    }
-}
+//   if ((I_gl/nblk)%num_procs == my_proc) // (L_block_gl%num_procs == my_proc), block is local
+//     {
+//     return I_gl/(num_procs*nblk)* nblk + I_gl%nblk; // local_index = l_block_loc * nblk + x
+//     }
+//   else if ((I_gl/nblk)%num_procs < my_proc) // block is non-local
+//     {
+//     return I_gl/(num_procs*nblk)* nblk;
+//     }
+//   else // ((I_gl/nblk)%num_procs > my_proc)
+//     {
+//     return (I_gl/(num_procs*nblk) + 1)* nblk;
+//     }
+// }
 
 //________________________________________________________________
 
