@@ -142,30 +142,20 @@ subroutine elpa_transform_generalized_&
   if(error .NE. ELPA_OK) return
 
   if (.not. is_already_decomposed) then
-#ifdef WITH_NVTX
-    call nvtxRangePush("cholesky: B = U^T*U, B <- U")
-#endif
+
     ! B = U^T*U, B <- U
     call self%elpa_cholesky_a_h_a_&
         &ELPA_IMPL_SUFFIX&
         &(b, error)
     if(error .NE. ELPA_OK) return
-#ifdef WITH_NVTX
-    call nvtxRangePop()
-#endif
 
-#ifdef WITH_NVTX
-    call nvtxRangePush("invert_trm: B <- inv(U)")
-#endif
+
     ! B <- inv(U)
     call self%elpa_invert_trm_a_h_a_&
         &ELPA_IMPL_SUFFIX&
         &(b, error)
     if(error .NE. ELPA_OK) return
   end if
-#ifdef WITH_NVTX
-  call nvtxRangePop()
-#endif
 
   if (use_cannon == 1) then
     call self%get("cannon_buffer_size", BuffLevelInt, error)
@@ -175,7 +165,13 @@ subroutine elpa_transform_generalized_&
     endif
     call self%timer_start("cannons_reduction")
     ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
+#ifdef WITH_NVTX
+    call nvtxRangePush("tmp = 0")
+#endif
     tmp = 0.0_rck
+#ifdef WITH_NVTX
+    call nvtxRangePop()
+#endif
 #ifdef WITH_MPI
 #ifdef WITH_NVTX
     call nvtxRangePush("cannons_reduction")

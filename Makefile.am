@@ -1038,6 +1038,7 @@ EXTRA_DIST = \
   src/GPU/ccl_communicators_template.F90 \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
+  src/GPU/common_device_functions.h \
   src/GPU/CUDA/cuda_template.F90 \
   src/GPU/CUDA/cusolver_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \

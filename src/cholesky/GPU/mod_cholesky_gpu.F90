@@ -102,7 +102,7 @@ module cholesky_gpu
 #endif
     end subroutine
 
-    
+
     subroutine gpu_copy_double_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -179,6 +179,28 @@ module cholesky_gpu
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_complex_a_tmatc(a_dev, tmatc_dev, nblk, matrixRows, l_cols, l_colx, l_row1, my_stream)
+#endif
+    end subroutine
+
+    
+    subroutine gpu_set_a_lower_to_zero(dataType, a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, &
+                                       nblk, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_int), intent(in) :: na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk, debug
+      integer(kind=c_intptr_t)        :: a_dev
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_set_a_lower_to_zero(dataType, a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk, debug, my_stream)
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_set_a_lower_to_zero (dataType, a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk, debug, my_stream)
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_set_a_lower_to_zero(dataType, a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk, debug, my_stream)
 #endif
     end subroutine
 
