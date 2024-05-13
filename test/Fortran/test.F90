@@ -703,6 +703,7 @@ program test
      do_test_frank_eigenvalues = .false.
      do_test_toeplitz_eigenvalues = .false.
      do_test_cholesky = .false.
+     do_test_hermitian_multiply = .false.
    endif
 
 
