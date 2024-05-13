@@ -105,7 +105,7 @@
 #include "../../src/general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)   :: obj
 
-  character*1                                  :: uplo_a, uplo_c, trans_a
+  character*1                                  :: uplo_a, uplo_c, trans_a, trans_b
 
   integer(kind=ik), intent(in)                 :: ldb, ldbCols, ldc, ldcCols
   integer(kind=ik)                             :: na, ncb
@@ -136,6 +136,8 @@
   integer(kind=ik), allocatable                :: lrs_save(:), lre_save(:)
 
   logical                                      :: a_lower, a_upper, c_lower, c_upper
+  logical                                      :: a_transposed, b_transposed
+  MATH_DATATYPE(kind=rck)                      :: beta
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_mat(:,:), tmp1(:,:)
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_a_full(:,:), aux_b_full(:,:), tmp1_full(:,:), tmp2_full(:,:) ! PETERDEBUG
   MATH_DATATYPE(kind=rck), allocatable         :: aux_bc(:), tmp2(:,:)
@@ -149,13 +151,13 @@
   integer(kind=c_int)                          :: numGPU, blocking
   integer(kind=ik)                             :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=ik)                             :: nblk, matrixRows, matrixCols, error
-  integer(kind=c_intptr_t)                     :: aux_mat_dev, tmp1_dev
+  integer(kind=c_intptr_t)                     :: aux_bc_dev, aux_mat_dev, tmp1_dev, tmp2_dev
+  integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev, tmp2_full_dev ! PETERDEBUG_NEW
 !#ifndef DEVICE_POINTER
-  integer(kind=c_intptr_t)                     :: b_dev
   integer(kind=c_intptr_t)                     :: a_dev
+  integer(kind=c_intptr_t)                     :: b_dev
   integer(kind=c_intptr_t)                     :: c_dev
 !#endif
-  integer(kind=c_intptr_t)                     :: tmp2_dev, aux_bc_dev
   type(c_ptr)                                  :: aux_host, tmp1_host ! PETERDEBUG: unused - clean up
   integer(kind=c_intptr_t)                     :: num
   integer(kind=c_intptr_t)                     :: aux_off, b_off
@@ -189,6 +191,14 @@
   useGPU = .false.
 
   trans_a='N' ! PETERDEBUG: propagate it up, accept as an option
+  trans_b='N'
+
+  a_transposed = .false.
+  b_transposed = .false.
+  if (trans_a=='t' .or. trans_a=='T') a_transposed = .true.
+  if (trans_b=='t' .or. trans_b=='T') b_transposed = .true.
+  print *, "a_transposed = ", a_transposed ! PETERDEBUG
+  print *, "b_transposed = ", b_transposed
 
   call obj%get("debug", debug, error)
   if (error .ne. ELPA_OK) then
@@ -313,12 +323,6 @@
 
   l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
   l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
-
-  if (np_rows==np_cols) then
-    isSquareGrid = .true.
-  else
-    isSquareGrid = .false.
-  endif
 
   ! Block factor for matrix multiplications, must be a multiple of nblk
 
@@ -466,6 +470,17 @@
   if (uplo_c=='u' .or. uplo_c=='U') c_upper = .true.
   if (uplo_c=='l' .or. uplo_c=='L') c_lower = .true.
 
+  isSquareGrid = .true.
+  if (np_rows/=np_cols) isSquareGrid = .false.
+  if (a_upper .or. a_lower .or. c_upper .or. c_lower) isSquareGrid = .false.
+  print *, "isSquareGrid = ", isSquareGrid ! PETERDEBUG
+  print *, "a_upper = ", a_upper
+  print *, "a_lower = ", a_lower
+  print *, "c_upper = ", c_upper
+  print *, "c_lower = ", c_lower
+  print *, "np_rows = ", np_rows
+  print *, "np_cols = ", np_cols
+
 #ifdef MORE_GPU
   if (useGPU) then
 
@@ -500,6 +515,7 @@
 !______________________________________________________________________________________________
 
   if (.not. isSquareGrid .or. useGPU) then ! PETERDEBUG: delete useGPU, upon porting square grid case to GPU
+    print *, "Old codepath" ! PETERDEBUG
 
   ! main loop: build up the result matrix by processor rows
     do np = 0, np_rows-1 ! PETERDEBUG: np -> np_row_curr or np_row_c (for matrix C)
@@ -900,59 +916,136 @@
     allocate(tmp2_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_mult_at_b: tmp2_full", istat, errorMessage)
 
-    ! main loop: build up the result matrix by processor rows
-    do np = 0, np_rows-1 ! PETERDEBUG: np -> np_row_curr or np_row_c (for matrix C)
+    ! PETERDEBUG: is it possible to use the original GPU memory, without copying?
+    if (useGPU) then
+      successGPU = gpu_malloc(aux_a_full_dev, l_rows_max*l_cols_max*size_of_datatype)
+      check_alloc_gpu("elpa_mult_at_b: aux_a_full_dev", successGPU)
+
+      successGPU = gpu_malloc(aux_b_full_dev, l_rows_max*l_cols_max*size_of_datatype)
+      check_alloc_gpu("elpa_mult_at_b: aux_b_full_dev", successGPU)
+    endif
+
+!_______________________________________________
+
+    if (a_transposed .and. .not. b_transposed) then
+      print *, "elpa_mult_at_b NEW: NONSQUARE_GRID start: (.not. a_transposed .and. .not. b_transposed)" ! PETERDEBUG
+
+      ! main loop: build up the result matrix by processor rows
+      do np = 0, np_rows-1 ! PETERDEBUG: np -> np_row_curr or np_row_c (for matrix C)
 #ifdef WITH_NVTX
-      call nvtxRangePush("do np_row_curr = 0, np_rows-1")
+        call nvtxRangePush("do np_row_curr = 0, np_rows-1")
 #endif
-      print *, "np = ", np ! PETERDEBUG
+        print *, "np = ", np ! PETERDEBUG
 
-      ! In this turn, procs of row np assemble the result
+        ! In this turn, procs of row np assemble the result
+        
+        np_bc=np ! np, that posesses the given column of a
 
-      l_rows_np = local_index(na, np, np_rows, nblk, -1) ! local rows on receiving processors np_row_curr
+        if (my_pcol == np_bc) aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
+        aux_b_full(1:l_rows,1:l_cols) = b(1:l_rows,1:l_cols)
+
+        ! Broadcast processor column
+        call obj%timer%start("mpi_communication")
+#ifdef WITH_NVTX
+        call nvtxRangePush("MPI_Bcast(aux_a_full)")
+#endif
+
+        call MPI_Bcast(aux_a_full, int(l_rows_max*l_cols_max,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                      int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! MPI_Bcast(aux_a_full)
+#endif
+        call obj%timer%stop("mpi_communication")
+
+        call obj%timer%start("blas")
+
+        call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor_block,kind=BLAS_KIND), &
+                            int(l_cols_max,kind=BLAS_KIND), int(l_rows_max,kind=BLAS_KIND), ONE, &
+                            aux_a_full(1:l_rows_max,1:nstor_block), int(l_rows_max,kind=BLAS_KIND), &
+                            aux_b_full(1:l_rows_max,1:l_cols_max), int(l_rows_max,kind=BLAS_KIND), ZERO, &
+                            tmp1_full, int(nstor_block,kind=BLAS_KIND))
+
+        call obj%timer%stop("blas")
+
+        call obj%timer%start("mpi_communication")
+        call mpi_reduce(tmp1_full, tmp2_full, int(l_rows_max*l_cols_max,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
+                      MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        call obj%timer%stop("mpi_communication")
+
+        ! Put the result into C
+        if (my_prow==np) c(1:l_rows,1:l_cols) = tmp2_full(1:l_rows,1:l_cols)
+
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! do np_row_curr = 0, np_rows-1
+#endif
+      enddo ! np = 0, np_rows-1
+    endif ! (a_transposed .and. b_transposed)
+
+!_______________________________________________
+
+    if ((.not. a_transposed) .and. (.not. b_transposed)) then
+      print *, "elpa_mult_at_b NEW: NONSQUARE_GRID start: (.not. a_transposed .and. .not. b_transposed)" ! PETERDEBUG
+
+      do np = 0, np_rows-1 ! np_rows=np_cols
+#ifdef WITH_NVTX
+        call nvtxRangePush("np = 0, np_rows-1")
+#endif
+        print *, "np = ", np ! PETERDEBUG
+
+        ! In this turn, procs of row np assemble the result
+        
+        np_bc=np ! np, that posesses the given column of a
+
+        if (np_bc == my_pcol) aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
+        if (np    == my_prow) aux_b_full(1:l_rows,1:l_cols) = b(1:l_rows,1:l_cols)
+
+        ! Broadcast processor column
+        call obj%timer%start("mpi_communication")
+#ifdef WITH_NVTX
+        call nvtxRangePush("MPI_Bcast: aux_a_full, aux_b_full")
+#endif
+
+        call MPI_Bcast(aux_a_full, int(l_rows_max*l_cols_max,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                      int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+        call MPI_Bcast(aux_b_full, int(l_rows_max*l_cols_max,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                      int(np   ,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! MPI_Bcast: aux_a_full, aux_b_full
+#endif
+        call obj%timer%stop("mpi_communication")
+
+        call obj%timer%start("blas")
+        
+        beta = ZERO
+        if (np>0) beta = ONE
+        ! tmp1_full = aux_a_full*aux_b_full + beta*tmp1_full
+        call PRECISION_GEMM('N', 'N', &
+                            int(nstor_block,kind=BLAS_KIND), &
+                            int(l_cols_max,kind=BLAS_KIND), &
+                            int(l_rows_max,kind=BLAS_KIND), ONE, &
+                            aux_a_full(1:l_rows_max,1:nstor_block), int(l_rows_max,kind=BLAS_KIND), &
+                            aux_b_full(1:l_rows_max,1:l_cols_max) , int(l_rows_max,kind=BLAS_KIND), beta, &
+                            tmp1_full, int(nstor_block,kind=BLAS_KIND))
+
+        call obj%timer%stop("blas")
+
+        ! call obj%timer%start("mpi_communication")
+        ! call mpi_reduce(tmp1_full, tmp2_full, int(l_rows_max*l_cols_max,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
+        !               MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        ! call obj%timer%stop("mpi_communication")
+
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! do np_row_curr = 0, np_rows-1
+#endif
+      enddo ! np = 0, np_rows-1
       
-      np_bc=np ! np, that posesses the given column of a
-      aux_a_full = 0 ! PETERDEBUG
-      aux_b_full = 0 ! PETERDEBUG
-      if (my_pcol == np_bc) aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
-      aux_b_full(1:l_rows,1:l_cols) = b(1:l_rows,1:l_cols)
-
-      ! Broadcast processor column
-      call obj%timer%start("mpi_communication")
-#ifdef WITH_NVTX
-      call nvtxRangePush("MPI_Bcast(aux_a_full)")
-#endif
-
-      call MPI_Bcast(aux_a_full, int(l_rows_max*l_cols_max,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                    int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-
-#ifdef WITH_NVTX
-      call nvtxRangePop() ! MPI_Bcast(aux_a_full)
-#endif
-      call obj%timer%stop("mpi_communication")
-
-      call obj%timer%start("blas")
-
-      call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor_block,kind=BLAS_KIND), &
-                        int(l_cols_max,kind=BLAS_KIND), int(l_rows_max,kind=BLAS_KIND), &
-                        ONE, aux_a_full(1:l_rows_max,1:nstor_block), int(l_rows_max,kind=BLAS_KIND), &
-                        aux_b_full(1:l_rows_max,1:l_cols_max), int(l_rows_max,kind=BLAS_KIND), ZERO, tmp1_full, &
-                        int(nstor_block,kind=BLAS_KIND))
-
-      call obj%timer%stop("blas")
-
-      call obj%timer%start("mpi_communication")
-      call mpi_reduce(tmp1_full, tmp2_full, int(l_rows_max*l_cols_max,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
-                    MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-      call obj%timer%stop("mpi_communication")
-
       ! Put the result into C
-      if (my_prow==np) c(1:l_rows,1:l_cols) = tmp2_full(1:l_rows,1:l_cols)
+      c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
 
-#ifdef WITH_NVTX
-      call nvtxRangePop() ! do np_row_curr = 0, np_rows-1
-#endif
-    enddo ! np = 0, np_rows-1
+    endif ! (a_transposed .and. b_transposed)
+!_______________________________________________
 
     deallocate(aux_a_full, tmp1_full, tmp2_full, stat=istat, errmsg=errorMessage)
     call check_alloc("elpa_mult_at_b", "aux_a_full, tmp1_full, tmp2_full", istat, errorMessage)
