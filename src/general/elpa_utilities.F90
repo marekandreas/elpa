@@ -69,8 +69,9 @@ module ELPA_utilities
   public :: map_global_array_index_to_local_index
   public :: pcol, prow
   public :: local_index                ! Get local index of a block cyclic distributed matrix
+  public :: greatest_common_divisor    ! Get greatest common divisor
   public :: least_common_multiple      ! Get least common multiple
-
+  
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter :: error_unit = 0
   integer, parameter :: output_unit = 6
@@ -84,7 +85,7 @@ module ELPA_utilities
 !-------------------------------------------------------------------------------
 #include "map_global_to_local.F90"
 
- integer function local_index(idx, my_proc, num_procs, nblk, iflag)
+  integer function local_index(idx, my_proc, num_procs, nblk, iflag)
 
 !-------------------------------------------------------------------------------
 !  local_index: returns the local index for a given global index
@@ -138,9 +139,28 @@ module ELPA_utilities
       endif
     endif
 
- end function local_index
+  end function local_index
 
- integer function least_common_multiple(a, b)
+
+  function greatest_common_divisor(a, b) result(gcd)
+    ! Returns the greatest common divisor of a and b, calculated using the Euclidean algorithm
+    integer, intent(in) :: a, b
+    integer :: gcd
+    integer :: a_temp, b_temp
+
+    a_temp = a
+    b_temp = b
+
+    do while (b_temp /= 0)
+      gcd = mod(a_temp, b_temp)
+      a_temp = b_temp
+      b_temp = gcd
+    end do
+
+    gcd = a_temp
+  end function greatest_common_divisor
+
+  integer function least_common_multiple(a, b)
 
     ! Returns the least common multiple of a and b
     ! There may be more efficient ways to do this, we use the most simple approach
@@ -148,13 +168,14 @@ module ELPA_utilities
     integer(kind=c_int), intent(in) :: a, b
 
     do least_common_multiple = a, a*(b-1), a
-    if(mod(least_common_multiple,b)==0) exit
+      if(mod(least_common_multiple,b)==0) exit
     enddo
     ! if the loop is left regularly, least_common_multiple = a*b
 
- end function least_common_multiple
+  end function least_common_multiple
 
- subroutine check_alloc(function_name, variable_name, istat, errorMessage)
+
+  subroutine check_alloc(function_name, variable_name, istat, errorMessage)
 
     implicit none
 
@@ -167,9 +188,10 @@ module ELPA_utilities
       print *, function_name, ": error when allocating ", variable_name, " ", errorMessage
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_alloc_GPU_f(file_name, line, successGPU)
+
+  subroutine check_alloc_GPU_f(file_name, line, successGPU)
     use elpa_gpu
     implicit none
 
@@ -189,9 +211,10 @@ module ELPA_utilities
       endif
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_dealloc_GPU_f(file_name, line, successGPU)
+
+  subroutine check_dealloc_GPU_f(file_name, line, successGPU)
     use elpa_gpu
     implicit none
 
@@ -211,9 +234,10 @@ module ELPA_utilities
       endif
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_stream_synchronize_GPU_f(file_name, line, successGPU)
+
+  subroutine check_stream_synchronize_GPU_f(file_name, line, successGPU)
     use elpa_gpu
     implicit none
 
@@ -233,9 +257,10 @@ module ELPA_utilities
       endif
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_memcpy_GPU_f(file_name, line, successGPU)
+
+  subroutine check_memcpy_GPU_f(file_name, line, successGPU)
     use elpa_gpu
     implicit none
 
@@ -255,9 +280,10 @@ module ELPA_utilities
       endif
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_host_alloc_GPU_f(file_name, line, successGPU)
+
+  subroutine check_host_alloc_GPU_f(file_name, line, successGPU)
     use elpa_gpu
     implicit none
 
@@ -277,9 +303,10 @@ module ELPA_utilities
       endif
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_host_dealloc_GPU_f(file_name, line, successGPU)
+
+  subroutine check_host_dealloc_GPU_f(file_name, line, successGPU)
     use elpa_gpu
     implicit none
 
@@ -299,9 +326,10 @@ module ELPA_utilities
       endif
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_host_register_GPU_f(file_name, line, successGPU)
+
+  subroutine check_host_register_GPU_f(file_name, line, successGPU)
     use elpa_gpu
     implicit none
 
@@ -321,9 +349,10 @@ module ELPA_utilities
       endif
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_host_unregister_GPU_f(file_name, line, successGPU)
+
+  subroutine check_host_unregister_GPU_f(file_name, line, successGPU)
     use elpa_gpu
     implicit none
 
@@ -343,9 +372,9 @@ module ELPA_utilities
       endif
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_memset_GPU_f(file_name, line, successGPU)
+  subroutine check_memset_GPU_f(file_name, line, successGPU)
     use elpa_gpu
     implicit none
 
@@ -365,9 +394,10 @@ module ELPA_utilities
       endif
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_allocate_f(file_name, line, success, errorMessage)
+
+  subroutine check_allocate_f(file_name, line, success, errorMessage)
 
     implicit none
 
@@ -380,9 +410,9 @@ module ELPA_utilities
       print *, file_name, ":", line,  " error in allocate: " // errorMessage
       stop 1
     endif
- end subroutine
+  end subroutine
 
- subroutine check_deallocate_f(file_name, line, success, errorMessage)
+  subroutine check_deallocate_f(file_name, line, success, errorMessage)
 
     implicit none
 
@@ -395,5 +425,6 @@ module ELPA_utilities
       print *, file_name, ":", line,  " error in deallocate: " // errorMessage
       stop 1
     endif
- end subroutine
+  end subroutine
+
 end module ELPA_utilities
