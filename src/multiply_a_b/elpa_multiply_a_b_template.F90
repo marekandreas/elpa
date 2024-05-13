@@ -65,16 +65,17 @@
 #endif
 
 
-
-#ifdef USE_CCL_MULTIPLY
+! PETERDEBUG: clean up this and remaining MORE_GPU's, delete. MORE_GPU is used always
 #define MORE_GPU
-#endif
-#ifndef USE_CCL_MULTIPLY
-#define MORE_GPU
-#endif
-#ifdef DEVICE_POINTER
-#define MORE_GPU
-#endif
+! #ifdef USE_CCL_MULTIPLY
+! #define MORE_GPU
+! #endif
+! #ifndef USE_CCL_MULTIPLY
+! #define MORE_GPU
+! #endif
+! #ifdef DEVICE_POINTER
+! #define MORE_GPU
+! #endif
 
   use elpa1_compute
   use elpa_mpi
@@ -151,16 +152,10 @@
   integer(kind=c_intptr_t)                     :: aux_mat_dev, tmp1_dev
 !#ifndef DEVICE_POINTER
   integer(kind=c_intptr_t)                     :: b_dev
-#ifdef MORE_GPU
   integer(kind=c_intptr_t)                     :: a_dev
-#endif
-#ifdef MORE_GPU
   integer(kind=c_intptr_t)                     :: c_dev
-#endif
 !#endif
-#ifdef MORE_GPU
   integer(kind=c_intptr_t)                     :: tmp2_dev, aux_bc_dev
-#endif
   type(c_ptr)                                  :: aux_host, tmp1_host ! PETERDEBUG: unused - clean up
   integer(kind=c_intptr_t)                     :: num
   integer(kind=c_intptr_t)                     :: aux_off, b_off
@@ -583,20 +578,13 @@
 
           if (lrs <= lre) then
             nvals = lre-lrs+1
-#ifdef MORE_GPU
             if (useGPU) then
               if (my_pcol == np_bc) call gpu_copy_PRECISION_a_aux_bc(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, &
                                                                      nblk, n, l_rows, obj%local_nrows, obj%local_ncols, my_stream)
             else ! useGPU
               if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
             endif ! useGPU
-#else /* MORE_GPU */
-#ifndef DEVICE_POINTER
-            if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
-#else
-            if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a_tmp(lrs:lre,noff*nblk+n)
-#endif
-#endif /* MORE_GPU */
+
             n_aux_bc = n_aux_bc + nvals
           endif ! (lrs <= lre)
 
@@ -624,7 +612,7 @@
         else ! useGPU-USE_CCL_MULTIPLY
 #endif /* USE_CCL_MULTIPLY */
 
-#if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
+#if !defined(USE_CCL_MULTIPLY)
         if (useGPU) then
           ! copy data to host for Bcast
           num = l_rows*nblk*size_of_datatype
@@ -642,7 +630,7 @@
 #endif
 
         endif ! useGPU
-#endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
+#endif /* !defined(USE_CCL_MULTIPLY) */
 
         ! Broadcast block column
         call obj%timer%start("mpi_communication")
@@ -653,7 +641,7 @@
 
         call obj%timer%stop("mpi_communication")
 
-#if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
+#if !defined(USE_CCL_MULTIPLY)
         if (useGPU) then
           ! copy data back to device
           num = l_rows*nblk*size_of_datatype
@@ -670,7 +658,7 @@
 #endif
 
         endif ! useGPU
-#endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
+#endif /* defined(USE_CCL_MULTIPLY) */
 
 #ifdef USE_CCL_MULTIPLY
         endif ! useGPU-USE_CCL_MULTIPLY
@@ -682,7 +670,6 @@
 
   ! Insert what we got in aux_mat
 
-#ifdef MORE_GPU
         if (useGPU) then
           n_aux_bc = 0
           my_stream = obj%gpu_setup%my_stream
@@ -699,8 +686,6 @@
             endif
           enddo
         else ! useGPU
-#endif /* MORE_GPU */
-
           n_aux_bc = 0
           do n = 1, min(nblk, l_rows_np-nb*nblk)
             nstor = nstor+1
@@ -712,10 +697,7 @@
               n_aux_bc = n_aux_bc + nvals
             endif
           enddo
-
-#ifdef MORE_GPU
         endif ! useGPU
-#endif /* MORE_GPU */
 
         ! If we got nblk_mult columns in aux_mat or this is the last block
         ! do the matrix multiplication
@@ -733,34 +715,19 @@
           if (c_lower) lce = MIN(local_index(gcol, my_pcol, np_cols, nblk, -1),l_cols)
 
           if (lcs <= lce) then
-#if defined(MORE_GPU) && defined(USE_CCL_MULTIPLY)
-            if (.not.useGPU) then
+#if defined(USE_CCL_MULTIPLY)
+            if (.not. useGPU) then
 #endif
               ! introduce 1-based indexing
               allocate(tmp1(nstor,1:lce-lcs+1), tmp2(nstor,1:lce-lcs+1), stat=istat, errmsg=errorMessage)
               call check_alloc("elpa_mult_at_b_&
                               &MATH_DATATYPE ", "tmp1", istat, errorMessage)
-#if defined(MORE_GPU) && defined(USE_CCL_MULTIPLY)
+#if defined(USE_CCL_MULTIPLY)
             endif
 #endif
 
             if (lrs <= lre) then
               if (useGPU) then
-#ifndef MORE_GPU
-                num = l_rows*nblk_mult*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-                my_stream = obj%gpu_setup%my_stream
-                call gpu_memcpy_async_and_stream_synchronize &
-                ("elpa_mult_at_b: aux_mat to aux_mat_dev", aux_mat_dev, 0_c_intptr_t, &
-                                                  aux_mat(1:l_rows,1:nblk_mult), &
-                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
-#else
-                successGPU = gpu_memcpy(aux_mat_dev, int(loc(aux_mat),kind=c_intptr_t), &
-                              num, gpuMemcpyHostToDevice)
-                check_memcpy_gpu("elpa_mult_at_b: aux_mat to aux_mat_dev", successGPU)
-#endif
-
-#endif /* MORE_GPU */
                 aux_off = (lrs-1)*size_of_datatype
                 b_off = ((lcs-1)*ldb+lrs-1)*size_of_datatype
 
@@ -771,32 +738,7 @@
                     tmp1_dev, nstor, gpuHandle)
                 call obj%timer%stop("gpublas")
 
-#ifndef MORE_GPU
-                num = nstor*(lce-lcs+1)*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-                my_stream = obj%gpu_setup%my_stream
-                successGPU = gpu_stream_synchronize(my_stream)
-                check_stream_synchronize_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
-
-                successGPU = gpu_memcpy_async(int(loc(tmp1),kind=c_intptr_t), &
-                              tmp1_dev, num, gpuMemcpyDeviceToHost, my_stream)
-                check_memcpy_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
-
-                my_stream = obj%gpu_setup%my_stream
-                successGPU = gpu_stream_synchronize(my_stream)
-                check_stream_synchronize_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
-                ! synchronize streamsPerThread; maybe not neccessary
-                successGPU = gpu_stream_synchronize()
-                check_stream_synchronize_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
-#else
-                successGPU = gpu_memcpy(int(loc(tmp1),kind=c_intptr_t), &
-                              tmp1_dev, num, gpuMemcpyDeviceToHost)
-                check_memcpy_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
-#endif
-#endif /* MORE_GPU */
-                
-
-                num = nstor*(lce-lcs+1)*size_of_datatype
+                num = nstor*(lce-lcs+1)*size_of_datatype ! PETERDEBUG: just a hanging line, delete it
               else ! useGPU
                 call obj%timer%start("blas")
                 ! tmp1 = aux_mat^{T/N} * b
@@ -808,7 +750,6 @@
                 call obj%timer%stop("blas")
               endif ! useGPU
             else ! (lrs <= lre)
-#ifdef MORE_GPU
               if (useGPU) then
                 num = nstor*(lce-lcs+1)*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -822,9 +763,6 @@
               else ! useGPU 
                 tmp1 = 0
               endif ! useGPU
-#else /* MORE_GPU */
-                tmp1 = 0
-#endif /* MORE_GPU */
             endif ! (lrs <= lre)
 
             ! Sum up the results and send to processor row np
@@ -845,7 +783,7 @@
               endif
 #endif /* USE_CCL_MULTIPLY */
 
-#if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
+#if !defined(USE_CCL_MULTIPLY)
               ! copy data to host
               num = nstor*(lce-lcs+1)*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -859,7 +797,7 @@
                               tmp1_dev, num, gpuMemcpyDeviceToHost)
               check_memcpy_gpu("elpa_mult_at_b: tmp1_dev to tmp1", successGPU)
 #endif
-#endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
+#endif /* !defined(USE_CCL_MULTIPLY) */
 
 #if !defined(USE_CCL_MULTIPLY)
               ! communication already done before with CCL
@@ -869,7 +807,7 @@
               call obj%timer%stop("mpi_communication")
 #endif /* !defined(USE_CCL_MULTIPLY) */
 
-#if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
+#if !defined(USE_CCL_MULTIPLY)
               ! copy data to device
               num = nstor*(lce-lcs+1)*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -883,18 +821,16 @@
                                       num, gpuMemcpyHostToDevice)
               check_memcpy_gpu("elpa_mult_at_b: tmp2 to tmp2_dev", successGPU)
 #endif
-#endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
+#endif /* !defined(USE_CCL_MULTIPLY) */
 
 #else /* WITH_MPI */
 
-#ifdef MORE_GPU
+              ! PETERDEBUG: add streamed version to memcpy here
               num = nstor*(lce-lcs+1)*size_of_datatype
               successGPU = gpu_memcpy(tmp2_dev, tmp1_dev, &
                                       num, gpuMemcpyDeviceToDevice)
               check_memcpy_gpu("elpa_mult_at_b: tmp2 to tmp2_dev", successGPU)
-#else /* MORE_GPU */
-              tmp2 = tmp1
-#endif /* MORE_GPU */
+
 #endif /* WITH_MPI */
 
             else ! useGPU
@@ -907,28 +843,8 @@
             endif ! endif
 
             if (useGPU) then
-#ifdef MORE_GPU
               if (my_prow==np) call gpu_copy_PRECISION_tmp2_c(tmp2_dev, c_dev, nr_done, nstor, &
                                                               lcs, lce, ldc, ldcCols, my_stream)
-#else /* MORE_GPU */
-#ifdef WITH_MPI
-              ! Put the result into C
-#ifndef DEVICE_POINTER
-              if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,1:lce-lcs+1)
-#else
-              if (my_prow==np) c_tmp(nr_done+1:nr_done+nstor,lcs:lce) = tmp2(1:nstor,1:lce-lcs+1)
-#endif
-#else /* WITH_MPI */
-              ! Put the result into C
-#ifndef DEVICE_POINTER
-              if (my_prow==np) c(nr_done+1:nr_done+nstor,lcs:lce) = tmp1(1:nstor,1:lce-lcs+1)
-#else
-              if (my_prow==np) c_tmp(nr_done+1:nr_done+nstor,lcs:lce) = tmp1(1:nstor,1:lce-lcs+1)
-#endif
-              !tmp2(:,:) = 0.
-#endif /* WITH_MPI */
-              
-#endif /* MORE_GPU */
             else ! useGPU
 #ifdef WITH_MPI
               ! Put the result into C
@@ -939,13 +855,13 @@
               !tmp2(:,:) = 0.
 #endif /* WITH_MPI */
             endif ! useGPU
-#if defined(MORE_GPU) && defined(USE_CCL_MULTIPLY)
+#if defined(USE_CCL_MULTIPLY)
             if (.not.useGPU) then
 #endif
                 deallocate(tmp1, tmp2, stat=istat, errmsg=errorMessage)
                 call check_alloc("elpa_mult_at_b_&
                   &MATH_DATATYPE ", "tmp1", istat, errorMessage)
-#if defined(MORE_GPU) && defined(USE_CCL_MULTIPLY)
+#if defined(USE_CCL_MULTIPLY)
             endif
 #endif
           endif ! (lcs <= lce)
@@ -962,14 +878,9 @@
             successGPU = gpu_memset(aux_mat_dev, 0, num)
             check_memcpy_gpu("hermitian_multiply: aux_mat_dev", successGPU)
 #endif
-
-#ifndef MORE_GPU
-            ! additionally set HOST array to zero
+          else ! useGPU
             aux_mat(:,:) = 0
-#endif
-          else
-            aux_mat(:,:) = 0
-          endif
+          endif ! useGPU
         endif ! (nstor==nblk_mult .or. nb*nblk+nblk >= l_rows_np)
       
 #ifdef WITH_NVTX
@@ -982,13 +893,6 @@
 #endif
     enddo ! main loop: np = 0, np_rows-1
   endif ! .not. isSquareGrid
-
-!#ifdef MORE_GPU
-!  if (useGPU) then
-!    deallocate(tmp2, stat=istat, errmsg=errorMessage)
-!    check_deallocate("elpa_mult_at_b: tmp1, tmp2", istat, errorMessage)
-!   endif
-!#endif
 
 !______________________________________________________________________________________________
 
