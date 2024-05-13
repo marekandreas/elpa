@@ -208,17 +208,11 @@ endif
 
   else ! (cannon_for_generalized == 1), do not use cannon algorithm, use elpa hermitian multiply and scalapack instead
     ! tmp <- B * A = inv(U^T) * A (we have to use temporary variable)
-#ifdef WITH_NVTX
-    call nvtxRangePush("hermitian_multiply: tmp <- B*A  = inv(U^T) * A")
-#endif
     call self%elpa_hermitian_multiply_a_h_a_&
         &ELPA_IMPL_SUFFIX&
         &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
                               self%local_nrows, self%local_ncols, error)
     if(error .NE. ELPA_OK) return
-#ifdef WITH_NVTX
-    call nvtxRangePop()
-#endif
 
     ! A <- tmp * inv(U) = inv(U)^T * A * inv(U)
     ! For this (non-transposed) multiplication we do not have internal function in ELPA,

@@ -139,11 +139,11 @@
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_mat(:,:), tmp1(:,:)
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_a_full(:,:), aux_b_full(:,:), tmp1_full(:,:), tmp2_full(:,:) ! PETERDEBUG
   MATH_DATATYPE(kind=rck), allocatable         :: aux_bc(:), tmp2(:,:)
-  integer(kind=ik)                             :: istat
+  logical                                      :: wantDebug
+  integer(kind=ik)                             :: istat, debug
   character(200)                               :: errorMessage
   character(20)                                :: gpuString
-  logical                                      :: success
-  logical                                      :: successGPU
+  logical                                      :: success, successGPU
   logical                                      :: useGPU
   logical                                      :: isSquareGrid
   integer(kind=c_int)                          :: numGPU, blocking
@@ -180,44 +180,28 @@
   integer(kind=c_intptr_t)                     :: aux_dev
   integer(kind=c_int)                          :: gpu
   integer(kind=c_int)                          :: gpu_multiply_a_b
+
+#ifdef WITH_NVTX
+  call nvtxRangePush("hermitian_multiply")
+#endif
+
   success = .true.
   useGPU = .false.
 
   trans_a='N' ! PETERDEBUG: propagate it up, accept as an option
 
-#if !defined(DEVICE_POINTER)
-
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-  if (.not.(query_gpu_usage(obj, "ELPA_MULITPLY_AB", useGPU))) then
-    print *,"ELPA_MULITPLY_AB: Problem querrying settings for GPU Aborting..."
-    stop 1
+  call obj%get("debug", debug, error)
+  if (error .ne. ELPA_OK) then
+    write(error_unit,*) "ELPA_MULTIPLY_AB: Problem getting option for debug settings. Aborting..."
+    success = .false.
+    return
   endif
-#endif
-
-  ! check whether the above setting should be overriden
-  if (obj%is_set("gpu_hermitian_multiply") == 1) then
-    call obj%get("gpu_hermitian_multiply", gpu_hermitian_multiply, error)
-    if (error .ne. ELPA_OK) then
-      print *,"Problem getting option for gpu_hermitian_mutltiply. Aborting..."
-      stop 1
-    endif
-    if (useGPU .and. gpu_hermitian_multiply .eq. 0) then
-      useGPU = .false.
-    else if (.not.(useGPU) .and. gpu_hermitian_multiply .eq. 1) then
-      useGPU = .true.
-    else
-    endif
+  if (debug == 1) then
+    wantDebug = .true.
   else
-    ! no override by user
-    ! keep seeting as found before
+    wantDebug = .false.
   endif
 
-#else /* DEVICE_POINTER */
-  useGPU = .true.
-#endif /* DEVICE_POINTER */
-
-  ! assumption, when DEVICE_POINTER -> MORE_GPU
-  !             when DEVICE_POINTER -> useGPU = .true.
 
 #if !defined(DEVICE_POINTER)
 
@@ -513,6 +497,7 @@
   endif !useGPU
 #endif /* MORE_GPU */
 
+!______________________________________________________________________________________________
 
   if (.not. isSquareGrid .or. useGPU) then ! PETERDEBUG: delete useGPU, upon porting square grid case to GPU
 
@@ -634,7 +619,7 @@
 
           call obj%timer%stop("ccl_bcast")
 #ifdef WITH_NVTX
-          call nvtxRangePop() ! ccl_bcast aux_bc_dev"
+          call nvtxRangePop() ! ccl_bcast aux_bc_dev
 #endif
 #endif /* USE_CCL_MULTIPLY */
         else ! useCCL
@@ -720,22 +705,30 @@
                 aux_off = (lrs-1)*size_of_datatype
                 b_off = ((lcs-1)*ldb+lrs-1)*size_of_datatype
 
+#ifdef WITH_NVTX
+                call nvtxRangePush("gpublas")
+#endif
                 call obj%timer%start("gpublas")
                 gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-                call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nstor, lce-lcs+1, &
-                    lre-lrs+1, ONE, aux_mat_dev+aux_off, l_rows, b_dev+b_off, ldb, ZERO, &
-                    tmp1_dev, nstor, gpuHandle)
+                ! tmp1_dev = aux_mat_dev^{T/N} * b_dev
+                call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', nstor, lce-lcs+1, lre-lrs+1, ONE, &
+                                            aux_mat_dev+aux_off, l_rows, &
+                                            b_dev+b_off, ldb, ZERO, &
+                                            tmp1_dev, nstor, gpuHandle)
+                if (wantDebug) successGPU = gpu_DeviceSynchronize()
                 call obj%timer%stop("gpublas")
-
+#ifdef WITH_NVTX
+                call nvtxRangePop() ! gpublas
+#endif
                 num = nstor*(lce-lcs+1)*size_of_datatype ! PETERDEBUG: just a hanging line, delete it
               else ! useGPU
                 call obj%timer%start("blas")
                 ! tmp1 = aux_mat^{T/N} * b
                 call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
-                                  int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), &
-                                  ONE, aux_mat(lrs:lre,1:nstor), int(lre-lrs+1,kind=BLAS_KIND), &
-                                  b(lrs,lcs), int(ldb,kind=BLAS_KIND), ZERO, tmp1, &
-                                  int(nstor,kind=BLAS_KIND))
+                                  int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), ONE, &
+                                  aux_mat(lrs:lre,1:nstor), int(lre-lrs+1,kind=BLAS_KIND), &
+                                  b(lrs,lcs), int(ldb,kind=BLAS_KIND), ZERO, &
+                                  tmp1, int(nstor,kind=BLAS_KIND))
                 call obj%timer%stop("blas")
               endif ! useGPU
             else ! (lrs <= lre)
@@ -776,6 +769,10 @@
             ! MPI/ccl Reduce
             if (useCCL) then
 #ifdef USE_CCL_MULTIPLY
+#ifdef WITH_NVTX
+              call nvtxRangePush("ccl_reduce tmp1_dev")
+#endif
+              call obj%timer%start("ccl_reduce")
               my_stream = obj%gpu_setup%my_stream
               ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
 
@@ -786,6 +783,14 @@
                 print *,"Error in ccl_reduce"
                 stop 1
               endif
+
+              successGPU = gpu_stream_synchronize(my_stream)
+              check_stream_synchronize_gpu("elpa_cholesky: ccl_reduce", successGPU)
+
+              call obj%timer%stop("ccl_reduce")
+#ifdef WITH_NVTX
+              call nvtxRangePop() ! ccl_reduce tmp1_dev
+#endif
 #endif /* USE_CCL_MULTIPLY */
             else ! useCCL
               call obj%timer%start("mpi_communication")
@@ -881,7 +886,7 @@
     ! l_rows_max = l_rows
     call mpi_allreduce(l_rows, l_rows_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
     call mpi_allreduce(l_cols, l_cols_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
-    nstor_block = greatest_common_divisor(l_rows_max, l_cols_max) 
+    nstor_block = greatest_common_divisor(l_rows_max, l_cols_max) ! here nstor_block = l_rows_max = l_cols_max
 
     allocate(aux_a_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_mult_at_b: aux_a_full", istat, errorMessage)
@@ -932,7 +937,7 @@
                         int(l_cols_max,kind=BLAS_KIND), int(l_rows_max,kind=BLAS_KIND), &
                         ONE, aux_a_full(1:l_rows_max,1:nstor_block), int(l_rows_max,kind=BLAS_KIND), &
                         aux_b_full(1:l_rows_max,1:l_cols_max), int(l_rows_max,kind=BLAS_KIND), ZERO, tmp1_full, &
-                        int(nstor_block,kind=BLAS_KIND)) 
+                        int(nstor_block,kind=BLAS_KIND))
 
       call obj%timer%stop("blas")
 
@@ -944,6 +949,9 @@
       ! Put the result into C
       if (my_prow==np) c(1:l_rows,1:l_cols) = tmp2_full(1:l_rows,1:l_cols)
 
+#ifdef WITH_NVTX
+      call nvtxRangePop() ! do np_row_curr = 0, np_rows-1
+#endif
     enddo ! np = 0, np_rows-1
 
     deallocate(aux_a_full, tmp1_full, tmp2_full, stat=istat, errmsg=errorMessage)
@@ -1182,3 +1190,6 @@
   &PRECISION&
   &"//gpuString)
 
+#ifdef WITH_NVTX
+  call nvtxRangePop() ! hermitian_multiply
+#endif
