@@ -178,6 +178,17 @@ module elpa_impl
      procedure, public :: elpa_hermitian_multiply_d_ptr_dc           !< for complex valued matrices:   a**H * b
      procedure, public :: elpa_hermitian_multiply_d_ptr_fc
 
+     procedure, public :: elpa_pxgemm_multiply_a_h_a_d      !< public methods to implement a "pxgemm" multiplication of matrices a and b
+     procedure, public :: elpa_pxgemm_multiply_a_h_a_f 
+     procedure, public :: elpa_pxgemm_multiply_a_h_a_dc
+     procedure, public :: elpa_pxgemm_multiply_a_h_a_fc
+
+     procedure, public :: elpa_pxgemm_multiply_d_ptr_d      !< public methods to implement a "pxgemm" multiplication of matrices a and b
+     procedure, public :: elpa_pxgemm_multiply_d_ptr_f
+     procedure, public :: elpa_pxgemm_multiply_d_ptr_dc
+     procedure, public :: elpa_pxgemm_multiply_d_ptr_fc
+
+
      procedure, public :: elpa_cholesky_a_h_a_d      !< public methods to implement the cholesky factorisation of
                                                                !< real/complex double/single matrices
      procedure, public :: elpa_cholesky_a_h_a_f

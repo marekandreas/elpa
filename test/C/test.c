@@ -89,7 +89,7 @@
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_single_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_single_f
 #    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_real_single_f
-#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_single_f
+#    define CHECK_CORRECTNESS_MULTIPLY check_correctness_multiply_real_single_f
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_real_single_f
 #    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_real_single_f
 #  else
@@ -101,7 +101,7 @@
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_single_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_complex_single_f
 #    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_complex_single_f
-#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_complex_single_f
+#    define CHECK_CORRECTNESS_MULTIPLY check_correctness_multiply_complex_single_f
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_complex_single_f
 #    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_complex_single_f
 #  endif
@@ -116,7 +116,7 @@
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_real_double_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_real_double_f
 #    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_real_double_f
-#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_double_f
+#    define CHECK_CORRECTNESS_MULTIPLY check_correctness_multiply_real_double_f
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_real_double_f
 #    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_real_double_f
 #  else
@@ -128,7 +128,7 @@
 #    define CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS check_correctness_evp_numeric_residuals_complex_double_f
 #    define CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS check_correctness_evp_gen_numeric_residuals_complex_double_f
 #    define CHECK_CORRECTNESS_CHOLESKY check_correctness_cholesky_complex_double_f
-#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_complex_double_f
+#    define CHECK_CORRECTNESS_MULTIPLY check_correctness_multiply_complex_double_f
 #    define CHECK_CORRECTNESS_ANALYTIC check_correctness_analytic_complex_double_f
 #    define CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ check_correctness_eigenvalues_toeplitz_complex_double_f
 #  endif
@@ -171,6 +171,10 @@
 #include "../shared/GPU/test_gpu_vendor_agnostic_layerVariables.h"
 #endif
 
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_PXGEMM_MULTIPLY_NN)
+#define TEST_MULTIPLY 1
+#endif
+
 #include "test/shared/generated.h"
 
 
@@ -198,7 +202,7 @@ int main(int argc, char** argv) {
 
    /* The Matrix */
    MATRIX_TYPE *a, *as;
-#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
+#if defined(TEST_MULTIPLY)
    MATRIX_TYPE *b, *c;
 #endif
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
@@ -353,10 +357,40 @@ int main(int argc, char** argv) {
    is_skewsymmetric=0;
    PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
 
-#ifdef TEST_HERMITIAN_MULTIPLY_FULL
+#ifdef TEST_MULTIPLY
 	b  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	c  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, b, z, c, is_skewsymmetric); // b=c
+
+  char trans_a = 'T';
+  char trans_b = 'N';
+  char uplo_a  = 'F';
+  char uplo_c  = 'F';
+
+#if   defined(TEST_PXGEMM_MULTIPLY_NN)
+  trans_a = 'N';
+  trans_b = 'N';
+#elif defined(TEST_PXGEMM_MULTIPLY_TN)
+  trans_a = 'T';
+  trans_b = 'N';
+#elif defined(TEST_PXGEMM_MULTIPLY_NT)
+  trans_a = 'N';
+  trans_b = 'T';
+#elif defined(TEST_PXGEMM_MULTIPLY_TT)
+  trans_a = 'T';
+  trans_b = 'T';
+#endif
+
+#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
+  uplo_a  = 'F';
+  uplo_c  = 'F';
+#elif defined(TEST_HERMITIAN_MULTIPLY_UPPER)
+  uplo_a  = 'U';
+  uplo_c  = 'U';
+#elif defined(TEST_HERMITIAN_MULTIPLY_LOWER)
+  uplo_a  = 'L';
+  uplo_c  = 'L';
+#endif
 #endif
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
@@ -606,7 +640,7 @@ int main(int argc, char** argv) {
       }
 #endif /* TEST_CHOLESKY */
 
-#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
+#if defined(TEST_MULTIPLY)
    elpa_set(handle, "gpu_hermitian_multiply", 1, &error_elpa);
    assert_elpa_ok(error_elpa);
 
@@ -646,7 +680,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "Error in gpuMemcpy(c_dev, c)\n");
       exit(1);
       }
-#endif /* TEST_HERMITIAN_MULTIPLY_FULL */
+#endif /* TEST_MULTIPLY */
 
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 && TEST_NVIDIA_GPU == 1 */
 
@@ -830,6 +864,7 @@ int main(int argc, char** argv) {
    elpa_timer_stop(handle, (char*) "elpa_cholesky()");
 #endif /* TEST_CHOLESKY */
 
+// TEST_MULTIPLY
 #if defined(TEST_HERMITIAN_MULTIPLY_FULL)
    elpa_timer_start(handle, (char*) "elpa_hermitian_multiply()");
 #if defined(TEST_EXPLICIT_NAME)
@@ -837,19 +872,19 @@ int main(int argc, char** argv) {
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-	 elpa_hermitian_multiply_double(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_double(handle, uplo_a, uplo_c, na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #else
-	 elpa_hermitian_multiply_double(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_double(handle, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-	 elpa_hermitian_multiply_float(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_float(handle, uplo_a, uplo_c, na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #else
-	 elpa_hermitian_multiply_float(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_float(handle, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
@@ -858,30 +893,84 @@ int main(int argc, char** argv) {
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-	 elpa_hermitian_multiply_double_complex(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_double_complex(handle, uplo_a, uplo_c, na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #else
-	 elpa_hermitian_multiply_double_complex(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_double_complex(handle, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-	 elpa_hermitian_multiply_float_complex(handle, 'F', 'F', na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_float_complex(handle, uplo_a, uplo_c, na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #else
-	 elpa_hermitian_multiply_float_complex(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply_float_complex(handle, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_COMPLEX */
 
 #else /* TEST_EXPLICIT_NAME */
-	 elpa_hermitian_multiply(handle, 'F', 'F', na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+	 elpa_hermitian_multiply(handle, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
    assert_elpa_ok(error_elpa);
 #endif /* TEST_EXPLICIT_NAME */
    elpa_timer_stop(handle, (char*) "elpa_hermitian_multiply()");
 #endif /* TEST_HERMITIAN_MULTIPLY_FULL */
+
+// TEST_MULTIPLY
+#if defined(TEST_PXGEMM_MULTIPLY_NN)
+   elpa_timer_start(handle, (char*) "elpa_pxgemm_multiply()");
+#if defined(TEST_EXPLICIT_NAME)
+
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+	 elpa_pxgemm_multiply_double(handle, trans_a, trans_b, uplo_a, uplo_c, na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+	 elpa_pxgemm_multiply_double(handle, trans_a, trans_b, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+	 elpa_pxgemm_multiply_float(handle, trans_a, trans_b, uplo_a, uplo_c, na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+	 elpa_pxgemm_multiply_float(handle, trans_a, trans_b, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_REAL */
+
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+	 elpa_pxgemm_multiply_double_complex(handle, trans_a, trans_b, uplo_a, uplo_c, na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+	 elpa_pxgemm_multiply_double_complex(handle, trans_a, trans_b, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+	 elpa_pxgemm_multiply_float_complex(handle, trans_a, trans_b, uplo_a, uplo_c, na, a_dev, b_dev, na_rows, na_cols, c_dev, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#else
+	 elpa_pxgemm_multiply_float_complex(handle, trans_a, trans_b, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_COMPLEX */
+
+#else /* TEST_EXPLICIT_NAME */
+	 elpa_pxgemm_multiply(handle, trans_a, trans_b, uplo_a, uplo_c, na, a, b, na_rows, na_cols, c, na_rows, na_cols, &error_elpa);
+   assert_elpa_ok(error_elpa);
+#endif /* TEST_EXPLICIT_NAME */
+   elpa_timer_stop(handle, (char*) "elpa_pxgemm_multiply()");
+#endif /* TEST_PXGEMM_MULTIPLY_NN */
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
      elpa_timer_start(handle, (char*) "elpa_generalized_eigenvectors()");
@@ -995,7 +1084,7 @@ int main(int argc, char** argv) {
       }
 #endif /* TEST_CHOLESKY */
 
-#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
+#if defined(TEST_MULTIPLY)
    // copy for testing
    successGPU = gpuMemcpy((intptr_t *) a, (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
    if (!successGPU){
@@ -1033,7 +1122,7 @@ int main(int argc, char** argv) {
       fprintf(stderr, "Error in gpuFree(c_dev)\n");
       exit(1);
       }
-#endif /* TEST_HERMITIAN_MULTIPLY_FULL */
+#endif /* TEST_MULTIPLY */
 
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
 
@@ -1044,23 +1133,24 @@ int main(int argc, char** argv) {
 	status = CHECK_CORRECTNESS_CHOLESKY(na, a, as, na_rows, na_cols, sc_desc, myid);
 #endif
 
-#if defined(TEST_HERMITIAN_MULTIPLY_FULL)
-   status = CHECK_CORRECTNESS_HERMITIAN_MULTIPLY('H', na, a, b, c, na_rows, na_cols, sc_desc, myid);
+#if defined(TEST_MULTIPLY)
+   status = CHECK_CORRECTNESS_MULTIPLY(trans_a, trans_b, uplo_a, uplo_c, na, a, b, c, na_rows, na_cols, sc_desc,
+                                       nblk, myid, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
 #if defined(TEST_EIGENVALUES)
-   status = CHECK_CORRECTNESS_ANALYTIC (na, nev, ev, z, na_rows, na_cols, nblk, myid, np_rows, np_cols,
-                                           my_prow, my_pcol, 1, 0);
+   status = CHECK_CORRECTNESS_ANALYTIC (na, nev, ev, z, na_rows, na_cols,
+                                        nblk, myid, np_rows, np_cols, my_prow, my_pcol, 1, 0);
 #endif
 
 #if defined(TEST_EIGENVECTORS)
-   status = CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
-                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
+   status = CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev, sc_desc,
+                                                    nblk, myid, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-   status = CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev,
-                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs);
+   status = CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev, sc_desc,
+                                                  nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs);
 #endif
 
 #if defined(TEST_SOLVE_TRIDIAGONAL)
@@ -1088,7 +1178,7 @@ int main(int argc, char** argv) {
    free(as);
    free(ev);
 
-#ifdef TEST_HERMITIAN_MULTIPLY_FULL
+#ifdef TEST_MULTIPLY
 	free(b);
 	free(c);
 #endif

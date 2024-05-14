@@ -57,9 +57,13 @@ test_type_flag = {
     "eigenvalues":        "-DTEST_EIGENVALUES",
     "solve_tridiagonal":  "-DTEST_SOLVE_TRIDIAGONAL",
     "cholesky":           "-DTEST_CHOLESKY",
-    "hermitian_multiply_full": "-DTEST_HERMITIAN_MULTIPLY_FULL",
+    "hermitian_multiply_full" : "-DTEST_HERMITIAN_MULTIPLY_FULL",
     "hermitian_multiply_upper": "-DTEST_HERMITIAN_MULTIPLY_UPPER",
     "hermitian_multiply_lower": "-DTEST_HERMITIAN_MULTIPLY_LOWER",
+    "pxgemm_multiply_nn": "-DTEST_PXGEMM_MULTIPLY_NN",
+    "pxgemm_multiply_nt": "-DTEST_PXGEMM_MULTIPLY_NT",
+    "pxgemm_multiply_tn": "-DTEST_PXGEMM_MULTIPLY_TN",
+    "pxgemm_multiply_tt": "-DTEST_PXGEMM_MULTIPLY_TT",
     "generalized":        "-DTEST_GENERALIZED_EIGENPROBLEM",
     "generalized_decomp": "-DTEST_GENERALIZED_DECOMP_EIGENPROBLEM",
 }
@@ -119,24 +123,26 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if gid == 1 and not(m  == "random" 
                         or (lang=="Fortran" and t=="eigenvalues" and m=="toeplitz" and s=="1stage" and lay=="square")
                         or (lang!="Fortran" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
-         continue
+        continue
 
     if deviceptr == 1 and not(m  == "random" 
                               or (lang=="Fortran" and t=="eigenvalues" and m=="toeplitz" and s=="1stage" and lay=="square")
                               or (lang!="Fortran" and t=="eigenvalues" and m=="analytic" and s=="1stage" and gid==deviceptr)):
-      continue
+        continue
 	
     # C/C++-tests only for "random", "analytic" or "toeplitz" matrix and "square" layout
     if lang!="Fortran" and (m == "frank" or lay == "all_layouts"):
         continue
 
-    if lang!="Fortran" and (api_name == "explicit") and (gid != deviceptr) and (t != "eigenvectors") and (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_lower"):
+    if (lang!="Fortran" and (api_name == "explicit") and (gid != deviceptr) and (t != "eigenvectors") and (t != "eigenvalues") and (t != "cholesky") and 
+        t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_lower" and 
+        t != "pxgemm_multiply_nn" and t != "pxgemm_multiply_nt" and t != "pxgemm_multiply_tn" and t != "pxgemm_multiply_tt"):
         continue
        
     if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_lower")):
         continue
 
-    if lang !="Fortran" and (t == "hermitian_multiply_upper" or t == "hermitian_multiply_lower"):
+    if lang !="Fortran" and (t == "hermitian_multiply_upper" or t == "hermitian_multiply_lower" or t == "pxgemm_multiply_nt" or t == "pxgemm_multiply_tn" or t == "pxgemm_multiply_tt"):
         continue
 
     # not implemented in the test.c file yet
@@ -191,10 +197,10 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if (lang != "Fortran" and ((t=="solve_tridiagonal" and m!="toeplitz") or (t!="solve_tridiagonal" and m=="toeplitz"))): 
         continue
         
-    if ((t == "hermitian_multiply_full" or t == "hermitian_multiply_upper" or t == "hermitian_multiply_lower") and (s == "2stage")):
+    if (("multiply" in t) and (s == "2stage")):
         continue
 
-    if ((t == "hermitian_multiply_full" or t == "hermitian_multiply_upper" or t == "hermitian_multiply_lower") and (m == "toeplitz")):
+    if (("multiply" in t) and (m == "toeplitz")):
         continue
 
     # qr only for 2stage real

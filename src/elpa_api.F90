@@ -221,6 +221,28 @@ module elpa_api
               elpa_hermitian_multiply_a_h_a_fc, &
               elpa_hermitian_multiply_d_ptr_fc
 
+      generic, public :: pxgemm_multiply => &                    !< method for a "pxgemm" multiplication of matrices a and b
+          elpa_pxgemm_multiply_a_h_a_d, &
+          elpa_pxgemm_multiply_a_h_a_dc, &
+          elpa_pxgemm_multiply_a_h_a_f, &
+          elpa_pxgemm_multiply_a_h_a_fc
+
+      generic, public:: pxgemm_multiply_double => &
+              elpa_pxgemm_multiply_a_h_a_d, &
+              elpa_pxgemm_multiply_d_ptr_d
+
+      generic, public:: pxgemm_multiply_float => &
+              elpa_pxgemm_multiply_a_h_a_f, &
+              elpa_pxgemm_multiply_d_ptr_f
+
+      generic, public:: pxgemm_multiply_double_complex => &
+              elpa_pxgemm_multiply_a_h_a_dc, &
+              elpa_pxgemm_multiply_d_ptr_dc
+
+      generic, public:: pxgemm_multiply_float_complex => &
+              elpa_pxgemm_multiply_a_h_a_fc, &
+              elpa_pxgemm_multiply_d_ptr_fc
+  
       generic, public :: cholesky => &                              !< method for the cholesky factorisation of matrix a
           elpa_cholesky_a_h_a_d, &
           elpa_cholesky_a_h_a_f, &
@@ -346,6 +368,16 @@ module elpa_api
       procedure(elpa_hermitian_multiply_d_ptr_f_i),  deferred, public :: elpa_hermitian_multiply_d_ptr_f
       procedure(elpa_hermitian_multiply_d_ptr_dc_i), deferred, public :: elpa_hermitian_multiply_d_ptr_dc
       procedure(elpa_hermitian_multiply_d_ptr_fc_i), deferred, public :: elpa_hermitian_multiply_d_ptr_fc
+
+      procedure(elpa_pxgemm_multiply_a_h_a_d_i),  deferred, public :: elpa_pxgemm_multiply_a_h_a_d
+      procedure(elpa_pxgemm_multiply_a_h_a_f_i),  deferred, public :: elpa_pxgemm_multiply_a_h_a_f
+      procedure(elpa_pxgemm_multiply_a_h_a_dc_i), deferred, public :: elpa_pxgemm_multiply_a_h_a_dc
+      procedure(elpa_pxgemm_multiply_a_h_a_fc_i), deferred, public :: elpa_pxgemm_multiply_a_h_a_fc
+
+      procedure(elpa_pxgemm_multiply_d_ptr_d_i),  deferred, public :: elpa_pxgemm_multiply_d_ptr_d
+      procedure(elpa_pxgemm_multiply_d_ptr_f_i),  deferred, public :: elpa_pxgemm_multiply_d_ptr_f
+      procedure(elpa_pxgemm_multiply_d_ptr_dc_i), deferred, public :: elpa_pxgemm_multiply_d_ptr_dc
+      procedure(elpa_pxgemm_multiply_d_ptr_fc_i), deferred, public :: elpa_pxgemm_multiply_d_ptr_fc
 
       procedure(elpa_cholesky_a_h_a_d_i),    deferred, public :: elpa_cholesky_a_h_a_d
       procedure(elpa_cholesky_a_h_a_f_i),    deferred, public :: elpa_cholesky_a_h_a_f
