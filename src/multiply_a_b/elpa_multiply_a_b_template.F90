@@ -64,19 +64,6 @@
 #define USE_CCL_MULTIPLY
 #endif
 
-
-! PETERDEBUG: clean up this and remaining MORE_GPU's, delete. MORE_GPU is used always
-#define MORE_GPU
-! #ifdef USE_CCL_MULTIPLY
-! #define MORE_GPU
-! #endif
-! #ifndef USE_CCL_MULTIPLY
-! #define MORE_GPU
-! #endif
-! #ifdef DEVICE_POINTER
-! #define MORE_GPU
-! #endif
-
   use elpa1_compute
   use elpa_mpi
   use precision
@@ -238,55 +225,12 @@
   endif
 
 #else /* DEVICE_POINTER */
+
   useGPU = .true.
 
-#ifdef MORE_GPU  
-  c_dev = transfer(cDev, c_dev)
   a_dev = transfer(aDev, a_dev)
-#else /* MORE_GPU */
-  allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_multiply: a_tmp", istat, errorMessage)
-
-  num = obj%local_nrows*obj%local_ncols*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-  successGPU = gpu_host_register(int(loc(a_tmp),kind=c_intptr_t), &
-                  obj%local_nrows*obj%local_ncols * size_of_datatype,&
-                  gpuHostRegisterDefault)
-  check_host_register_gpu("elpa_multiply: a_tmp", successGPU)
-
-  my_stream = obj%gpu_setup%my_stream
-  successGPU = gpu_stream_synchronize(my_stream)
-  check_stream_synchronize_gpu("elpa_multiply: a_dev to a_tmp", successGPU)
-
-  successGPU = gpu_memcpy_async(int(loc(a_tmp),kind=c_intptr_t), aDev, num,&
-                gpuMemcpyDeviceToHost, my_stream)
-  check_memcpy_gpu("elpa_multiply: a_dev -> a_tmp", successGPU)
-
-  my_stream = obj%gpu_setup%my_stream
-  successGPU = gpu_stream_synchronize(my_stream)
-  check_stream_synchronize_gpu("elpa_multiply: a_dev -> a_tmp", successGPU)
-  ! synchronize streamsPerThread; maybe not neccessary
-  successGPU = gpu_stream_synchronize()
-  check_stream_synchronize_gpu("elpa_multiply: a_dev -> a_tmp", successGPU)
-#else
-  successGPU = gpu_memcpy(int(loc(a_tmp),kind=c_intptr_t), aDev, num,&
-                  gpuMemcpyDeviceToHost)
-  check_memcpy_gpu("elpa_multiply: a_dev -> a_tmp", successGPU)
-#endif
-
-  allocate(c_tmp(ldc,ldcCols), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_multiply: c_tmp", istat, errorMessage)
-
-#ifdef WITH_GPU_STREAMS
-  successGPU = gpu_host_register(int(loc(c_tmp),kind=c_intptr_t),&
-               ldc*ldcCols*size_of_datatype, &
-                gpuHostRegisterDefault)
-#endif
-
-#endif /* MORE_GPU  */
-
-
   b_dev = transfer(bDev, b_dev)
+  c_dev = transfer(cDev, c_dev)
 
 #endif /* DEVICE_POINTER */
 
@@ -379,14 +323,12 @@
 #endif
 #endif /* defined(USE_CCL_MULTIPLY) */
 
-#ifdef MORE_GPU
 #if !defined(DEVICE_POINTER)
     num = ldc*ldcCols*size_of_datatype
     successGPU = gpu_malloc(c_dev, num)
     check_alloc_gpu("elpa_multiply: c_dev", successGPU)
     ! no copy from c to c_dev needed since c will be overwritten anyway
 #endif
-#endif /* MORE_GPU */
 
 #if !defined(DEVICE_POINTER)
     ! copy b to b_dev
@@ -433,16 +375,10 @@
     successGPU = gpu_malloc(tmp1_dev, num)
     check_alloc_gpu("elpa_multiply: tmp1_dev", successGPU)
 
-!#ifdef MORE_GPU
-!    allocate(tmp2(nblk_mult,l_cols), stat=istat, errmsg=errorMessage)
-!    check_allocate("elpa_multiply: tmp2", istat, errorMessage)
-!#endif
-
-#ifdef MORE_GPU
     num = nblk_mult*l_cols*size_of_datatype
     successGPU = gpu_malloc(tmp2_dev, num)
     check_alloc_gpu("elpa_multiply: tmp2_dev", successGPU)
-#endif
+
   else ! useGPU
     allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_multiply: aux_mat", istat, errorMessage)
@@ -478,7 +414,6 @@
   print *, "np_rows = ", np_rows
   print *, "np_cols = ", np_cols
 
-#ifdef MORE_GPU
   if (useGPU) then
 
 #if !defined(DEVICE_POINTER)
@@ -507,9 +442,8 @@
 #endif
 #endif /* DEVICE_POINTER */
   endif !useGPU
-#endif /* MORE_GPU */
 
-!______________________________________________________________________________________________
+! _________________________________________________________________________________________________________________________________
 
   if (.not. isSquareGrid .or. useGPU) then ! PETERDEBUG: delete useGPU, upon porting square grid case to GPU
     print *, "Old codepath" ! PETERDEBUG
@@ -1153,7 +1087,6 @@
     check_host_unregister_gpu("elpa_multiply_a_b: b", successGPU)
 #endif
 
-#ifdef MORE_GPU
     ! copy result c_dev back to CPU
     num = ldc*ldcCols*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -1171,10 +1104,6 @@
     successGPU = gpu_free(c_dev)
     check_dealloc_gpu("elpa_multiply_a_b: c_dev", successGPU)
 
-#else /* MORE_GPU */
-    ! c on host no copy back needed
-#endif /* MORE_GPU */
-
 #else /* DEVICE_POINTER */
     !successGPU = gpu_free(b_dev)
     !check_dealloc_gpu("elpa_multiply_a_b: b_dev", successGPU)
@@ -1187,7 +1116,6 @@
     !successGPU = gpu_free(c_dev)
     !check_dealloc_gpu("elpa_multiply_a_b: c_dev", successGPU)
 
-#ifndef MORE_GPU
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_multiply: a_tmp", successGPU)
@@ -1223,7 +1151,6 @@
 
     deallocate(c_tmp, stat=istat, errmsg=errorMessage)
     check_deallocate("elpa_multiply: c_tmp", istat, errorMessage)
-#endif /* MORE_GPU */
 
 #endif /* DEVICE_POINTER */
 #if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
@@ -1246,23 +1173,20 @@
     successGPU = gpu_free(tmp1_dev)
     check_dealloc_gpu("elpa_multiply_a_b: tmp1_dev", successGPU)
 
-#ifdef MORE_GPU
     successGPU = gpu_free(tmp2_dev)
     check_dealloc_gpu("elpa_multiply_a_b: tmp2_dev", successGPU)
 
     successGPU = gpu_free(aux_bc_dev)
     check_dealloc_gpu("elpa_multiply_a_b: aux_bc_dev", successGPU)
-#endif
 
 #if !defined(DEVICE_POINTER)
-#ifdef MORE_GPU
     successGPU = gpu_free(a_dev)
     check_dealloc_gpu("elpa_multiply: a_dev", successGPU)
-#endif
 #else
     !successGPU = gpu_free(a_dev)
     !check_dealloc_gpu("elpa_multiply: a_dev", successGPU)
 #endif
+
   else ! useGPU
     deallocate(aux_mat, stat=istat, errmsg=errorMessage)
     check_deallocate("elpa_multiply: aux_mat", istat, errorMessage)
