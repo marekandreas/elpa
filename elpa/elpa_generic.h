@@ -302,8 +302,8 @@ inline void elpa_cholesky(elpa_t handle, std::complex<float>  *a, int *error)
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  uplo_a  descriptor for matrix a
- *  \param  uplo_c  descriptor for matrix c
+ *  \param  uplo_a  character that defines if matrix a is upper triangular, lower triangular, or full ('U', 'L', 'F)
+ *  \param  uplo_c  character that defines if matrix c is upper triangular, lower triangular, or full ('U', 'L', 'F)
  *  \param  ncb     int
  *  \param  a       float/double float complex/double complex pointer to matrix a
  *  \param  b       float/double float complex/double complex pointer to matrix b
@@ -346,6 +346,58 @@ inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int
                 float complex*: \
                   elpa_hermitian_multiply_a_h_a_fc \
         )(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error)
+#endif
+
+/*! \brief generic C method for elpa_pxgemm_multiply
+ * PETERDEBUG: fix this if needed!
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  trans_a character that defines if matrix a is transposed or not ('T', 'N')
+ *  \param  trans_b character that defines if matrix b is transposed or not ('T', 'N')
+ *  \param  uplo_a  character that defines if matrix a is upper triangular, lower triangular, or full ('U', 'L', 'F)
+ *  \param  uplo_c  character that defines if matrix c is upper triangular, lower triangular, or full ('U', 'L', 'F)
+ *  \param  ncb     int
+ *  \param  a       float/double float complex/double complex pointer to matrix a
+ *  \param  b       float/double float complex/double complex pointer to matrix b
+ *  \param  nrows_b number of rows for matrix b
+ *  \param  ncols_b number of cols for matrix b
+ *  \param  c       float/double float complex/double complex pointer to matrix c
+ *  \param  nrows_c number of rows for matrix c
+ *  \param  ncols_c number of cols for matrix c
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+#ifdef __cplusplus
+inline void elpa_pxgemm_multiply(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error)
+	{
+	elpa_pxgemm_multiply_a_h_a_d(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}
+inline void elpa_pxgemm_multiply(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, float  *a, float  *b, int nrows_b, int ncols_b, float  *c, int nrows_c, int ncols_c, int *error)
+	{
+	elpa_pxgemm_multiply_a_h_a_f(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}
+inline void elpa_pxgemm_multiply(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, std::complex<double> *a, std::complex<double> *b, int nrows_b, int ncols_b, std::complex<double> *c, int nrows_c, int ncols_c, int *error)
+	{
+	elpa_pxgemm_multiply_a_h_a_dc(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}
+inline void elpa_pxgemm_multiply(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, std::complex<float>  *a, std::complex<float>  *b, int nrows_b, int ncols_b, std::complex<float>  *c, int nrows_c, int ncols_c, int *error)
+	{
+	elpa_pxgemm_multiply_a_h_a_fc(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}
+#else
+#define elpa_pxgemm_multiply(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error) _Generic((a), \
+                double*: \
+                  elpa_pxgemm_multiply_a_h_a_d, \
+                \
+                float*: \
+                  elpa_pxgemm_multiply_a_h_a_f, \
+                \
+                double complex*: \
+                  elpa_pxgemm_multiply_a_h_a_dc, \
+                \
+                float complex*: \
+                  elpa_pxgemm_multiply_a_h_a_fc \
+        )(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error)
 #endif
 
 /*! \brief generic C method for elpa_invert_triangular

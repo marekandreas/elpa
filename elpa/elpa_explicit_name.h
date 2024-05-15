@@ -93,7 +93,12 @@ void elpa_hermitian_multiply_double(elpa_t handle, char uplo_a, char uplo_c, int
 void elpa_hermitian_multiply_float(elpa_t handle, char uplo_a, char uplo_c, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error);
 void elpa_hermitian_multiply_double_complex(elpa_t handle, char uplo_a, char uplo_c, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
 void elpa_hermitian_multiply_float_complex(elpa_t handle, char uplo_a, char uplo_c, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
- 
+
+void elpa_pxgemm_multiply_double(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error);
+void elpa_pxgemm_multiply_float(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error);
+void elpa_pxgemm_multiply_double_complex(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
+void elpa_pxgemm_multiply_float_complex(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
+
 void elpa_invert_triangular_double(elpa_t handle, double *a, int *error);
 void elpa_invert_triangular_float(elpa_t handle, float *a, int *error);
 void elpa_invert_triangular_double_complex(elpa_t handle, double_complex *a, int *error);
