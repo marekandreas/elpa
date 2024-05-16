@@ -1092,8 +1092,8 @@ function check_correctness_evp_gen_numeric_residuals_&
 ! _________________________________________________________________________________________________________________________________
     ! Check for correcntess of C = op(A) * op(B)
     ! where op(A) = A, A**T, or A**H (for normal/transposed/hermitian cases)
-    ! trans_a = 'N', 'T', or 'H'/'C'
-    ! trans_b = 'N', 'T', or 'H'/'C'
+    ! trans_a = 'N', 'T', or 'C'
+    ! trans_b = 'N', 'T', or 'C'
 	
 function check_correctness_multiply_&
         &MATH_DATATYPE&
@@ -1130,34 +1130,6 @@ function check_correctness_multiply_&
 
   status = 0
   tmp1(:,:) = ZERO
-   
-  if (trans_a == "H") then
-#if REALCASE == 1   
-    trans_a = "T"
-#else
-    trans_a = "C"
-#endif
-  endif
-
-  if (trans_a == "T") then
-#if COMPLEXCASE == 1   
-    trans_a = "C"
-#endif
-  endif
-
-  if (trans_b == "H") then
-#if REALCASE == 1   
-    trans_b = "T"
-#else
-    trans_b = "C"
-#endif
-  endif
-
-  if (trans_b == "T") then
-#if COMPLEXCASE == 1   
-    trans_b = "C"
-#endif
-  endif
 
   isUpper_a = .false.
   isLower_c = .false.

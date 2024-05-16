@@ -101,9 +101,11 @@ error: define either TEST_ALL_KERNELS or a valid TEST_KERNEL
 
 #ifdef TEST_REAL
 #define KERNEL_KEY "real_kernel"
+#define BLAS_TRANS_OR_CONJ 'T'
 #endif
 #ifdef TEST_COMPLEX
 #define KERNEL_KEY "complex_kernel"
+#define BLAS_TRANS_OR_CONJ 'C'
 #endif
 
 #ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
@@ -671,7 +673,7 @@ program test
 
 
 #if defined(TEST_MULTIPLY)
-  trans_a = 'T'
+  trans_a = BLAS_TRANS_OR_CONJ
   trans_b = 'N'
   uplo_a  = 'F'
   uplo_c  = 'F'
@@ -680,14 +682,14 @@ program test
   trans_a = 'N'
   trans_b = 'N'
 #elif defined(TEST_PXGEMM_MULTIPLY_TN)
-  trans_a = 'T'
+  trans_a = BLAS_TRANS_OR_CONJ
   trans_b = 'N'
 #elif defined(TEST_PXGEMM_MULTIPLY_NT)
   trans_a = 'N'
-  trans_b = 'T'
+  trans_b = BLAS_TRANS_OR_CONJ
 #elif defined(TEST_PXGEMM_MULTIPLY_TT)
-  trans_a = 'T'
-  trans_b = 'T'
+  trans_a = BLAS_TRANS_OR_CONJ
+  trans_b = BLAS_TRANS_OR_CONJ
 #endif
 
 #if defined(TEST_HERMITIAN_MULTIPLY_FULL)

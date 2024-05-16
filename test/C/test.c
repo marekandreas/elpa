@@ -134,6 +134,13 @@
 #  endif
 #endif
 
+#ifdef TEST_REAL
+#define BLAS_TRANS_OR_CONJ 'T'
+#endif
+#ifdef TEST_COMPLEX
+#define BLAS_TRANS_OR_CONJ 'C'
+#endif
+
 #define assert_elpa_ok(x) assert(x == ELPA_OK)
 
 #ifdef HAVE_64BIT_INTEGER_MATH_SUPPORT
@@ -362,7 +369,7 @@ int main(int argc, char** argv) {
 	c  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, b, z, c, is_skewsymmetric); // b=c
 
-  char trans_a = 'T';
+  char trans_a = BLAS_TRANS_OR_CONJ;
   char trans_b = 'N';
   char uplo_a  = 'F';
   char uplo_c  = 'F';
@@ -371,14 +378,14 @@ int main(int argc, char** argv) {
   trans_a = 'N';
   trans_b = 'N';
 #elif defined(TEST_PXGEMM_MULTIPLY_TN)
-  trans_a = 'T';
+  trans_a = BLAS_TRANS_OR_CONJ;
   trans_b = 'N';
 #elif defined(TEST_PXGEMM_MULTIPLY_NT)
   trans_a = 'N';
-  trans_b = 'T';
+  trans_b = BLAS_TRANS_OR_CONJ;
 #elif defined(TEST_PXGEMM_MULTIPLY_TT)
-  trans_a = 'T';
-  trans_b = 'T';
+  trans_a = BLAS_TRANS_OR_CONJ;
+  trans_b = BLAS_TRANS_OR_CONJ;
 #endif
 
 #if defined(TEST_HERMITIAN_MULTIPLY_FULL)
