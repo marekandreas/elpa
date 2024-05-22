@@ -62,8 +62,17 @@
 
 #if REALCASE == 1
 
+#undef TRIDIAG_GPU_BUILD
 #include "tridiag_template.F90"
+#define TRIDIAG_GPU_BUILD
+#include "tridiag_template.F90"
+#undef TRIDIAG_GPU_BUILD
+
+#undef TRANS_EV_GPU
 #include "trans_ev_template.F90"
+#define TRANS_EV_GPU
+#include "trans_ev_template.F90"
+#undef TRANS_EV_GPU
 
 ! now comes a dirty hack:
 ! the file elpa1_solve_tridi_real_template.F90 must be included twice
@@ -82,7 +91,12 @@
 #else
 #define PRECISION_AND_SUFFIX  single_impl
 #endif
-#include "../solve_tridi/solve_tridi_template.F90"
+#undef SOLVE_TRIDI_GPU_BUILD 
+#include "../solve_tridi/solve_tridi_template.F90" 
+#define SOLVE_TRIDI_GPU_BUILD 
+#include "../solve_tridi/solve_tridi_template.F90" 
+#undef SOLVE_TRIDI_GPU_BUILD
+#include "../solve_tridi/solve_tridi_col_template.F90"
 #undef PRECISION_AND_SUFFIX
 !#include "elpa1_merge_systems_real_template.F90"
 #include "elpa1_tools_template.F90"
@@ -91,8 +105,17 @@
 
 #if COMPLEXCASE == 1
 
+#undef TRIDIAG_GPU_BUILD
 #include "tridiag_template.F90"
+#define TRIDIAG_GPU_BUILD
+#include "tridiag_template.F90"
+#undef TRIDIAG_GPU_BUILD
+
+#undef TRANS_EV_GPU
 #include "trans_ev_template.F90"
+#define TRANS_EV_GPU
+#include "trans_ev_template.F90"
+#undef TRANS_EV_GPU
 #include "elpa1_tools_template.F90"
 
 #define ALREADY_DEFINED 1

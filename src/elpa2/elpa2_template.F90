@@ -257,6 +257,8 @@
    integer(kind=ik)                                                   :: gpu_old, gpu_new
    integer(kind=ik)                                                   :: non_blocking_collectives_all
 
+   integer(kind=c_intptr_t)                                           :: num
+   integer(kind=c_intptr_t)                                           :: e_dev, ev_dev, q_dev_real, q_dev_actual
 #if REALCASE == 1
 #undef GPU_KERNEL
 #undef GPU_KERNEL2
@@ -1254,18 +1256,115 @@
 #ifdef HAVE_LIKWID
        call likwid_markerStartRegion("solve")
 #endif
+       if (do_useGPU_solve_tridi) then
+         ! temp hack
+         num = (na) * size_of_real_datatype
+         successGPU = gpu_malloc(ev_dev, num)
+         check_alloc_gpu("elpa1_template ev_devIntern", successGPU)
 
-       call solve_tridi_&
-       &PRECISION &
-       (obj, na, nev, ev, e, &
+         num = (na) * size_of_real_datatype
+         successGPU = gpu_malloc(e_dev, num)
+         check_alloc_gpu("elpa1_template e_dev", successGPU)
+
+
 #if REALCASE == 1
-       q_actual, matrixRows,   &
+         num = (matrixRows*matrixCols) * size_of_datatype
+         successGPU = gpu_malloc(q_dev_actual, num)
+         check_alloc_gpu("elpa1_template e_dev", successGPU)
+#endif
+
+#if COMPLEXCASE == 1
+         num = (matrixRows*matrixCols) * size_of_real_datatype
+         successGPU = gpu_malloc(q_dev_real, num)
+         check_alloc_gpu("elpa1_template e_dev", successGPU)
+#endif
+
+
+         num = (na) * size_of_real_datatype
+         successGPU = gpu_memcpy(ev_dev, int(loc(ev(1)),kind=c_intptr_t), &
+                 num, gpuMemcpyHostToDevice) 
+         check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
+
+         num = (na) * size_of_real_datatype
+         successGPU = gpu_memcpy(e_dev, int(loc(e(1)),kind=c_intptr_t),  &
+                 num, gpuMemcpyHostToDevice) 
+         check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
+
+#if REALCASE == 1
+         num = (matrixRows*matrixCols) * size_of_datatype
+         successGPU = gpu_memcpy(q_dev_actual, int(loc(q_actual(1,1)),kind=c_intptr_t), &
+                 num, gpuMemcpyHostToDevice) 
+         check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
+#endif
+
+#if COMPLEXCASE == 1
+         num = (matrixRows*matrixCols) * size_of_real_datatype
+         successGPU = gpu_memcpy(q_dev_real, int(loc(q_real(1,1)),kind=c_intptr_t),  &
+                 num, gpuMemcpyHostToDevice) 
+         check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
+#endif
+
+         call solve_tridi_gpu_&
+         &PRECISION &
+         (obj, na, nev, ev_dev, e_dev, &
+#if REALCASE == 1
+         q_dev_actual, matrixRows,   &
 #endif
 #if COMPLEXCASE == 1
-       q_real, ubound(q_real,dim=1), &
+         q_dev_real, ubound(q_real,dim=1), &
 #endif
-       nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, do_useGPU_solve_tridi, wantDebug, &
+         nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, wantDebug, &
                success, nrThreads)
+
+         num = (na) * size_of_real_datatype
+         successGPU = gpu_memcpy(int(loc(ev(1)),kind=c_intptr_t), ev_dev, &
+                 num, gpuMemcpyDeviceToHost) 
+         check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
+
+         num = (na) * size_of_real_datatype
+         successGPU = gpu_memcpy(int(loc(e(1)),kind=c_intptr_t), e_dev, &
+                 num, gpuMemcpyDeviceToHost) 
+         check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
+#if REALCASE == 1
+         num = (matrixRows*matrixCols) * size_of_datatype
+         successGPU = gpu_memcpy(int(loc(q_actual(1,1)),kind=c_intptr_t), q_dev_actual, &
+                 num, gpuMemcpyDeviceToHost) 
+         check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
+#endif
+
+#if COMPLEXCASE == 1
+         num = (matrixRows*matrixCols) * size_of_real_datatype
+         successGPU = gpu_memcpy(int(loc(q_real(1,1)),kind=c_intptr_t), q_dev_real, &
+                 num, gpuMemcpyDeviceToHost) 
+         check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
+#endif
+
+         successGPU = gpu_free(ev_dev)
+         check_dealloc_gpu("elpa1_template q_part2_dev", successGPU)
+
+         successGPU = gpu_free(e_dev)
+         check_dealloc_gpu("elpa1_template q_part2_dev", successGPU)
+#if REALCASE == 1
+         successGPU = gpu_free(q_dev_actual)
+         check_dealloc_gpu("elpa1_template q_part2_dev", successGPU)
+#endif
+#if COMPLEXCASE == 1
+         successGPU = gpu_free(q_dev_real)
+         check_dealloc_gpu("elpa1_template q_part2_dev", successGPU)
+#endif
+       else
+         call solve_tridi_cpu_&
+         &PRECISION &
+         (obj, na, nev, ev, e, &
+#if REALCASE == 1
+         q_actual, matrixRows,   &
+#endif
+#if COMPLEXCASE == 1
+         q_real, ubound(q_real,dim=1), &
+#endif
+         nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, wantDebug, &
+               success, nrThreads)
+       endif
 
 #ifdef HAVE_LIKWID
        call likwid_markerStopRegion("solve")
