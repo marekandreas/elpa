@@ -538,7 +538,7 @@
    ! TODO: make sure that nowhere in ELPA the communicators are getting "getted",
    ! and the variables obj%local_nrows,1:obj%local_ncols are being used
    ! - a points then to aIntern, q points to qIntern
-#include "../helpers/elpa_redistribute_template.F90"
+#include "../helpers/elpa2_redistribute_template.F90"
 
    ! still have to point ev
 #endif /* REDISTRIBUTE_MATRIX */

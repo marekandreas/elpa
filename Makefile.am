@@ -183,6 +183,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \
+  src/helpers/elpa2_redistribute_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \
   src/helpers/elpa_redistribute_back_template.F90 \
   src/elpa1/elpa1_template.F90 \
