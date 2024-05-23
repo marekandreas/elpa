@@ -48,7 +48,6 @@
 
 #ifdef REDISTRIBUTE_MATRIX
    doRedistributeMatrix = .false.
-   print *,"in redis function"
    call obj%set("internal_nblk",32)
    call obj%set("matrix_order",1)
 
@@ -85,7 +84,6 @@
      endif
    endif
 
-   print *,"redistributing",doRedistributeMatrix
    if (doRedistributeMatrix) then
      call obj%timer%start("redistribute")
 
@@ -225,30 +223,34 @@
        allocate(aExtern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
        check_allocate("redistribute: aExtern", istat, errorMessage)
 
-       if (isSkewsymmetric) then
-         allocate(qExtern(1:matrixRows,1:2*matrixCols), stat=istat, errmsg=errorMessage)
-       else
-         allocate(qExtern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+       if (present(qDevExtern)) then
+         if (isSkewsymmetric) then
+           allocate(qExtern(1:matrixRows,1:2*matrixCols), stat=istat, errmsg=errorMessage)
+         else
+           allocate(qExtern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+         endif
+         check_allocate("redistribute: qExtern", istat, errorMessage)
        endif
-       check_allocate("redistribute: qExtern", istat, errorMessage)
 
        num = (matrixRows*matrixCols) * size_of_datatype
        successGPU = gpu_memcpy(int(loc(aExtern(1,1)),kind=c_intptr_t), aDevExtern, &
                                num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("redistribute aDevExtern -> aExtern", successGPU)
 
-       if (isSkewsymmetric) then
-         num = (matrixRows*2*matrixCols) * size_of_datatype
-       else
-         num = (matrixRows*matrixCols) * size_of_datatype
+       if (present(qDevExtern)) then
+         if (isSkewsymmetric) then
+           num = (matrixRows*2*matrixCols) * size_of_datatype
+         else
+           num = (matrixRows*matrixCols) * size_of_datatype
+         endif
+         successGPU = gpu_memcpy(int(loc(qExtern(1,1)),kind=c_intptr_t), qDevExtern, &
+                                 num, gpuMemcpyDeviceToHost)
+         check_memcpy_gpu("redistribute qDevExtern -> qExtern", successGPU)
        endif
-       successGPU = gpu_memcpy(int(loc(qExtern(1,1)),kind=c_intptr_t), qDevExtern, &
-                               num, gpuMemcpyDeviceToHost)
-       check_memcpy_gpu("redistribute qDevExtern -> qExtern", successGPU)
 #else
        ! data is provided via host arrays {a|q|ev|}Extern
 #endif
-     endif
+     endif ! useGPU
              
 
      ! allocate the memory for the redistributed matrices
@@ -260,7 +262,6 @@
        allocate(qIntern(na_rowsInternal,na_colsInternal))
      endif
 
-     print *,"doing some redistribute"
      call obj%timer%start("GEMR2D")
      call scal_PRECISION_GEMR2D &
      (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), aExtern, 1_BLAS_KIND, 1_BLAS_KIND, sc_descExt, aIntern, &
@@ -295,7 +296,10 @@
        check_memcpy_gpu("redistribute qIntern -> q_devIntern", successGPU)
 
 #ifdef DEVICE_POINTER
-       deallocate(aExtern, qExtern)
+       if (present(qDevExtern)) then
+         deallocate(qExtern)
+       endif
+       deallocate(aExtern)
        deallocate(aIntern, qIntern)
 #else
        deallocate(aIntern, qIntern)

@@ -70,40 +70,51 @@
 
      endif
 #ifdef DEVICE_POINTER
-
-       ! data is provided via {a|q|ev}DevExtern
+       if (present(qDevExtern)) then
+         ! data is provided via {a|q|ev}DevExtern
      
-       ! allocate dummy HOST arrays and copy
-       allocate(qIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
-       check_allocate("redistribute: qIntern", istat, errorMessage)
+         ! allocate dummy HOST arrays and copy
+         allocate(qIntern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+         check_allocate("redistribute: qIntern", istat, errorMessage)
    
-       allocate(qExtern(1:na_rowsExt,1:na_colsExt), stat=istat, errmsg=errorMessage)
-       check_allocate("redistribute: qExtern", istat, errorMessage)
+         allocate(qExtern(1:na_rowsExt,1:na_colsExt), stat=istat, errmsg=errorMessage)
+         check_allocate("redistribute: qExtern", istat, errorMessage)
 
-       ! copy back
-       num = (matrixRows* matrixCols) * size_of_datatype
-       successGPU = gpu_memcpy(int(loc(qIntern(1,1)),kind=c_intptr_t), q_dev, &
-                    num, gpuMemcpyDeviceToHost)
-       check_memcpy_gpu("elpa1_template q_dev -> qIntern", successGPU)
-
+         ! copy back
+         num = (matrixRows* matrixCols) * size_of_datatype
+         successGPU = gpu_memcpy(int(loc(qIntern(1,1)),kind=c_intptr_t), q_dev, &
+                      num, gpuMemcpyDeviceToHost)
+         check_memcpy_gpu("elpa1_template q_dev -> qIntern", successGPU)
+       endif
 
 #else
        ! data is provided via host arrays {a|q|ev|}Extern
 #endif
 
-     call obj%timer%start("GEMR2D")
-     call scal_PRECISION_GEMR2D &
-     (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), qIntern, 1_BLAS_KIND, 1_BLAS_KIND, sc_descInternal, qExtern, &
-     1_BLAS_KIND, 1_BLAS_KIND, sc_descExt, external_blacs_ctxtBLAS)
-     call obj%timer%stop("GEMR2D")
 
 #ifdef DEVICE_POINTER
-     num = (na_rowsExt*na_colsExt) * size_of_datatype
-     successGPU = gpu_memcpy(qDevExtern,int(loc(qExtern(1,1)),kind=c_intptr_t), &
-                               num, gpuMemcpyHostToDevice)
-     check_memcpy_gpu("redistribute qExtern -> qDevExtern", successGPU)
+       if (present(qDevExtern)) then
+#else
+       if (present(qExtern)) then
+#endif
+       call obj%timer%start("GEMR2D")
+       call scal_PRECISION_GEMR2D &
+       (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), qIntern, 1_BLAS_KIND, 1_BLAS_KIND, sc_descInternal, qExtern, &
+       1_BLAS_KIND, 1_BLAS_KIND, sc_descExt, external_blacs_ctxtBLAS)
+       call obj%timer%stop("GEMR2D")
+     endif
 
-     deallocate(qIntern, qExtern)
+#ifdef DEVICE_POINTER
+     if (present(qDevExtern)) then
+       num = (na_rowsExt*na_colsExt) * size_of_datatype
+       successGPU = gpu_memcpy(qDevExtern,int(loc(qExtern(1,1)),kind=c_intptr_t), &
+                                 num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("redistribute qExtern -> qDevExtern", successGPU)
+
+       deallocate(qExtern)
+     endif
+
+     deallocate(qIntern)
 #endif
      !clean MPI communicators and blacs grid
      !of the internal re-distributed matrix
