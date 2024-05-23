@@ -182,7 +182,6 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
-  src/helpers/elpa_redistribute_template.F90 \
   src/helpers/elpa2_redistribute_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \
   src/helpers/elpa_redistribute_back_template.F90 \
@@ -1079,7 +1078,7 @@ EXTRA_DIST = \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
   src/elpa_impl_math_generalized_template.F90 \
-  src/helpers/elpa_redistribute_template.F90 \
+  src/helpers/elpa2_redistribute_template.F90 \
   src/helpers/elpa_redistribute_template.F90 \
   src/helpers/elpa_redistribute_back_template.F90 \
   src/helpers/elpa_openmp_settings_template.F90 \
