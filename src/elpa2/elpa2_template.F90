@@ -324,6 +324,7 @@
 #endif /* COMPLEXCASE */
 
 
+    useGPU = .false.
 
 #ifdef ACTIVATE_SKEW
     call obj%timer%start("elpa_solve_skew_evp_&

@@ -48,8 +48,8 @@
 
 #ifdef REDISTRIBUTE_MATRIX
    doRedistributeMatrix = .false.
-   call obj%set("internal_nblk",32)
-   call obj%set("matrix_order",1)
+   !call obj%set("internal_nblk",32)
+   !call obj%set("matrix_order",1)
 
    if (obj%is_set("internal_nblk") == 1) then
      if (obj%is_set("matrix_order") == 1) then

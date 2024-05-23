@@ -266,6 +266,8 @@ function elpa_solve_evp_&
                                                                          allreduce_request2, allreduce_request3, &
                                                                          allreduce_request4, allreduce_request
 
+   useGPU = .false.
+
    ! as default do all three steps (this might change at some point)
    do_tridiag  = .true.
    do_solve    = .true.
