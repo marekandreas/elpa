@@ -58,7 +58,20 @@
 #include <stdint.h>
 #include "config-f90.h"
 
+//#include "../../../GPU/common_device_functions.h"
+
+#define MAX_THREADS_PER_BLOCK 1024
+
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
+
+// PETERDEBUG: clean up after merge. Uncommnent //#include "../../../GPU/common_device_functions.h" above
+// construct a generic double/float/double_complex/float_complex from a double
+template <typename T> __forceinline__ __device__ T elpaDeviceNumber(double number);
+template <>  __forceinline__ __device__ double elpaDeviceNumber<double>(double number) {return number;}
+template <>  __forceinline__ __device__ float  elpaDeviceNumber<float> (double number) {return (float) number;}
+template <>  __forceinline__ __device__ cuDoubleComplex elpaDeviceNumber<cuDoubleComplex>(double number) {return make_cuDoubleComplex (number, 0.0);}
+template <>  __forceinline__ __device__ cuFloatComplex elpaDeviceNumber<cuFloatComplex> (double number) {return make_cuFloatComplex ((float) number, 0.0);}
+
 
 __global__ void cuda_copy_double_tmp2_c_kernel(double *tmp2_dev, double *c_dev, const int nr_done, const int nstor, const int lcs, const int lce, const int ldc, const int ldcCols){
 
@@ -535,6 +548,59 @@ extern "C" void cuda_copy_float_complex_aux_bc_aux_mat_FromC(float _Complex *aux
 }
 
 
+//________________________________________________________________
 
+template <typename T>
+__global__ void cuda_copy_and_set_zeros_aux_full_kernel(T *a_dev, T *aux_mat_full_dev, int l_rows, int l_cols, int nblk_mult) {
 
+  // aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
+  // if (l_rows<nblk_mult) aux_a_full(l_rows+1:nblk_mult,1:l_cols) = 0
+  // if (l_cols<nblk_mult) aux_a_full(1:l_rows,l_cols+1:nblk_mult) = 0
+  // if (l_rows<nblk_mult .and. l_cols<nblk_mult) aux_a_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
 
+  int i_loc = threadIdx.x; // 0..nblk_mult-1
+  int j_loc = blockIdx.x ; // 0..nblk_mult-1
+
+  T Zero = elpaDeviceNumber<T>(0.0);
+
+  for (; j_loc < nblk_mult; j_loc += gridDim.x) {
+    for (; i_loc < nblk_mult; i_loc += blockDim.x) {
+      if (i_loc < l_rows && j_loc < l_cols) aux_mat_full_dev[i_loc+j_loc*nblk_mult] = a_dev[i_loc+j_loc*l_rows];
+      else aux_mat_full_dev[i_loc+j_loc*nblk_mult] = Zero;
+    }
+  }
+}
+
+template <typename T>
+void cuda_copy_and_set_zeros_aux_full(T *mat_dev, T *aux_mat_full_dev, int *l_rows_in, int *l_cols_in, int *nblk_mult_in, int *debug_in, cudaStream_t my_stream){
+  int l_rows = *l_rows_in;
+  int l_cols = *l_cols_in;
+  int nblk_mult = *nblk_mult_in;
+  int debug = *debug_in;
+
+  dim3 blocks = dim3(nblk_mult,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_copy_and_set_zeros_aux_full_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult);
+#else
+  cuda_copy_and_set_zeros_aux_full_kernel<<<blocks,threadsPerBlock>>>(mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult);
+#endif
+
+  if (debug)
+    {
+    cudaDeviceSynchronize();
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing cuda_copy_and_set_zeros_aux_full: %s\n",cudaGetErrorString(cuerr));
+    }
+  }
+}
+
+extern "C" void cuda_copy_and_set_zeros_aux_full_FromC(char dataType, intptr_t mat_dev, intptr_t aux_mat_full_dev,
+                                                       int *l_rows_in, int *l_cols_in, int *nblk_mult_in, int *debug_in, cudaStream_t my_stream){
+  if (dataType=='D') cuda_copy_and_set_zeros_aux_full<double>((double *) mat_dev, (double *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, debug_in, my_stream);
+  if (dataType=='S') cuda_copy_and_set_zeros_aux_full<float> ((float  *) mat_dev, (float  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, debug_in, my_stream);
+  if (dataType=='Z') cuda_copy_and_set_zeros_aux_full<cuDoubleComplex>((cuDoubleComplex *) mat_dev, (cuDoubleComplex *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, debug_in, my_stream);
+  if (dataType=='C') cuda_copy_and_set_zeros_aux_full<cuFloatComplex> ((cuFloatComplex  *) mat_dev, (cuFloatComplex  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, debug_in, my_stream);
+}

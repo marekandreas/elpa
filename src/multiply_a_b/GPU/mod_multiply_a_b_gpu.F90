@@ -109,7 +109,6 @@ module multiply_a_b_gpu
     module procedure gpu_copy_float_complex_tmp2_c_intptr
     module procedure gpu_copy_float_complex_tmp2_c_cptr
   end interface
-  
 
   contains
 
@@ -700,6 +699,39 @@ module multiply_a_b_gpu
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_copy_float_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
                                                       nblk, nblk_mult, my_stream)
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print * "NOT implemented yet"
+      stop
+#endif
+
+    end subroutine
+
+
+    subroutine gpu_copy_and_set_zeros_aux_full(dataType, mat_dev, aux_mat_full_dev, &
+                                               l_rows, l_cols, nblk_mult, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t)        :: mat_dev, aux_mat_full_dev
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, nblk_mult, debug
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_copy_and_set_zeros_aux_full(dataType, mat_dev, aux_mat_full_dev, &
+                                            l_rows, l_cols, nblk_mult, debug, my_stream)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_copy_and_set_zeros_aux_full(dataType, mat_dev, aux_mat_full_dev, &
+                                            l_rows, l_cols, nblk_mult, debug, my_stream)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_and_set_zeros_aux_full(dataType, mat_dev, aux_mat_full_dev, &
+                                            l_rows, l_cols, nblk_mult, debug, my_stream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION

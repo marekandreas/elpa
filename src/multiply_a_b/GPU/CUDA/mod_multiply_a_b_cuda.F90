@@ -321,7 +321,22 @@ module multiply_a_b_cuda
     end subroutine
   end interface
 
+  interface
+    subroutine cuda_copy_and_set_zeros_aux_full_c(dataType, mat_dev, aux_mat_full_dev, &
+                                                  l_rows, l_cols, nblk_mult, debug, my_stream) &
+                          bind(C, name="cuda_copy_and_set_zeros_aux_full_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value      :: dataType
+      integer(kind=c_intptr_t), value  :: mat_dev, aux_mat_full_dev
+      integer(kind=c_int), intent(in)  :: l_rows, l_cols, nblk_mult, debug
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+
   contains
+
 
     subroutine cuda_copy_double_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, &
                                                               ldcCols, my_stream)
@@ -655,4 +670,19 @@ module multiply_a_b_cuda
 #endif
 
     end subroutine
+
+    subroutine cuda_copy_and_set_zeros_aux_full(dataType, mat_dev, aux_mat_full_dev, &
+                                                l_rows, l_cols, nblk_mult, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t)        :: mat_dev, aux_mat_full_dev
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, nblk_mult, debug
+      integer(kind=c_intptr_t)        :: my_stream
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_copy_and_set_zeros_aux_full_c(dataType, mat_dev, aux_mat_full_dev, &
+                                              l_rows, l_cols, nblk_mult, debug, my_stream)
+#endif
+    end subroutine
+
 end module
