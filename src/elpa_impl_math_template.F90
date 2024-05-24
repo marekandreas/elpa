@@ -111,7 +111,7 @@
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  &_impl(self, 'H', 'N', uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+                  &_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                                  c, nrows_c, ncols_c)
 #endif
 
@@ -192,7 +192,7 @@
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  &_impl(self, 'H', 'N', uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+                  &_impl(self, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
                                                        c, nrows_c, ncols_c)
 #endif
 
@@ -399,7 +399,7 @@
      
       success_l = .false.
 #if defined(INCLUDE_ROUTINES)
-      success_l = elpa_multiply_a_h_a_&
+      success_l = elpa_pxgemm_a_h_a_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
@@ -478,7 +478,7 @@
      
       success_l = .false.
 #if defined(INCLUDE_ROUTINES)
-      success_l = elpa_multiply_d_ptr_&
+      success_l = elpa_pxgemm_d_ptr_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
