@@ -73,6 +73,7 @@ subroutine elpa_transform_generalized_&
   logical                  :: is_already_decomposed
   integer                  :: sc_desc(SC_DESC_LEN)
   integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=ik)         :: i, j
   integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
   integer(kind=ik)         :: BuffLevelInt
   integer(kind=c_int)      :: cannon_for_generalized, pxtrmm_for_generalized, debug, gpu_cannon
@@ -266,6 +267,7 @@ endif
       call self%timer_start("PxTRAN")
 
       ! A <- tmp^T
+#ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
 #if REALCASE == 1
@@ -276,7 +278,18 @@ endif
 #endif
             &(self%na, self%na, ONE , tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
                                 ZERO,   a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
-
+#else /* WITH_MPI */
+      do j = 1, self%na
+        do i = 1, self%na
+#if REALCASE == 1
+      a(j, i) = tmp(i, j)
+#endif
+#if COMPLEXCASE == 1
+      a(j, i) = conjg(tmp(i, j))
+#endif
+        end do
+      end do
+#endif /* WITH_MPI */
       call self%timer_stop("PxTRAN")
       
       ! tmp <- A^T * inv(U) = (tmp^T)^T * inv(U)
@@ -323,6 +336,7 @@ subroutine elpa_transform_back_generalized_&
   MATH_DATATYPE(kind=rck) :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
   integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=ik)         :: i, j
   integer(kind=MPI_KIND)   :: mpierr, my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
   integer                  :: error
   integer(kind=ik)         :: istat
@@ -460,7 +474,8 @@ subroutine elpa_transform_back_generalized_&
       allocate(bt(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_impl_generalized_transform_template: bt", istat, errorMessage)
 
-      ! bt <- b^T 
+      ! bt <- b^T
+#ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
 #if REALCASE == 1
@@ -471,6 +486,18 @@ subroutine elpa_transform_back_generalized_&
 #endif
             &(self%na, self%na, ONE , b , 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
                                 ZERO, bt, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+#else /* WITH_MPI */
+      do j = 1, self%na
+        do i = 1, self%na
+#if REALCASE == 1
+      bt(j, i) = b(i, j)
+#endif
+#if COMPLEXCASE == 1
+      bt(j, i) = conjg(b(i, j))
+#endif
+        end do
+      end do
+#endif /* WITH_MPI */
 
       call self%timer_stop("PxTRAN")
       
