@@ -59,45 +59,35 @@ module elpa1_compute
 
   PRIVATE ! set default to private
 
-  public :: tridiag_real_double               ! Transform real symmetric matrix to tridiagonal form
-  public :: tridiag_real
-  public :: trans_ev_real_double              ! Transform real eigenvectors of a tridiagonal matrix back
-  public :: trans_ev_real
+  public :: tridiag_cpu_real_double               ! Transform real symmetric matrix to tridiagonal form
+  public :: tridiag_gpu_real_double               ! Transform real symmetric matrix to tridiagonal form
+  !public :: tridiag_real
+  public :: trans_ev_cpu_real_double              ! Transform real eigenvectors of a tridiagonal matrix back
+  public :: trans_ev_gpu_real_double              ! Transform real eigenvectors of a tridiagonal matrix back
 
-  !public :: solve_tridi_double
-  public :: solve_tridi_double_impl
-
-  interface tridiag_real
-    module procedure tridiag_real_double
-  end interface
-
-  interface trans_ev_real
-    module procedure trans_ev_real_double
-  end interface
+  public :: solve_tridi_cpu_double_impl
+  public :: solve_tridi_gpu_double_impl
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: tridiag_real_single        ! Transform real single-precision symmetric matrix to tridiagonal form
-  public :: trans_ev_real_single       ! Transform real  single-precision eigenvectors of a tridiagonal matrix back
+  public :: tridiag_cpu_real_single        ! Transform real single-precision symmetric matrix to tridiagonal form
+  public :: tridiag_gpu_real_single        ! Transform real single-precision symmetric matrix to tridiagonal form
+  public :: trans_ev_cpu_real_single       ! Transform real  single-precision eigenvectors of a tridiagonal matrix back
+  public :: trans_ev_gpu_real_single       ! Transform real  single-precision eigenvectors of a tridiagonal matrix back
   !public :: solve_tridi_single
-  public :: solve_tridi_single_impl
+  public :: solve_tridi_cpu_single_impl
+  public :: solve_tridi_gpu_single_impl
 #endif
 
-  public :: tridiag_complex_double            ! Transform complex hermitian matrix to tridiagonal form
-  public :: tridiag_complex
-  public :: trans_ev_complex_double           ! Transform eigenvectors of a tridiagonal matrix back
-  public :: trans_ev_complex
-
-  interface tridiag_complex
-    module procedure tridiag_complex_double
-  end interface
-
-  interface trans_ev_complex
-    module procedure trans_ev_complex_double
-  end interface
+  public :: tridiag_cpu_complex_double            ! Transform complex hermitian matrix to tridiagonal form
+  public :: tridiag_gpu_complex_double            ! Transform complex hermitian matrix to tridiagonal form
+  public :: trans_ev_cpu_complex_double           ! Transform eigenvectors of a tridiagonal matrix back
+  public :: trans_ev_gpu_complex_double           ! Transform eigenvectors of a tridiagonal matrix back
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: tridiag_complex_single     ! Transform complex single-precision hermitian matrix to tridiagonal form
-  public :: trans_ev_complex_single    ! Transform complex single-precision eigenvectors of a tridiagonal matrix back
+  public :: tridiag_cpu_complex_single     ! Transform complex single-precision hermitian matrix to tridiagonal form
+  public :: tridiag_gpu_complex_single     ! Transform complex single-precision hermitian matrix to tridiagonal form
+  public :: trans_ev_cpu_complex_single    ! Transform complex single-precision eigenvectors of a tridiagonal matrix back
+  public :: trans_ev_gpu_complex_single    ! Transform complex single-precision eigenvectors of a tridiagonal matrix back
 #endif
 
   public :: hh_transform_real_double
