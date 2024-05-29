@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [21:1:2])
+AC_SUBST([ELPA_SO_VERSION], [21:2:2])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -2885,10 +2885,6 @@ fi
 #
 ##########################################################################################
 
-use_cuda_streams=no
-use_hip_streams=no
-use_gpu_streams=no
-relied_on_default=no
 AC_MSG_CHECKING(whether GPU streams should be used)
 AC_ARG_ENABLE([gpu-streams],
                [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
@@ -2911,11 +2907,8 @@ AC_ARG_ENABLE([gpu-streams],
                                 fi
 				],
               [relied_on_default=yes
-               use_cuda_streams=no
-               use_hip_streams=no
-	       use_gpu_streams=no
 	       #if test x"$enable_openmp" = x"no"; then
-		 if test x"$enable_cuda_aware_mpi" = x"no"; then
+		 #if test x"$enable_cuda_aware_mpi" = x"no"; then
 	           if test x"$need_nvidia_gpu" = x"yes"; then
                      use_cuda_streams=yes
                      use_gpu_streams=yes
@@ -2924,7 +2917,7 @@ AC_ARG_ENABLE([gpu-streams],
                      use_hip_streams=yes
                      use_gpu_streams=yes
                    fi
-		 fi
+		 #fi
 	       #fi
 	       ])
 AC_MSG_RESULT([${use_gpu_streams}])
@@ -3477,7 +3470,7 @@ AC_ARG_ENABLE([autotune-redistribute-matrix],
 AC_MSG_RESULT([${enable_autotune_redistribute_matrix}])
 if test x"${enable_autotune_redistribute_matrix}" = x"yes" ; then
   if test x"${enable_scalapack_tests}" = x"no"; then
-    AC_MSG_ERROR([Please also set --enable_scalapack_tests in this case])
+    AC_MSG_ERROR([Please also set --enable-scalapack-tests in this case])
   fi
   if test x"${with_mpi}" = x"no"; then
     AC_MSG_ERROR([For this option ELPA must be build with MPI enabled])
@@ -3485,6 +3478,23 @@ if test x"${enable_autotune_redistribute_matrix}" = x"yes" ; then
   AC_DEFINE([REDISTRIBUTE_MATRIX],[1],[enable matrix re-distribution during autotuning])
 fi
 
+AC_MSG_CHECKING(whether all Fortran tests should be provided)
+AC_ARG_ENABLE([fortran-tests],
+              AS_HELP_STRING([--enable-fortran-tests],
+                             [enables ALL the Fortran tests (some are always build) for elpa, default yes.]),
+			     [
+			      if test x"$enableval" = x"yes"; then
+			        enable_fortran_tests=yes
+		              else
+			        enable_fortran_tests=no
+			      fi
+			      ],
+              [enable_fortran_tests=yes])
+AC_MSG_RESULT([${enable_fortran_tests}])
+AM_CONDITIONAL([ENABLE_FORTRAN_TESTS],[test x"$enable_fortran_tests" = x"yes"])
+if test x"${enable_fortran_tests}" = x"yes"; then
+ AC_DEFINE([ENABLE_FORTRAN_TESTS], [1], [enable FORTRAN tests])
+fi
 
 
 

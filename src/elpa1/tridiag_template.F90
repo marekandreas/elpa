@@ -97,12 +97,29 @@ call prmat(na, useGpu, a_mat, a_dev, matrixRows, matrixCols, nblk, my_prow, my_p
 !> \param useGPU      If true,  GPU version of the subroutine will be used
 !> \param wantDebug   if true more debug information
 !>
-subroutine tridiag_&
-  &MATH_DATATYPE&
-  &_&
-  &PRECISION &
-  (obj, na, a_mat, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, d_vec, e_vec, tau, useGPU, wantDebug, &
-   max_threads_in, isSkewsymmetric, success)
+
+#ifdef TRIDIAG_GPU_BUILD
+subroutine tridiag_gpu_&
+#else
+subroutine tridiag_cpu_&
+#endif
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION &
+  (obj, na, &
+#ifdef TRIDIAG_GPU_BUILD
+   a_dev, &  
+#else
+   a_mat, &
+#endif
+  matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+#ifdef TRIDIAG_GPU_BUILD
+  d_vec_dev, e_vec_dev, tau_dev, &
+#else
+  d_vec, e_vec, tau, &
+#endif
+  wantDebug, max_threads_in, isSkewsymmetric, success)
+
   use, intrinsic :: iso_c_binding
   use precision
   use elpa_abstract_impl
@@ -119,15 +136,19 @@ subroutine tridiag_&
   use elpa_ccl_gpu
 #endif
 
+
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)    :: obj
   integer(kind=ik), intent(in)                  :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
-  logical, intent(in)                           :: useGPU, wantDebug
+  logical, intent(in)                           :: wantDebug
   logical, intent(in)                           :: isSkewsymmetric
 
   logical                                       :: useCCL=.false.
 
+  ! input/output GPU pointers
+  integer(kind=C_intptr_T)                      :: tau_dev, a_dev, d_vec_dev, e_vec_dev 
+#ifndef TRIDIAG_GPU_BUILD
   MATH_DATATYPE(kind=rck), intent(out)          :: tau(na)
 #ifdef USE_ASSUMED_SIZE
   MATH_DATATYPE(kind=rck), intent(inout)        :: a_mat(matrixRows,*)
@@ -136,6 +157,16 @@ subroutine tridiag_&
 #endif
   real(kind=rk), intent(out)                    :: d_vec(na)
   real(kind=rk), intent(out)                    :: e_vec(na)
+
+#else /* TRIDIAG_GPU_BUILD */
+  MATH_DATATYPE(kind=rck)                       :: tau(na)
+  MATH_DATATYPE(kind=rck)                       :: a_mat(matrixRows,matrixCols)
+  real(kind=rk)                                 :: d_vec(na)
+  real(kind=rk)                                 :: e_vec(na)
+#endif /* TRIDIAG_GPU_BUILD */
+
+
+ 
   integer(kind=ik)                              :: max_stored_uv = 32 ! TODO_23_11 - make it tunable instead of hard-coded
   logical,          parameter                   :: mat_vec_as_one_block = .true.
 
@@ -152,8 +183,8 @@ subroutine tridiag_&
   logical                                       :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
 
 
-  integer(kind=C_intptr_T)                      :: a_dev, v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
-                                                   uv_stored_cols_dev, d_vec_dev, e_vec_dev, tau_dev
+  integer(kind=C_intptr_T)                      :: v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
+                                                   uv_stored_cols_dev
   logical                                       :: successGPU
 
   integer(kind=ik)                              :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
@@ -233,9 +264,16 @@ subroutine tridiag_&
   integer(kind=c_int)                           :: cclDataType
   integer(kind=ik)                              :: k_datatype
 #endif
-  integer(kind=c_int) :: pointerMode
+  logical                                       :: useGPU
+  integer(kind=c_int)                           :: pointerMode
+
 
   integer(kind=ik)                              :: string_length, sm_count
+
+  useGPU = .false.
+#ifdef TRIDIAG_GPU_BUILD
+  useGPU = .true.
+#endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG)
   if (useGPU) then
@@ -245,28 +283,19 @@ subroutine tridiag_&
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
   
 #if   REALCASE == 1 && DOUBLE_PRECISION == 1
-  cclDataType = cclDouble
-  k_datatype = 1
+    cclDataType = cclDouble
+    k_datatype = 1
 #elif REALCASE == 1 && SINGLE_PRECISION == 1
-  cclDataType = cclFloat
-  k_datatype = 1
+    cclDataType = cclFloat
+    k_datatype = 1
 #elif COMPLEXCASE == 1 && DOUBLE_PRECISION == 1
-  cclDataType = cclDouble
-  k_datatype = 2
+    cclDataType = cclDouble
+    k_datatype = 2
 #elif COMPLEXCASE == 1 && SINGLE_PRECISION == 1
-  cclDataType = cclFloat
-  k_datatype = 2
+    cclDataType = cclFloat
+    k_datatype = 2
 #endif
  
-#if !defined(WITH_GPU_STREAMS)
-    if (useCCL) then
-      successGPU = cuda_stream_create(obj%gpu_setup%my_stream) ! for developing and debugging
-      if (.not.(successGPU)) then
-        print *,"Cannot create gpu stream handle"
-      endif
-      my_stream = obj%gpu_setup%my_stream
-    endif
-#endif
   endif 
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG) */
 
@@ -285,6 +314,29 @@ subroutine tridiag_&
   else
     max_threads=max_threads_in
   endif
+
+  if (useGPU) then
+
+          ! copy from device to host
+    ! dirty hack copy a_dev -> a_mat (in order not to have to change the code for the moment)
+    num = matrixRows * matrixCols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+    call gpu_memcpy_async_and_stream_synchronize &
+            ("tridiag a_dev -> a_mat", a_dev, 0_c_intptr_t, &
+                                                 a_mat(1:matrixRows,1:matrixCols), &
+                                                 1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
+#else
+    successGPU = gpu_memcpy(int(loc(a_mat(1,1)),kind=c_intptr_t), a_dev, &
+                              num, gpuMemcpyDeviceToHost)
+    check_memcpy_gpu("tridiag: a_dev", successGPU)
+#endif
+
+  endif
+
+
+
+
 
   call obj%timer%start("tridiag_&
   &MATH_DATATYPE&
@@ -567,14 +619,14 @@ subroutine tridiag_&
     successGPU = gpu_malloc(uv_stored_cols_dev, max_local_cols * 2 * max_stored_uv * size_of_datatype)
     check_alloc_gpu("tridiag: uv_stored_cols_dev", successGPU)
 
-    successGPU = gpu_malloc(d_vec_dev, na * size_of_datatype_real)
-    check_alloc_gpu("tridiag: d_vec_dev", successGPU)
+    !successGPU = gpu_malloc(d_vec_dev, na * size_of_datatype_real)
+    !check_alloc_gpu("tridiag: d_vec_dev", successGPU)
 
-    successGPU = gpu_malloc(e_vec_dev, na * size_of_datatype_real)
-    check_alloc_gpu("tridiag: e_vec_dev", successGPU)
+    !successGPU = gpu_malloc(e_vec_dev, na * size_of_datatype_real)
+    !check_alloc_gpu("tridiag: e_vec_dev", successGPU)
 
-    successGPU = gpu_malloc(tau_dev, na * size_of_datatype)
-    check_alloc_gpu("tridiag: tau_dev", successGPU)
+    !successGPU = gpu_malloc(tau_dev, na * size_of_datatype)
+    !check_alloc_gpu("tridiag: tau_dev", successGPU)
 
     successGPU = gpu_malloc(aux_dev, 2*max_stored_uv * size_of_datatype)
     check_alloc_gpu("tridiag: aux_dev", successGPU)
@@ -638,6 +690,7 @@ subroutine tridiag_&
   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a_mat
 
   if (my_prow == prow(na, nblk, np_rows) .and. my_pcol == pcol(na, nblk, np_cols)) then
+          ! do on GPU
 #if COMPLEXCASE == 1
       d_vec(na) = real(a_mat(l_rows,l_cols), kind=rk)
 #endif
@@ -651,8 +704,8 @@ subroutine tridiag_&
 
     num = matrixRows * matrixCols * size_of_datatype
 
-    successGPU = gpu_malloc(a_dev, num)
-    check_alloc_gpu("tridiag: a_dev", successGPU)
+    !successGPU = gpu_malloc(a_dev, num)
+    !check_alloc_gpu("tridiag: a_dev", successGPU)
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
@@ -787,7 +840,7 @@ subroutine tridiag_&
 
       if (useGPU) then
         isOurProcessRow = (my_prow == prow(istep-1, nblk, np_rows))
-        
+
         my_stream = obj%gpu_setup%my_stream
 #ifdef WITH_NVTX
         call nvtxRangePush("kernel: gpu_dot_product_and_assign v_row_dev*v_row_dev,aux1_dev")
@@ -1625,7 +1678,9 @@ subroutine tridiag_&
       call nvtxRangePush("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
 #endif
       sm_count = obj%gpu_setup%gpuSMcount
+      !sm_count=32
       call gpu_dot_product_PRECISION(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, sm_count, my_stream)
+      !call gpu_dot_product_PRECISION(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, my_stream)
 #ifdef WITH_NVTX
       call nvtxRangePop()
 #endif
@@ -2066,8 +2121,8 @@ subroutine tridiag_&
     endif
 
     ! todo: should we leave a_mat on the device for further use?
-    successGPU = gpu_free(a_dev)
-    check_dealloc_gpu("tridiag: a_dev 9", successGPU)
+    !successGPU = gpu_free(a_dev)
+    !check_dealloc_gpu("tridiag: a_dev 9", successGPU)
 
     successGPU = gpu_free(v_row_dev)
     check_dealloc_gpu("tridiag: v_row_dev", successGPU)
@@ -2087,14 +2142,14 @@ subroutine tridiag_&
     successGPU = gpu_free(uv_stored_cols_dev)
     check_dealloc_gpu("tridiag:uv_stored_cols_dev ", successGPU)
 
-    successGPU = gpu_free(d_vec_dev)
-    check_dealloc_gpu("tridiag: d_vec_dev", successGPU)
+    !successGPU = gpu_free(d_vec_dev)
+    !check_dealloc_gpu("tridiag: d_vec_dev", successGPU)
 
-    successGPU = gpu_free(e_vec_dev)
-    check_dealloc_gpu("tridiag: e_vec_dev", successGPU)
+    !successGPU = gpu_free(e_vec_dev)
+    !check_dealloc_gpu("tridiag: e_vec_dev", successGPU)
 
-    successGPU = gpu_free(tau_dev)
-    check_dealloc_gpu("tridiag: tau_dev", successGPU)
+    !successGPU = gpu_free(tau_dev)
+    !check_dealloc_gpu("tridiag: tau_dev", successGPU)
 
     successGPU = gpu_free(aux_dev)
     check_dealloc_gpu("tridiag: aux_dev", successGPU)
@@ -2256,11 +2311,66 @@ subroutine tridiag_&
   deallocate(aux, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: aux", istat, errorMessage)
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG) && !defined(WITH_GPU_STREAMS)
-  if (useCCL) then
-    success = cuda_stream_destroy(obj%gpu_setup%my_stream)
-  endif
+
+
+! copy to device
+  if (useGPU) then
+    ! dirty hack copy a_mat -> a_dev (in order not to have to change the code for the moment)
+    num = matrixRows * matrixCols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+    call gpu_memcpy_async_and_stream_synchronize &
+            ("tridiag a_mat -> a_dev", a_dev, 0_c_intptr_t, &
+                                                 a_mat(1:matrixRows,1:matrixCols), &
+                                                 1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+#else
+    successGPU = gpu_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t),  &
+                              num, gpuMemcpyHostToDevice)
+    check_memcpy_gpu("tridiag: a_dev", successGPU)
 #endif
+
+    num = na * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+    call gpu_memcpy_async_and_stream_synchronize &
+            ("tridiag e_vec -> e_vec_dev", e_vec_dev, 0_c_intptr_t, &
+                                                 e_vec(1:na), &
+                                                 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+#else
+    successGPU = gpu_memcpy(e_vec_dev, int(loc(e_vec(1)),kind=c_intptr_t),  &
+                              num, gpuMemcpyHostToDevice)
+    check_memcpy_gpu("tridiag: e_vec_dev", successGPU)
+#endif
+
+    num = na * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+    call gpu_memcpy_async_and_stream_synchronize &
+            ("tridiag d_vec -> d_vec_dev", d_vec_dev, 0_c_intptr_t, &
+                                                 d_vec(1:na), &
+                                                 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+#else
+    successGPU = gpu_memcpy(d_vec_dev, int(loc(d_vec(1)),kind=c_intptr_t),  &
+                              num, gpuMemcpyHostToDevice)
+    check_memcpy_gpu("tridiag: d_vec_dev", successGPU)
+#endif
+
+    num = na * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+    call gpu_memcpy_async_and_stream_synchronize &
+            ("tridiag tau -> tau_dev", tau_dev, 0_c_intptr_t, &
+                                                 tau(1:na), &
+                                                 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+#else
+    successGPU = gpu_memcpy(tau_dev, int(loc(tau(1)),kind=c_intptr_t),  &
+                              num, gpuMemcpyHostToDevice)
+    check_memcpy_gpu("tridiag: d_vec_dev", successGPU)
+#endif
+
+
+
+  endif
 
 
   call obj%timer%stop("tridiag_&
@@ -2269,7 +2379,4 @@ subroutine tridiag_&
   PRECISION_SUFFIX // &
   gpuString )
 
-end subroutine tridiag_&
-&MATH_DATATYPE&
-&_&
-&PRECISION
+end

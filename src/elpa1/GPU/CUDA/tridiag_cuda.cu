@@ -63,76 +63,14 @@
 #include <type_traits>
 #include "config-f90.h"
 
+#include "../../../GPU/common_device_functions.h"
+
 #define MAX_THREADS_PER_BLOCK 1024
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-template <typename T> 
-__device__ T sign(T a, T b) {
-    if (b>=0) return fabs(a);
-    else return -fabs(a);
-}
-
-// construct a generic /float/cuDoubleComplex/cuFloatComplex from a double
-template <typename T>  __device__ T elpaDeviceNumber(double number);
-template <>  __device__ double elpaDeviceNumber<double>(double number) {return number;}
-template <>  __device__ float  elpaDeviceNumber<float> (double number) {return (float) number;}
-template <>  __device__ cuDoubleComplex elpaDeviceNumber<cuDoubleComplex>(double number) { return make_cuDoubleComplex(number , 0.0 );}
-template <>  __device__ cuComplex       elpaDeviceNumber<cuComplex>      (double number) { return make_cuFloatComplex ((float) number, 0.0f);}
-
-// construct a generic double/float/cuDoubleComplex/cuFloatComplex from a real and imaginary parts
-template <typename T, typename T_real>  __device__ T elpaDeviceNumberFromRealImag(T_real Re, T_real Im);
-template <> __device__ double elpaDeviceNumberFromRealImag<double>(double Real, double Imag) {return Real;}
-template <> __device__ float  elpaDeviceNumberFromRealImag<float> (float  Real, float  Imag) {return Real;}
-template <> __device__ cuDoubleComplex elpaDeviceNumberFromRealImag<cuDoubleComplex>(double Real, double Imag) { return make_cuDoubleComplex(Real, Imag);}
-template <> __device__ cuComplex       elpaDeviceNumberFromRealImag<cuComplex>      (float  Real, float  Imag) { return make_cuFloatComplex (Real, Imag);}
-
-__device__ double elpaDeviceAdd(double a, double b) { return a + b; }
-__device__ float  elpaDeviceAdd(float a, float b)   { return a + b; }
-__device__ cuDoubleComplex elpaDeviceAdd(cuDoubleComplex a, cuDoubleComplex b) { return cuCadd (a, b); }
-__device__ cuComplex       elpaDeviceAdd(cuComplex       a, cuComplex       b) { return cuCaddf(a, b); }
-
-__device__ double elpaDeviceSubtract(double a, double b) { return a - b; }
-__device__ float  elpaDeviceSubtract(float a, float b)   { return a - b; }
-__device__ cuDoubleComplex elpaDeviceSubtract(cuDoubleComplex a, cuDoubleComplex b) { return cuCsub (a, b); }
-__device__ cuComplex       elpaDeviceSubtract(cuComplex       a, cuComplex       b) { return cuCsubf(a, b); }
-
-__device__ double elpaDeviceMultiply(double a, double b) { return a * b; }
-__device__ float  elpaDeviceMultiply(float  a, float  b) { return a * b; }
-__device__ cuDoubleComplex elpaDeviceMultiply(cuDoubleComplex a, cuDoubleComplex b) { return cuCmul (a, b); }
-__device__ cuComplex       elpaDeviceMultiply(cuComplex       a, cuComplex       b) { return cuCmulf(a, b); }
-
-__device__ double elpaDeviceDivide(double a, double b) { return a / b; }
-__device__ float  elpaDeviceDivide(float  a, float  b) { return a / b; }
-__device__ cuDoubleComplex elpaDeviceDivide(cuDoubleComplex a, cuDoubleComplex b) { return cuCdiv (a, b); }
-__device__ cuComplex       elpaDeviceDivide(cuComplex       a, cuComplex       b) { return cuCdivf(a, b); }
-
-__device__ double elpaDeviceSqrt(double number) { return sqrt (number); }
-__device__ float  elpaDeviceSqrt(float  number) { return sqrtf(number); }
-
-// atomicAdd for cuDoubleComplex and cuComplex
-template<typename T>
-__device__ void atomicAdd(T* address, T val) {
-    atomicAdd(&(address->x), val.x);
-    atomicAdd(&(address->y), val.y);
-}
-
-__device__ double elpaDeviceComplexConjugate(double number) {return number;}
-__device__ float elpaDeviceComplexConjugate(float  number) {return number;}
-__device__ cuDoubleComplex elpaDeviceComplexConjugate(cuDoubleComplex number) {number.y = -number.y; return number;}
-__device__ cuComplex elpaDeviceComplexConjugate(cuComplex number) {number.y = -number.y; return number;}
-
-__device__ double elpaDeviceRealPart(double number) {return number;}
-__device__ float  elpaDeviceRealPart(float  number) {return number;}
-__device__ double elpaDeviceRealPart(cuDoubleComplex number) {return number.x;}
-__device__ float  elpaDeviceRealPart(cuComplex       number) {return number.x;}
-
-__device__ double elpaDeviceImagPart(double number) {return 0.0;}
-__device__ float  elpaDeviceImagPart(float  number) {return 0.0f;}
-__device__ double elpaDeviceImagPart(cuDoubleComplex number) {return number.y;}
-__device__ float  elpaDeviceImagPart(cuComplex       number) {return number.y;}
 
 // Define a helper struct to determine if a type is a pointer
 template <typename T>
@@ -140,14 +78,6 @@ struct is_pointer { static const bool value = false; };
 
 template <typename T>
 struct is_pointer<T*> { static const bool value = true; };
-
-// Device function to convert a pointer to a value
-template <typename T>
-__device__ T convert_to_device(T* x, std::true_type) { return *x;}
-
-// Device function to convert a value to a value
-template <typename T>
-__device__ T convert_to_device(T x, std::false_type) { return x;}
 
 //________________________________________________________________
  
@@ -1016,7 +946,7 @@ __global__ void cuda_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_de
 
   else
     {
-    T beta = elpaDeviceNumber<T> (sign( elpaDeviceSqrt( alpha_r*alpha_r + alpha_i*alpha_i +
+    T beta = elpaDeviceNumber<T> (elpaDeviceSign( elpaDeviceSqrt( alpha_r*alpha_r + alpha_i*alpha_i +
                                           elpaDeviceRealPart(*xnorm_sq_dev) ), elpaDeviceRealPart(*alpha_dev) ));
 
     *alpha_dev = elpaDeviceAdd(*alpha_dev, beta);

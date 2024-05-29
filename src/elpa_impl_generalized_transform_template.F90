@@ -191,7 +191,13 @@ endif
     endif
     call self%timer_start("cannons_reduction")
     ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
+#ifdef WITH_NVTX
+    call nvtxRangePush("tmp = 0")
+#endif
     tmp = 0.0_rck
+#ifdef WITH_NVTX
+    call nvtxRangePop()
+#endif
 #ifdef WITH_MPI
 #ifdef WITH_NVTX
     call nvtxRangePush("cannons_reduction")

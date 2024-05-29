@@ -222,6 +222,10 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
             continue
         
         # end: exclude some test combinations
+        #if (lang == "Fortran" and ((t != "eigenvectors") and (m !="random") and (lay !="square"))):
+        if (lang == "Fortran"): 
+            print("if ENABLE_FORTRAN_TESTS")
+            endifs += 1
       
         if (lang == "C"):
             print("if ENABLE_C_TESTS")
@@ -532,6 +536,8 @@ for lang, g, gid, deviceptr, p, d, api_name in product(sorted(language_flag.keys
     #    print("if WITH_INTEL_GPU_VERSION")
     #    endifs += 1
 
+    print("if ENABLE_FORTRAN_TESTS")
+    endifs += 1
     if (g == "OPENMP_OFFLOAD_GPU_ON"):
         print("if WITH_OPENMP_OFFLOAD_GPU_VERSION")
         endifs += 1
@@ -652,33 +658,82 @@ print("  " + " \\\n  ".join([
 print("endif")
 print("endif\n")
 
+for g, gid, deviceptr in product(sorted(gpu_flag.keys()),
+                                 sorted(gpu_id_flag.keys()),
+                                 sorted(device_pointer_flag.keys())):
+  endifs = 0
 
-name = "validate_skewsymmetric_real_double"
-print("if HAVE_SKEWSYMMETRIC")
-print("check_SCRIPTS += " + name + "_extended.sh")
-print("noinst_PROGRAMS += " + name)
-print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
-print(name + "_LDADD = $(test_program_ldadd)")
-print(name + "_FCFLAGS = $(test_program_fcflags) \\")
-print("  " + " \\\n  ".join([
+  if (gid == 1):
+    continue
+  if (deviceptr == 1):
+    continue
+
+  if (g == "NVIDIA_GPU_ON"):
+    print("if WITH_NVIDIA_GPU_VERSION")
+    endifs += 1
+  #if (g == "INTEL_GPU_ON"):
+  #    print("if WITH_INTEL_GPU_VERSION")
+  #    endifs += 1
+
+  if (g == "OPENMP_OFFLOAD_GPU_ON"):
+      print("if WITH_OPENMP_OFFLOAD_GPU_VERSION")
+      endifs += 1
+
+  if (g == "SYCL_GPU_ON"):
+      print("if WITH_SYCL_GPU_VERSION")
+      endifs += 1
+
+  if (g == "AMD_GPU_ON"):
+      print("if WITH_AMD_GPU_VERSION")
+      endifs += 1
+
+  if (g != "GPU_OFF"):
+    name = "validate_skewsymmetric_real_double_gpu"
+  else:
+    name = "validate_skewsymmetric_real_double"
+  print("if HAVE_SKEWSYMMETRIC")
+  print("check_SCRIPTS += " + name + "_extended.sh")
+  print("noinst_PROGRAMS += " + name)
+  print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
+  print(name + "_LDADD = $(test_program_ldadd)")
+  print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+  print("  " + " \\\n  ".join([
+          domain_flag['real'],
+          prec_flag['double'],
+          gpu_flag[g]]))
+  print("endif\n")
+  print("endif\n" * endifs)
+    
+  if (g == "NVIDIA_GPU_ON"):
+    print("if WITH_NVIDIA_GPU_VERSION")
+  #if (g == "INTEL_GPU_ON"):
+  #    print("if WITH_INTEL_GPU_VERSION")
+  if (g == "OPENMP_OFFLOAD_GPU_ON"):
+      print("if WITH_OPENMP_OFFLOAD_GPU_VERSION")
+  if (g == "SYCL_GPU_ON"):
+      print("if WITH_SYCL_GPU_VERSION")
+  if (g == "AMD_GPU_ON"):
+      print("if WITH_AMD_GPU_VERSION")
+
+
+  if (g != "GPU_OFF"):
+    name = "validate_skewsymmetric_real_single_gpu"
+  else:
+    name = "validate_skewsymmetric_real_single"
+  print("if HAVE_SKEWSYMMETRIC")
+  print("if WANT_SINGLE_PRECISION_REAL")
+  print("check_SCRIPTS += " + name + "_extended.sh")
+  print("noinst_PROGRAMS += " + name)
+  print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
+  print(name + "_LDADD = $(test_program_ldadd)")
+  print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+  print("  " + " \\\n  ".join([
         domain_flag['real'],
-        prec_flag['double']]))
-print("endif\n")
-
-name = "validate_skewsymmetric_real_single"
-print("if HAVE_SKEWSYMMETRIC")
-print("if WANT_SINGLE_PRECISION_REAL")
-print("check_SCRIPTS += " + name + "_extended.sh")
-print("noinst_PROGRAMS += " + name)
-print(name + "_SOURCES = test/Fortran/test_skewsymmetric.F90")
-print(name + "_LDADD = $(test_program_ldadd)")
-print(name + "_FCFLAGS = $(test_program_fcflags) \\")
-print("  " + " \\\n  ".join([
-        domain_flag['real'],
-        prec_flag['single']]))
-print("endif")
-print("endif\n")
-
+        prec_flag['single'],
+        gpu_flag[g]]))
+  print("endif\n")
+  print("endif\n")
+  print("endif\n" * endifs)
 
 name = "validate_real_skewsymmetric_double_c_version"
 print("if ENABLE_C_TESTS")
@@ -689,11 +744,10 @@ print(name + "_SOURCES = test/C/test_skewsymmetric.c")
 print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
 print(name + "_CFLAGS = $(test_program_cflags) \\")
 print("  " + " \\\n  ".join([
-        domain_flag['real'],
-        prec_flag['double']]))
-print("endif")
-print("endif")
-
+         domain_flag['real'],
+         prec_flag['double']]))
+print("endif\n")
+print("endif\n")
 
 name = "validate_real_skewsymmetric_double_cpp_version"
 print("if ENABLE_CPP_TESTS")
