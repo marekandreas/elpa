@@ -361,7 +361,7 @@ subroutine trans_ev_cpu_&
   ! In the complex case tau(2) /= 0
   if (useGPU) then
     if (my_prow == prow(1, nblk, np_rows)) then
-      call GPU_SCALE_QMAT_PRECISION_COMPLEX(ldq, l_cols, q_dev, tau_dev, my_stream)
+      call GPU_SCALE_QMAT_PRECISION(ldq, l_cols, q_dev, tau_dev, my_stream)
      endif
   else
     if (my_prow == prow(1, nblk, np_rows)) then

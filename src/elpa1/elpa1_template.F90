@@ -1071,9 +1071,9 @@ function elpa_solve_evp_&
      if (do_useGPU_trans_ev) then
 #ifdef WITH_GPU_STREAMS
        my_stream = obj%gpu_setup%my_stream
-       call GPU_COPY_REAL_PART_TO_Q_PRECISION_COMPLEX(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev, my_stream)
+       call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev, my_stream)
 #else
-       call GPU_COPY_REAL_PART_TO_Q_PRECISION_COMPLEX(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev)
+       call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev)
 #endif
      else
        q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
@@ -1086,9 +1086,9 @@ function elpa_solve_evp_&
        if (do_useGPU_trans_ev) then
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
-         call GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION_REAL(q_dev, matrixRows, matrixCols, my_stream)
+         call GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION(q_dev, matrixRows, matrixCols, my_stream)
 #else
-         call GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION_REAL(q_dev, matrixRows, matrixCols)
+         call GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION(q_dev, matrixRows, matrixCols)
 #endif
          do i = 1, matrixRows
            global_index = np_rows*nblk*((i-1)/nblk) + MOD(i-1,nblk) + MOD(np_rows+my_prow-0, np_rows)*nblk + 1
@@ -1099,10 +1099,10 @@ function elpa_solve_evp_&
              negative_or_positive = 1
 #ifdef WITH_GPU_STREAMS
              my_stream = obj%gpu_setup%my_stream
-             call GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL(q_dev, i, matrixRows, &
+             call GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, i, matrixRows, &
                      matrixCols, negative_or_positive, my_stream)
 #else
-             call GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL(q_dev, i, matrixRows, &
+             call GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, i, matrixRows, &
                      matrixCols, negative_or_positive)
 #endif
            end if
@@ -1110,10 +1110,10 @@ function elpa_solve_evp_&
              negative_or_positive = -1
 #ifdef WITH_GPU_STREAMS
              my_stream = obj%gpu_setup%my_stream
-             call GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION_REAL(q_dev, i, matrixRows, &
+             call GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION(q_dev, i, matrixRows, &
                      matrixCols, negative_or_positive, my_stream)
 #else
-             call GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION_REAL(q_dev, i, matrixRows, &
+             call GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION(q_dev, i, matrixRows, &
                      matrixCols, negative_or_positive)
 #endif
            end if
@@ -1121,10 +1121,10 @@ function elpa_solve_evp_&
              negative_or_positive = -1
 #ifdef WITH_GPU_STREAMS
              my_stream = obj%gpu_setup%my_stream
-             call GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL(q_dev, i, matrixRows, matrixCols, &
+             call GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, i, matrixRows, matrixCols, &
                           negative_or_positive, my_stream)
 #else
-             call GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL(q_dev, i, matrixRows, matrixCols, &
+             call GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, i, matrixRows, matrixCols, &
                           negative_or_positive)
 #endif
            end if
@@ -1220,10 +1220,10 @@ function elpa_solve_evp_&
          ! copy q_part2(1:matrixRows,1:matrixCols) = q(1:matrixRows, matrixCols+1:2*matrixCols)
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
-         call GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL(q_dev, q_part2_dev, matrixRows, matrixCols, &
+         call GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, q_part2_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #else
-         call GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL(q_dev, q_part2_dev, matrixRows, matrixCols)
+         call GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, q_part2_dev, matrixRows, matrixCols)
 #endif
 
          call trans_ev_gpu_&
@@ -1257,10 +1257,10 @@ function elpa_solve_evp_&
        if (do_useGPU_trans_ev) then
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
-         call GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL(q_dev, q_part2_dev, matrixRows, matrixCols, &
+         call GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, q_part2_dev, matrixRows, matrixCols, &
                                                                  my_stream)
 #else
-         call GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL(q_dev, q_part2_dev, matrixRows, matrixCols)
+         call GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, q_part2_dev, matrixRows, matrixCols)
 #endif
        endif
      endif

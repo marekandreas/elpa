@@ -149,11 +149,11 @@
 #undef  MPI_MATH_DATATYPE_PRECISION_EXPL
 #undef  C_DATATYPE_KIND
 
-#undef  GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION_REAL
-#undef  GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL
-#undef  GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION_REAL
-#undef  GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL
-#undef  GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL
+#undef  GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION
+#undef  GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION
+#undef  GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION
+#undef  GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION
+#undef  GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION
 
 #if 0
 /* General definitions needed in single and double case */
@@ -260,11 +260,11 @@
 #define C_PLACPY pdlacpy_
 #define C_PTRAN pdtran_
 
-#define GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION_REAL gpu_zero_skewsymmetric_q_double_real
-#define GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL gpu_copy_skewsymmetric_second_half_q_double_real
-#define GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION_REAL gpu_copy_skewsymmetric_first_half_q_double_real
-#define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL gpu_get_skewsymmetric_second_half_q_double_real
-#define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL gpu_put_skewsymmetric_second_half_q_double_real
+#define GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION gpu_zero_skewsymmetric_q_double
+#define GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_copy_skewsymmetric_second_half_q_double
+#define GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION gpu_copy_skewsymmetric_first_half_q_double
+#define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_get_skewsymmetric_second_half_q_double
+#define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_put_skewsymmetric_second_half_q_double
 
 #endif /* DOUBLE_PRECISION */
 
@@ -367,11 +367,11 @@
 #define C_PLACPY pslacpy_
 #define C_PTRAN pstran_
 
-#define GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION_REAL gpu_zero_skewsymmetric_q_float_real
-#define GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL gpu_copy_skewsymmetric_second_half_q_float_real
-#define GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION_REAL gpu_copy_skewsymmetric_first_half_q_float_real
-#define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL gpu_get_skewsymmetric_second_half_q_float_real
-#define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION_REAL gpu_put_skewsymmetric_second_half_q_float_real
+#define GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION gpu_zero_skewsymmetric_q_float
+#define GPU_COPY_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_copy_skewsymmetric_second_half_q_float
+#define GPU_COPY_SKEWSYMMETRIC_FIRST_HALF_Q_PRECISION gpu_copy_skewsymmetric_first_half_q_float
+#define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_get_skewsymmetric_second_half_q_float
+#define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_put_skewsymmetric_second_half_q_float
 
 #endif /* SINGLE_PRECISION */
 
@@ -491,8 +491,8 @@
 #undef ELPA_PRECISION_SSMV
 #undef ELPA_PRECISION_SSR2
 
-#undef  GPU_SCALE_QMAT_PRECISION_COMPLEX
-#undef  GPU_COPY_REAL_PART_TO_Q_PRECISION_COMPLEX
+#undef  GPU_SCALE_QMAT_PRECISION
+#undef  GPU_COPY_REAL_PART_TO_Q_PRECISION
 
 #if 0
 /* General definitions needed in single and double case */
@@ -602,8 +602,8 @@
 #define  PRECISION_REAL DREAL
 #define  C_DATATYPE_KIND c_double
 
-#define GPU_SCALE_QMAT_PRECISION_COMPLEX gpu_scale_qmat_double_complex
-#define GPU_COPY_REAL_PART_TO_Q_PRECISION_COMPLEX gpu_copy_real_part_to_q_double_complex
+#define GPU_SCALE_QMAT_PRECISION gpu_scale_qmat_double_complex
+#define GPU_COPY_REAL_PART_TO_Q_PRECISION gpu_copy_real_part_to_q_double_complex
 
 #define ELPA_PRECISION_SSMV elpa_zssmv
 #define ELPA_PRECISION_SSR2 elpa_zssr2
@@ -713,8 +713,8 @@
 #define ELPA_PRECISION_SSMV elpa_cssmv
 #define ELPA_PRECISION_SSR2 elpa_cssr2
 
-#define GPU_SCALE_QMAT_PRECISION_COMPLEX gpu_scale_qmat_float_complex
-#define GPU_COPY_REAL_PART_TO_Q_PRECISION_COMPLEX gpu_copy_real_part_to_q_float_complex
+#define GPU_SCALE_QMAT_PRECISION gpu_scale_qmat_float_complex
+#define GPU_COPY_REAL_PART_TO_Q_PRECISION gpu_copy_real_part_to_q_float_complex
 
 #endif /* SINGLE PRECISION */
 

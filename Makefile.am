@@ -59,7 +59,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/GPU/CUDA/mod_tridiag_cuda.F90 \
   src/elpa1/GPU/ROCm/mod_tridiag_hip.F90 \
   src/elpa1/GPU/SYCL/mod_tridiag_sycl.F90 \
-   src/elpa1/GPU/CUDA/mod_trans_ev_cuda.F90 \
+  src/elpa1/GPU/CUDA/mod_trans_ev_cuda.F90 \
   src/elpa1/GPU/ROCm/mod_trans_ev_hip.F90 \
   src/elpa1/GPU/SYCL/mod_trans_ev_sycl.F90 \
   src/elpa1/GPU/CUDA/mod_elpa1_cuda.F90 \
@@ -294,6 +294,8 @@ if WITH_AMD_GPU_VERSION
   src/GPU/ROCm/rocmFunctions.cpp \
   src/GPU/ROCm/hipUtils.cpp \
   src/elpa1/GPU/ROCm/tridiag_hip.cpp \
+  src/elpa1/GPU/ROCm/elpa1_hip.cpp \
+  src/elpa1/GPU/ROCm/trans_ev_hip.cpp \
   src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp \
   src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp \
   src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp \
