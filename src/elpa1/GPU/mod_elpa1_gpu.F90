@@ -126,7 +126,7 @@ module elpa1_gpu
 
     end subroutine
 
-    subroutine gpu_zero_skewsymmetric_q_double_real(q_dev, matrixRows, matrixCols, my_stream)
+    subroutine gpu_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -137,29 +137,29 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_zero_skewsymmetric_q_double_real(q_dev, matrixRows, matrixCols, my_stream)
+        call cuda_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_zero_skewsymmetric_q_double_real(q_dev, matrixRows, matrixCols, my_stream)
+        call hip_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_zero_skewsymmetric_q_double_real(q_dev, matrixRows, matrixCols, my_stream)
+        call sycl_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols, my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_zero_skewsymmetric_q_double_real(q_dev, matrixRows, matrixCols)
+        call cuda_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_zero_skewsymmetric_q_double_real(q_dev, matrixRows, matrixCols)
+        call hip_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_zero_skewsymmetric_q_double_real(q_dev, matrixRows, matrixCols)
+        call sycl_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols)
 #endif
       endif
 
     end subroutine
 
-    subroutine gpu_zero_skewsymmetric_q_float_real(q_dev, matrixRows, matrixCols, my_stream)
+    subroutine gpu_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -169,28 +169,28 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_zero_skewsymmetric_q_float_real(q_dev, matrixRows, matrixCols, my_stream)
+        call cuda_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_zero_skewsymmetric_q_float_real(q_dev, matrixRows, matrixCols, my_stream)
+        call hip_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_zero_skewsymmetric_q_float_real(q_dev, matrixRows, matrixCols, my_stream)
+        call sycl_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols, my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_zero_skewsymmetric_q_float_real(q_dev, matrixRows, matrixCols)
+        call cuda_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_zero_skewsymmetric_q_float_real(q_dev, matrixRows, matrixCols)
+        call hip_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_zero_skewsymmetric_q_float_real(q_dev, matrixRows, matrixCols)
+        call sycl_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols)
 #endif
       endif
     end subroutine
 
-    subroutine gpu_copy_skewsymmetric_second_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+    subroutine gpu_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                negative_or_positive, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -201,34 +201,34 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_copy_skewsymmetric_second_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+        call cuda_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_copy_skewsymmetric_second_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+        call hip_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_copy_skewsymmetric_second_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+        call sycl_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_copy_skewsymmetric_second_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+        call cuda_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_copy_skewsymmetric_second_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+        call hip_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_copy_skewsymmetric_second_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+        call sycl_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
       endif
     end subroutine
 
-    subroutine gpu_copy_skewsymmetric_second_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+    subroutine gpu_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                negative_or_positive, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -239,34 +239,34 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_copy_skewsymmetric_second_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call cuda_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_copy_skewsymmetric_second_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call hip_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_copy_skewsymmetric_second_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call sycl_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_copy_skewsymmetric_second_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call cuda_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_copy_skewsymmetric_second_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call hip_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_copy_skewsymmetric_second_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call sycl_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
       endif
     end subroutine
 
-    subroutine gpu_copy_skewsymmetric_first_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+    subroutine gpu_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                negative_or_positive, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -277,34 +277,34 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_skewsymmetric_first_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+      call cuda_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_skewsymmetric_first_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+      call hip_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_skewsymmetric_first_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+      call sycl_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_skewsymmetric_first_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+      call cuda_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_skewsymmetric_first_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+      call hip_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_skewsymmetric_first_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
+      call sycl_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
       endif
     end subroutine
 
-    subroutine gpu_copy_skewsymmetric_first_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+    subroutine gpu_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                negative_or_positive, my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -315,35 +315,35 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_copy_skewsymmetric_first_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call cuda_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_copy_skewsymmetric_first_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call hip_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_copy_skewsymmetric_first_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call sycl_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive, my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_copy_skewsymmetric_first_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call cuda_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_copy_skewsymmetric_first_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call hip_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_copy_skewsymmetric_first_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
+        call sycl_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
                                                                 negative_or_positive)
 #endif
       endif
 
     end subroutine
 
-    subroutine gpu_get_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+    subroutine gpu_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -354,32 +354,32 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_get_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call cuda_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_get_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call hip_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_get_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call sycl_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_get_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call cuda_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_get_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call hip_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_get_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call sycl_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
       endif
 
     end subroutine
 
-    subroutine gpu_get_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+    subroutine gpu_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -390,32 +390,32 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_get_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call cuda_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_get_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call hip_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_get_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call sycl_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_get_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call cuda_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_get_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call hip_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_get_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call sycl_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
       endif
 
     end subroutine
 
-    subroutine gpu_put_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+    subroutine gpu_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -426,32 +426,32 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_put_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call cuda_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_put_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call hip_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_put_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call sycl_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_put_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call cuda_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_put_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call hip_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_put_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call sycl_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
       endif
 
     end subroutine
 
-    subroutine gpu_put_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+    subroutine gpu_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                my_stream)
       use, intrinsic :: iso_c_binding
 
@@ -462,26 +462,26 @@ module elpa1_gpu
 
       if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_put_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call cuda_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_put_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call hip_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_put_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
+        call sycl_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                                                 my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_put_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call cuda_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_put_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call hip_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_put_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols)
+        call sycl_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
       endif
 

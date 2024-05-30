@@ -54,13 +54,14 @@
 #include <time.h>
 #include <alloca.h>
 #include <complex.h>
-#include <cuComplex.h>
+#include <hip/hip_complex.h>
+#include "hip/hip_runtime.h"
 #include <stdint.h>
 #include "config-f90.h"
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
-__global__ void cuda_copy_real_part_to_q_double_complex_kernel(cuDoubleComplex *q, const double *q_real, const int matrixRows, const int l_rows, const int l_cols_nev) {
+__global__ void hip_copy_real_part_to_q_double_complex_kernel(hipDoubleComplex *q, const double *q_real, const int matrixRows, const int l_rows, const int l_cols_nev) {
     int row = blockIdx.x * blockDim.x + threadIdx.x;
     int col = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -77,29 +78,29 @@ __global__ void cuda_copy_real_part_to_q_double_complex_kernel(cuDoubleComplex *
     }
 }
 
-extern "C" void cuda_copy_real_part_to_q_double_complex_FromC(double _Complex *q_dev, double *q_real_dev, int *matrixRows_in, int *l_rows_in, int *l_cols_nev_in, cudaStream_t  my_stream){
+extern "C" void hip_copy_real_part_to_q_double_complex_FromC(double _Complex *q_dev, double *q_real_dev, int *matrixRows_in, int *l_rows_in, int *l_cols_nev_in, hipStream_t  my_stream){
   int l_rows = *l_rows_in;
   int l_cols_nev = *l_cols_nev_in;
   int matrixRows = *matrixRows_in;
 
-  cuDoubleComplex* q_casted = (cuDoubleComplex*) q_dev;
+  hipDoubleComplex* q_casted = (hipDoubleComplex*) q_dev;
 
   dim3 threadsPerBlock(32, 32); 
   dim3 blocks((l_rows + threadsPerBlock.x - 1) / threadsPerBlock.x, (l_cols_nev + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_real_part_to_q_double_complex_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_casted, q_real_dev, matrixRows, l_rows, l_cols_nev);
+  hip_copy_real_part_to_q_double_complex_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_casted, q_real_dev, matrixRows, l_rows, l_cols_nev);
 #else
-  cuda_copy_real_part_to_q_double_complex_kernel<<<blocks, threadsPerBlock>>>(q_casted, q_real_dev, matrixRows, l_rows, l_cols_nev);
+  hip_copy_real_part_to_q_double_complex_kernel<<<blocks, threadsPerBlock>>>(q_casted, q_real_dev, matrixRows, l_rows, l_cols_nev);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_copy_real_part_to_q_double_complex_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_real_part_to_q_double_complex_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_copy_real_part_to_q_float_complex_kernel(cuFloatComplex *q, const float *q_real, const int matrixRows, const int l_rows, const int l_cols_nev) {
+__global__ void hip_copy_real_part_to_q_float_complex_kernel(hipFloatComplex *q, const float *q_real, const int matrixRows, const int l_rows, const int l_cols_nev) {
     int row = blockIdx.x * blockDim.x + threadIdx.x;
     int col = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -110,29 +111,29 @@ __global__ void cuda_copy_real_part_to_q_float_complex_kernel(cuFloatComplex *q,
     }
 }
 
-extern "C" void cuda_copy_real_part_to_q_float_complex_FromC(float _Complex *q_dev, float *q_real_dev, int *matrixRows_in, int *l_rows_in, int *l_cols_nev_in, cudaStream_t  my_stream){
+extern "C" void hip_copy_real_part_to_q_float_complex_FromC(float _Complex *q_dev, float *q_real_dev, int *matrixRows_in, int *l_rows_in, int *l_cols_nev_in, hipStream_t  my_stream){
   int l_rows = *l_rows_in;
   int l_cols_nev = *l_cols_nev_in;
   int matrixRows = *matrixRows_in;
 
-  cuFloatComplex* q_casted = (cuFloatComplex*) q_dev;
+  hipFloatComplex* q_casted = (hipFloatComplex*) q_dev;
 
   dim3 threadsPerBlock(32, 32); 
   dim3 blocks((l_rows + threadsPerBlock.x - 1) / threadsPerBlock.x, (l_cols_nev + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_real_part_to_q_float_complex_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_casted, q_real_dev, matrixRows, l_rows, l_cols_nev);
+  hip_copy_real_part_to_q_float_complex_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_casted, q_real_dev, matrixRows, l_rows, l_cols_nev);
 #else
-  cuda_copy_real_part_to_q_float_complex_kernel<<<blocks, threadsPerBlock>>>(q_casted, q_real_dev, matrixRows, l_rows, l_cols_nev);
+  hip_copy_real_part_to_q_float_complex_kernel<<<blocks, threadsPerBlock>>>(q_casted, q_real_dev, matrixRows, l_rows, l_cols_nev);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_copy_real_part_to_q_float_complex_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_real_part_to_q_float_complex_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_zero_skewsymmetric_q_double_kernel(double *q, const int matrixRows, const int matrixCols) {
+__global__ void hip_zero_skewsymmetric_q_double_kernel(double *q, const int matrixRows, const int matrixCols) {
     int row = blockIdx.x * blockDim.x + threadIdx.x;
     int col = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -142,7 +143,7 @@ __global__ void cuda_zero_skewsymmetric_q_double_kernel(double *q, const int mat
     }
 }
 
-extern "C" void cuda_zero_skewsymmetric_q_double_FromC(double *q_dev, int *matrixRows_in, int *matrixCols_in, cudaStream_t  my_stream){
+extern "C" void hip_zero_skewsymmetric_q_double_FromC(double *q_dev, int *matrixRows_in, int *matrixCols_in, hipStream_t  my_stream){
   int matrixCols = *matrixCols_in;
   int matrixRows = *matrixRows_in;
 
@@ -150,18 +151,18 @@ extern "C" void cuda_zero_skewsymmetric_q_double_FromC(double *q_dev, int *matri
   dim3 blocks((matrixRows + threadsPerBlock.x - 1) / threadsPerBlock.x, (matrixCols + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_zero_skewsymmetric_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, matrixRows, matrixCols);
+  hip_zero_skewsymmetric_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, matrixRows, matrixCols);
 #else
-  cuda_zero_skewsymmetric_q_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, matrixRows, matrixCols);
+  hip_zero_skewsymmetric_q_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, matrixRows, matrixCols);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_zero_skewsymmetric_q_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_zero_skewsymmetric_q_double_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_zero_skewsymmetric_q_float_kernel(float *q, const int matrixRows, const int matrixCols) {
+__global__ void hip_zero_skewsymmetric_q_float_kernel(float *q, const int matrixRows, const int matrixCols) {
     int row = blockIdx.x * blockDim.x + threadIdx.x;
     int col = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -175,7 +176,7 @@ __global__ void cuda_zero_skewsymmetric_q_float_kernel(float *q, const int matri
     }
 }
 
-extern "C" void cuda_zero_skewsymmetric_q_float_FromC(float *q_dev, int *matrixRows_in, int *matrixCols_in, cudaStream_t  my_stream){
+extern "C" void hip_zero_skewsymmetric_q_float_FromC(float *q_dev, int *matrixRows_in, int *matrixCols_in, hipStream_t  my_stream){
   int matrixCols = *matrixCols_in;
   int matrixRows = *matrixRows_in;
 
@@ -184,18 +185,18 @@ extern "C" void cuda_zero_skewsymmetric_q_float_FromC(float *q_dev, int *matrixR
   dim3 blocks((matrixRows + threadsPerBlock.x - 1) / threadsPerBlock.x, (matrixCols + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_zero_skewsymmetric_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, matrixRows, matrixCols);
+  hip_zero_skewsymmetric_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, matrixRows, matrixCols);
 #else
-  cuda_zero_skewsymmetric_q_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, matrixRows, matrixCols);
+  hip_zero_skewsymmetric_q_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, matrixRows, matrixCols);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_zero_skewsymmetric_q_float_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_zero_skewsymmetric_q_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_copy_skewsymmetric_second_half_q_double_minus_kernel(double *q, const int i, const int matrixRows, const int matrixCols) {
+__global__ void hip_copy_skewsymmetric_second_half_q_double_minus_kernel(double *q, const int i, const int matrixRows, const int matrixCols) {
 
 
 #if 0
@@ -227,7 +228,7 @@ __global__ void cuda_copy_skewsymmetric_second_half_q_double_minus_kernel(double
 
 }
 
-__global__ void cuda_copy_skewsymmetric_second_half_q_double_plus_kernel(double *q, const int i, const int matrixRows, const int matrixCols) {
+__global__ void hip_copy_skewsymmetric_second_half_q_double_plus_kernel(double *q, const int i, const int matrixRows, const int matrixCols) {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     //if (col >= matrixCols && col <= 2 * matrixCols) {
     //    int index = (i-1) * (2 * matrixCols) + col;
@@ -272,7 +273,7 @@ __global__ void cuda_copy_skewsymmetric_second_half_q_double_plus_kernel(double 
     }	
 }
 
-extern "C" void cuda_copy_skewsymmetric_second_half_q_double_FromC(double *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, cudaStream_t  my_stream){
+extern "C" void hip_copy_skewsymmetric_second_half_q_double_FromC(double *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, hipStream_t  my_stream){
   int matrixCols = *matrixCols_in;
   int matrixRows = *matrixRows_in;
   int negative_or_positive = *negative_or_positive_in;
@@ -285,25 +286,25 @@ extern "C" void cuda_copy_skewsymmetric_second_half_q_double_FromC(double *q_dev
 
   if (negative_or_positive == 1) {
 #ifdef WITH_GPU_STREAMS
-    cuda_copy_skewsymmetric_second_half_q_double_plus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_second_half_q_double_plus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
 #else
-    cuda_copy_skewsymmetric_second_half_q_double_plus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_second_half_q_double_plus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
 #endif
   } else {
 #ifdef WITH_GPU_STREAMS
-    cuda_copy_skewsymmetric_second_half_q_double_minus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_second_half_q_double_minus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
 #else
-    cuda_copy_skewsymmetric_second_half_q_double_minus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_second_half_q_double_minus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
 #endif
   }
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_copy_skewsymmetric_second_half_q_double_plus/minus_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_skewsymmetric_second_half_q_double_plus/minus_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_copy_skewsymmetric_second_half_q_float_minus_kernel(float *q, const int i, const int matrixRows, const int matrixCols) {
+__global__ void hip_copy_skewsymmetric_second_half_q_float_minus_kernel(float *q, const int i, const int matrixRows, const int matrixCols) {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (col >= matrixCols && col < 2 * matrixCols) {  // geht nivht
@@ -314,7 +315,7 @@ __global__ void cuda_copy_skewsymmetric_second_half_q_float_minus_kernel(float *
     }	
 }
 
-__global__ void cuda_copy_skewsymmetric_second_half_q_float_plus_kernel(float *q, const int i, const int matrixRows, const int matrixCols) {
+__global__ void hip_copy_skewsymmetric_second_half_q_float_plus_kernel(float *q, const int i, const int matrixRows, const int matrixCols) {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (col >= matrixCols && col < 2 * matrixCols) {  // geht nivht
@@ -325,7 +326,7 @@ __global__ void cuda_copy_skewsymmetric_second_half_q_float_plus_kernel(float *q
     }	
 }
 
-extern "C" void cuda_copy_skewsymmetric_second_half_q_float_FromC(float *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, cudaStream_t  my_stream){
+extern "C" void hip_copy_skewsymmetric_second_half_q_float_FromC(float *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, hipStream_t  my_stream){
   int matrixCols = *matrixCols_in;
   int matrixRows = *matrixRows_in;
   int negative_or_positive = *negative_or_positive_in;
@@ -336,25 +337,25 @@ extern "C" void cuda_copy_skewsymmetric_second_half_q_float_FromC(float *q_dev, 
 
   if (negative_or_positive == 1) {
 #ifdef WITH_GPU_STREAMS
-    cuda_copy_skewsymmetric_second_half_q_float_plus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_second_half_q_float_plus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
 #else
-    cuda_copy_skewsymmetric_second_half_q_float_plus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_second_half_q_float_plus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
 #endif
   } else {
 #ifdef WITH_GPU_STREAMS
-    cuda_copy_skewsymmetric_second_half_q_float_minus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_second_half_q_float_minus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
 #else
-    cuda_copy_skewsymmetric_second_half_q_float_minus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_second_half_q_float_minus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
 #endif
   }
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_copy_skewsymmetric_second_half_q_float_plus/minus_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_skewsymmetric_second_half_q_float_plus/minus_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_copy_skewsymmetric_first_half_q_double_minus_kernel(double *q, const int i, const int matrixRows, const int matrixCols) {
+__global__ void hip_copy_skewsymmetric_first_half_q_double_minus_kernel(double *q, const int i, const int matrixRows, const int matrixCols) {
   int col = blockIdx.x * blockDim.x + threadIdx.x;
   if (col < matrixCols) {
     int index = (i-1) + matrixRows * col;
@@ -362,7 +363,7 @@ __global__ void cuda_copy_skewsymmetric_first_half_q_double_minus_kernel(double 
   }
 }
 
-extern "C" void cuda_copy_skewsymmetric_first_half_q_double_FromC(double *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, cudaStream_t  my_stream){
+extern "C" void hip_copy_skewsymmetric_first_half_q_double_FromC(double *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, hipStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
   int negative_or_positive = *negative_or_positive_in;
@@ -372,18 +373,18 @@ extern "C" void cuda_copy_skewsymmetric_first_half_q_double_FromC(double *q_dev,
   dim3 blocks((matrixCols + threadsPerBlock.x - 1) / threadsPerBlock.x);
 
 #ifdef WITH_GPU_STREAMS
-    cuda_copy_skewsymmetric_first_half_q_double_minus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_first_half_q_double_minus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
 #else
-    cuda_copy_skewsymmetric_first_half_q_double_minus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_first_half_q_double_minus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_copy_skewsymmetric_first_half_q_double_plus/minus_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_skewsymmetric_first_half_q_double_plus/minus_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_copy_skewsymmetric_first_half_q_float_minus_kernel(float *q, const int i, const int matrixRows, const int matrixCols) {
+__global__ void hip_copy_skewsymmetric_first_half_q_float_minus_kernel(float *q, const int i, const int matrixRows, const int matrixCols) {
   int col = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (col < matrixCols) {
@@ -392,7 +393,7 @@ __global__ void cuda_copy_skewsymmetric_first_half_q_float_minus_kernel(float *q
   }
 }
 
-extern "C" void cuda_copy_skewsymmetric_first_half_q_float_FromC(float *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, cudaStream_t  my_stream){
+extern "C" void hip_copy_skewsymmetric_first_half_q_float_FromC(float *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, hipStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
   int negative_or_positive = *negative_or_positive_in;
@@ -402,18 +403,18 @@ extern "C" void cuda_copy_skewsymmetric_first_half_q_float_FromC(float *q_dev, i
   dim3 blocks((matrixCols + threadsPerBlock.x - 1) / threadsPerBlock.x);
 
 #ifdef WITH_GPU_STREAMS
-    cuda_copy_skewsymmetric_first_half_q_float_minus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_first_half_q_float_minus_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, i, matrixRows, matrixCols);
 #else
-    cuda_copy_skewsymmetric_first_half_q_float_minus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
+    hip_copy_skewsymmetric_first_half_q_float_minus_kernel<<<blocks, threadsPerBlock>>>(q_dev, i, matrixRows, matrixCols);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_copy_skewsymmetric_first_half_q_float_plus/minus_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_skewsymmetric_first_half_q_float_plus/minus_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_get_skewsymmetric_second_half_q_double_kernel(double *q, double* q_2, const int matrixRows, const int matrixCols) {
+__global__ void hip_get_skewsymmetric_second_half_q_double_kernel(double *q, double* q_2, const int matrixRows, const int matrixCols) {
   int row = blockIdx.x * blockDim.x + threadIdx.x;
   int col = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -432,7 +433,7 @@ __global__ void cuda_get_skewsymmetric_second_half_q_double_kernel(double *q, do
 //                                                                my_stream)
 
 
-extern "C" void cuda_get_skewsymmetric_second_half_q_double_FromC(double *q_dev, double *q_2_dev, int *matrixRows_in, int *matrixCols_in, cudaStream_t  my_stream){
+extern "C" void hip_get_skewsymmetric_second_half_q_double_FromC(double *q_dev, double *q_2_dev, int *matrixRows_in, int *matrixCols_in, hipStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
 
@@ -440,18 +441,18 @@ extern "C" void cuda_get_skewsymmetric_second_half_q_double_FromC(double *q_dev,
   dim3 blocks( (matrixRows + threadsPerBlock.x - 1) / threadsPerBlock.x, (matrixCols + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
 #ifdef WITH_GPU_STREAMS
-    cuda_get_skewsymmetric_second_half_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q_2_dev, matrixRows, matrixCols);
+    hip_get_skewsymmetric_second_half_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q_2_dev, matrixRows, matrixCols);
 #else
-    cuda_get_skewsymmetric_second_half_q_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, q_2_dev, matrixRows, matrixCols);
+    hip_get_skewsymmetric_second_half_q_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, q_2_dev, matrixRows, matrixCols);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_get_skewsymmetric_second_half_q_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_get_skewsymmetric_second_half_q_double_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_get_skewsymmetric_second_half_q_float_kernel(float *q, float *q_2, const int matrixRows, const int matrixCols) {
+__global__ void hip_get_skewsymmetric_second_half_q_float_kernel(float *q, float *q_2, const int matrixRows, const int matrixCols) {
   int row = blockIdx.x * blockDim.x + threadIdx.x;
   int col = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -462,7 +463,7 @@ __global__ void cuda_get_skewsymmetric_second_half_q_float_kernel(float *q, floa
   }
 }
 
-extern "C" void cuda_get_skewsymmetric_second_half_q_float_FromC(float *q_dev, float *q_2_dev, int *matrixRows_in, int *matrixCols_in, cudaStream_t  my_stream){
+extern "C" void hip_get_skewsymmetric_second_half_q_float_FromC(float *q_dev, float *q_2_dev, int *matrixRows_in, int *matrixCols_in, hipStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
 
@@ -470,18 +471,18 @@ extern "C" void cuda_get_skewsymmetric_second_half_q_float_FromC(float *q_dev, f
   dim3 blocks( (matrixRows + threadsPerBlock.x - 1) / threadsPerBlock.x, (matrixCols + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
 #ifdef WITH_GPU_STREAMS
-    cuda_get_skewsymmetric_second_half_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q_2_dev, matrixRows, matrixCols);
+    hip_get_skewsymmetric_second_half_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q_2_dev, matrixRows, matrixCols);
 #else
-    cuda_get_skewsymmetric_second_half_q_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, q_2_dev, matrixRows, matrixCols);
+    hip_get_skewsymmetric_second_half_q_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, q_2_dev, matrixRows, matrixCols);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_get_skewsymmetric_second_half_q_float_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_get_skewsymmetric_second_half_q_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_put_skewsymmetric_second_half_q_double_kernel(double *q, double* q_2, const int matrixRows, const int matrixCols) {
+__global__ void hip_put_skewsymmetric_second_half_q_double_kernel(double *q, double* q_2, const int matrixRows, const int matrixCols) {
   int row = blockIdx.x * blockDim.x + threadIdx.x;
   int col = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -492,7 +493,7 @@ __global__ void cuda_put_skewsymmetric_second_half_q_double_kernel(double *q, do
   }
 }
 
-extern "C" void cuda_put_skewsymmetric_second_half_q_double_FromC(double *q_dev, double *q2_dev, int *matrixRows_in, int *matrixCols_in, cudaStream_t  my_stream){
+extern "C" void hip_put_skewsymmetric_second_half_q_double_FromC(double *q_dev, double *q2_dev, int *matrixRows_in, int *matrixCols_in, hipStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
 
@@ -500,18 +501,18 @@ extern "C" void cuda_put_skewsymmetric_second_half_q_double_FromC(double *q_dev,
   dim3 blocks( (matrixRows + threadsPerBlock.x - 1) / threadsPerBlock.x, (matrixCols + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
 #ifdef WITH_GPU_STREAMS
-    cuda_put_skewsymmetric_second_half_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q2_dev, matrixRows, matrixCols);
+    hip_put_skewsymmetric_second_half_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q2_dev, matrixRows, matrixCols);
 #else
-    cuda_put_skewsymmetric_second_half_q_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, q2_dev, matrixRows, matrixCols);
+    hip_put_skewsymmetric_second_half_q_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, q2_dev, matrixRows, matrixCols);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_put_skewsymmetric_second_half_q_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_put_skewsymmetric_second_half_q_double_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 
-__global__ void cuda_put_skewsymmetric_second_half_q_float_kernel(float *q, float* q_2, const int matrixRows, const int matrixCols) {
+__global__ void hip_put_skewsymmetric_second_half_q_float_kernel(float *q, float* q_2, const int matrixRows, const int matrixCols) {
   int row = blockIdx.x * blockDim.x + threadIdx.x;
   int col = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -522,7 +523,7 @@ __global__ void cuda_put_skewsymmetric_second_half_q_float_kernel(float *q, floa
   }
 }
 
-extern "C" void cuda_put_skewsymmetric_second_half_q_float_FromC(float *q_dev, float *q2_dev, int *matrixRows_in, int *matrixCols_in, cudaStream_t  my_stream){
+extern "C" void hip_put_skewsymmetric_second_half_q_float_FromC(float *q_dev, float *q2_dev, int *matrixRows_in, int *matrixCols_in, hipStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
 
@@ -530,14 +531,14 @@ extern "C" void cuda_put_skewsymmetric_second_half_q_float_FromC(float *q_dev, f
   dim3 blocks( (matrixRows + threadsPerBlock.x - 1) / threadsPerBlock.x, (matrixCols + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
 #ifdef WITH_GPU_STREAMS
-    cuda_put_skewsymmetric_second_half_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q2_dev, matrixRows, matrixCols);
+    hip_put_skewsymmetric_second_half_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q2_dev, matrixRows, matrixCols);
 #else
-    cuda_put_skewsymmetric_second_half_q_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, q2_dev, matrixRows, matrixCols);
+    hip_put_skewsymmetric_second_half_q_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, q2_dev, matrixRows, matrixCols);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_put_skewsymmetric_second_half_q_float_kernel: %s\n",cudaGetErrorString(cuerr));
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_put_skewsymmetric_second_half_q_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
 

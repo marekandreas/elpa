@@ -1,11 +1,13 @@
-!    Copyright 2024, A. Marek
+#if 0
+!    Copyright 2024, A. Marek, MPCDF
 !
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -15,7 +17,6 @@
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
-!
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -39,167 +40,160 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
-!
-! This file was written by A. Marek, MPCDF
+
+!    This file was written by A.Marek, MPCDF
+#endif
 
 
 #include "config-f90.h"
+
+! This file is auto-generated. Do NOT edit
+
 module elpa1_sycl
   use, intrinsic :: iso_c_binding
   use precision
+
   implicit none
 
   public
+
   interface
     subroutine sycl_copy_real_part_to_q_double_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream) &
-                    bind(C, name="sycl_copy_real_part_to_q_double_complex_FromC")
+                                                  bind(C, name="sycl_copy_real_part_to_q_double_complex_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)         :: l_cols_nev, l_rows, matrixRows
-      integer(kind=C_intptr_T), value    :: q_dev, q_real_dev
-      integer(kind=c_intptr_t), value    :: my_stream
+      integer(kind=c_int), intent(in)  :: l_cols_nev, l_rows, matrixRows
+      integer(kind=c_intptr_t), value  :: q_dev, q_real_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
     subroutine sycl_copy_real_part_to_q_float_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream) &
-                    bind(C, name="sycl_copy_real_part_to_q_float_complex_FromC")
+                                                  bind(C, name="sycl_copy_real_part_to_q_float_complex_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)         :: l_cols_nev, l_rows, matrixRows
-      integer(kind=C_intptr_T), value    :: q_dev, q_real_dev
-      integer(kind=c_intptr_t), value    :: my_stream
+      integer(kind=c_int), intent(in)  :: l_cols_nev, l_rows, matrixRows
+      integer(kind=c_intptr_t), value  :: q_dev, q_real_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_zero_skewsymmetric_q_double_real_c(q_dev, matrixRows, matrixCols, my_stream) &
-                    bind(C, name="sycl_zero_skewsymmetric_q_double_real_FromC")
+    subroutine sycl_zero_skewsymmetric_q_double_c(q_dev, matrixRows, matrixCols, my_stream) &
+                                                  bind(C, name="sycl_zero_skewsymmetric_q_double_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)      :: matrixRows, matrixCols
-      integer(kind=C_intptr_T), value :: q_dev
-      integer(kind=c_intptr_t), value :: my_stream
+      integer(kind=c_int), intent(in)  :: matrixRows, matrixCols
+      integer(kind=c_intptr_t), value  :: q_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_zero_skewsymmetric_q_float_real_c(q_dev, matrixRows, matrixCols, my_stream) &
-                    bind(C, name="sycl_zero_skewsymmetric_q_float_real_FromC")
+    subroutine sycl_copy_skewsymmetric_second_half_q_double_c(q_dev, i, matrixRows, matrixCols, &
+                                                         negative_or_positive, my_stream) &
+                                                  bind(C, name="sycl_copy_skewsymmetric_second_half_q_double_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)      :: matrixRows, matrixCols
-      integer(kind=C_intptr_T), value :: q_dev
-      integer(kind=c_intptr_t), value :: my_stream
+      integer(kind=c_int), intent(in)  :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=c_intptr_t), value  :: q_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_copy_skewsymmetric_second_half_q_double_real_c(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream) &
-                    bind(C, name="sycl_skewsymmetric_second_half_q_double_real_FromC")
+    subroutine sycl_copy_skewsymmetric_first_half_q_double_c(q_dev, i, matrixRows, matrixCols, &
+                                                         negative_or_positive, my_stream) &
+                                                  bind(C, name="sycl_copy_skewsymmetric_first_half_q_double_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)      :: i, matrixRows, matrixCols, minus_or_positive
-      integer(kind=C_intptr_T), value :: q_dev
-      integer(kind=c_intptr_t), value :: my_stream
+      integer(kind=c_int), intent(in)  :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=c_intptr_t), value  :: q_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_copy_skewsymmetric_second_half_q_float_real_c(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream) &
-                    bind(C, name="sycl_skewsymmetric_second_half_q_float_real_FromC")
+    subroutine sycl_get_skewsymmetric_second_half_q_double_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                         my_stream) &
+                             bind(C, name="sycl_get_skewsymmetric_second_half_q_double_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)      :: i, matrixRows, matrixCols, minus_or_positive
-      integer(kind=C_intptr_T), value :: q_dev
-      integer(kind=c_intptr_t), value :: my_stream
+      integer(kind=c_int), intent(in)  :: matrixRows, matrixCols
+      integer(kind=c_intptr_t), value  :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_copy_skewsymmetric_first_half_q_double_real_c(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream) &
-                    bind(C, name="sycl_copy_skewsymmetric_first_half_q_double_real_FromC")
+    subroutine sycl_put_skewsymmetric_second_half_q_double_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                         my_stream) &
+                             bind(C, name="sycl_put_skewsymmetric_second_half_q_double_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)      :: i, matrixRows, matrixCols, minus_or_positive
-      integer(kind=C_intptr_T), value :: q_dev
-      integer(kind=c_intptr_t), value :: my_stream
+      integer(kind=c_int), intent(in)  :: matrixRows, matrixCols
+      integer(kind=c_intptr_t), value  :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_copy_skewsymmetric_first_half_q_float_real_c(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream) &
-                    bind(C, name="sycl_copy_skewsymmetric_first_half_q_float_real_FromC")
+    subroutine sycl_zero_skewsymmetric_q_float_c(q_dev, matrixRows, matrixCols, my_stream) &
+                                                  bind(C, name="sycl_zero_skewsymmetric_q_float_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)      :: i, matrixRows, matrixCols, minus_or_positive
-      integer(kind=C_intptr_T), value :: q_dev
-      integer(kind=c_intptr_t), value :: my_stream
-    end subroutine
-  end interface
-
-
-  interface
-    subroutine sycl_get_skewsymmetric_second_half_q_double_real_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                                my_stream) &
-                    bind(C, name="sycl_get_skewsymmetric_second_half_q_double_real_FromC")
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(c_int), intent(in)      :: matrixRows, matrixCols
-      integer(kind=C_intptr_T), value :: q_dev, q2nd_dev
-      integer(kind=c_intptr_t), value :: my_stream
+      integer(kind=c_int), intent(in)  :: matrixRows, matrixCols
+      integer(kind=c_intptr_t), value  :: q_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_get_skewsymmetric_second_half_q_float_real_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                                my_stream) &
-                    bind(C, name="sycl_get_skewsymmetric_second_half_q_float_real_FromC")
+    subroutine sycl_copy_skewsymmetric_second_half_q_float_c(q_dev, i, matrixRows, matrixCols, &
+                                                         negative_or_positive, my_stream) &
+                                                  bind(C, name="sycl_copy_skewsymmetric_second_half_q_float_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)      :: matrixRows, matrixCols
-      integer(kind=C_intptr_T), value :: q_dev, q2nd_dev
-      integer(kind=c_intptr_t), value :: my_stream
+      integer(kind=c_int), intent(in)  :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=c_intptr_t), value  :: q_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_put_skewsymmetric_second_half_q_double_real_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                                my_stream) &
-                    bind(C, name="sycl_put_skewsymmetric_second_half_q_double_real_FromC")
+    subroutine sycl_copy_skewsymmetric_first_half_q_float_c(q_dev, i, matrixRows, matrixCols, &
+                                                         negative_or_positive, my_stream) &
+                                                  bind(C, name="sycl_copy_skewsymmetric_first_half_q_float_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)      :: matrixRows, matrixCols
-      integer(kind=C_intptr_T), value :: q_dev, q2nd_dev
-      integer(kind=c_intptr_t), value :: my_stream
+      integer(kind=c_int), intent(in)  :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=c_intptr_t), value  :: q_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
   interface
-    subroutine sycl_put_skewsymmetric_second_half_q_float_real_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                                my_stream) &
-                    bind(C, name="sycl_put_skewsymmetric_second_half_q_float_real_FromC")
+    subroutine sycl_get_skewsymmetric_second_half_q_float_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                         my_stream) &
+                             bind(C, name="sycl_get_skewsymmetric_second_half_q_float_FromC")
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in)      :: matrixRows, matrixCols
-      integer(kind=C_intptr_T), value :: q_dev, q2nd_dev
-      integer(kind=c_intptr_t), value :: my_stream
+      integer(kind=c_int), intent(in)  :: matrixRows, matrixCols
+      integer(kind=c_intptr_t), value  :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+  interface
+    subroutine sycl_put_skewsymmetric_second_half_q_float_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                         my_stream) &
+                             bind(C, name="sycl_put_skewsymmetric_second_half_q_float_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int), intent(in)  :: matrixRows, matrixCols
+      integer(kind=c_intptr_t), value  :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
 
@@ -209,174 +203,252 @@ module elpa1_sycl
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in)   :: l_cols_nev, l_rows, matrixRows
-      integer(kind=C_intptr_T)     :: q_dev, q_real_dev
-      integer(kind=c_intptr_t)     :: my_stream
+      integer(kind=c_int), intent(in)    :: l_cols_nev, l_rows, matrixRows
+      integer(kind=c_intptr_t)           :: q_dev, q_real_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_real_part_to_q_double_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev my_stream)
+      if (present(my_stream)) then
+        call sycl_copy_real_part_to_q_double_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
+      else
+        call sycl_copy_real_part_to_q_double_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream2)
+      endif
 #endif
-    end subroutine
 
+    end subroutine
 
     subroutine sycl_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in)   :: l_cols_nev, l_rows, matrixRows
-      integer(kind=C_intptr_T)     :: q_dev, q_real_dev
-      integer(kind=c_intptr_t)     :: my_stream
+      integer(kind=c_int), intent(in)    :: l_cols_nev, l_rows, matrixRows
+      integer(kind=c_intptr_t)           :: q_dev, q_real_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_real_part_to_q_float_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev my_stream)
+      if (present(my_stream)) then
+        call sycl_copy_real_part_to_q_float_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
+      else
+        call sycl_copy_real_part_to_q_float_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_zero_skewsymmetric_q_double_real(q_dev, matrixRows, matrixCols, my_stream)
+    subroutine sycl_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: matrixRows, matrixCols
-      integer(kind=C_intptr_T)   :: q_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
+      integer(kind=c_intptr_t)           :: q_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_zero_skewsymmetric_q_double_real_c(q_dev, matrixRows, matrixCols, my_stream)
+      if (present(my_stream)) then
+        call sycl_zero_skewsymmetric_q_double_c(q_dev, matrixRows, matrixCols, my_stream)
+      else
+        call sycl_zero_skewsymmetric_q_double_c(q_dev, matrixRows, matrixCols, my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_zero_skewsymmetric_q_float_real(q_dev, matrixRows, matrixCols, my_stream)
+    subroutine sycl_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                 negative_or_positive, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: matrixRows, matrixCols
-      integer(kind=C_intptr_T)   :: q_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=c_intptr_t)           :: q_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_zero_skewsymmetric_q_float_real_c(q_dev, matrixRows, matrixCols, my_stream)
+      if (present(my_stream)) then
+        call sycl_copy_skewsymmetric_second_half_q_double_c(q_dev, i, matrixRows, matrixCols, &
+                                       negative_or_positive, my_stream)
+      else
+        call sycl_copy_skewsymmetric_second_half_q_double_c(q_dev, i, matrixRows, matrixCols, &
+                                       negative_or_positive, my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_copy_skewsymmetric_second_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream)
+    subroutine sycl_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                 negative_or_positive, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: i, matrixRows, matrixCols, minus_or_positive
-      integer(kind=C_intptr_T)   :: q_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=c_intptr_t)           :: q_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_skewsymmetric_second_half_q_double_real_c(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream)
+      if (present(my_stream)) then
+        call sycl_copy_skewsymmetric_first_half_q_double_c(q_dev, i, matrixRows, matrixCols, &
+                                       negative_or_positive, my_stream)
+      else
+        call sycl_copy_skewsymmetric_first_half_q_double_c(q_dev, i, matrixRows, matrixCols, &
+                                       negative_or_positive, my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_copy_skewsymmetric_second_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream)
+    subroutine sycl_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                 my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: i, matrixRows, matrixCols, minus_or_positive
-      integer(kind=C_intptr_T)   :: q_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
+      integer(kind=c_intptr_t)           :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_skewsymmetric_second_half_q_float_real_c(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream)
+      if (present(my_stream)) then
+        call sycl_get_skewsymmetric_second_half_q_double_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                       my_stream)
+      else
+        call sycl_get_skewsymmetric_second_half_q_double_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                       my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_copy_skewsymmetric_first_half_q_double_real(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream)
+    subroutine sycl_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                 my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: i, matrixRows, matrixCols, minus_or_positive
-      integer(kind=C_intptr_T)   :: q_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
+      integer(kind=c_intptr_t)           :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_skewsymmetric_first_half_q_double_real_c(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream)
+      if (present(my_stream)) then
+        call sycl_put_skewsymmetric_second_half_q_double_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                       my_stream)
+      else
+        call sycl_put_skewsymmetric_second_half_q_double_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                       my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_copy_skewsymmetric_first_half_q_float_real(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream)
+    subroutine sycl_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: i, matrixRows, matrixCols, minus_or_positive
-      integer(kind=C_intptr_T)   :: q_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
+      integer(kind=c_intptr_t)           :: q_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_skewsymmetric_first_half_q_float_real_c(q_dev, i, matrixRows, matrixCols, &
-                                                               minus_or_positive, my_stream)
+      if (present(my_stream)) then
+        call sycl_zero_skewsymmetric_q_float_c(q_dev, matrixRows, matrixCols, my_stream)
+      else
+        call sycl_zero_skewsymmetric_q_float_c(q_dev, matrixRows, matrixCols, my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_get_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                               my_stream)
+    subroutine sycl_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                 negative_or_positive, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: matrixRows, matrixCols
-      integer(kind=C_intptr_T)   :: q_dev, q2nd_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=c_intptr_t)           :: q_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_get_skewsymmetric_second_half_q_double_real_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                                my_stream)
+      if (present(my_stream)) then
+        call sycl_copy_skewsymmetric_second_half_q_float_c(q_dev, i, matrixRows, matrixCols, &
+                                       negative_or_positive, my_stream)
+      else
+        call sycl_copy_skewsymmetric_second_half_q_float_c(q_dev, i, matrixRows, matrixCols, &
+                                       negative_or_positive, my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_get_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                               my_stream)
+    subroutine sycl_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                 negative_or_positive, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: matrixRows, matrixCols
-      integer(kind=C_intptr_T)   :: q_dev, q2nd_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=c_intptr_t)           :: q_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_get_skewsymmetric_second_half_q_float_real_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                                my_stream)
+      if (present(my_stream)) then
+        call sycl_copy_skewsymmetric_first_half_q_float_c(q_dev, i, matrixRows, matrixCols, &
+                                       negative_or_positive, my_stream)
+      else
+        call sycl_copy_skewsymmetric_first_half_q_float_c(q_dev, i, matrixRows, matrixCols, &
+                                       negative_or_positive, my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_put_skewsymmetric_second_half_q_double_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                               my_stream)
+    subroutine sycl_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                 my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: matrixRows, matrixCols
-      integer(kind=C_intptr_T)   :: q_dev, q2nd_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
+      integer(kind=c_intptr_t)           :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_put_skewsymmetric_second_half_q_double_real_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                                my_stream)
+      if (present(my_stream)) then
+        call sycl_get_skewsymmetric_second_half_q_float_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                       my_stream)
+      else
+        call sycl_get_skewsymmetric_second_half_q_float_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                       my_stream2)
+      endif
 #endif
+
     end subroutine
 
-    subroutine sycl_put_skewsymmetric_second_half_q_float_real(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                               my_stream)
+    subroutine sycl_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                 my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
-      integer(c_int), intent(in) :: matrixRows, matrixCols
-      integer(kind=C_intptr_T)   :: q_dev, q2nd_dev
-      integer(kind=c_intptr_t)   :: my_stream
+      integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
+      integer(kind=c_intptr_t)           :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
-      call sycl_put_skewsymmetric_second_half_q_float_real_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
-                                                                my_stream)
+      if (present(my_stream)) then
+        call sycl_put_skewsymmetric_second_half_q_float_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                       my_stream)
+      else
+        call sycl_put_skewsymmetric_second_half_q_float_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                       my_stream2)
+      endif
 #endif
+
     end subroutine
 
 end module
-
