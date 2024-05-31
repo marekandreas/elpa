@@ -2,13 +2,13 @@
 
 ## 0. Preamble ##
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2024.03.001**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2024.05.001.rc1**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
 As anounced, with the the release 2021.11.001 the **legacy interface has been removed**.
 
-The release of ELPA 2024.03.001 does not change the API and ABI compared to the release 2022.11.001.
+The release of ELPA 2024.05.001.rc1 does not change the API and ABI compared to the release 2022.11.001.
 
 ## 1. How to install *ELPA* ##
 
