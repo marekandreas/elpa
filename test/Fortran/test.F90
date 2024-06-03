@@ -463,14 +463,14 @@ program test
   allocate(z (na_rows,na_cols))
   allocate(ev(na))
 
-#if defined(TEST_MULTIPLY)
-  allocate(b (na_rows,na_cols))
-  allocate(c (na_rows,na_cols))
-#endif
-
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
   allocate(b (na_rows,na_cols))
   allocate(bs (na_rows,na_cols))
+#endif
+
+#if defined(TEST_MULTIPLY)
+  allocate(b (na_rows,na_cols))
+  allocate(c (na_rows,na_cols))
 #endif
 
 #if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
@@ -1670,6 +1670,10 @@ end do ! kernels
 #endif
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
   deallocate(b, bs)
+#endif
+#if defined(TEST_MULTIPLY)
+  deallocate(b)
+  deallocate(c)
 #endif
 
 #if defined(WITH_MPI) && defined (SPLIT_COMM_MYSELF)
