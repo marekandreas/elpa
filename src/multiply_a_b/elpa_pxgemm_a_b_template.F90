@@ -908,8 +908,8 @@
     if ((.not. a_transposed) .and. (.not. b_transposed)) then
       print *, "elpa_pxgemm NEW: SQUARE_GRID start: (.not. a_transposed) .and. (.not. b_transposed)" ! PETERDEBUG
 
-      ! main loop: iterate through np, which are process rows for matrix A and process cols for matrix B
-      do np_fine = 0, np_rows_fine-1 ! np_rows=np_cols
+      ! main loop: iterate through np_fine, which are "virtual" process rows for matrix A and process cols for matrix B
+      do np_fine = 0, np_rows_fine-1 ! np_rows_fine=np_cols_fine
 #ifdef WITH_NVTX
         call nvtxRangePush("np_fine = 0, np_rows_fine-1")
 #endif
@@ -947,7 +947,7 @@
             call gpu_copy_and_set_zeros_aux_full(PRECISION_CHAR, a_dev, aux_a_full_dev, &
                                                  l_rows, l_cols, nblk_mult, debug, my_stream)
           else ! useGPU
-            aux_a_full = 0 ! PETERDEBUG: optimize this!
+            !aux_a_full = 0 ! PETERDEBUG: optimize this!
             do j_block_loc_fine = 0, nblk_mult_cols/nblk-1
               !j_block_loc = j_block_loc_fine*np_cols
               j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
@@ -969,7 +969,7 @@
             ! successGPU = gpu_memset_async(aux_b_full_dev, 0, nblk_mult*nblk_mult*size_of_datatype, my_stream)
             ! successGPU = gpu_memcpy(aux_b_full_dev, b_dev, l_rows*l_cols*size_of_datatype, gpuMemcpyDeviceToDevice)
           else ! useGPU
-            aux_b_full = 0 ! PETERDEBUG: optimize this!
+            !aux_b_full = 0 ! PETERDEBUG: optimize this!
             do i_block_loc_fine = 0, nblk_mult_rows/nblk-1
               i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
               aux_b_full(1+i_block_loc_fine*nblk: nblk+i_block_loc_fine*nblk, 1:l_cols) = &
@@ -1044,7 +1044,10 @@
 #endif
           call MPI_Bcast(aux_a_full, int(l_rows*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                         int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+
           call MPI_Bcast(aux_b_full, int(nblk_mult*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+                        int(np   ,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+          call MPI_Bcast(nblk_mult_rows, 1_MPI_KIND, MPI_INTEGER, &
                         int(np   ,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 #ifdef WITH_NVTX
           call nvtxRangePop() ! MPI_Bcast: aux_a_full, aux_b_full
@@ -1096,7 +1099,7 @@
           call PRECISION_GEMM('N', 'N', &
                               int(l_rows, kind=BLAS_KIND), &
                               int(l_cols, kind=BLAS_KIND), &
-                              int(nblk_mult, kind=BLAS_KIND), ONE, &
+                              int(nblk_mult_rows, kind=BLAS_KIND), ONE, &
                               aux_a_full, int(l_rows,kind=BLAS_KIND), &
                               aux_b_full, int(nblk_mult,kind=BLAS_KIND), beta, &
                               tmp1_full , int(l_rows,kind=BLAS_KIND))
