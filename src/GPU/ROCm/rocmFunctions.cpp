@@ -305,7 +305,7 @@
 #else /* HIPBLAS */
 #include "rocblas/rocblas.h"
 #ifdef WITH_AMD_ROCSOLVER
-#include <rocsolver.h>
+#include <rocsolver/rocsolver.h>
 #endif
 #endif /* HIPBLAS */
 #include "hip/hip_runtime_api.h"

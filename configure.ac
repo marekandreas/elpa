@@ -2735,6 +2735,23 @@ if test x"${need_amd_gpu}" = x"yes" ; then
   if test x"${hipcc_found}" = x"no" ; then
     AC_MSG_ERROR([hipcc not found; try to set the hip-path or disable AMD GPU support])
   fi
+  AC_MSG_CHECKING(how to querry GPU memory types)
+  AC_LANG_PUSH([C++])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+    #include <hip/hip_runtime.h>
+    int main(int argc, char **argv) {
+    hipPointerAttribute_t attributes;
+    if (attributes.memoryType==hipMemoryTypeDevice) return 1;
+    }
+  ])],
+  [can_compile_memory_type=yes],
+  [can_compile_memory_type=no]
+  )
+  AC_LANG_POP([C++])
+  AC_MSG_RESULT([${can_compile_memory_type}])
+  if test x"${can_compile_memory_type}" = x"yes"; then
+      AC_DEFINE([HAVE_OLD_HIP_TYPESTRUCTURE],[1],[old hip memory type structure])
+  fi
 
   if test x"${use_hipblas}" = x"yes"; then
     #dnl check whether we find marshalling hipblas
