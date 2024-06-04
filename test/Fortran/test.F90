@@ -1431,6 +1431,9 @@ program test
 #if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) || defined(TEST_HERMITIAN_MULTIPLY_LOWER) 
     call e%print_times("e%hermitian_multiply()")
 #endif
+#if defined(TEST_PXGEMM_MULTIPLY_NN) || defined(TEST_PXGEMM_MULTIPLY_NT) || defined(TEST_PXGEMM_MULTIPLY_TN) || defined(TEST_PXGEMM_MULTIPLY_TT)
+    call e%print_times("e%pxgemm_multiply()")
+#endif
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
   call e%print_times("e%generalized_eigenvectors()")
 #endif
@@ -1660,20 +1663,18 @@ end do ! kernels
   deallocate(z)
   deallocate(ev)
 
-#if defined(TEST_HERMITIAN_MULTIPLY_FULL) || defined(TEST_HERMITIAN_MULTIPLY_LOWER) || defined(TEST_HERMITIAN_MULTIPLY_UPPER) 
-  deallocate(b)
-  deallocate(c)
-#endif
-#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
-  deallocate(d, ds)
-  deallocate(sd, sds)
-#endif
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
   deallocate(b, bs)
 #endif
+
 #if defined(TEST_MULTIPLY)
   deallocate(b)
   deallocate(c)
+#endif
+
+#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
+  deallocate(d, ds)
+  deallocate(sd, sds)
 #endif
 
 #if defined(WITH_MPI) && defined (SPLIT_COMM_MYSELF)

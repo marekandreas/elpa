@@ -551,6 +551,196 @@ extern "C" void cuda_copy_float_complex_aux_bc_aux_mat_FromC(float _Complex *aux
 //________________________________________________________________
 
 template <typename T>
+__global__ void cuda_copy_and_set_zeros_aux_a_full_kernel(T *a_dev, T *aux_a_full_dev, int l_rows, int l_cols, int nblk_mult_cols, 
+                                                          int nblk, int np_bc_fine, int np_cols_fine, int np_cols) {
+
+  // do j_block_loc_fine = 0, nblk_mult_cols/nblk-1
+  //   j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+  //     aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: nblk+j_block_loc_fine*nblk) = &
+  //              a(1:l_rows, 1+j_block_loc*nblk     : nblk+j_block_loc*nblk)
+  //   enddo ! j_block_loc_fine
+  //   if (mod(nblk_mult_cols,nblk) /= 0) then ! last incomplete nblk-block
+  //     j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+  //     aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: mod(nblk_mult_cols,nblk)+j_block_loc_fine*nblk) = &
+  //              a(1:l_rows, 1+j_block_loc*nblk     : mod(nblk_mult_cols,nblk)+j_block_loc*nblk)
+  //   endif
+  // endif ! useGPU
+
+  int i0 = threadIdx.x; // i  = 0..l_rows-1
+  int dj0 = blockIdx.x; // dj = 0..nblk-1
+
+  // Loop through full blocks
+  int j_block_loc_fine = 0;
+  for (; j_block_loc_fine < nblk_mult_cols/nblk; j_block_loc_fine++) 
+    {
+    int j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols;
+    for (int dj = dj0; dj < nblk ; dj += gridDim.x)
+      {
+      for (int i = i0; i < l_rows; i += blockDim.x)
+        {
+        aux_a_full_dev[i + (dj+j_block_loc_fine*nblk)*l_rows] = a_dev[i + (dj+j_block_loc*nblk)*l_rows];
+        }
+      }
+    }
+
+  // Handle the last incomplete block if it exists
+  if (nblk_mult_cols%nblk != 0) 
+    {
+    int j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols;
+      for (int dj = dj0; dj < nblk_mult_cols%nblk ; dj += gridDim.x) 
+        {
+        for (int i = i0; i < l_rows; i += blockDim.x)
+          {
+          aux_a_full_dev[i + (dj+j_block_loc_fine*nblk)*l_rows] = a_dev[i + (dj+j_block_loc*nblk)*l_rows];
+          }
+        }
+    }
+}
+
+
+
+template <typename T>
+void cuda_copy_and_set_zeros_aux_a_full(T *mat_dev, T *aux_mat_full_dev, int *l_rows_in, int *l_cols_in, int *nblk_mult_cols_in, 
+                                        int *nblk_in, int *np_bc_fine_in, int *np_cols_fine_in, int *np_cols_in, int *debug_in, cudaStream_t my_stream){
+  int l_rows = *l_rows_in;
+  int l_cols = *l_cols_in;
+  int nblk_mult_cols = *nblk_mult_cols_in;
+  int nblk = *nblk_in;
+  int np_bc_fine = *np_bc_fine_in;
+  int np_cols_fine = *np_cols_fine_in;
+  int np_cols = *np_cols_in;
+  int debug = *debug_in;
+
+  dim3 blocks = dim3(nblk, 1, 1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_copy_and_set_zeros_aux_a_full_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult_cols, 
+                                                                                  nblk, np_bc_fine, np_cols_fine, np_cols);
+#else
+  cuda_copy_and_set_zeros_aux_a_full_kernel<<<blocks,threadsPerBlock>>>            (mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult_cols, 
+                                                                                  nblk, np_bc_fine, np_cols_fine, np_cols);
+#endif
+
+  if (debug)
+    {
+    cudaDeviceSynchronize();
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing cuda_copy_and_set_zeros_aux_full: %s\n",cudaGetErrorString(cuerr));
+    }
+  }
+}
+
+extern "C" void cuda_copy_and_set_zeros_aux_a_full_FromC(char dataType, intptr_t mat_dev, intptr_t aux_mat_full_dev,
+                                                       int *l_rows_in, int *l_cols_in, int *nblk_mult_cols_in, int *nblk_in, int *np_bc_fine_in, int *np_cols_fine_in, int *np_cols_in, int *debug_in, cudaStream_t my_stream){
+  if (dataType=='D') cuda_copy_and_set_zeros_aux_a_full<double>((double *) mat_dev, (double *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, nblk_in, np_bc_fine_in, np_cols_fine_in, np_cols_in, debug_in, my_stream);
+  if (dataType=='S') cuda_copy_and_set_zeros_aux_a_full<float> ((float  *) mat_dev, (float  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, nblk_in, np_bc_fine_in, np_cols_fine_in, np_cols_in, debug_in, my_stream);
+  if (dataType=='Z') cuda_copy_and_set_zeros_aux_a_full<cuDoubleComplex>((cuDoubleComplex *) mat_dev, (cuDoubleComplex *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, nblk_in, np_bc_fine_in, np_cols_fine_in, np_cols_in, debug_in, my_stream);
+  if (dataType=='C') cuda_copy_and_set_zeros_aux_a_full<cuFloatComplex> ((cuFloatComplex  *) mat_dev, (cuFloatComplex  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, nblk_in, np_bc_fine_in, np_cols_fine_in, np_cols_in, debug_in, my_stream);
+}
+
+//________________________________________________________________
+
+template <typename T>
+__global__ void cuda_copy_and_set_zeros_aux_b_full_kernel(T *b_dev, T *aux_b_full_dev, int l_rows, int l_cols, int nblk_mult, 
+                                                          int nblk_mult_rows, int nblk, int np_fine, int np_rows_fine, int np_rows) {
+
+  // do i_block_loc_fine = 0, nblk_mult_rows/nblk-1
+  //   i_block_loc = (np_fine + i_block_loc_fine * np_rows_fine) / np_rows
+  //   aux_b_full(1 + i_block_loc_fine * nblk : nblk + i_block_loc_fine * nblk, 1 : l_cols) = &
+  //            b(1 + i_block_loc * nblk      : nblk + i_block_loc * nblk     , 1 : l_cols)
+  // enddo ! i_block_loc_fine
+  // if (mod(nblk_mult_rows, nblk) /= 0) then ! last incomplete nblk-block
+  //   i_block_loc = (np_fine + i_block_loc_fine * np_rows_fine) / np_rows
+  //   aux_b_full(1 + i_block_loc_fine * nblk : mod(nblk_mult_rows, nblk) + i_block_loc_fine * nblk, 1 : l_cols) = &
+  //            b(1 + i_block_loc * nblk : mod(nblk_mult_rows, nblk) + i_block_loc * nblk, 1 : l_cols)
+  // endif
+
+  int di0 = threadIdx.x; // di = 0..nblk-1
+  int j0  = blockIdx.x ; // j  = 0..l_cols-1
+
+  // Loop through full blocks
+  int i_block_loc_fine = 0;
+  for (; i_block_loc_fine < nblk_mult_rows/nblk; i_block_loc_fine++) 
+    {
+    int i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows;
+    for (int j = j0; j < l_cols; j += gridDim.x)
+      {
+      for (int di = di0; di < nblk ; di += blockDim.x)
+        {
+        aux_b_full_dev[di + i_block_loc_fine*nblk + j*nblk_mult] = b_dev[di + i_block_loc*nblk + j*l_rows];
+        }
+      }
+    }
+
+  // Handle the last incomplete block if it exists
+  if (nblk_mult_rows%nblk != 0)
+    {
+    int i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows;
+    for (int j = j0; j < l_cols; j += gridDim.x)
+      {
+      for (int di = di0; di < nblk_mult_rows%nblk ; di += blockDim.x)
+        {
+        aux_b_full_dev[di + i_block_loc_fine*nblk + j*nblk_mult] = b_dev[di + i_block_loc*nblk + j*l_rows];
+        }
+      }
+    }
+}
+
+template <typename T>
+void cuda_copy_and_set_zeros_aux_b_full(T *mat_dev, T *aux_mat_full_dev, int *l_rows_in, int *l_cols_in, int *nblk_mult_in, 
+                                        int *nblk_mult_rows_in, int *nblk_in, int *np_fine_in, int *np_rows_fine_in, int *np_rows_in,
+                                        int *SM_count_in, int *debug_in, cudaStream_t my_stream){
+
+  int l_rows = *l_rows_in;
+  int l_cols = *l_cols_in;
+  int nblk_mult = *nblk_mult_in;
+  int nblk_mult_rows = *nblk_mult_rows_in;
+  int nblk = *nblk_in;
+  int np_fine = *np_fine_in;
+  int np_rows_fine = *np_rows_fine_in;
+  int np_rows = *np_rows_in;
+  int SM_count = *SM_count_in;
+  int debug = *debug_in;
+
+  dim3 blocks = dim3(SM_count, 1, 1); // PETERDEBUG what happens in the analogous Intel-GPU case? Here and in other analogous places
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
+
+  // dim3 blocks = dim3(1,1,1);
+  // dim3 threadsPerBlock = dim3(1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_copy_and_set_zeros_aux_b_full_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult, 
+                                                                                    nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows);
+#else
+  cuda_copy_and_set_zeros_aux_b_full_kernel<<<blocks,threadsPerBlock>>>            (mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult, 
+                                                                                    nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows);
+#endif
+  
+    if (debug)
+      {
+      cudaDeviceSynchronize();
+      cudaError_t cuerr = cudaGetLastError();
+      if (cuerr != cudaSuccess){
+        printf("Error in executing cuda_copy_and_set_zeros_aux_b_full: %s\n",cudaGetErrorString(cuerr));
+      }
+    }
+  }
+
+extern "C" void cuda_copy_and_set_zeros_aux_b_full_FromC(char dataType, intptr_t mat_dev, intptr_t aux_mat_full_dev,
+                                                       int *l_rows_in, int *l_cols_in, int *nblk_mult_in, 
+                                                       int *nblk_mult_rows_in, int *nblk_in, int *np_fine_in, int *np_rows_fine_in, int *np_rows_in,
+                                                       int *SM_count_in, int *debug_in, cudaStream_t my_stream){
+  if (dataType=='D') cuda_copy_and_set_zeros_aux_b_full<double>((double *) mat_dev, (double *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, nblk_mult_rows_in, nblk_in, np_fine_in, np_rows_fine_in, np_rows_in, SM_count_in, debug_in, my_stream);
+  if (dataType=='S') cuda_copy_and_set_zeros_aux_b_full<float> ((float  *) mat_dev, (float  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, nblk_mult_rows_in, nblk_in, np_fine_in, np_rows_fine_in, np_rows_in, SM_count_in, debug_in, my_stream);
+  if (dataType=='Z') cuda_copy_and_set_zeros_aux_b_full<cuDoubleComplex>((cuDoubleComplex *) mat_dev, (cuDoubleComplex *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, nblk_mult_rows_in, nblk_in, np_fine_in, np_rows_fine_in, np_rows_in, SM_count_in, debug_in, my_stream);
+  if (dataType=='C') cuda_copy_and_set_zeros_aux_b_full<cuFloatComplex> ((cuFloatComplex  *) mat_dev, (cuFloatComplex  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, nblk_mult_rows_in, nblk_in, np_fine_in, np_rows_fine_in, np_rows_in, SM_count_in, debug_in, my_stream);
+}
+
+//________________________________________________________________
+
+template <typename T>
 __global__ void cuda_copy_and_set_zeros_aux_full_kernel(T *a_dev, T *aux_mat_full_dev, int l_rows, int l_cols, int nblk_mult) {
 
   // aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
