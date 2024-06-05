@@ -56,9 +56,9 @@
 
 #include "../general/sanity.F90"
 
-      use elpa1_compute, solve_tridi_&
+      use elpa1_compute, solve_tridi_cpu_&
                          &PRECISION&
-                         &_private_impl => solve_tridi_&
+                         &_private_impl => solve_tridi_cpu_&
                          &PRECISION&
                          &_impl
       use precision
@@ -143,10 +143,10 @@
       endif
       success = .false.
 
-      call solve_tridi_&
+      call solve_tridi_cpu_&
       &PRECISION&
       &_private_impl(obj, na, nev, d, e, q, matrixRows, nblk, matrixCols, &
-               mpi_comm_all, mpi_comm_rows, mpi_comm_cols,.false., wantDebug, success, &
+               mpi_comm_all, mpi_comm_rows, mpi_comm_cols, wantDebug, success, &
                nrThreads)
 
 

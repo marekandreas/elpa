@@ -180,6 +180,8 @@ program test
    TEST_INT_TYPE                          :: numberOfDevices
    TEST_INT_TYPE                          :: gpuID
 #endif
+   
+   logical                                :: skip_check_correctness
 
 ! for gpu_malloc
 #if TEST_GPU == 1
@@ -203,7 +205,7 @@ program test
 #endif /* TEST_GPU == 1 */
 
 
-   call read_input_parameters(na, nev, nblk, write_to_file)
+   call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
    call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI
@@ -503,9 +505,10 @@ program test
    !-----------------------------------------------------------------------------------------------------------------------------
    ! Check the results
    
-   status = check_correctness_hermitian_multiply("N", na, a, as, c, na_rows, sc_desc, myid )
-   call check_status(status, myid)
-   
+   if(.not. skip_check_correctness) then
+     status = check_correctness_hermitian_multiply("N", na, a, as, c, na_rows, sc_desc, myid )
+     call check_status(status, myid)
+   endif
 
    !-----------------------------------------------------------------------------------------------------------------------------
    ! Deallocate

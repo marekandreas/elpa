@@ -26,7 +26,7 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [21:2:2])
+AC_SUBST([ELPA_SO_VERSION], [21:3:3])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -40,17 +40,17 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20241103, "Current ELPA API version")
-print_current_api_version=20241103
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20241105, "Current ELPA API version")
+print_current_api_version=20241105
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241103], [Current ELPA autotune version])
-print_current_autotune_version=20241103
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241103], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20241103, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241105], [Current ELPA autotune version])
+print_current_autotune_version=20241105
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241105], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20241105, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1725776247],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1732082353],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -2735,6 +2735,23 @@ if test x"${need_amd_gpu}" = x"yes" ; then
   if test x"${hipcc_found}" = x"no" ; then
     AC_MSG_ERROR([hipcc not found; try to set the hip-path or disable AMD GPU support])
   fi
+  AC_MSG_CHECKING(how to querry GPU memory types)
+  AC_LANG_PUSH([C++])
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+    #include <hip/hip_runtime.h>
+    int main(int argc, char **argv) {
+    hipPointerAttribute_t attributes;
+    if (attributes.memoryType==hipMemoryTypeDevice) return 1;
+    }
+  ])],
+  [can_compile_memory_type=yes],
+  [can_compile_memory_type=no]
+  )
+  AC_LANG_POP([C++])
+  AC_MSG_RESULT([${can_compile_memory_type}])
+  if test x"${can_compile_memory_type}" = x"yes"; then
+      AC_DEFINE([HAVE_OLD_HIP_TYPESTRUCTURE],[1],[old hip memory type structure])
+  fi
 
   if test x"${use_hipblas}" = x"yes"; then
     #dnl check whether we find marshalling hipblas
@@ -2885,10 +2902,6 @@ fi
 #
 ##########################################################################################
 
-use_cuda_streams=no
-use_hip_streams=no
-use_gpu_streams=no
-relied_on_default=no
 AC_MSG_CHECKING(whether GPU streams should be used)
 AC_ARG_ENABLE([gpu-streams],
                [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
@@ -2911,11 +2924,8 @@ AC_ARG_ENABLE([gpu-streams],
                                 fi
 				],
               [relied_on_default=yes
-               use_cuda_streams=no
-               use_hip_streams=no
-	       use_gpu_streams=no
 	       #if test x"$enable_openmp" = x"no"; then
-		 if test x"$enable_cuda_aware_mpi" = x"no"; then
+		 #if test x"$enable_cuda_aware_mpi" = x"no"; then
 	           if test x"$need_nvidia_gpu" = x"yes"; then
                      use_cuda_streams=yes
                      use_gpu_streams=yes
@@ -2924,7 +2934,7 @@ AC_ARG_ENABLE([gpu-streams],
                      use_hip_streams=yes
                      use_gpu_streams=yes
                    fi
-		 fi
+		 #fi
 	       #fi
 	       ])
 AC_MSG_RESULT([${use_gpu_streams}])
@@ -3049,7 +3059,7 @@ if test x"$need_nvidia_gpu" = x"yes"; then
       if test x"${need_nvidia_gpu}" = x"yes"; then
         AC_MSG_WARN([-------------------------------------------------------------------------])
         AC_MSG_WARN([])
-        AC_MSG_WARN([Not using cusolver might lead to performance drops it is not recommended!])
+        AC_MSG_WARN([Not using cusolver might lead to performance drops, it is not recommended!])
         AC_MSG_WARN([])
         AC_MSG_WARN([-------------------------------------------------------------------------])
       fi
@@ -3064,7 +3074,7 @@ if test x"$need_nvidia_gpu" = x"yes"; then
     AC_LANG_PUSH([C])
     AC_SEARCH_LIBS([cusolverDnXtrtri],[cusolver],[have_cusolver=yes],[have_cusolver=no])
     if test x"${have_cusolver}" = x"no"; then
-      AC_MSG_ERROR([Could not link cudart; try to set the cuda-path or disable Nvidia GPU support])
+      AC_MSG_ERROR([Could not link cusolver;  try to set the path to cusolver.so or disable it: --with-cusolver=no])
     fi
     AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
     AC_LANG_POP([C])
@@ -3093,7 +3103,7 @@ if test x"$need_amd_gpu" = x"yes"; then
       if test x"${need_amd_gpu}" = x"yes"; then
         AC_MSG_WARN([-------------------------------------------------------------------------])
         AC_MSG_WARN([])
-        AC_MSG_WARN([Not using rocsolver might lead to performance drops it is not recommended!])
+        AC_MSG_WARN([Not using rocsolver might lead to performance drops, it is not recommended!])
         AC_MSG_WARN([])
         AC_MSG_WARN([-------------------------------------------------------------------------])
       fi
@@ -3114,7 +3124,7 @@ if test x"$need_amd_gpu" = x"yes"; then
       AC_SEARCH_LIBS([rocsolver_dtrtri],[rocsolver],[have_rocsolver=yes],[have_rocsolver=no])
     fi
     if test x"${have_rocsolver}" = x"no"; then
-      AC_MSG_ERROR([Could not link rocsolver; try to set the hip-path or disable AMD GPU support])
+      AC_MSG_ERROR([Could not link rocsolver;  try to set the path to rocsolver.so or disable it: --with-rocsolver=no])
     fi
     AC_DEFINE([WITH_AMD_ROCSOLVER],[1],[enable AMD rocsolver])
     AC_LANG_POP([C])
@@ -3477,7 +3487,7 @@ AC_ARG_ENABLE([autotune-redistribute-matrix],
 AC_MSG_RESULT([${enable_autotune_redistribute_matrix}])
 if test x"${enable_autotune_redistribute_matrix}" = x"yes" ; then
   if test x"${enable_scalapack_tests}" = x"no"; then
-    AC_MSG_ERROR([Please also set --enable_scalapack_tests in this case])
+    AC_MSG_ERROR([Please also set --enable-scalapack-tests in this case])
   fi
   if test x"${with_mpi}" = x"no"; then
     AC_MSG_ERROR([For this option ELPA must be build with MPI enabled])
@@ -3485,6 +3495,23 @@ if test x"${enable_autotune_redistribute_matrix}" = x"yes" ; then
   AC_DEFINE([REDISTRIBUTE_MATRIX],[1],[enable matrix re-distribution during autotuning])
 fi
 
+AC_MSG_CHECKING(whether all Fortran tests should be provided)
+AC_ARG_ENABLE([fortran-tests],
+              AS_HELP_STRING([--enable-fortran-tests],
+                             [enables ALL the Fortran tests (some are always build) for elpa, default yes.]),
+			     [
+			      if test x"$enableval" = x"yes"; then
+			        enable_fortran_tests=yes
+		              else
+			        enable_fortran_tests=no
+			      fi
+			      ],
+              [enable_fortran_tests=yes])
+AC_MSG_RESULT([${enable_fortran_tests}])
+AM_CONDITIONAL([ENABLE_FORTRAN_TESTS],[test x"$enable_fortran_tests" = x"yes"])
+if test x"${enable_fortran_tests}" = x"yes"; then
+ AC_DEFINE([ENABLE_FORTRAN_TESTS], [1], [enable FORTRAN tests])
+fi
 
 
 
@@ -3956,13 +3983,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2024.03.001.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2024.03.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2024.05.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2024.05.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

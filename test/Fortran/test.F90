@@ -417,18 +417,10 @@ program test
 
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_ALL_LAYOUTS)
-#ifdef WITH_MPI
-     call mpi_finalize(mpierr)
-#endif
-     stop 77
-#endif
-#if defined(TEST_GENERALIZED_EIGENPROBLEM)
-#if !defined(WITH_GPU_STREAMS)
-#ifdef WITH_MPI
-     call mpi_finalize(mpierr)
-#endif
-     stop 77
-#endif
+! #ifdef WITH_MPI
+!      call mpi_finalize(mpierr) ! PETERDEBUG: comment out for testing
+! #endif
+!      stop 77
 #endif
 
    call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
