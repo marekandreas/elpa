@@ -315,34 +315,11 @@ subroutine tridiag_cpu_&
     max_threads=max_threads_in
   endif
 
-  if (useGPU) then
-
-          ! copy from device to host
-    ! dirty hack copy a_dev -> a_mat (in order not to have to change the code for the moment)
-    num = matrixRows * matrixCols * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    call gpu_memcpy_async_and_stream_synchronize &
-            ("tridiag a_dev -> a_mat", a_dev, 0_c_intptr_t, &
-                                                 a_mat(1:matrixRows,1:matrixCols), &
-                                                 1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
-#else
-    successGPU = gpu_memcpy(int(loc(a_mat(1,1)),kind=c_intptr_t), a_dev, &
-                              num, gpuMemcpyDeviceToHost)
-    check_memcpy_gpu("tridiag: a_dev", successGPU)
-#endif
-
-  endif
-
-
-
-
-
   call obj%timer%start("tridiag_&
-  &MATH_DATATYPE&
-  &" // &
-  PRECISION_SUFFIX // &
-  gpuString )
+       &MATH_DATATYPE&
+       &" // &
+       PRECISION_SUFFIX // &
+       gpuString )
 
   call obj%get("nbc_row_elpa1_full_to_tridi", non_blocking_collectives_rows, error)
   if (error .ne. ELPA_OK) then
@@ -690,44 +667,22 @@ subroutine tridiag_cpu_&
   l_cols = local_index(na, my_pcol, np_cols, nblk, -1) ! Local cols of a_mat
 
   if (my_prow == prow(na, nblk, np_rows) .and. my_pcol == pcol(na, nblk, np_cols)) then
-          ! do on GPU
+    if (useGPU) then
+      my_stream = obj%gpu_setup%my_stream
+      num = 1 * size_of_datatype_real
+      offset_dev = (l_rows-1 + (l_cols-1)*matrixRows) * size_of_datatype
+      successGPU = gpu_memcpy(int(loc(d_vec(na)),kind=c_intptr_t), a_dev + offset_dev, &
+                                num, gpuMemcpyDeviceToHost)
+      check_memcpy_gpu("tridiag: a_dev", successGPU)
+    else ! useGPU
 #if COMPLEXCASE == 1
       d_vec(na) = real(a_mat(l_rows,l_cols), kind=rk)
 #endif
 #if REALCASE == 1
       d_vec(na) = a_mat(l_rows,l_cols)
 #endif
+    endif ! useGPU
   endif
-
-  if (useGPU) then
-    ! allocate memory for matrix A on the device and than copy the matrix
-
-    num = matrixRows * matrixCols * size_of_datatype
-
-    !successGPU = gpu_malloc(a_dev, num)
-    !check_alloc_gpu("tridiag: a_dev", successGPU)
-
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
-      successGPU = gpu_host_register(int(loc(a_mat),kind=c_intptr_t),num,&
-                  gpuHostRegisterDefault)
-      check_host_register_gpu("tridiag: a_mat", successGPU)
-    endif
-#endif
-
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    call gpu_memcpy_async_and_stream_synchronize &
-            ("tridiag a_mat -> a_dev", a_dev, 0_c_intptr_t, &
-                                                 a_mat(1:matrixRows,1:matrixCols), &
-                                                 1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else
-    successGPU = gpu_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t), &
-                              num, gpuMemcpyHostToDevice)
-    check_memcpy_gpu("tridiag: a_dev", successGPU)
-#endif
-
-  endif ! useGPU
 
   ! main cycle of tridiagonalization
   ! in each step, 1 Householder Vector is calculated
@@ -1953,22 +1908,6 @@ subroutine tridiag_cpu_&
 
   enddo ! main cycle over istep=na,3,-1
 
-
-  if (useGPU) then
-    ! copy a_dev -> a_mat for backtransformation
-    num = matrixRows * matrixCols * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-    call gpu_memcpy_async_and_stream_synchronize ("tridiag a_dev -> a_mat", a_dev, 0_c_intptr_t,  &
-                                                  a_mat(1:matrixRows,1:matrixCols), 1, 1, num, &
-                                                  gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
-#else
-    successGPU = gpu_memcpy(int(loc(a_mat(1,1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
-    check_memcpy_gpu("tridiag: a_dev", successGPU)
-#endif
-
-  endif ! useGPU
-
-
 #if COMPLEXCASE == 1
   ! Store e_vec(1) and d_vec(1)
 
@@ -2241,11 +2180,6 @@ subroutine tridiag_cpu_&
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
-      successGPU = gpu_host_unregister(int(loc(a_mat),kind=c_intptr_t))
-      check_host_unregister_gpu("tridiag: a_mat", successGPU)
-    endif
-
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
       successGPU = gpu_free_host(v_row_host)
       check_host_dealloc_gpu("tridiag: v_row_host", successGPU)
       nullify(v_row)
@@ -2315,20 +2249,6 @@ subroutine tridiag_cpu_&
 
 ! copy to device
   if (useGPU) then
-    ! dirty hack copy a_mat -> a_dev (in order not to have to change the code for the moment)
-    num = matrixRows * matrixCols * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    call gpu_memcpy_async_and_stream_synchronize &
-            ("tridiag a_mat -> a_dev", a_dev, 0_c_intptr_t, &
-                                                 a_mat(1:matrixRows,1:matrixCols), &
-                                                 1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-#else
-    successGPU = gpu_memcpy(a_dev, int(loc(a_mat(1,1)),kind=c_intptr_t),  &
-                              num, gpuMemcpyHostToDevice)
-    check_memcpy_gpu("tridiag: a_dev", successGPU)
-#endif
-
     num = na * size_of_datatype_real
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
@@ -2368,15 +2288,13 @@ subroutine tridiag_cpu_&
     check_memcpy_gpu("tridiag: d_vec_dev", successGPU)
 #endif
 
-
-
-  endif
+  endif ! useGPU
 
 
   call obj%timer%stop("tridiag_&
-  &MATH_DATATYPE&
-  &" // &
-  PRECISION_SUFFIX // &
-  gpuString )
+       &MATH_DATATYPE&
+       &" // &
+       PRECISION_SUFFIX // &
+       gpuString )
 
 end
