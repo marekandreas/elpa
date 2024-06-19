@@ -275,7 +275,7 @@ subroutine tridiag_cpu_&
   useGPU = .true.
 #endif
 
-#if defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG)
+#if defined(USE_CCL_TRIDIAG)
   if (useGPU) then
     useCCL = .true.
   
@@ -297,7 +297,7 @@ subroutine tridiag_cpu_&
 #endif
  
   endif 
-#endif /* defined(WITH_NVIDIA_GPU_VERSION) && defined(USE_CCL_TRIDIAG) */
+#endif /* defined(USE_CCL_TRIDIAG) */
 
   allocate(aux(2*max_stored_uv), stat=istat, errmsg=errorMessage)
 
