@@ -708,6 +708,7 @@ subroutine tridiag_cpu_&
       isOurProcessRow      = (my_prow == prow(istep-1, nblk, np_rows))
       isOurProcessCol      = (my_pcol == pcol(istep-1, nblk, np_cols))
       isOurProcessCol_prev = (my_pcol == pcol(istep  , nblk, np_cols)) ! isOurProcessCol from the previous step
+      my_stream = obj%gpu_setup%my_stream
       call gpu_copy_and_set_zeros_PRECISION(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
                                             aux1_dev, vav_dev, d_vec_dev, &
                                             isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
