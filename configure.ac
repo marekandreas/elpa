@@ -3921,6 +3921,58 @@ if test x"${enable_python_tests}" = x"yes"; then
           AC_MSG_ERROR([pytest not found.])
         fi
 fi
+
+
+
+#AC_ARG_WITH([mpi], 
+#	    [AS_HELP_STRING([--with-mpi=[[yes|no]]], 
+#	                    [compile with MPI. Default: yes])],
+#	         	    [
+#			     with_mpi_specified=yes
+#			     if test x"$withval" = x"auto"; then
+#			       correct_mpi_argument=yes
+#			     fi
+#			     if test x"$withval" = x"yes"; then
+#			       correct_mpi_argument=yes
+#			     fi
+#			     if test x"$withval" = x"no"; then
+#                               correct_mpi_argument=yes
+#                             fi],
+#			     [with_mpi=yes])
+
+AC_MSG_CHECKING(whether which test programms should be build) 
+AC_ARG_WITH([test-programs],
+              [AS_HELP_STRING([--with-test-programs=[[all|gpu|cpu]]],
+                               [build the test programs for cpu, gpu or all (default all)])],
+                               [if test x"$withval" = x"all"; then
+				  build_cpu_tests=yes
+				  build_gpu_tests=yes
+				fi
+				if test x"$withval" = x"cpu"; then
+				  build_cpu_tests=yes
+				  build_gpu_tests=no
+				fi
+				if test x"$withval" = x"gpu"; then
+				  build_cpu_tests=no
+				  build_gpu_tests=yes
+                                fi
+				if test x"$withval" = x"yes"; then
+				  build_cpu_tests=yes
+				  build_gpu_tests=yes
+                                fi
+				if test x"$withval" = x"no"; then
+				  build_cpu_tests=no
+				  build_gpu_tests=no
+                                fi],
+              [build_cpu_tests=yes
+	       build_gpu_tests=yes])
+AC_MSG_RESULT([${withval}])
+AM_CONDITIONAL([BUILD_CPU_TESTS],[test x"$build_cpu_tests" = x"yes"])
+AM_CONDITIONAL([BUILD_GPU_TESTS],[test x"$build_gpu_tests" = x"yes"])
+
+
+
+
 AC_OUTPUT
 
 echo ""
