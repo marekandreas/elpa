@@ -671,7 +671,7 @@ function elpa_solve_evp_&
 
      ! associate a_dev, q_dev, ev_dev
      a_dev = transfer(a_devIntern, a_dev)
-     ev_dev = transfer(ev_devIntern, a_dev)
+     ev_dev = transfer(ev_devIntern, ev_dev)
      if (present(qExtern)) then
        q_dev = transfer(q_devIntern, q_dev)
      endif
@@ -720,7 +720,7 @@ function elpa_solve_evp_&
 
      ! associate a_dev, q_dev, ev_dev
      a_dev = transfer(a_devIntern, a_dev)
-     ev_dev = transfer(ev_devIntern, a_dev)
+     ev_dev = transfer(ev_devIntern, ev_dev)
      if (present(qExtern)) then
        q_dev = transfer(q_devIntern, q_dev)
      endif
@@ -764,7 +764,7 @@ function elpa_solve_evp_&
      ! associate a_dev, q_dev, ev_dev
      a_devIntern = transfer(aDevExtern, a_devIntern)
      a_dev = transfer(a_devIntern, a_dev)
-     ev_dev = transfer(evDevExtern, a_dev)
+     ev_dev = transfer(evDevExtern, ev_dev)
      ev_devIntern = transfer(evDevExtern, ev_devIntern)
      if (present(qDevExtern)) then
        q_dev = transfer(qDevExtern, q_dev)
@@ -818,8 +818,8 @@ function elpa_solve_evp_&
        ! associate a_dev, q_dev, ev_dev
        a_devIntern = transfer(aDevExtern, a_devIntern)
        a_dev = transfer(a_devIntern, a_dev)
-       ev_dev = transfer(evDevExtern, a_dev)
-       ev_devIntern = transfer(evDevExtern, a_devIntern)
+       ev_dev = transfer(evDevExtern, ev_dev)
+       ev_devIntern = transfer(evDevExtern, ev_devIntern)
        if (present(qDevExtern)) then
          q_devIntern = transfer(qDevExtern, q_devIntern)
          q_dev = transfer(q_devIntern, q_dev)

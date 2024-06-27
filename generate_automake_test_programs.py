@@ -309,6 +309,13 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
             spl="_split_comm_myself" if spl == "myself" else "", 
             api_name="_explicit" if api_name == "explicit" else "")
 
+
+        if (g == "GPU_OFF"):
+          print("if BUILD_CPU_TESTS")
+        else:
+          print("if BUILD_GPU_TESTS")
+
+
         if (m == "analytic"):
           print("if BUILD_FUGAKU")
           print("else")
@@ -424,7 +431,8 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
 
           print("endif\n" * endifs)
           print("")
-
+        #CPU / GPU tests
+        print("endif")
 
 for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys()), sorted(domain_flag.keys())):
     endifs = 0
@@ -440,6 +448,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
 
     name = "validate_autotune{langsuffix}_{d}_{p}".format(langsuffix=language_flag[lang], d=d, p=p)
 
+    print("if BUILD_CPU_TESTS")
     print("if ENABLE_AUTOTUNING")
     if lang == "C":
         print("if ENABLE_C_TESTS")
@@ -474,6 +483,7 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
         print("endif")
     if lang == "C++":
         print("endif")
+    print("endif")
     print("endif")
 
 
@@ -536,6 +546,7 @@ for lang, g, gid, deviceptr, p, d, api_name in product(sorted(language_flag.keys
     #    print("if WITH_INTEL_GPU_VERSION")
     #    endifs += 1
 
+    print("if BUILD_GPU_TESTS")
     print("if ENABLE_FORTRAN_TESTS")
     endifs += 1
     if (g == "OPENMP_OFFLOAD_GPU_ON"):
@@ -616,7 +627,7 @@ for lang, g, gid, deviceptr, p, d, api_name in product(sorted(language_flag.keys
         gpu_id_flag[gid],
         device_pointer_flag[deviceptr]]))
     print("endif\n" * endifs)
-
+    print("endif")
     
 name = "validate_multiple_objs_real_double"
 print("if ENABLE_AUTOTUNING")
@@ -631,6 +642,7 @@ print("  " + " \\\n  ".join([
 print("endif\n")
 
 name = "validate_multiple_objs_real_double_c_version"
+print("if BUILD_CPU_TESTS")
 print("if ENABLE_C_TESTS")
 print("if ENABLE_AUTOTUNING")
 print("check_SCRIPTS += " + name + "_extended.sh")
@@ -643,8 +655,10 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 print("endif\n")
+print("endif")
 
 name = "validate_multiple_objs_real_double_cpp_version"
+print("if BUILD_CPU_TESTS")
 print("if ENABLE_CPP_TESTS")
 print("if ENABLE_AUTOTUNING")
 print("check_SCRIPTS += " + name + "_extended.sh")
@@ -657,6 +671,7 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 print("endif\n")
+print("endif")
 
 for g, gid, deviceptr in product(sorted(gpu_flag.keys()),
                                  sorted(gpu_id_flag.keys()),
@@ -689,8 +704,10 @@ for g, gid, deviceptr in product(sorted(gpu_flag.keys()),
 
   if (g != "GPU_OFF"):
     name = "validate_skewsymmetric_real_double_gpu"
+    print("if BUILD_GPU_TESTS")
   else:
     name = "validate_skewsymmetric_real_double"
+    print("if BUILD_CPU_TESTS")
   print("if HAVE_SKEWSYMMETRIC")
   print("check_SCRIPTS += " + name + "_extended.sh")
   print("noinst_PROGRAMS += " + name)
@@ -703,6 +720,7 @@ for g, gid, deviceptr in product(sorted(gpu_flag.keys()),
           gpu_flag[g]]))
   print("endif\n")
   print("endif\n" * endifs)
+  print("endif\n")
     
   if (g == "NVIDIA_GPU_ON"):
     print("if WITH_NVIDIA_GPU_VERSION")
@@ -718,8 +736,10 @@ for g, gid, deviceptr in product(sorted(gpu_flag.keys()),
 
   if (g != "GPU_OFF"):
     name = "validate_skewsymmetric_real_single_gpu"
+    print("if BUILD_GPU_TESTS")
   else:
     name = "validate_skewsymmetric_real_single"
+    print("if BUILD_CPU_TESTS")
   print("if HAVE_SKEWSYMMETRIC")
   print("if WANT_SINGLE_PRECISION_REAL")
   print("check_SCRIPTS += " + name + "_extended.sh")
@@ -734,8 +754,10 @@ for g, gid, deviceptr in product(sorted(gpu_flag.keys()),
   print("endif\n")
   print("endif\n")
   print("endif\n" * endifs)
+  print("endif\n")
 
 name = "validate_real_skewsymmetric_double_c_version"
+print("if BUILD_CPU_TESTS")
 print("if ENABLE_C_TESTS")
 print("if HAVE_SKEWSYMMETRIC")
 print("check_SCRIPTS += " + name + "_extended.sh")
@@ -748,8 +770,10 @@ print("  " + " \\\n  ".join([
          prec_flag['double']]))
 print("endif\n")
 print("endif\n")
+print("endif\n")
 
 name = "validate_real_skewsymmetric_double_cpp_version"
+print("if BUILD_CPU_TESTS")
 print("if ENABLE_CPP_TESTS")
 print("if HAVE_SKEWSYMMETRIC")
 print("check_SCRIPTS += " + name + "_extended.sh")
@@ -762,10 +786,11 @@ print("  " + " \\\n  ".join([
         prec_flag['double']]))
 print("endif")
 print("endif")
-
+print("endif")
 
 
 name = "validate_split_comm_real_double"
+print("if BUILD_CPU_TESTS")
 print("check_SCRIPTS += " + name + "_extended.sh")
 print("noinst_PROGRAMS += " + name)
 print(name + "_SOURCES = test/Fortran/test_split_comm.F90")
@@ -774,3 +799,4 @@ print(name + "_FCFLAGS = $(test_program_fcflags) \\")
 print("  " + " \\\n  ".join([
         domain_flag['real'],
         prec_flag['double']]))
+print("endif")
