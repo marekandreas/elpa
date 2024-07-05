@@ -58,10 +58,14 @@ extern "C" {
 		  {    
 		  printf("Warning in is_device_ptr(): hipPointerGetAttributes: %s\n", hipGetErrorString(hiperr));
 		  printf("Pointer wasn't allocated via hip, so we use an all host array (a_h_a) function\n");
+        hiperr = hipGetLastError(); // reset the error
         return 0;
 		  }
-    
+#ifdef HAVE_OLD_HIP_TYPESTRUCTURE
     if (attributes.memoryType==hipMemoryTypeDevice) return 1;
+#else
+    if (attributes.type==hipMemoryTypeDevice) return 1;
+#endif
     else return 0;
   }
   

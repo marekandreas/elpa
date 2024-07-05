@@ -48,6 +48,8 @@
 
 #ifdef REDISTRIBUTE_MATRIX
    doRedistributeMatrix = .false.
+   !call obj%set("internal_nblk",32)
+   !call obj%set("matrix_order",1)
 
    if (obj%is_set("internal_nblk") == 1) then
      if (obj%is_set("matrix_order") == 1) then
@@ -73,7 +75,6 @@
        print *,"Problem getting option. Aborting..."
        stop 1
      endif
-
      layoutExternal=matrixLayouts(matrixOrder)
 
      if (nblkInternal == nblk) then
@@ -97,6 +98,14 @@
      np_cols = int(np_colsMPI,kind=c_int)
 
 
+     ! store external variables
+     np_rowsExt  = np_rows
+     np_colsExt  = np_cols
+     my_prowExt  = my_prow
+     my_pcolExt  = my_prow
+
+     na_rowsExt = matrixRows
+     na_colsExt = matrixCols
 
      ! create a new internal blacs discriptor
      ! matrix will still be distributed over the same process grid
@@ -105,82 +114,87 @@
      ! construct current descriptor
      if (obj%is_set("blacs_context") == 1) then
        call obj%get("blacs_context",external_blacs_ctxt, error)
-       external_blacs_ctxt_ = int(external_blacs_ctxt,kind=BLAS_KIND)
+       external_blacs_ctxtBLAS = int(external_blacs_ctxt,kind=BLAS_KIND)
      else
-
        ! we have to re-create the blacs context
-       external_blacs_ctxt_ = int(mpi_comm_all,kind=BLAS_KIND)
-       call BLACS_Gridinit(external_blacs_ctxt_, layoutExternal, int(np_rows,kind=BLAS_KIND), int(np_cols,kind=BLAS_KIND))
+       external_blacs_ctxtBLAS = int(mpi_comm_all,kind=BLAS_KIND)
+       call BLACS_Gridinit(external_blacs_ctxtBLAS, layoutExternal, int(np_rows,kind=BLAS_KIND), int(np_cols,kind=BLAS_KIND))
      endif
 
-      sc_desc(1) = 1
-      sc_desc(2) = external_blacs_ctxt_
-      sc_desc(3) = obj%na
-      sc_desc(4) = obj%na
-      sc_desc(5) = obj%nblk
-      sc_desc(6) = obj%nblk
-      sc_desc(7) = 0
-      sc_desc(8) = 0
-      sc_desc(9) = obj%local_nrows
+
+     sc_desc(1) = 1
+     sc_desc(2) = external_blacs_ctxtBLAS
+     sc_desc(3) = int(obj%na,kind=BLAS_KIND)
+     sc_desc(4) = int(obj%na,kind=BLAS_KIND)
+     sc_desc(5) = int(obj%nblk,kind=BLAS_KIND)
+     sc_desc(6) = int(obj%nblk,kind=BLAS_KIND)
+     sc_desc(7) = 0
+     sc_desc(8) = 0
+     sc_desc(9) = int(obj%local_nrows,kind=BLAS_KIND)
+
+
+     sc_descExt(1:9) = sc_desc(1:9)
 
      layoutInternal = 'C'
 
-     blacs_ctxt_ = int(mpi_comm_all,kind=BLAS_KIND)
+     blacs_ctxtInternal = int(mpi_comm_all,kind=BLAS_KIND)
 
      !if (layoutInternal /= layoutExternal) then
        ! we get new blacs context ; we want to keep the np_rows, and np_cols
-       np_rows_ = int(np_rows,kind=BLAS_KIND)
-       np_cols_ = int(np_cols,kind=BLAS_KIND)
+       np_rowsInternal = int(np_rows,kind=BLAS_KIND)
+       np_colsInternal = int(np_cols,kind=BLAS_KIND)
 
-       ! blacs_ctxt_ inout
+       ! blacs_ctxtInternal inout
        ! np_rows,cols in
-       call BLACS_Gridinit(blacs_ctxt_, layoutInternal, int(np_rows,kind=BLAS_KIND), int(np_cols,kind=BLAS_KIND))
+       call BLACS_Gridinit(blacs_ctxtInternal, layoutInternal, int(np_rows,kind=BLAS_KIND), int(np_cols,kind=BLAS_KIND))
 
 
-       call BLACS_Gridinfo(blacs_ctxt_, np_rows_, np_cols_, my_prow_, my_pcol_)
-       if (np_rows /= np_rows_) then
+       call BLACS_Gridinfo(blacs_ctxtInternal, np_rowsInternal, np_colsInternal, my_prowInternal, my_pcolInternal)
+       if (np_rows /= np_rowsInternal) then
          print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
-         print *,np_rows,np_rows_
+         print *,np_rows,np_rowsInternal
          stop 1
        endif
-       if (np_cols /= np_cols_) then
+       if (np_cols /= np_colsInternal) then
          print *, "BLACS_Gridinfo returned different values for np_cols as set by BLACS_Gridinit"
-         print *,np_cols,np_cols_
+         print *,np_cols,np_colsInternal
          stop 1
        endif
 
-       call mpi_comm_split(int(mpi_comm_all,kind=MPI_KIND), int(my_pcol_,kind=MPI_KIND), &
-                           int(my_prow_,kind=MPI_KIND), mpi_comm_rowsMPI_, mpierr)
-       mpi_comm_rows_ = int(mpi_comm_rowsMPI_,kind=c_int)
+       call mpi_comm_split(int(mpi_comm_all,kind=MPI_KIND), int(my_pcolInternal,kind=MPI_KIND), &
+                           int(my_prowInternal,kind=MPI_KIND), mpi_comm_rowsMPIInternal, mpierr)
+       mpi_comm_rowsInternal = int(mpi_comm_rowsMPIInternal,kind=c_int)
 
-       call mpi_comm_split(int(mpi_comm_all,kind=MPI_KIND), int(my_prow_,kind=MPI_KIND), &
-                           int(my_pcol_,kind=MPI_KIND), mpi_comm_colsMPI_, mpierr)
-       mpi_comm_cols_ = int(mpi_comm_colsMPI_,kind=c_int)
+       call mpi_comm_split(int(mpi_comm_all,kind=MPI_KIND), int(my_prowInternal,kind=MPI_KIND), &
+                           int(my_pcolInternal,kind=MPI_KIND), mpi_comm_colsMPIInternal, mpierr)
+       mpi_comm_colsInternal = int(mpi_comm_colsMPIInternal,kind=c_int)
 
-       if (int(np_rows_,kind=c_int) /= np_rows) then
+       if (int(np_rowsInternal,kind=c_int) /= np_rows) then
          print *, "BLACS_Gridinfo returned different values for np_rows as set by BLACS_Gridinit"
          stop 1
        endif
-       if (int(np_cols_,kind=c_int) /= np_cols) then
+       if (int(np_colsInternal,kind=c_int) /= np_cols) then
          print *, "BLACS_Gridinfo returned different values for np_cols as set by BLACS_Gridinit"
          stop 1
        endif
      !else
-     !  na_rows_ = int(na_rows,kind=BLAS_KIND)
-     !  na_cols_ = int(na_cols,kind=BLAS_KIND)
+     !  na_rowsInternal = int(na_rows,kind=BLAS_KIND)
+     !  na_colsInternal = int(na_cols,kind=BLAS_KIND)
      !  sc_desc_ 
      !endif
      
      ! now we can set up the the blacs descriptor
 
      !sc_desc_(:) = 0
-     na_rows_ = numroc(int(na,kind=BLAS_KIND), int(nblkInternal,kind=BLAS_KIND), my_prow_, 0_BLAS_KIND, np_rows_)
-     na_cols_ = numroc(int(na,kind=BLAS_KIND), int(nblkInternal,kind=BLAS_KIND), my_pcol_, 0_BLAS_KIND, np_cols_)
+     na_rowsInternal = numroc(int(na,kind=BLAS_KIND), int(nblkInternal,kind=BLAS_KIND), my_prowInternal, &
+                              0_BLAS_KIND, np_rowsInternal)
+     na_colsInternal = numroc(int(na,kind=BLAS_KIND), int(nblkInternal,kind=BLAS_KIND), my_pcolInternal, &
+                              0_BLAS_KIND, np_colsInternal)
 
      info_ = 0
-     call descinit(sc_desc_, int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), int(nblkInternal,kind=BLAS_KIND), &
+     call descinit(sc_descInternal, int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), int(nblkInternal,kind=BLAS_KIND), &
                    int(nblkInternal,kind=BLAS_KIND), 0_BLAS_KIND, 0_BLAS_KIND, &
-                   blacs_ctxt_, na_rows_, info_)
+                   blacs_ctxtInternal, na_rowsInternal, info_)
 
      if (info_ .ne. 0) then
        write(error_unit,*) 'Error in BLACS descinit! info=',info_
@@ -188,34 +202,111 @@
        call MPI_ABORT(int(mpi_comm_all,kind=MPI_KIND), 1_MPI_KIND, mpierr)
      endif
 
+     if (useGPU) then
+       ! allocate internal GPU device arrays
+       num = (na_rowsInternal * na_colsInternal ) * size_of_datatype
+       successGPU = gpu_malloc(a_devIntern, num)
+       check_alloc_gpu("redistribute a_devIntern", successGPU)
+
+       if (isSkewsymmetric) then
+         num = (na_rowsInternal * 2*na_colsInternal ) * size_of_datatype
+       else
+         num = (na_rowsInternal * na_colsInternal ) * size_of_datatype
+       endif
+       successGPU = gpu_malloc(q_devIntern, num)
+       check_alloc_gpu("redistribute q_devIntern", successGPU)
+
+#ifdef DEVICE_POINTER
+       ! data is provided via {a|q|ev}DevExtern
+
+       ! allocate dummy HOST arrays and copy
+       allocate(aExtern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+       check_allocate("redistribute: aExtern", istat, errorMessage)
+
+       if (present(qDevExtern)) then
+         if (isSkewsymmetric) then
+           allocate(qExtern(1:matrixRows,1:2*matrixCols), stat=istat, errmsg=errorMessage)
+         else
+           allocate(qExtern(1:matrixRows,1:matrixCols), stat=istat, errmsg=errorMessage)
+         endif
+         check_allocate("redistribute: qExtern", istat, errorMessage)
+       endif
+
+       num = (matrixRows*matrixCols) * size_of_datatype
+       successGPU = gpu_memcpy(int(loc(aExtern(1,1)),kind=c_intptr_t), aDevExtern, &
+                               num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("redistribute aDevExtern -> aExtern", successGPU)
+
+       if (present(qDevExtern)) then
+         if (isSkewsymmetric) then
+           num = (matrixRows*2*matrixCols) * size_of_datatype
+         else
+           num = (matrixRows*matrixCols) * size_of_datatype
+         endif
+         successGPU = gpu_memcpy(int(loc(qExtern(1,1)),kind=c_intptr_t), qDevExtern, &
+                                 num, gpuMemcpyDeviceToHost)
+         check_memcpy_gpu("redistribute qDevExtern -> qExtern", successGPU)
+       endif
+#else
+       ! data is provided via host arrays {a|q|ev|}Extern
+#endif
+     endif ! useGPU
+             
 
      ! allocate the memory for the redistributed matrices
-     allocate(aIntern(na_rows_,na_cols_))
-#ifdef HAVE_SKEWSYMMETRIC
-     allocate(qIntern(na_rows_,2*na_cols_))
-#else
-     allocate(qIntern(na_rows_,na_cols_))
-#endif
+     allocate(aIntern(na_rowsInternal,na_colsInternal))
+
+     if (isSkewsymmetric) then
+       allocate(qIntern(na_rowsInternal,2*na_colsInternal))
+     else
+       allocate(qIntern(na_rowsInternal,na_colsInternal))
+     endif
+
      call obj%timer%start("GEMR2D")
      call scal_PRECISION_GEMR2D &
-     (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), aExtern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, aIntern, &
-     1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, blacs_ctxt_)
+     (int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), aExtern, 1_BLAS_KIND, 1_BLAS_KIND, sc_descExt, aIntern, &
+     1_BLAS_KIND, 1_BLAS_KIND, sc_descInternal, blacs_ctxtInternal)
      call obj%timer%stop("GEMR2D")
-     !call scal_PRECISION_GEMR2D &
-     !(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), qExtern, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, qIntern, &
-     !1_BLAS_KIND, 1_BLAS_KIND, sc_desc_, blacs_ctxt_)
 
      !map all important new variables to be used from here
      nblk                    = nblkInternal
-     matrixCols              = na_cols_
-     matrixRows              = na_rows_
-     mpi_comm_cols           = mpi_comm_cols_
-     mpi_comm_rows           = mpi_comm_rows_
+     matrixCols              = na_colsInternal
+     matrixRows              = na_rowsInternal
+     mpi_comm_cols           = mpi_comm_colsInternal
+     mpi_comm_rows           = mpi_comm_rowsInternal
 
-     a => aIntern(1:matrixRows,1:matrixCols)
-     q => qIntern(1:matrixRows,1:matrixCols)
+!#ifndef DEVICE_POINTER
+!     a => aIntern(1:matrixRows,1:matrixCols)
+!     q => qIntern(1:matrixRows,1:matrixCols)
+!#endif
 
-     
+     if (useGPU) then
+       num = (matrixRows*matrixCols) * size_of_datatype
+       successGPU = gpu_memcpy(a_devIntern, int(loc(aIntern(1,1)),kind=c_intptr_t), &
+                               num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("redistribute aIntern -> a_devIntern", successGPU)
+
+       if (isSkewsymmetric) then
+         num = (matrixRows*2*matrixCols) * size_of_datatype
+       else
+         num = (matrixRows*matrixCols) * size_of_datatype
+       endif
+       successGPU = gpu_memcpy(q_devIntern, int(loc(qIntern(1,1)),kind=c_intptr_t), &
+                               num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("redistribute qIntern -> q_devIntern", successGPU)
+
+#ifdef DEVICE_POINTER
+       if (present(qDevExtern)) then
+         deallocate(qExtern)
+       endif
+       deallocate(aExtern)
+       deallocate(aIntern, qIntern)
+#else
+       deallocate(aIntern, qIntern)
+#endif
+     endif ! useGPU
+
+
      call obj%timer%stop("redistribute")
    !else
    !  print *,"not redistributing"

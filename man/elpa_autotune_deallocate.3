@@ -1,4 +1,4 @@
-.TH "elpa_autotune_deallocate" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.TH "elpa_autotune_deallocate" 3 "Wed Mar 20 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -28,17 +28,12 @@ The returned error code
 .SS C INTERFACE
 #include <elpa/elpa.h>
 .br
-elpa_t handle;
-.br
 elpa_autotune_t autotune_handle;
 
-void\fB elpa_autotune_deallocate\fP (\fBelpa_t\fP handle,\fB elpa_autotune_t\fP autotune_handle,\fB int\fP *error);
+void\fB elpa_autotune_deallocate\fP (\fBelpa_autotune_t\fP autotune_handle,\fB int\fP *error);
 .sp
 With the definitions of the input and output variables:
 
-.TP
-elpa_t \fB handle\fP;
-The handle of an ELPA object, obtained before with\fB elpa_allocate\fP(3)
 .TP
 elpa_autotune_t\fB autotune_handle\fP;
 The handle of an ELPA object, obtained before with\fB elpa_autotune_setup\fP(3)

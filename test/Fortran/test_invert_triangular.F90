@@ -155,7 +155,7 @@ program test
 
    ! blacs
    character(len=1)                       :: layout
-   TEST_INT_TYPE                          :: my_blacs_ctxt, sc_desc(9), info, nprow, npcol, blacs_ok
+   TEST_INT_TYPE                          :: my_blacs_ctxt, sc_desc(9), info, blacs_ok
 
    ! The Matrix
    MATRIX_TYPE, allocatable, target       :: a(:,:), as(:,:)
@@ -171,7 +171,6 @@ program test
    type(output_t)                         :: write_to_file
    class(elpa_t), pointer                 :: e
 
-   logical                                :: success
    logical                                :: successGPU
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -181,6 +180,8 @@ program test
    TEST_INT_TYPE                          :: numberOfDevices
    TEST_INT_TYPE                          :: gpuID
 #endif
+   
+   logical                                :: skip_check_correctness
 
 ! for gpu_malloc
 #if TEST_GPU == 1
@@ -204,7 +205,7 @@ program test
 #endif /* TEST_GPU == 1 */
 
 
-   call read_input_parameters(na, nev, nblk, write_to_file)
+   call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
    call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI
@@ -350,8 +351,8 @@ program test
       stop 1
    endif
 
-   success = gpu_GetDeviceCount(numberOfDevices)
-   if (.not.(success)) then
+   successGPU = gpu_GetDeviceCount(numberOfDevices)
+   if (.not.(successGPU)) then
       print *,"Error in gpu_GetDeviceCount. Aborting..."
       stop 1
    endif
@@ -372,17 +373,17 @@ program test
    endif
 
    ! Set device 
-   success = .true.        
+   successGPU = .true.        
 #if TEST_INTEL_GPU_SYCL == 1
-   success = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
-   if (.not.(success)) then
+   successGPU = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
+   if (.not.(successGPU)) then
       print *,"Error in sycl_getcpucount. Aborting..."
       stop 1
     endif
 #endif
 
-   success = gpu_setdevice(gpuID)
-   if (.not.(success)) then
+   successGPU = gpu_setdevice(gpuID)
+   if (.not.(successGPU)) then
      print *,"Cannot set GPU device. Aborting..."
      stop 1
    endif
@@ -504,9 +505,10 @@ program test
    !-----------------------------------------------------------------------------------------------------------------------------
    ! Check the results
    
-   status = check_correctness_hermitian_multiply("N", na, a, as, c, na_rows, sc_desc, myid )
-   call check_status(status, myid)
-   
+   if(.not. skip_check_correctness) then
+     status = check_correctness_hermitian_multiply("N", na, a, as, c, na_rows, sc_desc, myid )
+     call check_status(status, myid)
+   endif
 
    !-----------------------------------------------------------------------------------------------------------------------------
    ! Deallocate

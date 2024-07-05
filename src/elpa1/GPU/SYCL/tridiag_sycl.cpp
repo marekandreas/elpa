@@ -65,100 +65,14 @@
 #include <complex>
 #include <atomic>
 
+#include "../../../GPU/common_device_functions.h"
+
 #define MAX_THREADS_PER_BLOCK 1024
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-template <typename T>
-T sign(T a, T b) {
-    if (b>=0) return fabs(a);
-    else return -fabs(a);
-}
-
-// construct a generic /float/std::complex<double>/cuFloatComplex from a double
-template <typename T>  T elpaDeviceNumber(double number);
-template <>  double elpaDeviceNumber<double>(double number) {return number;}
-template <>  float  elpaDeviceNumber<float> (double number) {return (float) number;}
-template <> std::complex<double> elpaDeviceNumber<std::complex<double>>(double number) {return std::complex<double>(number, 0.0);}
-template <> std::complex<float>  elpaDeviceNumber<std::complex<float>> (double number) {return std::complex<float>((float)number, 0.0f);}
-
-// construct a generic double/float/std::complex<double>/cuFloatComplex from a real and imaginary parts
-template <typename T, typename T_real>  T elpaDeviceNumberFromRealImag(T_real Re, T_real Im);
-template <> double elpaDeviceNumberFromRealImag<double>(double Real, double Imag) {return Real;}
-template <> float  elpaDeviceNumberFromRealImag<float> (float  Real, float  Imag) {return Real;}
-template <> std::complex<double> elpaDeviceNumberFromRealImag<std::complex<double>>(double Real, double Imag) {return std::complex<double>(Real, Imag);}
-template <> std::complex<float>  elpaDeviceNumberFromRealImag<std::complex<float>> (float Real,  float Imag ) {return std::complex<float>(Real, Imag);}
-
-double elpaDeviceAdd(double a, double b) { return a + b; }
-float  elpaDeviceAdd(float a, float b)   { return a + b; }
-std::complex<double> elpaDeviceAdd(std::complex<double> a, std::complex<double> b) { return a + b; }
-std::complex<float> elpaDeviceAdd(std::complex<float> a, std::complex<float> b) { return a + b; }
-
-double elpaDeviceSubtract(double a, double b) { return a - b; }
-float  elpaDeviceSubtract(float a, float b)   { return a - b; }
-std::complex<double> elpaDeviceSubtract(std::complex<double> a, std::complex<double> b) {return a - b;}
-std::complex<float> elpaDeviceSubtract(std::complex<float> a, std::complex<float> b)  {return a - b;}
-
-double elpaDeviceMultiply(double a, double b) { return a * b; }
-float  elpaDeviceMultiply(float  a, float  b) { return a * b; }
-std::complex<double> elpaDeviceMultiply(std::complex<double> a, std::complex<double> b) { return a * b; }
-std::complex<float> elpaDeviceMultiply(std::complex<float> a, std::complex<float> b){ return a * b; }
-
-double elpaDeviceDivide(double a, double b) { return a / b; }
-float  elpaDeviceDivide(float  a, float  b) { return a / b; }
-std::complex<double> elpaDeviceDivide(std::complex<double> a, std::complex<double> b)  { return a / b; }
-std::complex<float> elpaDeviceDivide(std::complex<float> a, std::complex<float> b)  { return a / b; }
-
-double elpaDeviceSqrt(double number) { return sycl::sqrt(number); }
-float elpaDeviceSqrt(float number) { return sycl::sqrt(number); }
-
-
-template <typename T> void atomicAdd(T* address, T val)
-  {
-  sycl::atomic_ref<T, sycl::memory_order_relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum (*address);
-  atomic_sum += val;
-  }
-
-template <>  void atomicAdd(std::complex<double>* address, std::complex<double> val)
-  {
-  double* real_ptr = reinterpret_cast<double*>(address); // Pointer to the real part
-  double* imag_ptr = real_ptr + 1; // Pointer to the imaginary part
-
-  sycl::atomic_ref<double, sycl::memory_order_relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum_real(*real_ptr);
-  sycl::atomic_ref<double, sycl::memory_order_relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum_imag(*imag_ptr);
-
-  atomic_sum_real += val.real();
-  atomic_sum_imag += val.imag();
-  }
-
-template <>  void atomicAdd(std::complex<float>* address, std::complex<float> val)
-  {
-  float* real_ptr = reinterpret_cast<float*>(address); // Pointer to the real part
-  float* imag_ptr = real_ptr + 1; // Pointer to the imaginary part
-
-  sycl::atomic_ref<float, sycl::memory_order_relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum_real(*real_ptr);
-  sycl::atomic_ref<float, sycl::memory_order_relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum_imag(*imag_ptr);
-
-  atomic_sum_real += val.real();
-  atomic_sum_imag += val.imag();
-  }
-
-double elpaDeviceComplexConjugate(double number) {return number;}
-float elpaDeviceComplexConjugate(float  number) {return number;}
-std::complex<double> elpaDeviceComplexConjugate(std::complex<double> number) {return std::conj(number);}
-std::complex<float>  elpaDeviceComplexConjugate(std::complex<float> number)  {return std::conj(number);}
-
-double elpaDeviceRealPart(double number) {return number;}
-float  elpaDeviceRealPart(float  number) {return number;}
-double elpaDeviceRealPart(std::complex<double> number) { return number.real(); }
-float  elpaDeviceRealPart(std::complex<float>  number) { return number.real(); }
-
-double elpaDeviceImagPart(double number) {return 0.0;}
-float  elpaDeviceImagPart(float  number) {return 0.0f;}
-double elpaDeviceImagPart(std::complex<double> number) { return number.imag(); }
-float  elpaDeviceImagPart(std::complex<float>  number) { return number.imag(); }
 
 // Define a helper struct to determine if a type is a pointer
 template <typename T>
@@ -167,19 +81,12 @@ struct is_pointer { static const bool value = false; };
 template <typename T>
 struct is_pointer<T*> { static const bool value = true; };
 
-// Device function to convert a pointer to a value
-template <typename T>
-T convert_to_device(T* x, std::true_type) { return *x;}
-// Device function to convert a value to a value
-template <typename T>
-T convert_to_device(T x, std::false_type) { return x;}
-
 //________________________________________________________________
 
 template <typename T, typename T_real>
 void sycl_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int matrixRows, int istep,
-                                         T *aux1_dev, T *vav_dev, T_real *d_vec_dev,
-                                         bool isOurProcessRow, bool isOurProcessCol, bool isOurProcessCol_prev, bool isSkewsymmetric, bool useCCL,
+                                         T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
+                                         int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, int isSkewsymmetric, int useCCL,
                                          sycl::nd_item<1> item_ct1){
   int tid = item_ct1.get_local_id(0) +
             item_ct1.get_group(0) * item_ct1.get_local_range(0);
@@ -215,21 +122,21 @@ template <typename T, typename T_real>
 void sycl_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in,
                                    int *l_cols_in, int *matrixRows_in,
                                    int *istep_in, T *aux1_dev, T *vav_dev,
-                                   T_real *d_vec_dev, bool *isOurProcessRow_in,
-                                   bool *isOurProcessCol_in,
-                                   bool *isOurProcessCol_prev_in,
-                                   bool *isSkewsymmetric_in, bool *useCCL_in,
-                                   bool *wantDebug_in, intptr_t my_stream) {
-  int l_rows = *l_rows_in;
-  int l_cols = *l_cols_in;
+                                   T_real *d_vec_dev, int *isOurProcessRow_in,
+                                   int *isOurProcessCol_in,
+                                   int *isOurProcessCol_prev_in,
+                                   int *isSkewsymmetric_in, int *useCCL_in,
+                                   int *wantDebug_in, intptr_t my_stream) {
+  int l_rows = *l_rows_in;   
+  int l_cols = *l_cols_in;   
   int matrixRows = *matrixRows_in;
   int istep = *istep_in;
-  bool isOurProcessRow = *isOurProcessRow_in;
-  bool isOurProcessCol = *isOurProcessCol_in;
-  bool isOurProcessCol_prev = *isOurProcessCol_prev_in;
-  bool isSkewsymmetric = *isSkewsymmetric_in;
-  bool useCCL = *useCCL_in;
-  bool wantDebug = *wantDebug_in;
+  int isOurProcessRow = *isOurProcessRow_in;
+  int isOurProcessCol = *isOurProcessCol_in;
+  int isOurProcessCol_prev = *isOurProcessCol_prev_in;
+  int isSkewsymmetric = *isSkewsymmetric_in;
+  int useCCL = *useCCL_in;
+  int wantDebug = *wantDebug_in;
 
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
@@ -261,27 +168,27 @@ work-group size if needed.
 extern "C" void sycl_copy_and_set_zeros_double_FromC(
     double *v_row_dev, double *a_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *istep_in, double *aux1_dev, double *vav_dev,
-    double *d_vec_dev, bool *isOurProcessRow_in, bool *isOurProcessCol_in,
-    bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in,
-    bool *wantDebug_in, intptr_t my_stream) {
+    double *d_vec_dev, int *isOurProcessRow_in, int *isOurProcessCol_in,
+    int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in,
+    int *wantDebug_in, intptr_t my_stream) {
   sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_copy_and_set_zeros_float_FromC(
     float *v_row_dev, float *a_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *istep_in, float *aux1_dev, float *vav_dev,
-    float *d_vec_dev, bool *isOurProcessRow_in, bool *isOurProcessCol_in,
-    bool *isOurProcessCol_prev_in, bool *isSkewsymmetric_in, bool *useCCL_in,
-    bool *wantDebug_in, intptr_t my_stream) {
+    float *d_vec_dev, int *isOurProcessRow_in, int *isOurProcessCol_in,
+    int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in,
+    int *wantDebug_in, intptr_t my_stream) {
   sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_copy_and_set_zeros_double_complex_FromC(
     std::complex<double> *v_row_dev, std::complex<double> *a_dev, int *l_rows_in,
     int *l_cols_in, int *matrixRows_in, int *istep_in, std::complex<double> *aux1_dev,
-    std::complex<double> *vav_dev, double *d_vec_dev, bool *isOurProcessRow_in,
-    bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in,
-    bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in,
+    std::complex<double> *vav_dev, double *d_vec_dev, int *isOurProcessRow_in,
+    int *isOurProcessCol_in, int *isOurProcessCol_prev_in,
+    int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in,
     intptr_t my_stream) {
   sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
@@ -289,9 +196,9 @@ extern "C" void sycl_copy_and_set_zeros_double_complex_FromC(
 extern "C" void sycl_copy_and_set_zeros_float_complex_FromC(
     std::complex<float> *v_row_dev, std::complex<float> *a_dev, int *l_rows_in,
     int *l_cols_in, int *matrixRows_in, int *istep_in, std::complex<float> *aux1_dev,
-    std::complex<float> *vav_dev, float *d_vec_dev, bool *isOurProcessRow_in,
-    bool *isOurProcessCol_in, bool *isOurProcessCol_prev_in,
-    bool *isSkewsymmetric_in, bool *useCCL_in, bool *wantDebug_in,
+    std::complex<float> *vav_dev, float *d_vec_dev, int *isOurProcessRow_in,
+    int *isOurProcessCol_in, int *isOurProcessCol_prev_in,
+    int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in,
     intptr_t my_stream) {
   sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
@@ -346,12 +253,12 @@ performance if there is no access to global memory.
 
 template <typename T>
 void sycl_dot_product_FromC(int *n_in, T *x_dev, int *incx_in, T *y_dev,
-                            int *incy_in, T *result_dev, bool *wantDebug_in,
+                            int *incy_in, T *result_dev, int *wantDebug_in,
                             int *SM_count_in, intptr_t my_stream) {
   int n = *n_in;
   int incx = *incx_in;
   int incy = *incy_in;
-  bool wantDebug = *wantDebug_in;
+  int wantDebug = *wantDebug_in;
   int SM_count = *SM_count_in;
 
   //int SM_count=32;
@@ -386,7 +293,7 @@ work-group size if needed.
 extern "C" void sycl_dot_product_double_FromC(int *n_in, double *x_dev,
                                               int *incx_in, double *y_dev,
                                               int *incy_in, double *result_dev,
-                                              bool *wantDebug_in,
+                                              int *wantDebug_in,
                                               int *SM_count_in, intptr_t my_stream) {
   sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
@@ -394,21 +301,21 @@ extern "C" void sycl_dot_product_double_FromC(int *n_in, double *x_dev,
 extern "C" void sycl_dot_product_float_FromC(int *n_in, float *x_dev,
                                              int *incx_in, float *y_dev,
                                              int *incy_in, float *result_dev,
-                                             bool *wantDebug_in,
+                                             int *wantDebug_in,
                                              int *SM_count_in, intptr_t my_stream) {
   sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_double_complex_FromC(
     int *n_in, std::complex<double> *x_dev, int *incx_in, std::complex<double> *y_dev,
-    int *incy_in, std::complex<double> *result_dev, bool *wantDebug_in,
+    int *incy_in, std::complex<double> *result_dev, int *wantDebug_in,
     int *SM_count_in, intptr_t my_stream) {
   sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_float_complex_FromC(
     int *n_in, std::complex<float> *x_dev, int *incx_in, std::complex<float> *y_dev,
-    int *incy_in, std::complex<float> *result_dev, bool *wantDebug_in,
+    int *incy_in, std::complex<float> *result_dev, int *wantDebug_in,
     int *SM_count_in, intptr_t my_stream) {
   sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
@@ -485,11 +392,11 @@ performance if there is no access to global memory.
 template <typename T>
 void sycl_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in,
                                        int *isOurProcessRow_in, T *aux1_dev,
-                                       bool *wantDebug_in,
+                                       int *wantDebug_in,
                                        intptr_t my_stream) {
   int l_rows = *l_rows_in;
   int isOurProcessRow = *isOurProcessRow_in;
-  bool wantDebug = *wantDebug_in;
+  int wantDebug = *wantDebug_in;
 
   //int numSMs;
   //syclDeviceGetAttribute(&numSMs, syclDevAttrMultiProcessorCount, 0);
@@ -525,33 +432,33 @@ work-group size if needed.
 
 extern "C" void sycl_dot_product_and_assign_double_FromC(
     double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in,
-    double *aux1_dev, bool *wantDebug_in, intptr_t my_stream) {
+    double *aux1_dev, int *wantDebug_in, intptr_t my_stream) {
   sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_and_assign_float_FromC(
     float *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, float *aux1_dev,
-    bool *wantDebug_in, intptr_t my_stream) {
+    int *wantDebug_in, intptr_t my_stream) {
   sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_and_assign_double_complex_FromC(
     std::complex<double> *v_row_dev, int *l_rows_in, int *isOurProcessRow_in,
-    std::complex<double> *aux1_dev, bool *wantDebug_in, intptr_t my_stream) {
+    std::complex<double> *aux1_dev, int *wantDebug_in, intptr_t my_stream) {
   sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_and_assign_float_complex_FromC(
     std::complex<float> *v_row_dev, int *l_rows_in, int *isOurProcessRow_in,
-    std::complex<float> *aux1_dev, bool *wantDebug_in, intptr_t my_stream) {
+    std::complex<float> *aux1_dev, int *wantDebug_in, intptr_t my_stream) {
  sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
 //________________________________________________________________
 
 template <typename T, typename T_real, typename T_value_or_pointer>
-void sycl_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T_value_or_pointer xf_host_or_dev,
-                                                      int l_rows, int l_cols,  int matrixRows, int istep, bool isOurProcessRow, bool useCCL,
+void sycl_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T_value_or_pointer xf_host_or_dev, 
+                                                      int l_rows, int l_cols,  int matrixRows, int istep, int isOurProcessRow, int useCCL,
                                                       sycl::nd_item<1> it){
   int tid = it.get_local_id(0) +
             it.get_group(0) * it.get_local_range(0);
@@ -603,7 +510,7 @@ void sycl_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_d
     index_global += it.get_local_range(0) * it.get_group_range(0);
   }
 
-  if (isOurProcessRow && index_global - it.get_local_range(0)*it.get_group_range(0) ==  l_rows - 1) // last element
+  if (isOurProcessRow && (index_global - it.get_local_range(0)*it.get_group_range(0) ==  l_rows - 1)) // last element
     {
     v_row_dev[l_rows-1] = elpaDeviceNumber<T>(1.0);
     }
@@ -620,16 +527,16 @@ template <typename T, typename T_real>
 void sycl_set_e_vec_scale_set_one_store_v_row_FromC(
     T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev,
     T *xf_host_or_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in,
-    int *istep_in, bool *isOurProcessRow_in, bool *useCCL_in,
-    bool *wantDebug_in, intptr_t my_stream) {
+    int *istep_in, int *isOurProcessRow_in, int *useCCL_in,
+    int *wantDebug_in, intptr_t my_stream) {
 
   int l_rows = *l_rows_in;
   int l_cols = *l_cols_in;
   int matrixRows = *matrixRows_in;
   int istep = *istep_in;
-  bool isOurProcessRow = *isOurProcessRow_in;
-  bool useCCL = *useCCL_in;
-  bool wantDebug = *wantDebug_in;
+  int isOurProcessRow = *isOurProcessRow_in;
+  int useCCL = *useCCL_in;
+  int wantDebug = *wantDebug_in;
 
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
@@ -684,16 +591,16 @@ work-group size if needed.
 extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_double_FromC(
     double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev,
     double *tau_dev, double *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in,
-    bool *useCCL_in, bool *wantDebug_in, intptr_t my_stream) {
+    int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
+    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
   sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_float_FromC(
     float *e_vec_dev, float *vrl_dev, float *a_dev, float *v_row_dev,
     float *tau_dev, float *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in,
-    bool *useCCL_in, bool *wantDebug_in, intptr_t my_stream) {
+    int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
+    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
   sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -701,8 +608,8 @@ extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_double_complex_FromC(
     double *e_vec_dev, std::complex<double> *vrl_dev, std::complex<double> *a_dev,
     std::complex<double> *v_row_dev, std::complex<double> *tau_dev,
     std::complex<double> *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in,
-    bool *useCCL_in, bool *wantDebug_in, intptr_t my_stream) {
+    int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
+    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
   sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -710,8 +617,8 @@ extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(
     float *e_vec_dev, std::complex<float> *vrl_dev, std::complex<float> *a_dev,
     std::complex<float> *v_row_dev, std::complex<float> *tau_dev,
     std::complex<float> *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, bool *isOurProcessRow_in,
-    bool *useCCL_in, bool *wantDebug_in, intptr_t my_stream) {
+    int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
+    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
   sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -721,7 +628,7 @@ extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(
 template <typename T, typename T_value_or_pointer>
 void sycl_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
                 T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T_value_or_pointer vav_host_or_dev, T_value_or_pointer tau_host_or_dev,
-                int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, bool useCCL,
+                int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, int useCCL,
                 sycl::nd_item<1> it){
   int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
 
@@ -804,19 +711,19 @@ void sycl_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev
 template <typename T>
 void sycl_store_u_v_in_uv_vu_FromC(
     T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
-    T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T *vav_host_or_dev, T *tau_host_or_dev,
-    int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    bool *useCCL_in, bool *wantDebug_in, intptr_t my_stream) {
+    T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T *vav_host_or_dev, T *tau_host_or_dev, 
+    int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, 
+    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
 
   int l_rows = *l_rows_in;
   int l_cols = *l_cols_in;
   int n_stored_vecs  = *n_stored_vecs_in;
-  int max_local_rows = *max_local_rows_in;
-  int max_local_cols = *max_local_cols_in;
-  int istep = *istep_in;
-  bool useCCL = *useCCL_in;
-  bool wantDebug = *wantDebug_in;
-
+  int max_local_rows = *max_local_rows_in;   
+  int max_local_cols = *max_local_cols_in;   
+  int istep = *istep_in;   
+  int useCCL = *useCCL_in;
+  int wantDebug = *wantDebug_in;
+  
   int threads = MAX_THREADS_PER_BLOCK/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
   int blocks = std::max({(l_rows+threads-1)/threads, (l_cols+threads-1)/threads, 1});
 
@@ -877,8 +784,8 @@ extern "C" void sycl_store_u_v_in_uv_vu_double_FromC(
     double *aux_complex_dev, double *vav_host_or_dev, double *tau_host_or_dev,
     int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in,
     int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    bool *useCCL_in, bool *wantDebug_in, intptr_t my_stream) {
-  sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev,
+    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
+  sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
                                 l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -888,7 +795,7 @@ extern "C" void sycl_store_u_v_in_uv_vu_float_FromC(
     float *aux_complex_dev, float *vav_host_or_dev, float *tau_host_or_dev,
     int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in,
     int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    bool *useCCL_in, bool *wantDebug_in, intptr_t my_stream) {
+    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
   sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -899,7 +806,7 @@ extern "C" void sycl_store_u_v_in_uv_vu_double_complex_FromC(
     std::complex<double> *aux_complex_dev, std::complex<double> *vav_host_or_dev,
     std::complex<double> *tau_host_or_dev, int *l_rows_in, int *l_cols_in,
     int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in,
-    int *istep_in, bool *useCCL_in, bool *wantDebug_in,
+    int *istep_in, int *useCCL_in, int *wantDebug_in,
     intptr_t my_stream) {
   sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
@@ -911,7 +818,7 @@ extern "C" void sycl_store_u_v_in_uv_vu_float_complex_FromC(
     std::complex<float> *aux_complex_dev, std::complex<float> *vav_host_or_dev,
     std::complex<float> *tau_host_or_dev, int *l_rows_in, int *l_cols_in,
     int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in,
-    int *istep_in, bool *useCCL_in, bool *wantDebug_in,
+    int *istep_in, int *useCCL_in, int *wantDebug_in,
     intptr_t my_stream) {
   sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
@@ -919,8 +826,8 @@ extern "C" void sycl_store_u_v_in_uv_vu_float_complex_FromC(
 //________________________________________________________________
 
 template <typename T, typename T_real>
-void sycl_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev,
-                                                      int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, bool isSkewsymmetric,
+void sycl_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
+                                                      int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric,
                                                       sycl::nd_item<1> it, sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>  cache){
 
   const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
@@ -1009,17 +916,17 @@ void sycl_update_matrix_element_add_FromC(
     T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev,
     int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in,
     int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in,
-    bool *isSkewsymmetric_in, bool *wantDebug_in, intptr_t my_stream) {
-  int l_rows = *l_rows_in;
+    int *isSkewsymmetric_in, int *wantDebug_in, intptr_t my_stream) {
+  int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;
   int matrixRows = *matrixRows_in;
   int max_local_rows = *max_local_rows_in;
   int max_local_cols = *max_local_cols_in;
-  int istep = *istep_in;
-  int n_stored_vecs = *n_stored_vecs_in;
-  bool isSkewsymmetric = *isSkewsymmetric_in;
-  bool wantDebug = *wantDebug_in;
-
+  int istep = *istep_in;   
+  int n_stored_vecs = *n_stored_vecs_in; 
+  int isSkewsymmetric = *isSkewsymmetric_in;   
+  int wantDebug = *wantDebug_in;
+  
   int blocks = std::min((2*n_stored_vecs+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 32);
   if (n_stored_vecs==0) blocks=1;
 
@@ -1064,7 +971,7 @@ extern "C" void sycl_update_matrix_element_add_double_FromC(
     double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *a_dev,
     double *d_vec_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in,
     int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    int *n_stored_vecs_in, bool *isSkewsymmetric_in, bool *wantDebug_in,
+    int *n_stored_vecs_in, int *isSkewsymmetric_in, int *wantDebug_in,
     intptr_t my_stream) {
   sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
@@ -1073,7 +980,7 @@ extern "C" void sycl_update_matrix_element_add_float_FromC(
     float *vu_stored_rows_dev, float *uv_stored_cols_dev, float *a_dev,
     float *d_vec_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in,
     int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    int *n_stored_vecs_in, bool *isSkewsymmetric_in, bool *wantDebug_in,
+    int *n_stored_vecs_in, int *isSkewsymmetric_in, int *wantDebug_in,
     intptr_t my_stream) {
   sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
@@ -1082,8 +989,8 @@ extern "C" void sycl_update_matrix_element_add_double_complex_FromC(
     std::complex<double> *vu_stored_rows_dev, std::complex<double> *uv_stored_cols_dev,
     std::complex<double> *a_dev, double *d_vec_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in,
-    int *istep_in, int *n_stored_vecs_in, bool *isSkewsymmetric_in,
-    bool *wantDebug_in, intptr_t my_stream) {
+    int *istep_in, int *n_stored_vecs_in, int *isSkewsymmetric_in,
+    int *wantDebug_in, intptr_t my_stream) {
  sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
@@ -1091,8 +998,8 @@ extern "C" void sycl_update_matrix_element_add_float_complex_FromC(
     std::complex<float> *vu_stored_rows_dev, std::complex<float> *uv_stored_cols_dev,
     std::complex<float> *a_dev, float *d_vec_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in,
-    int *istep_in, int *n_stored_vecs_in, bool *isSkewsymmetric_in,
-    bool *wantDebug_in, intptr_t my_stream) {
+    int *istep_in, int *n_stored_vecs_in, int *isSkewsymmetric_in,
+    int *wantDebug_in, intptr_t my_stream) {
  sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
@@ -1159,7 +1066,7 @@ extern "C" void sycl_update_array_element_float_complex_FromC(
 //________________________________________________________________
 
 template <typename T>
-void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, bool wantDebug_in){
+void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, int wantDebug_in){
 
 /*
 #if complexcase == 1
@@ -1239,7 +1146,7 @@ void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_d
 
   else
     {
-    T beta = elpaDeviceNumber<T> (sign( elpaDeviceSqrt( alpha_r*alpha_r + alpha_i*alpha_i +
+    T beta = elpaDeviceNumber<T> (elpaDeviceSign( elpaDeviceSqrt( alpha_r*alpha_r + alpha_i*alpha_i +
                                           elpaDeviceRealPart(*xnorm_sq_dev) ), elpaDeviceRealPart(*alpha_dev) ));
 
     *alpha_dev = elpaDeviceAdd(*alpha_dev, beta);
@@ -1266,9 +1173,9 @@ void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_d
 
 template <typename T>
 void sycl_hh_transform_FromC(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev,
-                             T *tau_dev, int *index_in, bool *wantDebug_in,
+                             T *tau_dev, int *index_in, int *wantDebug_in,
                              intptr_t my_stream) {
-  bool wantDebug = *wantDebug_in;
+  int wantDebug = *wantDebug_in;
 
   sycl::range<1> blocksPerGrid   = sycl::range<1>(1);
   sycl::range<1> threadsPerBlock = sycl::range<1>(1);
@@ -1294,14 +1201,14 @@ work-group size if needed.
 extern "C" void
 sycl_hh_transform_double_FromC(double *alpha_dev, double *xnorm_sq_dev,
                                double *xf_dev, double *tau_dev, int *index_in,
-                               bool *wantDebug_in, intptr_t my_stream) {
+                               int *wantDebug_in, intptr_t my_stream) {
   sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_hh_transform_float_FromC(float *alpha_dev,
                                               float *xnorm_sq_dev,
                                               float *xf_dev, float *tau_dev,
-                                              int *index_in, bool *wantDebug_in,
+                                              int *index_in, int *wantDebug_in,
                                               intptr_t my_stream) {
   sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
@@ -1309,13 +1216,13 @@ extern "C" void sycl_hh_transform_float_FromC(float *alpha_dev,
 extern "C" void sycl_hh_transform_double_complex_FromC(
     std::complex<double> *alpha_dev, std::complex<double> *xnorm_sq_dev,
     std::complex<double> *xf_dev, std::complex<double> *tau_dev, int *index_in,
-    bool *wantDebug_in, intptr_t my_stream) {
+    int *wantDebug_in, intptr_t my_stream) {
   sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_hh_transform_float_complex_FromC(
     std::complex<float> *alpha_dev, std::complex<float> *xnorm_sq_dev, std::complex<float> *xf_dev,
-    std::complex<float> *tau_dev, int *index_in, bool *wantDebug_in,
+    std::complex<float> *tau_dev, int *index_in, int *wantDebug_in,
     intptr_t my_stream) {
   sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
@@ -1323,9 +1230,9 @@ extern "C" void sycl_hh_transform_float_complex_FromC(
 //________________________________________________________________
 
 template <typename T>
-void sycl_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *vmat_st_dev,
-                                              int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot,
-                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, bool isSkewsymmetric, bool isReduceadd,
+void sycl_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *vmat_st_dev, 
+                                              int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
+                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, int isSkewsymmetric, int isReduceadd,
                                               sycl::nd_item<1> it){
   int tid_x = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
 
@@ -1383,8 +1290,8 @@ void sycl_transpose_reduceadd_vectors_copy_block_FromC(
     T *aux_transpose_dev, T *vmat_st_dev, int *nvc_in, int *nvr_in,
     int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, int *lcm_s_t_in,
     int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in,
-    int *direction_in, bool *isSkewsymmetric_in, bool *isReduceadd_in,
-    bool *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *direction_in, int *isSkewsymmetric_in, int *isReduceadd_in,
+    int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
 
   int nvc = *nvc_in;
   int nvr = *nvr_in;
@@ -1397,9 +1304,9 @@ void sycl_transpose_reduceadd_vectors_copy_block_FromC(
   int np_st = *np_st_in;
   int ld_st = *ld_st_in;
   int direction = *direction_in;
-  bool isSkewsymmetric = *isSkewsymmetric_in;
-  bool isReduceadd = *isReduceadd_in;
-  bool wantDebug = *wantDebug_in;
+  int isSkewsymmetric = *isSkewsymmetric_in;
+  int isReduceadd = *isReduceadd_in;
+  int wantDebug = *wantDebug_in;
 
   int SM_count = *SM_count_in;
 
@@ -1433,8 +1340,8 @@ extern "C" void sycl_transpose_reduceadd_vectors_copy_block_double_FromC(
     double *aux_transpose_dev, double *vmat_st_dev, int *nvc_in, int *nvr_in,
     int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, int *lcm_s_t_in,
     int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in,
-    int *direction_in, bool *isSkewsymmetric_in, bool *isReduceadd_in,
-    bool *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *direction_in, int *isSkewsymmetric_in, int *isReduceadd_in,
+    int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
   sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
@@ -1442,8 +1349,8 @@ extern "C" void sycl_transpose_reduceadd_vectors_copy_block_float_FromC(
     float *aux_transpose_dev, float *vmat_st_dev, int *nvc_in, int *nvr_in,
     int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, int *lcm_s_t_in,
     int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in,
-    int *direction_in, bool *isSkewsymmetric_in, bool *isReduceadd_in,
-    bool *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *direction_in, int *isSkewsymmetric_in, int *isReduceadd_in,
+    int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
   sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
@@ -1452,8 +1359,8 @@ sycl_transpose_reduceadd_vectors_copy_block_double_complex_FromC(
     std::complex<double> *aux_transpose_dev, std::complex<double> *vmat_st_dev, int *nvc_in,
     int *nvr_in, int *n_block_in, int *nblks_skip_in, int *nblks_tot_in,
     int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in,
-    int *ld_st_in, int *direction_in, bool *isSkewsymmetric_in,
-    bool *isReduceadd_in, bool *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *ld_st_in, int *direction_in, int *isSkewsymmetric_in,
+    int *isReduceadd_in, int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
   sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
@@ -1461,8 +1368,8 @@ extern "C" void sycl_transpose_reduceadd_vectors_copy_block_float_complex_FromC(
     std::complex<float> *aux_transpose_dev, std::complex<float> *vmat_st_dev, int *nvc_in,
     int *nvr_in, int *n_block_in, int *nblks_skip_in, int *nblks_tot_in,
     int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in,
-    int *ld_st_in, int *direction_in, bool *isSkewsymmetric_in,
-    bool *isReduceadd_in, bool *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *ld_st_in, int *direction_in, int *isSkewsymmetric_in,
+    int *isReduceadd_in, int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
   sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 

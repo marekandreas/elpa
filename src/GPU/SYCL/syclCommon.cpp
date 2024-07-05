@@ -71,9 +71,9 @@ struct device_selection {
 #endif
 
     device_selection(int deviceId, cl::sycl::queue queue)
-      : deviceId(deviceId), queue(queue),
+      : deviceId(deviceId), queue(queue)
 #ifdef WITH_ONEAPI_ONECCL
-        cclDevice(ccl::create_device(queue.get_device())),
+      , cclDevice(ccl::create_device(queue.get_device())),
         cclContext(ccl::create_context(queue.get_context())),
         cclStream(ccl::create_stream(queue))
 #endif

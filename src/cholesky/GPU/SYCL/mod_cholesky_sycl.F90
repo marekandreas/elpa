@@ -125,6 +125,19 @@ module cholesky_sycl
     end subroutine
   end interface
 
+  interface
+    subroutine sycl_set_a_lower_to_zero_c(dataType, a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, &
+                                          nblk, debug, my_stream)&
+                                          bind(C, name="sycl_set_a_lower_to_zero_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: a_dev
+      integer(kind=c_int), intent(in) :: na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
+
 
   contains
 
@@ -214,6 +227,22 @@ module cholesky_sycl
                                                           l_row1, my_stream)
 #endif
 
+    end subroutine
+
+
+    subroutine sycl_set_a_lower_to_zero(dataType, a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, &
+                                        nblk, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t)        :: a_dev
+      integer(kind=c_int), intent(in) :: na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk, debug
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_set_a_lower_to_zero_c(dataType, a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, &
+                                      nblk, debug, my_stream)
+#endif
     end subroutine
 
 end module

@@ -265,7 +265,8 @@ static const elpa_index_int_entry_t int_entries[] = {
         BOOL_ENTRY("measure_performance", "Also measure with flops (via papi) with the timings", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
         BOOL_ENTRY("check_pd", "Check eigenvalues to be positive", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
         BOOL_ENTRY("output_pinning_information", "Print the pinning information", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
-        BOOL_ENTRY("cannon_for_generalized", "Whether to use Cannons algorithm for the generalized EVP", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
+        BOOL_ENTRY("cannon_for_generalized", "Whether to use Cannons algorithm for the generalized EVP" , 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
+        BOOL_ENTRY("pxtrmm_for_generalized", "Whether to use ScaLAPACK's PxTRMM for the generalized EVP", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
 #if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
         BOOL_ENTRY("limit_openmp_threads", "Limit the number if openmp threads to 1", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_NO),
 #endif
@@ -323,24 +324,44 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("nbc_all_elpa2_main", "Use non blocking collectives for comm_world in elpa2_main", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA2_AUTOTUNE_MAIN, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ELPA2, \
                         cardinality_bool, enumerate_identity, nbc_elpa2_is_valid, NULL, PRINT_YES),
 	// 2. GPU usage
+#if defined(WITH_NVIDIA_GPU_VERSION)
+        INT_ENTRY("gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                         cardinality_bool, enumerate_identity, nvidia_gpu_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("nvidia-gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                         cardinality_bool, enumerate_identity, nvidia_gpu_is_valid, NULL, PRINT_YES),
+#else
         INT_ENTRY("gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, nvidia_gpu_is_valid, NULL, PRINT_YES),
-        INT_ENTRY("nvidia-gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+        INT_ENTRY("nvidia-gpu", "Use Nvidia GPU acceleration", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, nvidia_gpu_is_valid, NULL, PRINT_YES),
+#endif
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+        INT_ENTRY("intel-gpu", "Use INTEL GPU acceleration", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                         cardinality_bool, enumerate_identity, intel_gpu_is_valid, NULL, PRINT_YES),
+#else
         INT_ENTRY("intel-gpu", "Use INTEL GPU acceleration", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, intel_gpu_is_valid, NULL, PRINT_YES),
-        INT_ENTRY("amd-gpu", "Use AMD GPU acceleration", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+#endif
+#if defined(WITH_AMD_GPU_VERSION)
+        INT_ENTRY("amd-gpu", "Use AMD GPU acceleration", 0, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, amd_gpu_is_valid, NULL, PRINT_YES),
+#else
+        INT_ENTRY("amd-gpu", "Use AMD GPU acceleration", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                         cardinality_bool, enumerate_identity, amd_gpu_is_valid, NULL, PRINT_YES),
+#endif
+
         // For SYCL, currently ELPA ignores non-GPU devices.
         INT_ENTRY("sycl_show_all_devices", "Utilize ALL SYCL devices, not just level zero GPUs.", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, expose_all_sycl_devices_is_valid, NULL, PRINT_YES),
-        //default of gpu ussage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
+        //default of gpu usage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
+        INT_ENTRY("gpu_cannon", "Use GPU acceleration for Cannon's algorithm", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
+        INT_ENTRY("gpu_cholesky", "Use GPU acceleration for elpa_cholesky", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_hermitian_multiply", "Use GPU acceleration for elpa_hermitian_multiply", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_invert_trm", "Use GPU acceleration for elpa_triangular", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
-                        cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
-        INT_ENTRY("gpu_cholesky", "Use GPU acceleration for elpa_cholesky", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ELPA1, \
                         cardinality_bool, enumerate_identity, valid_with_gpu_elpa1, NULL, PRINT_YES),
@@ -401,8 +422,6 @@ static const elpa_index_int_entry_t int_entries[] = {
                         stripewidth_real_cardinality, stripewidth_real_enumerate, stripewidth_real_is_valid, NULL, PRINT_YES),
         INT_ENTRY("stripewidth_complex", "Stripewidth_complex, default 96. Must be a multiple of 8", 96, ELPA_AUTOTUNE_EXTENSIVE, ELPA2_AUTOTUNE_TRIDI_TO_BAND_STRIPEWIDTH, ELPA_AUTOTUNE_DOMAIN_COMPLEX, ELPA_AUTOTUNE_PART_ELPA2, \
                         stripewidth_complex_cardinality, stripewidth_complex_enumerate, stripewidth_complex_is_valid, NULL, PRINT_YES),
-        INT_ENTRY("min_tile_size", "Minimal tile size used internally in elpa1_tridiag and elpa2_bandred", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
-                        min_tile_size_cardinality, min_tile_size_enumerate, min_tile_size_is_valid, NULL, PRINT_YES),
 };
 
 #define READONLY_FLOAT_ENTRY(option_name, option_description) \
@@ -1622,10 +1641,11 @@ void elpa_index_print_int_parameter(elpa_index_t index, char* buff, int i)
 {
         int value = index->int_options.values[i];
         sprintf(buff, "%s = ", int_entries[i].base.name);
+        size_t used_length = strlen(buff);
         if (int_entries[i].to_string) {
-                sprintf(buff, "%s%d -> %s\n", buff, value, int_entries[i].to_string(value));
+                sprintf(buff + used_length, "%d -> %s\n", value, int_entries[i].to_string(value));
         } else {
-                sprintf(buff, "%s%d\n", buff, value);
+                sprintf(buff + used_length, "%d\n", value);
         }
 }
 
@@ -1945,7 +1965,8 @@ int elpa_index_print_settings(elpa_index_t index, char *file_name) {
                         } else
                                 out = &out_nowhere;
                         elpa_index_print_int_parameter(index, buff, i);
-                        sprintf(*out, "%s%s", *out, buff);
+                        size_t used_length = strlen(*out);
+                        sprintf(*out + used_length, "%s", buff);
                 }
                 int output_to_file = (strlen(file_name) > 0);
                 if(output_to_file) {

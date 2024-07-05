@@ -55,7 +55,7 @@
 #include "../general/error_checking.inc"
 
 #undef USE_CCL_MULTIPLY
-#if defined(WITH_NIVIDA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #define USE_CCL_MULTIPLY
 #endif
 
@@ -90,11 +90,8 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions ! for NVTX labels
 #endif
-#ifdef WITH_NVIDIA_NCCL
-  use nccl_functions
-#endif
-#ifdef WITH_AMD_RCCL
-  use rccl_functions
+#if defined(USE_CCL_MULTIPLY)
+  use elpa_ccl_gpu
 #endif
   use multiply_a_b_gpu
   implicit none
@@ -102,7 +99,7 @@
 #include "../../src/general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)   :: obj
 
-  character*1                                  :: uplo_a, uplo_c
+  character*1                                  :: uplo_a, uplo_c, trans_a
 
   integer(kind=ik), intent(in)                 :: ldb, ldbCols, ldc, ldcCols
   integer(kind=ik)                             :: na, ncb
@@ -126,6 +123,7 @@
   integer(kind=ik)                             :: np, n, nb, nblk_mult, lrs, lre, lcs, lce
   integer(kind=ik)                             :: gcol_min, gcol, goff
   integer(kind=ik)                             :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
+  integer(kind=ik)                             :: np_br, noff_n ! PETERDEBUG
   integer(kind=ik), allocatable                :: lrs_save(:), lre_save(:)
 
   logical                                      :: a_lower, a_upper, c_lower, c_upper
@@ -164,7 +162,7 @@
   integer(kind=c_intptr_t)                     :: gpuHandle, my_stream
   integer(kind=c_int)                          :: gpu_hermitian_multiply
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(USE_CCL_MULTIPLY)
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
 #endif
 #ifdef DEVICE_POINTER
@@ -176,7 +174,7 @@
   success = .true.
   useGPU = .false.
 
-
+  trans_a='N' ! PETERDEBUG: propagate it up, accept as an option
 
 #if !defined(DEVICE_POINTER)
 
@@ -479,11 +477,11 @@
   endif !useGPU
 #endif /* MORE_GPU */
 
-  ! Build up the result matrix by processor rows
+  ! main loop: build up the result matrix by processor rows
   do np = 0, np_rows-1
 
 #ifdef WITH_NVTX
-       call nvtxRangePush("do np = 0, np_rows-1")
+    call nvtxRangePush("do np = 0, np_rows-1")
 #endif
 
     ! In this turn, procs of row np assemble the result
@@ -491,6 +489,8 @@
     l_rows_np = local_index(na, np, np_rows, nblk, -1) ! local rows on receiving processors
 
     nr_done = 0 ! Number of rows done
+    nstor = 0   ! Number of columns stored in aux_mat
+
     aux_mat = 0
     if (useGPU) then
       num = l_rows*nblk_mult*size_of_datatype
@@ -502,31 +502,34 @@
       successGPU = gpu_memset(aux_mat_dev, 0, num)
       check_memcpy_gpu("hermitian_multiply: aux_mat_dev", successGPU)
 #endif
-
-    endif
-    nstor = 0   ! Number of columns stored in aux_mat
+    endif ! useGPU
 
     ! Loop over the blocks on row np
     do nb = 0, (l_rows_np-1)/nblk
 
 #ifdef WITH_NVTX
-       call nvtxRangePush("do nb = 0, (l_rows_np-1)/nblk")
+      call nvtxRangePush("do nb = 0, (l_rows_np-1)/nblk")
 #endif
 
       goff  = nb*np_rows + np ! Global offset in blocks corresponding to nb
+      ! rename: goff -> block_offset_gl
 
-      ! Get the processor column which owns this block (A is transposed, so we need the column)
-      ! and the offset in blocks within this column.
-      ! The corresponding block column in A is then broadcast to all for multiplication with B
+      ! Get the processor row (if trans_a='N') or column (if trans_a='T' or 'H') which owns this block
+      ! and the offset in blocks within this row/column.
+      ! The corresponding block row/column in A is then broadcast to all for multiplication with B
 
-      np_bc = MOD(goff,np_cols) ! "bc"=block column
-      noff = goff/np_cols
+      np_br = MOD(goff,np_rows) ! np, that posesses the given block row   ; trans_a='N'; "br"=block row ! PETERDEBUG
+      np_bc = MOD(goff,np_cols) ! np, that posesses the given block column; trans_a='T'; "bc"=block column; rename: np_bc -> np_col_b
+      
+      noff = goff/np_cols ! noff -> noff_t 
+      noff_n = goff/np_rows ! PETERDEBUG
+      
+      ! Gather up the complete block column of A on the owner in contigous memory of aux_bc array
       n_aux_bc = 0
-
-      ! Gather up the complete block column of A on the owner
-      do n = 1, min(l_rows_np-nb*nblk,nblk) ! Loop over columns to be broadcast
+      do n = 1, min(l_rows_np-nb*nblk, nblk) ! Loop over local rows/columns to be broadcast
 
         gcol = goff*nblk + n ! global column corresponding to n
+
         if (nstor==0 .and. n==1) gcol_min = gcol
 
         lrs = 1       ! 1st local row number for broadcast
@@ -541,47 +544,39 @@
             if (my_pcol == np_bc) call gpu_copy_PRECISION_a_aux_bc(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, &
                                                                    nblk, n, l_rows, obj%local_nrows, obj%local_ncols, my_stream)
           else ! useGPU
-           if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
+            if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
           endif ! useGPU
 #else /* MORE_GPU */
 #ifndef DEVICE_POINTER
           if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
 #else
           if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a_tmp(lrs:lre,noff*nblk+n)
-          !print *,"done test 2"
 #endif
 #endif /* MORE_GPU */
           n_aux_bc = n_aux_bc + nvals
-        endif
+        endif ! (lrs <= lre)
 
         lrs_save(n) = lrs
         lre_save(n) = lre
 
-      enddo
+      enddo ! n = 1, min(l_rows_np-nb*nblk, nblk)
 
 #ifdef WITH_MPI
-! NCCL only with MPI
+! CCL only with MPI
 #ifdef USE_CCL_MULTIPLY
-      if (useGPU) then
+      if (useGPU) then ! useGPU-USE_CCL_MULTIPLY
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-#ifdef WITH_NIVIDA_NCCL
-        successGPU = nccl_group_start()
-#endif
-#ifdef WITH_AMD_RCCL
-        successGPU = rccl_group_start()
-#endif
+        successGPU = ccl_group_start()
+
         if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_start!"
-          stop
+          print *,"Error in setting up ccl_group_start!"
+          stop 1
         endif
-#ifdef WITH_NIVIDA_NCCL
-        successGPU = nccl_bcast(aux_bc_dev, aux_bc_dev, &
-#endif
-#ifdef WITH_AMD_RCCL
-        successGPU = rccl_bcast(aux_bc_dev, aux_bc_dev, &
-#endif
+
+        successGPU = ccl_bcast(aux_bc_dev, aux_bc_dev, &
+
 #if REALCASE == 1
                          int(n_aux_bc,kind=c_size_t), &
 #endif
@@ -590,38 +585,34 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                         ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                         ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                        ncclDouble, &
+                        cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                        ncclFloat, &
+                        cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
                         int(np_bc,kind=c_int), ccl_comm_cols, my_stream)
 
         if (.not.successGPU) then
-          print *,"Error in nccl_reduce"
-          stop
+          print *,"Error in ccl_bcast"
+          stop 1
         endif
-#ifdef WITH_NIVIDA_NCCL
-        successGPU = nccl_group_end()
-#endif
-#ifdef WITH_AMD_RCCL
-        successGPU = rccl_group_end()
-#endif
+
+        successGPU = ccl_group_end()
         if (.not.successGPU) then
-          print *,"Error in setting up nccl_group_end!"
-          stop
+          print *,"Error in setting up ccl_group_end!"
+          stop 1
         endif
 #endif /* WITH_GPU_STREAMS */
-      else ! useGPU
+      else ! useGPU-USE_CCL_MULTIPLY
 #endif /* USE_CCL_MULTIPLY */
 
 #if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
@@ -641,21 +632,16 @@
         check_memcpy_gpu("elpa_mult_at_b: aux_bc_dev -> aux_bc", successGPU)
 #endif
 
-      endif
+      endif ! useGPU
 #endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
 
       ! Broadcast block column
       call obj%timer%start("mpi_communication")
-#if REALCASE == 1
+
       call MPI_Bcast(aux_bc, int(n_aux_bc,kind=MPI_KIND),    &
-                     MPI_REAL_PRECISION,  &
+                     MPI_MATH_DATATYPE_PRECISION,  &
                      int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-#endif
-#if COMPLEXCASE == 1
-      call MPI_Bcast(aux_bc, int(n_aux_bc,kind=MPI_KIND),    &
-                     MPI_COMPLEX_PRECISION,  &
-                     int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-#endif
+
       call obj%timer%stop("mpi_communication")
 
 #if defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY)
@@ -674,11 +660,11 @@
         check_memcpy_gpu("elpa_mult_at_b: aux_bc -> aux_bc_dev", successGPU)
 #endif
 
-      endif !useGPU
+      endif ! useGPU
 #endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
 
 #ifdef USE_CCL_MULTIPLY
-      endif ! useGPU
+      endif ! useGPU-USE_CCL_MULTIPLY
 #endif /* USE_CCL_MULTIPLY */
 
 #else /* WITH_MPI */
@@ -840,22 +826,15 @@
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-#ifdef WITH_NIVIDA_NCCL
-            successGPU = nccl_group_start()
-#endif
-#ifdef WITH_AMD_RCCL
-            successGPU = rccl_group_start()
-#endif
+
+            successGPU = ccl_group_start()
             if (.not.successGPU) then
-              print *,"Error in setting up nccl_group_start!"
-              stop
+              print *,"Error in setting up ccl_group_start!"
+              stop 1
             endif
-#ifdef WITH_NIVIDA_NCCL
-            successGPU = nccl_reduce(tmp1_dev, tmp2_dev, &
-#endif
-#ifdef WITH_AMD_RCCL
-            successGPU = rccl_reduce(tmp1_dev, tmp2_dev, &
-#endif
+
+            successGPU = ccl_reduce(tmp1_dev, tmp2_dev, &
+
 #if REALCASE == 1
                          int(nstor*(lce-lcs+1),kind=c_size_t), &
 #endif
@@ -864,36 +843,32 @@
 #endif
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION
-                         ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                         ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* REALCASE */
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION
-                        ncclDouble, &
+                         cclDouble, &
 #endif
 #ifdef SINGLE_PRECISION
-                        ncclFloat, &
+                         cclFloat, &
 #endif
 #endif /* COMPLEXCASE */
-                        ncclSum, int(np,kind=c_int), ccl_comm_rows, my_stream)
+                         cclSum, int(np,kind=c_int), ccl_comm_rows, my_stream)
 
 
             if (.not.successGPU) then
-              print *,"Error in nccl_reduce"
-              stop
+              print *,"Error in ccl_reduce"
+              stop 1
             endif
-#ifdef WITH_NIVIDA_NCCL
-            successGPU = nccl_group_end()
-#endif
-#ifdef WITH_AMD_NCCL
-            successGPU = rccl_group_end()
-#endif
+
+            successGPU = ccl_group_end()
             if (.not.successGPU) then
-              print *,"Error in setting up nccl_group_end!"
-              stop
+              print *,"Error in setting up ccl_group_end!"
+              stop 1
             endif
 #endif /* WITH_GPU_STREAMS */
 
@@ -916,7 +891,7 @@
 #endif /* defined(MORE_GPU) && !defined(USE_CCL_MULTIPLY) */
 
 #if !defined(USE_CCL_MULTIPLY)
-            ! communication already done before with NCCL
+            ! communication already done before with CCL
             call obj%timer%start("mpi_communication")
             call mpi_reduce(tmp1, tmp2, int(nstor*(lce-lcs+1),kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                           MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
@@ -1026,14 +1001,14 @@
       endif ! (nstor==nblk_mult .or. nb*nblk+nblk >= l_rows_np)
     
 #ifdef WITH_NVTX
-       call nvtxRangePop() ! do nb = 0, (l_rows_np-1)/nblk
+      call nvtxRangePop() ! do nb = 0, (l_rows_np-1)/nblk
 #endif
     enddo ! nb = 0, (l_rows_np-1)/nbl
 
 #ifdef WITH_NVTX
-       call nvtxRangePop() ! do np = 0, np_rows-1
+    call nvtxRangePop() ! do np = 0, np_rows-1
 #endif
-  enddo ! np = 0, np_rows-1
+  enddo ! main loop: np = 0, np_rows-1
 
 !#ifdef MORE_GPU
 !  if (useGPU) then

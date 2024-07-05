@@ -1,4 +1,4 @@
-.TH "elpa_setup" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.TH "elpa_setup" 3 "Wed Mar 13 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -13,7 +13,7 @@ use elpa
 class(elpa_t), pointer :: elpa
 .br
 
-success = elpa%\fBsetup\fP()
+status = elpa%\fBsetup\fP()
 .sp
 With the definitions of the input and output variables:
 
@@ -21,7 +21,7 @@ With the definitions of the input and output variables:
 class(elpa_t) :: \fB elpa\fP
 An instance of the ELPA object.
 .TP
-integer :: \fB success\fP  
+integer :: \fB status\fP  
 The returned error code. Should normally be ELPA_OK. Can be queried with\fB elpa_strerr\fP(3)
 .br
 
@@ -32,7 +32,7 @@ The returned error code. Should normally be ELPA_OK. Can be queried with\fB elpa
 elpa_t handle;
 
 .br
-\fBint\fP success =\fB elpa_setup\fP (\fBelpa_t\fP handle);
+\fBint\fP status =\fB elpa_setup\fP (\fBelpa_t\fP handle);
 .sp
 With the definitions of the input and output variables:
 
@@ -40,11 +40,11 @@ With the definitions of the input and output variables:
 elpa_t \fB handle\fP;  
 The handle of an ELPA object, obtained before with\fB elpa_allocate\fP(3)
 .TP
-int \fB success\fP;    
+int \fB status\fP;    
 The returned error code. Should normally be ELPA_OK. Can be queried with\fB elpa_strerr\fP(3)
 
 .SH DESCRIPTION
-Setups an ELPA object.\fI Prior\fP to calling  the setup, the functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3)\fI must have been called\fP and some parameters must have been set with\fB elpa_set\fP(3).
+Finalizes setting of the mandatory parameters and setups an ELPA object.\fI Prior\fP to calling  the setup, the functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3)\fI must have been called\fP and the mandatory parameters must have been set with\fB elpa_set\fP(3).
 
 .SH SEE ALSO
 \fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_deallocate\fP(3)\fB elpa_uninit\fP(3)

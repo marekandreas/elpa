@@ -1,4 +1,4 @@
-!    Copyright 2023, P. Karpov
+!    Copyright 2024, A. Marek
 !
 !    This file is part of ELPA.
 !
@@ -40,9 +40,10 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! This file was written by P. Karpov, MPCDF
-#include "config-f90.h"
+! This file was written by A. Marek, MPCDF
 
+
+#include "config-f90.h"
 module elpa1_gpu
   use, intrinsic :: iso_c_binding
   use precision
@@ -60,1065 +61,433 @@ module elpa1_gpu
   public
   contains
 
+    subroutine gpu_copy_real_part_to_q_double_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
+      use, intrinsic :: iso_c_binding
 
-  subroutine gpu_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                           aux1_dev, vav_dev, d_vec_dev, &
-                                           isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+      implicit none
+      integer(c_int), intent(in)           :: l_cols_nev, l_rows, matrixRows
+      integer(kind=C_intptr_T)             :: q_dev, q_real_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
-    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                           isSkewsymmetric, useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                        wantDebug, my_stream)
+        call cuda_copy_real_part_to_q_double_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_copy_and_set_zeros_double (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                        wantDebug, my_stream)
+        call hip_copy_real_part_to_q_double_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_copy_and_set_zeros_double(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                        wantDebug, my_stream)
+        call sycl_scopy_real_part_to_q_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                           aux1_dev, vav_dev, d_vec_dev, &
-                                           isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
-    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                           isSkewsymmetric, useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
+        call cuda_copy_real_part_to_q_double_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_copy_and_set_zeros_float (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
+        call hip_copy_real_part_to_q_double_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_copy_and_set_zeros_float(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
+        call sycl_scopy_real_part_to_q_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
-  end subroutine
+     endif
+
+    end subroutine
 
 
-  subroutine gpu_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                           aux1_dev, vav_dev, d_vec_dev, &
-                                           isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+    subroutine gpu_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
+      use, intrinsic :: iso_c_binding
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
-    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                           isSkewsymmetric, useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
-    integer(kind=c_intptr_t)            :: my_stream
+      implicit none
+      integer(c_int), intent(in)           :: l_cols_nev, l_rows, matrixRows
+      integer(kind=C_intptr_T)             :: q_dev, q_real_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
+        call cuda_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_copy_and_set_zeros_double_complex (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
+        call hip_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_copy_and_set_zeros_double_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
+        call sycl_scopy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                           aux1_dev, vav_dev, d_vec_dev, &
-                                           isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
-    logical, intent(in)                 :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                           isSkewsymmetric, useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
+        call cuda_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_copy_and_set_zeros_float_complex (v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
+        call hip_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_copy_and_set_zeros_float_complex(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
-                                        isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, &
-                                           wantDebug, my_stream)
+        call sycl_scopy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
-  end subroutine
+      endif
 
-  !________________________________________________________________
+    end subroutine
 
-  subroutine gpu_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+    subroutine gpu_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols, my_stream)
+      use, intrinsic :: iso_c_binding
 
-    integer(kind=c_int), intent(in)     :: n, incx, incy
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: x_dev, y_dev, result_dev
-    integer(kind=c_intptr_t)            :: my_stream
+      implicit none
+      integer(c_int), intent(in)           :: matrixRows, matrixCols
+      integer(kind=C_intptr_T)             :: q_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
+
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call cuda_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_dot_product_double (n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call hip_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_dot_product_double(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call sycl_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols, my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_dot_product_float(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: n, incx, incy
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: x_dev, y_dev, result_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_float(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call cuda_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_dot_product_float (n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call hip_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_dot_product_float(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call sycl_zero_skewsymmetric_q_double(q_dev, matrixRows, matrixCols)
 #endif
-  end subroutine
+      endif
 
+    end subroutine
 
-  subroutine gpu_dot_product_double_complex(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+    subroutine gpu_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols, my_stream)
+      use, intrinsic :: iso_c_binding
 
-    integer(kind=c_int), intent(in)     :: n, incx, incy
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: x_dev, y_dev, result_dev
-    integer(kind=c_intptr_t)            :: my_stream
+      implicit none
+      integer(c_int), intent(in)           :: matrixRows, matrixCols
+      integer(kind=C_intptr_T)             :: q_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_double_complex(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call cuda_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_dot_product_double_complex (n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call hip_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_dot_product_double_complex(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call sycl_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols, my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_dot_product_float_complex(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: n, incx, incy
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: x_dev, y_dev, result_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_float_complex(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call cuda_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_dot_product_float_complex (n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call hip_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_dot_product_float_complex(n, x_dev, incx, y_dev, incy, result_dev, wantDebug, my_stream)
+        call sycl_zero_skewsymmetric_q_float(q_dev, matrixRows, matrixCols)
 #endif
-  end subroutine
+      endif
+    end subroutine
 
-  !________________________________________________________________
-  
-  subroutine gpu_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+    subroutine gpu_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                               negative_or_positive, my_stream)
+      use, intrinsic :: iso_c_binding
 
-    integer(kind=c_int), intent(in)     :: l_rows, isOurProcessRowInt
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, aux1_dev
-    integer(kind=c_intptr_t)            :: my_stream
+      implicit none
+      integer(c_int), intent(in)           :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=C_intptr_T)             :: q_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call cuda_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_dot_product_and_assign_double (v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call hip_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_dot_product_and_assign_double(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call sycl_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_dot_product_and_assign_float(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: l_rows, isOurProcessRowInt
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, aux1_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_and_assign_float(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call cuda_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_dot_product_and_assign_float (v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call hip_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_dot_product_and_assign_float(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call sycl_copy_skewsymmetric_second_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
-  end subroutine
+      endif
+    end subroutine
 
+    subroutine gpu_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                               negative_or_positive, my_stream)
+      use, intrinsic :: iso_c_binding
 
-  subroutine gpu_dot_product_and_assign_double_complex(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+      implicit none
+      integer(c_int), intent(in)           :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=C_intptr_T)             :: q_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
-    integer(kind=c_int), intent(in)     :: l_rows, isOurProcessRowInt
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, aux1_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_and_assign_double_complex(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call cuda_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_dot_product_and_assign_double_complex (v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call hip_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_dot_product_and_assign_double_complex(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call sycl_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_dot_product_and_assign_float_complex(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: l_rows, isOurProcessRowInt
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: v_row_dev, aux1_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_dot_product_and_assign_float_complex(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call cuda_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_dot_product_and_assign_float_complex (v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call hip_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_dot_product_and_assign_float_complex(v_row_dev, l_rows, isOurProcessRowInt, aux1_dev, wantDebug, my_stream)
+        call sycl_copy_skewsymmetric_second_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
-  end subroutine
+      endif
+    end subroutine
 
-  !________________________________________________________________
+    subroutine gpu_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                               negative_or_positive, my_stream)
+      use, intrinsic :: iso_c_binding
 
-  subroutine gpu_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
-                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                            wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+      implicit none
+      integer(c_int), intent(in)           :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=C_intptr_T)             :: q_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
-    logical, intent(in)                 :: isOurProcessRow, useCCL
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
-    integer(kind=c_intptr_t)            :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+      call cuda_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_set_e_vec_scale_set_one_store_v_row_double (e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+      call hip_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_set_e_vec_scale_set_one_store_v_row_double(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+      call sycl_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_set_e_vec_scale_set_one_store_v_row_float(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
-                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                            wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    logical, intent(in)                 :: isOurProcessRow, useCCL
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
-    integer(kind=c_intptr_t)            :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_set_e_vec_scale_set_one_store_v_row_float(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+      call cuda_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_set_e_vec_scale_set_one_store_v_row_float (e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+      call hip_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_set_e_vec_scale_set_one_store_v_row_float(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+      call sycl_copy_skewsymmetric_first_half_q_double(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
-  end subroutine
+      endif
+    end subroutine
 
+    subroutine gpu_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                               negative_or_positive, my_stream)
+      use, intrinsic :: iso_c_binding
 
-  subroutine gpu_set_e_vec_scale_set_one_store_v_row_double_complex(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
-                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                            wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+      implicit none
+      integer(c_int), intent(in)           :: i, matrixRows, matrixCols, negative_or_positive
+      integer(kind=C_intptr_T)             :: q_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
-    logical, intent(in)                 :: isOurProcessRow, useCCL
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
-    integer(kind=c_intptr_t)            :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_set_e_vec_scale_set_one_store_v_row_double_complex(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+        call cuda_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_set_e_vec_scale_set_one_store_v_row_double_complex (e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+        call hip_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_set_e_vec_scale_set_one_store_v_row_double_complex(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+        call sycl_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive, my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_set_e_vec_scale_set_one_store_v_row_float_complex(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
-                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                            wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    logical, intent(in)                 :: isOurProcessRow, useCCL
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, istep
-    integer(kind=c_intptr_t)            :: e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_set_e_vec_scale_set_one_store_v_row_float_complex(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+        call cuda_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_set_e_vec_scale_set_one_store_v_row_float_complex (e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+        call hip_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_set_e_vec_scale_set_one_store_v_row_float_complex(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, &
-                                                         l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, &
-                                                         wantDebug, my_stream)
+        call sycl_copy_skewsymmetric_first_half_q_float(q_dev, i, matrixRows, matrixCols, &
+                                                                negative_or_positive)
 #endif
-  end subroutine
+      endif
 
-  !________________________________________________________________
+    end subroutine
 
-  subroutine gpu_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                           vav_host_or_dev, tau_istep_host_or_dev, &
-                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                           useCCL, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+    subroutine gpu_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                               my_stream)
+      use, intrinsic :: iso_c_binding
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                           vav_host_or_dev, tau_istep_host_or_dev
-    integer(kind=c_intptr_t)            :: my_stream
+      implicit none
+      integer(c_int), intent(in)           :: matrixRows, matrixCols
+      integer(kind=C_intptr_T)             :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call cuda_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_store_u_v_in_uv_vu_double (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call hip_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_store_u_v_in_uv_vu_double(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call sycl_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_store_u_v_in_uv_vu_float(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                           vav_host_or_dev, tau_istep_host_or_dev, &
-                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                           useCCL, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                           vav_host_or_dev, tau_istep_host_or_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_store_u_v_in_uv_vu_float(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call cuda_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_store_u_v_in_uv_vu_float (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call hip_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_store_u_v_in_uv_vu_float(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call sycl_get_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
-  end subroutine
+      endif
 
+    end subroutine
 
-    subroutine gpu_store_u_v_in_uv_vu_double_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                           vav_host_or_dev, tau_istep_host_or_dev, &
-                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                           useCCL, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+    subroutine gpu_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                               my_stream)
+      use, intrinsic :: iso_c_binding
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                           vav_host_or_dev, tau_istep_host_or_dev
-    integer(kind=c_intptr_t)            :: my_stream
+      implicit none
+      integer(c_int), intent(in)           :: matrixRows, matrixCols
+      integer(kind=C_intptr_T)             :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_store_u_v_in_uv_vu_double_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call cuda_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_store_u_v_in_uv_vu_double_complex (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call hip_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_store_u_v_in_uv_vu_double_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call sycl_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_store_u_v_in_uv_vu_float_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                           vav_host_or_dev, tau_istep_host_or_dev, &
-                                           l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                           useCCL, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep
-    logical, intent(in)                 :: useCCL, wantDebug
-    integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
-                                           v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                           vav_host_or_dev, tau_istep_host_or_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_store_u_v_in_uv_vu_float_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call cuda_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_store_u_v_in_uv_vu_float_complex (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call hip_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_store_u_v_in_uv_vu_float_complex(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, & 
-                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                        vav_host_or_dev, tau_istep_host_or_dev, &
-                                        l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, &
-                                        useCCL, wantDebug, my_stream)
+        call sycl_get_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
-  end subroutine
+      endif
 
-  !________________________________________________________________
-  
-  subroutine gpu_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                            l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                            isSkewsymmetric, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+    end subroutine
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs
-    logical, intent(in)                 :: isSkewsymmetric, wantDebug
-    integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
-    integer(kind=c_intptr_t)            :: my_stream
+    subroutine gpu_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                               my_stream)
+      use, intrinsic :: iso_c_binding
 
+      implicit none
+      integer(c_int), intent(in)           :: matrixRows, matrixCols
+      integer(kind=C_intptr_T)             :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
+
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                               isSkewsymmetric, wantDebug, my_stream)
+        call cuda_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_update_matrix_element_add_double (vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                              isSkewsymmetric, wantDebug, my_stream)
+        call hip_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_matrix_element_add_double(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                               isSkewsymmetric, wantDebug, my_stream)
+        call sycl_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_update_matrix_element_add_float(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                            l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                            isSkewsymmetric, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs
-    logical, intent(in)                 :: isSkewsymmetric, wantDebug
-    integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_matrix_element_add_float(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                               isSkewsymmetric, wantDebug, my_stream)
+        call cuda_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_update_matrix_element_add_float (vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                              isSkewsymmetric, wantDebug, my_stream)
+        call hip_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_matrix_element_add_float(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                               isSkewsymmetric, wantDebug, my_stream)
+        call sycl_put_skewsymmetric_second_half_q_double(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
-  end subroutine 
+      endif
 
+    end subroutine
 
-  subroutine gpu_update_matrix_element_add_double_complex(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                            l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                            isSkewsymmetric, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
+    subroutine gpu_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                               my_stream)
+      use, intrinsic :: iso_c_binding
 
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs
-    logical, intent(in)                 :: isSkewsymmetric, wantDebug
-    integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
-    integer(kind=c_intptr_t)            :: my_stream
+      implicit none
+      integer(c_int), intent(in)           :: matrixRows, matrixCols
+      integer(kind=C_intptr_T)             :: q_dev, q2nd_dev
+      integer(kind=c_intptr_t), optional   :: my_stream
 
+      if (present(my_stream)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_matrix_element_add_double_complex(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                               isSkewsymmetric, wantDebug, my_stream)
+        call cuda_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_update_matrix_element_add_double_complex (vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                              isSkewsymmetric, wantDebug, my_stream)
+        call hip_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_matrix_element_add_double_complex(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                               isSkewsymmetric, wantDebug, my_stream)
+        call sycl_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols, &
+                                                                my_stream)
 #endif
-  end subroutine
-
-
-  subroutine gpu_update_matrix_element_add_float_complex(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                            l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                            isSkewsymmetric, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs
-    logical, intent(in)                 :: isSkewsymmetric, wantDebug
-    integer(kind=c_intptr_t)            :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
+      else
 #ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_matrix_element_add_float_complex(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                               isSkewsymmetric, wantDebug, my_stream)
+        call cuda_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-    call hip_update_matrix_element_add_float_complex (vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                              l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                              isSkewsymmetric, wantDebug, my_stream)
+        call hip_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_matrix_element_add_float_complex(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
-                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                               isSkewsymmetric, wantDebug, my_stream)
+        call sycl_put_skewsymmetric_second_half_q_float(q_dev, q2nd_dev, matrixRows, matrixCols)
 #endif
-  end subroutine 
+      endif
 
-  !________________________________________________________________
-
-  ! Update one element of device array: array_dev[index] = value
-  subroutine gpu_update_array_element_double(array_dev, index, value, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: index
-    integer(kind=c_intptr_t)            :: value
-    integer(kind=c_intptr_t)            :: array_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_array_element_double(array_dev, index, value, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_update_array_element_double (array_dev, index, value, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_array_element_double(array_dev, index, value, my_stream)
-#endif
-  end subroutine
+    end subroutine
 
 
-  subroutine gpu_update_array_element_float(array_dev, index, value, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: index
-    integer(kind=c_intptr_t)            :: value
-    integer(kind=c_intptr_t)            :: array_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_array_element_float(array_dev, index, value, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_update_array_element_float (array_dev, index, value, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_array_element_float(array_dev, index, value, my_stream)
-#endif
-  end subroutine
-
-
-  subroutine gpu_update_array_element_double_complex(array_dev, index, value, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: index
-    integer(kind=c_intptr_t)            :: value
-    integer(kind=c_intptr_t)            :: array_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_array_element_double_complex(array_dev, index, value, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_update_array_element_double_complex (array_dev, index, value, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_array_element_double_complex(array_dev, index, value, my_stream)
-#endif
-  end subroutine
-
-
-  subroutine gpu_update_array_element_float_complex(array_dev, index, value, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: index
-    integer(kind=c_intptr_t)            :: value
-    integer(kind=c_intptr_t)            :: array_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_update_array_element_float_complex(array_dev, index, value, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_update_array_element_float_complex (array_dev, index, value, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_update_array_element_float_complex(array_dev, index, value, my_stream)
-#endif
-  end subroutine
-
-  !________________________________________________________________
-
-  subroutine gpu_hh_transform_double(obj, alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use elpa_abstract_impl
-    implicit none
-
-    class(elpa_abstract_impl_t), intent(inout)  :: obj
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
-    if (wantDebug) call obj%timer%start("gpu_hh_transform")
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_hh_transform_double(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_hh_transform_double (alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_hh_transform_double(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-    
-    if (wantDebug) call obj%timer%stop("gpu_hh_transform")
-  end subroutine
-
-
-  subroutine gpu_hh_transform_float(obj, alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use elpa_abstract_impl
-    implicit none
-
-    class(elpa_abstract_impl_t), intent(inout)  :: obj
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
-    if (wantDebug) call obj%timer%start("gpu_hh_transform")
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_hh_transform_float(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_hh_transform_float (alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_hh_transform_float(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-    
-    if (wantDebug) call obj%timer%stop("gpu_hh_transform")
-  end subroutine
-
-
-  subroutine gpu_hh_transform_double_complex(obj, alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use elpa_abstract_impl
-    implicit none
-
-    class(elpa_abstract_impl_t), intent(inout)  :: obj
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
-    if (wantDebug) call obj%timer%start("gpu_hh_transform")
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_hh_transform_double_complex(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_hh_transform_double_complex (alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_hh_transform_double_complex(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-    
-    if (wantDebug) call obj%timer%stop("gpu_hh_transform")
-  end subroutine
-
-  subroutine gpu_hh_transform_float_complex(obj, alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use elpa_abstract_impl
-    implicit none
-
-    class(elpa_abstract_impl_t), intent(inout)  :: obj
-    logical, intent(in)                 :: wantDebug
-    integer(kind=c_intptr_t)            :: alpha_dev, xnorm_sq_dev, xf_dev, tau_dev
-    integer(kind=c_intptr_t)            :: my_stream
-
-    if (wantDebug) call obj%timer%start("gpu_hh_transform")
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_hh_transform_float_complex(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_hh_transform_float_complex (alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_hh_transform_float_complex(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug, my_stream)
-#endif
-    
-    if (wantDebug) call obj%timer%stop("gpu_hh_transform")
-  end subroutine
-
-  !________________________________________________________________
-
-  subroutine gpu_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, & 
-                                              nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                              lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                              isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &  
-                                           np_st, ld_st, direction
-    integer(kind=c_intptr_t)            :: aux_transpose_dev, vmat_st_dev
-    logical, intent(in)                 :: isSkewsymmetric, isReduceadd, wantDebug
-    integer(kind=c_intptr_t)            :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_transpose_reduceadd_vectors_copy_block_double (aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_transpose_reduceadd_vectors_copy_block_double(aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-  end subroutine
-
-
-  subroutine gpu_transpose_reduceadd_vectors_copy_block_float(aux_transpose_dev, vmat_st_dev, & 
-                                              nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                              lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                              isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &  
-                                           np_st, ld_st, direction
-    integer(kind=c_intptr_t)            :: aux_transpose_dev, vmat_st_dev
-    logical, intent(in)                 :: isSkewsymmetric, isReduceadd, wantDebug
-    integer(kind=c_intptr_t)            :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_transpose_reduceadd_vectors_copy_block_float(aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_transpose_reduceadd_vectors_copy_block_float (aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_transpose_reduceadd_vectors_copy_block_float(aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-  end subroutine
-
-
-  subroutine gpu_transpose_reduceadd_vectors_copy_block_double_complex(aux_transpose_dev, vmat_st_dev, & 
-                                              nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                              lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                              isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &  
-                                           np_st, ld_st, direction
-    integer(kind=c_intptr_t)            :: aux_transpose_dev, vmat_st_dev
-    logical, intent(in)                 :: isSkewsymmetric, isReduceadd, wantDebug
-    integer(kind=c_intptr_t)            :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_transpose_reduceadd_vectors_copy_block_double_complex(aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_transpose_reduceadd_vectors_copy_block_double_complex (aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_transpose_reduceadd_vectors_copy_block_double_complex(aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-  end subroutine
-
-
-  subroutine gpu_transpose_reduceadd_vectors_copy_block_float_complex(aux_transpose_dev, vmat_st_dev, & 
-                                              nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                              lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                              isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-    use, intrinsic :: iso_c_binding
-    use precision
-    implicit none
-
-    integer(kind=c_int), intent(in)     :: nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, &  
-                                           np_st, ld_st, direction
-    integer(kind=c_intptr_t)            :: aux_transpose_dev, vmat_st_dev
-    logical, intent(in)                 :: isSkewsymmetric, isReduceadd, wantDebug
-    integer(kind=c_intptr_t)            :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-    call cuda_transpose_reduceadd_vectors_copy_block_float_complex(aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-    call hip_transpose_reduceadd_vectors_copy_block_float_complex (aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-    call sycl_transpose_reduceadd_vectors_copy_block_float_complex(aux_transpose_dev, vmat_st_dev, &
-                                                  nvc, nvr, n_block, nblks_skip, nblks_tot, &
-                                                  lcm_s_t, nblk, auxstride, np_st, ld_st, direction, &
-                                                  isSkewsymmetric, isReduceadd, wantDebug, my_stream)
-#endif
-  end subroutine
 
 end module
 

@@ -1,0 +1,54 @@
+.TH "elpa_setup_gpu" 3 "Wed Mar 13 2024" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_setup_gpu \- finalize the setup of GPU in ELPA
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa
+.br
+
+status = elpa%\fBsetup_gpu\fP()
+.sp
+With the definitions of the input and output variables:
+
+.TP
+class(elpa_t) :: \fB elpa\fP
+An instance of the ELPA object.
+.TP
+integer :: \fB status\fP  
+The returned error code. Should normally be ELPA_OK. Can be queried with\fB elpa_strerr\fP(3)
+.br
+
+.br
+.SS C INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t handle;
+
+.br
+\fBint\fP status =\fB elpa_setup_gpu\fP (\fBelpa_t\fP handle);
+.sp
+With the definitions of the input and output variables:
+
+.TP
+elpa_t \fB handle\fP;  
+The handle of an ELPA object, obtained before with\fB elpa_allocate\fP(3)
+.TP
+int \fB status\fP;    
+The returned error code. Should normally be ELPA_OK. Can be queried with\fB elpa_strerr\fP(3)
+
+.SH DESCRIPTION
+Finalizes the setup of GPU runtime options in ELPA. \fB elpa_setup_gpu\fP has to be called after the runtime option for GPU usage has been set with\fB elpa_set\fP(3),
+e.g. by 'call elpaInstance%set("nvidia-gpu", 1, status)' in Fortran or 'elpa_set(handle, "nvidia-gpu", 1, &status)' in C.
+ \fB elpa_setup_gpu\fP will check if the GPU is available and if the GPU is supported by the ELPA library. 
+If the GPU is not available or not supported, the function will return an error code. 
+If the GPU is available and supported, the function will finalize the setup of the GPU and return ELPA_OK. 
+
+.SH SEE ALSO
+\fBelpa_set\fP(3)\fB elpa_strerr\fP(3) \fBelpa_setup\fP(3)

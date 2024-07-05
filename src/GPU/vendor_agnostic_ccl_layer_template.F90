@@ -246,7 +246,7 @@
       flag = rccl_dataType_ncclInt32()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_ONEAPI_ONECCL
       flag = oneccl_dataType_onecclInt32()
 #endif
 
