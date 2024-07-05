@@ -51,7 +51,7 @@
 
 #include <CL/sycl.hpp>
 
-#ifdef WITH_INTEL_ONECCL
+#ifdef WITH_ONEAPI_ONECCL
 #include <oneapi/ccl.hpp>
 #endif
 
@@ -69,10 +69,11 @@ namespace sycl {
   size_t getNumCpuDevices();
   cl::sycl::device getDevice();
   cl::sycl::queue getQueue();
+  cl::sycl::queue* getQueueRef();
 
   
 
-#ifdef WITH_INTEL_ONECCL
+#ifdef WITH_ONEAPI_ONECCL
   // oneCCL deals with objects rather than opaque handles. Thus, ELPA becomes responsible for keeping them.
   // To keep the interface uniform, ELPA mostly deals with pointers. Where possible, I use them, but in some
   // cases, memoizing the values is necessary.
@@ -84,6 +85,7 @@ namespace sycl {
   ccl::device& getCclDevice();
   ccl::context& getCclContext();
   ccl::stream& getCclStream();
+  ccl::stream* getCclStreamRef();
 #endif
 
 }

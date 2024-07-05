@@ -1,5 +1,5 @@
 //
-//    Copyright 2022, A. Marek
+//    Copyright 2024, A. Marek, A. Pöppl
 //
 //    This file is part of ELPA.
 //
@@ -50,18 +50,6 @@
 //
 // This file was written by A. Marek, MPCDF and Alexander Pöppl, Intel Corporation
 #include "config-f90.h"
-
-#include <stdio.h>
-#include <math.h>
-#include <stdio.h>
-
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <alloca.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <complex.h>
 
 #include "oneapi/ccl.hpp"
 

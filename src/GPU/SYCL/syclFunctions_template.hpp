@@ -168,10 +168,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   int syclSetDeviceFromC(int targetGpuDeviceId) {
     int success = elpa::gpu::sycl::selectGpuDevice(targetGpuDeviceId);
-    if (success) {
-      std::cout << "<<<<<<< GPU " << targetGpuDeviceId << " has been selected. >>>>>>>>" << std::endl;
-    }
-    else {
+    if (!success) {
       std::cout << "<<<<<<< GPU " << targetGpuDeviceId << " cannot be selected. >>>>>>>>" << std::endl;
     }
     return success;

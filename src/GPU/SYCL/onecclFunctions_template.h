@@ -10,11 +10,17 @@
 #include "syclCommon.hpp"
 
 
-#ifdef WITH_INTEL_ONECCL
+#ifdef WITH_ONEAPI_ONECCL
 
 #include <oneapi/ccl.hpp>
 
 extern "C" {
+
+  int onecclStreamGetFromC(ccl::stream **stream) {
+    *stream = elpa::gpu::sycl::getCclStreamRef();
+    return 1;
+  }
+
   int onecclGroupStartFromC() {
     // No such thing in oneCCL. Therefore, we do nothing.
     return 1;
@@ -64,6 +70,12 @@ extern "C" {
 
   int onecclCommDestroyFromC(ccl::communicator *onecclComm) {
     delete onecclComm;
+    return 1;
+  }
+
+  int onecclStreamSynchronizeFromC(ccl::stream *stream) {
+    sycl::queue &q = stream->get_native();
+    q.wait();
     return 1;
   }
 
@@ -145,7 +157,7 @@ extern "C" {
 
     try {
       auto attributes = ccl::create_operation_attr<ccl::allreduce_attr>();
-      ccl::allreduce(sendbuff, recvbuff, count, onecclDatatype, onecclOp, *onecclComm, stream, attributes);
+      ccl::allreduce(sendbuff, recvbuff, count, onecclDatatype, onecclOp, *onecclComm, stream, attributes).wait();
     } catch (const ccl::exception &e) {
       errormessage("Error in onecclAllReduce: %s\n", e.what());
       return 0;
@@ -161,7 +173,7 @@ extern "C" {
 
     try {
       auto attributes = ccl::create_operation_attr<ccl::reduce_attr>();
-      ccl::reduce(sendbuff, recvbuff, count, onecclDatatype, onecclOp, root, *onecclComm, stream, attributes);
+      ccl::reduce(sendbuff, recvbuff, count, onecclDatatype, onecclOp, root, *onecclComm, stream, attributes).wait();
     } catch (const ccl::exception &e) {
       errormessage("Error in onecclReduce: %s\n", e.what());
       return 0;
@@ -178,7 +190,7 @@ extern "C" {
         deps.push_back(ccl::create_event(e));
       } 
       auto attr = ccl::create_operation_attr<ccl::broadcast_attr>();
-      ccl::broadcast(recvbuff, count, onecclDatatype, root, *onecclComm, attr, deps);
+      ccl::broadcast(recvbuff, count, onecclDatatype, root, *onecclComm, attr, deps).wait();
     } catch (const ccl::exception &e) {
       errormessage("Error in onecclBroadcast: %s\n", e.what());
       return 0;
@@ -198,7 +210,7 @@ extern "C" {
 
   int onecclRecvFromC(void* recvbuff, size_t count, ccl::datatype onecclDatatype, int peer, ccl::communicator *onecclComm, ccl::stream stream) {
     try {
-      ccl::recv(recvbuff, count, onecclDatatype, peer, *onecclComm, stream);
+      ccl::recv(recvbuff, count, onecclDatatype, peer, *onecclComm, stream).wait();
     } catch (const ccl::exception &e) {
       errormessage("Error in onecclRecv: %s\n", e.what());
       return 0;

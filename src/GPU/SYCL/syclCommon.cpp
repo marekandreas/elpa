@@ -56,7 +56,7 @@
 #include <mpi.h>
 #endif
 
-#ifdef WITH_INTEL_ONECCL
+#ifdef WITH_ONEAPI_ONECCL
 #include <oneapi/ccl.hpp>    
 #endif
 
@@ -64,7 +64,7 @@
 struct device_selection {
     int deviceId;
     cl::sycl::queue queue;
-#ifdef WITH_INTEL_ONECCL
+#ifdef WITH_ONEAPI_ONECCL
     ccl::device cclDevice;
     ccl::context cclContext;
     ccl::stream cclStream;
@@ -72,7 +72,7 @@ struct device_selection {
 
     device_selection(int deviceId, cl::sycl::queue queue)
       : deviceId(deviceId), queue(queue),
-#ifdef WITH_INTEL_ONECCL
+#ifdef WITH_ONEAPI_ONECCL
         cclDevice(ccl::create_device(queue.get_device())),
         cclContext(ccl::create_context(queue.get_context())),
         cclStream(ccl::create_stream(queue))
@@ -87,7 +87,7 @@ std::optional<device_selection> chosenQueue;
 
 namespace egs = elpa::gpu::sycl;
 
-#ifdef WITH_INTEL_ONECCL
+#ifdef WITH_ONEAPI_ONECCL
 std::unordered_map<void *, egs::cclKvsHandle> kvsMap;
 #endif
 
@@ -200,22 +200,26 @@ void egs::printGpuInfo() {
     return;
   }
 #endif
+
+  const std::string RED = "\033[31m";
+  const std::string RESET = "\033[0m";
   std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA GPU Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
   std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
   std::cout << "# GPU devices:     " << devices.size() << std::endl;
   std::cout << "Eligible devices: " << std::endl;
   for (size_t i = 0; i < devices.size(); i++) {
+    bool isChosenDevice = chosenQueue && (chosenQueue->deviceId == i);
     bool hasDpSupport = devices[i].has(cl::sycl::aspect::fp64);
-    std::cout << " - Device #" << i << ": "
+    std::cout << (isChosenDevice ? RED : "") << " - Device #" << i << ": "
       << devices[i].get_platform().get_info<cl::sycl::info::platform::name>() << " -> "
       << devices[i].get_info<cl::sycl::info::device::name>() << " ("
       << devices[i].get_info<cl::sycl::info::device::max_compute_units>() << " EUs"
-      << (hasDpSupport ? "" : ", SP only") << ")" << std::endl;
+      << (hasDpSupport ? "" : ", SP only") << ")" << (isChosenDevice ? RESET : "")<< std::endl;
   }
   std::cout << "~~~~~~~~~~~~~~~~ END ELPA GPU Info ~~~~~~~~~~~~~~~~~~~" << std::endl;
 }
 
-#ifdef WITH_INTEL_ONECCL
+#ifdef WITH_ONEAPI_ONECCL
 ccl::device& egs::getCclDevice() {
   if (!chosenQueue) {
     egs::selectDefaultGpuDevice();
@@ -236,6 +240,15 @@ ccl::stream& egs::getCclStream() {
   }
   return chosenQueue->cclStream;
 }
+
+ccl::stream* egs::getCclStreamRef() {
+  if (!chosenQueue) {
+    egs::selectDefaultGpuDevice();
+  }
+  return &(chosenQueue->cclStream);
+}
+
+
 
 std::optional<egs::cclKvsHandle> egs::retrieveKvs(void *kvsAddress) {
   if (kvsMap.find(kvsAddress) != kvsMap.end()) {

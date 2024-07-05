@@ -106,9 +106,8 @@
       flag = rccl_redOp_ncclSum()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_redOp_onecclSum()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -130,9 +129,8 @@
       flag = rccl_redOp_ncclMax()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_redOp_onecclMax()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -154,9 +152,8 @@
       flag = rccl_redOp_ncclMin()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_redOp_onecclMin()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -178,8 +175,9 @@
       flag = rccl_redOp_ncclAvg()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_ONEAPI_ONECCL
       print *,"Not yet implemented"
+      flag = -1
       stop
 #endif
 
@@ -202,9 +200,8 @@
       flag = rccl_redOp_ncclProd()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_redOp_onecclProd()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -226,9 +223,8 @@
       flag = rccl_dataType_ncclInt()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_dataType_onecclInt()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -251,8 +247,7 @@
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+      flag = oneccl_dataType_onecclInt32()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -274,9 +269,8 @@
       flag = rccl_dataType_ncclInt64()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_dataType_onecclInt64()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -298,9 +292,8 @@
       flag = rccl_dataType_ncclFloat()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_dataType_onecclFloat()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -322,9 +315,8 @@
       flag = rccl_dataType_ncclFloat32()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_dataType_onecclFloat32()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -346,9 +338,8 @@
       flag = rccl_dataType_ncclFloat64()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_dataType_onecclFloat64()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -370,9 +361,8 @@
       flag = rccl_dataType_ncclDouble()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      flag = oneccl_dataType_onecclDouble()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -394,9 +384,8 @@
       success = rccl_group_start()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_group_start()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -417,9 +406,8 @@
       success = rccl_group_end()
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_group_end()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -436,9 +424,14 @@
 #ifdef WITH_AMD_RCCL
       use rccl_functions, only : ncclUniqueId
 #endif
+#ifdef WITH_ONEAPI_ONECCL
+      use oneccl_functions, only : onecclUniqueId
+#endif
       implicit none
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
       type(ncclUniqueId)  :: cclId
+#elif defined(WITH_ONEAPI_ONECCL)
+      type(onecclUniqueId)  :: cclId
 #else
       ! dummy argument
       integer(kind=c_intptr_t) :: cclId
@@ -452,9 +445,8 @@
       success = rccl_get_unique_id(cclId)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_get_unique_id(cclId)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -471,11 +463,16 @@
 #ifdef WITH_AMD_RCCL
       use rccl_functions, only : ncclUniqueId
 #endif
+#ifdef WITH_ONEAPI_ONECCL
+      use oneccl_functions, only : onecclUniqueId
+#endif
       implicit none
       integer(kind=C_intptr_T)                  :: cclComm
       integer(kind=c_int)                       :: nRanks
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
       type(ncclUniqueId)                        :: cclId
+#elif defined(WITH_ONEAPI_ONECCL)
+      type(onecclUniqueId)                      :: cclId
 #else
       ! dummy argument
       integer(kind=c_intptr_t) :: cclId
@@ -489,12 +486,9 @@
 #ifdef WITH_AMD_RCCL
       success = rccl_comm_init_rank(cclComm, nRanks, cclId, myRank)
 #endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_comm_init_rank(cclComm, nRanks, cclId, myRank)
 #endif
-
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print *,"Not yet implemented"
       stop
@@ -526,6 +520,10 @@
 #ifdef WITH_AMD_RCCL
       success = rccl_comm_destroy(cclComm)
 #endif
+
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_comm_destroy(cclComm)
+#endif
     end function
 
     function ccl_allreduce_intptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, cclComm, gpuStream) result(success)
@@ -549,9 +547,8 @@
       success = rccl_allreduce_intptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_allreduce_intptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -582,9 +579,8 @@
       success = rccl_allreduce_cptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_allreduce_cptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -615,9 +611,8 @@
       success = rccl_reduce_intptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, root, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_reduce_intptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, root, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -648,9 +643,8 @@
       success = rccl_reduce_cptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, root, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_reduce_cptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, root, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -680,9 +674,8 @@
       success = rccl_bcast_intptr(sendbuff, recvbuff, nrElements, cclDatatype, root, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_bcast_intptr(sendbuff, recvbuff, nrElements, cclDatatype, root, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -712,9 +705,8 @@
       success = rccl_bcast_cptr(sendbuff, recvbuff, nrElements, cclDatatype, root, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_bcast_cptr(sendbuff, recvbuff, nrElements, cclDatatype, root, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -743,9 +735,8 @@
       success = rccl_send_intptr(sendbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_send_intptr(sendbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -774,9 +765,8 @@
       success = rccl_send_cptr(sendbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_send_cptr(sendbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -805,9 +795,8 @@
       success = rccl_recv_intptr(recvbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_recv_intptr(recvbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -836,9 +825,8 @@
       success = rccl_recv_cptr(recvbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
 #endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-      print *,"Not yet implemented"
-      stop
+#ifdef WITH_ONEAPI_ONECCL
+      success = oneccl_recv_cptr(recvbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -846,4 +834,3 @@
       stop
 #endif
     end function
-

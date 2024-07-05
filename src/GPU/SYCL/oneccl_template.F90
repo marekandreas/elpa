@@ -244,6 +244,16 @@
       integer(kind=C_INT)             :: istat  
     end function                                
   end interface
+  
+  interface
+    function oneccl_stream_synchronize_c(syclStream) result(istat) &
+             bind(C, name="onecclStreamSynchronizeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t), value :: syclStream
+      integer(kind=C_INT)             :: istat
+    end function
+  end interface
 
   interface oneccl_Allreduce
     module procedure oneccl_allreduce_intptr
@@ -322,6 +332,7 @@
       integer(kind=C_INT)                          :: istat
     end function
   end interface
+
 
   interface oneccl_Bcast
     module procedure oneccl_Bcast_intptr
@@ -431,7 +442,33 @@
     end function
   end interface
 
+
+  interface
+    function oneccl_stream_get_c(onecclStream) result(istat) &
+             bind(C, name="onecclStreamGetFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T) :: onecclStream
+      integer(kind=C_INT)      :: istat
+    end function
+  end interface
+
+
   contains
+
+
+    function oneccl_stream_get(onecclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: onecclStream
+      logical                                   :: success
+#if defined(WITH_SYCL_GPU_VERSION) && defined(WITH_ONEAPI_ONECCL)
+      success = oneccl_stream_get_c(onecclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
 
 
     function oneccl_redOp_onecclSum() result(flag)
@@ -593,10 +630,7 @@
     function oneccl_get_unique_id(onecclId) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
-      !integer(kind=C_intptr_t)                  :: onecclId(16)
       type(onecclUniqueId)                        :: onecclId
-      !integer(kind=C_intptr_t)                  :: onecclId
-      !character(len=128)                        :: onecclId
       logical                                   :: success
       integer :: i
 #ifdef WITH_ONEAPI_ONECCL
@@ -612,10 +646,7 @@
       implicit none
       integer(kind=C_intptr_T)                  :: onecclComm
       integer(kind=c_int)                       :: nRanks
-      !integer(kind=C_intptr_t)                  :: onecclId(16)
-      type(onecclUniqueId)                        :: onecclId
-      !integer(kind=C_intptr_t)                  :: onecclId
-      !character(len=128)                        :: onecclID
+      type(onecclUniqueId)                      :: onecclId
       integer(kind=c_int)                       :: myRank
       logical                                   :: success
 
@@ -651,6 +682,14 @@
 #endif
     end function
   
+    function oneccl_stream_synchronize(syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t), value :: syclStream
+      logical                         :: success
+      success = oneccl_stream_synchronize_c(syclStream) /= 0
+    end function
+
     function oneccl_allreduce_intptr(sendbuff, recvbuff, nrElements, onecclDatatype, onecclOp, onecclComm, syclStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
