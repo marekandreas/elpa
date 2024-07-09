@@ -26,7 +26,9 @@ AM_SILENT_RULES([yes])
 #    by the current interface, as they are ABI compatible (e.g. only new symbols
 #    were added by the new interface)
 #
-AC_SUBST([ELPA_SO_VERSION], [21:3:3])
+# Note that this number translates into the library file name like this:
+# c:r:a  --->  libelpa.so.(c-a).a.r
+AC_SUBST([ELPA_SO_VERSION], [22:0:3])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
