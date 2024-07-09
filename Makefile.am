@@ -264,6 +264,8 @@ if WITH_SYCL_GPU_VERSION
   src/GPU/SYCL/syclFunctions.cpp \
   src/GPU/SYCL/syclUtils.cpp \
   src/elpa1/GPU/SYCL/tridiag_sycl.cpp \
+  src/elpa1/GPU/SYCL/elpa1_sycl.cpp \
+  src/elpa1/GPU/SYCL/trans_ev_sycl.cpp \
   src/elpa2/GPU/SYCL/ev_tridi_band_sycl_gpu_real.cpp \
   src/invert_trm/GPU/SYCL/elpa_invert_trm_sycl.cpp \
   src/cholesky/GPU/SYCL/elpa_cholesky_sycl.cpp \

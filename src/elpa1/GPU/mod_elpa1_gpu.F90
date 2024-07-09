@@ -77,7 +77,7 @@ module elpa1_gpu
         call hip_copy_real_part_to_q_double_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_scopy_real_part_to_q_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
+        call sycl_copy_real_part_to_q_double_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -87,7 +87,7 @@ module elpa1_gpu
         call hip_copy_real_part_to_q_double_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_scopy_real_part_to_q_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
+        call sycl_copy_real_part_to_q_double_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
      endif
 
@@ -110,7 +110,7 @@ module elpa1_gpu
         call hip_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_scopy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
+        call sycl_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
 #endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -120,7 +120,7 @@ module elpa1_gpu
         call hip_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-        call sycl_scopy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
+        call sycl_copy_real_part_to_q_float_complex(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev)
 #endif
       endif
 

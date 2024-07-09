@@ -1375,7 +1375,7 @@ extern "C" void sycl_transpose_reduceadd_vectors_copy_block_float_complex_FromC(
 
 //________________________________________________________________
 
-
+#if 0
 //----------------------------------------------------------------
 // Stubs for the missing functions.
 
@@ -1448,3 +1448,4 @@ extern "C" void sycl_copy_real_part_to_q_float_complex_FromC(std::complex<float>
   // Only a stub function for now.
   std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
 }
+#endif
