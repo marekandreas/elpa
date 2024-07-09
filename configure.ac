@@ -28,7 +28,7 @@ AM_SILENT_RULES([yes])
 #
 # Note that this number translates into the library file name like this:
 # c:r:a  --->  libelpa.so.(c-a).a.r
-AC_SUBST([ELPA_SO_VERSION], [21:3:3])
+AC_SUBST([ELPA_SO_VERSION], [22:0:3])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
