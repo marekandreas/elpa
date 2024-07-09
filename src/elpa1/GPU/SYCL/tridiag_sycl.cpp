@@ -1374,3 +1374,77 @@ extern "C" void sycl_transpose_reduceadd_vectors_copy_block_float_complex_FromC(
 }
 
 //________________________________________________________________
+
+
+//----------------------------------------------------------------
+// Stubs for the missing functions.
+
+extern "C" void sycl_scale_qmat_double_complex_FromC(int ldq, int l_cols, std::complex<double> *q_dev, std::complex<double> *tau_dev, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_scale_qmat_float_complex_FromC(int ldq, int l_cols, std::complex<float> *q_dev, std::complex<float> *tau_dev, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_put_skewsymmetric_second_half_q_double_FromC(double *q_dev, double *q2nd_dev, int matrix_rows, int matrix_cols, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_put_skewsymmetric_second_half_q_float_FromC(float *q_dev, float *q2nd_dev, int matrix_rows, int matrix_cols, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_get_skewsymmetric_second_half_q_double_FromC(double *q_dev, double *q2nd_dev, int matrix_rows, int matrix_cols, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_get_skewsymmetric_second_half_q_float_FromC(float *q_dev, float *q2nd_dev, int matrix_rows, int matrix_cols, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_zero_skewsymmetric_q_double_FromC(double *q_dev, int matrix_rows, int matrix_cols, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_zero_skewsymmetric_q_float_FromC(float *q_dev, int matrix_rows, int matrix_cols, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_copy_skewsymmetric_first_half_q_double_FromC(double *q_dev, int i, int matrix_rows, int matrix_cols, int negative_or_positive, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_copy_skewsymmetric_first_half_q_float_FromC(float *q_dev, int i, int matrix_rows, int matrix_cols, int negative_or_positive, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_copy_skewsymmetric_second_half_q_double_FromC(double *q_dev, int i, int matrix_rows, int matrix_cols, int negative_or_positive, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_copy_skewsymmetric_second_half_q_float_FromC(float *q_dev, int i, int matrix_rows, int matrix_cols, int negative_or_positive, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_copy_real_part_to_q_double_complex_FromC(std::complex<double> *q_dev, double *q_real_dev, int matrix_rows, int l_rows, int l_cols_nev, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
+
+extern "C" void sycl_copy_real_part_to_q_float_complex_FromC(std::complex<float> *q_dev, float *q_real_dev, int matrix_rows, int l_rows, int l_cols_nev, void *my_stream) {
+  // Only a stub function for now.
+  std::cout << __func__ << " is only a stub, don't actually call this" << std::endl;
+}
