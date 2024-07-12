@@ -375,6 +375,7 @@ function elpa_solve_evp_&
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
    if (useGPU) then
+     my_pe = obj%mpi_setup%myRank_comm_parent
      call obj%timer%start("check_for_gpu")
 
      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
