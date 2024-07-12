@@ -46,16 +46,12 @@
 //
 //    This file was written by A. Marek, MPCDF
 
+#include "src/GPU/SYCL/syclCommon.hpp"
+
 #include <sycl/sycl.hpp>
-#include <dpct/dpct.hpp>
-#include <stdio.h>
 #include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include <alloca.h>
-#include <complex.h>
 #include <stdint.h>
 #include <complex>
 
@@ -63,140 +59,38 @@
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
-void sycl_scale_qmat_double_complex_kernel(sycl::double2 *q, sycl::double2 *tau,
-                                           const int ldq, const int l_cols,
-                                           const sycl::nd_item<3> &item_ct1) {
-
-    double one = 1.0;
-    double zero = 0.0;
-    sycl::double2 c_one = sycl::double2(one, zero);
-
-    //printf("c: tau[1]=%.6f %.6f \n",tau[1].x,tau[1].y);
-    int col = item_ct1.get_group(2) * item_ct1.get_local_range(2) +
-              item_ct1.get_local_id(2);
-    int index = (1-1) + ldq * col;
-
-    // q_mat(1,1:l_cols) = q_mat(1,1:l_cols)*(ONE-tau(2))
-    if (col < l_cols) {
-
-	    // (a + ib) (c + id) = (ac - bd) + i(ad + bc)
-            // a = q.x
-	    // b = q.y
-	    // c = one-tau.x
-	    // d = zero - tau.y
-	    // (q.x + i * q.y) * ((one-tau.x) + i * (zero-tau.y)) = (q.x*(one-tau.x) - q.y * (zero-tau.y)) + i * (q.x * (zero-tau.y) + q.y * (one-tau.x)
-        //// real part 
-        //q[index].x = q[index].x * (one-tau[1].x) - q[index].y * (zero - tau[1].y);
-	//// imag part
-	//q[index].y = q[index].x * (zero - tau[1].y) + q[index].y * (one - tau[1].x);
-
-        //// real part 
-        //q[index].x = q[index].x * (one-tau[1].x) + q[index].y * tau[1].y;
-	//// imag part
-	//q[index].y = -q[index].x * tau[1].y + q[index].y * (one - tau[1].x);
-
-
-        //q[index].x = q[index].x * (one - tau[1].x);
-        //q[index].y = q[index].y * (zero - tau[1].y);
-
-      q[index] = dpct::cmul<double>(q[index], c_one - tau[1]);
-    }
-}
-
-extern "C" void sycl_scale_qmat_double_complex_FromC(
-    int *ldq_in, int *l_cols_in, double _Complex *q_dev,
-    double _Complex *tau_dev, dpct::queue_ptr my_stream) {
+template<typename T>
+void sycl_scale_qmat_complex(int *ldq_in, int *l_cols_in, std::complex<T> *q_dev, std::complex<T> *tau_dev, sycl::queue *my_stream) {
   int ldq = *ldq_in;
   int l_cols = *l_cols_in;
 
-  sycl::double2 *q_casted = (sycl::double2 *)q_dev;
-  sycl::double2 *tau_casted = (sycl::double2 *)tau_dev;
-
-  sycl::range<3> threadsPerBlock(1, 1, 1024);
-  sycl::range<3> blocks(1, 1,
-                        (l_cols + threadsPerBlock[2] - 1) / threadsPerBlock[2]);
-
-#ifdef WITH_GPU_STREAMS
-  sycl_scale_qmat_double_complex_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_casted, tau_casted, ldq, l_cols);
+#ifdef WITH_GPU_STREAMS  // Unsupported still, there be dragons!
+  sycl::queue q = *my_stream;
 #else
-  /*
-  DPCT1049:0: The work-group size passed to the SYCL kernel may exceed the
-  limit. To get the device limit, query info::device::max_work_group_size.
-  Adjust the work-group size if needed.
-  */
-  {
-    dpct::has_capability_or_fail(dpct::get_in_order_queue().get_device(),
-                                 {sycl::aspect::fp64});
-
-    dpct::get_in_order_queue().parallel_for(
-        sycl::nd_range<3>(blocks * threadsPerBlock, threadsPerBlock),
-        [=](sycl::nd_item<3> item_ct1) {
-          sycl_scale_qmat_double_complex_kernel(q_casted, tau_casted, ldq,
-                                                l_cols, item_ct1);
-        });
-  }
+  sycl::queue q = elpa::gpu::sycl::getQueue();
 #endif
-  /*
-  DPCT1010:2: SYCL uses exceptions to report errors and does not use the error
-  codes. The call was replaced with 0. You need to rewrite this code.
-  */
-  dpct::err0 cuerr = 0;
+
+  auto maxWorkGroupSize = q.get_device().get_info<sycl::info::device::max_work_group_size>();
+  sycl::range<1> threadsPerBlock(maxWorkGroupSize);
+  sycl::range<1> blocks((l_cols + threadsPerBlock - 1) / threadsPerBlock);
+  
+  q.parallel_for(sycl::nd_range<1>(blocks * threadsPerBlock, threadsPerBlock), [=](sycl::nd_item<1> it) {
+      T one(1.0);
+      T zero(0.0);
+      std::complex<T> c_one(one, zero);
+      int col = it.get_group(0) * it.get_local_range(0) + it.get_local_id(0);
+      int index = ldq * col;
+
+      if (col < l_cols) {
+        q_dev[index] *= (c_one - tau_dev[1]);
+      }
+    });
 }
 
-void sycl_scale_qmat_float_complex_kernel(sycl::float2 *q, sycl::float2 *tau,
-                                          const int ldq, const int l_cols,
-                                          const sycl::nd_item<3> &item_ct1) {
-
-    float one = 1.0f;
-    float zero = 0.0f;
-    sycl::float2 c_one = sycl::float2(one, zero);
-
-    int col = item_ct1.get_group(2) * item_ct1.get_local_range(2) +
-              item_ct1.get_local_id(2);
-    int index = (1-1) + ldq * col;
-
-    // q_mat(1,1:l_cols) = q_mat(1,1:l_cols)*(ONE-tau(2))
-    if (col < l_cols) {
-      //  q[index].x = q[index].x * (one - tau[1].x);
-      //  q[index].y = q[index].y * (zero - tau[1].y);
-      q[index] = dpct::cmul<float>(q[index], c_one - tau[1]);
-    }
-
+extern "C" void sycl_scale_qmat_double_complex_FromC(int *ldq_in, int *l_cols_in, std::complex<double> *q_dev, std::complex<double> *tau_dev, sycl::queue *my_stream) {
+  sycl_scale_qmat_complex<double>(ldq_in, l_cols_in, q_dev, tau_dev, my_stream);
 }
 
-extern "C" void sycl_scale_qmat_float_complex_FromC(int *ldq_in, int *l_cols_in,
-                                                    float _Complex *q_dev,
-                                                    float _Complex *tau_dev,
-                                                    dpct::queue_ptr my_stream) {
-  int ldq = *ldq_in;
-  int l_cols = *l_cols_in;
-
-  sycl::float2 *q_casted = (sycl::float2 *)q_dev;
-  sycl::float2 *tau_casted = (sycl::float2 *)tau_dev;
-
-  sycl::range<3> threadsPerBlock(1, 1, 1024);
-  sycl::range<3> blocks(1, 1,
-                        (l_cols + threadsPerBlock[2] - 1) / threadsPerBlock[2]);
-
-#ifdef WITH_GPU_STREAMS
-  sycl_scale_qmat_float_complex_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_casted, tau_casted, ldq, l_cols);
-#else
-  /*
-  DPCT1049:1: The work-group size passed to the SYCL kernel may exceed the
-  limit. To get the device limit, query info::device::max_work_group_size.
-  Adjust the work-group size if needed.
-  */
-  dpct::get_in_order_queue().parallel_for(
-      sycl::nd_range<3>(blocks * threadsPerBlock, threadsPerBlock),
-      [=](sycl::nd_item<3> item_ct1) {
-        sycl_scale_qmat_float_complex_kernel(q_casted, tau_casted, ldq, l_cols,
-                                             item_ct1);
-      });
-#endif
-  /*
-  DPCT1010:4: SYCL uses exceptions to report errors and does not use the error
-  codes. The call was replaced with 0. You need to rewrite this code.
-  */
-  dpct::err0 cuerr = 0;
+extern "C" void sycl_scale_qmat_float_complex_FromC(int *ldq_in, int *l_cols_in, std::complex<float> *q_dev, std::complex<float> *tau_dev, sycl::queue *my_stream) {
+  sycl_scale_qmat_complex<float>(ldq_in, l_cols_in, q_dev, tau_dev, my_stream);
 }
-
