@@ -209,15 +209,15 @@
     end function
   end interface
 
-!  interface
-!    function sycl_devicesynchronize_c()result(istat) &
-!             bind(C,name="syclDeviceSynchronizeFromC")
-!
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_INT)                       :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_devicesynchronize_c() result(istat) &
+             bind(C,name="syclDeviceSynchronizeFromC")
+
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)                       :: istat
+    end function
+  end interface
 
   ! functions to copy GPU memory
   interface
@@ -326,149 +326,149 @@
     end function
   end interface
 
-!  interface
-!    function sycl_memcpy_async_intptr_c(dst, src, size, dir, syclStream) result(istat) &
-!             bind(C, name="syclMemcpyAsyncFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t), value              :: dst
-!      integer(kind=C_intptr_t), value              :: src
-!      integer(kind=c_intptr_t), intent(in), value  :: size
-!      integer(kind=C_INT), intent(in), value       :: dir
-!      integer(kind=c_intptr_t), value              :: syclStream
-!      integer(kind=C_INT)                          :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_memcpy_async_intptr_c(dst, src, size, dir, syclStream) result(istat) &
+             bind(C, name="syclMemcpyAsyncFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t), value              :: dst
+      integer(kind=C_intptr_t), value              :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=c_intptr_t), value              :: syclStream
+      integer(kind=C_INT)                          :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_memcpy_async_cptr_c(dst, src, size, dir, syclStream) result(istat) &
-!             bind(C, name="syclMemcpyAsyncFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr), value                           :: dst
-!      type(c_ptr), value                           :: src
-!      integer(kind=c_intptr_t), intent(in), value  :: size
-!      integer(kind=C_INT), intent(in), value       :: dir
-!      integer(kind=c_intptr_t), value              :: syclStream
-!      integer(kind=C_INT)                          :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_memcpy_async_cptr_c(dst, src, size, dir, syclStream) result(istat) &
+             bind(C, name="syclMemcpyAsyncFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value                           :: dst
+      type(c_ptr), value                           :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=c_intptr_t), value              :: syclStream
+      integer(kind=C_INT)                          :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_memcpy_async_mixed_to_device_c(dst, src, size, dir, syclStream) result(istat) &
-!             bind(C, name="syclMemcpyAsyncFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr), value                           :: dst
-!      integer(kind=C_intptr_t), value              :: src
-!      integer(kind=c_intptr_t), intent(in), value  :: size
-!      integer(kind=C_INT), intent(in), value       :: dir
-!      integer(kind=c_intptr_t), value              :: syclStream
-!      integer(kind=C_INT)                          :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_memcpy_async_mixed_to_device_c(dst, src, size, dir, syclStream) result(istat) &
+             bind(C, name="syclMemcpyAsyncFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value                           :: dst
+      integer(kind=C_intptr_t), value              :: src
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=c_intptr_t), value              :: syclStream
+      integer(kind=C_INT)                          :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_memcpy_async_mixed_to_host_c(dst, src, size, dir, syclStream) result(istat) &
-!             bind(C, name="syclMemcpyAsyncFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr), value                           :: src
-!      integer(kind=C_intptr_t), value              :: dst
-!      integer(kind=c_intptr_t), intent(in), value  :: size
-!      integer(kind=C_INT), intent(in), value       :: dir
-!      integer(kind=c_intptr_t), value              :: syclStream
-!      integer(kind=C_INT)                          :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_memcpy_async_mixed_to_host_c(dst, src, size, dir, syclStream) result(istat) &
+             bind(C, name="syclMemcpyAsyncFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value                           :: src
+      integer(kind=C_intptr_t), value              :: dst
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: dir
+      integer(kind=c_intptr_t), value              :: syclStream
+      integer(kind=C_INT)                          :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
-!             bind(C, name="syclMemcpy2dFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value                :: dst
-!      integer(kind=c_intptr_t), intent(in), value    :: dpitch
-!      integer(kind=C_intptr_T), value                :: src
-!      integer(kind=c_intptr_t), intent(in), value    :: spitch
-!      integer(kind=c_intptr_t), intent(in), value    :: width
-!      integer(kind=c_intptr_t), intent(in), value    :: height
-!      integer(kind=C_INT), intent(in), value         :: dir
-!      integer(kind=C_INT)                            :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
+             bind(C, name="syclMemcpy2dFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value                :: dst
+      integer(kind=c_intptr_t), intent(in), value    :: dpitch
+      integer(kind=C_intptr_T), value                :: src
+      integer(kind=c_intptr_t), intent(in), value    :: spitch
+      integer(kind=c_intptr_t), intent(in), value    :: width
+      integer(kind=c_intptr_t), intent(in), value    :: height
+      integer(kind=C_INT), intent(in), value         :: dir
+      integer(kind=C_INT)                            :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
-!             bind(C, name="syclMemcpy2dFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr), value                :: dst
-!      integer(kind=c_intptr_t), intent(in), value    :: dpitch
-!      type(c_ptr), value                :: src
-!      integer(kind=c_intptr_t), intent(in), value    :: spitch
-!      integer(kind=c_intptr_t), intent(in), value    :: width
-!      integer(kind=c_intptr_t), intent(in), value    :: height
-!      integer(kind=C_INT), intent(in), value         :: dir
-!      integer(kind=C_INT)                            :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) result(istat) &
+             bind(C, name="syclMemcpy2dFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value                :: dst
+      integer(kind=c_intptr_t), intent(in), value    :: dpitch
+      type(c_ptr), value                :: src
+      integer(kind=c_intptr_t), intent(in), value    :: spitch
+      integer(kind=c_intptr_t), intent(in), value    :: width
+      integer(kind=c_intptr_t), intent(in), value    :: height
+      integer(kind=C_INT), intent(in), value         :: dir
+      integer(kind=C_INT)                            :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_memcpy2d_async_intptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) result(istat) &
-!             bind(C, name="syclMemcpy2dAsyncFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value                :: dst
-!      integer(kind=c_intptr_t), intent(in), value    :: dpitch
-!      integer(kind=C_intptr_T), value                :: src
-!      integer(kind=c_intptr_t), intent(in), value    :: spitch
-!      integer(kind=c_intptr_t), intent(in), value    :: width
-!      integer(kind=c_intptr_t), intent(in), value    :: height
-!      integer(kind=C_INT), intent(in), value         :: dir
-!      integer(kind=c_intptr_t), value                :: syclStream
-!      integer(kind=C_INT)                            :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_memcpy2d_async_intptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) result(istat) &
+             bind(C, name="syclMemcpy2dAsyncFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value                :: dst
+      integer(kind=c_intptr_t), intent(in), value    :: dpitch
+      integer(kind=C_intptr_T), value                :: src
+      integer(kind=c_intptr_t), intent(in), value    :: spitch
+      integer(kind=c_intptr_t), intent(in), value    :: width
+      integer(kind=c_intptr_t), intent(in), value    :: height
+      integer(kind=C_INT), intent(in), value         :: dir
+      integer(kind=c_intptr_t), value                :: syclStream
+      integer(kind=C_INT)                            :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_memcpy2d_async_cptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) result(istat) &
-!             bind(C, name="syclMemcpy2dAsyncFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr), value                :: dst
-!      integer(kind=c_intptr_t), intent(in), value    :: dpitch
-!      type(c_ptr), value                :: src
-!      integer(kind=c_intptr_t), intent(in), value    :: spitch
-!      integer(kind=c_intptr_t), intent(in), value    :: width
-!      integer(kind=c_intptr_t), intent(in), value    :: height
-!      integer(kind=C_INT), intent(in), value         :: dir
-!      integer(kind=c_intptr_t), value                :: syclStream
-!      integer(kind=C_INT)                            :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_memcpy2d_async_cptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) result(istat) &
+             bind(C, name="syclMemcpy2dAsyncFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value                :: dst
+      integer(kind=c_intptr_t), intent(in), value    :: dpitch
+      type(c_ptr), value                :: src
+      integer(kind=c_intptr_t), intent(in), value    :: spitch
+      integer(kind=c_intptr_t), intent(in), value    :: width
+      integer(kind=c_intptr_t), intent(in), value    :: height
+      integer(kind=C_INT), intent(in), value         :: dir
+      integer(kind=c_intptr_t), value                :: syclStream
+      integer(kind=C_INT)                            :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_host_register_c(a, size, flag) result(istat) &
-!             bind(C, name="syclHostRegisterFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t), value              :: a
-!      integer(kind=c_intptr_t), intent(in), value  :: size
-!      integer(kind=C_INT), intent(in), value       :: flag
-!      integer(kind=C_INT)                          :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_host_register_c(a, size, flag) result(istat) &
+             bind(C, name="syclHostRegisterFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t), value              :: a
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT), intent(in), value       :: flag
+      integer(kind=C_INT)                          :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_host_unregister_c(a) result(istat) &
-!             bind(C, name="syclHostUnregisterFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t), value              :: a
-!      integer(kind=C_INT)                          :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_host_unregister_c(a) result(istat) &
+             bind(C, name="syclHostUnregisterFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t), value              :: a
+      integer(kind=C_INT)                          :: istat
+    end function
+  end interface
 
   interface sycl_free
     module procedure sycl_free_intptr
@@ -502,12 +502,12 @@
     module procedure sycl_memcpy_mixed_to_host
   end interface
 
-!  interface sycl_memcpy_async
-!    module procedure sycl_memcpy_async_intptr
-!    module procedure sycl_memcpy_async_cptr
-!    module procedure sycl_memcpy_async_mixed_to_device
-!    module procedure sycl_memcpy_async_mixed_to_host
-!  end interface
+  interface sycl_memcpy_async
+    module procedure sycl_memcpy_async_intptr
+    module procedure sycl_memcpy_async_cptr
+    module procedure sycl_memcpy_async_mixed_to_device
+    module procedure sycl_memcpy_async_mixed_to_host
+  end interface
 
   interface sycl_malloc
     module procedure sycl_malloc_intptr
@@ -538,55 +538,55 @@
     end function
   end interface
 
-!  interface sycl_free_host
-!    module procedure sycl_free_host_intptr
-!    module procedure sycl_free_host_cptr
-!  end interface
-!  interface
-!    function sycl_free_host_intptr_c(a) result(istat) &
-!             bind(C, name="syclFreeHostFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_intptr_t), value  :: a
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
+  interface sycl_free_host
+    module procedure sycl_free_host_intptr
+    module procedure sycl_free_host_cptr
+  end interface
+  interface
+    function sycl_free_host_intptr_c(a) result(istat) &
+             bind(C, name="syclFreeHostFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t), value  :: a
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_free_host_cptr_c(a) result(istat) &
-!             bind(C, name="syclFreeHostFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr), value               :: a
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_free_host_cptr_c(a) result(istat) &
+             bind(C, name="syclFreeHostFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value               :: a
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
 
-!  interface sycl_malloc_host
-!    module procedure sycl_malloc_host_intptr
-!    module procedure sycl_malloc_host_cptr
-!  end interface
-!  interface
-!    function sycl_malloc_host_intptr_c(a, width_height) result(istat) &
-!             bind(C, name="syclMallocHostFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_intptr_t)                    :: a
-!      integer(kind=c_intptr_t), intent(in), value :: width_height
-!      integer(kind=C_INT)                         :: istat
-!    end function
-!  end interface
+  interface sycl_malloc_host
+    module procedure sycl_malloc_host_intptr
+    module procedure sycl_malloc_host_cptr
+  end interface
+  interface
+    function sycl_malloc_host_intptr_c(a, width_height) result(istat) &
+             bind(C, name="syclMallocHostFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t)                    :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
+      integer(kind=C_INT)                         :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_malloc_host_cptr_c(a, width_height) result(istat) &
-!             bind(C, name="syclMallocHostFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr)                    :: a
-!      integer(kind=c_intptr_t), intent(in), value :: width_height
-!      integer(kind=C_INT)                         :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_malloc_host_cptr_c(a, width_height) result(istat) &
+             bind(C, name="syclMallocHostFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                    :: a
+      integer(kind=c_intptr_t), intent(in), value :: width_height
+      integer(kind=C_INT)                         :: istat
+    end function
+  end interface
 
   interface
     function sycl_memset_c(a, val, size) result(istat) &
@@ -600,18 +600,18 @@
     end function
   end interface
 
-!  interface
-!    function sycl_memset_async_c(a, val, size, syclStream) result(istat) &
-!             bind(C, name="syclMemsetAsyncFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value            :: a
-!      integer(kind=C_INT), value                 :: val
-!      integer(kind=c_intptr_t), intent(in), value  :: size
-!      integer(kind=C_INT)                        :: istat
-!      integer(kind=c_intptr_t), value            :: syclStream
-!    end function
-!  end interface
+  interface
+    function sycl_memset_async_c(a, val, size, syclStream) result(istat) &
+             bind(C, name="syclMemsetAsyncFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value            :: a
+      integer(kind=C_INT), value                 :: val
+      integer(kind=c_intptr_t), intent(in), value  :: size
+      integer(kind=C_INT)                        :: istat
+      integer(kind=c_intptr_t), value            :: syclStream
+    end function
+  end interface
 
   interface syclblas_Dgemm
     module procedure syclblas_Dgemm_intptr
@@ -1921,55 +1921,58 @@
 #endif
     end function
 
-!    function sycl_malloc_host_intptr(a, width_height) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_intptr_t)                  :: a
-!      integer(kind=c_intptr_t), intent(in)      :: width_height
-!      logical                                   :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_malloc_host_intptr_c(a, width_height) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_malloc_host_intptr(a, width_height) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t)                  :: a
+      integer(kind=c_intptr_t), intent(in)      :: width_height
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_malloc_host_intptr_c(a, width_height) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_malloc_host_cptr(a, width_height) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr)                               :: a
-!      integer(kind=c_intptr_t), intent(in)      :: width_height
-!      logical                                   :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_malloc_host_cptr_c(a, width_height) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_malloc_host_cptr(a, width_height) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                               :: a
+      integer(kind=c_intptr_t), intent(in)      :: width_height
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_malloc_host_cptr_c(a, width_height) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_free_host_intptr(a) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_intptr_t) :: a
-!      logical                  :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_free_host_intptr_c(a) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
 
-!    function sycl_free_host_cptr(a) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr)                   :: a
-!      logical                  :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_free_host_cptr_c(a) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    ! We don't actually need these, all done in sycl_
+
+    function sycl_free_host_intptr(a) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t) :: a
+      logical                  :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_free_host_intptr_c(a) /= 0
+#else
+      success = .true.
+#endif
+    end function
+
+    function sycl_free_host_cptr(a) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                   :: a
+      logical                  :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_free_host_cptr_c(a) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
     function sycl_memset(a, val, size) result(success)
       use, intrinsic :: iso_c_binding
@@ -1986,22 +1989,22 @@
 #endif
     end function
 
-!    function sycl_memset_async(a, val, size, syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_intptr_t)                :: a
-!      integer(kind=ik)                        :: val
-!      integer(kind=c_intptr_t), intent(in)    :: size
-!      integer(kind=C_INT)                     :: istat
-!      integer(kind=c_intptr_t)                :: syclStream
-!      logical :: success
-!
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success= sycl_memset_async_c(a, int(val,kind=c_int), int(size,kind=c_intptr_t), syclStream) /=0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_memset_async(a, val, size, syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t)                :: a
+      integer(kind=ik)                        :: val
+      integer(kind=c_intptr_t), intent(in)    :: size
+      integer(kind=C_INT)                     :: istat
+      integer(kind=c_intptr_t)                :: syclStream
+      logical :: success
+
+#ifdef WITH_SYCL_GPU_VERSION
+      success= sycl_memset_async_c(a, int(val,kind=c_int), int(size,kind=c_intptr_t), syclStream) /=0
+#else
+      success = .true.
+#endif
+    end function
 
     function sycl_memcpyDeviceToDevice() result(flag)
       use, intrinsic :: iso_c_binding
@@ -2134,169 +2137,169 @@
 #endif
     end function
 
-!    function sycl_memcpy_async_intptr(dst, src, size, dir, syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t)              :: dst
-!      integer(kind=C_intptr_t)              :: src
-!      integer(kind=c_intptr_t), intent(in)  :: size
-!      integer(kind=C_INT), intent(in)       :: dir
-!      integer(kind=c_intptr_t), intent(in)  :: syclStream
-!      logical :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_memcpy_async_intptr_c(dst, src, size, dir, syclStream) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_memcpy_async_intptr(dst, src, size, dir, syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: syclStream
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_async_intptr_c(dst, src, size, dir, syclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_memcpy_async_cptr(dst, src, size, dir, syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr)                           :: dst
-!      type(c_ptr)                           :: src
-!      integer(kind=c_intptr_t), intent(in)  :: size
-!      integer(kind=C_INT), intent(in)       :: dir
-!      integer(kind=c_intptr_t), intent(in)  :: syclStream
-!      logical :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_memcpy_async_cptr_c(dst, src, size, dir, syclStream) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_memcpy_async_cptr(dst, src, size, dir, syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                           :: dst
+      type(c_ptr)                           :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: syclStream
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_async_cptr_c(dst, src, size, dir, syclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_memcpy_async_mixed_to_device(dst, src, size, dir, syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr)                           :: dst
-!      integer(kind=C_intptr_t)              :: src
-!      integer(kind=c_intptr_t), intent(in)  :: size
-!      integer(kind=C_INT), intent(in)       :: dir
-!      integer(kind=c_intptr_t), intent(in)  :: syclStream
-!      logical :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_memcpy_async_mixed_to_device_c(dst, src, size, dir, syclStream) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_memcpy_async_mixed_to_device(dst, src, size, dir, syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                           :: dst
+      integer(kind=C_intptr_t)              :: src
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: syclStream
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_async_mixed_to_device_c(dst, src, size, dir, syclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_memcpy_async_mixed_to_host(dst, src, size, dir, syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr)                           :: src
-!      integer(kind=C_intptr_t)              :: dst
-!      integer(kind=c_intptr_t), intent(in)  :: size
-!      integer(kind=C_INT), intent(in)       :: dir
-!      integer(kind=c_intptr_t), intent(in)  :: syclStream
-!      logical :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_memcpy_async_mixed_to_host_c(dst, src, size, dir, syclStream) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_memcpy_async_mixed_to_host(dst, src, size, dir, syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)                           :: src
+      integer(kind=C_intptr_t)              :: dst
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: dir
+      integer(kind=c_intptr_t), intent(in)  :: syclStream
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy_async_mixed_to_host_c(dst, src, size, dir, syclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T)           :: dst
-!      integer(kind=c_intptr_t), intent(in) :: dpitch
-!      integer(kind=C_intptr_T)           :: src
-!      integer(kind=c_intptr_t), intent(in) :: spitch
-!      integer(kind=c_intptr_t), intent(in) :: width
-!      integer(kind=c_intptr_t), intent(in) :: height
-!      integer(kind=C_INT), intent(in)    :: dir
-!      logical                            :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T)           :: dst
+      integer(kind=c_intptr_t), intent(in) :: dpitch
+      integer(kind=C_intptr_T)           :: src
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
+      integer(kind=C_INT), intent(in)    :: dir
+      logical                            :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy2d_intptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr)           :: dst
-!      integer(kind=c_intptr_t), intent(in) :: dpitch
-!      type(c_ptr)           :: src
-!      integer(kind=c_intptr_t), intent(in) :: spitch
-!      integer(kind=c_intptr_t), intent(in) :: width
-!      integer(kind=c_intptr_t), intent(in) :: height
-!      integer(kind=C_INT), intent(in)    :: dir
-!      logical                            :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)           :: dst
+      integer(kind=c_intptr_t), intent(in) :: dpitch
+      type(c_ptr)           :: src
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
+      integer(kind=C_INT), intent(in)    :: dir
+      logical                            :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy2d_cptr_c(dst, dpitch, src, spitch, width, height , dir) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T)           :: dst
-!      integer(kind=c_intptr_t), intent(in) :: dpitch
-!      integer(kind=C_intptr_T)           :: src
-!      integer(kind=c_intptr_t), intent(in) :: spitch
-!      integer(kind=c_intptr_t), intent(in) :: width
-!      integer(kind=c_intptr_t), intent(in) :: height
-!      integer(kind=C_INT), intent(in)    :: dir
-!      integer(kind=c_intptr_t), intent(in) :: syclStream
-!      logical                            :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_memcpy2d_async_intptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T)           :: dst
+      integer(kind=c_intptr_t), intent(in) :: dpitch
+      integer(kind=C_intptr_T)           :: src
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
+      integer(kind=C_INT), intent(in)    :: dir
+      integer(kind=c_intptr_t), intent(in) :: syclStream
+     logical                            :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy2d_async_intptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height, dir, syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      type(c_ptr)           :: dst
-!      integer(kind=c_intptr_t), intent(in) :: dpitch
-!      type(c_ptr)           :: src
-!      integer(kind=c_intptr_t), intent(in) :: spitch
-!      integer(kind=c_intptr_t), intent(in) :: width
-!      integer(kind=c_intptr_t), intent(in) :: height
-!      integer(kind=C_INT), intent(in)    :: dir
-!      integer(kind=c_intptr_t), intent(in) :: syclStream
-!      logical                            :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_memcpy2d_async_cptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height, dir, syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr)           :: dst
+      integer(kind=c_intptr_t), intent(in) :: dpitch
+      type(c_ptr)           :: src
+      integer(kind=c_intptr_t), intent(in) :: spitch
+      integer(kind=c_intptr_t), intent(in) :: width
+      integer(kind=c_intptr_t), intent(in) :: height
+      integer(kind=C_INT), intent(in)    :: dir
+      integer(kind=c_intptr_t), intent(in) :: syclStream
+      logical                            :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_memcpy2d_async_cptr_c(dst, dpitch, src, spitch, width, height, dir, syclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_host_register(a, size, flag) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t)              :: a
-!      integer(kind=c_intptr_t), intent(in)  :: size
-!      integer(kind=C_INT), intent(in)       :: flag
-!      logical :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_host_register_c(a, size, flag) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_host_register(a, size, flag) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)              :: a
+      integer(kind=c_intptr_t), intent(in)  :: size
+      integer(kind=C_INT), intent(in)       :: flag
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_host_register_c(a, size, flag) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_host_unregister(a) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t)              :: a
-!      logical :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_host_unregister_c(a) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_host_unregister(a) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)              :: a
+      logical :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_host_unregister_c(a) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
     subroutine syclblas_Dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclblasHandle)
       use, intrinsic :: iso_c_binding

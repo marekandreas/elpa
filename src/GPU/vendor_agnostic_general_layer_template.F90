@@ -593,8 +593,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: malloc_host"
-        stop 1
+        sycl_malloc_host_intptr(array, elements)
       endif
 #endif
 
@@ -639,8 +638,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: malloc_host"
-        stop 1
+        success = sycl_malloc_host_cptr(array, elements)
       endif
 #endif
 
@@ -764,8 +762,7 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
-        print *,"not yet implemented: host_register"
-        stop 1
+        success = sycl_host_register(array, elements, flag)
       endif
 #endif
 
@@ -1006,9 +1003,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        stop 1
-        !success = sycl_memcpy_intptr(dst, src, size, dir)
+        success = sycl_memcpy_async_intptr(dst, src, size, dir, stream)
       endif
 #endif
       return
@@ -1057,9 +1052,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        stop 1
-        !success = sycl_memcpy_cptr(dst, src, size, dir)
+        success = sycl_memcpy_async_cptr(dst, src, size, dir, stream)
       endif
 #endif
       return
@@ -1109,9 +1102,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        stop 1
-        !success = sycl_memcpy_mixed_to_device(dst, src, size, dir)
+        success = sycl_memcpy_async_mixed_to_device(dst, src, size, dir, stream)
       endif
 #endif
     
@@ -1160,8 +1151,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        !success = sycl_memcpy_mixed_to_host(dst, src, size, dir)
+        success = sycl_memcpy_async_mixed_to_host(dst, src, size, dir, stream)
       endif
 #endif
     
@@ -1258,9 +1248,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        !success = sycl_memset(a, int(val,kind=c_int32_t), size)
-        print *,"Sycl memset_async not yet implemented"
-        stop 1
+        success = sycl_memset_async(a, val, size, stream)
       endif
 #endif
 
@@ -1392,7 +1380,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_free_intptr(a)
+        success = sycl_free_host_intptr(a)
       endif
 #endif
 
@@ -1437,8 +1425,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_free"
-        stop 1
+        success = sycl_free_host_cptr(a)
       endif
 #endif
     end function
@@ -1482,8 +1469,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_unregister"
-        stop 1
+        success = sycl_host_unregister(a)
       endif
 #endif
 
@@ -1535,7 +1521,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_intptr"
+        success = sycl_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
         stop 1
       endif
 #endif
@@ -1587,8 +1573,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_cptr"
-        stop 1
+        success = sycl_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)
       endif
 #endif
     end function
@@ -1640,8 +1625,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_async_intptr"
-        stop 1
+        success = sycl_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, stream)
       endif
 #endif
     end function
@@ -1693,10 +1677,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_async-cptr"
-        stop 1
+        success = sycl_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height, dir, stream)
       endif
 #endif
     end function
-
-
