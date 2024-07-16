@@ -110,7 +110,7 @@
   MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), b(:,:), c(:,:)
   type(c_ptr)                                  :: aDev, bDev, cDev
 #endif /* DEVICE_POINTER */
-  MATH_DATATYPE(kind=rck), allocatable         :: at_full(:,:), bt_full(:,:) ! PETERDEBUG: needed for TT case
+  MATH_DATATYPE(kind=rck), allocatable         :: at_full(:,:), bt_full(:,:), buf_send(:,:), buf_recv(:,:) ! PETERDEBUG: needed for TT case
 
   integer(kind=ik)                             :: my_prow, my_pcol, np_rows, np_cols, myid
   integer(kind=ik)                             :: my_pdir, my_pdir_t, np_dirs, np_dirs_t ! PETERDEBUG_NEW
@@ -148,7 +148,13 @@
   integer(kind=c_int)                          :: numGPU, blocking, SM_count
   integer(kind=ik)                             :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=ik)                             :: mpi_comm_dirs ! PETERDEBUG_NEW
-  integer(kind=ik)                             :: nblk, error
+  integer(kind=ik)                             :: matrix_order ! PETERDEBUG_NEW --> needed only for transpose case
+  integer(kind=ik)                             :: my_mpi_rank, mpi_rank_target, my_prow_target, my_pcol_target, &
+                                                  mpi_rank_source, my_prow_source, my_pcol_source, &
+                                                  I_block_gl_target, J_block_gl_source ! PETERDEBUG_NEW --> needed only for transpose case
+
+  integer(kind=ik)                             :: nblk, nblk_cut, nblk_cut_row, nblk_cut_col
+  integer(kind=ik)                             :: error
   integer(kind=c_intptr_t)                     :: aux_bc_dev, aux_mat_dev, tmp1_dev, tmp2_dev
   integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev ! PETERDEBUG_NEW
 !#ifndef DEVICE_POINTER
@@ -217,6 +223,12 @@
     wantDebug = .false.
   endif
 
+  call obj%get("matrix_order", matrix_order, error)
+  if (error .ne. ELPA_OK) then
+    write(error_unit,*) "ELPA_PXGEMM_AB: Problem getting option matrix_order. Aborting..."
+    success = .false.
+    return
+  endif
 
 #if !defined(DEVICE_POINTER)
 
@@ -282,6 +294,8 @@
 
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
+
+  call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
 
   l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
   l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
@@ -427,8 +441,8 @@
   if (uplo_c=='u' .or. uplo_c=='U') c_upper = .true.
   if (uplo_c=='l' .or. uplo_c=='L') c_lower = .true.
 
-  isSquareGrid = .true.
-  if (np_rows/=np_cols) isSquareGrid = .false. ! PETERDEBUG switch off old codepath
+  isSquareGrid = .false. ! PETERDEBUG switch off old codepath
+  if (np_rows/=np_cols) isSquareGrid = .false. 
   if (a_upper .or. a_lower .or. c_upper .or. c_lower) isSquareGrid = .false.
   print *, "isSquareGrid = ", isSquareGrid ! PETERDEBUG
   print *, "a_upper = ", a_upper
@@ -483,8 +497,6 @@
   
   !nblk_mult = l_rows_max ! = l_cols_max
   nblk_mult = greatest_common_divisor(l_rows_max, l_cols_max)
-
-
 
   if (isSquareGrid) then
 
@@ -736,7 +748,7 @@
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_pxgemm: ccl_bcast", successGPU)
 
-          call obj%timer%stop("ccl_bcast")
+          call obj%timer%stop("ccl_reduce")
 #ifdef WITH_NVTX
           call nvtxRangePop() ! ccl_bcast aux_a_full_dev, aux_b_full_dev
 #endif
@@ -1081,8 +1093,8 @@
 
 ! ___________________________________________________________________
 
-    if ((.not. a_transposed) .and. (.not. b_transposed)) then
-      
+!    if ((.not. a_transposed) .and. (.not. b_transposed)) then
+    if (.not. b_transposed) then ! PETERDEBUG: try universal algorithm wrt transposition of a 
       allocate(aux_a_full(l_rows, nblk_mult), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
     
@@ -1091,7 +1103,22 @@
       
       allocate(tmp1_full(l_rows, l_cols), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm: tmp1_full", istat, errorMessage)
-  
+      
+      if (a_transposed) then
+        ! PETERDEBUG: probably not needed anymore after implementing aux_a_send_full
+        allocate(at_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
+        check_allocate("elpa_pxgemm: at_max", istat, errorMessage)
+
+        allocate(buf_send(nblk, nblk), stat=istat, errmsg=errorMessage)
+        check_allocate("elpa_pxgemm: buf_send", istat, errorMessage)
+
+        allocate(buf_recv(nblk, nblk), stat=istat, errmsg=errorMessage)
+        check_allocate("elpa_pxgemm: buf_recv", istat, errorMessage)
+
+        ! allocate(aux_a_send_full(nblk_mult, l_cols), stat=istat, errmsg=errorMessage)
+        ! check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
+      endif
+
       if (useGPU) then
         successGPU = gpu_malloc(aux_a_full_dev, l_rows*nblk_mult*size_of_datatype)
         check_alloc_gpu("elpa_pxgemm: aux_a_full_dev", successGPU)
@@ -1104,7 +1131,7 @@
       endif
 
       call obj%timer%start("main_loop_nn")
-      print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: (.not. a_transposed) .and. (.not. b_transposed)" ! PETERDEBUG
+      print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: (.not. a_transposed) .and. (.not. b_transposed) or universal" ! PETERDEBUG
 
       ! main loop: iterate through np_fine, which are "virtual" process rows for matrix A and process cols for matrix B
       do np_fine = 0, np_rows_fine-1 ! np_rows_fine=np_cols_fine
@@ -1140,38 +1167,154 @@
           nblk_mult_rows = nblk_mult_rows + mod(l_rows, nblk)
         endif
 
-        if (mod(np_bc_fine,np_cols) == my_pcol) then
-          if (useGPU) then
-            call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, a_dev, aux_a_full_dev, l_rows, l_cols, &
-                                                   nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
-          else ! useGPU
-            do j_block_loc_fine = 0, nblk_mult_cols/nblk-1
-              j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
-              aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: nblk+j_block_loc_fine*nblk) = &
-                       a(1:l_rows, 1+j_block_loc*nblk     : nblk+j_block_loc*nblk)
-            enddo ! j_block_loc_fine
-            if (mod(nblk_mult_cols,nblk) /= 0) then ! last incomplete nblk-block
-              j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
-              aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: mod(nblk_mult_cols,nblk)+j_block_loc_fine*nblk) = &
-                       a(1:l_rows, 1+j_block_loc*nblk     : mod(nblk_mult_cols,nblk)+j_block_loc*nblk)
-            endif
-          endif ! useGPU
-        endif
+        ! PETERDEBUG: transpose should be done instead of the codeblock below
+        ! we can transpose and compress in one step
+        if (a_transposed) then
+          ! a -> at_full: transpose block-row #np_fine of a
+          ! Send
+          if (mod(np_fine,np_rows) == my_prow) then
+            do j_block_loc = 0, (l_cols+nblk-1)/nblk - 1
+              nblk_cut_col = min(nblk, l_cols-j_block_loc*nblk)
+              J_block_gl = j_block_loc*np_cols + my_pcol
+              I_block_gl_target = J_block_gl
+              my_prow_target = mod(I_block_gl_target, np_rows)
+              !i_block_loc_target = I_block_gl/np_rows
+
+              my_pcol_target = mod(np_bc_fine, np_cols)
+              !j_block_loc_target = np_fine_bc/np_cols
+
+              if (matrix_order==COLUMN_MAJOR_ORDER) then
+                mpi_rank_target = my_prow_target + np_rows*my_pcol_target
+              else
+                mpi_rank_target = my_pcol_target + np_cols*my_prow_target
+              endif
+
+              ! do i_block_loc_fine = 0, nblk_mult_rows/nblk-1
+              !   i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
+              !   aux_a_send_full(1+i_block_loc_fine*nblk: nblk+i_block_loc_fine*nblk,1:l_cols) = &
+              !                 a(1+i_block_loc     *nblk: nblk+i_block_loc     *nblk,1:l_cols)
+              ! enddo
+
+              do i_block_loc_fine = 0, (nblk_mult_rows+nblk-1)/nblk - 1
+                nblk_cut_row = min(nblk, nblk_mult_rows-i_block_loc_fine*nblk)
+                i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
+                ! PETERDEBUG: l_rows = nblk so far
+                ! if (mpi_rank_target == my_mpi_rank) then
+                !   at_full(1:l_rows, 1+j_block_loc*nblk: nblk+j_block_loc*nblk) = &
+                !         a(1:l_rows, 1+j_block_loc*nblk     : nblk+j_block_loc*nblk)
+                ! else
+                  buf_send(1:nblk_cut_row, 1:nblk_cut_col) = &
+                         a(1+i_block_loc*nblk: nblk_cut_row+i_block_loc*nblk, 1+j_block_loc*nblk: nblk_cut_col+j_block_loc*nblk)
+                  call MPI_Send(buf_send, int(nblk*nblk,kind=MPI_KIND), &
+                          MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_target,kind=MPI_KIND), 0, &
+                          int(mpi_comm_all,kind=MPI_KIND),mpierr)
+                ! endif
+              enddo ! i_block_loc_fine
+              ! if (mod(nblk_mult_rows,nblk) /= 0) then ! last incomplete nblk-block
+              !   i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
+              !   buf_send(1:nblk, 1:nblk) = &
+              !            a(1:l_rows, 1+j_block_loc*nblk     : mod(nblk_mult_cols,nblk)+j_block_loc*nblk)
+              ! endif
+            enddo ! j_block_loc
+          endif
+
+          ! Recv
+          if (mod(np_bc_fine,np_cols) == my_pcol) then
+            do i_block_loc = 0, (l_rows+nblk-1)/nblk - 1
+              nblk_cut_row = min(nblk, l_rows-i_block_loc*nblk)
+              I_block_gl = i_block_loc*np_rows + my_prow
+              J_block_gl_source = I_block_gl
+              my_pcol_source = mod(J_block_gl_source, np_cols)
+              !j_block_loc_source = J_block_gl_source/np_cols
+
+              my_prow_source = mod(np_fine, np_rows)
+              !i_block_loc_source = np_fine/np_rows
+
+              if (matrix_order==COLUMN_MAJOR_ORDER) then
+                mpi_rank_source = my_prow_source + np_rows*my_pcol_source
+              else
+                mpi_rank_source = my_pcol_source + np_cols*my_prow_source
+              endif
+
+              do j_block_loc_fine = 0, (nblk_mult_cols+nblk-1)/nblk - 1
+                nblk_cut_col = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
+                j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+                ! if (mpi_rank_target /= my_mpi_rank) then
+                  call MPI_Recv(buf_recv, int(nblk*nblk,kind=MPI_KIND), &
+                                MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_source,kind=MPI_KIND), 0, &
+                                int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+                  at_full(1+i_block_loc*nblk:nblk_cut_row+i_block_loc*nblk, 1+j_block_loc*nblk:nblk_cut_col+j_block_loc*nblk) = &
+                          transpose(buf_recv(1:nblk_cut_col, 1:nblk_cut_row))
+                ! endif
+              enddo ! j_block_loc_fine
+              ! if (mod(nblk_mult_cols,nblk) /= 0) then ! last incomplete nblk-block
+              !   j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+              !   ! aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: mod(nblk_mult_cols,nblk)+j_block_loc_fine*nblk) = &
+              !   !          a(1:l_rows, 1+j_block_loc*nblk     : mod(nblk_mult_cols,nblk)+j_block_loc*nblk)
+              ! endif
+            enddo ! i_block_loc
+          endif
+
+
+          if (mod(np_bc_fine,np_cols) == my_pcol) then
+            if (useGPU) then
+              call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, a_dev, aux_a_full_dev, l_rows, l_cols, &
+                                                    nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
+            else ! useGPU
+              do j_block_loc_fine = 0, (nblk_mult_cols+nblk-1)/nblk - 1
+                nblk_cut = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
+                j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+                aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: nblk_cut+j_block_loc_fine*nblk) = &
+                   at_full(1:l_rows, 1+j_block_loc*nblk     : nblk_cut+j_block_loc*nblk)
+              enddo ! j_block_loc_fine
+              ! PETERDEBUG: cleanup after testing
+              ! if (mod(nblk_mult_cols,nblk) /= 0) then ! last incomplete nblk-block
+              !   j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+              !   aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: mod(nblk_mult_cols,nblk)+j_block_loc_fine*nblk) = &
+              !      at_full(1:l_rows, 1+j_block_loc*nblk     : mod(nblk_mult_cols,nblk)+j_block_loc*nblk)
+              ! endif
+            endif ! useGPU
+          endif ! (mod(np_bc_fine,np_cols) == my_pcol)
+
+        else ! a_transposed
+          if (mod(np_bc_fine,np_cols) == my_pcol) then
+            if (useGPU) then
+              call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, a_dev, aux_a_full_dev, l_rows, l_cols, &
+                                                    nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
+            else ! useGPU
+              do j_block_loc_fine = 0, (nblk_mult_cols+nblk-1)/nblk - 1
+                nblk_cut = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
+                j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+                aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: nblk_cut+j_block_loc_fine*nblk) = &
+                         a(1:l_rows, 1+j_block_loc*nblk     : nblk_cut+j_block_loc*nblk)
+              enddo ! j_block_loc_fine
+              ! PETERDEBUG: cleanup after testing
+              ! if (mod(nblk_mult_cols,nblk) /= 0) then ! last incomplete nblk-block
+              !   j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+              !   aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: mod(nblk_mult_cols,nblk)+j_block_loc_fine*nblk) = &
+              !            a(1:l_rows, 1+j_block_loc*nblk     : mod(nblk_mult_cols,nblk)+j_block_loc*nblk)
+              ! endif
+            endif ! useGPU
+          endif ! (mod(np_bc_fine,np_cols) == my_pcol)
+        endif ! a_transposed
+
         if (mod(np_fine,np_rows) == my_prow) then
           if (useGPU) then
             call gpu_copy_and_set_zeros_aux_b_full(PRECISION_CHAR, b_dev, aux_b_full_dev, l_rows, l_cols, nblk_mult, &
                                                    nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, SM_count, debug, my_stream)
           else ! useGPU
-            do i_block_loc_fine = 0, nblk_mult_rows/nblk-1
+            do i_block_loc_fine = 0, (nblk_mult_rows+nblk-1)/nblk - 1
+              nblk_cut = min(nblk, nblk_mult_rows-i_block_loc_fine*nblk)
               i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
-              aux_b_full(1+i_block_loc_fine*nblk: nblk+i_block_loc_fine*nblk, 1:l_cols) = &
-                       b(1+i_block_loc*nblk     : nblk+i_block_loc*nblk     , 1:l_cols)
+              aux_b_full(1+i_block_loc_fine*nblk: nblk_cut+i_block_loc_fine*nblk, 1:l_cols) = &
+                       b(1+i_block_loc*nblk     : nblk_cut+i_block_loc*nblk     , 1:l_cols)
             enddo ! i_block_loc_fine
-            if (mod(nblk_mult_rows,nblk) /= 0) then ! last incomplete nblk-block
-              i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
-              aux_b_full(1+i_block_loc_fine*nblk: mod(nblk_mult_rows,nblk)+i_block_loc_fine*nblk, 1:l_cols) = &
-                       b(1+i_block_loc*nblk     : mod(nblk_mult_rows,nblk)+i_block_loc*nblk     , 1:l_cols)
-            endif
+            ! PETERDEBUG: cleanup after testing
+            ! if (mod(nblk_mult_rows,nblk) /= 0) then ! last incomplete nblk-block
+            !   i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
+            !   aux_b_full(1+i_block_loc_fine*nblk: mod(nblk_mult_rows,nblk)+i_block_loc_fine*nblk, 1:l_cols) = &
+            !            b(1+i_block_loc*nblk     : mod(nblk_mult_rows,nblk)+i_block_loc*nblk     , 1:l_cols)
+            ! endif
           endif ! useGPU
         endif
 
@@ -1326,12 +1469,20 @@
 
       c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
 
+      if (a_transposed) then
+        deallocate(at_full, stat=istat, errmsg=errorMessage)
+        call check_alloc("elpa_pxgemm", "at_full", istat, errorMessage)
+
+        deallocate(buf_send, buf_recv, stat=istat, errmsg=errorMessage)
+        call check_alloc("elpa_pxgemm", "buf_send, buf_recv", istat, errorMessage)
+      endif
+
     endif ! (a_transposed .and. b_transposed)
 
 ! ___________________________________________________________________
     
-    if (.not. a_transposed .and.       b_transposed .or. &
-              a_transposed .and. .not. b_transposed ) then
+    if (.false. .and. (.not. a_transposed .and.       b_transposed .or. &
+              a_transposed .and. .not. b_transposed )) then
       print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: ( a_transposed XOR b_transposed)" ! PETERDEBUG
       
       ! dir = row/col for TN/NT
