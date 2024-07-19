@@ -49,16 +49,76 @@
 
 #pragma once
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 
 #ifdef WITH_ONEAPI_ONECCL
 #include <oneapi/ccl.hpp>
 #endif
 
-namespace elpa {
-namespace gpu {
-namespace sycl {
+namespace sycl_be {
 
+struct QueueData {
+  sycl::queue queue;
+  size_t oneMklScratchpadSize;
+  void *oneMklScratchpad;
+
+#ifdef WITH_ONEAPI_ONECCL
+  ccl::device cclDevice;
+  ccl::context cclContext;
+  ccl::stream cclStream;
+#endif  
+
+  QueueData(sycl::device device);
+  ~QueueData();
+
+  void increaseScratchpadSize(size_t newSize);
+
+#ifdef WITH_ONEAPI_ONECCL
+  ccl::stream* getCclStreamRef();
+#endif
+};
+
+struct DeviceSelection {
+  int deviceId;
+  sycl::device device;
+  std::vector<QueueData> queueHandles;
+  
+#ifdef WITH_ONEAPI_ONECCL
+  using cclKvsHandle = ccl::shared_ptr_class<ccl::kvs>;
+  std::unordered_map<void *, egs::cclKvsHandle> kvsMap;
+#endif
+
+  DeviceSelection(int deviceId, sycl::device device);
+  QueueData* createQueue();
+  QueueData* getQueue(int id);
+#ifdef WITH_ONEAPI_ONECCL
+  void registerKvs(void *kvsAddr, cclKvsHandle kvs);
+  std::optional<cclKvsHandle> retrieveKvs(void *kvsAddress);
+#endif
+};
+
+
+class SyclState {
+  static std::optional<SyclState> _staticState;
+
+  std::vector<sycl::device> devices;
+  
+  SyclState(bool onlyL0Gpus = false);
+  
+  public:
+  
+  void printGpuInfo();
+  int selectGpuDevice(int deviceNum);
+  size_t getNumDevices();
+  DeviceSelection *getDeviceHandle();
+
+
+  static SyclState& defaultState();
+  static void initialize(bool onlyL0Gpus = false);
+
+};
+
+/*
   void collectGpuDevices(bool onlyGpus);
   void collectCpuDevices();
   void printGpuInfo();
@@ -67,28 +127,10 @@ namespace sycl {
   void selectDefaultGpuDevice();
   size_t getNumDevices();
   size_t getNumCpuDevices();
-  cl::sycl::device getDevice();
-  cl::sycl::queue getQueue();
-  cl::sycl::queue* getQueueRef();
-
+  sycl::device getDevice();
+  sycl::queue getQueue();
+  sycl::queue* getQueueRef();
+*/
   
-
-#ifdef WITH_ONEAPI_ONECCL
-  // oneCCL deals with objects rather than opaque handles. Thus, ELPA becomes responsible for keeping them.
-  // To keep the interface uniform, ELPA mostly deals with pointers. Where possible, I use them, but in some
-  // cases, memoizing the values is necessary.
-
-  using cclKvsHandle = ccl::shared_ptr_class<ccl::kvs>;
-  void registerKvs(void *kvsAddr, cclKvsHandle kvs);
-  std::optional<cclKvsHandle> retrieveKvs(void *kvsAddress);
-
-  ccl::device& getCclDevice();
-  ccl::context& getCclContext();
-  ccl::stream& getCclStream();
-  ccl::stream* getCclStreamRef();
-#endif
-
-}
-}
 }
 #endif

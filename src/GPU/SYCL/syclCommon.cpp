@@ -61,78 +61,65 @@
 #endif
 
 
-struct device_selection {
-    int deviceId;
-    cl::sycl::queue queue;
-#ifdef WITH_ONEAPI_ONECCL
-    ccl::device cclDevice;
-    ccl::context cclContext;
-    ccl::stream cclStream;
-#endif
 
-    device_selection(int deviceId, cl::sycl::queue queue)
-      : deviceId(deviceId), queue(queue)
-#ifdef WITH_ONEAPI_ONECCL
-      , cclDevice(ccl::create_device(queue.get_device())),
-        cclContext(ccl::create_context(queue.get_context())),
-        cclStream(ccl::create_stream(queue))
-#endif
-    {}
-};
-
-static bool deviceCollectionFlag = false;
-
-std::vector<cl::sycl::device> devices;
-std::optional<device_selection> chosenQueue;
-
-namespace egs = elpa::gpu::sycl;
-
-#ifdef WITH_ONEAPI_ONECCL
-std::unordered_map<void *, egs::cclKvsHandle> kvsMap;
-#endif
-
-void egs::collectGpuDevices(bool onlyGpus) {
-  if (deviceCollectionFlag) {
-    return;
+void sycl_be::SyclState::initialize(bool onlyL0Gpus) {
+  if (sycl_be::SyclState::_staticState) {
+    std::cout << "SyclStaticState already initialized! This will not query devices again." << std::endl;
   } else {
-    deviceCollectionFlag = true;
+    SyclState::_staticState = std::make_optional(SyclState(onlyL0Gpus));
   }
+}
 
-  // ELPA is a library, and hence we cannot assume the user's environment.
-  // Therefore, we may need to be opinionated about the device selection.
-  // Currently, devices are displayed in duplicate, if they are supported by multiple platforms.
-  // For now, the default behavior is to only utilize the Intel Level Zero platform and and GPUs.
-  // This will have to be changed later as we move towards generalizing the backend.
-  // Alternatively, one can pass an enviromental variable to let ELPA reveal and circle through
-  // all available devices. The displayed devices can then be limited through SYCL device filters
-  // expressed in SYCL env variables.
-  namespace si = cl::sycl::info;
-  for (auto const &p : cl::sycl::platform::get_platforms()) {
-    if (!onlyGpus || (p.get_info<si::platform::name>().find("Level-Zero") != std::string::npos)) {
-      for (auto dev : p.get_devices((onlyGpus) ? si::device_type::gpu : si::device_type::all)) {
+/**
+ * @param onlyL0Gpus: ELPA is a library, and hence we cannot assume the user's environment.
+ * Therefore, we may need to be opinionated about the device selection.
+ * Currently, devices are displayed in duplicate, if they are supported by multiple platforms.
+ * For now, the default behavior is to only utilize the Intel Level Zero platform and and GPUs.
+ * This will have to be changed later as we move towards generalizing the backend.
+ * Alternatively, one can pass an enviromental variable to let ELPA reveal and circle through
+ * all available devices. The displayed devices can then be limited through SYCL device filters
+ * expressed in SYCL env variables.
+ */
+sycl_be::SyclState::SyclState(bool onlyL0Gpus) {
+  namespace si = sycl::info;
+  for (auto const &p : sycl::platform::get_platforms()) {
+    if (!onlyL0Gpus || (p.get_info<si::platform::name>().find("Level-Zero") != std::string::npos)) {
+      auto deviceType = (onlyL0Gpus) ? si::device_type::gpu : si::device_type::all;
+      for (auto dev : p.get_devices(deviceType)) {
           devices.push_back(dev);
       }
     }
   }
 }
 
-void egs::collectCpuDevices() {
-  if (deviceCollectionFlag) {
-    return;
-  } else {
-    deviceCollectionFlag = true;
-  }
-  std::cout << "DO NOT CALL THIS!!!!!!!!!!!!!" << std::endl;
-  // We need to be opinionated about the device selection. Currently, devices are displayed in duplicate, if they are supported
-  // by multiple platforms. For now, a first step could be only supporting level zero and Intel GPUs. This will have to be
-  // changed later as we move towards generalizing the backend.
-  for (auto const &p : cl::sycl::platform::get_platforms()) {
-    for (auto dev : p.get_devices()) {
-      devices.push_back(dev);
-    }
-  }
+size_t sycl_be::SyclState::getNumDevices() {
+  return devices.size();
 }
 
+void sycl_be::SyclState::printGpuInfo() {
+#ifdef WITH_MPI
+  int mpiRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+  if (mpiRank > 0) {
+    return;
+  }
+#endif
+
+  std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA SYCL Backend Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
+  std::cout << "# GPU devices:     " << devices.size() << std::endl;
+  std::cout << "Eligible devices: " << std::endl;
+  for (size_t i = 0; i < devices.size(); i++) {
+    bool hasDpSupport = devices[i].has(sycl::aspect::fp64);
+    std::cout << " - Device #" << i << ": "
+      << devices[i].get_platform().get_info<sycl::info::platform::name>() << " -> "
+      << devices[i].get_info<sycl::info::device::name>() << " ("
+      << devices[i].get_info<sycl::info::device::max_compute_units>() << " EUs"
+      << (hasDpSupport ? "" : ", SP only") << ")" << std::endl;
+  }
+  std::cout << "~~~~~~~~~~~~~~~~ END ELPA SYCL Backend Info ~~~~~~~~~~~~~~~~~~~" << std::endl;
+}
+/**
 int egs::selectGpuDevice(int deviceId) {
   if (deviceId >= devices.size()){
     std::cerr << "Invalid GPU device ID selected, only " << devices.size() << " devices available." << std::endl;
@@ -150,13 +137,6 @@ int egs::selectGpuDevice(int deviceId) {
   }
   return 1;
 }
-
-int egs::selectCpuDevice(int deviceId) {
-  collectCpuDevices();
-  egs::selectGpuDevice(deviceId);
-  return 1;
-}
-
 #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
 #define GPU_SELECTOR cl::sycl::gpu_selector()
 #else
@@ -183,41 +163,9 @@ cl::sycl::device egs::getDevice() {
   return chosenQueue->queue.get_device();
 }
 
-size_t egs::getNumDevices() {
-  return devices.size();
-}
+*/
 
-size_t egs::getNumCpuDevices() {
-  collectCpuDevices();
-  return devices.size();
-}
 
-void egs::printGpuInfo() {
-#ifdef WITH_MPI
-  int mpiRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-  if (mpiRank > 0) {
-    return;
-  }
-#endif
-
-  const std::string RED = "\033[31m";
-  const std::string RESET = "\033[0m";
-  std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA GPU Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
-  std::cout << "# GPU devices:     " << devices.size() << std::endl;
-  std::cout << "Eligible devices: " << std::endl;
-  for (size_t i = 0; i < devices.size(); i++) {
-    bool isChosenDevice = chosenQueue && (chosenQueue->deviceId == i);
-    bool hasDpSupport = devices[i].has(cl::sycl::aspect::fp64);
-    std::cout << (isChosenDevice ? RED : "") << " - Device #" << i << ": "
-      << devices[i].get_platform().get_info<cl::sycl::info::platform::name>() << " -> "
-      << devices[i].get_info<cl::sycl::info::device::name>() << " ("
-      << devices[i].get_info<cl::sycl::info::device::max_compute_units>() << " EUs"
-      << (hasDpSupport ? "" : ", SP only") << ")" << (isChosenDevice ? RESET : "")<< std::endl;
-  }
-  std::cout << "~~~~~~~~~~~~~~~~ END ELPA GPU Info ~~~~~~~~~~~~~~~~~~~" << std::endl;
-}
 
 #ifdef WITH_ONEAPI_ONECCL
 ccl::device& egs::getCclDevice() {
