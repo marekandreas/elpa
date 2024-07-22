@@ -92,6 +92,14 @@ sycl_be::SyclState::SyclState(bool onlyL0Gpus) {
   }
 }
 
+void sycl_be::SyclState& sycl_be::SyclState::defaultState() {
+  if (_staticState) {
+    return *_static_state;
+  } else {
+    throw std::runtime_error("SyclState not initialized!");
+  }
+}
+
 size_t sycl_be::SyclState::getNumDevices() {
   return devices.size();
 }
@@ -119,52 +127,18 @@ void sycl_be::SyclState::printGpuInfo() {
   }
   std::cout << "~~~~~~~~~~~~~~~~ END ELPA SYCL Backend Info ~~~~~~~~~~~~~~~~~~~" << std::endl;
 }
-/**
-int egs::selectGpuDevice(int deviceId) {
-  if (deviceId >= devices.size()){
-    std::cerr << "Invalid GPU device ID selected, only " << devices.size() << " devices available." << std::endl;
-    return 0;
-  }
-  if (!chosenQueue || chosenQueue->deviceId != deviceId) {
-    cl::sycl::property::queue::in_order io;
-    cl::sycl::property_list props(io);
-    auto dev = devices[deviceId];
-    std::cout << " - Device #" << deviceId << ": "
-      << dev.get_platform().get_info<cl::sycl::info::platform::name>() << " -> "
-      << dev.get_info<cl::sycl::info::device::name>() << " ("
-      << dev.get_info<cl::sycl::info::device::max_compute_units>() << " EUs)" << std::endl;
-    chosenQueue = std::make_optional<device_selection>(deviceId, cl::sycl::queue(devices[deviceId], props));
-  }
-  return 1;
-}
-#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
-#define GPU_SELECTOR cl::sycl::gpu_selector()
-#else
-#define GPU_SELECTOR cl::sycl::gpu_selector_v
-#endif
-void egs::selectDefaultGpuDevice() {
-  cl::sycl::property::queue::in_order io;
-  cl::sycl::property_list props(io);
-  chosenQueue = std::make_optional<device_selection>(0, cl::sycl::queue(GPU_SELECTOR, props));
-}
-#undef GPU_SELECTOR
 
-cl::sycl::queue egs::getQueue() {
-  if (!chosenQueue) {
-    egs::selectDefaultGpuDevice();
-  }
-  return chosenQueue->queue;
+sycl_be::DeviceSelection& sycl_be::SyclState::selectGpuDevice(int deviceNum) {
+
 }
 
-cl::sycl::device egs::getDevice() {
-  if (!chosenQueue) {
-    egs::selectDefaultGpuDevice();
-  }
-  return chosenQueue->queue.get_device();
+sycl_be::DeviceSelection& sycl_be::SyclState::getDeviceHandle(deviceNum) {
+
 }
 
-*/
-
+sycl_be::DeviceSelection& sycl_be::SyclState::getDefaultDeviceHandle() {
+  
+}
 
 
 #ifdef WITH_ONEAPI_ONECCL

@@ -66,11 +66,7 @@ using namespace cl;
 extern "C" {
 
 static void collectGpuDevices(bool onlyGpus) {
-  elpa::gpu::sycl::collectGpuDevices(onlyGpus);
-}
-
-static void collectCpuDevices() {
-  elpa::gpu::sycl::collectCpuDevices();
+  sycl_be::SyclState::initialize(onlyGpus);
 }
 
 bool isCPU=0;
@@ -148,26 +144,13 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   int syclGetDeviceCountFromC(int *count, int onlyL0Gpus) {
-    int count_tmp;
     collectGpuDevices(onlyL0Gpus != 0);
-    count_tmp = elpa::gpu::sycl::getNumDevices();
-    *count = count_tmp;
-    return 1;
-  }
-
-  int syclGetCpuCountFromC(int *count) {
-    int count_tmp;
-    collectCpuDevices();
-    count_tmp = elpa::gpu::sycl::getNumCpuDevices();
-    if (count_tmp > 0) {
-      isCPU=1;
-    }
-    *count = count_tmp;
+     *count = sycl_be::SyclState.defaultState().getNumDevices();
     return 1;
   }
 
   int syclSetDeviceFromC(int targetGpuDeviceId) {
-    int success = elpa::gpu::sycl::selectGpuDevice(targetGpuDeviceId);
+    int success = sycl_be::SyclState::defaultState().selectGpuDevice(targetGpuDeviceId);
     if (!success) {
       std::cout << "<<<<<<< GPU " << targetGpuDeviceId << " cannot be selected. >>>>>>>>" << std::endl;
     }
@@ -175,17 +158,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclSetGpuParamsFromC() {
-    // These do not really have any meaning, as there is an universal address space,
-    // and as long as the pointer is either a host pointer, or of the chosen GPU, there
-    // is no need to indicate the direction. However, they are used by ELPA, and we can
-    // use them as an indication to help detect programming errors such as switched src
-    // and dst.
-    syclMemcpyHostToDevice = 0;
-    syclMemcpyDeviceToHost = 1;
-    syclMemcpyDeviceToDevice = 2;
-  }
-
-  void syclSetCpuParamsFromC() {
     // These do not really have any meaning, as there is an universal address space,
     // and as long as the pointer is either a host pointer, or of the chosen GPU, there
     // is no need to indicate the direction. However, they are used by ELPA, and we can
@@ -217,7 +189,8 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   int syclMallocFromC(intptr_t *a, size_t elems) {
-    auto queue = elpa::gpu::sycl::getQueue();
+    using namespace sycl_be;
+    SyclState::defaultState().
     *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, queue));
     char *bytes = reinterpret_cast<char *>(*a);
     if (*a) {

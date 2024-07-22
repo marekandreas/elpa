@@ -167,7 +167,7 @@ extern "C" {
 
   int onecclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, ccl::datatype onecclDatatype, ccl::reduction onecclOp, int root, ccl::communicator *onecclComm, ccl::stream stream) {
     if (onecclOp == ccl::reduction::custom) {
-      errormessage("%s\n", "Error in onecclAllReduce: ccl::reduction::custom is not supported in ELPA. (Likely you wanted avg, which oneCCL doesn't have)");
+      errormessage("%s\n", "Error in onecclReduce: ccl::reduction::custom is not supported in ELPA. (Likely you wanted avg, which oneCCL doesn't have)");
       return 0;
     }
 
