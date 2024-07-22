@@ -59,11 +59,11 @@ namespace sycl_be {
 
 struct QueueData {
   sycl::queue queue;
-  size_t oneMklScratchpadSize;
-  void *oneMklScratchpad; 
 #ifdef WITH_ONEAPI_ONECCL
   ccl::stream cclStream;
 #endif  
+  size_t oneMklScratchpadSize;
+  void *oneMklScratchpad; 
 
   QueueData(sycl::device device);
   ~QueueData();
@@ -78,10 +78,10 @@ struct QueueData {
 
 struct DeviceSelection {
   int deviceId;
+  sycl::device device;
 #ifdef WITH_ONEAPI_ONECCL
   ccl::device cclDevice;
 #endif  
-  sycl::device device;
   QueueData defaultQueueHandle;
   std::vector<QueueData> queueHandles;
 

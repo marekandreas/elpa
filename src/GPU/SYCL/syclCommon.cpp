@@ -60,10 +60,15 @@
 #include <oneapi/ccl.hpp>    
 #endif
 
+using namespace sycl_be;
+
+//--------------------------------------------------------------------------------------------
+// SyclState
+//--------------------------------------------------------------------------------------------
 
 
-void sycl_be::SyclState::initialize(bool onlyL0Gpus) {
-  if (sycl_be::SyclState::_staticState) {
+void SyclState::initialize(bool onlyL0Gpus) {
+  if (SyclState::_staticState) {
     std::cout << "SyclStaticState already initialized! This will not query devices again." << std::endl;
   } else {
     SyclState::_staticState = std::make_optional(SyclState(onlyL0Gpus));
@@ -80,7 +85,8 @@ void sycl_be::SyclState::initialize(bool onlyL0Gpus) {
  * all available devices. The displayed devices can then be limited through SYCL device filters
  * expressed in SYCL env variables.
  */
-sycl_be::SyclState::SyclState(bool onlyL0Gpus) {
+SyclState::SyclState(bool onlyL0Gpus)
+  : defaultDevice(-1) {
   namespace si = sycl::info;
   for (auto const &p : sycl::platform::get_platforms()) {
     if (!onlyL0Gpus || (p.get_info<si::platform::name>().find("Level-Zero") != std::string::npos)) {
@@ -92,7 +98,7 @@ sycl_be::SyclState::SyclState(bool onlyL0Gpus) {
   }
 }
 
-void sycl_be::SyclState& sycl_be::SyclState::defaultState() {
+void SyclState& SyclState::defaultState() {
   if (_staticState) {
     return *_static_state;
   } else {
@@ -100,11 +106,11 @@ void sycl_be::SyclState& sycl_be::SyclState::defaultState() {
   }
 }
 
-size_t sycl_be::SyclState::getNumDevices() {
+size_t SyclState::getNumDevices() {
   return devices.size();
 }
 
-void sycl_be::SyclState::printGpuInfo() {
+void SyclState::printGpuInfo() {
 #ifdef WITH_MPI
   int mpiRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -122,23 +128,107 @@ void sycl_be::SyclState::printGpuInfo() {
     std::cout << " - Device #" << i << ": "
       << devices[i].get_platform().get_info<sycl::info::platform::name>() << " -> "
       << devices[i].get_info<sycl::info::device::name>() << " ("
+      << devices[i].get_info<sycl::info::device::type>() << ", "
       << devices[i].get_info<sycl::info::device::max_compute_units>() << " EUs"
       << (hasDpSupport ? "" : ", SP only") << ")" << std::endl;
   }
   std::cout << "~~~~~~~~~~~~~~~~ END ELPA SYCL Backend Info ~~~~~~~~~~~~~~~~~~~" << std::endl;
 }
 
-sycl_be::DeviceSelection& sycl_be::SyclState::selectGpuDevice(int deviceNum) {
-
+DeviceSelection& SyclState::selectGpuDevice(int deviceNum) {
+  if (deviceNum < this->devices.size()) {
+    this->defaultDevice = deviceNum;
+  } else {
+    throw std::runtime_error("Device number out of range!");
+  }
 }
 
-sycl_be::DeviceSelection& sycl_be::SyclState::getDeviceHandle(deviceNum) {
-
+DeviceSelection& SyclState::getDeviceHandle(deviceNum) {
+  if (deviceData.find(deviceNum) != deviceData.end()) {
+    return this->deviceData[deviceNum];
+  } else if (deviceNum < this->devices.size() && deviceNum >= 0) {
+    this->deviceData.insert({deviceNum, DeviceSelection(deviceNum, this->devices[deviceNum])});
+  } else {
+    throw std::runtime_error("No GPU device chosen yet. No handle available.");     
+  }
 }
 
-sycl_be::DeviceSelection& sycl_be::SyclState::getDefaultDeviceHandle() {
-  
+DeviceSelection& SyclState::getDefaultDeviceHandle() {
+  return this->getDeviceHandle(this->defaultDevice);
 }
+
+#ifdef WITH_ONEAPI_ONECCL
+std::optional<egs::cclKvsHandle> SyclState::retrieveKvs(void *kvsAddress) {
+  if (kvsMap.find(kvsAddress) != kvsMap.end()) {
+    return kvsMap[kvsAddress];
+  }
+  return std::nullopt;
+}
+
+void SyclState::registerKvs(void *kvsAddr, egs::cclKvsHandle kvs) {
+  kvsMap.insert({kvsAddr, kvs});
+}
+#endif
+
+//--------------------------------------------------------------------------------------------
+// DeviceSelection
+//--------------------------------------------------------------------------------------------
+
+DeviceSelection::DeviceSelection(int deviceId, sycl::device device) 
+  : deviceId(deviceId),
+    device(device), 
+#ifdef WITH_ONEAPI_ONECCL
+    cclDevice(ccl::create_device(this->device)),
+#endif
+    defaultQueueHandle(device) {
+  queueHandles.push_back(defaultQueueHandle);
+}
+
+QueueData* DeviceSelection::createQueue() {
+  queueHandles.emplace_back(device);
+  return &queueHandles.back();
+}
+
+QueueData* DeviceSelection::getQueue(int id) {
+  if (id < queueHandles.size()) {
+    return &queueHandles[id];
+  } else {
+    throw std::runtime_error("Queue ID does not exist.");
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+// QueueData
+//--------------------------------------------------------------------------------------------
+
+QueueData::QueueData(sycl::device device) 
+  : queue(device, sycl::property_list(sycl::property::queue::in_order()),
+#ifdef WITH_ONEAPI_ONECCL
+    cclStream(ccl::create_stream(queue)),
+#endif
+    oneMklScratchpadSize(0),
+    oneMklScratchpad(nullptr) {}
+
+ QueueData::~QueueData() {
+    if (oneMklScratchpad) {
+      sycl::free(oneMklScratchpad, queue);
+    }
+ }
+
+void QueueData::increaseScratchpadSize(size_t newSize) {
+  if (newSize > oneMklScratchpadSize) {
+    if (oneMklScratchpad) {
+      sycl::free(oneMklScratchpad, queue);
+    }
+    oneMklScratchpad = sycl::malloc_shared<void>(newSize, this->queue);
+    oneMklScratchpadSize = newSize;
+  }
+}
+#ifdef WITH_ONEAPI_ONECCL
+ccl::stream* QueueData::getCclStreamRef() {
+  return &cclStream;
+}
+#endif
 
 
 #ifdef WITH_ONEAPI_ONECCL
@@ -169,17 +259,5 @@ ccl::stream* egs::getCclStreamRef() {
   }
   return &(chosenQueue->cclStream);
 }
-
-
-
-std::optional<egs::cclKvsHandle> egs::retrieveKvs(void *kvsAddress) {
-  if (kvsMap.find(kvsAddress) != kvsMap.end()) {
-    return kvsMap[kvsAddress];
-  }
-  return std::nullopt;
-}
-
-void egs::registerKvs(void *kvsAddr, egs::cclKvsHandle kvs) {
-  kvsMap.insert({kvsAddr, kvs});
-}
 #endif
+
