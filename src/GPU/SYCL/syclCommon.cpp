@@ -98,9 +98,9 @@ SyclState::SyclState(bool onlyL0Gpus)
   }
 }
 
-void SyclState& SyclState::defaultState() {
+SyclState& SyclState::defaultState() {
   if (_staticState) {
-    return *_static_state;
+    return *_staticState;
   } else {
     throw std::runtime_error("SyclState not initialized!");
   }
@@ -111,6 +111,14 @@ size_t SyclState::getNumDevices() {
 }
 
 void SyclState::printGpuInfo() {
+  auto deviceTypeToString = [](sycl::info::device_type dt) {
+    switch (dt) {
+      case sycl::info::device_type::cpu: return "CPU";
+      case sycl::info::device_type::gpu: return "GPU";
+      case sycl::info::device_type::accelerator: return "Accelerator";
+      default: return "Other/Unknown/Error";
+    }
+  };
 #ifdef WITH_MPI
   int mpiRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -128,7 +136,7 @@ void SyclState::printGpuInfo() {
     std::cout << " - Device #" << i << ": "
       << devices[i].get_platform().get_info<sycl::info::platform::name>() << " -> "
       << devices[i].get_info<sycl::info::device::name>() << " ("
-      << devices[i].get_info<sycl::info::device::type>() << ", "
+      << deviceTypeToString(devices[i].get_info<sycl::info::device::device_type>()) << ", "
       << devices[i].get_info<sycl::info::device::max_compute_units>() << " EUs"
       << (hasDpSupport ? "" : ", SP only") << ")" << std::endl;
   }
@@ -138,16 +146,18 @@ void SyclState::printGpuInfo() {
 DeviceSelection& SyclState::selectGpuDevice(int deviceNum) {
   if (deviceNum < this->devices.size()) {
     this->defaultDevice = deviceNum;
+    return this->getDeviceHandle(deviceNum);
   } else {
     throw std::runtime_error("Device number out of range!");
   }
 }
 
-DeviceSelection& SyclState::getDeviceHandle(deviceNum) {
+DeviceSelection& SyclState::getDeviceHandle(int deviceNum) {
   if (deviceData.find(deviceNum) != deviceData.end()) {
-    return this->deviceData[deviceNum];
+    return this->deviceData.at(deviceNum);
   } else if (deviceNum < this->devices.size() && deviceNum >= 0) {
     this->deviceData.insert({deviceNum, DeviceSelection(deviceNum, this->devices[deviceNum])});
+    return this->deviceData.at(deviceNum);
   } else {
     throw std::runtime_error("No GPU device chosen yet. No handle available.");     
   }
@@ -202,7 +212,7 @@ QueueData* DeviceSelection::getQueue(int id) {
 //--------------------------------------------------------------------------------------------
 
 QueueData::QueueData(sycl::device device) 
-  : queue(device, sycl::property_list(sycl::property::queue::in_order()),
+  : queue(device, sycl::property_list(sycl::property::queue::in_order())),
 #ifdef WITH_ONEAPI_ONECCL
     cclStream(ccl::create_stream(queue)),
 #endif
@@ -215,15 +225,6 @@ QueueData::QueueData(sycl::device device)
     }
  }
 
-void QueueData::increaseScratchpadSize(size_t newSize) {
-  if (newSize > oneMklScratchpadSize) {
-    if (oneMklScratchpad) {
-      sycl::free(oneMklScratchpad, queue);
-    }
-    oneMklScratchpad = sycl::malloc_shared<void>(newSize, this->queue);
-    oneMklScratchpadSize = newSize;
-  }
-}
 #ifdef WITH_ONEAPI_ONECCL
 ccl::stream* QueueData::getCclStreamRef() {
   return &cclStream;
@@ -231,33 +232,17 @@ ccl::stream* QueueData::getCclStreamRef() {
 #endif
 
 
-#ifdef WITH_ONEAPI_ONECCL
-ccl::device& egs::getCclDevice() {
-  if (!chosenQueue) {
-    egs::selectDefaultGpuDevice();
-  }
-  return chosenQueue->cclDevice;
+QueueData* getQueueDataOrDefault(QueueData *handle) {
+  return (handle == nullptr) 
+    ? &(SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle)
+    : reinterpret_cast<QueueData *>(handle);
 }
 
-ccl::context& egs::getCclContext() {
-  if (!chosenQueue) {
-    egs::selectDefaultGpuDevice();
-  }
-  return chosenQueue->cclContext;
-}
-
-ccl::stream& egs::getCclStream() {
-  if (!chosenQueue) {
-    egs::selectDefaultGpuDevice();
-  }
-  return chosenQueue->cclStream;
-}
-
-ccl::stream* egs::getCclStreamRef() {
-  if (!chosenQueue) {
-    egs::selectDefaultGpuDevice();
-  }
-  return &(chosenQueue->cclStream);
-}
+sycl::queue getQueueOrDefault(QueueData *qh) {
+#ifdef WITH_GPU_STREAMS
+  assert(qh != nullptr)
+  return qh->queue;
+#else
+  return sycl_be::SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle.queue;
 #endif
-
+}

@@ -50,7 +50,7 @@
 #include "config-f90.h"
 #include "syclCommon.hpp"
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <stdlib.h>
 #include <stdio.h>
 #include <complex>
@@ -59,10 +59,12 @@
 #include <vector>
 #include <optional>
 
+using namespace sycl_be;
+
 template<typename T> void launch_my_pack_c_sycl_kernel(const int row_count, const int n_offset, const int max_idx,
                                                         const int stripe_width, const int a_dim2, const int stripe_count,
-                                                        const int l_nev, T *a, T *row_group) {
-  sycl::queue queue = elpa::gpu::sycl::getQueue();
+                                                        const int l_nev, T *a, T *row_group, QueueData *queueHandle) {
+  sycl::queue queue = getQueueOrDefault(queueHandle);
   int const maxWgSize = queue.get_device().get_info<sycl::info::device::max_work_group_size>();
   int wgSize = stripe_width > maxWgSize ? maxWgSize : stripe_width;
   sycl::range<2> rLocal = sycl::range<2>(1, wgSize);
@@ -85,25 +87,25 @@ template<typename T> void launch_my_pack_c_sycl_kernel(const int row_count, cons
   }
 }
 
-
-extern "C" void launch_my_pack_c_sycl_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *a_dev, float *row_group_dev) {
-  launch_my_pack_c_sycl_kernel<float>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev);
+extern "C" void launch_my_pack_c_sycl_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *a_dev, float *row_group_dev, QueueData *queueHandle) {
+  launch_my_pack_c_sycl_kernel<float>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev, queueHandle);
 }
 
-extern "C" void launch_my_pack_c_sycl_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *a_dev, double *row_group_dev) {
-  launch_my_pack_c_sycl_kernel<double>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev);
+extern "C" void launch_my_pack_c_sycl_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *a_dev, double *row_group_dev, QueueData *queueHandle) {
+  launch_my_pack_c_sycl_kernel<double>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev, queueHandle);
 }
 
-extern "C" void launch_my_pack_c_sycl_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, std::complex<float> *a_dev, std::complex<float> *row_group_dev) {
-  launch_my_pack_c_sycl_kernel<std::complex<float>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev);
+extern "C" void launch_my_pack_c_sycl_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, std::complex<float> *a_dev, std::complex<float> *row_group_dev, QueueData *queueHandle) {
+  launch_my_pack_c_sycl_kernel<std::complex<float>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev, queueHandle);
 }
 
-extern "C" void launch_my_pack_c_sycl_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, std::complex<double> *a_dev, std::complex<double> *row_group_dev) {
-  launch_my_pack_c_sycl_kernel<std::complex<double>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev);
+extern "C" void launch_my_pack_c_sycl_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, std::complex<double> *a_dev, std::complex<double> *row_group_dev, QueueData *queueHandle) {
+  launch_my_pack_c_sycl_kernel<std::complex<double>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, a_dev, row_group_dev, queueHandle);
 }
 
-template<typename T> void launch_extract_hh_tau_c_sycl_kernel(T *bcast_buffer, T *hh_tau, int const nbw, int const n, int const is_zero) {
-  sycl::queue queue = elpa::gpu::sycl::getQueue();
+
+template<typename T> void launch_extract_hh_tau_c_sycl_kernel(T *bcast_buffer, T *hh_tau, int const nbw, int const n, int const is_zero, QueueData *queueHandle) {
+  sycl::queue queue = getQueueOrDefault(queueHandle);
   int const maxWgSize = queue.get_device().get_info<sycl::info::device::max_work_group_size>();
   int numWorkItems = (1 + (n-1)/maxWgSize) * maxWgSize;
   sycl::range<1> rGlobal(numWorkItems);
@@ -127,26 +129,27 @@ template<typename T> void launch_extract_hh_tau_c_sycl_kernel(T *bcast_buffer, T
   queue.wait_and_throw();
 }
 
-extern "C" void launch_extract_hh_tau_c_sycl_kernel_real_single(float *bcast_buffer_dev, float *hh_tau_dev, const int nbw, const int n, const int is_zero) {
-    launch_extract_hh_tau_c_sycl_kernel<float>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+extern "C" void launch_extract_hh_tau_c_sycl_kernel_real_single(float *bcast_buffer_dev, float *hh_tau_dev, const int nbw, const int n, const int is_zero, QueueData *queueHandle) {
+    launch_extract_hh_tau_c_sycl_kernel<float>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero, queueHandle);
 }
 
-extern "C" void launch_extract_hh_tau_c_sycl_kernel_real_double(double *bcast_buffer_dev, double *hh_tau_dev, const int nbw, const int n, const int is_zero) {
-    launch_extract_hh_tau_c_sycl_kernel<double>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+extern "C" void launch_extract_hh_tau_c_sycl_kernel_real_double(double *bcast_buffer_dev, double *hh_tau_dev, const int nbw, const int n, const int is_zero, QueueData *queueHandle) {
+    launch_extract_hh_tau_c_sycl_kernel<double>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero, queueHandle);
 }
 
-extern "C" void launch_extract_hh_tau_c_sycl_kernel_complex_single(std::complex<float> *bcast_buffer_dev, std::complex<float> *hh_tau_dev, const int nbw, const int n, const int is_zero) {
-    launch_extract_hh_tau_c_sycl_kernel<std::complex<float>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+extern "C" void launch_extract_hh_tau_c_sycl_kernel_complex_single(std::complex<float> *bcast_buffer_dev, std::complex<float> *hh_tau_dev, const int nbw, const int n, const int is_zero, QueueData *queueHandle) {
+    launch_extract_hh_tau_c_sycl_kernel<std::complex<float>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero, queueHandle);
 }
 
-extern "C" void launch_extract_hh_tau_c_sycl_kernel_complex_double(std::complex<double> *bcast_buffer_dev, std::complex<double> *hh_tau_dev, const int nbw, const int n, const int is_zero) {
-    launch_extract_hh_tau_c_sycl_kernel<std::complex<double>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero);
+extern "C" void launch_extract_hh_tau_c_sycl_kernel_complex_double(std::complex<double> *bcast_buffer_dev, std::complex<double> *hh_tau_dev, const int nbw, const int n, const int is_zero, QueueData *queueHandle) {
+    launch_extract_hh_tau_c_sycl_kernel<std::complex<double>>(bcast_buffer_dev, hh_tau_dev, nbw, n, is_zero, queueHandle);
 }
+
 
 template<typename T> void launch_my_unpack_c_sycl_kernel(int const row_count, int const n_offset, int const max_idx,
                                                           int const stripe_width, int const a_dim2, int const stripe_count,
-                                                          int const l_nev, T *row_group, T* a) {
-  sycl::queue queue = elpa::gpu::sycl::getQueue();
+                                                          int const l_nev, T *row_group, T* a, QueueData *queueHandle) {
+  sycl::queue queue = getQueueOrDefault(queueHandle);
   int const maxWgSize = queue.get_device().get_info<sycl::info::device::max_work_group_size>();
   int wgSize = stripe_width > maxWgSize ? maxWgSize : stripe_width;
   sycl::range<2> rLocal = sycl::range<2>(1, wgSize);
@@ -165,18 +168,18 @@ template<typename T> void launch_my_unpack_c_sycl_kernel(int const row_count, in
   queue.wait_and_throw();
 }
 
-extern "C" void launch_my_unpack_c_sycl_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *row_group_dev, float *a_dev) {
-  launch_my_unpack_c_sycl_kernel<float>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev, a_dev);
+extern "C" void launch_my_unpack_c_sycl_kernel_real_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, float *row_group_dev, float *a_dev, QueueData *queueHandle) {
+  launch_my_unpack_c_sycl_kernel<float>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev, a_dev, queueHandle);
 }
 
-extern "C" void launch_my_unpack_c_sycl_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *row_group_dev, double *a_dev) {
-  launch_my_unpack_c_sycl_kernel<double>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev, a_dev);
+extern "C" void launch_my_unpack_c_sycl_kernel_real_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, double *row_group_dev, double *a_dev, QueueData *queueHandle) {
+  launch_my_unpack_c_sycl_kernel<double>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev, a_dev, queueHandle);
 }
 
-extern "C" void launch_my_unpack_c_sycl_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, std::complex<float> *row_group_dev, std::complex<float> *a_dev) {
-  launch_my_unpack_c_sycl_kernel<std::complex<float>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev, a_dev);
+extern "C" void launch_my_unpack_c_sycl_kernel_complex_single(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, std::complex<float> *row_group_dev, std::complex<float> *a_dev, QueueData *queueHandle) {
+  launch_my_unpack_c_sycl_kernel<std::complex<float>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev, a_dev, queueHandle);
 }
 
-extern "C" void launch_my_unpack_c_sycl_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, std::complex<double> *row_group_dev, std::complex<double> *a_dev) {
-  launch_my_unpack_c_sycl_kernel<std::complex<double>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev, a_dev);
+extern "C" void launch_my_unpack_c_sycl_kernel_complex_double(const int row_count, const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int stripe_count, const int l_nev, std::complex<double> *row_group_dev, std::complex<double> *a_dev, QueueData *queueHandle) {
+  launch_my_unpack_c_sycl_kernel<std::complex<double>>(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, row_group_dev, a_dev, queueHandle);
 }

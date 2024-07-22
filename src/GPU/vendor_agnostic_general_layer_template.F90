@@ -593,7 +593,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        sycl_malloc_host_intptr(array, elements)
+        success = sycl_malloc_host_intptr(array, elements)
       endif
 #endif
 

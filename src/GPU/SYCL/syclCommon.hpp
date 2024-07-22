@@ -58,18 +58,22 @@
 namespace sycl_be {
 
 struct QueueData {
+  private:
+  void *oneMklScratchpad; 
+  
+  public:
   sycl::queue queue;
 #ifdef WITH_ONEAPI_ONECCL
   ccl::stream cclStream;
 #endif  
   size_t oneMklScratchpadSize;
-  void *oneMklScratchpad; 
+
 
   QueueData(sycl::device device);
   ~QueueData();
 
-  void increaseScratchpadSize(size_t newSize);
-
+  template <typename T> inline T* getScratchpadFor(size_t numElements);
+  
 #ifdef WITH_ONEAPI_ONECCL
   ccl::stream* getCclStreamRef();
 #endif
@@ -110,7 +114,7 @@ class SyclState {
   
   void printGpuInfo();
   DeviceSelection& selectGpuDevice(int deviceNum);
-  DeviceSelection& getDeviceHandle(deviceNum);
+  DeviceSelection& getDeviceHandle(int deviceNum);
   DeviceSelection& getDefaultDeviceHandle();
   
   size_t getNumDevices();
@@ -124,5 +128,20 @@ class SyclState {
 #endif
 };
 
+  
+  sycl::queue getQueueOrDefault(QueueData *my_stream);
+  QueueData* getQueueDataOrDefault(QueueData *my_stream);
+  
+}
+
+template <typename T> inline T* sycl_be::QueueData::getScratchpadFor(size_t numElements) {
+  if (numElements > oneMklScratchpadSize * sizeof(T)) {
+    if (oneMklScratchpad != nullptr) {
+      sycl::free(oneMklScratchpad, queue);
+    }
+    oneMklScratchpad = sycl::malloc_device(numElements * sizeof(T), this->queue);
+    oneMklScratchpadSize = numElements * sizeof(T);
+  }
+  return static_cast<T*>(oneMklScratchpad);
 }
 #endif
