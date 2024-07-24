@@ -48,7 +48,7 @@
 #include "config-f90.h"
 #endif
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -64,6 +64,8 @@
 #else
 #include "syclCommon.hpp"
 #endif
+
+using namespace sycl_be;
 
 // Detect complex number template arguments
 namespace {
@@ -164,7 +166,7 @@ __attribute__((flatten)) std::complex<T> parallel_sum_group_complex(sycl::nd_ite
 }
 
 template <typename T, int wg_size, int sg_size, bool is_using_custom_reduction=true>
-void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols) {
+void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int const nev, int const nb, int const ldq, int const ncols, QueueData *my_stream) {
   // DPC++ & SYCL 1.2.1 is gradually replaced by SYCL2020. This is to keep ELPA compatible with both old and new versions.
 #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
   using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
@@ -177,9 +179,7 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
   #define GET_POINTER(x) x.template get_multi_ptr<sycl::access::decorated::yes>().get()
 #endif
   using sf = sycl::access::fence_space;
-  auto device = elpa::gpu::sycl::getDevice();
-  auto queue = elpa::gpu::sycl::getQueue();
-
+  auto queue = getQueueOrDefault(my_stream);
   int constexpr q_reserve_size = wg_size;
 
   queue.submit([&](sycl::handler &h) {
@@ -256,58 +256,58 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
 }
 
 template <typename T, int sg_size>
-void launch_compute_hh_trafo_c_sycl_kernel_sg(T *q, const T *hh, const T *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
+void launch_compute_hh_trafo_c_sycl_kernel_sg(T *q, const T *hh, const T *hh_tau, const int nev, const int nb, const int ldq, const int ncols, QueueData *my_stream) {
   switch (nb) {
-    case 1024: compute_hh_trafo_c_sycl_kernel<T, 1024, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 512:  compute_hh_trafo_c_sycl_kernel<T, 512, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 256:  compute_hh_trafo_c_sycl_kernel<T, 256, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 128:  compute_hh_trafo_c_sycl_kernel<T, 128, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 64:   compute_hh_trafo_c_sycl_kernel<T, 64, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 32:   compute_hh_trafo_c_sycl_kernel<T, 32, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 16:   compute_hh_trafo_c_sycl_kernel<T, 16, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 8:    compute_hh_trafo_c_sycl_kernel<T, 8, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 4:    compute_hh_trafo_c_sycl_kernel<T, 4, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 2:    compute_hh_trafo_c_sycl_kernel<T, 2, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case 1:    compute_hh_trafo_c_sycl_kernel<T, 1, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+    case 1024: compute_hh_trafo_c_sycl_kernel<T, 1024, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 512:  compute_hh_trafo_c_sycl_kernel<T, 512, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 256:  compute_hh_trafo_c_sycl_kernel<T, 256, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 128:  compute_hh_trafo_c_sycl_kernel<T, 128, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 64:   compute_hh_trafo_c_sycl_kernel<T, 64, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 32:   compute_hh_trafo_c_sycl_kernel<T, 32, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 16:   compute_hh_trafo_c_sycl_kernel<T, 16, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 8:    compute_hh_trafo_c_sycl_kernel<T, 8, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 4:    compute_hh_trafo_c_sycl_kernel<T, 4, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 2:    compute_hh_trafo_c_sycl_kernel<T, 2, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case 1:    compute_hh_trafo_c_sycl_kernel<T, 1, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
     default:   abort();
   }
 }
 
 template <typename T>
-void launch_compute_hh_trafo_c_sycl_kernel(T *q, const T *hh, const T *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
+void launch_compute_hh_trafo_c_sycl_kernel(T *q, const T *hh, const T *hh_tau, const int nev, const int nb, const int ldq, const int ncols, QueueData *my_stream) {
   static int chosen_sg_size;
 
   if (chosen_sg_size == 0) {
-    auto device = elpa::gpu::sycl::getDevice();
+    auto device = getQueueOrDefault(my_stream).get_device();
     auto sg_sizes = device.get_info<sycl::info::device::sub_group_sizes>();
     if (std::find(sg_sizes.begin(), sg_sizes.end(), 32) != sg_sizes.end()) chosen_sg_size = 32;
     else if (std::find(sg_sizes.begin(), sg_sizes.end(), 64) != sg_sizes.end()) chosen_sg_size = 64;
     else chosen_sg_size = sg_sizes[sg_sizes.size() - 1];
   }
   switch (chosen_sg_size) {
-    case 128: launch_compute_hh_trafo_c_sycl_kernel_sg<T, 128>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case  64: launch_compute_hh_trafo_c_sycl_kernel_sg<T,  64>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case  32: launch_compute_hh_trafo_c_sycl_kernel_sg<T,  32>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case  16: launch_compute_hh_trafo_c_sycl_kernel_sg<T,  16>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case   8: launch_compute_hh_trafo_c_sycl_kernel_sg<T,   8>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case   4: launch_compute_hh_trafo_c_sycl_kernel_sg<T,   4>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
-    case   2: launch_compute_hh_trafo_c_sycl_kernel_sg<T,   2>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+    case 128: launch_compute_hh_trafo_c_sycl_kernel_sg<T, 128>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case  64: launch_compute_hh_trafo_c_sycl_kernel_sg<T,  64>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case  32: launch_compute_hh_trafo_c_sycl_kernel_sg<T,  32>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case  16: launch_compute_hh_trafo_c_sycl_kernel_sg<T,  16>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case   8: launch_compute_hh_trafo_c_sycl_kernel_sg<T,   8>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case   4: launch_compute_hh_trafo_c_sycl_kernel_sg<T,   4>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+    case   2: launch_compute_hh_trafo_c_sycl_kernel_sg<T,   2>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
     default: abort();
   }
 }
 
-extern "C" void launch_compute_hh_trafo_c_sycl_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
-  launch_compute_hh_trafo_c_sycl_kernel<double>(q, hh, hh_tau, nev, nb, ldq, ncols);
+extern "C" void launch_compute_hh_trafo_c_sycl_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols, QueueData *my_stream) {
+  launch_compute_hh_trafo_c_sycl_kernel<double>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream);
 }
 
-extern "C" void launch_compute_hh_trafo_c_sycl_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
-  launch_compute_hh_trafo_c_sycl_kernel<float>(q, hh, hh_tau, nev, nb, ldq, ncols);
+extern "C" void launch_compute_hh_trafo_c_sycl_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols, QueueData *my_stream) {
+  launch_compute_hh_trafo_c_sycl_kernel<float>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream);
 }
 
-extern "C" void launch_compute_hh_trafo_c_sycl_kernel_complex_double(std::complex<double> *q, const std::complex<double> *hh, const std::complex<double> *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
-  launch_compute_hh_trafo_c_sycl_kernel<std::complex<double>>(q, hh, hh_tau, nev, nb, ldq, ncols);
+extern "C" void launch_compute_hh_trafo_c_sycl_kernel_complex_double(std::complex<double> *q, const std::complex<double> *hh, const std::complex<double> *hh_tau, const int nev, const int nb, const int ldq, const int ncols, QueueData *my_stream) {
+  launch_compute_hh_trafo_c_sycl_kernel<std::complex<double>>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream);
 }
 
-extern "C" void launch_compute_hh_trafo_c_sycl_kernel_complex_single(std::complex<float> *q, const std::complex<float> *hh, const std::complex<float> *hh_tau, const int nev, const int nb, const int ldq, const int ncols) {
-  launch_compute_hh_trafo_c_sycl_kernel<std::complex<float>>(q, hh, hh_tau, nev, nb, ldq, ncols);
+extern "C" void launch_compute_hh_trafo_c_sycl_kernel_complex_single(std::complex<float> *q, const std::complex<float> *hh, const std::complex<float> *hh_tau, const int nev, const int nb, const int ldq, const int ncols, QueueData *my_stream) {
+  launch_compute_hh_trafo_c_sycl_kernel<std::complex<float>>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream);
 }

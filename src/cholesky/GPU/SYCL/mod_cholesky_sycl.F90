@@ -57,25 +57,25 @@ module cholesky_sycl
 
   public
 
-!  interface
-!    subroutine sycl_check_device_info_c(info_dev,  my_stream)&
-!                 bind(C, name="sycl_check_device_info_FromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_intptr_t), value  :: info_dev
-!      integer(kind=c_intptr_t), value  :: my_stream
-!    end subroutine
-!  end interface
+  interface
+    subroutine sycl_check_device_info_c(info_dev,  my_stream)&
+                 bind(C, name="sycl_check_device_info_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t), value  :: info_dev
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine sycl_accumulate_device_info_c(info_abs_dev, info_new_dev, my_stream)&
-!                 bind(C, name="sycl_accumulate_device_info_FromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_intptr_t), value  :: info_abs_dev, info_new_dev
-!      integer(kind=c_intptr_t), value  :: my_stream
-!    end subroutine
-!  end interface
+  interface
+    subroutine sycl_accumulate_device_info_c(info_abs_dev, info_new_dev, my_stream)&
+                 bind(C, name="sycl_accumulate_device_info_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_intptr_t), value  :: info_abs_dev, info_new_dev
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
 
   interface
     subroutine sycl_copy_double_a_tmatc_c(a_dev, tmatc_dev, nblk, matrixRows, l_cols, &
@@ -149,7 +149,7 @@ module cholesky_sycl
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-!      call sycl_check_device_info_c(info_dev, my_stream)
+      call sycl_check_device_info_c(info_dev, my_stream)
 #endif
     end subroutine
 
@@ -161,7 +161,7 @@ module cholesky_sycl
       integer(kind=c_intptr_t)        :: my_stream
 
 #ifdef WITH_SYCL_GPU_VERSION
-!      call sycl_accumulate_device_info_c(info_abs_dev, info_new_dev, my_stream)
+      call sycl_accumulate_device_info_c(info_abs_dev, info_new_dev, my_stream)
 #endif
     end subroutine
 

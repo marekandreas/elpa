@@ -205,6 +205,21 @@ static oneapi::mkl::side sideFromChar(char c) {
     }
   }
 
+    int syclMallocHostFromC(intptr_t *a, size_t elems) {
+    QueueData *qHandle = getQueueDataOrDefault(nullptr);
+    sycl::queue queue = qHandle->queue;
+    *a = reinterpret_cast<intptr_t>(sycl::malloc_host(elems, queue));
+    char *bytes = reinterpret_cast<char *>(*a);
+    if (*a) {
+      //std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
+      return 1;
+    } else {
+      std::cout << "Failed to allocate " << elems << "B on device." << std::endl;
+      return 0;
+    }
+  }
+
+
   int syclFreeFromC(intptr_t *a) {
     QueueData *qHandle = getQueueDataOrDefault(nullptr);
     sycl::queue queue = qHandle->queue;
@@ -212,6 +227,10 @@ static oneapi::mkl::side sideFromChar(char c) {
     queue.wait();
     sycl::free(ptr, queue);
     return 1;
+  }
+
+  int syclFreeHostFromC(intptr_t *a) {
+    return syclFreeFromC(a);
   }
 
   bool checkPointerValidity(void *dst, void *src, int direction, sycl::queue queue) {

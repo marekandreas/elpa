@@ -67,6 +67,26 @@
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
+using namespace sycl_be;
+
+extern "C" void sycl_check_device_info_FromC(int *info_dev, QueueData *my_stream){
+  sycl::queue q = getQueueOrDefault(my_stream);
+  q.single_task([=]{
+    assert(*info_dev == 0);
+  });
+  q.wait_and_throw();
+}
+
+extern "C" void sycl_accumulate_device_info_FromC(int *info_abs_dev, int *info_new_dev, QueueData *my_stream){
+  sycl::queue q = getQueueOrDefault(my_stream);
+  q.single_task([=]{
+    *info_abs_dev += abs(*info_new_dev);
+  });
+  q.wait_and_throw();
+}
+
+
+
 //________________________________________________________________
 
 template <typename T>
@@ -84,7 +104,7 @@ void sycl_copy_a_tmatc_kernel(T *a_dev, T *tmatc_dev, const int l_cols, const in
 }
 
 template <typename T>
-void sycl_copy_a_tmatc_FromC(T *a_dev, T *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
+void sycl_copy_a_tmatc_FromC(T *a_dev, T *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, QueueData *my_stream){
 
   int nblk = *nblk_in;
   int matrixRows = *matrixRows_in;
@@ -95,8 +115,7 @@ void sycl_copy_a_tmatc_FromC(T *a_dev, T *tmatc_dev, int *nblk_in, int *matrixRo
   sycl::range<1> global_range = sycl::range<1>(nblk*(l_cols - l_colx + 1));
   sycl::range<1> local_range  = sycl::range<1>(nblk);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto queue = elpa::gpu::sycl::getQueue();
+  auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
     sycl::nd_range<1>(global_range, local_range),
@@ -107,19 +126,19 @@ void sycl_copy_a_tmatc_FromC(T *a_dev, T *tmatc_dev, int *nblk_in, int *matrixRo
 
 }
 
-extern "C" void sycl_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, QueueData *my_stream){
   sycl_copy_a_tmatc_FromC(a_dev, tmatc_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, QueueData *my_stream){
   sycl_copy_a_tmatc_FromC(a_dev, tmatc_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, my_stream);
 }
 
-extern "C" void sycl_copy_double_complex_a_tmatc_FromC(std::complex<double> *a_dev, std::complex<double> *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_complex_a_tmatc_FromC(std::complex<double> *a_dev, std::complex<double> *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, QueueData *my_stream){
   sycl_copy_a_tmatc_FromC(a_dev, tmatc_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_complex_a_tmatc_FromC(std::complex<float> *a_dev, std::complex<float> *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_complex_a_tmatc_FromC(std::complex<float> *a_dev, std::complex<float> *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, QueueData *my_stream){
   sycl_copy_a_tmatc_FromC(a_dev, tmatc_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, my_stream);
 }
 
@@ -158,7 +177,7 @@ template <typename T>
 void sycl_set_a_lower_to_zero(T *a_dev, int *na_in, int *matrixRows_in,
                               int *my_pcol_in, int *np_cols_in, int *my_prow_in,
                               int *np_rows_in, int *nblk_in, int *wantDebug_in,
-                              intptr_t my_stream) {
+                              QueueData *my_stream) {
   int na = *na_in;
   int matrixRows = *matrixRows_in;
   int my_pcol = *my_pcol_in;
@@ -171,8 +190,7 @@ void sycl_set_a_lower_to_zero(T *a_dev, int *na_in, int *matrixRows_in,
   sycl::range<1> global_range = sycl::range<1>(MAX_THREADS_PER_BLOCK*nblk);
   sycl::range<1> local_range  = sycl::range<1>(MAX_THREADS_PER_BLOCK);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto queue = elpa::gpu::sycl::getQueue();
+  auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
     sycl::nd_range<1>(global_range, local_range),
@@ -185,7 +203,7 @@ void sycl_set_a_lower_to_zero(T *a_dev, int *na_in, int *matrixRows_in,
 
 extern "C" void sycl_set_a_lower_to_zero_FromC(char dataType, intptr_t a_dev, int *na_in, int *matrixRows_in,
                                                int *my_pcol_in, int *np_cols_in, int *my_prow_in, int *np_rows_in,
-                                               int *nblk_in, int *wantDebug_in, intptr_t my_stream) {
+                                               int *nblk_in, int *wantDebug_in, QueueData *my_stream) {
 
   if (dataType=='D') sycl_set_a_lower_to_zero<double>((double *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);
   if (dataType=='S') sycl_set_a_lower_to_zero<float> ((float *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);

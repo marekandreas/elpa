@@ -198,17 +198,7 @@
       integer(kind=C_INT) :: n
     end function
   end interface
-
-  interface
-    function sycl_getcpucount_c(n) result(istat) &
-             bind(C, name="syclGetCpuCountFromC")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT), intent(out) :: n
-      integer(kind=C_INT)              :: istat
-    end function
-  end interface
-
+ 
   interface
     function sycl_devicesynchronize_c() result(istat) &
              bind(C,name="syclDeviceSynchronizeFromC")
@@ -1852,7 +1842,8 @@
       integer(kind=c_int)  :: nCasted
       logical              :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_getcpucount_c(nCasted) /=0
+      !success = sycl_getcpucount_c(nCasted) /=0
+      n = 0
       n = int(nCasted)
 #else
       success = .true.

@@ -66,6 +66,7 @@ using namespace sycl_be;
 // SyclState
 //--------------------------------------------------------------------------------------------
 
+std::optional<SyclState> SyclState::_staticState;
 
 void SyclState::initialize(bool onlyL0Gpus) {
   if (SyclState::_staticState) {
@@ -232,13 +233,15 @@ ccl::stream* QueueData::getCclStreamRef() {
 #endif
 
 
-QueueData* getQueueDataOrDefault(QueueData *handle) {
-  return (handle == nullptr) 
-    ? &(SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle)
-    : reinterpret_cast<QueueData *>(handle);
+QueueData* sycl_be::getQueueDataOrDefault(QueueData *handle) {
+#ifdef WITH_GPU_STREAMS
+  return (handle == nullptr) ? &(SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle) : handle;
+#else 
+  return &(SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle);
+#endif
 }
 
-sycl::queue getQueueOrDefault(QueueData *qh) {
+sycl::queue sycl_be::getQueueOrDefault(QueueData *qh) {
 #ifdef WITH_GPU_STREAMS
   assert(qh != nullptr)
   return qh->queue;

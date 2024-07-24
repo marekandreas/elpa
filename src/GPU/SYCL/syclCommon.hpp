@@ -131,7 +131,8 @@ class SyclState {
   
   sycl::queue getQueueOrDefault(QueueData *my_stream);
   QueueData* getQueueDataOrDefault(QueueData *my_stream);
-  
+  template<int numDims> sycl::range<numDims> maxWorkgroupSize(sycl::queue d);
+
 }
 
 template <typename T> inline T* sycl_be::QueueData::getScratchpadFor(size_t numElements) {
@@ -143,5 +144,30 @@ template <typename T> inline T* sycl_be::QueueData::getScratchpadFor(size_t numE
     oneMklScratchpadSize = numElements * sizeof(T);
   }
   return static_cast<T*>(oneMklScratchpad);
+}
+
+template <int numDims> inline sycl::range<numDims> sycl_be::maxWorkgroupSize(sycl::queue q) {
+  static_assert(numDims > 0 && numDims < 3, "numDims must be either 1, 2, or 3.");
+  sycl::device d = q.get_device();
+  int maxWgSize = d.get_info<sycl::info::device::max_work_group_size>();
+  if constexpr (numDims == 1) {
+    return sycl::range<1>(maxWgSize);
+  } else if constexpr (numDims == 2) {
+    int res[2] {128, 128};
+    int dim = 0;
+    while (res[0] * res[1] > maxWgSize) {
+      res[dim] /= 2;
+      dim = (dim + 1) % 2;
+    }
+    return sycl::range<2>(res[0], res[1]);
+  } else {
+    int res[3] {32, 32, 32};
+    int dim = 0;
+    while (res[0] * res[1] * res[2] > maxWgSize) {
+      res[dim] /= 2;
+      dim = (dim + 1) % 3;
+    }
+    return sycl::range<3>(res[0], res[1], res[2]);
+  }
 }
 #endif

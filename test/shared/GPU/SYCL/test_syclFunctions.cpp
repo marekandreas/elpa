@@ -64,8 +64,9 @@
 
 extern "C" {
     int syclFreeVoidPtr(void *ptr) {
-    auto queue = elpa::gpu::sycl::getQueue();
-    sycl::free(ptr, queue);
-    return 1;
+        QueueData *qh = getQueueDataOrDefault(nullptr);
+        auto queue = qh->queue;
+        sycl::free(ptr, queue);
+        return 1;
     }
 }

@@ -44,7 +44,7 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//    This file was written by A. Marek, MPCDF
+//    This file was written by A. Poeppl, Intel Corporation
 
 #include "src/GPU/SYCL/syclCommon.hpp"
 
@@ -59,19 +59,15 @@
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
+using namespace sycl_be;
+
 template<typename T>
-void sycl_scale_qmat_complex(int *ldq_in, int *l_cols_in, std::complex<T> *q_dev, std::complex<T> *tau_dev, sycl::queue *my_stream) {
+void sycl_scale_qmat_complex(int *ldq_in, int *l_cols_in, std::complex<T> *q_dev, std::complex<T> *tau_dev, QueueData *my_stream) {
   int ldq = *ldq_in;
   int l_cols = *l_cols_in;
 
-#ifdef WITH_GPU_STREAMS  // Unsupported still, there be dragons!
-  sycl::queue q = *my_stream;
-#else
-  sycl::queue q = elpa::gpu::sycl::getQueue();
-#endif
-
-  auto maxWorkGroupSize = q.get_device().get_info<sycl::info::device::max_work_group_size>();
-  sycl::range<1> threadsPerBlock(maxWorkGroupSize);
+  sycl::queue q = getQueueOrDefault(my_stream);
+  sycl::range<1> threadsPerBlock = maxWorkgroupSize<1>(q);
   sycl::range<1> blocks((l_cols + threadsPerBlock - 1) / threadsPerBlock);
   
   q.parallel_for(sycl::nd_range<1>(blocks * threadsPerBlock, threadsPerBlock), [=](sycl::nd_item<1> it) {
@@ -87,10 +83,10 @@ void sycl_scale_qmat_complex(int *ldq_in, int *l_cols_in, std::complex<T> *q_dev
     });
 }
 
-extern "C" void sycl_scale_qmat_double_complex_FromC(int *ldq_in, int *l_cols_in, std::complex<double> *q_dev, std::complex<double> *tau_dev, sycl::queue *my_stream) {
+extern "C" void sycl_scale_qmat_double_complex_FromC(int *ldq_in, int *l_cols_in, std::complex<double> *q_dev, std::complex<double> *tau_dev, QueueData *my_stream) {
   sycl_scale_qmat_complex<double>(ldq_in, l_cols_in, q_dev, tau_dev, my_stream);
 }
 
-extern "C" void sycl_scale_qmat_float_complex_FromC(int *ldq_in, int *l_cols_in, std::complex<float> *q_dev, std::complex<float> *tau_dev, sycl::queue *my_stream) {
+extern "C" void sycl_scale_qmat_float_complex_FromC(int *ldq_in, int *l_cols_in, std::complex<float> *q_dev, std::complex<float> *tau_dev, QueueData *my_stream) {
   sycl_scale_qmat_complex<float>(ldq_in, l_cols_in, q_dev, tau_dev, my_stream);
 }

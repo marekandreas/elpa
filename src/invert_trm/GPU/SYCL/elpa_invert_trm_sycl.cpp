@@ -60,6 +60,8 @@
 #include <CL/sycl.hpp>
 #include "src/GPU/SYCL/syclCommon.hpp"
 
+using namespace sycl_be;
+
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 template <typename T>
@@ -73,7 +75,7 @@ void sycl_copy_a_tmat2_kernel(T *a_dev, T *tmat2_dev, const int nblk, const int 
 }
 
 template <typename T>
-void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
+void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, QueueData *my_stream){
 
   int nblk = *nblk_in;
   int matrixRows = *matrixRows_in;
@@ -85,8 +87,7 @@ void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRo
   sycl::range<1> global_range = sycl::range<1>(nb*(l_cols - l_colx + 1));
   sycl::range<1> local_range  = sycl::range<1>(nb);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto queue = elpa::gpu::sycl::getQueue();
+  auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
@@ -98,19 +99,19 @@ void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRo
 
 }
 
-extern "C" void sycl_copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, QueueData *my_stream){
   sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_a_tmat2_FromC(float *a_dev, float *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_a_tmat2_FromC(float *a_dev, float *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, QueueData *my_stream){
   sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_double_complex_a_tmat2_FromC(std::complex<double> *a_dev, std::complex<double> *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_complex_a_tmat2_FromC(std::complex<double> *a_dev, std::complex<double> *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, QueueData *my_stream){
   sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev, std::complex<float> *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev, std::complex<float> *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, QueueData *my_stream){
   sycl_copy_a_tmat2_FromC(a_dev, tmat2_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, nb_in, my_stream);
 }
 
@@ -127,7 +128,7 @@ void sycl_copy_tmp2_tmat2_kernel(T *tmp2_dev, T *tmat2_dev, const int nblk, cons
 }
 
 template <typename T>
-void sycl_copy_tmp2_tmat2_FromC(T *tmp2_dev, T *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
+void sycl_copy_tmp2_tmat2_FromC(T *tmp2_dev, T *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, QueueData *my_stream){
 
   int nblk   = *nblk_in;
   int l_col1 = *l_col1_in;
@@ -136,8 +137,7 @@ void sycl_copy_tmp2_tmat2_FromC(T *tmp2_dev, T *tmat2_dev, int *nblk_in, int *l_
   sycl::range<1> global_range = sycl::range<1>(nb*nb);
   sycl::range<1> local_range  = sycl::range<1>(nb);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto queue = elpa::gpu::sycl::getQueue();
+  auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
@@ -148,19 +148,19 @@ void sycl_copy_tmp2_tmat2_FromC(T *tmp2_dev, T *tmat2_dev, int *nblk_in, int *l_
 
 }
 
-extern "C" void sycl_copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, QueueData *my_stream){
   sycl_copy_tmp2_tmat2_FromC(tmp2_dev, tmat2_dev, nblk_in, l_col1_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_tmp2_tmat2_FromC(float *tmp2_dev, float *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_tmp2_tmat2_FromC(float *tmp2_dev, float *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, QueueData *my_stream){
   sycl_copy_tmp2_tmat2_FromC(tmp2_dev, tmat2_dev, nblk_in, l_col1_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_double_complex_tmp2_tmat2_FromC(std::complex<double> *tmp2_dev, std::complex<double> *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_complex_tmp2_tmat2_FromC(std::complex<double> *tmp2_dev, std::complex<double> *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, QueueData *my_stream){
   sycl_copy_tmp2_tmat2_FromC(tmp2_dev, tmat2_dev, nblk_in, l_col1_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_complex_tmp2_tmat2_FromC(std::complex<float> *tmp2_dev, std::complex<float> *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_complex_tmp2_tmat2_FromC(std::complex<float> *tmp2_dev, std::complex<float> *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, QueueData *my_stream){
   sycl_copy_tmp2_tmat2_FromC(tmp2_dev, tmat2_dev, nblk_in, l_col1_in, nb_in, my_stream);
 }
 
@@ -178,7 +178,7 @@ void sycl_copy_a_tmat1_kernel(T *a_dev, T *tmat1_dev, const int l_rows, const in
 }
 
 template <typename T>
-void sycl_copy_a_tmat1_FromC(T *a_dev, T *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, intptr_t my_stream){
+void sycl_copy_a_tmat1_FromC(T *a_dev, T *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, QueueData *my_stream){
 
   int l_rows = *l_rows_in;
   int matrixRows = *matrixRows_in;
@@ -189,8 +189,7 @@ void sycl_copy_a_tmat1_FromC(T *a_dev, T *tmat1_dev, int *l_rows_in, int *matrix
   sycl::range<1> global_range = sycl::range<1>(nb*(l_row1 - 1));
   sycl::range<1> local_range  = sycl::range<1>(nb);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto queue = elpa::gpu::sycl::getQueue();
+  auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
@@ -203,19 +202,19 @@ void sycl_copy_a_tmat1_FromC(T *a_dev, T *tmat1_dev, int *l_rows_in, int *matrix
 }
 
 
-extern "C" void sycl_copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, QueueData *my_stream){
   sycl_copy_a_tmat1_FromC(a_dev, tmat1_dev, l_rows_in, matrixRows_in, nb_in, l_row1_in, l_col1_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_a_tmat1_FromC(float *a_dev, float *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_a_tmat1_FromC(float *a_dev, float *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, QueueData *my_stream){
   sycl_copy_a_tmat1_FromC(a_dev, tmat1_dev, l_rows_in, matrixRows_in, nb_in, l_row1_in, l_col1_in, my_stream);
 }
 
-extern "C" void sycl_copy_double_complex_a_tmat1_FromC(std::complex<double> *a_dev, std::complex<double> *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_complex_a_tmat1_FromC(std::complex<double> *a_dev, std::complex<double> *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, QueueData *my_stream){
   sycl_copy_a_tmat1_FromC(a_dev, tmat1_dev, l_rows_in, matrixRows_in, nb_in, l_row1_in, l_col1_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_complex_a_tmat1_FromC(std::complex<float> *a_dev, std::complex<float> *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_complex_a_tmat1_FromC(std::complex<float> *a_dev, std::complex<float> *tmat1_dev, int *l_rows_in, int *matrixRows_in, int *nb_in, int *l_row1_in, int *l_col1_in, QueueData *my_stream){
   sycl_copy_a_tmat1_FromC(a_dev, tmat1_dev, l_rows_in, matrixRows_in, nb_in, l_row1_in, l_col1_in, my_stream);
 }
 
@@ -233,7 +232,7 @@ void sycl_copy_tmp1_tmp2_kernel(T *tmp1_dev, T *tmp2_dev, const int nblk, const 
 }
 
 template <typename T>
-void sycl_copy_tmp1_tmp2_FromC(T *tmp1_dev, T *tmp2_dev, int *nblk_in, int *nb_in, intptr_t my_stream){
+void sycl_copy_tmp1_tmp2_FromC(T *tmp1_dev, T *tmp2_dev, int *nblk_in, int *nb_in, QueueData *my_stream){
 
   int nblk = *nblk_in;
   int nb = *nb_in;
@@ -241,8 +240,7 @@ void sycl_copy_tmp1_tmp2_FromC(T *tmp1_dev, T *tmp2_dev, int *nblk_in, int *nb_i
   sycl::range<1> global_range = sycl::range<1>(nb*nb);
   sycl::range<1> local_range  = sycl::range<1>(nb);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto queue = elpa::gpu::sycl::getQueue();
+  auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
@@ -253,19 +251,19 @@ void sycl_copy_tmp1_tmp2_FromC(T *tmp1_dev, T *tmp2_dev, int *nblk_in, int *nb_i
 
 }
 
-extern "C" void sycl_copy_double_tmp1_tmp2_FromC(double *tmp1_dev, double *tmp2_dev, int *nblk_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_tmp1_tmp2_FromC(double *tmp1_dev, double *tmp2_dev, int *nblk_in, int *nb_in, QueueData *my_stream){
   sycl_copy_tmp1_tmp2_FromC(tmp1_dev, tmp2_dev, nblk_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_tmp1_tmp2_FromC(float *tmp1_dev, float *tmp2_dev, int *nblk_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_tmp1_tmp2_FromC(float *tmp1_dev, float *tmp2_dev, int *nblk_in, int *nb_in, QueueData *my_stream){
   sycl_copy_tmp1_tmp2_FromC(tmp1_dev, tmp2_dev, nblk_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_double_complex_tmp1_tmp2_FromC(std::complex<double> *tmp1_dev, std::complex<double> *tmp2_dev, int *nblk_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_complex_tmp1_tmp2_FromC(std::complex<double> *tmp1_dev, std::complex<double> *tmp2_dev, int *nblk_in, int *nb_in, QueueData *my_stream){
   sycl_copy_tmp1_tmp2_FromC(tmp1_dev, tmp2_dev, nblk_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_complex_tmp1_tmp2_FromC(std::complex<float> *tmp1_dev, std::complex<float> *tmp2_dev, int *nblk_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_complex_tmp1_tmp2_FromC(std::complex<float> *tmp1_dev, std::complex<float> *tmp2_dev, int *nblk_in, int *nb_in, QueueData *my_stream){
   sycl_copy_tmp1_tmp2_FromC(tmp1_dev, tmp2_dev, nblk_in, nb_in, my_stream);
 }
 
@@ -283,7 +281,7 @@ void sycl_copy_a_tmp1_kernel(T *a_dev, T *tmp1_dev, const int l_row1, const int 
 }
 
 template <typename T>
-void sycl_copy_a_tmp1_FromC(T *a_dev, T *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, intptr_t my_stream){
+void sycl_copy_a_tmp1_FromC(T *a_dev, T *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, QueueData *my_stream){
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
   int matrixRows = *matrixRows_in;
@@ -292,8 +290,7 @@ void sycl_copy_a_tmp1_FromC(T *a_dev, T *tmp1_dev, int *l_row1_in, int *l_col1_i
   sycl::range<1> global_range = sycl::range<1>(nb*nb);
   sycl::range<1> local_range  = sycl::range<1>(nb);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto queue = elpa::gpu::sycl::getQueue();
+  auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
@@ -305,18 +302,18 @@ void sycl_copy_a_tmp1_FromC(T *a_dev, T *tmp1_dev, int *l_row1_in, int *l_col1_i
 
 }
 
-extern "C" void sycl_copy_double_a_tmp1_FromC(double *a_dev, double *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_a_tmp1_FromC(double *a_dev, double *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, QueueData *my_stream){
   sycl_copy_a_tmp1_FromC(a_dev, tmp1_dev, l_row1_in, l_col1_in, matrixRows_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_a_tmp1_FromC(float *a_dev, float *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_a_tmp1_FromC(float *a_dev, float *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, QueueData *my_stream){
   sycl_copy_a_tmp1_FromC(a_dev, tmp1_dev, l_row1_in, l_col1_in, matrixRows_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_double_complex_a_tmp1_FromC(std::complex<double> *a_dev, std::complex<double> *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_double_complex_a_tmp1_FromC(std::complex<double> *a_dev, std::complex<double> *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, QueueData *my_stream){
   sycl_copy_a_tmp1_FromC(a_dev, tmp1_dev, l_row1_in, l_col1_in, matrixRows_in, nb_in, my_stream);
 }
 
-extern "C" void sycl_copy_float_complex_a_tmp1_FromC(std::complex<float> *a_dev, std::complex<float> *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, intptr_t my_stream){
+extern "C" void sycl_copy_float_complex_a_tmp1_FromC(std::complex<float> *a_dev, std::complex<float> *tmp1_dev, int *l_row1_in, int *l_col1_in, int *matrixRows_in, int *nb_in, QueueData *my_stream){
   sycl_copy_a_tmp1_FromC(a_dev, tmp1_dev, l_row1_in, l_col1_in, matrixRows_in, nb_in, my_stream);
 }

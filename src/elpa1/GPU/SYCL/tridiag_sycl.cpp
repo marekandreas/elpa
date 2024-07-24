@@ -44,7 +44,7 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//    This file was written by P. Karpov, MPCDF
+//    This file was written by P. Karpov, MPCDF and A. Poeppl, Intel Corporation
 
 #include <sycl/sycl.hpp>
 #include "src/GPU/SYCL/syclCommon.hpp"
@@ -67,13 +67,18 @@
 
 #include "../../../GPU/common_device_functions.h"
 
-#define MAX_THREADS_PER_BLOCK 1024
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 using namespace sycl_be;
+
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
+template <typename T> using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
+#else
+template <typename T> using local_buffer = sycl::local_accessor<T>;
+#endif
 
 // Define a helper struct to determine if a type is a pointer
 template <typename T>
@@ -139,16 +144,11 @@ void sycl_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in,
   int useCCL = *useCCL_in;
   int wantDebug = *wantDebug_in;
 
-  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
+  auto queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+  int blocks = std::max((l_rows+maxWgSize-1)/maxWgSize, 1);
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // TODO_23_11: change to NB?
-
-  /*
-DPCT1049:0: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
-  auto queue = getQueueDataOrDefault(my_stream);
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11: change to NB?
 
   queue.submit([&](sycl::handler &cgh)
     {
@@ -208,7 +208,7 @@ extern "C" void sycl_copy_and_set_zeros_float_complex_FromC(
 
 template <typename T>
 void sycl_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev,
-                             sycl::nd_item<1> it, sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>  cache){
+                             sycl::nd_item<1> it, local_buffer<T>  cache){
    // extra space of fixed size is reserved for a speedup
   int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
 
@@ -264,20 +264,16 @@ void sycl_dot_product_FromC(int *n_in, T *x_dev, int *incx_in, T *y_dev,
   //int SM_count=32;
   //syclDeviceGetAttribute(&SM_count, syclDevAttrMultiProcessorCount, 0); // TODO_23_11 move this outside, to set_gpu, claim the number only once during GPU setup
 
+  sycl::queue queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
   int blocks = SM_count;
   sycl::range<1> blocksPerGrid   = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // TODO_23_11: or NB?
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11: or NB?
 
 
-  /*
-DPCT1049:2: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
-  sycl::queue queue = getQueueDataOrDefault(my_stream);
 
   queue.submit([&](sycl::handler &cgh) {
-    sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local> cache_acc_ct1(sycl::range<1>(1024), cgh);
+    local_buffer<T> cache_acc_ct1(sycl::range<1>(1024), cgh);
 
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
@@ -323,11 +319,10 @@ extern "C" void sycl_dot_product_float_complex_FromC(
 
 template <typename T>
 void sycl_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev,
-                                        sycl::nd_item<1> it, sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>  cache){
-  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
+                                        sycl::nd_item<1> it, local_buffer<T>  cache){
+  const int threadsPerBlock = it.get_local_range(0);
 
-  int tid = it.get_local_id(0) +
-            it.get_group(0) * it.get_local_range(0);
+  int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
 
 /*
   if (isOurProcessRow) {
@@ -400,13 +395,14 @@ void sycl_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in,
   //int numSMs;
   //syclDeviceGetAttribute(&numSMs, syclDevAttrMultiProcessorCount, 0);
 
-  //int blocks = (l_rows+1023)/MAX_THREADS_PER_BLOCK;
+  //int blocks = (l_rows+1023)/maxWgSize;
   int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
-
   sycl::queue queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+
 
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK);
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
 
   /*
 DPCT1049:7: The work-group size passed to the SYCL kernel may exceed the limit.
@@ -415,7 +411,7 @@ work-group size if needed.
 */
 
   queue.submit([&](sycl::handler &cgh) {
-    sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local> cache_acc_ct1(sycl::range<1>(1024), cgh);
+    local_buffer<T> cache_acc_ct1(sycl::range<1>(1024), cgh);
 
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
@@ -538,9 +534,10 @@ void sycl_set_e_vec_scale_set_one_store_v_row_FromC(
 
   sycl::queue queue = getQueueOrDefault(my_stream);
 
-  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+  int blocks = std::max((l_rows+maxWgSize-1)/maxWgSize, 1);
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // TODO_23_11 change to NB
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11 change to NB
 
   //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)xf_host_or_dev, queue.get_context());
   sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
@@ -721,10 +718,11 @@ void sycl_store_u_v_in_uv_vu_FromC(
   int useCCL = *useCCL_in;
   int wantDebug = *wantDebug_in;
   
-  int threads = MAX_THREADS_PER_BLOCK/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
+  sycl::queue queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+  int threads = maxWgSize/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
   int blocks = std::max({(l_rows+threads-1)/threads, (l_cols+threads-1)/threads, 1});
 
-  sycl::queue queue = getQeueOrDefault(my_stream);
 
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
   sycl::range<1> threadsPerBlock = sycl::range<1>(threads);
@@ -824,9 +822,9 @@ extern "C" void sycl_store_u_v_in_uv_vu_float_complex_FromC(
 template <typename T, typename T_real>
 void sycl_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
                                                       int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric,
-                                                      sycl::nd_item<1> it, sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>  cache){
-
-  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
+                                                      sycl::nd_item<1> it, local_buffer<T>  cache){
+  
+  const int threadsPerBlock = it.get_local_range(0);
 
   int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
 
@@ -922,14 +920,15 @@ void sycl_update_matrix_element_add_FromC(
   int n_stored_vecs = *n_stored_vecs_in; 
   int isSkewsymmetric = *isSkewsymmetric_in;   
   int wantDebug = *wantDebug_in;
-  
-  int blocks = std::min((2*n_stored_vecs+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 32);
-  if (n_stored_vecs==0) blocks=1;
 
   sycl::queue queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+  int blocks = std::min((2*n_stored_vecs+maxWgSize-1)/maxWgSize, 32);
+  if (n_stored_vecs==0) blocks=1;
+
 
   sycl::range<1> blocksPerGrid   = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK);
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
 
   /*
 DPCT1049:24: The work-group size passed to the SYCL kernel may exceed the limit.
@@ -938,7 +937,7 @@ work-group size if needed.
 */
 
   queue.submit([&](sycl::handler &cgh) {
-    sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local> cache_acc_ct1(sycl::range<1>(1024 /*1024*/), cgh);
+    local_buffer<T> cache_acc_ct1(sycl::range<1>(1024 /*1024*/), cgh);
 
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
@@ -1307,7 +1306,6 @@ void sycl_transpose_reduceadd_vectors_copy_block_FromC(
           isSkewsymmetric, isReduceadd, it);
     });
   queue.wait_and_throw();
-
 }
 
 extern "C" void sycl_transpose_reduceadd_vectors_copy_block_double_FromC(
