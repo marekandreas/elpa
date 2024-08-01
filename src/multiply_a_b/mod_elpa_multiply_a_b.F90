@@ -1,4 +1,4 @@
-!    Copyright 2021, A. Marek
+!    Copyright 2024, A. Marek
 !
 !    This file is part of ELPA.
 !
