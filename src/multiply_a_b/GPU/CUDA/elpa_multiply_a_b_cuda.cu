@@ -658,6 +658,8 @@ extern "C" void cuda_copy_and_set_zeros_aux_full_FromC(char dataType, intptr_t m
 
 //________________________________________________________________
 
+// PETERDEBUG:  l_cols is unused, delete it
+// also "variable "threadsPerBlock" was declared but never referenced" in this source file
 template <typename T>
 __global__ void cuda_copy_and_set_zeros_aux_a_full_kernel(T *a_dev, T *aux_a_full_dev, int l_rows, int l_cols, int nblk_mult_cols, 
                                                           int nblk, int np_bc_fine, int np_cols_fine, int np_cols) {
