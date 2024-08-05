@@ -162,7 +162,8 @@
   integer(kind=ik)                             :: error
   integer(kind=c_intptr_t)                     :: aux_bc_dev, aux_mat_dev, tmp1_dev, tmp2_dev
   integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev ! PETERDEBUG_NEW
-  integer(kind=c_intptr_t)                     :: at_col_dev ! PETERDEBUG_NEW: for transposed case
+  integer(kind=c_intptr_t)                     :: at_col_dev ! PETERDEBUG_NEW: for transposed+GPU case
+  integer(kind=c_intptr_t)                     :: buf_send_dev, buf_recv_dev, buf_self_dev ! PETERDEBUG_NEW: for transposed+NCCL case
 !#ifndef DEVICE_POINTER
   integer(kind=c_intptr_t)                     :: a_dev
   integer(kind=c_intptr_t)                     :: b_dev
@@ -181,7 +182,7 @@
 
   logical                                      :: useCCL
 #if defined(USE_CCL_PXGEMM)
-  integer(kind=c_intptr_t)                     :: ccl_comm_rows, ccl_comm_cols, ccl_comm_dirs
+  integer(kind=c_intptr_t)                     :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all, ccl_comm_dirs
   integer(kind=c_int)                          :: cclDataType
   integer(kind=ik)                             :: k_datatype
 #endif
@@ -349,8 +350,10 @@
 #if defined(USE_CCL_PXGEMM)
     useCCL = .true.
 
+    my_stream = obj%gpu_setup%my_stream
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+    ccl_comm_all  = obj%gpu_setup%ccl_comm_all
 
 #if   REALCASE == 1 && defined(DOUBLE_PRECISION)
     cclDataType = cclDouble
@@ -1147,14 +1150,30 @@
           nblk_mult_rows_max = nblk_mult_rows_max + mod(l_rows_max, nblk)
         endif
 
-        allocate(buf_send(nblk_mult_rows_max, nblk_mult_cols_max), stat=istat, errmsg=errorMessage)
-        check_allocate("elpa_pxgemm: buf_send", istat, errorMessage)
-
-        allocate(buf_recv(nblk_mult_rows_max, nblk_mult_cols_max), stat=istat, errmsg=errorMessage)
-        check_allocate("elpa_pxgemm: buf_recv", istat, errorMessage)
-
         ! allocate(aux_a_send_full(nblk_mult, l_cols), stat=istat, errmsg=errorMessage)
         ! check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
+        if (useGPU) then
+          ! PETERDEBUG: this is as memory consuming as the whole matrix. Can we do smth about it?
+          successGPU = gpu_malloc(at_col_dev, l_rows*l_cols*size_of_datatype) ! l_rows*nblk_mult as aux_a_full_dev
+          check_alloc_gpu("elpa_pxgemm: at_col_dev", successGPU)
+        endif
+
+        if (useCCL) then
+          successGPU = gpu_malloc(buf_send_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype)
+          check_alloc_gpu("elpa_pxgemm: buf_send_dev", successGPU)
+
+          successGPU = gpu_malloc(buf_recv_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype)
+          check_alloc_gpu("elpa_pxgemm: buf_recv_dev", successGPU)
+
+          successGPU = gpu_malloc(buf_self_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype)
+          check_alloc_gpu("elpa_pxgemm: buf_self_dev", successGPU)
+        else ! useCCL
+          allocate(buf_send(nblk_mult_rows_max, nblk_mult_cols_max), stat=istat, errmsg=errorMessage)
+          check_allocate("elpa_pxgemm: buf_send", istat, errorMessage)
+
+          allocate(buf_recv(nblk_mult_rows_max, nblk_mult_cols_max), stat=istat, errmsg=errorMessage)
+          check_allocate("elpa_pxgemm: buf_recv", istat, errorMessage)
+        endif ! useCCL
       endif
 
       if (useGPU) then
@@ -1166,12 +1185,6 @@
   
         successGPU = gpu_malloc(tmp1_full_dev, l_rows*l_cols*size_of_datatype)
         check_alloc_gpu("elpa_pxgemm: tmp1_full_dev", successGPU)
-
-        if (a_transposed) then
-          ! PETERDEBUG: this is as memory consuming as the whole matrix. Can we do smth about it?
-          successGPU = gpu_malloc(at_col_dev, l_rows*l_cols*size_of_datatype) ! l_rows*nblk_mult as aux_a_full_dev
-          check_alloc_gpu("elpa_pxgemm: at_col_dev", successGPU)
-        endif
       endif
 
       call obj%timer%start("main_loop_nn")
@@ -1259,27 +1272,57 @@
               endif
 
               n_blocks_loc_fine_1 = (nblk_mult_cols_1+nblk-1)/nblk ! number of complete and incomplete blocks that with fine-grained process np_bc_fine_1
-              do j_block_loc_fine = 0, n_blocks_loc_fine_1 - 1
-                j_block_loc = (np_bc_fine_1 + j_block_loc_fine*np_cols_fine)/np_cols
-                nblk_cut_col = min(nblk, l_cols-j_block_loc*nblk)
+              if (useCCL) then
+                call gpu_ccl_copy_buf_send(PRECISION_CHAR, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, nblk_mult_rows_max, &
+                                           nblk, m_blocks_loc_fine, n_blocks_loc_fine_1, np_fine, np_bc_fine_1, &
+                                           np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+              else ! useCCL
+                do j_block_loc_fine = 0, n_blocks_loc_fine_1 - 1
+                  j_block_loc = (np_bc_fine_1 + j_block_loc_fine*np_cols_fine)/np_cols
+                  nblk_cut_col = min(nblk, l_cols-j_block_loc*nblk)
 
-                m_blocks_loc_fine = (nblk_mult_rows+nblk-1)/nblk
-                do i_block_loc_fine = 0, m_blocks_loc_fine - 1
-                  nblk_cut_row = min(nblk, nblk_mult_rows-i_block_loc_fine*nblk)
-                  i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
-                  buf_send(1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk,   &
-                            1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk) = &
-                          a(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
-                            1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk)
-                enddo ! i_block_loc_fine
+                  m_blocks_loc_fine = (nblk_mult_rows+nblk-1)/nblk
+                  do i_block_loc_fine = 0, m_blocks_loc_fine - 1
+                    nblk_cut_row = min(nblk, nblk_mult_rows-i_block_loc_fine*nblk)
+                    i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
 
-              enddo ! j_block_loc_fine
+                    buf_send(1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk,   &
+                             1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk) = &
+                           a(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
+                             1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk)
+                  enddo ! i_block_loc_fine
+                enddo ! j_block_loc_fine
+              endif ! useCCL
 
               ! PETERDEBUG: we send extra data to resolve the problem of continuity of the data.
               ! Alternatively, we could make buf_send and buf_recv to be 1D arrays of blocks (still 2D array of elements, so convenient to copy)
-              call MPI_Send(buf_send, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
-                            MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_target, kind=MPI_KIND), 0, &
-                            int(mpi_comm_all, kind=MPI_KIND), mpierr)
+              if (useCCL) then
+                if (mpi_rank_target/=myid) then
+                  successGPU = gpu_stream_synchronize(my_stream)
+                  check_stream_synchronize_gpu("elpa_pxgemm: ccl_send", successGPU)
+                  
+                  successGPU = ccl_Send(buf_send_dev, int(k_datatype*nblk_mult_rows_max*nblk_mult_cols_max,kind=c_size_t), &
+                                        cclDataType, mpi_rank_target, ccl_comm_all, my_stream)
+
+                  if (.not. successGPU) then
+                    print *,"Error in ccl_send"
+                    stop 1
+                  endif
+
+                  successGPU = gpu_stream_synchronize(my_stream)
+                  check_stream_synchronize_gpu("elpa_pxgemm: ccl_send", successGPU)
+                else
+                  ! PETERDEBUG: optimize memory usage - copy directly to at_col_dev (kernel needed or use gpu_ccl_copy_buf_recv)
+                  ! buf_self_dev = buf_send_dev
+                  successGPU = gpu_memcpy(buf_self_dev, buf_send_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype, &
+                                          gpuMemcpyDeviceToDevice)
+                  check_memcpy_gpu("elpa_pxgemm: buf_self_dev <- buf_send_dev", successGPU)
+                endif
+              else ! useCCL
+                call MPI_Send(buf_send, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
+                              MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_target, kind=MPI_KIND), 0, &
+                              int(mpi_comm_all, kind=MPI_KIND), mpierr)
+              endif ! useCCL
               np_bc_fine_1 = mod(np_bc_fine_1+np_cols, np_cols_fine)
               if (np_bc_fine_1 == np_bc_fine_1_start) exit
             enddo ! np_bc_fine_1  periodic loop
@@ -1311,25 +1354,52 @@
 
               m_blocks_loc_fine_1 = (nblk_mult_rows_1+nblk-1)/nblk
               n_blocks_loc_fine   = (nblk_mult_cols  +nblk-1)/nblk
-                
-              call MPI_Recv(buf_recv, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
-                            MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_source, kind=MPI_KIND), 0, &
-                            int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+              
+              if (useCCL) then
+                if (mpi_rank_source/=myid) then
+                  successGPU = ccl_Recv(buf_recv_dev, int(k_datatype*nblk_mult_rows_max*nblk_mult_cols_max,kind=c_size_t), &
+                                        cclDataType, mpi_rank_source, ccl_comm_all, my_stream)
 
-              do i_block_loc_fine = 0, m_blocks_loc_fine_1 - 1
-                i_block_loc = (np_fine_1 + i_block_loc_fine*np_rows_fine)/np_rows
+                  if (.not. successGPU) then
+                    print *,"Error in ccl_recv"
+                    stop 1
+                  endif
 
-                nblk_cut_row = min(nblk, l_rows-i_block_loc*nblk)
+                  successGPU = gpu_stream_synchronize(my_stream)
+                  check_stream_synchronize_gpu("elpa_pxgemm: ccl_recv", successGPU)
+                else
+                  ! buf_recv_dev = buf_self_dev
+                  successGPU = gpu_memcpy(buf_recv_dev, buf_self_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype, &
+                                          gpuMemcpyDeviceToDevice)
+                  check_memcpy_gpu("elpa_pxgemm: buf_recv_dev <- buf_self_dev", successGPU)
+                endif
+              else ! useCCL
+                call MPI_Recv(buf_recv, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
+                              MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_source, kind=MPI_KIND), 0, &
+                              int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+              endif ! useCCL
 
-                do j_block_loc_fine = 0, n_blocks_loc_fine - 1
-                  nblk_cut_col = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
-                  j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
-                  at_col(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
-                         1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk) = &
-      transpose(buf_recv(1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk,   &
-                         1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk))
-                enddo ! j_block_loc_fine
-              enddo ! i_block_loc_fine
+              if (useCCL) then
+                call gpu_ccl_copy_buf_recv(PRECISION_CHAR, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_cols, &
+                                           nblk_mult_rows_max, nblk, m_blocks_loc_fine_1, n_blocks_loc_fine, np_fine_1, &
+                                           np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+              else ! useCCL
+                do i_block_loc_fine = 0, m_blocks_loc_fine_1 - 1
+                  i_block_loc = (np_fine_1 + i_block_loc_fine*np_rows_fine)/np_rows
+
+                  nblk_cut_row = min(nblk, l_rows-i_block_loc*nblk)
+
+                  do j_block_loc_fine = 0, n_blocks_loc_fine - 1
+                    nblk_cut_col = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
+                    j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+                    at_col(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
+                           1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk) = &
+        transpose(buf_recv(1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk,   &
+                           1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk))
+                  enddo ! j_block_loc_fine
+                enddo ! i_block_loc_fine
+              endif ! useCCL
+
             enddo ! np_fine_1
           endif ! (mod(np_bc_fine,np_cols) == my_pcol)
         endif ! a_transposed
@@ -1352,12 +1422,14 @@
           if (mod(np_bc_fine,np_cols) == my_pcol) then
             if (useGPU) then
               if (a_transposed) then
+                if (.not. useCCL) then
 !#ifdef WITH_GPU_STREAMS ! PETERDEBUG
 !#else
-                num = l_rows*l_cols
-                successGPU = gpu_memcpy(at_col_dev, int(loc(at_col),kind=c_intptr_t), num*size_of_datatype, gpuMemcpyHostToDevice)
-                check_memcpy_gpu("elpa_pxgemm: at_col -> at_col_dev", successGPU)
+                  num = l_rows*l_cols
+                  successGPU = gpu_memcpy(at_col_dev, int(loc(at_col),kind=c_intptr_t), num*size_of_datatype, gpuMemcpyHostToDevice)
+                  check_memcpy_gpu("elpa_pxgemm: at_col -> at_col_dev", successGPU)
 !#endif
+                endif ! (.not. useCCL)
                 ! call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, at_col_dev, aux_a_full_dev, l_rows, l_cols, &
                 !                                       nblk_mult_cols, nblk, 0, np_cols_fine, np_cols, debug, my_stream)
                 call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, at_col_dev, aux_a_full_dev, l_rows, l_cols, &
@@ -1561,12 +1633,23 @@
         deallocate(at_full, stat=istat, errmsg=errorMessage)
         call check_alloc("elpa_pxgemm", "at_full", istat, errorMessage)
 
-        deallocate(buf_send, buf_recv, stat=istat, errmsg=errorMessage)
-        call check_alloc("elpa_pxgemm", "buf_send, buf_recv", istat, errorMessage)
-
         if (useGPU) then
           successGPU = gpu_free(at_col_dev)
           check_dealloc_gpu("elpa_pxgemm: at_col_dev", successGPU)
+        endif
+
+        if (useCCL) then
+          successGPU = gpu_free(buf_send_dev)
+          check_dealloc_gpu("elpa_pxgemm: buf_send_dev", successGPU)
+
+          successGPU = gpu_free(buf_recv_dev)
+          check_dealloc_gpu("elpa_pxgemm: buf_recv_dev", successGPU)
+
+          successGPU = gpu_free(buf_self_dev)
+          check_dealloc_gpu("elpa_pxgemm: buf_self_dev", successGPU)
+        else
+          deallocate(buf_send, buf_recv, stat=istat, errmsg=errorMessage)
+          call check_alloc("elpa_pxgemm", "buf_send, buf_recv", istat, errorMessage)
         endif
       endif ! a_transposed
 

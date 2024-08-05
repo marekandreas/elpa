@@ -834,4 +834,79 @@ module multiply_a_b_gpu
 #endif
     end subroutine
 
+
+    subroutine gpu_ccl_copy_buf_send(dataType, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, &
+                                     m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                     np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t)        :: a_dev, buf_send_dev
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, m_blocks_loc_fine, n_blocks_loc_fine, &
+                                        np_fine, np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, debug
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_ccl_copy_buf_send(dataType, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, &
+                                  m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                  np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_ccl_copy_buf_send(dataType, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, &
+                                 m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                 np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_ccl_copy_buf_send(dataType, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, &
+                                  m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                  np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print * "NOT implemented yet"
+      stop
+#endif
+    end subroutine
+
+
+    subroutine gpu_ccl_copy_buf_recv(dataType, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, &
+                                     m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                     np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t)        :: at_col_dev, buf_recv_dev
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, m_blocks_loc_fine, n_blocks_loc_fine, &
+                                         np_fine, np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, debug
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_ccl_copy_buf_recv(dataType, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, &
+                                  m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                  np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_ccl_copy_buf_recv(dataType, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, &
+                                 m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                 np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_ccl_copy_buf_recv(dataType, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, &
+                                  m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                  np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print * "NOT implemented yet"
+      stop
+#endif
+    end subroutine
+
+
 end module

@@ -848,3 +848,228 @@ extern "C" void cuda_copy_and_set_zeros_aux_b_full_FromC(char dataType, intptr_t
   if (dataType=='C') cuda_copy_and_set_zeros_aux_b_full<cuFloatComplex> ((cuFloatComplex  *) mat_dev, (cuFloatComplex  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, nblk_mult_rows_in, nblk_in, np_fine_in, np_rows_fine_in, np_rows_in, SM_count_in, debug_in, my_stream);
 }
 
+//________________________________________________________________
+
+template <typename T>
+__global__ void cuda_ccl_copy_buf_send_kernel(T *a_dev, T *buf_send_dev, int l_rows, int l_cols, int nblk_mult_rows, int lld_buf, int nblk,
+                                              int m_blocks_loc_fine, int n_blocks_loc_fine, int np_fine, int np_bc_fine, 
+                                              int np_rows_fine, int np_cols_fine, int np_rows, int np_cols) {
+                                           
+  // do j_block_loc_fine = 0, n_blocks_loc_fine_1 - 1
+  //   j_block_loc = (np_bc_fine_1 + j_block_loc_fine*np_cols_fine)/np_cols
+  //   nblk_cut_col = min(nblk, l_cols-j_block_loc*nblk)
+
+  //   m_blocks_loc_fine = (nblk_mult_rows+nblk-1)/nblk
+  //   do i_block_loc_fine = 0, m_blocks_loc_fine - 1
+  //     nblk_cut_row = min(nblk, nblk_mult_rows-i_block_loc_fine*nblk)
+  //     i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
+
+  //     buf_send(1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk,   &
+  //               1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk) = &
+  //             a(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
+  //               1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk)
+  //   enddo ! i_block_loc_fine
+  // enddo ! j_block_loc_fine
+
+  int i_block_loc, j_block_loc, nblk_cut_row, nblk_cut_col;
+
+  int j_block_loc_fine = 0;
+  for (; j_block_loc_fine < n_blocks_loc_fine; j_block_loc_fine++) 
+    {
+    j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols;
+    nblk_cut_col = min(nblk, l_cols-j_block_loc*nblk);
+
+    m_blocks_loc_fine = (nblk_mult_rows+nblk-1)/nblk;
+    int i_block_loc_fine = 0;
+    for (; i_block_loc_fine < m_blocks_loc_fine; i_block_loc_fine++) 
+      {
+      nblk_cut_row = min(nblk, nblk_mult_rows-i_block_loc_fine*nblk);
+      i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows;
+
+      for (int di = 0; di < nblk_cut_row; di++)
+        {
+        for (int dj = 0; dj < nblk_cut_col; dj++)
+          {
+          buf_send_dev[(di+i_block_loc_fine*nblk) + (dj+j_block_loc_fine*nblk)*lld_buf] 
+               = a_dev[(di+i_block_loc*     nblk) + (dj+j_block_loc     *nblk)*l_rows];
+          }
+        }
+      }
+    }
+
+}
+
+template <typename T>
+void cuda_ccl_copy_buf_send(T *a_dev, T *buf_send_dev, int *l_rows_in, int *l_cols_in, int *nblk_mult_rows_in, int *lld_buf_in, int *nblk_in,
+                            int *m_blocks_loc_fine_in, int *n_blocks_loc_fine_in, int *np_fine_in, int *np_bc_fine_in, 
+                            int *np_rows_fine_in, int *np_cols_fine_in, int *np_rows_in, int *np_cols_in, int *debug_in, cudaStream_t my_stream){
+
+  int l_rows = *l_rows_in;
+  int l_cols = *l_cols_in;
+  int nblk_mult_rows = *nblk_mult_rows_in;
+  int lld_buf = *lld_buf_in;
+  int nblk = *nblk_in;
+  int m_blocks_loc_fine = *m_blocks_loc_fine_in;
+  int n_blocks_loc_fine = *n_blocks_loc_fine_in;
+  int np_fine = *np_fine_in;
+  int np_bc_fine = *np_bc_fine_in;
+  int np_rows_fine = *np_rows_fine_in;
+  int np_cols_fine = *np_cols_fine_in;
+  int np_rows = *np_rows_in;
+  int np_cols = *np_cols_in;
+  int debug = *debug_in;
+
+  dim3 blocks = dim3(1, 1, 1);
+  dim3 threadsPerBlock = dim3(1, 1, 1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_ccl_copy_buf_send_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk,
+                                                                       m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, 
+                                                                       np_rows_fine, np_cols_fine, np_rows, np_cols);
+#else
+  cuda_ccl_copy_buf_send_kernel<<<blocks,threadsPerBlock>>>(a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, nblk,
+                                                           m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, 
+                                                           np_rows_fine, np_cols_fine, np_rows, np_cols);
+#endif
+
+  if (debug)
+    {
+    cudaDeviceSynchronize();
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing cuda_ccl_copy_buf_send: %s\n",cudaGetErrorString(cuerr));
+    }
+  }
+}
+
+extern "C" void cuda_ccl_copy_buf_send_FromC(char dataType, intptr_t a_dev, intptr_t buf_send_dev, 
+                                             int *l_rows_in, int *l_cols_in, int *nblk_mult_rows_in, int *lld_buf_in, int *nblk_in,
+                                             int *m_blocks_loc_fine_in, int *n_blocks_loc_fine_in, int *np_fine_in, int *np_bc_fine_in, 
+                                             int *np_rows_fine_in, int *np_cols_fine_in, int *np_rows_in, int *np_cols_in, int *debug_in, cudaStream_t my_stream){
+  if (dataType=='D') cuda_ccl_copy_buf_send<double>((double *) a_dev, (double *) buf_send_dev, l_rows_in, l_cols_in, nblk_mult_rows_in, lld_buf_in, nblk_in,
+                                                    m_blocks_loc_fine_in, n_blocks_loc_fine_in, np_fine_in, np_bc_fine_in, 
+                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, debug_in, my_stream);
+  if (dataType=='S') cuda_ccl_copy_buf_send<float> ((float  *) a_dev, (float  *) buf_send_dev, l_rows_in, l_cols_in, nblk_mult_rows_in, lld_buf_in, nblk_in,
+                                                    m_blocks_loc_fine_in, n_blocks_loc_fine_in, np_fine_in, np_bc_fine_in, 
+                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, debug_in, my_stream);
+  if (dataType=='Z') cuda_ccl_copy_buf_send<cuDoubleComplex>((cuDoubleComplex *) a_dev, (cuDoubleComplex *) buf_send_dev, l_rows_in, l_cols_in, nblk_mult_rows_in, lld_buf_in, nblk_in,
+                                                    m_blocks_loc_fine_in, n_blocks_loc_fine_in, np_fine_in, np_bc_fine_in, 
+                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, debug_in, my_stream);
+  if (dataType=='C') cuda_ccl_copy_buf_send<cuFloatComplex> ((cuFloatComplex  *) a_dev, (cuFloatComplex  *) buf_send_dev, l_rows_in, l_cols_in, nblk_mult_rows_in, lld_buf_in, nblk_in,
+                                                    m_blocks_loc_fine_in, n_blocks_loc_fine_in, np_fine_in, np_bc_fine_in,
+                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, debug_in, my_stream);
+}
+
+//________________________________________________________________
+
+template <typename T>
+__global__ void cuda_ccl_copy_buf_recv_kernel(T *at_col_dev, T *buf_recv_dev, int l_rows, int l_cols, int nblk_mult_cols, int lld_buf, int nblk,
+                                              int m_blocks_loc_fine, int n_blocks_loc_fine, int np_fine, int np_bc_fine, 
+                                              int np_rows_fine, int np_cols_fine, int np_rows, int np_cols) {
+
+  // do i_block_loc_fine = 0, m_blocks_loc_fine_1 - 1
+  //   i_block_loc = (np_fine_1 + i_block_loc_fine*np_rows_fine)/np_rows
+
+  //   nblk_cut_row = min(nblk, l_rows-i_block_loc*nblk)
+
+  //   do j_block_loc_fine = 0, n_blocks_loc_fine - 1
+  //     nblk_cut_col = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
+  //     j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+  //     at_col(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
+  //             1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk) = &
+  // transpose(buf_recv(1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk,   &
+  //             1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk))
+  //   enddo ! j_block_loc_fine
+  // enddo ! i_block_loc_fine
+  printf("cuda_ccl_copy_buf_recv_kernel; m_blocks_loc_fine=%d\n", m_blocks_loc_fine); // PETERDEBUG
+
+  int i_block_loc, j_block_loc, nblk_cut_row, nblk_cut_col;
+
+  int i_block_loc_fine = 0;
+  for (; i_block_loc_fine < m_blocks_loc_fine; i_block_loc_fine++) 
+    {
+    i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows;
+    nblk_cut_row = min(nblk, l_rows-i_block_loc*nblk);
+
+    int j_block_loc_fine = 0;
+    for (; j_block_loc_fine < n_blocks_loc_fine; j_block_loc_fine++) 
+      {
+      nblk_cut_col = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk);
+      j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols;
+
+      for (int di = 0; di < nblk_cut_row; di++)
+        {
+        for (int dj = 0; dj < nblk_cut_col; dj++)
+          {
+          // T temp = buf_recv_dev[(dj+j_block_loc_fine*nblk) + (di+i_block_loc_fine*nblk)*lld_buf];
+          // printf("i_block_loc_fine = %d, j_block_loc_fine = %d, di = %d, dj = %d, temp=%f\n",
+          //         i_block_loc_fine, j_block_loc_fine, di, dj, temp); // PETERDEBUG
+          at_col_dev[(di+i_block_loc*     nblk) + (dj+j_block_loc*     nblk)*l_rows] 
+      = buf_recv_dev[(dj+j_block_loc_fine*nblk) + (di+i_block_loc_fine*nblk)*lld_buf];
+          }
+        }
+      }
+    }
+
+}
+
+template <typename T>
+void cuda_ccl_copy_buf_recv(T *at_col_dev, T *buf_recv_dev, int *l_rows_in, int *l_cols_in, int *nblk_mult_cols_in, int *lld_buf_in, int *nblk_in,
+                            int *m_blocks_loc_fine_in, int *n_blocks_loc_fine_in, int *np_fine_in, int *np_bc_fine_in, 
+                            int *np_rows_fine_in, int *np_cols_fine_in, int *np_rows_in, int *np_cols_in, int *debug_in, cudaStream_t my_stream){
+
+  int l_rows = *l_rows_in;
+  int l_cols = *l_cols_in;
+  int nblk_mult_cols = *nblk_mult_cols_in;
+  int lld_buf = *lld_buf_in;
+  int nblk = *nblk_in;
+  int m_blocks_loc_fine = *m_blocks_loc_fine_in;
+  int n_blocks_loc_fine = *n_blocks_loc_fine_in;
+  int np_fine = *np_fine_in;
+  int np_bc_fine = *np_bc_fine_in;
+  int np_rows_fine = *np_rows_fine_in;
+  int np_cols_fine = *np_cols_fine_in;
+  int np_rows = *np_rows_in;
+  int np_cols = *np_cols_in;
+  int debug = *debug_in;
+
+  dim3 blocks = dim3(1, 1, 1);
+  dim3 threadsPerBlock = dim3(1, 1, 1);
+
+#ifdef WITH_GPU_STREAMS
+  cuda_ccl_copy_buf_recv_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_cols, lld_buf, nblk,
+                                                                       m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, 
+                                                                       np_rows_fine, np_cols_fine, np_rows, np_cols);
+#else
+  cuda_ccl_copy_buf_recv_kernel<<<blocks,threadsPerBlock>>>(at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_cols, lld_buf, nblk,
+                                                           m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, 
+                                                           np_rows_fine, np_cols_fine, np_rows, np_cols);
+#endif
+  
+    if (debug)
+      {
+      cudaDeviceSynchronize();
+      cudaError_t cuerr = cudaGetLastError();
+      if (cuerr != cudaSuccess){
+        printf("Error in executing cuda_ccl_copy_buf_recv: %s\n",cudaGetErrorString(cuerr));
+      }
+    }
+  }
+
+extern "C" void cuda_ccl_copy_buf_recv_FromC(char dataType, intptr_t at_col_dev, intptr_t buf_recv_dev, 
+                                             int *l_rows_in, int *l_cols_in, int *nblk_mult_cols_in, int *lld_buf_in, int *nblk_in,
+                                             int *m_blocks_loc_fine_in, int *n_blocks_loc_fine_in, int *np_fine_in, int *np_bc_fine_in, 
+                                             int *np_rows_fine_in, int *np_cols_fine_in, int *np_rows_in, int *np_cols_in, int *debug_in, cudaStream_t my_stream){
+  if (dataType=='D') cuda_ccl_copy_buf_recv<double>((double *) at_col_dev, (double *) buf_recv_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, lld_buf_in, nblk_in,
+                                                    m_blocks_loc_fine_in, n_blocks_loc_fine_in, np_fine_in, np_bc_fine_in, 
+                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, debug_in, my_stream);
+  if (dataType=='S') cuda_ccl_copy_buf_recv<float> ((float  *) at_col_dev, (float  *) buf_recv_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, lld_buf_in, nblk_in,
+                                                    m_blocks_loc_fine_in, n_blocks_loc_fine_in, np_fine_in, np_bc_fine_in, 
+                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, debug_in, my_stream);
+  if (dataType=='Z') cuda_ccl_copy_buf_recv<cuDoubleComplex>((cuDoubleComplex *) at_col_dev, (cuDoubleComplex *) buf_recv_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, lld_buf_in, nblk_in,
+                                                    m_blocks_loc_fine_in, n_blocks_loc_fine_in, np_fine_in, np_bc_fine_in, 
+                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, debug_in, my_stream);
+  if (dataType=='C') cuda_ccl_copy_buf_recv<cuFloatComplex> ((cuFloatComplex  *) at_col_dev, (cuFloatComplex  *) buf_recv_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, lld_buf_in, nblk_in,
+                                                    m_blocks_loc_fine_in, n_blocks_loc_fine_in, np_fine_in, np_bc_fine_in,
+                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, debug_in, my_stream);
+}

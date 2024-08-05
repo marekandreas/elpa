@@ -362,6 +362,7 @@ module multiply_a_b_cuda
     end subroutine
   end interface
 
+
   interface
     subroutine cuda_copy_and_set_zeros_aux_b_full_c(dataType, mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult, &
                                                     nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, &
@@ -373,6 +374,38 @@ module multiply_a_b_cuda
       integer(kind=c_intptr_t), value  :: mat_dev, aux_mat_full_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_cols, nblk_mult, nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, &
                                           SM_count, debug
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine cuda_ccl_copy_buf_send_c(dataType, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, &
+                                        nblk, m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                        np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream) &
+                          bind(C, name="cuda_ccl_copy_buf_send_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value      :: dataType
+      integer(kind=c_intptr_t), value  :: a_dev, buf_send_dev
+      integer(kind=c_int), intent(in)  :: l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, m_blocks_loc_fine, n_blocks_loc_fine, &
+                                         np_fine, np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, debug
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine cuda_ccl_copy_buf_recv_c(dataType, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, &
+                                        nblk, m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                        np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream) &
+                          bind(C, name="cuda_ccl_copy_buf_recv_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value      :: dataType
+      integer(kind=c_intptr_t), value  :: at_col_dev, buf_recv_dev
+      integer(kind=c_int), intent(in)  :: l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, m_blocks_loc_fine, n_blocks_loc_fine, &
+                                        np_fine, np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, debug
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -769,6 +802,44 @@ module multiply_a_b_cuda
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_and_set_zeros_aux_b_full_c(dataType, mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult, &
                                                 nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+
+    subroutine cuda_ccl_copy_buf_send(dataType, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, &
+                                      nblk, m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                      np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t)        :: a_dev, buf_send_dev
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, m_blocks_loc_fine, n_blocks_loc_fine, &
+                                         np_fine, np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, debug
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_ccl_copy_buf_send_c(dataType, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, &
+                                    nblk, m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                    np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+#endif
+    end subroutine
+
+
+    subroutine cuda_ccl_copy_buf_recv(dataType, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_rows, lld_buf, &
+                                      nblk, m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                      np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t)        :: at_col_dev, buf_recv_dev
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, nblk_mult_rows, lld_buf, nblk, m_blocks_loc_fine, n_blocks_loc_fine, &
+                                         np_fine, np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, debug
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_ccl_copy_buf_recv_c(dataType, at_col_dev, buf_recv_dev, l_rows, l_cols, &
+                                    nblk_mult_rows, lld_buf, nblk, m_blocks_loc_fine, n_blocks_loc_fine, np_fine, np_bc_fine, &
+                                    np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
 #endif
     end subroutine
 
