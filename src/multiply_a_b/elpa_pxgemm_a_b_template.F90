@@ -1275,7 +1275,7 @@
               if (useCCL) then
                 call gpu_ccl_copy_buf_send(PRECISION_CHAR, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, nblk_mult_rows_max, &
                                            nblk, m_blocks_loc_fine, n_blocks_loc_fine_1, np_fine, np_bc_fine_1, &
-                                           np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+                                           np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
               else ! useCCL
                 do j_block_loc_fine = 0, n_blocks_loc_fine_1 - 1
                   j_block_loc = (np_bc_fine_1 + j_block_loc_fine*np_cols_fine)/np_cols
@@ -1382,7 +1382,7 @@
               if (useCCL) then
                 call gpu_ccl_copy_buf_recv(PRECISION_CHAR, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_cols, &
                                            nblk_mult_rows_max, nblk, m_blocks_loc_fine_1, n_blocks_loc_fine, np_fine_1, &
-                                           np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, debug, my_stream)
+                                           np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
               else ! useCCL
                 do i_block_loc_fine = 0, m_blocks_loc_fine_1 - 1
                   i_block_loc = (np_fine_1 + i_block_loc_fine*np_rows_fine)/np_rows
