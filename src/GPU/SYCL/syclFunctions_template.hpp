@@ -55,6 +55,7 @@
 #include <cstdint>
 #include <vector>
 #include <optional>
+#include <cstdint>
 
 #include "config-f90.h"
 
@@ -144,9 +145,13 @@ static oneapi::mkl::side sideFromChar(char c) {
     return syclMemcpyDeviceToHost;
   }
 
-  int syclGetDeviceCountFromC(int *count, int onlyL0Gpus) {
-    collectGpuDevices(onlyL0Gpus != 0);
-     *count = SyclState::defaultState().getNumDevices();
+  int syclStateInitializeFromC(int onlyL0Gpus) {
+    bool isInitializedSuccessfully = SyclState::initialize(onlyL0Gpus != 0);
+    return isInitializedSuccessfully ? 1 : 0;
+  }
+
+  int syclGetDeviceCountFromC(int *count) {
+    *count = SyclState::defaultState().getNumDevices();
     return 1;
   }
 
@@ -157,6 +162,98 @@ static oneapi::mkl::side sideFromChar(char c) {
       std::cout << "Device #" << targetDeviceId << " cannot be selected." << std::endl;
       return 0;
     }
+    return 1;
+  }
+
+  int syclHostRegisterDefaultFromC() {
+    return 0;
+  }
+
+  int syclHostRegisterPortableFromC() {
+    return 1;
+  }
+
+  int syclHostRegisterMappedFromC() {
+    return 2;
+  }
+
+  int syclGetLastErrorFromC() {
+    return 1;
+  }
+
+  int syclDeviceGetAttributeFromC(int *value, int attribute) {
+    namespace sid = sycl::info::device;
+    DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
+    sycl::device &dev = devSel.device;
+    sycl::range<3> maxWgDim = dev.get_info<sid::max_work_item_sizes<3>>();
+    auto sgSizes = dev.get_info<sid::sub_group_sizes>();
+    auto maxSgSize = *std::max_element(sgSizes.begin(), sgSizes.end());
+    switch(attribute) {
+      case 0: return dev.get_info<sid::max_work_group_size>();
+      case 1: return maxWgDim[2];
+      case 2: return maxWgDim[1];
+      case 3: return maxWgDim[0];
+      case 4: return UINT32_MAX / maxWgDim[2];
+      case 5: return UINT32_MAX / maxWgDim[1];
+      case 6: return UINT32_MAX / maxWgDim[0];
+      case 7: return maxSgSize;        
+      case 8: return dev.get_info<sid::max_compute_units>();
+      default: return 0;
+    }
+  }
+
+  int syclblasGetVersionFromC(QueueData *blasHandle, int *version) {
+    // This may not be 100% portable if a non-intel MKL is targeted. 
+    // If that should ever be the case, one should have a look at this.
+    MKLVersion mklVersion;
+    mkl_get_version(&mklVersion);
+    return mklVersion.MajorVersion * 10000 + mklVersion.MinorVersion * 100 + mklVersion.UpdateVersion;
+  }
+
+  int syclStreamCreateFromC(QueueData **my_stream) {
+    QueueData *queueHandle = SyclState::defaultState().getDefaultDeviceHandle().createQueue();
+    *my_stream = queueHandle;
+    return 1;
+  }
+
+  int syclStreamDestroyFromC(QueueData *my_stream) {
+    bool isSuccessfullyDeleted = SyclState::defaultState().getDefaultDeviceHandle().destroyQueue(my_stream);
+    return isSuccessfullyDeleted ? 1 : 0;
+  }
+
+  int syclStreamSynchronizeExplicitFromC(QueueData *my_stream) {
+    sycl::queue q = getQueueOrDefault(my_stream);
+    q.wait();
+    return 1;
+  }
+
+  int syclStreamSynchronizeImplicitFromC() {
+    sycl::queue q = getQueueOrDefault(nullptr);
+    q.wait();
+    return 1;
+  }
+
+  int syclDeviceSynchronizeFromC() {
+    sycl::queue q = getQueueOrDefault(nullptr);
+    q.wait();
+    return 1;
+  }
+
+/*
+    interface
+    function sycl_devicesynchronize_c() result(istat) &
+             bind(C,name="syclDeviceSynchronizeFromC")
+
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)                       :: istat
+    end function
+  end interface
+*/
+
+
+  int syclblasSetStreamFromC(QueueData *syclBlasHandle, QueueData *syclStream) {
+    // This does nothing, as QueueData is being used for everything here, and it contains both queue and scratchpad.
     return 1;
   }
 
@@ -171,22 +268,22 @@ static oneapi::mkl::side sideFromChar(char c) {
     syclMemcpyDeviceToDevice = 2;
   }
 
-  int syclblasCreateFromC(intptr_t* handle){
+  int syclblasCreateFromC(QueueData **handle) {
     //stub function
     return 1;
   }
 
-  int syclblasDestroyFromC(intptr_t* handle){
+  int syclblasDestroyFromC(QueueData **handle) {
     //stub function
     return 1;
   }
 
-  int syclsolverCreateFromC(intptr_t* handle){
+  int syclsolverCreateFromC(QueueData **handle) {
     //stub function
     return 1;
   }
 
-  int syclsolverDestroyFromC(intptr_t* handle){
+  int syclsolverDestroyFromC(QueueData **handle) {
     //stub function
     return 1;
   }

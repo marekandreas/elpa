@@ -56,95 +56,96 @@
   integer(kind=ik) :: syclblasPointerModeHost
 
 
-!  interface
-!    function sycl_device_get_attributes_c(value, attribute) result(istat) &
-!             bind(C, name="syclDeviceGetAttributeFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!
-!      integer(kind=C_INT), value  :: attribute
-!      integer(kind=C_INT)         :: value
-!      integer(kind=C_INT)         :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_device_get_attributes_c(value, attribute) result(istat) &
+             bind(C, name="syclDeviceGetAttributeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_INT), value  :: attribute
+      integer(kind=C_INT)         :: value
+      integer(kind=C_INT)         :: istat
+    end function
+  end interface
 
 
-!  interface
-!    function syclblas_get_version_c(syclblasHandle, version) result(istat) &
-!             bind(C, name="syclblasGetVersionFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!
-!      integer(kind=C_intptr_T), value  :: syclblasHandle
-!      integer(kind=C_INT)              :: version
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
+  interface
+    function syclblas_get_version_c(syclblasHandle, version) result(istat) &
+             bind(C, name="syclblasGetVersionFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value  :: syclblasHandle
+      integer(kind=C_INT)              :: version
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
 
 
-!  interface
-!    function sycl_get_last_error_c() result(istat) &
-!             bind(C, name="syclGetLastErrorFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_int)              :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_get_last_error_c() result(istat) &
+             bind(C, name="syclGetLastErrorFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int)              :: istat
+    end function
+  end interface
 
-!  ! streams
-!
-!  interface
-!    function sycl_stream_create_c(syclStream) result(istat) &
-!             bind(C, name="syclStreamCreateFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T) :: syclStream
-!      integer(kind=C_INT)      :: istat
-!    end function
-!  end interface
+  ! streams
 
-!  interface
-!    function sycl_stream_destroy_c(syclStream) result(istat) &
-!             bind(C, name="syclStreamDestroyFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value :: syclStream
-!      integer(kind=C_INT)             :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_stream_create_c(syclStream) result(istat) &
+             bind(C, name="syclStreamCreateFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      ! not a value this time!
+      integer(kind=C_intptr_T) :: syclStream
+      integer(kind=C_INT)      :: istat
+   end function
+  end interface
 
-!  interface
-!    function sycl_stream_synchronize_explicit_c(syclStream) result(istat) &
-!             bind(C, name="syclStreamSynchronizeExplicitFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!
-!      integer(kind=C_intptr_T), value  :: syclStream
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_stream_destroy_c(syclStream) result(istat) &
+             bind(C, name="syclStreamDestroyFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value :: syclStream
+      integer(kind=C_INT)             :: istat
+    end function
+  end interface
 
-!  interface
-!    function sycl_stream_synchronize_implicit_c() result(istat) &
-!             bind(C, name="syclStreamSynchronizeImplicitFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
+  interface
+    function sycl_stream_synchronize_explicit_c(syclStream) result(istat) &
+             bind(C, name="syclStreamSynchronizeExplicitFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
 
-!  interface
-!    function syclblas_set_stream_c(syclHandle, syclStream) result(istat) &
-!             bind(C, name="syclblasSetStreamFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!
-!      integer(kind=C_intptr_T), value  :: syclHandle
-!      integer(kind=C_intptr_T), value  :: syclStream
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
+      integer(kind=C_intptr_T), value  :: syclStream
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+  interface
+    function sycl_stream_synchronize_implicit_c() result(istat) &
+             bind(C, name="syclStreamSynchronizeImplicitFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
+
+  interface
+    function syclblas_set_stream_c(syclHandle, syclStream) result(istat) &
+             bind(C, name="syclblasSetStreamFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value  :: syclHandle
+      integer(kind=C_intptr_T), value  :: syclStream
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
 
   interface
     function syclblas_create_c(syclHandle) result(istat) &
@@ -179,12 +180,21 @@
   end interface
 
   interface
-    function sycl_getdevicecount_c(n, onlyIntelgpus) result(istat) &
+    function sycl_state_initialize_c(onlyL0Gpus) result(istat) &
+             bind(C, name="syclStateInitializeFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), intent(in), value   :: onlyL0Gpus
+      integer(kind=C_INT)                      :: istat
+    end function
+  end interface
+
+  interface
+    function sycl_getdevicecount_c(n) result(istat) &
              bind(C, name="syclGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT), intent(out)         :: n
-      integer(kind=C_INT), intent(in), value :: onlyIntelgpus
       integer(kind=C_INT)                      :: istat
     end function
   end interface
@@ -237,32 +247,32 @@
     end function
   end interface
 
-!  interface
-!    function sycl_hostRegisterDefault_c() result(flag) &
-!             bind(C, name="syclHostRegisterDefaultFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_int) :: flag
-!    end function
-!  end interface
+  interface
+    function sycl_hostRegisterDefault_c() result(flag) &
+             bind(C, name="syclHostRegisterDefaultFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int) :: flag
+    end function
+  end interface
 
-!  interface
-!    function sycl_hostRegisterPortable_c() result(flag) &
-!             bind(C, name="syclHostRegisterPortableFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_int) :: flag
-!    end function
-!  end interface
+  interface
+    function sycl_hostRegisterPortable_c() result(flag) &
+             bind(C, name="syclHostRegisterPortableFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int) :: flag
+    end function
+  end interface
 
-!  interface
-!    function sycl_hostRegisterMapped_c() result(flag) &
-!             bind(C, name="syclHostRegisterMappedFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=c_int) :: flag
-!    end function
-!  end interface
+  interface
+    function sycl_hostRegisterMapped_c() result(flag) &
+             bind(C, name="syclHostRegisterMappedFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int) :: flag
+    end function
+  end interface
 
   interface
     function sycl_memcpy_intptr_c(dst, src, size, dir) result(istat) &
@@ -1659,99 +1669,99 @@
 
   contains
 
-!    function sycl_device_get_attributes(value, attribute) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_INT)                       :: value, attribute
-!      logical                                   :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_device_get_attributes_c(value, attribute) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_device_get_attributes(value, attribute) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)                       :: value, attribute
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_device_get_attributes_c(value, attribute) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function syclblas_get_version(syclblasHandle, version) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t)                  :: syclblasHandle
-!      integer(kind=C_INT)                       :: version
-!      logical                                   :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = syclblas_get_version_c(syclblasHandle, version) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function syclblas_get_version(syclblasHandle, version) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: syclblasHandle
+      integer(kind=C_INT)                       :: version
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = syclblas_get_version_c(syclblasHandle, version) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_get_last_error() result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      logical                                   :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_get_last_error_c() /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_get_last_error() result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_get_last_error_c() /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_stream_create(syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t)                  :: syclStream
-!      logical                                   :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_stream_create_c(syclStream) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_stream_create(syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: syclStream
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_stream_create_c(syclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function sycl_stream_destroy(syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t)                  :: syclStream
-!      logical                                   :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_stream_destroy_c(syclStream) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function sycl_stream_destroy(syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: syclStream
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_stream_destroy_c(syclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
-!    function syclblas_set_stream(syclblasHandle, syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t)                  :: syclblasHandle
-!      integer(kind=C_intptr_t)                  :: syclStream
-!      logical                                   :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = syclblas_set_stream_c(syclblasHandle, syclStream) /= 0
-!#else
-!      success = .true.
-!#endif
-!    end function
+    function syclblas_set_stream(syclblasHandle, syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: syclblasHandle
+      integer(kind=C_intptr_t)                  :: syclStream
+      logical                                   :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = syclblas_set_stream_c(syclblasHandle, syclStream) /= 0
+#else
+      success = .true.
+#endif
+    end function
 
 
-!    function sycl_stream_synchronize(syclStream) result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_t), optional        :: syclStream
-!      logical                                   :: success
-!      if (present(syclStream)) then
-!#ifdef WITH_SYCL_GPU_VERSION
-!        success = sycl_stream_synchronize_explicit_c(syclStream) /= 0
-!#else
-!        success = .true.
-!#endif
-!      else
-!#ifdef WITH_SYCL_GPU_VERSION
-!        success = sycl_stream_synchronize_implicit_c() /= 0
-!#else
-!        success = .true.
-!#endif
-!      endif
-!    end function
+    function sycl_stream_synchronize(syclStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t), optional        :: syclStream
+      logical                                   :: success
+      if (present(syclStream)) then
+#ifdef WITH_SYCL_GPU_VERSION
+        success = sycl_stream_synchronize_explicit_c(syclStream) /= 0
+#else
+        success = .true.
+#endif
+      else
+#ifdef WITH_SYCL_GPU_VERSION
+        success = sycl_stream_synchronize_implicit_c() /= 0
+#else
+        success = .true.
+#endif
+      endif
+    end function
 
 !#ifdef WITH_NVTX
 !    ! this wrapper is needed for the string conversion
@@ -1807,7 +1817,19 @@
 #endif
     end function
 
-    function sycl_getdevicecount(n, onlyIntelGpus) result(success)
+    function sycl_state_initialize(onlyL0Gpus) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int)  :: onlyL0Gpus
+      logical              :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_state_initialize_c(onlyL0Gpus) /=0
+#else
+      success = .true.
+#endif
+    end function
+
+    function sycl_getdevicecount(n) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=ik)     :: n
@@ -1815,7 +1837,7 @@
       integer(kind=c_int)  :: nCasted
       logical              :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_getdevicecount_c(nCasted, onlyIntelGpus) /=0
+      success = sycl_getdevicecount_c(nCasted) /=0
       n = int(nCasted)
 #else
       success = .true.
@@ -1835,32 +1857,16 @@
 #endif
     end subroutine sycl_printdevices
 
-    function sycl_getcpucount(n) result(success)
+    function sycl_devicesynchronize()result(success)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=ik)     :: n
-      integer(kind=c_int)  :: nCasted
-      logical              :: success
+      logical :: success
 #ifdef WITH_SYCL_GPU_VERSION
-      !success = sycl_getcpucount_c(nCasted) /=0
-      n = 0
-      n = int(nCasted)
+      success = sycl_devicesynchronize_c() /=0
 #else
       success = .true.
-      n = 0
 #endif
     end function
-
-!    function sycl_devicesynchronize()result(success)
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      logical :: success
-!#ifdef WITH_SYCL_GPU_VERSION
-!      success = sycl_devicesynchronize_c() /=0
-!#else
-!      success = .true.
-!#endif
-!    end function
 
     function sycl_malloc_intptr(a, width_height) result(success)
       use, intrinsic :: iso_c_binding
@@ -1938,8 +1944,6 @@
 #endif
     end function
 
-
-    ! We don't actually need these, all done in sycl_
 
     function sycl_free_host_intptr(a) result(success)
       use, intrinsic :: iso_c_binding
@@ -2032,41 +2036,41 @@
 #endif
     end function
 
-!    function sycl_hostRegisterDefault() result(flag)
-!      use, intrinsic :: iso_c_binding
-!      use precision
-!      implicit none
-!      integer(kind=ik) :: flag
-!#ifdef WITH_SYCL_GPU_VERSION
-!      flag = int(sycl_hostRegisterDefault_c())
-!#else
-!      flag = 0
-!#endif
-!    end function
+    function sycl_hostRegisterDefault() result(flag)
+      use, intrinsic :: iso_c_binding
+      use precision
+      implicit none
+      integer(kind=ik) :: flag
+#ifdef WITH_SYCL_GPU_VERSION
+      flag = int(sycl_hostRegisterDefault_c())
+#else
+      flag = 0
+#endif
+    end function
 
-!    function sycl_hostRegisterPortable() result(flag)
-!      use, intrinsic :: iso_c_binding
-!      use precision
-!      implicit none
-!      integer(kind=ik) :: flag
-!#ifdef WITH_SYCL_GPU_VERSION
-!      flag = int(sycl_hostRegisterPortable_c())
-!#else
-!      flag = 0
-!#endif
-!    end function
+    function sycl_hostRegisterPortable() result(flag)
+      use, intrinsic :: iso_c_binding
+      use precision
+      implicit none
+      integer(kind=ik) :: flag
+#ifdef WITH_SYCL_GPU_VERSION
+      flag = int(sycl_hostRegisterPortable_c())
+#else
+      flag = 0
+#endif
+    end function
 
-!    function sycl_hostRegisterMapped() result(flag)
-!      use, intrinsic :: iso_c_binding
-!      use precision
-!      implicit none
-!      integer(kind=ik) :: flag
-!#ifdef WITH_SYCL_GPU_VERSION
-!      flag = int(sycl_hostRegisterMapped_c())
-!#else
-!      flag = 0
-!#endif
-!    end function
+    function sycl_hostRegisterMapped() result(flag)
+      use, intrinsic :: iso_c_binding
+      use precision
+      implicit none
+      integer(kind=ik) :: flag
+#ifdef WITH_SYCL_GPU_VERSION
+      flag = int(sycl_hostRegisterMapped_c())
+#else
+      flag = 0
+#endif
+    end function
 
     function sycl_memcpy_intptr(dst, src, size, dir) result(success)
       use, intrinsic :: iso_c_binding

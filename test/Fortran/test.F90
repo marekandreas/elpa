@@ -848,11 +848,11 @@ program test
    ! Set device
    successGPU = .true.
 #if TEST_INTEL_GPU_SYCL == 1
-   successGPU = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
-   if (.not.(successGPU)) then
-      print *,"Error in sycl_getcpucount. Aborting..."
-      stop 1
-    endif
+!   successGPU = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
+!   if (.not.(successGPU)) then
+!      print *,"Error in sycl_getcpucount. Aborting..."
+!      stop 1
+!    endif
 #endif
    successGPU = gpu_setdevice(gpuID)
    if (.not.(successGPU)) then

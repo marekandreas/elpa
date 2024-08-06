@@ -68,11 +68,19 @@ using namespace sycl_be;
 
 std::optional<SyclState> SyclState::_staticState;
 
-void SyclState::initialize(bool onlyL0Gpus) {
-  if (SyclState::_staticState) {
-    std::cout << "SyclStaticState already initialized! This will not query devices again." << std::endl;
+bool SyclState::initialize(bool onlyL0Gpus) {
+  if (SyclState::_staticState && onlyL0Gpus != SyclState::_staticState->isManagingOnlyL0Gpus) {
+    std::cout << "SyclStaticState already initialized " 
+              << ((SyclState::_staticState->isManagingOnlyL0Gpus) ? "with only L0 GPUs" : "all SYCL devices") << "."
+              << " You are trying to re-initialize with " << ((onlyL0Gpus) ? "with only L0 GPUs" : "all SYCL devices")
+              << " which doesn't match the previous selection. " << std::endl;
+    return false;
+  } else if (SyclState::_staticState) {
+    // SyclState already initialized, but with the same parameters.
+    return true;
   } else {
     SyclState::_staticState = std::make_optional(SyclState(onlyL0Gpus));
+    return true;
   }
 }
 
@@ -83,19 +91,25 @@ void SyclState::initialize(bool onlyL0Gpus) {
  * For now, the default behavior is to only utilize the Intel Level Zero platform and and GPUs.
  * This will have to be changed later as we move towards generalizing the backend.
  * Alternatively, one can pass an enviromental variable to let ELPA reveal and circle through
- * all available devices. The displayed devices can then be limited through SYCL device filters
+ * all available devices. The displayed devices can then be limited through SYCL device filtersrzb
  * expressed in SYCL env variables.
  */
 SyclState::SyclState(bool onlyL0Gpus)
   : defaultDevice(-1) {
   namespace si = sycl::info;
-  for (auto const &p : sycl::platform::get_platforms()) {
-    if (!onlyL0Gpus || (p.get_info<si::platform::name>().find("Level-Zero") != std::string::npos)) {
-      auto deviceType = (onlyL0Gpus) ? si::device_type::gpu : si::device_type::all;
-      for (auto dev : p.get_devices(deviceType)) {
-          devices.push_back(dev);
-      }
-    }
+  auto platforms = sycl::platform::get_platforms();
+  if (onlyL0Gpus) {
+    for (auto &p : platforms) {
+        if (p.get_info<si::platform::name>().find("Level-Zero") != std::string::npos) {
+          devices = p.get_devices(sycl::info::device_type::gpu);
+          break;
+        }
+    }    
+  } else {
+    for (auto &p : platforms) {
+      auto platformDevices = p.get_devices(sycl::info::device_type::all);
+      devices.insert(devices.end(), platformDevices.begin(), platformDevices.end());
+    }    
   }
 }
 
@@ -200,12 +214,28 @@ QueueData* DeviceSelection::createQueue() {
   return &queueHandles.back();
 }
 
+bool DeviceSelection::destroyQueue(QueueData *handle) {
+  bool isQueueFound = false;
+  for (auto it = queueHandles.begin(); it != queueHandles.end(); it++) {
+    if (&(*it) == handle) {
+      queueHandles.erase(it);
+      isQueueFound = true;
+      break;
+    }
+  }
+  return isQueueFound;
+}
+
 QueueData* DeviceSelection::getQueue(int id) {
   if (id < queueHandles.size()) {
     return &queueHandles[id];
   } else {
     throw std::runtime_error("Queue ID does not exist.");
   }
+}
+
+QueueData* DeviceSelection::getDefaultQueueRef() {
+  return &(this->defaultQueueHandle);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -233,18 +263,23 @@ ccl::stream* QueueData::getCclStreamRef() {
 #endif
 
 
+
+
 QueueData* sycl_be::getQueueDataOrDefault(QueueData *handle) {
 #ifdef WITH_GPU_STREAMS
   return (handle == nullptr) ? &(SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle) : handle;
 #else 
-  return &(SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle);
+  return SyclState::defaultState().getDefaultDeviceHandle().getDefaultQueueRef();
 #endif
 }
 
 sycl::queue sycl_be::getQueueOrDefault(QueueData *qh) {
 #ifdef WITH_GPU_STREAMS
-  assert(qh != nullptr)
-  return qh->queue;
+  if (qh == nullptr) {
+    return sycl_be::SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle.queue;
+  } else {
+    return qh->queue;
+  }
 #else
   return sycl_be::SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle.queue;
 #endif

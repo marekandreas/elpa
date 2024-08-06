@@ -151,9 +151,6 @@
 #ifdef WITH_AMD_GPU_VERSION
       vendor = amd_gpu
 #endif
-!#ifdef WITH_INTEL_GPU_VERSION
-!      vendor = intel_gpu
-!#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       vendor = openmp_offload_gpu
 #endif
@@ -176,13 +173,13 @@
       if (set_vendor == amd_gpu) then
         vendor = amd_gpu
       endif
+      if (set_vendor == sycl_gpu) then
+        vendor = sycl_gpu
+      endif
       if (vendor == no_gpu) then
         print *,"setting gpu vendor in tests does not work"
         stop 1
       endif
-!#if TEST_INTEL_GPU == 1
-!      vendor = intel_gpu
-!#endif
       use_gpu_vendor = vendor
       return
     end function
@@ -292,12 +289,12 @@
         gpuMemcpyDeviceToHost    = syclMemcpyDeviceToHost
         syclMemcpyDeviceToDevice = sycl_MemcpyDeviceToDevice()
         gpuMemcpyDeviceToDevice  = syclMemcpyDeviceToDevice
-        !openmpOffloadHostRegisterPortable = openmp_offload_hostRegisterPortable()
-        !gpuHostRegisterPortable           = openmpOffloadHostRegisterPortable
-        !openmpOffloadHostRegisterMapped   = openmp_offload_hostRegisterMapped()
-        !gpuHostRegisterMapped             = openmpOffloadHostRegisterMapped
-        !openmpOffloadHostRegisterDefault  = openmp_offload_hostRegisterDefault()
-        !gpuHostRegisterDefault            = openmpOffloadHostRegisterDefault
+        syclHostRegisterPortable = sycl_hostRegisterPortable()
+        gpuHostRegisterPortable  = syclHostRegisterPortable
+        syclHostRegisterMapped   = sycl_hostRegisterMapped()
+        gpuHostRegisterMapped    = syclHostRegisterMapped
+        syclHostRegisterDefault  = sycl_hostRegisterDefault()
+        gpuHostRegisterDefault   = syclHostRegisterDefault
       endif
 #endif
     end subroutine
@@ -386,6 +383,13 @@
         endif
 #endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
+        if (use_gpu_vendor == sycl_gpu) then
+          success = sycl_stream_synchronize(stream)
+        endif
+#endif
+#endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
@@ -401,6 +405,13 @@
         endif
 #endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
+        if (use_gpu_vendor == sycl_gpu) then
+          success = sycl_stream_synchronize()
+        endif
+#endif
+#endif
       endif
 
 
@@ -410,13 +421,6 @@
         stop 1
       endif
 #endif
-#ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"gpu_stream_synchronize not implemented for sycl"
-        stop 1
-      endif
-#endif
-
     end function
 
     function gpu_getdevicecount(n) result(success)
@@ -451,10 +455,8 @@
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        !obj%gpu_setup%syclCPU=.false.
-        !success = sycl_getdevicecount(numberOfDevices)
+        success = sycl_getdevicecount(n)
         success = .true.
-        n=0
       endif
 #endif
 
@@ -762,14 +764,14 @@
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
-        success = sycl_host_register(array, elements, flag)
+        print *,"not yet implemented: host_register"
+        stop 1
       endif
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_register"
-        stop 1
+        success = sycl_host_register(array, elements, flag)
       endif
 #endif
 
@@ -1522,7 +1524,6 @@
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
         success = sycl_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
-        stop 1
       endif
 #endif
     end function

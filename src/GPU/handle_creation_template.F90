@@ -51,6 +51,10 @@
 #ifdef WITH_AMD_GPU_VERSION
           success = hip_stream_create(OBJECT%gpu_setup%my_stream)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+          success = sycl_stream_create(OBJECT%gpu_setup%my_stream)
+#endif
+
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
             print *,"Cannot create cuda stream handle"
@@ -58,8 +62,15 @@
 #ifdef WITH_AMD_GPU_VERSION
             print *,"Cannot create hip stream handle"
 #endif
+#ifdef WITH_AMD_GPU_VERSION
+            print *,"Cannot create sycl stream handle"
+#endif
             stop 1
           endif
+#else
+#ifdef WITH_SYCL_GPU_VERSION
+            OBJECT%gpu_setup%my_stream = 0
+#endif
 #endif /* WITH_GPU_STREAMS */
            
           ! handle creation
@@ -86,10 +97,9 @@
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
             handle_tmp = 0
-            ! not needed dummy call
-            success = syclblas_create(handle_tmp)
-            OBJECT%gpu_setup%syclHandleArray(thread) = handle_tmp
-            OBJECT%gpu_setup%gpublasHandleArray(thread) = handle_tmp
+            ! not needed dummy call, the sycl::queue is used as a handle?
+            OBJECT%gpu_setup%syclHandleArray(thread) = OBJECT%gpu_setup%my_stream
+            OBJECT%gpu_setup%gpublasHandleArray(thread) = OBJECT%gpu_setup%syclHandleArray(thread)
 #endif
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -154,16 +164,8 @@
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
 #ifdef WITH_SYCL_SOLVER
-          do thread=0, maxThreads-1
-            success = sycl_solver_create(handle_tmp)
-            OBJECT%gpu_setup%syclsolverHandleArray(thread) = handle_tmp
-            OBJECT%gpu_setup%gpusolverHandleArray(thread) = handle_tmp
-            !success = sycl_solver_create(OBJECT%gpu_setup%syclsolverHandleArray(thread))
-            if (.not.(success)) then
-              print *,"Cannot create syclsolver handle"
-              stop 1
-            endif
-          enddo
+          OBJECT%gpu_setup%syclsolverHandleArray(:) = OBJECT%gpu_setup%syclHandleArray(:)
+          OBJECT%gpu_setup%gpusolverHandleArray(:) = OBJECT%gpu_setup%syclHandleArray(:)
 #endif
 #endif
           call OBJECT%timer%stop("create_gpusolver")
@@ -177,6 +179,10 @@
 #ifdef WITH_AMD_GPU_VERSION
             success = rocblas_set_stream(OBJECT%gpu_setup%rocblasHandleArray(thread), OBJECT%gpu_setup%my_stream)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+            ! Do nothing, our "handle" is the stream, a.k.a. the chosen SYCL queue.
+#endif
+
             if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
               print *,"Cannot create cublas stream handle"
@@ -210,6 +216,12 @@
           !    stop 1
           !  endif
           !enddo
+#endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_SYCL_SOLVER
+          ! Nothing to be done here either, sycl::queue is the handle.
 #endif
 #endif
 

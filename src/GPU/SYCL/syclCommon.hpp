@@ -91,13 +91,16 @@ struct DeviceSelection {
 
   DeviceSelection(int deviceId, sycl::device device);
   QueueData* createQueue();
+  bool destroyQueue(QueueData *handle);
   QueueData* getQueue(int id);
+  QueueData* getDefaultQueueRef();
 };
 
 
 class SyclState {
   static std::optional<SyclState> _staticState;
 
+  bool isManagingOnlyL0Gpus;
   std::vector<sycl::device> devices;
   std::unordered_map<int, DeviceSelection> deviceData;
   int defaultDevice;
@@ -120,7 +123,7 @@ class SyclState {
   size_t getNumDevices();
 
   static SyclState& defaultState();
-  static void initialize(bool onlyL0Gpus = false);
+  static bool initialize(bool onlyL0Gpus = false);
 
 #ifdef WITH_ONEAPI_ONECCL
   void registerKvs(void *kvsAddr, cclKvsHandle kvs);
@@ -132,7 +135,6 @@ class SyclState {
   sycl::queue getQueueOrDefault(QueueData *my_stream);
   QueueData* getQueueDataOrDefault(QueueData *my_stream);
   template<int numDims> sycl::range<numDims> maxWorkgroupSize(sycl::queue d);
-
 }
 
 template <typename T> inline T* sycl_be::QueueData::getScratchpadFor(size_t numElements) {

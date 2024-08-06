@@ -2639,18 +2639,18 @@ use_intel_gpu=no
 AC_MSG_CHECKING(whether INTEL GPU version should be used with OpenMP or SYCL backend) 
 AC_ARG_ENABLE([intel-gpu-backend],
               [AS_HELP_STRING([--enable-intel-gpu-backend=[[openmp|sycl]]],
-                               [do use INTEL GPU version with either OpenMP or SYCL backend])],
-                               [if test x"$enableval" = x"openmp"; then
-				  use_openmp_gpu_backend=yes
-                                  use_intel_gpu=yes
-				fi
-				if test x"$enableval" = x"sycl"; then
-				  use_sycl_gpu_backend=yes
-                                  use_intel_gpu=yes
-				fi
-				if test x"$enableval" = x"yes"; then
-                                  use_intel_gpu=yes
-                                fi],
+                              [do use INTEL GPU version with either OpenMP or SYCL backend])],
+                              [if test x"$enableval" = x"openmp"; then
+				                        use_openmp_gpu_backend=yes
+                                use_intel_gpu=yes
+                              fi
+                              if test x"$enableval" = x"sycl"; then
+                                use_sycl_gpu_backend=yes
+                                use_intel_gpu=yes
+                              fi
+                              if test x"$enableval" = x"yes"; then
+                                use_intel_gpu=yes
+                              fi],
               [use_intel_gpu=no])
 AC_MSG_RESULT([${use_intel_gpu}])
 
@@ -2904,40 +2904,50 @@ fi
 
 AC_MSG_CHECKING(whether GPU streams should be used)
 AC_ARG_ENABLE([gpu-streams],
-               [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd]]],
-			       [do use Nvidia or AMD GPU version with Cuda or HIP streams, respectively: default yes])],
-                               [if test x"$enableval" = x"nvidia"; then
-				  use_cuda_streams=yes
-				  use_gpu_streams=yes
-				fi
-				if test x"$enableval" = x"amd"; then
-				  use_hip_streams=yes
-				  use_gpu_streams=yes
-				fi
-				if test x"$enableval" = x"yes"; then
-                                  AC_MSG_ERROR([Wrong value! Must be either "nvidia" or "amd" ])
-                                fi
-				if test x"$enableval" = x"no"; then
-                                  use_cuda_streams=no
-                                  use_hip_streams=no
-				  use_gpu_streams=no
-                                fi
+        [AS_HELP_STRING([--enable-gpu-streams=[[nvidia|amd|sycl]]],
+			  [do use Nvidia, AMD and SYCL GPU version with Cuda or HIP streams or SYCL Queues, respectively: default yes])],
+        [
+          if test x"$enableval" = x"nvidia"; then
+            use_cuda_streams=yes
+            use_gpu_streams=yes
+          fi
+          if test x"$enableval" = x"amd"; then
+            use_hip_streams=yes
+            use_gpu_streams=yes
+          fi
+          if test x"$enableval" = x"sycl"; then
+            use_sycl_streams=yes
+            use_gpu_streams=yes
+          fi
+          if test x"$enableval" = x"yes"; then
+            AC_MSG_ERROR([Wrong value! Must be either "nvidia", "amd" or "sycl" ])
+          fi
+          if test x"$enableval" = x"no"; then
+            use_cuda_streams=no
+            use_hip_streams=no
+            use_sycl_streams=no
+            use_gpu_streams=no
+          fi
 				],
-              [relied_on_default=yes
-	       #if test x"$enable_openmp" = x"no"; then
-		 #if test x"$enable_cuda_aware_mpi" = x"no"; then
-	           if test x"$need_nvidia_gpu" = x"yes"; then
-                     use_cuda_streams=yes
-                     use_gpu_streams=yes
-                   fi
-                   if test x"$need_amd_gpu" = x"yes"; then
-                     use_hip_streams=yes
-                     use_gpu_streams=yes
-                   fi
-		 #fi
-	       #fi
+        [relied_on_default=yes
+          #if test x"$enable_openmp" = x"no"; then
+		      #if test x"$enable_cuda_aware_mpi" = x"no"; then
+          if test x"$need_nvidia_gpu" = x"yes"; then
+            use_cuda_streams=yes
+            use_gpu_streams=yes
+          fi
+          if test x"$need_amd_gpu" = x"yes"; then
+            use_hip_streams=yes
+            use_gpu_streams=yes
+          fi
+          if test x"$need_sycl_gpu" = x"yes"; then
+            use_sycl_streams=yes
+            use_gpu_streams=yes
+          fi
+		      #fi
+	        #fi
 	       ])
-AC_MSG_RESULT([${use_gpu_streams}])
+AC_MSG_RESULT([ ADAWDAWDAWD ${use_gpu_streams}])
 #if test x"$enable_openmp" = x"no"; then
   if test x"$enable_cuda_aware_mpi" = x"no"; then
     if test x"$relied_on_default" = x"yes"; then
@@ -2954,6 +2964,9 @@ if test x"$use_gpu_streams" = x"yes"; then
     if test x"$need_amd_gpu" = x"yes"; then
       use_hip_streams=yes
     fi
+    if test x"$need_sycl_gpu" = x"yes"; then
+      use_sycl_streams=yes
+    fi
   fi
 fi
 
@@ -2962,7 +2975,10 @@ if test x"$use_cuda_streams" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-streams=nvidia is set, you must also use --enable-nvidia-gpu])
   fi
   if test x"$need_amd_gpu" = x"yes"; then
-    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-amd-gpu])
+    AC_MSG_ERROR([If --enable-gpu-streams=nvidia is set, you cannot set --enable-amd-gpu]) 
+  fi
+  if test x"$need_sycl_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=nvidia is set, you cannot set --enable-sycl-gpu]) 
   fi
   #if test x"${enable_openmp}" = x"yes"; then
   #  AC_MSG_ERROR([If --enable-gpu-streams=nvidia currently not supported in combination with --enable-openmp])
@@ -3004,6 +3020,9 @@ if test x"$use_hip_streams" = x"yes"; then
   if test x"$need_nvidia_gpu" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-nvidia-gpu])
   fi
+  if test x"$need_nvidia_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=amd is set, you cannot set --enable-sycl-gpu])
+  fi
   #if test x"${enable_openmp}" = x"yes"; then
   #  AC_MSG_ERROR([If --enable-gpu-streams=amd currently not supported in combination with --enable-openmp])
   #fi
@@ -3029,12 +3048,45 @@ if test x"$need_amd_gpu" = x"yes"; then
   fi
 fi
 
-#TODO: Intel streams
-#
+
+if test x"$use_sycl_streams" = x"yes"; then
+  if test x"$need_sycl_gpu" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=sycl is set, you must also use --enable-sycl-gpu])
+  fi
+  if test x"$need_nvidia_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=sycl is set, you cannot set --enable-nvidia-gpu])
+  fi
+  if test x"$need_nvidia_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-streams=sycl is set, you cannot set --enable-amd-gpu])
+  fi
+  #if test x"${enable_openmp}" = x"yes"; then
+  #  AC_MSG_ERROR([If --enable-gpu-streams=amd currently not supported in combination with --enable-openmp])
+  #fi
+  AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
+fi
+if test x"$need_sycl_gpu" = x"yes"; then
+  if test x"$use_sycl_streams" = x"no"; then
+    echo ""
+    echo ""
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo "   PERFORMANCE DEGRADATION DETECTED:"
+    echo ""
+    echo " You want to build ELPA for SYCL GPUs but did not configure to use streams "
+    echo " this will work but performance will be far from optimal!"
+    echo " This setting is NOT recommended"
+    echo ""
+    echo "-----------------------------------------------------------------------------"
+    echo ""
+    echo ""
+    echo ""
+    AC_MSG_NOTICE([If --enable-sycl-gpu is set, we recommend --enable-gpu-streams=sycl])
+  fi
+fi
 
 ##################################################################################################
 #
-# [cu|roc]Solver
+# [cu|roc|sycl]Solver
 #
 ##################################################################################################
 if test x"$need_nvidia_gpu" = x"yes"; then
@@ -3131,7 +3183,41 @@ if test x"$need_amd_gpu" = x"yes"; then
   fi
 fi
 
-#TODO: Intel solver
+if test x"$need_sycl_gpu" = x"yes"; then
+  if test x"$use_gpu_streams" = x"yes"; then
+    AC_MSG_CHECKING(whether oneMKL library should be used (since streams are activated))
+    AC_ARG_WITH(
+      [syclsolver],
+      [AS_HELP_STRING([--with-syclsolver], [Use oneMKL library, enabled by default])],
+      [
+        if test x"$withval" = x"yes"; then
+          with_syclsolver=yes
+        else
+          with_syclsolver=no
+        fi
+	    ],
+      [relied_on_default_syclsolver="yes"])
+    if test x"${relied_on_default_syclsolver}" = x"yes"; then
+      with_cusolver=yes
+    fi
+    AC_MSG_RESULT([${with_syclsolver}])
+    if test x"${with_syclsolver}" = x"no"; then
+      if test x"${need_sycl_gpu}" = x"yes"; then
+        AC_MSG_WARN([------------------------------------------------------------------------------------------])
+        AC_MSG_WARN([])
+        AC_MSG_WARN([Not using oneMKL solver components might lead to performance drops, it is not recommended!])
+        AC_MSG_WARN([])
+        AC_MSG_WARN([------------------------------------------------------------------------------------------])
+      fi
+    fi
+  fi
+  if test x"${with_syclsolver}" = x"yes"; then
+    AC_LANG_PUSH([C])
+    # Nothing to add, already included with oneMKL, which has to be configured manually anyways.    
+    AC_DEFINE([WITH_SYCL_SOLVER],[1],[enable SYCL solver])
+    AC_LANG_POP([C])
+  fi
+fi
 
 ##################################################################################################
 #
