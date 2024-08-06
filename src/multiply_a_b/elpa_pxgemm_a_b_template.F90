@@ -77,6 +77,7 @@
                              check_host_dealloc_gpu_f, check_alloc_gpu_f, check_host_alloc_gpu_f, &
                              check_host_unregister_gpu_f, check_memcpy_gpu_f, check_allocate_f, &
                              check_host_register_gpu_f, check_alloc, error_unit
+  use elpa_multiply_helpers
   use mod_query_gpu_usage
 #ifdef WITH_GPU_STREAMS
   use elpa_gpu_util
@@ -1127,28 +1128,32 @@
         allocate(at_col(l_rows, l_cols), stat=istat, errmsg=errorMessage) ! l_rows*nblk_mult as aux_a_full (maybe they are the same??)
         check_allocate("elpa_pxgemm: at_col", istat, errorMessage)
 
-        ! max nblk_mult_cols is achieved at the 0-th MPI process
-        nblk_mult_cols_max = l_cols_max/(LCM/np_cols)*nblk
-        tail_loc = mod(l_cols_max, LCM/np_cols)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-        np_bc_fine = 0
-        if (np_bc_fine/np_cols > tail_loc) then
-          nblk_mult_cols_max = nblk_mult_cols_max + 0
-        else if (np_bc_fine/np_cols < tail_loc) then
-          nblk_mult_cols_max = nblk_mult_cols_max + nblk
-        else ! np_bc_fine/np_cols == tail_loc
-          nblk_mult_cols_max = nblk_mult_cols_max + mod(l_cols_max, nblk)
-        endif
+        ! max nblk_mult_rows, nblk_mult_cols is achieved at the 0-th MPI process
+        ! PETERDEBUG: cleanup
+        ! nblk_mult_cols_max = l_cols_max/(LCM/np_cols)*nblk
+        ! tail_loc = mod(l_cols_max, LCM/np_cols)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
+        ! np_bc_fine = 0
+        ! if (np_bc_fine/np_cols > tail_loc) then
+        !   nblk_mult_cols_max = nblk_mult_cols_max + 0
+        ! else if (np_bc_fine/np_cols < tail_loc) then
+        !   nblk_mult_cols_max = nblk_mult_cols_max + nblk
+        ! else ! np_bc_fine/np_cols == tail_loc
+        !   nblk_mult_cols_max = nblk_mult_cols_max + mod(l_cols_max, nblk)
+        ! endif
+        call find_nblk_mult_dirs(l_cols_max, nblk, np_cols, 0, LCM, nblk_mult_cols_max)
 
-        nblk_mult_rows_max = l_rows_max/(LCM/np_rows)*nblk
-        tail_loc = mod(l_rows_max, LCM/np_rows)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-        np_fine = 0
-        if (np_fine/np_rows > tail_loc) then
-          nblk_mult_rows_max = nblk_mult_rows_max + 0
-        else if (np_fine/np_rows < tail_loc) then
-          nblk_mult_rows_max = nblk_mult_rows_max + nblk
-        else ! np_fine/np_rows == tail_loc
-          nblk_mult_rows_max = nblk_mult_rows_max + mod(l_rows_max, nblk)
-        endif
+        ! PETERDEBUG: cleanup
+        ! nblk_mult_rows_max = l_rows_max/(LCM/np_rows)*nblk
+        ! tail_loc = mod(l_rows_max, LCM/np_rows)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
+        ! np_fine = 0
+        ! if (np_fine/np_rows > tail_loc) then
+        !   nblk_mult_rows_max = nblk_mult_rows_max + 0
+        ! else if (np_fine/np_rows < tail_loc) then
+        !   nblk_mult_rows_max = nblk_mult_rows_max + nblk
+        ! else ! np_fine/np_rows == tail_loc
+        !   nblk_mult_rows_max = nblk_mult_rows_max + mod(l_rows_max, nblk)
+        ! endif
+        call find_nblk_mult_dirs(l_rows_max, nblk, np_rows, 0, LCM, nblk_mult_rows_max)
 
         ! allocate(aux_a_send_full(nblk_mult, l_cols), stat=istat, errmsg=errorMessage)
         ! check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
@@ -1204,30 +1209,36 @@
         np    = mod(np_fine, np_rows)
         np_bc = mod(np_bc_fine, np_cols)
 
-        ! PETERDEBUG: pack this to a function
-        nblk_mult_cols = l_cols/(LCM/np_cols)*nblk
-        tail_loc = mod(l_cols, LCM/np_cols)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-        if (np_bc_fine/np_cols > tail_loc) then
-          nblk_mult_cols = nblk_mult_cols + 0
-        else if (np_bc_fine/np_cols < tail_loc) then
-          nblk_mult_cols = nblk_mult_cols + nblk
-        else ! np_bc_fine/np_cols == tail_loc
-          nblk_mult_cols = nblk_mult_cols + mod(l_cols, nblk)
-        endif
+        ! PETERDEBUG: pack this to a function, cleanup
+        ! nblk_mult_cols = l_cols/(LCM/np_cols)*nblk
+        ! tail_loc = mod(l_cols, LCM/np_cols)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
+        ! if (np_bc_fine/np_cols > tail_loc) then
+        !   nblk_mult_cols = nblk_mult_cols + 0
+        ! else if (np_bc_fine/np_cols < tail_loc) then
+        !   nblk_mult_cols = nblk_mult_cols + nblk
+        ! else ! np_bc_fine/np_cols == tail_loc
+        !   nblk_mult_cols = nblk_mult_cols + mod(l_cols, nblk)
+        ! endif
+        call find_nblk_mult_dirs(l_cols, nblk, np_cols, np_bc_fine, LCM, nblk_mult_cols)
 
-        nblk_mult_rows = l_rows/(LCM/np_rows)*nblk
-        tail_loc = mod(l_rows, LCM/np_rows)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-        if (np_fine/np_rows > tail_loc) then
-          nblk_mult_rows = nblk_mult_rows + 0
-        else if (np_fine/np_rows < tail_loc) then
-          nblk_mult_rows = nblk_mult_rows + nblk
-        else ! np_fine/np_rows == tail_loc
-          nblk_mult_rows = nblk_mult_rows + mod(l_rows, nblk)
-        endif
+        ! PETERDEBUG: pack this to a function, cleanup
+        ! nblk_mult_rows = l_rows/(LCM/np_rows)*nblk
+        ! tail_loc = mod(l_rows, LCM/np_rows)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
+        ! if (np_fine/np_rows > tail_loc) then
+        !   nblk_mult_rows = nblk_mult_rows + 0
+        ! else if (np_fine/np_rows < tail_loc) then
+        !   nblk_mult_rows = nblk_mult_rows + nblk
+        ! else ! np_fine/np_rows == tail_loc
+        !   nblk_mult_rows = nblk_mult_rows + mod(l_rows, nblk)
+        ! endif
+        call find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine, LCM, nblk_mult_rows)
 
         ! PETERDEBUG: transpose should be done instead of the codeblock below
         ! we can transpose and compress in one step
         if (a_transposed) then
+#ifdef WITH_NVTX
+          call nvtxRangePush("transpose a")
+#endif
           ! a -> at_col: transpose block-row #np_fine of a
           ! Send
           if (mod(np_fine,np_rows) == my_prow) then
@@ -1260,16 +1271,18 @@
               else
                 mpi_rank_target = my_pcol_target + np_cols*my_prow_target
               endif
-
-              nblk_mult_cols_1 = l_cols/(LCM/np_cols)*nblk
-              tail_loc = mod(l_cols, LCM/np_cols)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-              if (np_bc_fine_1/np_cols > tail_loc) then
-                nblk_mult_cols_1 = nblk_mult_cols_1 + 0
-              else if (np_bc_fine_1/np_cols < tail_loc) then
-                nblk_mult_cols_1 = nblk_mult_cols_1 + nblk
-              else ! np_bc_fine_1/np_cols == tail_loc
-                nblk_mult_cols_1 = nblk_mult_cols_1 + mod(l_cols, nblk)
-              endif
+              
+              ! PETERDEBUG: cleanup
+              ! nblk_mult_cols_1 = l_cols/(LCM/np_cols)*nblk
+              ! tail_loc = mod(l_cols, LCM/np_cols)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
+              ! if (np_bc_fine_1/np_cols > tail_loc) then
+              !   nblk_mult_cols_1 = nblk_mult_cols_1 + 0
+              ! else if (np_bc_fine_1/np_cols < tail_loc) then
+              !   nblk_mult_cols_1 = nblk_mult_cols_1 + nblk
+              ! else ! np_bc_fine_1/np_cols == tail_loc
+              !   nblk_mult_cols_1 = nblk_mult_cols_1 + mod(l_cols, nblk)
+              ! endif
+              call find_nblk_mult_dirs(l_cols, nblk, np_cols, np_bc_fine_1, LCM, nblk_mult_cols_1)
 
               n_blocks_loc_fine_1 = (nblk_mult_cols_1+nblk-1)/nblk ! number of complete and incomplete blocks that with fine-grained process np_bc_fine_1
               if (useCCL) then
@@ -1297,6 +1310,7 @@
               ! PETERDEBUG: we send extra data to resolve the problem of continuity of the data.
               ! Alternatively, we could make buf_send and buf_recv to be 1D arrays of blocks (still 2D array of elements, so convenient to copy)
               if (useCCL) then
+#ifdef USE_CCL_PXGEMM
                 if (mpi_rank_target/=myid) then
                   successGPU = gpu_stream_synchronize(my_stream)
                   check_stream_synchronize_gpu("elpa_pxgemm: ccl_send", successGPU)
@@ -1318,6 +1332,7 @@
                                           gpuMemcpyDeviceToDevice)
                   check_memcpy_gpu("elpa_pxgemm: buf_self_dev <- buf_send_dev", successGPU)
                 endif
+#endif /* USE_CCL_PXGEMM */
               else ! useCCL
                 call MPI_Send(buf_send, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
                               MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_target, kind=MPI_KIND), 0, &
@@ -1342,20 +1357,23 @@
                 mpi_rank_source = my_pcol_source + np_cols*my_prow_source
               endif
 
-              nblk_mult_rows_1 = l_rows/(LCM/np_rows)*nblk
-              tail_loc = mod(l_rows, LCM/np_rows)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-              if (np_fine_1/np_rows > tail_loc) then
-                nblk_mult_rows_1 = nblk_mult_rows_1 + 0
-              else if (np_fine_1/np_rows < tail_loc) then
-                nblk_mult_rows_1 = nblk_mult_rows_1 + nblk
-              else ! np_fine_1/np_rows == tail_loc
-                nblk_mult_rows_1 = nblk_mult_rows_1 + mod(l_rows, nblk)
-              endif
+              ! PETERDEBUG: cleanup
+              ! nblk_mult_rows_1 = l_rows/(LCM/np_rows)*nblk
+              ! tail_loc = mod(l_rows, LCM/np_rows)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
+              ! if (np_fine_1/np_rows > tail_loc) then
+              !   nblk_mult_rows_1 = nblk_mult_rows_1 + 0
+              ! else if (np_fine_1/np_rows < tail_loc) then
+              !   nblk_mult_rows_1 = nblk_mult_rows_1 + nblk
+              ! else ! np_fine_1/np_rows == tail_loc
+              !   nblk_mult_rows_1 = nblk_mult_rows_1 + mod(l_rows, nblk)
+              ! endif
+              call find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine_1, LCM, nblk_mult_rows_1)
 
               m_blocks_loc_fine_1 = (nblk_mult_rows_1+nblk-1)/nblk
               n_blocks_loc_fine   = (nblk_mult_cols  +nblk-1)/nblk
               
               if (useCCL) then
+#ifdef USE_CCL_PXGEMM
                 if (mpi_rank_source/=myid) then
                   successGPU = ccl_Recv(buf_recv_dev, int(k_datatype*nblk_mult_rows_max*nblk_mult_cols_max,kind=c_size_t), &
                                         cclDataType, mpi_rank_source, ccl_comm_all, my_stream)
@@ -1373,6 +1391,7 @@
                                           gpuMemcpyDeviceToDevice)
                   check_memcpy_gpu("elpa_pxgemm: buf_recv_dev <- buf_self_dev", successGPU)
                 endif
+#endif /* USE_CCL_PXGEMM */
               else ! useCCL
                 call MPI_Recv(buf_recv, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
                               MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_source, kind=MPI_KIND), 0, &
@@ -1402,6 +1421,9 @@
 
             enddo ! np_fine_1
           endif ! (mod(np_bc_fine,np_cols) == my_pcol)
+#ifdef WITH_NVTX
+          call nvtxRangePop() ! transpose a
+#endif
         endif ! a_transposed
 
           ! if (mod(np_bc_fine,np_cols) == my_pcol) then

@@ -115,6 +115,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/cholesky/GPU/SYCL/mod_cholesky_sycl.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
+  src/multiply_a_b/mod_elpa_multiply_helpers.F90 \
   src/multiply_a_b/GPU/mod_multiply_a_b_gpu.F90 \
   src/multiply_a_b/GPU/CUDA/mod_multiply_a_b_cuda.F90 \
   src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
@@ -200,6 +201,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/invert_trm/invert_trm_template.F90 \
   src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/multiply_a_b/elpa_pxgemm_a_b_template.F90 \
+  src/multiply_a_b/elpa_multiply_helpers_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
@@ -1097,6 +1099,8 @@ EXTRA_DIST = \
   src/multiply_a_b/elpa_multiply_a_b_template.F90 \
   src/multiply_a_b/elpa_pxgemm_a_b_template.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
+  src/multiply_a_b/elpa_multiply_helpers_template.F90 \
+  src/multiply_a_b/mod_elpa_multiply_helpers.F90 \
   src/multiply_a_b/GPU/mod_multiply_a_b_gpu.F90 \
   src/multiply_a_b/GPU/CUDA/mod_multiply_a_b_cuda.F90 \
   src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
