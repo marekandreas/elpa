@@ -69,25 +69,25 @@ module elpa_multiply_helpers
     endif
   end subroutine find_nblk_mult_dirs
 
+#undef DEVICE_POINTER
+#undef USE_CCL_PXGEMM
+#define CCL _
+
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa_multiply_helpers_template.F90"
-
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
 ! single precision
 #ifdef WANT_SINGLE_PRECISION_REAL
-
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa_multiply_helpers_template.F90"
-
 #undef REALCASE
 #undef SINGLE_PRECISION
-
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
 ! double precision
@@ -95,23 +95,64 @@ module elpa_multiply_helpers
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
 #include "elpa_multiply_helpers_template.F90"
-
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
-
 #include "../general/precision_macros.h"
 #include "elpa_multiply_helpers_template.F90"
-
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
+#undef CCL
 
+!___________________________________________________
+! CCL-version
+
+#define DEVICE_POINTER
+#define USE_CCL_PXGEMM
+#define CCL _ccl_
+
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "elpa_multiply_helpers_template.F90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
+
+! single precision
+#ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "elpa_multiply_helpers_template.F90"
+#undef REALCASE
+#undef SINGLE_PRECISION
+#endif /* WANT_SINGLE_PRECISION_REAL */
+
+! double precision
+#define COMPLEXCASE 1
+#define DOUBLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "elpa_multiply_helpers_template.F90"
+#undef COMPLEXCASE
+#undef DOUBLE_PRECISION
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION 1
+#include "../general/precision_macros.h"
+#include "elpa_multiply_helpers_template.F90"
+#undef COMPLEXCASE
+#undef SINGLE_PRECISION
+#endif /* WANT_SINGLE_PRECISION_COMPLEX */
+
+#undef DEVICE_POINTER
+#undef USE_CCL_PXGEMM
+#undef CCL
 
 end module elpa_multiply_helpers
 

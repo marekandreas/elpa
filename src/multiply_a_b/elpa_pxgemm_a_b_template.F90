@@ -111,7 +111,8 @@
   MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), b(:,:), c(:,:)
   type(c_ptr)                                  :: aDev, bDev, cDev
 #endif /* DEVICE_POINTER */
-  MATH_DATATYPE(kind=rck), allocatable         :: at_full(:,:), bt_full(:,:), buf_send(:,:), buf_recv(:,:), at_col(:,:) ! PETERDEBUG: needed for TT case
+  MATH_DATATYPE(kind=rck), allocatable         :: at_full(:,:), bt_full(:,:)
+  MATH_DATATYPE(kind=rck), allocatable         :: buf_send(:,:), buf_recv(:,:), at_col(:,:), bt_row(:,:) ! PETERDEBUG: needed for TT case
 
   integer(kind=ik)                             :: my_pdir, my_pdir_t, np_dirs, np_dirs_t ! PETERDEBUG_NEW
   integer(kind=ik)                             :: np_rows_fine, np_cols_fine, np_dirs_fine, np_fine, np_t_fine, np_bc_fine, &
@@ -123,7 +124,6 @@
   integer(kind=ik)                             :: nblk_mult_rows_max, nblk_mult_cols_max, tail_loc, nblk_rows_min, nblk_cols_min ! PETERDEBUG_NEW
   integer(kind=ik)                             :: l_cols, l_rows, l_rows_np
   integer(kind=ik)                             :: l_rows_max, l_cols_max, l_rows_min, l_cols_min, nstor_block, nstor_block_cut ! PETERDEBUG
-  integer(kind=ik)                             :: m, n, k, k_a, k_b ! PETERDEBUG_NEW
   integer(kind=ik)                             :: np, nb, nblk_mult, lrs, lre, lcs, lce
   integer(kind=ik)                             :: np_row_curr, n_blocks_loc_x, n_blocks_loc_y, I_block_gl, J_block_gl, &
                                                   i_block_loc, j_block_loc ! PETERDEBUG
@@ -163,7 +163,7 @@
   integer(kind=ik)                             :: error
   integer(kind=c_intptr_t)                     :: aux_bc_dev, aux_mat_dev, tmp1_dev, tmp2_dev
   integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev ! PETERDEBUG_NEW
-  integer(kind=c_intptr_t)                     :: at_col_dev ! PETERDEBUG_NEW: for transposed+GPU case
+  integer(kind=c_intptr_t)                     :: at_col_dev, bt_row_dev ! PETERDEBUG_NEW: for transposed+GPU case
   integer(kind=c_intptr_t)                     :: buf_send_dev, buf_recv_dev, buf_self_dev ! PETERDEBUG_NEW: for transposed+NCCL case
 !#ifndef DEVICE_POINTER
   integer(kind=c_intptr_t)                     :: a_dev
@@ -1107,7 +1107,8 @@
 
 ! ___________________________________________________________________
 
-!    if ((.not. a_transposed) .and. (.not. b_transposed)) then
+    !if ((.not. a_transposed) .and. (.not. b_transposed) .or. &
+    !           a_transposed  .and.        b_transposed) then
     if (.not. b_transposed) then ! PETERDEBUG: try universal algorithm wrt transposition of a 
       allocate(aux_a_full(l_rows, nblk_mult), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
@@ -1119,42 +1120,10 @@
       check_allocate("elpa_pxgemm: tmp1_full", istat, errorMessage)
       
       if (a_transposed) then
-        ! PETERDEBUG: probably not needed anymore after implementing aux_a_send_full
-        allocate(at_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
-        !allocate(at_full(l_cols_max, l_rows_max), stat=istat, errmsg=errorMessage) ! l_rows_max and l_cols_max exchange their roles due to transposition
-        check_allocate("elpa_pxgemm: at_full", istat, errorMessage)
-
         ! PETERDEBUG: this is as memory consuming as the whole matrix. Can we do smth about it?
         allocate(at_col(l_rows, l_cols), stat=istat, errmsg=errorMessage) ! l_rows*nblk_mult as aux_a_full (maybe they are the same??)
         check_allocate("elpa_pxgemm: at_col", istat, errorMessage)
-
-        ! max nblk_mult_rows, nblk_mult_cols is achieved at the 0-th MPI process
-        ! PETERDEBUG: cleanup
-        ! nblk_mult_cols_max = l_cols_max/(LCM/np_cols)*nblk
-        ! tail_loc = mod(l_cols_max, LCM/np_cols)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-        ! np_bc_fine = 0
-        ! if (np_bc_fine/np_cols > tail_loc) then
-        !   nblk_mult_cols_max = nblk_mult_cols_max + 0
-        ! else if (np_bc_fine/np_cols < tail_loc) then
-        !   nblk_mult_cols_max = nblk_mult_cols_max + nblk
-        ! else ! np_bc_fine/np_cols == tail_loc
-        !   nblk_mult_cols_max = nblk_mult_cols_max + mod(l_cols_max, nblk)
-        ! endif
-        call find_nblk_mult_dirs(l_cols_max, nblk, np_cols, 0, LCM, nblk_mult_cols_max)
-
-        ! PETERDEBUG: cleanup
-        ! nblk_mult_rows_max = l_rows_max/(LCM/np_rows)*nblk
-        ! tail_loc = mod(l_rows_max, LCM/np_rows)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-        ! np_fine = 0
-        ! if (np_fine/np_rows > tail_loc) then
-        !   nblk_mult_rows_max = nblk_mult_rows_max + 0
-        ! else if (np_fine/np_rows < tail_loc) then
-        !   nblk_mult_rows_max = nblk_mult_rows_max + nblk
-        ! else ! np_fine/np_rows == tail_loc
-        !   nblk_mult_rows_max = nblk_mult_rows_max + mod(l_rows_max, nblk)
-        ! endif
-        call find_nblk_mult_dirs(l_rows_max, nblk, np_rows, 0, LCM, nblk_mult_rows_max)
-
+        
         ! allocate(aux_a_send_full(nblk_mult, l_cols), stat=istat, errmsg=errorMessage)
         ! check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
         if (useGPU) then
@@ -1162,6 +1131,24 @@
           successGPU = gpu_malloc(at_col_dev, l_rows*l_cols*size_of_datatype) ! l_rows*nblk_mult as aux_a_full_dev
           check_alloc_gpu("elpa_pxgemm: at_col_dev", successGPU)
         endif
+      endif
+
+      if (b_transposed) then
+        ! PETERDEBUG: this is as memory consuming as the whole matrix. Can we do smth about it?
+        allocate(bt_row(l_rows, l_cols), stat=istat, errmsg=errorMessage)
+        check_allocate("elpa_pxgemm: bt_row", istat, errorMessage)
+        
+        if (useGPU) then
+          ! PETERDEBUG: this is as memory consuming as the whole matrix. Can we do smth about it?
+          successGPU = gpu_malloc(bt_row_dev, l_rows*l_cols*size_of_datatype)
+          check_alloc_gpu("elpa_pxgemm: bt_row_dev", successGPU)
+        endif
+      endif
+
+      if (a_transposed .or. b_transposed) then
+        ! max nblk_mult_rows, nblk_mult_cols is achieved at the 0-th MPI process
+        call find_nblk_mult_dirs(l_rows_max, nblk, np_rows, 0, LCM, nblk_mult_rows_max)
+        call find_nblk_mult_dirs(l_cols_max, nblk, np_cols, 0, LCM, nblk_mult_cols_max)
 
         if (useCCL) then
           successGPU = gpu_malloc(buf_send_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype)
@@ -1192,7 +1179,7 @@
         check_alloc_gpu("elpa_pxgemm: tmp1_full_dev", successGPU)
       endif
 
-      call obj%timer%start("main_loop_nn")
+      call obj%timer%start("main_loop_nn_tt")
       print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: (.not. a_transposed) .and. (.not. b_transposed) or universal" ! PETERDEBUG
 
       ! main loop: iterate through np_fine, which are "virtual" process rows for matrix A and process cols for matrix B
@@ -1209,283 +1196,279 @@
         np    = mod(np_fine, np_rows)
         np_bc = mod(np_bc_fine, np_cols)
 
-        ! PETERDEBUG: pack this to a function, cleanup
-        ! nblk_mult_cols = l_cols/(LCM/np_cols)*nblk
-        ! tail_loc = mod(l_cols, LCM/np_cols)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-        ! if (np_bc_fine/np_cols > tail_loc) then
-        !   nblk_mult_cols = nblk_mult_cols + 0
-        ! else if (np_bc_fine/np_cols < tail_loc) then
-        !   nblk_mult_cols = nblk_mult_cols + nblk
-        ! else ! np_bc_fine/np_cols == tail_loc
-        !   nblk_mult_cols = nblk_mult_cols + mod(l_cols, nblk)
-        ! endif
+        call find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine   , LCM, nblk_mult_rows)
         call find_nblk_mult_dirs(l_cols, nblk, np_cols, np_bc_fine, LCM, nblk_mult_cols)
-
-        ! PETERDEBUG: pack this to a function, cleanup
-        ! nblk_mult_rows = l_rows/(LCM/np_rows)*nblk
-        ! tail_loc = mod(l_rows, LCM/np_rows)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-        ! if (np_fine/np_rows > tail_loc) then
-        !   nblk_mult_rows = nblk_mult_rows + 0
-        ! else if (np_fine/np_rows < tail_loc) then
-        !   nblk_mult_rows = nblk_mult_rows + nblk
-        ! else ! np_fine/np_rows == tail_loc
-        !   nblk_mult_rows = nblk_mult_rows + mod(l_rows, nblk)
-        ! endif
-        call find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine, LCM, nblk_mult_rows)
-
+        
         ! PETERDEBUG: transpose should be done instead of the codeblock below
         ! we can transpose and compress in one step
-        if (a_transposed) then
-#ifdef WITH_NVTX
-          call nvtxRangePush("transpose a")
-#endif
-          ! a -> at_col: transpose block-row #np_fine of a
-          ! Send
-          if (mod(np_fine,np_rows) == my_prow) then
+!         if (a_transposed) then
+! #ifdef WITH_NVTX
+!           call nvtxRangePush("transpose a")
+! #endif
+!           ! a -> at_col: transpose block-row #np_fine of a
+!           ! Send
+!           if (mod(np_fine,np_rows) == my_prow) then
 
-            my_pcol_target = mod(np_bc_fine, np_cols)
+!             my_pcol_target = mod(np_bc_fine, np_cols)
             
-            ! we send to the process (mod(np_fine,np_rows), mod(np_bc_fine,np_cols)) last
-            ! to avoid the deadlock
-            my_prow_target_deadlock = mod(np_fine,np_rows)
+!             ! we send to the process (mod(np_fine,np_rows), mod(np_bc_fine,np_cols)) last
+!             ! to avoid the deadlock
+!             my_prow_target_deadlock = mod(np_fine,np_rows)
             
-            np_bc_fine_1 = my_pcol
-            np_bc_fine_1_start = mod(np_bc_fine_1, np_cols_fine)
-            ! dry run: to find, whether there is a potential deadlock
-            do np_bc_fine_1 = my_pcol, np_cols_fine-1, np_cols
-              np_fine_1 = np_bc_fine_1
-              my_prow_target = mod(np_fine_1, np_rows)
-              if (my_prow_target==my_prow_target_deadlock) then
-                np_bc_fine_1_start = mod(np_bc_fine_1+np_cols, np_cols_fine)
-                exit
-              endif
-            enddo
+!             np_bc_fine_1 = my_pcol
+!             np_bc_fine_1_start = mod(np_bc_fine_1, np_cols_fine)
+!             ! dry run: to find, whether there is a potential deadlock
+!             do np_bc_fine_1 = my_pcol, np_cols_fine-1, np_cols
+!               np_fine_1 = np_bc_fine_1
+!               my_prow_target = mod(np_fine_1, np_rows)
+!               if (my_prow_target==my_prow_target_deadlock) then
+!                 np_bc_fine_1_start = mod(np_bc_fine_1+np_cols, np_cols_fine)
+!                 exit
+!               endif
+!             enddo
             
-            np_bc_fine_1 = np_bc_fine_1_start
-            do ! np_bc_fine_1 periodic loop
-              np_fine_1 = np_bc_fine_1
-              my_prow_target = mod(np_fine_1, np_rows)
+!             np_bc_fine_1 = np_bc_fine_1_start
+!             do ! np_bc_fine_1 periodic loop
+!               np_fine_1 = np_bc_fine_1
+!               my_prow_target = mod(np_fine_1, np_rows)
 
-              if (matrix_order==COLUMN_MAJOR_ORDER) then
-                mpi_rank_target = my_prow_target + np_rows*my_pcol_target
-              else
-                mpi_rank_target = my_pcol_target + np_cols*my_prow_target
-              endif
+!               if (matrix_order==COLUMN_MAJOR_ORDER) then
+!                 mpi_rank_target = my_prow_target + np_rows*my_pcol_target
+!               else
+!                 mpi_rank_target = my_pcol_target + np_cols*my_prow_target
+!               endif
               
-              ! PETERDEBUG: cleanup
-              ! nblk_mult_cols_1 = l_cols/(LCM/np_cols)*nblk
-              ! tail_loc = mod(l_cols, LCM/np_cols)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-              ! if (np_bc_fine_1/np_cols > tail_loc) then
-              !   nblk_mult_cols_1 = nblk_mult_cols_1 + 0
-              ! else if (np_bc_fine_1/np_cols < tail_loc) then
-              !   nblk_mult_cols_1 = nblk_mult_cols_1 + nblk
-              ! else ! np_bc_fine_1/np_cols == tail_loc
-              !   nblk_mult_cols_1 = nblk_mult_cols_1 + mod(l_cols, nblk)
-              ! endif
-              call find_nblk_mult_dirs(l_cols, nblk, np_cols, np_bc_fine_1, LCM, nblk_mult_cols_1)
+!               call find_nblk_mult_dirs(l_cols, nblk, np_cols, np_bc_fine_1, LCM, nblk_mult_cols_1)
 
-              n_blocks_loc_fine_1 = (nblk_mult_cols_1+nblk-1)/nblk ! number of complete and incomplete blocks that with fine-grained process np_bc_fine_1
-              if (useCCL) then
-                call gpu_ccl_copy_buf_send(PRECISION_CHAR, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, nblk_mult_rows_max, &
-                                           nblk, m_blocks_loc_fine, n_blocks_loc_fine_1, np_fine, np_bc_fine_1, &
-                                           np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
-              else ! useCCL
-                do j_block_loc_fine = 0, n_blocks_loc_fine_1 - 1
-                  j_block_loc = (np_bc_fine_1 + j_block_loc_fine*np_cols_fine)/np_cols
-                  nblk_cut_col = min(nblk, l_cols-j_block_loc*nblk)
+!               n_blocks_loc_fine_1 = (nblk_mult_cols_1+nblk-1)/nblk ! number of complete and incomplete blocks that with fine-grained process np_bc_fine_1
+!               if (useCCL) then
+!                 call gpu_ccl_copy_buf_send(PRECISION_CHAR, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, nblk_mult_rows_max, &
+!                                            nblk, m_blocks_loc_fine, n_blocks_loc_fine_1, np_fine, np_bc_fine_1, &
+!                                            np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
+!               else ! useCCL
+!                 do j_block_loc_fine = 0, n_blocks_loc_fine_1 - 1
+!                   j_block_loc = (np_bc_fine_1 + j_block_loc_fine*np_cols_fine)/np_cols
+!                   nblk_cut_col = min(nblk, l_cols-j_block_loc*nblk)
 
-                  m_blocks_loc_fine = (nblk_mult_rows+nblk-1)/nblk
-                  do i_block_loc_fine = 0, m_blocks_loc_fine - 1
-                    nblk_cut_row = min(nblk, nblk_mult_rows-i_block_loc_fine*nblk)
-                    i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
+!                   m_blocks_loc_fine = (nblk_mult_rows+nblk-1)/nblk
+!                   do i_block_loc_fine = 0, m_blocks_loc_fine - 1
+!                     nblk_cut_row = min(nblk, nblk_mult_rows-i_block_loc_fine*nblk)
+!                     i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
 
-                    buf_send(1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk,   &
-                             1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk) = &
-                           a(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
-                             1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk)
-                  enddo ! i_block_loc_fine
-                enddo ! j_block_loc_fine
-              endif ! useCCL
+!                     buf_send(1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk,   &
+!                              1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk) = &
+!                            a(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
+!                              1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk)
+!                   enddo ! i_block_loc_fine
+!                 enddo ! j_block_loc_fine
+!               endif ! useCCL
 
-              ! PETERDEBUG: we send extra data to resolve the problem of continuity of the data.
-              ! Alternatively, we could make buf_send and buf_recv to be 1D arrays of blocks (still 2D array of elements, so convenient to copy)
-              if (useCCL) then
-#ifdef USE_CCL_PXGEMM
-                if (mpi_rank_target/=myid) then
-                  successGPU = gpu_stream_synchronize(my_stream)
-                  check_stream_synchronize_gpu("elpa_pxgemm: ccl_send", successGPU)
+!               ! PETERDEBUG: we send extra data to resolve the problem of continuity of the data.
+!               ! Alternatively, we could make buf_send and buf_recv to be 1D arrays of blocks (still 2D array of elements, so convenient to copy)
+!               if (useCCL) then
+! #ifdef USE_CCL_PXGEMM
+!                 if (mpi_rank_target/=myid) then
+!                   successGPU = gpu_stream_synchronize(my_stream)
+!                   check_stream_synchronize_gpu("elpa_pxgemm: ccl_send", successGPU)
                   
-                  successGPU = ccl_Send(buf_send_dev, int(k_datatype*nblk_mult_rows_max*nblk_mult_cols_max,kind=c_size_t), &
-                                        cclDataType, mpi_rank_target, ccl_comm_all, my_stream)
+!                   successGPU = ccl_Send(buf_send_dev, int(k_datatype*nblk_mult_rows_max*nblk_mult_cols_max,kind=c_size_t), &
+!                                         cclDataType, mpi_rank_target, ccl_comm_all, my_stream)
 
-                  if (.not. successGPU) then
-                    print *,"Error in ccl_send"
-                    stop 1
-                  endif
+!                   if (.not. successGPU) then
+!                     print *,"Error in ccl_send"
+!                     stop 1
+!                   endif
 
-                  successGPU = gpu_stream_synchronize(my_stream)
-                  check_stream_synchronize_gpu("elpa_pxgemm: ccl_send", successGPU)
-                else
-                  ! PETERDEBUG: optimize memory usage - copy directly to at_col_dev (kernel needed or use gpu_ccl_copy_buf_recv)
-                  ! buf_self_dev = buf_send_dev
-                  successGPU = gpu_memcpy(buf_self_dev, buf_send_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype, &
-                                          gpuMemcpyDeviceToDevice)
-                  check_memcpy_gpu("elpa_pxgemm: buf_self_dev <- buf_send_dev", successGPU)
-                endif
-#endif /* USE_CCL_PXGEMM */
-              else ! useCCL
-                call MPI_Send(buf_send, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
-                              MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_target, kind=MPI_KIND), 0, &
-                              int(mpi_comm_all, kind=MPI_KIND), mpierr)
-              endif ! useCCL
-              np_bc_fine_1 = mod(np_bc_fine_1+np_cols, np_cols_fine)
-              if (np_bc_fine_1 == np_bc_fine_1_start) exit
-            enddo ! np_bc_fine_1  periodic loop
-          endif ! (mod(np_fine,np_rows) == my_prow)
+!                   successGPU = gpu_stream_synchronize(my_stream)
+!                   check_stream_synchronize_gpu("elpa_pxgemm: ccl_send", successGPU)
+!                 else
+!                   ! PETERDEBUG: optimize memory usage - copy directly to at_col_dev (kernel needed or use gpu_ccl_copy_buf_recv)
+!                   ! buf_self_dev = buf_send_dev
+!                   successGPU = gpu_memcpy(buf_self_dev, buf_send_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype, &
+!                                           gpuMemcpyDeviceToDevice)
+!                   check_memcpy_gpu("elpa_pxgemm: buf_self_dev <- buf_send_dev", successGPU)
+!                 endif
+! #endif /* USE_CCL_PXGEMM */
+!               else ! useCCL
+!                 call MPI_Send(buf_send, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
+!                               MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_target, kind=MPI_KIND), 0, &
+!                               int(mpi_comm_all, kind=MPI_KIND), mpierr)
+!               endif ! useCCL
+!               np_bc_fine_1 = mod(np_bc_fine_1+np_cols, np_cols_fine)
+!               if (np_bc_fine_1 == np_bc_fine_1_start) exit
+!             enddo ! np_bc_fine_1  periodic loop
+!           endif ! (mod(np_fine,np_rows) == my_prow)
 
-          ! Recv
-          if (mod(np_bc_fine,np_cols) == my_pcol) then
-            my_prow_source = mod(np_fine, np_rows)
+!           ! Recv
+!           if (mod(np_bc_fine,np_cols) == my_pcol) then
+!             my_prow_source = mod(np_fine, np_rows)
 
-            do np_fine_1 = my_prow, np_rows_fine-1, np_rows
-              np_bc_fine_1 = np_fine_1
-              my_pcol_source = mod(np_bc_fine_1, np_cols)
+!             do np_fine_1 = my_prow, np_rows_fine-1, np_rows
+!               np_bc_fine_1 = np_fine_1
+!               my_pcol_source = mod(np_bc_fine_1, np_cols)
 
-              if (matrix_order==COLUMN_MAJOR_ORDER) then
-                mpi_rank_source = my_prow_source + np_rows*my_pcol_source
-              else
-                mpi_rank_source = my_pcol_source + np_cols*my_prow_source
-              endif
+!               if (matrix_order==COLUMN_MAJOR_ORDER) then
+!                 mpi_rank_source = my_prow_source + np_rows*my_pcol_source
+!               else
+!                 mpi_rank_source = my_pcol_source + np_cols*my_prow_source
+!               endif
 
-              ! PETERDEBUG: cleanup
-              ! nblk_mult_rows_1 = l_rows/(LCM/np_rows)*nblk
-              ! tail_loc = mod(l_rows, LCM/np_rows)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-              ! if (np_fine_1/np_rows > tail_loc) then
-              !   nblk_mult_rows_1 = nblk_mult_rows_1 + 0
-              ! else if (np_fine_1/np_rows < tail_loc) then
-              !   nblk_mult_rows_1 = nblk_mult_rows_1 + nblk
-              ! else ! np_fine_1/np_rows == tail_loc
-              !   nblk_mult_rows_1 = nblk_mult_rows_1 + mod(l_rows, nblk)
-              ! endif
-              call find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine_1, LCM, nblk_mult_rows_1)
+!               call find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine_1, LCM, nblk_mult_rows_1)
 
-              m_blocks_loc_fine_1 = (nblk_mult_rows_1+nblk-1)/nblk
-              n_blocks_loc_fine   = (nblk_mult_cols  +nblk-1)/nblk
+!               m_blocks_loc_fine_1 = (nblk_mult_rows_1+nblk-1)/nblk
+!               n_blocks_loc_fine   = (nblk_mult_cols  +nblk-1)/nblk
               
-              if (useCCL) then
-#ifdef USE_CCL_PXGEMM
-                if (mpi_rank_source/=myid) then
-                  successGPU = ccl_Recv(buf_recv_dev, int(k_datatype*nblk_mult_rows_max*nblk_mult_cols_max,kind=c_size_t), &
-                                        cclDataType, mpi_rank_source, ccl_comm_all, my_stream)
+!               if (useCCL) then
+! #ifdef USE_CCL_PXGEMM
+!                 if (mpi_rank_source/=myid) then
+!                   successGPU = ccl_Recv(buf_recv_dev, int(k_datatype*nblk_mult_rows_max*nblk_mult_cols_max,kind=c_size_t), &
+!                                         cclDataType, mpi_rank_source, ccl_comm_all, my_stream)
 
-                  if (.not. successGPU) then
-                    print *,"Error in ccl_recv"
-                    stop 1
-                  endif
+!                   if (.not. successGPU) then
+!                     print *,"Error in ccl_recv"
+!                     stop 1
+!                   endif
 
-                  successGPU = gpu_stream_synchronize(my_stream)
-                  check_stream_synchronize_gpu("elpa_pxgemm: ccl_recv", successGPU)
-                else
-                  ! buf_recv_dev = buf_self_dev
-                  successGPU = gpu_memcpy(buf_recv_dev, buf_self_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype, &
-                                          gpuMemcpyDeviceToDevice)
-                  check_memcpy_gpu("elpa_pxgemm: buf_recv_dev <- buf_self_dev", successGPU)
-                endif
-#endif /* USE_CCL_PXGEMM */
-              else ! useCCL
-                call MPI_Recv(buf_recv, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
-                              MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_source, kind=MPI_KIND), 0, &
-                              int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
-              endif ! useCCL
+!                   successGPU = gpu_stream_synchronize(my_stream)
+!                   check_stream_synchronize_gpu("elpa_pxgemm: ccl_recv", successGPU)
+!                 else
+!                   ! buf_recv_dev = buf_self_dev
+!                   successGPU = gpu_memcpy(buf_recv_dev, buf_self_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype, &
+!                                           gpuMemcpyDeviceToDevice)
+!                   check_memcpy_gpu("elpa_pxgemm: buf_recv_dev <- buf_self_dev", successGPU)
+!                 endif
+! #endif /* USE_CCL_PXGEMM */
+!               else ! useCCL
+!                 call MPI_Recv(buf_recv, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
+!                               MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_source, kind=MPI_KIND), 0, &
+!                               int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+!               endif ! useCCL
 
-              if (useCCL) then
-                call gpu_ccl_copy_buf_recv(PRECISION_CHAR, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_cols, &
-                                           nblk_mult_rows_max, nblk, m_blocks_loc_fine_1, n_blocks_loc_fine, np_fine_1, &
-                                           np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
-              else ! useCCL
-                do i_block_loc_fine = 0, m_blocks_loc_fine_1 - 1
-                  i_block_loc = (np_fine_1 + i_block_loc_fine*np_rows_fine)/np_rows
+!               if (useCCL) then
+!                 call gpu_ccl_copy_buf_recv(PRECISION_CHAR, at_col_dev, buf_recv_dev, l_rows, l_cols, nblk_mult_cols, &
+!                                            nblk_mult_rows_max, nblk, m_blocks_loc_fine_1, n_blocks_loc_fine, np_fine_1, &
+!                                            np_bc_fine, np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
+!               else ! useCCL
+!                 do i_block_loc_fine = 0, m_blocks_loc_fine_1 - 1
+!                   i_block_loc = (np_fine_1 + i_block_loc_fine*np_rows_fine)/np_rows
 
-                  nblk_cut_row = min(nblk, l_rows-i_block_loc*nblk)
+!                   nblk_cut_row = min(nblk, l_rows-i_block_loc*nblk)
 
-                  do j_block_loc_fine = 0, n_blocks_loc_fine - 1
-                    nblk_cut_col = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
-                    j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
-                    at_col(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
-                           1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk) = &
-        transpose(buf_recv(1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk,   &
-                           1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk))
-                  enddo ! j_block_loc_fine
-                enddo ! i_block_loc_fine
-              endif ! useCCL
+!                   do j_block_loc_fine = 0, n_blocks_loc_fine - 1
+!                     nblk_cut_col = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
+!                     j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+!                     at_col(1+i_block_loc     *nblk: nblk_cut_row+i_block_loc     *nblk,   &
+!                            1+j_block_loc     *nblk: nblk_cut_col+j_block_loc     *nblk) = &
+!         transpose(buf_recv(1+j_block_loc_fine*nblk: nblk_cut_col+j_block_loc_fine*nblk,   &
+!                            1+i_block_loc_fine*nblk: nblk_cut_row+i_block_loc_fine*nblk))
+!                   enddo ! j_block_loc_fine
+!                 enddo ! i_block_loc_fine
+!               endif ! useCCL
 
-            enddo ! np_fine_1
-          endif ! (mod(np_bc_fine,np_cols) == my_pcol)
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! transpose a
-#endif
-        endif ! a_transposed
+!             enddo ! np_fine_1
+!           endif ! (mod(np_bc_fine,np_cols) == my_pcol)
+! #ifdef WITH_NVTX
+!           call nvtxRangePop() ! transpose a
+! #endif
+!         endif ! a_transposed
 
-          ! if (mod(np_bc_fine,np_cols) == my_pcol) then
-          !   if (useGPU) then
-          !     call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, a_dev, aux_a_full_dev, l_rows, l_cols, &
-          !                                           nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
-          !   else ! useGPU
-          !     do j_block_loc_fine = 0, (nblk_mult_cols+nblk-1)/nblk - 1
-          !       nblk_cut = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
-          !       j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
-          !       aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: nblk_cut+j_block_loc_fine*nblk) = &
-          !           at_col(1:l_rows, 1+j_block_loc*nblk     : nblk_cut+j_block_loc*nblk)
-          !     enddo ! j_block_loc_fine
-          !   endif ! useGPU
-          ! endif ! (mod(np_bc_fine,np_cols) == my_pcol)
+        if (a_transposed) then
+          if (useCCL) then
+            call elpa_transpose_row_ccl_&
+                  &MATH_DATATYPE&
+                  &_&
+                  &PRECISION&
+                  (obj, a_dev, at_col_dev, buf_send_dev, buf_recv_dev, buf_self_dev, np_fine, l_rows, l_cols, &
+                  nblk_mult_rows_max, nblk_mult_cols_max)
+          else
+            call elpa_transpose_row_&
+                  &MATH_DATATYPE&
+                  &_&
+                  &PRECISION&
+                  (obj, a, at_col, buf_send, buf_recv, np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max)
+          endif
+        endif
 
-        !else ! a_transposed
-          if (mod(np_bc_fine,np_cols) == my_pcol) then
-            if (useGPU) then
-              if (a_transposed) then
-                if (.not. useCCL) then
+        if (b_transposed) then
+          if (useCCL) then
+            call elpa_transpose_row_ccl_&
+                  &MATH_DATATYPE&
+                  &_&
+                  &PRECISION&
+                  (obj, b_dev, bt_row_dev, buf_send_dev, buf_recv_dev, buf_self_dev, np_fine, l_rows, l_cols, &
+                  nblk_mult_rows_max, nblk_mult_cols_max)
+          else
+            call elpa_transpose_row_&
+                  &MATH_DATATYPE&
+                  &_&
+                  &PRECISION&
+                  (obj, b, bt_row, buf_send, buf_recv, np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max)
+          endif
+        endif
+
+        if (mod(np_bc_fine,np_cols) == my_pcol) then
+          if (useGPU) then
+            if (a_transposed) then
+              if (.not. useCCL) then
 !#ifdef WITH_GPU_STREAMS ! PETERDEBUG
 !#else
-                  num = l_rows*l_cols
-                  successGPU = gpu_memcpy(at_col_dev, int(loc(at_col),kind=c_intptr_t), num*size_of_datatype, gpuMemcpyHostToDevice)
-                  check_memcpy_gpu("elpa_pxgemm: at_col -> at_col_dev", successGPU)
+                num = l_rows*l_cols
+                successGPU = gpu_memcpy(at_col_dev, int(loc(at_col),kind=c_intptr_t), num*size_of_datatype, gpuMemcpyHostToDevice)
+                check_memcpy_gpu("elpa_pxgemm: at_col -> at_col_dev", successGPU)
 !#endif
-                endif ! (.not. useCCL)
-                ! call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, at_col_dev, aux_a_full_dev, l_rows, l_cols, &
-                !                                       nblk_mult_cols, nblk, 0, np_cols_fine, np_cols, debug, my_stream)
-                call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, at_col_dev, aux_a_full_dev, l_rows, l_cols, &
-                                                      nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
+              endif ! (.not. useCCL)
+              ! call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, at_col_dev, aux_a_full_dev, l_rows, l_cols, &
+              !                                       nblk_mult_cols, nblk, 0, np_cols_fine, np_cols, debug, my_stream)
+              call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, at_col_dev, aux_a_full_dev, l_rows, l_cols, &
+                                                    nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
+            else ! (a_transposed .and. b_transposed)
+              call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, a_dev, aux_a_full_dev, l_rows, l_cols, &
+                                                    nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
+            endif ! a_transposed
+          else ! useGPU
+            do j_block_loc_fine = 0, (nblk_mult_cols+nblk-1)/nblk - 1
+              nblk_cut = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
+              j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
+              if (a_transposed) then
+                aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: nblk_cut+j_block_loc_fine*nblk) = &
+                    at_col(1:l_rows, 1+j_block_loc*nblk     : nblk_cut+j_block_loc*nblk)
               else ! a_transposed
-                call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, a_dev, aux_a_full_dev, l_rows, l_cols, &
-                                                      nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
+                aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: nblk_cut+j_block_loc_fine*nblk) = &
+                         a(1:l_rows, 1+j_block_loc*nblk     : nblk_cut+j_block_loc*nblk)
               endif ! a_transposed
-            else ! useGPU
-              do j_block_loc_fine = 0, (nblk_mult_cols+nblk-1)/nblk - 1
-                nblk_cut = min(nblk, nblk_mult_cols-j_block_loc_fine*nblk)
-                j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols
-                if (a_transposed) then
-                  aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: nblk_cut+j_block_loc_fine*nblk) = &
-                      at_col(1:l_rows, 1+j_block_loc*nblk     : nblk_cut+j_block_loc*nblk)
-                else ! a_transposed
-                  aux_a_full(1:l_rows, 1+j_block_loc_fine*nblk: nblk_cut+j_block_loc_fine*nblk) = &
-                           a(1:l_rows, 1+j_block_loc*nblk     : nblk_cut+j_block_loc*nblk)
-                endif ! a_transposed
-              enddo ! j_block_loc_fine
-            endif ! useGPU
-          endif ! (mod(np_bc_fine,np_cols) == my_pcol)
-        !endif ! a_transposed
+            enddo ! j_block_loc_fine
+          endif ! useGPU
+        endif ! (mod(np_bc_fine,np_cols) == my_pcol)
 
         if (mod(np_fine,np_rows) == my_prow) then
           if (useGPU) then
-            call gpu_copy_and_set_zeros_aux_b_full(PRECISION_CHAR, b_dev, aux_b_full_dev, l_rows, l_cols, nblk_mult, &
-                                                   nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, SM_count, debug, my_stream)
+            if (b_transposed) then
+              if (.not. useCCL) then
+!#ifdef WITH_GPU_STREAMS ! PETERDEBUG
+!#else
+                num = l_rows*l_cols
+                successGPU = gpu_memcpy(bt_row_dev, int(loc(bt_row),kind=c_intptr_t), num*size_of_datatype, gpuMemcpyHostToDevice)
+                check_memcpy_gpu("elpa_pxgemm: bt_row -> bt_row_dev", successGPU)
+!#endif
+              endif ! (.not. useCCL)
+              
+              call gpu_copy_and_set_zeros_aux_b_full(PRECISION_CHAR, bt_row_dev, aux_b_full_dev, l_rows, l_cols, nblk_mult, &
+                                                  nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, SM_count, debug, my_stream)
+            else  ! b_transposed
+              call gpu_copy_and_set_zeros_aux_b_full(PRECISION_CHAR, b_dev, aux_b_full_dev, l_rows, l_cols, nblk_mult, &
+                                                  nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, SM_count, debug, my_stream)
+            endif ! b_transposed
           else ! useGPU
             do i_block_loc_fine = 0, (nblk_mult_rows+nblk-1)/nblk - 1
               nblk_cut = min(nblk, nblk_mult_rows-i_block_loc_fine*nblk)
               i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
-              aux_b_full(1+i_block_loc_fine*nblk: nblk_cut+i_block_loc_fine*nblk, 1:l_cols) = &
-                       b(1+i_block_loc*nblk     : nblk_cut+i_block_loc*nblk     , 1:l_cols)
+              if (b_transposed) then
+                aux_b_full(1+i_block_loc_fine*nblk: nblk_cut+i_block_loc_fine*nblk, 1:l_cols) = &
+                    bt_row(1+i_block_loc*nblk     : nblk_cut+i_block_loc*nblk     , 1:l_cols)
+              else  ! b_transposed
+                aux_b_full(1+i_block_loc_fine*nblk: nblk_cut+i_block_loc_fine*nblk, 1:l_cols) = &
+                         b(1+i_block_loc*nblk     : nblk_cut+i_block_loc*nblk     , 1:l_cols)
+              endif ! b_transposed
             enddo ! i_block_loc_fine
           endif ! useGPU
         endif ! (mod(np_fine,np_rows) == my_prow)
@@ -1591,13 +1574,6 @@
         
         beta = ZERO
         if (np_fine>0) beta = ONE
-        ! if (a_transposed) then ! PETERDEBUG: cleanup
-        !   m = nblk_mult_rows
-        !   k = l_rows
-        ! else
-        !   m = l_rows
-        !   k = nblk_mult_rows
-        ! endif
         if (useGPU) then
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
 #ifdef WITH_NVTX
@@ -1633,7 +1609,7 @@
 #endif
       enddo ! np_fine = 0, np_rows_fine-1
       
-      call obj%timer%stop("main_loop_nn")
+      call obj%timer%stop("main_loop_nn_tt")
 
       ! Put the result into C
       if (useGPU) then
@@ -1651,13 +1627,16 @@
 
       c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
 
-      if (a_transposed) then
-        deallocate(at_full, stat=istat, errmsg=errorMessage)
-        call check_alloc("elpa_pxgemm", "at_full", istat, errorMessage)
+      if (a_transposed .and. b_transposed) then
+        deallocate(at_col, bt_row, stat=istat, errmsg=errorMessage)
+        call check_alloc("elpa_pxgemm", "at_col, bt_row", istat, errorMessage)
 
         if (useGPU) then
           successGPU = gpu_free(at_col_dev)
           check_dealloc_gpu("elpa_pxgemm: at_col_dev", successGPU)
+
+          successGPU = gpu_free(bt_row_dev)
+          check_dealloc_gpu("elpa_pxgemm: bt_row_dev", successGPU)
         endif
 
         if (useCCL) then
@@ -1678,9 +1657,9 @@
     endif ! universal
 
 ! ___________________________________________________________________
-    
-    if (.false. .and. (.not. a_transposed .and.       b_transposed .or. &
-              a_transposed .and. .not. b_transposed )) then
+    if (.false.) then    
+    ! if (.not. a_transposed .and.       b_transposed .or. &
+    !           a_transposed .and. .not. b_transposed) then
       print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: ( a_transposed XOR b_transposed)" ! PETERDEBUG
       
       ! dir = row/col for TN/NT
