@@ -52,10 +52,10 @@ module elpa_multiply_helpers
   ! dir = "row" or "col"
   ! np_row_fine = np_fine
   ! np_col_fine = np_bc_fine
-  subroutine find_nblk_mult_dirs(l_dirs, nblk, np_dirs, np_dir_fine, LCM, nblk_mult_dirs)
+  function find_nblk_mult_dirs(l_dirs, nblk, np_dirs, np_dir_fine, LCM) result(nblk_mult_dirs)
     implicit none
     integer, intent(in)  :: l_dirs, nblk, np_dirs, np_dir_fine, LCM
-    integer, intent(out) :: nblk_mult_dirs
+    integer              :: nblk_mult_dirs
     integer              :: tail_loc
 
     nblk_mult_dirs = l_dirs/(LCM/np_dirs)*nblk
@@ -67,7 +67,7 @@ module elpa_multiply_helpers
     else ! np_dir_fine/np_dirs == tail_loc
       nblk_mult_dirs = nblk_mult_dirs + mod(l_dirs, nblk)
     endif
-  end subroutine find_nblk_mult_dirs
+  end function find_nblk_mult_dirs
 
 #undef DEVICE_POINTER
 #undef USE_CCL_PXGEMM
@@ -113,7 +113,6 @@ module elpa_multiply_helpers
 ! CCL-version
 
 #define DEVICE_POINTER
-#define USE_CCL_PXGEMM
 #define CCL _ccl_
 
 #define REALCASE 1
@@ -151,7 +150,6 @@ module elpa_multiply_helpers
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
 #undef DEVICE_POINTER
-#undef USE_CCL_PXGEMM
 #undef CCL
 
 end module elpa_multiply_helpers

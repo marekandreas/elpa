@@ -1082,6 +1082,9 @@
       deallocate(at_full, bt_full, stat=istat, errmsg=errorMessage)
       call check_alloc("elpa_pxgemm", "at_full, bt_full", istat, errorMessage)
 
+      deallocate(tmp1_full, stat=istat, errmsg=errorMessage)
+      call check_alloc("elpa_pxgemm", "tmp1_full", istat, errorMessage)
+      
     endif ! (a_transposed .and. b_transposed)
   endif ! isSquareGrid
 
@@ -1109,7 +1112,8 @@
 
     !if ((.not. a_transposed) .and. (.not. b_transposed) .or. &
     !           a_transposed  .and.        b_transposed) then
-    if (.not. b_transposed) then ! PETERDEBUG: try universal algorithm wrt transposition of a 
+    !if (.not. b_transposed) then ! PETERDEBUG: try universal algorithm wrt transposition of a 
+    if (.true.) then ! PETERDEBUG: try universal
       allocate(aux_a_full(l_rows, nblk_mult), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
     
@@ -1123,7 +1127,11 @@
         ! PETERDEBUG: this is as memory consuming as the whole matrix. Can we do smth about it?
         allocate(at_col(l_rows, l_cols), stat=istat, errmsg=errorMessage) ! l_rows*nblk_mult as aux_a_full (maybe they are the same??)
         check_allocate("elpa_pxgemm: at_col", istat, errorMessage)
-        
+        ! PETERDEBUG: it seems we can't do much about it. Consider 2x2 grid. 
+        ! Process (0,1) sends data to process (1,0), hence the latter should contain the whole local matrix
+        ! Of course, process (1,1) doesn't need the space for the matrix, but that's not signficant
+        ! due to the balance considerations
+
         ! allocate(aux_a_send_full(nblk_mult, l_cols), stat=istat, errmsg=errorMessage)
         ! check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
         if (useGPU) then
@@ -1147,8 +1155,8 @@
 
       if (a_transposed .or. b_transposed) then
         ! max nblk_mult_rows, nblk_mult_cols is achieved at the 0-th MPI process
-        call find_nblk_mult_dirs(l_rows_max, nblk, np_rows, 0, LCM, nblk_mult_rows_max)
-        call find_nblk_mult_dirs(l_cols_max, nblk, np_cols, 0, LCM, nblk_mult_cols_max)
+        nblk_mult_rows_max = find_nblk_mult_dirs(l_rows_max, nblk, np_rows, 0, LCM)
+        nblk_mult_cols_max = find_nblk_mult_dirs(l_cols_max, nblk, np_cols, 0, LCM)
 
         if (useCCL) then
           successGPU = gpu_malloc(buf_send_dev, nblk_mult_rows_max*nblk_mult_cols_max*size_of_datatype)
@@ -1196,8 +1204,8 @@
         np    = mod(np_fine, np_rows)
         np_bc = mod(np_bc_fine, np_cols)
 
-        call find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine   , LCM, nblk_mult_rows)
-        call find_nblk_mult_dirs(l_cols, nblk, np_cols, np_bc_fine, LCM, nblk_mult_cols)
+        nblk_mult_rows = find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine   , LCM)
+        nblk_mult_cols = find_nblk_mult_dirs(l_cols, nblk, np_cols, np_bc_fine, LCM)
         
         ! PETERDEBUG: transpose should be done instead of the codeblock below
         ! we can transpose and compress in one step
@@ -1238,13 +1246,15 @@
 !                 mpi_rank_target = my_pcol_target + np_cols*my_prow_target
 !               endif
               
-!               call find_nblk_mult_dirs(l_cols, nblk, np_cols, np_bc_fine_1, LCM, nblk_mult_cols_1)
+!               nblk_mult_cols_1 = find_nblk_mult_dirs(l_cols, nblk, np_cols, np_bc_fine_1, LCM)
 
 !               n_blocks_loc_fine_1 = (nblk_mult_cols_1+nblk-1)/nblk ! number of complete and incomplete blocks that with fine-grained process np_bc_fine_1
 !               if (useCCL) then
+! #ifdef USE_CCL_PXGEMM
 !                 call gpu_ccl_copy_buf_send(PRECISION_CHAR, a_dev, buf_send_dev, l_rows, l_cols, nblk_mult_rows, nblk_mult_rows_max, &
 !                                            nblk, m_blocks_loc_fine, n_blocks_loc_fine_1, np_fine, np_bc_fine_1, &
 !                                            np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
+! #endif /* USE_CCL_PXGEMM */
 !               else ! useCCL
 !                 do j_block_loc_fine = 0, n_blocks_loc_fine_1 - 1
 !                   j_block_loc = (np_bc_fine_1 + j_block_loc_fine*np_cols_fine)/np_cols
@@ -1313,7 +1323,7 @@
 !                 mpi_rank_source = my_pcol_source + np_cols*my_prow_source
 !               endif
 
-!               call find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine_1, LCM, nblk_mult_rows_1)
+!               nblk_mult_rows_1 = find_nblk_mult_dirs(l_rows, nblk, np_rows, np_fine_1, LCM)
 
 !               m_blocks_loc_fine_1 = (nblk_mult_rows_1+nblk-1)/nblk
 !               n_blocks_loc_fine   = (nblk_mult_cols  +nblk-1)/nblk
@@ -1374,35 +1384,35 @@
 
         if (a_transposed) then
           if (useCCL) then
-            call elpa_transpose_row_ccl_&
+            call elpa_transpose_row_or_col_ccl_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  (obj, a_dev, at_col_dev, buf_send_dev, buf_recv_dev, buf_self_dev, np_fine, l_rows, l_cols, &
+                  (obj, 'R', a_dev, at_col_dev, buf_send_dev, buf_recv_dev, buf_self_dev, np_fine, l_rows, l_cols, &
                   nblk_mult_rows_max, nblk_mult_cols_max)
           else
-            call elpa_transpose_row_&
+            call elpa_transpose_row_or_col_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  (obj, a, at_col, buf_send, buf_recv, np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max)
+                  (obj, 'R', a, at_col, buf_send, buf_recv, np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max)
           endif
         endif
 
         if (b_transposed) then
           if (useCCL) then
-            call elpa_transpose_row_ccl_&
+            call elpa_transpose_row_or_col_ccl_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  (obj, b_dev, bt_row_dev, buf_send_dev, buf_recv_dev, buf_self_dev, np_fine, l_rows, l_cols, &
+                  (obj, 'C', b_dev, bt_row_dev, buf_send_dev, buf_recv_dev, buf_self_dev, np_fine, l_rows, l_cols, &
                   nblk_mult_rows_max, nblk_mult_cols_max)
           else
-            call elpa_transpose_row_&
+            call elpa_transpose_row_or_col_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  (obj, b, bt_row, buf_send, buf_recv, np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max)
+                  (obj, 'C', b, bt_row, buf_send, buf_recv, np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max)
           endif
         endif
 
@@ -1627,18 +1637,27 @@
 
       c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
 
-      if (a_transposed .and. b_transposed) then
-        deallocate(at_col, bt_row, stat=istat, errmsg=errorMessage)
-        call check_alloc("elpa_pxgemm", "at_col, bt_row", istat, errorMessage)
+      if (a_transposed) then
+        deallocate(at_col, stat=istat, errmsg=errorMessage)
+        call check_alloc("elpa_pxgemm", "at_col", istat, errorMessage)
 
         if (useGPU) then
           successGPU = gpu_free(at_col_dev)
           check_dealloc_gpu("elpa_pxgemm: at_col_dev", successGPU)
+        endif
+      endif
 
+      if (b_transposed) then
+        deallocate(bt_row, stat=istat, errmsg=errorMessage)
+        call check_alloc("elpa_pxgemm", "bt_row", istat, errorMessage)
+
+        if (useGPU) then
           successGPU = gpu_free(bt_row_dev)
           check_dealloc_gpu("elpa_pxgemm: bt_row_dev", successGPU)
         endif
+      endif
 
+      if (a_transposed .or. b_transposed) then
         if (useCCL) then
           successGPU = gpu_free(buf_send_dev)
           check_dealloc_gpu("elpa_pxgemm: buf_send_dev", successGPU)
@@ -1657,7 +1676,7 @@
     endif ! universal
 
 ! ___________________________________________________________________
-    if (.false.) then    
+    if (.false.) then ! PETERDEBUG
     ! if (.not. a_transposed .and.       b_transposed .or. &
     !           a_transposed .and. .not. b_transposed) then
       print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: ( a_transposed XOR b_transposed)" ! PETERDEBUG
@@ -1910,8 +1929,11 @@
 
     endif ! (.not. a_transposed .and. b_transposed)
 
-! ___________________________________________________________________  
-  
+! ___________________________________________________________________ 
+ 
+    deallocate(tmp1_full,  stat=istat, errmsg=errorMessage)
+    call check_alloc("elpa_pxgemm", "tmp1_full", istat, errorMessage)
+
   endif ! (.not. isSquareGrid)
   
 !______________________________________________________________________________________________
@@ -1919,7 +1941,6 @@
     ! PETERDEBUG
     deallocate(aux_a_full, stat=istat, errmsg=errorMessage)
     deallocate(aux_b_full, stat=istat, errmsg=errorMessage)
-    deallocate(tmp1_full,  stat=istat, errmsg=errorMessage)
     
     !deallocate(aux_a_full, aux_b_full, tmp1_full, stat=istat, errmsg=errorMessage)
     !call check_alloc("elpa_pxgemm", "aux_a_full, tmp1_full", istat, errorMessage)
