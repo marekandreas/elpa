@@ -65,7 +65,7 @@ subroutine elpa_transpose_row_or_col&
 #else /* DEVICE_POINTER */
                               a, at, buf_send, buf_recv, &
 #endif /* DEVICE_POINTER */
-                              np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max)
+                              np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max, debug)
 
   use, intrinsic :: iso_c_binding
   use precision
@@ -237,11 +237,9 @@ subroutine elpa_transpose_row_or_col&
   np_cols_fine = np_rows_fine
   np_dirs_fine = np_rows_fine
   np_dirs_t_fine = np_rows_fine
-    
-  print *, "transpose row/col" ! PETERDEBUG
 
 #ifdef WITH_NVTX
-  call nvtxRangePush("transpose row")
+  call nvtxRangePush("transpose row/col")
 #endif
   ! a -> at: transpose block-row (block-col) #np_fine of a
   ! Send
@@ -310,30 +308,6 @@ subroutine elpa_transpose_row_or_col&
                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
 #endif /* USE_CCL_PXGEMM */
       else ! useCCL
-        ! PETERDEBUG: cleanup
-        ! do it_block_loc_fine = 0, mt_blocks_loc_fine_1 - 1
-        !   it_block_loc = (np_t_fine_1 + it_block_loc_fine*np_dirs_t_fine)/np_dirs_t
-        !   nblk_cut_dir_t = min(nblk, l_dirs_t-it_block_loc*nblk)
-
-        !   m_blocks_loc_fine = (nblk_mult_dirs+nblk-1)/nblk
-        !   do i_block_loc_fine = 0, m_blocks_loc_fine - 1
-        !     i_block_loc = (np_fine + i_block_loc_fine*np_dirs_fine)/np_dirs
-        !     nblk_cut_dir = min(nblk, l_dirs-i_block_loc*nblk)
-
-        !     if (row_transposed) then
-        !       buf_send(1+ i_block_loc_fine*nblk: nblk_cut_dir  + i_block_loc_fine*nblk,   &
-        !                1+it_block_loc_fine*nblk: nblk_cut_dir_t+it_block_loc_fine*nblk) = &
-        !              a(1+ i_block_loc     *nblk: nblk_cut_dir  + i_block_loc     *nblk,   &
-        !                1+it_block_loc     *nblk: nblk_cut_dir_t+it_block_loc     *nblk)
-        !     else
-        !       buf_send(1+it_block_loc_fine*nblk: nblk_cut_dir_t+it_block_loc_fine*nblk,   &
-        !                1+ i_block_loc_fine*nblk: nblk_cut_dir  + i_block_loc_fine*nblk) = &
-        !              a(1+it_block_loc     *nblk: nblk_cut_dir_t+it_block_loc     *nblk,   &
-        !                1+ i_block_loc     *nblk: nblk_cut_dir  + i_block_loc     *nblk)
-        !     endif
-        !   enddo ! i_block_loc_fine
-        ! enddo ! it_block_loc_fine
-
         ! The nested loop is symmetric wrt to i,j, so we use the rigid order of indices for convenience of copying
         do j_block_loc_fine = 0, j_block_loc_fine_max
           j_block_loc = (np_t + j_block_loc_fine*np_cols_fine)/np_cols
@@ -462,29 +436,6 @@ subroutine elpa_transpose_row_or_col&
                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
 #endif /* USE_CCL_PXGEMM */
       else ! useCCL
-        ! PETERDEBUG: cleanup
-        ! do i_block_loc_fine = 0, m_blocks_loc_fine_1 - 1
-        !   i_block_loc = (np_fine_1 + i_block_loc_fine*np_dirs_fine)/np_dirs
-        !   nblk_cut_dir = min(nblk, l_dirs-i_block_loc*nblk)
-
-        !   do it_block_loc_fine = 0, mt_blocks_loc_fine - 1
-        !     it_block_loc = (np_t_fine + it_block_loc_fine*np_dirs_t_fine)/np_dirs_t
-        !     nblk_cut_dir_t = min(nblk, l_dirs_t-it_block_loc*nblk)
-
-        !     if (row_transposed) then
-        !       at(1+ i_block_loc     *nblk: nblk_cut_dir  + i_block_loc     *nblk,   &
-        !          1+it_block_loc     *nblk: nblk_cut_dir_t+it_block_loc     *nblk) = &
-        !       transpose(buf_recv(1+it_block_loc_fine*nblk: nblk_cut_dir_t+it_block_loc_fine*nblk,   &
-        !                          1+ i_block_loc_fine*nblk: nblk_cut_dir  + i_block_loc_fine*nblk))
-        !     else
-        !       at(1+it_block_loc     *nblk: nblk_cut_dir_t+it_block_loc     *nblk,   &
-        !          1+ i_block_loc     *nblk: nblk_cut_dir  + i_block_loc     *nblk) = &
-        !       transpose(buf_recv(1+ i_block_loc_fine*nblk: nblk_cut_dir  + i_block_loc_fine*nblk,   &
-        !                          1+it_block_loc_fine*nblk: nblk_cut_dir_t+it_block_loc_fine*nblk))
-        !     endif
-        !   enddo ! j_block_loc_fine
-        ! enddo ! i_block_loc_fine
-
         do i_block_loc_fine = 0, i_block_loc_fine_max
           i_block_loc = (np + i_block_loc_fine*np_rows_fine)/np_rows
           nblk_cut_row = min(nblk, l_rows-i_block_loc*nblk)
@@ -504,13 +455,13 @@ subroutine elpa_transpose_row_or_col&
 
     enddo ! np_fine_1
   endif ! (mod(np_t_fine,np_dirs_t) == my_pdir)
-#ifdef WITH_NVTX
-  call nvtxRangePop() ! transpose row
-#endif
 
-  
-
+  if (debug==1) successGPU = gpu_DeviceSynchronize()
   call obj%timer%stop("elpa_transpose_row")
+
+#ifdef WITH_NVTX
+  call nvtxRangePop() ! transpose row/col
+#endif
 
 end subroutine
 
