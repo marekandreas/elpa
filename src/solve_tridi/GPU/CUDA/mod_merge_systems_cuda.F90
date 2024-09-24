@@ -75,14 +75,15 @@ module merge_systems_cuda
 
   interface
     subroutine cuda_copy_q_slice_to_qtmp2_double_c(q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows, l_rqs, l_rqe, &
-                                                             matrixRows, matrixCols, gemm_dim_k,  gemm_dim_m, ns, ncnt, indx, indx2, &
-                                                             na, my_stream) &
-                                                     bind(C, name="cuda_copy_q_slice_to_qtmp2_double_FromC")
+                                            matrixRows, matrixCols, gemm_dim_k,  gemm_dim_m, ns, ncnt, indx, indx2, &
+                                            na, my_stream) &
+                                            bind(C, name="cuda_copy_q_slice_to_qtmp2_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp2_dev
       type(c_ptr), value               :: idxq1_dev, l_col_out_dev
-      integer(kind=c_int), intent(in)  :: l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na
+      integer(kind=c_int), intent(in)  :: l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, &
+                                          indx, indx2, na
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -91,9 +92,9 @@ module merge_systems_cuda
 
   interface
     subroutine cuda_fill_ev_double_c(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
-                                                          idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
-                                                             ncnt, my_stream) &
-                                                     bind(C, name="cuda_fill_ev_double_FromC")
+                                           idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
+                                           ncnt, my_stream) &
+                                           bind(C, name="cuda_fill_ev_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
@@ -107,8 +108,8 @@ module merge_systems_cuda
 
   interface
     subroutine cuda_copy_qtmp2_slice_to_q_double_c(q_dev, qtmp2_dev, idx1q_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, &
-                                                             gemm_dim_k, matrixRows, ns,  my_stream) &
-                                                     bind(C, name="cuda_copy_qtmp2_slice_to_q_double_FromC")
+                                               gemm_dim_k, matrixRows, ns,  my_stream) &
+                                               bind(C, name="cuda_copy_qtmp2_slice_to_q_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp2_dev
@@ -121,18 +122,64 @@ module merge_systems_cuda
 
 
   interface
-    subroutine cuda_fill_tmp_arrays_double_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev,  &
-                                                                  zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, &
-                                                             np_rem,  my_stream) &
-                                                     bind(C, name="cuda_fill_tmp_arrays_double_FromC")
+    subroutine cuda_fill_tmp_arrays_double_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+                                             d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, &
+                                             np_rem,  my_stream) &
+                                             bind(C, name="cuda_fill_tmp_arrays_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
-      type(c_ptr), value               :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      type(c_ptr), value               :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_int), intent(in)  :: na, np, na1, np_rem
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
+
+
+
+  interface
+    subroutine cuda_zero_q_double_c(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                          matrixRows, my_stream) &
+                                          bind(C, name="cuda_zero_q_double_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: q_dev
+      type(c_ptr), value               :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_int), intent(in)  :: na, my_pcol, l_rqs, l_rqe, matrixRows
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+
+
+  interface
+    subroutine cuda_copy_q_slice_to_qtmp1_double_c(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, &
+                                           p_col_dev, na2, na, my_pcol, l_rows, l_rqs, l_rqe, &
+                                           matrixRows, gemm_dim_k, my_stream) &
+                                           bind(C, name="cuda_copy_q_slice_to_qtmp1_double_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: qtmp1_dev, q_dev
+      type(c_ptr), value               :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_int), intent(in)  :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+
+
+  interface
+    subroutine cuda_copy_qtmp1_to_qtmp1_tmp_double_c(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, &
+                                            gemm_dim_l, my_stream) &
+                                            bind(C, name="cuda_copy_qtmp1_to_qtmp1_tmp_double_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: qtmp1_dev, qtmp1_tmp_dev
+      integer(kind=c_int), intent(in)  :: gemm_dim_k, gemm_dim_l
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
 
 
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -156,14 +203,15 @@ module merge_systems_cuda
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
     subroutine cuda_copy_q_slice_to_qtmp2_float_c(q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows, l_rqs, l_rqe, &
-                                                             matrixRows, matrixCols, gemm_dim_k,  gemm_dim_m, ns, ncnt, indx, indx2, &
-                                                             na, my_stream) &
-                                                     bind(C, name="cuda_copy_q_slice_to_qtmp2_float_FromC")
+                                            matrixRows, matrixCols, gemm_dim_k,  gemm_dim_m, ns, ncnt, indx, indx2, &
+                                            na, my_stream) &
+                                            bind(C, name="cuda_copy_q_slice_to_qtmp2_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp2_dev
       type(c_ptr), value               :: idxq1_dev, l_col_out_dev
-      integer(kind=c_int), intent(in)  :: l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na
+      integer(kind=c_int), intent(in)  :: l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, &
+                                          indx, indx2, na
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -174,9 +222,9 @@ module merge_systems_cuda
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
     subroutine cuda_fill_ev_float_c(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
-                                                          idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
-                                                             ncnt, my_stream) &
-                                                     bind(C, name="cuda_fill_ev_float_FromC")
+                                           idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
+                                           ncnt, my_stream) &
+                                           bind(C, name="cuda_fill_ev_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
@@ -192,8 +240,8 @@ module merge_systems_cuda
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
     subroutine cuda_copy_qtmp2_slice_to_q_float_c(q_dev, qtmp2_dev, idx1q_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, &
-                                                             gemm_dim_k, matrixRows, ns,  my_stream) &
-                                                     bind(C, name="cuda_copy_qtmp2_slice_to_q_float_FromC")
+                                               gemm_dim_k, matrixRows, ns,  my_stream) &
+                                               bind(C, name="cuda_copy_qtmp2_slice_to_q_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp2_dev
@@ -208,14 +256,14 @@ module merge_systems_cuda
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine cuda_fill_tmp_arrays_float_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev,  &
-                                                                  zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, &
-                                                             np_rem,  my_stream) &
-                                                     bind(C, name="cuda_fill_tmp_arrays_float_FromC")
+    subroutine cuda_fill_tmp_arrays_float_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+                                             d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, &
+                                             np_rem,  my_stream) &
+                                             bind(C, name="cuda_fill_tmp_arrays_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
-      type(c_ptr), value               :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      type(c_ptr), value               :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_int), intent(in)  :: na, np, na1, np_rem
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -223,11 +271,102 @@ module merge_systems_cuda
 
 #endif
 
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  interface
+    subroutine cuda_zero_q_float_c(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                          matrixRows, my_stream) &
+                                          bind(C, name="cuda_zero_q_float_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: q_dev
+      type(c_ptr), value               :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_int), intent(in)  :: na, my_pcol, l_rqs, l_rqe, matrixRows
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+#endif
+
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  interface
+    subroutine cuda_copy_q_slice_to_qtmp1_float_c(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, &
+                                           p_col_dev, na2, na, my_pcol, l_rows, l_rqs, l_rqe, &
+                                           matrixRows, gemm_dim_k, my_stream) &
+                                           bind(C, name="cuda_copy_q_slice_to_qtmp1_float_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: qtmp1_dev, q_dev
+      type(c_ptr), value               :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_int), intent(in)  :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+#endif
+
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+  interface
+    subroutine cuda_copy_qtmp1_to_qtmp1_tmp_float_c(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, &
+                                            gemm_dim_l, my_stream) &
+                                            bind(C, name="cuda_copy_qtmp1_to_qtmp1_tmp_float_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: qtmp1_dev, qtmp1_tmp_dev
+      integer(kind=c_int), intent(in)  :: gemm_dim_k, gemm_dim_l
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+#endif
+
+
+  interface
+    subroutine cuda_update_ndef_c_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, &
+                                           my_stream) &
+                                           bind(C, name="cuda_update_ndef_c_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value               :: ndef_c_dev, idx_dev, p_col_dev, idx2_dev
+      integer(kind=c_int), intent(in)  :: na, na1, np_rem, ndef
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine cuda_compute_nnzl_nnzu_val_part1_c(p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, &
+                                            na, na1, np_rem, npc_n, nnzu_start, nnzl_start, np, &
+                                            my_stream) &
+                                            bind(C, name="cuda_compute_nnzl_nnzu_val_part1_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value               :: p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      integer(kind=c_int), intent(in)  :: na, na1, np_rem, npc_n, nnzu_start, nnzl_start, np
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine cuda_compute_nnzl_nnzu_val_part2_c(nnzu_val_dev, nnzl_val_dev, na, na1, &
+                                           nnzu_start, nnzl_start, npc_n, my_stream) &
+                                           bind(C, name="cuda_compute_nnzl_nnzu_val_part2_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      type(c_ptr), value               :: nnzu_val_dev, nnzl_val_dev
+      integer(kind=c_int), intent(in)  ::  na, na1, nnzu_start, nnzl_start, npc_n
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
   contains
     subroutine cuda_copy_qtmp1_slice_to_q_double(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, &
-                                                          ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, &
-                                                          l_rqe, l_rows, matrixRows, &
-                                                          gemm_dim_k, my_pcol, na1, np_rem, na,  my_stream)
+                                         ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, &
+                                         l_rqe, l_rows, matrixRows, &
+                                         gemm_dim_k, my_pcol, na1, np_rem, na,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -255,8 +394,8 @@ module merge_systems_cuda
 
 
     subroutine cuda_copy_q_slice_to_qtmp2_double(q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows,  &
-                                                          l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, &
-                                                          na,  my_stream)
+                                           l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, &
+                                              na,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -283,8 +422,8 @@ module merge_systems_cuda
 
 
     subroutine cuda_fill_ev_double(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
-                                                          idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
-                                                          ncnt,  my_stream)
+                                               idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
+                                               ncnt,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -310,7 +449,7 @@ module merge_systems_cuda
 
 
     subroutine cuda_copy_qtmp2_slice_to_q_double(q_dev, qtmp2_dev, idx1q_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, &
-                                                          gemm_dim_k, matrixRows, ns,  my_stream)
+                                             gemm_dim_k, matrixRows, ns,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -333,24 +472,78 @@ module merge_systems_cuda
     end subroutine
 
 
-    subroutine cuda_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
-                                                          zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
+    subroutine cuda_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+                                               d1u_dev, d1_dev, &
+                                               zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in)    :: na, np, na1, np_rem
       integer(kind=C_intptr_T)           :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
-      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (present(my_stream)) then
-        call cuda_fill_tmp_arrays_double_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
-                                                  zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
+        call cuda_fill_tmp_arrays_double_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+                                                 d1u_dev, d1_dev, &
+                                                 zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
       else
-        call cuda_fill_tmp_arrays_double_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
-                                                  zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream2)
+        call cuda_fill_tmp_arrays_double_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+                                                 d1u_dev, d1_dev, &
+                                                 zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream2)
+      endif
+#endif
+
+    end subroutine
+
+
+    subroutine cuda_zero_q_double(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                     matrixRows,  my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: na, my_pcol, l_rqs, l_rqe, matrixRows
+      integer(kind=C_intptr_T)           :: q_dev
+      type(c_ptr)                        :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_zero_q_double_c(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                        matrixRows, my_stream)
+      else
+        call cuda_zero_q_double_c(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                        matrixRows, my_stream2)
+      endif
+#endif
+
+    end subroutine
+
+
+    subroutine cuda_copy_q_slice_to_qtmp1_double(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, &
+                                                        p_col_dev, na2, na, my_pcol, l_rows, l_rqs, l_rqe, &
+                                                        matrixRows, gemm_dim_k, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
+      integer(kind=C_intptr_T)           :: qtmp1_dev, q_dev
+      type(c_ptr)                        :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_copy_q_slice_to_qtmp1_double_c(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, &
+                                           p_col_dev, na2, na, my_pcol, l_rows, l_rqs, l_rqe, &
+                                           matrixRows, gemm_dim_k, my_stream)
+      else
+        call cuda_copy_q_slice_to_qtmp1_double_c(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, &
+                                           p_col_dev, na2, na, my_pcol, l_rows, l_rqs, l_rqe, &
+                                           matrixRows, gemm_dim_k, my_stream2)
       endif
 #endif
 
@@ -358,11 +551,33 @@ module merge_systems_cuda
 
 
 
+
+    subroutine cuda_copy_qtmp1_to_qtmp1_tmp_double(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, &
+                                                       gemm_dim_l, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: gemm_dim_k, gemm_dim_l
+      integer(kind=C_intptr_T)           :: qtmp1_dev, qtmp1_tmp_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_copy_qtmp1_to_qtmp1_tmp_double_c(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, &
+                                           gemm_dim_l, my_stream)
+      else
+        call cuda_copy_qtmp1_to_qtmp1_tmp_double_c(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, &
+                                           gemm_dim_l, my_stream2)
+      endif
+#endif
+
+    end subroutine
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine cuda_copy_qtmp1_slice_to_q_float(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, &
-                                                          ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, &
-                                                          l_rqe, l_rows, matrixRows, &
-                                                          gemm_dim_k, my_pcol, na1, np_rem, na,  my_stream)
+                                         ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, &
+                                         l_rqe, l_rows, matrixRows, &
+                                         gemm_dim_k, my_pcol, na1, np_rem, na,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -392,8 +607,8 @@ module merge_systems_cuda
 
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine cuda_copy_q_slice_to_qtmp2_float(q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows,  &
-                                                          l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, &
-                                                          na,  my_stream)
+                                           l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, &
+                                              na,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -422,8 +637,8 @@ module merge_systems_cuda
 
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine cuda_fill_ev_float(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
-                                                          idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
-                                                          ncnt,  my_stream)
+                                               idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
+                                               ncnt,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -451,7 +666,7 @@ module merge_systems_cuda
 
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine cuda_copy_qtmp2_slice_to_q_float(q_dev, qtmp2_dev, idx1q_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, &
-                                                          gemm_dim_k, matrixRows, ns,  my_stream)
+                                             gemm_dim_k, matrixRows, ns,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -476,24 +691,82 @@ module merge_systems_cuda
 
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine cuda_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
-                                                          zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
+    subroutine cuda_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+                                               d1u_dev, d1_dev, &
+                                               zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in)    :: na, np, na1, np_rem
       integer(kind=C_intptr_T)           :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
-      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (present(my_stream)) then
-        call cuda_fill_tmp_arrays_float_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
-                                                  zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
+        call cuda_fill_tmp_arrays_float_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+                                                 d1u_dev, d1_dev, &
+                                                 zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
       else
-        call cuda_fill_tmp_arrays_float_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
-                                                  zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream2)
+        call cuda_fill_tmp_arrays_float_c(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+                                                 d1u_dev, d1_dev, &
+                                                 zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream2)
+      endif
+#endif
+
+    end subroutine
+#endif
+
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+    subroutine cuda_zero_q_float(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                     matrixRows,  my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: na, my_pcol, l_rqs, l_rqe, matrixRows
+      integer(kind=C_intptr_T)           :: q_dev
+      type(c_ptr)                        :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_zero_q_float_c(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                        matrixRows, my_stream)
+      else
+        call cuda_zero_q_float_c(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                        matrixRows, my_stream2)
+      endif
+#endif
+
+    end subroutine
+#endif
+
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+    subroutine cuda_copy_q_slice_to_qtmp1_float(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, &
+                                                        p_col_dev, na2, na, my_pcol, l_rows, l_rqs, l_rqe, &
+                                                        matrixRows, gemm_dim_k, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
+      integer(kind=C_intptr_T)           :: qtmp1_dev, q_dev
+      type(c_ptr)                        :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_copy_q_slice_to_qtmp1_float_c(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, &
+                                           p_col_dev, na2, na, my_pcol, l_rows, l_rqs, l_rqe, &
+                                           matrixRows, gemm_dim_k, my_stream)
+      else
+        call cuda_copy_q_slice_to_qtmp1_float_c(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, &
+                                           p_col_dev, na2, na, my_pcol, l_rows, l_rqs, l_rqe, &
+                                           matrixRows, gemm_dim_k, my_stream2)
       endif
 #endif
 
@@ -502,4 +775,106 @@ module merge_systems_cuda
 
 
 
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+    subroutine cuda_copy_qtmp1_to_qtmp1_tmp_float(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, &
+                                                       gemm_dim_l, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: gemm_dim_k, gemm_dim_l
+      integer(kind=C_intptr_T)           :: qtmp1_dev, qtmp1_tmp_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_copy_qtmp1_to_qtmp1_tmp_float_c(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, &
+                                           gemm_dim_l, my_stream)
+      else
+        call cuda_copy_qtmp1_to_qtmp1_tmp_float_c(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, &
+                                           gemm_dim_l, my_stream2)
+      endif
+#endif
+
+    end subroutine
+#endif
+
+
+
+
+    subroutine cuda_update_ndef_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, &
+                                           my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: na, na1, np_rem, ndef
+      type(c_ptr)                        :: ndef_c_dev, idx_dev, p_col_dev, idx2_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_update_ndef_c_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, &
+                                           my_stream)
+      else
+        call cuda_update_ndef_c_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, &
+                                           my_stream2)
+      endif
+#endif
+
+    end subroutine
+
+
+
+
+    subroutine cuda_compute_nnzl_nnzu_val_part1(p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, &
+                                           na, na1, np_rem, &
+                                           npc_n, nnzu_start, nnzl_start, np, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: na, na1, np_rem, npc_n, nnzu_start, nnzl_start, np
+      type(c_ptr)                        :: p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_compute_nnzl_nnzu_val_part1_c(p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, &
+                                           na, na1, np_rem,  &
+                                           npc_n, nnzu_start, nnzl_start, np, my_stream)
+      else
+        call cuda_compute_nnzl_nnzu_val_part1_c(p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, &
+                                           na, na1, np_rem,  &
+                                           npc_n, nnzu_start, nnzl_start, np, my_stream2)
+      endif
+#endif
+
+    end subroutine
+
+
+
+
+    subroutine cuda_compute_nnzl_nnzu_val_part2(nnzu_val_dev, nnzl_val_dev, na, na1, &
+                                           nnzu_start, nnzl_start, npc_n, my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: na, na1, nnzu_start, nnzl_start, npc_n
+      type(c_ptr)                        :: nnzu_val_dev, nnzl_val_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_compute_nnzl_nnzu_val_part2_c(nnzu_val_dev, nnzl_val_dev, na, na1, &
+                                           nnzu_start, nnzl_start, npc_n, my_stream)
+      else
+        call cuda_compute_nnzl_nnzu_val_part2_c(nnzu_val_dev, nnzl_val_dev, na, na1, &
+                                           nnzu_start, nnzl_start, npc_n, my_stream2)
+      endif
+#endif
+
+    end subroutine
 end module

@@ -283,39 +283,40 @@ module merge_systems_gpu
     end subroutine
 
 
-    subroutine gpu_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
+    subroutine gpu_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, &
+                                            d1_dev, &
                                              zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
                     
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=c_int), intent(in)    :: na, np, na1, np_rem
-      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_intptr_t)           :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
 
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
+        call cuda_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, d1_dev, &
                                            zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
 #endif 
 
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
+        call hip_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, d1_dev, &
                                            zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
 #endif 
   
     end subroutine
 
-    subroutine gpu_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
+    subroutine gpu_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, d1_dev, &
                                              zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
                     
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=c_int), intent(in)    :: na, np, na1, np_rem
-      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_intptr_t)           :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
 
       integer(kind=c_intptr_t), optional :: my_stream
@@ -323,16 +324,252 @@ module merge_systems_gpu
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
+        call cuda_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, d1_dev, &
                                            zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
 #endif 
 
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, d1u_dev, d1_dev, &
+        call hip_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, d1_dev, &
                                            zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
 #endif 
 #endif  
     end subroutine
 
+    subroutine gpu_zero_q_double(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                      matrixRows,  my_stream)
+
+                    
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_int), intent(in)    :: na, my_pcol, l_rqs, l_rqe, matrixRows
+      type(c_ptr)                        :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_intptr_t)           :: q_dev
+
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        call cuda_zero_q_double(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                      matrixRows,  my_stream)
+#endif 
+
+#ifdef WITH_AMD_GPU_VERSION
+        call hip_zero_q_double(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                      matrixRows,  my_stream)
+#endif 
+    end subroutine
+
+    subroutine gpu_zero_q_float(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                      matrixRows,  my_stream)
+
+                    
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_int), intent(in)    :: na, my_pcol, l_rqs, l_rqe, matrixRows
+      type(c_ptr)                        :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_intptr_t)           :: q_dev
+
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+#ifdef WITH_NVIDIA_GPU_VERSION
+        call cuda_zero_q_float(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                      matrixRows,  my_stream)
+#endif 
+
+#ifdef WITH_AMD_GPU_VERSION
+        call hip_zero_q_float(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+                                                      matrixRows,  my_stream)
+#endif 
+#endif  
+    end subroutine
+
+    subroutine gpu_copy_q_slice_to_qtmp1_double(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
+                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
+
+                    
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_int), intent(in)    :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
+
+      type(c_ptr)                        :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_intptr_t)           :: q_dev, qtmp1_dev
+
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        call cuda_copy_q_slice_to_qtmp1_double(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
+                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
+#endif 
+
+#ifdef WITH_AMD_GPU_VERSION
+        call hip_copy_q_slice_to_qtmp1_double(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
+                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
+#endif 
+    end subroutine
+
+    subroutine gpu_copy_q_slice_to_qtmp1_float(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
+                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, &
+                                                my_stream)
+
+                    
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_int), intent(in)    :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
+      type(c_ptr)                        :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_intptr_t)           :: q_dev, qtmp1_dev
+
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+#ifdef WITH_NVIDIA_GPU_VERSION
+        call cuda_copy_q_slice_to_qtmp1_float(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
+                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, &
+                                                my_stream)
+#endif 
+
+#ifdef WITH_AMD_GPU_VERSION
+        call hip_copy_q_slice_to_qtmp1_float(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
+                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, &
+                                                my_stream)
+#endif
+#endif
+    end subroutine
+
+
+
+    subroutine gpu_copy_qtmp1_to_qtmp1_tmp_double(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
+
+                    
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_int), intent(in)    :: gemm_dim_k, gemm_dim_l
+      integer(kind=c_intptr_t)           :: qtmp1_dev, qtmp1_tmp_dev
+
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_copy_qtmp1_to_qtmp1_tmp_double(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
+#endif 
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_copy_qtmp1_to_qtmp1_tmp_double(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
+#endif
+    end subroutine
+
+
+    subroutine gpu_copy_qtmp1_to_qtmp1_tmp_float(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
+
+                    
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_int), intent(in)    :: gemm_dim_k, gemm_dim_l
+      integer(kind=c_intptr_t)           :: qtmp1_dev, qtmp1_tmp_dev
+
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_copy_qtmp1_to_qtmp1_tmp_float(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
+#endif 
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_copy_qtmp1_to_qtmp1_tmp_float(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
+#endif
+#endif
+    end subroutine
+
+
+
+    subroutine gpu_update_ndef_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, &
+                                                        my_stream)
+
+
+                    
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_int), intent(in)    :: na, na1, np_rem, ndef
+      type(c_ptr)                        :: ndef_c_dev, idx_dev, p_col_dev, idx2_dev
+
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+        call cuda_update_ndef_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, &
+                                                        my_stream)
+#endif 
+
+#ifdef WITH_AMD_GPU_VERSION
+        call hip_update_ndef_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, &
+                                                        my_stream2)
+#endif
+    end subroutine
+
+
+
+    subroutine gpu_compute_nnzl_nnzu_val_part1(p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, na, na1, np_rem, &
+                                         npc_n, nnzu_start, nnzl_start, np, my_stream)
+
+
+                    
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_int), intent(in)    :: na, na1, np_rem, npc_n, nnzu_start, nnzl_start, np
+      type(c_ptr)                        :: p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_compute_nnzl_nnzu_val_part1(p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, na, na1, np_rem, &
+                                         npc_n, nnzu_start, nnzl_start, np, my_stream)
+#endif 
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_compute_nnzl_nnzu_val_part1(p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, na, na1, np_rem, &
+                                         npc_n, nnzu_start, nnzl_start, np, my_stream)
+#endif
+    end subroutine
+
+
+
+
+    subroutine gpu_compute_nnzl_nnzu_val_part2(nnzu_val_dev, nnzl_val_dev, na, na1, &
+                                         nnzu_start, nnzl_start, npc_n, my_stream)
+
+
+                    
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=c_int), intent(in)    :: na, na1, nnzu_start, nnzl_start, npc_n
+      type(c_ptr)                        :: nnzu_val_dev, nnzl_val_dev
+
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_compute_nnzl_nnzu_val_part2(nnzu_val_dev, nnzl_val_dev, na, na1, &
+                                         nnzu_start, nnzl_start, npc_n, my_stream)
+#endif 
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_compute_nnzl_nnzu_val_part2(nnzu_val_dev, nnzl_val_dev, na, na1, &
+                                         nnzu_start, nnzl_start, npc_n, my_stream)
+#endif
+    end subroutine
 end module
 
