@@ -243,7 +243,7 @@ extern "C" void hip_copy_qtmp1_slice_to_q_double_FromC(double *q_dev, double *qt
 #ifdef WITH_GPU_STREAMS
   hip_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
 #else
-  hip_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
+  hip_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
 #endif
 
   hipError_t cuerr = hipGetLastError();
@@ -348,7 +348,7 @@ extern "C" void hip_copy_q_slice_to_qtmp2_double_FromC(double *q_dev, double *qt
 #ifdef WITH_GPU_STREAMS
   hip_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #else
-  hip_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, indx, indx2, na);
+  hip_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #endif
 
   hipError_t cuerr = hipGetLastError();
@@ -399,7 +399,7 @@ extern "C" void hip_copy_q_slice_to_qtmp2_float_FromC(float *q_dev, float *qtmp2
 #ifdef WITH_GPU_STREAMS
   hip_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #else
-  hip_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, indx, indx2, na);
+  hip_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #endif
 
   hipError_t cuerr = hipGetLastError();

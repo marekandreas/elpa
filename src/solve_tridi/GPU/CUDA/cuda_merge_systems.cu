@@ -242,7 +242,7 @@ extern "C" void cuda_copy_qtmp1_slice_to_q_double_FromC(double *q_dev, double *q
 #ifdef WITH_GPU_STREAMS
   cuda_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
 #else
-  cuda_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
+  cuda_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
 #endif
 
   cudaError_t cuerr = cudaGetLastError();
@@ -347,7 +347,7 @@ extern "C" void cuda_copy_q_slice_to_qtmp2_double_FromC(double *q_dev, double *q
 #ifdef WITH_GPU_STREAMS
   cuda_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #else
-  cuda_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, indx, indx2, na);
+  cuda_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #endif
 
   cudaError_t cuerr = cudaGetLastError();
@@ -398,7 +398,7 @@ extern "C" void cuda_copy_q_slice_to_qtmp2_float_FromC(float *q_dev, float *qtmp
 #ifdef WITH_GPU_STREAMS
   cuda_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #else
-  cuda_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, indx, indx2, na);
+  cuda_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #endif
 
   cudaError_t cuerr = cudaGetLastError();
