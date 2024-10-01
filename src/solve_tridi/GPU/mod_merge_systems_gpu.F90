@@ -104,7 +104,6 @@ module merge_systems_gpu
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
-
 #ifdef WANT_SINGLE_PRECISION_REAL
 #ifdef WITH_NVIDIA_GPU_VERSION
         call cuda_copy_qtmp1_slice_to_q_float(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, &
@@ -118,7 +117,9 @@ module merge_systems_gpu
                                                  gemm_dim_k,  my_pcol, na1, np_rem, na, my_stream)
 #endif 
 #endif
+
     end subroutine
+
 
     subroutine gpu_copy_q_slice_to_qtmp2_double(q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows, l_rqs, l_rqe, matrixRows, &
                     matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na, my_stream)
@@ -146,6 +147,7 @@ module merge_systems_gpu
 #endif 
   
     end subroutine
+
 
     subroutine gpu_copy_q_slice_to_qtmp2_float(q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows, l_rqs, l_rqe, matrixRows, &
                     matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na, my_stream)
@@ -176,6 +178,7 @@ module merge_systems_gpu
     end subroutine
 
 
+
     subroutine gpu_fill_ev_double(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
                                          idx_dev, &
                                      na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt, my_stream) 
@@ -201,6 +204,8 @@ module merge_systems_gpu
 #endif 
   
     end subroutine
+
+
 
     subroutine gpu_fill_ev_float(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
                                          idx_dev, &
@@ -230,6 +235,7 @@ module merge_systems_gpu
 
     end subroutine
 
+
     subroutine gpu_copy_qtmp2_slice_to_q_double(q_dev, qtmp2_dev, idx1q_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, &   
                                                  gemm_dim_k, matrixRows, ns,  my_stream)
                     
@@ -254,6 +260,7 @@ module merge_systems_gpu
 #endif 
   
     end subroutine
+
 
     subroutine gpu_copy_qtmp2_slice_to_q_float(q_dev, qtmp2_dev, idx1q_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, &   
                                                  gemm_dim_k, matrixRows, ns,  my_stream)
@@ -283,6 +290,7 @@ module merge_systems_gpu
     end subroutine
 
 
+
     subroutine gpu_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, &
                                             d1_dev, &
                                              zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
@@ -309,7 +317,10 @@ module merge_systems_gpu
   
     end subroutine
 
-    subroutine gpu_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, d1_dev, &
+
+
+    subroutine gpu_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, &
+                                            d1_dev, &
                                              zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
                     
       use, intrinsic :: iso_c_binding
@@ -332,8 +343,10 @@ module merge_systems_gpu
         call hip_fill_tmp_arrays_float(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, d1_dev, &
                                            zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
 #endif 
-#endif  
+#endif
+
     end subroutine
+
 
     subroutine gpu_zero_q_double(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
                                                       matrixRows,  my_stream)
@@ -360,6 +373,7 @@ module merge_systems_gpu
 #endif 
     end subroutine
 
+
     subroutine gpu_zero_q_float(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
                                                       matrixRows,  my_stream)
 
@@ -383,9 +397,10 @@ module merge_systems_gpu
 #ifdef WITH_AMD_GPU_VERSION
         call hip_zero_q_float(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
                                                       matrixRows,  my_stream)
-#endif 
-#endif  
+#endif
+#endif
     end subroutine
+
 
     subroutine gpu_copy_q_slice_to_qtmp1_double(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
                                                 my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
@@ -413,15 +428,16 @@ module merge_systems_gpu
 #endif 
     end subroutine
 
+
     subroutine gpu_copy_q_slice_to_qtmp1_float(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
-                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, &
-                                                my_stream)
+                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
 
                     
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=c_int), intent(in)    :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
+
       type(c_ptr)                        :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
       integer(kind=c_intptr_t)           :: q_dev, qtmp1_dev
 
@@ -431,15 +447,13 @@ module merge_systems_gpu
 #ifdef WANT_SINGLE_PRECISION_REAL
 #ifdef WITH_NVIDIA_GPU_VERSION
         call cuda_copy_q_slice_to_qtmp1_float(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
-                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, &
-                                                my_stream)
+                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
 #endif 
 
 #ifdef WITH_AMD_GPU_VERSION
         call hip_copy_q_slice_to_qtmp1_float(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
-                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, &
-                                                my_stream)
-#endif
+                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
+#endif 
 #endif
     end subroutine
 
@@ -467,6 +481,7 @@ module merge_systems_gpu
     end subroutine
 
 
+
     subroutine gpu_copy_qtmp1_to_qtmp1_tmp_float(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
 
                     
@@ -488,7 +503,10 @@ module merge_systems_gpu
       call hip_copy_qtmp1_to_qtmp1_tmp_float(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
 #endif
 #endif
+
     end subroutine
+
+
 
 
 

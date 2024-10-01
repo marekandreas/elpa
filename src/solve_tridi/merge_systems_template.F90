@@ -976,7 +976,7 @@
           check_memcpy_gpu("merge_systems: ndef_c_dev", successGPU)
 #endif
 
-              call gpu_copy_q_slice_to_qtmp1_double(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
+              call GPU_COPY_Q_SLICE_TO_QTMP1_PRECISION (qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
                                                 my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, &
                                                 my_stream)
         else
@@ -1022,7 +1022,8 @@
 
 
         if (useGPU) then
-          call gpu_zero_q_double(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
+
+          call GPU_ZERO_Q_PRECISION (q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
                                                       matrixRows,  my_stream)
         else
           DO i = 1, na
@@ -1180,7 +1181,8 @@
             endif
             nnzu = 0
             nnzl = 0
-            call gpu_compute_nnzl_nnzu_val_part1(p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, na, na1, np_rem, &
+            call GPU_COMPUTE_NNZL_NNZU_VAL_PART1 (p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, &
+                                         na, na1, np_rem, &
                                          npc_n, nnzu_save, nnzl_save, np, my_stream)
 
           enddo ! np = 1, npc_n
@@ -1188,7 +1190,7 @@
 
           nnzu_start = 0
           nnzl_start = 0
-            call gpu_compute_nnzl_nnzu_val_part2(nnzu_val_dev, nnzl_val_dev, na, na1, &
+            call GPU_COMPUTE_NNZL_NNZU_VAL_PART2 (nnzu_val_dev, nnzl_val_dev, na, na1, &
                                                   nnzu_start, nnzl_start, npc_n, my_stream)                     
         else
           ! precompute nnzu_val, nnzl_val
@@ -1238,7 +1240,7 @@
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 
 
-              call gpu_copy_qtmp1_to_qtmp1_tmp_double(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l)
+              call GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION (qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l)
 
               call obj%timer%start("nccl_communication")
               my_stream = obj%gpu_setup%my_stream
@@ -1358,7 +1360,7 @@
           if (useGPU) then
 
             my_stream = obj%gpu_setup%my_stream
-            call gpu_fill_tmp_arrays_double(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+            call GPU_FILL_TMP_ARRAYS_PRECISION (idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
                                              d1u_dev, d1_dev, &
                                              zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
 
@@ -1404,7 +1406,7 @@
 
           ndef = MAX(nnzu,nnzl) ! Remote counter in input matrix
           if (useGPU) then
-            call gpu_copy_qtmp1_slice_to_q_double(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, &
+            call GPU_COPY_QTMP1_SLICE_TO_Q_PRECISION (q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, &
             idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, &
             gemm_dim_k,  my_pcol, na1, np_rem,  na, my_stream)
           else ! ! useGPU
@@ -1429,7 +1431,7 @@
 
             ! Get partial result from (output) Q
             if (useGPU) then
-                call gpu_copy_q_slice_to_qtmp2_double(q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows, l_rqs, l_rqe, &
+                call GPU_COPY_Q_SLICE_TO_QTMP2_PRECISION (q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows, l_rqs, l_rqe, &
                                                              matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, &
                                                              ncnt, ind_ex, ind_ex2, na, my_stream)
             else ! useGPU
@@ -1451,7 +1453,7 @@
               if (nnzu .ge. 1) then
                    ! Calculate the j-th eigenvector of the deflated system
                    ! See above why we are doing it this way!
-                    call gpu_fill_ev_double(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
+                    call GPU_FILL_EV_PRECISION (ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
                     idx_dev, &
                                       na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt, my_stream) 
               endif ! nnzu
@@ -1510,7 +1512,7 @@
 
             if (useGPU) then
                 if (nnzl .ge. 1) then
-                    call gpu_fill_ev_double(ev_dev, tmp_dev, d1l_dev, dbase_dev, ddiff_dev, zl_dev, ev_scale_dev, idxq1_dev, &
+                    call GPU_FILL_EV_PRECISION (ev_dev, tmp_dev, d1l_dev, dbase_dev, ddiff_dev, zl_dev, ev_scale_dev, idxq1_dev, &
                     idx_dev, &
                                       na, gemm_dim_l, gemm_dim_m, nnzl, ns, ncnt, my_stream) 
                 endif
@@ -1558,7 +1560,7 @@
 
              ! Put partial result into (output) Q
             if  (useGPU) then
-              call gpu_copy_qtmp2_slice_to_q_double(q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, &
+              call GPU_COPY_QTMP2_SLICE_TO_Q_PRECISION (q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, &
                                                        gemm_dim_k, matrixRows, ns,  my_stream)
             else ! useGPU
 !$omp PARALLEL DO &

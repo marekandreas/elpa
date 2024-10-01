@@ -149,17 +149,18 @@ __global__ void cuda_fill_tmp_arrays_float_kernel(int *idx1, int *p_col, int *co
       }
     }
 
-
     __syncthreads();
     if (i == 0) {
+      nnzul[0]=0;
+      nnzul[1]=0;
       int nnzu = 0;
       int nnzl = 0;
       for (int ii=na1-1;ii>=0;ii--) {
-        int index = idx1[i] - 1;
+        int index = idx1[ii] - 1;
         if (nnzu == 0) {
           if (p_col[index] == np_rem) {
             if ((coltyp[index] == 1) || (coltyp[index] == 2)) {
-	      int nnzu = nnzu_val[(i) + na1 * (np-1)] -1 ;
+	      nnzu = nnzu_val[(ii) + na1 * (np-1)] ;
 	      nnzul[0] = nnzu;
 	    }
 	  }
@@ -167,7 +168,7 @@ __global__ void cuda_fill_tmp_arrays_float_kernel(int *idx1, int *p_col, int *co
         if (nnzl == 0) {
           if (p_col[index] == np_rem) {
             if ((coltyp[index] == 3) || (coltyp[index] == 2)) {
-	      int nnzl = nnzl_val[(i) + na1 * (np-1)]-1;
+	      nnzl = nnzl_val[(ii) + na1 * (np-1)];
 	      nnzul[1] = nnzl;
 	    }
 	  }
@@ -177,6 +178,7 @@ __global__ void cuda_fill_tmp_arrays_float_kernel(int *idx1, int *p_col, int *co
 }
 
 extern "C" void cuda_fill_tmp_arrays_float_FromC(int *idx1_dev, int *p_col_dev, int *coltyp_dev, int *nnzu_val_dev, int *nnzl_val_dev, int *nnzul_dev, float *d1u_dev, float *d1_dev, float *zu_dev, float *z_dev, float *d1l_dev, float *zl_dev, int *na_in, int *np_in, int *na1_in, int *np_rem_in, cudaStream_t  my_stream){
+
   int na = *na_in;
   int np = *np_in;
   int na1 = *na1_in;
@@ -561,6 +563,7 @@ __global__ void cuda_copy_qtmp2_slice_to_q_float_kernel(float *q, float *qtmp2, 
       }
     }
 
+
 }
 
 extern "C" void cuda_copy_qtmp2_slice_to_q_float_FromC(float *q_dev, float *qtmp2_dev, int *idx1q_dev, int *l_col_out_dev, int *l_rqs_in, int *l_rqe_in, int *l_rows_in, int *ncnt_in, int *gemm_dim_k_in, int *matrixRows_in, int *ns_in, cudaStream_t  my_stream){
@@ -637,11 +640,11 @@ __global__ void cuda_zero_q_float_kernel(float *q, int *p_col_out, int *l_col_ou
     if (i>=0 && i<na) {
       if (j>=0 && j<l_rqe-l_rqs+1) {
         if (p_col_out[i] == my_pcol) {
-          int index = l_col_out[i] -1;
-          q[i+l_rqs - 1 + matrixRows * index] = 0;
+      	  int index = l_col_out[i] -1;
+          q[j+l_rqs - 1 + matrixRows * index] = 0;
       }	      
     }
- }
+  }
 }
 
 extern "C" void cuda_zero_q_float_FromC(float *q_dev, int *p_col_out_dev, int *l_col_out_dev, int *na_in, int *my_pcol_in, int *l_rqs_in, int *l_rqe_in, int *matrixRows_in, cudaStream_t  my_stream){
@@ -714,6 +717,7 @@ extern "C" void cuda_copy_q_slice_to_qtmp1_double_FromC(double *qtmp1_dev, doubl
 #ifdef WANT_SINGLE_PRECISION_REAL
 __global__ void cuda_copy_q_slice_to_qtmp1_float_kernel(float *qtmp1, float *q, int *ndef_c,int *l_col, int *idx2, int *p_col, const int na2, const int na, const int my_pcol, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int gemm_dim_k) {
     int j = blockIdx.x * blockDim.x + threadIdx.x; // l_rows
+
 
     if (j>=0 && j<l_rows) {
       for (int i=1; i<na2+1; i++){
@@ -793,13 +797,13 @@ extern "C" void cuda_copy_qtmp1_to_qtmp1_tmp_double_FromC(double *qtmp1_dev, dou
 __global__ void cuda_copy_qtmp1_to_qtmp1_tmp_float_kernel(float *qtmp1, float *qtmp1_tmp, const int gemm_dim_k, const int gemm_dim_l) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
-  
-  
+
+
     if (i>=0 && i<gemm_dim_k) {
-      if (j>=0 &&j<gemm_dim_l) {
+      if (j>=0 && j<gemm_dim_l) {
         qtmp1_tmp[i+gemm_dim_k*j] = qtmp1[i+gemm_dim_k*j];
-      }
-    }
+      }    
+    }        
     
 }
 

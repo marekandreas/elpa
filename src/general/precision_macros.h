@@ -155,6 +155,19 @@
 #undef  GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION
 #undef  GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION
 
+
+#undef GPU_COPY_Q_SLICE_TO_QTMP1_PRECISION
+#undef GPU_ZERO_Q_PRECISION
+#undef GPU_COMPUTE_NNZL_NNZU_VAL_PART1
+#undef GPU_COMPUTE_NNZL_NNZU_VAL_PART2
+#undef GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION 
+#undef GPU_FILL_TMP_ARRAYS_PRECISION
+#undef GPU_COPY_QTMP1_SLICE_TO_Q_PRECISION
+#undef GPU_COPY_Q_SLICE_TO_QTMP2_PRECISION
+#undef GPU_FILL_EV_PRECISION
+#undef GPU_COPY_QTMP2_SLICE_TO_Q_PRECISION
+
+
 #if 0
 /* General definitions needed in single and double case */
 /* the if 0 bracket is just to make the IBM Fortran compiler happy */
@@ -266,6 +279,16 @@
 #define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_get_skewsymmetric_second_half_q_double
 #define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_put_skewsymmetric_second_half_q_double
 
+#define GPU_COPY_Q_SLICE_TO_QTMP1_PRECISION gpu_copy_q_slice_to_qtmp1_double
+#define GPU_ZERO_Q_PRECISION gpu_zero_q_double
+#define GPU_COMPUTE_NNZL_NNZU_VAL_PART1 gpu_compute_nnzl_nnzu_val_part1
+#define GPU_COMPUTE_NNZL_NNZU_VAL_PART2 gpu_compute_nnzl_nnzu_val_part2
+#define GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION gpu_copy_qtmp1_to_qtmp1_tmp_double
+#define GPU_FILL_TMP_ARRAYS_PRECISION gpu_fill_tmp_arrays_double
+#define  GPU_COPY_QTMP1_SLICE_TO_Q_PRECISION gpu_copy_qtmp1_slice_to_q_double
+#define GPU_COPY_Q_SLICE_TO_QTMP2_PRECISION gpu_copy_q_slice_to_qtmp2_double
+#define GPU_FILL_EV_PRECISION gpu_fill_ev_double
+#define GPU_COPY_QTMP2_SLICE_TO_Q_PRECISION gpu_copy_qtmp2_slice_to_q_double
 #endif /* DOUBLE_PRECISION */
 
 #ifdef SINGLE_PRECISION
@@ -373,6 +396,16 @@
 #define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_get_skewsymmetric_second_half_q_float
 #define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_put_skewsymmetric_second_half_q_float
 
+#define GPU_COPY_Q_SLICE_TO_QTMP1_PRECISION gpu_copy_q_slice_to_qtmp1_float
+#define GPU_ZERO_Q_PRECISION gpu_zero_q_float
+#define GPU_COMPUTE_NNZL_NNZU_VAL_PART1 gpu_compute_nnzl_nnzu_val_part1
+#define GPU_COMPUTE_NNZL_NNZU_VAL_PART2 gpu_compute_nnzl_nnzu_val_part2
+#define GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION gpu_copy_qtmp1_to_qtmp1_tmp_float
+#define GPU_FILL_TMP_ARRAYS_PRECISION gpu_fill_tmp_arrays_float
+#define GPU_COPY_QTMP1_SLICE_TO_Q_PRECISION gpu_copy_qtmp1_slice_to_q_float
+#define GPU_COPY_Q_SLICE_TO_QTMP2_PRECISION gpu_copy_q_slice_to_qtmp2_float
+#define GPU_FILL_EV_PRECISION gpu_fill_ev_float
+#define GPU_COPY_QTMP2_SLICE_TO_Q_PRECISION gpu_copy_qtmp2_slice_to_q_float
 #endif /* SINGLE_PRECISION */
 
 #endif /* REALCASE */
