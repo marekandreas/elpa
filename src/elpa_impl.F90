@@ -685,9 +685,33 @@ module elpa_impl
 #endif
 #endif
       integer(kind=ik)                    :: attribute, value
-      integer(kind=ik)                    :: debug
+      integer(kind=ik)                    :: debug, gpu
       logical                             :: wantDebugMessage
       error = ELPA_ERROR_SETUP
+
+      gpu = 0
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+
+#if defined(WITH_NVIDIA_GPU_VERSION)
+      call self%get("nvidia-gpu",gpu, error)
+      if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+#endif
+#if defined(WITH_AMD_GPU_VERSION)
+      call self%get("amd-gpu",gpu, error)
+      if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+#endif
+#if defined(WITH_SYCL_GPU_VERSION)
+      call self%get("intel-gpu",gpu, error)
+      if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
+#endif
+      if (gpu .eq. 0) then
+        write(error_unit,*) "ELPA_SETUP_GPU: no GPUs used. Leaving..."
+      endif
+#endif
+      if (gpu .eq. 0) then
+        error = ELPA_OK
+        return
+      endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     ! check legacy GPU setings

@@ -173,6 +173,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
       gpuErrCheck( gpuMalloc((intptr_t *)&Buf_to_send_receive_U_dev, ratio*Size_U_stored*sizeof(math_type)) );
       gpuErrCheck( gpuMalloc((intptr_t *)&Buf_to_send_receive_B_dev, Buf_cols_B*Buf_rows*sizeof(math_type)) );
       gpuErrCheck( gpuMalloc((intptr_t *)&Res_dev, na_rows*nb_cols*sizeof(math_type)) );
+      gpuErrCheck( gpuMemset((intptr_t *)Res_dev, 0, na_rows*nb_cols*sizeof(math_type)) );
    }
 
    /////////////////////////////////////////////////////////////// initial reordering of U ///////////////////////////////////////////////////////////////////////////////////////// 
@@ -463,7 +464,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
                             U_local_start_dev, curr_rows, 
                             B_local_start_dev, Size_receive_B, dOne, 
                             Res_dev, na_rows);
-               if (wantDebug) gpuDeviceSynchronize();     
+               if (wantDebug) gpuDeviceSynchronize(); 
             }
             else {
                C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &dOne, 
@@ -550,7 +551,7 @@ void cannons_triang_rectangular_impl(math_type* U, math_type* B, C_INT_TYPE np_r
                        U_local_start_dev, curr_rows, 
                        B_local_start_dev, Size_receive_B, dOne, 
                        Res_dev, na_rows);
-         if (wantDebug) gpuDeviceSynchronize();    
+         if (wantDebug) gpuDeviceSynchronize();  
          }
          else {
             C_GEMM("N", "N", &curr_rows, &nb_cols, &b_rows_mult, &dOne,

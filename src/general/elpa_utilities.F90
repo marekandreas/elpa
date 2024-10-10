@@ -90,7 +90,7 @@ module ELPA_utilities
 !-------------------------------------------------------------------------------
 !  local_index: returns the local index for a given global index
 !               If the global index has no local index on the
-!               processor my_proc behaviour is defined by iflag
+!               processor my_proc, behaviour is defined by iflag
 !
 !  Parameters
 !
@@ -111,15 +111,15 @@ module ELPA_utilities
 
     integer(kind=c_int) :: idx, my_proc, num_procs, nblk, iflag
 
-    integer(kind=c_int) :: iblk
+    integer(kind=c_int) :: L_block_gl
 
-    iblk = (idx-1)/nblk  ! global block number, 0 based
+    L_block_gl = (idx-1)/nblk  ! global block number, 0 based
 
-    if (mod(iblk,num_procs) == my_proc) then
+    if (mod(L_block_gl, num_procs) == my_proc) then
 
       ! block is local, always return local row/col number
 
-      local_index = (iblk/num_procs)*nblk + mod(idx-1,nblk) + 1
+      local_index = (L_block_gl/num_procs)*nblk + mod(idx-1,nblk) + 1
 
     else
 
@@ -131,9 +131,9 @@ module ELPA_utilities
 
       else
 
-        local_index = (iblk/num_procs)*nblk
+        local_index = (L_block_gl/num_procs)*nblk
 
-        if (mod(iblk,num_procs) > my_proc) local_index = local_index + nblk
+        if (mod(L_block_gl, num_procs) > my_proc) local_index = local_index + nblk
 
         if (iflag>0) local_index = local_index + 1
       endif

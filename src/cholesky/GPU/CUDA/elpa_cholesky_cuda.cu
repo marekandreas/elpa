@@ -59,7 +59,13 @@
 #include <assert.h>
 #include "config-f90.h"
 
+#include "../../../GPU/common_device_functions.h"
+
+#define MAX_THREADS_PER_BLOCK 1024
+
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
+
+//________________________________________________________________
 
 __global__ void cuda_check_device_info_kernel(int *info_dev){
   // if (*info_dev != 0){
@@ -106,100 +112,31 @@ extern "C" void cuda_accumulate_device_info_FromC(int *info_abs_dev, int *info_n
   }
 }
 
-__global__ void cuda_copy_double_a_tmatc_kernel(double *a_dev, double *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1, const int nblk){
+//________________________________________________________________
+
+template <typename T>
+__global__ void cuda_copy_a_tmatc_kernel(T *a_dev, T *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1){
 
   int ii_index    = threadIdx.x +1; // range 1..nblk
   int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
-  tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
+  tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = elpaDeviceComplexConjugate(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
 }
 
-extern "C" void cuda_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, cudaStream_t my_stream){
+template <typename T>
+void cuda_copy_a_tmatc_FromC(T *a_dev, T *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, cudaStream_t my_stream){
   int nblk = *nblk_in;   
   int matrixRows = *matrixRows_in;
   int l_cols = *l_cols_in;
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
 
-//#ifdef WITH_GPU_STREAMS
-//  cudaStream_t streamId = *((cudaStream_t*)my_stream);
-//#endif
-
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
   dim3 threadsPerBlock = dim3(nblk,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_double_a_tmatc_kernel<<<blocks,threadsPerBlock, 0, my_stream>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
+  cuda_copy_a_tmatc_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1);
 #else
-  cuda_copy_double_a_tmatc_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
-#endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing copy_double_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
-    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
-  }
-}
-
-__global__ void cuda_copy_float_a_tmatc_kernel(float *a_dev, float *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1, const int nblk){
-
-  int ii_index    = threadIdx.x +1; // range 1..nblk
-  int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
-  tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
-}
-
-extern "C" void cuda_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, cudaStream_t my_stream){
-  int nblk = *nblk_in;   
-  int matrixRows = *matrixRows_in;
-  int l_cols = *l_cols_in;
-  int l_colx = *l_colx_in;
-  int l_row1 = *l_row1_in;
-
-//#ifdef WITH_GPU_STREAMS
-//  cudaStream_t streamId = *((cudaStream_t*)my_stream);
-//#endif
-
-  dim3 blocks = dim3(l_cols-l_colx+1,1,1);
-  dim3 threadsPerBlock = dim3(nblk,1,1);
-
-#ifdef WITH_GPU_STREAMS
-  cuda_copy_float_a_tmatc_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
-#else
-  cuda_copy_float_a_tmatc_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
-#endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
-    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
-  }
-}
-
-__global__ void cuda_copy_double_complex_a_tmatc_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1){
-
-  int ii_index    = threadIdx.x +1; // range 1..nblk
-  int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
-  tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = cuConj(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
-}
-
-extern "C" void cuda_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, double _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, cudaStream_t my_stream){
-  int nblk = *nblk_in;   
-  int matrixRows = *matrixRows_in;
-  int l_cols = *l_cols_in;
-  int l_colx = *l_colx_in;
-  int l_row1 = *l_row1_in;
-
-//#ifdef WITH_GPU_STREAMS
-//  cudaStream_t streamId = *((cudaStream_t*)my_stream);
-//#endif
-
-  dim3 blocks = dim3(l_cols-l_colx+1,1,1);
-  dim3 threadsPerBlock = dim3(nblk,1,1);
-
-  cuDoubleComplex* a_casted = (cuDoubleComplex*) a_dev;
-  cuDoubleComplex* tmatc_casted = (cuDoubleComplex*) tmatc_dev;
-
-#ifdef WITH_GPU_STREAMS
-  cuda_copy_double_complex_a_tmatc_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
-#else
-  cuda_copy_double_complex_a_tmatc_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+  cuda_copy_a_tmatc_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -208,38 +145,91 @@ extern "C" void cuda_copy_double_complex_a_tmatc_FromC(double _Complex *a_dev, d
   }
 }
 
-__global__ void cuda_copy_float_complex_a_tmatc_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1){
-
-  int ii_index    = threadIdx.x +1; // range 1..nblk
-  int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
-  tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = cuConjf(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
+extern "C" void cuda_copy_double_a_tmatc_FromC(double *a_dev, double *tmatc_dev, int *nblk_in, int *matrixRows_in, 
+                                               int *l_cols_in, int *l_colx_in, int *l_row1_in, cudaStream_t my_stream){
+  cuda_copy_a_tmatc_FromC(a_dev, tmatc_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, my_stream);
 }
 
-extern "C" void cuda_copy_float_complex_a_tmatc_FromC(float _Complex *a_dev, float _Complex *tmatc_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, cudaStream_t my_stream){
-  int nblk = *nblk_in;   
+extern "C" void cuda_copy_float_a_tmatc_FromC(float *a_dev, float *tmatc_dev, int *nblk_in, int *matrixRows_in, 
+                                              int *l_cols_in, int *l_colx_in, int *l_row1_in, cudaStream_t my_stream){
+  cuda_copy_a_tmatc_FromC(a_dev, tmatc_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, my_stream);
+}
+
+extern "C" void cuda_copy_double_complex_a_tmatc_FromC(cuDoubleComplex *a_dev, cuDoubleComplex *tmatc_dev, int *nblk_in, int *matrixRows_in, 
+                                                  int *l_cols_in, int *l_colx_in, int *l_row1_in, cudaStream_t my_stream){
+  cuda_copy_a_tmatc_FromC(a_dev, tmatc_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, my_stream);
+}
+
+extern "C" void cuda_copy_float_complex_a_tmatc_FromC(cuFloatComplex *a_dev, cuFloatComplex *tmatc_dev, int *nblk_in, int *matrixRows_in, 
+                                                 int *l_cols_in, int *l_colx_in, int *l_row1_in, cudaStream_t my_stream){
+  cuda_copy_a_tmatc_FromC(a_dev, tmatc_dev, nblk_in, matrixRows_in, l_cols_in, l_colx_in, l_row1_in, my_stream);
+}
+
+//________________________________________________________________
+
+
+template <typename T>
+__global__ void cuda_set_a_lower_to_zero_kernel (T *a_dev, int na, int matrixRows, int my_pcol, int np_cols, int my_prow, int np_rows, int nblk) {
+
+  int J_gl_0 = blockIdx.x; // 0..nblk-1
+  int di_loc_0 = threadIdx.x; // 0..MAX_THREADS_PER_BLOCK-1
+
+  T Zero = elpaDeviceNumber<T>(0.0);
+
+  for (int J_gl = J_gl_0; J_gl < na; J_gl += gridDim.x)
+    {
+    if (my_pcol == pcol(J_gl, nblk, np_cols))
+      {
+      // Calculate local column and row indices of the first element below the diagonal (that has to be set to zero)
+      int l_col1 = local_index(J_gl  , my_pcol, np_cols, nblk);
+      int l_row1 = local_index(J_gl+1, my_prow, np_rows, nblk); // I_gl = J_gl + 1
+
+      // Calculate the offset and number of elements to zero out
+      //int offset = l_row1 + matrixRows*l_col1;
+      //int num = (matrixRows - l_row1);
+
+      // Set to zero in the GPU memory
+      for (int di_loc=di_loc_0; di_loc < (matrixRows-l_row1); di_loc += blockDim.x) a_dev[(l_row1+di_loc) + matrixRows*l_col1] = Zero;
+      }
+    }
+}
+
+template <typename T>
+void cuda_set_a_lower_to_zero(T *a_dev, int *na_in, int *matrixRows_in, int *my_pcol_in, int *np_cols_in, int *my_prow_in, int *np_rows_in, int *nblk_in, int *wantDebug_in, cudaStream_t my_stream){
+  int na = *na_in;
   int matrixRows = *matrixRows_in;
-  int l_cols = *l_cols_in;
-  int l_colx = *l_colx_in;
-  int l_row1 = *l_row1_in;
+  int my_pcol = *my_pcol_in;
+  int np_cols = *np_cols_in;
+  int my_prow = *my_prow_in;
+  int np_rows = *np_rows_in;
+  int nblk = *nblk_in;
+  int wantDebug = *wantDebug_in;
 
-//#ifdef WITH_GPU_STREAMS
-//  cudaStream_t streamId = *((cudaStream_t*)my_stream);
-//#endif
-
-  dim3 blocks = dim3(l_cols-l_colx+1,1,1);
-  dim3 threadsPerBlock = dim3(nblk,1,1);
-
-  cuFloatComplex* a_casted = (cuFloatComplex*) a_dev;
-  cuFloatComplex* tmatc_casted = (cuFloatComplex*) tmatc_dev;
+  dim3 blocks = dim3(nblk,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_float_complex_a_tmatc_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+  cuda_set_a_lower_to_zero_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk);
 #else
-  cuda_copy_float_complex_a_tmatc_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmatc_casted, l_cols, matrixRows, l_colx, l_row1);
+  cuda_set_a_lower_to_zero_kernel<<<blocks,threadsPerBlock>>>(a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk);
 #endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing copy_float_complex_a_tmatc_kernel: %s\n",cudaGetErrorString(cuerr));
-    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk); 
+
+  if (wantDebug)
+    {
+    cudaDeviceSynchronize();
+    cudaError_t cuerr = cudaGetLastError();
+    if (cuerr != cudaSuccess){
+      printf("Error in executing set_a_lower_to_zero_kernel: %s\n",cudaGetErrorString(cuerr));
+    }
   }
+}
+
+extern "C" void cuda_set_a_lower_to_zero_FromC(char dataType, intptr_t a_dev, int *na_in, int *matrixRows_in, 
+                                                      int *my_pcol_in, int *np_cols_in, int *my_prow_in, int *np_rows_in, 
+                                                      int *nblk_in, int *wantDebug_in, cudaStream_t my_stream){
+
+  if (dataType=='D') cuda_set_a_lower_to_zero<double>((double *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);
+  if (dataType=='S') cuda_set_a_lower_to_zero<float> ((float *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);
+  if (dataType=='Z') cuda_set_a_lower_to_zero<cuDoubleComplex>((cuDoubleComplex *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);
+  if (dataType=='C') cuda_set_a_lower_to_zero<cuFloatComplex> ((cuFloatComplex *) a_dev, na_in, matrixRows_in, my_pcol_in, np_cols_in, my_prow_in, np_rows_in, nblk_in, wantDebug_in, my_stream);
 }

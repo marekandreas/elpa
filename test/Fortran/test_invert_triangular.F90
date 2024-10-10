@@ -180,6 +180,8 @@ program test
   TEST_INT_TYPE                          :: numberOfDevices
   TEST_INT_TYPE                          :: gpuID
 #endif
+   
+   logical                                :: skip_check_correctness
 
 ! for gpu_malloc
 #if TEST_GPU == 1
@@ -203,7 +205,7 @@ program test
 #endif /* TEST_GPU == 1 */
 
 
-  call read_input_parameters(na, nev, nblk, write_to_file)
+  call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
   call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI
@@ -215,13 +217,13 @@ program test
 #ifdef WITH_CUDA_AWARE_MPI
 #if TEST_NVIDIA_GPU != 1
 #ifdef WITH_MPI
-    call mpi_finalize(mpierr)
+  call mpi_finalize(mpierr)
 #endif
     stop 77
 #endif
 #ifdef TEST_COMPLEX
 #ifdef WITH_MPI
-    call mpi_finalize(mpierr)
+  call mpi_finalize(mpierr)
 #endif
     stop 77
 #endif
@@ -498,19 +500,34 @@ program test
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
-  if (myid .eq. 0) then
-    call e%print_times("e%triangular")
-  endif
+! PETERDEBUG: cleanup
+! <<<<<<< HEAD
+!   if (myid .eq. 0) then
+!     call e%print_times("e%triangular")
+!   endif
+! =======
+!    if (myid .eq. 0) then
+!      call e%print_times("e%triangular")
+!    endif
+!    !-----------------------------------------------------------------------------------------------------------------------------
+!    ! Check the results
+   
+!    if(.not. skip_check_correctness) then
+!      status = check_correctness_hermitian_multiply("N", na, a, as, c, na_rows, sc_desc, myid )
+!      call check_status(status, myid)
+!    endif
+! >>>>>>> origin/master_pre_stage
 
 ! _________________________________________________________________________________________________________________________________
 
   ! Check the results
-   
-  status = check_correctness_multiply('N', 'N', 'F', 'F', uplo_c, &
-                                      na, a, b, c, na_rows, na_cols, sc_desc, &
-                                      nblk, myid, np_rows, np_cols, my_prow, my_pcol)
-
-  call check_status(status, myid)
+  
+  if (.not. skip_check_correctness) then
+    status = check_correctness_multiply('N', 'N', 'F', 'F', &
+                                        na, a, as, c, na_rows, na_cols, sc_desc, &
+                                        nblk, myid, np_rows, np_cols, my_prow, my_pcol)
+    call check_status(status, myid)
+  endif
 
 ! _________________________________________________________________________________________________________________________________
 

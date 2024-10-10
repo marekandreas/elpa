@@ -61,8 +61,11 @@ extern "C" {
         hiperr = hipGetLastError(); // reset the error
         return 0;
 		  }
-    
+#ifdef HAVE_OLD_HIP_TYPESTRUCTURE
     if (attributes.memoryType==hipMemoryTypeDevice) return 1;
+#else
+    if (attributes.type==hipMemoryTypeDevice) return 1;
+#endif
     else return 0;
   }
   

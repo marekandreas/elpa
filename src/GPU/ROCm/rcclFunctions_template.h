@@ -32,7 +32,6 @@ extern "C" {
       }
       return 0;
     }
-    printf("Leaving start group_c \n");
     return 1;
   }
 
@@ -40,9 +39,7 @@ extern "C" {
     ncclResult_t ncclError;
 
 
-    printf("IN RCCL Groub end_c\n");
     ncclError = ncclGroupEnd();
-    printf("foo %s \n",ncclGetErrorString(ncclError));
     if (ncclError != ncclSuccess) {
       if (ncclError == ncclUnhandledCudaError) {
         errormessage("Error in ncclGroupEnd: %s\n", "ncclUnhandledCudaError");
@@ -61,7 +58,6 @@ extern "C" {
       }
       return 0;
     }
-    printf("Leaving end group_c \n");
     return 1;
   }
 
@@ -95,7 +91,6 @@ extern "C" {
       return 0;
 
     }
-    printf("Leaving getUnique_c \n");
     return 1;
   }
 
@@ -132,7 +127,6 @@ extern "C" {
       }
       return 0;
     }
-    printf("Leaving initrank_c \n");
     return 1;
   }
 

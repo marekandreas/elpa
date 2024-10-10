@@ -51,6 +51,8 @@
 ! using cannon algorithm should be the fastest. After this is verified, the other options should be removed
 ! however, we need the extra temporary matrix as well.
 
+#include "general/error_checking.inc"
+
 subroutine elpa_transform_generalized_&
             &ELPA_IMPL_SUFFIX&
             &(self, a, b, is_already_decomposed, error)
@@ -71,6 +73,7 @@ subroutine elpa_transform_generalized_&
   logical                  :: is_already_decomposed
   integer                  :: sc_desc(SC_DESC_LEN)
   integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=ik)         :: i, j
   integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
   integer(kind=ik)         :: BuffLevelInt
   integer(kind=c_int)      :: cannon_for_generalized, pxtrmm_for_generalized, debug, gpu_cannon
@@ -78,7 +81,8 @@ subroutine elpa_transform_generalized_&
   integer(kind=c_intptr_t) :: gpublasHandle
   logical, save            :: firstCall = .true.
 
-  MATH_DATATYPE(kind=rck) :: tmp(self%local_nrows, self%local_ncols)
+  MATH_DATATYPE(kind=rck)  :: tmp(self%local_nrows, self%local_ncols)
+
 
   call self%get("mpi_comm_rows"  , mpi_comm_rows, error)
   call self%get("mpi_comm_cols"  , mpi_comm_cols, error)
@@ -100,11 +104,14 @@ subroutine elpa_transform_generalized_&
   call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
   call self%get("debug", debug, error)
 
+  useGPU = .false.
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (.not.(query_gpu_usage(self, "Generalized_transform", useGPU))) then
     write(error_unit,*) "Generalized transform: Problem getting options for GPU. Aborting..."
     error = ELPA_ERROR
     return
   endif
+#endif
 
   gpu_cannon = 0
   gpublasHandle=0
@@ -184,7 +191,13 @@ endif
     endif
     call self%timer_start("cannons_reduction")
     ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
+#ifdef WITH_NVTX
+    call nvtxRangePush("tmp = 0")
+#endif
     tmp = 0.0_rck
+#ifdef WITH_NVTX
+    call nvtxRangePop()
+#endif
 #ifdef WITH_MPI
 #ifdef WITH_NVTX
     call nvtxRangePush("cannons_reduction")
@@ -251,10 +264,10 @@ endif
     
     else ! (pxtrmm_for_generalized == 1)
 
-      print *, "Using PxTRAN for transform_generalized" ! PETERDEBUG
       call self%timer_start("PxTRAN")
 
       ! A <- tmp^T
+#ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
 #if REALCASE == 1
@@ -265,7 +278,18 @@ endif
 #endif
             &(self%na, self%na, ONE , tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
                                 ZERO,   a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
-
+#else /* WITH_MPI */
+      do j = 1, self%na
+        do i = 1, self%na
+#if REALCASE == 1
+      a(j, i) = tmp(i, j)
+#endif
+#if COMPLEXCASE == 1
+      a(j, i) = conjg(tmp(i, j))
+#endif
+        end do
+      end do
+#endif /* WITH_MPI */
       call self%timer_stop("PxTRAN")
       
       ! tmp <- A^T * inv(U) = (tmp^T)^T * inv(U)
@@ -292,16 +316,19 @@ endif
   call self%timer_stop("transform_generalized()")
 end subroutine
 
+! _________________________________________________________________________________________________________________________________
 
 subroutine elpa_transform_back_generalized_&
             &ELPA_IMPL_SUFFIX&
             &(self, b, q, error)
   use mod_query_gpu_usage
+  use elpa_utilities , only : check_alloc, check_allocate_f
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions ! for NVTX labels
 #endif
   implicit none
 #include "general/precision_kinds.F90"
+
   class(elpa_impl_t)  :: self
 #ifdef USE_ASSUMED_SIZE
   MATH_DATATYPE(kind=rck) :: b(self%local_nrows, *), q(self%local_nrows, *)
@@ -309,15 +336,19 @@ subroutine elpa_transform_back_generalized_&
   MATH_DATATYPE(kind=rck) :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
 #endif
   integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=ik)         :: i, j
   integer(kind=MPI_KIND)   :: mpierr, my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
   integer                  :: error
+  integer(kind=ik)         :: istat
+  character(200)           :: errorMessage
   integer                  :: sc_desc(SC_DESC_LEN)
   integer                  :: sc_desc_ev(SC_DESC_LEN)
   integer(kind=c_int)      :: cannon_for_generalized, pxtrmm_for_generalized, debug, gpu_cannon
   logical                  :: useGPU
   integer(kind=c_intptr_t) :: gpublasHandle
 
-  MATH_DATATYPE(kind=rck)  :: tmp(self%local_nrows, self%local_ncols)
+  MATH_DATATYPE(kind=rck), allocatable :: tmp(:,:)
+  MATH_DATATYPE(kind=rck), allocatable :: bt(:,:)
 
   call self%get("mpi_comm_rows",mpi_comm_rows,error)
   call self%get("mpi_comm_cols",mpi_comm_cols,error)
@@ -338,12 +369,15 @@ subroutine elpa_transform_back_generalized_&
   call self%get("cannon_for_generalized", cannon_for_generalized, error)
   call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
   call self%get("debug", debug, error)
-  
+
+  useGPU = .false.
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (.not.(query_gpu_usage(self, "elpa_transform_back_generalized", useGPU))) then
     write(error_unit,*) "elpa_transform_back_generalized: Problem getting options for GPU. Aborting..."
     error = ELPA_ERROR
     return
   endif
+#endif
 
   gpu_cannon = 0
   gpublasHandle=0
@@ -384,6 +418,9 @@ subroutine elpa_transform_back_generalized_&
       gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
     endif
 
+    allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_impl_generalized_transform_template: tmp", istat, errorMessage)
+
     call cannons_triang_rectangular_&
       &ELPA_IMPL_SUFFIX&
       &(b, q, self%local_nrows, self%local_ncols, &
@@ -396,6 +433,9 @@ subroutine elpa_transform_back_generalized_&
     call self%timer_stop("cannons_triang_rectangular")
 
     q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+
+    deallocate(tmp, stat=istat, errmsg=errorMessage)
+    call check_alloc("elpa_impl_generalized_transform_template", "tmp", istat, errorMessage)
 
   else ! (cannon_for_generalized == 1)
   
@@ -425,11 +465,17 @@ subroutine elpa_transform_back_generalized_&
     
     else ! (pxtrmm_for_generalized == 1)
 
-      print *, "Using PxTRAN for transform_back_generalized" ! PETERDEBUG
       call self%timer_start("PxTRAN")
+      
+      ! two additional temp arrays bt amd temp are needed, since we can't modify b: it might be used later if(is_already_decomposed)
+      allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
+      check_allocate("elpa_impl_generalized_transform_template: tmp", istat, errorMessage)
+      
+      allocate(bt(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
+      check_allocate("elpa_impl_generalized_transform_template: bt", istat, errorMessage)
 
-      ! PETERDEBUG: tmp is not needed for the other codepath -- we can make it allocatable and not waste memory
-      ! tmp <- b^T 
+      ! bt <- b^T
+#ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
 #if REALCASE == 1
@@ -438,22 +484,40 @@ subroutine elpa_transform_back_generalized_&
 #if COMPLEXCASE == 1
             &tranc&
 #endif
-            &(self%na, self%na, ONE , b  , 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
-                                ZERO, tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+            &(self%na, self%na, ONE , b , 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
+                                ZERO, bt, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+#else /* WITH_MPI */
+      do j = 1, self%na
+        do i = 1, self%na
+#if REALCASE == 1
+      bt(j, i) = b(i, j)
+#endif
+#if COMPLEXCASE == 1
+      bt(j, i) = conjg(b(i, j))
+#endif
+        end do
+      end do
+#endif /* WITH_MPI */
 
       call self%timer_stop("PxTRAN")
       
-      ! b <- tmp^T Q = inv(U) Q
+      ! tmp <- bt^T Q = inv(U) Q
       call self%elpa_hermitian_multiply_a_h_a_&
             &ELPA_IMPL_SUFFIX&
-            &('F','F', self%na, tmp, q, self%local_nrows, self%local_ncols, b, &
+            &('F','F', self%na, bt, q, self%local_nrows, self%local_ncols, tmp, &
             self%local_nrows, self%local_ncols, error)
       if(error .NE. ELPA_OK) return
       
-      ! q <- b
+      ! q <- tmp
       call self%timer_start("copy")
-      q(1:self%local_nrows, 1:self%local_ncols) = b(1:self%local_nrows, 1:self%local_ncols)
+      q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
       call self%timer_stop("copy")
+
+      deallocate(tmp, stat=istat, errmsg=errorMessage)
+      call check_alloc("elpa_impl_generalized_transform_template", "tmp", istat, errorMessage)
+
+      deallocate(bt, stat=istat, errmsg=errorMessage)
+      call check_alloc("elpa_impl_generalized_transform_template", "bt", istat, errorMessage)
     endif ! (pxtrmm_for_generalized == 1)
   endif ! (cannon_for_generalized == 1)
 
