@@ -46,6 +46,7 @@
 //
 //    This file was written by A. Marek, MPCDF
 
+// PETERDEBUG: split this file in two .h files and one .cu file
 #include <stdio.h>
 #include <math.h>
 #include <stdio.h>
@@ -57,7 +58,6 @@
 #include <cuComplex.h>
 #include <stdint.h>
 #include "config-f90.h"
-
 //#include "../../../GPU/common_device_functions.h"
 
 #define MAX_THREADS_PER_BLOCK 1024
@@ -1074,3 +1074,386 @@ extern "C" void cuda_ccl_copy_buf_recv_FromC(char dataType, intptr_t at_col_dev,
                                                     i_block_loc_fine_max_in, j_block_loc_fine_max_in, np_fine_in, np_bc_fine_in,
                                                     np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, SM_count_in, debug_in, my_stream);
 }
+
+//_________________________________________________________________________________________________
+// non-square grid, TN, NT codepath
+
+template <typename T>
+__global__ void cuda_copy_and_set_zeros_aux_ab_full_tn_kernel(T *a_dev, T *b_dev, T *aux_a_full_dev, T *aux_b_full_dev,
+                                                              int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
+                                                              int np_ab_fine, int np_rows, int my_prow,
+                                                              int np_t_fine , int np_cols, int my_pcol,
+                                                              int np_dirs_fine){
+  // if (mod(np_t_fine,np_cols) == my_pcol) then
+  //   do j_block_loc_fine = 0, nblk_mult_max/nblk-1
+  //     j_block_loc = (np_t_fine + j_block_loc_fine*np_dirs_fine)/np_cols
+      
+  //     do i_block_loc_fine = 0, nblk_mult/nblk-1
+  //       i_block_loc = (np_ab_fine + i_block_loc_fine*np_dirs_fine)/np_rows
+        
+  //       nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
+  //       nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
+
+  //       if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
+  //         aux_a_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
+  //                    1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk) = &
+  //                 a (1+i_block_loc*nblk      : nblk_rows_cut+i_block_loc*nblk, &
+  //                    1+j_block_loc*nblk      : nblk_cols_cut+j_block_loc*nblk)
+  //       endif
+
+  //     enddo ! i_block_loc_fine
+  //   enddo ! j_block_loc_fine
+  // endif ! (mod(np_t_fine,np_cols) == my_pcol)
+
+  int di0 = threadIdx.x; // 0..nblk
+  int dj0 = blockIdx.x ; // 0..nblk
+
+  T Zero = elpaDeviceNumber<T>(0.0);
+
+  int i_block_loc, j_block_loc, i_block_loc_fine, j_block_loc_fine,  nblk_rows_cut, nblk_cols_cut, di, dj;
+
+  if (np_t_fine%np_cols == my_pcol) 
+    {
+    for (j_block_loc_fine=0; j_block_loc_fine<nblk_mult_max/nblk; j_block_loc_fine++) 
+      {
+      j_block_loc = (np_t_fine + j_block_loc_fine*np_dirs_fine)/np_cols;
+      
+      for (i_block_loc_fine=0; i_block_loc_fine<nblk_mult/nblk; i_block_loc_fine++) 
+        {
+        i_block_loc = (np_ab_fine + i_block_loc_fine*np_dirs_fine)/np_rows;
+        
+        nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk);
+        nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk);
+
+        if (nblk_rows_cut>0 && nblk_cols_cut>0) 
+          {
+          for (dj=dj0; dj<nblk_cols_cut; dj += gridDim.x)
+            for (di=di0; di<nblk_rows_cut; di += blockDim.x)
+              aux_a_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] 
+                     = a_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
+          }
+        }
+      }
+    }
+
+  // do dnp_ab_t = 0, np_dirs_fine/np_cols-1
+  //   np_ab_t_fine = dnp_ab_t*np_cols + my_pcol
+
+  //   do j_block_loc_fine = 0, nblk_mult_max/nblk-1
+  //     j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_dirs_fine)/np_cols
+      
+  //     do i_block_loc_fine = 0, nblk_mult/nblk-1
+  //       i_block_loc = (np_ab_fine + i_block_loc_fine*np_dirs_fine)/np_rows
+
+  //       nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
+  //       nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
+        
+  //       if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
+  //         aux_b_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
+  //                   1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+  //                   nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = &
+  //                   b(1+i_block_loc*nblk      :nblk_rows_cut+i_block_loc*nblk, &
+  //                     1+j_block_loc*nblk      :nblk_cols_cut+j_block_loc*nblk)
+  //       endif
+
+  //       ! nullify the unused part of the block in b
+  //       if (nblk_rows_cut<nblk) then
+  //         if (nblk_rows_cut>0) then
+  //           aux_b_full(nblk_rows_cut+1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
+  //                       1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+  //                       nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
+  //         else ! for negative nblk_rows_cut we nullify the whole block (it's locally absent)
+  //           aux_b_full(1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
+  //                       1   +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+  //                       nblk+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
+  //         endif
+  //       endif
+
+  //       if (nblk_cols_cut<nblk) then
+  //         if (nblk_cols_cut>0) then
+  //           aux_b_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
+  //                       nblk_cols_cut+1+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+  //                       nblk           +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
+  //         else
+  //           aux_b_full(1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
+  //                       1   +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+  //                       nblk+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
+  //         endif
+  //       endif
+
+  //     enddo ! i_block_loc_fine
+  //   enddo ! j_block_loc_fine
+  // enddo ! np_ab_t_fine
+
+  int dnp_ab_t, np_ab_t_fine;
+  for (dnp_ab_t = 0; dnp_ab_t < np_dirs_fine/np_cols; dnp_ab_t++)
+    {
+    np_ab_t_fine = dnp_ab_t*np_cols + my_pcol;
+    for (j_block_loc_fine = 0; j_block_loc_fine < nblk_mult_max/nblk; j_block_loc_fine++)
+      {
+      j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_dirs_fine)/np_cols;
+
+      for (i_block_loc_fine = 0; i_block_loc_fine < nblk_mult/nblk; i_block_loc_fine++)
+        {
+        i_block_loc = (np_ab_fine + i_block_loc_fine*np_dirs_fine)/np_rows;
+
+        nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk);
+        nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk);
+
+        if (nblk_rows_cut>0 && nblk_cols_cut>0)
+          {
+          for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
+            for (di = di0; di < nblk_rows_cut; di += blockDim.x)
+              aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] 
+                    = b_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
+          }
+
+        // nullify the unused part of the block in b
+        if (nblk_rows_cut < nblk)
+          {
+          if (nblk_rows_cut > 0)
+            {
+            for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
+              for (di = nblk_rows_cut+di0; di < nblk; di += blockDim.x)
+                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
+            }
+          else // for negative nblk_rows_cut we nullify the whole block (it's locally absent)
+            {
+            for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
+              for (di = di0; di < nblk; di += blockDim.x)
+                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
+            }
+          }
+
+        if (nblk_cols_cut < nblk)
+          {
+          if (nblk_cols_cut > 0)
+            {
+            for (dj = nblk_cols_cut+dj0; dj < nblk; dj += gridDim.x)
+              for (di = di0; di < nblk_rows_cut; di += blockDim.x)
+                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
+            }
+          else 
+            {
+            for (dj = dj0; dj < nblk; dj += gridDim.x)
+              for (di = di0; di < nblk_rows_cut; di += blockDim.x)
+                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
+            }
+          }
+       }
+        
+      }
+    }
+}
+
+template <typename T>
+__global__ void cuda_copy_and_set_zeros_aux_ab_full_nt_kernel(T *a_dev, T *b_dev, T *aux_a_full_dev, T *aux_b_full_dev,
+                                                              int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
+                                                              int np_ab_fine, int np_rows, int my_prow,
+                                                              int np_t_fine , int np_cols, int my_pcol,
+                                                              int np_dirs_fine){
+  int di0 = threadIdx.x;
+  int dj0 = blockIdx.x;
+
+  T Zero = elpaDeviceNumber<T>(0.0);
+
+  int i_block_loc, j_block_loc, i_block_loc_fine, j_block_loc_fine, nblk_rows_cut, nblk_cols_cut, di, dj;
+  int dnp_ab_t, np_ab_t_fine;
+
+  if (np_t_fine%np_rows == my_prow) 
+    {
+    for (i_block_loc_fine=0; i_block_loc_fine<nblk_mult_max/nblk; i_block_loc_fine++) 
+      {
+      i_block_loc = (np_t_fine + i_block_loc_fine*np_dirs_fine)/np_rows;
+
+      for (j_block_loc_fine=0; j_block_loc_fine<nblk_mult/nblk; j_block_loc_fine++) 
+        {
+        j_block_loc = (np_ab_fine + j_block_loc_fine*np_dirs_fine)/np_cols;
+
+        nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk);
+        nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk);
+
+        if (nblk_rows_cut> 0 && nblk_cols_cut> 0)
+          {
+          for (dj=dj0; dj<nblk_cols_cut; dj += gridDim.x)
+            for (di=di0; di<nblk_rows_cut; di += blockDim.x)          
+              aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] =
+                       b_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
+          }
+
+        // Nullify the unused part of the block in b
+        if (nblk_rows_cut < nblk)
+          {
+          if (nblk_rows_cut > 0)
+            {
+            for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
+              for (di = nblk_rows_cut + di0; di < nblk; di += blockDim.x)
+                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
+            }
+          else // For negative nblk_rows_cut we nullify the whole block  (it's locally absent)
+            {
+            for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
+              for (di = di0; di < nblk; di += blockDim.x)            
+                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
+            }
+          }
+        
+
+        if (nblk_cols_cut < nblk)
+          {
+          if (nblk_cols_cut > 0)
+            {
+            for (dj = nblk_cols_cut + dj0; dj < nblk; dj += gridDim.x)
+              for (di = di0; di < nblk_rows_cut; di += blockDim.x)
+                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine * nblk)*nblk_mult] = Zero;
+            }
+          else
+            {
+            for (dj = dj0; dj < nblk; dj += gridDim.x)
+              for (di = di0; di < nblk_rows_cut; di += blockDim.x)
+                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine * nblk)*nblk_mult] = Zero;
+            }
+          }
+        }
+      }
+    }
+
+
+  for (dnp_ab_t = 0; dnp_ab_t < np_dirs_fine/np_rows; dnp_ab_t++)
+    {
+    np_ab_t_fine = dnp_ab_t*np_rows + my_prow;
+
+    for (i_block_loc_fine = 0; i_block_loc_fine < nblk_mult_max/nblk; i_block_loc_fine++)
+      {
+      i_block_loc = (np_ab_t_fine + i_block_loc_fine*np_dirs_fine)/np_rows;
+
+      for (j_block_loc_fine = 0; j_block_loc_fine < nblk_mult/nblk; j_block_loc_fine++)
+        {
+        j_block_loc = (np_ab_fine + j_block_loc_fine*np_dirs_fine)/np_cols;
+
+        nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk);
+        nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk);
+
+        if (nblk_rows_cut > 0 && nblk_cols_cut > 0)
+          {
+          for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
+            for (di = di0; di < nblk_rows_cut; di += blockDim.x)
+              aux_a_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*nblk_mult] =
+                       a_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
+                    
+                
+          }
+        }
+      }
+    }
+}
+
+template <typename T>
+void cuda_copy_and_set_zeros_aux_ab_full_tn_nt(int *a_transoposed_in, T *a_dev, T *b_dev, T *aux_a_full_dev, T *aux_b_full_dev,
+                                            int *l_rows_in, int *l_cols_in, int *nblk_mult_max_in, int *nblk_mult_in, int *nblk_in,
+                                            int *np_ab_fine_in, int *np_rows_in, int *my_prow_in,
+                                            int *np_t_fine_in, int *np_cols_in, int *my_pcol_in,
+                                            int *np_dirs_fine_in,int *SM_count_in,
+                                            int *debug_in, cudaStream_t my_stream){
+    
+    int a_transoposed = *a_transoposed_in;
+    int l_rows = *l_rows_in;
+    int l_cols = *l_cols_in;
+    int nblk_mult_max = *nblk_mult_max_in;
+    int nblk_mult = *nblk_mult_in;
+    int nblk = *nblk_in;
+    int np_ab_fine = *np_ab_fine_in;
+    int np_rows = *np_rows_in;
+    int my_prow = *my_prow_in;
+    int np_t_fine = *np_t_fine_in;
+    int np_cols = *np_cols_in;
+    int my_pcol = *my_pcol_in;
+    int np_dirs_fine = *np_dirs_fine_in;
+    int SM_count = *SM_count_in;
+    int debug = *debug_in;
+
+    dim3 blocksPerGrid(SM_count, 1, 1); 
+    dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1); // use only half of the max threads due to high register usage
+
+    if (a_transoposed)
+      {
+#ifdef WITH_GPU_STREAMS
+      cuda_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
+          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+          np_ab_fine, np_rows, my_prow,
+          np_t_fine, np_cols, my_pcol,
+          np_dirs_fine);
+#else
+      cuda_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock>>>(
+          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+          np_ab_fine, np_rows, my_prow,
+          np_t_fine, np_cols, my_pcol,
+          np_dirs_fine);
+#endif
+      }
+    else 
+      {
+#ifdef WITH_GPU_STREAMS
+      cuda_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
+          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+          np_ab_fine, np_rows, my_prow,
+          np_t_fine, np_cols, my_pcol,
+          np_dirs_fine);
+#else
+      cuda_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock>>>(
+          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+          np_ab_fine, np_rows, my_prow,
+          np_t_fine, np_cols, my_pcol,
+          np_dirs_fine);
+#endif
+      }
+    if (debug)
+    {
+        cudaDeviceSynchronize();
+        cudaError_t cuerr = cudaGetLastError();
+        if (cuerr != cudaSuccess)
+        {
+            printf("Error in executing cuda_copy_and_set_zeros_aux_ab_full_tn: %s\n", cudaGetErrorString(cuerr));
+        }
+    }
+}
+
+extern "C" void cuda_copy_and_set_zeros_aux_ab_full_tn_nt_FromC(char dataType, int *a_transoposed_in, intptr_t a_dev, intptr_t b_dev, intptr_t aux_a_full_dev, intptr_t aux_b_full_dev,
+                                                             int *l_rows_in, int *l_cols_in, int *nblk_mult_max_in, int *nblk_mult_in, int *nblk_in,
+                                                             int *np_ab_fine_in, int *np_rows_in, int *my_prow_in,
+                                                             int *np_t_fine_in , int *np_cols_in, int *my_pcol_in,
+                                                             int *np_dirs_fine_in,
+                                                             int *SM_count_in, int *debug_in, cudaStream_t my_stream){
+  if (dataType == 'D') cuda_copy_and_set_zeros_aux_ab_full_tn_nt<double>(a_transoposed_in, (double *)a_dev, (double *)b_dev, (double *)aux_a_full_dev, (double *)aux_b_full_dev,
+                                                       l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
+                                                       np_ab_fine_in, np_rows_in, my_prow_in,
+                                                       np_t_fine_in , np_cols_in, my_pcol_in,
+                                                       np_dirs_fine_in,
+                                                       SM_count_in, debug_in, my_stream);
+  if (dataType == 'S') cuda_copy_and_set_zeros_aux_ab_full_tn_nt<float>(a_transoposed_in, (float *)a_dev, (float *)b_dev, (float *)aux_a_full_dev, (float *)aux_b_full_dev,
+                                                      l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
+                                                      np_ab_fine_in, np_rows_in, my_prow_in,
+                                                      np_t_fine_in , np_cols_in, my_pcol_in,
+                                                      np_dirs_fine_in,
+                                                      SM_count_in, debug_in, my_stream);
+  if (dataType == 'Z') cuda_copy_and_set_zeros_aux_ab_full_tn_nt<cuDoubleComplex>(a_transoposed_in, (cuDoubleComplex *)a_dev, (cuDoubleComplex *)b_dev, (cuDoubleComplex *)aux_a_full_dev, (cuDoubleComplex *)aux_b_full_dev,
+                                                                l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
+                                                                np_ab_fine_in, np_rows_in, my_prow_in,
+                                                                np_t_fine_in , np_cols_in, my_pcol_in,
+                                                                np_dirs_fine_in,
+                                                                SM_count_in, debug_in, my_stream);
+  if (dataType == 'C') cuda_copy_and_set_zeros_aux_ab_full_tn_nt<cuFloatComplex>(a_transoposed_in, (cuFloatComplex *)a_dev, (cuFloatComplex *)b_dev, (cuFloatComplex *)aux_a_full_dev, (cuFloatComplex *)aux_b_full_dev,
+                                                               l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
+                                                               np_ab_fine_in, np_rows_in, my_prow_in,
+                                                               np_t_fine_in , np_cols_in, my_pcol_in,
+                                                               np_dirs_fine_in,
+                                                               SM_count_in, debug_in, my_stream);
+}
+
+//________________________________________________________________
+
+

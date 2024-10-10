@@ -134,7 +134,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -162,7 +162,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -193,7 +193,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -225,7 +225,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -256,7 +256,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -283,7 +283,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -311,7 +311,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -342,7 +342,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -374,7 +374,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -405,7 +405,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -432,7 +432,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -460,7 +460,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -491,7 +491,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -523,7 +523,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -554,7 +554,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -581,7 +581,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -609,7 +609,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -640,7 +640,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -672,7 +672,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -703,7 +703,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
 
     end subroutine
@@ -733,7 +733,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -765,7 +765,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -797,7 +797,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -830,7 +830,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -867,7 +867,7 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
     end subroutine
 
@@ -904,9 +904,60 @@ module multiply_a_b_gpu
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       print * "NOT implemented yet"
-      stop
+      stop 1
 #endif
     end subroutine
 
+
+    subroutine gpu_copy_and_set_zeros_aux_ab_full_tn_nt(dataType, a_transposed, &
+                                                  a_dev, b_dev, aux_a_full_dev, aux_b_full_dev, &
+                                                  l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                                  np_ab_fine, np_rows, my_prow, &
+                                                  np_t_fine , np_cols, my_pcol, &
+                                                  np_dirs_fine, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_int), intent(in) :: a_transposed
+      integer(kind=c_intptr_t), value :: a_dev, b_dev, aux_a_full_dev, aux_b_full_dev
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, nblk_mult_max, nblk_mult, nblk
+      integer(kind=c_int), intent(in) :: np_ab_fine, np_rows, my_prow
+      integer(kind=c_int), intent(in) :: np_t_fine , np_cols, my_pcol
+      integer(kind=c_int), intent(in) :: np_dirs_fine
+      integer(kind=c_int), intent(in) :: SM_count, debug
+      integer(kind=c_intptr_t)        :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_copy_and_set_zeros_aux_ab_full_tn_nt_c(dataType, a_transposed, &
+                                                    a_dev, b_dev, aux_a_full_dev, aux_b_full_dev, &
+                                                    l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                                    np_ab_fine, np_rows, my_prow, &
+                                                    np_t_fine , np_cols, my_pcol, &
+                                                    np_dirs_fine, SM_count, debug, my_stream)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_copy_and_set_zeros_aux_ab_full_tn_nt_c(dataType, a_transposed, &
+                                                    a_dev, b_dev, aux_a_full_dev, aux_b_full_dev, &
+                                                    l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                                    np_ab_fine, np_rows, my_prow, &
+                                                    np_t_fine , np_cols, my_pcol, &
+                                                    np_dirs_fine, SM_count, debug, my_stream)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_and_set_zeros_aux_ab_full_tn_nt_c(dataType, a_transposed, &
+                                                    a_dev, b_dev, aux_a_full_dev, aux_b_full_dev, &
+                                                    l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                                    np_ab_fine, np_rows, my_prow, &
+                                                    np_t_fine , np_cols, my_pcol, &
+                                                    np_dirs_fine, SM_count, debug, my_stream)
+#endif
+
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      print *, "NOT implemented yet"
+      stop 1
+#endif
+    end subroutine
 
 end module

@@ -410,6 +410,28 @@ module multiply_a_b_cuda
     end subroutine
   end interface
 
+  interface
+    subroutine cuda_copy_and_set_zeros_aux_ab_full_tn_nt_c(dataType,  a_transposed, &
+                                                        a_dev, b_dev, aux_a_full_dev, aux_b_full_dev, &
+                                                        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                                        np_ab_fine, np_rows, my_prow, &
+                                                        np_t_fine , np_cols, my_pcol, &
+                                                        np_dirs_fine, SM_count, debug, my_stream) &
+      bind(C, name="cuda_copy_and_set_zeros_aux_ab_full_tn_nt_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value      :: dataType
+      integer(kind=c_int), intent(in)  :: a_transposed
+      integer(kind=c_intptr_t), value  :: a_dev, b_dev, aux_a_full_dev, aux_b_full_dev
+      integer(kind=c_int), intent(in)  :: l_rows, l_cols, nblk_mult_max, nblk_mult, nblk
+      integer(kind=c_int), intent(in)  :: np_ab_fine, np_rows, my_prow
+      integer(kind=c_int), intent(in)  :: np_t_fine , np_cols, my_pcol
+      integer(kind=c_int), intent(in)  :: np_dirs_fine
+      integer(kind=c_int), intent(in)  :: SM_count, debug
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
 
   contains
 
@@ -840,6 +862,34 @@ module multiply_a_b_cuda
       call cuda_ccl_copy_buf_recv_c(dataType, at_col_dev, buf_recv_dev, l_rows, l_cols, &
                                     lld_buf, nblk, i_block_loc_fine_max, j_block_loc_fine_max, np_fine, np_bc_fine, &
                                     np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+
+    subroutine cuda_copy_and_set_zeros_aux_ab_full_tn_nt(dataType,  a_transposed, &
+                                                      a_dev, b_dev, aux_a_full_dev, aux_b_full_dev, &
+                                                      l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                                      np_ab_fine, np_rows, my_prow, &
+                                                      np_t_fine , np_cols, my_pcol, &
+                                                      np_dirs_fine, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value      :: dataType
+      integer(kind=c_int), intent(in)  :: a_transposed
+      integer(kind=c_intptr_t), value  :: a_dev, b_dev, aux_a_full_dev, aux_b_full_dev
+      integer(kind=c_int), intent(in)  :: l_rows, l_cols, nblk_mult_max, nblk_mult, nblk
+      integer(kind=c_int), intent(in)  :: np_ab_fine, np_rows, my_prow
+      integer(kind=c_int), intent(in)  :: np_t_fine , np_cols, my_pcol
+      integer(kind=c_int), intent(in)  :: np_dirs_fine
+      integer(kind=c_int), intent(in)  :: SM_count, debug
+      integer(kind=c_intptr_t), value  :: my_stream
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_copy_and_set_zeros_aux_ab_full_tn_nt_c(dataType,  a_transposed, &
+                                                    a_dev, b_dev, aux_a_full_dev, aux_b_full_dev, &
+                                                    l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                                    np_ab_fine, np_rows, my_prow, &
+                                                    np_t_fine , np_cols, my_pcol, &
+                                                    np_dirs_fine, SM_count, debug, my_stream)
 #endif
     end subroutine
 

@@ -427,8 +427,7 @@ subroutine tridiag_&
 #ifdef WITH_GPU_STREAMS
 #if COMPLEXCASE == 1
     num = 1 * size_of_datatype
-    successGPU = gpu_host_register(int(loc(aux3),kind=c_intptr_t), num,&
-                  gpuHostRegisterDefault)
+    successGPU = gpu_host_register(int(loc(aux3),kind=c_intptr_t), num, gpuHostRegisterDefault)
     check_host_register_gpu("tridiag: aux3", successGPU)
 #endif
 #endif
