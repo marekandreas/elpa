@@ -135,6 +135,7 @@
   integer(kind=ik)                             :: a_transposed_int, b_transposed_int
 
   MATH_DATATYPE(kind=rck)                      :: beta
+  integer(kind=ik)                             :: beta_int
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_mat(:,:), tmp1(:,:)
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_a_full(:,:), aux_b_full(:,:), tmp1_full(:,:) ! PETERDEBUG
   MATH_DATATYPE(kind=rck), allocatable         :: aux_bc(:), tmp2(:,:)
@@ -158,6 +159,7 @@
                                                   my_prow_target_deadlock
 
   integer(kind=ik)                             :: nblk, nblk_cut, nblk_cut_row, nblk_cut_col
+  integer(kind=ik)                             :: ld_aux_a_tmp1
   integer(kind=ik)                             :: error
   integer(kind=c_intptr_t)                     :: aux_bc_dev, aux_mat_dev, tmp1_dev, tmp2_dev
   integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev ! PETERDEBUG_NEW
@@ -1761,7 +1763,7 @@
                     
                     if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
                       aux_a_full(1            +i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                  nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
+                                 nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
                                   1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk) = &
                                 a(1+i_block_loc*nblk      : nblk_rows_cut+i_block_loc*nblk, &
                                   1+j_block_loc*nblk      : nblk_cols_cut+j_block_loc*nblk)
@@ -1845,11 +1847,12 @@
                                             tmp1_full_dev  + offset_dev, nblk_mult, gpuHandle)
               else if (b_transposed) then
                 offset_dev = dnp_ab_t*nblk_mult_max*1 * size_of_datatype
+                ld_aux_a_tmp1 = nblk_mult_max*(np_dirs_fine/np_dirs_t)
                 call gpublas_PRECISION_GEMM(trans_a_cchar, trans_b_cchar, &
                                             nblk_mult, nblk_mult, nblk_mult, ONE, &
-                                            aux_a_full_dev + offset_dev, nblk_mult, &
+                                            aux_a_full_dev + offset_dev, ld_aux_a_tmp1, &
                                             aux_b_full_dev, nblk_mult, ZERO, &
-                                            tmp1_full_dev  + offset_dev, nblk_mult, gpuHandle)
+                                            tmp1_full_dev  + offset_dev, ld_aux_a_tmp1, gpuHandle)
               endif ! b_transposed
               if (wantDebug) successGPU = gpu_DeviceSynchronize()
               call obj%timer%stop("gpublas")
@@ -1913,56 +1916,73 @@
 
 
           if (my_pdir==np) then
-            call obj%timer%start("update_C")
-            ! Put the result into C
-            beta = ONE
-            dnp_ab = np_ab_fine/np_dirs
-            if (dnp_ab == 0) beta = ZERO
+            if (useGPU) then
+              call obj%timer%start("gpu_update_c_tn_nt")
+              beta_int = 1
+              dnp_ab = np_ab_fine/np_dirs
+              if (dnp_ab == 0) beta_int = 0
+              ! Peter: for ELPA: ldc=l_rows (i.e. ld of c_dev and ld of tmp1_full_dev are same)
+              ! but generally it's possible that ldc is not equal to l_rows --> extra parameter in
+              ! kernel is needed
+              call cuda_update_c_tn_nt(PRECISION_CHAR, a_transposed_int, &
+                                       c_dev, tmp1_full_dev, beta_int, &
+                                       l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                       np_rows, np_cols, np_dirs_fine, &
+                                       np_dirs_t, my_pdir_t, np_fine, &
+                                       SM_count, debug, my_stream)
+              call obj%timer%stop("gpu_update_c_tn_nt")
+            else
+              call obj%timer%start("update_c_tn_nt")
+              ! Put the result into C
+              beta = ONE
+              dnp_ab = np_ab_fine/np_dirs
+              if (dnp_ab == 0) beta = ZERO
 
-            do dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
-              np_ab_t_fine = dnp_ab_t*np_dirs_t + my_pdir_t
-              
-              if (a_transposed) then
-                do j_block_loc_fine = 0, nblk_mult_max/nblk-1
-                  j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_cols_fine)/np_cols
-                  
-                  do i_block_loc_fine = 0, nblk_mult/nblk-1
-                    i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
+              do dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
+                np_ab_t_fine = dnp_ab_t*np_dirs_t + my_pdir_t
+                
+                if (a_transposed) then
+                  do j_block_loc_fine = 0, nblk_mult_max/nblk-1
+                    j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_cols_fine)/np_cols
+                    
+                    do i_block_loc_fine = 0, nblk_mult/nblk-1
+                      i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
 
-                    nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
-                    nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
+                      nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
+                      nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
 
-                    c     (1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
-                            1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) = &
-                    beta*c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
-                            1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) + &
-                    tmp1_full(1+i_block_loc_fine*nblk :nblk+i_block_loc_fine*nblk, &
-                              1   +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                              nblk+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max)
-                  enddo ! i_block_loc_fine
-                enddo ! j_block_loc_fine
-              else if (b_transposed) then
-                do i_block_loc_fine = 0, nblk_mult_max/nblk-1
-                  i_block_loc = (np_ab_t_fine + i_block_loc_fine*np_rows_fine)/np_rows
-          
-                  do j_block_loc_fine = 0, nblk_mult/nblk-1
-                    j_block_loc = (np_fine + j_block_loc_fine*np_cols_fine)/np_cols
-          
-                    nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
-                    nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
-          
-                    c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
-                      1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) = &
-                    beta * c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
-                             1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) + &
-                    tmp1_full(1+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                              nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
-                              1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk)
+                      c     (1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
+                              1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) = &
+                      beta*c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
+                              1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) + &
+                      tmp1_full(1+i_block_loc_fine*nblk :nblk+i_block_loc_fine*nblk, &
+                                1   +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                nblk+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max)
+                    enddo ! i_block_loc_fine
                   enddo ! j_block_loc_fine
-                enddo ! i_block_loc_fine
-              endif
-            enddo ! dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
-            call obj%timer%stop("update_C")
+                else if (b_transposed) then
+                  do i_block_loc_fine = 0, nblk_mult_max/nblk-1
+                    i_block_loc = (np_ab_t_fine + i_block_loc_fine*np_rows_fine)/np_rows
+            
+                    do j_block_loc_fine = 0, nblk_mult/nblk-1
+                      j_block_loc = (np_fine + j_block_loc_fine*np_cols_fine)/np_cols
+            
+                      nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
+                      nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
+            
+                      c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
+                        1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) = &
+                      beta * c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
+                              1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) + &
+                      tmp1_full(1+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
+                                1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk)
+                    enddo ! j_block_loc_fine
+                  enddo ! i_block_loc_fine
+                endif
+              enddo ! dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
+              call obj%timer%stop("update_c_tn_nt")
+            endif ! useGPU
           endif ! (my_pdir==np)
           
 
@@ -1973,6 +1993,14 @@
 #endif
       enddo ! np = 0, np_dirs-1
       call obj%timer%stop("main_loop_tn_nt")
+
+      if (useGPU) then
+        call obj%timer%start("gpu_memcpy")
+        successGPU = gpu_memcpy(int(loc(c),kind=c_intptr_t), c_dev, &
+                                ldc*ldcCols*size_of_datatype, gpuMemcpyDeviceToHost)
+        check_memcpy_gpu("elpa_pxgemm: tmp1_full_dev -> tmp1_full", successGPU)
+        call obj%timer%stop("gpu_memcpy")
+      endif ! useGPU 
 
     endif ! (.not. a_transposed .and. b_transposed)
 

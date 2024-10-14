@@ -930,7 +930,7 @@ void cuda_ccl_copy_buf_send(T *a_dev, T *buf_send_dev, int *l_rows_in, int *l_co
                                                                         np_rows_fine, np_cols_fine, np_rows, np_cols);
 #else
   cuda_ccl_copy_buf_send_kernel<<<blocks,threadsPerBlock>>>(a_dev, buf_send_dev, l_rows, l_cols, lld_buf, nblk,
-                                                            i_block_loc_fine, j_block_loc_fine, np_fine, np_bc_fine, 
+                                                            i_block_loc_fine_max, j_block_loc_fine_max, np_fine, np_bc_fine, 
                                                             np_rows_fine, np_cols_fine, np_rows, np_cols);
 #endif
 
@@ -1318,7 +1318,7 @@ __global__ void cuda_copy_and_set_zeros_aux_ab_full_nt_kernel(T *a_dev, T *b_dev
       }
     }
 
-
+  int lda = nblk_mult_max*(np_dirs_fine/np_rows);
   for (dnp_ab_t = 0; dnp_ab_t < np_dirs_fine/np_rows; dnp_ab_t++)
     {
     np_ab_t_fine = dnp_ab_t*np_rows + my_prow;
@@ -1333,13 +1333,15 @@ __global__ void cuda_copy_and_set_zeros_aux_ab_full_nt_kernel(T *a_dev, T *b_dev
 
         nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk);
         nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk);
-
+        
         if (nblk_rows_cut > 0 && nblk_cols_cut > 0)
           {
           for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
             for (di = di0; di < nblk_rows_cut; di += blockDim.x)
-              aux_a_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*nblk_mult] =
+              {
+              aux_a_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*lda] =
                        a_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
+              }
                     
                 
           }
@@ -1374,6 +1376,10 @@ void cuda_copy_and_set_zeros_aux_ab_full_tn_nt(int *a_transoposed_in, T *a_dev, 
 
     dim3 blocksPerGrid(SM_count, 1, 1); 
     dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1); // use only half of the max threads due to high register usage
+
+    // PETERDEBUG
+    //dim3 blocksPerGrid(1, 1, 1); 
+    //dim3 threadsPerBlock(1, 1, 1); // use only half of the max threads due to high register usage
 
     if (a_transoposed)
       {
@@ -1457,39 +1463,35 @@ extern "C" void cuda_copy_and_set_zeros_aux_ab_full_tn_nt_FromC(char dataType, i
 //________________________________________________________________
 
 template <typename T>
-__global__ void cuda_update_c_tn_nt_kernel(T *c_dev, T *tmp1_full_dev, T beta,
-                                           int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
-                                           int np_ab_fine, int np_rows, int my_prow,
-                                           int np_t_fine, int np_cols, int my_pcol,
-                                           int np_dirs_fine,
-                                           int np_dirs_t, int my_pdir_t,
-                                           int np_cols_fine, int np_rows_fine,
-                                           int np_fine,
-                                           int a_transposed, int b_transposed,
-                                           int debug) {
+__global__ void cuda_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_full_dev, T beta,
+                                          int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
+                                          int np_rows, int np_cols, int np_dirs_fine, 
+                                          int np_dirs_t, int my_pdir_t, int np_fine,
+                                          int debug) {
   int di0 = threadIdx.x;
   int dj0 = blockIdx.x;
 
   int dnp_ab_t, np_ab_t_fine;
   int i_block_loc, j_block_loc, i_block_loc_fine, j_block_loc_fine;
   int nblk_rows_cut, nblk_cols_cut, di, dj;
+  int c_idx;
 
   if (a_transposed) {
     for (dnp_ab_t = 0; dnp_ab_t < np_dirs_fine/np_dirs_t; dnp_ab_t++) {
       np_ab_t_fine = dnp_ab_t*np_dirs_t + my_pdir_t;
 
       for (j_block_loc_fine = 0; j_block_loc_fine < nblk_mult_max/nblk; j_block_loc_fine++) {
-        j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_cols_fine)/np_cols;
+        j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_dirs_fine)/np_cols;
         for (i_block_loc_fine = 0; i_block_loc_fine < nblk_mult/nblk; i_block_loc_fine++) {
-          i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows;
+          i_block_loc = (np_fine + i_block_loc_fine*np_dirs_fine)/np_rows;
           nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk);
           nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk);
           if (nblk_rows_cut > 0 && nblk_cols_cut > 0) {
             for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x) {
               for (di = di0; di < nblk_rows_cut; di += blockDim.x) {
-                  int c_idx = di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows;
-                  int tmp1_idx = di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult;
-                  c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]), tmp1_full_dev[tmp1_idx]);
+                  c_idx = di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows;
+                  c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]), 
+                                  tmp1_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult]);
               }
             }
           }
@@ -1497,25 +1499,22 @@ __global__ void cuda_update_c_tn_nt_kernel(T *c_dev, T *tmp1_full_dev, T beta,
       }
     }
   } 
-  else if (b_transposed) {
-    for (dnp_ab_t = 0; dnp_ab_t < np_dirs_fine / np_dirs_t; dnp_ab_t++) {
-      np_ab_t_fine = dnp_ab_t * np_dirs_t + my_pdir_t;
-      for (i_block_loc_fine = 0; i_block_loc_fine < nblk_mult_max / nblk; i_block_loc_fine++) {
-        i_block_loc = (np_ab_t_fine + i_block_loc_fine * np_rows_fine) / np_rows;
-        for (j_block_loc_fine = 0; j_block_loc_fine < nblk_mult / nblk; j_block_loc_fine++) {
-          j_block_loc = (np_fine + j_block_loc_fine * np_cols_fine) / np_cols;
+  else { // b_transposed
+    int ld_tmp1 = nblk_mult_max*(np_dirs_fine/np_rows);
+    for (dnp_ab_t = 0; dnp_ab_t < np_dirs_fine/np_dirs_t; dnp_ab_t++) {
+      np_ab_t_fine = dnp_ab_t*np_dirs_t + my_pdir_t;
+      for (i_block_loc_fine = 0; i_block_loc_fine < nblk_mult_max/nblk; i_block_loc_fine++) {
+        i_block_loc = (np_ab_t_fine + i_block_loc_fine*np_dirs_fine)/np_rows;
+        for (j_block_loc_fine = 0; j_block_loc_fine < nblk_mult/nblk; j_block_loc_fine++) {
+          j_block_loc = (np_fine + j_block_loc_fine*np_dirs_fine)/np_cols;
           nblk_rows_cut = min(nblk, l_rows - i_block_loc * nblk);
           nblk_cols_cut = min(nblk, l_cols - j_block_loc * nblk);
           if (nblk_rows_cut > 0 && nblk_cols_cut > 0) {
             for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x) {
               for (di = di0; di < nblk_rows_cut; di += blockDim.x) {
-                int c_row = di + i_block_loc*nblk;
-                int c_col = dj + j_block_loc*nblk;
-                int c_idx = c_row + c_col * l_rows;
-                int tmp1_row = di + i_block_loc_fine * nblk + dnp_ab_t * nblk_mult_max;
-                int tmp1_col = dj + j_block_loc_fine * nblk;
-                int tmp1_idx = tmp1_row + tmp1_col * nblk_mult;
-                c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]), tmp1_full_dev[tmp1_idx]);
+                int c_idx = di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows;
+                c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]),
+                                tmp1_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*ld_tmp1]);
               }
             }
           }
@@ -1526,66 +1525,56 @@ __global__ void cuda_update_c_tn_nt_kernel(T *c_dev, T *tmp1_full_dev, T beta,
 }
 
 template <typename T>
-void cuda_update_c_tn_nt(int *a_transposed_in, int *b_transposed_in,
-                         T *c_dev, T *tmp1_full_dev, T *beta_in,
+void cuda_update_c_tn_nt(int *a_transposed_in, 
+                         T *c_dev, T *tmp1_full_dev, int *beta_int_in,
                          int *l_rows_in, int *l_cols_in, int *nblk_mult_max_in, int *nblk_mult_in, int *nblk_in,
-                         int *np_ab_fine_in, int *np_rows_in, int *my_prow_in,
-                         int *np_t_fine_in, int *np_cols_in, int *my_pcol_in,
-                         int *np_dirs_fine_in,
-                         int *np_dirs_t_in, int *my_pdir_t_in,
-                         int *np_cols_fine_in, int *np_rows_fine_in,
-                         int *np_fine_in,
+                         int *np_rows_in, int *np_cols_in, int *np_dirs_fine_in,
+                         int *np_dirs_t_in, int *my_pdir_t_in, int *np_fine_in,
                          int *SM_count_in, int *debug_in, cudaStream_t my_stream) {
 
     int a_transposed = *a_transposed_in;
-    int b_transposed = *b_transposed_in;
-    T beta = *beta_in;
+    T beta; // assigned below
     int l_rows = *l_rows_in;
     int l_cols = *l_cols_in;
     int nblk_mult_max = *nblk_mult_max_in;
     int nblk_mult = *nblk_mult_in;
     int nblk = *nblk_in;
-    int np_ab_fine = *np_ab_fine_in;
     int np_rows = *np_rows_in;
-    int my_prow = *my_prow_in;
-    int np_t_fine = *np_t_fine_in;
     int np_cols = *np_cols_in;
-    int my_pcol = *my_pcol_in;
     int np_dirs_fine = *np_dirs_fine_in;
     int np_dirs_t = *np_dirs_t_in;
     int my_pdir_t = *my_pdir_t_in;
-    int np_cols_fine = *np_cols_fine_in;
-    int np_rows_fine = *np_rows_fine_in;
     int np_fine = *np_fine_in;
     int SM_count = *SM_count_in;
     int debug = *debug_in;
 
+    if constexpr (std::is_same_v<T, cuDoubleComplex>) {
+        beta = make_cuDoubleComplex(static_cast<double>(*beta_int_in), 0.0);
+    } else if constexpr (std::is_same_v<T, cuFloatComplex>) {
+        beta = make_cuFloatComplex(static_cast<float>(*beta_int_in), 0.0);
+    } else {
+        beta = static_cast<T>(*beta_int_in);
+    }
+
     dim3 blocksPerGrid(SM_count, 1, 1);
-    dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK / 2), 1, 1); // PETERDEBUG
+    dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK), 1, 1); // PETERDEBUG
 
 #ifdef WITH_GPU_STREAMS
     cuda_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
-        c_dev, tmp1_full_dev, beta,
+        a_transposed, c_dev, tmp1_full_dev, beta,
         l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-        np_ab_fine, np_rows, my_prow,
-        np_t_fine, np_cols, my_pcol,
+        np_rows, 
+        np_cols, 
         np_dirs_fine,
         np_dirs_t, my_pdir_t,
-        np_cols_fine, np_rows_fine,
         np_fine,
-        a_transposed, b_transposed,
         debug);
 #else
     cuda_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock>>>(
-        c_dev, tmp1_full_dev, beta,
+        a_transposed, c_dev, tmp1_full_dev, beta,
         l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-        np_ab_fine, np_rows, my_prow,
-        np_t_fine, np_cols, my_pcol,
-        np_dirs_fine,
-        np_dirs_t, my_pdir_t,
-        np_cols_fine, np_rows_fine,
-        np_fine,
-        a_transposed, b_transposed,
+        np_rows, np_cols, np_dirs_fine,
+        np_dirs_t, my_pdir_t, np_fine,
         debug);
 #endif
 
@@ -1599,64 +1588,36 @@ void cuda_update_c_tn_nt(int *a_transposed_in, int *b_transposed_in,
 }
 
 extern "C" void cuda_update_c_tn_nt_FromC(char dataType,
-                                          int *a_transposed_in, int *b_transposed_in,
-                                          intptr_t c_dev, intptr_t tmp1_full_dev, void *beta_in,
+                                          int *a_transposed_in, 
+                                          intptr_t c_dev, intptr_t tmp1_full_dev, int *beta_int_in,
                                           int *l_rows_in, int *l_cols_in, int *nblk_mult_max_in, int *nblk_mult_in, int *nblk_in,
-                                          int *np_ab_fine_in, int *np_rows_in, int *my_prow_in,
-                                          int *np_t_fine_in, int *np_cols_in, int *my_pcol_in,
-                                          int *np_dirs_fine_in,
-                                          int *np_dirs_t_in, int *my_pdir_t_in,
-                                          int *np_cols_fine_in, int *np_rows_fine_in,
-                                          int *np_fine_in,
+                                          int *np_rows_in, int *np_cols_in, int *np_dirs_fine_in,
+                                          int *np_dirs_t_in, int *my_pdir_t_in, int *np_fine_in,
                                           int *SM_count_in, int *debug_in, cudaStream_t my_stream) {
 
-    if (dataType == 'D') {
-        double beta = *(double *)beta_in;
-        cuda_update_c_tn_nt<double>(a_transposed_in, b_transposed_in,
-                                    (double *)c_dev, (double *)tmp1_full_dev, &beta,
-                                    l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                    np_ab_fine_in, np_rows_in, my_prow_in,
-                                    np_t_fine_in, np_cols_in, my_pcol_in,
-                                    np_dirs_fine_in,
-                                    np_dirs_t_in, my_pdir_t_in,
-                                    np_cols_fine_in, np_rows_fine_in,
-                                    np_fine_in,
-                                    SM_count_in, debug_in, my_stream);
-    } else if (dataType == 'S') {
-        float beta = *(float *)beta_in;
-        cuda_update_c_tn_nt<float>(a_transposed_in, b_transposed_in,
-                                   (float *)c_dev, (float *)tmp1_full_dev, &beta,
-                                   l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                   np_ab_fine_in, np_rows_in, my_prow_in,
-                                   np_t_fine_in, np_cols_in, my_pcol_in,
-                                   np_dirs_fine_in,
-                                   np_dirs_t_in, my_pdir_t_in,
-                                   np_cols_fine_in, np_rows_fine_in,
-                                   np_fine_in,
-                                   SM_count_in, debug_in, my_stream);
-    } else if (dataType == 'Z') {
-        cuDoubleComplex beta = *(cuDoubleComplex *)beta_in;
-        cuda_update_c_tn_nt<cuDoubleComplex>(a_transposed_in, b_transposed_in,
-                                             (cuDoubleComplex *)c_dev, (cuDoubleComplex *)tmp1_full_dev, &beta,
-                                             l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                             np_ab_fine_in, np_rows_in, my_prow_in,
-                                             np_t_fine_in, np_cols_in, my_pcol_in,
-                                             np_dirs_fine_in,
-                                             np_dirs_t_in, my_pdir_t_in,
-                                             np_cols_fine_in, np_rows_fine_in,
-                                             np_fine_in,
-                                             SM_count_in, debug_in, my_stream);
-    } else if (dataType == 'C') {
-        cuFloatComplex beta = *(cuFloatComplex *)beta_in;
-        cuda_update_c_tn_nt<cuFloatComplex>(a_transposed_in, b_transposed_in,
-                                            (cuFloatComplex *)c_dev, (cuFloatComplex *)tmp1_full_dev, &beta,
-                                            l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                            np_ab_fine_in, np_rows_in, my_prow_in,
-                                            np_t_fine_in, np_cols_in, my_pcol_in,
-                                            np_dirs_fine_in,
-                                            np_dirs_t_in, my_pdir_t_in,
-                                            np_cols_fine_in, np_rows_fine_in,
-                                            np_fine_in,
-                                            SM_count_in, debug_in, my_stream);
-    }
+  if (dataType == 'D') cuda_update_c_tn_nt<double>(a_transposed_in, 
+                                (double *)c_dev, (double *)tmp1_full_dev, beta_int_in,
+                                l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
+                                np_rows_in, np_cols_in, np_dirs_fine_in,
+                                np_dirs_t_in, my_pdir_t_in, np_fine_in,
+                                SM_count_in, debug_in, my_stream);
+  if (dataType == 'S') cuda_update_c_tn_nt<float>(a_transposed_in, 
+                                (float *)c_dev, (float *)tmp1_full_dev, beta_int_in,
+                                l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
+                                np_rows_in, np_cols_in, np_dirs_fine_in,
+                                np_dirs_t_in, my_pdir_t_in, np_fine_in,
+                                SM_count_in, debug_in, my_stream);
+  if (dataType == 'Z') cuda_update_c_tn_nt<cuDoubleComplex>(a_transposed_in, 
+                                          (cuDoubleComplex *)c_dev, (cuDoubleComplex *)tmp1_full_dev, beta_int_in,
+                                          l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
+                                          np_rows_in, np_cols_in, np_dirs_fine_in,
+                                          np_dirs_t_in, my_pdir_t_in, np_fine_in,
+                                          SM_count_in, debug_in, my_stream);
+  else if (dataType == 'C') cuda_update_c_tn_nt<cuFloatComplex>(a_transposed_in, 
+                                        (cuFloatComplex *)c_dev, (cuFloatComplex *)tmp1_full_dev, beta_int_in,
+                                        l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
+                                        np_rows_in, np_cols_in, np_dirs_fine_in,
+                                        np_dirs_t_in, my_pdir_t_in, np_fine_in,
+                                        SM_count_in, debug_in, my_stream);
 }
+

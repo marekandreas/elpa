@@ -432,6 +432,28 @@ module multiply_a_b_cuda
     end subroutine
   end interface
 
+  interface
+    subroutine cuda_update_c_tn_nt_c(dataType, a_transposed, &
+                                    c_dev, tmp1_full_dev, beta_int, &
+                                    l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                    np_rows, np_cols, np_dirs_fine, &
+                                    np_dirs_t, my_pdir_t, np_fine, &
+                                    SM_count, debug, my_stream) &
+      bind(C, name="cuda_update_c_tn_nt_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_int), intent(in) :: a_transposed
+      integer(kind=c_intptr_t), value :: c_dev, tmp1_full_dev
+      integer(kind=c_int), intent(in) :: beta_int
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, nblk_mult_max, nblk_mult, nblk
+      integer(kind=c_int), intent(in) :: np_rows, np_cols, np_dirs_fine
+      integer(kind=c_int), intent(in) :: np_dirs_t, my_pdir_t, np_fine
+      integer(kind=c_int), intent(in) :: SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
+
 
   contains
 
@@ -890,6 +912,35 @@ module multiply_a_b_cuda
                                                     np_ab_fine, np_rows, my_prow, &
                                                     np_t_fine , np_cols, my_pcol, &
                                                     np_dirs_fine, SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+
+    subroutine cuda_update_c_tn_nt(dataType, a_transposed, &
+                                  c_dev, tmp1_full_dev, beta_int, &
+                                  l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                  np_rows, np_cols, np_dirs_fine, &
+                                  np_dirs_t, my_pdir_t, np_fine, &
+                                  SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_int), intent(in) :: a_transposed
+      integer(kind=c_intptr_t), value :: c_dev, tmp1_full_dev
+      integer(kind=c_int), intent(in) :: beta_int
+      integer(kind=c_int), intent(in) :: l_rows, l_cols, nblk_mult_max, nblk_mult, nblk
+      integer(kind=c_int), intent(in) :: np_rows, np_cols, np_dirs_fine
+      integer(kind=c_int), intent(in) :: np_dirs_t, my_pdir_t, np_fine
+      integer(kind=c_int), intent(in) :: SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_update_c_tn_nt_c(dataType, a_transposed, &
+                                c_dev, tmp1_full_dev, beta_int, &
+                                l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                np_rows, np_cols, np_dirs_fine, &
+                                np_dirs_t, my_pdir_t, np_fine, &
+                                SM_count, debug, my_stream)
 #endif
     end subroutine
 
