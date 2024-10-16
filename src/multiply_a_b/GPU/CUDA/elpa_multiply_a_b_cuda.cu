@@ -1377,10 +1377,6 @@ void cuda_copy_and_set_zeros_aux_ab_full_tn_nt(int *a_transoposed_in, T *a_dev, 
     dim3 blocksPerGrid(SM_count, 1, 1); 
     dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1); // use only half of the max threads due to high register usage
 
-    // PETERDEBUG
-    //dim3 blocksPerGrid(1, 1, 1); 
-    //dim3 threadsPerBlock(1, 1, 1); // use only half of the max threads due to high register usage
-
     if (a_transoposed)
       {
 #ifdef WITH_GPU_STREAMS
