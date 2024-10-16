@@ -654,8 +654,8 @@ max_threads, isSkewsymmetric)
       enddo
 
       if (do_memcpy) then
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -686,7 +686,7 @@ max_threads, isSkewsymmetric)
           check_memcpy_gpu("bandred: a_dev -> a_mat", successGPU)
 #endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
         else
           do memcols = lc_start, lc_end
             successGPU = gpu_memcpy(int(loc(a_mat(1,memcols)),kind=c_intptr_t), &

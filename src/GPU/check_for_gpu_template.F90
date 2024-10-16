@@ -687,4 +687,24 @@
 #endif /* ADDITIONAL_OBJECT_CODE */
 #endif /* WITH_GPU_STREAMS */
 #endif /* WITH_AMD_GPU_VERSION */
+
+#ifdef WITH_SYCL_GPU_VERSION
+#ifndef WITH_GPU_STREAMS
+#ifdef ADDITIONAL_OBJECT_CODE
+        write(error_unit,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+        write(error_unit,*) "This does mean reduced performace!"
+        write(*,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+        write(*,*) "This does mean reduced performace!"
+#else /* ADDITIONAL_OBJECT_CODE */
+        ! myid is given as argument
+        if (myid .eq. 0) then
+          write(error_unit,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+          write(error_unit,*) "This does mean reduced performace!"
+          write(*,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+          write(*,*) "This does mean reduced performace!"
+        endif
+#endif /* ADDITIONAL_OBJECT_CODE */
+#endif /* WITH_GPU_STREAMS */
+#endif /* WITH_SYCL_GPU_VERSION */
+
       endif

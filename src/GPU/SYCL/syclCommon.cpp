@@ -179,7 +179,11 @@ DeviceSelection& SyclState::getDeviceHandle(int deviceNum) {
 }
 
 DeviceSelection& SyclState::getDefaultDeviceHandle() {
-  return this->getDeviceHandle(this->defaultDevice);
+  if (this->defaultDevice >= 0) {
+    return this->getDeviceHandle(this->defaultDevice);
+  } else {
+    throw std::runtime_error("No GPU device chosen yet. No default handle available.");
+  }
 }
 
 #ifdef WITH_ONEAPI_ONECCL
@@ -201,7 +205,12 @@ void SyclState::registerKvs(void *kvsAddr, egs::cclKvsHandle kvs) {
 
 DeviceSelection::DeviceSelection(int deviceId, sycl::device device) 
   : deviceId(deviceId),
-    device(device), 
+    device(device),
+#if defined(SYCL_EXT_ONEAPI_DEFAULT_CONTEXT) && SYCL_EXT_ONEAPI_DEFAULT_CONTEXT == 1
+    context(device.get_platform().ext_oneapi_get_default_context()),
+#else
+    context(sycl::queue(device).get_context()),
+#endif
 #ifdef WITH_ONEAPI_ONECCL
     cclDevice(ccl::create_device(this->device)),
 #endif

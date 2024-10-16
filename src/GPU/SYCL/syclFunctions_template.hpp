@@ -289,9 +289,8 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   int syclMallocFromC(intptr_t *a, size_t elems) {
-    QueueData *qHandle = getQueueDataOrDefault(nullptr);
-    sycl::queue queue = qHandle->queue;
-    *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, queue));
+    DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
+    *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, devSel.device, devSel.context));
     char *bytes = reinterpret_cast<char *>(*a);
     if (*a) {
       //std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
@@ -303,9 +302,8 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
     int syclMallocHostFromC(intptr_t *a, size_t elems) {
-    QueueData *qHandle = getQueueDataOrDefault(nullptr);
-    sycl::queue queue = qHandle->queue;
-    *a = reinterpret_cast<intptr_t>(sycl::malloc_host(elems, queue));
+    DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
+    *a = reinterpret_cast<intptr_t>(sycl::malloc_host(elems, devSel.context));
     char *bytes = reinterpret_cast<char *>(*a);
     if (*a) {
       //std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
@@ -318,11 +316,10 @@ static oneapi::mkl::side sideFromChar(char c) {
 
 
   int syclFreeFromC(intptr_t *a) {
-    QueueData *qHandle = getQueueDataOrDefault(nullptr);
-    sycl::queue queue = qHandle->queue;
+    DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
     void * ptr = reinterpret_cast<void *>(*a);
-    queue.wait();
-    sycl::free(ptr, queue);
+    // queue.wait();
+    sycl::free(ptr, devSel.context);
     return 1;
   }
 

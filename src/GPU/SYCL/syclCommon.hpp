@@ -83,6 +83,7 @@ struct QueueData {
 struct DeviceSelection {
   int deviceId;
   sycl::device device;
+  sycl::context context;
 #ifdef WITH_ONEAPI_ONECCL
   ccl::device cclDevice;
 #endif  
@@ -112,12 +113,12 @@ class SyclState {
 #endif
   
   SyclState(bool onlyL0Gpus = false);
+  DeviceSelection& getDeviceHandle(int deviceNum);
   
   public:
   
   void printGpuInfo();
   DeviceSelection& selectGpuDevice(int deviceNum);
-  DeviceSelection& getDeviceHandle(int deviceNum);
   DeviceSelection& getDefaultDeviceHandle();
   
   size_t getNumDevices();

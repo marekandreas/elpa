@@ -2949,7 +2949,7 @@ AC_ARG_ENABLE([gpu-streams],
 		      #fi
 	        #fi
 	       ])
-AC_MSG_RESULT([ ADAWDAWDAWD ${use_gpu_streams}])
+AC_MSG_RESULT([${use_gpu_streams}])
 #if test x"$enable_openmp" = x"no"; then
   if test x"$enable_cuda_aware_mpi" = x"no"; then
     if test x"$relied_on_default" = x"yes"; then
