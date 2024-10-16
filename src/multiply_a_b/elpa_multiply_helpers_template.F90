@@ -63,7 +63,7 @@ subroutine elpa_transpose_row_or_col&
 #ifdef DEVICE_POINTER
                               a_dev, at_dev, buf_send_dev, buf_recv_dev, buf_self_dev, &
 #else /* DEVICE_POINTER */
-                              a, at, buf_send, buf_recv, &
+                              a, at, buf_send, buf_recv, buf_self, &
 #endif /* DEVICE_POINTER */
                               np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max, debug)
 
@@ -87,12 +87,13 @@ subroutine elpa_transpose_row_or_col&
   character(len=1), intent(in)                 :: row_col_char
   integer(kind=ik), intent(in)                 :: np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max
 #ifdef DEVICE_POINTER
-  MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), at(:,:), buf_send(:,:), buf_recv(:,:) ! dummy variables
+  MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), at(:,:), buf_send(:,:), buf_recv(:,:), buf_self(:,:) ! dummy variables
   integer(kind=c_intptr_t)                     :: a_dev, at_dev, buf_send_dev, buf_recv_dev, buf_self_dev
 #else /* DEVICE_POINTER */
   MATH_DATATYPE(kind=rck)                      :: a(l_rows,l_cols), at(l_rows,l_cols), &
                                                   buf_send(nblk_mult_rows_max, nblk_mult_cols_max), & 
-                                                  buf_recv(nblk_mult_rows_max, nblk_mult_cols_max)
+                                                  buf_recv(nblk_mult_rows_max, nblk_mult_cols_max), &
+                                                  buf_self(nblk_mult_rows_max, nblk_mult_cols_max)
   integer(kind=c_intptr_t)                     :: a_dev, at_dev, buf_send_dev, buf_recv_dev, buf_self_dev
 #endif /* DEVICE_POINTER */
 
@@ -353,9 +354,13 @@ subroutine elpa_transpose_row_or_col&
         endif
 #endif /* USE_CCL_PXGEMM */
       else ! useCCL
-        call MPI_Send(buf_send, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
-                      MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_target, kind=MPI_KIND), 0, &
-                      int(mpi_comm_all, kind=MPI_KIND), mpierr)
+        if (mpi_rank_target/=myid) then
+          call MPI_Send(buf_send, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
+                        MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_target, kind=MPI_KIND), 0, &
+                        int(mpi_comm_all, kind=MPI_KIND), mpierr)
+        else
+          buf_self = buf_send
+        endif
       endif ! useCCL
       np_t_fine_1 = mod(np_t_fine_1+np_dirs_t, np_dirs_t_fine)
       if (np_t_fine_1 == np_t_fine_1_start) exit
@@ -423,9 +428,13 @@ subroutine elpa_transpose_row_or_col&
         endif
 #endif /* USE_CCL_PXGEMM */
       else ! useCCL
-        call MPI_Recv(buf_recv, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
-                      MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_source, kind=MPI_KIND), 0, &
-                      int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+        if (mpi_rank_source/=myid) then
+          call MPI_Recv(buf_recv, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
+                        MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_source, kind=MPI_KIND), 0, &
+                        int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+        else
+          buf_recv = buf_self
+        endif
       endif ! useCCL
 
       if (useCCL) then

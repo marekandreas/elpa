@@ -107,7 +107,7 @@
   type(c_ptr)                                  :: aDev, bDev, cDev
 #endif /* DEVICE_POINTER */
   MATH_DATATYPE(kind=rck), allocatable         :: at_full(:,:), bt_full(:,:)
-  MATH_DATATYPE(kind=rck), allocatable         :: buf_send(:,:), buf_recv(:,:), at_col(:,:), bt_row(:,:) ! PETERDEBUG: needed for TT case
+  MATH_DATATYPE(kind=rck), allocatable         :: buf_send(:,:), buf_recv(:,:), buf_self(:,:), at_col(:,:), bt_row(:,:) ! PETERDEBUG: needed for TT case
 
   integer(kind=ik)                             :: my_pdir, my_pdir_t, np_dirs, np_dirs_t ! PETERDEBUG_NEW
   integer(kind=ik)                             :: np_rows_fine, np_cols_fine, np_dirs_fine, np_fine, np_t_fine, np_bc_fine, &
@@ -1177,6 +1177,9 @@
 
           allocate(buf_recv(nblk_mult_rows_max, nblk_mult_cols_max), stat=istat, errmsg=errorMessage)
           check_allocate("elpa_pxgemm: buf_recv", istat, errorMessage)
+
+          allocate(buf_self(nblk_mult_rows_max, nblk_mult_cols_max), stat=istat, errmsg=errorMessage)
+          check_allocate("elpa_pxgemm: buf_self", istat, errorMessage)
         endif ! useCCL
       endif
 
@@ -1224,7 +1227,8 @@
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  (obj, 'R', a, at_col, buf_send, buf_recv, np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max, debug)
+                  (obj, 'R', a, at_col, buf_send, buf_recv, buf_self, np_fine, l_rows, l_cols, &
+                  nblk_mult_rows_max, nblk_mult_cols_max, debug)
           endif
         endif
 
@@ -1241,7 +1245,8 @@
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  (obj, 'C', b, bt_row, buf_send, buf_recv, np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max, debug)
+                  (obj, 'C', b, bt_row, buf_send, buf_recv, buf_self, np_fine, l_rows, l_cols, &
+                  nblk_mult_rows_max, nblk_mult_cols_max, debug)
           endif
         endif
 
@@ -1502,8 +1507,8 @@
           successGPU = gpu_free(buf_self_dev)
           check_dealloc_gpu("elpa_pxgemm: buf_self_dev", successGPU)
         else
-          deallocate(buf_send, buf_recv, stat=istat, errmsg=errorMessage)
-          call check_alloc("elpa_pxgemm", "buf_send, buf_recv", istat, errorMessage)
+          deallocate(buf_send, buf_recv, buf_self, stat=istat, errmsg=errorMessage)
+          call check_alloc("elpa_pxgemm", "buf_send, buf_recv, buf_self", istat, errorMessage)
         endif
       endif ! a_transposed
 
