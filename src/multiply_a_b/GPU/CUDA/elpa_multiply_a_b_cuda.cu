@@ -1553,7 +1553,7 @@ void cuda_update_c_tn_nt(int *a_transposed_in,
     }
 
     dim3 blocksPerGrid(SM_count, 1, 1);
-    dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK), 1, 1); // PETERDEBUG
+    dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
     cuda_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
