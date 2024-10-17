@@ -134,9 +134,7 @@
 
   MATH_DATATYPE(kind=rck)                      :: beta
   integer(kind=ik)                             :: beta_int
-  ! MATH_DATATYPE(kind=rck), pointer, contiguous :: tmp1(:,:)
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_a_full(:,:), aux_b_full(:,:), tmp1_full(:,:) ! PETERDEBUG
-  ! MATH_DATATYPE(kind=rck), allocatable         :: tmp2(:,:)
   logical                                      :: wantDebug
   integer(kind=ik)                             :: istat, debug
   character(200)                               :: errorMessage
@@ -164,12 +162,11 @@
   integer(kind=c_intptr_t)                     :: at_col_dev, bt_row_dev ! PETERDEBUG_NEW: for transposed+GPU case
   integer(kind=c_intptr_t)                     :: buf_send_dev, buf_recv_dev, buf_self_dev ! PETERDEBUG_NEW: for transposed+NCCL case
   integer(kind=c_intptr_t)                     :: offset_dev
-!#ifndef DEVICE_POINTER
+
   integer(kind=c_intptr_t)                     :: a_dev
   integer(kind=c_intptr_t)                     :: b_dev
   integer(kind=c_intptr_t)                     :: c_dev
-!#endif
-  !type(c_ptr)                                  :: aux_host ! PETERDEBUG: unused, delete
+
   integer(kind=c_intptr_t)                     :: num, num_a, num_b, num_r, num_c
   integer(kind=c_intptr_t)                     :: aux_off, b_off
   integer(kind=c_intptr_t), parameter          :: size_of_datatype = size_of_&
@@ -187,16 +184,11 @@
   integer(kind=ik)                             :: k_datatype
 #endif
 
-#ifdef DEVICE_POINTER
-!  MATH_DATATYPE(kind=rck), allocatable         :: a_tmp(:,:), c_tmp(:,:) ! PETERDEBUG: unused, also in elpa_multiply_a_b
-#endif
   integer(kind=c_intptr_t)                     :: aux_dev
   integer(kind=c_int)                          :: gpu
   integer(kind=c_int)                          :: gpu_multiply_a_b
 
-#ifdef WITH_NVTX
-  call nvtxRangePush("pxgemm")
-#endif
+  NVTX_RANGE_PUSH("elpa_pxgemm")
 
   success = .true.
   useGPU = .false.
@@ -388,9 +380,7 @@
     successGPU = gpu_malloc(c_dev, ldc*ldcCols*size_of_datatype)
     check_alloc_gpu("elpa_pxgemm: c_dev", successGPU)
 
-#ifdef WITH_NVTX
-        call nvtxRangePush("gpu_memcpy: a->a_dev, b->b_dev")
-#endif
+    NVTX_RANGE_PUSH("gpu_memcpy: a->a_dev, b->b_dev")
     ! copy a to a_dev
     num = lda*ldaCols*size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -417,16 +407,7 @@
     check_memcpy_gpu("elpa_pxgemm: b to b_dev", successGPU)
 #endif
 
-
-! #ifdef WITH_GPU_STREAMS
-!   if (wantDebug) then
-!     successGPU = gpu_stream_synchronize(my_stream)
-!     check_stream_synchronize_gpu("elpa_pxgemm: stream synchronize", successGPU)
-!   endif
-! #endif
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! gpu_memcpy: a->a_dev, b->b_dev
-#endif
+    NVTX_RANGE_POP("gpu_memcpy: a->a_dev, b->b_dev")
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
@@ -531,9 +512,7 @@
 
       ! main loop: build up the result matrix by processor rows/cols for TN/NT
       do np = 0, np_dirs-1
-#ifdef WITH_NVTX
-        call nvtxRangePush("do np = 0, np_dirs-1")
-#endif
+        NVTX_RANGE_PUSH("do np = 0, np_dirs-1")
         print *, "np = ", np ! PETERDEBUG
 
         ! In this turn, procs of row/col np assemble the result for TN/NT case
@@ -595,11 +574,9 @@
         ! Broadcast processor column
         if (useCCL) then
 #ifdef USE_CCL_PXGEMM
-#ifdef WITH_NVTX
-          call nvtxRangePush("ccl_bcast aux_a/b_full")
-#endif
           call obj%timer%start("ccl_bcast")
-
+          NVTX_RANGE_PUSH("ccl_bcast aux_a/b_full")
+          
           my_stream = obj%gpu_setup%my_stream
 
           if (a_transposed) then
@@ -620,16 +597,13 @@
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_pxgemm: ccl_bcast", successGPU)
 
+          NVTX_RANGE_POP("ccl_bcast aux_a/b_full")
           call obj%timer%stop("ccl_bcast")
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! ccl_bcast aux_a/b_full
-#endif
 #endif /* USE_CCL_PXGEMM */
         else ! useCCL
           call obj%timer%start("mpi_communication")
-#ifdef WITH_NVTX
-          call nvtxRangePush("MPI_Bcast(aux_a/b_full)")
-#endif
+          NVTX_RANGE_PUSH("MPI_Bcast(aux_a/b_full)")
+
           if (a_transposed) then
             call MPI_Bcast(aux_a_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                           int(np_t,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
@@ -637,9 +611,8 @@
             call MPI_Bcast(aux_b_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                           int(np_t,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           endif
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! MPI_Bcast(aux_a/b_full)
-#endif
+
+          NVTX_RANGE_POP("MPI_Bcast(aux_a/b_full)")
           call obj%timer%stop("mpi_communication")
         endif ! useCCL
 
@@ -674,20 +647,17 @@
 
         if (useGPU) then
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-#ifdef WITH_NVTX
-          call nvtxRangePush("gpublas")
-#endif
+
           call obj%timer%start("gpublas")
+          NVTX_RANGE_PUSH("gpublas")
           call gpublas_PRECISION_GEMM(trans_a_cchar, trans_b_cchar, &
                             nblk_mult, nblk_mult, nblk_mult, ONE, &
                             aux_a_full_dev, nblk_mult, &
                             aux_b_full_dev, nblk_mult, ZERO, &
                             tmp1_full_dev , nblk_mult, gpuHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          NVTX_RANGE_POP("gpublas")
           call obj%timer%stop("gpublas")
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! gpublas
-#endif
         else ! useGPU
           call obj%timer%start("blas")
           call PRECISION_GEMM(trans_a, trans_b, &
@@ -718,11 +688,9 @@
 
         if (useCCL) then
 #ifdef USE_CCL_PXGEMM
-#ifdef WITH_NVTX
-          call nvtxRangePush("ccl_reduce tmp1_full_dev")
-#endif
           call obj%timer%start("ccl_reduce")
-
+          NVTX_RANGE_PUSH("ccl_reduce tmp1_full_dev")
+          
           my_stream = obj%gpu_setup%my_stream
 
           successGPU  = ccl_reduce(tmp1_full_dev, tmp1_full_dev, int(k_datatype*nblk_mult*nblk_mult,kind=c_size_t), cclDatatype, &
@@ -736,10 +704,8 @@
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_pxgemm: ccl_bcast", successGPU)
 
+          NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
           call obj%timer%stop("ccl_reduce")
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! ccl_bcast aux_a_full_dev, aux_b_full_dev
-#endif
 #endif /* USE_CCL_PXGEMM */        
         else ! useCCL
           call obj%timer%start("mpi_communication")
@@ -763,9 +729,7 @@
           endif ! useCCL
         endif
 
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! do np = 0, np_dirs-1
-#endif
+        NVTX_RANGE_POP("do np = 0, np_dirs-1")
       enddo ! np = 0, np_dirs-1
       call obj%timer%stop("main_loop_square_grid_tn_nt")
 
@@ -795,9 +759,7 @@
       
       ! main loop: iterate through np, which are process rows for matrix A and process cols for matrix B
       do np = 0, np_rows-1 ! np_rows=np_cols
-#ifdef WITH_NVTX
-        call nvtxRangePush("np = 0, np_rows-1")
-#endif
+        NVTX_RANGE_PUSH("np = 0, np_rows-1")
         print *, "np = ", np ! PETERDEBUG
 
         ! In this turn, procs of row np assemble the result
@@ -850,11 +812,9 @@
         ! Broadcast processor column
         if (useCCL) then
 #ifdef USE_CCL_PXGEMM
-#ifdef WITH_NVTX
-          call nvtxRangePush("ccl_bcast aux_a_full_dev, aux_b_full_dev")
-#endif
           call obj%timer%start("ccl_bcast")
-
+          NVTX_RANGE_PUSH("ccl_bcast aux_a_full_dev, aux_b_full_dev")
+          
           my_stream = obj%gpu_setup%my_stream
           ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
@@ -872,23 +832,19 @@
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_pxgemm: ccl_bcast", successGPU)
 
+          NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
           call obj%timer%stop("ccl_bcast")
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! ccl_bcast aux_a_full_dev, aux_b_full_dev
-#endif
 #endif /* USE_CCL_PXGEMM */
         else ! useCCL
           call obj%timer%start("mpi_communication")
-#ifdef WITH_NVTX
-          call nvtxRangePush("MPI_Bcast: aux_a_full, aux_b_full")
-#endif
+          NVTX_RANGE_PUSH("MPI_Bcast: aux_a_full, aux_b_full")
+
           call MPI_Bcast(aux_a_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                         int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
           call MPI_Bcast(aux_b_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                         int(np   ,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! MPI_Bcast: aux_a_full, aux_b_full
-#endif
+
+          NVTX_RANGE_POP("MPI_Bcast: aux_a_full, aux_b_full")
           call obj%timer%stop("mpi_communication")
         endif ! useCCL
 
@@ -917,20 +873,17 @@
         if (np>0) beta = ONE
         if (useGPU) then
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-#ifdef WITH_NVTX
-          call nvtxRangePush("gpublas")
-#endif
+
           call obj%timer%start("gpublas")
+          NVTX_RANGE_PUSH("gpublas")
           call gpublas_PRECISION_GEMM('N', 'N', &
                             nblk_mult, nblk_mult, nblk_mult, ONE, &
                             aux_a_full_dev, nblk_mult, &
                             aux_b_full_dev, nblk_mult, beta, &
                             tmp1_full_dev , nblk_mult, gpuHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          NVTX_RANGE_POP("gpublas")
           call obj%timer%stop("gpublas")
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! gpublas
-#endif
         else ! useGPU
           call obj%timer%start("blas")
           call PRECISION_GEMM('N', 'N', &
@@ -943,9 +896,7 @@
           call obj%timer%stop("blas")
         endif ! useGPU
 
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! do np_row_curr = 0, np_rows-1
-#endif
+        NVTX_RANGE_POP("do np_row_curr = 0, np_rows-1")
       enddo ! np = 0, np_rows-1
 
       call obj%timer%stop("main_loop_square_grid_nn")
@@ -983,9 +934,7 @@
 
       ! main loop: iterate through np, which are process rows for matrix A and process cols for matrix B
       do np = 0, np_rows-1 ! np_rows=np_cols
-#ifdef WITH_NVTX
-        call nvtxRangePush("np = 0, np_rows-1")
-#endif
+        NVTX_RANGE_PUSH("np = 0, np_rows-1")
         print *, "np = ", np ! PETERDEBUG
 
         ! In this turn, procs of row np assemble the result
@@ -1031,10 +980,10 @@
                (obj, aux_b_full, l_rows_max, mpi_comm_rows, bt_full, l_rows_max, mpi_comm_cols, &
                 1, nblk_mult*np_rows, l_cols_max, nblk_mult, 1, .false., success) ! PETERDEBUG: allow nb != na
 
-        call obj%timer%start("blas")
         
         beta = ZERO
         if (np>0) beta = ONE
+        call obj%timer%start("blas")
         call PRECISION_GEMM('T', 'T', &
                             int(nblk_mult, kind=BLAS_KIND), &
                             int(nblk_mult, kind=BLAS_KIND), &
@@ -1042,12 +991,9 @@
                             at_full, int(nblk_mult,kind=BLAS_KIND), &
                             bt_full, int(nblk_mult,kind=BLAS_KIND), beta, &
                             tmp1_full , int(nblk_mult,kind=BLAS_KIND))
-
         call obj%timer%stop("blas")
 
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! do np_row_curr = 0, np_rows-1
-#endif
+        NVTX_RANGE_POP("do np_row_curr = 0, np_rows-1")
       enddo ! np = 0, np_rows-1
       
       ! Put the result into C
@@ -1165,9 +1111,7 @@
 
       ! main loop: iterate through np_fine, which are "virtual" process rows for matrix A and process cols for matrix B
       do np_fine = 0, np_rows_fine-1 ! np_rows_fine=np_cols_fine
-#ifdef WITH_NVTX
-        call nvtxRangePush("np_fine = 0, np_rows_fine-1")
-#endif
+        NVTX_RANGE_PUSH("np_fine = 0, np_rows_fine-1")
         print *, "np_fine = ", np_fine ! PETERDEBUG
 
         ! In this turn, procs of row np_fine assemble the result
@@ -1317,11 +1261,9 @@
         ! Broadcast processor column
         if (useCCL) then
 #ifdef USE_CCL_PXGEMM
-#ifdef WITH_NVTX
-          call nvtxRangePush("ccl_bcast aux_a_full_dev, aux_b_full_dev")
-#endif
           call obj%timer%start("ccl_bcast")
-
+          NVTX_RANGE_PUSH("ccl_bcast aux_a_full_dev, aux_b_full_dev")
+          
           my_stream = obj%gpu_setup%my_stream
           ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
@@ -1342,16 +1284,13 @@
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_pxgemm: ccl_bcast", successGPU)
 
+          NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
           call obj%timer%stop("ccl_bcast")
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! ccl_bcast aux_a_full_dev, aux_b_full_dev
-#endif
 #endif /* USE_CCL_PXGEMM */
         else ! useCCL
           call obj%timer%start("mpi_communication")
-#ifdef WITH_NVTX
-          call nvtxRangePush("MPI_Bcast: aux_a_full, aux_b_full")
-#endif
+          NVTX_RANGE_PUSH("MPI_Bcast: aux_a_full, aux_b_full")
+
           call MPI_Bcast(aux_a_full, int(l_rows*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                         int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
@@ -1359,9 +1298,8 @@
                         int(np   ,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call MPI_Bcast(nblk_mult_rows, 1_MPI_KIND, MPI_INTEGER, &
                         int(np   ,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! MPI_Bcast: aux_a_full, aux_b_full
-#endif
+
+          NVTX_RANGE_POP("MPI_Bcast: aux_a_full, aux_b_full")
           call obj%timer%stop("mpi_communication")
         endif ! useCCL
 
@@ -1393,20 +1331,17 @@
         if (np_fine>0) beta = ONE
         if (useGPU) then
           gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-#ifdef WITH_NVTX
-          call nvtxRangePush("gpublas")
-#endif
+
           call obj%timer%start("gpublas")
+          NVTX_RANGE_PUSH("gpublas")
           call gpublas_PRECISION_GEMM('N', 'N', &
                             l_rows, l_cols, nblk_mult_rows, ONE, &
                             aux_a_full_dev, l_rows, &
                             aux_b_full_dev, nblk_mult, beta, &
                             tmp1_full_dev , l_rows, gpuHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          NVTX_RANGE_POP("gpublas")
           call obj%timer%stop("gpublas")
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! gpublas
-#endif
         else ! useGPU
           call obj%timer%start("blas")
           call PRECISION_GEMM('N', 'N', &
@@ -1419,9 +1354,7 @@
           call obj%timer%stop("blas")
         endif ! useGPU
 
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! do np_row_curr = 0, np_rows-1
-#endif
+        NVTX_RANGE_POP("do np_row_curr = 0, np_rows-1")
       enddo ! np_fine = 0, np_rows_fine-1
       
       call obj%timer%stop("main_loop_nn_tt")
@@ -1560,9 +1493,7 @@
 
       ! main loop: build up the result matrix C by the (virtual) process rows/cols for TN/NT
       do np_fine = 0, np_dirs_fine-1
-#ifdef WITH_NVTX
-        call nvtxRangePush("do np_fine")
-#endif
+        NVTX_RANGE_PUSH("do np_fine")
         print *, "np_fine = ", np_fine ! PETERDEBUG
 
         ! In this turn, procs of row/col np assemble the result for TN/NT case
@@ -1776,11 +1707,9 @@
 
           ! Broadcast processor column/row
           if (useCCL) then
-            call obj%timer%start("ccl_bcast")
 #ifdef USE_CCL_PXGEMM
-#ifdef WITH_NVTX
-            call nvtxRangePush("ccl_bcast")
-#endif
+            call obj%timer%start("ccl_bcast")
+            NVTX_RANGE_PUSH("ccl_bcast")
             if (a_transposed) then
               successGPU  = ccl_bcast(aux_a_full_dev, aux_a_full_dev, int(k_datatype*nblk_mult*nblk_mult,kind=c_size_t), &
                                       cclDatatype, int(np_t,kind=c_int), ccl_comm_cols, my_stream)
@@ -1797,16 +1726,13 @@
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("elpa_pxgemm: ccl_bcast", successGPU)
 
-#ifdef WITH_NVTX
-            call nvtxRangePop() ! ccl_bcast aux_a_full_dev, aux_b_full_dev
-#endif
-#endif /* USE_CCL_PXGEMM */
+            NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
             call obj%timer%stop("ccl_bcast")
+#endif /* USE_CCL_PXGEMM */
           else ! useCCL
             call obj%timer%start("mpi_bcast")
-#ifdef WITH_NVTX
-            call nvtxRangePush("MPI_Bcast(aux_a/b_full)")
-#endif
+            NVTX_RANGE_PUSH("MPI_Bcast(aux_a/b_full)")
+
             if (a_transposed) then
               call MPI_Bcast(aux_a_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                             int(np_t,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
@@ -1814,9 +1740,8 @@
               call MPI_Bcast(aux_b_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                             int(np_t,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
             endif
-#ifdef WITH_NVTX
-            call nvtxRangePop() ! MPI_Bcast(aux_a/b_full)
-#endif
+
+            NVTX_RANGE_POP("MPI_Bcast(aux_a/b_full)")
             call obj%timer%stop("mpi_bcast")
           endif ! useCCL
 
@@ -1854,10 +1779,9 @@
             
             if (useGPU) then
               gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
-#ifdef WITH_NVTX
-              call nvtxRangePush("gpublas")
-#endif
+
               call obj%timer%start("gpublas")
+              NVTX_RANGE_PUSH("gpublas")
               if (a_transposed) then
                 offset_dev = dnp_ab_t*nblk_mult_max*nblk_mult * size_of_datatype
                 call gpublas_PRECISION_GEMM(trans_a_cchar, trans_b_cchar, &
@@ -1875,10 +1799,8 @@
                                             tmp1_full_dev  + offset_dev, ld_aux_a_tmp1, gpuHandle)
               endif ! b_transposed
               if (wantDebug) successGPU = gpu_DeviceSynchronize()
+              NVTX_RANGE_POP("gpublas")
               call obj%timer%stop("gpublas")
-#ifdef WITH_NVTX
-              call nvtxRangePop() ! gpublas
-#endif
             else ! useGPU
               call obj%timer%start("blas")
               if (a_transposed) then
@@ -1933,11 +1855,9 @@
           endif ! (useGPU .and. .not. useCCL) 
           
           if (useCCL) then
-            call obj%timer%start("ccl_reduce")
 #ifdef USE_CCL_PXGEMM
-#ifdef WITH_NVTX
-            call nvtxRangePush("ccl_reduce tmp1_full_dev")
-#endif
+            call obj%timer%start("ccl_reduce")
+            NVTX_RANGE_PUSH("ccl_reduce tmp1_full_dev")
 
             successGPU  = ccl_reduce(tmp1_full_dev, tmp1_full_dev, int(k_datatype*num, kind=c_size_t), &
                                      cclDatatype, cclSum, int(np, kind=c_int), ccl_comm_dirs, my_stream)
@@ -1950,11 +1870,9 @@
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("elpa_pxgemm: ccl_bcast", successGPU)
 
-#ifdef WITH_NVTX
-            call nvtxRangePop() ! ccl_bcast aux_a_full_dev, aux_b_full_dev
-#endif
-#endif /* USE_CCL_PXGEMM */
-            call obj%timer%stop("ccl_reduce")     
+            NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
+            call obj%timer%stop("ccl_reduce")
+#endif /* USE_CCL_PXGEMM */  
           else ! useCCL
             call obj%timer%start("mpi_reduce")
             if (my_pdir==np) then
@@ -2057,18 +1975,14 @@
 
         enddo ! do np_ab_fine = 0, np_dirs_fine-1
         
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! do np = 0, np_dirs-1
-#endif
+        NVTX_RANGE_POP("do np = 0, np_dirs-1")
       enddo ! np = 0, np_dirs-1
       call obj%timer%stop("main_loop_tn_nt")
 
 #if !defined(DEVICE_POINTER)
       if (useGPU) then
         call obj%timer%start("gpu_memcpy")
-#ifdef WITH_NVTX
-        call nvtxRangePush("gpu_memcpy: c_dev->c")
-#endif
+        NVTX_RANGE_PUSH("gpu_memcpy: c_dev->c")
 #ifdef WITH_GPU_STREAMS
         call gpu_memcpy_async_and_stream_synchronize &
           ("elpa_pxgemm: c_dev -> c", c_dev, 0_c_intptr_t, c(1:ldc,1:ldcCols), &
@@ -2078,9 +1992,8 @@
                                 ldc*ldcCols*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_pxgemm: c_dev -> c", successGPU)
 #endif
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! gpu_memcpy: c_dev->c
-#endif
+
+        NVTX_RANGE_POP("gpu_memcpy: c_dev->c")
         call obj%timer%stop("gpu_memcpy")
       endif ! useGPU 
 #endif /* DEVICE_POINTER */
@@ -2135,6 +2048,4 @@
   &PRECISION&
   &"//gpuString)
 
-#ifdef WITH_NVTX
-  call nvtxRangePop() ! pxgemm
-#endif
+  NVTX_RANGE_POP("elpa_pxgemm")
