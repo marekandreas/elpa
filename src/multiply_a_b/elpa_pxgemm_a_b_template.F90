@@ -235,11 +235,6 @@
 
 #if defined(DEVICE_POINTER)
   useGPU = .true.
-
-  a_dev = transfer(aDev, a_dev)
-  b_dev = transfer(bDev, b_dev)
-  c_dev = transfer(cDev, c_dev)
-
 #else /* DEVICE_POINTER */
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (.not.(query_gpu_usage(obj, "ELPA_MULITPLY_AB", useGPU))) then
@@ -369,8 +364,11 @@
 
 
 #if defined(DEVICE_POINTER)
+    a_dev = transfer(aDev, a_dev)
+    b_dev = transfer(bDev, b_dev)
+    c_dev = transfer(cDev, c_dev)
+
 #else /* DEVICE_POINTER */
-    
     successGPU = gpu_malloc(a_dev, lda*ldaCols*size_of_datatype)
     check_alloc_gpu("elpa_pxgemm: a_dev", successGPU)
 
@@ -446,11 +444,13 @@
   ! call mpi_iallreduce(l_cols, l_cols_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), allreduce_request4, mpierr)
 
   ! overlap async memcopy to GPU with MPI
-#ifdef WITH_GPU_STREAMS  
-  successGPU = gpu_stream_synchronize(my_stream)
-  check_stream_synchronize_gpu("elpa_pxgemm: stream synchronize", successGPU)
+#ifdef WITH_GPU_STREAMS
+  if (useGPU) then  
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("elpa_pxgemm: stream synchronize", successGPU)
+  endif
 #endif
-#else
+#else /* WITH_MPI */
   l_rows_max = l_rows
   l_cols_max = l_cols
   l_rows_min = l_rows
@@ -1005,6 +1005,10 @@
       deallocate(tmp1_full, stat=istat, errmsg=errorMessage)
       call check_alloc("elpa_pxgemm", "tmp1_full", istat, errorMessage)
       
+      if (useGPU) then
+        successGPU = gpu_free(tmp1_full_dev)
+        check_dealloc_gpu("elpa_pxgemm: tmp1_full_dev", successGPU)
+      endif
     endif ! (a_transposed .and. b_transposed)
   endif ! isSquareGrid
 
@@ -1038,8 +1042,13 @@
       allocate(aux_b_full(nblk_mult, l_cols), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm: aux_b_full", istat, errorMessage)
       
-      allocate(tmp1_full(l_rows, l_cols), stat=istat, errmsg=errorMessage)
-      check_allocate("elpa_pxgemm: tmp1_full", istat, errorMessage)
+      if (useGPU .and. l_rows /= ldc) then
+        print *, "elpa_pxgemm: Error: case ldc != lda is not implemented yet for NN and TT on GPU"
+        stop 1
+      endif
+
+      !allocate(tmp1_full(l_rows, l_cols), stat=istat, errmsg=errorMessage)
+      !check_allocate("elpa_pxgemm: tmp1_full", istat, errorMessage)
       
       if (a_transposed) then
         ! PETERDEBUG: this is as memory consuming as the whole matrix. Can we do smth about it?
@@ -1101,9 +1110,10 @@
   
         successGPU = gpu_malloc(aux_b_full_dev, nblk_mult*l_cols*size_of_datatype)
         check_alloc_gpu("elpa_pxgemm: aux_b_full_dev", successGPU)
-  
-        successGPU = gpu_malloc(tmp1_full_dev, l_rows*l_cols*size_of_datatype)
-        check_alloc_gpu("elpa_pxgemm: tmp1_full_dev", successGPU)
+        
+        ! PETERDEBUG: cleanup
+        !successGPU = gpu_malloc(tmp1_full_dev, l_rows*l_cols*size_of_datatype)
+        !check_alloc_gpu("elpa_pxgemm: tmp1_full_dev", successGPU)
       endif
 
       call obj%timer%start("main_loop_nn_tt")
@@ -1338,7 +1348,7 @@
                             l_rows, l_cols, nblk_mult_rows, ONE, &
                             aux_a_full_dev, l_rows, &
                             aux_b_full_dev, nblk_mult, beta, &
-                            tmp1_full_dev , l_rows, gpuHandle)
+                            c_dev , l_rows, gpuHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
           NVTX_RANGE_POP("gpublas")
           call obj%timer%stop("gpublas")
@@ -1348,9 +1358,9 @@
                               int(l_rows, kind=BLAS_KIND), &
                               int(l_cols, kind=BLAS_KIND), &
                               int(nblk_mult_rows, kind=BLAS_KIND), ONE, &
-                              aux_a_full, int(l_rows,kind=BLAS_KIND), &
-                              aux_b_full, int(nblk_mult,kind=BLAS_KIND), beta, &
-                              tmp1_full , int(l_rows,kind=BLAS_KIND))
+                              aux_a_full(1:l_rows, 1:nblk_mult), int(l_rows,kind=BLAS_KIND), &
+                              aux_b_full(1:nblk_mult, 1:l_cols), int(nblk_mult,kind=BLAS_KIND), beta, &
+                              c(1:l_rows, 1:l_cols) , int(l_rows,kind=BLAS_KIND))
           call obj%timer%stop("blas")
         endif ! useGPU
 
@@ -1361,20 +1371,21 @@
 
       ! Put the result into C
       if (useGPU) then
+#if !defined(DEVICE_POINTER)
         num = l_rows*l_cols
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
-            ("elpa_pxgemm: tmp1_full_dev -> tmp1_full", tmp1_full_dev, 0_c_intptr_t, tmp1_full(1:l_rows,1:l_cols), &
+            ("elpa_pxgemm: c_dev -> c", c_dev, 0_c_intptr_t, c(1:l_rows,1:l_cols), &
               1, 1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else
-        successGPU = gpu_memcpy(int(loc(tmp1_full),kind=c_intptr_t), tmp1_full_dev, num*size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("elpa_pxgemm: tmp1_full_dev -> tmp1_full", successGPU)
+        successGPU = gpu_memcpy(int(loc(c),kind=c_intptr_t), c_dev, num*size_of_datatype, gpuMemcpyDeviceToHost)
+        check_memcpy_gpu("elpa_pxgemm: c_dev -> c", successGPU)
 #endif
+#endif /* DEVICE_POINTER */
       endif ! useGPU
 
-      c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
-
+      
       if (a_transposed) then
         deallocate(at_col, stat=istat, errmsg=errorMessage)
         call check_alloc("elpa_pxgemm", "at_col", istat, errorMessage)
@@ -1998,33 +2009,33 @@
       endif ! useGPU 
 #endif /* DEVICE_POINTER */
 
+      deallocate(tmp1_full,  stat=istat, errmsg=errorMessage)
+      call check_alloc("elpa_pxgemm", "tmp1_full", istat, errorMessage)
+
+      if (useGPU) then
+        successGPU = gpu_free(tmp1_full_dev)
+        check_dealloc_gpu("elpa_pxgemm: tmp1_full_dev", successGPU)
+      endif
     endif ! (.not. a_transposed .and. b_transposed)
 
 ! ___________________________________________________________________ 
- 
-    deallocate(tmp1_full,  stat=istat, errmsg=errorMessage)
-    call check_alloc("elpa_pxgemm", "tmp1_full", istat, errorMessage)
 
   endif ! (.not. isSquareGrid)
   
 !______________________________________________________________________________________________
 
-    ! PETERDEBUG
     deallocate(aux_a_full, stat=istat, errmsg=errorMessage)
-    deallocate(aux_b_full, stat=istat, errmsg=errorMessage)
-    
-    !deallocate(aux_a_full, aux_b_full, tmp1_full, stat=istat, errmsg=errorMessage)
-    !call check_alloc("elpa_pxgemm", "aux_a_full, tmp1_full", istat, errorMessage)
+    call check_alloc("elpa_pxgemm", "aux_a_full", istat, errorMessage)
 
+    deallocate(aux_b_full, stat=istat, errmsg=errorMessage)
+    call check_alloc("elpa_pxgemm", "aux_b_full", istat, errorMessage)
+    
     if (useGPU) then
       successGPU = gpu_free(aux_a_full_dev)
       check_dealloc_gpu("elpa_pxgemm: aux_a_full_dev", successGPU)
 
       successGPU = gpu_free(aux_b_full_dev)
       check_dealloc_gpu("elpa_pxgemm: aux_b_full_dev", successGPU)
-
-      successGPU = gpu_free(tmp1_full_dev)
-      check_dealloc_gpu("elpa_pxgemm: tmp1_full_dev", successGPU)
     endif
 
 !______________________________________________________________________________________________
@@ -2035,10 +2046,10 @@
   check_dealloc_gpu("elpa_pxgemm: a_dev", successGPU)
 
   successGPU = gpu_free(b_dev)
-  check_dealloc_gpu("elpa_pxgemm_a_b: b_dev", successGPU)
+  check_dealloc_gpu("elpa_pxgemm: b_dev", successGPU)
 
   successGPU = gpu_free(c_dev)
-  check_dealloc_gpu("elpa_pxgemm_a_b: c_dev", successGPU)
+  check_dealloc_gpu("elpa_pxgemm: c_dev", successGPU)
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
