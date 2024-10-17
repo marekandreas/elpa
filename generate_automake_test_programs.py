@@ -139,7 +139,8 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
         t != "pxgemm_multiply_nn" and t != "pxgemm_multiply_nt" and t != "pxgemm_multiply_tn" and t != "pxgemm_multiply_tt"):
         continue
        
-    if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_lower")):
+    if api_name == "explicit" and ((t != "eigenvectors") and  (t != "eigenvalues") and (t != "cholesky") and (t != "hermitian_multiply_full" and t != "hermitian_multiply_upper" and t != "hermitian_multiply_lower" and
+                                                                                                              t != "pxgemm_multiply_nn" and t != "pxgemm_multiply_nt" and t != "pxgemm_multiply_tn" and t != "pxgemm_multiply_tt")):
         continue
 
     if lang !="Fortran" and (t == "hermitian_multiply_upper" or t == "hermitian_multiply_lower" or t == "pxgemm_multiply_nt" or t == "pxgemm_multiply_tn" or t == "pxgemm_multiply_tt"):

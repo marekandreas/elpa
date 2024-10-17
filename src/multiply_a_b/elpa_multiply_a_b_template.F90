@@ -168,7 +168,7 @@
 #endif
 
 #ifdef DEVICE_POINTER
-  MATH_DATATYPE(kind=rck), allocatable         :: a_tmp(:,:), c_tmp(:,:)
+  MATH_DATATYPE(kind=rck), allocatable         :: a_tmp(:,:), c_tmp(:,:) ! PETERDEBUG: unused
 #endif
   integer(kind=c_intptr_t)                     :: aux_dev
   integer(kind=c_int)                          :: gpu

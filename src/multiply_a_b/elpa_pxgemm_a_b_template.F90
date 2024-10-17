@@ -94,17 +94,15 @@
   integer(kind=ik), intent(in)                 :: ldb, ldbCols, ldc, ldcCols
   integer(kind=ik)                             :: lda, ldaCols
   integer(kind=ik)                             :: na, ncb
-#ifndef DEVICE_POINTER
-!forget device pointer case for the moment implement later <-- PETERDEBUG - take care of this
+#ifdef DEVICE_POINTER
+  type(c_ptr)                                  :: aDev, bDev, cDev
+  MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), b(:,:), c(:,:) ! dummy variables
+#else /* DEVICE_POINTER */
 #ifdef USE_ASSUMED_SIZE
   MATH_DATATYPE(kind=rck)                      :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
 #else
   MATH_DATATYPE(kind=rck)                      :: a(obj%local_nrows,obj%local_ncols), b(ldb,ldbCols), c(ldc,ldcCols)
 #endif
-#else /* DEVICE_POINTER */
-  ! dummy variables
-  MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), b(:,:), c(:,:)
-  type(c_ptr)                                  :: aDev, bDev, cDev
 #endif /* DEVICE_POINTER */
   MATH_DATATYPE(kind=rck), allocatable         :: at_full(:,:), bt_full(:,:)
   MATH_DATATYPE(kind=rck), allocatable         :: buf_send(:,:), buf_recv(:,:), buf_self(:,:), at_col(:,:), bt_row(:,:) ! PETERDEBUG: needed for TT case
@@ -136,9 +134,9 @@
 
   MATH_DATATYPE(kind=rck)                      :: beta
   integer(kind=ik)                             :: beta_int
-  MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_mat(:,:), tmp1(:,:)
+  ! MATH_DATATYPE(kind=rck), pointer, contiguous :: tmp1(:,:)
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_a_full(:,:), aux_b_full(:,:), tmp1_full(:,:) ! PETERDEBUG
-  MATH_DATATYPE(kind=rck), allocatable         :: aux_bc(:), tmp2(:,:)
+  ! MATH_DATATYPE(kind=rck), allocatable         :: tmp2(:,:)
   logical                                      :: wantDebug
   integer(kind=ik)                             :: istat, debug
   character(200)                               :: errorMessage
@@ -157,11 +155,11 @@
   integer(kind=ik)                             :: my_mpi_rank, mpi_rank_target, my_prow_target, my_pcol_target, &
                                                   mpi_rank_source, my_prow_source, my_pcol_source, & ! PETERDEBUG_NEW --> needed only for transpose
                                                   my_prow_target_deadlock
+  integer(kind=MPI_KIND)                       :: allreduce_request1, allreduce_request2, allreduce_request3, allreduce_request4
 
   integer(kind=ik)                             :: nblk, nblk_cut, nblk_cut_row, nblk_cut_col
   integer(kind=ik)                             :: ld_aux_a_tmp1
   integer(kind=ik)                             :: error
-  integer(kind=c_intptr_t)                     :: aux_bc_dev, aux_mat_dev, tmp1_dev, tmp2_dev
   integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev ! PETERDEBUG_NEW
   integer(kind=c_intptr_t)                     :: at_col_dev, bt_row_dev ! PETERDEBUG_NEW: for transposed+GPU case
   integer(kind=c_intptr_t)                     :: buf_send_dev, buf_recv_dev, buf_self_dev ! PETERDEBUG_NEW: for transposed+NCCL case
@@ -171,7 +169,7 @@
   integer(kind=c_intptr_t)                     :: b_dev
   integer(kind=c_intptr_t)                     :: c_dev
 !#endif
-  type(c_ptr)                                  :: aux_host
+  !type(c_ptr)                                  :: aux_host ! PETERDEBUG: unused, delete
   integer(kind=c_intptr_t)                     :: num, num_a, num_b, num_r, num_c
   integer(kind=c_intptr_t)                     :: aux_off, b_off
   integer(kind=c_intptr_t), parameter          :: size_of_datatype = size_of_&
@@ -190,7 +188,7 @@
 #endif
 
 #ifdef DEVICE_POINTER
-  MATH_DATATYPE(kind=rck), allocatable         :: a_tmp(:,:), c_tmp(:,:) ! PETERDEBUG: unused, also in elpa_multiply_a_b
+!  MATH_DATATYPE(kind=rck), allocatable         :: a_tmp(:,:), c_tmp(:,:) ! PETERDEBUG: unused, also in elpa_multiply_a_b
 #endif
   integer(kind=c_intptr_t)                     :: aux_dev
   integer(kind=c_int)                          :: gpu
@@ -243,8 +241,14 @@
     return
   endif
 
-#if !defined(DEVICE_POINTER)
+#if defined(DEVICE_POINTER)
+  useGPU = .true.
 
+  a_dev = transfer(aDev, a_dev)
+  b_dev = transfer(bDev, b_dev)
+  c_dev = transfer(cDev, c_dev)
+
+#else /* DEVICE_POINTER */
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (.not.(query_gpu_usage(obj, "ELPA_MULITPLY_AB", useGPU))) then
     print *,"ELPA_MULITPLY_AB: Problem querrying settings for GPU Aborting..."
@@ -269,15 +273,6 @@
     ! no override by user
     ! keep setting as found before
   endif
-
-#else /* DEVICE_POINTER */
-
-  useGPU = .true.
-
-  a_dev = transfer(aDev, a_dev)
-  b_dev = transfer(bDev, b_dev)
-  c_dev = transfer(cDev, c_dev)
-
 #endif /* DEVICE_POINTER */
 
   if(useGPU) then
@@ -380,74 +375,60 @@
 #endif
 #endif /* defined(USE_CCL_PXGEMM) */
 
-#if !defined(DEVICE_POINTER)
-    num = ldc*ldcCols*size_of_datatype
-    successGPU = gpu_malloc(c_dev, num)
+
+#if defined(DEVICE_POINTER)
+#else /* DEVICE_POINTER */
+    
+    successGPU = gpu_malloc(a_dev, lda*ldaCols*size_of_datatype)
+    check_alloc_gpu("elpa_pxgemm: a_dev", successGPU)
+
+    successGPU = gpu_malloc(b_dev, ldb*ldbCols*size_of_datatype)
+    check_alloc_gpu("elpa_pxgemm: b_dev", successGPU) 
+
+    successGPU = gpu_malloc(c_dev, ldc*ldcCols*size_of_datatype)
     check_alloc_gpu("elpa_pxgemm: c_dev", successGPU)
-    ! no copy from c to c_dev needed since c will be overwritten anyway
+
+#ifdef WITH_NVTX
+        call nvtxRangePush("gpu_memcpy: a->a_dev, b->b_dev")
+#endif
+    ! copy a to a_dev
+    num = lda*ldaCols*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+    call gpu_memcpy_async_and_stream_synchronize &
+    ("elpa_pxgemm: a to a_dev", a_dev, 0_c_intptr_t, &
+                                       a(1:lda,1:ldaCols), &
+                                       1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+#else
+    successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), &
+                  num, gpuMemcpyHostToDevice)
+    check_memcpy_gpu("elpa_pxgemm: a to a_dev", successGPU)
 #endif
 
-#if !defined(DEVICE_POINTER)
     ! copy b to b_dev
-    num = ldb*ldbCols*size_of_datatype
-    successGPU = gpu_malloc(b_dev, num)
-    check_alloc_gpu("elpa_pxgemm: b_dev", successGPU)
-
-#if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
-    successGPU = gpu_host_register(int(loc(b),kind=c_intptr_t),num,&
-                  gpuHostRegisterDefault)
-#endif    
-
-    check_host_register_gpu("elpa_pxgemm: b", successGPU)
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     call gpu_memcpy_async_and_stream_synchronize &
     ("elpa_pxgemm: b to b_dev", b_dev, 0_c_intptr_t, &
                                        b(1:ldb,1:ldbCols), &
-                                       1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
+                                       1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else
     successGPU = gpu_memcpy(b_dev,int(loc(b),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_pxgemm: b to b_dev", successGPU)
 #endif
 
-#else /* DEVICE_POINTER */
 
-#endif /* DEVICE_POINTER */
-
-    num = l_rows*nblk_mult*size_of_datatype
-#if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
-    successGPU = gpu_malloc_host(aux_host, num) ! aux_host is needed, because pinning host memory can be done only for 1D arrays
-    check_host_alloc_gpu("elpa_pxgemm: aux_host", successGPU)
-    call c_f_pointer(aux_host, aux_mat, (/l_rows,nblk_mult/))
-#else
-    allocate(aux_mat(l_rows, nblk_mult), stat=istat, errmsg=errorMessage)
-    check_allocate("elpa_pxgemm: aux_mat", istat, errorMessage)
+! #ifdef WITH_GPU_STREAMS
+!   if (wantDebug) then
+!     successGPU = gpu_stream_synchronize(my_stream)
+!     check_stream_synchronize_gpu("elpa_pxgemm: stream synchronize", successGPU)
+!   endif
+! #endif
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! gpu_memcpy: a->a_dev, b->b_dev
 #endif
-
-    successGPU = gpu_malloc(aux_mat_dev, num)
-    check_alloc_gpu("elpa_pxgemm: aux_mat_dev", successGPU)
-
-    num = nblk_mult*l_cols*size_of_datatype
-    successGPU = gpu_malloc(tmp1_dev, num)
-    check_alloc_gpu("elpa_pxgemm: tmp1_dev", successGPU)
-
-    num = nblk_mult*l_cols*size_of_datatype
-    successGPU = gpu_malloc(tmp2_dev, num)
-    check_alloc_gpu("elpa_pxgemm: tmp2_dev", successGPU)
-
-  else ! useGPU
-    allocate(aux_mat(l_rows,nblk_mult), stat=istat, errmsg=errorMessage)
-    check_allocate("elpa_pxgemm: aux_mat", istat, errorMessage)
+#endif /* DEVICE_POINTER */
   endif ! useGPU
-
-  allocate(aux_bc(l_rows*nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_pxgemm: aux_bc", istat, errorMessage)
-
-  allocate(lrs_save(nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_pxgemm: lrs_save", istat, errorMessage)
-
-  allocate(lre_save(nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_pxgemm: lre_save", istat, errorMessage)
 
   a_lower = .false.
   a_upper = .false.
@@ -470,51 +451,36 @@
   print *, "np_rows = ", np_rows
   print *, "np_cols = ", np_cols
 
-  if (useGPU) then
-
-#if !defined(DEVICE_POINTER)
-    num = lda*ldaCols*size_of_datatype
-    successGPU = gpu_malloc(a_dev, num)
-    check_alloc_gpu("elpa_pxgemm: a_dev", successGPU)
-#endif
-
-    num = l_rows*nblk*size_of_datatype
-    successGPU = gpu_malloc(aux_bc_dev, num)
-    check_alloc_gpu("elpa_pxgemm: aux_bc_dev", successGPU)
-
-    num = lda*ldaCols*size_of_datatype
-#if !defined(DEVICE_POINTER)
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    call gpu_memcpy_async_and_stream_synchronize &
-    ("elpa_pxgemm: a to a_dev", a_dev, 0_c_intptr_t, &
-                                       a(1:lda,1:ldaCols), &
-                                       1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
-#else
-    successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), &
-                  num, gpuMemcpyHostToDevice)
-    check_memcpy_gpu("elpa_pxgemm: a to a_dev", successGPU)
-#endif
-#endif /* DEVICE_POINTER */
-  endif !useGPU
-
-!______________________________________________________________________________________________
-
-  ! if (useGPU) then
-  !   print *, "elpa_pxgemm NEW: isSquareGrid and useGPU is not imlemented yet" ! PETERDEBUG
-  !   stop 1
-  ! endif
-
   print *, "elpa_pxgemm NEW: start" ! PETERDEBUG
 
+#if WITH_MPI
   ! l_rows_max = l_rows
   call mpi_allreduce(l_rows, l_rows_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
   call mpi_allreduce(l_cols, l_cols_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
   call mpi_allreduce(l_rows, l_rows_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), mpierr)
   call mpi_allreduce(l_cols, l_cols_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), mpierr)
-  
+  ! call mpi_iallreduce(l_rows, l_rows_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), allreduce_request1, mpierr)
+  ! call mpi_iallreduce(l_cols, l_cols_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), allreduce_request2, mpierr)
+  ! call mpi_iallreduce(l_rows, l_rows_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), allreduce_request3, mpierr)
+  ! call mpi_iallreduce(l_cols, l_cols_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), allreduce_request4, mpierr)
+
+  ! overlap async memcopy to GPU with MPI
+#ifdef WITH_GPU_STREAMS  
+  successGPU = gpu_stream_synchronize(my_stream)
+  check_stream_synchronize_gpu("elpa_pxgemm: stream synchronize", successGPU)
+#endif
+#else
+  l_rows_max = l_rows
+  l_cols_max = l_cols
+  l_rows_min = l_rows
+  l_cols_min = l_cols
+#endif /* WITH_MPI */
+
+
+
   !nblk_mult = l_rows_max ! = l_cols_max
   nblk_mult = greatest_common_divisor(l_rows_max, l_cols_max)
+!______________________________________________________________________________________________
 
   if (isSquareGrid) then
 
@@ -1934,7 +1900,7 @@
                                   int(nblk_mult, kind=BLAS_KIND), &
                                   aux_b_full(1:nblk_mult,1:nblk_mult), int(nblk_mult, kind=BLAS_KIND), ZERO, &
                                   tmp1_full ((1+dnp_ab_t*nblk_mult_max):(nblk_mult+dnp_ab_t*nblk_mult_max),1:nblk_mult),&
-                                  int(nblk_mult, kind=BLAS_KIND)) ! PETERDEBUG: why not ld_aux_a_tmp1 for a and tmp?
+                                  int(nblk_mult, kind=BLAS_KIND))
               endif ! b_transposed
               call obj%timer%stop("blas")
             endif ! useGPU
@@ -2097,13 +2063,27 @@
       enddo ! np = 0, np_dirs-1
       call obj%timer%stop("main_loop_tn_nt")
 
+#if !defined(DEVICE_POINTER)
       if (useGPU) then
         call obj%timer%start("gpu_memcpy")
+#ifdef WITH_NVTX
+        call nvtxRangePush("gpu_memcpy: c_dev->c")
+#endif
+#ifdef WITH_GPU_STREAMS
+        call gpu_memcpy_async_and_stream_synchronize &
+          ("elpa_pxgemm: c_dev -> c", c_dev, 0_c_intptr_t, c(1:ldc,1:ldcCols), &
+            1, 1, ldc*ldcCols*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+#else
         successGPU = gpu_memcpy(int(loc(c),kind=c_intptr_t), c_dev, &
                                 ldc*ldcCols*size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("elpa_pxgemm: tmp1_full_dev -> tmp1_full", successGPU)
+        check_memcpy_gpu("elpa_pxgemm: c_dev -> c", successGPU)
+#endif
+#ifdef WITH_NVTX
+        call nvtxRangePop() ! gpu_memcpy: c_dev->c
+#endif
         call obj%timer%stop("gpu_memcpy")
       endif ! useGPU 
+#endif /* DEVICE_POINTER */
 
     endif ! (.not. a_transposed .and. b_transposed)
 
@@ -2138,106 +2118,16 @@
 
   if (useGPU) then
 #if !defined(DEVICE_POINTER)
-    successGPU = gpu_free(b_dev)
-    check_dealloc_gpu("elpa_pxgemm_a_b: b_dev", successGPU)
-#if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
-    successGPU = gpu_host_unregister(int(loc(b),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_pxgemm_a_b: b", successGPU)
-#endif
+  successGPU = gpu_free(a_dev)
+  check_dealloc_gpu("elpa_pxgemm: a_dev", successGPU)
 
-    successGPU = gpu_free(c_dev)
-    check_dealloc_gpu("elpa_pxgemm_a_b: c_dev", successGPU)
+  successGPU = gpu_free(b_dev)
+  check_dealloc_gpu("elpa_pxgemm_a_b: b_dev", successGPU)
 
-#else /* DEVICE_POINTER */
-    !successGPU = gpu_free(b_dev)
-    !check_dealloc_gpu("elpa_pxgemm_a_b: b_dev", successGPU)
-
-    !num = ldc*ldcCols*size_of_datatype
-    !successGPU = gpu_memcpy(cDev, c_dev, num,&
-    !              gpuMemcpyDeviceToDevice)
-    !check_memcpy_gpu("elpa_pxgemm: c_dev -> cDev", successGPU)
-
-    !successGPU = gpu_free(c_dev)
-    !check_dealloc_gpu("elpa_pxgemm_a_b: c_dev", successGPU)
-
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_pxgemm: a_tmp", successGPU)
-#endif
-    deallocate(a_tmp, stat=istat, errmsg=errorMessage)
-    check_deallocate("elpa_pxgemm: a_tmp", istat, errorMessage)
-
-    num = ldc*ldcCols*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_pxgemm: c_tmp to c", successGPU)
-
-    successGPU = gpu_memcpy_async(cDev,int(loc(c_tmp),kind=c_intptr_t),num,&
-                  gpuMemcpyHostToDevice, my_stream)
-    check_memcpy_gpu("elpa_pxgemm: c_tmp -> c", successGPU)
-
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_pxgemm: c_tmp -> c", successGPU)
-    ! synchronize streamsPerThread; maybe not neccessary
-    successGPU = gpu_stream_synchronize()
-    check_stream_synchronize_gpu("elpa_pxgemm: c_tmp -> c", successGPU)
-#else
-    successGPU = gpu_memcpy(cDev,int(loc(c_tmp),kind=c_intptr_t),num,&
-                  gpuMemcpyHostToDevice)
-    check_memcpy_gpu("elpa_pxgemm: c_tmp -> c", successGPU)
-#endif
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_host_unregister(int(loc(c_tmp),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_pxgemm_a_b: c_tmp", successGPU)
-#endif
-
-    deallocate(c_tmp, stat=istat, errmsg=errorMessage)
-    check_deallocate("elpa_pxgemm: c_tmp", istat, errorMessage)
-
+  successGPU = gpu_free(c_dev)
+  check_dealloc_gpu("elpa_pxgemm_a_b: c_dev", successGPU)
 #endif /* DEVICE_POINTER */
-#if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
-    nullify(aux_mat)
-    !nullify(tmp1)
-
-    successGPU = gpu_free_host(aux_host)
-    check_host_dealloc_gpu("elpa_pxgemm_a_b: aux_host", successGPU)
-#else
-    deallocate(aux_mat, stat=istat, errmsg=errorMessage)
-    check_deallocate("elpa_pxgemm: aux_mat", istat, errorMessage)
-
-    !deallocate(tmp1, stat=istat, errmsg=errorMessage)
-    !check_deallocate("elpa_pxgemm: tmp1", istat, errorMessage)
-#endif
-
-    successGPU = gpu_free(aux_mat_dev)
-    check_dealloc_gpu("elpa_pxgemm_a_b: aux_mat_dev", successGPU)
-
-    successGPU = gpu_free(tmp1_dev)
-    check_dealloc_gpu("elpa_pxgemm_a_b: tmp1_dev", successGPU)
-
-    successGPU = gpu_free(tmp2_dev)
-    check_dealloc_gpu("elpa_pxgemm_a_b: tmp2_dev", successGPU)
-
-    successGPU = gpu_free(aux_bc_dev)
-    check_dealloc_gpu("elpa_pxgemm_a_b: aux_bc_dev", successGPU)
-
-#if !defined(DEVICE_POINTER)
-    successGPU = gpu_free(a_dev)
-    check_dealloc_gpu("elpa_pxgemm: a_dev", successGPU)
-#else
-    !successGPU = gpu_free(a_dev)
-    !check_dealloc_gpu("elpa_pxgemm: a_dev", successGPU)
-#endif
-
-  else ! useGPU
-    deallocate(aux_mat, stat=istat, errmsg=errorMessage)
-    check_deallocate("elpa_pxgemm: aux_mat", istat, errorMessage)
   endif ! useGPU
-
-  deallocate(aux_bc, lrs_save, lre_save, stat=istat, errmsg=errorMessage)
-  check_deallocate("elpa_pxgemm: aux_bc, lrs_save, lre_save", istat, errorMessage)
 
   call obj%timer%stop("elpa_pxgemm_&
   &MATH_DATATYPE&
