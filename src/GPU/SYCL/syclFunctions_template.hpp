@@ -315,23 +315,51 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
 
-  int syclFreeFromC(intptr_t *a) {
+  int syclFreeFromC(void *a) {
     DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
-    void * ptr = reinterpret_cast<void *>(*a);
+    using sycl::usm::alloc;
+    auto allocStr = [] (alloc a) {
+      switch (a) {
+        case alloc::host: return "alloc::host";
+        case alloc::device: return "alloc::device";
+        case alloc::unknown: return "alloc::unknown";
+        default: return "alloc::????";
+      }
+    };
+
+    auto allocT = sycl::get_pointer_type(a, devSel.context);
     // queue.wait();
-    sycl::free(ptr, devSel.context);
+    std::cerr << "FREE |" << "syclFree" << "| ~> void **: " << ((size_t) a) << " -> " << allocStr(allocT) << "\n";
+    sycl::free(a, devSel.context);
     return 1;
   }
 
-  int syclFreeHostFromC(intptr_t *a) {
+  int syclFreeHostFromC(void *a) {
     return syclFreeFromC(a);
   }
 
   bool checkPointerValidity(void *dst, void *src, int direction, sycl::queue queue) {
     using sycl::usm::alloc;
+    auto allocStr = [] (alloc a) {
+      switch (a) {
+        case alloc::host: return "alloc::host";
+        case alloc::device: return "alloc::device";
+        case alloc::unknown: return "alloc::unknown";
+        default: return "alloc::????";
+      }
+    };
+    auto dirStr = [] (int dir) {
+      if    (dir == syclMemcpyDeviceToDevice) { return "Devc->Devc"; }
+      else if (dir == syclMemcpyDeviceToHost) { return "Devc->Host"; }
+      else if (dir == syclMemcpyHostToDevice) { return "Host->Devc"; }
+      else { return "Invalid"; }
+    };
     sycl::context c = queue.get_context();
+    auto dstAllocT = sycl::get_pointer_type(dst, c);
+    auto srcAllocT = sycl::get_pointer_type(src, c);
+    std::cerr << "MEMCPY |" << dirStr(direction) << "| ~> Dst: " << ((size_t) dst) << " -> " << allocStr(dstAllocT) << ", Src: " << ((size_t) src) << " -> " << allocStr(srcAllocT) << "\n";
     bool isFailed = false;
-    if (isCPU == 1) {
+    /*if (isCPU == 1) {
       if (direction == syclMemcpyDeviceToDevice) {
         if (sycl::get_pointer_type(dst, c) != alloc::host) {
           std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen CPU queue." << std::endl;
@@ -363,8 +391,8 @@ static oneapi::mkl::side sideFromChar(char c) {
         std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
         isFailed = true;
       }
-    }
-    else {
+    } 
+    else */ {
       if (direction == syclMemcpyDeviceToDevice) {
         if (sycl::get_pointer_type(dst, c) != alloc::device) {
           std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
@@ -375,8 +403,8 @@ static oneapi::mkl::side sideFromChar(char c) {
           isFailed = true;
         }
       } else if (direction == syclMemcpyDeviceToHost) {
-        if (sycl::get_pointer_type(dst, c) != alloc::unknown) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is likely not a host pointer!." << std::endl;
+        if (sycl::get_pointer_type(dst, c) == alloc::device) {
+          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is a device pointer (but expected host/unknown)!." << std::endl;
           isFailed = true;
         }
         if (sycl::get_pointer_type(src, c) != alloc::device) {
@@ -388,8 +416,8 @@ static oneapi::mkl::side sideFromChar(char c) {
           std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
           isFailed = true;
         }
-        if (sycl::get_pointer_type(src, c) != alloc::unknown) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is likely not a host pointer!." << std::endl;
+        if (sycl::get_pointer_type(src, c) == alloc::device) {
+          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is a device pointer (but expected host/unknown)!." << std::endl;
           isFailed = true;
         }
       } else {
@@ -504,12 +532,24 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   int syclHostRegisterFromC(void *ptr, size_t length, int flags) {
-    // Do nothing, as SYCL does not support the operation, it only affects performance.
+#if defined(SYCL_EXT_ONEAPI_COPY_OPTIMIZE) && SYCL_EXT_ONEAPI_COPY_OPTIMIZE == 1
+    // oneAPI SYCL extension is available, may not always be the case, especially with other implementations, such as AdaptiveCpp
+    DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
+    sycl::ext::oneapi::experimental::prepare_for_device_copy(ptr, length, devSel.context);
+#else
+    // Do nothing, as SYCL standard does not support the operation, it only affects performance.
+#endif
     return 1;
   }
 
   int syclHostUnregisterFromC(void *ptr) {
-    // Do nothing, as SYCL does not support the operation, it only affects performance.
+    #if defined(SYCL_EXT_ONEAPI_COPY_OPTIMIZE) && SYCL_EXT_ONEAPI_COPY_OPTIMIZE == 1
+    // oneAPI SYCL extension is available, may not always be the case, especially with other implementations, such as AdaptiveCpp
+    DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
+    sycl::ext::oneapi::experimental::release_from_device_copy(ptr, devSel.context);
+#else
+    // Do nothing, as SYCL standard does not support the operation, it only affects performance.
+#endif
     return 1;
   }
 

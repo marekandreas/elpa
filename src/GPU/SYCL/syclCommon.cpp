@@ -214,12 +214,12 @@ DeviceSelection::DeviceSelection(int deviceId, sycl::device device)
 #ifdef WITH_ONEAPI_ONECCL
     cclDevice(ccl::create_device(this->device)),
 #endif
-    defaultQueueHandle(device) {
+    defaultQueueHandle(device, context) {
   queueHandles.push_back(defaultQueueHandle);
 }
 
 QueueData* DeviceSelection::createQueue() {
-  queueHandles.emplace_back(device);
+  queueHandles.emplace_back(device, context);
   return &queueHandles.back();
 }
 
@@ -251,8 +251,8 @@ QueueData* DeviceSelection::getDefaultQueueRef() {
 // QueueData
 //--------------------------------------------------------------------------------------------
 
-QueueData::QueueData(sycl::device device) 
-  : queue(device, sycl::property_list(sycl::property::queue::in_order())),
+QueueData::QueueData(sycl::device device, sycl::context context) 
+  : queue(context, device, sycl::property_list(sycl::property::queue::in_order())),
 #ifdef WITH_ONEAPI_ONECCL
     cclStream(ccl::create_stream(queue)),
 #endif

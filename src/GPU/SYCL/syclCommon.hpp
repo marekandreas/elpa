@@ -58,6 +58,7 @@
 namespace sycl_be {
 
 struct QueueData {
+  friend class DeviceSelection;
   private:
   void *oneMklScratchpad; 
   
@@ -69,7 +70,7 @@ struct QueueData {
   size_t oneMklScratchpadSize;
 
 
-  QueueData(sycl::device device);
+  QueueData(sycl::device device, sycl::context context);
   ~QueueData();
 
   template <typename T> inline T* getScratchpadFor(size_t numElements);
