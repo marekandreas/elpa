@@ -1344,7 +1344,6 @@ program test
 #if (TEST_GPU_DEVICE_POINTER_API == 1)
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
-  print *,"Calling e%pxgemm_multiply_double" ! PETERDEBUG
   call e%pxgemm_multiply_double(trans_a, trans_b, uplo_a, uplo_c, &
                             int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int), &
@@ -1376,7 +1375,6 @@ program test
 #endif
 #endif /* TEST_COMPLEX */
 #else /* TEST_GPU_DEVICE_POINTER_API */
-  print *,"Calling e%pxgemm_multiply" ! PETERDEBUG
   call e%pxgemm_multiply(trans_a, trans_b, uplo_a, uplo_c, &
                             int(na,kind=c_int), a, b, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), c, int(na_rows,kind=c_int), &

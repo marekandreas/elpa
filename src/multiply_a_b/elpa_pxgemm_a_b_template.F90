@@ -89,7 +89,8 @@
 #include "../../src/general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)   :: obj
 
-  character*1                                  :: uplo_a, uplo_c, trans_a, trans_b
+  character*1                                  :: uplo_a, uplo_c ! PETERDEBUG: cleanup uplo
+  character*1                                  :: trans_a, trans_b
   character(1, c_char)                         :: trans_a_cchar, trans_b_cchar
   integer(kind=ik), intent(in)                 :: ldb, ldbCols, ldc, ldcCols
   integer(kind=ik)                             :: lda, ldaCols
@@ -138,7 +139,7 @@
   logical                                      :: wantDebug
   integer(kind=ik)                             :: istat, debug
   character(200)                               :: errorMessage
-  character(20)                                :: gpuString
+  character(20)                                :: gpuString, tnString
   logical                                      :: success, successGPU, successGPU2
   logical                                      :: useGPU
   logical                                      :: isSquareGrid
@@ -268,11 +269,17 @@
     gpuString = ""
   endif
 
-  call obj%timer%start("elpa_pxgemm_&
-  &MATH_DATATYPE&
-  &_&
-  &PRECISION&
-  &"//gpuString)
+  if (a_transposed .and. b_transposed) then
+    tnString = "_tt"
+  else if (.not. a_transposed .and. b_transposed) then
+    tnString = "_nt"
+  else if (a_transposed .and. .not. b_transposed) then
+    tnString = "_tn"
+  else if (.not. a_transposed .and. .not. b_transposed) then
+    tnString = "_nn"
+  endif
+
+  call obj%timer%start("elpa_pxgemm"//trim(tnString)//trim(gpuString))
 
   na      = obj%na
   nblk    = obj%nblk
@@ -378,6 +385,7 @@
     successGPU = gpu_malloc(c_dev, ldc*ldcCols*size_of_datatype)
     check_alloc_gpu("elpa_pxgemm: c_dev", successGPU)
 
+    call obj%timer%start("gpu_memcpy")
     NVTX_RANGE_PUSH("gpu_memcpy: a->a_dev, b->b_dev")
     ! copy a to a_dev
     num = lda*ldaCols*size_of_datatype
@@ -406,6 +414,7 @@
 #endif
 
     NVTX_RANGE_POP("gpu_memcpy: a->a_dev, b->b_dev")
+    call obj%timer%stop("gpu_memcpy")
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
@@ -1372,6 +1381,7 @@
       ! Put the result into C
       if (useGPU) then
 #if !defined(DEVICE_POINTER)
+        call obj%timer%start("gpu_memcpy")
         num = l_rows*l_cols
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -1382,6 +1392,7 @@
         successGPU = gpu_memcpy(int(loc(c),kind=c_intptr_t), c_dev, num*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_pxgemm: c_dev -> c", successGPU)
 #endif
+        call obj%timer%stop("gpu_memcpy")
 #endif /* DEVICE_POINTER */
       endif ! useGPU
 
@@ -2053,10 +2064,11 @@
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
-  call obj%timer%stop("elpa_pxgemm_&
-  &MATH_DATATYPE&
-  &_&
-  &PRECISION&
-  &"//gpuString)
+  ! call obj%timer%stop("elpa_pxgemm_&
+  ! &MATH_DATATYPE&
+  ! &_&
+  ! &PRECISION&
+  ! &"//gpuString)
+  call obj%timer%stop("elpa_pxgemm"//trim(tnString)//trim(gpuString))
 
   NVTX_RANGE_POP("elpa_pxgemm")

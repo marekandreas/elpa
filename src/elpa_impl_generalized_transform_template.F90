@@ -220,11 +220,16 @@ endif
     a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
 
   else ! (cannon_for_generalized == 1), do not use cannon algorithm, use elpa hermitian multiply and scalapack instead
+    ! PETERDEBUG: cleanup old hermitian-multiply codepath? Cannons also? or add new default codepath (also new keyword)?
     ! tmp <- B * A = inv(U^T) * A (we have to use temporary variable)
-    call self%elpa_hermitian_multiply_a_h_a_&
+    ! call self%elpa_hermitian_multiply_a_h_a_&
+    !     &ELPA_IMPL_SUFFIX&
+    !     &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
+    !                           self%local_nrows, self%local_ncols, error)
+    call self%elpa_pxgemm_multiply_a_h_a_&
         &ELPA_IMPL_SUFFIX&
-        &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
-                              self%local_nrows, self%local_ncols, error)
+        &('T','N', 'X', 'X', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
+                            self%local_nrows, self%local_ncols, error)
     if(error .NE. ELPA_OK) return
 
     ! A <- tmp * inv(U) = inv(U)^T * A * inv(U)
@@ -264,45 +269,52 @@ endif
     
     else ! (pxtrmm_for_generalized == 1)
 
-      call self%timer_start("PxTRAN")
+!       call self%timer_start("PxTRAN")
 
-      ! A <- tmp^T
-#ifdef WITH_MPI
-      call p&
-            &BLAS_CHAR&
-#if REALCASE == 1
-            &tran&
-#endif
-#if COMPLEXCASE == 1
-            &tranc&
-#endif
-            &(self%na, self%na, ONE , tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
-                                ZERO,   a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
-#else /* WITH_MPI */
-      do j = 1, self%na
-        do i = 1, self%na
-#if REALCASE == 1
-      a(j, i) = tmp(i, j)
-#endif
-#if COMPLEXCASE == 1
-      a(j, i) = conjg(tmp(i, j))
-#endif
-        end do
-      end do
-#endif /* WITH_MPI */
-      call self%timer_stop("PxTRAN")
+!       ! A <- tmp^T
+! #ifdef WITH_MPI
+!       call p&
+!             &BLAS_CHAR&
+! #if REALCASE == 1
+!             &tran&
+! #endif
+! #if COMPLEXCASE == 1
+!             &tranc&
+! #endif
+!             &(self%na, self%na, ONE , tmp, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
+!                                 ZERO,   a, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+! #else /* WITH_MPI */
+!       do j = 1, self%na
+!         do i = 1, self%na
+! #if REALCASE == 1
+!       a(j, i) = tmp(i, j)
+! #endif
+! #if COMPLEXCASE == 1
+!       a(j, i) = conjg(tmp(i, j))
+! #endif
+!         end do
+!       end do
+! #endif /* WITH_MPI */
+!       call self%timer_stop("PxTRAN")
       
-      ! tmp <- A^T * inv(U) = (tmp^T)^T * inv(U)
-      call self%elpa_hermitian_multiply_a_h_a_&
+      ! ! tmp <- A^T * inv(U) = (tmp^T)^T * inv(U)
+      ! call self%elpa_hermitian_multiply_a_h_a_&
+      !       &ELPA_IMPL_SUFFIX&
+      !       &('F','F', self%na, a, b, self%local_nrows, self%local_ncols, tmp, &
+      !       self%local_nrows, self%local_ncols, error)
+      ! if(error .NE. ELPA_OK) return
+
+      ! ! a <- tmp
+      ! call self%timer_start("copy")
+      ! a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
+      ! call self%timer_stop("copy")
+
+      ! A <- A * inv(U) = tmp * inv(U)
+      call self%elpa_pxgemm_multiply_a_h_a_&
             &ELPA_IMPL_SUFFIX&
-            &('F','F', self%na, a, b, self%local_nrows, self%local_ncols, tmp, &
+            &('N','N','X','X', self%na, tmp, b, self%local_nrows, self%local_ncols, a, &
             self%local_nrows, self%local_ncols, error)
       if(error .NE. ELPA_OK) return
-      
-      ! a <- tmp
-      call self%timer_start("copy")
-      a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
-      call self%timer_stop("copy")
     endif ! useGPU
 
   endif ! (cannon_for_generalized == 1)
@@ -464,51 +476,57 @@ subroutine elpa_transform_back_generalized_&
       call self%timer_stop("scalapack multiply inv(U) * Q")
     
     else ! (pxtrmm_for_generalized == 1)
-
-      call self%timer_start("PxTRAN")
       
       ! two additional temp arrays bt amd temp are needed, since we can't modify b: it might be used later if(is_already_decomposed)
       allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_impl_generalized_transform_template: tmp", istat, errorMessage)
       
-      allocate(bt(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
-      check_allocate("elpa_impl_generalized_transform_template: bt", istat, errorMessage)
+      ! allocate(bt(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
+      ! check_allocate("elpa_impl_generalized_transform_template: bt", istat, errorMessage)
 
-      ! bt <- b^T
-#ifdef WITH_MPI
-      call p&
-            &BLAS_CHAR&
-#if REALCASE == 1
-            &tran&
-#endif
-#if COMPLEXCASE == 1
-            &tranc&
-#endif
-            &(self%na, self%na, ONE , b , 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
-                                ZERO, bt, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
-#else /* WITH_MPI */
-      do j = 1, self%na
-        do i = 1, self%na
-#if REALCASE == 1
-      bt(j, i) = b(i, j)
-#endif
-#if COMPLEXCASE == 1
-      bt(j, i) = conjg(b(i, j))
-#endif
-        end do
-      end do
-#endif /* WITH_MPI */
+!       ! bt <- b^T
+!       call self%timer_start("PxTRAN")
+! #ifdef WITH_MPI
+!       call p&
+!             &BLAS_CHAR&
+! #if REALCASE == 1
+!             &tran&
+! #endif
+! #if COMPLEXCASE == 1
+!             &tranc&
+! #endif
+!             &(self%na, self%na, ONE , b , 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND), &
+!                                 ZERO, bt, 1_BLAS_KIND, 1_BLAS_KIND, int(sc_desc,kind=BLAS_KIND))
+! #else /* WITH_MPI */
+!       do j = 1, self%na
+!         do i = 1, self%na
+! #if REALCASE == 1
+!       bt(j, i) = b(i, j)
+! #endif
+! #if COMPLEXCASE == 1
+!       bt(j, i) = conjg(b(i, j))
+! #endif
+!         end do
+!       end do
+! #endif /* WITH_MPI */
 
-      call self%timer_stop("PxTRAN")
+!       call self%timer_stop("PxTRAN")
+      
+      ! ! tmp <- bt^T Q = inv(U) Q
+      ! call self%elpa_hermitian_multiply_a_h_a_&
+      !       &ELPA_IMPL_SUFFIX&
+      !       &('F','F', self%na, bt, q, self%local_nrows, self%local_ncols, tmp, &
+      !       self%local_nrows, self%local_ncols, error)
+      ! if(error .NE. ELPA_OK) return
       
       ! tmp <- bt^T Q = inv(U) Q
-      call self%elpa_hermitian_multiply_a_h_a_&
+      call self%elpa_pxgemm_multiply_a_h_a_&
             &ELPA_IMPL_SUFFIX&
-            &('F','F', self%na, bt, q, self%local_nrows, self%local_ncols, tmp, &
+            &('N','N','X','X', self%na, b, q, self%local_nrows, self%local_ncols, tmp, &
             self%local_nrows, self%local_ncols, error)
       if(error .NE. ELPA_OK) return
-      
-      ! q <- tmp
+
+      ! ! q <- tmp
       call self%timer_start("copy")
       q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
       call self%timer_stop("copy")
@@ -516,8 +534,8 @@ subroutine elpa_transform_back_generalized_&
       deallocate(tmp, stat=istat, errmsg=errorMessage)
       call check_alloc("elpa_impl_generalized_transform_template", "tmp", istat, errorMessage)
 
-      deallocate(bt, stat=istat, errmsg=errorMessage)
-      call check_alloc("elpa_impl_generalized_transform_template", "bt", istat, errorMessage)
+      ! deallocate(bt, stat=istat, errmsg=errorMessage)
+      ! call check_alloc("elpa_impl_generalized_transform_template", "bt", istat, errorMessage)
     endif ! (pxtrmm_for_generalized == 1)
   endif ! (cannon_for_generalized == 1)
 
