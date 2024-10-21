@@ -292,6 +292,21 @@ static oneapi::mkl::side sideFromChar(char c) {
     DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
     *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, devSel.device, devSel.context));
     char *bytes = reinterpret_cast<char *>(*a);
+
+    using sycl::usm::alloc;
+    auto allocStr = [] (alloc al) {
+      switch (al) {
+        case alloc::host: return "alloc::host";
+        case alloc::device: return "alloc::device";
+        case alloc::unknown: return "alloc::unknown";
+        default: return "alloc::????";
+      }
+    };
+
+    auto allocT = sycl::get_pointer_type(bytes, devSel.context);
+    // queue.wait();
+    std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << (size_t (*a)) << " -> " << allocStr(allocT) << "\n";
+
     if (*a) {
       //std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
       return 1;
@@ -305,6 +320,22 @@ static oneapi::mkl::side sideFromChar(char c) {
     DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
     *a = reinterpret_cast<intptr_t>(sycl::malloc_host(elems, devSel.context));
     char *bytes = reinterpret_cast<char *>(*a);
+
+    using sycl::usm::alloc;
+    auto allocStr = [] (alloc al) {
+      switch (al) {
+        case alloc::host: return "alloc::host";
+        case alloc::device: return "alloc::device";
+        case alloc::unknown: return "alloc::unknown";
+        default: return "alloc::????";
+      }
+    };
+
+    auto allocT = sycl::get_pointer_type(bytes, devSel.context);
+    // queue.wait();
+    std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << (size_t (*a)) << " -> " << allocStr(allocT) << "\n";
+
+
     if (*a) {
       //std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
       return 1;
@@ -632,6 +663,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     auto up = uploFromChar(uplo);
     auto di = diagFromChar(diag);
 
+    throw std::runtime_error("Not Implemented, do not call.");
     // FIXME trtri is currently unavailable on the GPU!
     // dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
   }
@@ -644,6 +676,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     auto up = uploFromChar(uplo);
     auto di = diagFromChar(diag);
 
+    throw std::runtime_error("Not Implemented, do not call.");
     // FIXME trtri is currently unavailable on the GPU!
     // dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
   }
@@ -655,6 +688,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     //using oneapi::mkl::blas::column_major::gemm;
     auto up = uploFromChar(uplo);
     auto di = diagFromChar(diag);
+    throw std::runtime_error("Not Implemented, do not call.");
 
     // FIXME trtri is currently unavailable on the GPU!
     // dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
@@ -667,7 +701,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     //using oneapi::mkl::blas::column_major::gemm;
     auto up = uploFromChar(uplo);
     auto di = diagFromChar(diag);
-
+    throw std::runtime_error("Not Implemented, do not call.");
     // FIXME trtri is currently unavailable on the GPU!
     //dtrtri(&uplo, &diag, &n, reinterpret_cast<float *>(a), &lda, &info);
   }
@@ -679,6 +713,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     sycl::queue queue = qHandle->queue;
     using oneapi::mkl::lapack::potrf;
     auto up = uploFromChar(uplo);
+    throw std::runtime_error("Not Implemented, do not call.");
     //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
     //potrf(queue, up, &n, reinterpret_cast<double *>(a), &lda, &info);
   }
@@ -689,6 +724,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     sycl::queue queue = qHandle->queue;
     using oneapi::mkl::lapack::potrf;
     auto up = uploFromChar(uplo);
+    throw std::runtime_error("Not Implemented, do not call.");
     //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
     //potrf(queue, up, &n, reinterpret_cast<float *>(a), &lda, &info);
   }
@@ -699,6 +735,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     sycl::queue queue = qHandle->queue;
     using oneapi::mkl::lapack::potrf;
     auto up = uploFromChar(uplo);
+    throw std::runtime_error("Not Implemented, do not call.");
     //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
     //potrf(queue, up, &n, reinterpret_cast<std::complex<double> *>(c), &lda, &info);
   }
@@ -709,6 +746,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     sycl::queue queue = qHandle->queue;
     using oneapi::mkl::lapack::potrf;
     auto up = uploFromChar(uplo);
+    throw std::runtime_error("Not Implemented, do not call.");
     //void potrf( ..., int lda, &scratchpad, std::int64_t scratchpad_size)
     //potrf(queue, up, &n, reinterpret_cast<std::complex<float> *>(c), &lda, &info);
   }
@@ -897,8 +935,6 @@ static oneapi::mkl::side sideFromChar(char c) {
     trsm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_);
   }
 
-  // compile error here; fix this
-  //
   void syclblasDgemv_elpa_wrapper(QueueData *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
     //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
