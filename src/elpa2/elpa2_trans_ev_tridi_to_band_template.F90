@@ -733,8 +733,8 @@ subroutine trans_ev_tridi_to_band_&
     check_alloc_gpu("tridi_to_band: aIntern_dev", successGPU)
 
     ! openmp loop here
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -749,7 +749,7 @@ subroutine trans_ev_tridi_to_band_&
       check_memset_gpu("tridi_to_band: aIntern_dev", successGPU)
 #endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
 #ifdef WITH_OPENMP_TRADITIONAL
       allocate(aIntern(stripe_width,a_dim2,stripe_count,max_threads))
@@ -780,13 +780,13 @@ subroutine trans_ev_tridi_to_band_&
     endif ! allComputeOnGPU
 
     ! "row_group" and "row_group_dev" are needed for GPU optimizations
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
       successGPU = gpu_malloc_host(row_group_host,l_nev*nblk*size_of_datatype)
       check_host_alloc_gpu("tridi_to_band: row_group_host", successGPU)
       call c_f_pointer(row_group_host, row_group, (/l_nev,nblk/))
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
       allocate(row_group(l_nev,nblk))
     endif
@@ -797,8 +797,8 @@ subroutine trans_ev_tridi_to_band_&
     successGPU = gpu_malloc(row_group_dev, num)
     check_alloc_gpu("tridi_to_band: row_group_dev", successGPU)
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -813,7 +813,7 @@ subroutine trans_ev_tridi_to_band_&
       check_memset_gpu("tridi_to_band: row_group_dev", successGPU)
 #endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
       successGPU = gpu_memcpy(row_group_dev, int(loc(row_group),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -873,8 +873,8 @@ subroutine trans_ev_tridi_to_band_&
     num =  (l_nev)* size_of_datatype
     successGPU = gpu_malloc(row_dev, num)
     check_alloc_gpu("tridi_to_band: row_dev", successGPU)
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -892,7 +892,7 @@ subroutine trans_ev_tridi_to_band_&
       check_memset_gpu("tridi_to_band: row_dev", successGPU)
 #endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
       successGPU = gpu_memcpy(row_dev, int(loc(row),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -1117,7 +1117,6 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_MPI */
 !           row(1:l_nev) = row(1:l_nev)
 #endif /* WITH_MPI */
-
             call unpack_row_&
                 &MATH_DATATYPE&
                 &_cpu_&
@@ -1134,6 +1133,7 @@ subroutine trans_ev_tridi_to_band_&
           if (useGPU) then
 
             ! An unpacking of the current row group may occur before queuing the next row
+            !print *, __LINE__ !????
 
             call unpack_and_prepare_row_group_&
                  &MATH_DATATYPE&
@@ -1185,7 +1185,7 @@ subroutine trans_ev_tridi_to_band_&
 
           if (useGPU) then
 
-          else
+          else    
             call unpack_row_&
                  &MATH_DATATYPE&
                  &_cpu_&
@@ -1504,7 +1504,6 @@ subroutine trans_ev_tridi_to_band_&
 
   if (useGPU) then
     ! Force an unpacking of all remaining rows that haven't been unpacked yet
-
     call unpack_and_prepare_row_group_&
          &MATH_DATATYPE&
          &_gpu_&
@@ -1662,8 +1661,8 @@ subroutine trans_ev_tridi_to_band_&
 
       successGPU = gpu_malloc(top_border_send_buffer_dev, num)
       check_alloc_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -1681,7 +1680,7 @@ subroutine trans_ev_tridi_to_band_&
         check_memset_gpu("tridi_to_band: top_border_send_buffer_dev", successGPU)
 #endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
       else
         successGPU = gpu_memcpy(top_border_recv_buffer_dev, int(loc(top_border_recv_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -1717,8 +1716,8 @@ subroutine trans_ev_tridi_to_band_&
       successGPU = gpu_malloc(bottom_border_recv_buffer_dev, num)
       check_alloc_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -1736,7 +1735,7 @@ subroutine trans_ev_tridi_to_band_&
         check_memset_gpu("tridi_to_band: bottom_border_recv_buffer_dev", successGPU)
 #endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
       else
         successGPU = gpu_memcpy(bottom_border_recv_buffer_dev, int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -1764,8 +1763,8 @@ subroutine trans_ev_tridi_to_band_&
 #endif /* WITH_OPENMP_TRADITIONAL */
     endif ! allComputeOnGPU
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
       successGPU = gpu_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
                     stripe_width*nbw* stripe_count * size_of_datatype,&
@@ -1786,7 +1785,7 @@ subroutine trans_ev_tridi_to_band_&
                     stripe_width*nbw* stripe_count * size_of_datatype,&
                     gpuHostRegisterDefault)
       check_host_register_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     endif
 #endif
   endif ! useGPU
@@ -1795,13 +1794,13 @@ subroutine trans_ev_tridi_to_band_&
   ! Initialize broadcast buffer
 
   if (useGPU) then
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
       successGPU = gpu_malloc_host(bcast_buffer_host,nbw*max_blk_size*size_of_datatype)
       check_host_alloc_gpu("tridi_to_band: bcast_buffer_host", successGPU)
       call c_f_pointer(bcast_buffer_host, bcast_buffer, (/nbw,max_blk_size/))
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
       allocate(bcast_buffer(nbw,max_blk_size))
     endif
@@ -1825,8 +1824,8 @@ subroutine trans_ev_tridi_to_band_&
                       [nbw, max_blk_size])
     endif ! allComputeOnGPU
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -1840,7 +1839,7 @@ subroutine trans_ev_tridi_to_band_&
       check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
 #endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
       successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer),kind=c_intptr_t), &
                               num, gpuMemcpyHostToDevice)
@@ -1855,8 +1854,8 @@ subroutine trans_ev_tridi_to_band_&
     successGPU = gpu_malloc( hh_tau_dev, num)
     check_alloc_gpu("tridi_to_band: hh_tau_dev", successGPU)
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -1870,7 +1869,7 @@ subroutine trans_ev_tridi_to_band_&
       check_memset_gpu("tridi_to_band: hh_tau_dev", successGPU)
 #endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
       allocate(hh_tau_debug(max_blk_size))
       hh_tau_debug(:) = 0.
@@ -2167,8 +2166,8 @@ subroutine trans_ev_tridi_to_band_&
       ! for current_local_n == 1 the one and only HH Vector is 0 and not stored in hh_trans_real/complex
       bcast_buffer(:,1) = 0.0_rck
       if (useGPU) then
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -2182,7 +2181,7 @@ subroutine trans_ev_tridi_to_band_&
           check_memset_gpu("tridi_to_band: bcast_buffer_dev", successGPU)
 #endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
         else
           successGPU = gpu_memcpy(bcast_buffer_dev, int(loc(bcast_buffer(1,1)),kind=c_intptr_t), &
                               nbw*size_of_datatype, gpuMemcpyHostToDevice)
@@ -4364,6 +4363,7 @@ subroutine trans_ev_tridi_to_band_&
                    result_buffer_dev, nblk, num_result_buffers, nbuf, .true., wantDebug, allComputeOnGPU, my_stream)
 
           else  ! useGPU
+
             do i = 1, nblk
 #ifdef WITH_OPENMP_TRADITIONAL
               call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
@@ -4816,14 +4816,14 @@ subroutine trans_ev_tridi_to_band_&
       nullify(result_buffer_mpi_fortran_ptr)
     endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
       nullify(bcast_buffer)
 
       successGPU = gpu_free_host(bcast_buffer_host)
       check_host_dealloc_gpu("tridi_to_band: bcast_buffer_host", successGPU)
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
       deallocate(bcast_buffer)
     endif
@@ -4869,14 +4869,14 @@ subroutine trans_ev_tridi_to_band_&
     successGPU = gpu_free(hh_tau_dev)
     check_dealloc_gpu("tridi_to_band: hh_tau_dev", successGPU)
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU ) then
 #endif
       nullify(row_group)
 
       successGPU = gpu_free_host(row_group_host)
       check_host_dealloc_gpu("tridi_to_band: row_group_host", successGPU)
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
       deallocate(row_group)
     endif
@@ -4900,8 +4900,8 @@ subroutine trans_ev_tridi_to_band_&
       nullify(bcast_buffer_mpi_fortran_ptr)
     endif
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
       successGPU = gpu_host_unregister(int(loc(top_border_send_buffer),kind=c_intptr_t))
       check_host_unregister_gpu("tridi_to_band: top_border_send_buffer", successGPU)
@@ -4914,7 +4914,7 @@ subroutine trans_ev_tridi_to_band_&
 
       successGPU = gpu_host_unregister(int(loc(bottom_border_recv_buffer),kind=c_intptr_t))
       check_host_unregister_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     endif
 #endif
 
