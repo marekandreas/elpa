@@ -54,7 +54,6 @@
 
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
-
 #ifdef SOLVE_TRIDI_GPU_BUILD
 subroutine solve_tridi_gpu_&
 &PRECISION_AND_SUFFIX &
@@ -285,12 +284,18 @@ subroutine solve_tridi_cpu_&
 #endif
          if (.not.(obj%eigenvalues_only)) then
            num = ldq*matrixCols * size_of_datatype_real
+
+
+!#ifdef WITH_GPU_STREAMS
+!#define PRV_WGS
+!#undef WITH_GPU_STREAMS
+!#endif
 #ifdef WITH_GPU_STREAMS
            my_stream = obj%gpu_setup%my_stream
            call gpu_memcpy_async_and_stream_synchronize &
             ("solve_tride q_dev -> q_vec", q_dev, 0_c_intptr_t, &
                                                  q(1:ldq,1:matrixCols), &
-                                 1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+                                 1, 1, num, gpuMemcpyHostToDevice, my_stream, .true., .true., .false.) !! This synchronization seems to be necessary, otherwise I get incorrect results...
 #else
            successGPU = gpu_memcpy(q_dev, int(loc(q(1,1)),kind=c_intptr_t),  &
                               num, gpuMemcpyHostToDevice)
@@ -302,7 +307,10 @@ subroutine solve_tridi_cpu_&
         call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
         return
       endif
-
+!#ifdef PRV_WGS
+!#define WITH_GPU_STREAMS
+!#undef PRV_WGS
+!#endif
       ! Set index arrays for Q columns
 
       ! Dense distribution scheme:
@@ -345,6 +353,7 @@ subroutine solve_tridi_cpu_&
          enddo
       enddo
 
+      
       ! Recursively merge sub problems
       call merge_recursive_&
            &PRECISION &
@@ -409,3 +418,4 @@ subroutine solve_tridi_cpu_&
       return
 
     end 
+
