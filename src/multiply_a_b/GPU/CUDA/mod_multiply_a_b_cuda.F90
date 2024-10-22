@@ -471,7 +471,6 @@ module multiply_a_b_cuda
       call cuda_copy_double_tmp2_c_intptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, &
                                                                 lce, ldc, ldcCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_double_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, &
@@ -488,7 +487,6 @@ module multiply_a_b_cuda
       call cuda_copy_double_tmp2_c_cptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, &
                                                                 lce, ldc, ldcCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, &
@@ -505,7 +503,6 @@ module multiply_a_b_cuda
       call cuda_copy_double_a_aux_bc_intptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
                                                                   noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, &
@@ -523,7 +520,6 @@ module multiply_a_b_cuda
       call cuda_copy_double_a_aux_bc_cptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
                                                                   noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_double_aux_bc_aux_mat( aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
@@ -539,8 +535,8 @@ module multiply_a_b_cuda
       call cuda_copy_double_aux_bc_aux_mat_c(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
                                                                  l_rows, nblk, nblk_mult, my_stream)
 #endif
-
     end subroutine
+
     subroutine cuda_copy_float_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, &
                                                               ldcCols, my_stream)
       use, intrinsic :: iso_c_binding
@@ -554,7 +550,6 @@ module multiply_a_b_cuda
       call cuda_copy_float_tmp2_c_intptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, &
                                                                 lce, ldc, ldcCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_float_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, &
@@ -571,7 +566,6 @@ module multiply_a_b_cuda
       call cuda_copy_float_tmp2_c_cptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, &
                                                                 lce, ldc, ldcCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, &
@@ -588,7 +582,6 @@ module multiply_a_b_cuda
       call cuda_copy_float_a_aux_bc_intptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
                                                                   noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, &
@@ -606,7 +599,6 @@ module multiply_a_b_cuda
       call cuda_copy_float_a_aux_bc_cptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
                                                                   noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_float_aux_bc_aux_mat( aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
@@ -622,8 +614,8 @@ module multiply_a_b_cuda
       call cuda_copy_float_aux_bc_aux_mat_c(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
                                                                  l_rows, nblk, nblk_mult, my_stream)
 #endif
-
     end subroutine
+
     subroutine cuda_copy_double_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, &
                                                               ldcCols, my_stream)
       use, intrinsic :: iso_c_binding
@@ -637,7 +629,6 @@ module multiply_a_b_cuda
       call cuda_copy_double_complex_tmp2_c_intptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, &
                                                                 lce, ldc, ldcCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_double_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, &
@@ -654,7 +645,6 @@ module multiply_a_b_cuda
       call cuda_copy_double_complex_tmp2_c_cptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, &
                                                                 lce, ldc, ldcCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, &
@@ -671,7 +661,6 @@ module multiply_a_b_cuda
       call cuda_copy_double_complex_a_aux_bc_intptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
                                                                   noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, &
@@ -689,7 +678,6 @@ module multiply_a_b_cuda
       call cuda_copy_double_complex_a_aux_bc_cptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
                                                                   noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_double_complex_aux_bc_aux_mat( aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
@@ -705,8 +693,8 @@ module multiply_a_b_cuda
       call cuda_copy_double_complex_aux_bc_aux_mat_c(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
                                                                  l_rows, nblk, nblk_mult, my_stream)
 #endif
-
     end subroutine
+
     subroutine cuda_copy_float_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, &
                                                               ldcCols, my_stream)
       use, intrinsic :: iso_c_binding
@@ -720,7 +708,6 @@ module multiply_a_b_cuda
       call cuda_copy_float_complex_tmp2_c_intptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, &
                                                                 lce, ldc, ldcCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_float_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, &
@@ -737,7 +724,6 @@ module multiply_a_b_cuda
       call cuda_copy_float_complex_tmp2_c_cptr_c(tmp2_dev, c_dev, nr_done, nstor, lcs, &
                                                                 lce, ldc, ldcCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, &
@@ -754,7 +740,6 @@ module multiply_a_b_cuda
       call cuda_copy_float_complex_a_aux_bc_intptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
                                                                   noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, &
@@ -772,7 +757,6 @@ module multiply_a_b_cuda
       call cuda_copy_float_complex_a_aux_bc_cptr_c(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, &
                                                                   noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
-
     end subroutine
 
     subroutine cuda_copy_float_complex_aux_bc_aux_mat( aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
