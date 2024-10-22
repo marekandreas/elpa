@@ -48,7 +48,7 @@
 #define NVTX_RANGE_POP(x) call nvtxRangePop()
 #else
 #define NVTX_RANGE_PUSH(x)
-#define NVTX_RANGE_POP()
+#define NVTX_RANGE_POP(x)
 #endif
 
 module elpa_multiply_a_b

@@ -181,8 +181,6 @@ subroutine elpa_transpose_row_or_col&
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
 
-  SM_count = obj%gpu_setup%gpuSMcount
-
   LCM = least_common_multiple(np_rows, np_cols)*nblk
 
 #if defined(USE_CCL_PXGEMM)
@@ -190,7 +188,8 @@ subroutine elpa_transpose_row_or_col&
 
   my_stream = obj%gpu_setup%my_stream
   ccl_comm_all  = obj%gpu_setup%ccl_comm_all
-
+  SM_count = obj%gpu_setup%gpuSMcount
+  
 #if   REALCASE == 1 && defined(DOUBLE_PRECISION)
   cclDataType = cclDouble
   k_datatype = 1
