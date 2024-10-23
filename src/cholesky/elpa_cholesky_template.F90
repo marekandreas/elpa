@@ -1006,7 +1006,7 @@
 
         successGPU = ccl_group_end()
         if (.not.successGPU) then
-          print *,"Error in setting up ccl_group_end!"
+          print *,"cholesky: Error in setting up ccl_group_end!"
           stop 1
         endif
 
