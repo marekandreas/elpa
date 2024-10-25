@@ -946,7 +946,7 @@
                                     l_rows, l_cols, nblk_mult, ldb, debug, my_stream)
             else
               call gpu_copy_aux_full(PRECISION_CHAR, aux_b_full_dev, b_dev, &
-                                    l_rows, l_cols, l_rows, ldb, debug, my_stream)
+                                    l_rows, l_cols, nblk_mult, ldb, debug, my_stream)
               ! call gpu_copy_and_set_zeros_aux_full(PRECISION_CHAR, b_dev, aux_b_full_dev, &
               !                                       l_rows, l_cols, l_rows, debug, my_stream)
                                                   !l_rows, l_cols, nblk_mult, debug, my_stream)
