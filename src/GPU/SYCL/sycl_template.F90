@@ -1857,7 +1857,7 @@
 #endif
     end subroutine sycl_printdevices
 
-    function sycl_devicesynchronize()result(success)
+    function sycl_devicesynchronize() result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       logical :: success

@@ -49,15 +49,14 @@
 #include "src/GPU/SYCL/syclCommon.hpp"
 
 #include <sycl/sycl.hpp>
-#include <stdio.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <alloca.h>
-#include <complex.h>
-#include <stdint.h>
+#include <ccomplex>
+#include <cstdint>
 #include <complex>
 
 
@@ -87,6 +86,8 @@ void sycl_copy_real_part_to_q_complex(std::complex<T> *q_dev, T *q_real_dev, int
       q_dev[index] = std::complex<T>(q_real_dev[index], 0.0);
     }
   });
+
+  q.wait_and_throw();
 }
 
 extern "C" void sycl_copy_real_part_to_q_double_complex_FromC(std::complex<double> *q_dev, double *q_real_dev, int *matrixRows_in, int *l_rows_in, int *l_cols_nev_in, QueueData *my_stream) {
@@ -117,6 +118,8 @@ void sycl_zero_skewsymmetric_q(T *q_dev, int *matrixRows_in, int *matrixCols_in,
         q_dev[index] = 0.0;
     }
   });
+  
+  q.wait_and_throw();
 }
 
 extern "C" void sycl_zero_skewsymmetric_q_double_FromC(double *q_dev, int *matrixRows_in, int *matrixCols_in, QueueData *my_stream) {
@@ -163,6 +166,8 @@ template<typename T> void sycl_copy_skewsymmetric_second_half_q(T *q_dev, int *i
       sycl_copy_skewsymmetric_second_half_q_kernel<T, false>(q_dev, i, matrixRows, matrixCols, it);
     });
   }
+  
+  q.wait_and_throw();
 }
 
 extern "C" void sycl_copy_skewsymmetric_second_half_q_double_FromC(double *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, QueueData *my_stream) {
@@ -191,6 +196,8 @@ void sycl_copy_skewsymmetric_first_half_q_FromC(T *q_dev, int *i_in, int *matrix
       q_dev[index] = -q_dev[index];
     }
   });
+  
+  q.wait_and_throw();
 }
 
 extern "C" void sycl_copy_skewsymmetric_first_half_q_double_FromC(double *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, QueueData *my_stream) {
@@ -220,6 +227,8 @@ template<typename T> void sycl_get_skewsymmetric_second_half_q_FromC(T *q_dev, T
       q_2_dev[index] = q_dev[index2];
     }
   });
+
+  q.wait_and_throw();
 }
 
 extern "C" void sycl_get_skewsymmetric_second_half_q_double_FromC(double *q_dev, double *q_2_dev, int *matrixRows_in, int *matrixCols_in, QueueData *my_stream) {
@@ -248,6 +257,7 @@ template<typename T> void sycl_put_skewsymmetric_second_half_q_FromC(T *q_dev, T
       q_dev[index2] = q2_dev[index];
     }
   });
+  q.wait_and_throw();
 }
 
 
@@ -258,4 +268,3 @@ extern "C" void sycl_put_skewsymmetric_second_half_q_double_FromC(double *q_dev,
 extern "C" void sycl_put_skewsymmetric_second_half_q_float_FromC(float *q_dev, float *q2_dev, int *matrixRows_in, int *matrixCols_in, QueueData *my_stream) {
   sycl_put_skewsymmetric_second_half_q_FromC<float>(q_dev, q2_dev, matrixRows_in, matrixCols_in, my_stream);
 }
-

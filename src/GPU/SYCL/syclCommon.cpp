@@ -283,13 +283,5 @@ QueueData* sycl_be::getQueueDataOrDefault(QueueData *handle) {
 }
 
 sycl::queue sycl_be::getQueueOrDefault(QueueData *qh) {
-#ifdef WITH_GPU_STREAMS
-  if (qh == nullptr) {
-    return sycl_be::SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle.queue;
-  } else {
-    return qh->queue;
-  }
-#else
-  return sycl_be::SyclState::defaultState().getDefaultDeviceHandle().defaultQueueHandle.queue;
-#endif
+  return getQueueDataOrDefault(qh)->queue;
 }

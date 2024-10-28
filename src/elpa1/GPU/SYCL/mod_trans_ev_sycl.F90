@@ -91,6 +91,7 @@ module trans_ev_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_scale_qmat_double_complex_c(ldq, l_cols, q_dev, tau_dev, my_stream)
       else
@@ -110,6 +111,7 @@ module trans_ev_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_scale_qmat_float_complex_c(ldq, l_cols, q_dev, tau_dev, my_stream)
       else

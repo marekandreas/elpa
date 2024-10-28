@@ -48,22 +48,22 @@
 
 #include <sycl/sycl.hpp>
 #include "src/GPU/SYCL/syclCommon.hpp"
-#include <stdio.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <alloca.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <cstdint>
+#include <cstdbool>
 #include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <type_traits>
-#include "config-f90.h"
 #include <complex>
 #include <atomic>
+
+#include "config-f90.h"
 
 #include "../../../GPU/common_device_functions.h"
 
@@ -542,15 +542,8 @@ void sycl_set_e_vec_scale_set_one_store_v_row_FromC(
   //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)xf_host_or_dev, queue.get_context());
   sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
 
-  if (memoryType == sycl::usm::alloc::host)
-    {
+  if (memoryType == sycl::usm::alloc::host) {
     T xf_host_value = *xf_host_or_dev;
-
-    /*
-DPCT1049:10: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
 
     queue.submit([&](sycl::handler &cgh)
       {
@@ -735,11 +728,6 @@ void sycl_store_u_v_in_uv_vu_FromC(
     T vav_host_value = *vav_host_or_dev;
     T tau_host_value = *tau_host_or_dev;
 
-    /*
-DPCT1049:16: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
     queue.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
         [=](sycl::nd_item<1> it) {
@@ -929,12 +917,6 @@ void sycl_update_matrix_element_add_FromC(
 
   sycl::range<1> blocksPerGrid   = sycl::range<1>(blocks);
   sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
-
-  /*
-DPCT1049:24: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
 
   queue.submit([&](sycl::handler &cgh) {
     local_buffer<T> cache_acc_ct1(sycl::range<1>(1024 /*1024*/), cgh);

@@ -527,6 +527,9 @@
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
       implicit none
       logical                              :: success
 
@@ -542,19 +545,18 @@
         success = hip_devicesynchronize()
       endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_devicesynchronize()
+      endif
+#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: device synchronize"
         stop 1
       endif
 #endif
-#ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: device synchronize"
-        stop 1
-      endif
-#endif
-    end function
+end function
 
     function gpu_malloc_host_intptr(array, elements) result(success)
       use, intrinsic :: iso_c_binding

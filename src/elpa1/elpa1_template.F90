@@ -103,7 +103,10 @@ function elpa_solve_evp_&
 #ifdef WITH_AMD_GPU_VERSION
    use hip_functions
 #endif
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#ifdef WITH_SYCL_GPU_VERSION
+   use sycl_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
    use openmp_offload_functions
 #endif
    use elpa_gpu
@@ -1071,10 +1074,10 @@ function elpa_solve_evp_&
 #if COMPLEXCASE == 1
      if (do_useGPU_trans_ev) then
 #ifdef WITH_GPU_STREAMS
-       my_stream = obj%gpu_setup%my_stream
-       call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev, my_stream)
+        my_stream = obj%gpu_setup%my_stream
+        call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev, my_stream)
 #else
-       call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev)
+        call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev)
 #endif
      else
        q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
@@ -1561,12 +1564,9 @@ function elpa_solve_evp_&
 #endif /* DEVICE_POINTER */
 
 
-
-
-
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
-   successGPU = gpu_get_last_error()
-   if (.not.successGPU) then
+  successGPU = gpu_get_last_error()
+  if (.not.successGPU) then
     print *,"elpa1_template: GPU error detected via gpu_get_last_error(). Aborting..."
     print *,"Rerun the program with the debug option e.g. 'export ELPA_DEFAULT_debug=1'"
     stop 1
@@ -1583,5 +1583,3 @@ function elpa_solve_evp_&
    &PRECISION&
    &")
 end function
-
-
