@@ -454,8 +454,13 @@ subroutine elpa_transpose_row_or_col&
             
             at(1+ i_block_loc     *nblk: nblk_cut_row + i_block_loc     *nblk,   &
                1+ j_block_loc     *nblk: nblk_cut_col + j_block_loc     *nblk) = &
+#if defined (REALCASE)
             transpose(buf_recv(1+ j_block_loc_fine*nblk: nblk_cut_col + j_block_loc_fine*nblk,   &
                                1+ i_block_loc_fine*nblk: nblk_cut_row + i_block_loc_fine*nblk))
+#else
+      conjg(transpose(buf_recv(1+ j_block_loc_fine*nblk: nblk_cut_col + j_block_loc_fine*nblk,   &
+                               1+ i_block_loc_fine*nblk: nblk_cut_row + i_block_loc_fine*nblk)) )
+#endif
           enddo ! j_block_loc_fine
         enddo ! i_block_loc_fine
       

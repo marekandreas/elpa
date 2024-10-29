@@ -1005,8 +1005,8 @@ __global__ void cuda_ccl_copy_buf_recv_kernel(T *at_col_dev, T *buf_recv_dev, in
         {
         for (int di = di0; di < nblk_cut_row; di += blockDim.x)
           {
-          at_col_dev[(di+i_block_loc*     nblk) + (dj+j_block_loc*     nblk)*l_rows] 
-      = buf_recv_dev[(dj+j_block_loc_fine*nblk) + (di+i_block_loc_fine*nblk)*lld_buf];
+          at_col_dev[(di+i_block_loc*     nblk) + (dj+j_block_loc*     nblk)*l_rows] = elpaDeviceComplexConjugate(
+        buf_recv_dev[(dj+j_block_loc_fine*nblk) + (di+i_block_loc_fine*nblk)*lld_buf] );
           }
         }
       }
