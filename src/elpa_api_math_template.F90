@@ -686,14 +686,14 @@
   !> \details
   !>
   !> \param   self                class(elpa_t), the ELPA object
-  !> \param  uplo_a               'U' if A is upper triangular
+  !> \param trans_a               'U' if A is upper triangular ! PETERDEBUG
   !>                              'L' if A is lower triangular
   !>                              anything else if A is a full matrix
   !>                              Please note: This pertains to the original A (as set in the calling program)
   !>                                           whereas the transpose of A is used for calculations
   !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
   !>                              i.e. it may contain arbitrary numbers
-  !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+  !> \param  trans_b              'U' if only the upper diagonal part of C is needed
   !>                              'L' if only the upper diagonal part of C is needed
   !>                              anything else if the full matrix C is needed
   !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -713,13 +713,13 @@
   abstract interface
     subroutine elpa_pxgemm_multiply_a_h_a_&
         &ELPA_IMPL_SUFFIX&
-        &_i (self, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+        &_i (self, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
-      character*1                     :: trans_a, trans_b, uplo_a, uplo_c
+      character*1                     :: trans_a, trans_b
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
       MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
@@ -747,14 +747,14 @@
   !> \details
   !>
   !> \param   self                class(elpa_t), the ELPA object
-  !> \param  uplo_a               'U' if A is upper triangular
+  !> \param trans_a               'U' if A is upper triangular ! PETERDEBUG
   !>                              'L' if A is lower triangular
   !>                              anything else if A is a full matrix
   !>                              Please note: This pertains to the original A (as set in the calling program)
   !>                                           whereas the transpose of A is used for calculations
   !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
   !>                              i.e. it may contain arbitrary numbers
-  !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+  !> \param trans_b               'U' if only the upper diagonal part of C is needed
   !>                              'L' if only the upper diagonal part of C is needed
   !>                              anything else if the full matrix C is needed
   !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -774,13 +774,13 @@
   abstract interface
     subroutine elpa_pxgemm_multiply_d_ptr_&
         &ELPA_IMPL_SUFFIX&
-        &_i (self, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+        &_i (self, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       use, intrinsic :: iso_c_binding
       import elpa_t
       implicit none
       class(elpa_t)                   :: self
-      character*1                     :: trans_a, trans_b, uplo_a, uplo_c
+      character*1                     :: trans_a, trans_b
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
       type(c_ptr)                     :: a, b, c
 !#ifdef USE_ASSUMED_SIZE

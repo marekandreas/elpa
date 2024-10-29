@@ -460,6 +460,8 @@ module elpa_multiply_a_b
 
 !__________________________________________________________________________________________________________________________________
 
+! PETERDEBUG: fix parameter description here and below
+
 ! #define REALCASE 1
 ! #define DOUBLE_PRECISION
 ! #undef DEVICE_POINTER
@@ -492,7 +494,7 @@ module elpa_multiply_a_b
 ! !> \param c                     matrix c
 ! !> \param ldc                   leading dimension of matrix c
 ! !> \result success
-!     function elpa_pxgemm_a_h_a_real_double_impl(obj, trana_a, trana_b, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
+!     function elpa_pxgemm_a_h_a_real_double_impl(obj, trana_a, trana_b, ncb, a, b, ldb, ldbCols, &
 !                                              c, ldc, ldcCols) result(success)
 ! #include "elpa_pxgemm_a_b_template.F90"
 !     end function elpa_pxgemm_a_h_a_real_double_impl
@@ -513,14 +515,14 @@ module elpa_multiply_a_b
 !>                   triangle may be computed
 !> \details
 !>
-!> \param  uplo_a               'U' if A is upper triangular
+!> \param trans_a               'U' if A is upper triangular ! PETERDEBUG 
 !>                              'L' if A is lower triangular
 !>                              anything else if A is a full matrix
 !>                              Please note: This pertains to the original A (as set in the calling program)
 !>                                           whereas the transpose of A is used for calculations
 !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
 !>                              i.e. it may contain arbitrary numbers
-!> \param uplo_c                'U' if only the upper diagonal part of C is needed
+!> \param trans_c                'U' if only the upper diagonal part of C is needed
 !>                              'L' if only the upper diagonal part of C is needed
 !>                              anything else if the full matrix C is needed
 !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -537,7 +539,7 @@ module elpa_multiply_a_b
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_pxgemm_a_h_a_real_double_impl(obj, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
+    function elpa_pxgemm_a_h_a_real_double_impl(obj, trans_a, trans_b, ncb, a, b, ldb, ldbCols, &
                                              c, ldc, ldcCols) result(success)
 #include "elpa_pxgemm_a_b_template.F90"
     end function elpa_pxgemm_a_h_a_real_double_impl
@@ -556,14 +558,14 @@ module elpa_multiply_a_b
 !>                   triangle may be computed
 !> \details
 !>
-!> \param  uplo_a               'U' if A is upper triangular
+!> \param trans_a               'U' if A is upper triangular ! PETERDEBUG 
 !>                              'L' if A is lower triangular
 !>                              anything else if A is a full matrix
 !>                              Please note: This pertains to the original A (as set in the calling program)
 !>                                           whereas the transpose of A is used for calculations
 !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
 !>                              i.e. it may contain arbitrary numbers
-!> \param uplo_c                'U' if only the upper diagonal part of C is needed
+!> \param trans_b               'U' if only the upper diagonal part of C is needed
 !>                              'L' if only the upper diagonal part of C is needed
 !>                              anything else if the full matrix C is needed
 !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -580,7 +582,7 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_pxgemm_d_ptr_real_double_impl(obj, trans_a, trans_b, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+    function elpa_pxgemm_d_ptr_real_double_impl(obj, trans_a, trans_b, ncb, aDev, bDev, ldb, ldbCols, &
                                              cDev, ldc, ldcCols) result(success)
 #include "elpa_pxgemm_a_b_template.F90"
     end function elpa_pxgemm_d_ptr_real_double_impl
@@ -601,14 +603,14 @@ module elpa_multiply_a_b
 !>                   triangle may be computed
 !> \details
 !>
-!> \param  uplo_a               'U' if A is upper triangular
+!> \param trans_a               'U' if A is upper triangular
 !>                              'L' if A is lower triangular
 !>                              anything else if A is a full matrix
 !>                              Please note: This pertains to the original A (as set in the calling program)
 !>                                           whereas the transpose of A is used for calculations
 !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
 !>                              i.e. it may contain arbitrary numbers
-!> \param uplo_c                'U' if only the upper diagonal part of C is needed
+!> \param trans_b               'U' if only the upper diagonal part of C is needed
 !>                              'L' if only the upper diagonal part of C is needed
 !>                              anything else if the full matrix C is needed
 !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -625,7 +627,7 @@ module elpa_multiply_a_b
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_pxgemm_a_h_a_real_single_impl(obj, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
+    function elpa_pxgemm_a_h_a_real_single_impl(obj, trans_a, trans_b, ncb, a, b, ldb, ldbCols, &
                                              c, ldc, ldcCols) result(success)
 
 #include "elpa_pxgemm_a_b_template.F90"
@@ -645,14 +647,14 @@ module elpa_multiply_a_b
 !>                   triangle may be computed
 !> \details
 !>
-!> \param  uplo_a               'U' if A is upper triangular
+!> \param trans_a               'U' if A is upper triangular ! PETERDEBUG
 !>                              'L' if A is lower triangular
 !>                              anything else if A is a full matrix
 !>                              Please note: This pertains to the original A (as set in the calling program)
 !>                                           whereas the transpose of A is used for calculations
 !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
 !>                              i.e. it may contain arbitrary numbers
-!> \param uplo_c                'U' if only the upper diagonal part of C is needed
+!> \param trans_b               'U' if only the upper diagonal part of C is needed
 !>                              'L' if only the upper diagonal part of C is needed
 !>                              anything else if the full matrix C is needed
 !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -669,7 +671,7 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_pxgemm_d_ptr_real_single_impl(obj, trans_a, trans_b, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+    function elpa_pxgemm_d_ptr_real_single_impl(obj, trans_a, trans_b, ncb, aDev, bDev, ldb, ldbCols, &
                                              cDev, ldc, ldcCols) result(success)
 
 #include "elpa_pxgemm_a_b_template.F90"
@@ -693,14 +695,14 @@ module elpa_multiply_a_b
 !>                   triangle may be computed
 !> \details
 !>
-!> \param  uplo_a               'U' if A is upper triangular
+!> \param trans_a               'U' if A is upper triangular ! PETERDEBUG
 !>                              'L' if A is lower triangular
 !>                              anything else if A is a full matrix
 !>                              Please note: This pertains to the original A (as set in the calling program)
 !>                                           whereas the transpose of A is used for calculations
 !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
 !>                              i.e. it may contain arbitrary numbers
-!> \param uplo_c                'U' if only the upper diagonal part of C is needed
+!> \param trans_b               'U' if only the upper diagonal part of C is needed
 !>                              'L' if only the upper diagonal part of C is needed
 !>                              anything else if the full matrix C is needed
 !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -719,7 +721,7 @@ module elpa_multiply_a_b
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_pxgemm_a_h_a_complex_double_impl(obj, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
+    function elpa_pxgemm_a_h_a_complex_double_impl(obj, trans_a, trans_b, ncb, a, b, ldb, ldbCols, &
                                                 c, ldc, ldcCols) result(success)
 #include "elpa_pxgemm_a_b_template.F90"
 
@@ -736,7 +738,7 @@ module elpa_multiply_a_b
 !>                   triangle may be computed
 !> \details
 !>
-!> \param  uplo_a               'U' if A is upper triangular
+!> \param  uplo_a               'U' if A is upper triangular ! PETERDEBUG
 !>                              'L' if A is lower triangular
 !>                              anything else if A is a full matrix
 !>                              Please note: This pertains to the original A (as set in the calling program)
@@ -762,7 +764,7 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device_pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_pxgemm_d_ptr_complex_double_impl(obj, trans_a, trans_b, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+    function elpa_pxgemm_d_ptr_complex_double_impl(obj, trans_a, trans_b, ncb, aDev, bDev, ldb, ldbCols, &
                                                 cDev, ldc, ldcCols) result(success)
 #include "elpa_pxgemm_a_b_template.F90"
 
@@ -784,14 +786,14 @@ module elpa_multiply_a_b
 !>                   triangle may be computed
 !> \details
 !>
-!> \param  uplo_a               'U' if A is upper triangular
+!> \param trans_a               'U' if A is upper triangular ! PETERDEBUG
 !>                              'L' if A is lower triangular
 !>                              anything else if A is a full matrix
 !>                              Please note: This pertains to the original A (as set in the calling program)
 !>                                           whereas the transpose of A is used for calculations
 !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
 !>                              i.e. it may contain arbitrary numbers
-!> \param uplo_c                'U' if only the upper diagonal part of C is needed
+!> \param trans_b               'U' if only the upper diagonal part of C is needed
 !>                              'L' if only the upper diagonal part of C is needed
 !>                              anything else if the full matrix C is needed
 !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -810,7 +812,7 @@ module elpa_multiply_a_b
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_pxgemm_a_h_a_complex_single_impl(obj, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
+    function elpa_pxgemm_a_h_a_complex_single_impl(obj, trans_a, trans_b, ncb, a, b, ldb, ldbCols, &
                                                 c, ldc, ldcCols) result(success)
 
 #include "elpa_pxgemm_a_b_template.F90"
@@ -830,14 +832,14 @@ module elpa_multiply_a_b
 !>                   triangle may be computed
 !> \details
 !>
-!> \param  uplo_a               'U' if A is upper triangular
+!> \param trans_a               'U' if A is upper triangular
 !>                              'L' if A is lower triangular
 !>                              anything else if A is a full matrix
 !>                              Please note: This pertains to the original A (as set in the calling program)
 !>                                           whereas the transpose of A is used for calculations
 !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
 !>                              i.e. it may contain arbitrary numbers
-!> \param uplo_c                'U' if only the upper diagonal part of C is needed
+!> \param trans_b               'U' if only the upper diagonal part of C is needed
 !>                              'L' if only the upper diagonal part of C is needed
 !>                              anything else if the full matrix C is needed
 !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -856,7 +858,7 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_pxgemm_d_ptr_complex_single_impl(obj, trans_a, trans_b, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+    function elpa_pxgemm_d_ptr_complex_single_impl(obj, trans_a, trans_b, ncb, aDev, bDev, ldb, ldbCols, &
                                                 cDev, ldc, ldcCols) result(success)
 
 #include "elpa_pxgemm_a_b_template.F90"

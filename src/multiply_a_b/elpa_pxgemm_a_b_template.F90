@@ -89,7 +89,6 @@
 #include "../../src/general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout)   :: obj
 
-  character*1                                  :: uplo_a, uplo_c ! PETERDEBUG: cleanup uplo
   character*1                                  :: trans_a, trans_b
   character(1, c_char)                         :: trans_a_cchar, trans_b_cchar
   integer(kind=ik), intent(in)                 :: ldb, ldbCols, ldc, ldcCols
@@ -130,7 +129,6 @@
   integer(kind=ik)                             :: np_t ! PETERDEBUG_NEW -> instead of np_bc?
   integer(kind=ik), allocatable                :: lrs_save(:), lre_save(:)
 
-  logical                                      :: a_lower, a_upper, c_lower, c_upper
   logical                                      :: a_transposed, b_transposed
   integer(kind=ik)                             :: a_transposed_int, b_transposed_int
 
@@ -211,10 +209,6 @@
     b_transposed_int = 1
     trans_b_cchar = BLAS_TRANS_OR_CONJ
   endif
-  print *, "a_transposed = ", a_transposed ! PETERDEBUG
-  print *, "b_transposed = ", b_transposed
-  print *, "trans_a = ", trans_a ! PETERDEBUG
-  print *, "trans_b = ", trans_b
 
   call obj%get("debug", debug, error)
   if (error .ne. ELPA_OK) then
@@ -420,28 +414,20 @@
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
-  a_lower = .false.
-  a_upper = .false.
-  c_lower = .false.
-  c_upper = .false.
-
-  ! if (uplo_a=='u' .or. uplo_a=='U') a_upper = .true.
-  ! if (uplo_a=='l' .or. uplo_a=='L') a_lower = .true.
-  ! if (uplo_c=='u' .or. uplo_c=='U') c_upper = .true.
-  ! if (uplo_c=='l' .or. uplo_c=='L') c_lower = .true.
-
   isSquareGrid = .false.
   if (np_rows == np_cols) isSquareGrid = .true. 
-  !if (a_upper .or. a_lower .or. c_upper .or. c_lower) isSquareGrid = .false.
-  print *, "isSquareGrid = ", isSquareGrid ! PETERDEBUG: cleanup
-  print *, "a_upper = ", a_upper
-  print *, "a_lower = ", a_lower
-  print *, "c_upper = ", c_upper
-  print *, "c_lower = ", c_lower
-  print *, "np_rows = ", np_rows
-  print *, "np_cols = ", np_cols
 
-  print *, "elpa_pxgemm NEW: start" ! PETERDEBUG: cleanup
+  ! PETERDEBUG: cleanup
+  if (myid==0) then
+    print *, "a_transposed = ", a_transposed
+    print *, "b_transposed = ", b_transposed
+    print *, "trans_a = ", trans_a
+    print *, "trans_b = ", trans_b
+    print *, "isSquareGrid = ", isSquareGrid
+    print *, "np_rows = ", np_rows
+    print *, "np_cols = ", np_cols
+    print *, "elpa_pxgemm NEW: start"
+  endif
 
 #if WITH_MPI
   ! l_rows_max = l_rows
@@ -467,8 +453,6 @@
   l_rows_min = l_rows
   l_cols_min = l_cols
 #endif /* WITH_MPI */
-
-
 
   !nblk_mult = l_rows_max ! = l_cols_max
   nblk_mult = greatest_common_divisor(l_rows_max, l_cols_max)
@@ -524,7 +508,7 @@
       ! main loop: build up the result matrix by processor rows/cols for TN/NT
       do np = 0, np_dirs-1
         NVTX_RANGE_PUSH("do np = 0, np_dirs-1")
-        print *, "np = ", np ! PETERDEBUG
+        if (myid==0) print *, "np = ", np ! PETERDEBUG
 
         ! In this turn, procs of row/col np assemble the result for TN/NT case
         
@@ -768,7 +752,7 @@
 
     if ((.not. a_transposed) .and. (.not. b_transposed) .or. &
                a_transposed  .and.        b_transposed) then
-      print *, "elpa_pxgemm NEW: SQUARE_GRID start: NN or TT" ! PETERDEBUG
+      if (myid==0) print *, "elpa_pxgemm NEW: SQUARE_GRID start: NN or TT" ! PETERDEBUG
    
       allocate(aux_a_full(l_rows, nblk_mult), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
@@ -852,7 +836,7 @@
 
       do np = 0, np_rows-1 ! np_rows=np_cols
         NVTX_RANGE_PUSH("np = 0, np_rows-1")
-        print *, "np = ", np ! PETERDEBUG
+        if (myid==0) print *, "np = ", np ! PETERDEBUG
 
         ! In this turn, procs of row np assemble the result
         np_bc=np ! np, that posesses the given column of a
@@ -1146,7 +1130,7 @@
 
 !_______________________________________________
 
-    if (.false. .and. (a_transposed) .and. (b_transposed)) then
+    if (.false. .and. (a_transposed) .and. (b_transposed)) then ! PETERDEBUG: cleanup
 
       allocate(at_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm: at_max", istat, errorMessage)
@@ -1156,12 +1140,12 @@
   
       !call mpi_allreduce(nblk_mult, na_max, 1_MPI_KIND, MPI_INTEGER, MPI_SUM, int(mpi_comm_all,kind=MPI_KIND), mpierr)
 
-      print *, "elpa_pxgemm NEW: SQUARE_GRID start: (a_transposed) .and. (b_transposed)" ! PETERDEBUG
+      if (myid==0) print *, "elpa_pxgemm NEW: SQUARE_GRID start: (a_transposed) .and. (b_transposed)" ! PETERDEBUG
 
       ! main loop: iterate through np, which are process rows for matrix A and process cols for matrix B
       do np = 0, np_rows-1 ! np_rows=np_cols
         NVTX_RANGE_PUSH("np = 0, np_rows-1")
-        print *, "np = ", np ! PETERDEBUG
+        if (myid==0) print *, "np = ", np ! PETERDEBUG
 
         ! In this turn, procs of row np assemble the result
         
@@ -1246,14 +1230,17 @@
     nblk_mult_rows_max = (l_rows_max*np_rows+LCM-1)/LCM*nblk
     nblk_mult_cols_max = (l_cols_max*np_cols+LCM-1)/LCM*nblk
     nblk_mult = max(nblk_mult_rows_max, nblk_mult_cols_max)
-    print *, "LCM = ", LCM ! PETERDEBUG
-    print *, "l_rows_max", l_rows_max ! PETERDEBUG
-    print *, "l_cols_max", l_cols_max ! PETERDEBUG
-    print *, "l_rows", l_rows ! PETERDEBUG
-    print *, "l_cols", l_cols ! PETERDEBUG
-    print *, "np_rows", np_rows ! PETERDEBUG
-    print *, "np_cols", np_cols ! PETERDEBUG
-    print *, "nblk_mult = ", nblk_mult ! PETERDEBUG
+    
+    if (myid==0) then
+      print *, "LCM = ", LCM ! PETERDEBUG
+      print *, "l_rows_max", l_rows_max ! PETERDEBUG
+      print *, "l_cols_max", l_cols_max ! PETERDEBUG
+      print *, "l_rows", l_rows ! PETERDEBUG
+      print *, "l_cols", l_cols ! PETERDEBUG
+      print *, "np_rows", np_rows ! PETERDEBUG
+      print *, "np_cols", np_cols ! PETERDEBUG
+      print *, "nblk_mult = ", nblk_mult ! PETERDEBUG
+    endif
 
     np_rows_fine = least_common_multiple(np_rows, np_cols)
     np_cols_fine = np_rows_fine
@@ -1262,8 +1249,8 @@
 
     if ((.not. a_transposed) .and. (.not. b_transposed) .or. &
                a_transposed  .and.        b_transposed) then
-      print *, "elpa_pxgemm NEW: NONSQUARE_GRID start: NN or TT" ! PETERDEBUG
-      
+      if (myid==0) print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: NN or TT or universal" ! PETERDEBUG
+
       allocate(aux_a_full(l_rows, nblk_mult), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm: aux_a_full", istat, errorMessage)
     
@@ -1349,12 +1336,11 @@
       endif
 
       call obj%timer%start("main_loop_nn_tt")
-      print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: NN or TT or universal" ! PETERDEBUG
 
       ! main loop: iterate through np_fine, which are "virtual" process rows for matrix A and process cols for matrix B
       do np_fine = 0, np_rows_fine-1 ! np_rows_fine=np_cols_fine
         NVTX_RANGE_PUSH("np_fine = 0, np_rows_fine-1")
-        print *, "np_fine = ", np_fine ! PETERDEBUG
+        if (myid==0) print *, "np_fine = ", np_fine ! PETERDEBUG
 
         ! In this turn, procs of row np_fine assemble the result
         
@@ -1662,7 +1648,7 @@
 ! ___________________________________________________________________
     if (.not. a_transposed .and.       b_transposed .or. &
               a_transposed .and. .not. b_transposed) then
-      print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: (a_transposed XOR b_transposed)" ! PETERDEBUG
+      if (myid==0) print *, "elpa_pxgemm NEW: NON-SQUARE_GRID start: TN or NT" ! PETERDEBUG
       
       ! dir = row/col for TN/NT
       if (a_transposed) then
@@ -1740,7 +1726,7 @@
       ! main loop: build up the result matrix C by the (virtual) process rows/cols for TN/NT
       do np_fine = 0, np_dirs_fine-1
         NVTX_RANGE_PUSH("do np_fine")
-        print *, "np_fine = ", np_fine ! PETERDEBUG
+        if (myid==0) print *, "np_fine = ", np_fine ! PETERDEBUG
 
         ! In this turn, procs of row/col np assemble the result for TN/NT case
         
@@ -1752,8 +1738,6 @@
         np   = mod(np_fine, np_dirs)
         np_t = mod(np_t_fine, np_dirs_t)
 
-        print *, "my_pcol=", my_pcol, "nblk_mult_max=" , nblk_mult_max
-        
         ! For non-square grids we work on LCMxLCM blocks. 
         ! One block consists of nblk x nblk block in the first LCM*LCM block and all its copies in the other LCM*LCM blocks.
         ! TN: loop over fine rows of a
@@ -1763,8 +1747,6 @@
           
           ! consider only the fine rows/cols that belong to the current process
           if (mod(np_ab_fine,np_dirs)/=my_pdir) cycle
-
-          print *, "np_ab_fine = ", np_ab_fine ! PETERDEBUG
 
           if (useGPU) then
             call obj%timer%start("gpu_copy_and_set_zeros_aux_ab_full_tn")

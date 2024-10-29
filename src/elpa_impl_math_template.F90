@@ -338,7 +338,7 @@
     end subroutine
 
 !__________________________________________________________________________________________________________________________________
-    ! PETERDEBUG: fix description
+    ! PETERDEBUG: fix description here and below
     ! pxgemm_multiply
 
     !> \brief  elpa_pxgemm_multiply_a_h_a_d: class method to perform C : = op(A) * B
@@ -354,19 +354,18 @@
     !> \details
     !>
     !> \param  self                 class(elpa_t), the ELPA object
-    !> \param  uplo_a               'U' if A is upper triangular
+    !> \param trans_a               'U' if A is upper triangular ! PETERDEBUG:
     !>                              'L' if A is lower triangular
     !>                              anything else if A is a full matrix
     !>                              Please note: U/L label pertains to the original A (as set in the calling program)
     !>                                           whereas the transpose of A is might be used for calculations
     !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
     !>                              i.e. it may contain arbitrary numbers
-    !> \param uplo_c                'U' if only the upper-triangle part of C is needed
+    !> \param trans_b               'U' if only the upper-triangle part of C is needed
     !>                              'L' if only the lower-triangle part of C is needed
     !>                              anything else if the full matrix C is needed
     !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
     !>                                            written to a certain extent, i.e. one shouldn't rely on the content there!
-    !> \param trans_a
     !> \param ncb                   Number of columns  of global matrices B and C
     !> \param a                     matrix a
     !> \param local_nrows           number of rows of local (sub) matrix a, set with class method set("local_nrows",value)
@@ -380,10 +379,10 @@
     !> \param error                 optional argument, error code which can be queried with elpa_strerr
     subroutine elpa_pxgemm_multiply_a_h_a_&
                    &ELPA_IMPL_SUFFIX&
-                   & (self, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+                   & (self, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       class(elpa_impl_t)              :: self
-      character*1                     :: trans_a, trans_b, uplo_a, uplo_c
+      character*1                     :: trans_a, trans_b
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
 #ifdef USE_ASSUMED_SIZE
       MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows,*), b(nrows_b,*), c(nrows_c,*)
@@ -403,8 +402,7 @@
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  &_impl(self, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
-                                                                         c, nrows_c, ncols_c)
+                  &_impl(self, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c)
 #endif
 #ifdef USE_FORTRAN2008
       if (present(error)) then
@@ -438,14 +436,14 @@
     !> \details
     !>
     !> \param  self                 class(elpa_t), the ELPA object
-    !> \param  uplo_a               'U' if A is upper triangular
+    !> \param trans_a               'U' if A is upper triangular
     !>                              'L' if A is lower triangular
     !>                              anything else if A is a full matrix
     !>                              Please note: This pertains to the original A (as set in the calling program)
     !>                                           whereas the transpose of A is used for calculations
     !>                              If uplo_a is 'U' or 'L', the other triangle is not used at all,
     !>                              i.e. it may contain arbitrary numbers
-    !> \param uplo_c                'U' if only the upper diagonal part of C is needed
+    !> \param trans_b               'U' if only the upper diagonal part of C is needed
     !>                              'L' if only the upper diagonal part of C is needed
     !>                              anything else if the full matrix C is needed
     !>                              Please note: Even when uplo_c is 'U' or 'L', the other triangle may be
@@ -463,10 +461,10 @@
     !> \param error                 optional argument, error code which can be queried with elpa_strerr
     subroutine elpa_pxgemm_multiply_d_ptr_&
                    &ELPA_IMPL_SUFFIX&
-                   & (self, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
+                   & (self, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, &
                                           c, nrows_c, ncols_c, error)
       class(elpa_impl_t)              :: self
-      character*1                     :: trans_a, trans_b, uplo_a, uplo_c
+      character*1                     :: trans_a, trans_b
       integer(kind=c_int), intent(in) :: nrows_b, ncols_b, nrows_c, ncols_c, ncb
       type(c_ptr)                     :: a, b, c
 #ifdef USE_FORTRAN2008
@@ -482,8 +480,7 @@
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
-                  &_impl(self, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
-                                                                         c, nrows_c, ncols_c)
+                  &_impl(self, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c)
 #endif
 #ifdef USE_FORTRAN2008
       if (present(error)) then
@@ -508,23 +505,23 @@
     
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL    
-    !c> void elpa_pxgemm_multiply_a_h_a_d(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_pxgemm_multiply_a_h_a_d(elpa_t handle, char trans_a, char trans_b, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    !c> void elpa_pxgemm_multiply_a_h_a_f(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_pxgemm_multiply_a_h_a_f(elpa_t handle, char trans_a, char trans_b, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error);
 #endif
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX    
-    !c> void elpa_pxgemm_multiply_a_h_a_dc(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_pxgemm_multiply_a_h_a_dc(elpa_t handle, char trans_a, char trans_b, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_pxgemm_multiply_a_h_a_fc(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_pxgemm_multiply_a_h_a_fc(elpa_t handle, char trans_a, char trans_b, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
 #endif
 #endif
     subroutine elpa_pxgemm_multiply_a_h_a_&
                     &ELPA_IMPL_SUFFIX&
-                    &_c(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a_p, b_p, nrows_b, &
+                    &_c(handle, trans_a, trans_b, ncb, a_p, b_p, nrows_b, &
                                            ncols_b, c_p, nrows_c, ncols_c, error)          &
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL 
@@ -544,7 +541,7 @@
 #endif
 
       type(c_ptr), intent(in), value               :: handle, a_p, b_p, c_p
-      character(1, c_char), value                  :: trans_a, trans_b, uplo_a, uplo_c
+      character(1, c_char), value                  :: trans_a, trans_b
       integer(kind=c_int), value                   :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
 #ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in)    :: error
@@ -566,30 +563,28 @@
 
       call elpa_pxgemm_multiply_a_h_a_&
               &ELPA_IMPL_SUFFIX&
-              & (self, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, &
-                                     ncols_b, c, nrows_c, ncols_c, error)
+              & (self, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error)
     end subroutine
 
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL    
-    !c> void elpa_pxgemm_multiply_d_ptr_d(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_pxgemm_multiply_d_ptr_d(elpa_t handle, char trans_a, char trans_b, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error);
 #endif
 #ifdef SINGLE_PRECISION_REAL
-    !c> void elpa_pxgemm_multiply_d_ptr_f(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_pxgemm_multiply_d_ptr_f(elpa_t handle, char trans_a, char trans_b, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error);
 #endif
 #endif
 #ifdef COMPLEXCASE
 #ifdef DOUBLE_PRECISION_COMPLEX    
-    !c> void elpa_pxgemm_multiply_d_ptr_dc(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_pxgemm_multiply_d_ptr_dc(elpa_t handle, char trans_a, char trans_b, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-    !c> void elpa_pxgemm_multiply_d_ptr_fc(elpa_t handle, char trans_a, char trans_b, char uplo_a, char uplo_c, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
+    !c> void elpa_pxgemm_multiply_d_ptr_fc(elpa_t handle, char trans_a, char trans_b, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
 #endif
 #endif
     subroutine elpa_pxgemm_multiply_d_ptr_&
                     &ELPA_IMPL_SUFFIX&
-                    &_c(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a_p, b_p, nrows_b, &
-                                           ncols_b, c_p, nrows_c, ncols_c, error)          &
+                    &_c(handle, trans_a, trans_b, ncb, a_p, b_p, nrows_b, ncols_b, c_p, nrows_c, ncols_c, error) &
 #ifdef REALCASE
 #ifdef DOUBLE_PRECISION_REAL 
                                            bind(C, name="elpa_pxgemm_multiply_d_ptr_d")
@@ -608,7 +603,7 @@
 #endif
 
       type(c_ptr), intent(in), value            :: handle, a_p, b_p, c_p
-      character(1, c_char), value               :: trans_a, trans_b, uplo_a, uplo_c
+      character(1, c_char), value               :: trans_a, trans_b
       integer(kind=c_int), value                :: ncb, nrows_b, ncols_b, nrows_c, ncols_c
 #ifdef USE_FORTRAN2008
       integer(kind=c_int), optional, intent(in) :: error
@@ -622,8 +617,7 @@
 
       call elpa_pxgemm_multiply_d_ptr_&
               &ELPA_IMPL_SUFFIX&
-              & (self, trans_a, trans_b, uplo_a, uplo_c, ncb, a_p, b_p, nrows_b, &
-                                     ncols_b, c_p, nrows_c, ncols_c, error)
+              & (self, trans_a, trans_b, ncb, a_p, b_p, nrows_b, ncols_b, c_p, nrows_c, ncols_c, error)
     end subroutine
 
 ! _________________________________________________________________________________________________________________________________
