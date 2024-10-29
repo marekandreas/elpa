@@ -159,7 +159,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     try {
       SyclState::defaultState().selectGpuDevice(targetDeviceId);
     } catch(std::runtime_error &e) {
-      std::cout << "Device #" << targetDeviceId << " cannot be selected." << std::endl;
+      // std::cout << "Device #" << targetDeviceId << " cannot be selected." << std::endl;
       return 0;
     }
     return 1;
@@ -234,8 +234,10 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   int syclDeviceSynchronizeFromC() {
-    sycl::queue q = getQueueOrDefault(nullptr);
-    q.wait();
+    DeviceSelection &ds = SyclState::defaultState().getDefaultDeviceHandle();
+    for (auto &qd : ds.queueHandles) {
+      qd.queue.wait();
+    }
     return 1;
   }
 
@@ -305,13 +307,13 @@ static oneapi::mkl::side sideFromChar(char c) {
 
     auto allocT = sycl::get_pointer_type(bytes, devSel.context);
     // queue.wait();
-    std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << (size_t (*a)) << " -> " << allocStr(allocT) << "\n";
+    // std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << (size_t (*a)) << " -> " << allocStr(allocT) << "\n";
 
     if (*a) {
-      //std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
+      //// std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
       return 1;
     } else {
-      std::cout << "Failed to allocate " << elems << "B on device." << std::endl;
+      // std::cout << "Failed to allocate " << elems << "B on device." << std::endl;
       return 0;
     }
   }
@@ -333,14 +335,14 @@ static oneapi::mkl::side sideFromChar(char c) {
 
     auto allocT = sycl::get_pointer_type(bytes, devSel.context);
     // queue.wait();
-    std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << (size_t (*a)) << " -> " << allocStr(allocT) << "\n";
+    // std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << (size_t (*a)) << " -> " << allocStr(allocT) << "\n";
 
 
     if (*a) {
-      //std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
+      //// std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
       return 1;
     } else {
-      std::cout << "Failed to allocate " << elems << "B on device." << std::endl;
+      // std::cout << "Failed to allocate " << elems << "B on device." << std::endl;
       return 0;
     }
   }
@@ -360,7 +362,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
     auto allocT = sycl::get_pointer_type(a, devSel.context);
     // queue.wait();
-    std::cerr << "FREE |" << "syclFree" << "| ~> void **: " << ((size_t) a) << " -> " << allocStr(allocT) << "\n";
+    // std::cerr << "FREE |" << "syclFree" << "| ~> void **: " << ((size_t) a) << " -> " << allocStr(allocT) << "\n";
     sycl::free(a, devSel.context);
     return 1;
   }
@@ -388,7 +390,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     sycl::context c = queue.get_context();
     auto dstAllocT = sycl::get_pointer_type(dst, c);
     auto srcAllocT = sycl::get_pointer_type(src, c);
-    std::cerr << "MEMCPY |" << dirStr(direction) << "| ~> Dst: " << ((size_t) dst) << " -> " << allocStr(dstAllocT) << ", Src: " << ((size_t) src) << " -> " << allocStr(srcAllocT) << "\n";
+    // std::cerr << "MEMCPY |" << dirStr(direction) << "| ~> Dst: " << ((size_t) dst) << " -> " << allocStr(dstAllocT) << ", Src: " << ((size_t) src) << " -> " << allocStr(srcAllocT) << "\n";
     bool isFailed = false;
     /*if (isCPU == 1) {
       if (direction == syclMemcpyDeviceToDevice) {
@@ -467,6 +469,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     isFailed = checkPointerValidity(dst, src, direction, queue);
 #endif
     if (!isFailed) {
+      syclDeviceSynchronizeFromC();
       queue.memcpy(dst, src, size).wait();
       return 1;
     } else {
