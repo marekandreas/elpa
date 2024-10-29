@@ -41,7 +41,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 !
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
+! ELPA1 -- Faster replacements for ScaLAPACK hermitian eigenvalue routines
 !
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest

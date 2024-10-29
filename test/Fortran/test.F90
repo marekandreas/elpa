@@ -376,7 +376,6 @@ program test
 #endif
 
 
-
 #if TEST_QR_DECOMPOSITION == 1
 
 #if (TEST_NVIDIA_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
@@ -482,13 +481,14 @@ program test
   z(:,:) = 0.0
   ev(:) = 0.0
 
-#if defined(TEST_MATRIX_RANDOM) && !defined(TEST_SOLVE_TRIDIAGONAL) && !defined(TEST_CHOLESKY) && !defined(TEST_EIGENVALUES)
+#if defined(TEST_MATRIX_RANDOM) && !defined(TEST_SOLVE_TRIDIAGONAL) && !defined(TEST_CHOLESKY) && !defined(TEST_EIGENVALUES) && !defined(TEST_MULTIPLY)
   ! the random matrix can be used in allmost all tests; but for some no
   ! correctness checks have been implemented; do not allow these
   ! combinations
   ! RANDOM + TEST_SOLVE_TRIDIAGONAL: we need a TOEPLITZ MATRIX
-  ! RANDOM + TEST_CHOLESKY: wee need SPD matrix
+  ! RANDOM + TEST_CHOLESKY: we need SPD matrix
   ! RANDOM + TEST_EIGENVALUES: no correctness check known
+  ! RANDOM + TEST_MULTIPLY: we need a non-hermitian matrix
 
   ! We also have to take care of special case in TEST_EIGENVECTORS
 #if !defined(TEST_EIGENVECTORS)
@@ -538,6 +538,11 @@ program test
 
 #if defined(TEST_MATRIX_RANDOM) && (defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_EIGENVALUES))
 #error "Random matrix is not allowed in this configuration"
+#endif
+
+#if defined(TEST_MATRIX_RANDOM) && defined(TEST_MULTIPLY)
+  call prepare_matrix_random(na, myid       , sc_desc, a, z, as, is_hermitian=0)
+  call prepare_matrix_random(na, myid+nprocs, sc_desc, b, z, c , is_hermitian=0)
 #endif
 
 #if defined(TEST_MATRIX_ANALYTIC)  && !defined(TEST_SOLVE_TRIDIAGONAL) && !defined(TEST_CHOLESKY)
@@ -703,30 +708,15 @@ program test
   uplo_c  = 'L'
 #endif
 
-#ifdef TEST_REAL
-
-#ifdef TEST_DOUBLE
-  b(:,:) = 2.0_c_double * a(:,:)
+#if defined(TEST_REAL) && defined(TEST_DOUBLE)
   c(:,:) = 0.0_c_double
-#else
-  b(:,:) = 2.0_c_float * a(:,:)
+#elif defined(TEST_REAL) && defined(TEST_SINGLE)
   c(:,:) = 0.0_c_float
+#elif defined(TEST_COMPLEX) && defined(TEST_DOUBLE)
+  c(:,:) = (0.0_c_double, 0.0_c_double)
+#elif defined(TEST_COMPLEX) && defined(TEST_SINGLE)
+  c(:,:) = (0.0_c_float, 0.0_c_float)
 #endif
-
-#endif /* TEST_REAL */
-
-#ifdef TEST_COMPLEX
-
-#ifdef TEST_DOUBLE
-  b(:,:) = 2.0_c_double * a(:,:)
-  c(:,:) = (1.0_c_double, 1.0_c_double)
-#else
-  b(:,:) = 2.0_c_float * a(:,:)
-  c(:,:) = (1.0_c_float, 1.0_c_float)
-#endif
-
-#endif /* TEST_COMPLEX */
-
 #endif /* TEST_MULTIPLY  */
 
 ! if the test is used for (repeated) performacne tests, one might want to skip the checking
@@ -1344,14 +1334,14 @@ program test
 #if (TEST_GPU_DEVICE_POINTER_API == 1)
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
-  call e%pxgemm_multiply_double(trans_a, trans_b, uplo_a, uplo_c, &
+  call e%pxgemm_multiply_double(trans_a, trans_b, &
                             int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), error_elpa)
   assert_elpa_ok(error_elpa)
 #endif
 #if defined(TEST_SINGLE)
-  call e%pxgemm_multiply_float(trans_a, trans_b, uplo_a, uplo_c, &
+  call e%pxgemm_multiply_float(trans_a, trans_b, &
                             int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), error_elpa)
@@ -1360,14 +1350,14 @@ program test
 #endif /* TEST_REAL */
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
-  call e%pxgemm_multiply_double_complex(trans_a, trans_b, uplo_a, uplo_c, &
+  call e%pxgemm_multiply_double_complex(trans_a, trans_b, &
                             int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), error_elpa)
   assert_elpa_ok(error_elpa)
 #endif
 #if defined(TEST_SINGLE)
-  call e%pxgemm_multiply_float_complex(trans_a, trans_b, uplo_a, uplo_c, &
+  call e%pxgemm_multiply_float_complex(trans_a, trans_b, &
                             int(na,kind=c_int), a_dev, b_dev, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), c_dev, int(na_rows,kind=c_int), &
                             int(na_cols,kind=c_int), error_elpa)
@@ -1375,10 +1365,10 @@ program test
 #endif
 #endif /* TEST_COMPLEX */
 #else /* TEST_GPU_DEVICE_POINTER_API */
-  call e%pxgemm_multiply(trans_a, trans_b, uplo_a, uplo_c, &
-                            int(na,kind=c_int), a, b, int(na_rows,kind=c_int), &
-                            int(na_cols,kind=c_int), c, int(na_rows,kind=c_int), &
-                            int(na_cols,kind=c_int), error_elpa)
+  call e%pxgemm_multiply(trans_a, trans_b, &
+                        int(na,kind=c_int), a, b, int(na_rows,kind=c_int), &
+                        int(na_cols,kind=c_int), c, int(na_rows,kind=c_int), &
+                        int(na_cols,kind=c_int), error_elpa)
   assert_elpa_ok(error_elpa)
 #endif /* TEST_GPU_DEVICE_POINTER_API */
      call e%timer_stop("e%pxgemm_multiply()")
