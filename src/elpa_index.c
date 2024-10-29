@@ -265,8 +265,9 @@ static const elpa_index_int_entry_t int_entries[] = {
         BOOL_ENTRY("measure_performance", "Also measure with flops (via papi) with the timings", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
         BOOL_ENTRY("check_pd", "Check eigenvalues to be positive", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
         BOOL_ENTRY("output_pinning_information", "Print the pinning information", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
-        BOOL_ENTRY("cannon_for_generalized", "Whether to use Cannons algorithm for the generalized EVP" , 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
-        BOOL_ENTRY("pxtrmm_for_generalized", "Whether to use ScaLAPACK's PxTRMM for the generalized EVP", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
+        BOOL_ENTRY("cannon_for_generalized", "Whether to use Cannons algorithm for the generalized EVP" , 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
+        BOOL_ENTRY("pxtrmm_for_generalized", "Whether to use ScaLAPACK's PxTRMM for the generalized EVP", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
+        BOOL_ENTRY("pxgemm_for_generalized", "Whether to use elpa_pxgemm for the generalized EVP", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_YES),
 #if defined(THREADING_SUPPORT_CHECK) && defined(ALLOW_THREAD_LIMITING) && !defined(HAVE_SUFFICIENT_MPI_THREADING_SUPPORT)
         BOOL_ENTRY("limit_openmp_threads", "Limit the number if openmp threads to 1", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, 0, ELPA_AUTOTUNE_PART_NONE, PRINT_NO),
 #endif
