@@ -127,7 +127,6 @@
   integer(kind=ik), allocatable                :: lrs_save(:), lre_save(:)
 
   logical                                      :: a_lower, a_upper, c_lower, c_upper
-  logical                                      :: a_transposed, b_transposed
   MATH_DATATYPE(kind=rck)                      :: beta
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_mat(:,:), tmp1(:,:)
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_a_full(:,:), aux_b_full(:,:), tmp1_full(:,:), tmp2_full(:,:) ! PETERDEBUG
@@ -180,13 +179,6 @@
 
   success = .true.
   useGPU = .false.
-
-  a_transposed = .true.
-  b_transposed = .false.
-  if (trans_a=='t' .or. trans_a=='T' .or. trans_a=='c' .or. trans_a=='C') a_transposed = .true.
-  if (trans_b=='t' .or. trans_b=='T' .or. trans_b=='c' .or. trans_b=='C') b_transposed = .true.
-  print *, "a_transposed = ", a_transposed ! PETERDEBUG
-  print *, "b_transposed = ", b_transposed
 
   call obj%get("debug", debug, error)
   if (error .ne. ELPA_OK) then
@@ -294,6 +286,7 @@
     endif ! useGPU
   endif ! is_set
 
+  useCCL = .false.
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
     if (check_for_gpu(obj, myid, numGPU)) then
