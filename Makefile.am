@@ -1060,6 +1060,7 @@ EXTRA_DIST = \
   src/GPU/handle_creation_template.F90 \
   src/GPU/handle_destruction_template.F90 \
   src/GPU/common_device_functions.h \
+  src/GPU/gpu_to_cuda_and_hip_interface.h \
   src/GPU/CUDA/cuda_template.F90 \
   src/GPU/CUDA/cusolver_template.F90 \
   src/GPU/CUDA/cudaFunctions_template.h \
@@ -1128,6 +1129,7 @@ EXTRA_DIST = \
   src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
   src/multiply_a_b/GPU/SYCL/mod_multiply_a_b_sycl.F90 \
   src/multiply_a_b/GPU/OpenMP/mod_multiply_a_b_openmp_offload.F90 \
+  src/multiply_a_b/GPU/elpa_pxgemm_multiply_gpu.h \
   src/invert_trm/invert_trm_template.F90 \
   src/elpa1/elpa_reduce_add_vectors_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
