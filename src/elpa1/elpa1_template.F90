@@ -400,7 +400,7 @@ function elpa_solve_evp_&
    do_useGPU_trans_ev = do_useGPU
    ! only if we want (and can) use GPU in general, look what are the
    ! requirements for individual routines. Implicitly they are all set to 1, so
-   ! unles specified otherwise by the user, GPU versions of all individual
+   ! unless specified otherwise by the user, GPU versions of all individual
    ! routines should be used
    if(do_useGPU) then
      call obj%get("gpu_tridiag", gpu, error)
@@ -451,7 +451,7 @@ function elpa_solve_evp_&
 #endif /* REDISTRIBUTE_MATRIX */
 !
 
-   my_pe    = obj%mpi_setup%myRank_comm_parent
+   my_pe   = obj%mpi_setup%myRank_comm_parent
    my_prow = obj%mpi_setup%myRank_comm_rows
    my_pcol = obj%mpi_setup%myRank_comm_cols
 
@@ -918,21 +918,41 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("tridi")
 #endif
+     
+     ! it's possible to switch on/off GPU branches for each of ELPA1 steps (do_useGPU_tridiag, do_useGPU_solve_tridi, do_useGPU_trans_ev)
+     ! (only for debugging purposes, gpu_memcpy's are not optimized)
+     if (useGPU .and. .not. do_useGPU_tridiag) then
+       num = (matrixRows* matrixCols) * size_of_datatype
+       successGPU = gpu_memcpy(int(loc(a),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: a_dev -> a", successGPU)
+
+       num = (na) * size_of_real_datatype
+       successGPU = gpu_memcpy(int(loc(ev),kind=c_intptr_t), ev_dev, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: ev_dev -> ev", successGPU)
+
+       num = (na) * size_of_real_datatype
+       successGPU = gpu_memcpy(int(loc(e),kind=c_intptr_t), e_dev, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: e_dev -> e", successGPU)
+
+       num = (na) * size_of_datatype
+       successGPU = gpu_memcpy(int(loc(tau),kind=c_intptr_t), tau_dev, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: tau_dev -> tau", successGPU)
+     endif ! (useGPU .and. .not. do_useGPU_tridiag) then
 
      if (do_useGPU_tridiag) then
        call tridiag_gpu_&
        &MATH_DATATYPE&
        &_&
        &PRECISION&
-       & (obj, na, a_dev, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev_dev, e_dev, &
-         tau_dev, wantDebug, nrThreads, isSkewsymmetric, success)
+       & (obj, na, a_dev, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev_dev, e_dev, tau_dev, &
+          wantDebug, nrThreads, isSkewsymmetric, success)
      else
        call tridiag_cpu_&
        &MATH_DATATYPE&
        &_&
        &PRECISION&
-       & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, wantDebug, &
-          nrThreads, isSkewsymmetric, success)
+       & (obj, na, a, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, ev, e, tau, &
+          wantDebug, nrThreads, isSkewsymmetric, success)
      endif
      if (success) then
        success_int = 0
@@ -953,7 +973,23 @@ function elpa_solve_evp_&
        return
      endif
 
+     if (useGPU .and. .not. do_useGPU_tridiag) then
+      num = (matrixRows* matrixCols) * size_of_datatype
+      successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("elpa1_template: a -> a_dev", successGPU)
+ 
+      num = (na) * size_of_real_datatype
+      successGPU = gpu_memcpy(ev_dev, int(loc(ev),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("elpa1_template: ev -> ev_dev", successGPU)
+ 
+      num = (na) * size_of_real_datatype
+      successGPU = gpu_memcpy(e_dev, int(loc(e),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("elpa1_template: e -> e_dev", successGPU)
 
+      num = (na) * size_of_datatype
+      successGPU = gpu_memcpy(tau_dev, int(loc(tau),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("elpa1_template: tau -> tau_dev", successGPU)
+    endif ! (useGPU .and. .not. do_useGPU_tridiag) then
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -963,7 +999,8 @@ function elpa_solve_evp_&
 #endif
      call obj%timer%stop("forward")
      call obj%autotune_timer%stop("full_to_tridi")
-    endif  !do_tridiag
+    endif ! do_tridiag
+
 
     if (do_solve) then
      call obj%autotune_timer%start("solve")
@@ -975,6 +1012,27 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("solve")
 #endif
+
+     if (useGPU .and. .not. do_useGPU_solve_tridi) then
+       num = (na) * size_of_real_datatype
+       successGPU = gpu_memcpy(int(loc(ev),kind=c_intptr_t), ev_dev, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: ev_dev -> ev", successGPU) 
+
+       num = (na) * size_of_real_datatype
+       successGPU = gpu_memcpy(int(loc(e),kind=c_intptr_t), e_dev, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: e_dev -> e", successGPU)
+
+#if REALCASE == 1       
+       num = (matrixRows* matrixCols) * size_of_datatype
+       successGPU = gpu_memcpy(int(loc(q_actual(1,1)),kind=c_intptr_t), q_dev_actual, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: q_dev_actual -> q_actual", successGPU)
+#endif
+#if COMPLEXCASE == 1
+        num = (l_rows* l_cols) * size_of_real_datatype
+        successGPU = gpu_memcpy(int(loc(q_real(1,1)),kind=c_intptr_t), q_dev_real, num, gpuMemcpyDeviceToHost)
+        check_memcpy_gpu("elpa1_template: q_dev_real -> q_real", successGPU)
+#endif       
+     endif ! (useGPU .and. .not. do_useGPU_solve_tridi)
 
      if (do_useGPU_solve_tridi) then
        call solve_tridi_gpu_&
@@ -1000,7 +1058,28 @@ function elpa_solve_evp_&
 #endif
         nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, wantDebug, &
                 success, nrThreads)
-    endif
+     endif
+
+     if (useGPU .and. .not. do_useGPU_solve_tridi) then
+       num = (na) * size_of_real_datatype
+       successGPU = gpu_memcpy(ev_dev, int(loc(ev),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("elpa1_template: ev -> ev_dev", successGPU)
+  
+       num = (na) * size_of_real_datatype
+       successGPU = gpu_memcpy(e_dev, int(loc(e),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("elpa1_template: e -> e_dev", successGPU)
+
+#if REALCASE == 1
+       num = (matrixRows* matrixCols) * size_of_datatype
+       successGPU = gpu_memcpy(q_dev_actual, int(loc(q_actual(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("elpa1_template: q_actual -> q_dev_actual", successGPU)
+#endif
+#if COMPLEXCASE == 1
+       num = (l_rows* l_cols) * size_of_real_datatype
+       successGPU = gpu_memcpy(q_dev_real, int(loc(q_real(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("elpa1_template: q_real -> q_dev_real", successGPU)
+#endif
+     endif ! (useGPU .and. .not. do_useGPU_solve_tridi)
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -1029,8 +1108,8 @@ function elpa_solve_evp_&
        return
      endif
 
+   endif ! do_solve
 
-   endif !do_solve
 
    if (do_trans_ev) then
      call obj%get("check_pd",check_pd,error)
@@ -1060,34 +1139,31 @@ function elpa_solve_evp_&
          endif
        enddo
        if (check_pd .lt. na) then
-         ! not positiv definite => eigenvectors needed
+         ! not positive definite => eigenvectors needed
          do_trans_ev = .true.
        else
          do_trans_ev = .false.
        endif
      endif ! check_pd
-   endif ! do_trans_ev
-
-   if (do_trans_ev) then
 
     ! q must be given thats why from here on we can use q and not q_actual
 #if COMPLEXCASE == 1
-     if (do_useGPU_trans_ev) then
+     if (useGPU) then
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev, my_stream)
 #else
         call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev)
 #endif
-     else
+     else ! useGPU
        q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
-     endif
+     endif ! useGPU
 #endif /* COMPLEXCASE */
 
 
      if (isSkewsymmetric) then
 
-       if (do_useGPU_trans_ev) then
+       if (useGPU) then
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
          call GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION(q_dev, matrixRows, matrixCols, my_stream)
@@ -1133,7 +1209,7 @@ function elpa_solve_evp_&
 #endif
            end if
          enddo
-       else ! do_useGPU_trans_ev
+       else ! useGPU
          ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
          ! This makes the eigenvectors complex.
          ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
@@ -1155,7 +1231,7 @@ function elpa_solve_evp_&
              q(i,1:matrixCols) = 0
            end if
          end do
-       endif ! do_useGPU_trans_ev
+       endif ! useGPU
 
      endif ! isSkewsymmetric
 
@@ -1168,6 +1244,19 @@ function elpa_solve_evp_&
      call nvtxRangePush("trans_ev")
 #endif
 
+     if (useGPU .and. .not. do_useGPU_trans_ev) then
+       num = (matrixRows* matrixCols) * size_of_datatype
+       successGPU = gpu_memcpy(int(loc(a),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: a_dev -> a", successGPU)
+
+       num = (na) * size_of_datatype
+       successGPU = gpu_memcpy(int(loc(tau),kind=c_intptr_t), tau_dev, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: tau_dev -> tau", successGPU)
+       
+       num = (matrixRows* matrixCols) * size_of_datatype
+       successGPU = gpu_memcpy(int(loc(q(1,1)),kind=c_intptr_t), q_dev, num, gpuMemcpyDeviceToHost)
+       check_memcpy_gpu("elpa1_template: q_dev -> q", successGPU)
+     endif
 
      ! In the skew-symmetric case this transforms the real part
      if (do_useGPU_trans_ev) then
@@ -1175,15 +1264,15 @@ function elpa_solve_evp_&
        &MATH_DATATYPE&
        &_&
        &PRECISION&
-       & (obj, na, nev, a_dev, matrixRows, tau_dev, q_dev, matrixRows, nblk, matrixCols, &
-          mpi_comm_rows, mpi_comm_cols, success)
+       & (obj, na, nev, a_dev, matrixRows, tau_dev, q_dev, &
+          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, success)
      else
        call trans_ev_cpu_&
        &MATH_DATATYPE&
        &_&
        &PRECISION&
-       & (obj, na, nev, a, matrixRows, tau, q, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
-        success)
+       & (obj, na, nev, a, matrixRows, tau, q, &
+          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, success)
      endif
 
      if (success) then
@@ -1203,6 +1292,20 @@ function elpa_solve_evp_&
      if (success_int .eq. 1) then
        write(error_unit,*) "Error in trans_ev (real). Aborting..."
        return
+     endif
+
+     if (useGPU .and. .not. do_useGPU_trans_ev) then
+       num = (matrixRows* matrixCols) * size_of_datatype
+       successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("elpa1_template: a -> a_dev", successGPU)
+
+       num = (na) * size_of_datatype
+       successGPU = gpu_memcpy(tau_dev, int(loc(tau),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("elpa1_template: tau -> tau_dev", successGPU)
+      
+       num = (matrixRows* matrixCols) * size_of_datatype
+       successGPU = gpu_memcpy(q_dev, int(loc(q(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+       check_memcpy_gpu("elpa1_template: q -> q_dev", successGPU)
      endif
 
      if (isSkewsymmetric) then
@@ -1255,9 +1358,7 @@ function elpa_solve_evp_&
          write(error_unit,*) "Error in trans_ev (imag). Aborting..."
          return
        endif
-     endif ! isSkewsymmetric
 
-     if (isSkewsymmetric) then
        if (do_useGPU_trans_ev) then
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
@@ -1267,7 +1368,7 @@ function elpa_solve_evp_&
          call GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, q_part2_dev, matrixRows, matrixCols)
 #endif
        endif
-     endif
+     endif ! isSkewsymmetric
 
 #ifndef DEVICE_POINTER
      if (useGPU) then
