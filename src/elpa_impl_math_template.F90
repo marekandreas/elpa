@@ -107,7 +107,7 @@
       success_l = .false.
 
 #if defined(INCLUDE_ROUTINES)
-      success_l = elpa_multiply_a_h_a_&
+      success_l = elpa_hermitian_multiply_a_h_a_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
@@ -188,7 +188,7 @@
       success_l = .false.
 
 #if defined(INCLUDE_ROUTINES)
-      success_l = elpa_multiply_d_ptr_&
+      success_l = elpa_hermitian_multiply_d_ptr_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
@@ -398,7 +398,7 @@
      
       success_l = .false.
 #if defined(INCLUDE_ROUTINES)
-      success_l = elpa_pxgemm_a_h_a_&
+      success_l = elpa_pxgemm_multiply_a_h_a_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&
@@ -476,7 +476,7 @@
      
       success_l = .false.
 #if defined(INCLUDE_ROUTINES)
-      success_l = elpa_pxgemm_d_ptr_&
+      success_l = elpa_pxgemm_multiply_d_ptr_&
                   &MATH_DATATYPE&
                   &_&
                   &PRECISION&

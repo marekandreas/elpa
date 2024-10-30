@@ -124,7 +124,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/cholesky/GPU/SYCL/mod_cholesky_sycl.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
-  src/multiply_a_b/mod_elpa_multiply_helpers.F90 \
+  src/multiply_a_b/mod_elpa_pxgemm_multiply_transpose.F90 \
   src/multiply_a_b/GPU/mod_multiply_a_b_gpu.F90 \
   src/multiply_a_b/GPU/CUDA/mod_multiply_a_b_cuda.F90 \
   src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
@@ -211,9 +211,9 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/general/error_checking.inc \
   src/cholesky/elpa_cholesky_template.F90 \
   src/invert_trm/invert_trm_template.F90 \
-  src/multiply_a_b/elpa_multiply_a_b_template.F90 \
-  src/multiply_a_b/elpa_pxgemm_a_b_template.F90 \
-  src/multiply_a_b/elpa_multiply_helpers_template.F90 \
+  src/multiply_a_b/elpa_hermitian_multiply_template.F90 \
+  src/multiply_a_b/elpa_pxgemm_multiply_template.F90 \
+  src/multiply_a_b/elpa_pxgemm_multiply_transpose_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
@@ -250,7 +250,8 @@ if WITH_NVIDIA_GPU_VERSION
   src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu \
   src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu \
   src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu \
-  src/multiply_a_b/GPU/CUDA/elpa_multiply_a_b_cuda.cu
+  src/multiply_a_b/GPU/CUDA/elpa_hermitian_multiply_cuda.cu \
+  src/multiply_a_b/GPU/CUDA/elpa_pxgemm_multiply_cuda.cu
 
 
 if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
@@ -303,7 +304,8 @@ if WITH_AMD_GPU_VERSION
   src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp \
   src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp \
   src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp \
-  src/multiply_a_b/GPU/ROCm/elpa_multiply_a_b_hip.cpp
+  src/multiply_a_b/GPU/ROCm/elpa_hermitian_multiply_hip.cpp \
+  src/multiply_a_b/GPU/ROCm/elpa_pxgemm_multiply_hip.cpp
 endif
 
 
@@ -1116,11 +1118,11 @@ EXTRA_DIST = \
   src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
   src/invert_trm/GPU/ROCm/mod_invert_trm_hip.F90 \
   src/invert_trm/GPU/SYCL/mod_invert_trm_sycl.F90 \
-  src/multiply_a_b/elpa_multiply_a_b_template.F90 \
-  src/multiply_a_b/elpa_pxgemm_a_b_template.F90 \
+  src/multiply_a_b/elpa_hermitian_multiply_template.F90 \
+  src/multiply_a_b/elpa_pxgemm_multiply_template.F90 \
   src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
-  src/multiply_a_b/elpa_multiply_helpers_template.F90 \
-  src/multiply_a_b/mod_elpa_multiply_helpers.F90 \
+  src/multiply_a_b/elpa_pxgemm_multiply_transpose_template.F90 \
+  src/multiply_a_b/mod_elpa_pxgemm_multiply_transpose.F90 \
   src/multiply_a_b/GPU/mod_multiply_a_b_gpu.F90 \
   src/multiply_a_b/GPU/CUDA/mod_multiply_a_b_cuda.F90 \
   src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
