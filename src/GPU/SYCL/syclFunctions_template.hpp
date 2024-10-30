@@ -359,7 +359,7 @@ static oneapi::mkl::side sideFromChar(char c) {
         default: return "alloc::????";
       }
     };
-
+    syclDeviceSynchronizeFromC();
     auto allocT = sycl::get_pointer_type(a, devSel.context);
     // queue.wait();
     // std::cerr << "FREE |" << "syclFree" << "| ~> void **: " << ((size_t) a) << " -> " << allocStr(allocT) << "\n";
@@ -392,71 +392,36 @@ static oneapi::mkl::side sideFromChar(char c) {
     auto srcAllocT = sycl::get_pointer_type(src, c);
     // std::cerr << "MEMCPY |" << dirStr(direction) << "| ~> Dst: " << ((size_t) dst) << " -> " << allocStr(dstAllocT) << ", Src: " << ((size_t) src) << " -> " << allocStr(srcAllocT) << "\n";
     bool isFailed = false;
-    /*if (isCPU == 1) {
-      if (direction == syclMemcpyDeviceToDevice) {
-        if (sycl::get_pointer_type(dst, c) != alloc::host) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen CPU queue." << std::endl;
-          isFailed = true;
-        }
-        if (sycl::get_pointer_type(src, c) != alloc::host) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen CPU queue." << std::endl;
-          isFailed = true;
-        }
-      } else if (direction == syclMemcpyDeviceToHost) {
-        if (sycl::get_pointer_type(dst, c) != alloc::host) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is likely not a host pointer!." << std::endl;
-          isFailed = true;
-        }
-        if (sycl::get_pointer_type(src, c) != alloc::host) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen CPU queue." << std::endl;
-          isFailed = true;
-        }
-      } else if (direction == syclMemcpyHostToDevice) {
-        if (sycl::get_pointer_type(dst, c) != alloc::host) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen CPU queue." << std::endl;
-          isFailed = true;
-        }
-        if (sycl::get_pointer_type(src, c) != alloc::host) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is likely not a host pointer!." << std::endl;
-          isFailed = true;
-        }
-      } else {
-        std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
+    if (direction == syclMemcpyDeviceToDevice) {
+      if (sycl::get_pointer_type(dst, c) != alloc::device) {
+        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
         isFailed = true;
       }
-    } 
-    else */ {
-      if (direction == syclMemcpyDeviceToDevice) {
-        if (sycl::get_pointer_type(dst, c) != alloc::device) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-          isFailed = true;
-        }
-        if (sycl::get_pointer_type(src, c) != alloc::device) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen GPU queue." << std::endl;
-          isFailed = true;
-        }
-      } else if (direction == syclMemcpyDeviceToHost) {
-        if (sycl::get_pointer_type(dst, c) == alloc::device) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is a device pointer (but expected host/unknown)!." << std::endl;
-          isFailed = true;
-        }
-        if (sycl::get_pointer_type(src, c) != alloc::device) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-          isFailed = true;
-        }
-      } else if (direction == syclMemcpyHostToDevice) {
-        if (sycl::get_pointer_type(dst, c) != alloc::device) {
-          std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
-          isFailed = true;
-        }
-        if (sycl::get_pointer_type(src, c) == alloc::device) {
-          std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is a device pointer (but expected host/unknown)!." << std::endl;
-          isFailed = true;
-        }
-      } else {
-        std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
+      if (sycl::get_pointer_type(src, c) != alloc::device) {
+        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen GPU queue." << std::endl;
         isFailed = true;
       }
+    } else if (direction == syclMemcpyDeviceToHost) {
+      if (sycl::get_pointer_type(dst, c) == alloc::device) {
+        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is a device pointer (but expected host/unknown)!." << std::endl;
+        isFailed = true;
+      }
+      if (sycl::get_pointer_type(src, c) != alloc::device) {
+        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        isFailed = true;
+      }
+    } else if (direction == syclMemcpyHostToDevice) {
+      if (sycl::get_pointer_type(dst, c) != alloc::device) {
+        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        isFailed = true;
+      }
+      if (sycl::get_pointer_type(src, c) == alloc::device) {
+        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is a device pointer (but expected host/unknown)!." << std::endl;
+        isFailed = true;
+      }
+    } else {
+      std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
+      isFailed = true;
     }
     return isFailed;
   }
@@ -501,6 +466,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     if (!isFailed) {
       // Note that this operation currently relies on an Intel SYCL extension. This may or may not become part of the next SYCL standard.
       // For now, it is only supported by DPC++ and the Intel C++ Compiler. This should be okay, since there are implementations for the other vendors. 
+      syclDeviceSynchronizeFromC();
       queue.ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height).wait();
       return 1;
     } else {
