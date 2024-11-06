@@ -340,7 +340,7 @@ function elpa_solve_evp_&
    wantDebug = debug == 1
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    ! check legacy GPU setings
+    ! query keywords gpu, nvidia-gpu, amd-gpu and check for consisteny between actual and legacy GPU setings
 #ifdef ACTIVATE_SKEW
     if (.not.(query_gpu_usage(obj, "ELPA1_SKEW", useGPU))) then
       call obj%timer%stop("elpa_solve_skew_evp_&
@@ -377,7 +377,8 @@ function elpa_solve_evp_&
    if (useGPU) then
      my_pe = obj%mpi_setup%myRank_comm_parent
      call obj%timer%start("check_for_gpu")
-
+     
+     ! Count actual number of the available GPU devices
      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
        do_useGPU = .true.
        ! set the neccessary parameters
@@ -390,7 +391,7 @@ function elpa_solve_evp_&
      call obj%timer%stop("check_for_gpu")
    endif ! useGPU
 #endif
-
+   ! below this point useGPU=do_useGPU
 
    do_useGPU_tridiag = do_useGPU
    do_useGPU_solve_tridi = do_useGPU
@@ -565,7 +566,7 @@ function elpa_solve_evp_&
 
 #endif /* REDISTRIBUTE_MATRIX */
 
-   if (useGPU) then
+   if (do_useGPU) then
      num = (na) * size_of_real_datatype
      successGPU = gpu_malloc(e_dev, num)
      check_alloc_gpu("elpa1_template e_dev", successGPU)
@@ -744,7 +745,7 @@ function elpa_solve_evp_&
    endif ! doRedistributeMatrix
 
 #endif /* REDISTRIBUTE_MATRIX */
-   endif ! useGPU
+   endif ! do_useGPU
 #else /* DEVICE_POINTER */
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !
@@ -752,7 +753,7 @@ function elpa_solve_evp_&
    !
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !
-   if (useGPU) then
+   if (do_useGPU) then
      num = (na) * size_of_real_datatype
      successGPU = gpu_malloc(e_dev, num)
      check_alloc_gpu("elpa1_template e_dev", successGPU)
@@ -844,7 +845,7 @@ function elpa_solve_evp_&
      endif ! doRedistributeMatrix
 
 #endif /* REDISTRIBUTE_MATRIX */
-   endif ! useGPU
+   endif ! do_useGPU
 
 #endif /* DEVICE_POINTER */
 
@@ -883,7 +884,7 @@ function elpa_solve_evp_&
      if (.not.(obj%eigenvalues_only)) then
        q(1,1) = ONE
      endif
-     if (useGPU) then
+     if (do_useGPU) then
        ! nothing to do since no compute yet
      endif
 
@@ -918,7 +919,7 @@ function elpa_solve_evp_&
      
      ! it's possible to switch on/off GPU branches for each of ELPA1 steps (do_useGPU_tridiag, do_useGPU_solve_tridi, do_useGPU_trans_ev)
      ! (only for debugging purposes, gpu_memcpy's are not optimized)
-     if (useGPU .and. .not. do_useGPU_tridiag) then
+     if (do_useGPU .and. .not. do_useGPU_tridiag) then
        num = (matrixRows* matrixCols) * size_of_datatype
        successGPU = gpu_memcpy(int(loc(a),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("elpa1_template: a_dev -> a", successGPU)
@@ -934,7 +935,7 @@ function elpa_solve_evp_&
        num = (na) * size_of_datatype
        successGPU = gpu_memcpy(int(loc(tau),kind=c_intptr_t), tau_dev, num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("elpa1_template: tau_dev -> tau", successGPU)
-     endif ! (useGPU .and. .not. do_useGPU_tridiag) then
+     endif ! (do_useGPU .and. .not. do_useGPU_tridiag) then
 
      if (do_useGPU_tridiag) then
        call tridiag_gpu_&
@@ -970,7 +971,7 @@ function elpa_solve_evp_&
        return
      endif
 
-     if (useGPU .and. .not. do_useGPU_tridiag) then
+     if (do_useGPU .and. .not. do_useGPU_tridiag) then
       num = (matrixRows* matrixCols) * size_of_datatype
       successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
       check_memcpy_gpu("elpa1_template: a -> a_dev", successGPU)
@@ -986,7 +987,7 @@ function elpa_solve_evp_&
       num = (na) * size_of_datatype
       successGPU = gpu_memcpy(tau_dev, int(loc(tau),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
       check_memcpy_gpu("elpa1_template: tau -> tau_dev", successGPU)
-    endif ! (useGPU .and. .not. do_useGPU_tridiag) then
+    endif ! (do_useGPU .and. .not. do_useGPU_tridiag) then
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -1010,7 +1011,7 @@ function elpa_solve_evp_&
      call nvtxRangePush("solve")
 #endif
 
-     if (useGPU .and. .not. do_useGPU_solve_tridi) then
+     if (do_useGPU .and. .not. do_useGPU_solve_tridi) then
        num = (na) * size_of_real_datatype
        successGPU = gpu_memcpy(int(loc(ev),kind=c_intptr_t), ev_dev, num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("elpa1_template: ev_dev -> ev", successGPU) 
@@ -1029,7 +1030,7 @@ function elpa_solve_evp_&
         successGPU = gpu_memcpy(int(loc(q_real(1,1)),kind=c_intptr_t), q_dev_real, num, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa1_template: q_dev_real -> q_real", successGPU)
 #endif       
-     endif ! (useGPU .and. .not. do_useGPU_solve_tridi)
+     endif ! (do_useGPU .and. .not. do_useGPU_solve_tridi)
 
      if (do_useGPU_solve_tridi) then
        call solve_tridi_gpu_&
@@ -1057,7 +1058,7 @@ function elpa_solve_evp_&
                 success, nrThreads)
      endif
 
-     if (useGPU .and. .not. do_useGPU_solve_tridi) then
+     if (do_useGPU .and. .not. do_useGPU_solve_tridi) then
        num = (na) * size_of_real_datatype
        successGPU = gpu_memcpy(ev_dev, int(loc(ev),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
        check_memcpy_gpu("elpa1_template: ev -> ev_dev", successGPU)
@@ -1076,7 +1077,7 @@ function elpa_solve_evp_&
        successGPU = gpu_memcpy(q_dev_real, int(loc(q_real(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
        check_memcpy_gpu("elpa1_template: q_real -> q_dev_real", successGPU)
 #endif
-     endif ! (useGPU .and. .not. do_useGPU_solve_tridi)
+     endif ! (do_useGPU .and. .not. do_useGPU_solve_tridi)
 
 #ifdef WITH_NVTX
      call nvtxRangePop()
@@ -1145,22 +1146,22 @@ function elpa_solve_evp_&
 
     ! q must be given thats why from here on we can use q and not q_actual
 #if COMPLEXCASE == 1
-     if (useGPU) then
+     if (do_useGPU) then
 #ifdef WITH_GPU_STREAMS
        my_stream = obj%gpu_setup%my_stream
        call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev, my_stream)
 #else
        call GPU_COPY_REAL_PART_TO_Q_PRECISION(q_dev, q_dev_real, matrixRows, l_rows, l_cols_nev)
 #endif
-     else ! useGPU
+     else ! do_useGPU
        q(1:l_rows,1:l_cols_nev) = q_real(1:l_rows,1:l_cols_nev)
-     endif ! useGPU
+     endif ! do_useGPU
 #endif /* COMPLEXCASE */
 
 
      if (isSkewsymmetric) then
 
-       if (useGPU) then
+       if (do_useGPU) then
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
          call GPU_ZERO_SKEWSYMMETRIC_Q_PRECISION(q_dev, matrixRows, matrixCols, my_stream)
@@ -1206,7 +1207,7 @@ function elpa_solve_evp_&
 #endif
            end if
          enddo
-       else ! useGPU
+       else ! do_useGPU
          ! Extra transformation step for skew-symmetric matrix. Multiplication with diagonal complex matrix D.
          ! This makes the eigenvectors complex.
          ! For now real part of eigenvectors is generated in first half of q, imaginary part in second part.
@@ -1228,7 +1229,7 @@ function elpa_solve_evp_&
              q(i,1:matrixCols) = 0
            end if
          end do
-       endif ! useGPU
+       endif ! do_useGPU
 
      endif ! isSkewsymmetric
 
@@ -1241,7 +1242,7 @@ function elpa_solve_evp_&
      call nvtxRangePush("trans_ev")
 #endif
 
-     if (useGPU .and. .not. do_useGPU_trans_ev) then
+     if (do_useGPU .and. .not. do_useGPU_trans_ev) then
        num = (matrixRows* matrixCols) * size_of_datatype
        successGPU = gpu_memcpy(int(loc(a),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("elpa1_template: a_dev -> a", successGPU)
@@ -1291,7 +1292,7 @@ function elpa_solve_evp_&
        return
      endif
 
-     if (useGPU .and. .not. do_useGPU_trans_ev) then
+     if (do_useGPU .and. .not. do_useGPU_trans_ev) then
        num = (matrixRows* matrixCols) * size_of_datatype
        successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
        check_memcpy_gpu("elpa1_template: a -> a_dev", successGPU)
@@ -1368,7 +1369,7 @@ function elpa_solve_evp_&
      endif ! isSkewsymmetric
 
 #ifndef DEVICE_POINTER
-     if (useGPU) then
+     if (do_useGPU) then
        ! copy back
        if (isSkewsymmetric) then
          num = (matrixRows* 2*matrixCols) * size_of_datatype
@@ -1401,7 +1402,7 @@ function elpa_solve_evp_&
 
 
 #ifndef DEVICE_POINTER
-     if (useGPU) then
+     if (do_useGPU) then
        ! copy back always
        num = (na) * size_of_real_datatype
        successGPU = gpu_memcpy(int(loc(ev(1)),kind=c_intptr_t), ev_dev, &
@@ -1509,7 +1510,7 @@ function elpa_solve_evp_&
 
 #endif /* REDISTRIBUTE_MATRIX */
 
-   if (useGPU) then
+   if (do_useGPU) then
      successGPU = gpu_free(e_dev)
      check_dealloc_gpu("elpa1_template e_dev", successGPU)
 
@@ -1596,7 +1597,7 @@ function elpa_solve_evp_&
    endif ! doRedistributeMatrix
 
 #endif /* REDISTRIBUTE_MATRIX */
-   endif ! useGPU
+   endif ! do_useGPU
 #else /* DEVICE_POINTER */
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !
@@ -1604,7 +1605,7 @@ function elpa_solve_evp_&
    !
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !
-   if (useGPU) then
+   if (do_useGPU) then
      successGPU = gpu_free(e_dev)
      check_dealloc_gpu("elpa1_template e_dev", successGPU)
 
@@ -1657,7 +1658,7 @@ function elpa_solve_evp_&
      endif ! doRedistributeMatrix
 
 #endif /* REDISTRIBUTE_MATRIX */
-   endif ! useGPU
+   endif ! do_useGPU
 
 #endif /* DEVICE_POINTER */
 
