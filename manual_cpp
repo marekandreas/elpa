@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import sys
 import subprocess
+import os.path
 
 
 def cpp_arg(arg):
@@ -14,13 +15,17 @@ def cpp_arg(arg):
 
 def check_call(args, **kwargs):
     if os.getenv("V") == "1":
+        print("\ncheck_call") # PETERDEBUG
         print(" ".join(args))
+        print("\n") # PETERDEBUG
     return subprocess.check_call(args, **kwargs)
 
 
 def check_call_redirect(args, filename=None, **kwargs):
     if os.getenv("V") == "1":
+        print("\ncheck_call_redirect") # PETERDEBUG
         print(" ".join(args), ">", filename)
+        print("\n") # PETERDEBUG
     with open(filename, "wb") as fd:
         try:
             return subprocess.check_call(args, stdout=fd, **kwargs)
@@ -31,13 +36,13 @@ def check_call_redirect(args, filename=None, **kwargs):
 
 args = sys.argv[1:]
 cpp_args = list(filter(cpp_arg, args))
-files = list(filter(lambda q: q.endswith(".F90"), args))
-args = list(filter(lambda q: not q.endswith(".F90"), args))
+files = list(filter(lambda q: q.endswith((".F90", ".cu", ".cpp")), args))
+args = list(filter(lambda q: not q.endswith((".F90", ".cu", ".cpp")), args))
 
 if len(files) > 1:
-    raise Exception("Specify exactly one .F90 file")
+    raise Exception("Specify exactly one source file (.F90, .cu, or .cpp)")
 elif len(files) == 0:
-    # No .F90 file specified, execute program as-is
+    # No ".F90", ".cu", ".cpp" file specified, execute program as-is
     try:
         os.execvp(args[0], args[0:])
     except OSError as e:
@@ -46,22 +51,39 @@ elif len(files) == 0:
 elif len(files) == 1:
     file, = files
 
+# extract the base name and extension of the source file
+base, ext = os.path.splitext(file)
+
 tmp_filename = "manually_preprocessed_" + file.replace("/", "_")
 
 try:
     output = args.index("-o")
     outputname = args[output + 1]
-    tmp_filename += "-" + outputname.replace("/", "_") + ".F90"
+    tmp_filename += "-" + outputname.replace("/", "_") + ext
 except ValueError:
     pass
 
 tmp_filename = tmp_filename[-250:]
 
-# preprocess
-check_call_redirect(["cpp", "-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)
 
-# compile
-check_call(args + [tmp_filename])
+print("ext", ext) # PETERDEBUG
+if (ext==".cu"):
+    # preprocess
+    list_preprocess_call_cu = ["nvcc", "-I./", "-I../", "-E"] + [file] + ["-o"] + [tmp_filename]
+    check_call(list_preprocess_call_cu)
+
+    # compile
+    check_call(sys.argv[1:])
+elif (ext==".cpp"):
+    # preprocess
+    check_call_redirect(["cpp", "-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)
+    # compile
+    check_call(args + [tmp_filename])
+elif (ext==".F90"):
+    # preprocess
+    check_call_redirect(["cpp", "-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)
+    # compile
+    check_call(args + [tmp_filename])
 
 # cleanup (may be commented out for better debuggability
-os.remove(tmp_filename)
+# os.remove(tmp_filename) ! PETERDEBUG

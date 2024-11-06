@@ -66,6 +66,32 @@
 #endif
 
 //_________________________________________________________________________________________________
+// Generic math host functions
+
+// construct a generic double/float/double_complex/float_complex from a double
+template <typename T> inline T elpaHostNumberFromInt(int number);
+template <> inline double elpaHostNumberFromInt<double>(int number) {return (double) number;}
+template <> inline float  elpaHostNumberFromInt<float> (int number) {return (float) number;}
+template <> inline double_complex elpaHostNumberFromInt<double_complex>(int number) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return make_cuDoubleComplex ((double)number, 0.0);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return make_hipDoubleComplex((double)number, 0.0);
+#else
+  return std::complex<double> ((double)number, 0.0);
+#endif
+}
+template <>  inline float_complex elpaHostNumberFromInt<float_complex> (int number) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return make_cuFloatComplex ((float) number, 0.0f);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return make_hipFloatComplex((float) number, 0.0f);
+#else
+  return std::complex<float> ((float) number, 0.0f);
+#endif
+}
+
+//_________________________________________________________________________________________________
 // Generic math device functions
 
 template <typename T> 

@@ -1028,7 +1028,7 @@ void gpu_update_c_tn_nt(int *a_transposed_in,
                          int *SM_count_in, int *debug_in, gpuStream_t my_stream) {
 
     int a_transposed = *a_transposed_in;
-    T beta; // assigned below
+    T beta = elpaHostNumberFromInt<T>(*beta_int_in);
     int l_rows = *l_rows_in;
     int l_cols = *l_cols_in;
     int nblk_mult_max = *nblk_mult_max_in;
@@ -1042,14 +1042,6 @@ void gpu_update_c_tn_nt(int *a_transposed_in,
     int np_fine = *np_fine_in;
     int SM_count = *SM_count_in;
     int debug = *debug_in;
-
-    if constexpr (std::is_same_v<T, gpuDoubleComplex>) {
-        beta = make_gpuDoubleComplex(static_cast<double>(*beta_int_in), 0.0);
-    } else if constexpr (std::is_same_v<T, gpuFloatComplex>) {
-        beta = make_gpuFloatComplex(static_cast<float>(*beta_int_in), 0.0);
-    } else {
-        beta = static_cast<T>(*beta_int_in);
-    }
 
     dim3 blocksPerGrid(SM_count, 1, 1);
     dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1);

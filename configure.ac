@@ -2699,7 +2699,7 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   CFLAGS="$CFLAGS -I$CUDA_INSTALL_PATH/include"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
-  NVCC="nvcc"
+  NVCC="\$(top_srcdir)/manual_cpp nvcc"
   AC_SUBST(NVCC)
   AC_SUBST(NVCCFLAGS)
 
