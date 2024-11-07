@@ -252,12 +252,38 @@ if WITH_NVIDIA_GPU_VERSION
   src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu \
   src/multiply_a_b/GPU/CUDA/elpa_hermitian_multiply_cuda.cu \
   src/multiply_a_b/GPU/CUDA/elpa_pxgemm_multiply_cuda.cu
-
+endif
 
 if WITH_NVIDIA_GPU_SM80_COMPUTE_CAPABILITY
   libelpa@SUFFIX@_private_la_SOURCES += src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real_sm80.cu src/elpa2/GPU/CUDA/mma_m8n8k4_fp64_sm80.cuh
 endif
+
+if WITH_NVIDIA_NCCL
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/ncclFunctions.cpp
 endif
+
+
+if WITH_AMD_GPU_VERSION
+  libelpa@SUFFIX@_private_la_SOURCES += \
+  src/GPU/ROCm/elpa_index_amd_gpu.hip  \
+  src/GPU/ROCm/elpa_explicit_name_amd_gpu.hip \
+  src/GPU/ROCm/rocmFunctions.hip \
+  src/GPU/ROCm/hipUtils.hip \
+  src/elpa1/GPU/ROCm/tridiag_hip.hip \
+  src/elpa1/GPU/ROCm/elpa1_hip.hip \
+  src/elpa1/GPU/ROCm/trans_ev_hip.hip \
+  src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.hip \
+  src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.hip \
+  src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.hip \
+  src/cholesky/GPU/ROCm/elpa_cholesky_hip.hip \
+  src/multiply_a_b/GPU/ROCm/elpa_hermitian_multiply_hip.hip \
+  src/multiply_a_b/GPU/ROCm/elpa_pxgemm_multiply_hip.hip
+endif
+
+if WITH_AMD_RCCL
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/rcclFunctions.hip
+endif
+
 
 if WITH_SYCL_GPU_VERSION
   libelpa@SUFFIX@_private_la_CXXFLAGS = $(AM_CXXFLAGS) -Isrc
@@ -274,40 +300,10 @@ if WITH_SYCL_GPU_VERSION
   src/multiply_a_b/GPU/SYCL/elpa_multiply_a_b_sycl.cpp
 endif
 
+
 if WITH_OPENMP_OFFLOAD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/OpenMP/elpa_index_openmp_offload_gpu.cpp src/GPU/OpenMP/openmpOffloadFunctions.cpp
 endif
-
-#if WITH_SYCL_GPU_VERSION
-#  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/elpa_index_sycl_gpu.cpp src/GPU/SYCL/syclFunctions.cpp
-#endif
-
-
-if WITH_NVIDIA_NCCL
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/CUDA/ncclFunctions.cpp
-endif
-
-if WITH_AMD_RCCL
-  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/ROCm/rcclFunctions.cpp
-endif
-
-if WITH_AMD_GPU_VERSION
-  libelpa@SUFFIX@_private_la_SOURCES += \
-  src/GPU/ROCm/elpa_index_amd_gpu.cpp  \
-  src/GPU/ROCm/elpa_explicit_name_amd_gpu.cpp \
-  src/GPU/ROCm/rocmFunctions.cpp \
-  src/GPU/ROCm/hipUtils.cpp \
-  src/elpa1/GPU/ROCm/tridiag_hip.cpp \
-  src/elpa1/GPU/ROCm/elpa1_hip.cpp \
-  src/elpa1/GPU/ROCm/trans_ev_hip.cpp \
-  src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp \
-  src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.cpp \
-  src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.cpp \
-  src/cholesky/GPU/ROCm/elpa_cholesky_hip.cpp \
-  src/multiply_a_b/GPU/ROCm/elpa_hermitian_multiply_hip.cpp \
-  src/multiply_a_b/GPU/ROCm/elpa_pxgemm_multiply_hip.cpp
-endif
-
 
 
 if !WITH_MPI
@@ -728,7 +724,11 @@ endif
 
 # Cuda files
 .cu.lo:
-	NVCC="$(NVCC)" $(LIBTOOL) --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap $(NVCCFLAGS) $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
+	NVCC="$(NVCC)"   $(LIBTOOL) --mode=compile --tag=CC $(top_srcdir)/nvcc_wrap  $(NVCCFLAGS)  $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
+
+# HIP files
+.hip.lo:
+	HIPCC="$(HIPCC)" $(LIBTOOL) --mode=compile --tag=CC $(top_srcdir)/hipcc_wrap $(HIPCCFLAGS) $(LDFLAGS) -I$(top_builddir)/ -I$(top_srcdir)/  -c $< -o $@
 
 # Assembly files
 LTCCASCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -843,7 +843,7 @@ endif
 if WITH_AMD_GPU_VERSION
 libelpatest@SUFFIX@_la_SOURCES += \
   test/shared/GPU/ROCm/test_hip.F90 \
-  test/shared/GPU/ROCm/test_rocmFunctions.cpp
+  test/shared/GPU/ROCm/test_rocmFunctions.hip
 endif
 
 if WITH_SYCL_GPU_VERSION
@@ -1074,7 +1074,7 @@ EXTRA_DIST = \
   src/GPU/ROCm/rocsolverFunctions_template.h \
   src/GPU/ROCm/rccl_template.F90 \
   src/GPU/ROCm/rcclFunctions_template.h \
-  src/GPU/ROCm/hipUtils_template.cpp \
+  src/GPU/ROCm/hipUtils_template.h \
   src/GPU/OpenMP/openmp_offload_template.F90 \
   src/GPU/OpenMP/openmp_offload_solver_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \

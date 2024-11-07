@@ -15,17 +15,13 @@ def cpp_arg(arg):
 
 def check_call(args, **kwargs):
     if os.getenv("V") == "1":
-        print("\ncheck_call") # PETERDEBUG
         print(" ".join(args))
-        print("\n") # PETERDEBUG
     return subprocess.check_call(args, **kwargs)
 
 
 def check_call_redirect(args, filename=None, **kwargs):
     if os.getenv("V") == "1":
-        print("\ncheck_call_redirect") # PETERDEBUG
         print(" ".join(args), ">", filename)
-        print("\n") # PETERDEBUG
     with open(filename, "wb") as fd:
         try:
             return subprocess.check_call(args, stdout=fd, **kwargs)
@@ -36,13 +32,13 @@ def check_call_redirect(args, filename=None, **kwargs):
 
 args = sys.argv[1:]
 cpp_args = list(filter(cpp_arg, args))
-files = list(filter(lambda q: q.endswith((".F90", ".cu", ".cpp")), args))
-args = list(filter(lambda q: not q.endswith((".F90", ".cu", ".cpp")), args))
+files = list(filter(lambda q: q.endswith((".F90", ".cu", ".hip")), args))
+args = list(filter(lambda q: not q.endswith((".F90", ".cu", ".hip")), args))
 
 if len(files) > 1:
-    raise Exception("Specify exactly one source file (.F90, .cu, or .cpp)")
+    raise Exception("Specify exactly one source file (.F90, .cu, or .hip)")
 elif len(files) == 0:
-    # No ".F90", ".cu", ".cpp" file specified, execute program as-is
+    # No ".F90", ".cu", ".hip" file specified, execute program as-is
     try:
         os.execvp(args[0], args[0:])
     except OSError as e:
@@ -65,25 +61,26 @@ except ValueError:
 
 tmp_filename = tmp_filename[-250:]
 
-
-print("ext", ext) # PETERDEBUG
 if (ext==".cu"):
     # preprocess
-    list_preprocess_call_cu = ["nvcc", "-I./", "-I../", "-E"] + [file] + ["-o"] + [tmp_filename]
+    list_preprocess_call_cu  = ["nvcc"]  + cpp_args + ["-E"] + [file] + ["-o"] + [tmp_filename]
     check_call(list_preprocess_call_cu)
 
     # compile
     check_call(sys.argv[1:])
-elif (ext==".cpp"):
+elif (ext==".hip"):
     # preprocess
-    check_call_redirect(["cpp", "-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)
+    list_preprocess_call_hip = ["hipcc"] + cpp_args + ["-E"] + [file] + ["-o"] + [tmp_filename]
+    check_call(list_preprocess_call_hip)
+
     # compile
-    check_call(args + [tmp_filename])
+    check_call(sys.argv[1:])
 elif (ext==".F90"):
     # preprocess
     check_call_redirect(["cpp", "-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)
+
     # compile
     check_call(args + [tmp_filename])
 
 # cleanup (may be commented out for better debuggability
-# os.remove(tmp_filename) ! PETERDEBUG
+os.remove(tmp_filename)

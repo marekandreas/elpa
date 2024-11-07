@@ -2699,7 +2699,7 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   CFLAGS="$CFLAGS -I$CUDA_INSTALL_PATH/include"
   NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
-  NVCC="\$(top_srcdir)/manual_cpp nvcc"
+  NVCC="nvcc"
   AC_SUBST(NVCC)
   AC_SUBST(NVCCFLAGS)
 
@@ -2732,6 +2732,12 @@ fi
 
 if test x"${need_amd_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
+  HIPCC="hipcc"
+dnl Default value for $HIPCCFLAGS, unless set by the user. This is for backward compatibility.
+  : ${HIPCCFLAGS="$CXXFLAGS"}
+  AC_SUBST(HIPCC)
+  AC_SUBST(HIPCCFLAGS)
+
   dnl check whether hipcc compiler is found
   AC_CHECK_PROG(hipcc_found,hipcc,yes,no)
   if test x"${hipcc_found}" = x"no" ; then
@@ -3392,6 +3398,21 @@ if test x"$use_amd_rccl" = x"yes"; then
 fi
 AM_CONDITIONAL([WITH_AMD_RCCL],[test x"$use_amd_rccl" = x"yes"])
 
+#############################################################################################
+#
+# [Nvidia|AMD] preprocess .cu and .hip sources
+#
+#############################################################################################
+
+if test x"${need_nvidia_gpu}" = x"yes" ; then
+  NVCC="\$(top_srcdir)/manual_cpp $NVCC"
+fi
+
+if test x"${need_amd_gpu}" = x"yes" ; then
+  HIPCC="\$(top_srcdir)/manual_cpp $HIPCC"
+fi
+
+#############################################################################################
 
 LT_INIT
 
