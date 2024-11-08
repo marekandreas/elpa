@@ -145,8 +145,9 @@ static oneapi::mkl::side sideFromChar(char c) {
     return syclMemcpyDeviceToHost;
   }
 
-  int syclStateInitializeFromC(int onlyL0Gpus) {
-    bool isInitializedSuccessfully = SyclState::initialize(onlyL0Gpus != 0);
+  int syclStateInitializeFromC(int onlyL0Gpus, int wantDebugInt) {
+    bool isDebugEnabled = (wantDebugInt == 1);
+    bool isInitializedSuccessfully = SyclState::initialize(onlyL0Gpus != 0, isDebugEnabled);
     return isInitializedSuccessfully ? 1 : 0;
   }
 
@@ -292,58 +293,50 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   int syclMallocFromC(intptr_t *a, size_t elems) {
     DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
-    *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, devSel.device, devSel.context));
-    char *bytes = reinterpret_cast<char *>(*a);
-
-    using sycl::usm::alloc;
-    auto allocStr = [] (alloc al) {
-      switch (al) {
-        case alloc::host: return "alloc::host";
-        case alloc::device: return "alloc::device";
-        case alloc::unknown: return "alloc::unknown";
-        default: return "alloc::????";
-      }
-    };
-
-    auto allocT = sycl::get_pointer_type(bytes, devSel.context);
-    // queue.wait();
-    // std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << (size_t (*a)) << " -> " << allocStr(allocT) << "\n";
-
-    if (*a) {
-      //// std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
-      return 1;
-    } else {
-      // std::cout << "Failed to allocate " << elems << "B on device." << std::endl;
+    if (elems == 0) {
+      *a=0;
       return 0;
+    } else {
+      *a = reinterpret_cast<intptr_t>(sycl::malloc_device(elems, devSel.device, devSel.context));
+      char *bytes = reinterpret_cast<char *>(*a);
+      // using sycl::usm::alloc;
+      // auto allocStr = [] (alloc al) {
+      //   switch (al) {
+      //     case alloc::host: return "alloc::host";
+      //     case alloc::device: return "alloc::device";
+      //     case alloc::unknown: return "alloc::unknown";
+      //     default: return "alloc::????";
+      //   }
+      // };
+      // auto allocT = sycl::get_pointer_type(bytes, devSel.context);
+      // queue.wait();
+      // std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << (size_t (*a)) << " -> " << allocStr(allocT) << "\n";
+      if (*a) {
+        //// std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
+        return 1;
+      } else {
+        // std::cout << "Failed to allocate " << elems << "B on device." << std::endl;
+        return 0;
+      }
+
     }
   }
 
     int syclMallocHostFromC(intptr_t *a, size_t elems) {
     DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
-    *a = reinterpret_cast<intptr_t>(sycl::malloc_host(elems, devSel.context));
+    if (SyclState::defaultState().isDebugEnabled) std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << elems << "B" << "\n";
     char *bytes = reinterpret_cast<char *>(*a);
-
-    using sycl::usm::alloc;
-    auto allocStr = [] (alloc al) {
-      switch (al) {
-        case alloc::host: return "alloc::host";
-        case alloc::device: return "alloc::device";
-        case alloc::unknown: return "alloc::unknown";
-        default: return "alloc::????";
-      }
-    };
-
-    auto allocT = sycl::get_pointer_type(bytes, devSel.context);
-    // queue.wait();
-    // std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << (size_t (*a)) << " -> " << allocStr(allocT) << "\n";
-
-
-    if (*a) {
-      //// std::cout << "Allocated " << elems << "B starting at address " << *a << std::endl;
-      return 1;
-    } else {
-      // std::cout << "Failed to allocate " << elems << "B on device." << std::endl;
+    if (elems == 0) {
+      *a=0;
       return 0;
+    } else {
+      *a = reinterpret_cast<intptr_t>(sycl::malloc_host(elems, devSel.context));
+      if (*a) {
+        return 1;
+      } else {
+        return 0;
+      }
+    
     }
   }
 
@@ -394,33 +387,33 @@ static oneapi::mkl::side sideFromChar(char c) {
     bool isFailed = false;
     if (direction == syclMemcpyDeviceToDevice) {
       if (sycl::get_pointer_type(dst, c) != alloc::device) {
-        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
         isFailed = true;
       }
       if (sycl::get_pointer_type(src, c) != alloc::device) {
-        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen GPU queue." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context for the chosen GPU queue." << std::endl;
         isFailed = true;
       }
     } else if (direction == syclMemcpyDeviceToHost) {
       if (sycl::get_pointer_type(dst, c) == alloc::device) {
-        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is a device pointer (but expected host/unknown)!." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is a device pointer (but expected host/unknown)!." << std::endl;
         isFailed = true;
       }
       if (sycl::get_pointer_type(src, c) != alloc::device) {
-        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
         isFailed = true;
       }
     } else if (direction == syclMemcpyHostToDevice) {
       if (sycl::get_pointer_type(dst, c) != alloc::device) {
-        std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer dst (" << reinterpret_cast<intptr_t>(dst) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
         isFailed = true;
       }
       if (sycl::get_pointer_type(src, c) == alloc::device) {
-        std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is a device pointer (but expected host/unknown)!." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer src (" << reinterpret_cast<intptr_t>(src) << ") is a device pointer (but expected host/unknown)!." << std::endl;
         isFailed = true;
       }
     } else {
-      std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
+      if (SyclState::defaultState().isDebugEnabled) std::cerr << "Direction of transfer for memcpy unknown" << std::endl;
       isFailed = true;
     }
     return isFailed;
@@ -449,7 +442,9 @@ static oneapi::mkl::side sideFromChar(char c) {
     isFailed = checkPointerValidity(dst, src, direction, queue);
 #endif
     if (!isFailed) {
+      syclStreamSynchronizeExplicitFromC(queue_handle);
       queue.memcpy(dst, src, size);
+      syclStreamSynchronizeExplicitFromC(queue_handle);
       return 1;
     } else {
       return 0;
@@ -482,8 +477,11 @@ static oneapi::mkl::side sideFromChar(char c) {
 #endif
     if (!isFailed) {
       // Note that this operation currently relies on an Intel SYCL extension. This may or may not become part of the next SYCL standard.
-      // For now, it is only supported by DPC++ and the Intel C++ Compiler. This should be okay, since there are implementations for the other vendors. 
+      // For now, it is only supported by DPC++ and the Intel C++ Compiler. This should be okay, since there are implementations for the other vendors.
+      
+      syclStreamSynchronizeExplicitFromC(queue_handle);
       queue.ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height);
+      syclStreamSynchronizeExplicitFromC(queue_handle);
       return 1;
     } else {
       return 0;
@@ -498,16 +496,17 @@ static oneapi::mkl::side sideFromChar(char c) {
   #ifndef NDEBUG
     if (isCPU == 1) {
       if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::host) {
-        std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen CPU queue." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen CPU queue." << std::endl;
         return 0;
       }
     } else {
       if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::device) {
-        std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
         return 0;
       }
     }
 #endif
+    syclDeviceSynchronizeFromC();
     queue.memset(mem, val, size).wait();
     return 1;
   }
@@ -517,17 +516,19 @@ static oneapi::mkl::side sideFromChar(char c) {
 #ifndef NDEBUG
     if (isCPU == 1) {
       if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::host) {
-        std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen CPU queue." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen CPU queue." << std::endl;
         return 0;
       }
     } else {
       if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::device) {
-        std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
+        if (SyclState::defaultState().isDebugEnabled) std::cerr << "Pointer (" << reinterpret_cast<intptr_t>(mem) << ") is not a device pointer in the context of the chosen GPU queue." << std::endl;
         return 0;
       }
     }
 #endif
+    syclStreamSynchronizeExplicitFromC(queue_handle);
     queue.memset(mem, val, size);
+    syclStreamSynchronizeExplicitFromC(queue_handle);
     return 1;
   }
 

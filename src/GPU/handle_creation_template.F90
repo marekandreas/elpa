@@ -52,7 +52,6 @@
           success = hip_stream_create(OBJECT%gpu_setup%my_stream)
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-          print *, "SYCL stream created"
           success = sycl_stream_create(OBJECT%gpu_setup%my_stream)
 #endif
 

@@ -68,18 +68,23 @@ using namespace sycl_be;
 
 std::optional<SyclState> SyclState::_staticState;
 
-bool SyclState::initialize(bool onlyL0Gpus) {
+bool SyclState::initialize(bool onlyL0Gpus, bool isDebugEnabled) {
   if (SyclState::_staticState && onlyL0Gpus != SyclState::_staticState->isManagingOnlyL0Gpus) {
     std::cout << "SyclStaticState already initialized " 
               << ((SyclState::_staticState->isManagingOnlyL0Gpus) ? "with only L0 GPUs" : "all SYCL devices") << "."
               << " You are trying to re-initialize with " << ((onlyL0Gpus) ? "with only L0 GPUs" : "all SYCL devices")
               << " which doesn't match the previous selection. " << std::endl;
     return false;
+  } else if (SyclState::_staticState && isDebugEnabled != SyclState::_staticState->isDebugEnabled) {
+    std::cout << "SyclStaticState already initialized " 
+              << ((SyclState::_staticState->isDebugEnabled) ? "with debug enabled" : "with debug disabled") << "."
+              << " You are trying to re-initialize with " << ((isDebugEnabled) ? "with debug enabled" : "with debug disabled")
+              << " which doesn't match the previous selection. " << std::endl;
+    return false;
   } else if (SyclState::_staticState) {
-    // SyclState already initialized, but with the same parameters.
-    return true;
+    return true;     // SyclState already initialized, but with the same parameters.
   } else {
-    SyclState::_staticState = std::make_optional(SyclState(onlyL0Gpus));
+    SyclState::_staticState = std::make_optional(SyclState(onlyL0Gpus, isDebugEnabled));
     return true;
   }
 }
@@ -91,11 +96,11 @@ bool SyclState::initialize(bool onlyL0Gpus) {
  * For now, the default behavior is to only utilize the Intel Level Zero platform and and GPUs.
  * This will have to be changed later as we move towards generalizing the backend.
  * Alternatively, one can pass an enviromental variable to let ELPA reveal and circle through
- * all available devices. The displayed devices can then be limited through SYCL device filtersrzb
+ * all available devices. The displayed devices can then be limited through SYCL device filters
  * expressed in SYCL env variables.
  */
-SyclState::SyclState(bool onlyL0Gpus)
-  : defaultDevice(-1) {
+SyclState::SyclState(bool onlyL0Gpus, bool isDebugEnabled)
+  : isManagingOnlyL0Gpus(onlyL0Gpus), isDebugEnabled(isDebugEnabled), defaultDevice(-1) {
   namespace si = sycl::info;
   auto platforms = sycl::platform::get_platforms();
   if (onlyL0Gpus) {
@@ -117,7 +122,7 @@ SyclState& SyclState::defaultState() {
   if (_staticState) {
     return *_staticState;
   } else {
-    throw std::runtime_error("SyclState not initialized!");
+    throw std::runtime_error("ELPA GPU SYCL Backend (This is likely a programming error in ELPA.): SyclState not initialized!");
   }
 }
 
@@ -126,36 +131,38 @@ size_t SyclState::getNumDevices() {
 }
 
 void SyclState::printGpuInfo() {
-  auto deviceTypeToString = [](sycl::info::device_type dt) {
-    switch (dt) {
-      case sycl::info::device_type::cpu: return "CPU";
-      case sycl::info::device_type::gpu: return "GPU";
-      case sycl::info::device_type::accelerator: return "Accelerator";
-      default: return "Other/Unknown/Error";
+  if (this->isDebugEnabled) {
+    auto deviceTypeToString = [](sycl::info::device_type dt) {
+      switch (dt) {
+        case sycl::info::device_type::cpu: return "CPU";
+        case sycl::info::device_type::gpu: return "GPU";
+        case sycl::info::device_type::accelerator: return "Accelerator";
+        default: return "Other/Unknown/Error";
+      }
+    };
+  #ifdef WITH_MPI
+    int mpiRank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    if (mpiRank > 0) {
+      return;
     }
-  };
-#ifdef WITH_MPI
-  int mpiRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-  if (mpiRank > 0) {
-    return;
-  }
-#endif
+  #endif
 
-  std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA SYCL Backend Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
-  std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
-  std::cout << "# GPU devices:     " << devices.size() << std::endl;
-  std::cout << "Eligible devices: " << std::endl;
-  for (size_t i = 0; i < devices.size(); i++) {
-    bool hasDpSupport = devices[i].has(sycl::aspect::fp64);
-    std::cout << " - Device #" << i << ": "
-      << devices[i].get_platform().get_info<sycl::info::platform::name>() << " -> "
-      << devices[i].get_info<sycl::info::device::name>() << " ("
-      << deviceTypeToString(devices[i].get_info<sycl::info::device::device_type>()) << ", "
-      << devices[i].get_info<sycl::info::device::max_compute_units>() << " EUs"
-      << (hasDpSupport ? "" : ", SP only") << ")" << std::endl;
+    std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA SYCL Backend Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
+    std::cout << "# GPU devices:     " << devices.size() << std::endl;
+    std::cout << "Eligible devices: " << std::endl;
+    for (size_t i = 0; i < devices.size(); i++) {
+      bool hasDpSupport = devices[i].has(sycl::aspect::fp64);
+      std::cout << " - Device #" << i << ": "
+        << devices[i].get_platform().get_info<sycl::info::platform::name>() << " -> "
+        << devices[i].get_info<sycl::info::device::name>() << " ("
+        << deviceTypeToString(devices[i].get_info<sycl::info::device::device_type>()) << ", "
+        << devices[i].get_info<sycl::info::device::max_compute_units>() << " EUs"
+        << (hasDpSupport ? "" : ", SP only") << ")" << std::endl;
+    }
+    std::cout << "~~~~~~~~~~~~~~~~ END ELPA SYCL Backend Info ~~~~~~~~~~~~~~~~~~~" << std::endl;
   }
-  std::cout << "~~~~~~~~~~~~~~~~ END ELPA SYCL Backend Info ~~~~~~~~~~~~~~~~~~~" << std::endl;
 }
 
 DeviceSelection& SyclState::selectGpuDevice(int deviceNum) {
@@ -163,7 +170,7 @@ DeviceSelection& SyclState::selectGpuDevice(int deviceNum) {
     this->defaultDevice = deviceNum;
     return this->getDeviceHandle(deviceNum);
   } else {
-    throw std::runtime_error("Device number out of range!");
+    throw std::runtime_error("ELPA GPU SYCL Backend (This is likely a programming error in ELPA.): Device number out of range!");
   }
 }
 
@@ -174,7 +181,7 @@ DeviceSelection& SyclState::getDeviceHandle(int deviceNum) {
     this->deviceData.insert({deviceNum, DeviceSelection(deviceNum, this->devices[deviceNum])});
     return this->deviceData.at(deviceNum);
   } else {
-    throw std::runtime_error("No GPU device chosen yet. No handle available.");     
+    throw std::runtime_error("ELPA GPU SYCL Backend (This is likely a programming error in ELPA.): No GPU device chosen yet. No handle available.");     
   }
 }
 
@@ -182,7 +189,7 @@ DeviceSelection& SyclState::getDefaultDeviceHandle() {
   if (this->defaultDevice >= 0) {
     return this->getDeviceHandle(this->defaultDevice);
   } else {
-    throw std::runtime_error("No GPU device chosen yet. No default handle available.");
+    throw std::runtime_error("ELPA GPU SYCL Backend (This is likely a programming error in ELPA.): No GPU device chosen yet. No default handle available. ");
   }
 }
 
@@ -239,7 +246,7 @@ QueueData* DeviceSelection::getQueue(int id) {
   if (id < queueHandles.size()) {
     return &queueHandles[id];
   } else {
-    throw std::runtime_error("Queue ID does not exist.");
+    throw std::runtime_error("ELPA GPU SYCL Backend (This is likely a programming error in ELPA.): Queue ID does not exist.");
   }
 }
 

@@ -245,7 +245,7 @@
         else
           syclShowOnlyIntelGpus = 1
         endif
-        success = sycl_state_initialize(syclShowOnlyIntelGpus)
+        success = sycl_state_initialize(syclShowOnlyIntelGpus, wantDebugMessage)
         if (.not. success) then
           write(error_unit, *) "sycl_state_initialize: inconsistent SYCL setup. Aborting..."
           stop 1

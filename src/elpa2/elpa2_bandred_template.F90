@@ -532,7 +532,6 @@ max_threads, isSkewsymmetric)
       successGPU = gpu_malloc_host(umc_host,umc_size*size_of_datatype)
       check_host_alloc_gpu("bandred: umc_host", successGPU)
       call c_f_pointer(umc_host, umcGPU, (/umc_size/))
-      print *, __LINE__, "ifndef WITH_OPENMP_TRADITIONAL umcGPU alloc addr: ", TRANSFER(umc_host, 0_c_intptr_t) 
       
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     else
@@ -597,7 +596,6 @@ max_threads, isSkewsymmetric)
         
         call c_f_pointer(umc_host, umcGPU, [max_l_cols*2*n_cols])
         call c_f_pointer(umc_host, umcGPU_2d, [max_l_cols,2*n_cols])
-        print *, __LINE__, "ifdef WITH_OPENMP_TRADITIONAL umcGPU alloc addr: ", TRANSFER(umc_host, 0_c_intptr_t) 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
       else
         allocate(umcGPU(max_l_cols*2*n_cols))

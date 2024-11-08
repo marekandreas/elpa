@@ -103,6 +103,9 @@ class SyclState {
   static std::optional<SyclState> _staticState;
 
   bool isManagingOnlyL0Gpus;
+  public:
+  bool isDebugEnabled;
+  private:
   std::vector<sycl::device> devices;
   std::unordered_map<int, DeviceSelection> deviceData;
   int defaultDevice;
@@ -113,7 +116,7 @@ class SyclState {
   std::unordered_map<void *, egs::cclKvsHandle> kvsMap;
 #endif
   
-  SyclState(bool onlyL0Gpus = false);
+  SyclState(bool onlyL0Gpus = false, bool isDebugEnabled = false);
   DeviceSelection& getDeviceHandle(int deviceNum);
   
   public:
@@ -125,21 +128,21 @@ class SyclState {
   size_t getNumDevices();
 
   static SyclState& defaultState();
-  static bool initialize(bool onlyL0Gpus = false);
+  static bool initialize(bool onlyL0Gpus = false, bool isDebugEnabled = false);
 
 #ifdef WITH_ONEAPI_ONECCL
   void registerKvs(void *kvsAddr, cclKvsHandle kvs);
   std::optional<cclKvsHandle> retrieveKvs(void *kvsAddress);
 #endif
 };
-
   
   sycl::queue getQueueOrDefault(QueueData *my_stream);
   QueueData* getQueueDataOrDefault(QueueData *my_stream);
   template<int numDims> sycl::range<numDims> maxWorkgroupSize(sycl::queue d);
 }
 
-template <typename T> inline T* sycl_be::QueueData::getScratchpadFor(size_t numElements) {
+template <typename T>
+inline T* sycl_be::QueueData::getScratchpadFor(size_t numElements) {
   if (numElements > oneMklScratchpadSize * sizeof(T)) {
     if (oneMklScratchpad != nullptr) {
       sycl::free(oneMklScratchpad, queue);
@@ -150,8 +153,9 @@ template <typename T> inline T* sycl_be::QueueData::getScratchpadFor(size_t numE
   return static_cast<T*>(oneMklScratchpad);
 }
 
-template <int numDims> inline sycl::range<numDims> sycl_be::maxWorkgroupSize(sycl::queue q) {
-  static_assert(numDims > 0 && numDims < 3, "numDims must be either 1, 2, or 3.");
+template <int numDims>
+inline sycl::range<numDims> sycl_be::maxWorkgroupSize(sycl::queue q) {
+  static_assert(numDims > 0 && numDims <= 3, "numDims must be either 1, 2, or 3.");
   sycl::device d = q.get_device();
   int maxWgSize = d.get_info<sycl::info::device::max_work_group_size>();
   if constexpr (numDims == 1) {

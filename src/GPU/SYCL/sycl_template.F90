@@ -180,11 +180,12 @@
   end interface
 
   interface
-    function sycl_state_initialize_c(onlyL0Gpus) result(istat) &
+    function sycl_state_initialize_c(onlyL0Gpus, wantDebug) result(istat) &
              bind(C, name="syclStateInitializeFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT), intent(in), value   :: onlyL0Gpus
+      integer(kind=C_INT), intent(in), value   :: wantDebug
       integer(kind=C_INT)                      :: istat
     end function
   end interface
@@ -1817,13 +1818,16 @@
 #endif
     end function
 
-    function sycl_state_initialize(onlyL0Gpus) result(success)
+    function sycl_state_initialize(onlyL0Gpus, wantDebug) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int)  :: onlyL0Gpus
       logical              :: success
+      logical              :: wantDebug
+      integer(kind=c_int)  :: wantDebugInt
 #ifdef WITH_SYCL_GPU_VERSION
-      success = sycl_state_initialize_c(onlyL0Gpus) /=0
+      wantDebugInt = merge(1, 0, wantDebug)
+      success = sycl_state_initialize_c(onlyL0Gpus, wantDebugInt) /=0
 #else
       success = .true.
 #endif

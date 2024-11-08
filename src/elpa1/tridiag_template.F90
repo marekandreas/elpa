@@ -2123,22 +2123,22 @@ subroutine tridiag_cpu_&
   check_allocate("tridiag: tmp_real", istat, errorMessage)
 
 #ifdef WITH_MPI
-  if (useNonBlockingCollectivesRows) then
-    if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+if (useNonBlockingCollectivesRows) then
+  if (wantDebug) call obj%timer%start("mpi_nbc_communication")
     tmp_real = d_vec
     call mpi_iallreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), allreduce_request4, mpierr)
+    int(mpi_comm_rows,kind=MPI_KIND), allreduce_request4, mpierr)
     call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
     tmp_real = e_vec
     call mpi_iallreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6,mpierr)
+    int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6,mpierr)
     call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
     if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
   else
     if (wantDebug) call obj%timer%start("mpi_communication")
     tmp_real = d_vec
     call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+    int(mpi_comm_rows,kind=MPI_KIND), mpierr)
     tmp_real = e_vec
     call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
                        int(mpi_comm_rows,kind=MPI_KIND), mpierr) ! TODO_23_11: change to MPI_IN_PLACE, get rid of tmp_real
@@ -2148,19 +2148,19 @@ subroutine tridiag_cpu_&
     if (wantDebug) call obj%timer%start("mpi_nbc_communication")
     tmp_real = d_vec
     call mpi_iallreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_cols,kind=MPI_KIND), allreduce_request5, mpierr)
+    int(mpi_comm_cols,kind=MPI_KIND), allreduce_request5, mpierr)
     call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
-
+    
     tmp_real = e_vec
     call mpi_iallreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_cols,kind=MPI_KIND), allreduce_request7, mpierr)
+    int(mpi_comm_cols,kind=MPI_KIND), allreduce_request7, mpierr)
     call mpi_wait(allreduce_request7, MPI_STATUS_IGNORE, mpierr)
     if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
   else
     if (wantDebug) call obj%timer%start("mpi_communication")
     tmp_real = d_vec
     call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+    int(mpi_comm_cols,kind=MPI_KIND), mpierr)
     tmp_real = e_vec
     call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
                        int(mpi_comm_cols,kind=MPI_KIND), mpierr)

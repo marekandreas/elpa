@@ -307,10 +307,7 @@ subroutine solve_tridi_cpu_&
         call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)
         return
       endif
-!#ifdef PRV_WGS
-!#define WITH_GPU_STREAMS
-!#undef PRV_WGS
-!#endif
+
       ! Set index arrays for Q columns
 
       ! Dense distribution scheme:
