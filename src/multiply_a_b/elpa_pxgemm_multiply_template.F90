@@ -80,9 +80,7 @@
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions ! for NVTX labels
 #endif
-#if defined(USE_CCL_PXGEMM)
   use elpa_ccl_gpu
-#endif
   use multiply_a_b_gpu
   implicit none
 
@@ -178,11 +176,9 @@
   integer(kind=c_int)                          :: gpu_pxgemm_multiply
 
   logical                                      :: useCCL
-#if defined(USE_CCL_PXGEMM)
   integer(kind=c_intptr_t)                     :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all, ccl_comm_dirs
   integer(kind=c_int)                          :: cclDataType
   integer(kind=ik)                             :: k_datatype
-#endif
 
   NVTX_RANGE_PUSH("elpa_pxgemm_multiply")
 
@@ -462,16 +458,12 @@
         my_pdir = my_prow
         np_dirs = np_rows
         mpi_comm_dirs = mpi_comm_rows
-#if defined(USE_CCL_PXGEMM)
         ccl_comm_dirs = obj%gpu_setup%ccl_comm_rows
-#endif
       else if (b_transposed) then
         my_pdir = my_pcol
         np_dirs = np_cols
         mpi_comm_dirs = mpi_comm_cols
-#if defined(USE_CCL_PXGEMM)
         ccl_comm_dirs = obj%gpu_setup%ccl_comm_cols
-#endif
       endif
 
       call obj%timer%start("main_loop_square_grid_tn_nt")
@@ -540,7 +532,6 @@
 
         ! Broadcast processor column
         if (useCCL) then
-#ifdef USE_CCL_PXGEMM
           call obj%timer%start("ccl_bcast")
           NVTX_RANGE_PUSH("ccl_bcast aux_a/b_full")
           
@@ -564,7 +555,6 @@
 
           NVTX_RANGE_POP("ccl_bcast aux_a/b_full")
           call obj%timer%stop("ccl_bcast")
-#endif /* USE_CCL_PXGEMM */
         else ! useCCL
           call obj%timer%start("mpi_communication")
           NVTX_RANGE_PUSH("MPI_Bcast(aux_a/b_full)")
@@ -650,14 +640,13 @@
 
 
         if (useCCL) then
-#ifdef USE_CCL_PXGEMM
           call obj%timer%start("ccl_reduce")
           NVTX_RANGE_PUSH("ccl_reduce tmp1_full_dev")
           
           my_stream = obj%gpu_setup%my_stream
 
           successGPU  = ccl_reduce(tmp1_full_dev, tmp1_full_dev, int(k_datatype*nblk_mult*nblk_mult,kind=c_size_t), cclDatatype, &
-                                  cclSum, int(np, kind=c_int), ccl_comm_dirs, my_stream)
+                                   cclSum, int(np, kind=c_int), ccl_comm_dirs, my_stream)
           
           if (.not. successGPU) then
             print *,"Error in ccl_reduce"
@@ -668,8 +657,7 @@
           check_stream_synchronize_gpu("elpa_pxgemm_multiply: ccl_bcast", successGPU)
 
           NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
-          call obj%timer%stop("ccl_reduce")
-#endif /* USE_CCL_PXGEMM */        
+          call obj%timer%stop("ccl_reduce")    
         else ! useCCL
           call obj%timer%start("mpi_communication")
           if (my_pdir==np) then
@@ -940,7 +928,6 @@
 
         ! Broadcast processor column
         if (useCCL) then
-#ifdef USE_CCL_PXGEMM
           call obj%timer%start("ccl_bcast")
           NVTX_RANGE_PUSH("ccl_bcast aux_a_full_dev, aux_b_full_dev")
 
@@ -960,7 +947,6 @@
 
           NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
           call obj%timer%stop("ccl_bcast")
-#endif /* USE_CCL_PXGEMM */
         else ! useCCL
           call obj%timer%start("mpi_communication")
           NVTX_RANGE_PUSH("MPI_Bcast: aux_a_full, aux_b_full")
@@ -1460,7 +1446,6 @@
 #ifdef WITH_MPI
         ! Broadcast processor column
         if (useCCL) then
-#ifdef USE_CCL_PXGEMM
           call obj%timer%start("ccl_bcast")
           NVTX_RANGE_PUSH("ccl_bcast aux_a_full_dev, aux_b_full_dev")
 
@@ -1483,7 +1468,6 @@
 
           NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
           call obj%timer%stop("ccl_bcast")
-#endif /* USE_CCL_PXGEMM */
         else ! useCCL
           call obj%timer%start("mpi_communication")
           NVTX_RANGE_PUSH("MPI_Bcast: aux_a_full, aux_b_full")
@@ -1628,18 +1612,14 @@
         np_dirs = np_rows
         np_dirs_t = np_cols
         mpi_comm_dirs = mpi_comm_rows
-#if defined(USE_CCL_PXGEMM)
         ccl_comm_dirs = obj%gpu_setup%ccl_comm_rows
-#endif
       else if (b_transposed) then
         my_pdir = my_pcol
         my_pdir_t = my_prow
         np_dirs = np_cols
         np_dirs_t = np_rows
         mpi_comm_dirs = mpi_comm_cols
-#if defined(USE_CCL_PXGEMM)
         ccl_comm_dirs = obj%gpu_setup%ccl_comm_cols
-#endif
       endif
 
       np_dirs_fine = least_common_multiple(np_rows, np_cols)
@@ -1906,9 +1886,9 @@
 
           ! Broadcast processor column/row
           if (useCCL) then
-#ifdef USE_CCL_PXGEMM
             call obj%timer%start("ccl_bcast")
             NVTX_RANGE_PUSH("ccl_bcast")
+
             if (a_transposed) then
               successGPU  = ccl_bcast(aux_a_full_dev, aux_a_full_dev, int(k_datatype*nblk_mult*nblk_mult,kind=c_size_t), &
                                       cclDatatype, int(np_t,kind=c_int), ccl_comm_cols, my_stream)
@@ -1927,7 +1907,6 @@
 
             NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
             call obj%timer%stop("ccl_bcast")
-#endif /* USE_CCL_PXGEMM */
           else ! useCCL
             call obj%timer%start("mpi_bcast")
             NVTX_RANGE_PUSH("MPI_Bcast(aux_a/b_full)")
@@ -2052,7 +2031,6 @@
           endif ! (useGPU .and. .not. useCCL) 
           
           if (useCCL) then
-#ifdef USE_CCL_PXGEMM
             call obj%timer%start("ccl_reduce")
             NVTX_RANGE_PUSH("ccl_reduce tmp1_full_dev")
 
@@ -2069,7 +2047,6 @@
 
             NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
             call obj%timer%stop("ccl_reduce")
-#endif /* USE_CCL_PXGEMM */  
           else ! useCCL
             call obj%timer%start("mpi_reduce")
             if (my_pdir==np) then
