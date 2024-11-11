@@ -324,7 +324,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 
     int syclMallocHostFromC(intptr_t *a, size_t elems) {
     DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
-    if (SyclState::defaultState().isDebugEnabled) std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << elems << "B" << "\n";
+    //if (SyclState::defaultState().isDebugEnabled) std::cerr << "ALLOC |" << "SYCL USM" << "| ~> void *: " << elems << "B" << "\n";
     char *bytes = reinterpret_cast<char *>(*a);
     if (elems == 0) {
       *a=0;
@@ -444,7 +444,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     if (!isFailed) {
       syclStreamSynchronizeExplicitFromC(queue_handle);
       queue.memcpy(dst, src, size);
-      syclStreamSynchronizeExplicitFromC(queue_handle);
+      //syclStreamSynchronizeExplicitFromC(queue_handle);
       return 1;
     } else {
       return 0;
@@ -481,7 +481,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       
       syclStreamSynchronizeExplicitFromC(queue_handle);
       queue.ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height);
-      syclStreamSynchronizeExplicitFromC(queue_handle);
+      //syclStreamSynchronizeExplicitFromC(queue_handle);
       return 1;
     } else {
       return 0;
@@ -528,7 +528,7 @@ static oneapi::mkl::side sideFromChar(char c) {
 #endif
     syclStreamSynchronizeExplicitFromC(queue_handle);
     queue.memset(mem, val, size);
-    syclStreamSynchronizeExplicitFromC(queue_handle);
+    //syclStreamSynchronizeExplicitFromC(queue_handle);
     return 1;
   }
 

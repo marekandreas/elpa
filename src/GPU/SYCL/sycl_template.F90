@@ -1823,7 +1823,7 @@
       implicit none
       integer(kind=c_int)  :: onlyL0Gpus
       logical              :: success
-      logical              :: wantDebug
+      logical, optional    :: wantDebug
       integer(kind=c_int)  :: wantDebugInt
 #ifdef WITH_SYCL_GPU_VERSION
       wantDebugInt = merge(1, 0, wantDebug)

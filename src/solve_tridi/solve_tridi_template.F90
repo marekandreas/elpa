@@ -252,7 +252,7 @@ subroutine solve_tridi_cpu_&
         return
       endif
       ! If there is only 1 processor column, we are done
-
+      
       if (np_cols==1) then
         deallocate(limits, stat=istat, errmsg=errorMessage)
         check_deallocate("solve_tridi: limits", istat, errorMessage)
@@ -286,10 +286,6 @@ subroutine solve_tridi_cpu_&
            num = ldq*matrixCols * size_of_datatype_real
 
 
-!#ifdef WITH_GPU_STREAMS
-!#define PRV_WGS
-!#undef WITH_GPU_STREAMS
-!#endif
 #ifdef WITH_GPU_STREAMS
            my_stream = obj%gpu_setup%my_stream
            call gpu_memcpy_async_and_stream_synchronize &
@@ -402,7 +398,7 @@ subroutine solve_tridi_cpu_&
           call gpu_memcpy_async_and_stream_synchronize &
             ("solve_tride q_dev -> q_vec", q_dev, 0_c_intptr_t, &
                                                  q(1:ldq,1:matrixCols), &
-                                 1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+                                 1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
 #else
          successGPU = gpu_memcpy(q_dev, int(loc(q(1,1)),kind=c_intptr_t),  &
                               num, gpuMemcpyHostToDevice)
@@ -415,4 +411,3 @@ subroutine solve_tridi_cpu_&
       return
 
     end 
-
