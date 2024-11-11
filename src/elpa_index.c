@@ -362,6 +362,8 @@ static const elpa_index_int_entry_t int_entries[] = {
                         cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_hermitian_multiply", "Use GPU acceleration for elpa_hermitian_multiply", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
+        INT_ENTRY("gpu_pxgemm_multiply", "Use GPU acceleration for elpa_pxgemm_multiply", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                        cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_invert_trm", "Use GPU acceleration for elpa_triangular", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
                         cardinality_bool, enumerate_identity, valid_with_gpu, NULL, PRINT_YES),
         INT_ENTRY("gpu_tridiag", "Use GPU acceleration for ELPA1 tridiagonalization", 1, ELPA_AUTOTUNE_MEDIUM, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ELPA1, \

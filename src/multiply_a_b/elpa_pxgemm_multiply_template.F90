@@ -105,7 +105,7 @@
 #endif
 #endif /* DEVICE_POINTER */
   MATH_DATATYPE(kind=rck), allocatable         :: at_full(:,:), bt_full(:,:)
-  MATH_DATATYPE(kind=rck), allocatable         :: buf_send(:,:), buf_recv(:,:), buf_self(:,:), at_col(:,:), bt_row(:,:) ! PETERDEBUG: needed for TT case
+  MATH_DATATYPE(kind=rck), allocatable         :: buf_send(:,:), buf_recv(:,:), buf_self(:,:), at_col(:,:), bt_row(:,:) ! needed for TT case
 
   integer(kind=ik)                             :: my_pdir, my_pdir_t, np_dirs, np_dirs_t ! PETERDEBUG_NEW
   integer(kind=ik)                             :: np_rows_fine, np_cols_fine, np_dirs_fine, np_fine, np_t_fine, np_bc_fine, &
@@ -175,7 +175,7 @@
                                                             &MATH_DATATYPE
 
   integer(kind=c_intptr_t)                     :: gpuHandle, my_stream
-  integer(kind=c_int)                          :: gpu_hermitian_multiply
+  integer(kind=c_int)                          :: gpu_pxgemm_multiply
 
   logical                                      :: useCCL
 #if defined(USE_CCL_PXGEMM)
@@ -236,15 +236,15 @@
 #endif
 
   ! check whether the above setting should be overriden
-  if (obj%is_set("gpu_hermitian_multiply") == 1) then ! PETERDEBUG: add gpu_pxgemm_multiply keyword
-    call obj%get("gpu_hermitian_multiply", gpu_hermitian_multiply, error)
+  if (obj%is_set("gpu_pxgemm_multiply") == 1) then ! PETERDEBUG: add gpu_pxgemm_multiply keyword to the docs
+    call obj%get("gpu_pxgemm_multiply", gpu_pxgemm_multiply, error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option for gpu_hermitian_mutltiply. Aborting..."
       stop 1
     endif
-    if (useGPU .and. gpu_hermitian_multiply .eq. 0) then
+    if (useGPU .and. gpu_pxgemm_multiply .eq. 0) then
       useGPU = .false.
-    else if (.not.(useGPU) .and. gpu_hermitian_multiply .eq. 1) then
+    else if (.not.(useGPU) .and. gpu_pxgemm_multiply .eq. 1) then
       useGPU = .true.
     else
     endif
