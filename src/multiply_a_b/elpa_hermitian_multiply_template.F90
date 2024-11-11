@@ -54,11 +54,6 @@
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
 
-! PETERDEBUG
-!#define OLD_GENERIC_GRID
-!#define SQUARE_GRID
-!#define NONSQUARE_GRID
-
 #undef USE_CCL_HERMITIAN_MULTIPLY
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #define USE_CCL_HERMITIAN_MULTIPLY
@@ -97,7 +92,6 @@
   integer(kind=ik), intent(in)                 :: ldb, ldbCols, ldc, ldcCols
   integer(kind=ik)                             :: na, ncb
 #ifndef DEVICE_POINTER
-!forget device pointer case for the moment implement later
 #ifdef USE_ASSUMED_SIZE
   MATH_DATATYPE(kind=rck)                      :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
 #else
@@ -108,28 +102,20 @@
   MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), b(:,:), c(:,:)
   type(c_ptr)                                  :: aDev, bDev, cDev
 #endif /* DEVICE_POINTER */
-  MATH_DATATYPE(kind=rck), allocatable         :: at_full(:,:), bt_full(:,:) ! PETERDEBUG: needed for TT case
 
   integer(kind=ik)                             :: my_prow, my_pcol, np_rows, np_cols, myid
-  integer(kind=ik)                             :: my_pdir, np_dirs ! PETERDEBUG_NEW
   integer(kind=MPI_KIND)                       :: my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
   integer(kind=MPI_KIND)                       :: mpierr, myidMPI
   integer(kind=ik)                             :: l_cols, l_rows, l_rows_np
-  integer(kind=ik)                             :: l_rows_max, l_cols_max, l_rows_min, l_cols_min, nstor_block, nstor_block_cut ! PETERDEBUG
-  integer(kind=ik)                             :: m, n, k, k_a, k_b ! PETERDEBUG_NEW
+  integer(kind=ik)                             :: n
   integer(kind=ik)                             :: np, nb, nblk_mult, lrs, lre, lcs, lce
-  integer(kind=ik)                             :: np_row_curr, n_blocks_loc_x, n_blocks_loc_y, I_block_gl, J_block_gl, &
-                                                  i_block_loc, j_block_loc ! PETERDEBUG
   integer(kind=ik)                             :: gcol_min, gcol, goff
   integer(kind=ik)                             :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
-  integer(kind=ik)                             :: np_br, noff_n ! PETERDEBUG
-  integer(kind=ik)                             :: np_t ! PETERDEBUG_NEW -> instead of np_bc?
   integer(kind=ik), allocatable                :: lrs_save(:), lre_save(:)
 
   logical                                      :: a_lower, a_upper, c_lower, c_upper
   MATH_DATATYPE(kind=rck)                      :: beta
   MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_mat(:,:), tmp1(:,:)
-  MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_a_full(:,:), aux_b_full(:,:), tmp1_full(:,:), tmp2_full(:,:) ! PETERDEBUG
   MATH_DATATYPE(kind=rck), allocatable         :: aux_bc(:), tmp2(:,:)
   logical                                      :: wantDebug
   integer(kind=ik)                             :: istat, debug
@@ -139,15 +125,13 @@
   logical                                      :: useGPU
   integer(kind=c_int)                          :: numGPU, blocking
   integer(kind=ik)                             :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-  integer(kind=ik)                             :: mpi_comm_dirs ! PETERDEBUG_NEW
   integer(kind=ik)                             :: nblk, matrixRows, matrixCols, error
   integer(kind=c_intptr_t)                     :: aux_bc_dev, aux_mat_dev, tmp1_dev, tmp2_dev
-  integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev, tmp2_full_dev ! PETERDEBUG_NEW
-!#ifndef DEVICE_POINTER
+
   integer(kind=c_intptr_t)                     :: a_dev
   integer(kind=c_intptr_t)                     :: b_dev
   integer(kind=c_intptr_t)                     :: c_dev
-!#endif
+
   type(c_ptr)                                  :: aux_host
   integer(kind=c_intptr_t)                     :: num
   integer(kind=c_intptr_t)                     :: aux_off, b_off
@@ -166,9 +150,6 @@
   integer(kind=ik)                             :: k_datatype
 #endif
 
-#ifdef DEVICE_POINTER
-  MATH_DATATYPE(kind=rck), allocatable         :: a_tmp(:,:), c_tmp(:,:) ! PETERDEBUG: unused
-#endif
   integer(kind=c_intptr_t)                     :: aux_dev
   integer(kind=c_int)                          :: gpu
 
@@ -268,7 +249,7 @@
       write(error_unit,*) "elpa_hermitian_multiply: Problem in getting keyword 'blocking_in_multiply'. Aborting..."
       stop 1
     endif
-    nblk_mult = (blocking/nblk+1) * nblk ! PETERDEBUG: how autotuning works here? d_blocking in one step should be ~nblk
+    nblk_mult = (blocking/nblk+1) * nblk
   else ! is_set
     if (useGPU) then
       if (na/np_rows <= 256) then
@@ -431,7 +412,7 @@
 ! _________________________________________________________________________________________________________________________________
 
   ! main loop: build up the result matrix by processor rows
-  do np = 0, np_rows-1 ! PETERDEBUG: np -> np_row_curr or np_row_c (for matrix C)
+  do np = 0, np_rows-1
 
 #ifdef WITH_NVTX
     call nvtxRangePush("do np = 0, np_rows-1")
@@ -465,22 +446,19 @@
 #endif
 
       goff  = nb*np_rows + np ! offset in the global grid of blocks
-      ! rename: goff -> block_offset_gl or I_block_gl; global coordinate of the given block in the grid of blocks ! PETERDEBUG
-
-      ! Get the processor row (if trans_a='N') or column (if trans_a='T' or 'H') which owns this block
-      ! and the offset in blocks within this row/column.
-      ! The corresponding block row/column in A is then broadcast to all for multiplication with B
+      
+      ! Get the processor column which owns this block
+      ! and the offset in blocks within this column.
+      ! The corresponding block column in A is then broadcast to all for multiplication with B
 
       np_bc = MOD(goff, np_cols) ! np, that posesses the given column of blocks; trans_a='T'; "bc"=block column; rename: np_bc -> np_col_b / np_col_curr
-      np_br = MOD(goff, np_rows) ! np, that posesses the given row of blocks   ; trans_a='N'; "br"=block row ! PETERDEBUG
       
       noff = goff/np_cols   ! offset in the local grid of blocks
-      noff_n = goff/np_rows ! PETERDEBUG
       
       ! Gather up the complete column/row of blocks of A (for T/N case) on the owner in contigous memory of aux_bc array
       n_aux_bc = 0
-      ! PETERDEBUG: this loop below is essentially a one-liner if not for upper/lower cases: aux_bc_2D(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
-      do n = 1, min(nblk, l_rows_np-nb*nblk) ! Loop over local columns/rows (for T/N) to be broadcast
+      ! if not for upper/lower cases: aux_bc_2D(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
+      do n = 1, min(nblk, l_rows_np-nb*nblk) ! Loop over local columns for to be broadcast
 
         gcol = goff*nblk + n ! global column corresponding to n, needed only for a_lower and a_upper cases
 
@@ -534,7 +512,6 @@
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
-        ! PETERDEBUG We can send the whole aux_bc_2D(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols) straight away ??? ! We don't need to copy it to aux_bc_dev at all!
         successGPU = ccl_bcast(aux_bc_dev, aux_bc_dev, int(k_datatype*n_aux_bc,kind=c_size_t), cclDatatype, &
                               int(np_bc,kind=c_int), ccl_comm_cols, my_stream)
 
@@ -649,7 +626,6 @@
 #ifdef WITH_NVTX
               call nvtxRangePop() ! gpublas
 #endif
-              num = nstor*(lce-lcs+1)*size_of_datatype ! PETERDEBUG: just a hanging line, delete it
             else ! useGPU
               call obj%timer%start("blas")
               ! tmp1 = aux_mat^{T/N} * b
@@ -804,6 +780,7 @@
 !_______________________________________________
 
   if (useGPU) then
+#if !defined(DEVICE_POINTER)
     ! copy result c_dev back to CPU
     num = ldc*ldcCols
 #ifdef WITH_GPU_STREAMS
@@ -815,6 +792,7 @@
     successGPU = gpu_memcpy(int(loc(c),kind=c_intptr_t), c_dev, num*size_of_datatype, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("elpa_hermitian_multiply: c_dev -> c", successGPU)
 #endif
+#endif /* !defined(DEVICE_POINTER) */
   endif ! useGPU
 
 
@@ -833,54 +811,9 @@
     check_dealloc_gpu("elpa_hermitian_multiply: c_dev", successGPU)
 
 #else /* DEVICE_POINTER */
-    !successGPU = gpu_free(b_dev)
-    !check_dealloc_gpu("elpa_hermitian_multiply: b_dev", successGPU)
-
-    !num = ldc*ldcCols*size_of_datatype
-    !successGPU = gpu_memcpy(cDev, c_dev, num,&
-    !              gpuMemcpyDeviceToDevice)
-    !check_memcpy_gpu("elpa_hermitian_multiply: c_dev -> cDev", successGPU)
-
-    !successGPU = gpu_free(c_dev)
-    !check_dealloc_gpu("elpa_hermitian_multiply: c_dev", successGPU)
-
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_hermitian_multiply: a_tmp", successGPU)
-#endif
-    deallocate(a_tmp, stat=istat, errmsg=errorMessage)
-    check_deallocate("elpa_hermitian_multiply: a_tmp", istat, errorMessage)
-
-    num = ldc*ldcCols*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_hermitian_multiply: c_tmp to c", successGPU)
-
-    successGPU = gpu_memcpy_async(cDev,int(loc(c_tmp),kind=c_intptr_t),num,&
-                  gpuMemcpyHostToDevice, my_stream)
-    check_memcpy_gpu("elpa_hermitian_multiply: c_tmp -> c", successGPU)
-
-    my_stream = obj%gpu_setup%my_stream
-    successGPU = gpu_stream_synchronize(my_stream)
-    check_stream_synchronize_gpu("elpa_hermitian_multiply: c_tmp -> c", successGPU)
-    ! synchronize streamsPerThread; maybe not neccessary
-    successGPU = gpu_stream_synchronize()
-    check_stream_synchronize_gpu("elpa_hermitian_multiply: c_tmp -> c", successGPU)
-#else
-    successGPU = gpu_memcpy(cDev,int(loc(c_tmp),kind=c_intptr_t),num,&
-                  gpuMemcpyHostToDevice)
-    check_memcpy_gpu("elpa_hermitian_multiply: c_tmp -> c", successGPU)
-#endif
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_host_unregister(int(loc(c_tmp),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_hermitian_multiply: c_tmp", successGPU)
-#endif
-
-    deallocate(c_tmp, stat=istat, errmsg=errorMessage)
-    check_deallocate("elpa_hermitian_multiply: c_tmp", istat, errorMessage)
 
 #endif /* DEVICE_POINTER */
+
 #if !defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) && !defined(WITH_SYCL_GPU_VERSION)
     nullify(aux_mat)
     !nullify(tmp1)
