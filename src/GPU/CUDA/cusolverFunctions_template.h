@@ -622,4 +622,80 @@ void cusolverXpotrf_elpa_wrapper(cusolverDnHandle_t cusolverHandle, char uplo, i
     }
   }
 
+
+//_________________________________________________________________________________________________
+// cusolverXsyevd
+//
+//
+
+
+  void cusolverDsyevd_elpa_wrapper (cusolverDnHandle_t cudaHandle, int n, double *A, int lda, double *eigenvalues, int *info_dev) {
+    cusolverStatus_t status;
+    cudaError_t cuerr;
+
+    double *d_work = NULL;
+    int d_lwork = 0;
+
+    cusolverEigMode_t jobz = CUSOLVER_EIG_MODE_VECTOR; // compute eigenvalues and eigenvectors.
+    cublasFillMode_t uplo = CUBLAS_FILL_MODE_LOWER;
+
+    status = cusolverDnDsyevd_bufferSize(cudaHandle, jobz,  uplo, n, A, lda, eigenvalues, &d_lwork);
+    if (status != CUSOLVER_STATUS_SUCCESS) {
+      errormessage("Error in cusolverDnSsyevd_buffer_size %s \n","aborting");
+    }
+
+    cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cusolver_DnSsyevd d_work: %s\n",cudaGetErrorString(cuerr));
+    }
+#ifdef DEBUG_CUDA
+    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
+#endif
+
+    status = cusolverDnDsyevd(cudaHandle, jobz, uplo, n, A, lda, eigenvalues, d_work, d_lwork, info_dev);
+
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
+
+    cuerr = cudaFree(d_work);
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cusolver_DnDsyevd cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
+    }
+  }
+
+  void cusolverSsyevd_elpa_wrapper (cusolverDnHandle_t cudaHandle, int n, float *A, int lda, float *eigenvalues, int *info_dev) {
+    cusolverStatus_t status;
+    cudaError_t cuerr;
+
+    float *d_work = NULL;
+    int d_lwork = 0;
+
+    cusolverEigMode_t jobz = CUSOLVER_EIG_MODE_VECTOR; // compute eigenvalues and eigenvectors.
+    cublasFillMode_t uplo = CUBLAS_FILL_MODE_LOWER;
+
+    status = cusolverDnSsyevd_bufferSize(cudaHandle, jobz,  uplo, n, A, lda, eigenvalues, &d_lwork);
+    if (status != CUSOLVER_STATUS_SUCCESS) {
+      errormessage("Error in cusolverDnSsyevd_buffer_size %s \n","aborting");
+    }
+
+    cuerr = cudaMalloc((void**) &d_work, sizeof(float) * d_lwork);
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cusolver_Ssyevd d_work: %s\n",cudaGetErrorString(cuerr));
+    }
+#ifdef DEBUG_CUDA
+    printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
+#endif
+
+    status = cusolverDnSsyevd(cudaHandle, jobz, uplo, n, A, lda, eigenvalues, d_work, d_lwork, info_dev);
+
+    if (status != CUSOLVER_STATUS_SUCCESS)
+      cusolverPrintError(status);
+
+    cuerr = cudaFree(d_work);
+    if (cuerr != cudaSuccess) {
+      errormessage("Error in cusolver_DnSsyevd cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
+    }
+  }
+
+    
 } // extern "C"

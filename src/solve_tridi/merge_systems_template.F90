@@ -55,10 +55,19 @@
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
 
-    subroutine merge_systems_&
+#ifdef SOLVE_TRIDI_GPU_BUILD
+    subroutine merge_systems_gpu_&
     &PRECISION &
                          (obj, na, nm, d, e, q, matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success, max_threads)
+#else
+    subroutine merge_systems_cpu_&
+    &PRECISION &
+                         (obj, na, nm, d, e, q, matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                          l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success, max_threads)
+#endif
+
+
       use elpa_gpu
       use, intrinsic :: iso_c_binding
       use precision
@@ -1735,5 +1744,4 @@
 
       return
 
-    end subroutine merge_systems_&
-    &PRECISION
+    end 

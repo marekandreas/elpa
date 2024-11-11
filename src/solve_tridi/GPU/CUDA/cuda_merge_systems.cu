@@ -130,7 +130,7 @@ extern "C" void cuda_fill_tmp_arrays_double_FromC(int *idx1_dev, int *p_col_dev,
   }
 }
 
-#ifdef WANT_SINGLE_PRECISION_REAL
+
 __global__ void cuda_fill_tmp_arrays_float_kernel(int *idx1, int *p_col, int *coltyp, int *nnzu_val, int *nnzl_val, int *nnzul, float *d1u, float *d1, float *zu, float *z, float *d1l, float *zl, const int na, const int np, const int na1, const int np_rem) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i>=0 && i < na1) {
@@ -178,7 +178,6 @@ __global__ void cuda_fill_tmp_arrays_float_kernel(int *idx1, int *p_col, int *co
 }
 
 extern "C" void cuda_fill_tmp_arrays_float_FromC(int *idx1_dev, int *p_col_dev, int *coltyp_dev, int *nnzu_val_dev, int *nnzl_val_dev, int *nnzul_dev, float *d1u_dev, float *d1_dev, float *zu_dev, float *z_dev, float *d1l_dev, float *zl_dev, int *na_in, int *np_in, int *na1_in, int *np_rem_in, cudaStream_t  my_stream){
-
   int na = *na_in;
   int np = *np_in;
   int na1 = *na1_in;
@@ -198,7 +197,7 @@ extern "C" void cuda_fill_tmp_arrays_float_FromC(int *idx1_dev, int *p_col_dev, 
     printf("Error in executing cuda_fill_tmp_arrays_float_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
-#endif
+
 
 
 __global__ void cuda_copy_qtmp1_slice_to_q_double_kernel(double *q, double *qtmp1, int *l_col_out, int *p_col_out, int *ndef_c, int *p_col, int *idx2, int *idx, const int l_rqs, const int l_rqe, const int l_rows, const int matrixRows, const int gemm_dim_k, const int my_pcol, const int na1, const int np_rem, const int na) {
@@ -255,7 +254,6 @@ extern "C" void cuda_copy_qtmp1_slice_to_q_double_FromC(double *q_dev, double *q
 
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
 __global__ void cuda_copy_qtmp1_slice_to_q_float_kernel(float *q, float *qtmp1, int *l_col_out, int *p_col_out, int *ndef_c, int *p_col, int *idx2, int *idx, const int l_rqs, const int l_rqe, const int l_rows, const int matrixRows, const int gemm_dim_k, const int my_pcol, const int na1, const int np_rem, const int na) {
     int slice = blockIdx.x * blockDim.x + threadIdx.x;
     int i = blockIdx.y * blockDim.y + threadIdx.y;
@@ -307,7 +305,9 @@ extern "C" void cuda_copy_qtmp1_slice_to_q_float_FromC(float *q_dev, float *qtmp
     printf("Error in executing cuda_copy_qtmp1_slice_to_q_float_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
-#endif
+
+
+
 
 __global__ void cuda_copy_q_slice_to_qtmp2_double_kernel(double *q, double *qtmp2, int *idxq1, int *l_col_out, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int matrixCols, const int gemm_dim_k, const int gemm_dim_m, const int ns, const int ncnt, const int indx, const int indx2, const int na) {
     int j = blockIdx.x * blockDim.x + threadIdx.x; // 1.._l_rows
@@ -359,7 +359,7 @@ extern "C" void cuda_copy_q_slice_to_qtmp2_double_FromC(double *q_dev, double *q
 }
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
+
 __global__ void cuda_copy_q_slice_to_qtmp2_float_kernel(float *q, float *qtmp2, int *idxq1, int *l_col_out, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int matrixCols, const int gemm_dim_k, const int gemm_dim_m, const int ns, const int ncnt, const int indx, const int indx2, const int na) {
     int j = blockIdx.x * blockDim.x + threadIdx.x; // 1.._l_rows
     int ii = blockIdx.y * blockDim.y + threadIdx.y + 1; // 1.._l_rows
@@ -408,7 +408,8 @@ extern "C" void cuda_copy_q_slice_to_qtmp2_float_FromC(float *q_dev, float *qtmp
     printf("Error in executing cuda_copy_q_slice_to_qtmp2_float_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
-#endif
+
+
 
 __global__ void cuda_fill_ev_double_kernel(double *ev, double *tmp, double *d1u, double *dbase, double *ddiff, double *zu, double *ev_scale, int *idxq1, int *idx, const int na, const int gemm_dim_l, const int gemm_dim_m, const int nnzu, const int ns, const int ncnt) {
     int k = blockIdx.x * blockDim.x + threadIdx.x;
@@ -459,7 +460,6 @@ extern "C" void cuda_fill_ev_double_FromC(double *ev_dev, double *tmp_dev, doubl
 
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
 __global__ void cuda_fill_ev_float_kernel(float *ev, float *tmp, float *d1u, float *dbase, float *ddiff, float *zu, float *ev_scale, int *idxq1, int *idx, const int na, const int gemm_dim_l, const int gemm_dim_m, const int nnzu, const int ns, const int ncnt) {
     int k = blockIdx.x * blockDim.x + threadIdx.x;
     int i = blockIdx.y * blockDim.y + threadIdx.y + 1;
@@ -506,7 +506,9 @@ extern "C" void cuda_fill_ev_float_FromC(float *ev_dev, float *tmp_dev, float *d
   }
   }
 }
-#endif
+
+
+
 
 __global__ void cuda_copy_qtmp2_slice_to_q_double_kernel(double *q, double *qtmp2, int *idx1q, int *l_col_out, const int l_rqs, const int l_rqe, const int l_rows,  const int ncnt, const int gemm_dim_k, const int matrixRows, const int ns) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -549,7 +551,7 @@ extern "C" void cuda_copy_qtmp2_slice_to_q_double_FromC(double *q_dev, double *q
 }
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
+
 __global__ void cuda_copy_qtmp2_slice_to_q_float_kernel(float *q, float *qtmp2, int *idx1q, int *l_col_out, const int l_rqs, const int l_rqe, const int l_rows,  const int ncnt, const int gemm_dim_k, const int matrixRows, const int ns) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -562,7 +564,6 @@ __global__ void cuda_copy_qtmp2_slice_to_q_float_kernel(float *q, float *qtmp2, 
         q[j+l_rqs - 1 + matrixRows * (l_col-1)] = qtmp2[j+gemm_dim_k*i];
       }
     }
-
 
 }
 
@@ -590,7 +591,8 @@ extern "C" void cuda_copy_qtmp2_slice_to_q_float_FromC(float *q_dev, float *qtmp
     printf("Error in executing cuda_copy_qtmp2_slice_to_q_float_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
-#endif
+
+
 
 
 __global__ void cuda_zero_q_double_kernel(double *q, int *p_col_out, int *l_col_out, const int na, const int my_pcol, const int l_rqs, const int l_rqe, const int matrixRows) {
@@ -632,7 +634,6 @@ extern "C" void cuda_zero_q_double_FromC(double *q_dev, int *p_col_out_dev, int 
 
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
 __global__ void cuda_zero_q_float_kernel(float *q, int *p_col_out, int *l_col_out, const int na, const int my_pcol, const int l_rqs, const int l_rqe, const int matrixRows) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -655,9 +656,9 @@ extern "C" void cuda_zero_q_float_FromC(float *q_dev, int *p_col_out_dev, int *l
   int l_rqe = *l_rqe_in;
   int matrixRows = *matrixRows_in;
 
-
   dim3 threadsPerBlock(32,32);
   dim3 blocks((na + threadsPerBlock.x - 1) / threadsPerBlock.x, ((l_rqe-l_rqs+1) + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
 #ifdef WITH_GPU_STREAMS
   cuda_zero_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, matrixRows);
 #else
@@ -669,7 +670,9 @@ extern "C" void cuda_zero_q_float_FromC(float *q_dev, int *p_col_out_dev, int *l
     printf("Error in executing cuda_zero_q_float_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
-#endif
+
+
+
 
 
 __global__ void cuda_copy_q_slice_to_qtmp1_double_kernel(double *qtmp1, double *q, int *ndef_c,int *l_col, int *idx2, int *p_col, const int na2, const int na, const int my_pcol, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int gemm_dim_k) {
@@ -714,7 +717,7 @@ extern "C" void cuda_copy_q_slice_to_qtmp1_double_FromC(double *qtmp1_dev, doubl
 }
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
+
 __global__ void cuda_copy_q_slice_to_qtmp1_float_kernel(float *qtmp1, float *q, int *ndef_c,int *l_col, int *idx2, int *p_col, const int na2, const int na, const int my_pcol, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int gemm_dim_k) {
     int j = blockIdx.x * blockDim.x + threadIdx.x; // l_rows
 
@@ -755,7 +758,8 @@ extern "C" void cuda_copy_q_slice_to_qtmp1_float_FromC(float *qtmp1_dev, float *
     printf("Error in executing cuda_copy_q_slice_to_qtmp1_float_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
-#endif
+
+
 
 
 __global__ void cuda_copy_qtmp1_to_qtmp1_tmp_double_kernel(double *qtmp1, double *qtmp1_tmp, const int gemm_dim_k, const int gemm_dim_l) {
@@ -791,9 +795,9 @@ extern "C" void cuda_copy_qtmp1_to_qtmp1_tmp_double_FromC(double *qtmp1_dev, dou
     printf("Error in executing cuda_copy_qtmp1_to_qtmp1_tmp_double_kernel: %s\n",cudaGetErrorString(cuerr));
   }       
 }
-            
-  
-#ifdef WANT_SINGLE_PRECISION_REAL
+
+
+
 __global__ void cuda_copy_qtmp1_to_qtmp1_tmp_float_kernel(float *qtmp1, float *qtmp1_tmp, const int gemm_dim_k, const int gemm_dim_l) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -804,31 +808,31 @@ __global__ void cuda_copy_qtmp1_to_qtmp1_tmp_float_kernel(float *qtmp1, float *q
         qtmp1_tmp[i+gemm_dim_k*j] = qtmp1[i+gemm_dim_k*j];
       }    
     }        
+           
+         
+}      
     
-}
-
-
 extern "C" void cuda_copy_qtmp1_to_qtmp1_tmp_float_FromC(float *qtmp1_dev, float *qtmp1_tmp_dev, int *gemm_dim_k_in, int *gemm_dim_l_in, cudaStream_t  my_stream){
-
+    
   int gemm_dim_k = *gemm_dim_k_in;
   int gemm_dim_l = *gemm_dim_l_in;
-
+    
   dim3 threadsPerBlock(32,32);
   dim3 blocks((gemm_dim_k + threadsPerBlock.x - 1) / threadsPerBlock.x, (gemm_dim_l + threadsPerBlock.y - 1) / threadsPerBlock.y);
-
+          
 #ifdef WITH_GPU_STREAMS
   cuda_copy_qtmp1_to_qtmp1_tmp_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l);
-#else
+#else     
   cuda_copy_qtmp1_to_qtmp1_tmp_float_kernel<<<blocks, threadsPerBlock>>>(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l);
 #endif
-
+      
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_copy_qtmp1_to_qtmp1_tmp_float_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
+    printf("Error in executing cuda_copy_qtmp1_to_qtmp1_tmp_floaet_kernel: %s\n",cudaGetErrorString(cuerr));
+  }       
 }
-
-#endif
+            
+  
 
 
 __global__ void cuda_update_ndef_c_kernel(int *ndef_c, int *idx, int *p_col, int *idx2, const int na, const int na1, const int np_rem, const int ndef_start) {
@@ -994,3 +998,4 @@ extern "C" void cuda_compute_nnzl_nnzu_val_part2_FromC(int *nnzu_val_dev, int *n
     printf("Error in executing cuda_compute_nnzl_nnzu_val_part2_c_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
+
