@@ -442,9 +442,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     isFailed = checkPointerValidity(dst, src, direction, queue);
 #endif
     if (!isFailed) {
-      syclStreamSynchronizeExplicitFromC(queue_handle);
       queue.memcpy(dst, src, size);
-      //syclStreamSynchronizeExplicitFromC(queue_handle);
       return 1;
     } else {
       return 0;
@@ -479,9 +477,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       // Note that this operation currently relies on an Intel SYCL extension. This may or may not become part of the next SYCL standard.
       // For now, it is only supported by DPC++ and the Intel C++ Compiler. This should be okay, since there are implementations for the other vendors.
       
-      syclStreamSynchronizeExplicitFromC(queue_handle);
       queue.ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height);
-      //syclStreamSynchronizeExplicitFromC(queue_handle);
       return 1;
     } else {
       return 0;
@@ -526,9 +522,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
     }
 #endif
-    syclStreamSynchronizeExplicitFromC(queue_handle);
     queue.memset(mem, val, size);
-    //syclStreamSynchronizeExplicitFromC(queue_handle);
     return 1;
   }
 
