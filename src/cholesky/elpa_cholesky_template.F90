@@ -372,16 +372,17 @@
 #endif
 #else /* DEVICE_POINTER */
     a_dev = transfer(aDev, a_dev)
-!#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
     allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_cholesky: a_tmp", istat, errorMessage)
+
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_host_register(int(loc(a_tmp),kind=c_intptr_t), &
                     matrixRows*matrixCols * size_of_datatype,&
                     gpuHostRegisterDefault)
     check_host_register_gpu("elpa_cholesky: a_tmp", successGPU)
 #endif /* WITH_GPU_STREAMS */
-!#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER) */
+#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER) */
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
@@ -1292,16 +1293,18 @@
     successGPU = gpu_host_unregister(int(loc(a),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_cholesky: a", successGPU)
 #endif
+  endif ! useGPU
 
-  endif
 #else /* DEVICE_POINTER */
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_cholesky: a_tmp", successGPU)
-#endif
+#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+  deallocate(a_tmp, stat=istat, errmsg=errorMessage)
+  check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
 
-    deallocate(a_tmp, stat=istat, errmsg=errorMessage)
-    check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
+#ifdef WITH_GPU_STREAMS
+  successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
+  check_host_unregister_gpu("elpa_cholesky: a_tmp", successGPU)
+#endif
+#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER) */
 #endif /* DEVICE_POINTER */
 
   ! restore original OpenMP settings
