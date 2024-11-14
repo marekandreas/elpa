@@ -46,10 +46,6 @@
 #include "config-f90.h"
 #include "../general/error_checking.inc"
 
-#undef USE_CCL_PXGEMM
-#if defined(DEVICE_POINTER) && (defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL))
-#define USE_CCL_PXGEMM
-#endif
 
 ! transposes a row (col) of nblk-blocks of a matrix, along with the LCM-copies of the row
 ! there are two versions: 1) with CCL; 2) without CCL (CPU or GPU+MPI)
@@ -60,11 +56,11 @@ subroutine elpa_transpose_row_or_col&
                             &_&
                             &PRECISION &
                             (obj, row_col_char, &
-#ifdef DEVICE_POINTER
+#ifdef USE_CCL_PXGEMM
                               a_dev, at_dev, buf_send_dev, buf_recv_dev, buf_self_dev, &
-#else /* DEVICE_POINTER */
+#else /* USE_CCL_PXGEMM */
                               a, at, buf_send, buf_recv, buf_self, &
-#endif /* DEVICE_POINTER */
+#endif /* USE_CCL_PXGEMM */
                               np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max, debug)
 
   use, intrinsic :: iso_c_binding
@@ -86,16 +82,16 @@ subroutine elpa_transpose_row_or_col&
   class(elpa_abstract_impl_t), intent(inout)   :: obj
   character(len=1), intent(in)                 :: row_col_char
   integer(kind=ik), intent(in)                 :: np_fine, l_rows, l_cols, nblk_mult_rows_max, nblk_mult_cols_max
-#ifdef DEVICE_POINTER
+#ifdef USE_CCL_PXGEMM
   MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), at(:,:), buf_send(:,:), buf_recv(:,:), buf_self(:,:) ! dummy variables
   integer(kind=c_intptr_t)                     :: a_dev, at_dev, buf_send_dev, buf_recv_dev, buf_self_dev
-#else /* DEVICE_POINTER */
+#else /* USE_CCL_PXGEMM */
   MATH_DATATYPE(kind=rck)                      :: a(l_rows,l_cols), at(l_rows,l_cols), &
                                                   buf_send(nblk_mult_rows_max, nblk_mult_cols_max), & 
                                                   buf_recv(nblk_mult_rows_max, nblk_mult_cols_max), &
                                                   buf_self(nblk_mult_rows_max, nblk_mult_cols_max)
   integer(kind=c_intptr_t)                     :: a_dev, at_dev, buf_send_dev, buf_recv_dev, buf_self_dev
-#endif /* DEVICE_POINTER */
+#endif /* USE_CCL_PXGEMM */
 
   logical                                      :: row_transposed, col_transposed
   integer(kind=ik)                             :: l_dirs, l_dirs_t

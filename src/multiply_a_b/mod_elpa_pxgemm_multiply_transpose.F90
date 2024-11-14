@@ -69,7 +69,8 @@ module elpa_pxgemm_multiply_transpose
     endif
   end function find_nblk_mult_dirs
 
-#undef DEVICE_POINTER
+!___________________________________________________
+
 #undef USE_CCL_PXGEMM
 #define CCL _
 
@@ -107,12 +108,13 @@ module elpa_pxgemm_multiply_transpose
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-#undef CCL
-
 !___________________________________________________
 ! CCL-version
 
-#define DEVICE_POINTER
+#undef USE_CCL_PXGEMM
+#undef CCL
+
+#define USE_CCL_PXGEMM
 #define CCL _ccl_
 
 #define REALCASE 1
@@ -148,9 +150,6 @@ module elpa_pxgemm_multiply_transpose
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
-
-#undef DEVICE_POINTER
-#undef CCL
 
 end module elpa_pxgemm_multiply_transpose
 

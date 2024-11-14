@@ -94,7 +94,7 @@
   integer(kind=ik)                             :: na, ncb
 #ifdef DEVICE_POINTER
   type(c_ptr)                                  :: aDev, bDev, cDev
-  MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), b(:,:), c(:,:) ! dummy variables
+  MATH_DATATYPE(kind=rck), allocatable         :: a(:,:), b(:,:), c(:,:) ! used for d_ptr and (.not. USE_CCL_PXGEMM)
 #else /* DEVICE_POINTER */
 #ifdef USE_ASSUMED_SIZE
   MATH_DATATYPE(kind=rck)                      :: a(obj%local_nrows,*), b(ldb,*), c(ldc,*)
@@ -359,8 +359,7 @@
                                        a(1:lda,1:ldaCols), &
                                        1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else
-    successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), &
-                  num, gpuMemcpyHostToDevice)
+    successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_pxgemm_multiply: a to a_dev", successGPU)
 #endif
 
@@ -787,6 +786,22 @@
 
           allocate(buf_self(nblk_mult_rows_max, nblk_mult_cols_max), stat=istat, errmsg=errorMessage)
           check_allocate("elpa_pxgemm_multiply: buf_self", istat, errorMessage)
+
+#if defined(DEVICE_POINTER)
+          allocate(a(obj%local_nrows, obj%local_ncols), stat=istat, errmsg=errorMessage)
+          check_allocate("elpa_pxgemm_multiply: a", istat, errorMessage)
+
+          allocate(b(ldb, ldbCols), stat=istat, errmsg=errorMessage)
+          check_allocate("elpa_pxgemm_multiply: b", istat, errorMessage)
+
+          successGPU = gpu_memcpy(int(loc(a),kind=c_intptr_t), a_dev, &
+                                  obj%local_nrows*obj%local_ncols*size_of_datatype, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("elpa_pxgemm_multiply: a_dev -> a", successGPU)
+
+          successGPU = gpu_memcpy(int(loc(b),kind=c_intptr_t), b_dev, &
+                                  ldb*ldbCols*size_of_datatype, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("elpa_pxgemm_multiply: b_dev -> b", successGPU)
+#endif /* defined(DEVICE_POINTER) */          
         endif ! useCCL
       endif ! (a_transposed .or. b_transposed)
 
@@ -1082,6 +1097,11 @@
         else
           deallocate(buf_send, buf_recv, buf_self, stat=istat, errmsg=errorMessage)
           call check_alloc("elpa_pxgemm_multiply", "buf_send, buf_recv, buf_self", istat, errorMessage)
+
+#if defined(DEVICE_POINTER)
+          deallocate(a, b, stat=istat, errmsg=errorMessage)
+          call check_alloc("elpa_pxgemm_multiply", "a, b", istat, errorMessage)
+#endif
         endif
       endif ! (a_transposed .or. b_transposed)
 
@@ -1292,6 +1312,22 @@
 
           allocate(buf_self(nblk_mult_rows_max, nblk_mult_cols_max), stat=istat, errmsg=errorMessage)
           check_allocate("elpa_pxgemm_multiply: buf_self", istat, errorMessage)
+
+#if defined(DEVICE_POINTER)
+          allocate(a(obj%local_nrows, obj%local_ncols), stat=istat, errmsg=errorMessage)
+          check_allocate("elpa_pxgemm_multiply: a", istat, errorMessage)
+
+          allocate(b(ldb, ldbCols), stat=istat, errmsg=errorMessage)
+          check_allocate("elpa_pxgemm_multiply: b", istat, errorMessage)
+
+          successGPU = gpu_memcpy(int(loc(a),kind=c_intptr_t), a_dev, &
+                                  obj%local_nrows*obj%local_ncols*size_of_datatype, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("elpa_pxgemm_multiply: a_dev -> a", successGPU)
+
+          successGPU = gpu_memcpy(int(loc(b),kind=c_intptr_t), b_dev, &
+                                  ldb*ldbCols*size_of_datatype, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("elpa_pxgemm_multiply: b_dev -> b", successGPU)
+#endif /* defined(DEVICE_POINTER) */
         endif ! useCCL
       endif
 
@@ -1600,6 +1636,11 @@
         else
           deallocate(buf_send, buf_recv, buf_self, stat=istat, errmsg=errorMessage)
           call check_alloc("elpa_pxgemm_multiply", "buf_send, buf_recv, buf_self", istat, errorMessage)
+
+#if defined(DEVICE_POINTER)
+          deallocate(a, b, stat=istat, errmsg=errorMessage)
+          call check_alloc("elpa_pxgemm_multiply", "a, b", istat, errorMessage)
+#endif          
         endif
       endif ! (a_transposed .or. b_transposed)
 
