@@ -201,15 +201,16 @@ program test
 #endif
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-  MATRIX_TYPE, allocatable            :: b(:,:), bs(:,:)
+  MATRIX_TYPE, allocatable, target    :: b(:,:)
+  MATRIX_TYPE, allocatable            :: bs(:,:)
 #endif
   ! eigenvectors
-  MATRIX_TYPE, allocatable, target    :: z(:,:)
+  MATRIX_TYPE, allocatable, target    :: q(:,:)
   ! eigenvalues
   EV_TYPE, allocatable, target        :: ev(:)
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
-  type(c_ptr)                         :: a_dev, q_dev, ev_dev, b_dev, c_dev ! q_dev -- eigenvectors (analogous to z)
+  type(c_ptr)                         :: a_dev, q_dev, ev_dev, b_dev, c_dev
 #endif
 
   logical                             :: check_all_evals, skip_check_correctness
@@ -459,7 +460,7 @@ program test
 
   allocate(a (na_rows,na_cols))
   allocate(as(na_rows,na_cols))
-  allocate(z (na_rows,na_cols))
+  allocate(q (na_rows,na_cols))
   allocate(ev(na))
 
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
@@ -478,7 +479,7 @@ program test
 #endif
 
   a(:,:) = 0.0
-  z(:,:) = 0.0
+  q(:,:) = 0.0
   ev(:) = 0.0
 
 #if defined(TEST_MATRIX_RANDOM) && !defined(TEST_SOLVE_TRIDIAGONAL) && !defined(TEST_CHOLESKY) && !defined(TEST_EIGENVALUES) && !defined(TEST_MULTIPLY)
@@ -492,10 +493,10 @@ program test
 
   ! We also have to take care of special case in TEST_EIGENVECTORS
 #if !defined(TEST_EIGENVECTORS)
-  call prepare_matrix_random(na, myid, sc_desc, a, z, as)
+  call prepare_matrix_random(na, myid, sc_desc, a, q, as)
 #else /* TEST_EIGENVECTORS */
   if (nev .ge. 1) then
-    call prepare_matrix_random(na, myid, sc_desc, a, z, as)
+    call prepare_matrix_random(na, myid, sc_desc, a, q, as)
 #if !defined(TEST_MULTIPLY)
     do_test_numeric_residual = .true.
 #endif
@@ -516,7 +517,7 @@ program test
 #endif /* (TEST_MATRIX_RANDOM) */
 
 #if defined(TEST_MATRIX_RANDOM) && defined(TEST_CHOLESKY)
-  call prepare_matrix_random_spd(na, myid, sc_desc, a, z, as, &
+  call prepare_matrix_random_spd(na, myid, sc_desc, a, q, as, &
                                  nblk, np_rows, np_cols, my_prow, my_pcol)
   do_test_analytic_eigenvalues = .false.
   do_test_analytic_eigenvalues_eigenvectors = .false.
@@ -525,8 +526,8 @@ program test
 #endif /* TEST_MATRIX_RANDOM and TEST_CHOLESKY */
 
 #if defined(TEST_MATRIX_RANDOM) && defined(TEST_GENERALIZED_EIGENPROBLEM)
-  ! call prepare_matrix_random(na, myid, sc_desc, a, z, as)
-  call prepare_matrix_random_spd(na, myid, sc_desc, b, z, bs, &
+  ! call prepare_matrix_random(na, myid, sc_desc, a, q, as)
+  call prepare_matrix_random_spd(na, myid, sc_desc, b, q, bs, &
                                  nblk, np_rows, np_cols, my_prow, my_pcol)
   do_test_analytic_eigenvalues = .false.
   do_test_analytic_eigenvalues_eigenvectors = .false.
@@ -541,12 +542,12 @@ program test
 #endif
 
 #if defined(TEST_MATRIX_RANDOM) && defined(TEST_MULTIPLY)
-  call prepare_matrix_random(na, myid       , sc_desc, a, z, as, is_hermitian=0)
-  call prepare_matrix_random(na, myid+nprocs, sc_desc, b, z, c , is_hermitian=0)
+  call prepare_matrix_random(na, myid       , sc_desc, a, q, as, is_hermitian=0)
+  call prepare_matrix_random(na, myid+nprocs, sc_desc, b, q, c , is_hermitian=0)
 #endif
 
 #if defined(TEST_MATRIX_ANALYTIC)  && !defined(TEST_SOLVE_TRIDIAGONAL) && !defined(TEST_CHOLESKY)
-  ! the analytic matrix can be used in allmost all tests; but for some no
+  ! the analytic matrix can be used in almost all tests; but for some no
   ! correctness checks have been implemented; do not allow these
   ! combinations
   ! ANALYTIC + TEST_SOLVE_TRIDIAGONAL: we need a TOEPLITZ MATRIX
@@ -638,7 +639,7 @@ program test
 
   ! We also have to take care of special case in TEST_EIGENVECTORS
 #if !defined(TEST_EIGENVECTORS)
-  call prepare_matrix_frank(na, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
+  call prepare_matrix_frank(na, a, q, as, nblk, np_rows, np_cols, my_prow, my_pcol)
 
   do_test_analytic_eigenvalues = .false.
   do_test_analytic_eigenvalues_eigenvectors = .false.
@@ -650,7 +651,7 @@ program test
 #else /* TEST_EIGENVECTORS */
 
   if (nev .ge. 1) then
-    call prepare_matrix_frank(na, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol)
+    call prepare_matrix_frank(na, a, q, as, nblk, np_rows, np_cols, my_prow, my_pcol)
 
     do_test_analytic_eigenvalues = .false.
     do_test_analytic_eigenvalues_eigenvectors = .false.
@@ -911,7 +912,7 @@ program test
     print *,"Cannot copy matrix a to GPU! Aborting..."
     stop 1
   endif
-#endif
+#endif /* defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM) */
 
 #if defined(TEST_EIGENVALUES)
   ! malloc
@@ -933,7 +934,42 @@ program test
     print *,"Cannot copy matrix a to GPU! Aborting..."
     stop 1
   endif
-#endif
+#endif /* defined(TEST_EIGENVALUES) */
+
+#if defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_MATRIX_RANDOM)
+  ! malloc
+  successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)
+  if (.not.(successGPU)) then
+    print *,"Cannot allocate matrix a on GPU! Aborting..."
+    stop 1
+  endif
+  successGPU = gpu_malloc(b_dev, na_rows*na_cols*size_of_datatype)
+  if (.not.(successGPU)) then
+    print *,"Cannot allocate matrix b on GPU! Aborting..."
+    stop 1
+  endif
+  successGPU = gpu_malloc(q_dev, na_rows*na_cols*size_of_datatype)
+  if (.not.(successGPU)) then
+    print *,"Cannot allocate matrix q on GPU! Aborting..."
+    stop 1
+  endif
+  successGPU = gpu_malloc(ev_dev, na*size_of_real_datatype)
+  if (.not.(successGPU)) then
+    print *,"Cannot allocate vector of eigenvalues on GPU! Aborting..."
+    stop 1
+  endif
+
+  successGPU = gpu_memcpy(a_dev, c_loc(a), na_rows*na_cols*size_of_datatype, gpuMemcpyHostToDevice)
+  if (.not.(successGPU)) then
+    print *,"Cannot copy matrix a to GPU! Aborting..."
+    stop 1
+  endif
+  successGPU = gpu_memcpy(b_dev, c_loc(b), na_rows*na_cols*size_of_datatype, gpuMemcpyHostToDevice)
+  if (.not.(successGPU)) then
+    print *,"Cannot copy matrix b to GPU! Aborting..."
+    stop 1
+  endif
+#endif /* defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_MATRIX_RANDOM) */
 
 #if defined(TEST_CHOLESKY)
 #if TEST_NVIDIA_GPU == 1
@@ -1131,29 +1167,29 @@ program test
 #endif
 
 #ifdef TEST_SCALAPACK_ALL
-  call solve_scalapack_all(na, a, sc_desc, ev, z)
+  call solve_scalapack_all(na, a, sc_desc, ev, q)
 #elif TEST_SCALAPACK_PART
-  call solve_scalapack_part(na, a, sc_desc, nev, ev, z)
+  call solve_scalapack_part(na, a, sc_desc, nev, ev, q)
   check_all_evals = .false. ! scalapack does not compute all eigenvectors
 #else /* TEST_SCALAPACK_PART */
 
 #ifdef TEST_EXPLICIT_NAME
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
-#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM)
   call e%eigenvectors_double(a_dev, ev_dev, q_dev, error_elpa)
   assert_elpa_ok(error_elpa)
 #else
-  call e%eigenvectors_double(a, ev, z, error_elpa)
+  call e%eigenvectors_double(a, ev, q, error_elpa)
   assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
-#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM)
   call e%eigenvectors_float(a_dev, ev_dev, q_dev, error_elpa)
   assert_elpa_ok(error_elpa)
 #else
-  call e%eigenvectors_float(a, ev, z, error_elpa)
+  call e%eigenvectors_float(a, ev, q, error_elpa)
   assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_SINGLE */
@@ -1161,26 +1197,26 @@ program test
 
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
-#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM)
   call e%eigenvectors_double_complex(a_dev, ev_dev, q_dev, error_elpa)
   assert_elpa_ok(error_elpa)
 #else
-  call e%eigenvectors_double_complex(a, ev, z, error_elpa)
+  call e%eigenvectors_double_complex(a, ev, q, error_elpa)
   assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
-#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM) && defined(TEST_EIGENVECTORS)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM)
   call e%eigenvectors_float_complex(a_dev, ev_dev, q_dev, error_elpa)
   assert_elpa_ok(error_elpa)
 #else
-  call e%eigenvectors_float_complex(a, ev, z, error_elpa)
+  call e%eigenvectors_float_complex(a, ev, q, error_elpa)
   assert_elpa_ok(error_elpa)
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_COMPLEX */
 #else /* TEST_EXPLICIT_NAME */
-  call e%eigenvectors(a, ev, z, error_elpa)
+  call e%eigenvectors(a, ev, q, error_elpa)
   assert_elpa_ok(error_elpa)
 #endif /* TEST_EXPLICIT_NAME */
 #endif /* TEST_SCALAPACK_PART */
@@ -1243,7 +1279,7 @@ program test
 
 #if defined(TEST_SOLVE_TRIDIAGONAL)
   call e%timer_start("e%solve_tridiagonal()")
-  call e%solve_tridiagonal(d, sd, z, error_elpa)
+  call e%solve_tridiagonal(d, sd, q, error_elpa)
   assert_elpa_ok(error_elpa)
   call e%timer_stop("e%solve_tridiagonal()")
   ev(:) = d(:)
@@ -1377,19 +1413,64 @@ program test
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
   call e%timer_start("e%generalized_eigenvectors()")
+#ifdef TEST_EXPLICIT_NAME
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM)
+  call e%generalized_eigenvectors_double(a_dev, b_dev, ev_dev, q_dev, .false., error_elpa)
+  assert_elpa_ok(error_elpa)
+#else
+  call e%generalized_eigenvectors_double(a, b, ev, q, .false., error_elpa)
+  assert_elpa_ok(error_elpa)
+#endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM)
+  call e%generalized_eigenvectors_float(a_dev, b_dev, ev_dev, q_dev, .false., error_elpa)
+  assert_elpa_ok(error_elpa)
+#else
+  call e%generalized_eigenvectors_float(a, b, ev, q, .false., error_elpa)
+  assert_elpa_ok(error_elpa)
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_REAL */
+
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM)
+  call e%generalized_eigenvectors_double_complex(a_dev, b_dev, ev_dev, q_dev, .false., error_elpa)
+  assert_elpa_ok(error_elpa)
+#else
+  call e%generalized_eigenvectors_double_complex(a, b, ev, q, .false., error_elpa)
+  assert_elpa_ok(error_elpa)
+#endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if (TEST_GPU_DEVICE_POINTER_API == 1) && defined(TEST_MATRIX_RANDOM)
+  call e%generalized_eigenvectors_float_complex(a_dev, b_dev, ev_dev, q_dev, .false., error_elpa)
+  assert_elpa_ok(error_elpa)
+#else
+  call e%generalized_eigenvectors_float_complex(a, b, ev, q, .false., error_elpa)
+  assert_elpa_ok(error_elpa)
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_COMPLEX */
+
+#else /* TEST_EXPLICIT_NAME */
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
   call e%timer_start("is_already_decomposed=.false.")
 #endif
-  call e%generalized_eigenvectors(a, b, ev, z, .false., error_elpa)
+  call e%generalized_eigenvectors(a, b, ev, q, .false., error_elpa)
   assert_elpa_ok(error_elpa)
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
   call e%timer_stop("is_already_decomposed=.false.")
   a = as ! so that the problem can be solved again
   call e%timer_start("is_already_decomposed=.true.")
-  call e%generalized_eigenvectors(a, b, ev, z, .true., error_elpa)
+  call e%generalized_eigenvectors(a, b, ev, q, .true., error_elpa)
   assert_elpa_ok(error_elpa)
   call e%timer_stop("is_already_decomposed=.true.")
 #endif /* TEST_GENERALIZED_DECOMP_EIGENPROBLEM */
+#endif /* TEST_EXPLICIT_NAME */
   call e%timer_stop("e%generalized_eigenvectors()")
 #endif /* TEST_GENERALIZED_EIGENPROBLEM */
 
@@ -1438,7 +1519,7 @@ program test
 
 #if defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM)
   ! copy for testing
-  successGPU = gpu_memcpy(c_loc(z), q_dev, na_rows*na_cols*size_of_datatype, &
+  successGPU = gpu_memcpy(c_loc(q), q_dev, na_rows*na_cols*size_of_datatype, &
                           gpuMemcpyDeviceToHost)
   if (.not.(successGPU)) then
     print *,"cannot copy matrix of eigenvectors from GPU to host! Aborting..."
@@ -1450,7 +1531,6 @@ program test
     print *,"cannot copy vector of eigenvalues from GPU to host! Aborting..."
     stop 1
   endif
-
 #endif /* defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM) */
 
 #if defined(TEST_EIGENVALUES)
@@ -1462,6 +1542,21 @@ program test
   endif
 #endif /* TEST_EIGENVALUES  */
 
+#if defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_MATRIX_RANDOM)
+  ! copy for testing
+  successGPU = gpu_memcpy(c_loc(q), q_dev, na_rows*na_cols*size_of_datatype, &
+                          gpuMemcpyDeviceToHost)
+  if (.not.(successGPU)) then
+    print *,"cannot copy matrix of eigenvectors from GPU to host! Aborting..."
+    stop 1
+  endif
+
+  successGPU = gpu_memcpy(c_loc(ev), ev_dev, na*size_of_real_datatype, gpuMemcpyDeviceToHost)
+  if (.not.(successGPU)) then
+    print *,"cannot copy vector of eigenvalues from GPU to host! Aborting..."
+    stop 1
+  endif
+#endif /* defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM) */
 
 #if defined(TEST_CHOLESKY)
   successGPU = gpu_memcpy(c_loc(a), a_dev, na_rows*na_cols*size_of_datatype, &
@@ -1502,38 +1597,38 @@ program test
   ! Check the results
 
   if (do_test_analytic_eigenvalues) then
-    status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, &
+    status = check_correctness_analytic(na, nev, ev, q, nblk, myid, np_rows, np_cols, &
                                         my_prow, my_pcol, check_all_evals, .false.)
     call check_status(status, myid)
   endif
 
   if (do_test_analytic_eigenvalues_eigenvectors) then
-    status = check_correctness_analytic(na, nev, ev, z, nblk, myid, np_rows, np_cols, &
+    status = check_correctness_analytic(na, nev, ev, q, nblk, myid, np_rows, np_cols, &
                                         my_prow, my_pcol, check_all_evals, .true.)
     call check_status(status, myid)
   endif
 
   if(do_test_numeric_residual) then
-    status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, &
-                                                    np_rows,np_cols, my_prow, my_pcol)
+    status = check_correctness_evp_numeric_residuals(na, nev, as, q, ev, sc_desc, nblk, myid, &
+                                                    np_rows, np_cols, my_prow, my_pcol)
     call check_status(status, myid)
   endif
 
   if (do_test_frank_eigenvalues) then
-    status = check_correctness_eigenvalues_frank(na, ev, z, myid)
+    status = check_correctness_eigenvalues_frank(na, ev, q, myid)
     call check_status(status, myid)
   endif
 
   if (do_test_toeplitz_eigenvalues) then
 #if defined(TEST_EIGENVALUES) || defined(TEST_SOLVE_TRIDIAGONAL)
     status = check_correctness_eigenvalues_toeplitz(na, diagonalElement, &
-                                                    subdiagonalElement, ev, z, myid)
+                                                    subdiagonalElement, ev, q, myid)
     call check_status(status, myid)
 #endif
   endif
 
   if (do_test_cholesky) then
-    status = check_correctness_cholesky(na, a, as, na_rows, sc_desc, myid )
+    status = check_correctness_cholesky(na, a, as, na_rows, sc_desc, myid)
     call check_status(status, myid)
   endif
 
@@ -1548,7 +1643,7 @@ program test
 
 #ifdef TEST_GENERALIZED_EIGENPROBLEM
   if(do_test_numeric_residual_generalized) then
-    status = check_correctness_evp_numeric_residuals(na, nev, as, z, ev, sc_desc, nblk, myid, np_rows, &
+    status = check_correctness_evp_numeric_residuals(na, nev, as, q, ev, sc_desc, nblk, myid, np_rows, &
                                                      np_cols, my_prow, my_pcol, bs)
     call check_status(status, myid)
   endif
@@ -1615,6 +1710,30 @@ end do ! kernels
   endif
 #endif /* TEST_EIGENVALUES  */
 
+#if defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_MATRIX_RANDOM)
+  ! and deallocate device pointers
+  successGPU = gpu_free(a_dev)
+  if (.not.(successGPU)) then
+    print *,"cannot free memory of a_dev on GPU. Aborting..."
+    stop 1
+  endif
+  successGPU = gpu_free(b_dev)
+  if (.not.(successGPU)) then
+    print *,"cannot free memory of b_dev on GPU. Aborting..."
+    stop 1
+  endif
+  successGPU = gpu_free(q_dev)
+  if (.not.(successGPU)) then
+    print *,"cannot free memory of q_dev on GPU. Aborting..."
+    stop 1
+  endif
+  successGPU = gpu_free(ev_dev)
+  if (.not.(successGPU)) then
+    print *,"cannot free memory of ev_dev on GPU. Aborting..."
+    stop 1
+  endif
+#endif /* defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_MATRIX_RANDOM) */
+
 #if defined(TEST_CHOLESKY)
   successGPU = gpu_free(a_dev)
   if (.not.(successGPU)) then
@@ -1650,7 +1769,7 @@ end do ! kernels
 
   deallocate(a)
   deallocate(as)
-  deallocate(z)
+  deallocate(q)
   deallocate(ev)
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)

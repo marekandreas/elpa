@@ -1030,6 +1030,7 @@
       ! Put the result into C
       if (useGPU) then
         call obj%timer%start("gpu_memcpy")
+        NVTX_RANGE_PUSH("gpu_memcpy: c_dev->c")
         num = l_rows*l_cols
 #ifdef WITH_GPU_STREAMS
         call gpu_memcpy_async_and_stream_synchronize &
@@ -1039,6 +1040,7 @@
         successGPU = gpu_memcpy(int(loc(c),kind=c_intptr_t), c_dev, num*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_pxgemm_multiply: c_dev -> c", successGPU)
 #endif
+        NVTX_RANGE_POP("gpu_memcpy: c_dev->c")
         call obj%timer%stop("gpu_memcpy")
       endif ! useGPU
 #endif /* !defined(DEVICE_POINTER) */
@@ -1087,96 +1089,97 @@
 
 !_______________________________________________
 
-    if (.false. .and. (a_transposed) .and. (b_transposed)) then ! PETERDEBUG: cleanup
+  !   if (.false. .and. (a_transposed) .and. (b_transposed)) then ! PETERDEBUG: cleanup
 
-      allocate(at_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
-      check_allocate("elpa_pxgemm_multiply: at_max", istat, errorMessage)
+  !     allocate(at_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
+  !     check_allocate("elpa_pxgemm_multiply: at_max", istat, errorMessage)
   
-      allocate(bt_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
-      check_allocate("elpa_pxgemm_multiply: bt_full", istat, errorMessage)
+  !     allocate(bt_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
+  !     check_allocate("elpa_pxgemm_multiply: bt_full", istat, errorMessage)
   
-      !call mpi_allreduce(nblk_mult, na_max, 1_MPI_KIND, MPI_INTEGER, MPI_SUM, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+  !     !call mpi_allreduce(nblk_mult, na_max, 1_MPI_KIND, MPI_INTEGER, MPI_SUM, int(mpi_comm_all,kind=MPI_KIND), mpierr)
 
-      if (myid==0) print *, "elpa_pxgemm_multiply NEW: SQUARE_GRID start: (a_transposed) .and. (b_transposed)" ! PETERDEBUG
+  !     if (myid==0) print *, "elpa_pxgemm_multiply NEW: SQUARE_GRID start: (a_transposed) .and. (b_transposed)" ! PETERDEBUG
 
-      ! main loop: iterate through np, which are process rows for matrix A and process cols for matrix B
-      do np = 0, np_rows-1 ! np_rows=np_cols
-        NVTX_RANGE_PUSH("np = 0, np_rows-1")
-        if (myid==0) print *, "np = ", np ! PETERDEBUG
+  !     ! main loop: iterate through np, which are process rows for matrix A and process cols for matrix B
+  !     do np = 0, np_rows-1 ! np_rows=np_cols
+  !       NVTX_RANGE_PUSH("np = 0, np_rows-1")
+  !       if (myid==0) print *, "np = ", np ! PETERDEBUG
 
-        ! In this turn, procs of row np assemble the result
+  !       ! In this turn, procs of row np assemble the result
         
-        np_bc=np ! np, that posesses the given column of a
+  !       np_bc=np ! np, that posesses the given column of a
         
-        if (np_bc == my_prow) then
-          aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
-          if (l_rows<nblk_mult) aux_a_full(l_rows+1:nblk_mult,1:l_cols) = 0
-          if (l_cols<nblk_mult) aux_a_full(1:l_rows,l_cols+1:nblk_mult) = 0
-          if (l_rows<nblk_mult .and. l_cols<nblk_mult) aux_a_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
-        endif
+  !       if (np_bc == my_prow) then
+  !         aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
+  !         if (l_rows<nblk_mult) aux_a_full(l_rows+1:nblk_mult,1:l_cols) = 0
+  !         if (l_cols<nblk_mult) aux_a_full(1:l_rows,l_cols+1:nblk_mult) = 0
+  !         if (l_rows<nblk_mult .and. l_cols<nblk_mult) aux_a_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
+  !       endif
 
-        ! PETERDEBUG: approach Bcast+elpa_transpose_vectors can be optimized: it uses two Bcasts instead of one
-        ! alternative approach: write a function that transposes one block-column by send-recv
-        call MPI_Bcast(aux_a_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-               int(np_bc,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+  !       ! PETERDEBUG: approach Bcast+elpa_transpose_vectors can be optimized: it uses two Bcasts instead of one
+  !       ! alternative approach: write a function that transposes one block-column by send-recv
+  !       call MPI_Bcast(aux_a_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+  !              int(np_bc,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 
-        ! a -> at_full: transpose row #np of a
-        ! elpa_transpose_vectors: There must be an identical copy of vmat_s in every communicator comm_s
-        ! it performs bcast after transpose; it doesn't perform transpose inside a block
-        call elpa_transpose_vectors_&
-              &MATH_DATATYPE&
-              &_&
-              &PRECISION&
-              (obj, aux_a_full, l_rows_max, mpi_comm_cols, at_full, l_rows_max, mpi_comm_rows, &
-               1, nblk_mult*np_rows, l_cols_max, nblk_mult, 1, .true., success) ! PETERDEBUG: 1 (third from last) -> max_threads
+  !       ! a -> at_full: transpose row #np of a
+  !       ! elpa_transpose_vectors: There must be an identical copy of vmat_s in every communicator comm_s
+  !       ! it performs bcast after transpose; it doesn't perform transpose inside a block
+  !       call elpa_transpose_vectors_&
+  !             &MATH_DATATYPE&
+  !             &_&
+  !             &PRECISION&
+  !             (obj, aux_a_full, l_rows_max, mpi_comm_cols, at_full, l_rows_max, mpi_comm_rows, &
+  !              1, nblk_mult*np_rows, l_cols_max, nblk_mult, 1, .true., success) ! PETERDEBUG: 1 (third from last) -> max_threads
         
-        ! b -> bt_full: transpose column #np of b
-        if (np    == my_pcol) then
-          aux_b_full(1:l_rows,1:l_cols) = b(1:l_rows,1:l_cols)
-          if (l_rows<nblk_mult) aux_b_full(l_rows+1:nblk_mult,1:l_cols) = 0
-          if (l_cols<nblk_mult) aux_b_full(1:l_rows,l_cols+1:nblk_mult) = 0
-          if (l_rows<nblk_mult .and. l_cols<nblk_mult) aux_b_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
-        endif
-        call MPI_Bcast(aux_b_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-                int(np   ,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+  !       ! b -> bt_full: transpose column #np of b
+  !       if (np    == my_pcol) then
+  !         aux_b_full(1:l_rows,1:l_cols) = b(1:l_rows,1:l_cols)
+  !         if (l_rows<nblk_mult) aux_b_full(l_rows+1:nblk_mult,1:l_cols) = 0
+  !         if (l_cols<nblk_mult) aux_b_full(1:l_rows,l_cols+1:nblk_mult) = 0
+  !         if (l_rows<nblk_mult .and. l_cols<nblk_mult) aux_b_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
+  !       endif
+  !       call MPI_Bcast(aux_b_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
+  !               int(np   ,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
-        call elpa_transpose_vectors_&
-               &MATH_DATATYPE&
-               &_&
-               &PRECISION&
-               (obj, aux_b_full, l_rows_max, mpi_comm_rows, bt_full, l_rows_max, mpi_comm_cols, &
-                1, nblk_mult*np_rows, l_cols_max, nblk_mult, 1, .false., success) ! PETERDEBUG: allow nb != na
+  !       call elpa_transpose_vectors_&
+  !              &MATH_DATATYPE&
+  !              &_&
+  !              &PRECISION&
+  !              (obj, aux_b_full, l_rows_max, mpi_comm_rows, bt_full, l_rows_max, mpi_comm_cols, &
+  !               1, nblk_mult*np_rows, l_cols_max, nblk_mult, 1, .false., success) ! PETERDEBUG: allow nb != na
 
         
-        beta = ZERO
-        if (np>0) beta = ONE
-        call obj%timer%start("blas")
-        call PRECISION_GEMM('T', 'T', &
-                            int(nblk_mult, kind=BLAS_KIND), &
-                            int(nblk_mult, kind=BLAS_KIND), &
-                            int(nblk_mult, kind=BLAS_KIND), ONE, &
-                            at_full, int(nblk_mult,kind=BLAS_KIND), &
-                            bt_full, int(nblk_mult,kind=BLAS_KIND), beta, &
-                            tmp1_full , int(nblk_mult,kind=BLAS_KIND))
-        call obj%timer%stop("blas")
+  !       beta = ZERO
+  !       if (np>0) beta = ONE
+  !       call obj%timer%start("blas")
+  !       call PRECISION_GEMM('T', 'T', &
+  !                           int(nblk_mult, kind=BLAS_KIND), &
+  !                           int(nblk_mult, kind=BLAS_KIND), &
+  !                           int(nblk_mult, kind=BLAS_KIND), ONE, &
+  !                           at_full, int(nblk_mult,kind=BLAS_KIND), &
+  !                           bt_full, int(nblk_mult,kind=BLAS_KIND), beta, &
+  !                           tmp1_full , int(nblk_mult,kind=BLAS_KIND))
+  !       call obj%timer%stop("blas")
 
-        NVTX_RANGE_POP("do np_row_curr = 0, np_rows-1")
-      enddo ! np = 0, np_rows-1
+  !       NVTX_RANGE_POP("do np_row_curr = 0, np_rows-1")
+  !     enddo ! np = 0, np_rows-1
       
-      ! Put the result into C
-      c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
+  !     ! Put the result into C
+  !     c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
       
-      deallocate(at_full, bt_full, stat=istat, errmsg=errorMessage)
-      call check_alloc("elpa_pxgemm_multiply", "at_full, bt_full", istat, errorMessage)
+  !     deallocate(at_full, bt_full, stat=istat, errmsg=errorMessage)
+  !     call check_alloc("elpa_pxgemm_multiply", "at_full, bt_full", istat, errorMessage)
 
-      deallocate(tmp1_full, stat=istat, errmsg=errorMessage)
-      call check_alloc("elpa_pxgemm_multiply", "tmp1_full", istat, errorMessage)
+  !     deallocate(tmp1_full, stat=istat, errmsg=errorMessage)
+  !     call check_alloc("elpa_pxgemm_multiply", "tmp1_full", istat, errorMessage)
       
-      if (useGPU) then
-        successGPU = gpu_free(tmp1_full_dev)
-        check_dealloc_gpu("elpa_pxgemm_multiply: tmp1_full_dev", successGPU)
-      endif
-    endif ! (a_transposed .and. b_transposed)
+  !     if (useGPU) then
+  !       successGPU = gpu_free(tmp1_full_dev)
+  !       check_dealloc_gpu("elpa_pxgemm_multiply: tmp1_full_dev", successGPU)
+  !     endif
+  !   endif ! (a_transposed .and. b_transposed)
+
   endif ! isSquareGrid
 
 ! _________________________________________________________________________________________________________________________________
@@ -1543,6 +1546,7 @@
       ! Put the result into C
       if (useGPU) then
         call obj%timer%start("gpu_memcpy")
+        NVTX_RANGE_PUSH("gpu_memcpy: c_dev->c")
         num = l_rows*l_cols
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -1553,6 +1557,7 @@
         successGPU = gpu_memcpy(int(loc(c),kind=c_intptr_t), c_dev, num*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_pxgemm_multiply: c_dev -> c", successGPU)
 #endif
+        NVTX_RANGE_POP("gpu_memcpy: c_dev->c")
         call obj%timer%stop("gpu_memcpy")
       endif ! useGPU
 #endif /* DEVICE_POINTER */
@@ -2166,7 +2171,6 @@
                                 ldc*ldcCols*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa_pxgemm_multiply: c_dev -> c", successGPU)
 #endif
-
         NVTX_RANGE_POP("gpu_memcpy: c_dev->c")
         call obj%timer%stop("gpu_memcpy")
       endif ! useGPU 

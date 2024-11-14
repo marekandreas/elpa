@@ -143,43 +143,43 @@ inline void elpa_skew_eigenvectors(const elpa_t handle, float  *a, float  *ev, f
  *  \param  b       float/double float complex/double complex pointer to matrix b
  *  \param  ev      on return: float/double pointer to eigenvalues
  *  \param  q       on return: float/double float complex/double complex pointer to eigenvectors
- *  \param  is_already_decomposed   set to 1, if b already decomposed by previous call to elpa_generalized
+ *  \param  is_already_decomposed   has to be set to 1, if b already decomposed by previous call to elpa_generalized
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
 #ifdef __cplusplus
 inline void elpa_generalized_eigenvectors(elpa_t handle, double *a, double *b, double *ev, double *q, int is_already_decomposed, int *error)
 	{
-	elpa_generalized_eigenvectors_d(handle, a, b, ev, q, is_already_decomposed, error);	
+	elpa_generalized_eigenvectors_a_h_a_d(handle, a, b, ev, q, is_already_decomposed, error);	
 	}
 
 inline void elpa_generalized_eigenvectors(elpa_t handle, float  *a, float  *b, float  *ev, float  *q, int is_already_decomposed, int *error)
 	{
-	elpa_generalized_eigenvectors_f(handle, a, b, ev, q, is_already_decomposed, error);	
+	elpa_generalized_eigenvectors_a_h_a_f(handle, a, b, ev, q, is_already_decomposed, error);	
 	}
 
 inline void elpa_generalized_eigenvectors(elpa_t handle, std::complex<double> *a, std::complex<double> *b, double *ev, std::complex<double> *q, int is_already_decomposed, int *error)
 	{
-	elpa_generalized_eigenvectors_dc(handle, a, b, ev, q, is_already_decomposed, error);	
+	elpa_generalized_eigenvectors_a_h_a_dc(handle, a, b, ev, q, is_already_decomposed, error);	
 	}
 
 inline void elpa_generalized_eigenvectors(elpa_t handle, std::complex<float>  *a, std::complex<float>  *b, float  *ev, std::complex<float>  *q, int is_already_decomposed, int *error)
 	{
-	elpa_generalized_eigenvectors_fc(handle, a, b, ev, q, is_already_decomposed, error);	
+	elpa_generalized_eigenvectors_a_h_a_fc(handle, a, b, ev, q, is_already_decomposed, error);	
 	}
 #else
 #define elpa_generalized_eigenvectors(handle, a, b, ev, q, is_already_decomposed, error) _Generic((a), \
                 double*: \
-                  elpa_generalized_eigenvectors_d, \
+                  elpa_generalized_eigenvectors_a_h_a_d, \
                 \
                 float*: \
-                  elpa_generalized_eigenvectors_f, \
+                  elpa_generalized_eigenvectors_a_h_a_f, \
                 \
                 double complex*: \
-                  elpa_generalized_eigenvectors_dc, \
+                  elpa_generalized_eigenvectors_a_h_a_dc, \
                 \
                 float complex*: \
-                  elpa_generalized_eigenvectors_fc \
+                  elpa_generalized_eigenvectors_a_h_a_fc \
         )(handle, a, b, ev, q, is_already_decomposed, error)
 #endif
 

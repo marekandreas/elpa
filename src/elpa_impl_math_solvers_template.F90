@@ -45,7 +45,7 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-    !>  \brief elpa_eigenvectors_d: class method to solve the eigenvalue problem
+    !>  \brief elpa_eigenvectors_a_h_a: class method to solve the eigenvector problem, using host arrays
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
     !>  blocksize, the number of eigenvectors
@@ -161,7 +161,7 @@
 #endif
     end subroutine 
 
-    !>  \brief elpa_eigenvectors_d_ptr_d: class method to solve the eigenvalue problem
+    !>  \brief elpa_eigenvectors_ptr_d: class method to solve the eigenvector problem, using device pointers
     !>
     !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
     !>  blocksize, the number of eigenvectors
@@ -207,7 +207,7 @@
       logical             :: success_l
 
       success_l = .false.
-      call self%get("solver", solver,error2)
+      call self%get("solver", solver, error2)
       if (error2 .ne. ELPA_OK) then
         print *,"Problem setting solver. Aborting..."
 #ifdef USE_FORTRAN2008

@@ -216,12 +216,12 @@ int main(int argc, char** argv) {
   MATRIX_TYPE *b, *bs;
 #endif
   /* eigenvectors */
-  MATRIX_TYPE *z;
+  MATRIX_TYPE *q;
   /* eigenvalues */
   EV_TYPE *ev;
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
-  MATRIX_TYPE *a_dev, *z_dev, *b_dev, *c_dev;
+  MATRIX_TYPE *a_dev, *q_dev, *b_dev, *c_dev;
   EV_TYPE *ev_dev;
 #endif
 
@@ -357,7 +357,7 @@ int main(int argc, char** argv) {
   /* Allocate the matrices needed for elpa */
 
   a  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-  z  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+  q  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
   as = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
   ev = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
 
@@ -368,12 +368,12 @@ int main(int argc, char** argv) {
 #endif
   is_skewsymmetric=0;
 
-  PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_hermitian, is_skewsymmetric);
+  PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a, q, as, is_hermitian, is_skewsymmetric);
 
 #ifdef TEST_MULTIPLY
 	b  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	c  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-	PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, b, z, c, is_hermitian, is_skewsymmetric); // b=c
+	PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, b, q, c, is_hermitian, is_skewsymmetric); // b=c
 
   char trans_a = BLAS_TRANS_OR_CONJ;
   char trans_b = 'N';
@@ -409,11 +409,11 @@ int main(int argc, char** argv) {
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
 	b  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
 	bs = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-	PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, b, z, bs, nblk, np_rows, np_cols, my_prow, my_pcol);
+	PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, b, q, bs, nblk, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
 #if defined(TEST_CHOLESKY)
-	PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol);
+	PREPARE_MATRIX_RANDOM_SPD(na, myid, na_rows, na_cols, sc_desc, a, q, as, nblk, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
 #if defined(TEST_EIGENVALUES)
@@ -518,29 +518,29 @@ int main(int argc, char** argv) {
 #ifdef TEST_REAL
 #if (TEST_NVIDIA_GPU == 1)
 #if WITH_NVIDIA_SM80_GPU_KERNEL == 1
-    kernel = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
+  kernel = ELPA_2STAGE_REAL_NVIDIA_SM80_GPU
 #else
-    kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
+  kernel = ELPA_2STAGE_REAL_NVIDIA_GPU
 #endif
 #endif /* TEST_NVIDIA_GPU */
 
 #if (TEST_AMD_GPU == 1)
-    kernel = ELPA_2STAGE_REAL_AMD_GPU
+  kernel = ELPA_2STAGE_REAL_AMD_GPU
 #endif
 
 #if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
-    kernel = ELPA_2STAGE_REAL_INTEL_GPU_SYCL
+  kernel = ELPA_2STAGE_REAL_INTEL_GPU_SYCL
 #endif
 #endif /* TEST_REAL */
 #ifdef TEST_COMPLEX
 #if (TEST_NVIDIA_GPU == 1)
-    kernel = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
+  kernel = ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 #endif
 #if (TEST_AMD_GPU == 1)
-    kernel = ELPA_2STAGE_COMPLEX_AMD_GPU
+  kernel = ELPA_2STAGE_COMPLEX_AMD_GPU
 #endif
 #if (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
-    kernel = ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL
+  kernel = ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL
 #endif
 #endif /* TEST_COMPLEX */
 
@@ -594,9 +594,9 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  successGPU = gpuMalloc((intptr_t *) &z_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc((intptr_t *) &q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
-    fprintf(stderr, "Error in gpuMalloc(z_dev)\n");
+    fprintf(stderr, "Error in gpuMalloc(q_dev)\n");
     exit(1);
   }
 
@@ -634,6 +634,46 @@ int main(int argc, char** argv) {
     exit(1);
   }
 #endif /* TEST_EIGENVALUES */
+
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+  // malloc
+  successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
+    exit(1);
+  }
+
+  successGPU = gpuMalloc((intptr_t *) &b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuMalloc(b_dev)\n");
+    exit(1);
+  }
+
+  successGPU = gpuMalloc((intptr_t *) &q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuMalloc(q_dev)\n");
+    exit(1);
+  }
+
+  successGPU = gpuMalloc((intptr_t *) &ev_dev, na*sizeof(EV_TYPE));
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuMalloc(ev_dev)\n");
+    exit(1);
+  }
+
+   // copy
+  successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
+    exit(1);
+  }
+
+  successGPU = gpuMemcpy((intptr_t *) b_dev, (intptr_t *) b, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuMemcpy(b_dev, b)\n");
+    exit(1);
+  }
+#endif /* defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_MATRIX_RANDOM) */
 
 #if defined(TEST_CHOLESKY)
   elpa_set(handle, "gpu_cholesky", 1, &error_elpa);
@@ -703,37 +743,35 @@ int main(int argc, char** argv) {
     printf("Solver is set to %d \n", value);
   }
 
-  //_____________________________________________________________________________________________________________________
-	/* The actual solve step */
+//_____________________________________________________________________________________________________________________
+/* The actual solve step */
 
 #if defined(TEST_EIGENVECTORS)
 #if TEST_QR_DECOMPOSITION == 1
-    elpa_timer_start(handle, (char*) "elpa_eigenvectors_qr()");
+  elpa_timer_start(handle, (char*) "elpa_eigenvectors_qr()");
 #else
-    elpa_timer_start(handle, (char*) "elpa_eigenvectors()");
+  elpa_timer_start(handle, (char*) "elpa_eigenvectors()");
 #endif
-#endif /* TEST_EIGENVECTORS */
 
-#if defined(TEST_EIGENVECTORS)
 #if defined(TEST_EXPLICIT_NAME)
 
 #if defined(TEST_REAL)
 #if defined(TEST_DOUBLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_eigenvectors_double(handle, a_dev, ev_dev, z_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvectors_double(handle, a_dev, ev_dev, q_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_eigenvectors_double(handle, a    , ev    , z    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvectors_double(handle, a    , ev    , q    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_eigenvectors_float (handle, a_dev, ev_dev, z_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvectors_float (handle, a_dev, ev_dev, q_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_eigenvectors_float (handle, a    , ev    , z    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvectors_float (handle, a    , ev    , q    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_REAL */
@@ -741,32 +779,32 @@ int main(int argc, char** argv) {
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_eigenvectors_double_complex(handle, a_dev, ev_dev, z_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvectors_double_complex(handle, a_dev, ev_dev, q_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_eigenvectors_double_complex(handle, a    , ev    , z    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvectors_double_complex(handle, a    , ev    , q    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_eigenvectors_float_complex (handle, a_dev, ev_dev, z_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvectors_float_complex (handle, a_dev, ev_dev, q_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_eigenvectors_float_complex (handle, a    , ev    , z    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvectors_float_complex (handle, a    , ev    , q    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_COMPLEX */
 
 #else /* TEST_EXPLICIT_NAME */
-    elpa_eigenvectors(handle, a, ev, z, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvectors(handle, a, ev, q, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif /* TEST_EXPLICIT_NAME */
 #if TEST_QR_DECOMPOSITION == 1
-    elpa_timer_stop(handle, (char*) "elpa_eigenvectors_qr()");
+  elpa_timer_stop(handle, (char*) "elpa_eigenvectors_qr()");
 #else
-    elpa_timer_stop(handle, (char*) "elpa_eigenvectors()");
+  elpa_timer_stop(handle, (char*) "elpa_eigenvectors()");
 #endif
 #endif /* TEST_EIGENVECTORS */
 
@@ -787,11 +825,11 @@ int main(int argc, char** argv) {
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_eigenvalues_float (handle, a_dev, ev_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvalues_float (handle, a_dev, ev_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_eigenvalues_float (handle, a    , ev    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvalues_float (handle, a    , ev    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_REAL */
@@ -799,20 +837,20 @@ int main(int argc, char** argv) {
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_eigenvalues_double_complex(handle, a_dev, ev_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvalues_double_complex(handle, a_dev, ev_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_eigenvalues_double_complex(handle, a    , ev    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvalues_double_complex(handle, a    , ev    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_eigenvalues_float_complex (handle, a_dev, ev_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvalues_float_complex (handle, a_dev, ev_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_eigenvalues_float_complex (handle, a    , ev    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_eigenvalues_float_complex (handle, a    , ev    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_COMPLEX */
@@ -840,11 +878,11 @@ int main(int argc, char** argv) {
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_cholesky_float (handle, a_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_cholesky_float (handle, a_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_cholesky_float (handle, a    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_cholesky_float (handle, a    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_REAL */
@@ -852,20 +890,20 @@ int main(int argc, char** argv) {
 #if defined(TEST_COMPLEX)
 #if defined(TEST_DOUBLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_cholesky_double_complex(handle, a_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_cholesky_double_complex(handle, a_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_cholesky_double_complex(handle, a    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_cholesky_double_complex(handle, a    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_DOUBLE */
 #if defined(TEST_SINGLE)
 #if TEST_GPU_DEVICE_POINTER_API == 1
-    elpa_cholesky_float_complex (handle, a_dev, &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_cholesky_float_complex (handle, a_dev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #else
-    elpa_cholesky_float_complex (handle, a    , &error_elpa);
-    assert_elpa_ok(error_elpa);
+  elpa_cholesky_float_complex (handle, a    , &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 #endif /* TEST_SINGLE */
 #endif /* TEST_COMPLEX */
@@ -987,49 +1025,95 @@ int main(int argc, char** argv) {
 #endif /* TEST_PXGEMM_MULTIPLY_NN */
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-    elpa_timer_start(handle, (char*) "elpa_generalized_eigenvectors()");
-#if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
-    elpa_timer_start(handle, "is_already_decomposed=.false.");
+  elpa_timer_start(handle, (char*) "elpa_generalized_eigenvectors()");
+#if defined(TEST_EXPLICIT_NAME)
+
+#if defined(TEST_REAL)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+  elpa_generalized_eigenvectors_double(handle, a_dev, b_dev, ev_dev, q_dev, 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
+#else
+  elpa_generalized_eigenvectors_double(handle, a    , b    , ev    , q    , 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
-    elpa_generalized_eigenvectors(handle, a, b, ev, z, 0, &error_elpa);
-    assert_elpa_ok(error_elpa);
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+  elpa_generalized_eigenvectors_float (handle, a_dev, b_dev, ev_dev, q_dev, 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
+#else
+  elpa_generalized_eigenvectors_float (handle, a    , b    , ev    , q    , 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_REAL */
+
+#if defined(TEST_COMPLEX)
+#if defined(TEST_DOUBLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+  elpa_generalized_eigenvectors_double_complex(handle, a_dev, b_dev, ev_dev, q_dev, 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
+#else
+  elpa_generalized_eigenvectors_double_complex(handle, a    , b    , ev    , q    , 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_DOUBLE */
+#if defined(TEST_SINGLE)
+#if TEST_GPU_DEVICE_POINTER_API == 1
+  elpa_generalized_eigenvectors_float_complex (handle, a_dev, b_dev, ev_dev, q_dev, 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
+#else
+  elpa_generalized_eigenvectors_float_complex (handle, a    , b    , ev    , q    , 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
+#endif
+#endif /* TEST_SINGLE */
+#endif /* TEST_COMPLEX */
+
+#else /* TEST_EXPLICIT_NAME */
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
-    elpa_timer_stop(handle, (char*) "is_already_decomposed=.false.");
-    memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE)); // so that the problem can be solved again
-    elpa_timer_start(handle, (char*) "is_already_decomposed=.true.");
-    elpa_generalized_eigenvectors(handle, a, b, ev, z, 1, &error_elpa);
-    assert_elpa_ok(error_elpa);
-    elpa_timer_stop(handle, (char*) "is_already_decomposed=.true.");
+  elpa_timer_start(handle, "is_already_decomposed=.false.");
+#endif
+  elpa_generalized_eigenvectors(handle, a, b, ev, q, 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
+#if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
+  elpa_timer_stop(handle, (char*) "is_already_decomposed=.false.");
+  memcpy(a, as, na_rows * na_cols * sizeof(MATRIX_TYPE)); // so that the problem can be solved again
+  elpa_timer_start(handle, (char*) "is_already_decomposed=.true.");
+  elpa_generalized_eigenvectors(handle, a, b, ev, q, 1, &error_elpa);
+  assert_elpa_ok(error_elpa);
+  elpa_timer_stop(handle, (char*) "is_already_decomposed=.true.");
 #endif /* TEST_GENERALIZED_DECOMP_EIGENPROBLEM */
-    elpa_timer_stop(handle, (char*) "elpa_generalized_eigenvectors()");
+#endif /* TEST_EXPLICIT_NAME */
+  elpa_timer_stop(handle, (char*) "elpa_generalized_eigenvectors()");
 #endif /* TEST_GENERALIZED_EIGENPROBLEM */
 
 #if defined(TEST_SOLVE_TRIDIAGONAL)
-    elpa_solve_tridiagonal(handle, d, sd, z, &error_elpa);
-    assert_elpa_ok(error_elpa);
-    memcpy(ev, d, na*sizeof(EV_TYPE));
+  elpa_solve_tridiagonal(handle, d, sd, q, &error_elpa);
+  assert_elpa_ok(error_elpa);
+  memcpy(ev, d, na*sizeof(EV_TYPE));
 #endif
 
 #if defined(TEST_EIGENVECTORS)
-    if (myid == 0) {
+  if (myid == 0) {
 #if TEST_QR_DECOMPOSITION == 1
-      elpa_print_times(handle, (char*) "elpa_eigenvectors_qr()");
+    elpa_print_times(handle, (char*) "elpa_eigenvectors_qr()");
 #else
-      elpa_print_times(handle, (char*) "elpa_eigenvectors()");
+    elpa_print_times(handle, (char*) "elpa_eigenvectors()");
 #endif
-    }
+  }
 #endif /* TEST_EIGENVECTORS */
 
 //_____________________________________________________________________________________________________________________
-   /* TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host, deallocate device pointers */
+/* TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host, deallocate device pointers */
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
 
 #if defined(TEST_EIGENVECTORS)
   // copy for testing
-  successGPU = gpuMemcpy((intptr_t *) z , (intptr_t *) z_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy((intptr_t *) q , (intptr_t *) q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
   if (!successGPU){
-    fprintf(stderr, "Error in gpuMemcpy(z, z_dev)\n");
+    fprintf(stderr, "Error in gpuMemcpy(q, q_dev)\n");
     exit(1);
   }
 
@@ -1040,16 +1124,15 @@ int main(int argc, char** argv) {
   }
 
   // and deallocate device pointer
-  //successGPU = gpuFree((void *) a_dev);
   successGPU = gpuFree((intptr_t *) a_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuFree((intptr_t *) z_dev);
+  successGPU = gpuFree((intptr_t *) q_dev);
   if (!successGPU){
-    fprintf(stderr, "Error in gpuFree(z_dev)\n");
+    fprintf(stderr, "Error in gpuFree(q_dev)\n");
     exit(1);
   }
 
@@ -1081,6 +1164,46 @@ int main(int argc, char** argv) {
     exit(1);
   }
 #endif /* TEST_EIGENVALUES */
+
+#if defined(TEST_GENERALIZED_EIGENPROBLEM)
+  // copy for testing
+  successGPU = gpuMemcpy((intptr_t *) q , (intptr_t *) q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuMemcpy(q, q_dev)\n");
+    exit(1);
+  }
+
+  successGPU = gpuMemcpy((intptr_t *) ev, (intptr_t *) ev_dev, na*sizeof(EV_TYPE)    , gpuMemcpyDeviceToHost);
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuMemcpy(ev, ev_dev)\n");
+    exit(1);
+  }
+
+  // and deallocate device pointers
+  successGPU = gpuFree((intptr_t *) a_dev);
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuFree(a_dev)\n");
+    exit(1);
+  }
+
+  successGPU = gpuFree((intptr_t *) b_dev);
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuFree(b_dev)\n");
+    exit(1);
+  }
+
+  successGPU = gpuFree((intptr_t *) q_dev);
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuFree(q_dev)\n");
+    exit(1);
+  }
+
+  successGPU = gpuFree((intptr_t *) ev_dev);
+  if (!successGPU){
+    fprintf(stderr, "Error in gpuFree(ev_dev)\n");
+    exit(1);
+  }
+#endif /* defined(TEST_GENERALIZED_EIGENPROBLEM) */
 
 #if defined(TEST_CHOLESKY)
   // copy for testing
@@ -1140,8 +1263,8 @@ int main(int argc, char** argv) {
 
 #endif /* TEST_GPU_DEVICE_POINTER_API == 1 */
 
-   //_____________________________________________________________________________________________________________________
-   /* Check the results */
+//_____________________________________________________________________________________________________________________
+/* Check the results */
 
 #if defined(TEST_CHOLESKY)
 	status = CHECK_CORRECTNESS_CHOLESKY(na, a, as, na_rows, na_cols, sc_desc, myid);
@@ -1153,23 +1276,23 @@ int main(int argc, char** argv) {
 #endif
 
 #if defined(TEST_EIGENVALUES)
-  status = CHECK_CORRECTNESS_ANALYTIC (na, nev, ev, z, na_rows, na_cols,
+  status = CHECK_CORRECTNESS_ANALYTIC (na, nev, ev, q, na_rows, na_cols,
                                       nblk, myid, np_rows, np_cols, my_prow, my_pcol, 1, 0);
 #endif
 
 #if defined(TEST_EIGENVECTORS)
-  status = CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev, sc_desc,
+  status = CHECK_CORRECTNESS_EVP_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, q, ev, sc_desc,
                                                   nblk, myid, np_rows, np_cols, my_prow, my_pcol);
 #endif
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
-  status = CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, z, ev, sc_desc,
+  status = CHECK_CORRECTNESS_EVP_GEN_NUMERIC_RESIDUALS(na, nev, na_rows, na_cols, as, q, ev, sc_desc,
                                                 nblk, myid, np_rows, np_cols, my_prow, my_pcol, bs);
 #endif
 
 #if defined(TEST_SOLVE_TRIDIAGONAL)
   status = CHECK_CORRECTNESS_EIGENVALUES_TOEPLITZ(na, na_rows, na_cols, diagonalElement,
-                              subdiagonalElement, ev, z, myid);
+                              subdiagonalElement, ev, q, myid);
 #endif
 
   if (status != 0) printf("Test produced an error!\n");
@@ -1177,7 +1300,7 @@ int main(int argc, char** argv) {
 
 
 //_____________________________________________________________________________________________________________________
-  /* Deallocate */
+/* Deallocate */
 
   elpa_deallocate(handle, &error_elpa);
   assert_elpa_ok(error_elpa);
@@ -1185,13 +1308,13 @@ int main(int argc, char** argv) {
   assert_elpa_ok(error_elpa);
 
   free(a);
-  free(z);
+  free(q);
   free(as);
   free(ev);
 
 #ifdef TEST_MULTIPLY
-free(b);
-free(c);
+  free(b);
+  free(c);
 #endif
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)

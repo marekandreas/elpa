@@ -525,7 +525,7 @@
                                 gpusolver_buffer_dev , workspaceInBytesOnDevice, &
                                 gpusolver_buffer_host, workspaceInBytesOnHost, info_dev)
           my_stream = obj%gpu_setup%my_stream
-          !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
+          if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
 
@@ -672,7 +672,7 @@
                                 gpusolver_buffer_dev , workspaceInBytesOnDevice, &
                                 gpusolver_buffer_host, workspaceInBytesOnHost, info_dev)
           my_stream = obj%gpu_setup%my_stream
-          !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
+          if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
 

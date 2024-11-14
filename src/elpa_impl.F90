@@ -50,8 +50,8 @@
 !> \brief Fortran module which provides the actual implementation of the API. Do not use directly! Use the module "elpa"
 module elpa_impl
   use precision
-  use elpa2_impl
   use elpa1_impl
+  use elpa2_impl
   !use elpa1_auxiliary_impl
   use elpa_mpi
   use elpa_generated_fortran_interfaces
@@ -118,9 +118,9 @@ module elpa_impl
 
 
      !> \brief the implemenation methods
-
-     procedure, public :: elpa_eigenvectors_a_h_a_d                  !< public methods to implement the solve step for real/complex
-                                                                               !< double/single matrices
+     
+     !< public methods to implement the solve step for real/complex double/single matrices
+     procedure, public :: elpa_eigenvectors_a_h_a_d                  
      procedure, public :: elpa_eigenvectors_a_h_a_f
      procedure, public :: elpa_eigenvectors_a_h_a_dc
      procedure, public :: elpa_eigenvectors_a_h_a_fc
@@ -129,9 +129,10 @@ module elpa_impl
      procedure, public :: elpa_eigenvectors_d_ptr_f
      procedure, public :: elpa_eigenvectors_d_ptr_dc
      procedure, public :: elpa_eigenvectors_d_ptr_fc
-
-     procedure, public :: elpa_eigenvalues_a_h_a_d                   !< public methods to implement the solve step for real/complex
-                                                                               !< double/single matrices; only the eigenvalues are computed
+    
+     !< public methods to implement the solve step for real/complex
+     !< double/single matrices; only the eigenvalues are computed
+     procedure, public :: elpa_eigenvalues_a_h_a_d                   
      procedure, public :: elpa_eigenvalues_a_h_a_f
      procedure, public :: elpa_eigenvalues_a_h_a_dc
      procedure, public :: elpa_eigenvalues_a_h_a_fc
@@ -155,22 +156,37 @@ module elpa_impl
      procedure, public :: elpa_skew_eigenvalues_d_ptr_d 
      procedure, public :: elpa_skew_eigenvalues_d_ptr_f
 #endif
+    
+     !< public methods to implement the solve step for generalized
+     !< eigenproblem and real/complex double/single matrices
+     procedure, public :: elpa_generalized_eigenvectors_a_h_a_d      
+     procedure, public :: elpa_generalized_eigenvectors_a_h_a_f
+     procedure, public :: elpa_generalized_eigenvectors_a_h_a_dc
+     procedure, public :: elpa_generalized_eigenvectors_a_h_a_fc
 
-     procedure, public :: elpa_generalized_eigenvectors_d      !< public methods to implement the solve step for generalized
-                                                               !< eigenproblem and real/complex double/single matrices
-     procedure, public :: elpa_generalized_eigenvectors_f
-     procedure, public :: elpa_generalized_eigenvectors_dc
-     procedure, public :: elpa_generalized_eigenvectors_fc
+     procedure, public :: elpa_generalized_eigenvectors_d_ptr_d      
+     procedure, public :: elpa_generalized_eigenvectors_d_ptr_f
+     procedure, public :: elpa_generalized_eigenvectors_d_ptr_dc
+     procedure, public :: elpa_generalized_eigenvectors_d_ptr_fc
 
-     procedure, public :: elpa_generalized_eigenvalues_d      !< public methods to implement the solve step for generalized
-                                                              !< eigenproblem and real/complex double/single matrices
-     procedure, public :: elpa_generalized_eigenvalues_f
-     procedure, public :: elpa_generalized_eigenvalues_dc
-     procedure, public :: elpa_generalized_eigenvalues_fc
+     !< public methods to implement the solve step for generalized
+     !< eigenproblem and real/complex double/single matrices; only the eigenvalues are computed
+     procedure, public :: elpa_generalized_eigenvalues_a_h_a_d                  
+     procedure, public :: elpa_generalized_eigenvalues_a_h_a_f
+     procedure, public :: elpa_generalized_eigenvalues_a_h_a_dc
+     procedure, public :: elpa_generalized_eigenvalues_a_h_a_fc
+    
+     procedure, public :: elpa_generalized_eigenvalues_d_ptr_d                  
+     procedure, public :: elpa_generalized_eigenvalues_d_ptr_f
+     procedure, public :: elpa_generalized_eigenvalues_d_ptr_dc
+     procedure, public :: elpa_generalized_eigenvalues_d_ptr_fc
 
-     procedure, public :: elpa_hermitian_multiply_a_h_a_d      !< public methods to implement a "hermitian" multiplication of matrices a and b
-     procedure, public :: elpa_hermitian_multiply_a_h_a_f            !< for real valued matrices:   a**T * b
-     procedure, public :: elpa_hermitian_multiply_a_h_a_dc           !< for complex valued matrices:   a**H * b
+     !< public methods to implement a "hermitian" multiplication of matrices a and b
+     !< for real valued matrices:   a**T * b
+     !< for complex valued matrices:   a**H * b
+     procedure, public :: elpa_hermitian_multiply_a_h_a_d      
+     procedure, public :: elpa_hermitian_multiply_a_h_a_f            
+     procedure, public :: elpa_hermitian_multiply_a_h_a_dc           
      procedure, public :: elpa_hermitian_multiply_a_h_a_fc
 
      procedure, public :: elpa_hermitian_multiply_d_ptr_d      !< public methods to implement a "hermitian" multiplication of matrices a and b
@@ -188,47 +204,65 @@ module elpa_impl
      procedure, public :: elpa_pxgemm_multiply_d_ptr_dc
      procedure, public :: elpa_pxgemm_multiply_d_ptr_fc
 
-
-     procedure, public :: elpa_cholesky_a_h_a_d      !< public methods to implement the cholesky factorisation of
-                                                               !< real/complex double/single matrices
+     !< public methods to implement the cholesky factorisation of
+     !< real/complex double/single matrices
+     procedure, public :: elpa_cholesky_a_h_a_d                          
      procedure, public :: elpa_cholesky_a_h_a_f
      procedure, public :: elpa_cholesky_a_h_a_dc
      procedure, public :: elpa_cholesky_a_h_a_fc
-
-     procedure, public :: elpa_cholesky_d_ptr_d       !< public methods to implement the cholesky factorisation of
-                                                               !< real/complex double/single matrices
+     
+     !< public methods to implement the cholesky factorisation of
+     !< real/complex double/single matrices
+     procedure, public :: elpa_cholesky_d_ptr_d                           
      procedure, public :: elpa_cholesky_d_ptr_f
      procedure, public :: elpa_cholesky_d_ptr_dc
      procedure, public :: elpa_cholesky_d_ptr_fc
 
-     procedure, public :: elpa_invert_trm_a_h_a_d    !< public methods to implement the inversion of a triangular
-                                                               !< real/complex double/single matrix
+     !< public methods to implement the inversion of a triangular
+     !< real/complex double/single matrix
+     procedure, public :: elpa_invert_trm_a_h_a_d                                  
      procedure, public :: elpa_invert_trm_a_h_a_f
      procedure, public :: elpa_invert_trm_a_h_a_dc
      procedure, public :: elpa_invert_trm_a_h_a_fc
 
-     procedure, public :: elpa_invert_trm_d_ptr_d     !< public methods to implement the inversion of a triangular
-                                                               !< real/complex double/single matrix
+     !< public methods to implement the inversion of a triangular
+     !< real/complex double/single matrix
+     procedure, public :: elpa_invert_trm_d_ptr_d                        
      procedure, public :: elpa_invert_trm_d_ptr_f
      procedure, public :: elpa_invert_trm_d_ptr_dc
      procedure, public :: elpa_invert_trm_d_ptr_fc
-
-     procedure, public :: elpa_solve_tridiagonal_d             !< public methods to implement the solve step for a real valued
-     procedure, public :: elpa_solve_tridiagonal_f             !< double/single tridiagonal matrix
+     
+     !< public methods to implement the solve step for a real valued
+     !< double/single tridiagonal matrix
+     procedure, public :: elpa_solve_tridiagonal_d             
+     procedure, public :: elpa_solve_tridiagonal_f             
 
      procedure, public :: associate_int => elpa_associate_int  !< public method to set some pointers
 
-     procedure, private :: elpa_transform_generalized_d
-     procedure, private :: elpa_transform_back_generalized_d
-     procedure, private :: elpa_transform_generalized_dc
-     procedure, private :: elpa_transform_back_generalized_dc
+     procedure, private :: elpa_transform_generalized_a_h_a_d
+     procedure, private :: elpa_transform_back_generalized_a_h_a_d
+     procedure, private :: elpa_transform_generalized_a_h_a_dc
+     procedure, private :: elpa_transform_back_generalized_a_h_a_dc
 #ifdef WANT_SINGLE_PRECISION_REAL
-     procedure, private :: elpa_transform_generalized_f
-     procedure, private :: elpa_transform_back_generalized_f
+     procedure, private :: elpa_transform_generalized_a_h_a_f
+     procedure, private :: elpa_transform_back_generalized_a_h_a_f
 #endif
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-     procedure, private :: elpa_transform_generalized_fc
-     procedure, private :: elpa_transform_back_generalized_fc
+     procedure, private :: elpa_transform_generalized_a_h_a_fc
+     procedure, private :: elpa_transform_back_generalized_a_h_a_fc
+#endif
+
+     procedure, private :: elpa_transform_generalized_d_ptr_d
+     procedure, private :: elpa_transform_back_generalized_d_ptr_d
+     procedure, private :: elpa_transform_generalized_d_ptr_dc
+     procedure, private :: elpa_transform_back_generalized_d_ptr_dc
+#ifdef WANT_SINGLE_PRECISION_REAL
+     procedure, private :: elpa_transform_generalized_d_ptr_f
+     procedure, private :: elpa_transform_back_generalized_d_ptr_f
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+     procedure, private :: elpa_transform_generalized_d_ptr_fc
+     procedure, private :: elpa_transform_back_generalized_d_ptr_fc
 #endif
 
      procedure, public :: print_settings => elpa_print_settings
@@ -1963,6 +1997,8 @@ module elpa_impl
 #undef SINGLE_PRECISION
 #undef INCLUDE_ROUTINES
 
+#undef DEVICE_POINTER
+
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "general/precision_macros.h"
@@ -1996,6 +2032,42 @@ module elpa_impl
 #undef SINGLE_PRECISION
 #endif
 
+#define DEVICE_POINTER
+
+#define REALCASE 1
+#define DOUBLE_PRECISION 1
+#include "general/precision_macros.h"
+#include "elpa_impl_generalized_transform_template.F90"
+#undef REALCASE
+#undef DOUBLE_PRECISION
+
+#ifdef WANT_SINGLE_PRECISION_REAL
+#define REALCASE 1
+#define SINGLE_PRECISION 1
+#include "general/precision_macros.h"
+#include "elpa_impl_generalized_transform_template.F90"
+#undef REALCASE
+#undef SINGLE_PRECISION
+#endif
+
+#define COMPLEXCASE 1
+
+#define DOUBLE_PRECISION 1
+#include "general/precision_macros.h"
+#include "elpa_impl_generalized_transform_template.F90"
+#undef DOUBLE_PRECISION
+#undef COMPLEXCASE
+
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+#define COMPLEXCASE 1
+#define SINGLE_PRECISION
+#include "general/precision_macros.h"
+#include "elpa_impl_generalized_transform_template.F90"
+#undef COMPLEXCASE
+#undef SINGLE_PRECISION
+#endif
+
+#undef DEVICE_POINTER
 
 !    function use_cannons_algorithm(self) result(use_cannon, do_print)
 !      class(elpa_impl_t), intent(inout), target :: self

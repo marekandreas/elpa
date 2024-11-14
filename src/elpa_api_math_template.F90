@@ -47,9 +47,10 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 #endif
-  !> \brief abstract definition of interface to solve double real eigenvalue problem
+
+  !> \brief abstract definition of interface to solve eigenvector problem
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -104,9 +105,10 @@
     end subroutine
   end interface
 
-  !> \brief abstract definition of interface to solve double real eigenvalue problem
+
+  !> \brief abstract definition of interface to solve eigenvector problem, using device pointers
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -156,10 +158,11 @@
     end subroutine
   end interface
 
+
 #ifdef HAVE_SKEWSYMMETRIC
   !> \brief abstract definition of interface to solve double real skew-symmetric eigenvalue problem
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -204,9 +207,10 @@
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to solve double real skew-symmetric eigenvalue problem
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -248,9 +252,10 @@
   
 #endif /* HAVE_SKEWSYMMETRIC */
 
+
   !> \brief abstract definition of interface to solve a eigenvalue problem
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -300,9 +305,10 @@
     end subroutine
   end interface       
 
+
   !> \brief abstract definition of interface to solve a eigenvalue problem
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -347,10 +353,11 @@
     end subroutine
   end interface       
 
+
 #ifdef HAVE_SKEWSYMMETRIC
   !> \brief abstract definition of interface to solve a skew-symmetric eigenvalue problem
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -392,9 +399,10 @@
     end subroutine
   end interface
 
+
   !> \brief abstract definition of interface to solve a skew-symmetric eigenvalue problem
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -432,9 +440,11 @@
   end interface       
 #endif /* HAVE_SKEWSYMMETRIC */
 
-  !> \brief abstract definition of interface to solve a generalized eigenvalue problem
+! _________________________________________________________________________________________________
+
+  !> \brief abstract definition of interface to solve a generalized eigenvector problem, using host arrays
   !>
-  !>  The dimensions of the matrix a and b (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a and b (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -468,11 +478,10 @@
   !> \param   ev          single real: on output stores the eigenvalues
   !> \param   q           single complex matrix q: on output stores the eigenvalues
 #endif
-
   !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvectors_&
+    subroutine elpa_generalized_eigenvectors_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, b, ev, q, is_already_decomposed, error)
       use, intrinsic :: iso_c_binding
@@ -493,9 +502,67 @@
     end subroutine
   end interface
 
-  !> \brief abstract definition of interface to solve a generalized eigenvalue problem
+
+  !> \brief abstract definition of interface to solve a generalized eigenvector problem, using device pointers
   !>
-  !>  The dimensions of the matrix a and b (locally ditributed and global), the block-cyclic distribution
+  !>  The dimensions of the matrix a and b (locally distributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+#if ELPA_IMPL_SUFFIX == d   
+  !> \param   a           double real matrix a: defines the problem to solve
+  !> \param   b           double real matrix b: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+  !> \param   q           double real matrix q: on output stores the eigenvalues
+#endif
+#if ELPA_IMPL_SUFFIX == f  
+  !> \param   a           single real matrix a: defines the problem to solve
+  !> \param   b           single real matrix b: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+  !> \param   q           single real matrix q: on output stores the eigenvalues
+#endif
+#if ELPA_IMPL_SUFFIX == dc  
+  !> \param   a           double complex matrix a: defines the problem to solve
+  !> \param   b           double complex matrix b: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+  !> \param   q           double complex matrix q: on output stores the eigenvalues
+#endif
+#if ELPA_IMPL_SUFFIX == fc
+  !> \param   a           single complex matrix a: defines the problem to solve
+  !> \param   b           single complex matrix b: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+  !> \param   q           single complex matrix q: on output stores the eigenvalues
+#endif
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_generalized_eigenvectors_d_ptr_&
+           &ELPA_IMPL_SUFFIX&
+           &_i(self, aDev, bDev, evDev, qDev, is_already_decomposed, error)
+      use, intrinsic :: iso_c_binding
+      use elpa_constants
+      import elpa_t
+      implicit none
+      class(elpa_t)       :: self
+      
+      type(c_ptr)         :: aDev, bDev, evDev, qDev
+
+      logical             :: is_already_decomposed
+      integer, optional   :: error
+    end subroutine
+  end interface
+  
+! _________________________________________________________________________________________________
+
+  !> \brief abstract definition of interface to solve a generalized eigenvalue problem, using host arrays
+  !>
+  !>  The dimensions of the matrix a and b (locally distributed and global), the block-cyclic distribution
   !>  blocksize, the number of eigenvectors
   !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
@@ -529,7 +596,7 @@
   !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
   !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
   abstract interface
-    subroutine elpa_generalized_eigenvalues_&
+    subroutine elpa_generalized_eigenvalues_a_h_a_&
            &ELPA_IMPL_SUFFIX&
            &_i(self, a, b, ev, is_already_decomposed, error)
       use, intrinsic :: iso_c_binding
@@ -549,7 +616,60 @@
     end subroutine
   end interface
 
-! _________________________________________________________________________________________________________________________________
+
+  !> \brief abstract definition of interface to solve a generalized eigenvalue problem, using device pointers
+  !>
+  !>  The dimensions of the matrix a and b (locally distributed and global), the block-cyclic distribution
+  !>  blocksize, the number of eigenvectors
+  !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+  !>  with the class method "setup"
+  !>
+  !>  It is possible to change the behaviour of the method by setting tunable parameters with the
+  !>  class method "set"
+  !> Parameters
+  !> \details
+  !> \param   self        class(elpa_t), the ELPA object
+#if ELPA_IMPL_SUFFIX == d   
+  !> \param   a           double real matrix a: defines the problem to solve
+  !> \param   b           double real matrix b: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+#endif
+#if ELPA_IMPL_SUFFIX == f  
+  !> \param   a           single real matrix a: defines the problem to solve
+  !> \param   b           single real matrix b: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+#endif
+#if ELPA_IMPL_SUFFIX == dc  
+  !> \param   a           double complex matrix a: defines the problem to solve
+  !> \param   b           double complex matrix b: defines the problem to solve
+  !> \param   ev          double real: on output stores the eigenvalues
+#endif
+#if ELPA_IMPL_SUFFIX == fc
+  !> \param   a           single complex matrix a: defines the problem to solve
+  !> \param   b           single complex matrix b: defines the problem to solve
+  !> \param   ev          single real: on output stores the eigenvalues
+#endif
+
+  !> \param   is_already_decomposed   logical, input: is it repeated call with the same b (decomposed in the fist call)?
+  !> \result  error       integer, optional : error code, which can be queried with elpa_strerr
+  abstract interface
+    subroutine elpa_generalized_eigenvalues_d_ptr_&
+           &ELPA_IMPL_SUFFIX&
+           &_i(self, aDev, bDev, evDev, is_already_decomposed, error)
+      use, intrinsic :: iso_c_binding
+      use elpa_constants
+      import elpa_t
+      implicit none
+      class(elpa_t)       :: self
+
+      type(c_ptr)         :: aDev, bDev, evDev
+
+      logical             :: is_already_decomposed
+      integer, optional   :: error
+    end subroutine
+  end interface  
+
+! _________________________________________________________________________________________________
 
   !> \brief abstract definition of interface to compute C : = A**T * B
   !>         where   A is a square matrix (self%a,self%na) which is optionally upper or lower triangular
@@ -801,7 +921,7 @@
   
   !> \brief abstract definition of interface to do a cholesky decomposition of a matrix
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cylic-distribution
   !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
   !>
@@ -845,7 +965,7 @@
 
   !> \brief abstract definition of interface to do a cholesky decomposition of a matrix
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cylic-distribution
   !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
   !>
@@ -886,7 +1006,7 @@
 
   !> \brief abstract definition of interface to invert a triangular matrix
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cylic-distribution
   !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
   !>
@@ -930,7 +1050,7 @@
 
   !> \brief abstract definition of interface to invert a triangular matrix using device pointer
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cylic-distribution
   !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
   !>
@@ -972,7 +1092,7 @@
 
   !> \brief abstract definition of interface to solve the eigenvalue problem for a valued tridiangular matrix
   !>
-  !>  The dimensions of the matrix a (locally ditributed and global), the block-cylic-distribution
+  !>  The dimensions of the matrix a (locally distributed and global), the block-cylic-distribution
   !>  block size, and the MPI communicators are already known to the object and MUST be set BEFORE
   !>  with the class method "setup"
   !>

@@ -56,9 +56,9 @@
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double host/device pointer to matrix a in CPU/GPU memory
- *  \param  ev      on return: double pointer to eigenvalues in CPU/GPU memory
- *  \param  q       on return: double pointer to eigenvectors in CPU/GPU memory
+ *  \param  a       double host/device pointer to matrix a
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
@@ -84,9 +84,9 @@ void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, i
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float host/device pointer to matrix a in CPU/GPU memory
- *  \param  ev      on return: float pointer to eigenvalues in CPU/GPU memory
- *  \param  q       on return: float pointer to eigenvectors in CPU/GPU memory
+ *  \param  a       float host/device pointer to matrix a
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  q       on return: float host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
@@ -112,9 +112,9 @@ void elpa_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double complex host/device pointer to matrix a in CPU/GPU memory
- *  \param  ev      on return: double complex pointer to eigenvalues in CPU/GPU memory
- *  \param  q       on return: double complex pointer to eigenvectors in CPU/GPU memory
+ *  \param  a       double complex host/device pointer to matrix a
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double complex host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
@@ -141,9 +141,9 @@ void elpa_eigenvectors_double_complex(elpa_t handle, double complex *a, double *
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float complex host/device pointer to matrix a in CPU/GPU memory
- *  \param  ev      on return: float complex pointer to eigenvalues in CPU/GPU memory
- *  \param  q       on return: float complex pointer to eigenvectors in CPU/GPU memory
+ *  \param  a       float complex host/device pointer to matrix a
+ *  \param  ev      on return: float host/device  pointer to eigenvalues
+ *  \param  q       on return: float complex host/device  pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
@@ -166,15 +166,16 @@ void elpa_eigenvectors_float_complex(elpa_t handle, float complex *a, float *ev,
 #endif		
 }
 
+//_________________________________________________________________________________________________
 
 #ifdef HAVE_SKEWSYMMETRIC
 /*! \brief generic C method for elpa_skew_eigenvectors_double
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double pointer to matrix a
- *  \param  ev      on return: double pointer to eigenvalues
- *  \param  q       on return: double pointer to eigenvectors
+ *  \param  a       double host/device pointer to matrix a
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
@@ -200,9 +201,9 @@ void elpa_skew_eigenvectors_double(elpa_t handle, double *a, double *ev, double 
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float pointer to matrix a
- *  \param  ev      on return: float pointer to eigenvalues
- *  \param  q       on return: float pointer to eigenvectors
+ *  \param  a       float host/device pointer to matrix a
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  q       on return: float host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
@@ -224,6 +225,127 @@ void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, 
 	}
 #endif /* HAVE_SKEWSYMMETRIC */
 
+//_________________________________________________________________________________________________
+
+/*! \brief generic C method for elpa_generalized_eigenvectors_double
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       double host/device pointer to matrix a
+ *  \param  b       double host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double host/device pointer to eigenvectors
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvectors_double(elpa_t handle, double *a, double *b, double *ev, double *q, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvectors_d_ptr_d(handle, a, b, ev, q, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvectors_a_h_a_d(handle, a, b, ev, q, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvectors_a_h_a_d(handle, a, b, ev, q, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvectors_float
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float host/device pointer to matrix a
+ *  \param  b       float host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  q       on return: float host/device pointer to eigenvectors
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvectors_float(elpa_t handle, float *a, float *b, float *ev, float *q, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvectors_d_ptr_f(handle, a, b, ev, q, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvectors_a_h_a_f(handle, a, b, ev, q, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvectors_a_h_a_f(handle, a, b, ev, q, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvectors_double_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       double complex host/device pointer to matrix a
+ *  \param  b       double complex host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double complex host/device pointer to eigenvectors
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvectors_double_complex(elpa_t handle, double complex *a, double complex *b, double *ev, double complex *q, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvectors_d_ptr_dc(handle, a, b, ev, q, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvectors_a_h_a_dc(handle, a, b, ev, q, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvectors_a_h_a_dc(handle, a, b, ev, q, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvectors_float_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float complex host/device pointer to matrix a
+ *  \param  b       float complex host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  q       on return: float complex host/device pointer to eigenvectors
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvectors_float_complex(elpa_t handle, float complex *a, float complex *b, float *ev, float complex *q, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvectors_d_ptr_fc(handle, a, b, ev, q, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvectors_a_h_a_fc(handle, a, b, ev, q, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvectors_a_h_a_fc(handle, a, b, ev, q, is_already_decomposed, error);
+#endif		
+}
 //_________________________________________________________________________________________________
 
 /*! \brief generic C method for elpa_eigenvalues_double
@@ -334,6 +456,8 @@ void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, 
 #endif		
 }
 
+//_________________________________________________________________________________________________
+
 #ifdef HAVE_SKEWSYMMETRIC
 /*! \brief generic C method for elpa_skew_eigenvalues_double
  *
@@ -344,6 +468,7 @@ void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, 
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
+
 
 void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error)
 {
@@ -389,6 +514,124 @@ void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
 #endif		
 }
 #endif /* HAVE_SKEWSYMMETRIC */
+
+//_________________________________________________________________________________________________
+
+/*! \brief generic C method for elpa_generalized_eigenvalues_double
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       double host/device pointer to matrix a
+ *  \param  b       double host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvalues_double(elpa_t handle, double *a, double *b, double *ev, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvalues_d_ptr_d(handle, a, b, ev, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvalues_a_h_a_d(handle, a, b, ev, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvalues_a_h_a_d(handle, a, b, ev, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvalues_float
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float host/device pointer to matrix a
+ *  \param  b       float host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvalues_float(elpa_t handle, float *a, float *b, float *ev, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvalues_d_ptr_f(handle, a, b, ev, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvalues_a_h_a_f(handle, a, b, ev, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvalues_a_h_a_f(handle, a, b, ev, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvalues_double_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       double complex host/device pointer to matrix a
+ *  \param  b       double complex host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvalues_double_complex(elpa_t handle, double complex *a, double complex *b, double *ev, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvalues_d_ptr_dc(handle, a, b, ev, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvalues_a_h_a_dc(handle, a, b, ev, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvalues_a_h_a_dc(handle, a, b, ev, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvalues_float_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float complex host/device pointer to matrix a
+ *  \param  b       float complex host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvalues_float_complex(elpa_t handle, float complex *a, float complex *b, float *ev, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvalues_d_ptr_fc(handle, a, b, ev, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvalues_a_h_a_fc(handle, a, b, ev, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvalues_a_h_a_fc(handle, a, b, ev, is_already_decomposed, error);
+#endif		
+}
 
 //_________________________________________________________________________________________________
 

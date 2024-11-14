@@ -195,7 +195,7 @@ function elpa_solve_evp_&
 
    logical                                         :: do_useGPU, do_useGPU_tridiag, &
                                                       do_useGPU_solve_tridi, do_useGPU_trans_ev
-   integer(kind=ik)                                :: numberOfGPUDevices
+   integer(kind=c_int)                             :: numberOfGPUDevices
 
    integer(kind=c_int)                             :: my_pe, n_pes, my_prow, my_pcol
    integer(kind=MPI_KIND)                          :: mpierr, my_peMPI, n_pesMPI, my_prowMPI, my_pcolMPI
@@ -331,7 +331,7 @@ function elpa_solve_evp_&
    &PRECISION&
    &") ! "
 
-   call obj%get("debug",debug, error)
+   call obj%get("debug", debug, error)
    if (error .ne. ELPA_OK) then
      write(error_unit,*) "ELPA1: Problem getting option for debug settings. Aborting..."
 #include "./elpa1_aborting_template.F90"
