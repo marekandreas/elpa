@@ -114,7 +114,7 @@
   integer(kind=ik)                             :: LCM, nblk_mult_rows, nblk_mult_cols, i_block_loc_fine, j_block_loc_fine ! PETERDEBUG_NEW
   integer(kind=ik)                             :: nblk_mult_rows_max, nblk_mult_cols_max, tail_loc, nblk_rows_cut, nblk_cols_cut ! PETERDEBUG_NEW
   integer(kind=ik)                             :: nblk_mult_max, nblk_mult_min
-  integer(kind=ik)                             :: l_cols, l_rows, l_rows_np
+  integer(kind=ik)                             :: l_cols, l_rows
   integer(kind=ik)                             :: l_rows_max, l_cols_max, l_rows_min, l_cols_min, nstor_block, nstor_block_cut ! PETERDEBUG
   integer(kind=ik)                             :: l_rows_source, l_cols_source
   integer(kind=ik)                             :: np, nb, nblk_mult, lrs, lre, lcs, lce
@@ -420,16 +420,16 @@
   l_cols_min = l_cols
 #endif /* WITH_MPI */
 
-  !nblk_mult = l_rows_max ! = l_cols_max
   nblk_mult = greatest_common_divisor(l_rows_max, l_cols_max)
 !______________________________________________________________________________________________
 
   if (isSquareGrid) then
+    !nblk_mult = l_rows_max ! = l_cols_max
 !_______________________________________________
 
     if (.not. a_transposed .and. b_transposed .or. &
         a_transposed .and. .not. b_transposed ) then
-      print *, "elpa_pxgemm_multiply NEW: SQUARE_GRID start: ( a_transposed XOR b_transposed)" ! PETERDEBUG
+      print *, "elpa_pxgemm_multiply NEW: SQUARE_GRID start: (a_transposed XOR b_transposed)" ! PETERDEBUG
       
       allocate(aux_a_full(l_rows_max, nblk_mult), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm_multiply: aux_a_full", istat, errorMessage)
@@ -478,22 +478,40 @@
 
         if (a_transposed) then
           if (useGPU) then
-            if (np_t == my_pcol) call gpu_copy_aux_full(PRECISION_CHAR, aux_a_full_dev, a_dev, l_rows, l_cols, &
-                                                        l_rows_max, lda, debug, my_stream)
-            call gpu_copy_aux_full(PRECISION_CHAR, aux_b_full_dev, b_dev, l_rows, l_cols, nblk_mult, ldb, debug, my_stream)
+            if (np_t == my_pcol) call gpu_copy_and_set_zeros_aux_full(PRECISION_CHAR, a_dev, aux_a_full_dev, l_rows, l_cols, &
+                                                                      nblk_mult, debug, my_stream)
+            call gpu_copy_and_set_zeros_aux_full(PRECISION_CHAR, b_dev, aux_b_full_dev, l_rows, l_cols, &
+                                                 nblk_mult, debug, my_stream)
           else ! useGPU
-            if (np_t == my_pcol) aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
+            if (np_t == my_pcol) then
+              aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
+              if (l_rows < nblk_mult) aux_a_full(l_rows+1:nblk_mult,1:l_cols) = 0
+              if (l_cols < nblk_mult) aux_a_full(1:l_rows,l_cols+1:nblk_mult) = 0
+              if (l_rows < nblk_mult .and. l_cols < nblk_mult) aux_a_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
+            endif
             aux_b_full(1:l_rows,1:l_cols) = b(1:l_rows,1:l_cols)
+            if (l_rows < nblk_mult) aux_b_full(l_rows+1:nblk_mult,1:l_cols) = 0
+            if (l_cols < nblk_mult) aux_b_full(1:l_rows,l_cols+1:nblk_mult) = 0
+            if (l_rows < nblk_mult .and. l_cols < nblk_mult) aux_b_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
           endif ! useGPU
         else if (b_transposed) then
           if (useGPU) then
-            if (np_t == my_prow) call gpu_copy_aux_full(PRECISION_CHAR, aux_b_full_dev, b_dev, l_rows, l_cols, &
-                                                        nblk_mult, ldb, debug, my_stream)
-            call gpu_copy_aux_full(PRECISION_CHAR, aux_a_full_dev, a_dev, l_rows, l_cols, l_rows_max, lda, debug, my_stream)
+            if (np_t == my_prow) call gpu_copy_and_set_zeros_aux_full(PRECISION_CHAR, b_dev, aux_b_full_dev, l_rows, l_cols, &
+                                                                      nblk_mult, debug, my_stream)
+            call gpu_copy_and_set_zeros_aux_full(PRECISION_CHAR, a_dev, aux_a_full_dev, l_rows, l_cols, &
+                                                 nblk_mult, debug, my_stream)
           
           else
-            if (np_t == my_prow) aux_b_full(1:l_rows,1:l_cols) = b(1:l_rows,1:l_cols)
+            if (np_t == my_prow) then
+              aux_b_full(1:l_rows,1:l_cols) = b(1:l_rows,1:l_cols)
+              if (l_rows < nblk_mult) aux_b_full(l_rows+1:nblk_mult,1:l_cols) = 0
+              if (l_cols < nblk_mult) aux_b_full(1:l_rows,l_cols+1:nblk_mult) = 0
+              if (l_rows < nblk_mult .and. l_cols < nblk_mult) aux_b_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
+            endif
             aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols) ! aux_a_full -> aux_ab_nontransposed_full
+            if (l_rows < nblk_mult) aux_a_full(l_rows+1:nblk_mult,1:l_cols) = 0
+            if (l_cols < nblk_mult) aux_a_full(1:l_rows,l_cols+1:nblk_mult) = 0
+            if (l_rows < nblk_mult .and. l_cols < nblk_mult) aux_a_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
           endif ! useGPU
         endif
 
@@ -1384,6 +1402,8 @@
           endif
         endif
 
+        aux_a_full = 1000 ! PETERDEBUG111
+        aux_b_full = 1000 ! PETERDEBUG111
         if (mod(np_bc_fine,np_cols) == my_pcol) then
           if (useGPU) then
             if (a_transposed) then
@@ -1756,6 +1776,8 @@
             call obj%timer%stop("gpu_copy_and_set_zeros_aux_ab_full_tn")
           else ! useGPU
             call obj%timer%start("copy_and_set_zeros_aux_ab_full_tn")
+            aux_a_full = 1000 ! PETERDEBUG111
+            aux_b_full = 1000 ! PETERDEBUG111
             if (a_transposed) then
               if (mod(np_t_fine,np_cols) == my_pcol) then
                 do j_block_loc_fine = 0, nblk_mult_max/nblk-1
