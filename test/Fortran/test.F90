@@ -1157,7 +1157,7 @@ program test
 
 ! _________________________________________________________________________________________________________________________________
   
-  ! The actual solve step
+! The actual solve step
 
 #if defined(TEST_EIGENVECTORS)
 #if TEST_QR_DECOMPOSITION == 1
@@ -1513,7 +1513,7 @@ program test
 
 ! _________________________________________________________________________________________________________________________________
    
-  ! TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host
+! TEST_GPU_DEVICE_POINTER_API case: copy for testing from device to host
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
 
@@ -1594,7 +1594,7 @@ program test
 
 ! _________________________________________________________________________________________________________________________________
      
-  ! Check the results
+! Check the results
 
   if (do_test_analytic_eigenvalues) then
     status = check_correctness_analytic(na, nev, ev, q, nblk, myid, np_rows, np_cols, &
@@ -1673,7 +1673,7 @@ end do ! kernels
 
 ! _________________________________________________________________________________________________________________________________
 
-  ! Deallocate
+! Deallocate
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
 
