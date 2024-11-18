@@ -1117,6 +1117,7 @@ EXTRA_DIST = \
   src/multiply_a_b/elpa_hermitian_multiply_template.F90 \
   src/multiply_a_b/elpa_pxgemm_multiply_template.F90 \
   src/multiply_a_b/elpa_pxgemm_transpose_template.F90 \
+  src/multiply_a_b/elpa_pxgemm_helpers_template.F90 \
   src/multiply_a_b/GPU/elpa_pxgemm_multiply_gpu.h \
   src/invert_trm/invert_trm_template.F90 \
   src/elpa1/elpa_reduce_add_vectors_template.F90 \
