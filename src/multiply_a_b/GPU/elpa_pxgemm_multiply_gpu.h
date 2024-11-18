@@ -585,21 +585,28 @@ __global__ void gpu_copy_and_set_zeros_aux_ab_full_tn_kernel(T *a_dev, T *b_dev,
                                                               int np_dirs_fine){
   // if (mod(np_t_fine,np_cols) == my_pcol) then
   //   do j_block_loc_fine = 0, nblk_mult_max/nblk-1
-  //     j_block_loc = (np_t_fine + j_block_loc_fine*np_dirs_fine)/np_cols
-      
+  //     j_block_loc = (np_t_fine + j_block_loc_fine*np_cols_fine)/np_cols
+  //  
   //     do i_block_loc_fine = 0, nblk_mult/nblk-1
-  //       i_block_loc = (np_ab_fine + i_block_loc_fine*np_dirs_fine)/np_rows
-        
+  //       i_block_loc = (np_ab_fine + i_block_loc_fine*np_rows_fine)/np_rows
+  //    
   //       nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
   //       nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
-
+  //
   //       if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
   //         aux_a_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
   //                    1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk) = &
   //                 a (1+i_block_loc*nblk      : nblk_rows_cut+i_block_loc*nblk, &
   //                    1+j_block_loc*nblk      : nblk_cols_cut+j_block_loc*nblk)
   //       endif
-
+  //
+  //       call set_zeros_in_unused_block_part_&
+  //                     &MATH_DATATYPE&
+  //                     &_&
+  //                     &PRECISION &
+  //                     (aux_a_full, nblk, nblk_rows_cut, nblk_cols_cut, &
+  //                     i_block_loc_fine, j_block_loc_fine, 0, 0)
+  //
   //     enddo ! i_block_loc_fine
   //   enddo ! j_block_loc_fine
   // endif ! (mod(np_t_fine,np_cols) == my_pcol)
@@ -631,58 +638,62 @@ __global__ void gpu_copy_and_set_zeros_aux_ab_full_tn_kernel(T *a_dev, T *b_dev,
               aux_a_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] 
                      = a_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
           }
+
+        // nullify the unused part of the block in a
+        if (nblk_rows_cut<nblk && nblk_cols_cut>0)
+          {
+          for (dj=dj0; dj<nblk_cols_cut; dj += gridDim.x)
+            for (di=di0+max(nblk_rows_cut,0); di<nblk; di += blockDim.x)
+              aux_a_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
+          }
+
+        if (nblk_cols_cut<nblk && nblk_rows_cut>0)
+          {
+          for (dj=dj0+max(nblk_cols_cut,0); dj<nblk; dj += gridDim.x)
+            for (di=di0; di<nblk_rows_cut; di += blockDim.x)
+              aux_a_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
+          }
+
+        if (nblk_rows_cut<nblk && nblk_cols_cut<nblk)
+          {
+          for (dj=dj0+max(nblk_cols_cut,0); dj<nblk; dj += gridDim.x)
+            for (di=di0+max(nblk_rows_cut,0); di<nblk; di += blockDim.x)
+              aux_a_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
+          }
         }
       }
     }
 
-  // do dnp_ab_t = 0, np_dirs_fine/np_cols-1
-  //   np_ab_t_fine = dnp_ab_t*np_cols + my_pcol
+    // do dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
+    //   np_ab_t_fine = dnp_ab_t*np_dirs_t + my_pdir_t
 
-  //   do j_block_loc_fine = 0, nblk_mult_max/nblk-1
-  //     j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_dirs_fine)/np_cols
-      
-  //     do i_block_loc_fine = 0, nblk_mult/nblk-1
-  //       i_block_loc = (np_ab_fine + i_block_loc_fine*np_dirs_fine)/np_rows
-
-  //       nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
-  //       nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
+    //   do j_block_loc_fine = 0, nblk_mult_max/nblk-1
+    //     j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_cols_fine)/np_cols
         
-  //       if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
-  //         aux_b_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
-  //                   1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-  //                   nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = &
-  //                   b(1+i_block_loc*nblk      :nblk_rows_cut+i_block_loc*nblk, &
-  //                     1+j_block_loc*nblk      :nblk_cols_cut+j_block_loc*nblk)
-  //       endif
+    //     do i_block_loc_fine = 0, nblk_mult/nblk-1
+    //       i_block_loc = (np_ab_fine + i_block_loc_fine*np_rows_fine)/np_rows
 
-  //       ! nullify the unused part of the block in b
-  //       if (nblk_rows_cut<nblk) then
-  //         if (nblk_rows_cut>0) then
-  //           aux_b_full(nblk_rows_cut+1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
-  //                       1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-  //                       nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
-  //         else ! for negative nblk_rows_cut we nullify the whole block (it's locally absent)
-  //           aux_b_full(1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
-  //                       1   +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-  //                       nblk+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
-  //         endif
-  //       endif
+    //       nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
+    //       nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
+          
+    //       if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
+    //         aux_b_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
+    //                    1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+    //                    nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = &
+    //                  b(1+i_block_loc*nblk      :nblk_rows_cut+i_block_loc*nblk, &
+    //                    1+j_block_loc*nblk      :nblk_cols_cut+j_block_loc*nblk)
+    //       endif
 
-  //       if (nblk_cols_cut<nblk) then
-  //         if (nblk_cols_cut>0) then
-  //           aux_b_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
-  //                       nblk_cols_cut+1+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-  //                       nblk           +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
-  //         else
-  //           aux_b_full(1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
-  //                       1   +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-  //                       nblk+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
-  //         endif
-  //       endif
+    //       call set_zeros_in_unused_block_part_&
+    //                     &MATH_DATATYPE&
+    //                     &_&
+    //                     &PRECISION &
+    //                     (aux_b_full, nblk, nblk_rows_cut, nblk_cols_cut, &
+    //                     i_block_loc_fine, j_block_loc_fine, 0, dnp_ab_t*nblk_mult_max)
 
-  //     enddo ! i_block_loc_fine
-  //   enddo ! j_block_loc_fine
-  // enddo ! np_ab_t_fine
+    //     enddo ! i_block_loc_fine
+    //   enddo ! j_block_loc_fine
+    // enddo ! np_ab_t_fine
 
   int dnp_ab_t, np_ab_t_fine;
   for (dnp_ab_t = 0; dnp_ab_t < np_dirs_fine/np_cols; dnp_ab_t++)
@@ -704,43 +715,32 @@ __global__ void gpu_copy_and_set_zeros_aux_ab_full_tn_kernel(T *a_dev, T *b_dev,
           for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
             for (di = di0; di < nblk_rows_cut; di += blockDim.x)
               aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] 
-                    = b_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
+                     = b_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
           }
 
         // nullify the unused part of the block in b
-        if (nblk_rows_cut < nblk)
+        if (nblk_rows_cut<nblk && nblk_cols_cut>0)
           {
-          if (nblk_rows_cut > 0)
-            {
-            for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
-              for (di = nblk_rows_cut+di0; di < nblk; di += blockDim.x)
-                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
-            }
-          else // for negative nblk_rows_cut we nullify the whole block (it's locally absent)
-            {
-            for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
-              for (di = di0; di < nblk; di += blockDim.x)
-                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
-            }
+          for (dj=dj0; dj<nblk_cols_cut; dj += gridDim.x)
+            for (di=di0+max(nblk_rows_cut,0); di<nblk; di += blockDim.x)
+              aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
           }
 
-        if (nblk_cols_cut < nblk)
+        if (nblk_cols_cut<nblk && nblk_rows_cut>0)
           {
-          if (nblk_cols_cut > 0)
-            {
-            for (dj = nblk_cols_cut+dj0; dj < nblk; dj += gridDim.x)
-              for (di = di0; di < nblk_rows_cut; di += blockDim.x)
-                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
-            }
-          else 
-            {
-            for (dj = dj0; dj < nblk; dj += gridDim.x)
-              for (di = di0; di < nblk_rows_cut; di += blockDim.x)
-                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
-            }
+          for (dj=dj0+max(nblk_cols_cut,0); dj<nblk; dj += gridDim.x)
+            for (di=di0; di<nblk_rows_cut; di += blockDim.x)
+              aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
           }
-       }
-        
+
+        if (nblk_rows_cut<nblk && nblk_cols_cut<nblk)
+          {
+          for (dj=dj0+max(nblk_cols_cut,0); dj<nblk; dj += gridDim.x)
+            for (di=di0+max(nblk_rows_cut,0); di<nblk; di += blockDim.x)
+              aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult] = Zero;
+          }
+
+        }
       }
     }
 }
@@ -780,39 +780,28 @@ __global__ void gpu_copy_and_set_zeros_aux_ab_full_nt_kernel(T *a_dev, T *b_dev,
                        b_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
           }
 
-        // Nullify the unused part of the block in b
-        if (nblk_rows_cut < nblk)
+        // nullify the unused part of the block in b
+        if (nblk_rows_cut<nblk && nblk_cols_cut>0)
           {
-          if (nblk_rows_cut > 0)
-            {
-            for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
-              for (di = nblk_rows_cut + di0; di < nblk; di += blockDim.x)
-                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
-            }
-          else // For negative nblk_rows_cut we nullify the whole block  (it's locally absent)
-            {
-            for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
-              for (di = di0; di < nblk; di += blockDim.x)            
-                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
-            }
+          for (dj=dj0; dj<nblk_cols_cut; dj += gridDim.x)
+            for (di=di0+max(nblk_rows_cut,0); di<nblk; di += blockDim.x)
+              aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
           }
-        
 
-        if (nblk_cols_cut < nblk)
+        if (nblk_cols_cut<nblk && nblk_rows_cut>0)
           {
-          if (nblk_cols_cut > 0)
-            {
-            for (dj = nblk_cols_cut + dj0; dj < nblk; dj += gridDim.x)
-              for (di = di0; di < nblk_rows_cut; di += blockDim.x)
-                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine * nblk)*nblk_mult] = Zero;
-            }
-          else
-            {
-            for (dj = dj0; dj < nblk; dj += gridDim.x)
-              for (di = di0; di < nblk_rows_cut; di += blockDim.x)
-                aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine * nblk)*nblk_mult] = Zero;
-            }
+          for (dj=dj0+max(nblk_cols_cut,0); dj<nblk; dj += gridDim.x)
+            for (di=di0; di<nblk_rows_cut; di += blockDim.x)
+              aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
           }
+
+        if (nblk_rows_cut<nblk && nblk_cols_cut<nblk)
+          {
+          for (dj=dj0+max(nblk_cols_cut,0); dj<nblk; dj += gridDim.x)
+            for (di=di0+max(nblk_rows_cut,0); di<nblk; di += blockDim.x)
+              aux_b_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk)*nblk_mult] = Zero;
+          }
+
         }
       }
     }
@@ -837,13 +826,32 @@ __global__ void gpu_copy_and_set_zeros_aux_ab_full_nt_kernel(T *a_dev, T *b_dev,
           {
           for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x)
             for (di = di0; di < nblk_rows_cut; di += blockDim.x)
-              {
               aux_a_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*lda] =
-                       a_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];
-              }
-                    
-                
+                       a_dev[di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows];  
           }
+
+        // nullify the unused part of the block in a
+        if (nblk_rows_cut<nblk && nblk_cols_cut>0)
+          {
+          for (dj=dj0; dj<nblk_cols_cut; dj += gridDim.x)
+            for (di=di0+max(nblk_rows_cut,0); di<nblk; di += blockDim.x)
+              aux_a_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*lda] = Zero;
+          }
+
+        if (nblk_cols_cut<nblk && nblk_rows_cut>0)
+          {
+          for (dj=dj0+max(nblk_cols_cut,0); dj<nblk; dj += gridDim.x)
+            for (di=di0; di<nblk_rows_cut; di += blockDim.x)
+              aux_a_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*lda] = Zero;
+          }
+
+        if (nblk_rows_cut<nblk && nblk_cols_cut<nblk)
+          {
+          for (dj=dj0+max(nblk_cols_cut,0); dj<nblk; dj += gridDim.x)
+            for (di=di0+max(nblk_rows_cut,0); di<nblk; di += blockDim.x)
+              aux_a_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*lda] = Zero;
+          }
+
         }
       }
     }

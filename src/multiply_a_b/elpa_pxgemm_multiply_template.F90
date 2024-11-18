@@ -1776,9 +1776,6 @@
             call obj%timer%stop("gpu_copy_and_set_zeros_aux_ab_full_tn")
           else ! useGPU
             call obj%timer%start("copy_and_set_zeros_aux_ab_full_tn")
-            
-            !aux_a_full = 1000 ! PETERDEBUG111
-            aux_b_full = 1000
 
             if (a_transposed) then
               if (mod(np_t_fine,np_cols) == my_pcol) then
