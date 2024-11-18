@@ -72,7 +72,8 @@
                              check_host_dealloc_gpu_f, check_alloc_gpu_f, check_host_alloc_gpu_f, &
                              check_host_unregister_gpu_f, check_memcpy_gpu_f, check_allocate_f, &
                              check_host_register_gpu_f, check_alloc, error_unit
-  use elpa_pxgemm_multiply_transpose
+  use elpa_pxgemm_transpose
+  use elpa_pxgemm_helpers
   use mod_query_gpu_usage
 #ifdef WITH_GPU_STREAMS
   use elpa_gpu_util
@@ -139,7 +140,7 @@
   character(20)                                :: gpuString, tnString
   logical                                      :: success, successGPU, successGPU2
   logical                                      :: useGPU
-  logical                                      :: isSquareGrid
+  logical                                      :: isSquareGrid, first_call
   integer(kind=c_int)                          :: numGPU, blocking, SM_count
 
   ! MPI-related
@@ -740,7 +741,8 @@
         print *, "elpa_pxgemm_multiply: Error: case ldc != lda is not implemented yet for NN and TT on GPU"
         stop 1
       endif
-
+      
+      ! PETERDEBUG: cleanup
       ! allocate(tmp1_full(l_rows, l_cols), stat=istat, errmsg=errorMessage)
       ! check_allocate("elpa_pxgemm_multiply: tmp1_full", istat, errorMessage)
   
@@ -1402,8 +1404,6 @@
           endif
         endif
 
-        aux_a_full = 1000 ! PETERDEBUG111
-        aux_b_full = 1000 ! PETERDEBUG111
         if (mod(np_bc_fine,np_cols) == my_pcol) then
           if (useGPU) then
             if (a_transposed) then
@@ -1776,8 +1776,10 @@
             call obj%timer%stop("gpu_copy_and_set_zeros_aux_ab_full_tn")
           else ! useGPU
             call obj%timer%start("copy_and_set_zeros_aux_ab_full_tn")
-            aux_a_full = 1000 ! PETERDEBUG111
-            aux_b_full = 1000 ! PETERDEBUG111
+            
+            !aux_a_full = 1000 ! PETERDEBUG111
+            aux_b_full = 1000
+
             if (a_transposed) then
               if (mod(np_t_fine,np_cols) == my_pcol) then
                 do j_block_loc_fine = 0, nblk_mult_max/nblk-1
@@ -1791,11 +1793,19 @@
 
                     if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
                       aux_a_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
-                                  1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk) = &
+                                 1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk) = &
                               a (1+i_block_loc*nblk      : nblk_rows_cut+i_block_loc*nblk, &
-                                  1+j_block_loc*nblk      : nblk_cols_cut+j_block_loc*nblk)
+                                 1+j_block_loc*nblk      : nblk_cols_cut+j_block_loc*nblk)
                     endif
 
+                    call set_zeros_in_unused_block_part_&
+                                  &MATH_DATATYPE&
+                                  &_&
+                                  &PRECISION &
+                                  (aux_a_full, nblk, nblk_rows_cut, nblk_cols_cut, &
+                                  i_block_loc_fine, j_block_loc_fine, 0, 0)
+
+                    
                   enddo ! i_block_loc_fine
                 enddo ! j_block_loc_fine
               endif ! (mod(np_t_fine,np_cols) == my_pcol)
@@ -1814,36 +1824,18 @@
                     
                     if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
                       aux_b_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
-                                1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = &
-                                b(1+i_block_loc*nblk      :nblk_rows_cut+i_block_loc*nblk, &
-                                  1+j_block_loc*nblk      :nblk_cols_cut+j_block_loc*nblk)
+                                 1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                 nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = &
+                               b(1+i_block_loc*nblk      :nblk_rows_cut+i_block_loc*nblk, &
+                                 1+j_block_loc*nblk      :nblk_cols_cut+j_block_loc*nblk)
                     endif
 
-                    ! nullify the unused part of the block in b
-                    if (nblk_rows_cut<nblk) then
-                      if (nblk_rows_cut>0) then
-                        aux_b_full(nblk_rows_cut+1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
-                                    1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                    nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
-                      else ! for negative nblk_rows_cut we nullify the whole block (it's locally absent)
-                        aux_b_full(1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
-                                    1   +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                    nblk+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
-                      endif
-                    endif
-
-                    if (nblk_cols_cut<nblk) then
-                      if (nblk_cols_cut>0) then
-                        aux_b_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
-                                    nblk_cols_cut+1+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                    nblk           +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
-                      else
-                        aux_b_full(1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
-                                    1   +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                    nblk+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max) = 0
-                      endif
-                    endif
+                    call set_zeros_in_unused_block_part_&
+                                  &MATH_DATATYPE&
+                                  &_&
+                                  &PRECISION &
+                                  (aux_b_full, nblk, nblk_rows_cut, nblk_cols_cut, &
+                                  i_block_loc_fine, j_block_loc_fine, 0, dnp_ab_t*nblk_mult_max)
 
                   enddo ! i_block_loc_fine
                 enddo ! j_block_loc_fine
@@ -1867,26 +1859,13 @@
                                 1+j_block_loc*nblk      : nblk_cols_cut+j_block_loc*nblk)
                     endif
 
-                    ! nullify the unused part of the block in b
-                    if (nblk_rows_cut < nblk) then
-                      if (nblk_rows_cut>0) then
-                        aux_b_full(nblk_rows_cut+1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
-                                    1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk) = 0
-                      else ! for negative nblk_rows_cut we nullify the whole block (it's locally absent)
-                        aux_b_full(1+i_block_loc_fine*nblk : nblk+i_block_loc_fine*nblk, &
-                                    1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk) = 0
-                      endif
-                    endif
+                    call set_zeros_in_unused_block_part_&
+                                  &MATH_DATATYPE&
+                                  &_&
+                                  &PRECISION &
+                                  (aux_b_full, nblk, nblk_rows_cut, nblk_cols_cut, &
+                                  i_block_loc_fine, j_block_loc_fine, 0, 0)
 
-                    if (nblk_cols_cut < nblk) then
-                      if (nblk_cols_cut>0) then
-                        aux_b_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
-                                    nblk_cols_cut+1+j_block_loc_fine*nblk : nblk+j_block_loc_fine*nblk) = 0
-                      else
-                        aux_b_full(1+i_block_loc_fine*nblk : nblk_rows_cut+i_block_loc_fine*nblk, &
-                                    1+j_block_loc_fine*nblk : nblk+j_block_loc_fine*nblk) = 0
-                      endif
-                    endif
                   enddo ! j_block_loc_fine
                 enddo ! i_block_loc_fine
               endif ! (mod(np_t_fine, np_rows) == my_prow)
@@ -1910,7 +1889,14 @@
                                 a(1+i_block_loc*nblk      : nblk_rows_cut+i_block_loc*nblk, &
                                   1+j_block_loc*nblk      : nblk_cols_cut+j_block_loc*nblk)
                     endif
-          
+                    
+                    call set_zeros_in_unused_block_part_&
+                                  &MATH_DATATYPE&
+                                  &_&
+                                  &PRECISION &
+                                  (aux_a_full, nblk, nblk_rows_cut, nblk_cols_cut, &
+                                  i_block_loc_fine, j_block_loc_fine, dnp_ab_t*nblk_mult_max, 0)
+
                   enddo ! j_block_loc_fine
                 enddo ! i_block_loc_fine
               enddo ! dnp_ab_t
@@ -2023,6 +2009,7 @@
 
           do dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
             
+            ! PETERDEBUG: potential for opttimization: GEMM can be done in one go
             if (useGPU) then
               call obj%timer%start("gpublas")
               NVTX_RANGE_PUSH("gpublas")
@@ -2161,11 +2148,11 @@
                                       SM_count, debug, my_stream)
               call obj%timer%stop("gpu_update_c_tn_nt")
             else
-              call obj%timer%start("update_c_tn_nt")
               ! Put the result into C
-              beta = ONE
+              call obj%timer%start("update_c_tn_nt")
+              first_call = .false.
               dnp_ab = np_ab_fine/np_dirs
-              if (dnp_ab == 0) beta = ZERO
+              if (dnp_ab == 0) first_call = .true.
 
               do dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
                 np_ab_t_fine = dnp_ab_t*np_dirs_t + my_pdir_t
@@ -2177,16 +2164,26 @@
                     do i_block_loc_fine = 0, nblk_mult/nblk-1
                       i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
 
-                      nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
                       nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
-
-                      c     (1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
-                              1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) = &
-                      beta*c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
-                              1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) + &
-                      tmp1_full(1+i_block_loc_fine*nblk :nblk+i_block_loc_fine*nblk, &
-                                1   +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                nblk+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max)
+                      nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
+                      
+                      if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
+                        if (first_call) then
+                          c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
+                            1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) = &
+                          tmp1_full(1+i_block_loc_fine*nblk :nblk_rows_cut+i_block_loc_fine*nblk, &
+                                    1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                    nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max)
+                        else
+                          c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
+                            1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) = &
+                          c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
+                            1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) + &
+                          tmp1_full(1+i_block_loc_fine*nblk :nblk_rows_cut+i_block_loc_fine*nblk, &
+                                    1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                    nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max)
+                        endif
+                      endif                    
                     enddo ! i_block_loc_fine
                   enddo ! j_block_loc_fine
                 else if (b_transposed) then
@@ -2198,14 +2195,24 @@
             
                       nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
                       nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
-            
-                      c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
-                        1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) = &
-                      beta * c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
-                              1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) + &
-                      tmp1_full(1+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
-                                1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk)
+                      
+                      if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
+                        if (first_call) then
+                          c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
+                            1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) = &
+                          tmp1_full(1            +i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                    nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
+                                    1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk)
+                        else
+                          c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
+                            1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) = &
+                          c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
+                            1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) + &
+                          tmp1_full(1            +i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                    nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
+                                    1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk)
+                        endif
+                      endif
                     enddo ! j_block_loc_fine
                   enddo ! i_block_loc_fine
                 endif

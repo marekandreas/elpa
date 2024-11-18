@@ -43,33 +43,11 @@
 ! This file was written by P. Karpov, MPCDF
 
 #include "config-f90.h"
-module elpa_pxgemm_multiply_transpose
+module elpa_pxgemm_transpose
 
   public
 
   contains
-
-  ! dir = "row" or "col"
-  ! np_row_fine = np_fine
-  ! np_col_fine = np_bc_fine
-  function find_nblk_mult_dirs(l_dirs, nblk, np_dirs, np_dir_fine, LCM) result(nblk_mult_dirs)
-    implicit none
-    integer, intent(in)  :: l_dirs, nblk, np_dirs, np_dir_fine, LCM
-    integer              :: nblk_mult_dirs
-    integer              :: tail_loc
-
-    nblk_mult_dirs = l_dirs/(LCM/np_dirs)*nblk
-    tail_loc = mod(l_dirs, LCM/np_dirs)/nblk ! number of local nblk-blocks in the last (incomplete) LCM block
-    if (np_dir_fine/np_dirs > tail_loc) then
-      nblk_mult_dirs = nblk_mult_dirs + 0
-    else if (np_dir_fine/np_dirs < tail_loc) then
-      nblk_mult_dirs = nblk_mult_dirs + nblk
-    else ! np_dir_fine/np_dirs == tail_loc
-      nblk_mult_dirs = nblk_mult_dirs + mod(l_dirs, nblk)
-    endif
-  end function find_nblk_mult_dirs
-
-!___________________________________________________
 
 #undef USE_CCL_PXGEMM
 #define CCL _
@@ -77,7 +55,7 @@ module elpa_pxgemm_multiply_transpose
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_pxgemm_multiply_transpose_template.F90"
+#include "elpa_pxgemm_transpose_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -86,7 +64,7 @@ module elpa_pxgemm_multiply_transpose
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_pxgemm_multiply_transpose_template.F90"
+#include "elpa_pxgemm_transpose_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */
@@ -95,7 +73,7 @@ module elpa_pxgemm_multiply_transpose
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_pxgemm_multiply_transpose_template.F90"
+#include "elpa_pxgemm_transpose_template.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
@@ -103,7 +81,7 @@ module elpa_pxgemm_multiply_transpose
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_pxgemm_multiply_transpose_template.F90"
+#include "elpa_pxgemm_transpose_template.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
@@ -120,7 +98,7 @@ module elpa_pxgemm_multiply_transpose
 #define REALCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_pxgemm_multiply_transpose_template.F90"
+#include "elpa_pxgemm_transpose_template.F90"
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -129,7 +107,7 @@ module elpa_pxgemm_multiply_transpose
 #define REALCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_pxgemm_multiply_transpose_template.F90"
+#include "elpa_pxgemm_transpose_template.F90"
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_REAL */
@@ -138,7 +116,7 @@ module elpa_pxgemm_multiply_transpose
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_pxgemm_multiply_transpose_template.F90"
+#include "elpa_pxgemm_transpose_template.F90"
 #undef COMPLEXCASE
 #undef DOUBLE_PRECISION
 
@@ -146,10 +124,10 @@ module elpa_pxgemm_multiply_transpose
 #define COMPLEXCASE 1
 #define SINGLE_PRECISION 1
 #include "../general/precision_macros.h"
-#include "elpa_pxgemm_multiply_transpose_template.F90"
+#include "elpa_pxgemm_transpose_template.F90"
 #undef COMPLEXCASE
 #undef SINGLE_PRECISION
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-end module elpa_pxgemm_multiply_transpose
+end module
 

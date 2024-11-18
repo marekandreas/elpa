@@ -68,6 +68,7 @@ subroutine elpa_transpose_row_or_col&
   use elpa_mpi
   use elpa_abstract_impl
   use elpa_utilities, only : least_common_multiple, check_memcpy_gpu_f
+  use elpa_pxgemm_helpers, only : find_nblk_mult_dirs
   use elpa_gpu
 #if defined(USE_CCL_PXGEMM)
   use elpa_ccl_gpu

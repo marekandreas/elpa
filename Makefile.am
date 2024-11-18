@@ -123,8 +123,10 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/cholesky/GPU/ROCm/mod_cholesky_hip.F90 \
   src/cholesky/GPU/SYCL/mod_cholesky_sycl.F90 \
   src/invert_trm/mod_elpa_invert_trm.F90 \
-  src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
-  src/multiply_a_b/mod_elpa_pxgemm_multiply_transpose.F90 \
+  src/multiply_a_b/mod_elpa_hermitian_multiply.F90 \
+  src/multiply_a_b/mod_elpa_pxgemm_multiply.F90 \
+  src/multiply_a_b/mod_elpa_pxgemm_transpose.F90 \
+  src/multiply_a_b/mod_elpa_pxgemm_helpers.F90 \
   src/multiply_a_b/GPU/mod_multiply_a_b_gpu.F90 \
   src/multiply_a_b/GPU/CUDA/mod_multiply_a_b_cuda.F90 \
   src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
@@ -213,7 +215,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/invert_trm/invert_trm_template.F90 \
   src/multiply_a_b/elpa_hermitian_multiply_template.F90 \
   src/multiply_a_b/elpa_pxgemm_multiply_template.F90 \
-  src/multiply_a_b/elpa_pxgemm_multiply_transpose_template.F90 \
+  src/multiply_a_b/elpa_pxgemm_transpose_template.F90 \
+  src/multiply_a_b/elpa_pxgemm_helpers_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
@@ -1110,25 +1113,10 @@ EXTRA_DIST = \
   src/elpa1/elpa1_tools_template.F90 \
   src/elpa1/trans_ev_template.F90 \
   src/elpa1/tridiag_template.F90 \
-  src/cholesky/mod_elpa_cholesky.F90 \
   src/cholesky/elpa_cholesky_template.F90 \
-  src/cholesky/GPU/mod_cholesky_gpu.F90 \
-  src/cholesky/GPU/CUDA/mod_cholesky_cuda.F90 \
-  src/invert_trm/mod_elpa_invert_trm.F90 \
-  src/invert_trm/GPU/mod_invert_trm_gpu.F90 \
-  src/invert_trm/GPU/CUDA/mod_invert_trm_cuda.F90 \
-  src/invert_trm/GPU/ROCm/mod_invert_trm_hip.F90 \
-  src/invert_trm/GPU/SYCL/mod_invert_trm_sycl.F90 \
   src/multiply_a_b/elpa_hermitian_multiply_template.F90 \
   src/multiply_a_b/elpa_pxgemm_multiply_template.F90 \
-  src/multiply_a_b/mod_elpa_multiply_a_b.F90 \
-  src/multiply_a_b/elpa_pxgemm_multiply_transpose_template.F90 \
-  src/multiply_a_b/mod_elpa_pxgemm_multiply_transpose.F90 \
-  src/multiply_a_b/GPU/mod_multiply_a_b_gpu.F90 \
-  src/multiply_a_b/GPU/CUDA/mod_multiply_a_b_cuda.F90 \
-  src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
-  src/multiply_a_b/GPU/SYCL/mod_multiply_a_b_sycl.F90 \
-  src/multiply_a_b/GPU/OpenMP/mod_multiply_a_b_openmp_offload.F90 \
+  src/multiply_a_b/elpa_pxgemm_transpose_template.F90 \
   src/multiply_a_b/GPU/elpa_pxgemm_multiply_gpu.h \
   src/invert_trm/invert_trm_template.F90 \
   src/elpa1/elpa_reduce_add_vectors_template.F90 \

@@ -92,7 +92,7 @@ subroutine elpa_transform_generalized_a_h_a_&
   integer(kind=ik)         :: istat
   character(200)           :: errorMessage
   integer                  :: sc_desc(SC_DESC_LEN)
-  integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=ik)         :: myid, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=ik)         :: i, j
   integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
   integer(kind=ik)         :: BuffLevelInt
@@ -118,7 +118,7 @@ subroutine elpa_transform_generalized_a_h_a_&
   call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
 
-  my_p    = int(my_pMPI   , kind=c_int)
+  myid    = int(my_pMPI   , kind=c_int)
   my_prow = int(my_prowMPI, kind=c_int)
   np_rows = int(np_rowsMPI, kind=c_int)
   my_pcol = int(my_pcolMPI, kind=c_int)
@@ -151,7 +151,7 @@ subroutine elpa_transform_generalized_a_h_a_&
 
 
 #if !defined(WITH_MPI)
-  if (cannon_for_generalized==1 .and. (my_p == 0) .and. firstCall) then
+  if (cannon_for_generalized==1 .and. (myid == 0) .and. firstCall) then
     write(error_uni,*) "Cannons algorithm can only be used with MPI. Switching it off."
     firstCall = .false.
   end if
@@ -159,7 +159,7 @@ subroutine elpa_transform_generalized_a_h_a_&
 #endif
 
 if (mod(np_cols, np_rows) /= 0) then
-  if (cannon_for_generalized==1 .and. (my_p == 0) .and. firstCall) then
+  if (cannon_for_generalized==1 .and. (myid == 0) .and. firstCall) then
     write(error_unit,*) "To use Cannons algorithm, np_cols must be a multiple of np_rows. Switching it off."
     firstCall = .false.
   endif
@@ -434,7 +434,6 @@ subroutine elpa_transform_back_generalized_a_h_a_&
 
 #ifdef DEVICE_POINTER
   type(c_ptr)              :: bDev, qDev, tmpDev
-  !integer(kind=c_intptr_t) :: b_dev, q_dev, tmp_dev ! PETERDEBUG: cleanup
   MATH_DATATYPE(kind=rck),  allocatable :: b(:,:), q(:,:) ! dummy variables
 #else /* DEVICE_POINTER */
 #ifdef USE_ASSUMED_SIZE
@@ -448,7 +447,7 @@ subroutine elpa_transform_back_generalized_a_h_a_&
   
   integer(kind=ik)         :: istat
   character(200)           :: errorMessage
-  integer(kind=ik)         :: my_p, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
+  integer(kind=ik)         :: myid, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=ik)         :: i, j
   integer(kind=MPI_KIND)   :: mpierr, my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI
   integer                  :: sc_desc(SC_DESC_LEN)
@@ -475,7 +474,7 @@ subroutine elpa_transform_back_generalized_a_h_a_&
   call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND),my_pcolMPI,mpierr)
   call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND),np_colsMPI,mpierr)
 
-  my_p = int(my_pMPI,kind=c_int)
+  myid = int(my_pMPI,kind=c_int)
   my_prow = int(my_prowMPI,kind=c_int)
   np_rows = int(np_rowsMPI,kind=c_int)
   my_pcol = int(my_pcolMPI,kind=c_int)
@@ -541,8 +540,6 @@ subroutine elpa_transform_back_generalized_a_h_a_&
 #ifdef DEVICE_POINTER
     successGPU = gpu_malloc(tmpDev, self%local_nrows*self%local_ncols*size_of_datatype)
     check_alloc_gpu("elpa_transform_back_generalized: tmpDev", successGPU)
-
-    !tmpDev = transfer(tmp_dev, tmpDev) ! PETERDEBUG: cleanup
 #else
     allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_transform_back_generalized: tmp", istat, errorMessage)
