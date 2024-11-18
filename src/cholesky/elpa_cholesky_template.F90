@@ -88,6 +88,7 @@
 #endif
 #else /* DEVICE_POINTER */
   type(c_ptr)                                :: aDev
+  MATH_DATATYPE(kind=rck), allocatable       :: a(:,:) ! dummy variable
 !#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
   MATH_DATATYPE(kind=rck), allocatable       :: a_tmp(:,:)
 !#endif
@@ -408,29 +409,30 @@
     endif ! .not. isSquareGridGPU
 #endif /* USE_CCL_CHOLESKY */
 
+  if (.not. useCCL) then
 #ifdef WITH_NVTX
-  call nvtxRangePush("allocate tmp1, tmp2, tmatr, tmatc")
+    call nvtxRangePush("allocate tmp1, tmp2, tmatr, tmatc")
 #endif
 
-  allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_cholesky: tmp1", istat, errorMessage)
+    allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_cholesky: tmp1", istat, errorMessage)
 
-  allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_cholesky: tmp2", istat, errorMessage)
-  
-  allocate(tmatr(matrixRows,nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_cholesky: tmatr", istat, errorMessage)
+    allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_cholesky: tmp2", istat, errorMessage)
+    
+    allocate(tmatr(matrixRows,nblk), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_cholesky: tmatr", istat, errorMessage)
 
-  allocate(tmatc(matrixCols,nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_cholesky: tmatc", istat, errorMessage)
+    allocate(tmatc(matrixCols,nblk), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_cholesky: tmatc", istat, errorMessage)
 
 #ifdef WITH_NVTX
-  call nvtxRangePop() ! allocate tmp1, tmp2, tmatr, tmatc
+    call nvtxRangePop() ! allocate tmp1, tmp2, tmatr, tmatc
 #endif
-
+  endif ! (.not. useCCL)
 
 #ifdef WITH_GPU_STREAMS
-  if (useGPU) then
+  if (useGPU .and. .not. useCCL) then
     successGPU = gpu_host_register(int(loc(tmp1),kind=c_intptr_t), &
                     nblk*(nblk+1)/2 * size_of_datatype, gpuHostRegisterDefault)
     check_host_register_gpu("elpa_cholesky: tmp1", successGPU)
@@ -806,9 +808,7 @@
         else ! useGPU
           nc = 0
           do i=1,nblk
-#ifndef DEVICE_POINTER
             tmp1(nc+1:nc+i) = a(l_row1:l_row1+i-1,l_col1+i-1)
-#endif
             nc = nc+i
           enddo
         endif ! useGPU
@@ -907,13 +907,11 @@
       else ! useGPU
 
         call obj%timer%start("lapack")
-#ifndef DEVICE_POINTER
         if (matrixCols-l_colx+1>0) then
           call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', int(nblk,kind=BLAS_KIND),  &
                             int(matrixCols-l_colx+1,kind=BLAS_KIND), ONE, tmp2, &
                             int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND) )
         endif
-#endif
         call obj%timer%stop("lapack")
       endif ! useGPU
     endif ! (my_prow==prow(n, nblk, np_rows))
@@ -931,14 +929,12 @@
       endif
     else ! useGPU
       do i=1,nblk
-#ifndef DEVICE_POINTER
 #if REALCASE == 1
         if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:matrixCols,i) = a(l_row1+i-1,l_colx:matrixCols)
 #endif
 #if COMPLEXCASE == 1
         if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:matrixCols,i) = conjg(a(l_row1+i-1,l_colx:matrixCols))
 #endif
-#endif /* DEVICE_POINTER */
       enddo
     endif ! useGPU
 
@@ -1092,8 +1088,8 @@
           &MATH_DATATYPE&
           &_&
           &PRECISION &
-                (obj, tmatc_dev, ubound(tmatc,dim=1), ccl_comm_cols, mpi_comm_cols, &
-                      tmatr_dev, ubound(tmatr,dim=1), ccl_comm_rows, mpi_comm_rows, &
+                (obj, tmatc_dev, matrixCols, ccl_comm_cols, mpi_comm_cols, &
+                      tmatr_dev, matrixRows, ccl_comm_rows, mpi_comm_rows, &
                 n, na, nblk, nblk, nrThreads, .false., my_pcol, my_prow, np_cols, np_rows, &
                 aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
 #endif /* USE_CCL_CHOLESKY */
@@ -1106,12 +1102,12 @@
       call nvtxRangePush("elpa_transpose_vectors")
 #endif
       call elpa_transpose_vectors_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION &
-      (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
-      tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
-      n, na, nblk, nblk, nrThreads, .false., success)
+                &MATH_DATATYPE&
+                &_&
+                &PRECISION &
+                (obj, tmatc, matrixCols, mpi_comm_cols, &
+                      tmatr, matrixRows, mpi_comm_rows, &
+                n, na, nblk, nblk, nrThreads, .false., success)
 #ifdef WITH_NVTX
       call nvtxRangePop() ! elpa_transpose_vectors
 #endif
@@ -1162,13 +1158,11 @@
         lre = min(matrixRows,(i+1)*l_rows_tile)
         if (lce<lcs .or. lre<lrs) cycle
         call obj%timer%start("blas")
-#ifndef DEVICE_POINTER
         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(lre-lrs+1,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
                             int(nblk,kind=BLAS_KIND), -ONE,  &
                             tmatr(lrs,1), int(ubound(tmatr,dim=1),kind=BLAS_KIND), tmatc(lcs,1), &
                             int(ubound(tmatc,dim=1),kind=BLAS_KIND), &
                             ONE, a(lrs,lcs), int(matrixRows,kind=BLAS_KIND))
-#endif
         call obj%timer%stop("blas")
       enddo
     endif ! useGPU
@@ -1226,23 +1220,25 @@
   endif
 
 #ifdef WITH_GPU_STREAMS
-  if (useGPU) then
+  if (useGPU .and. .not. useCCL) then
     successGPU = gpu_host_unregister(int(loc(tmp1),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_cholesky: tmp1", successGPU)
 
     successGPU = gpu_host_unregister(int(loc(tmp2),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_cholesky: tmp2", successGPU)
 
-    successGPU = gpu_host_unregister(int(loc(tmatc),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_cholesky: tmatc", successGPU)
-
     successGPU = gpu_host_unregister(int(loc(tmatr),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_cholesky: tmatr", successGPU)
+    
+    successGPU = gpu_host_unregister(int(loc(tmatc),kind=c_intptr_t))
+    check_host_unregister_gpu("elpa_cholesky: tmatc", successGPU)
   endif
 #endif
 
-  deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
-  check_deallocate("elpa_cholesky: tmp1, tmp2, tmatr, tmatc", istat, errorMessage)
+  if (.not. useCCL) then
+    deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_cholesky: tmp1, tmp2, tmatr, tmatc", istat, errorMessage)
+  endif
 
   call obj%timer%stop("deallocate")
 

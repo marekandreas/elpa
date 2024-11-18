@@ -557,11 +557,7 @@
         else ! useGPU
           nc = 0
           do i=1,nb
-!#ifndef DEVICE_POINTER ! PETERDEBUG111: cleanup
             tmp1(nc+1:nc+i) = a(l_row1:l_row1+i-1,l_col1+i-1)
-!#else
-!            tmp1(nc+1:nc+i) = a_tmp(l_row1:l_row1+i-1,l_col1+i-1)
-!#endif
             nc = nc+i
           enddo
         endif ! useGPU
@@ -679,7 +675,6 @@
         endif
       else ! useGPU
         call obj%timer%start("blas")
-!#ifndef DEVICE_POINTER ! PETERDEBUG111: cleanup
         if (l_cols-l_colx+1>0) then
           call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
                               tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND))
@@ -687,15 +682,15 @@
         call obj%timer%stop("blas")
         if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a(l_row1:l_row1+nb-1,l_colx:l_cols)
         if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
-!#else
-!        if (l_cols-l_colx+1>0) then
-!          call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
-!                              tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a_tmp(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND))
-!        endif
-!        call obj%timer%stop("blas")
-!        if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a_tmp(l_row1:l_row1+nb-1,l_colx:l_cols)
-!        if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
-!#endif
+! #else
+!         if (l_cols-l_colx+1>0) then
+!           call PRECISION_TRMM('L', 'U', 'N', 'N', int(nb,kind=BLAS_KIND), int(l_cols-l_colx+1,kind=BLAS_KIND), ONE, &
+!                               tmp2, int(ubound(tmp2,dim=1),kind=BLAS_KIND), a_tmp(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND))
+!         endif
+!         call obj%timer%stop("blas")
+!         if (l_colx<=l_cols)   tmat2(1:nb,l_colx:l_cols) = a_tmp(l_row1:l_row1+nb-1,l_colx:l_cols)
+!         if (my_pcol==pcol(n, nblk, np_cols)) tmat2(1:nb,l_col1:l_col1+nb-1) = tmp2(1:nb,1:nb) ! tmp2 has the lower left triangle 0
+! #endif
       endif ! useGPU
 
     endif ! (my_prow==prow(n, nblk, np_rows)
@@ -706,13 +701,8 @@
           my_stream = obj%gpu_setup%my_stream
           call gpu_copy_PRECISION_a_tmat1 (a_dev, tmat1_dev, l_rows, matrixRows, nb, l_row1, l_col1, my_stream)
         else
-!#ifndef DEVICE_POINTER ! PETERDEBUG111: cleanup
           tmat1(1:l_row1-1,1:nb) = a(1:l_row1-1,l_col1:l_col1+nb-1)
           a(1:l_row1-1,l_col1:l_col1+nb-1) = 0
-!#else
-!          tmat1(1:l_row1-1,1:nb) = a_tmp(1:l_row1-1,l_col1:l_col1+nb-1)
-!          a_tmp(1:l_row1-1,l_col1:l_col1+nb-1) = 0
-!#endif
         endif
       endif
 
