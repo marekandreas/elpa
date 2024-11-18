@@ -70,10 +70,8 @@ subroutine elpa_transpose_row_or_col&
   use elpa_utilities, only : least_common_multiple, check_memcpy_gpu_f
   use elpa_pxgemm_helpers, only : find_nblk_mult_dirs
   use elpa_gpu
-#if defined(USE_CCL_PXGEMM)
   use elpa_ccl_gpu
   use multiply_a_b_gpu
-#endif
 #ifdef WITH_NVIDIA_GPU_VERSION
   use cuda_functions ! for NVTX labels
 #endif
@@ -136,11 +134,11 @@ subroutine elpa_transpose_row_or_col&
   logical                                      :: successGPU, useCCL
   integer(kind=c_intptr_t)                     :: my_stream
   integer(kind=ik)                             :: SM_count
-#if defined(USE_CCL_PXGEMM)
+!#if defined(USE_CCL_PXGEMM) ! PETERDEBUG: clean up
   integer(kind=c_intptr_t)                     :: ccl_comm_all
   integer(kind=c_int)                          :: cclDataType
   integer(kind=ik)                             :: k_datatype
-#endif
+!#endif
 
   call obj%timer%start("elpa_transpose_row")
 
@@ -297,13 +295,11 @@ subroutine elpa_transpose_row_or_col&
       endif
 
       if (useCCL) then
-#ifdef USE_CCL_PXGEMM
         ! PETERDEBUG: changes needed here? Modification of kernel?
         lld_buf = nblk_mult_rows_max
         call gpu_ccl_copy_buf_send(PRECISION_CHAR, a_dev, buf_send_dev, l_rows, l_cols, lld_buf, &
                                    nblk, i_block_loc_fine_max, j_block_loc_fine_max, np, np_t, &
                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
-#endif /* USE_CCL_PXGEMM */
       else ! useCCL
         ! The nested loop is symmetric wrt to i,j, so we use the rigid order of indices for convenience of copying
         do j_block_loc_fine = 0, j_block_loc_fine_max
@@ -326,7 +322,6 @@ subroutine elpa_transpose_row_or_col&
       ! PETERDEBUG: we send extra data to resolve the problem of continuity of the data.
       ! Alternatively, we could make buf_send and buf_recv to be 1D arrays of blocks (still 2D array of elements, so convenient to copy)
       if (useCCL) then
-#ifdef USE_CCL_PXGEMM
         if (mpi_rank_target/=myid) then
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("elpa_pxgemm: ccl_send", successGPU)
@@ -348,12 +343,13 @@ subroutine elpa_transpose_row_or_col&
                                   gpuMemcpyDeviceToDevice)
           check_memcpy_gpu("elpa_pxgemm: buf_self_dev <- buf_send_dev", successGPU)
         endif
-#endif /* USE_CCL_PXGEMM */
       else ! useCCL
         if (mpi_rank_target/=myid) then
+#ifdef WITH_MPI
           call MPI_Send(buf_send, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
                         MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_target, kind=MPI_KIND), 0, &
                         int(mpi_comm_all, kind=MPI_KIND), mpierr)
+#endif
         else
           buf_self = buf_send
         endif
@@ -404,7 +400,6 @@ subroutine elpa_transpose_row_or_col&
       endif
 
       if (useCCL) then
-#ifdef USE_CCL_PXGEMM
         if (mpi_rank_source/=myid) then
           successGPU = ccl_Recv(buf_recv_dev, int(k_datatype*nblk_mult_rows_max*nblk_mult_cols_max,kind=c_size_t), &
                                 cclDataType, mpi_rank_source, ccl_comm_all, my_stream)
@@ -422,24 +417,23 @@ subroutine elpa_transpose_row_or_col&
                                   gpuMemcpyDeviceToDevice)
           check_memcpy_gpu("elpa_pxgemm: buf_recv_dev <- buf_self_dev", successGPU)
         endif
-#endif /* USE_CCL_PXGEMM */
       else ! useCCL
         if (mpi_rank_source/=myid) then
+#ifdef WITH_MPI
           call MPI_Recv(buf_recv, int(nblk_mult_rows_max*nblk_mult_cols_max, kind=MPI_KIND), &
                         MPI_MATH_DATATYPE_PRECISION, int(mpi_rank_source, kind=MPI_KIND), 0, &
                         int(mpi_comm_all, kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+#endif
         else
           buf_recv = buf_self
         endif
       endif ! useCCL
 
       if (useCCL) then
-#ifdef USE_CCL_PXGEMM
         lld_buf = nblk_mult_rows_max
         call gpu_ccl_copy_buf_recv(PRECISION_CHAR, at_dev, buf_recv_dev, l_rows, l_cols, &
                                    lld_buf, nblk, i_block_loc_fine_max, j_block_loc_fine_max, np, np_t, &
                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream)
-#endif /* USE_CCL_PXGEMM */
       else ! useCCL
         do i_block_loc_fine = 0, i_block_loc_fine_max
           i_block_loc = (np + i_block_loc_fine*np_rows_fine)/np_rows

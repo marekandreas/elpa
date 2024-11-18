@@ -721,7 +721,7 @@
           endif ! useGPU .and. .not. useCCL
 #else /* WITH_MPI */
 
-          if (useGPU)
+          if (useGPU) then
             num = nstor*(lce-lcs+1)*size_of_datatype
             successGPU = gpu_memcpy(tmp2_dev, tmp1_dev, num, gpuMemcpyDeviceToDevice)
             check_memcpy_gpu("elpa_hermitian_multiply: tmp2 to tmp2_dev", successGPU)

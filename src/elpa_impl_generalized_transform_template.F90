@@ -152,7 +152,7 @@ subroutine elpa_transform_generalized_a_h_a_&
 
 #if !defined(WITH_MPI)
   if (cannon_for_generalized==1 .and. (myid == 0) .and. firstCall) then
-    write(error_uni,*) "Cannons algorithm can only be used with MPI. Switching it off."
+    write(error_unit,*) "Cannons algorithm can only be used with MPI. Switching it off."
     firstCall = .false.
   end if
   cannon_for_generalized = 0

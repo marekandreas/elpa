@@ -641,7 +641,7 @@
           call obj%timer%stop("blas")
         endif ! useGPU
 
-
+#ifdef WITH_MPI
         ! copy data to host for mpi_reduce, if needed
         if (useGPU .and. .not. useCCL) then
           num = nblk_mult*nblk_mult
@@ -687,6 +687,7 @@
           endif
           call obj%timer%stop("mpi_communication")
         endif ! useCCL
+#endif /* WITH_MPI */
 
         ! Put the result into C
         ! PETERDEBUG: we put the result to c_dev (ifdef DEVICE_POINTER) or to c (if not DEVICE_POINTER)
@@ -1029,6 +1030,8 @@
           check_memcpy_gpu("elpa_pxgemm_multiply: aux_b_full -> aux_b_full_dev", successGPU)
 #endif
         endif ! (useGPU .and. .not. useCCL)
+#else /* WITH_MPI */
+        nblk_mult_min= l_rows
 #endif /* WITH_MPI */
 
         beta = ZERO
