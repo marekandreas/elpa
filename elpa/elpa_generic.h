@@ -368,15 +368,15 @@ inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int
 #ifdef __cplusplus
 inline void elpa_pxgemm_multiply(elpa_t handle, char trans_a, char trans_b, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error)
 	{
-	elpa_pxgemm_multiply_a_h_a_d(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	elpa_pxgemm_multiply_a_h_a_d(handle, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 	}
 inline void elpa_pxgemm_multiply(elpa_t handle, char trans_a, char trans_b, int ncb, float  *a, float  *b, int nrows_b, int ncols_b, float  *c, int nrows_c, int ncols_c, int *error)
 	{
-	elpa_pxgemm_multiply_a_h_a_f(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	elpa_pxgemm_multiply_a_h_a_f(handle, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 	}
 inline void elpa_pxgemm_multiply(elpa_t handle, char trans_a, char trans_b, int ncb, std::complex<double> *a, std::complex<double> *b, int nrows_b, int ncols_b, std::complex<double> *c, int nrows_c, int ncols_c, int *error)
 	{
-	elpa_pxgemm_multiply_a_h_a_dc(handle, trans_a, trans_b, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	elpa_pxgemm_multiply_a_h_a_dc(handle, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 	}
 inline void elpa_pxgemm_multiply(elpa_t handle, char trans_a, char trans_b, int ncb, std::complex<float>  *a, std::complex<float>  *b, int nrows_b, int ncols_b, std::complex<float>  *c, int nrows_c, int ncols_c, int *error)
 	{
