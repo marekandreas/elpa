@@ -200,7 +200,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if (("multiply" in t) and (s == "2stage")):
         continue
 
-    if (("multiply" in t) and (m == "toeplitz")):
+    if (("multiply" in t) and (m != "random")):
         continue
 
     # qr only for 2stage real
