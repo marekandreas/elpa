@@ -588,7 +588,6 @@
           NVTX_RANGE_POP("MPI_Bcast(aux_a/b_full)")
           call obj%timer%stop("mpi_communication")
         endif ! useCCL
-#endif /* WITH_MPI */
 
         ! copy data back to device, if needed
         if (useGPU .and. .not. useCCL) then
@@ -616,7 +615,7 @@
           endif
 #endif
         endif ! (useGPU .and. .not. useCCL)
-
+#endif /* WITH_MPI */
 
         if (useGPU) then
           call obj%timer%start("gpublas")
@@ -641,8 +640,7 @@
           call obj%timer%stop("blas")
         endif ! useGPU
 
-#ifdef WITH_MPI
-        ! copy data to host for mpi_reduce, if needed
+        ! copy data to host for mpi_reduce (WITH_MPI) or further copying to c (!WITH_MPI) if needed
         if (useGPU .and. .not. useCCL) then
           num = nblk_mult*nblk_mult
 #ifdef WITH_GPU_STREAMS
@@ -656,7 +654,7 @@
 #endif  
         endif ! (useGPU .and. .not. useCCL)
 
-
+#ifdef WITH_MPI
         if (useCCL) then
           call obj%timer%start("ccl_reduce")
           NVTX_RANGE_PUSH("ccl_reduce tmp1_full_dev")
@@ -690,13 +688,13 @@
 #endif /* WITH_MPI */
 
         ! Put the result into C
-        ! PETERDEBUG: we put the result to c_dev (ifdef DEVICE_POINTER) or to c (if not DEVICE_POINTER)
+        ! PETERDEBUG: we put the result to c_dev if(useCCL). Otherwise, tmp1_full is already on host and we can copy it to c
         if (my_pdir==np) then
           if (useCCL) then
             NVTX_RANGE_PUSH("gpu_copy_aux_full")
             call gpu_copy_aux_full(PRECISION_CHAR, c_dev, tmp1_full_dev, l_rows, l_cols, ldc, nblk_mult, debug, my_stream)
             NVTX_RANGE_POP ("gpu_copy_aux_full")
-          else ! useCCL
+          else  ! useCCL
             c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
           endif ! useCCL
         endif
