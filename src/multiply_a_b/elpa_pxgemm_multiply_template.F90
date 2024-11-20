@@ -354,7 +354,6 @@
     ! copy a to a_dev
     num = lda*ldaCols*size_of_datatype
 #ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
     call gpu_memcpy_async_and_stream_synchronize &
     ("elpa_pxgemm_multiply: a to a_dev", a_dev, 0_c_intptr_t, &
                                        a(1:lda,1:ldaCols), &
@@ -366,7 +365,6 @@
 
     ! copy b to b_dev
 #ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
     call gpu_memcpy_async_and_stream_synchronize &
     ("elpa_pxgemm_multiply: b to b_dev", b_dev, 0_c_intptr_t, &
                                        b(1:ldb,1:ldbCols), &
@@ -524,7 +522,6 @@
         if (useGPU .and. .not. useCCL) then
           num = nblk_mult*nblk_mult
 #ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
           if (a_transposed) then
             call gpu_memcpy_async_and_stream_synchronize("elpa_pxgemm_multiply: aux_a_full_dev -> aux_a_full",  &
                   aux_a_full_dev, 0_c_intptr_t, aux_a_full(1:nblk_mult,1:nblk_mult), &
@@ -552,8 +549,6 @@
         if (useCCL) then
           call obj%timer%start("ccl_bcast")
           NVTX_RANGE_PUSH("ccl_bcast aux_a/b_full")
-          
-          my_stream = obj%gpu_setup%my_stream
 
           if (a_transposed) then
             successGPU = ccl_bcast(aux_a_full_dev, aux_a_full_dev, int(k_datatype*nblk_mult*nblk_mult,kind=c_size_t), &
@@ -593,7 +588,6 @@
         if (useGPU .and. .not. useCCL) then
           num = nblk_mult*nblk_mult
 #ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
           if (a_transposed) then
             call gpu_memcpy_async_and_stream_synchronize("elpa_pxgemm_multiply: aux_a_full -> aux_a_full_dev", &
                   aux_a_full_dev, 0_c_intptr_t, aux_a_full(1:nblk_mult,1:nblk_mult), &
@@ -640,28 +634,29 @@
           call obj%timer%stop("blas")
         endif ! useGPU
 
-        ! copy data to host for mpi_reduce (WITH_MPI) or further copying to c (!WITH_MPI) if needed
+#ifdef WITH_MPI
+        num = nblk_mult*nblk_mult
+
+        ! copy data to host for mpi_reduce, if needed
         if (useGPU .and. .not. useCCL) then
-          num = nblk_mult*nblk_mult
+          call obj%timer%start("gpu_memcpy")
 #ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize("elpa_pxgemm_multiply: tmp1_full_dev -> tmp1_full",  &
                 tmp1_full_dev, 0_c_intptr_t, tmp1_full(1:nblk_mult,1:nblk_mult), &
                 1, 1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
 #else
           successGPU = gpu_memcpy(int(loc(tmp1_full),kind=c_intptr_t), tmp1_full_dev, num*size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("elpa_pxgemm_multiply: tmp1_full_dev -> tmp1_full", successGPU)
-#endif  
+#endif
+          call obj%timer%stop("gpu_memcpy")
         endif ! (useGPU .and. .not. useCCL)
 
-#ifdef WITH_MPI
+
         if (useCCL) then
           call obj%timer%start("ccl_reduce")
           NVTX_RANGE_PUSH("ccl_reduce tmp1_full_dev")
-          
-          my_stream = obj%gpu_setup%my_stream
 
-          successGPU  = ccl_reduce(tmp1_full_dev, tmp1_full_dev, int(k_datatype*nblk_mult*nblk_mult,kind=c_size_t), cclDatatype, &
+          successGPU  = ccl_reduce(tmp1_full_dev, tmp1_full_dev, int(k_datatype*num,kind=c_size_t), cclDatatype, &
                                    cclSum, int(np, kind=c_int), ccl_comm_dirs, my_stream)
           
           if (.not. successGPU) then
@@ -677,26 +672,41 @@
         else ! useCCL
           call obj%timer%start("mpi_communication")
           if (my_pdir==np) then
-            call MPI_Reduce(MPI_IN_PLACE, tmp1_full, int(nblk_mult*nblk_mult,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
+            call MPI_Reduce(MPI_IN_PLACE, tmp1_full, int(num,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                             MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_dirs,kind=MPI_KIND), mpierr)
           else
-            call MPI_Reduce(tmp1_full   , tmp1_full, int(nblk_mult*nblk_mult,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
+            call MPI_Reduce(tmp1_full   , tmp1_full, int(num,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                             MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_dirs,kind=MPI_KIND), mpierr)
           endif
           call obj%timer%stop("mpi_communication")
         endif ! useCCL
+
+        if (useGPU .and. .not. useCCL) then
+          call obj%timer%start("gpu_memcpy")
+#ifdef WITH_GPU_STREAMS
+          call gpu_memcpy_async_and_stream_synchronize &
+              ("elpa_pxgemm_multiply: tmp1_full -> tmp1_full_dev", 0_c_intptr_t, tmp1_full_dev, &
+                tmp1_full(1:nblk_mult,1:nblk_mult), &
+                1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
+#else
+          successGPU = gpu_memcpy(tmp1_full_dev, int(loc(tmp1_full),kind=c_intptr_t), &
+                                  num*size_of_datatype, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("elpa_pxgemm_multiply: tmp1_full -> tmp1_full_dev", successGPU)
+#endif
+          call obj%timer%stop("gpu_memcpy")
+        endif ! (useGPU .and. .not. useCCL)
 #endif /* WITH_MPI */
 
         ! Put the result into C
         ! PETERDEBUG: we put the result to c_dev if(useCCL). Otherwise, tmp1_full is already on host and we can copy it to c
         if (my_pdir==np) then
-          if (useCCL) then
+          if (useGPU) then
             NVTX_RANGE_PUSH("gpu_copy_aux_full")
             call gpu_copy_aux_full(PRECISION_CHAR, c_dev, tmp1_full_dev, l_rows, l_cols, ldc, nblk_mult, debug, my_stream)
             NVTX_RANGE_POP ("gpu_copy_aux_full")
-          else  ! useCCL
+          else  ! useGPU
             c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
-          endif ! useCCL
+          endif ! useGPU
         endif
 
         NVTX_RANGE_POP("do np = 0, np_dirs-1")
@@ -704,12 +714,11 @@
       call obj%timer%stop("main_loop_square_grid_tn_nt")
 
 #if !defined(DEVICE_POINTER)
-      if (useCCL) then
+      if (useGPU) then
         call obj%timer%start("gpu_memcpy")
         NVTX_RANGE_PUSH("gpu_memcpy: c_dev->c")
         num = ldc*ldcCols
 #ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
             ("elpa_pxgemm_multiply: c_dev -> c", c_dev, 0_c_intptr_t, c(1:ldc,1:ldcCols), &
               1, 1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
@@ -719,7 +728,7 @@
 #endif
         NVTX_RANGE_POP("gpu_memcpy: c_dev->c")
         call obj%timer%stop("gpu_memcpy")
-      endif ! useCCL
+      endif ! useGPU
 #endif /* !defined(DEVICE_POINTER) */
 
     endif ! (.not. a_transposed .and. b_transposed)
@@ -876,7 +885,6 @@
               if (.not. useCCL) then
                 num = l_rows*l_cols
 #ifdef WITH_GPU_STREAMS
-                my_stream = obj%gpu_setup%my_stream
                 call gpu_memcpy_async_and_stream_synchronize &
                     ("elpa_pxgemm_multiply: at_col -> at_col_dev", at_col_dev, 0_c_intptr_t, at_col(1:l_rows,1:l_cols), &
                       1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
@@ -909,7 +917,6 @@
               if (.not. useCCL) then
                 num = l_rows*l_cols
 #ifdef WITH_GPU_STREAMS
-                my_stream = obj%gpu_setup%my_stream
                 call gpu_memcpy_async_and_stream_synchronize &
                     ("elpa_pxgemm_multiply: bt_row -> bt_row_dev", bt_row_dev, 0_c_intptr_t, bt_row(1:l_rows,1:l_cols), &
                       1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
@@ -944,7 +951,6 @@
           num_a = l_rows*nblk_mult
           num_b = nblk_mult*l_cols
 #ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize("elpa_pxgemm_multiply: aux_a_full_dev -> aux_a_full", &
                 aux_a_full_dev, 0_c_intptr_t, aux_a_full(1:l_rows,1:nblk_mult), &
                 1, 1, num_a*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
@@ -1013,7 +1019,6 @@
           num_a = l_rows*nblk_mult
           num_b = nblk_mult*l_cols
 #ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize("elpa_pxgemm_multiply: aux_a_full -> aux_a_full_dev", &
                 aux_a_full_dev, 0_c_intptr_t, aux_a_full(1:l_rows,1:nblk_mult), &
                 1, 1, num_a*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
@@ -1411,7 +1416,6 @@
               if (.not. useCCL) then
                 num = l_rows*l_cols
 #ifdef WITH_GPU_STREAMS
-                my_stream = obj%gpu_setup%my_stream
                 call gpu_memcpy_async_and_stream_synchronize &
                     ("elpa_pxgemm_multiply: at_col -> at_col_dev", at_col_dev, 0_c_intptr_t, at_col(1:l_rows,1:l_cols), &
                       1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
@@ -1448,7 +1452,6 @@
               if (.not. useCCL) then
                 num = l_rows*l_cols
 #ifdef WITH_GPU_STREAMS
-                my_stream = obj%gpu_setup%my_stream
                 call gpu_memcpy_async_and_stream_synchronize &
                     ("elpa_pxgemm_multiply: bt_row -> bt_row_dev", bt_row_dev, 0_c_intptr_t, bt_row(1:l_rows,1:l_cols), &
                       1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
@@ -1485,7 +1488,6 @@
         num_b = nblk_mult*l_cols
         if (useGPU .and. .not. useCCL) then
 #ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize("elpa_pxgemm_multiply: aux_a_full_dev -> aux_a_full",  &
                 aux_a_full_dev, 0_c_intptr_t, aux_a_full(1:l_rows,1:nblk_mult), &
                 1, 1, num_a*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
@@ -1550,7 +1552,6 @@
           num_a = l_rows*nblk_mult
           num_b = nblk_mult*l_cols
 #ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize("elpa_pxgemm_multiply: aux_a_full -> aux_a_full_dev", &
                 aux_a_full_dev, 0_c_intptr_t, aux_a_full(1:l_rows,1:nblk_mult), &
                 1, 1, num_a*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
@@ -1606,7 +1607,6 @@
         NVTX_RANGE_PUSH("gpu_memcpy: c_dev->c")
         num = l_rows*l_cols
 #ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
             ("elpa_pxgemm_multiply: c_dev -> c", c_dev, 0_c_intptr_t, c(1:l_rows,1:l_cols), &
               1, 1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
@@ -1980,7 +1980,6 @@
             num = nblk_mult*nblk_mult
             if (a_transposed) then
 #ifdef WITH_GPU_STREAMS
-              my_stream = obj%gpu_setup%my_stream
               call gpu_memcpy_async_and_stream_synchronize("elpa_pxgemm_multiply: aux_a_full -> aux_a_full_dev", &
                     aux_a_full_dev, 0_c_intptr_t, aux_a_full(1:nblk_mult,1:nblk_mult), &
                     1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
@@ -1991,7 +1990,6 @@
 #endif
             else if (b_transposed) then
 #ifdef WITH_GPU_STREAMS
-              my_stream = obj%gpu_setup%my_stream
               call gpu_memcpy_async_and_stream_synchronize ("elpa_pxgemm_multiply: aux_b_full -> aux_b_full_dev", &
                     aux_b_full_dev, 0_c_intptr_t, aux_b_full(1:nblk_mult,1:nblk_mult), &
                     1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
