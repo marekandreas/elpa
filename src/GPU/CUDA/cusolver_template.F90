@@ -215,7 +215,7 @@
     end subroutine
   end interface
 
-  ! cusolver_?dsyevd_c
+  ! cusolver_?syevd_c
 
   interface
     subroutine cusolver_Dsyevd_c(cusolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev) &
@@ -223,7 +223,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a_dev, info_dev, eigenvalues_dev
+      integer(kind=C_intptr_T), value           :: a_dev, eigenvalues_dev, info_dev
       integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
@@ -234,7 +234,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_INT), intent(in),value     :: n, lda
-      integer(kind=C_intptr_T), value           :: a_dev, info_dev, eigenvalues_dev
+      integer(kind=C_intptr_T), value           :: a_dev, eigenvalues_dev, info_dev
       integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
@@ -447,3 +447,4 @@
       call cusolver_Ssyevd_c(cusolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
 #endif
     end subroutine
+

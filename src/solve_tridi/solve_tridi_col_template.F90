@@ -280,6 +280,10 @@
           nlen = limits(n+1)-noff ! Size of subproblem
 
           if (useGPU) then
+
+
+              ! Fallback to CPU !
+              ! debug and fix why this does not wotk with gpu function directly    
               num = (na) * size_of_datatype_real
 #ifdef WITH_GPU_STREAMS
               my_stream = obj%gpu_setup%my_stream

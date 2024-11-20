@@ -223,6 +223,30 @@
 !    end subroutine
 !  end interface
 
+  ! rocsolver_?syevd_c
+
+  interface
+    subroutine rocsolver_Dsyevd_c(rocsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev) &
+                              bind(C,name="rocsolverDsyevd_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a_dev, eigenvalues_dev, info_dev
+      integer(kind=C_intptr_T), value           :: rocsolverHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine rocsolver_Ssyevd_c(rocsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev) &
+                              bind(C,name="rocsolverSsyevd_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a_dev, eigenvalues_dev, info_dev
+      integer(kind=C_intptr_T), value           :: rocsolverHandle
+    end subroutine
+  end interface
+
 
   contains
 
@@ -415,4 +439,32 @@
 !                             buffer_host, workspaceInBytesOnHost, info_dev)
 !#endif
 !    end subroutine
+
+    ! rocsolver_?syevd
+
+#ifndef WITH_AMD_HIPSOLVER_API
+    subroutine rocsolver_Dsyevd(n, a_dev, lda, eigenvalues_dev, info_dev, rocsolverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a_dev, info_dev, eigenvalues_dev
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_Dsyevd_c(rocsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
+#endif
+    end subroutine
+#endif
+
+#ifndef WITH_AMD_HIPSOLVER_API
+    subroutine rocsolver_Ssyevd(n, a_dev, lda, eigenvalues_dev, info_dev, rocsolverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a_dev, info_dev, eigenvalues_dev
+      integer(kind=C_intptr_T)        :: rocsolverHandle
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_Ssyevd_c(rocsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
+#endif
+    end subroutine
+#endif
 

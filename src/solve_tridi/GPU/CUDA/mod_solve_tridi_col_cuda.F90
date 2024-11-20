@@ -100,6 +100,34 @@ module solve_tridi_col_cuda
 
 
 
+  interface
+    subroutine cuda_copy_q_to_q_tmp_double_c(q_dev, q_tmp_dev, ldq, &
+                                                          nlen, my_stream) &
+                                                     bind(C, name="cuda_copy_q_to_q_tmp_double_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: q_dev, q_tmp_dev
+      integer(kind=c_int), intent(in)  :: ldq, nlen
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+
+
+  interface
+    subroutine cuda_copy_q_tmp_to_q_double_c(q_tmp_dev, q_dev, ldq, &
+                                                          nlen, my_stream) &
+                                                     bind(C, name="cuda_copy_q_tmp_to_q_double_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value  :: q_dev, q_tmp_dev
+      integer(kind=c_int), intent(in)  :: ldq, nlen
+      integer(kind=c_intptr_t), value  :: my_stream
+    end subroutine
+  end interface
+
+
+
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
     subroutine cuda_update_d_float_c(limits_dev, d_dev, e_dev, ndiv, na, &
@@ -149,24 +177,11 @@ module solve_tridi_col_cuda
 #endif
 
 
-  interface
-    subroutine cuda_copy_q_to_q_tmp_double_c(q_dev, q_tmp_dev, ldq, nlen, &
-                                                          my_stream) &
-                              bind(C, name="cuda_copy_q_to_q_tmp_double_FromC")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_intptr_T), value  :: q_dev, q_tmp_dev
-      integer(kind=c_int), intent(in)  :: ldq, nlen
-      integer(kind=c_intptr_t), value  :: my_stream
-    end subroutine
-  end interface
-
-
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine cuda_copy_q_to_q_tmp_float_c(q_dev, q_tmp_dev, ldq, nlen, &
-                                                          my_stream) &
-                              bind(C, name="cuda_copy_q_to_q_tmp_float_FromC")
+    subroutine cuda_copy_q_to_q_tmp_float_c(q_dev, q_tmp_dev, ldq, &
+                                                          nlen, my_stream) &
+                                                     bind(C, name="cuda_copy_q_to_q_tmp_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, q_tmp_dev
@@ -174,27 +189,15 @@ module solve_tridi_col_cuda
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
+
 #endif
 
 
-  interface
-    subroutine cuda_copy_q_tmp_to_q_double_c(q_tmp_dev, q_dev, ldq, nlen, &
-                                                          my_stream) &
-                              bind(C, name="cuda_copy_q_tmp_to_q_double_FromC")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_intptr_T), value  :: q_dev, q_tmp_dev
-      integer(kind=c_int), intent(in)  :: ldq, nlen
-      integer(kind=c_intptr_t), value  :: my_stream
-    end subroutine
-  end interface
-
-
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine cuda_copy_q_tmp_to_q_float_c(q_tmp_dev, q_dev, ldq, nlen, &
-                                                          my_stream) &
-                              bind(C, name="cuda_copy_q_tmp_to_q_float_FromC")
+    subroutine cuda_copy_q_tmp_to_q_float_c(q_tmp_dev, q_dev, ldq, &
+                                                          nlen, my_stream) &
+                                                     bind(C, name="cuda_copy_q_tmp_to_q_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, q_tmp_dev
@@ -202,6 +205,7 @@ module solve_tridi_col_cuda
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
+
 #endif
 
 
@@ -266,6 +270,48 @@ module solve_tridi_col_cuda
         call cuda_copy_d_to_d_tmp_double_c(d_dev, d_tmp_dev, na, my_stream)
       else
         call cuda_copy_d_to_d_tmp_double_c(d_dev, d_tmp_dev, na, my_stream2)
+      endif
+#endif
+
+    end subroutine
+
+
+    subroutine cuda_copy_q_to_q_tmp_double(q_dev, q_tmp_dev, ldq, &
+                                              nlen,  my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: ldq, nlen
+      integer(kind=C_intptr_T)           :: q_dev, q_tmp_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_copy_q_to_q_tmp_double_c(q_dev, q_tmp_dev, ldq, nlen, my_stream)
+      else
+        call cuda_copy_q_to_q_tmp_double_c(q_dev, q_tmp_dev, ldq, nlen, my_stream2)
+      endif
+#endif
+
+    end subroutine
+
+
+    subroutine cuda_copy_q_tmp_to_q_double(q_tmp_dev, q_dev, ldq, &
+                                              nlen,  my_stream)
+      use, intrinsic :: iso_c_binding
+
+      implicit none
+      integer(kind=C_INT), intent(in)    :: ldq, nlen
+      integer(kind=C_intptr_T)           :: q_dev, q_tmp_dev
+      integer(kind=c_intptr_t), optional :: my_stream
+      integer(kind=c_intptr_t)           :: my_stream2
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      if (present(my_stream)) then
+        call cuda_copy_q_tmp_to_q_double_c(q_tmp_dev, q_dev, ldq, nlen, my_stream)
+      else
+        call cuda_copy_q_tmp_to_q_double_c(q_tmp_dev, q_dev, ldq, nlen, my_stream2)
       endif
 #endif
 
@@ -344,8 +390,9 @@ module solve_tridi_col_cuda
 #endif
 
 
-    subroutine cuda_copy_q_to_q_tmp_double(q_dev, q_tmp_dev, ldq, nlen, &
-                                              my_stream)
+#ifdef WANT_SINGLE_PRECISION_REAL
+    subroutine cuda_copy_q_to_q_tmp_float(q_dev, q_tmp_dev, ldq, &
+                                              nlen,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -356,20 +403,19 @@ module solve_tridi_col_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (present(my_stream)) then
-        call cuda_copy_q_to_q_tmp_double_c(q_dev, q_tmp_dev, ldq, nlen, &
-                                                  my_stream)
+        call cuda_copy_q_to_q_tmp_float_c(q_dev, q_tmp_dev, ldq, nlen, my_stream)
       else
-        call cuda_copy_q_to_q_tmp_double_c(q_dev, q_tmp_dev, ldq, nlen, &
-                                                  my_stream2)
+        call cuda_copy_q_to_q_tmp_float_c(q_dev, q_tmp_dev, ldq, nlen, my_stream2)
       endif
 #endif
 
     end subroutine
+#endif
 
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine cuda_copy_q_to_q_tmp_float(q_dev, q_tmp_dev, ldq, nlen, &
-                                              my_stream)
+    subroutine cuda_copy_q_tmp_to_q_float(q_tmp_dev, q_dev, ldq, &
+                                              nlen,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
@@ -380,61 +426,9 @@ module solve_tridi_col_cuda
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (present(my_stream)) then
-        call cuda_copy_q_to_q_tmp_float_c(q_dev, q_tmp_dev, ldq, nlen, &
-                                                  my_stream)
+        call cuda_copy_q_tmp_to_q_float_c(q_tmp_dev, q_dev, ldq, nlen, my_stream)
       else
-        call cuda_copy_q_to_q_tmp_float_c(q_dev, q_tmp_dev, ldq, nlen, &
-                                                  my_stream2)
-      endif
-#endif
-
-    end subroutine
-#endif
-
-
-
-    subroutine cuda_copy_q_tmp_to_q_double(q_tmp_dev, q_dev, ldq, nlen, &
-                                              my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in)    :: ldq, nlen
-      integer(kind=C_intptr_T)           :: q_dev, q_tmp_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      if (present(my_stream)) then
-        call cuda_copy_q_tmp_to_q_double_c(q_tmp_dev, q_dev, ldq, nlen, &
-                                                  my_stream)
-      else
-        call cuda_copy_q_tmp_to_q_double_c(q_tmp_dev, q_dev, ldq, nlen, &
-                                                  my_stream2)
-      endif
-#endif
-
-    end subroutine
-
-
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine cuda_copy_q_tmp_to_q_float(q_tmp_dev, q_dev, ldq, nlen, &
-                                              my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in)    :: ldq, nlen
-      integer(kind=C_intptr_T)           :: q_dev, q_tmp_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      if (present(my_stream)) then
-        call cuda_copy_q_tmp_to_q_float_c(q_tmp_dev, q_dev, ldq, nlen, &
-                                                  my_stream)
-      else
-        call cuda_copy_q_tmp_to_q_float_c(q_tmp_dev, q_dev, ldq, nlen, &
-                                                  my_stream2)
+        call cuda_copy_q_tmp_to_q_float_c(q_tmp_dev, q_dev, ldq, nlen, my_stream2)
       endif
 #endif
 

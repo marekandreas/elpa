@@ -48,7 +48,6 @@
   
 #include "config-f90.h"
   
-#include "hip/hip_runtime.h"
 #include <stdio.h>
 #include <math.h>
 #include <stdio.h>
@@ -57,6 +56,7 @@
 #include <time.h>
 #include <alloca.h>
 #include <complex.h>
+#include "hip/hip_runtime.h"
 #include <hip/hip_complex.h>
 #include <stdint.h> 
 #include "config-f90.h"
@@ -91,7 +91,7 @@ extern "C" void hip_update_d_double_FromC(int *limits_dev, double *d_dev, double
 #ifdef WITH_GPU_STREAMS
   hip_update_d_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(limits_dev, d_dev, e_dev, ndiv, na);
 #else
-  hip_update_d_double_kernel<<<blocks, threadsPerBlock>>>              (limits_dev, d_dev, e_dev, ndev, na);
+  hip_update_d_double_kernel<<<blocks, threadsPerBlock>>>              (limits_dev, d_dev, e_dev, ndiv, na);
 #endif
 
   hipError_t cuerr = hipGetLastError();
@@ -99,6 +99,7 @@ extern "C" void hip_update_d_double_FromC(int *limits_dev, double *d_dev, double
     printf("Error in executing hip_update_d_double_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
+
 
 __global__ void hip_update_d_float_kernel(int *limits, float *d, float *e, const int ndiv, const int na) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -127,7 +128,7 @@ extern "C" void hip_update_d_float_FromC(int *limits_dev, float *d_dev, float *e
 #ifdef WITH_GPU_STREAMS
   hip_update_d_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(limits_dev, d_dev, e_dev, ndiv, na);
 #else
-  hip_update_d_float_kernel<<<blocks, threadsPerBlock>>>              (limits_dev, d_dev, e_dev, ndev, na);
+  hip_update_d_float_kernel<<<blocks, threadsPerBlock>>>              (limits_dev, d_dev, e_dev, ndiv, na);
 #endif
 
   hipError_t cuerr = hipGetLastError();
@@ -135,6 +136,7 @@ extern "C" void hip_update_d_float_FromC(int *limits_dev, float *d_dev, float *e
     printf("Error in executing hip_update_d_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
+
 
 
 __global__ void hip_copy_qmat1_to_qmat2_double_kernel(double *qmat1, double *qmat2, const int max_size) {
@@ -169,6 +171,7 @@ extern "C" void hip_copy_qmat1_to_qmat2_double_FromC(double *qmat1_dev, double *
 }
 
 
+
 __global__ void hip_copy_qmat1_to_qmat2_float_kernel(float *qmat1, float *qmat2, const int max_size) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.x * blockDim.x + threadIdx.x;
@@ -201,6 +204,8 @@ extern "C" void hip_copy_qmat1_to_qmat2_float_FromC(float *qmat1_dev, float *qma
 }
 
 
+
+
 __global__ void hip_copy_d_to_d_tmp_double_kernel(double *d, double *d_tmp, const int na) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -229,6 +234,8 @@ extern "C" void hip_copy_d_to_d_tmp_double_FromC(double *d_dev, double *d_tmp_de
 }
 
 
+
+
 __global__ void hip_copy_d_to_d_tmp_float_kernel(float *d, float *d_tmp, const int na) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -255,3 +262,138 @@ extern "C" void hip_copy_d_to_d_tmp_float_FromC(float *d_dev, float *d_tmp_dev, 
     printf("Error in executing hip_copy_d_to_d_tmp_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
+
+
+
+__global__ void hip_copy_q_to_q_tmp_double_kernel(double *q, double *q_tmp, const int ldq, const int nlen) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (i >= 0 && i < ldq) {
+      if (j >= 0 && j < nlen) {
+         q_tmp[i+ldq*j] = q[i+ldq*j];
+      }
+    }
+}
+
+
+extern "C" void hip_copy_q_to_q_tmp_double_FromC(double *q_dev, double *q_tmp_dev, int *ldq_in, int *nlen_in, hipStream_t  my_stream){
+  int ldq  = *ldq_in;
+  int nlen = *nlen_in;
+
+  dim3 threadsPerBlock(32,32);
+  dim3 blocks((ldq + threadsPerBlock.x - 1) / threadsPerBlock.x,(nlen + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
+#ifdef WITH_GPU_STREAMS
+  hip_copy_q_to_q_tmp_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q_tmp_dev, ldq, nlen);
+#else
+  hip_copy_q_to_q_tmp_double_kernel<<<blocks, threadsPerBlock>>>              (q_dev, q_tmp_dev, ldq, nlen);
+#endif
+
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_q_to_q_tmp_double_kernel: %s\n",hipGetErrorString(cuerr));
+  }
+}
+
+
+
+__global__ void hip_copy_q_to_q_tmp_float_kernel(float *q, float *q_tmp, const int ldq, const int nlen) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (i >= 0 && i < ldq) {
+      if (j >= 0 && j < nlen) {
+         q_tmp[i+ldq*j] = q[i+ldq*j];
+      }
+    }
+}
+
+
+extern "C" void hip_copy_q_to_q_tmp_float_FromC(float *q_dev, float *q_tmp_dev, int *ldq_in, int *nlen_in, hipStream_t  my_stream){
+  int ldq  = *ldq_in;
+  int nlen = *nlen_in;
+
+  dim3 threadsPerBlock(32,32);
+  dim3 blocks((ldq + threadsPerBlock.x - 1) / threadsPerBlock.x,(nlen + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
+#ifdef WITH_GPU_STREAMS
+  hip_copy_q_to_q_tmp_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, q_tmp_dev, ldq, nlen);
+#else
+  hip_copy_q_to_q_tmp_float_kernel<<<blocks, threadsPerBlock>>>              (q_dev, q_tmp_dev, ldq, nlen);
+#endif
+
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_q_to_q_tmp_float_kernel: %s\n",hipGetErrorString(cuerr));
+  }
+}
+
+
+
+__global__ void hip_copy_q_tmp_to_q_double_kernel(double *q_tmp, double *q, const int ldq, const int nlen) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (i >= 0 && i < ldq) {
+      if (j >= 0 && j < nlen) {
+         q[i+ldq*j] = q_tmp[i+ldq*j];
+      }
+    }
+}
+
+
+extern "C" void hip_copy_q_tmp_to_q_double_FromC(double *q_tmp_dev, double *q_dev, int *ldq_in, int *nlen_in, hipStream_t  my_stream){
+  int ldq  = *ldq_in;
+  int nlen = *nlen_in;
+
+  dim3 threadsPerBlock(32,32);
+  dim3 blocks((ldq + threadsPerBlock.x - 1) / threadsPerBlock.x,(nlen + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
+#ifdef WITH_GPU_STREAMS
+  hip_copy_q_tmp_to_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_tmp_dev, q_dev, ldq, nlen);
+#else
+  hip_copy_q_tmp_to_q_double_kernel<<<blocks, threadsPerBlock>>>              (q_tmp_dev, q_dev, ldq, nlen);
+#endif
+
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_q_tmp_to_q_double_kernel: %s\n",hipGetErrorString(cuerr));
+  }
+}
+
+
+
+__global__ void hip_copy_q_tmp_to_q_float_kernel(float *q_tmp, float *q, const int ldq, const int nlen) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (i >= 0 && i < ldq) {
+      if (j >= 0 && j < nlen) {
+         q[i+ldq*j] = q_tmp[i+ldq*j];
+      }
+    }
+}
+
+
+extern "C" void hip_copy_q_tmp_to_q_float_FromC(float *q_tmp_dev, float *q_dev, int *ldq_in, int *nlen_in, hipStream_t  my_stream){
+  int ldq  = *ldq_in;
+  int nlen = *nlen_in;
+
+  dim3 threadsPerBlock(32,32);
+  dim3 blocks((ldq + threadsPerBlock.x - 1) / threadsPerBlock.x,(nlen + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
+#ifdef WITH_GPU_STREAMS
+  hip_copy_q_tmp_to_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_tmp_dev, q_dev, ldq, nlen);
+#else
+  hip_copy_q_tmp_to_q_float_kernel<<<blocks, threadsPerBlock>>>              (q_tmp_dev, q_dev, ldq, nlen);
+#endif
+
+  hipError_t cuerr = hipGetLastError();
+  if (cuerr != hipSuccess){
+    printf("Error in executing hip_copy_q_tmp_to_q_float_kernel: %s\n",hipGetErrorString(cuerr));
+  }
+}
+
+
+

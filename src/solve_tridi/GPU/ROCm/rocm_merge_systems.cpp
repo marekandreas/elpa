@@ -48,7 +48,6 @@
 
 #include "config-f90.h"
 
-#include "hip/hip_runtime.h"
 #include <stdio.h>
 #include <math.h>
 #include <stdio.h>
@@ -57,6 +56,7 @@
 #include <time.h>
 #include <alloca.h>
 #include <complex.h>
+#include "hip/hip_runtime.h"
 #include <hip/hip_complex.h>
 #include <stdint.h>
 #include "config-f90.h"
@@ -131,7 +131,7 @@ extern "C" void hip_fill_tmp_arrays_double_FromC(int *idx1_dev, int *p_col_dev, 
   }
 }
 
-#ifdef WANT_SINGLE_PRECISION_REAL
+
 __global__ void hip_fill_tmp_arrays_float_kernel(int *idx1, int *p_col, int *coltyp, int *nnzu_val, int *nnzl_val, int *nnzul, float *d1u, float *d1, float *zu, float *z, float *d1l, float *zl, const int na, const int np, const int na1, const int np_rem) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i>=0 && i < na1) {
@@ -150,17 +150,18 @@ __global__ void hip_fill_tmp_arrays_float_kernel(int *idx1, int *p_col, int *col
       }
     }
 
-
     __syncthreads();
     if (i == 0) {
+      nnzul[0]=0;
+      nnzul[1]=0;
       int nnzu = 0;
       int nnzl = 0;
       for (int ii=na1-1;ii>=0;ii--) {
-        int index = idx1[i] - 1;
+        int index = idx1[ii] - 1;
         if (nnzu == 0) {
           if (p_col[index] == np_rem) {
             if ((coltyp[index] == 1) || (coltyp[index] == 2)) {
-	      int nnzu = nnzu_val[(i) + na1 * (np-1)] -1 ;
+	      nnzu = nnzu_val[(ii) + na1 * (np-1)] ;
 	      nnzul[0] = nnzu;
 	    }
 	  }
@@ -168,7 +169,7 @@ __global__ void hip_fill_tmp_arrays_float_kernel(int *idx1, int *p_col, int *col
         if (nnzl == 0) {
           if (p_col[index] == np_rem) {
             if ((coltyp[index] == 3) || (coltyp[index] == 2)) {
-	      int nnzl = nnzl_val[(i) + na1 * (np-1)]-1;
+	      nnzl = nnzl_val[(ii) + na1 * (np-1)];
 	      nnzul[1] = nnzl;
 	    }
 	  }
@@ -197,7 +198,7 @@ extern "C" void hip_fill_tmp_arrays_float_FromC(int *idx1_dev, int *p_col_dev, i
     printf("Error in executing hip_fill_tmp_arrays_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
-#endif
+
 
 
 __global__ void hip_copy_qtmp1_slice_to_q_double_kernel(double *q, double *qtmp1, int *l_col_out, int *p_col_out, int *ndef_c, int *p_col, int *idx2, int *idx, const int l_rqs, const int l_rqe, const int l_rows, const int matrixRows, const int gemm_dim_k, const int my_pcol, const int na1, const int np_rem, const int na) {
@@ -243,7 +244,7 @@ extern "C" void hip_copy_qtmp1_slice_to_q_double_FromC(double *q_dev, double *qt
 #ifdef WITH_GPU_STREAMS
   hip_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
 #else
-  hip_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
+  hip_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
 #endif
 
   hipError_t cuerr = hipGetLastError();
@@ -254,7 +255,6 @@ extern "C" void hip_copy_qtmp1_slice_to_q_double_FromC(double *q_dev, double *qt
 
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
 __global__ void hip_copy_qtmp1_slice_to_q_float_kernel(float *q, float *qtmp1, int *l_col_out, int *p_col_out, int *ndef_c, int *p_col, int *idx2, int *idx, const int l_rqs, const int l_rqe, const int l_rows, const int matrixRows, const int gemm_dim_k, const int my_pcol, const int na1, const int np_rem, const int na) {
     int slice = blockIdx.x * blockDim.x + threadIdx.x;
     int i = blockIdx.y * blockDim.y + threadIdx.y;
@@ -298,7 +298,7 @@ extern "C" void hip_copy_qtmp1_slice_to_q_float_FromC(float *q_dev, float *qtmp1
 #ifdef WITH_GPU_STREAMS
   hip_copy_qtmp1_slice_to_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
 #else
-  hip_copy_qtmp1_slice_to_q_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
+  hip_copy_qtmp1_slice_to_q_float_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
 #endif
 
   hipError_t cuerr = hipGetLastError();
@@ -306,7 +306,9 @@ extern "C" void hip_copy_qtmp1_slice_to_q_float_FromC(float *q_dev, float *qtmp1
     printf("Error in executing hip_copy_qtmp1_slice_to_q_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
-#endif
+
+
+
 
 __global__ void hip_copy_q_slice_to_qtmp2_double_kernel(double *q, double *qtmp2, int *idxq1, int *l_col_out, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int matrixCols, const int gemm_dim_k, const int gemm_dim_m, const int ns, const int ncnt, const int indx, const int indx2, const int na) {
     int j = blockIdx.x * blockDim.x + threadIdx.x; // 1.._l_rows
@@ -348,7 +350,7 @@ extern "C" void hip_copy_q_slice_to_qtmp2_double_FromC(double *q_dev, double *qt
 #ifdef WITH_GPU_STREAMS
   hip_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #else
-  hip_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, indx, indx2, na);
+  hip_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #endif
 
   hipError_t cuerr = hipGetLastError();
@@ -358,7 +360,7 @@ extern "C" void hip_copy_q_slice_to_qtmp2_double_FromC(double *q_dev, double *qt
 }
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
+
 __global__ void hip_copy_q_slice_to_qtmp2_float_kernel(float *q, float *qtmp2, int *idxq1, int *l_col_out, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int matrixCols, const int gemm_dim_k, const int gemm_dim_m, const int ns, const int ncnt, const int indx, const int indx2, const int na) {
     int j = blockIdx.x * blockDim.x + threadIdx.x; // 1.._l_rows
     int ii = blockIdx.y * blockDim.y + threadIdx.y + 1; // 1.._l_rows
@@ -399,7 +401,7 @@ extern "C" void hip_copy_q_slice_to_qtmp2_float_FromC(float *q_dev, float *qtmp2
 #ifdef WITH_GPU_STREAMS
   hip_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #else
-  hip_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, indx, indx2, na);
+  hip_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock>>>              (q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
 #endif
 
   hipError_t cuerr = hipGetLastError();
@@ -407,7 +409,8 @@ extern "C" void hip_copy_q_slice_to_qtmp2_float_FromC(float *q_dev, float *qtmp2
     printf("Error in executing hip_copy_q_slice_to_qtmp2_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
-#endif
+
+
 
 __global__ void hip_fill_ev_double_kernel(double *ev, double *tmp, double *d1u, double *dbase, double *ddiff, double *zu, double *ev_scale, int *idxq1, int *idx, const int na, const int gemm_dim_l, const int gemm_dim_m, const int nnzu, const int ns, const int ncnt) {
     int k = blockIdx.x * blockDim.x + threadIdx.x;
@@ -458,7 +461,6 @@ extern "C" void hip_fill_ev_double_FromC(double *ev_dev, double *tmp_dev, double
 
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
 __global__ void hip_fill_ev_float_kernel(float *ev, float *tmp, float *d1u, float *dbase, float *ddiff, float *zu, float *ev_scale, int *idxq1, int *idx, const int na, const int gemm_dim_l, const int gemm_dim_m, const int nnzu, const int ns, const int ncnt) {
     int k = blockIdx.x * blockDim.x + threadIdx.x;
     int i = blockIdx.y * blockDim.y + threadIdx.y + 1;
@@ -505,7 +507,9 @@ extern "C" void hip_fill_ev_float_FromC(float *ev_dev, float *tmp_dev, float *d1
   }
   }
 }
-#endif
+
+
+
 
 __global__ void hip_copy_qtmp2_slice_to_q_double_kernel(double *q, double *qtmp2, int *idx1q, int *l_col_out, const int l_rqs, const int l_rqe, const int l_rows,  const int ncnt, const int gemm_dim_k, const int matrixRows, const int ns) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -548,7 +552,7 @@ extern "C" void hip_copy_qtmp2_slice_to_q_double_FromC(double *q_dev, double *qt
 }
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
+
 __global__ void hip_copy_qtmp2_slice_to_q_float_kernel(float *q, float *qtmp2, int *idx1q, int *l_col_out, const int l_rqs, const int l_rqe, const int l_rows,  const int ncnt, const int gemm_dim_k, const int matrixRows, const int ns) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -588,7 +592,8 @@ extern "C" void hip_copy_qtmp2_slice_to_q_float_FromC(float *q_dev, float *qtmp2
     printf("Error in executing hip_copy_qtmp2_slice_to_q_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
-#endif
+
+
 
 
 __global__ void hip_zero_q_double_kernel(double *q, int *p_col_out, int *l_col_out, const int na, const int my_pcol, const int l_rqs, const int l_rqe, const int matrixRows) {
@@ -630,7 +635,6 @@ extern "C" void hip_zero_q_double_FromC(double *q_dev, int *p_col_out_dev, int *
 
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
 __global__ void hip_zero_q_float_kernel(float *q, int *p_col_out, int *l_col_out, const int na, const int my_pcol, const int l_rqs, const int l_rqe, const int matrixRows) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -638,11 +642,11 @@ __global__ void hip_zero_q_float_kernel(float *q, int *p_col_out, int *l_col_out
     if (i>=0 && i<na) {
       if (j>=0 && j<l_rqe-l_rqs+1) {
         if (p_col_out[i] == my_pcol) {
-          int index = l_col_out[i] -1;
-          q[i+l_rqs - 1 + matrixRows * index] = 0;
+      	  int index = l_col_out[i] -1;
+          q[j+l_rqs - 1 + matrixRows * index] = 0;
       }	      
     }
- }
+  }
 }
 
 extern "C" void hip_zero_q_float_FromC(float *q_dev, int *p_col_out_dev, int *l_col_out_dev, int *na_in, int *my_pcol_in, int *l_rqs_in, int *l_rqe_in, int *matrixRows_in, hipStream_t  my_stream){
@@ -653,9 +657,9 @@ extern "C" void hip_zero_q_float_FromC(float *q_dev, int *p_col_out_dev, int *l_
   int l_rqe = *l_rqe_in;
   int matrixRows = *matrixRows_in;
 
-
   dim3 threadsPerBlock(32,32);
   dim3 blocks((na + threadsPerBlock.x - 1) / threadsPerBlock.x, ((l_rqe-l_rqs+1) + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
 #ifdef WITH_GPU_STREAMS
   hip_zero_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, matrixRows);
 #else
@@ -667,7 +671,9 @@ extern "C" void hip_zero_q_float_FromC(float *q_dev, int *p_col_out_dev, int *l_
     printf("Error in executing hip_zero_q_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
-#endif
+
+
+
 
 
 __global__ void hip_copy_q_slice_to_qtmp1_double_kernel(double *qtmp1, double *q, int *ndef_c,int *l_col, int *idx2, int *p_col, const int na2, const int na, const int my_pcol, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int gemm_dim_k) {
@@ -712,9 +718,10 @@ extern "C" void hip_copy_q_slice_to_qtmp1_double_FromC(double *qtmp1_dev, double
 }
 
 
-#ifdef WANT_SINGLE_PRECISION_REAL
+
 __global__ void hip_copy_q_slice_to_qtmp1_float_kernel(float *qtmp1, float *q, int *ndef_c,int *l_col, int *idx2, int *p_col, const int na2, const int na, const int my_pcol, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int gemm_dim_k) {
     int j = blockIdx.x * blockDim.x + threadIdx.x; // l_rows
+
 
     if (j>=0 && j<l_rows) {
       for (int i=1; i<na2+1; i++){
@@ -752,7 +759,8 @@ extern "C" void hip_copy_q_slice_to_qtmp1_float_FromC(float *qtmp1_dev, float *q
     printf("Error in executing hip_copy_q_slice_to_qtmp1_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
-#endif
+
+
 
 
 __global__ void hip_copy_qtmp1_to_qtmp1_tmp_double_kernel(double *qtmp1, double *qtmp1_tmp, const int gemm_dim_k, const int gemm_dim_l) {
@@ -788,44 +796,44 @@ extern "C" void hip_copy_qtmp1_to_qtmp1_tmp_double_FromC(double *qtmp1_dev, doub
     printf("Error in executing hip_copy_qtmp1_to_qtmp1_tmp_double_kernel: %s\n",hipGetErrorString(cuerr));
   }       
 }
-            
-  
-#ifdef WANT_SINGLE_PRECISION_REAL
+
+
+
 __global__ void hip_copy_qtmp1_to_qtmp1_tmp_float_kernel(float *qtmp1, float *qtmp1_tmp, const int gemm_dim_k, const int gemm_dim_l) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
-  
-  
+
+
     if (i>=0 && i<gemm_dim_k) {
-      if (j>=0 &&j<gemm_dim_l) {
+      if (j>=0 && j<gemm_dim_l) {
         qtmp1_tmp[i+gemm_dim_k*j] = qtmp1[i+gemm_dim_k*j];
-      }
-    }
+      }    
+    }        
+           
+         
+}      
     
-}
-
-
 extern "C" void hip_copy_qtmp1_to_qtmp1_tmp_float_FromC(float *qtmp1_dev, float *qtmp1_tmp_dev, int *gemm_dim_k_in, int *gemm_dim_l_in, hipStream_t  my_stream){
-
+    
   int gemm_dim_k = *gemm_dim_k_in;
   int gemm_dim_l = *gemm_dim_l_in;
-
+    
   dim3 threadsPerBlock(32,32);
   dim3 blocks((gemm_dim_k + threadsPerBlock.x - 1) / threadsPerBlock.x, (gemm_dim_l + threadsPerBlock.y - 1) / threadsPerBlock.y);
-
+          
 #ifdef WITH_GPU_STREAMS
   hip_copy_qtmp1_to_qtmp1_tmp_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l);
-#else
+#else     
   hip_copy_qtmp1_to_qtmp1_tmp_float_kernel<<<blocks, threadsPerBlock>>>(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l);
 #endif
-
+      
   hipError_t cuerr = hipGetLastError();
   if (cuerr != hipSuccess){
-    printf("Error in executing hip_copy_qtmp1_to_qtmp1_tmp_float_kernel: %s\n",hipGetErrorString(cuerr));
-  }
+    printf("Error in executing hip_copy_qtmp1_to_qtmp1_tmp_floaet_kernel: %s\n",hipGetErrorString(cuerr));
+  }       
 }
-
-#endif
+            
+  
 
 
 __global__ void hip_update_ndef_c_kernel(int *ndef_c, int *idx, int *p_col, int *idx2, const int na, const int na1, const int np_rem, const int ndef_start) {
@@ -991,3 +999,4 @@ extern "C" void hip_compute_nnzl_nnzu_val_part2_FromC(int *nnzu_val_dev, int *nn
     printf("Error in executing hip_compute_nnzl_nnzu_val_part2_c_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
+

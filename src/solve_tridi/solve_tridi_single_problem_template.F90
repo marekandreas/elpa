@@ -133,6 +133,8 @@
 
      if (useGPU) then
 
+       ! this is an arbitrary value: for nlen < 100 the cusolverXsyevd function
+       ! returns wrong results??? Check and fix this
        if (nlen .lt. 100) then
          ! use CPU version
 
