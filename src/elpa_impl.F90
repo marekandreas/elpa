@@ -47,6 +47,7 @@
 !
 #include "config-f90.h"
 #include "general/error_checking.inc"
+#include "general/nvtx_labels.h"
 
 !> \brief Fortran module which provides the actual implementation of the API. Do not use directly! Use the module "elpa"
 module elpa_impl

@@ -201,17 +201,12 @@ endif
 #endif
 
   call self%timer_start("transform_generalized()")
-
-#ifdef WITH_NVTX
-  call nvtxRangePush("transform_generalized")
-#endif
+  NVTX_RANGE_PUSH("transform_generalized")
 
   if (.not. is_already_decomposed) then
-#ifdef WITH_NVTX
-    call nvtxRangePush("cholesky: B = U^T*U, B <- U")
-#endif
 
     ! B = U^T*U, B <- U
+    NVTX_RANGE_PUSH("cholesky: B = U^T*U, B <- U")
 #ifdef DEVICE_POINTER
     call self%elpa_cholesky_d_ptr_&
         &ELPA_IMPL_SUFFIX&
@@ -222,16 +217,10 @@ endif
         &(b, error)
 #endif
     if(error .NE. ELPA_OK) return
-
-#ifdef WITH_NVTX
-    call nvtxRangePop() ! cholesky: B = U^T*U, B <- U
-#endif
-
-#ifdef WITH_NVTX
-    call nvtxRangePush("invert_trm: B <- inv(U)")
-#endif
+    NVTX_RANGE_POP("cholesky: B = U^T*U, B <- U")
 
     ! B <- inv(U)
+    NVTX_RANGE_PUSH("invert_trm: B <- inv(U)")
 #ifdef DEVICE_POINTER
     call self%elpa_invert_trm_d_ptr_&
         &ELPA_IMPL_SUFFIX&
@@ -242,10 +231,7 @@ endif
         &(b, error)
 #endif
     if(error .NE. ELPA_OK) return
-
-#ifdef WITH_NVTX
-    call nvtxRangePop() ! invert_trm: B <- inv(U)
-#endif
+    NVTX_RANGE_POP("invert_trm: B <- inv(U)")
 
   endif ! (.not. is_already_decomposed)
 
@@ -300,17 +286,12 @@ endif
 
     call self%timer_start("cannons_reduction")
     ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
-#ifdef WITH_NVTX
-    call nvtxRangePush("tmp = 0")
-#endif
+    NVTX_RANGE_PUSH("tmp = 0")
     tmp(1:self%local_nrows, 1:self%local_ncols) = 0.0_rck
-#ifdef WITH_NVTX
-    call nvtxRangePop()
-#endif
+    NVTX_RANGE_POP("tmp = 0")
+
 #ifdef WITH_MPI
-#ifdef WITH_NVTX
-    call nvtxRangePush("cannons_reduction")
-#endif
+    NVTX_RANGE_PUSH("cannons_reduction")
     
     error = self%construct_scalapack_descriptor(sc_desc, .false.)
     if(error .NE. ELPA_OK) return
@@ -320,9 +301,7 @@ endif
       &(a, b, self%local_nrows, self%local_ncols, &
         int(sc_desc,kind=BLAS_KIND), tmp, int(cannon_buffer_size,kind=MPI_KIND),   &
         int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), debug, gpu_cannon, gpublasHandle)
-#ifdef WITH_NVTX
-    call nvtxRangePop()
-#endif
+    NVTX_RANGE_POP("cannons_reduction")
 #endif /* WITH_MPI */
     call self%timer_stop("cannons_reduction")
 
@@ -338,21 +317,15 @@ endif
     ! A <- tmp * inv(U) = inv(U)^T * A * inv(U)
     if (pxtrmm_for_generalized == 1) then ! CPU-only codepath
       ! A <- inv(U)^T * A
-#ifdef WITH_NVTX
-      call nvtxRangePush("copy: tmp -> a")
-#endif
+      NVTX_RANGE_PUSH("copy: tmp -> a")
       a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
-#ifdef WITH_NVTX
-      call nvtxRangePop()
-#endif
+      NVTX_RANGE_POP("copy: tmp -> a")
 
       error = self%construct_scalapack_descriptor(sc_desc, .false.)
       if(error .NE. ELPA_OK) return
 
       call self%timer_start("scalapack multiply A * inv(U)")
-#ifdef WITH_NVTX
-      call nvtxRangePush("scalapack multiply A * inv(U)")
-#endif
+      NVTX_RANGE_PUSH("scalapack multiply A * inv(U)")
 #ifdef WITH_MPI
       call p&
             &BLAS_CHAR&
@@ -365,9 +338,7 @@ endif
                   ONE, b, int(self%na,kind=BLAS_KIND), a, int(self%na,kind=BLAS_KIND))
 #endif /* WITH_MPI */
 
-#ifdef WITH_NVTX
-      call nvtxRangePop()
-#endif
+      NVTX_RANGE_POP("scalapack multiply A * inv(U)")
       call self%timer_stop("scalapack multiply A * inv(U)")
     
     else ! (pxtrmm_for_generalized == 1)
@@ -408,10 +379,7 @@ endif
     endif ! (pxtrmm_for_generalized == 1)
   endif ! (pxgemm_for_generalized == 1) .or. (cannon_for_generalized == 1) .or. else
 
-#ifdef WITH_NVTX
-  call nvtxRangePop() ! transform_generalized
-#endif
-
+  NVTX_RANGE_POP("transform_generalized")
   call self%timer_stop("transform_generalized()")
 end subroutine
 
@@ -538,10 +506,7 @@ subroutine elpa_transform_back_generalized_a_h_a_&
 
 
   call self%timer_start("transform_back_generalized()")
-
-#ifdef WITH_NVTX
-  call nvtxRangePush("transform_back_generalized") ! PETERDEBUG: change to short notation
-#endif
+  NVTX_RANGE_PUSH("transform_back_generalized")
 
   if (pxgemm_for_generalized == 1) then
     ! tmp <- b Q = inv(U) Q
@@ -570,11 +535,8 @@ subroutine elpa_transform_back_generalized_a_h_a_&
 
   else if (cannon_for_generalized == 1) then
     call self%timer_start("cannons_triang_rectangular")
-#ifdef WITH_NVTX
-    call nvtxRangePush("cannons_triang_rectangular")
-#endif
-#ifdef WITH_MPI
-    
+    NVTX_RANGE_PUSH("cannons_triang_rectangular")
+
     do_useGPU_cannon = .false.
     gpu_cannon = 0
     gpublasHandle=0
@@ -587,15 +549,15 @@ subroutine elpa_transform_back_generalized_a_h_a_&
       gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
     endif
 
+#ifdef WITH_MPI
     call cannons_triang_rectangular_&
       &ELPA_IMPL_SUFFIX&
       &(b, q, self%local_nrows, self%local_ncols, &
         int(sc_desc,kind=BLAS_KIND), int(sc_desc_ev,kind=BLAS_KIND), tmp,  &
         int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), debug, gpu_cannon, gpublasHandle)
 #endif
-#ifdef WITH_NVTX
-    call nvtxRangePop()
-#endif
+
+    NVTX_RANGE_POP("cannons_triang_rectangular")
     call self%timer_stop("cannons_triang_rectangular")
 
     q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
@@ -603,9 +565,7 @@ subroutine elpa_transform_back_generalized_a_h_a_&
   else
     if (pxtrmm_for_generalized == 1) then
       call self%timer_start("scalapack multiply inv(U) * Q")
-#ifdef WITH_NVTX
-      call nvtxRangePush("scalapack multiply: Q <- inv(U) * Q")
-#endif
+      NVTX_RANGE_PUSH("scalapack multiply: Q <- inv(U) * Q")
 
 #ifdef WITH_MPI
       ! Q <- inv(U) * Q
@@ -620,9 +580,7 @@ subroutine elpa_transform_back_generalized_a_h_a_&
                 ONE, b, int(self%na,kind=BLAS_KIND), q, int(self%na,kind=BLAS_KIND))
 #endif
 
-#ifdef WITH_NVTX
-      call nvtxRangePop()
-#endif  
+      NVTX_RANGE_POP("scalapack multiply: Q <- inv(U) * Q")
       call self%timer_stop("scalapack multiply inv(U) * Q")
     
     else ! (pxtrmm_for_generalized == 1)
@@ -668,9 +626,7 @@ subroutine elpa_transform_back_generalized_a_h_a_&
     endif ! (pxtrmm_for_generalized == 1)
   endif
 
-#ifdef WITH_NVTX
-  call nvtxRangePop() ! transform_back_generalized
-#endif
+  NVTX_RANGE_POP("transform_back_generalized")
   call self%timer_stop("transform_back_generalized()")
 
 end subroutine

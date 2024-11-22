@@ -41,7 +41,9 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! This file was written by A. Marek, MPCDF
+
 #include "config-f90.h"
+#include "../general/nvtx_labels.h"
 
 module elpa_cholesky
   use, intrinsic :: iso_c_binding

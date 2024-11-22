@@ -211,6 +211,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/elpa2/redist_band.F90 \
   src/general/sanity.F90 \
   src/general/error_checking.inc \
+  src/general/nvtx_labels.h \
   src/cholesky/elpa_cholesky_template.F90 \
   src/invert_trm/invert_trm_template.F90 \
   src/multiply_a_b/elpa_hermitian_multiply_template.F90 \
@@ -1166,6 +1167,7 @@ EXTRA_DIST = \
   src/general/error_checking.inc \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
+  src/general/nvtx_labels.h \
   src/shipped_srcs/NVIDIA_A100_kernel/hh_test/.gitignore \
   src/shipped_srcs/NVIDIA_A100_kernel/hh_test/CMakeLists.txt \
   src/shipped_srcs/NVIDIA_A100_kernel/hh_test/LICENSE \

@@ -151,9 +151,7 @@
   integer(kind=ik)                           :: k_datatype
 #endif
 
-#ifdef WITH_NVTX
-  call nvtxRangePush("invert_trm")
-#endif
+  NVTX_RANGE_PUSH("invert_trm")
 
   success = .true.
   useGPU = .false.
@@ -312,14 +310,8 @@
 #endif
 #else /* DEVICE_POINTER */
 
-#ifdef WITH_NVTX
-    call nvtxRangePush("transfer(aDev, a_dev)")
-#endif
     ! associate with a_dev
     a_dev = transfer(aDev, a_dev)
-#ifdef WITH_NVTX
-    call nvtxRangePop() ! transfer(aDev, a_dev)")
-#endif
 
 #if !defined(INVERT_TRM_GPU_SOLVER)
     ! allocate a_tmp
@@ -337,9 +329,7 @@
   endif ! useGPU
 
   if (.not. useCCL) then
-#ifdef WITH_NVTX
-    call nvtxRangePush("allocate tmp1, tmp2, tmat1, tmat2")
-#endif
+    NVTX_RANGE_PUSH("allocate tmp1, tmp2, tmat1, tmat2")
 
     allocate(tmp1(nblk*(nblk+1)/2), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_invert_trm: tmp1", istat, errorMessage)
@@ -353,9 +343,7 @@
     allocate(tmat2(nblk,l_cols), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_invert_trm: tmat2", istat, errorMessage)
 
-#ifdef WITH_NVTX
-    call nvtxRangePop() ! allocate tmp1, tmp2, tmat1, tmat2
-#endif
+    NVTX_RANGE_POP("allocate tmp1, tmp2, tmat1, tmat2")
   endif ! .not. useCCL
 
   if (.not. useGPU) then
@@ -405,9 +393,7 @@
   ns = ((na-1)/nblk)*nblk + 1
 
   do n = ns,1,-nblk
-#ifdef WITH_NVTX
-    call nvtxRangePush("do n = ns,1,-nblk")
-#endif
+    NVTX_RANGE_PUSH("do n = ns,1,-nblk")
 
     l_row1 = local_index(n, my_prow, np_rows, nblk, +1)
     l_col1 = local_index(n, my_pcol, np_cols, nblk, +1)
@@ -424,10 +410,9 @@
         if (useGPU) then
 
 #if defined(INVERT_TRM_GPU_SOLVER)
-#ifdef WITH_NVTX
-          call nvtxRangePush("gpusolver_TRTRI")
-#endif
           call obj%timer%start("gpusolver")
+          NVTX_RANGE_PUSH("gpusolver_TRTRI")
+
           gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = ((l_row1-1) + (l_col1-1)*matrixRows) * size_of_datatype
           call gpusolver_PRECISION_TRTRI('U', 'N', int(nb,kind=c_int64_t), a_dev+a_off, int(matrixRows,c_int64_t), &
@@ -436,10 +421,10 @@
             write(error_unit,*) "elpa_invert_trm: error in gpusolver_TRTRI"
             stop 1
           endif
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+
+          NVTX_RANGE_POP("gpusolver_TRTRI")
           call obj%timer%stop("gpusolver")
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! gpusolver_TRTRI
-#endif   
 #else /* defined(INVERT_TRM_GPU_SOLVER) */
          
           ! still have to use cpu blas -> a generic GPU implementation would be needed
@@ -479,7 +464,6 @@
           call obj%timer%stop("lapack")
 #else /* DEVICE_POINTER */
 
-#if !defined(INVERT_TRM_GPU_SOLVER)
           call obj%timer%start("lapack")
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -514,7 +498,6 @@
           check_memcpy_gpu("invert_trm: memcpy a -> a_dev", successGPU)
 #endif /* WITH_GPU_STREAMS */
           call obj%timer%stop("lapack")
-#endif /* !defined(INVERT_TRM_GPU_SOLVER) */
 #endif /* DEVICE_POINTER */
 #endif /* defined(INVERT_TRM_GPU_SOLVER) */
 
@@ -652,14 +635,13 @@
         if (l_cols-l_colx+1 > 0) then
           a_off = (l_row1 -1 + (l_colx-1)*matrixRows) * size_of_datatype
 
-#ifdef WITH_NVTX
-          call nvtxRangePush("gpublas_TRMM")
-#endif
+          NVTX_RANGE_PUSH("gpublas_TRMM")
+
           call gpublas_PRECISION_TRMM('L', 'U', 'N', 'N', nb, l_cols-l_colx+1, ONE, tmp2_dev, &
                                       nblk, a_dev+a_off, matrixRows, gpublasHandle)
-#ifdef WITH_NVTX
-          call nvtxRangePop()! gpublas_TRMM
-#endif
+          
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          NVTX_RANGE_POP("gpublas_TRMM")
         endif
         call obj%timer%stop("gpublas")
 
@@ -747,9 +729,8 @@
       if (useCCL) then
 #ifdef USE_CCL_INVERT
         call obj%timer%start("ccl_bcast")
-#ifdef WITH_NVTX
-        call nvtxRangePush("ccl_bcast_group tmat1_dev")
-#endif
+        NVTX_RANGE_PUSH("ccl_bcast_group tmat1_dev")
+
         successGPU = ccl_group_start()
         if (.not. successGPU) then
           print *, "Error in setting up ccl_group_start!"
@@ -778,17 +759,14 @@
 
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("elpa_invert_trm: ccl_bcast", successGPU)
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! ccl_bcast_group tmat1_dev
-#endif
+
+        NVTX_RANGE_POP("ccl_bcast_group tmat1_dev")
         call obj%timer%stop("ccl_bcast")
 #endif /* USE_CCL_INVERT */
       else ! useCCL
 
-#ifdef WITH_NVTX
-        call nvtxRangePush("MPI_Bcast tmat1")
-#endif
         call obj%timer%start("mpi_communication")
+        NVTX_RANGE_PUSH("MPI_Bcast tmat1")
         ! do i=1,nb
         !   call MPI_Bcast(tmat1(1,i), int(l_row1-1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
         !                  int(pcol(n, nblk, np_cols),kind=MPI_KIND), & 
@@ -797,10 +775,8 @@
         call MPI_Bcast(tmat1(1,1), int(l_rows*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                   int(pcol(n, nblk, np_cols),kind=MPI_KIND), &
                   int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+        NVTX_RANGE_POP("MPI_Bcast tmat1")
         call obj%timer%stop("mpi_communication")
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! MPI_Bcast tmat1
-#endif
       endif ! useCCL
 
       if (useGPU .and. .not. useCCL) then
@@ -904,43 +880,30 @@
 #endif /* WITH_MPI */
 
     if (useGPU) then
-      call obj%timer%start("gpublas")
-
       gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
       tmat2_off = (1 - 1 + (l_col1-1) * nblk) * size_of_datatype      
       a_off = (1 - 1 + (l_col1-1) * matrixRows) * size_of_datatype
       if (l_row1>1 .and. l_cols-l_col1+1>0) then
+        call obj%timer%start("gpublas")
         call gpublas_PRECISION_GEMM('N', 'N', l_row1-1, l_cols-l_col1+1, nb, -ONE, &
                                     tmat1_dev, l_rows, tmat2_dev + tmat2_off, &
                                     nblk, ONE, a_dev+a_off, matrixRows, gpublasHandle)
+        if (wantDebug) successGPU = gpu_DeviceSynchronize()
+        call obj%timer%stop("gpublas")
       endif
-      call obj%timer%stop("gpublas")
-
+      
     else ! useGPU
-      call obj%timer%start("blas")
-!#ifndef DEVICE_POINTER ! PETERDEBUG111: cleanup
       if (l_row1>1 .and. l_cols-l_col1+1>0) then
+        call obj%timer%start("blas")
         call PRECISION_GEMM('N', 'N', int(l_row1-1,kind=BLAS_KIND), int(l_cols-l_col1+1,kind=BLAS_KIND), &
                             int(nb,kind=BLAS_KIND), -ONE, &
                              tmat1, int(ubound(tmat1,dim=1),kind=BLAS_KIND), tmat2(1,l_col1), &
                              int(ubound(tmat2,dim=1),kind=BLAS_KIND), ONE, &
                               a(1,l_col1), int(matrixRows,kind=BLAS_KIND) )
+        call obj%timer%stop("blas")
       endif
-!#else
-!      if (l_row1>1 .and. l_cols-l_col1+1>0) then
-!        call PRECISION_GEMM('N', 'N', int(l_row1-1,kind=BLAS_KIND), int(l_cols-l_col1+1,kind=BLAS_KIND), &
-!                            int(nb,kind=BLAS_KIND), -ONE, &
-!                             tmat1, int(ubound(tmat1,dim=1),kind=BLAS_KIND), tmat2(1,l_col1), &
-!                             int(ubound(tmat2,dim=1),kind=BLAS_KIND), ONE, &
-!                              a_tmp(1,l_col1), int(matrixRows,kind=BLAS_KIND) )
-!      endif
-!#endif
-
-      call obj%timer%stop("blas")
     endif ! useGPU
-#ifdef WITH_NVTX
-    call nvtxRangePop() ! do n = ns,1,-nblk
-#endif
+    NVTX_RANGE_POP("do n = ns,1,-nblk")
   enddo ! n = ns,1,-nblk
 
 #ifndef DEVICE_POINTER
@@ -1015,9 +978,7 @@
     check_deallocate("elpa_invert_trm: tmp1, tmp2, tmat1, tmat2", istat, errorMessage)
   endif
 
-#ifdef WITH_NVTX
-  call nvtxRangePop() ! invert_trm
-#endif
+  NVTX_RANGE_POP("invert_trm")
 
   call obj%timer%stop("elpa_invert_trm_&
   &MATH_DATATYPE&

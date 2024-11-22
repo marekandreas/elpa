@@ -42,14 +42,7 @@
 !
 ! This file was written by P. Karpov, MPCDF
 #include "config-f90.h"
-
-#ifdef WITH_NVTX
-#define NVTX_RANGE_PUSH(x) call nvtxRangePush(x)
-#define NVTX_RANGE_POP(x) call nvtxRangePop()
-#else
-#define NVTX_RANGE_PUSH(x)
-#define NVTX_RANGE_POP(x)
-#endif
+#include "../general/nvtx_labels.h"
 
 module elpa_pxgemm_multiply
   use, intrinsic :: iso_c_binding
