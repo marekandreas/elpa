@@ -95,10 +95,10 @@ subroutine elpa_transform_generalized_a_h_a_&
   integer(kind=ik)         :: myid, my_prow, my_pcol, np_rows, np_cols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
   integer(kind=ik)         :: i, j
   integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
-  integer(kind=ik)         :: BuffLevelInt
+  integer(kind=ik)         :: cannon_buffer_size
   integer(kind=c_int)      :: cannon_for_generalized, pxgemm_for_generalized, pxtrmm_for_generalized, debug, gpu_cannon
 
-  logical                  :: useGPU, successGPU
+  logical                  :: useGPU, do_useGPU_cannon, successGPU
   integer(kind=c_intptr_t) :: gpublasHandle
   integer(kind=c_intptr_t), parameter ::  size_of_datatype = size_of_&
                                         &PRECISION&
@@ -106,11 +106,13 @@ subroutine elpa_transform_generalized_a_h_a_&
                                         &MATH_DATATYPE
 
   MATH_DATATYPE(kind=rck), allocatable :: tmp(:,:)
-  logical, save            :: firstCall = .true.
+  logical, save            :: firstCall_cannon = .true.
+  logical, save            :: firstCall_pxgemm = .true.
 
   call self%get("mpi_comm_rows"  , mpi_comm_rows, error)
   call self%get("mpi_comm_cols"  , mpi_comm_cols, error)
   call self%get("mpi_comm_parent", mpi_comm_all , error)
+  call self%get("debug", debug, error)
 
   call mpi_comm_rank(int(mpi_comm_all ,kind=MPI_KIND), my_pMPI   , mpierr)
   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
@@ -123,12 +125,7 @@ subroutine elpa_transform_generalized_a_h_a_&
   np_rows = int(np_rowsMPI, kind=c_int)
   my_pcol = int(my_pcolMPI, kind=c_int)
   np_cols = int(np_colsMPI, kind=c_int)
-
-  call self%get("cannon_for_generalized", cannon_for_generalized, error)
-  call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
-  call self%get("pxgemm_for_generalized", pxgemm_for_generalized, error)
-  call self%get("debug", debug, error)
-
+  
   useGPU = .false.
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (.not.(query_gpu_usage(self, "Generalized_transform", useGPU))) then
@@ -136,32 +133,53 @@ subroutine elpa_transform_generalized_a_h_a_&
     error = ELPA_ERROR
     return
   endif
+  
+  ! numberofGPUDevices is already checked in elpa_impl_math_generalized_template.F90
 #endif
 
-  gpu_cannon = 0
-  gpublasHandle=0
-  if (useGPU) then
-    call self%get("gpu_cannon", gpu_cannon, error)
+  ! Default codebranches:
+  ! GPU -> pxgemm
+  ! CPU and grid with mod(np_cols,np_rows)=0 -> cannon
+  ! CPU, else -> hermitian_multiply. For NN-multiply use either pxtrmm (default, CPU-only) or not (pxtran+hermitian_multiply)
 
-    pxtrmm_for_generalized = 0 ! default for GPU
-    if (self%is_set("pxtrmm_for_generalized") == 1) then ! if user enforces pxtrmm, use it
-      call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
+  ! Set defaults
+  if (useGPU) then
+    pxgemm_for_generalized = 1
+    cannon_for_generalized = 0
+    pxtrmm_for_generalized = 0
+  else
+    pxgemm_for_generalized = 0
+    cannon_for_generalized = 1
+    pxtrmm_for_generalized = 1
+  endif
+  
+  ! If user enforces a variable, use the provided value
+  if (self%is_set("pxgemm_for_generalized")==1) call self%get("pxgemm_for_generalized", pxgemm_for_generalized, error)
+  if (self%is_set("cannon_for_generalized")==1) call self%get("cannon_for_generalized", cannon_for_generalized, error)
+  if (self%is_set("pxtrmm_for_generalized")==1) call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
+
+  ! Consistency check
+  if (self%is_set("pxgemm_for_generalized")==1 .and. self%is_set("cannon_for_generalized")==1) then
+    if (pxgemm_for_generalized==1 .and. cannon_for_generalized==1) then
+      write(error_unit,*) "It's not possible to set simultaneously pxgemm_for_generalized=1 and cannon_for_generalized=1.&
+                           &Choose only one of them. Aborting..."
+      error = ELPA_ERROR
+      return
     endif
   endif
 
-
 #if !defined(WITH_MPI)
-  if (cannon_for_generalized==1 .and. (myid == 0) .and. firstCall) then
+  if (cannon_for_generalized==1 .and. (myid == 0) .and. firstCall_cannon) then
     write(error_unit,*) "Cannons algorithm can only be used with MPI. Switching it off."
-    firstCall = .false.
+    firstCall_cannon = .false.
   end if
   cannon_for_generalized = 0
 #endif
 
 if (mod(np_cols, np_rows) /= 0) then
-  if (cannon_for_generalized==1 .and. (myid == 0) .and. firstCall) then
+  if (cannon_for_generalized==1 .and. (myid == 0) .and. firstCall_cannon) then
     write(error_unit,*) "To use Cannons algorithm, np_cols must be a multiple of np_rows. Switching it off."
-    firstCall = .false.
+    firstCall_cannon = .false.
   endif
   cannon_for_generalized = 0
 endif
@@ -174,7 +192,10 @@ endif
   endif
 
   if (pxgemm_for_generalized /= 1) then
-    write(error_unit,*) "Device pointer interface is available only for pxgemm_for_generalized=1. Switching it on."
+    if (myid == 0 .and. firstCall_pxgemm) then
+      write(error_unit,*) "Device pointer interface is available only for pxgemm_for_generalized=1. Switching it on."
+      firstCall_pxgemm = .false.
+    endif
     pxgemm_for_generalized = 1
   endif
 #endif
@@ -277,11 +298,24 @@ endif
     allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_transform_generalized: tmp", istat, errorMessage)
 
-    call self%get("cannon_buffer_size", BuffLevelInt, error)
-    if (gpu_cannon==1 .and. BuffLevelInt>0) then
-      write(error_unit,*) "Warning: cannon_buffer_size>0 is not supported with GPUs. Using cannon_buffer_size=0"
-      BuffLevelInt = 0
+    do_useGPU_cannon = .false.
+    gpu_cannon = 0
+    gpublasHandle=0
+    if (useGPU) then ! per convention of elpa_index.c, gpu_cannon is evaluated only if GPU is used at all
+      call self%get("gpu_cannon", gpu_cannon, error)
+      if (gpu_cannon == 1) do_useGPU_cannon = .true.
     endif
+
+    if (do_useGPU_cannon) then
+      gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
+    endif
+
+    call self%get("cannon_buffer_size", cannon_buffer_size, error)
+    if (do_useGPU_cannon .and. cannon_buffer_size>0) then
+      write(error_unit,*) "Warning: cannon_buffer_size>0 is not supported with GPUs. Using cannon_buffer_size=0"
+      cannon_buffer_size = 0
+    endif
+
     call self%timer_start("cannons_reduction")
     ! BEWARE! even though tmp is output from the routine, it has to be zero on input!
 #ifdef WITH_NVTX
@@ -295,9 +329,6 @@ endif
 #ifdef WITH_NVTX
     call nvtxRangePush("cannons_reduction")
 #endif
-    if (useGPU) then
-      gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
-    endif 
     
     error = self%construct_scalapack_descriptor(sc_desc, .false.)
     if(error .NE. ELPA_OK) return
@@ -305,7 +336,7 @@ endif
     call cannons_reduction_&
       &ELPA_IMPL_SUFFIX&
       &(a, b, self%local_nrows, self%local_ncols, &
-        int(sc_desc,kind=BLAS_KIND), tmp, int(BuffLevelInt,kind=MPI_KIND),   &
+        int(sc_desc,kind=BLAS_KIND), tmp, int(cannon_buffer_size,kind=MPI_KIND),   &
         int(mpi_comm_rows,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), debug, gpu_cannon, gpublasHandle)
 #ifdef WITH_NVTX
     call nvtxRangePop()
@@ -454,7 +485,7 @@ subroutine elpa_transform_back_generalized_a_h_a_&
   integer                  :: sc_desc_ev(SC_DESC_LEN)
   integer(kind=c_int)      :: cannon_for_generalized, pxgemm_for_generalized, pxtrmm_for_generalized, debug, gpu_cannon
   
-  logical                  :: useGPU, successGPU
+  logical                  :: useGPU, do_useGPU_cannon, successGPU
   integer(kind=c_intptr_t) :: gpublasHandle
   integer(kind=c_intptr_t), parameter ::  size_of_datatype = size_of_&
                                           &PRECISION&
@@ -467,7 +498,8 @@ subroutine elpa_transform_back_generalized_a_h_a_&
   call self%get("mpi_comm_rows",mpi_comm_rows,error)
   call self%get("mpi_comm_cols",mpi_comm_cols,error)
   call self%get("mpi_comm_parent", mpi_comm_all,error)
-
+  call self%get("debug", debug, error)
+  
   call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_pMPI,mpierr)
   call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND),my_prowMPI,mpierr)
   call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND),np_rowsMPI,mpierr)
@@ -480,11 +512,6 @@ subroutine elpa_transform_back_generalized_a_h_a_&
   my_pcol = int(my_pcolMPI,kind=c_int)
   np_cols = int(np_colsMPI,kind=c_int)
 
-  call self%get("cannon_for_generalized", cannon_for_generalized, error)
-  call self%get("pxgemm_for_generalized", pxgemm_for_generalized, error)
-  call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
-  call self%get("debug", debug, error)
-  
   useGPU = .false.
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
   if (.not.(query_gpu_usage(self, "elpa_transform_back_generalized", useGPU))) then
@@ -494,16 +521,21 @@ subroutine elpa_transform_back_generalized_a_h_a_&
   endif
 #endif
 
-  gpu_cannon = 0
-  gpublasHandle=0
+  ! Set defaults
   if (useGPU) then
-    call self%get("gpu_cannon", gpu_cannon, error)
-
-    pxtrmm_for_generalized = 0 ! default for GPU
-    if (self%is_set("pxtrmm_for_generalized") == 1) then ! if user enforces pxtrmm, use it
-      call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
-    endif
+    pxgemm_for_generalized = 1
+    cannon_for_generalized = 0
+    pxtrmm_for_generalized = 0
+  else
+    pxgemm_for_generalized = 0
+    cannon_for_generalized = 1
+    pxtrmm_for_generalized = 1
   endif
+
+  ! If user enforces a variable, use the provided value
+  if (self%is_set("pxgemm_for_generalized") == 1) call self%get("pxgemm_for_generalized", pxgemm_for_generalized, error)
+  if (self%is_set("cannon_for_generalized") == 1) call self%get("cannon_for_generalized", cannon_for_generalized, error)
+  if (self%is_set("pxtrmm_for_generalized") == 1) call self%get("pxtrmm_for_generalized", pxtrmm_for_generalized, error)
 
 #if !defined(WITH_MPI)
   cannon_for_generalized = 0
@@ -513,22 +545,22 @@ subroutine elpa_transform_back_generalized_a_h_a_&
     cannon_for_generalized = 0
   endif
 
-  error = self%construct_scalapack_descriptor(sc_desc, .false.)
-  error = self%construct_scalapack_descriptor(sc_desc_ev, .true.)
-  if(error .NE. ELPA_OK) return
-
 #ifdef DEVICE_POINTER
   if (.not. useGPU) then
-    write(*,*) "Device pointer interface is not available if gpu keywords weren't switched on. Aborting..."
+    write(error_unit,*) "Device pointer interface is not available if gpu keywords weren't switched on. Aborting..."
     error = ELPA_ERROR
     return
   endif
 
   if (pxgemm_for_generalized /= 1) then
-    write(*,*) "Device pointer interface is available only for pxgemm_for_generalized=1. Switching it on."
     pxgemm_for_generalized = 1
   endif
 #endif
+
+  error = self%construct_scalapack_descriptor(sc_desc, .false.)
+  error = self%construct_scalapack_descriptor(sc_desc_ev, .true.)
+  if(error .NE. ELPA_OK) return
+
 
   call self%timer_start("transform_back_generalized()")
 
@@ -583,7 +615,16 @@ subroutine elpa_transform_back_generalized_a_h_a_&
     call nvtxRangePush("cannons_triang_rectangular")
 #endif
 #ifdef WITH_MPI
+    
+    do_useGPU_cannon = .false.
+    gpu_cannon = 0
+    gpublasHandle=0
     if (useGPU) then
+      call self%get("gpu_cannon", gpu_cannon, error)
+      if (gpu_cannon == 1) do_useGPU_cannon = .true.
+    endif
+
+    if (do_useGPU_cannon) then
       gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
     endif
 

@@ -107,7 +107,7 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
 
   ! PETERDEBUG: use or clean up
   ! logical                    :: useGPU, successGPU
-  ! integer(kind=c_int)        :: my_pe, numberOfGPUDevices
+  ! integer(kind=c_int)        :: myid, numberOfGPUDevices
   ! integer(kind=c_intptr_t)   :: a_dev, b_dev, ev_dev, q_dev
   ! integer(kind=c_intptr_t), parameter ::  size_of_datatype = size_of_&
   !                                         &PRECISION&
@@ -131,10 +131,10 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
 !   endif
 
 !   if (useGPU) then
-!     my_pe = self%mpi_setup%myRank_comm_parent
+!     myid = self%mpi_setup%myRank_comm_parent
 !     call self%timer%start("check_for_gpu")
 
-!     if (check_for_gpu(self, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
+!     if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug=wantDebug)) then
 !       call set_gpu_parameters()
 !     else
 !       write(error_unit, *) "GPUs are requested but not detected! Aborting..."
@@ -372,7 +372,7 @@ subroutine elpa_generalized_eigenvectors_d_ptr_&
   integer(kind=c_int)        :: solver, debug
 
   logical                    :: useGPU, successGPU
-  integer(kind=c_int)        :: my_pe, numberOfGPUDevices
+  integer(kind=c_int)        :: myid, numberOfGPUDevices
 
   error_l   = -10
   success_l = .false.
@@ -395,10 +395,10 @@ subroutine elpa_generalized_eigenvectors_d_ptr_&
   endif
 
   if (useGPU) then
-    my_pe = self%mpi_setup%myRank_comm_parent
+    myid = self%mpi_setup%myRank_comm_parent
     call self%timer%start("check_for_gpu")
 
-    if (check_for_gpu(self, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
+    if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug=wantDebug)) then
       call set_gpu_parameters()
     else
       write(error_unit, *) "GPUs are requested but not detected! Aborting..."
@@ -775,7 +775,7 @@ subroutine elpa_generalized_eigenvalues_d_ptr_&
   integer(kind=c_int)        :: solver, debug
 
   logical                   :: useGPU
-  integer(kind=c_int)       :: my_pe, numberOfGPUDevices
+  integer(kind=c_int)       :: myid, numberOfGPUDevices
 
   error_l = -10
   success_l = .false.
@@ -799,10 +799,10 @@ subroutine elpa_generalized_eigenvalues_d_ptr_&
   endif
 
   if (useGPU) then
-    my_pe = self%mpi_setup%myRank_comm_parent
+    myid = self%mpi_setup%myRank_comm_parent
     call self%timer%start("check_for_gpu")
 
-    if (check_for_gpu(self, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
+    if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug=wantDebug)) then
       call set_gpu_parameters()
     else
       write(error_unit, *) "GPUs are requested but not detected! Aborting..."
