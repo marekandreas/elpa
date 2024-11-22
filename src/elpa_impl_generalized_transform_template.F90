@@ -52,16 +52,16 @@
 ! using cannon algorithm should be the fastest. After this is verified, the other options should be removed
 ! however, we need the extra temporary matrix as well.
 
-#include "general/error_checking.inc"
+! we utilize still unused q/qDev as a buffer tmp/tmpDev here
 
 #ifdef DEVICE_POINTER
 subroutine elpa_transform_generalized_d_ptr_&
           &ELPA_IMPL_SUFFIX&
-          &(self, aDev, bDev, is_already_decomposed, error)
+          &(self, aDev, bDev, tmpDev, is_already_decomposed, error)
 #else
 subroutine elpa_transform_generalized_a_h_a_&
           &ELPA_IMPL_SUFFIX&
-          &(self, a, b, is_already_decomposed, error)
+          &(self, a, b, tmp, is_already_decomposed, error)
 #endif
 
   use precision
@@ -76,13 +76,14 @@ subroutine elpa_transform_generalized_a_h_a_&
   class(elpa_impl_t)  :: self
 
 #ifdef DEVICE_POINTER
+  MATH_DATATYPE(kind=rck), allocatable :: a(:,:), b(:,:), tmp(:,:) ! dummy variables
   type(c_ptr)              :: aDev, bDev, tmpDev
-  MATH_DATATYPE(kind=rck)  :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols) ! dummy variables
 #else /* DEVICE_POINTER */  
 #ifdef USE_ASSUMED_SIZE
-  MATH_DATATYPE(kind=rck)  :: a(self%local_nrows, *), b(self%local_nrows, *)
+  MATH_DATATYPE(kind=rck)  :: a(self%local_nrows, *), b(self%local_nrows, *), tmp(self%local_nrows, *)
 #else
-  MATH_DATATYPE(kind=rck)  :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols)
+  MATH_DATATYPE(kind=rck)  :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols), &
+                              tmp(self%local_nrows, self%local_ncols)
 #endif
 #endif /* DEVICE_POINTER */
 
@@ -101,11 +102,10 @@ subroutine elpa_transform_generalized_a_h_a_&
   logical                  :: useGPU, do_useGPU_cannon, successGPU
   integer(kind=c_intptr_t) :: gpublasHandle
   integer(kind=c_intptr_t), parameter ::  size_of_datatype = size_of_&
-                                        &PRECISION&
-                                        &_&
-                                        &MATH_DATATYPE
+                                                            &PRECISION&
+                                                            &_&
+                                                            &MATH_DATATYPE
 
-  MATH_DATATYPE(kind=rck), allocatable :: tmp(:,:)
   logical, save            :: firstCall_cannon = .true.
   logical, save            :: firstCall_pxgemm = .true.
 
@@ -250,14 +250,6 @@ endif
   endif ! (.not. is_already_decomposed)
 
   if (pxgemm_for_generalized == 1) then
-#ifdef DEVICE_POINTER
-    successGPU = gpu_malloc(tmpDev, self%local_nrows*self%local_ncols*size_of_datatype)
-    check_alloc_gpu("elpa_transform_generalized: tmpDev", successGPU)
-#else
-    allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
-    check_allocate("elpa_transform_generalized: tmp", istat, errorMessage)
-#endif
-
     ! tmp <- B^T * A = inv(U^T) * A (we have to use temporary variable)
 #ifdef DEVICE_POINTER
     ! PETERDEBUG: use qDev (yet empty) for tmpDev here, and use aDev (already destroyed) for tmpDev in backtransform
@@ -287,17 +279,7 @@ endif
 #endif
     if(error .NE. ELPA_OK) return
 
-#ifdef DEVICE_POINTER
-    successGPU = gpu_free(tmpDev)
-    check_dealloc_gpu("elpa_transform_generalized: tmpDev", successGPU)
-#else
-    deallocate(tmp, stat=istat, errmsg=errorMessage)
-    call check_alloc("elpa_transform_generalized", "tmp", istat, errorMessage)
-#endif
   else if (cannon_for_generalized == 1) then
-    allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
-    check_allocate("elpa_transform_generalized: tmp", istat, errorMessage)
-
     do_useGPU_cannon = .false.
     gpu_cannon = 0
     gpublasHandle=0
@@ -321,7 +303,7 @@ endif
 #ifdef WITH_NVTX
     call nvtxRangePush("tmp = 0")
 #endif
-    tmp = 0.0_rck
+    tmp(1:self%local_nrows, 1:self%local_ncols) = 0.0_rck
 #ifdef WITH_NVTX
     call nvtxRangePop()
 #endif
@@ -345,13 +327,7 @@ endif
     call self%timer_stop("cannons_reduction")
 
     a(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
-
-    deallocate(tmp, stat=istat, errmsg=errorMessage)
-    call check_alloc("elpa_transform_generalized", "tmp", istat, errorMessage)
   else ! not ((pxgemm_for_generalized == 1) .or. (cannon_for_generalized == 1))
-    allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
-    check_allocate("elpa_transform_generalized: tmp", istat, errorMessage)
-
     ! tmp <- B^T * A = inv(U^T) * A (we have to use temporary variable)
     call self%elpa_hermitian_multiply_a_h_a_&
         &ELPA_IMPL_SUFFIX&
@@ -430,9 +406,6 @@ endif
       call self%timer_stop("copy")
 
     endif ! (pxtrmm_for_generalized == 1)
-
-    deallocate(tmp, stat=istat, errmsg=errorMessage)
-    call check_alloc("elpa_transform_generalized", "tmp", istat, errorMessage)
   endif ! (pxgemm_for_generalized == 1) .or. (cannon_for_generalized == 1) .or. else
 
 #ifdef WITH_NVTX
@@ -444,14 +417,16 @@ end subroutine
 
 ! _________________________________________________________________________________________________________________________________
 
+! we utilize already unused a/aDev as a buffer tmp/tmpDev here
+
 #ifdef DEVICE_POINTER
 subroutine elpa_transform_back_generalized_d_ptr_&
             &ELPA_IMPL_SUFFIX&
-            &(self, bDev, qDev, error)
+            &(self, bDev, qDev, tmpDev, error)
 #else
 subroutine elpa_transform_back_generalized_a_h_a_&
             &ELPA_IMPL_SUFFIX&
-            &(self, b, q, error)
+            &(self, b, q, tmp, error)
 #endif
   use mod_query_gpu_usage
   use elpa_utilities , only : check_alloc, check_allocate_f, error_unit
@@ -461,16 +436,17 @@ subroutine elpa_transform_back_generalized_a_h_a_&
 #endif
   implicit none
 #include "general/precision_kinds.F90"
-  class(elpa_impl_t)  :: self
+  class(elpa_impl_t)       :: self
 
 #ifdef DEVICE_POINTER
+  MATH_DATATYPE(kind=rck),  allocatable :: b(:,:), q(:,:), tmp(:,:) ! dummy variables
   type(c_ptr)              :: bDev, qDev, tmpDev
-  MATH_DATATYPE(kind=rck),  allocatable :: b(:,:), q(:,:) ! dummy variables
 #else /* DEVICE_POINTER */
 #ifdef USE_ASSUMED_SIZE
-  MATH_DATATYPE(kind=rck)  :: b(self%local_nrows, *), q(self%local_nrows, *)
+  MATH_DATATYPE(kind=rck)  :: b(self%local_nrows, *), q(self%local_nrows, *), tmp(self%local_nrows, *)
 #else
-  MATH_DATATYPE(kind=rck)  :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols)
+  MATH_DATATYPE(kind=rck)  :: b(self%local_nrows, self%local_ncols), q(self%local_nrows, self%local_ncols), &
+                              tmp(self%local_nrows, self%local_ncols)
 #endif
 #endif /* DEVICE_POINTER */
 
@@ -488,11 +464,10 @@ subroutine elpa_transform_back_generalized_a_h_a_&
   logical                  :: useGPU, do_useGPU_cannon, successGPU
   integer(kind=c_intptr_t) :: gpublasHandle
   integer(kind=c_intptr_t), parameter ::  size_of_datatype = size_of_&
-                                          &PRECISION&
-                                          &_&
-                                          &MATH_DATATYPE
+                                                            &PRECISION&
+                                                            &_&
+                                                            &MATH_DATATYPE
 
-  MATH_DATATYPE(kind=rck), allocatable :: tmp(:,:)
   MATH_DATATYPE(kind=rck), allocatable :: bt(:,:)
 
   call self%get("mpi_comm_rows",mpi_comm_rows,error)
@@ -569,14 +544,6 @@ subroutine elpa_transform_back_generalized_a_h_a_&
 #endif
 
   if (pxgemm_for_generalized == 1) then
-#ifdef DEVICE_POINTER
-    successGPU = gpu_malloc(tmpDev, self%local_nrows*self%local_ncols*size_of_datatype)
-    check_alloc_gpu("elpa_transform_back_generalized: tmpDev", successGPU)
-#else
-    allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
-    check_allocate("elpa_transform_back_generalized: tmp", istat, errorMessage)
-#endif
-
     ! tmp <- b Q = inv(U) Q
 #ifdef DEVICE_POINTER
     call self%elpa_pxgemm_multiply_d_ptr_&
@@ -601,14 +568,6 @@ subroutine elpa_transform_back_generalized_a_h_a_&
 #endif
     call self%timer_stop("copy")
 
-#ifdef DEVICE_POINTER
-    successGPU = gpu_free(tmpDev)
-    check_dealloc_gpu("elpa_transform_back_generalized: tmpDev", successGPU)
-#else
-    deallocate(tmp, stat=istat, errmsg=errorMessage)
-    call check_alloc("elpa_transform_back_generalized", "tmp", istat, errorMessage)
-#endif
-
   else if (cannon_for_generalized == 1) then
     call self%timer_start("cannons_triang_rectangular")
 #ifdef WITH_NVTX
@@ -628,9 +587,6 @@ subroutine elpa_transform_back_generalized_a_h_a_&
       gpublasHandle = self%gpu_setup%gpublasHandleArray(0)
     endif
 
-    allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
-    check_allocate("elpa_transform_back_generalized: tmp", istat, errorMessage)
-
     call cannons_triang_rectangular_&
       &ELPA_IMPL_SUFFIX&
       &(b, q, self%local_nrows, self%local_ncols, &
@@ -644,8 +600,6 @@ subroutine elpa_transform_back_generalized_a_h_a_&
 
     q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
 
-    deallocate(tmp, stat=istat, errmsg=errorMessage)
-    call check_alloc("elpa_transform_back_generalized", "tmp", istat, errorMessage)
   else
     if (pxtrmm_for_generalized == 1) then
       call self%timer_start("scalapack multiply inv(U) * Q")
@@ -672,11 +626,7 @@ subroutine elpa_transform_back_generalized_a_h_a_&
       call self%timer_stop("scalapack multiply inv(U) * Q")
     
     else ! (pxtrmm_for_generalized == 1)
-      
-      ! two additional temp arrays bt amd temp are needed, since we can't modify b: it might be used later if(is_already_decomposed)
-      allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
-      check_allocate("elpa_transform_back_generalized: tmp", istat, errorMessage)
-      
+      ! additional temp array bt is needed, since we can't modify b: it might be used later if(is_already_decomposed)
       allocate(bt(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_transform_back_generalized: bt", istat, errorMessage)
 
@@ -712,9 +662,6 @@ subroutine elpa_transform_back_generalized_a_h_a_&
       call self%timer_start("copy")
       q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
       call self%timer_stop("copy")
-
-      deallocate(tmp, stat=istat, errmsg=errorMessage)
-      call check_alloc("elpa_transform_back_generalized", "tmp", istat, errorMessage)
 
       deallocate(bt, stat=istat, errmsg=errorMessage)
       call check_alloc("elpa_transform_back_generalized", "bt", istat, errorMessage)

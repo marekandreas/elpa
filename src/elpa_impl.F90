@@ -46,6 +46,7 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 #include "config-f90.h"
+#include "general/error_checking.inc"
 
 !> \brief Fortran module which provides the actual implementation of the API. Do not use directly! Use the module "elpa"
 module elpa_impl

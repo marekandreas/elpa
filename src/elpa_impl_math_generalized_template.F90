@@ -85,8 +85,6 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
   use elpa1_impl
   use elpa2_impl
   use elpa_utilities, only : error_unit
-  !use elpa_gpu ! PETERDEBUG: check and cleanup  
-  !use elpa_gpu_util
   use, intrinsic :: iso_c_binding
   class(elpa_impl_t)  :: self
 
@@ -105,88 +103,19 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
   logical                    :: success_l
   integer(kind=c_int)        :: solver
 
-  ! PETERDEBUG: use or clean up
-  ! logical                    :: useGPU, successGPU
-  ! integer(kind=c_int)        :: myid, numberOfGPUDevices
-  ! integer(kind=c_intptr_t)   :: a_dev, b_dev, ev_dev, q_dev
-  ! integer(kind=c_intptr_t), parameter ::  size_of_datatype = size_of_&
-  !                                         &PRECISION&
-  !                                         &_&
-  !                                         &MATH_DATATYPE
-  ! integer(kind=c_intptr_t), parameter ::  size_of_datatype_real = size_of_&
-  !                                         &PRECISION&
-  !                                         &_real
-
   error_l   = -10
   success_l = .false.
-
-! PETERDEBUG: check and cleanup  
-! PETERDEBUG: new: check whether gpu keywords are set and check number of available GPUs
-!   useGPU = .false.
-! #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-!   if (.not.(query_gpu_usage(self, "elpa_generalized_eigenvectors_a_h_a", useGPU))) then
-!     write(error_unit,*) "elpa_generalized_eigenvectors_a_h_a: Problem getting options for GPU. Aborting..."
-!     error_l = ELPA_ERROR
-!     return
-!   endif
-
-!   if (useGPU) then
-!     myid = self%mpi_setup%myRank_comm_parent
-!     call self%timer%start("check_for_gpu")
-
-!     if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug=wantDebug)) then
-!       call set_gpu_parameters()
-!     else
-!       write(error_unit, *) "GPUs are requested but not detected! Aborting..."
-!       call self%timer%stop("check_for_gpu")
-!       error_l = ELPA_ERROR
-!       return
-!     endif
-!     call self%timer%stop("check_for_gpu")
-!   endif ! useGPU
-! #endif
-
-! PETERDEBUG: check and cleanup
-!   if (useGPU) then
-!     num = self%local_nrows*self%local_ncols
-!     successGPU = gpu_malloc(a_dev, num*size_of_datatype)
-!     check_alloc_gpu("elpa_impl_math_generalized_template a_dev", successGPU)
-
-!     num = self%local_nrows*self%local_ncols
-!     successGPU = gpu_malloc(b_dev, num*size_of_datatype)
-!     check_alloc_gpu("elpa_impl_math_generalized_template b_dev", successGPU)
-
-!     num = self%local_nrows*self%local_ncols
-!     successGPU = gpu_malloc(q_dev, num*size_of_datatype)
-!     check_alloc_gpu("elpa_impl_math_generalized_template q_dev", successGPU)
-
-!     num = self%na
-!     successGPU = gpu_malloc(ev_dev, num*size_of_datatype_real)
-!     check_alloc_gpu("elpa_impl_math_generalized_template ev_dev", successGPU)
-
-!     num = matrixRows*matrixCols
-! #ifdef WITH_GPU_STREAMS
-!     my_stream = self%local_nrows*self%local_ncols
-!     call gpu_memcpy_async_and_stream_synchronize &
-!         ("elpa_impl_math_generalized_template: a to a_dev", a_dev, 0_c_intptr_t, a(1:obj%local_nrows,1:obj%local_ncols), &
-!           1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
-! #else
-!     successGPU = gpu_memcpy(a_dev, int(loc(a(1,1)),kind=c_intptr_t), &
-!                             num*size_of_datatype, gpuMemcpyHostToDevice)
-!     check_memcpy_gpu("elpa_impl_math_generalized_template: memcpy a-> a_dev", successGPU)
-! #endif
-!   endif
 
 #if defined(INCLUDE_ROUTINES)
     call self%elpa_transform_generalized_a_h_a_&
             &ELPA_IMPL_SUFFIX&
-            & (a, b, is_already_decomposed, error_l)
+            & (a, b, q, is_already_decomposed, error_l)
 #endif
 
   if (present(error)) then
       error = error_l
   else if (error_l .ne. ELPA_OK) then
-    write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
+    write(error_unit,'(a)') "ELPA: Error in elpa_transform_generalized_a_h_a() and you did not check for errors!"
   endif
 
   call self%get("solver", solver,error_l)
@@ -234,13 +163,13 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
 #if defined(INCLUDE_ROUTINES)
   call self%elpa_transform_back_generalized_a_h_a_&
           &ELPA_IMPL_SUFFIX&
-          & (b, q, error_l)
+          & (b, q, a, error_l)
 #endif
 
   if (present(error)) then
       error = error_l
   else if (error_l .ne. ELPA_OK) then
-    write(error_unit,'(a)') "ELPA: Error in transform_back_generalized() and you did not check for errors!"
+    write(error_unit,'(a)') "ELPA: Error in transform_back_generalized_a_h_a() and you did not check for errors!"
   endif
 end subroutine
 
@@ -412,7 +341,7 @@ subroutine elpa_generalized_eigenvectors_d_ptr_&
 #if defined(INCLUDE_ROUTINES)
   call self%elpa_transform_generalized_d_ptr_&
           &ELPA_IMPL_SUFFIX&
-          & (aDev, bDev, is_already_decomposed, error_l)
+          & (aDev, bDev, qDev, is_already_decomposed, error_l)
 #endif
 
   if (present(error)) then
@@ -466,13 +395,13 @@ subroutine elpa_generalized_eigenvectors_d_ptr_&
 #if defined(INCLUDE_ROUTINES)
   call self%elpa_transform_back_generalized_d_ptr_&
           &ELPA_IMPL_SUFFIX&
-          & (bDev, qDev, error_l)
+          & (bDev, qDev, aDev, error_l)
 #endif
 
   if (present(error)) then
       error = error_l
   else if (error_l .ne. ELPA_OK) then
-    write(error_unit,'(a)') "ELPA: Error in transform_back_generalized() and you did not check for errors!"
+    write(error_unit,'(a)') "ELPA: Error in transform_back_generalized_d_ptr() and you did not check for errors!"
   endif
 end subroutine
 
@@ -577,9 +506,10 @@ end subroutine
     subroutine elpa_generalized_eigenvalues_a_h_a_&
                     &ELPA_IMPL_SUFFIX&
                     & (self, a, b, ev, is_already_decomposed, error)
-      use elpa2_impl
       use elpa1_impl
-      use elpa_utilities, only : error_unit
+      use elpa2_impl
+      use elpa_utilities, only : error_unit, check_alloc, check_allocate_f
+
       use, intrinsic :: iso_c_binding
       class(elpa_impl_t)  :: self
 
@@ -596,20 +526,29 @@ end subroutine
       integer(kind=c_int) :: solver
       logical             :: success_l
 
+      integer(kind=ik)    :: istat
+      character(200)      :: errorMessage
+      MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable :: tmp(:,:)
+
       error_l = -10
       success_l = .false.
 
+      allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
+      check_allocate("elpa_generalized_eigenvalues_a_h_a: tmp", istat, errorMessage)
 
 #if defined(INCLUDE_ROUTINES)
       call self%elpa_transform_generalized_a_h_a_&
               &ELPA_IMPL_SUFFIX&
-              & (a, b, is_already_decomposed, error_l)
+              & (a, b, tmp, is_already_decomposed, error_l)
 #endif
       if (present(error)) then
           error = error_l
       else if (error_l .ne. ELPA_OK) then
         write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
       endif
+
+      deallocate(tmp, stat=istat, errmsg=errorMessage)
+      check_deallocate("elpa_generalized_eigenvalues_a_h_a: tmp", istat, errorMessage)
 
       call self%get("solver", solver,error_l)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
@@ -766,16 +705,21 @@ subroutine elpa_generalized_eigenvalues_d_ptr_&
   class(elpa_impl_t)        :: self
 
   type(c_ptr)               :: aDev, bDev, evDev
+  type(c_ptr)               :: tmpDev
 
   logical                   :: is_already_decomposed
   integer, optional         :: error
   integer                   :: error_l
   
-  logical                    :: success_l, wantDebug
-  integer(kind=c_int)        :: solver, debug
+  logical                   :: success_l, wantDebug
+  integer(kind=c_int)       :: solver, debug
 
-  logical                   :: useGPU
+  logical                   :: useGPU, successGPU
   integer(kind=c_int)       :: myid, numberOfGPUDevices
+  integer(kind=c_intptr_t), parameter ::  size_of_datatype = size_of_&
+                                                            &PRECISION&
+                                                            &_&
+                                                            &MATH_DATATYPE
 
   error_l = -10
   success_l = .false.
@@ -813,17 +757,24 @@ subroutine elpa_generalized_eigenvalues_d_ptr_&
     call self%timer%stop("check_for_gpu")
   endif ! useGPU
 #endif
+  
+  successGPU = gpu_malloc(tmpDev, self%local_ncols*self%local_nrows * size_of_datatype)
+  check_alloc_gpu("elpa_generalized_eigenvalues_d_ptr tmpDev", successGPU)
 
 #if defined(INCLUDE_ROUTINES)
   call self%elpa_transform_generalized_d_ptr_&
           &ELPA_IMPL_SUFFIX&
-          & (aDev, bDev, is_already_decomposed, error_l)
+          & (aDev, bDev, tmpDev, is_already_decomposed, error_l)
 #endif
+
   if (present(error)) then
       error = error_l
   else if (error_l .ne. ELPA_OK) then
     write(error_unit,'(a)') "ELPA: Error in elpa_generalized_eigenvalues_d_ptr() and you did not check for errors!"
   endif
+
+  successGPU = gpu_free(tmpDev)
+  check_dealloc_gpu("elpa_generalized_eigenvalues_d_ptr tmpDev", successGPU)
 
   call self%get("solver", solver,error_l)
   if (solver .eq. ELPA_SOLVER_1STAGE) then
