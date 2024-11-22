@@ -155,12 +155,10 @@
   integer(kind=MPI_KIND)                       :: allreduce_request1, allreduce_request2, allreduce_request3, allreduce_request4
 
   integer(kind=ik)                             :: nblk, nblk_cut, nblk_cut_row, nblk_cut_col
-  integer(kind=ik)                             :: ld_aux_a_tmp1
   integer(kind=ik)                             :: error
   integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev ! PETERDEBUG_NEW
   integer(kind=c_intptr_t)                     :: at_col_dev, bt_row_dev ! PETERDEBUG_NEW: for transposed+GPU case
   integer(kind=c_intptr_t)                     :: buf_send_dev, buf_recv_dev, buf_self_dev ! PETERDEBUG_NEW: for transposed+NCCL case
-  integer(kind=c_intptr_t)                     :: offset_dev
 
   integer(kind=c_intptr_t)                     :: a_dev
   integer(kind=c_intptr_t)                     :: b_dev
@@ -380,7 +378,7 @@
   endif ! useGPU
 
   isSquareGrid = .false.
-  if (np_rows == np_cols) isSquareGrid = .true. 
+  if (np_rows == np_cols) isSquareGrid = .true.
 
   ! PETERDEBUG: cleanup
   if (myid==0) then
@@ -2002,58 +2000,55 @@
             call obj%timer%stop("gpu_memcpy")
           endif ! (useGPU .and. .not. useCCL)
 #endif /* WITH_MPI */
-
-          do dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
-            
-            ! PETERDEBUG: potential for opttimization: GEMM can be done in one go
-            if (useGPU) then
-              call obj%timer%start("gpublas")
-              NVTX_RANGE_PUSH("gpublas")
-              if (a_transposed) then
-                offset_dev = dnp_ab_t*nblk_mult_max*nblk_mult * size_of_datatype
-                call gpublas_PRECISION_GEMM(trans_a_cchar, trans_b_cchar, &
-                                            nblk_mult, nblk_mult, nblk_mult, ONE, &
-                                            aux_a_full_dev, nblk_mult, &
-                                            aux_b_full_dev + offset_dev, nblk_mult, ZERO, &
-                                            tmp1_full_dev  + offset_dev, nblk_mult, gpuHandle)
-              else if (b_transposed) then
-                offset_dev = dnp_ab_t*nblk_mult_max*1 * size_of_datatype
-                ld_aux_a_tmp1 = nblk_mult_max*(np_dirs_fine/np_dirs_t)
-                call gpublas_PRECISION_GEMM(trans_a_cchar, trans_b_cchar, &
-                                            nblk_mult, nblk_mult, nblk_mult, ONE, &
-                                            aux_a_full_dev + offset_dev, ld_aux_a_tmp1, &
-                                            aux_b_full_dev, nblk_mult, ZERO, &
-                                            tmp1_full_dev  + offset_dev, ld_aux_a_tmp1, gpuHandle)
-              endif ! b_transposed
-              if (wantDebug) successGPU = gpu_DeviceSynchronize()
-              NVTX_RANGE_POP("gpublas")
-              call obj%timer%stop("gpublas")
-            else ! useGPU
-              call obj%timer%start("blas")
-              if (a_transposed) then
-                call PRECISION_GEMM(trans_a, trans_b, &
+   
+          if (useGPU) then
+            call obj%timer%start("gpublas")
+            NVTX_RANGE_PUSH("gpublas")
+            if (a_transposed) then
+              call gpublas_PRECISION_GEMM(trans_a_cchar, trans_b_cchar, &
+                                          nblk_mult, &
+                                          nblk_mult_max*(np_dirs_fine/np_dirs_t), &
+                                          nblk_mult, ONE, &
+                                          aux_a_full_dev, nblk_mult, &
+                                          aux_b_full_dev, nblk_mult, ZERO, &
+                                          tmp1_full_dev , nblk_mult, gpuHandle)
+            else if (b_transposed) then
+              call gpublas_PRECISION_GEMM(trans_a_cchar, trans_b_cchar, &
+                                          nblk_mult_max*(np_dirs_fine/np_dirs_t), &
+                                          nblk_mult, &
+                                          nblk_mult, ONE, &
+                                          aux_a_full_dev, nblk_mult_max*(np_dirs_fine/np_dirs_t), &
+                                          aux_b_full_dev, nblk_mult, ZERO, &
+                                          tmp1_full_dev , nblk_mult_max*(np_dirs_fine/np_dirs_t), gpuHandle)
+            endif ! b_transposed
+            if (wantDebug) successGPU = gpu_DeviceSynchronize()
+            NVTX_RANGE_POP("gpublas")
+            call obj%timer%stop("gpublas")
+          else ! useGPU
+            call obj%timer%start("blas")
+            if (a_transposed) then
+              call PRECISION_GEMM(trans_a, trans_b, &
                                   int(nblk_mult, kind=BLAS_KIND), &
-                                  int(nblk_mult, kind=BLAS_KIND), &
+                                  int(nblk_mult_max*(np_dirs_fine/np_dirs_t), kind=BLAS_KIND), &
                                   int(nblk_mult, kind=BLAS_KIND), ONE, &
                                   aux_a_full(1:nblk_mult,1:nblk_mult), int(nblk_mult, kind=BLAS_KIND), &
-                                  aux_b_full(1:nblk_mult,(1+dnp_ab_t*nblk_mult_max):(nblk_mult+dnp_ab_t*nblk_mult_max)),&
+                                  aux_b_full(1:nblk_mult,1:nblk_mult_max*(np_dirs_fine/np_dirs_t)), &
                                   int(nblk_mult, kind=BLAS_KIND), ZERO, &
-                                  tmp1_full (1:nblk_mult,(1+dnp_ab_t*nblk_mult_max):(nblk_mult+dnp_ab_t*nblk_mult_max)),&
+                                  tmp1_full (1:nblk_mult,1:nblk_mult_max*(np_dirs_fine/np_dirs_t)), &
                                   int(nblk_mult, kind=BLAS_KIND))
-              else if (b_transposed) then
-                call PRECISION_GEMM(trans_a, trans_b, &
-                                  int(nblk_mult, kind=BLAS_KIND), &
+            else if (b_transposed) then
+              call PRECISION_GEMM(trans_a, trans_b, &
+                                  int(nblk_mult_max*(np_dirs_fine/np_dirs_t), kind=BLAS_KIND), &
                                   int(nblk_mult, kind=BLAS_KIND), &
                                   int(nblk_mult, kind=BLAS_KIND), ONE, &
-                                  aux_a_full((1+dnp_ab_t*nblk_mult_max):(nblk_mult+dnp_ab_t*nblk_mult_max),1:nblk_mult),&
-                                  int(nblk_mult, kind=BLAS_KIND), &
+                                  aux_a_full(1:nblk_mult_max*(np_dirs_fine/np_dirs_t),1:nblk_mult),&
+                                  int(nblk_mult_max*(np_dirs_fine/np_dirs_t), kind=BLAS_KIND), &
                                   aux_b_full(1:nblk_mult,1:nblk_mult), int(nblk_mult, kind=BLAS_KIND), ZERO, &
-                                  tmp1_full ((1+dnp_ab_t*nblk_mult_max):(nblk_mult+dnp_ab_t*nblk_mult_max),1:nblk_mult),&
-                                  int(nblk_mult, kind=BLAS_KIND))
-              endif ! b_transposed
-              call obj%timer%stop("blas")
-            endif ! useGPU
-          enddo ! dnp_ab_t
+                                  tmp1_full (1:nblk_mult_max*(np_dirs_fine/np_dirs_t),1:nblk_mult), &
+                                  int(nblk_mult_max*(np_dirs_fine/np_dirs_t), kind=BLAS_KIND))
+            endif ! b_transposed
+            call obj%timer%stop("blas")
+          endif ! useGPU
 
 #ifdef WITH_MPI
           if (a_transposed) then
