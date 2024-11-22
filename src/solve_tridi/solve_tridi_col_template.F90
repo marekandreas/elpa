@@ -382,25 +382,28 @@
 
         qmat1 = 0 ! Make sure that all elements are defined
 
+        if (useGPU) then
+          num = max_size*max_size * size_of_datatype_real
+          successGPU = gpu_malloc(qmat1_dev, num)
+          check_alloc_gpu("solve_tridi_single qmat1_dev: ", successGPU)
+
+          num = max_size*max_size * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+          my_stream = obj%gpu_setup%my_stream
+          successGPU = gpu_memset_async(qmat1_dev , 0, num, my_stream)
+          check_memset_gpu("solve_tridi_col: 1 qmat1_dev", successGPU)
+#else
+          successGPU = gpu_memset(qmat1_dev , 0, num)
+          check_memset_gpu("solve_tridi_col: 1 qmat1_dev", successGPU)
+#endif
+        endif
+
         if (my_prow < ndiv) then
 
           noff = limits(my_prow)        ! Start of subproblem
           nlen = limits(my_prow+1)-noff ! Size of subproblem
 
           if (useGPU) then
-            num = max_size*max_size * size_of_datatype_real
-            successGPU = gpu_malloc(qmat1_dev, num)
-            check_alloc_gpu("solve_tridi_single qmat1_dev: ", successGPU)
-
-            num = max_size*max_size * size_of_datatype_real
-#ifdef WITH_GPU_STREAMS
-            my_stream = obj%gpu_setup%my_stream
-            successGPU = gpu_memset_async(qmat1_dev , 0, num, my_stream)
-            check_memset_gpu("solve_tridi_col: 1 qmat1_dev", successGPU)
-#else
-            successGPU = gpu_memset(qmat1_dev , 0, num)
-            check_memset_gpu("solve_tridi_col: 1 qmat1_dev", successGPU)
-#endif
             call solve_tridi_single_problem_gpu_&
             &PRECISION_AND_SUFFIX &
                                     (obj, nlen, d_dev + (noff+1-1)*size_of_datatype_real, &
@@ -598,6 +601,9 @@
         enddo ! np = 0, ndiv-1
 
         if (useGPU) then
+          successGPU = gpu_free(qmat1_dev)
+          check_dealloc_gpu("solve_tridi_col: qmat1_dev", successGPU)
+
           successGPU = gpu_free(qmat2_dev)
           check_dealloc_gpu("solve_tridi_col: qmat2_dev", successGPU)
 

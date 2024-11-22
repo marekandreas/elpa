@@ -114,11 +114,11 @@
 
 #if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
      if (useGPU) then
-       num = 1 * 4
+       num = 1 * size_of_int
        successGPU = gpu_malloc(info_dev, num)
        check_alloc_gpu("solve_tridi_single info_dev: ", successGPU)
 
-       call GPU_CONSTRUCT_TRIDI_MATRIX_PRECISION (q_dev, d_dev, e_dev, ldq, nlen)
+       call GPU_CONSTRUCT_TRIDI_MATRIX_PRECISION (q_dev, d_dev, e_dev, nlen, ldq)
 
      endif
 #endif
