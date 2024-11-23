@@ -238,7 +238,6 @@ endif
   if (pxgemm_for_generalized == 1) then
     ! tmp <- B^T * A = inv(U^T) * A (we have to use temporary variable)
 #ifdef DEVICE_POINTER
-    ! PETERDEBUG: use qDev (yet empty) for tmpDev here, and use aDev (already destroyed) for tmpDev in backtransform
     call self%elpa_pxgemm_multiply_d_ptr_&
           &ELPA_IMPL_SUFFIX&
           &(BLAS_TRANS_OR_CONJ,'N', self%na, bDev, aDev, self%local_nrows, self%local_ncols, tmpDev, &

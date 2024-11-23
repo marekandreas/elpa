@@ -49,10 +49,6 @@
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
 
-! PETERDEBUG
-!#define OLD_GENERIC_GRID
-!#define SQUARE_GRID
-!#define NONSQUARE_GRID
 
 #undef USE_CCL_PXGEMM
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
@@ -106,26 +102,19 @@
   MATH_DATATYPE(kind=rck), allocatable         :: at_full(:,:), bt_full(:,:)
   MATH_DATATYPE(kind=rck), allocatable         :: buf_send(:,:), buf_recv(:,:), buf_self(:,:), at_col(:,:), bt_row(:,:) ! needed for TT case
 
-  integer(kind=ik)                             :: my_pdir, my_pdir_t, np_dirs, np_dirs_t ! PETERDEBUG_NEW
+  integer(kind=ik)                             :: my_pdir, my_pdir_t, np_dirs, np_dirs_t
   integer(kind=ik)                             :: np_rows_fine, np_cols_fine, np_dirs_fine, np_fine, np_t_fine, np_bc_fine, &
-                                                  np_ab_fine, np_ab_t_fine, dnp_ab, dnp_ab_t, & ! PETERDEBUG_NEW
-                                                  np_bc_fine_1, nblk_mult_cols_1, np_fine_1, nblk_mult_rows_1, & ! PETERDEBUG_NEW
-                                                  m_blocks_loc_fine, n_blocks_loc_fine, m_blocks_loc_fine_1, n_blocks_loc_fine_1, &
-                                                  dnp_bc_fine, np_bc_fine_1_start
-  integer(kind=ik)                             :: LCM, nblk_mult_rows, nblk_mult_cols, i_block_loc_fine, j_block_loc_fine ! PETERDEBUG_NEW
-  integer(kind=ik)                             :: nblk_mult_rows_max, nblk_mult_cols_max, tail_loc, nblk_rows_cut, nblk_cols_cut ! PETERDEBUG_NEW
+                                                  np_ab_fine, np_ab_t_fine, dnp_ab, dnp_ab_t
+  integer(kind=ik)                             :: LCM, nblk_mult_rows, nblk_mult_cols, i_block_loc_fine, j_block_loc_fine
+  integer(kind=ik)                             :: nblk_mult_rows_max, nblk_mult_cols_max, nblk_rows_cut, nblk_cols_cut
   integer(kind=ik)                             :: nblk_mult_max, nblk_mult_min
   integer(kind=ik)                             :: l_cols, l_rows
-  integer(kind=ik)                             :: l_rows_max, l_cols_max, l_rows_min, l_cols_min, nstor_block, nstor_block_cut ! PETERDEBUG
+  integer(kind=ik)                             :: l_rows_max, l_cols_max, l_rows_min, l_cols_min
   integer(kind=ik)                             :: l_rows_source, l_cols_source
   integer(kind=ik)                             :: np, nb, nblk_mult, lrs, lre, lcs, lce
-  integer(kind=ik)                             :: np_row_curr, n_blocks_loc_x, n_blocks_loc_y, I_block_gl, J_block_gl, &
-                                                  i_block_loc, j_block_loc ! PETERDEBUG
-  integer(kind=ik)                             :: I_block_gl_target, J_block_gl_source ! PETERDEBUG_NEW --> needed only for transpose case
-  integer(kind=ik)                             :: gcol_min, gcol, goff
-  integer(kind=ik)                             :: nstor, nr_done, noff, np_bc, n_aux_bc, nvals
-  integer(kind=ik)                             :: np_br, noff_n ! PETERDEBUG
-  integer(kind=ik)                             :: np_t ! PETERDEBUG_NEW -> instead of np_bc?
+  integer(kind=ik)                             :: i_block_loc, j_block_loc
+  integer(kind=ik)                             :: np_bc
+  integer(kind=ik)                             :: np_t
   integer(kind=ik), allocatable                :: lrs_save(:), lre_save(:)
 
   logical                                      :: a_transposed, b_transposed
@@ -133,7 +122,7 @@
 
   MATH_DATATYPE(kind=rck)                      :: beta
   integer(kind=ik)                             :: beta_int
-  MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_a_full(:,:), aux_b_full(:,:), tmp1_full(:,:) ! PETERDEBUG
+  MATH_DATATYPE(kind=rck), pointer, contiguous :: aux_a_full(:,:), aux_b_full(:,:), tmp1_full(:,:)
   logical                                      :: wantDebug
   integer(kind=ik)                             :: istat, debug
   character(200)                               :: errorMessage
@@ -147,18 +136,13 @@
   integer(kind=MPI_KIND)                       :: mpierr
   integer(kind=ik)                             :: my_prow, my_pcol, np_rows, np_cols, myid
   integer(kind=ik)                             :: mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-  integer(kind=ik)                             :: mpi_comm_dirs ! PETERDEBUG_NEW
-  integer(kind=ik)                             :: matrix_order ! PETERDEBUG_NEW --> needed only for transpose case
-  integer(kind=ik)                             :: my_mpi_rank, mpi_rank_target, my_prow_target, my_pcol_target, &
-                                                  mpi_rank_source, my_prow_source, my_pcol_source, & ! PETERDEBUG_NEW --> needed only for transpose
-                                                  my_prow_target_deadlock
-  integer(kind=MPI_KIND)                       :: allreduce_request1, allreduce_request2, allreduce_request3, allreduce_request4
+  integer(kind=ik)                             :: mpi_comm_dirs
 
   integer(kind=ik)                             :: nblk, nblk_cut, nblk_cut_row, nblk_cut_col
   integer(kind=ik)                             :: error
-  integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev ! PETERDEBUG_NEW
-  integer(kind=c_intptr_t)                     :: at_col_dev, bt_row_dev ! PETERDEBUG_NEW: for transposed+GPU case
-  integer(kind=c_intptr_t)                     :: buf_send_dev, buf_recv_dev, buf_self_dev ! PETERDEBUG_NEW: for transposed+NCCL case
+  integer(kind=c_intptr_t)                     :: aux_a_full_dev, aux_b_full_dev, tmp1_full_dev
+  integer(kind=c_intptr_t)                     :: at_col_dev, bt_row_dev
+  integer(kind=c_intptr_t)                     :: buf_send_dev, buf_recv_dev, buf_self_dev
 
   integer(kind=c_intptr_t)                     :: a_dev
   integer(kind=c_intptr_t)                     :: b_dev
@@ -167,9 +151,9 @@
   integer(kind=c_intptr_t)                     :: num, num_a, num_b, num_r, num_c
   integer(kind=c_intptr_t)                     :: aux_off, b_off
   integer(kind=c_intptr_t), parameter          :: size_of_datatype = size_of_&
-                                                            &PRECISION&
-                                                            &_&
-                                                            &MATH_DATATYPE
+                                                                    &PRECISION&
+                                                                    &_&
+                                                                    &MATH_DATATYPE
 
   integer(kind=c_intptr_t)                     :: gpuHandle, my_stream
   integer(kind=c_int)                          :: gpu_pxgemm_multiply
@@ -211,13 +195,6 @@
     wantDebug = .true.
   else
     wantDebug = .false.
-  endif
-
-  call obj%get("matrix_order", matrix_order, error)
-  if (error .ne. ELPA_OK) then
-    write(error_unit,*) "elpa_pxgemm_multiply: Problem getting option matrix_order. Aborting..."
-    success = .false.
-    return
   endif
 
 #if defined(DEVICE_POINTER)
@@ -282,8 +259,6 @@
 
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
-
-  call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), my_mpi_rank, mpierr)
 
   l_rows = local_index(na,  my_prow, np_rows, nblk, -1) ! Local rows of a and b
   l_cols = local_index(ncb, my_pcol, np_cols, nblk, -1) ! Local cols of b
@@ -380,29 +355,7 @@
   isSquareGrid = .false.
   if (np_rows == np_cols) isSquareGrid = .true.
 
-  ! PETERDEBUG: cleanup
-  if (myid==0) then
-    print *, "a_transposed = ", a_transposed
-    print *, "b_transposed = ", b_transposed
-    print *, "trans_a = ", trans_a
-    print *, "trans_b = ", trans_b
-    print *, "isSquareGrid = ", isSquareGrid
-    print *, "np_rows = ", np_rows
-    print *, "np_cols = ", np_cols
-    print *, "elpa_pxgemm_multiply NEW: start"
-  endif
-
 #if WITH_MPI
-  ! l_rows_max = l_rows
-  call mpi_allreduce(l_rows, l_rows_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
-  call mpi_allreduce(l_cols, l_cols_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
-  call mpi_allreduce(l_rows, l_rows_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), mpierr)
-  call mpi_allreduce(l_cols, l_cols_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), mpierr)
-  ! call mpi_iallreduce(l_rows, l_rows_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), allreduce_request1, mpierr) ! PETERDEBUG: cleanup
-  ! call mpi_iallreduce(l_cols, l_cols_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), allreduce_request2, mpierr)
-  ! call mpi_iallreduce(l_rows, l_rows_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), allreduce_request3, mpierr)
-  ! call mpi_iallreduce(l_cols, l_cols_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), allreduce_request4, mpierr)
-
   ! overlap async memcopy to GPU with MPI
 #ifdef WITH_GPU_STREAMS
   if (useGPU) then  
@@ -410,6 +363,12 @@
     check_stream_synchronize_gpu("elpa_pxgemm_multiply: stream synchronize", successGPU)
   endif
 #endif
+
+  ! l_rows_max = l_rows
+  call mpi_allreduce(l_rows, l_rows_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+  call mpi_allreduce(l_cols, l_cols_max, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+  call mpi_allreduce(l_rows, l_rows_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), mpierr)
+  call mpi_allreduce(l_cols, l_cols_min, 1_MPI_KIND, MPI_INTEGER, MPI_MIN, int(mpi_comm_all,kind=MPI_KIND), mpierr)
 #else /* WITH_MPI */
   l_rows_max = l_rows
   l_cols_max = l_cols
@@ -426,7 +385,7 @@
 
     if (.not. a_transposed .and. b_transposed .or. &
         a_transposed .and. .not. b_transposed ) then
-      print *, "elpa_pxgemm_multiply NEW: SQUARE_GRID start: (a_transposed XOR b_transposed)" ! PETERDEBUG
+      if (wantDebug .and. myid==0) print *, "elpa_pxgemm_multiply NEW: SQUARE_GRID start: (a_transposed XOR b_transposed)" ! PETERDEBUG
       
       allocate(aux_a_full(l_rows_max, nblk_mult), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm_multiply: aux_a_full", istat, errorMessage)
@@ -467,7 +426,7 @@
       ! main loop: build up the result matrix by processor rows/cols for TN/NT
       do np = 0, np_dirs-1
         NVTX_RANGE_PUSH("do np = 0, np_dirs-1")
-        if (myid==0) print *, "np = ", np ! PETERDEBUG
+        if (wantDebug .and. myid==0)  print *, "np = ", np ! PETERDEBUG
 
         ! In this turn, procs of row/col np assemble the result for TN/NT case
         
@@ -696,7 +655,6 @@
 #endif /* WITH_MPI */
 
         ! Put the result into C
-        ! PETERDEBUG: we put the result to c_dev if(useCCL). Otherwise, tmp1_full is already on host and we can copy it to c
         if (my_pdir==np) then
           if (useGPU) then
             NVTX_RANGE_PUSH("gpu_copy_aux_full")
@@ -735,7 +693,7 @@
 
     if ((.not. a_transposed) .and. (.not. b_transposed) .or. &
                a_transposed  .and.        b_transposed) then
-      if (myid==0) print *, "elpa_pxgemm_multiply NEW: SQUARE_GRID start: NN or TT" ! PETERDEBUG
+       if (wantDebug .and. myid==0) print *, "elpa_pxgemm_multiply NEW: SQUARE_GRID start: NN or TT" ! PETERDEBUG
    
       allocate(aux_a_full(l_rows, nblk_mult), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm_multiply: aux_a_full", istat, errorMessage)
@@ -748,10 +706,6 @@
         stop 1
       endif
       
-      ! PETERDEBUG: cleanup
-      ! allocate(tmp1_full(l_rows, l_cols), stat=istat, errmsg=errorMessage)
-      ! check_allocate("elpa_pxgemm_multiply: tmp1_full", istat, errorMessage)
-  
       ! PETERDEBUG: is it possible to use the original GPU memory, without copying?
       if (useGPU) then
         successGPU = gpu_malloc(aux_a_full_dev, l_rows*nblk_mult*size_of_datatype)
@@ -759,9 +713,6 @@
   
         successGPU = gpu_malloc(aux_b_full_dev, nblk_mult*l_cols*size_of_datatype)
         check_alloc_gpu("elpa_pxgemm_multiply: aux_b_full_dev", successGPU)
-  
-        ! successGPU = gpu_malloc(tmp1_full_dev, l_rows*l_cols*size_of_datatype)
-        ! check_alloc_gpu("elpa_pxgemm_multiply: tmp1_full_dev", successGPU)
       endif
 
       if (a_transposed) then
@@ -929,7 +880,7 @@
             else
               call gpu_copy_aux_full(PRECISION_CHAR, aux_b_full_dev, b_dev, &
                                     l_rows, l_cols, nblk_mult, ldb, debug, my_stream)
-              ! call gpu_copy_and_set_zeros_aux_full(PRECISION_CHAR, b_dev, aux_b_full_dev, &
+              ! call gpu_copy_and_set_zeros_aux_full(PRECISION_CHAR, b_dev, aux_b_full_dev, & ! PETERDEBUG
               !                                       l_rows, l_cols, l_rows, debug, my_stream)
                                                   !l_rows, l_cols, nblk_mult, debug, my_stream)
             endif
@@ -1060,7 +1011,7 @@
           call obj%timer%stop("blas")
         endif ! useGPU
 
-        NVTX_RANGE_POP("do np_row_curr = 0, np_rows-1")
+        NVTX_RANGE_POP("np = 0, np_rows-1")
       enddo ! np = 0, np_rows-1
 
       call obj%timer%stop("main_loop_square_grid_nn_tt")
@@ -1133,97 +1084,6 @@
 
 !_______________________________________________
 
-  !   if (.false. .and. (a_transposed) .and. (b_transposed)) then ! PETERDEBUG: cleanup
-
-  !     allocate(at_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
-  !     check_allocate("elpa_pxgemm_multiply: at_max", istat, errorMessage)
-  
-  !     allocate(bt_full(l_rows_max, l_cols_max), stat=istat, errmsg=errorMessage)
-  !     check_allocate("elpa_pxgemm_multiply: bt_full", istat, errorMessage)
-  
-  !     !call mpi_allreduce(nblk_mult, na_max, 1_MPI_KIND, MPI_INTEGER, MPI_SUM, int(mpi_comm_all,kind=MPI_KIND), mpierr)
-
-  !     if (myid==0) print *, "elpa_pxgemm_multiply NEW: SQUARE_GRID start: (a_transposed) .and. (b_transposed)" ! PETERDEBUG
-
-  !     ! main loop: iterate through np, which are process rows for matrix A and process cols for matrix B
-  !     do np = 0, np_rows-1 ! np_rows=np_cols
-  !       NVTX_RANGE_PUSH("np = 0, np_rows-1")
-  !       if (myid==0) print *, "np = ", np ! PETERDEBUG
-
-  !       ! In this turn, procs of row np assemble the result
-        
-  !       np_bc=np ! np, that posesses the given column of a
-        
-  !       if (np_bc == my_prow) then
-  !         aux_a_full(1:l_rows,1:l_cols) = a(1:l_rows,1:l_cols)
-  !         if (l_rows<nblk_mult) aux_a_full(l_rows+1:nblk_mult,1:l_cols) = 0
-  !         if (l_cols<nblk_mult) aux_a_full(1:l_rows,l_cols+1:nblk_mult) = 0
-  !         if (l_rows<nblk_mult .and. l_cols<nblk_mult) aux_a_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
-  !       endif
-
-  !       ! PETERDEBUG: approach Bcast+elpa_transpose_vectors can be optimized: it uses two Bcasts instead of one
-  !       ! alternative approach: write a function that transposes one block-column by send-recv
-  !       call MPI_Bcast(aux_a_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-  !              int(np_bc,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-
-  !       ! a -> at_full: transpose row #np of a
-  !       ! elpa_transpose_vectors: There must be an identical copy of vmat_s in every communicator comm_s
-  !       ! it performs bcast after transpose; it doesn't perform transpose inside a block
-  !       call elpa_transpose_vectors_&
-  !             &MATH_DATATYPE&
-  !             &_&
-  !             &PRECISION&
-  !             (obj, aux_a_full, l_rows_max, mpi_comm_cols, at_full, l_rows_max, mpi_comm_rows, &
-  !              1, nblk_mult*np_rows, l_cols_max, nblk_mult, 1, .true., success) ! PETERDEBUG: 1 (third from last) -> max_threads
-        
-  !       ! b -> bt_full: transpose column #np of b
-  !       if (np    == my_pcol) then
-  !         aux_b_full(1:l_rows,1:l_cols) = b(1:l_rows,1:l_cols)
-  !         if (l_rows<nblk_mult) aux_b_full(l_rows+1:nblk_mult,1:l_cols) = 0
-  !         if (l_cols<nblk_mult) aux_b_full(1:l_rows,l_cols+1:nblk_mult) = 0
-  !         if (l_rows<nblk_mult .and. l_cols<nblk_mult) aux_b_full(l_rows+1:nblk_mult,l_cols+1:nblk_mult) = 0
-  !       endif
-  !       call MPI_Bcast(aux_b_full, int(nblk_mult*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
-  !               int(np   ,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-
-  !       call elpa_transpose_vectors_&
-  !              &MATH_DATATYPE&
-  !              &_&
-  !              &PRECISION&
-  !              (obj, aux_b_full, l_rows_max, mpi_comm_rows, bt_full, l_rows_max, mpi_comm_cols, &
-  !               1, nblk_mult*np_rows, l_cols_max, nblk_mult, 1, .false., success) ! PETERDEBUG: allow nb != na
-
-        
-  !       beta = ZERO
-  !       if (np>0) beta = ONE
-  !       call obj%timer%start("blas")
-  !       call PRECISION_GEMM('T', 'T', &
-  !                           int(nblk_mult, kind=BLAS_KIND), &
-  !                           int(nblk_mult, kind=BLAS_KIND), &
-  !                           int(nblk_mult, kind=BLAS_KIND), ONE, &
-  !                           at_full, int(nblk_mult,kind=BLAS_KIND), &
-  !                           bt_full, int(nblk_mult,kind=BLAS_KIND), beta, &
-  !                           tmp1_full , int(nblk_mult,kind=BLAS_KIND))
-  !       call obj%timer%stop("blas")
-
-  !       NVTX_RANGE_POP("do np_row_curr = 0, np_rows-1")
-  !     enddo ! np = 0, np_rows-1
-      
-  !     ! Put the result into C
-  !     c(1:l_rows,1:l_cols) = tmp1_full(1:l_rows,1:l_cols)
-      
-  !     deallocate(at_full, bt_full, stat=istat, errmsg=errorMessage)
-  !     call check_alloc("elpa_pxgemm_multiply", "at_full, bt_full", istat, errorMessage)
-
-  !     deallocate(tmp1_full, stat=istat, errmsg=errorMessage)
-  !     call check_alloc("elpa_pxgemm_multiply", "tmp1_full", istat, errorMessage)
-      
-  !     if (useGPU) then
-  !       successGPU = gpu_free(tmp1_full_dev)
-  !       check_dealloc_gpu("elpa_pxgemm_multiply: tmp1_full_dev", successGPU)
-  !     endif
-  !   endif ! (a_transposed .and. b_transposed)
-
   endif ! isSquareGrid
 
 ! _________________________________________________________________________________________________________________________________
@@ -1235,15 +1095,15 @@
     nblk_mult_cols_max = (l_cols_max*np_cols+LCM-1)/LCM*nblk
     nblk_mult = max(nblk_mult_rows_max, nblk_mult_cols_max)
     
-    if (myid==0) then
-      print *, "LCM = ", LCM ! PETERDEBUG
-      print *, "l_rows_max", l_rows_max ! PETERDEBUG
-      print *, "l_cols_max", l_cols_max ! PETERDEBUG
-      print *, "l_rows", l_rows ! PETERDEBUG
-      print *, "l_cols", l_cols ! PETERDEBUG
-      print *, "np_rows", np_rows ! PETERDEBUG
-      print *, "np_cols", np_cols ! PETERDEBUG
-      print *, "nblk_mult = ", nblk_mult ! PETERDEBUG
+    if (wantDebug .and. myid==0) then ! PETERDEBUG
+      print *, "LCM = ", LCM
+      print *, "l_rows_max", l_rows_max
+      print *, "l_cols_max", l_cols_max
+      print *, "l_rows", l_rows
+      print *, "l_cols", l_cols
+      print *, "np_rows", np_rows
+      print *, "np_cols", np_cols
+      print *, "nblk_mult = ", nblk_mult
     endif
 
     np_rows_fine = least_common_multiple(np_rows, np_cols)
@@ -1253,7 +1113,7 @@
 
     if ((.not. a_transposed) .and. (.not. b_transposed) .or. &
                a_transposed  .and.        b_transposed) then
-      if (myid==0) print *, "elpa_pxgemm_multiply NEW: NON-SQUARE_GRID start: NN or TT or universal" ! PETERDEBUG
+      if (wantDebug .and. myid==0) print *, "elpa_pxgemm_multiply NEW: NON-SQUARE_GRID start: NN or TT or universal" ! PETERDEBUG
 
       allocate(aux_a_full(l_rows, nblk_mult), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_pxgemm_multiply: aux_a_full", istat, errorMessage)
@@ -1267,19 +1127,12 @@
   
         successGPU = gpu_malloc(aux_b_full_dev, nblk_mult*l_cols*size_of_datatype)
         check_alloc_gpu("elpa_pxgemm_multiply: aux_b_full_dev", successGPU)
-        
-        ! PETERDEBUG: cleanup
-        !successGPU = gpu_malloc(tmp1_full_dev, l_rows*l_cols*size_of_datatype)
-        !check_alloc_gpu("elpa_pxgemm_multiply: tmp1_full_dev", successGPU)
       endif
 
       if (useGPU .and. l_rows /= ldc) then
         print *, "elpa_pxgemm_multiply: Error: case ldc != lda is not implemented yet for NN and TT on GPU"
         stop 1
       endif
-
-      !allocate(tmp1_full(l_rows, l_cols), stat=istat, errmsg=errorMessage) --> c
-      !check_allocate("elpa_pxgemm_multiply: tmp1_full", istat, errorMessage)
       
       if (a_transposed) then
         ! PETERDEBUG: this is as memory consuming as the whole matrix. Can we do smth about it?
@@ -1360,7 +1213,7 @@
       ! main loop: iterate through np_fine, which are "virtual" process rows for matrix A and process cols for matrix B
       do np_fine = 0, np_rows_fine-1 ! np_rows_fine=np_cols_fine
         NVTX_RANGE_PUSH("np_fine = 0, np_rows_fine-1")
-        if (myid==0) print *, "np_fine = ", np_fine ! PETERDEBUG
+        if (wantDebug .and. myid==0) print *, "np_fine = ", np_fine ! PETERDEBUG
 
         ! In this turn, procs of row np_fine assemble the result
         
@@ -1593,7 +1446,7 @@
           call obj%timer%stop("blas")
         endif ! useGPU
 
-        NVTX_RANGE_POP("do np_row_curr = 0, np_rows-1")
+        NVTX_RANGE_POP("np_fine = 0, np_rows_fine-1")
       enddo ! np_fine = 0, np_rows_fine-1
       
       call obj%timer%stop("main_loop_nn_tt")
@@ -1668,7 +1521,7 @@
 ! ___________________________________________________________________
     if (.not. a_transposed .and.       b_transposed .or. &
               a_transposed .and. .not. b_transposed) then
-      if (myid==0) print *, "elpa_pxgemm_multiply NEW: NON-SQUARE_GRID start: TN or NT" ! PETERDEBUG
+      if (wantDebug .and. myid==0) print *, "elpa_pxgemm_multiply NEW: NON-SQUARE_GRID start: TN or NT" ! PETERDEBUG
       
       ! dir = row/col for TN/NT
       if (a_transposed) then
@@ -1742,7 +1595,7 @@
       ! main loop: build up the result matrix C by the (virtual) process rows/cols for TN/NT
       do np_fine = 0, np_dirs_fine-1
         NVTX_RANGE_PUSH("do np_fine")
-        if (myid==0) print *, "np_fine = ", np_fine ! PETERDEBUG
+        if (wantDebug .and. myid==0) print *, "np_fine = ", np_fine ! PETERDEBUG
 
         ! In this turn, procs of row/col np assemble the result for TN/NT case
         

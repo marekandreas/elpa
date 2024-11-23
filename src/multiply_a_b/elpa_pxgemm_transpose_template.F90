@@ -101,8 +101,7 @@ subroutine elpa_transpose_row_or_col&
   integer(kind=ik)                             :: my_prow, my_pcol, np_rows, np_cols, myid
   integer(kind=ik)                             :: my_pdir, my_pdir_t, np_dirs, np_dirs_t
   integer(kind=ik)                             :: mpi_comm_all
-  integer(kind=ik)                             :: mpi_comm_dirs ! PETERDEBUG_NEW
-  integer(kind=ik)                             :: matrix_order ! PETERDEBUG_NEW --> needed only for transpose case
+  integer(kind=ik)                             :: matrix_order
   integer(kind=ik)                             :: my_mpi_rank, mpi_rank_target, mpi_rank_source, &
                                                   my_pdir_target, my_pdir_t_target, &
                                                   my_pdir_source, my_pdir_t_source, &
@@ -111,7 +110,7 @@ subroutine elpa_transpose_row_or_col&
                                                   my_pdir_target_deadlock
 
   integer(kind=ik)                             :: np_rows_fine, np_cols_fine, np_dirs_fine, np_dirs_t_fine, np_t_fine, np_bc_fine, &
-                                                  np_t_fine_1, nblk_mult_dirs_1, np_fine_1, nblk_mult_dirs_t_1, & ! PETERDEBUG_NEW
+                                                  np_t_fine_1, nblk_mult_dirs_1, np_fine_1, nblk_mult_dirs_t_1, &
                                                   m_blocks_loc_fine, mt_blocks_loc_fine, &
                                                   m_blocks_loc_fine_1, mt_blocks_loc_fine_1, &
                                                   np_t_fine_1_start
@@ -134,11 +133,10 @@ subroutine elpa_transpose_row_or_col&
   logical                                      :: successGPU, useCCL
   integer(kind=c_intptr_t)                     :: my_stream
   integer(kind=ik)                             :: SM_count
-!#if defined(USE_CCL_PXGEMM) ! PETERDEBUG: clean up
+
   integer(kind=c_intptr_t)                     :: ccl_comm_all
   integer(kind=c_int)                          :: cclDataType
   integer(kind=ik)                             :: k_datatype
-!#endif
 
   call obj%timer%start("elpa_transpose_row")
 
@@ -364,7 +362,6 @@ subroutine elpa_transpose_row_or_col&
     my_pdir_source = mod(np_fine, np_dirs)
 
     do np_fine_1 = my_pdir, np_dirs_fine-1, np_dirs
-      !if (myid==1) print *, "np_fine_1=", np_fine_1 ! PETERDEBUG
       np_t_fine_1 = np_fine_1
       my_pdir_t_source = mod(np_t_fine_1, np_dirs_t)
 
