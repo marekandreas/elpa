@@ -521,3 +521,76 @@ extern "C" {
   }
 
 }
+
+  void rocsolverDsyevd_elpa_wrapper (SOLVER_handle rocsolverHandle, int n, double *A, int lda, double *eigenvalues, int *info_dev) {
+    SOLVER_status status;
+    hipError_t hiperr;
+
+    double *d_work = NULL;
+    int d_lwork = 0;
+
+    //cusolverEigMode_t jobz = CUSOLVER_EIG_MODE_VECTOR; // compute eigenvalues and eigenvectors.
+    hipsolverFillMode_t uplo = HIPSOLVER_FILL_MODE_LOWER;
+
+    //status = cusolverDnDsyevd_bufferSize(cudaHandle, jobz,  uplo, n, A, lda, eigenvalues, &d_lwork);
+    //if (status != CUSOLVER_STATUS_SUCCESS) {
+    //  errormessage("Error in cusolverDnSsyevd_buffer_size %s \n","aborting");
+    //}
+
+    hiperr = hipMalloc((void**) &d_work, sizeof(double) * d_lwork);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_DnSsyevd d_work: %s\n",hipGetErrorString(hiperr));
+    }
+//#ifdef DEBUG_CUDA
+    //printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
+//#endif
+
+    rocblas_evect jobz = rocblas_evect_tridiagonal;
+    status = rocsolver_dsyevd(rocsolverHandle, jobz, uplo, n, A, lda, eigenvalues, work, info_dev);
+
+    if (status != SOLVER_status_success) {
+      errormessage("Error in rocsolver_Dsyeved %s\n",hipGetErrorString(hiperr));
+    }
+    hiperr = hipFree(d_work);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Dsyevd hip_free(d_work): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+
+  void rocsolverSsyevd_elpa_wrapper (SOLVER_handle rocsolverHandle, int n, float *A, int lda, float *eigenvalues, int *info_dev) {
+    SOLVER_status status;
+    hipError_t hiperr;
+
+    float *d_work = NULL;
+    int d_lwork = 0;
+
+    //cusolverEigMode_t jobz = CUSOLVER_EIG_MODE_VECTOR; // compute eigenvalues and eigenvectors.
+    hipsolverFillMode_t uplo = HIPSOLVER_FILL_MODE_LOWER;
+
+    //status = cusolverDnDsyevd_bufferSize(cudaHandle, jobz,  uplo, n, A, lda, eigenvalues, &d_lwork);
+    //if (status != CUSOLVER_STATUS_SUCCESS) {
+    //  errormessage("Error in cusolverDnSsyevd_buffer_size %s \n","aborting");
+    //}
+
+    hiperr = hipMalloc((void**) &d_work, sizeof(double) * d_lwork);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_DnSsyevd d_work: %s\n",hipGetErrorString(hiperr));
+    }
+//#ifdef DEBUG_CUDA
+    //printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
+//#endif
+
+    rocblas_evect jobz = rocblas_evect_tridiagonal;
+    status = rocsolver_ssyevd(rocsolverHandle, jobz, uplo, n, A, lda, eigenvalues, work, info_dev);
+
+    if (status != SOLVER_status_success) {
+      errormessage("Error in rocsolver_Ssyeved %s\n",hipGetErrorString(hiperr));
+    }
+    hiperr = hipFree(d_work);
+    if (hiperr != hipSuccess) {
+      errormessage("Error in rocsolver_Ssyevd hip_free(d_work): %s\n",hipGetErrorString(hiperr));
+    }
+  }
+
+
+

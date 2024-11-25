@@ -43,85 +43,59 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-!
-! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
-!
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
 !
-! Author: Andreas Marek, MPCDF
+! Copyright Andreas Marek, MPCDF
 #endif
 
-#include "../general/sanity.F90"
+#include "config-f90.h"
+module mod_local_to_global
+  use precision
+  implicit none
+  private
 
-#if REALCASE == 1
-#include "../general/error_checking.inc"
-#endif
+  public :: local_to_global
+  contains
 
-#if REALCASE == 1
 
-#undef TRIDIAG_GPU_BUILD
-#include "tridiag_template.F90"
-#define TRIDIAG_GPU_BUILD
-#include "tridiag_template.F90"
-#undef TRIDIAG_GPU_BUILD
+     subroutine local_to_global(ldq, matrixCols, n, m, local_index, rowGlobal, colGlobal)
+       use precision
 
-#undef TRANS_EV_GPU
-#include "trans_ev_template.F90"
-#define TRANS_EV_GPU
-#include "trans_ev_template.F90"
-#undef TRANS_EV_GPU
+       implicit none
+       integer(kind=ik), intent(in)  :: ldq, matrixCols, n, m
+       integer(kind=ik), intent(out) :: rowGlobal, colGlobal
+       integer(kind=ik), intent(in)  :: local_index
 
-! now comes a dirty hack:
-! the file elpa1_solve_tridi_real_template.F90 must be included twice
-! for the legacy and for the new API. In the new API, however, some routines
-! must be named "..._impl"
+       integer(kind=ik)              :: number_of_entries, entries_in_started_col, &
+                                        colums_in_sub_matrix, entries_in_sub_matrix
+       integer(kind=ik)              :: columns_in_sub_matrix, index_sub_matrix, row_sub_matrix, &
+                                        col_sub_matrix
 
-#ifdef DOUBLE_PRECISION_REAL
-#define PRECISION_AND_SUFFIX double
-#else
-#define PRECISION_AND_SUFFIX single
-#endif
-!#include "elpa1_solve_tridi_real_template.F90"
-#undef PRECISION_AND_SUFFIX
-#ifdef DOUBLE_PRECISION_REAL
-#define PRECISION_AND_SUFFIX  double_impl
-#else
-#define PRECISION_AND_SUFFIX  single_impl
-#endif
-#undef SOLVE_TRIDI_GPU_BUILD 
-#include "../solve_tridi/solve_tridi_template.F90" 
-#include "../solve_tridi/solve_tridi_col_template.F90"
-#include "../solve_tridi/solve_tridi_single_problem_template.F90"
-#define SOLVE_TRIDI_GPU_BUILD 
-#include "../solve_tridi/solve_tridi_template.F90" 
-#include "../solve_tridi/solve_tridi_col_template.F90"
-#include "../solve_tridi/solve_tridi_single_problem_template.F90"
-#undef SOLVE_TRIDI_GPU_BUILD
-!#include "../solve_tridi/solve_tridi_col_template.F90"
-#undef PRECISION_AND_SUFFIX
-!#include "elpa1_merge_systems_real_template.F90"
-#include "elpa1_tools_template.F90"
+       number_of_entries = (matrixCols-m)*ldq+ldq-n+1
 
-#endif
+       entries_in_started_col=ldq-n+1
+       entries_in_sub_matrix=number_of_entries-entries_in_started_col
+       if (mod(entries_in_sub_matrix,ldq) .ne. 0) then
+         print *,"submatrix dimensions wrong!"
+       endif
+       columns_in_sub_matrix=entries_in_sub_matrix/ldq
 
-#if COMPLEXCASE == 1
+       if (local_index .gt. entries_in_started_col) then
+         index_sub_matrix = local_index - entries_in_started_col
+         col_sub_matrix = (index_sub_matrix -1)/ ldq + 1
+         row_sub_matrix = mod(index_sub_matrix,ldq)
+         if (row_sub_matrix .eq. 0) row_sub_matrix=ldq
 
-#undef TRIDIAG_GPU_BUILD
-#include "tridiag_template.F90"
-#define TRIDIAG_GPU_BUILD
-#include "tridiag_template.F90"
-#undef TRIDIAG_GPU_BUILD
+         colGlobal = col_sub_matrix + m
+         rowGlobal = row_sub_matrix
+       else
+         colGlobal = m
+         rowGlobal = n + local_index-1
+       endif
 
-#undef TRANS_EV_GPU
-#include "trans_ev_template.F90"
-#define TRANS_EV_GPU
-#include "trans_ev_template.F90"
-#undef TRANS_EV_GPU
-#include "elpa1_tools_template.F90"
 
-#define ALREADY_DEFINED 1
-
-#endif
+     end subroutine
+end module
