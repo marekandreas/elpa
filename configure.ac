@@ -3621,6 +3621,24 @@ if test x"${enable_cpp_tests}" = x"yes"; then
  AC_DEFINE([ENABLE_CPP_TESTS], [1], [enable C++ tests])
 fi
 
+AC_MSG_CHECKING(whether Fortran tests should be provided)
+AC_ARG_ENABLE([Fortran-tests],
+              AS_HELP_STRING([--enable-Fortran-tests],
+                             [enables the Fortran tests for elpa, default yes.]),
+			     [
+			      if test x"$enableval" = x"yes"; then
+			        enable_fortran_tests=yes
+		              else
+			        enable_fortran_tests=no
+			      fi
+			      ],
+              [enable_fortran_tests=yes])
+AC_MSG_RESULT([${enable_fortran_tests}])
+AM_CONDITIONAL([ENABLE_FORTRAN_TESTS],[test x"$enable_fortran_tests" = x"yes"])
+if test x"${enable_fortran_tests}" = x"yes"; then
+ AC_DEFINE([ENABLE_FORTRAN_TESTS], [1], [enable Fortran tests])
+fi
+
 ##check for MPI-CXX wrapper
 #if test x"${enable_cpp_tests}" = x"yes"; then
 #  if test x"$with_mpi" = x"yes"; then

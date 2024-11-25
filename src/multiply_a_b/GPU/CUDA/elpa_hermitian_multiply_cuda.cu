@@ -210,7 +210,7 @@ __global__ void cuda_copy_double_a_aux_bc_kernel(double *a_dev, double *aux_bc_d
   //dim3 threadsPerBlock = dim3(1,1,1);
 
   int i_index    = blockIdx.x +1; // range 1..lre-lrs+1
-  int j_index = threadIdx.x + 1; // range 1..1
+  //int j_index = threadIdx.x + 1; // range 1..1
   aux_bc_dev[(n_aux_bc+1-1)+(i_index-1)] = a_dev[(lrs-1)+(i_index-1)+lda*(noff*nblk+n-1)];
 }
 

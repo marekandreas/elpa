@@ -142,7 +142,7 @@ recursive subroutine merge_recursive_&
 
      ! Last merge, result distribution must be block cyclic, noff==0,
      ! p_col_bc is set so that only nev eigenvalues are calculated
-     call merge_systems_&
+     call merge_systems_cpu_&
           &PRECISION &
                          (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                          nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
@@ -155,7 +155,7 @@ recursive subroutine merge_recursive_&
 
    else
      ! Not last merge, leave dense column distribution
-     call merge_systems_&
+     call merge_systems_cpu_&
           &PRECISION &
                         (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                          nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &

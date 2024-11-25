@@ -1,9 +1,9 @@
 #if 0
 !    This file is part of ELPA.
-!
+!     
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
-!
+!     
 !    - Max Planck Computing and Data Facility (MPCDF), formerly known as
 !      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
@@ -19,9 +19,9 @@
 !    This particular source code file contains additions, changes and
 !    enhancements authored by Intel Corporation which is not part of
 !    the ELPA consortium.
-!
+!       
 !    More information can be found here:
-!    http://elpa.mpcdf.mpg.de/
+!    http://elpa.mpcdf.mpg.de/      
 !
 !    ELPA is free software: you can redistribute it and/or modify
 !    it under the terms of the version 3 of the license of the
@@ -42,86 +42,54 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
-!
-!
+!     
+!     
 ! ELPA1 -- Faster replacements for ScaLAPACK symmetric eigenvalue routines
-!
+!       
 ! Copyright of the original code rests with the authors inside the ELPA
 ! consortium. The copyright of any additional modifications shall rest
 ! with their original authors, but shall adhere to the licensing terms
 ! distributed along with the original code in the file "COPYING".
-!
-! Author: Andreas Marek, MPCDF
-#endif
+#endif  
 
-#include "../general/sanity.F90"
+       ! First try dstedc, this is normally faster but it may fail sometimes (why???)
 
-#if REALCASE == 1
-#include "../general/error_checking.inc"
-#endif
+       lwork = 1 + 4*nlen + nlen**2
+       liwork =  3 + 5*nlen
+       allocate(work(lwork), iwork(liwork), stat=istat, errmsg=errorMessage)
+       check_allocate("solve_tridi_single: work, iwork", istat, errorMessage)
+       call obj%timer%start("lapack")
+       call PRECISION_STEDC('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND),    &
+                            work, int(lwork,kind=BLAS_KIND), int(iwork,kind=BLAS_KIND), int(liwork,kind=BLAS_KIND), &
+                            infoBLAS)
+       info = int(infoBLAS,kind=ik)
+       call obj%timer%stop("lapack")
 
-#if REALCASE == 1
+       if (info /= 0) then
 
-#undef TRIDIAG_GPU_BUILD
-#include "tridiag_template.F90"
-#define TRIDIAG_GPU_BUILD
-#include "tridiag_template.F90"
-#undef TRIDIAG_GPU_BUILD
+         ! DSTEDC failed, try DSTEQR. The workspace is enough for DSTEQR.
 
-#undef TRANS_EV_GPU
-#include "trans_ev_template.F90"
-#define TRANS_EV_GPU
-#include "trans_ev_template.F90"
-#undef TRANS_EV_GPU
+         write(error_unit,'(a,i8,a)') 'Warning: Lapack routine DSTEDC failed, info= ',info,', Trying DSTEQR!'
 
-! now comes a dirty hack:
-! the file elpa1_solve_tridi_real_template.F90 must be included twice
-! for the legacy and for the new API. In the new API, however, some routines
-! must be named "..._impl"
+         d(:) = ds(:)
+         e(:) = es(:)
+         call obj%timer%start("lapack")
+         call PRECISION_STEQR('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND), work, infoBLAS )
+         info = int(infoBLAS,kind=ik)
+         call obj%timer%stop("lapack")
 
-#ifdef DOUBLE_PRECISION_REAL
-#define PRECISION_AND_SUFFIX double
-#else
-#define PRECISION_AND_SUFFIX single
-#endif
-!#include "elpa1_solve_tridi_real_template.F90"
-#undef PRECISION_AND_SUFFIX
-#ifdef DOUBLE_PRECISION_REAL
-#define PRECISION_AND_SUFFIX  double_impl
-#else
-#define PRECISION_AND_SUFFIX  single_impl
-#endif
-#undef SOLVE_TRIDI_GPU_BUILD 
-#include "../solve_tridi/solve_tridi_template.F90" 
-#include "../solve_tridi/solve_tridi_col_template.F90"
-#include "../solve_tridi/solve_tridi_single_problem_template.F90"
-#define SOLVE_TRIDI_GPU_BUILD 
-#include "../solve_tridi/solve_tridi_template.F90" 
-#include "../solve_tridi/solve_tridi_col_template.F90"
-#include "../solve_tridi/solve_tridi_single_problem_template.F90"
-#undef SOLVE_TRIDI_GPU_BUILD
-!#include "../solve_tridi/solve_tridi_col_template.F90"
-#undef PRECISION_AND_SUFFIX
-!#include "elpa1_merge_systems_real_template.F90"
-#include "elpa1_tools_template.F90"
+         ! If DSTEQR fails also, we don't know what to do further ...
 
-#endif
+         if (info /= 0) then
+           if (wantDebug) then
+             write(error_unit,'(a,i8,a)') 'ELPA1_solve_tridi_single: ERROR: Lapack routine DSTEQR failed, info= ',info,', Aborting!'
+           endif
+           success = .false.
+           return
+         endif
+       end if
 
-#if COMPLEXCASE == 1
+       deallocate(work,iwork,ds,es, stat=istat, errmsg=errorMessage)
+       check_deallocate("solve_tridi_single: work, iwork, ds, es", istat, errorMessage)
 
-#undef TRIDIAG_GPU_BUILD
-#include "tridiag_template.F90"
-#define TRIDIAG_GPU_BUILD
-#include "tridiag_template.F90"
-#undef TRIDIAG_GPU_BUILD
 
-#undef TRANS_EV_GPU
-#include "trans_ev_template.F90"
-#define TRANS_EV_GPU
-#include "trans_ev_template.F90"
-#undef TRANS_EV_GPU
-#include "elpa1_tools_template.F90"
-
-#define ALREADY_DEFINED 1
-
-#endif

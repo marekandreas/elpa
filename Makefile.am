@@ -64,7 +64,19 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/GPU/SYCL/mod_trans_ev_sycl.F90 \
   src/elpa1/GPU/CUDA/mod_elpa1_cuda.F90 \
   src/elpa1/GPU/ROCm/mod_elpa1_hip.F90 \
-  src/elpa1/GPU/SYCL/mod_elpa1_sycl.F90 \ 
+  src/elpa1/GPU/SYCL/mod_elpa1_sycl.F90 \
+  src/solve_tridi/GPU/mod_merge_systems_gpu.F90 \
+  src/solve_tridi/GPU/mod_solve_single_problem_gpu.F90 \
+  src/solve_tridi/GPU/mod_solve_tridi_col_gpu.F90 \
+  src/solve_tridi/GPU/mod_distribute_global_column_gpu.F90 \
+  src/solve_tridi/GPU/CUDA/mod_merge_systems_cuda.F90 \
+  src/solve_tridi/GPU/CUDA/mod_solve_tridi_single_problem_cuda.F90 \
+  src/solve_tridi/GPU/CUDA/mod_solve_tridi_col_cuda.F90 \
+  src/solve_tridi/GPU/CUDA/mod_distribute_global_column_cuda.F90 \
+  src/solve_tridi/GPU/ROCm/mod_merge_systems_hip.F90 \
+  src/solve_tridi/GPU/ROCm/mod_solve_tridi_single_problem_hip.F90 \
+  src/solve_tridi/GPU/ROCm/mod_solve_tridi_col_hip.F90 \
+  src/solve_tridi/GPU/ROCm/mod_distribute_global_column_hip.F90 \
   src/elpa2/elpa2_determine_workload.F90 \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
@@ -104,6 +116,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa_generalized/gpu_vendor_agnostic_layer.c \
   src/helpers/matrix_plot.F90 \
   src/general/mod_elpa_skewsymmetric_blas.F90 \
+  src/solve_tridi/mod_local_to_global.F90 \
   src/solve_tridi/mod_global_product.F90 \
   src/solve_tridi/mod_global_gather.F90 \
   src/solve_tridi/mod_resort_ev.F90 \
@@ -219,6 +232,7 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/multiply_a_b/elpa_pxgemm_transpose_template.F90 \
   src/multiply_a_b/elpa_pxgemm_helpers_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
+  src/solve_tridi/solve_tridi_single_problem_template.F90 \
   src/general/elpa_ssr2_template.F90 \
   src/general/elpa_ssmv_template.F90 \
   src/general/precision_macros.h \
@@ -250,6 +264,10 @@ if WITH_NVIDIA_GPU_VERSION
   src/elpa1/GPU/CUDA/tridiag_cuda.cu \
   src/elpa1/GPU/CUDA/trans_ev_cuda.cu \
   src/elpa1/GPU/CUDA/elpa1_cuda.cu \
+  src/solve_tridi/GPU/CUDA/cuda_merge_systems.cu \
+  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_single_problem.cu \
+  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col.cu \
+  src/solve_tridi/GPU/CUDA/cuda_distribute_global_column.cu \
   src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu \
   src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu \
   src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu \
@@ -1096,6 +1114,8 @@ EXTRA_DIST = \
   src/helpers/elpa_openmp_settings_template.F90 \
   src/elpa_impl_generalized_transform_template.F90 \
   src/elpa1/elpa1_compute_template.F90 \
+  src/solve_tridi/solve_tridi_single_problem_template.F90 \
+  src/solve_tridi/solve_tridi_single_problem_include.F90 \
   src/solve_tridi/global_product_template.F90 \
   src/solve_tridi/global_gather_template.F90 \
   src/solve_tridi/resort_ev_template.F90 \

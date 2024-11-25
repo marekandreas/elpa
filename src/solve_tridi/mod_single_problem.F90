@@ -1,15 +1,15 @@
 
 #include "config-f90.h"
-module solve_tridi
+module single_problem
   use precision
   implicit none
   private
 
-  public :: solve_tridi_cpu_double
-  public :: solve_tridi_gpu_double
+  public :: solve_tridi_single_problem_cpu_double
+  public :: solve_tridi_single_problem_gpu_double
 #if defined(WANT_SINGLE_PRECISION_REAL) || defined(WANT_SINGLE_PRECISION_COMPLEX)
-  public :: solve_tridi_gpu_single
-  public :: solve_tridi_cpu_single
+  public :: solve_tridi_single_problem_cpu_single
+  public :: solve_tridi_single_problem_gpu_single
 #endif
 
   contains
@@ -22,12 +22,8 @@ module solve_tridi
 #include "../general/precision_macros.h"
 
 #undef SOLVE_TRIDI_GPU_BUILD
-#include "./solve_tridi_template.F90"
-#include "./solve_tridi_col_template.F90"
 #include "./solve_tridi_single_problem_template.F90"
 #define SOLVE_TRIDI_GPU_BUILD
-#include "./solve_tridi_template.F90"
-#include "./solve_tridi_col_template.F90"
 #include "./solve_tridi_single_problem_template.F90"
 #undef SOLVE_TRIDI_GPU_BUILD
 #undef DOUBLE_PRECISION_REAL
@@ -45,12 +41,8 @@ module solve_tridi
 #include "../general/precision_macros.h"
 
 #undef SOLVE_TRIDI_GPU_BUILD
-#include "./solve_tridi_template.F90"
-#include "./solve_tridi_col_template.F90"
 #include "./solve_tridi_single_problem_template.F90"
 #define SOLVE_TRIDI_GPU_BUILD
-#include "./solve_tridi_template.F90"
-#include "./solve_tridi_col_template.F90"
 #include "./solve_tridi_single_problem_template.F90"
 #undef SOLVE_TRIDI_GPU_BUILD
 #undef SINGLE_PRECISION_REAL
@@ -60,3 +52,4 @@ module solve_tridi
 #endif
 
 end module
+
