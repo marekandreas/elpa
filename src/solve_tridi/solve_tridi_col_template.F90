@@ -273,7 +273,7 @@
         enddo
       endif
 
-      if (np_rows==1)    then
+      if (np_rows==1 .and. .not. useGPU) then
         ! For 1 processor row there may be 1 or 2 subdivisions
         do n=0,ndiv-1
           noff = limits(n)        ! Start of subproblem
@@ -384,7 +384,7 @@
           endif
         enddo ! n=0,ndiv-1
 
-      else ! np_rows == 1
+      else ! (np_rows == 1 and. .not. useGPU)
 
         ! Solve sub problems in parallel with solve_tridi_single
         ! There is at maximum 1 subproblem per processor
@@ -635,7 +635,7 @@
         deallocate(qmat1, qmat2, stat=istat, errmsg=errorMessage)
         check_deallocate("solve_tridi_col: qmat1, qmat2", istat, errorMessage)
 
-      endif ! np_rows == 1
+      endif ! (np_rows == 1 and. .not. useGPU)
 
 
       ! Allocate and set index arrays l_col and p_col

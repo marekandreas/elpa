@@ -68,6 +68,7 @@
     ! PETERDEBUG: calling from solve_trodi_col: q_dev=qmat1_dev, ldq=max_size
     ! qmat1(max_size, max_size) -> q(ldq, ldq), and not q(ldq,nlen)!! same for q_dev
     ! but that's fine if nlen<=ldq, then not the whole matrix is used. otherwise can lead to errors
+    ! Now: called from two places differently: with np_rows==1 and np_rows>1 and should be treated with care  
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on a single processor.
    ! Takes precautions if DSTEDC fails or if the eigenvalues are not ordered correctly.
@@ -104,6 +105,7 @@
 
      integer(kind=c_intptr_t)                    :: gpusolverHandle
 
+     ! print *, "solve_tridi_single_problem_gpu: nlen=", nlen, " ldq=", ldq ! PETERDEBUG
 
      useGPU =.false.
      useGPUsolver =.false.
