@@ -215,6 +215,30 @@
 !    end subroutine
 !  end interface
 
+  ! syclsolver_?syevd_c
+
+  interface
+    subroutine syclsolver_Dsyevd_c(syclsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev) &
+                              bind(C,name="syclsolverDsyevd_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a_dev, eigenvalues_dev, info_dev
+      integer(kind=C_intptr_T), value           :: syclsolverHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclsolver_Ssyevd_c(syclsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev) &
+                              bind(C,name="syclsolverSsyevd_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a_dev, eigenvalues_dev, info_dev
+      integer(kind=C_intptr_T), value           :: syclsolverHandle
+    end subroutine
+  end interface
+
 
   contains
 
@@ -399,4 +423,28 @@
 !                             buffer_host, workspaceInBytesOnHost, info_dev)
 !#endif
 !    end subroutine
+
+    ! syclsolver_?syevd
+
+    subroutine syclsolver_Dsyevd(n, a_dev, lda, eigenvalues_dev, info_dev, syclsolverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a_dev, info_dev, eigenvalues_dev
+      integer(kind=C_intptr_T)        :: syclsolverHandle
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+      call syclsolver_Dsyevd_c(syclsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
+#endif
+    end subroutine
+
+    subroutine syclsolver_Ssyevd(n, a_dev, lda, eigenvalues_dev, info_dev, syclsolverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a_dev, info_dev, eigenvalues_dev
+      integer(kind=C_intptr_T)        :: syclsolverHandle
+#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+      call syclsolver_Ssyevd_c(syclsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
+#endif
+    end subroutine
 
