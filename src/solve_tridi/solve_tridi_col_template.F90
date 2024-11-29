@@ -215,8 +215,11 @@
       ! and the matrix size is big enough, then use 2 subdivisions
       ! so that merge_systems is called once and only the needed
       ! eigenvectors are calculated for the final problem.
-
-      if (np_rows==1 .and. nev<na_local .and. na_local>2*min_submatrix_size) ndiv = 2
+      
+      ! PETERDEBUG: investigate the goal of the condtition below
+      ! In the current implementation it leads to fail (GPU codebranch doesn't have special handling for np_rows=1)
+      ! if (np_rows==1 .and. nev<na_local .and. na_local>2*min_submatrix_size) ndiv = 2
+      if (.not. useGPU .and. np_rows==1 .and. nev<na_local .and. na_local>2*min_submatrix_size) ndiv = 2
 
       allocate(limits(0:ndiv), stat=istat, errmsg=errorMessage)
       check_deallocate("solve_tridi_col: limits", istat, errorMessage)
@@ -572,6 +575,9 @@
                       num, gpuMemcpyHostToDevice)
               check_memcpy_gpu("solve_tridi_col: d_dev_dev", successGPU)
 #endif
+              ! PETERDEBUG: check whether we can use one buffer on device: qmat1_dev (not qmat2_dev)
+              ! and also on host: qmat1 (not qmat2)
+              ! This will save memory and eliminate branching below at GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION 
               num = (max_size*max_size) * size_of_datatype_real
 #ifdef WITH_GPU_STREAMS
               my_stream = obj%gpu_setup%my_stream
@@ -590,31 +596,37 @@
 
 ! what to do here??
 !          qmat2 = qmat1 ! is this correct
+
 #endif /* WITH_MPI */
 
 
 
 
 #ifdef WITH_MPI
-            if (useGPU) then
-              call GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION (qmat2_dev, max_size, max_size, q_dev, ldq, matrixCols, &
-                                                 noff, nqoff+noff, nlen, my_prow, np_rows, nblk, my_stream)
-            else
-              do i=1,nlen
-                call distribute_global_column_4_&
-                &PRECISION &
-                     (obj, qmat2(1:max_size,1:max_size), max_size, max_size, q(1:ldq,1:matrixCols), ldq, matrixCols, &
-                       noff, nqoff+noff, nlen, my_prow, np_rows, nblk)
-              enddo ! i=1,nlen
-            endif
+          if (useGPU) then
+            call GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION (qmat2_dev, max_size, max_size, q_dev, ldq, matrixCols, &
+                                                noff, nqoff+noff, nlen, my_prow, np_rows, nblk, my_stream)
+          else
+            do i=1,nlen
+              call distribute_global_column_4_&
+              &PRECISION &
+                    (obj, qmat2(1:max_size,1:max_size), max_size, max_size, q(1:ldq,1:matrixCols), ldq, matrixCols, &
+                      noff, nqoff+noff, nlen, my_prow, np_rows, nblk)
+            enddo ! i=1,nlen
+          endif
 #else /* WITH_MPI */
-          do i=1,nlen
-                call distribute_global_column_4_&
-                &PRECISION &
-                     (obj, qmat1(1:max_size,1:max_size), max_size, max_size, q(1:ldq,1:matrixCols), ldq, matrixCols, &
-                       noff, nqoff+noff, nlen, my_prow, np_rows, nblk)
+          if (useGPU) then
+            call GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION (qmat1_dev, max_size, max_size, q_dev, ldq, matrixCols, &
+                                              noff, nqoff+noff, nlen, my_prow, np_rows, nblk, my_stream)
+          else
+            do i=1,nlen
+                  call distribute_global_column_4_&
+                  &PRECISION &
+                      (obj, qmat1(1:max_size,1:max_size), max_size, max_size, q(1:ldq,1:matrixCols), ldq, matrixCols, &
+                        noff, nqoff+noff, nlen, my_prow, np_rows, nblk)
 
-          enddo ! i=1,nlen
+            enddo ! i=1,nlen
+          endif
 #endif /* WITH_MPI */
 
           ! assume d is on the host
@@ -664,6 +676,8 @@
                            num, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("solve_tridi_col: e_dev2", successGPU)
 #endif
+        
+        ! PETERDEBUG: investigate whether we can reduce number of gpu_memcpy's of d
         num = na_local * size_of_datatype_real
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
@@ -675,6 +689,7 @@
                              num, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("solve_tridi_col: d_dev", successGPU)
 #endif
+
         num = ldq*matrixCols * size_of_datatype_real
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
