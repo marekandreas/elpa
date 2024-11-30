@@ -1,0 +1,57 @@
+.TH "elpa_cholesky_float" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_cholesky_float \- performs a Cholesky factorization of a real symmetric positive-definite matrix: A = U^T*U, where U is an upper triangular matrix.
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa_handle
+.br
+
+call elpa_handle%\fBcholesky_float\fP (a, error)
+.sp
+With the definitions of the input and output variables:
+
+.TP
+real(kind=c_float) :: \fB a\fP \t OR \t type(c_ptr) ::\fB a\fP
+On input:  the host/device local part of matrix A that should be decomposed.
+On output: the host/device local part of upper triangular matrix U.
+The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+.TP
+integer, optional :: \fB error\fP
+The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
+
+.br
+.SS C/C++ INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t elpa_handle;
+
+.br
+void \fB elpa_cholesky_float\fP(\fBelpa_t\fP elpa_handle,\fB float\fP *a,\fB int\fP *error);
+.sp
+With the definitions of the input and output variables:
+
+.TP
+elpa_t \fB elpa_handle\fP;
+The handle to the ELPA object
+.TP
+float\fB *a\fP;
+On input:  the host/device local part of matrix A that should be decomposed.
+On output: the host/device local part of upper triangular matrix U.
+The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+.TP
+int \fB *error\fP;
+The error code of the function. Should be "ELPA_OK". The error codes can be queried with\fB elpa_strerr\fP(3)
+
+.SH DESCRIPTION
+Computes the Cholesky decomposition of a real symmetric positive-definite matrix.
+The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_cholesky_float\fP can be called.
+
+.SH SEE ALSO
+\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fB(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)
