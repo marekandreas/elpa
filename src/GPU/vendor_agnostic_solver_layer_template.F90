@@ -496,7 +496,7 @@
 #endif
 
       implicit none
-      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a_dev, eigenvalues_dev, info_dev
       integer(kind=c_intptr_t)        :: handle
 
@@ -539,7 +539,7 @@
 #endif
 
       implicit none
-      integer(kind=C_INT64_T)         :: n, lda
+      integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a_dev, eigenvalues_dev, info_dev
       integer(kind=c_intptr_t)        :: handle
 
