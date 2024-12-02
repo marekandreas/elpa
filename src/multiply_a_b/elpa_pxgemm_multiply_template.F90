@@ -687,6 +687,14 @@
       endif ! useGPU
 #endif /* !defined(DEVICE_POINTER) */
 
+      deallocate(tmp1_full,  stat=istat, errmsg=errorMessage)
+      call check_alloc("elpa_pxgemm_multiply", "tmp1_full", istat, errorMessage)
+
+      if (useGPU) then
+        successGPU = gpu_free(tmp1_full_dev)
+        check_dealloc_gpu("elpa_pxgemm_multiply: tmp1_full_dev", successGPU)
+      endif
+
     endif ! (.not. a_transposed .and. b_transposed)
 
 !_______________________________________________
