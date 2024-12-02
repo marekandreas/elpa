@@ -1089,279 +1089,295 @@ function check_correctness_evp_gen_numeric_residuals_&
 
     end function
     
-    !-----------------------------------------------------------------------------------------------------------
-    ! transa_NH = 'H' - hermitian multiply  C = A**H * B
-    ! transa_NH = 'N' - normal multiply     C = A    * B
+! _________________________________________________________________________________________________________________________________
+    ! Check for correcntess of C = op(A) * op(B)
+    ! where op(A) = A, A**T, or A**H (for normal/transposed/hermitian cases)
+    ! trans_a = 'N', 'T', or 'C'
+    ! trans_b = 'N', 'T', or 'C'
 	
-    function check_correctness_hermitian_multiply_&
-    &MATH_DATATYPE&
-    &_&
-    &PRECISION&
-    & (transa_NH, na, a, b, c, na_rows, sc_desc, myid, nblk, np_rows, np_cols, my_prow, my_pcol, &
-       isUpper, isLower) result(status) 
-      use precision_for_tests
-      use tests_blas_interfaces
-      use tests_scalapack_interfaces
-      use test_util
-      implicit none
+function check_correctness_multiply_&
+        &MATH_DATATYPE&
+        &_&
+        &PRECISION&
+        & (trans_a, trans_b, uplo_a, uplo_c, na, a, b, c, na_rows, na_cols, sc_desc, & 
+           nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status) 
+  use precision_for_tests
+  use tests_blas_interfaces
+  use tests_scalapack_interfaces
+  use test_util
+  implicit none
 #include "./test_precision_kinds.F90"
-      logical, intent(in), optional                                   :: isUpper, isLower
 
-      TEST_INT_TYPE, intent(in), optional                             :: nblk, np_rows, np_cols, &
-                                                                         my_prow, my_pcol
-      TEST_INT_TYPE                                                   :: status
-	  character*1                                                     :: transa_NH, transa_NTC
-      TEST_INT_TYPE, intent(in)                                       :: na, myid, na_rows
-      MATH_DATATYPE(kind=rck)                                         :: a(:,:), c(:,:)
-      MATH_DATATYPE(kind=rck), intent(in)                             :: b(:,:)
-      MATH_DATATYPE(kind=rck), dimension(size(a,dim=1),size(a,dim=2)) :: tmp1, tmp2
+  TEST_INT_TYPE                                                   :: status
+  character*1, value                                              :: trans_a, trans_b, uplo_a, uplo_c
+  TEST_INT_TYPE, intent(in)                                       :: na, na_rows, na_cols
+  TEST_INT_TYPE, intent(in)                                       :: nblk, myid, np_rows, np_cols, my_prow, my_pcol
+  MATH_DATATYPE(kind=rck)                                         :: a(:,:), c(:,:)
+  MATH_DATATYPE(kind=rck), intent(in)                             :: b(:,:)
+
+  logical                                                         :: isUpper_a, isLower_c
+  MATH_DATATYPE(kind=rck), dimension(size(a,dim=1),size(a,dim=2)) :: tmp1, tmp2
 #if COMPLEXCASE == 1
-      real(kind=rk), dimension(2*size(a,dim=1),size(a,dim=2))         :: tmp1_real
+  real(kind=rk), dimension(2*size(a,dim=1),size(a,dim=2))         :: tmp1_real
 #endif
-      real(kind=rck)                                                  :: norm, normmax
+  real(kind=rck)                                                  :: norm, normmax
 
+  integer(kind=c_int)                                             :: rowLocal, colLocal
+  TEST_INT_TYPE                                                   :: ii, jj
+  TEST_INT_TYPE                                                   :: sc_desc(:)
+  real(kind=rck)                                                  :: err, errmax
+  TEST_INT_MPI_TYPE                                               :: mpierr
 
-      integer(kind=c_int)                                             :: rowLocal, colLocal
-      TEST_INT_TYPE                                                   :: ii, jj
-      TEST_INT_TYPE                                                   :: sc_desc(:)
-      real(kind=rck)                                                  :: err, errmax
-      TEST_INT_MPI_TYPE                                               :: mpierr
+  status = 0
+  tmp1(:,:) = ZERO
 
-      status = 0
-      tmp1(:,:) = ZERO
+  isUpper_a = .false.
+  isLower_c = .false.
 
-   transa_NTC = "N"
-   if (transa_NH .eq. "H") then
-#if REALCASE == 1   
-      transa_NTC = "T"
-#else
-      transa_NTC = "C"
-#endif
-   endif
-   
-   if (present(isUpper)) then
-     if (isUpper) then
-       ! a should only be upper triangular
+  if (uplo_a=='u' .or. uplo_a=='U') isUpper_a = .true.
+  if (uplo_c=='l' .or. uplo_c=='L') isLower_c = .true.
 
-       ! do a dirty hack set lower half to zero
-       do ii=1, na
-         do jj=1, ii-1
-           if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
-                                                    colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
-                                                    int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
-                                                    int(my_pcol,kind=c_int) ) ) then
-             a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+  if (isUpper_a) then
+    ! C should also be upper triangular for the test
+    ! do a dirty hack set lower half to zero
+    do ii=1, na
+      do jj=1, ii-1
+        if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
+                                                colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                int(my_pcol,kind=c_int) ) ) then
+          a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
 
-             ! and remove garbage in c
-             c(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
-           endif
-         enddo
-       enddo
-     endif ! isUpper
-   endif ! present (isUpper)
+          ! and remove garbage in c
+          c(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+        endif
+      enddo
+    enddo
+  endif ! isUpper_a
+  
+  if (isLower_c) then
+    ! A should also be lower triangular for the test
+    ! do a dirty hack set upper half to zero
+    do ii=1, na
+      do jj=ii+1, na
+        if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
+                                                colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                int(my_pcol,kind=c_int) ) ) then
+          a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
 
-   if (present(isLower)) then
-     if (isLower) then
-       ! a should only be lower triangular
+          ! and remove garbage in c
+          c(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
 
-       ! do a dirty hack set upper half to zero
-       do ii=1, na
-         do jj=ii+1, na
-           if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
-                                                    colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
-                                                    int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
-                                                    int(my_pcol,kind=c_int) ) ) then
-             a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
-
-
-             ! and remove garber in c
-             c(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
-
-           endif
-         enddo
-       enddo
-     endif ! isLower
-   endif ! present(isLower)
+        endif
+      enddo
+    enddo
+  endif ! isLower_c
 
    ! tmp2 = a * b
 #ifdef WITH_MPI
-   call p&
-         &BLAS_CHAR&
-         &gemm(transa_NTC,"N", na, na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, b, 1_BLAS_KIND, 1_BLAS_KIND, &
-               sc_desc, ZERO, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
+  call p&
+        &BLAS_CHAR&
+        &gemm(trans_a, trans_b, na, na, na, ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, b, 1_BLAS_KIND, 1_BLAS_KIND, &
+              sc_desc, ZERO, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc)
 #else
-   call BLAS_CHAR&
-        &gemm(transa_NTC,"N", na, na, na, ONE, a, na, b, na, ZERO, tmp2, na)
+  call BLAS_CHAR&
+      &gemm(trans_a, trans_b, na, na, na, ONE, a, na, b, na, ZERO, tmp2, na)
 #endif
 
-   if (present(isUpper)) then
-     if (isUpper) then
-       ! tmp2 should only be upper triangular
 
-       ! do a dirty hack set lower half to zero
-       do ii=1, na
-         do jj=1, ii-1
-           if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
-                                                    colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
-                                                    int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
-                                                    int(my_pcol,kind=c_int) ) ) then
-             tmp2(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
-           endif
-         enddo
-       enddo
-     endif ! isUpper
-   endif ! present (isUpper)
+  if (isUpper_a) then
+    ! tmp2 should only be upper triangular
+    ! do a dirty hack set lower half to zero
+    do ii=1, na
+      do jj=1, ii-1
+        if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
+                                                colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                int(my_pcol,kind=c_int) ) ) then
+          tmp2(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+        endif
+      enddo
+    enddo
+  endif ! isUpper_a
 
-   if (present(isLower)) then
-     if (isLower) then
-       ! a should only be lower triangular
-       ! do a dirty hack set upper half to zero
-       do ii=1, na
-         do jj=ii+1, na
-           if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
-                                                    colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
-                                                    int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
-                                                    int(my_pcol,kind=c_int) ) ) then
-             tmp2(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
-           endif
-         enddo
-       enddo
-     endif ! isLower
-   endif ! present(isLower)
+  if (isLower_c) then
+    ! a should only be lower triangular
+    ! do a dirty hack set upper half to zero
+    do ii=1, na
+      do jj=ii+1, na
+        if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(jj,kind=c_int), rowLocal, &
+                                                colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                int(my_pcol,kind=c_int) ) ) then
+          tmp2(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = 0
+        endif
+      enddo
+    enddo
+  endif ! isLower_c
 
-
-
-   ! compare tmp2 with c
-   tmp2(:,:) = tmp2(:,:) - c(:,:)
+  ! compare tmp2 with c
+  tmp2(:,:) = tmp2(:,:) - c(:,:)
 
 #ifdef WITH_MPI
-      ! dirty hack: the last argument should be a real array, but is not referenced
-      ! if mode = "M", thus we get away with a complex argument
-      norm = p&
-              &BLAS_CHAR&
-              &lange("M", na, na, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+  ! dirty hack: the last argument should be a real array, but is not referenced
+  ! if mode = "M", thus we get away with a complex argument
+  norm = p&
+          &BLAS_CHAR&
+          &lange("M", na, na, tmp2, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
 #if COMPLEXCASE == 1              
-              tmp1_real)
+          tmp1_real)
 #else
-              tmp1)
+          tmp1)
 #endif
 #else /* WITH_MPI */
-      ! dirty hack: the last argument should be a real array, but is not referenced
-      ! if mode = "M", thus we get away with a complex argument
-      norm = BLAS_CHAR&
-             &lange("M", na, na, tmp2, na_rows, &
+  ! dirty hack: the last argument should be a real array, but is not referenced
+  ! if mode = "M", thus we get away with a complex argument
+  norm = BLAS_CHAR&
+          &lange("M", na, na, tmp2, na_rows, &
 #if COMPLEXCASE == 1              
-              tmp1_real)
+          tmp1_real)
 #else
-              tmp1)
+          tmp1)
 #endif
 #endif /* WITH_MPI */
 
 #ifdef WITH_MPI
-      call mpi_allreduce(norm, normmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
+  call mpi_allreduce(norm, normmax, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, MPI_COMM_WORLD, mpierr)
 #else /* WITH_MPI */
-      normmax = norm
+  normmax = norm
 #endif /* WITH_MPI */
 
-      if (myid .eq. 0) then
-        print *," Maximum error of result: ", normmax
-      endif
+  if (myid .eq. 0) then
+    print *," Maximum error of result: ", normmax
+  endif
 
-      if (is_infinity_or_NaN(normmax)) then
-        status = 1
-      endif
+  if (is_infinity_or_NaN(normmax)) then
+    status = 1
+  endif
 
 #ifdef DOUBLE_PRECISION_REAL
-      if (normmax .gt. 9e-10_rk8 ) then
-        status = 1
-      endif
+  if (normmax .gt. 9e-10_rk8 ) then
+    status = 1
+  endif
 #else
-      if (normmax .gt. 9e-2_rk4 ) then
-        status = 1
-      endif
+  if (normmax .gt. 9e-2_rk4 ) then
+    status = 1
+  endif
 #endif
 
 #ifdef DOUBLE_PRECISION_COMPLEX
-      if (normmax .gt. 9e-10_rk8 ) then
-        status = 1
-      endif
+  if (normmax .gt. 9e-10_rk8 ) then
+    status = 1
+  endif
 #else
-      if (normmax .gt. 9e-2_rk4 ) then
-        status = 1
-      endif
+  if (normmax .gt. 9e-2_rk4 ) then
+    status = 1
+  endif
 #endif
     end function
 
-   ! hermitian_multiply C-interface
-   ! additional parameter na_cols is needed on top of Fortran interface
+  ! hermitian_multiply C-interface
+  ! additional parameter na_cols is needed on top of Fortran interface
    
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
-    !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_real_double_f(char transa_NH, TEST_C_INT_TYPE na, 
-    !c>                                                        double *a, double *b, double *c,
-    !c>                                                        TEST_C_INT_TYPE na_rows,
-    !c>                                                        TEST_C_INT_TYPE na_cols,
-    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
-    !c>                                                        TEST_C_INT_TYPE myid);
+  !c> TEST_C_INT_TYPE check_correctness_multiply_real_double_f(char trans_a, char trans_b,
+  !c>                                                        char uplo_a, char uplo_c, 
+  !c>                                                        TEST_C_INT_TYPE na, 
+  !c>                                                        double *a, double *b, double *c,
+  !c>                                                        TEST_C_INT_TYPE na_rows,
+  !c>                                                        TEST_C_INT_TYPE na_cols,
+  !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+  !c>                                                        TEST_C_INT_TYPE nblk,
+  !c>                                                        TEST_C_INT_TYPE myid,
+  !c>                                                        TEST_C_INT_TYPE np_rows,
+  !c>                                                        TEST_C_INT_TYPE np_cols,
+  !c>                                                        TEST_C_INT_TYPE my_prow,
+  !c>                                                        TEST_C_INT_TYPE my_pcol);
 #else
-    !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_real_single_f(char transa_NH, TEST_C_INT_TYPE na, 
-    !c>                                                        float *a, float *b, float *c,
-    !c>                                                        TEST_C_INT_TYPE na_rows,
-    !c>                                                        TEST_C_INT_TYPE na_cols,
-    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
-    !c>                                                        TEST_C_INT_TYPE myid);
+  !c> TEST_C_INT_TYPE check_correctness_multiply_real_single_f(char trans_a, char trans_b,
+  !c>                                                        char uplo_a, char uplo_c, 
+  !c>                                                        TEST_C_INT_TYPE na,  
+  !c>                                                        float *a, float *b, float *c,
+  !c>                                                        TEST_C_INT_TYPE na_rows,
+  !c>                                                        TEST_C_INT_TYPE na_cols,
+  !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+  !c>                                                        TEST_C_INT_TYPE nblk,
+  !c>                                                        TEST_C_INT_TYPE myid,
+  !c>                                                        TEST_C_INT_TYPE np_rows,
+  !c>                                                        TEST_C_INT_TYPE np_cols,
+  !c>                                                        TEST_C_INT_TYPE my_prow,
+  !c>                                                        TEST_C_INT_TYPE my_pcol);
 #endif
 #endif /* REALCASE */
 
 #if COMPLEXCASE == 1
 #ifdef DOUBLE_PRECISION_COMPLEX
-    !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_complex_double_f(char transa_NH, TEST_C_INT_TYPE na, 
-    !c>                                                        double_complex *a, double_complex *b, double_complex *c,
-    !c>                                                        TEST_C_INT_TYPE na_rows,
-    !c>                                                        TEST_C_INT_TYPE na_cols,    
-    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
-    !c>                                                        TEST_C_INT_TYPE myid);
+  !c> TEST_C_INT_TYPE check_correctness_multiply_complex_double_f(char trans_a, char trans_b,
+  !c>                                                        char uplo_a, char uplo_c, 
+  !c>                                                        TEST_C_INT_TYPE na,
+  !c>                                                        double_complex *a, double_complex *b, double_complex *c,
+  !c>                                                        TEST_C_INT_TYPE na_rows,
+  !c>                                                        TEST_C_INT_TYPE na_cols,    
+  !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+  !c>                                                        TEST_C_INT_TYPE nblk,
+  !c>                                                        TEST_C_INT_TYPE myid,
+  !c>                                                        TEST_C_INT_TYPE np_rows,
+  !c>                                                        TEST_C_INT_TYPE np_cols,
+  !c>                                                        TEST_C_INT_TYPE my_prow,
+  !c>                                                        TEST_C_INT_TYPE my_pcol);
 #else
-    !c> TEST_C_INT_TYPE check_correctness_hermitian_multiply_complex_single_f(char transa_NH, TEST_C_INT_TYPE na, 
-    !c>                                                        float_complex *a, float_complex *b, float_complex *c,
-    !c>                                                        TEST_C_INT_TYPE na_rows,
-    !c>                                                        TEST_C_INT_TYPE na_cols,
-    !c>                                                        TEST_C_INT_TYPE sc_desc[9],
-    !c>                                                        TEST_C_INT_TYPE myid);
+  !c> TEST_C_INT_TYPE check_correctness_multiply_complex_single_f(char trans_a, char trans_b,
+  !c>                                                        char uplo_a, char uplo_c, 
+  !c>                                                        TEST_C_INT_TYPE na,  
+  !c>                                                        float_complex *a, float_complex *b, float_complex *c,
+  !c>                                                        TEST_C_INT_TYPE na_rows,
+  !c>                                                        TEST_C_INT_TYPE na_cols,
+  !c>                                                        TEST_C_INT_TYPE sc_desc[9],
+  !c>                                                        TEST_C_INT_TYPE nblk,
+  !c>                                                        TEST_C_INT_TYPE myid,
+  !c>                                                        TEST_C_INT_TYPE np_rows,
+  !c>                                                        TEST_C_INT_TYPE np_cols,
+  !c>                                                        TEST_C_INT_TYPE my_prow,
+  !c>                                                        TEST_C_INT_TYPE my_pcol);
 #endif
 #endif /* COMPLEXCASE */
 
-    function check_correctness_hermitian_multiply_&
-    &MATH_DATATYPE&
-    &_&
-    &PRECISION&
-    &_f (transa_NH, na, a, b, c, na_rows, na_cols, sc_desc, myid) result(status) &
-      bind(C,name="check_correctness_hermitian_multiply_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION&
-      &_f")
-      use iso_c_binding
-      use precision_for_tests
-      use test_util
-      implicit none
+function check_correctness_multiply_&
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION&
+          &_f (trans_a, trans_b, uplo_a, uplo_c, na, a, b, c, na_rows, na_cols, sc_desc, &
+          nblk, myid, np_rows, np_cols, my_prow, my_pcol) result(status) &
+          bind(C,name="check_correctness_multiply_&
+          &MATH_DATATYPE&
+          &_&
+          &PRECISION&
+          &_f")
+  use iso_c_binding
+  use precision_for_tests
+  use test_util
+  implicit none
 #include "./test_precision_kinds.F90"
       
-      TEST_INT_TYPE              :: status
-	  character(1,C_CHAR), value :: transa_NH
-      TEST_INT_TYPE, value       :: na, na_rows, na_cols, myid
-      MATH_DATATYPE(kind=rck)    :: a(1:na_rows,1:na_cols), b(1:na_rows,1:na_cols), c(1:na_rows,1:na_cols)
-      TEST_INT_TYPE              :: sc_desc(1:9)
+  TEST_INT_TYPE               :: status
+  character(1, c_char), value :: trans_a, trans_b, uplo_a, uplo_c
+  TEST_INT_TYPE, value        :: na, na_rows, na_cols
+  TEST_INT_TYPE, value        :: nblk, myid, np_rows, np_cols, my_prow, my_pcol
+  MATH_DATATYPE(kind=rck)     :: a(1:na_rows,1:na_cols), b(1:na_rows,1:na_cols), c(1:na_rows,1:na_cols)
+  TEST_INT_TYPE               :: sc_desc(1:9)
 
-      status = check_correctness_hermitian_multiply_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION&
-      & (transa_NH, na, a, b, c, na_rows, sc_desc, myid)
+  status = check_correctness_multiply_&
+            &MATH_DATATYPE&
+            &_&
+            &PRECISION&
+            & (trans_a, trans_b, uplo_a, uplo_c, na, a, b, c, na_rows, na_cols, sc_desc, &
+               nblk, myid, np_rows, np_cols, my_prow, my_pcol)
 
-      end function
+end function
 
-    !-----------------------------------------------------------------------------------------------------------
+! _________________________________________________________________________________________________________________________________
 
     function check_correctness_eigenvalues_frank_&
     &MATH_DATATYPE&

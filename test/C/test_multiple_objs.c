@@ -106,353 +106,354 @@
 #include "test/shared/generated.h"
 
 void set_basic_parameters(elpa_t *handle, C_INT_TYPE na, C_INT_TYPE nev, C_INT_TYPE na_rows, C_INT_TYPE na_cols, C_INT_TYPE nblk, C_INT_TYPE my_prow, C_INT_TYPE my_pcol){
-   int error_elpa;
-   elpa_set(*handle, "na", (int) na, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  int error_elpa;
+  elpa_set(*handle, "na", (int) na, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_set(*handle, "nev", (int) nev, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(*handle, "nev", (int) nev, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_set(*handle, "local_nrows", (int) na_rows, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(*handle, "local_nrows", (int) na_rows, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_set(*handle, "local_ncols", (int) na_cols, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(*handle, "local_ncols", (int) na_cols, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_set(*handle, "nblk", (int) nblk, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(*handle, "nblk", (int) nblk, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
 #ifdef WITH_MPI
-   elpa_set(*handle, "mpi_comm_parent", (int) (MPI_Comm_c2f(MPI_COMM_WORLD)), &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(*handle, "mpi_comm_parent", (int) (MPI_Comm_c2f(MPI_COMM_WORLD)), &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_set(*handle, "process_row", (int) my_prow, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(*handle, "process_row", (int) my_prow, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_set(*handle, "process_col", (int) my_pcol, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(*handle, "process_col", (int) my_pcol, &error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 }
 
 
 int main(int argc, char** argv) {
-   /* matrix dimensions */
-   C_INT_TYPE na, nev, nblk;
+  /* matrix dimensions */
+  C_INT_TYPE na, nev, nblk;
 
-   /* mpi */
-   C_INT_TYPE myid, nprocs;
-   C_INT_TYPE na_cols, na_rows;
-   C_INT_TYPE np_cols, np_rows;
-   C_INT_TYPE my_prow, my_pcol;
-   C_INT_TYPE mpi_comm;
+  /* mpi */
+  C_INT_TYPE myid, nprocs;
+  C_INT_TYPE na_cols, na_rows;
+  C_INT_TYPE np_cols, np_rows;
+  C_INT_TYPE my_prow, my_pcol;
+  C_INT_TYPE mpi_comm;
 
-   /* blacs */
-   C_INT_TYPE my_blacs_ctxt, sc_desc[9], info, blacs_ok;
+  /* blacs */
+  C_INT_TYPE my_blacs_ctxt, sc_desc[9], info, blacs_ok;
 
-   /* The Matrix */
-   MATRIX_TYPE *a, *as, *z;
-   EV_TYPE *ev;
+  /* The Matrix */
+  MATRIX_TYPE *a, *as, *z;
+  EV_TYPE *ev;
 
-   C_INT_TYPE status;
-   int error_elpa;
-   int gpu, timings, debug; 
-   char str[400];
+  C_INT_TYPE status;
+  int error_elpa;
+  int gpu, timings, debug; 
+  char str[400];
 
-   elpa_t elpa_handle_1, elpa_handle_2, *elpa_handle_ptr;
+  elpa_t elpa_handle_1, elpa_handle_2, *elpa_handle_ptr;
 
-   elpa_autotune_t autotune_handle;
-   C_INT_TYPE i, unfinished;
+  elpa_autotune_t autotune_handle;
+  C_INT_TYPE i, unfinished;
 
-   C_INT_TYPE value;
-   int is_skewsymmetric;
+  C_INT_TYPE value;
+  int is_hermitian, is_skewsymmetric;
 
 #ifdef WITH_MPI
-   MPI_Init(&argc, &argv);
-   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+  MPI_Init(&argc, &argv);
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+  MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 #else
-   nprocs = 1;
-   myid = 0;
+  nprocs = 1;
+  myid = 0;
 #endif
 
 #if defined(HAVE_64BIT_INTEGER_MPI_SUPPORT) || defined(HAVE_64BIT_INTEGER_MATH_SUPPORT) || defined(HAVE_64BIT_INTEGER_SUPPORT)
 #ifdef WITH_MPI
-   MPI_Finalize();
+  MPI_Finalize();
 #endif
-   return 77;
+  return 77;
 #endif
 
 #ifdef WITH_CUDA_AWARE_MPI
 #if TEST_NVIDIA_GPU != 1
 #ifdef WITH_MPI
-   MPI_Finalize();
+  MPI_Finalize();
 #endif
-   return 77;
+  return 77;
 #endif
 #ifdef TEST_COMPLEX
 #ifdef WITH_MPI
-   MPI_Finalize();
+  MPI_Finalize();
 #endif
-   return 77;
+  return 77;
 #endif
 #endif
 
 
-   if (argc == 4) {
-     na = atoi(argv[1]);
-     nev = atoi(argv[2]);
-     nblk = atoi(argv[3]);
-   } else {
+  if (argc == 4) {
+    na = atoi(argv[1]);
+    nev = atoi(argv[2]);
+    nblk = atoi(argv[3]);
+  } else {
 #ifdef __cplusplus
-     na = 100;
-     nev = 50;
-     nblk = 4;
+    na = 100;
+    nev = 50;
+    nblk = 4;
 #else
-     na = 500;
-     nev = 250;
-     nblk = 16;
+    na = 500;
+    nev = 250;
+    nblk = 16;
 #endif 
-   }
+  }
 
-   for (np_cols = (C_INT_TYPE) sqrt((double) nprocs); np_cols > 1; np_cols--) {
-     if (nprocs % np_cols == 0) {
-       break;
-     }
-   }
+  for (np_cols = (C_INT_TYPE) sqrt((double) nprocs); np_cols > 1; np_cols--) {
+    if (nprocs % np_cols == 0) {
+      break;
+    }
+  }
 
-   np_rows = nprocs/np_cols;
+  np_rows = nprocs/np_cols;
 
-   /* set up blacs */
-   /* convert communicators before */
+  /* set up blacs */
+  /* convert communicators before */
 #ifdef WITH_MPI
-   mpi_comm = MPI_Comm_c2f(MPI_COMM_WORLD);
+  mpi_comm = MPI_Comm_c2f(MPI_COMM_WORLD);
 #else
-   mpi_comm = 0;
+  mpi_comm = 0;
 #endif
-   set_up_blacsgrid_f(mpi_comm, np_rows, np_cols, 'C', &my_blacs_ctxt, &my_prow, &my_pcol);
-   set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info, &blacs_ok);
+  set_up_blacsgrid_f(mpi_comm, np_rows, np_cols, 'C', &my_blacs_ctxt, &my_prow, &my_pcol);
+  set_up_blacs_descriptor_f(na, nblk, my_prow, my_pcol, np_rows, np_cols, &na_rows, &na_cols, sc_desc, my_blacs_ctxt, &info, &blacs_ok);
 
-   if (blacs_ok == 0) {
-     if (myid == 0) {
-       printf("Setting up the blacsgrid failed. Aborting...");
-     }
+  if (blacs_ok == 0) {
+    if (myid == 0) {
+      printf("Setting up the blacsgrid failed. Aborting...");
+    }
 #ifdef WITH_MPI
-     MPI_Finalize();
+    MPI_Finalize();
 #endif
-     abort();
-   }
+    abort();
+  }
 
-   /* allocate the matrices needed for elpa */
-   a  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   z  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   as = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
-   ev = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
+  /* allocate the matrices needed for elpa */
+  a  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+  z  = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+  as = (MATRIX_TYPE *) calloc(na_rows*na_cols, sizeof(MATRIX_TYPE));
+  ev = (EV_TYPE *) calloc(na, sizeof(EV_TYPE));
 
-   is_skewsymmetric=0;
+  is_hermitian=1;
+  is_skewsymmetric=0;
 #ifdef TEST_REAL
 #ifdef TEST_DOUBLE
-   prepare_matrix_random_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
+  prepare_matrix_random_real_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_hermitian, is_skewsymmetric);
 #else
-   prepare_matrix_random_real_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
+  prepare_matrix_random_real_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_hermitian, is_skewsymmetric);
 #endif
 #else
 #ifdef TEST_DOUBLE
-   prepare_matrix_random_complex_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
+  prepare_matrix_random_complex_double_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_hermitian, is_skewsymmetric);
 #else
-   prepare_matrix_random_complex_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric);
+  prepare_matrix_random_complex_single_f(na, myid, na_rows, na_cols, sc_desc, a, z, as, is_hermitian, is_skewsymmetric);
 #endif
 #endif
 
-   if (elpa_init(CURRENT_API_VERSION) != ELPA_OK) {
-     fprintf(stderr, "Error: ELPA API version not supported");
-     exit(1);
-   }
+  if (elpa_init(CURRENT_API_VERSION) != ELPA_OK) {
+    fprintf(stderr, "Error: ELPA API version not supported");
+    exit(1);
+  }
 
-   elpa_handle_1 = elpa_allocate(&error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_handle_1 = elpa_allocate(&error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   set_basic_parameters(&elpa_handle_1, na, nev, na_rows, na_cols, nblk, my_prow, my_pcol);
-   /* Setup */
-   assert_elpa_ok(elpa_setup(elpa_handle_1));
+  set_basic_parameters(&elpa_handle_1, na, nev, na_rows, na_cols, nblk, my_prow, my_pcol);
+  /* Setup */
+  assert_elpa_ok(elpa_setup(elpa_handle_1));
 
-   elpa_set(elpa_handle_1, "nvidia-gpu", 0, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(elpa_handle_1, "nvidia-gpu", 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_set(elpa_handle_1, "intel-gpu", 0, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(elpa_handle_1, "intel-gpu", 0, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_set(elpa_handle_1, "timings", 1, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(elpa_handle_1, "timings", 1, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_set(elpa_handle_1, "debug", 1, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_set(elpa_handle_1, "debug", 1, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_store_settings(elpa_handle_1, "initial_parameters.txt", &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_store_settings(elpa_handle_1, "initial_parameters.txt", &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   sleep(5);
+  sleep(5);
 #ifdef WITH_MPI
-   // barrier after store settings, file created from one MPI rank only, but loaded everywhere
-   MPI_Barrier(MPI_COMM_WORLD);
+  // barrier after store settings, file created from one MPI rank only, but loaded everywhere
+  MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
-   elpa_handle_2 = elpa_allocate();
+  elpa_handle_2 = elpa_allocate();
 #else
-   elpa_handle_2 = elpa_allocate(&error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_handle_2 = elpa_allocate(&error_elpa);
+  assert_elpa_ok(error_elpa);
 #endif
 
-   set_basic_parameters(&elpa_handle_2, na, nev, na_rows, na_cols, nblk, my_prow, my_pcol);
-   /* Setup */
-   assert_elpa_ok(elpa_setup(elpa_handle_2));
+  set_basic_parameters(&elpa_handle_2, na, nev, na_rows, na_cols, nblk, my_prow, my_pcol);
+  /* Setup */
+  assert_elpa_ok(elpa_setup(elpa_handle_2));
 
 #ifdef WITH_MPI
-   // barrier after store settings, file created from one MPI rank only, but loaded everywhere
-   MPI_Barrier(MPI_COMM_WORLD);
+  // barrier after store settings, file created from one MPI rank only, but loaded everywhere
+  MPI_Barrier(MPI_COMM_WORLD);
 #endif
-   sleep(2);
-   elpa_load_settings(elpa_handle_2, "initial_parameters.txt", &error_elpa);
-   assert_elpa_ok(error_elpa);
+  sleep(2);
+  elpa_load_settings(elpa_handle_2, "initial_parameters.txt", &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_get(elpa_handle_2, "nvidia-gpu", &gpu, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_get(elpa_handle_2, "nvidia-gpu", &gpu, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_get(elpa_handle_2, "intel-gpu", &gpu, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_get(elpa_handle_2, "intel-gpu", &gpu, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_get(elpa_handle_2, "timings", &timings, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_get(elpa_handle_2, "timings", &timings, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   elpa_get(elpa_handle_2, "debug", &debug, &error_elpa);
-   assert_elpa_ok(error_elpa);
+  elpa_get(elpa_handle_2, "debug", &debug, &error_elpa);
+  assert_elpa_ok(error_elpa);
 
-   if ((timings != 1) || (debug != 1) || (gpu != 0)){
-     printf("Parameters not stored or loaded correctly. Aborting... %d, %d, %d\n", timings, debug, gpu);
-     exit(1);
-   }
+  if ((timings != 1) || (debug != 1) || (gpu != 0)){
+    printf("Parameters not stored or loaded correctly. Aborting... %d, %d, %d\n", timings, debug, gpu);
+    exit(1);
+  }
 
-   elpa_handle_ptr = &elpa_handle_2;
+  elpa_handle_ptr = &elpa_handle_2;
 
-   autotune_handle = elpa_autotune_setup(*elpa_handle_ptr, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error_elpa);
-   assert_elpa_ok(error_elpa);
-   /* mimic 20 scf steps */
+  autotune_handle = elpa_autotune_setup(*elpa_handle_ptr, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error_elpa);
+  assert_elpa_ok(error_elpa);
+  /* mimic 20 scf steps */
 
-   for (i=0; i < 20; i++) {
+  for (i=0; i < 20; i++) {
 
-      unfinished = elpa_autotune_step(*elpa_handle_ptr, autotune_handle, &error_elpa);
+    unfinished = elpa_autotune_step(*elpa_handle_ptr, autotune_handle, &error_elpa);
 
-      if (unfinished == 0) {
-        if (myid == 0) {
-          printf("ELPA autotuning finished in the %d th scf step \n",i);
-        }
-        break;
+    if (unfinished == 0) {
+      if (myid == 0) {
+        printf("ELPA autotuning finished in the %d th scf step \n",i);
       }
+      break;
+    }
 
-      elpa_print_settings(*elpa_handle_ptr, &error_elpa);
-      elpa_autotune_print_state(*elpa_handle_ptr, autotune_handle, &error_elpa);
+    elpa_print_settings(*elpa_handle_ptr, &error_elpa);
+    elpa_autotune_print_state(*elpa_handle_ptr, autotune_handle, &error_elpa);
 
-      sprintf(str, "saved_parameters_%d.txt", i);
-      elpa_store_settings(*elpa_handle_ptr, str, &error_elpa);
-      assert_elpa_ok(error_elpa);
+    sprintf(str, "saved_parameters_%d.txt", i);
+    elpa_store_settings(*elpa_handle_ptr, str, &error_elpa);
+    assert_elpa_ok(error_elpa);
 
-      sleep(5);
+    sleep(5);
 #ifdef WITH_MPI
-      // barrier after store settings, file created from one MPI rank only, but loaded everywhere
-      MPI_Barrier(MPI_COMM_WORLD);
+    // barrier after store settings, file created from one MPI rank only, but loaded everywhere
+    MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-      /* Solve EV problem */
-      elpa_eigenvectors(*elpa_handle_ptr, a, ev, z, &error_elpa);
-      assert_elpa_ok(error_elpa);
+    /* Solve EV problem */
+    elpa_eigenvectors(*elpa_handle_ptr, a, ev, z, &error_elpa);
+    assert_elpa_ok(error_elpa);
 
-      /* check the results */
+    /* check the results */
 #ifdef TEST_REAL
 #ifdef TEST_DOUBLE
-      status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev,
-                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
-      memcpy(a, as, na_rows*na_cols*sizeof(double));
+    status = check_correctness_evp_numeric_residuals_real_double_f(na, nev, na_rows, na_cols, as, z, ev,
+                              sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
+    memcpy(a, as, na_rows*na_cols*sizeof(double));
 
 #else
-      status = check_correctness_evp_numeric_residuals_real_single_f(na, nev, na_rows, na_cols, as, z, ev,
-                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
-      memcpy(a, as, na_rows*na_cols*sizeof(float));
+    status = check_correctness_evp_numeric_residuals_real_single_f(na, nev, na_rows, na_cols, as, z, ev,
+                              sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
+    memcpy(a, as, na_rows*na_cols*sizeof(float));
 #endif
 #else
 #ifdef TEST_DOUBLE
-      status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as, z, ev,
-                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
-      memcpy(a, as, na_rows*na_cols*sizeof(complex double));
+    status = check_correctness_evp_numeric_residuals_complex_double_f(na, nev, na_rows, na_cols, as, z, ev,
+                              sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
+    memcpy(a, as, na_rows*na_cols*sizeof(complex double));
 #else
-      status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as, z, ev,
-                                sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
-      memcpy(a, as, na_rows*na_cols*sizeof(complex float));
+    status = check_correctness_evp_numeric_residuals_complex_single_f(na, nev, na_rows, na_cols, as, z, ev,
+                              sc_desc, nblk, myid, np_rows, np_cols, my_prow, my_pcol);
+    memcpy(a, as, na_rows*na_cols*sizeof(complex float));
 #endif
 #endif
 
-      if (status !=0){
-        printf("The computed EVs are not correct !\n");
-        break;
+    if (status !=0){
+      printf("The computed EVs are not correct !\n");
+      break;
+    }
+
+    elpa_autotune_print_state(*elpa_handle_ptr, autotune_handle, &error_elpa);
+    assert_elpa_ok(error_elpa);
+
+    sprintf(str, "saved_state_%d.txt", i);
+    elpa_autotune_save_state(*elpa_handle_ptr, autotune_handle, str, &error_elpa);
+    assert_elpa_ok(error_elpa);
+
+#ifdef WITH_MPI
+    //barrier after save state, file created from one MPI rank only, but loaded everywhere
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    sleep(2);
+    elpa_autotune_load_state(*elpa_handle_ptr, autotune_handle, str, &error_elpa);
+    assert_elpa_ok(error_elpa);
+
+    if (unfinished == 1) {
+      if (myid == 0) {
+        printf("ELPA autotuning did not finished during %d scf cycles\n",i);
       }
+    }
 
-     elpa_autotune_print_state(*elpa_handle_ptr, autotune_handle, &error_elpa);
-     assert_elpa_ok(error_elpa);
+  }
+  elpa_autotune_set_best(*elpa_handle_ptr, autotune_handle, &error_elpa);
 
-     sprintf(str, "saved_state_%d.txt", i);
-     elpa_autotune_save_state(*elpa_handle_ptr, autotune_handle, str, &error_elpa);
-     assert_elpa_ok(error_elpa);
+  if (myid == 0) {
+    printf("The best combination found by the autotuning:\n");
+    elpa_autotune_print_best(*elpa_handle_ptr, autotune_handle, &error_elpa);
+  }
 
-#ifdef WITH_MPI
-     //barrier after save state, file created from one MPI rank only, but loaded everywhere
-     MPI_Barrier(MPI_COMM_WORLD);
-#endif
-     sleep(2);
-     elpa_autotune_load_state(*elpa_handle_ptr, autotune_handle, str, &error_elpa);
-     assert_elpa_ok(error_elpa);
-
-     if (unfinished == 1) {
-       if (myid == 0) {
-          printf("ELPA autotuning did not finished during %d scf cycles\n",i);
-       }
-     }
-
-   }
-   elpa_autotune_set_best(*elpa_handle_ptr, autotune_handle, &error_elpa);
-
-   if (myid == 0) {
-     printf("The best combination found by the autotuning:\n");
-     elpa_autotune_print_best(*elpa_handle_ptr, autotune_handle, &error_elpa);
-   }
-
-   elpa_autotune_deallocate(autotune_handle, &error_elpa);
-   elpa_deallocate(elpa_handle_1, &error_elpa);
+  elpa_autotune_deallocate(autotune_handle, &error_elpa);
+  elpa_deallocate(elpa_handle_1, &error_elpa);
 #if OPTIONAL_C_ERROR_ARGUMENT == 1
-   elpa_deallocate(elpa_handle_2);
+  elpa_deallocate(elpa_handle_2);
 #else
-   elpa_deallocate(elpa_handle_2, &error_elpa);
+  elpa_deallocate(elpa_handle_2, &error_elpa);
 #endif
-   elpa_uninit(&error_elpa);
+  elpa_uninit(&error_elpa);
 
-   if (myid == 0) {
-     printf("\n");
-     printf("2stage ELPA real solver complete\n");
-     printf("\n");
-   }
+  if (myid == 0) {
+    printf("\n");
+    printf("2stage ELPA real solver complete\n");
+    printf("\n");
+  }
 
-   if (status ==0){
-     if (myid ==0) {
-       printf("All ok!\n");
-     }
-   }
+  if (status ==0){
+    if (myid ==0) {
+      printf("All ok!\n");
+    }
+  }
 
-   free(a);
-   free(z);
-   free(as);
-   free(ev);
+  free(a);
+  free(z);
+  free(as);
+  free(ev);
 
 #ifdef WITH_MPI
-   MPI_Finalize();
+  MPI_Finalize();
 #endif
 
-   return status;
+  return status;
 }

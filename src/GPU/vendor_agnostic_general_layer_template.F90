@@ -82,14 +82,9 @@
 
   integer(kind=c_intptr_t), parameter :: size_of_int    = 4
   integer(kind=c_intptr_t), parameter :: size_of_double_real    = 8_rk8
-#ifdef WANT_SINGLE_PRECISION_REAL
   integer(kind=c_intptr_t), parameter :: size_of_single_real    = 4_rk4
-#endif
-
   integer(kind=c_intptr_t), parameter :: size_of_double_complex = 16_ck8
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
   integer(kind=c_intptr_t), parameter :: size_of_single_complex = 8_ck4
-#endif
 
   interface gpu_memcpy
     module procedure gpu_memcpy_intptr

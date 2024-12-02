@@ -303,7 +303,7 @@
 #include <hipsolver/hipsolver.h>
 #endif
 #else /* HIPBLAS */
-#include "rocblas/rocblas.h"
+#include <rocblas/rocblas.h>
 #ifdef WITH_AMD_ROCSOLVER
 #include <rocsolver/rocsolver.h>
 #endif

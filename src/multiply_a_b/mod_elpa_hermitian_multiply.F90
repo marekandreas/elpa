@@ -1,4 +1,4 @@
-!    Copyright 2021, A. Marek
+!    Copyright 2024, A. Marek
 !
 !    This file is part of ELPA.
 !
@@ -43,36 +43,45 @@
 ! This file was written by A. Marek, MPCDF
 #include "config-f90.h"
 
-module elpa_multiply_a_b
+#ifdef WITH_NVTX
+#define NVTX_RANGE_PUSH(x) call nvtxRangePush(x)
+#define NVTX_RANGE_POP(x) call nvtxRangePop()
+#else
+#define NVTX_RANGE_PUSH(x)
+#define NVTX_RANGE_POP(x)
+#endif
+
+module elpa_hermitian_multiply
   use, intrinsic :: iso_c_binding
   use precision
   implicit none
 
   public
 
-  public :: elpa_mult_at_b_a_h_a_real_double_impl      !< Multiply double-precision real matrices A**T * B
-  public :: elpa_mult_at_b_d_ptr_real_double_impl      !< Multiply double-precision real matrices A**T * B (device pointer)
+  public :: elpa_hermitian_multiply_a_h_a_real_double_impl      !< Multiply double-precision real matrices A**T * B
+  public :: elpa_hermitian_multiply_d_ptr_real_double_impl      !< Multiply double-precision real matrices A**T * B (device pointer)
 
-  public :: elpa_mult_ah_b_a_h_a_complex_double_impl   !< Multiply double-precision complex matrices A**H * B
-  public :: elpa_mult_ah_b_d_ptr_complex_double_impl   !< Multiply double-precision complex matrices A**H * B (device pointer)
+  public :: elpa_hermitian_multiply_a_h_a_complex_double_impl   !< Multiply double-precision complex matrices A**H * B
+  public :: elpa_hermitian_multiply_d_ptr_complex_double_impl   !< Multiply double-precision complex matrices A**H * B (device pointer)
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-  public :: elpa_mult_at_b_a_h_a_real_single_impl      !< Multiply single-precision real matrices A**T * B
-  public :: elpa_mult_at_b_d_ptr_real_single_impl      !< Multiply single-precision real matrices A**T * B (device pointer)
+  public :: elpa_hermitian_multiply_a_h_a_real_single_impl      !< Multiply single-precision real matrices A**T * B
+  public :: elpa_hermitian_multiply_d_ptr_real_single_impl      !< Multiply single-precision real matrices A**T * B (device pointer)
 #endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-  public :: elpa_mult_ah_b_a_h_a_complex_single_impl   !< Multiply single-precision complex matrices A**H * B
-  public :: elpa_mult_ah_b_d_ptr_complex_single_impl   !< Multiply single-precision complex matrices A**H * B (device pointer)
+  public :: elpa_hermitian_multiply_a_h_a_complex_single_impl   !< Multiply single-precision complex matrices A**H * B
+  public :: elpa_hermitian_multiply_d_ptr_complex_single_impl   !< Multiply single-precision complex matrices A**H * B (device pointer)
 #endif
 
   contains
+
 #define REALCASE 1
 #define DOUBLE_PRECISION
 #undef DEVICE_POINTER
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_mult_at_b_a_h_a_real_double_impl: Performs C : = A**T * B
+!> \brief  elpa_hermitian_multiply_a_h_a_real_double_impl: Performs C : = A**T * B
 !>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
 !>                 B is a (obj%na,ncb) matrix
 !>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
@@ -103,10 +112,10 @@ module elpa_multiply_a_b
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_at_b_a_h_a_real_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
+    function elpa_hermitian_multiply_a_h_a_real_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                              c, ldc, ldcCols) result(success)
-#include "elpa_multiply_a_b_template.F90"
-    end function elpa_mult_at_b_a_h_a_real_double_impl
+#include "elpa_hermitian_multiply_template.F90"
+    end function elpa_hermitian_multiply_a_h_a_real_double_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
 
@@ -115,7 +124,7 @@ module elpa_multiply_a_b
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
 
-!> \brief  elpa_mult_at_b_d_ptr_real_double_impl: Performs C : = A**T * B
+!> \brief  elpa_hermitian_multiply_d_ptr_real_double_impl: Performs C : = A**T * B
 !>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
 !>                 B is a (obj%na,ncb) matrix
 !>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
@@ -146,10 +155,10 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_at_b_d_ptr_real_double_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+    function elpa_hermitian_multiply_d_ptr_real_double_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
                                              cDev, ldc, ldcCols) result(success)
-#include "elpa_multiply_a_b_template.F90"
-    end function elpa_mult_at_b_d_ptr_real_double_impl
+#include "elpa_hermitian_multiply_template.F90"
+    end function elpa_hermitian_multiply_d_ptr_real_double_impl
 #undef DOUBLE_PRECISION
 #undef REALCASE
 #undef DEVICE_POINTER
@@ -160,7 +169,7 @@ module elpa_multiply_a_b
 #define SINGLE_PRECISION
 #undef DEVICE_POINTER
 #include "../general/precision_macros.h"
-!> \brief  elpa_mult_at_b_real_a_h_a_single_impl: Performs C : = A**T * B
+!> \brief  elpa_hermitian_multiply_real_a_h_a_single_impl: Performs C : = A**T * B
 !>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
 !>                 B is a (obj%na,ncb) matrix
 !>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
@@ -191,12 +200,12 @@ module elpa_multiply_a_b
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_at_b_a_h_a_real_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
+    function elpa_hermitian_multiply_a_h_a_real_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                              c, ldc, ldcCols) result(success)
 
-#include "elpa_multiply_a_b_template.F90"
+#include "elpa_hermitian_multiply_template.F90"
 
-    end function elpa_mult_at_b_a_h_a_real_single_impl
+    end function elpa_hermitian_multiply_a_h_a_real_single_impl
 #undef SINGLE_PRECISION
 #undef REALCASE
 
@@ -204,7 +213,7 @@ module elpa_multiply_a_b
 #define SINGLE_PRECISION
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
-!> \brief  elpa_mult_at_b_real_d_ptr_single_impl: Performs C : = A**T * B
+!> \brief  elpa_hermitian_multiply_real_d_ptr_single_impl: Performs C : = A**T * B
 !>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
 !>                 B is a (obj%na,ncb) matrix
 !>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
@@ -235,12 +244,12 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_at_b_d_ptr_real_single_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+    function elpa_hermitian_multiply_d_ptr_real_single_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
                                              cDev, ldc, ldcCols) result(success)
 
-#include "elpa_multiply_a_b_template.F90"
+#include "elpa_hermitian_multiply_template.F90"
 
-    end function elpa_mult_at_b_d_ptr_real_single_impl
+    end function elpa_hermitian_multiply_d_ptr_real_single_impl
 #undef SINGLE_PRECISION
 #undef REALCASE
 #undef DEVICE_POINTER
@@ -252,7 +261,7 @@ module elpa_multiply_a_b
 #define DOUBLE_PRECISION
 #undef DEVICE_POINTER
 #include "../general/precision_macros.h"
-!> \brief  elpa_mult_ah_b_a_h_a_complex_double_impl: Performs C : = A**H * B
+!> \brief  elpa_hermitian_multiply_a_h_a_complex_double_impl: Performs C : = A**H * B
 !>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
 !>                 B is a (obj%na,ncb) matrix
 !>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
@@ -285,17 +294,17 @@ module elpa_multiply_a_b
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_ah_b_a_h_a_complex_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
+    function elpa_hermitian_multiply_a_h_a_complex_double_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                                 c, ldc, ldcCols) result(success)
-#include "elpa_multiply_a_b_template.F90"
+#include "elpa_hermitian_multiply_template.F90"
 
-    end function elpa_mult_ah_b_a_h_a_complex_double_impl
+    end function elpa_hermitian_multiply_a_h_a_complex_double_impl
 
 #define COMPLEXCASE 1
 #define DOUBLE_PRECISION
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
-!> \brief  elpa_mult_ah_b_a_h_a_complex_double_impl: Performs C : = A**H * B
+!> \brief  elpa_hermitian_multiply_a_h_a_complex_double_impl: Performs C : = A**H * B
 !>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
 !>                 B is a (obj%na,ncb) matrix
 !>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
@@ -328,11 +337,11 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device_pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_ah_b_d_ptr_complex_double_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+    function elpa_hermitian_multiply_d_ptr_complex_double_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
                                                 cDev, ldc, ldcCols) result(success)
-#include "elpa_multiply_a_b_template.F90"
+#include "elpa_hermitian_multiply_template.F90"
 
-    end function elpa_mult_ah_b_d_ptr_complex_double_impl
+    end function elpa_hermitian_multiply_d_ptr_complex_double_impl
 
 #undef DOUBLE_PRECISION
 #undef COMPLEXCASE
@@ -343,7 +352,7 @@ module elpa_multiply_a_b
 #define SINGLE_PRECISION
 #undef DEVICE_POINTER
 #include "../general/precision_macros.h"
-!> \brief  elpa_mult_ah_b_a_h_a_complex_single_impl: Performs C : = A**H * B
+!> \brief  elpa_hermitian_multiply_a_h_a_complex_single_impl: Performs C : = A**H * B
 !>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
 !>                 B is a (obj%na,ncb) matrix
 !>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
@@ -376,12 +385,12 @@ module elpa_multiply_a_b
 !> \param c                     matrix c
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_ah_b_a_h_a_complex_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
+    function elpa_hermitian_multiply_a_h_a_complex_single_impl(obj, uplo_a, uplo_c, ncb, a, b, ldb, ldbCols, &
                                                 c, ldc, ldcCols) result(success)
 
-#include "elpa_multiply_a_b_template.F90"
+#include "elpa_hermitian_multiply_template.F90"
 
-    end function elpa_mult_ah_b_a_h_a_complex_single_impl
+    end function elpa_hermitian_multiply_a_h_a_complex_single_impl
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
 
@@ -389,7 +398,7 @@ module elpa_multiply_a_b
 #define SINGLE_PRECISION
 #define DEVICE_POINTER
 #include "../general/precision_macros.h"
-!> \brief  elpa_mult_ah_b_d_ptr_complex_single_impl: Performs C : = A**H * B
+!> \brief  elpa_hermitian_multiply_d_ptr_complex_single_impl: Performs C : = A**H * B
 !>         where   A is a square matrix (obj%na,obj%na) which is optionally upper or lower triangular
 !>                 B is a (obj%na,ncb) matrix
 !>                 C is a (obj%na,ncb) matrix where optionally only the upper or lower
@@ -422,17 +431,15 @@ module elpa_multiply_a_b
 !> \param c                     matrix c, as a device pointer of type(c_ptr)
 !> \param ldc                   leading dimension of matrix c
 !> \result success
-    function elpa_mult_ah_b_d_ptr_complex_single_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
+    function elpa_hermitian_multiply_d_ptr_complex_single_impl(obj, uplo_a, uplo_c, ncb, aDev, bDev, ldb, ldbCols, &
                                                 cDev, ldc, ldcCols) result(success)
 
-#include "elpa_multiply_a_b_template.F90"
+#include "elpa_hermitian_multiply_template.F90"
 
-    end function elpa_mult_ah_b_d_ptr_complex_single_impl
+    end function elpa_hermitian_multiply_d_ptr_complex_single_impl
 #undef SINGLE_PRECISION
 #undef COMPLEXCASE
 
 #endif /* WANT_SINGLE_PRECISION_COMPLEX */
 
-
 end module
-
