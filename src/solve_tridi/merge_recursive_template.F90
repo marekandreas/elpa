@@ -148,14 +148,14 @@ recursive subroutine merge_recursive_&
                            (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                            nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
                            l_col, p_col, &
-                           l_col_bc, p_col_bc, np_off, nprocs, wantDebug, success, max_threads)
+                           l_col_bc, p_col_bc, np_off, nprocs, useGPU, wantDebug, success, max_threads)
      else
        call merge_systems_cpu_&
             &PRECISION &
                            (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                            nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
                            l_col, p_col, &
-                           l_col_bc, p_col_bc, np_off, nprocs, wantDebug, success, max_threads)
+                           l_col_bc, p_col_bc, np_off, nprocs, useGPU, wantDebug, success, max_threads)
      endif
      if (.not.(success)) then
        write(error_unit,*) "Error in merge_systems: Aborting..."
@@ -170,7 +170,7 @@ recursive subroutine merge_recursive_&
                           (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                            nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
                            l_col(noff+1), p_col(noff+1), &
-                           l_col(noff+1), p_col(noff+1), np_off, nprocs, wantDebug, success, &
+                           l_col(noff+1), p_col(noff+1), np_off, nprocs, useGPU, wantDebug, success, &
                            max_threads)
 
      else
@@ -179,7 +179,7 @@ recursive subroutine merge_recursive_&
                           (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
                            nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
                            l_col(noff+1), p_col(noff+1), &
-                           l_col(noff+1), p_col(noff+1), np_off, nprocs, wantDebug, success, &
+                           l_col(noff+1), p_col(noff+1), np_off, nprocs, useGPU, wantDebug, success, &
                            max_threads)
      endif
      if (.not.(success)) then
