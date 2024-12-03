@@ -239,8 +239,8 @@ program test
    z_skewsymmetric(:,:) = 0.0
    ev_skewsymmetric(:) = 0.0
 
-   call prepare_matrix_random(na, myid, sc_desc, a_skewsymmetric, &
-   z_skewsymmetric(:,1:na_cols), as_skewsymmetric, is_skewsymmetric=1)
+   call prepare_matrix_random(na, myid, sc_desc, a_skewsymmetric, z_skewsymmetric(:,1:na_cols), as_skewsymmetric, &
+                              is_hermitian=1, is_skewsymmetric=1)
    
    !call MPI_BARRIER(MPI_COMM_WORLD, mpierr)  
    as_skewsymmetric(:,:) = a_skewsymmetric(:,:)

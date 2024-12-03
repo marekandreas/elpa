@@ -70,8 +70,10 @@ void elpa_eigenvectors_float_complex(elpa_t handle, float_complex *a, float *ev,
 void elpa_skew_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error);
 void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error);
 
-void elpa_skew_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error);
-void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error);
+void elpa_generalized_eigenvectors_double(elpa_t handle, double *a, double *b, double *ev, double *q, int is_already_decomposed, int *error);
+void elpa_generalized_eigenvectors_float(elpa_t handle, float *a, float *b, float *ev, float *q, int is_already_decomposed, int *error);
+void elpa_generalized_eigenvectors_double_complex(elpa_t handle, double_complex *a, double_complex *b, double *ev, double_complex *q, int is_already_decomposed, int *error);
+void elpa_generalized_eigenvectors_float_complex(elpa_t handle, float_complex *a, float_complex *b, float *ev, float_complex *q, int is_already_decomposed, int *error);
 
 void elpa_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error);
 void elpa_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error);
@@ -81,8 +83,10 @@ void elpa_eigenvalues_float_complex(elpa_t handle, float_complex *a, float *ev, 
 void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error);
 void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error);
 
-void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error);
-void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error);
+void elpa_generalized_eigenvalues_double(elpa_t handle, double *a, double *b, double *ev, int is_already_decomposed, int *error);
+void elpa_generalized_eigenvalues_float(elpa_t handle, float *a, float *b, float *ev, int is_already_decomposed, int *error);
+void elpa_generalized_eigenvalues_double_complex(elpa_t handle, double_complex *a, double_complex *b, double *ev, int is_already_decomposed, int *error);
+void elpa_generalized_eigenvalues_float_complex(elpa_t handle, float_complex *a, float_complex *b, float *ev, int is_already_decomposed, int *error);
 
 void elpa_cholesky_double(elpa_t handle, double *a, int *error);
 void elpa_cholesky_float(elpa_t handle, float *a, int *error);
@@ -93,7 +97,12 @@ void elpa_hermitian_multiply_double(elpa_t handle, char uplo_a, char uplo_c, int
 void elpa_hermitian_multiply_float(elpa_t handle, char uplo_a, char uplo_c, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error);
 void elpa_hermitian_multiply_double_complex(elpa_t handle, char uplo_a, char uplo_c, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
 void elpa_hermitian_multiply_float_complex(elpa_t handle, char uplo_a, char uplo_c, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
- 
+
+void elpa_pxgemm_multiply_double(elpa_t handle, char trans_a, char trans_b, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error);
+void elpa_pxgemm_multiply_float(elpa_t handle, char trans_a, char trans_b, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error);
+void elpa_pxgemm_multiply_double_complex(elpa_t handle, char trans_a, char trans_b, int ncb, double_complex *a, double_complex *b, int nrows_b, int ncols_b, double_complex *c, int nrows_c, int ncols_c, int *error);
+void elpa_pxgemm_multiply_float_complex(elpa_t handle, char trans_a, char trans_b, int ncb, float_complex *a, float_complex *b, int nrows_b, int ncols_b, float_complex *c, int nrows_c, int ncols_c, int *error);
+
 void elpa_invert_triangular_double(elpa_t handle, double *a, int *error);
 void elpa_invert_triangular_float(elpa_t handle, float *a, int *error);
 void elpa_invert_triangular_double_complex(elpa_t handle, double_complex *a, int *error);

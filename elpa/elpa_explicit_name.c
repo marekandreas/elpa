@@ -56,171 +56,159 @@
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double host/device pointer to matrix a in CPU/GPU memory
- *  \param  ev      on return: double pointer to eigenvalues in CPU/GPU memory
- *  \param  q       on return: double pointer to eigenvectors in CPU/GPU memory
+ *  \param  a       double host/device pointer to matrix a
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
 
 void elpa_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
-		//printf("elpa_eigenvectors_double dev\n");
 		elpa_eigenvectors_d_ptr_d(handle, a, ev, q, error);
-		}
+	}
 	else {
-		//printf("elpa_eigenvectors_double host\n");
 		elpa_eigenvectors_a_h_a_d(handle, a, ev, q, error);
-		}	
+	}	
 #else
-	//printf("elpa_eigenvectors_double non-gpu version\n");
 	elpa_eigenvectors_a_h_a_d(handle, a, ev, q, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_eigenvectors_float
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float host/device pointer to matrix a in CPU/GPU memory
- *  \param  ev      on return: float pointer to eigenvalues in CPU/GPU memory
- *  \param  q       on return: float pointer to eigenvectors in CPU/GPU memory
+ *  \param  a       float host/device pointer to matrix a
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  q       on return: float host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
 
 void elpa_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
-		//printf("elpa_eigenvectors_float dev\n");
 		elpa_eigenvectors_d_ptr_f(handle, a, ev, q, error);
-		}
-	else {
-		//printf("elpa_eigenvectors_float host\n");
-		elpa_eigenvectors_a_h_a_f(handle, a, ev, q, error);
-		}	
-#else
-   //printf("elpa_eigenvectors_float non-nvidia version\n");
-	elpa_eigenvectors_a_h_a_f(handle, a, ev, q, error);
-#endif		
 	}
+	else {
+		elpa_eigenvectors_a_h_a_f(handle, a, ev, q, error);
+	}	
+#else
+  elpa_eigenvectors_a_h_a_f(handle, a, ev, q, error);
+#endif		
+}
 
 /*! \brief generic C method for elpa_eigenvectors_double_complex
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double complex host/device pointer to matrix a in CPU/GPU memory
- *  \param  ev      on return: double complex pointer to eigenvalues in CPU/GPU memory
- *  \param  q       on return: double complex pointer to eigenvectors in CPU/GPU memory
+ *  \param  a       double complex host/device pointer to matrix a
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double complex host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
 
 void elpa_eigenvectors_double_complex(elpa_t handle, double complex *a, double *ev, double complex *q, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
    
 	if (IsDevicePtr){
-		//printf("elpa_eigenvectors_double_complex\n");
 		elpa_eigenvectors_d_ptr_dc(handle, a, ev, q, error);
-		}
+	}
 	else {
-		//printf("elpa_eigenvectors_double_complex\n");
 		elpa_eigenvectors_a_h_a_dc(handle, a, ev, q, error);
-		}	
+	}	
 		
 #else
-	//printf("elpa_eigenvectors_double_complex non-nvidia version\n");
 	elpa_eigenvectors_a_h_a_dc(handle, a, ev, q, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_eigenvectors_float_complex
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float complex host/device pointer to matrix a in CPU/GPU memory
- *  \param  ev      on return: float complex pointer to eigenvalues in CPU/GPU memory
- *  \param  q       on return: float complex pointer to eigenvectors in CPU/GPU memory
+ *  \param  a       float complex host/device pointer to matrix a
+ *  \param  ev      on return: float host/device  pointer to eigenvalues
+ *  \param  q       on return: float complex host/device  pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
 
 void elpa_eigenvectors_float_complex(elpa_t handle, float complex *a, float *ev, float complex *q, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
    
 	if (IsDevicePtr){
-		//printf("elpa_eigenvectors_float_complex\n");
 		elpa_eigenvectors_d_ptr_fc(handle, a, ev, q, error);
-		}
+	}
 	else {
-		//printf("elpa_eigenvectors_float_complex\n");
 		elpa_eigenvectors_a_h_a_fc(handle, a, ev, q, error);
-		}	
+	}	
 		
 #else
-	//printf("elpa_eigenvectors_float_complex non-nvidia version\n");
 	elpa_eigenvectors_a_h_a_fc(handle, a, ev, q, error);
 #endif		
-	}
+}
 
+//_________________________________________________________________________________________________
 
 #ifdef HAVE_SKEWSYMMETRIC
 /*! \brief generic C method for elpa_skew_eigenvectors_double
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       double pointer to matrix a
- *  \param  ev      on return: double pointer to eigenvalues
- *  \param  q       on return: double pointer to eigenvectors
+ *  \param  a       double host/device pointer to matrix a
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
 
 void elpa_skew_eigenvectors_double(elpa_t handle, double *a, double *ev, double *q, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_skew_eigenvectors_d_ptr_d(handle, a, ev, q, error);
-		}
+	}
 	else {
 		elpa_skew_eigenvectors_a_h_a_d(handle, a, ev, q, error);
-		}	
+	}	
 #else
-   elpa_skew_eigenvectors_a_h_a_d(handle, a, ev, q, error);
+  elpa_skew_eigenvectors_a_h_a_d(handle, a, ev, q, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_skew_eigenvectors_float
  *
  *  \details
  *  \param  handle  handle of the ELPA object, which defines the problem
- *  \param  a       float pointer to matrix a
- *  \param  ev      on return: float pointer to eigenvalues
- *  \param  q       on return: float pointer to eigenvectors
+ *  \param  a       float host/device pointer to matrix a
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  q       on return: float host/device pointer to eigenvectors
  *  \param  error   on return the error code, which can be queried with elpa_strerr()
  *  \result void
  */
 
-void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error)
-	{
+void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, int *error){
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
@@ -237,6 +225,129 @@ void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, 
 	}
 #endif /* HAVE_SKEWSYMMETRIC */
 
+//_________________________________________________________________________________________________
+
+/*! \brief generic C method for elpa_generalized_eigenvectors_double
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       double host/device pointer to matrix a
+ *  \param  b       double host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double host/device pointer to eigenvectors
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvectors_double(elpa_t handle, double *a, double *b, double *ev, double *q, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvectors_d_ptr_d(handle, a, b, ev, q, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvectors_a_h_a_d(handle, a, b, ev, q, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvectors_a_h_a_d(handle, a, b, ev, q, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvectors_float
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float host/device pointer to matrix a
+ *  \param  b       float host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  q       on return: float host/device pointer to eigenvectors
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvectors_float(elpa_t handle, float *a, float *b, float *ev, float *q, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvectors_d_ptr_f(handle, a, b, ev, q, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvectors_a_h_a_f(handle, a, b, ev, q, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvectors_a_h_a_f(handle, a, b, ev, q, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvectors_double_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       double complex host/device pointer to matrix a
+ *  \param  b       double complex host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  q       on return: double complex host/device pointer to eigenvectors
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvectors_double_complex(elpa_t handle, double complex *a, double complex *b, double *ev, double complex *q, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvectors_d_ptr_dc(handle, a, b, ev, q, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvectors_a_h_a_dc(handle, a, b, ev, q, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvectors_a_h_a_dc(handle, a, b, ev, q, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvectors_float_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float complex host/device pointer to matrix a
+ *  \param  b       float complex host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  q       on return: float complex host/device pointer to eigenvectors
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvectors_float_complex(elpa_t handle, float complex *a, float complex *b, float *ev, float complex *q, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvectors_d_ptr_fc(handle, a, b, ev, q, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvectors_a_h_a_fc(handle, a, b, ev, q, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvectors_a_h_a_fc(handle, a, b, ev, q, is_already_decomposed, error);
+#endif		
+}
+//_________________________________________________________________________________________________
+
 /*! \brief generic C method for elpa_eigenvalues_double
  *
  *  \details
@@ -248,21 +359,21 @@ void elpa_skew_eigenvectors_float(elpa_t handle, float *a, float *ev, float *q, 
  */
 
 void elpa_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_eigenvalues_d_ptr_d(handle, a, ev, error);
-		}
+	}
 	else {
 		elpa_eigenvalues_a_h_a_d(handle, a, ev, error);
-		}	
+	}	
 #else
    elpa_eigenvalues_a_h_a_d(handle, a, ev, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_eigenvalues_float
  *
@@ -275,21 +386,21 @@ void elpa_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error)
  */
 
 void elpa_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_eigenvalues_d_ptr_f(handle, a, ev, error);
-		}
+	}
 	else {
 		elpa_eigenvalues_a_h_a_f(handle, a, ev, error);
-		}	
+	}	
 #else
-   elpa_eigenvalues_a_h_a_f(handle, a, ev, error);
+  elpa_eigenvalues_a_h_a_f(handle, a, ev, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_eigenvalues_double_complex
  *
@@ -302,21 +413,21 @@ void elpa_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
  */
 
 void elpa_eigenvalues_double_complex(elpa_t handle, double complex *a, double *ev, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_eigenvalues_d_ptr_dc(handle, a, ev, error);
-		}
+	}
 	else {
 		elpa_eigenvalues_a_h_a_dc(handle, a, ev, error);
-		}	
+	}	
 #else
-   elpa_eigenvalues_a_h_a_dc(handle, a, ev, error);
+  elpa_eigenvalues_a_h_a_dc(handle, a, ev, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_eigenvalues_float_complex
  *
@@ -329,7 +440,7 @@ void elpa_eigenvalues_double_complex(elpa_t handle, double complex *a, double *e
  */
  
 void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
@@ -343,7 +454,9 @@ void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, 
 #else
    elpa_eigenvalues_a_h_a_fc(handle, a, ev, error);
 #endif		
-	}
+}
+
+//_________________________________________________________________________________________________
 
 #ifdef HAVE_SKEWSYMMETRIC
 /*! \brief generic C method for elpa_skew_eigenvalues_double
@@ -356,8 +469,9 @@ void elpa_eigenvalues_float_complex(elpa_t handle, float complex *a, float *ev, 
  *  \result void
  */
 
+
 void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
    void *a_void_ptr = (void*) a;
    int IsDevicePtr = is_device_ptr(a_void_ptr);
@@ -371,7 +485,7 @@ void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *err
 #else
    elpa_skew_eigenvalues_a_h_a_d(handle, a, ev, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_skew_eigenvalues_float
  *
@@ -384,22 +498,142 @@ void elpa_skew_eigenvalues_double(elpa_t handle, double *a, double *ev, int *err
  */
 
 void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_skew_eigenvalues_d_ptr_f(handle, a, ev, error);
-		}
+	}
 	else {
 		elpa_skew_eigenvalues_a_h_a_f(handle, a, ev, error);
-		}	
-#else
-   elpa_skew_eigenvalues_a_h_a_f(handle, a, ev, error);
-#endif		
 	}
+#else
+  elpa_skew_eigenvalues_a_h_a_f(handle, a, ev, error);
+#endif		
+}
 #endif /* HAVE_SKEWSYMMETRIC */
+
+//_________________________________________________________________________________________________
+
+/*! \brief generic C method for elpa_generalized_eigenvalues_double
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       double host/device pointer to matrix a
+ *  \param  b       double host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvalues_double(elpa_t handle, double *a, double *b, double *ev, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvalues_d_ptr_d(handle, a, b, ev, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvalues_a_h_a_d(handle, a, b, ev, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvalues_a_h_a_d(handle, a, b, ev, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvalues_float
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float host/device pointer to matrix a
+ *  \param  b       float host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvalues_float(elpa_t handle, float *a, float *b, float *ev, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvalues_d_ptr_f(handle, a, b, ev, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvalues_a_h_a_f(handle, a, b, ev, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvalues_a_h_a_f(handle, a, b, ev, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvalues_double_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       double complex host/device pointer to matrix a
+ *  \param  b       double complex host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: double host/device pointer to eigenvalues
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvalues_double_complex(elpa_t handle, double complex *a, double complex *b, double *ev, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvalues_d_ptr_dc(handle, a, b, ev, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvalues_a_h_a_dc(handle, a, b, ev, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvalues_a_h_a_dc(handle, a, b, ev, is_already_decomposed, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_generalized_eigenvalues_float_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  a       float complex host/device pointer to matrix a
+ *  \param  b       float complex host/device pointer to matrix b. If is_already_decomposed is false, on exit replaced by the decomposition
+ *  \param  ev      on return: float host/device pointer to eigenvalues
+ *  \param  is_already_decomposed  integer, has to be set to 0 for the first call with given b and 1 for the subsequent calls with the same b
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+
+void elpa_generalized_eigenvalues_float_complex(elpa_t handle, float complex *a, float complex *b, float *ev, int is_already_decomposed, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1 || ELPA_WITH_SYCL_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_generalized_eigenvalues_d_ptr_fc(handle, a, b, ev, is_already_decomposed, error);
+	}
+	else {
+		elpa_generalized_eigenvalues_a_h_a_fc(handle, a, b, ev, is_already_decomposed, error);
+	}	
+#else
+	elpa_generalized_eigenvalues_a_h_a_fc(handle, a, b, ev, is_already_decomposed, error);
+#endif		
+}
+
+//_________________________________________________________________________________________________
 
 /*! \brief generic C method for elpa_cholesky_double
  *
@@ -411,21 +645,21 @@ void elpa_skew_eigenvalues_float(elpa_t handle, float *a, float *ev, int *error)
  */
 
 void elpa_cholesky_double(elpa_t handle, double *a, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_cholesky_d_ptr_d(handle, a, error);
-		}
+	}
 	else {
 		elpa_cholesky_a_h_a_d(handle, a, error);
-		}	
+	}	
 #else
-   elpa_cholesky_a_h_a_d(handle, a, error);
+  elpa_cholesky_a_h_a_d(handle, a, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_cholesky_float
  *
@@ -437,21 +671,21 @@ void elpa_cholesky_double(elpa_t handle, double *a, int *error)
  */
 
 void elpa_cholesky_float(elpa_t handle, float *a, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_cholesky_d_ptr_f(handle, a, error);
-		}
+	}
 	else {
 		elpa_cholesky_a_h_a_f(handle, a, error);
-		}	
+	}	
 #else
-   elpa_cholesky_a_h_a_f(handle, a, error);
+  elpa_cholesky_a_h_a_f(handle, a, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_cholesky_double_complex
  *
@@ -463,21 +697,21 @@ void elpa_cholesky_float(elpa_t handle, float *a, int *error)
  */
 
 void elpa_cholesky_double_complex(elpa_t handle, double complex *a, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_cholesky_d_ptr_dc(handle, a, error);
-		}
+	}
 	else {
 		elpa_cholesky_a_h_a_dc(handle, a, error);
-		}	
+	}	
 #else
-   elpa_cholesky_a_h_a_dc(handle, a, error);
+  elpa_cholesky_a_h_a_dc(handle, a, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_cholesky_float_complex
  *
@@ -489,22 +723,23 @@ void elpa_cholesky_double_complex(elpa_t handle, double complex *a, int *error)
  */
 
 void elpa_cholesky_float_complex(elpa_t handle, float complex *a, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_cholesky_d_ptr_fc(handle, a, error);
-		}
+	}
 	else {
 		elpa_cholesky_a_h_a_fc(handle, a, error);
-		}	
+	}	
 #else
-   elpa_cholesky_a_h_a_fc(handle, a, error);
+  elpa_cholesky_a_h_a_fc(handle, a, error);
 #endif		
-	}
+}
 
+//_________________________________________________________________________________________________
 
 /*! \brief generic C method for elpa_hermitian_multiply_double
  *
@@ -525,21 +760,21 @@ void elpa_cholesky_float_complex(elpa_t handle, float complex *a, int *error)
  */
  
 void elpa_hermitian_multiply_double(elpa_t handle, char uplo_a, char uplo_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_hermitian_multiply_d_ptr_d(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
-		}
+	}
 	else {
 		elpa_hermitian_multiply_a_h_a_d(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
-		}	
+	}	
 #else
-   elpa_hermitian_multiply_a_h_a_d(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+  elpa_hermitian_multiply_a_h_a_d(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 #endif		
-	}
+}
    
 /*! \brief generic C method for elpa_hermitian_multiply_float
  *
@@ -560,21 +795,21 @@ void elpa_hermitian_multiply_double(elpa_t handle, char uplo_a, char uplo_c, int
  */
  
 void elpa_hermitian_multiply_float(elpa_t handle, char uplo_a, char uplo_c, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_hermitian_multiply_d_ptr_f(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
-		}
+  }
 	else {
 		elpa_hermitian_multiply_a_h_a_f(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
-		}	
+	}	
 #else
-   elpa_hermitian_multiply_a_h_a_f(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+  elpa_hermitian_multiply_a_h_a_f(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 #endif		
-	}
+}
 
 /*! \brief generic C method for elpa_hermitian_multiply_double_complex
  *
@@ -595,21 +830,21 @@ void elpa_hermitian_multiply_float(elpa_t handle, char uplo_a, char uplo_c, int 
  */
  
 void elpa_hermitian_multiply_double_complex(elpa_t handle, char uplo_a, char uplo_c, int ncb, double complex *a, double complex *b, int nrows_b, int ncols_b, double complex *c, int nrows_c, int ncols_c, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_hermitian_multiply_d_ptr_dc(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
-		}
+	}
 	else {
 		elpa_hermitian_multiply_a_h_a_dc(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
-		}	
+	}	
 #else
-   elpa_hermitian_multiply_a_h_a_dc(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+  elpa_hermitian_multiply_a_h_a_dc(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 #endif		
-	}
+}
    
 /*! \brief generic C method for elpa_hermitian_multiply_float_complex
  *
@@ -630,22 +865,166 @@ void elpa_hermitian_multiply_double_complex(elpa_t handle, char uplo_a, char upl
  */
  
 void elpa_hermitian_multiply_float_complex(elpa_t handle, char uplo_a, char uplo_c, int ncb, float complex *a, float complex *b, int nrows_b, int ncols_b, float complex *c, int nrows_c, int ncols_c, int *error)
-	{
+{
 #if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
-   void *a_void_ptr = (void*) a;
-   int IsDevicePtr = is_device_ptr(a_void_ptr);
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
 	
 	if (IsDevicePtr){
 		elpa_hermitian_multiply_d_ptr_fc(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
-		}
+	}
 	else {
 		elpa_hermitian_multiply_a_h_a_fc(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
-		}	
+	}	
 #else
-   elpa_hermitian_multiply_a_h_a_fc(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+  elpa_hermitian_multiply_a_h_a_fc(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 #endif		
+}
+
+//_________________________________________________________________________________________________
+
+/*! \brief generic C method for elpa_pxgemm_multiply_double
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  trans_a  descriptor for matrix a PETERDEBUG: fix description here and below
+ *  \param  trans_c  descriptor for matrix c
+ *  \param  ncb     int
+ *  \param  a       double pointer to matrix a
+ *  \param  b       double pointer to matrix b
+ *  \param  nrows_b number of rows for matrix b
+ *  \param  ncols_b number of cols for matrix b
+ *  \param  c       double pointer to matrix c
+ *  \param  nrows_c number of rows for matrix c
+ *  \param  ncols_c number of cols for matrix c
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+ 
+void elpa_pxgemm_multiply_double(elpa_t handle, char trans_a, char trans_c, int ncb, double *a, double *b, int nrows_b, int ncols_b, double *c, int nrows_c, int ncols_c, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_pxgemm_multiply_d_ptr_d(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
 	}
+	else {
+		elpa_pxgemm_multiply_a_h_a_d(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}	
+#else
+  elpa_pxgemm_multiply_a_h_a_d(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+#endif		
+}
    
+/*! \brief generic C method for elpa_pxgemm_multiply_float
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  trans_a  descriptor for matrix a
+ *  \param  trans_c  descriptor for matrix c
+ *  \param  ncb     int
+ *  \param  a       float pointer to matrix a
+ *  \param  b       float pointer to matrix b
+ *  \param  nrows_b number of rows for matrix b
+ *  \param  ncols_b number of cols for matrix b
+ *  \param  c       float pointer to matrix c
+ *  \param  nrows_c number of rows for matrix c
+ *  \param  ncols_c number of cols for matrix c
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+ 
+void elpa_pxgemm_multiply_float(elpa_t handle, char trans_a, char trans_c, int ncb, float *a, float *b, int nrows_b, int ncols_b, float *c, int nrows_c, int ncols_c, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_pxgemm_multiply_d_ptr_f(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+  }
+	else {
+		elpa_pxgemm_multiply_a_h_a_f(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}	
+#else
+  elpa_pxgemm_multiply_a_h_a_f(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+#endif		
+}
+
+/*! \brief generic C method for elpa_pxgemm_multiply_double_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  trans_a  descriptor for matrix a
+ *  \param  trans_c  descriptor for matrix c
+ *  \param  ncb     int
+ *  \param  a       double complex pointer to matrix a
+ *  \param  b       double complex pointer to matrix b
+ *  \param  nrows_b number of rows for matrix b
+ *  \param  ncols_b number of cols for matrix b
+ *  \param  c       double complex pointer to matrix c
+ *  \param  nrows_c number of rows for matrix c
+ *  \param  ncols_c number of cols for matrix c
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+ 
+void elpa_pxgemm_multiply_double_complex(elpa_t handle, char trans_a, char trans_c, int ncb, double complex *a, double complex *b, int nrows_b, int ncols_b, double complex *c, int nrows_c, int ncols_c, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_pxgemm_multiply_d_ptr_dc(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}
+	else {
+		elpa_pxgemm_multiply_a_h_a_dc(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}	
+#else
+  elpa_pxgemm_multiply_a_h_a_dc(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+#endif		
+}
+   
+/*! \brief generic C method for elpa_pxgemm_multiply_float_complex
+ *
+ *  \details
+ *  \param  handle  handle of the ELPA object, which defines the problem
+ *  \param  trans_a  descriptor for matrix a
+ *  \param  trans_c  descriptor for matrix c
+ *  \param  ncb     int
+ *  \param  a       float complex pointer to matrix a
+ *  \param  b       float complex pointer to matrix b
+ *  \param  nrows_b number of rows for matrix b
+ *  \param  ncols_b number of cols for matrix b
+ *  \param  c       float complex pointer to matrix c
+ *  \param  nrows_c number of rows for matrix c
+ *  \param  ncols_c number of cols for matrix c
+ *  \param  error   on return the error code, which can be queried with elpa_strerr()
+ *  \result void
+ */
+ 
+void elpa_pxgemm_multiply_float_complex(elpa_t handle, char trans_a, char trans_c, int ncb, float complex *a, float complex *b, int nrows_b, int ncols_b, float complex *c, int nrows_c, int ncols_c, int *error)
+{
+#if ELPA_WITH_NVIDIA_GPU_VERSION==1 || ELPA_WITH_AMD_GPU_VERSION==1
+  void *a_void_ptr = (void*) a;
+  int IsDevicePtr = is_device_ptr(a_void_ptr);
+	
+	if (IsDevicePtr){
+		elpa_pxgemm_multiply_d_ptr_fc(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}
+	else {
+		elpa_pxgemm_multiply_a_h_a_fc(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+	}	
+#else
+  elpa_pxgemm_multiply_a_h_a_fc(handle, trans_a, trans_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error);
+#endif		
+}
+
+//_________________________________________________________________________________________________
+
 /*! \brief generic C method for elpa_invert_triangular_double
  *
  *  \details

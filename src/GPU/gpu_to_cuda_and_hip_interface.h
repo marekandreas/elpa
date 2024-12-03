@@ -1,4 +1,4 @@
-//    Copyright 2021, A. Marek MPCDF
+//    Copyright 2024, P. Karpov
 //
 //    This file is part of ELPA.
 //
@@ -44,38 +44,55 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//
-// --------------------------------------------------------------------------------------------------
-//
-// written by A. Marek, MPCDF
+//    This file was written by P. Karpov, MPCDF
 
-#include "config-f90.h"
 
-// The real part
-#define REALCASE 1
-#undef COMPLEXCASE
-#define DOUBLE_PRECISION_REAL 1
-#include "hipUtils_template.cpp"
-#undef DOUBLE_PRECISION_REAL
+#undef gpuDeviceSynchronize
+#undef gpuStream_t
+#undef gpuGetLastError
+#undef gpuGetErrorString
+#undef gpuError_t
+#undef gpuSuccess
+#undef gpuDoubleComplex
+#undef gpuFloatComplex
+#undef make_gpuDoubleComplex
+#undef make_gpuFloatComplex
+#undef MAX_THREADS_PER_BLOCK
+#undef ELPA_GPU
 
-#ifdef WANT_SINGLE_PRECISION_REAL
+//_________________________________________________________________________________________________
 
-#undef DOUBLE_PRECISION_REAL
-#include "hipUtils_template.cpp"
-
+#ifdef WITH_NVIDIA_GPU_VERSION
+#define gpuDeviceSynchronize cudaDeviceSynchronize
+#define gpuStream_t cudaStream_t
+#define gpuGetLastError cudaGetLastError
+#define gpuGetErrorString cudaGetErrorString
+#define gpuError_t cudaError_t
+#define gpuSuccess cudaSuccess
+#define gpuDoubleComplex cuDoubleComplex
+#define gpuFloatComplex  cuFloatComplex
+#define make_gpuDoubleComplex make_cuDoubleComplex
+#define make_gpuFloatComplex make_cuFloatComplex
+#define MAX_THREADS_PER_BLOCK 1024
+#define ELPA_GPU cuda
 #endif
 
-// The complex part
-#define COMPLEXCASE 1
-#undef REALCASE
-#define DOUBLE_PRECISION_COMPLEX 1
-#include "hipUtils_template.cpp"
-#undef DOUBLE_PRECISION_COMPLEX
+//_________________________________________________________________________________________________
 
-#ifdef WANT_SINGLE_PRECISION_COMPLEX
-
-#undef DOUBLE_PRECISION_COMPLEX
-#include "hipUtils_template.cpp"
-
+#ifdef WITH_AMD_GPU_VERSION
+#define gpuDeviceSynchronize hipDeviceSynchronize
+#define gpuStream_t hipStream_t
+#define gpuGetLastError hipGetLastError
+#define gpuGetErrorString hipGetErrorString
+#define gpuError_t hipError_t
+#define gpuSuccess hipSuccess
+#define gpuDoubleComplex hipDoubleComplex
+#define gpuFloatComplex  hipFloatComplex
+#define make_gpuDoubleComplex make_hipDoubleComplex
+#define make_gpuFloatComplex make_hipFloatComplex
+#define MAX_THREADS_PER_BLOCK 1024
+#define ELPA_GPU hip
 #endif
 
+#define CONCATENATE_WITHOUT_EVALUATION(prefix, name) prefix##name
+#define CONCATENATE(prefix, name) CONCATENATE_WITHOUT_EVALUATION(prefix, name)

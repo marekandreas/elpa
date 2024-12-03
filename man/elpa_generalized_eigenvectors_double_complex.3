@@ -1,0 +1,110 @@
+.TH "elpa_generalized_eigenvectors_double_complex" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+elpa_generalized_eigenvectors_double_complex \- computes all eigenvalues and (part of) eigenvectors of a generalized eigenvalue problem, A*X=lambda*B*X,
+for complex hermitian matrices A, B.
+.br
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa_handle
+.br
+
+call elpa_handle%\fBgeneralized_eigenvectors\fP (a, b, ev, q, is_already_decomposed, error)
+.sp
+With the definitions of the input and output variables:
+
+.TP
+class(elpa_t) :: \fB elpa_handle\fP
+An instance of the ELPA object.
+.TP
+real(kind=c_double_complex) ::\fB a\fP \t OR \t type(c_ptr) ::\fB a\fP
+The host/device local matrix\fB a\fP for which the eigenvalues and eigenvalues should be computed.
+The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The matrix has to be symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+.TP
+real(kind=c_double_complex) ::\fB b\fP \t OR \t type(c_ptr) ::\fB b\fP
+The host/device local matrix\fB b\fP defining the generalized eigenvalue problem.
+The dimensions of the matrix\fB b\fP has to be the same as for matrix\fB a\fP.
+The matrix has to be symmetric, this is not checked by the routine.
+In case of a GPU build\fB b\fP can be a device pointer to a matrix\fB b\fP in the device memory.
+.TP
+real(kind=c_double) ::\fB ev\fP \t\t OR \t type(c_ptr) ::\fB ev\fP
+The host/device vector\fB ev\fP where the eigenvalues will be stored in\fI ascending\fP order.
+Note that the eigenvalues of complex hermitian matrices are also real.
+In case of a GPU build\fB ev\fP can be a device pointer to a vector\fB ev\fP in the device memory.
+.TP
+real(kind=c_double_complex) ::\fB q\fP \t OR \t type(c_ptr) ::\fB q\fP
+The storage space for the computed eigenvectors.
+The number of requested eigenvectors, nev, must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+In case of a GPU build\fB q\fP can be a device pointer to a matrix\fB q\fP in the device memory.
+.TP
+logical :: \fB is_already_decomposed\fP
+Has to be set to .false. for the first call with a given\fB b\fP and to .true. for each subsequent call with the same\fB b\fP,
+since\fB b\fP then already contains decomposition and thus the decomposing step is skipped.
+
+.TP
+integer, optional :: \fB error\fP
+The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3).
+
+.br
+.SS C/C++ INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t elpa_handle;
+
+.br
+// C:
+.br
+void\fB elpa_generalized_eigenvectors_double_complex\fP(\fBelpa_t\fP elpa_handle,\fB double complex\fP *a,\fB double complex\fP *b,\fB double complex\fP *ev,\fB double complex\fP *q, \fB int\fP is_already_decomposed,\fB int\fP *error);
+.sp
+// C++:
+.br
+void\fB elpa_generalized_eigenvectors_double_complex\fP(\fBelpa_t\fP elpa_handle,\fB std::complex<double> \fP *a,\fB std::complex<double> \fP *b,\fB std::complex<double> \fP *ev,\fB std::complex<double> \fP *q, \fB int\fP is_already_decomposed,\fB int\fP *error);
+.sp
+With the definitions of the input and output variables:
+
+.TP
+elpa_t \fB elpa_handle\fP;
+The handle to the ELPA object
+.TP
+double complex \fB *a\fP; \t OR \t std::complex<double> \fB *a\fP;
+The local matrix\fB a\fP for which all eigenvalues and (part of) eigenvectors should be computed.
+The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The matrix has to be symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+.TP
+double complex \fB *b\fP; \t OR \t std::complex<double> \fB *b\fP;
+The local matrix\fB b\fP defining the generalized eigenvalue problem.
+The dimensions of the matrix\fB b\fP must be the same as matrix\fB a\fP.
+The matrix has to be symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+.TP
+double \fB *ev\fP;
+The storage for the computed eigenvalues.
+Eigenvalues will be stored in\fI ascending\fP order.
+Note that the eigenvalues of complex hermitian matrices are also real.
+In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+.TP
+double complex \fB *q\fP;  \t OR \t std::complex<double> \fB *q\fP;
+The storage space for the computed eigenvectors.
+The number of requested eigenvectors, nev, must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+.TP
+int \fB is_already_decomposed\fP;
+Has to be set to 0 for the first call with a given\fB b\fP and 1 for each subsequent call with the same\fB b\fP,
+since\fB b\fP then already contains decomposition and thus the decomposing step is skipped.
+.TP
+int \fB *error\fP;
+The error code of the function. Should be "ELPA_OK". The error codes can be queried with\fB elpa_strerr\fP(3)
+
+.SH DESCRIPTION
+Computes the generalized eigenvalues and (part of) the eigenvector spectrum of a complex hermitian matrix. The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_generalized_eigenvalues_double_complex\fP can be called. In particular, the number of eigenvectors to be computed, nev, can be set with\fB elpa_set\fP(3). Unlike in the case of ordinary eigenvalue problem, the generalized problem calls some external ScaLAPACK routines. The user is responsible for initialization of the BLACS context, which then has to be passed to ELPA by\fB elpa_set\fP(3)\fI BEFORE\fP\fB elpa_generalized_eigenvalues_double_complex\fP can be called.
+
+.SH SEE ALSO
+\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3) \fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)
