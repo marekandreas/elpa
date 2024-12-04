@@ -51,6 +51,8 @@
 ! distributed along with the original code in the file "COPYING".
 
 #include "config-f90.h"
+#include "../general/nvtx_labels.h"
+
 !> \brief Fortran module which contains the source of ELPA 1stage
 module elpa1_compute
   use elpa_utilities
