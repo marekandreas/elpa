@@ -1,9 +1,9 @@
 .TH "elpa_generalized_eigenvectors" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
-elpa_generalized_eigenvectors \- computes all eigenvalues and (part of) eigenvectors of a generalized eigenvalue problem, A*X=lambda*B*X,
-for real symmetric or complex hermitian matrices
+elpa_generalized_eigenvectors \- computes all eigenvalues and (part of) eigenvectors of a generalized eigenvalue problem, A*Q = \(*l*B*Q, for real symmetric or complex hermitian matrices A, B.
 .sp
 There are also variations of this routine that can accept not only host but also device pointers as input/output. 
 Names of these routines explicitly contain the corresponding datatypes:
@@ -26,34 +26,34 @@ call elpa_handle%\fBgeneralized_eigenvectors\fP (a, b, ev, q, is_already_decompo
 With the definitions of the input and output variables:
 
 .TP
-class(elpa_t) :: \fB elpa_handle\fP
+class(elpa_t) ::\fB elpa_handle\fP
 An instance of the ELPA object.
 .TP
-datatype :: \fB a\fP
+datatype ::\fB a\fP
 The local matrix\fB a\fP for which the eigenvalues and eigenvalues should be computed.
 The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype\fP of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)
+The\fB datatype\fP of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)".
 .TP
-datatype :: \fB b\fP
+datatype ::\fB b\fP
 The local matrix\fB b\fP defining the generalized eigenvalue problem.
 The dimensions and datatype of the matrix\fB b\fP has to be the same as for matrix\fB a\fP.
 .TP
-datatype :: \fB ev\fP
-The vector\fB ev\fP where the eigenvalues will be stored in\fI ascending\fP order.
-The\fB datatype\fP of the vector\fB ev\fP can be either "real(kind=c_double)" or "real(kind=c_float)", depending of the\fB datatype\fP of the matrix.
-Note that complex hermitian matrices also have real-valued eigenvalues.
+datatype ::\fB ev\fP
+The array where the eigenvalues \(*l will be stored in\fI ascending\fP order.
+The\fB datatype_real\fP of\fB ev\fP can be either "real(kind=c_double)" or "real(kind=c_float)", depending of the\fB datatype\fP of the matrix.
+Note that complex hermitian matrices also have real eigenvalues.
 .TP
-datatype :: \fB q\fP
-The storage space for the computed eigenvectors.
+datatype ::\fB q\fP
+The storage space for the computed eigenvectors Q.
 The number of requested eigenvectors, nev, must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
 The\fB datatype\fP of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)".
 .TP
-logical :: \fB is_already_decomposed\fP
+logical ::\fB is_already_decomposed\fP
 Has to be set to .false. for the first call with a given\fB b\fP and to .true. for each subsequent call with the same\fB b\fP,
 since\fB b\fP then already contains decomposition and thus the decomposing step is skipped.
 
 .TP
-integer, optional :: \fB error\fP
+integer, optional ::\fB error\fP
 The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
 
 .br
@@ -74,23 +74,23 @@ The handle to the ELPA object
 datatype \fB *a\fP;
 The local matrix\fB a\fP for which all eigenvalues and (part of) eigenvectors should be computed.
 The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The matrix has to be symmetric or hermitian, this is not checked by the routine.
+The global matrix has to be symmetric or hermitian, this is not checked by the routine.
 The\fB datatype\fP can be one of "double", "float", "double complex"/"std::complex<double>", "float complex"/"std::complex<float>" for C/C++.
 .TP
 datatype \fB *b\fP;
 The local matrix\fB b\fP defining the generalized eigenvalue problem.
 The dimensions and the\fB datatype\fP of the matrix\fB b\fP must be the same as matrix\fB a\fP.
-The matrix has to be symmetric or hermitian, this is not checked by the routine.
+The global matrix has to be symmetric or hermitian, this is not checked by the routine.
 The\fB datatype\fP can be one of "double", "float", "double complex"/"std::complex<double>", "float complex"/"std::complex<float>" for C/C++.
 .TP
-datatype \fB *ev\fP;
-The storage for the computed eigenvalues.
+datatype_real \fB *ev\fP;
+The array where the eigenvalues \(*l will be stored in\fI ascending\fP order.
 Eigenvalues will be stored in\fI ascending\fP order.
-The\fB datatype\fP can be either "double" or "float".
+The\fB datatype_real\fP can be either "double" or "float".
 Note that the eigenvalues of complex hermitian matrices are also real.
 .TP
 datatype \fB *q\fP;
-The storage space for the computed eigenvectors.
+The storage space for the computed eigenvectors Q.
 The number of requested eigenvectors must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
 The\fB datatype\fP can be one of "double", "float", "double complex"/"std::complex<double>", "float complex"/"std::complex<float>" for C/C++.
 .TP

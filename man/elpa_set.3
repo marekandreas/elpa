@@ -1,8 +1,9 @@
-.TH "elpa_set" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.TH "elpa_set" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
-elpa_set \- set parameter or tunables for the ELPA library
+elpa_set \- set a parameter for the ELPA object.
 .br
 
 .SH SYNOPSIS
@@ -10,41 +11,41 @@ elpa_set \- set parameter or tunables for the ELPA library
 .SS FORTRAN INTERFACE
 use elpa
 .br
-class(elpa_t), pointer :: elpa
+class(elpa_t), pointer :: elpa_handle
 .br
 
-call elpa%\fBset\fP (\fBcharacter(*)\fP name,\fB datatype\fP value,\fB integer\fP error)
+call elpa_handle%\fBset\fP (name, value, error)
 .sp
 With the definitions of the input and output variables:
 .sp
 .TP
-class(elpa_t)     :: \fB elpa\fP
+class(elpa_t)     ::\fB elpa\fP
 An instance of the ELPA object.
 .TP
-character(*)      :: \fB name\fP
-the name of the option to be set
+character(*)      ::\fB name\fP
+The name of the option to be set.
 .TP
-datatype          :: \fB value\fP
+datatype          ::\fB value\fP
 the value which should be assigned to the option\fB name\fP.
 The\fB datatype\fP can be\fB integer\fP or\fB real(kind=c_double)\fP.
 .TP
-integer, optional :: \fB error\fP
+integer, optional ::\fB error\fP
 The returned error code. On success it is ELPA_OK, otherwise an error. 
 he error code can be queried with\fB elpa_strerr\fP(3)
 
 .br
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include <elpa/elpa.h>
 .br
-elpa_t handle;
+elpa_t elpa_handle;
 
 .br
-\fBvoid\fP\fB elpa_set\fP (\fBelpa_t\fP handle,\fB const char\fP *name,\fB datatype\fP value,\fB int\fP *error);
+\fBvoid\fP\fB elpa_set\fP (\fBelpa_t\fP elpa_handle,\fB const char\fP *name,\fB datatype\fP value,\fB int\fP *error);
 .sp
 With the definitions of the input and output variables:
 
 .TP
-elpa_t \fB handle\fP;
+elpa_t \fB elpa_handle\fP;
 The handle of an ELPA object, obtained before with\fB elpa_allocate\fP(3)
 .TP
 const char \fB *name\fP;
@@ -53,6 +54,9 @@ The name of the option to be set.
 datatype \fB value\fP;
 The value which should be assigned to the option\fB name\fP.
 The\fB datatype\fP  can be either\fB int\fP or\fB double\fP.
+.TP
+int \fB *error\fP;
+The error code of the function. Should be "ELPA_OK". The error codes can be queried with\fB elpa_strerr\fP(3)
 
 .SH DESCRIPTION
 The\fB elpa_set\fP function is used to set\fB mandatory parameters\fP and\fB runtime options\fP of the ELPA library.
@@ -102,7 +106,7 @@ integer parameter. Choose whether time measurements should be done in the ELPA r
 
 Runtime options of an ELPA option can be set at\fI any time\fP.
 
-At the moment the following runtime options are supported:
+Here are some suuported runtime options:
 .TP
 \fB"solver"\fP:
 Choose which solver should be used in the compute steps\fB elpa_eigenvalues\fP(3) or\fB elpa_eigenvectors\fP(3).
@@ -122,11 +126,10 @@ The available kernels can be queried with\fB elpa2_print_kernels\fP(1).
 Choose whether a QR decomposition should be used for the real case computations in\fB elpa_eigenvalues\fP(3) or\fB elpa_eigenvectors\fP(3) computational steps,
 if solver was set to \fB"ELPA_SOLVER_2STAGE"\fP.
 .TP
-\fB"gpu"\fP:
-Choose whether accelerated GPU calculations should be used. Only available if ELPA has been build with GPU support.
-.TP
 \fB"debug"\fP:
 Choose whether, in case of an error, more debug information should be provided.
+
+The full list of supported options can found in the ELPA documentation.
 
 .SH SEE ALSO
 \fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_deallocate\fP(3)\fB elpa_uninit\fP(3)

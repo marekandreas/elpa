@@ -1,6 +1,7 @@
 .TH "elpa_cholesky" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
 elpa_cholesky \- performs a Cholesky factorization of a real symmetric or complex hermitian positive-definite matrix: A = U^T*U or A = U^H*U, where U is an upper triangular matrix.
 .sp
@@ -24,13 +25,13 @@ call elpa_handle%\fBcholesky\fP (a, error)
 With the definitions of the input and output variables:
 
 .TP
-datatype :: \fB a\fP
+datatype ::\fB a\fP
 On input:  the local part of matrix A that should be decomposed.
 On output: the local part upper triangular matrix U.
 The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
 The\fB datatype\fP of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)".
 .TP
-integer, optional :: \fB error\fP
+integer, optional ::\fB error\fP
 The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
 
 .br

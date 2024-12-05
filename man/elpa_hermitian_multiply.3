@@ -1,8 +1,9 @@
-.TH "elpa_hermitian_multiply" 3 "Wed Apr 10 2024" "ELPA" \" -*- nroff -*-
+.TH "elpa_hermitian_multiply" 3 "Fri Apr 5 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
-elpa_hermitian_multiply \- performs a "hermitian" multiplication of matrices: C = A**T * B  for real matrices and C = A**H * B for complex matrices
+elpa_hermitian_multiply \- performs a "hermitian" multiplication of matrices: C = A^T * B  for real matrices and C = A^H * B for complex matrices
 .sp
 There are also variations of this routine that can accept not only host but also device pointers as input/output. 
 Names of these routines explicitly contain the corresponding datatypes:
@@ -16,69 +17,68 @@ elpa_hermitian_multiply_float_complex.
 .SS FORTRAN INTERFACE
 use elpa
 .br
-class(elpa_t), pointer :: elpa
+class(elpa_t), pointer :: elpa_handle
 .br
 
-call elpa%\fBhermitian_multiply\fP (uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, &
-                                          c, nrows_c, ncols_c, error)
+call elpa_handle%\fBhermitian_multiply\fP (uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error)
 .sp
 With the definitions of the input and output variables:
 .TP
-class(elpa_t) :: \fB elpa\fP
+class(elpa_t) ::\fB elpa_handle\fP
 An instance of the ELPA object.
 .TP
-character*1   :: \fB uplo_a\fP
+character*1   ::\fB uplo_a\fP
 Should be set to 'U' if A is upper triangular, 
 to 'L' if A is lower triangular or to anything else if A is a full matrix.
 .TP
-character*1   :: \fB uplo_c\fP
+character*1   ::\fB uplo_c\fP
 Should be set to 'U' if only the upper diagonal part of C is needed, 
 to 'L' if only the upper diagonal part of C is needed, 
 or to anything else if the full matrix C is needed.
 .TP
-integer       :: \fB ncb\fP
+integer       ::\fB ncb\fP
 The number of columns of the global matrices\fB b\fP and\fB c\fP.
 .TP
 datatype      ::\fB a\fP
 The matrix\fB a\fP. The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
 The\fB datatype\fP of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)".
 .TP
-datatype      :: \fB b\fP
+datatype      ::\fB b\fP
 The matrix\fB b\fP. The dimensions of the matrix are specified by the parameters\fB nrows_b\fP and\fB ncols_b\fP.
 The\fB datatype\fP of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)".
 .TP
-integer       :: \fB nrows_b\fP
-The number of rows of the local matrix\fB b\fP.
+integer       ::\fB nrows_b\fP
+The number of rows of matrix\fB b\fP.
 .TP
-integer       :: \fB ncols_b\fP
-The number of columns of the local matrix\fB b\fP.
+integer       ::\fB ncols_b\fP
+The number of columns of matrix\fB b\fP.
 .TP
-datatype      :: \fB c\fP
+datatype      ::\fB c\fP
 The matrix\fB c\fP. The dimensions of the matrix are specified by the parameters\fB nrows_c\fP and\fB ncols_c\fP.
 The\fB datatype\fP of the matrix can be one of "real(kind=c_double)", "real(kind=c_float)", "complex(kind=c_double)", or "complex(kind=c_float)".
 .TP
-integer       :: \fB nrows_c\fP
-The number of rows of the local matrix\fB c\fP.
+integer       ::\fB nrows_c\fP
+The number of rows of matrix\fB c\fP.
 .TP
-integer       :: \fB ncols_c\fP
-The number of columns the local of matrix\fB c\fP.
+integer       ::\fB ncols_c\fP
+The number of columns of matrix\fB c\fP.
 .TP
-integer, optional :: \fB error\fP
+integer, optional ::\fB error\fP
 The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
 
 .br
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include <elpa/elpa.h>
 .br
-elpa_t handle;
+elpa_t elpa_handle;
 
 .br
-void\fB elpa_hermitian_multiply\fP(\fBelpa_t\fP handle,\fB char\fP uplo_a,\fB char\fP uplo_c,\fB int\fP ncb,\fB datatype\fP *a,\fB datatype\fP *b,\fB int\fP nrows_b,\fB int\fP ncols_b,\fB datatype\fP *c,\fB int\fP nrows_c,\fB int\fP ncols_c,\fB int\fP *error);
+void\fB elpa_hermitian_multiply\fP(\fBelpa_t\fP elpa_handle,\fB char\fP uplo_a,\fB char\fP uplo_c,\fB int\fP ncb,\fB datatype\fP *a,\fB datatype\fP *b,\fB int\fP nrows_b,\fB int\fP ncols_b,\fB datatype\fP *c,\fB int\fP nrows_c,\fB int\fP ncols_c,\fB int\fP *error);
 .sp
 With the definitions of the input and output variables:
 
 .TP
-elpa_t \fB handle\fP;
+elpa_t \fB elpa_handle\fP;
 The handle to the ELPA object
 .TP
 char \fB uplo_a\fP;
@@ -95,33 +95,33 @@ The number of columns of the global matrices\fB b\fP and \fB c\fP.
 .TP
 datatype \fB *a\fP;
 The matrix\fB a\fP. The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype\fP of the matrix can be one of "double", "float", "double complex", or "float complex".
+The\fB datatype\fP can be one of "double", "float", "double complex"/"std::complex<double>", "float complex"/"std::complex<float>" for C/C++.
 .TP
 datatype \fB *b\fP;
 The matrix\fB b\fP. The dimensions of the matrix are specified by the parameters\fB nrows_b\fP and\fB ncols_b\fP.
-The\fB datatype\fP of the matrix can be one of "double", "float", "double complex", or "float complex".
+The\fB datatype\fP can be one of "double", "float", "double complex"/"std::complex<double>", "float complex"/"std::complex<float>" for C/C++.
 .TP
 int \fB nrows_b\fP;
-The number of rows of the local matrix\fB b\fP.
+The number of rows of matrix\fB b\fP.
 .TP
 int\fB ncols_b\fP;
-The number of columns of the local matrix\fB b\fP.
+The number of columns of matrix\fB b\fP.
 .TP
 datatype \fB *c\fP;
 The matrix\fB c\fP. The dimensions of the matrix are specified by the parameters\fBn rows_c\fP and\fB ncols_c\fP.
-The\fB datatype\fP of the matrix can be one of "double", "float", "double complex", or "float complex".
+The\fB datatype\fP can be one of "double", "float", "double complex"/"std::complex<double>", "float complex"/"std::complex<float>" for C/C++.
 .TP
 int \fB nrows_c\fP;
-The number of rows of the local matrix\fB c\fP.
+The number of rows of matrix\fB c\fP.
 .TP
 int \fB ncols_c\fP;
-The number of columns of the local matrix\fB c\fP.
+The number of columns of matrix\fB c\fP.
 .TP
 int \fB *error\fP;
 The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
 
 .SH DESCRIPTION
-Performs a "hermitian" multiplication: C = A**T * B for real matrices and C=A**H * B for complex matrices.
+Performs a "hermitian" multiplication: C = A^T * B for real matrices and C=A^H * B for complex matrices.
 The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_hermitian_multiply\fP can be called.
 
 .SH SEE ALSO

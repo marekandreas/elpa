@@ -1,6 +1,7 @@
 .TH "elpa_get_communicators" 3 "Wed Mar 13 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
 elpa_get_communicators \- splits the global MPI communicator mpi_comm_global communicator into rows and column communicators mpi_comm_rows and mpi_comm_cols
 .br
@@ -14,25 +15,25 @@ use elpa1
 status =\fB elpa_get_communicators\fP (mpi_comm_global, my_prow, my_pcol, mpi_comm_rows, mpi_comm_cols)
 
 .TP
-integer, intent(in)   :: \fB mpi_comm_global\fP  
+integer, intent(in)   ::\fB mpi_comm_global\fP  
 Global communicator for the calculation
 .TP
-integer, intent(in)   :: \fB my_prow\fP          
+integer, intent(in)   ::\fB my_prow\fP          
 Row coordinate of the calling process in the process grid
 .TP
-integer, intent(in)   :: \fB my_pcol\fP          
+integer, intent(in)   ::\fB my_pcol\fP          
 Column coordinate of the calling process in the process grid
 .TP
-integer, intent(out)  :: \fB mpi_comm_rows\fP    
+integer, intent(out)  ::\fB mpi_comm_rows\fP    
 Communicator for communication within rows of processes
 .TP
-integer, intent(out)  :: \fB mpi_comm_cols\fP    
+integer, intent(out)  ::\fB mpi_comm_cols\fP    
 Communicator for communication within columns of processes
 .TP
-integer               :: \fB status\fP
+integer               ::\fB status\fP
 Return value indicating success or failure of the underlying MPI_COMM_SPLIT function
 
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include "elpa_generated.h
 
 .br
