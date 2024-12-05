@@ -86,8 +86,6 @@
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
       use elpa_ccl_gpu
 #endif
-
-
       use merge_systems_gpu
 
 
@@ -146,13 +144,13 @@
 
       integer(kind=c_intptr_t)                    :: num
       integer(kind=C_intptr_T)                    :: qtmp1_dev, qtmp1_tmp_dev, qtmp2_dev, ev_dev, q_dev
-      integer(kind=c_intptr_t)                    :: tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
+      integer(kind=c_intptr_t)                    :: d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
       integer(kind=c_intptr_t)                    :: d1l_dev, zl_dev, z_dev, d1_dev
-      type(c_ptr)                                 :: idx1_dev, p_col_dev, coltyp_dev, p_col_out_dev, ndef_c_dev
-      type(c_ptr)                                 :: idxq1_dev, l_col_out_dev, idx_dev, idx2_dev, l_col_dev
-      type(c_ptr)                                 :: nnzul_dev
+      integer(kind=c_intptr_t)                    :: idx1_dev, p_col_dev, coltyp_dev, p_col_out_dev, ndef_c_dev
+      integer(kind=c_intptr_t)                    :: idxq1_dev, l_col_out_dev, idx_dev, idx2_dev, l_col_dev
+      integer(kind=c_intptr_t)                    :: nnzul_dev
 
-      type(c_ptr)                                 :: nnzu_val_dev, nnzl_val_dev
+      integer(kind=c_intptr_t)                    :: nnzu_val_dev, nnzl_val_dev
       logical                                     :: successGPU
       integer(kind=c_intptr_t), parameter         :: size_of_datatype = size_of_&
                                                                       &PRECISION&
@@ -757,7 +755,7 @@
         qtmp2 = 0 ! Not really needed
 
 
-        ! checj memory copies
+        ! check memory copies
 
         if (useGPU) then
           num = na * size_of_int   
@@ -795,10 +793,6 @@
           num = (na) * size_of_datatype
           successGPU = gpu_malloc(d1_dev, num)
           check_alloc_gpu("merge_systems: d1_dev", successGPU)
-
-          num = (na) * size_of_datatype
-          successGPU = gpu_malloc(tmp_dev, num)
-          check_alloc_gpu("merge_systems: tmp_dev", successGPU)
 
           num = (na) * size_of_datatype
           successGPU = gpu_malloc(d1u_dev, num)
@@ -985,9 +979,9 @@
           check_memcpy_gpu("merge_systems: ndef_c_dev", successGPU)
 #endif
 
-              call GPU_COPY_Q_SLICE_TO_QTMP1_PRECISION (qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
-                                                my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, &
-                                                my_stream)
+          call GPU_COPY_Q_SLICE_TO_QTMP1_PRECISION (qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
+                                            my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, &
+                                            my_stream)
         else
           do i = 1, na2
             l_idx = l_col(idx2(i))
@@ -1031,7 +1025,6 @@
 
 
         if (useGPU) then
-
           call GPU_ZERO_Q_PRECISION (q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, &
                                                       matrixRows,  my_stream)
         else
@@ -1054,6 +1047,7 @@
                              num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: idx1_dev", successGPU)
 #endif
+
           num = na * size_of_int
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -1065,6 +1059,7 @@
                              num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: p_col_dev", successGPU)
 #endif
+
           num = na * size_of_int
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -1076,6 +1071,7 @@
                              num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: coltyp_dev", successGPU)
 #endif
+
           num = na*size_of_datatype
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -1086,19 +1082,6 @@
           successGPU = gpu_memcpy(ev_scale_dev, int(loc(ev_scale(1)),kind=c_intptr_t), &
                              num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: ev_scale_dev", successGPU)
-
-
-#endif
-          num = na*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
-          successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), &
-                             num, gpuMemcpyHostToDevice, my_stream)
-          check_memcpy_gpu("merge_systems: tmp_dev", successGPU)
-#else
-          successGPU = gpu_memcpy(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), &
-                             num, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("merge_systems: tmp_dev", successGPU)
 #endif
 
           num = na*size_of_datatype
@@ -1112,6 +1095,7 @@
                              num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: z_dev", successGPU)
 #endif
+
           num = na*size_of_datatype
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -1122,6 +1106,7 @@
                              num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: d1_dev", successGPU)
 #endif
+
           num = gemm_dim_l * gemm_dim_m * size_of_datatype
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -1190,6 +1175,7 @@
             endif
             nnzu = 0
             nnzl = 0
+
             call GPU_COMPUTE_NNZL_NNZU_VAL_PART1 (p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, &
                                          na, na1, np_rem, &
                                          npc_n, nnzu_save, nnzl_save, np, my_stream)
@@ -1199,8 +1185,9 @@
 
           nnzu_start = 0
           nnzl_start = 0
-            call GPU_COMPUTE_NNZL_NNZU_VAL_PART2 (nnzu_val_dev, nnzl_val_dev, na, na1, &
-                                                  nnzu_start, nnzl_start, npc_n, my_stream)                     
+
+          call GPU_COMPUTE_NNZL_NNZU_VAL_PART2 (nnzu_val_dev, nnzl_val_dev, na, na1, &
+                                                nnzu_start, nnzl_start, npc_n, my_stream)              
         else
           ! precompute nnzu_val, nnzl_val
           do np = 1, npc_n
@@ -1249,7 +1236,7 @@
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 
 
-              call GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION (qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l)
+              call GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION (qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l) ! PETERDEBUG: this and other kernels --> streamed version
 
               call obj%timer%start("nccl_communication")
               my_stream = obj%gpu_setup%my_stream
@@ -1408,8 +1395,8 @@
 
           ndef = MAX(nnzu,nnzl) ! Remote counter in input matrix
           if (useGPU) then
-               call gpu_update_ndef_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, &
-                                                        my_stream)
+               call GPU_UPDATE_NDEF_C(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, &
+                                                        my_stream) ! PETERDEBUG: idx2_dev, problem with garbage values
 
           endif ! useGPU
 
@@ -1440,9 +1427,9 @@
 
             ! Get partial result from (output) Q
             if (useGPU) then
-                call GPU_COPY_Q_SLICE_TO_QTMP2_PRECISION (q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows, l_rqs, l_rqe, &
-                                                             matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, &
-                                                             ncnt, ind_ex, ind_ex2, na, my_stream)
+              call GPU_COPY_Q_SLICE_TO_QTMP2_PRECISION (q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows, l_rqs, l_rqe, &
+                                                            matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, &
+                                                            ncnt, ind_ex, ind_ex2, na, my_stream)
             else ! useGPU
 !$omp PARALLEL DO &
 !$omp default(none) &
@@ -1460,11 +1447,10 @@
             ! Parts for multiplying with upper half of Q:
             if (useGPU) then
               if (nnzu .ge. 1) then
-                   ! Calculate the j-th eigenvector of the deflated system
-                   ! See above why we are doing it this way!
-                    call GPU_FILL_EV_PRECISION (ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
-                    idx_dev, &
-                                      na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt, my_stream) 
+                ! Calculate the j-th eigenvector of the deflated system
+                ! See above why we are doing it this way!
+                call GPU_FILL_EV_PRECISION (ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, idx_dev, &
+                                            na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt, my_stream) 
               endif ! nnzu
 
             else ! useGPU
@@ -1520,11 +1506,10 @@
 
 
             if (useGPU) then
-                if (nnzl .ge. 1) then
-                    call GPU_FILL_EV_PRECISION (ev_dev, tmp_dev, d1l_dev, dbase_dev, ddiff_dev, zl_dev, ev_scale_dev, idxq1_dev, &
-                    idx_dev, &
-                                      na, gemm_dim_l, gemm_dim_m, nnzl, ns, ncnt, my_stream) 
-                endif
+              if (nnzl .ge. 1) then
+                call GPU_FILL_EV_PRECISION (ev_dev, d1l_dev, dbase_dev, ddiff_dev, zl_dev, ev_scale_dev, idxq1_dev, idx_dev, &
+                                            na, gemm_dim_l, gemm_dim_m, nnzl, ns, ncnt, my_stream) 
+              endif
             else ! useGPU
 !$omp PARALLEL DO &
 !$omp private(i, j, k, tmp)
@@ -1669,9 +1654,6 @@
 
           successGPU = gpu_free(q_dev)
           check_dealloc_gpu("merge_systems: q_dev", successGPU)
-
-          successGPU = gpu_free(tmp_dev)
-          check_dealloc_gpu("merge_systems: tmp_dev", successGPU)
 
           successGPU = gpu_free(d1_dev)
           check_dealloc_gpu("merge_systems: d1_dev", successGPU)

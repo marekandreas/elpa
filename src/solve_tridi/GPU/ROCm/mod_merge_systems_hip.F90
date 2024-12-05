@@ -65,7 +65,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp1_dev
-      type(c_ptr), value               :: l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev
+      integer(kind=c_intptr_t), value  :: l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev
       integer(kind=c_int), intent(in)  :: l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -81,7 +81,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp2_dev
-      type(c_ptr), value               :: idxq1_dev, l_col_out_dev
+      integer(kind=c_intptr_t), value  :: idxq1_dev, l_col_out_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, &
                                           indx, indx2, na
       integer(kind=c_intptr_t), value  :: my_stream
@@ -91,14 +91,14 @@ module merge_systems_hip
 
 
   interface
-    subroutine hip_fill_ev_double_c(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
+    subroutine hip_fill_ev_double_c(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
                                            idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
                                            ncnt, my_stream) &
                                            bind(C, name="hip_fill_ev_double_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
-      type(c_ptr), value               :: idxq1_dev, idx_dev
+      integer(kind=C_intptr_T), value  :: ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
+      integer(kind=c_intptr_t), value  :: idxq1_dev, idx_dev
       integer(kind=c_int), intent(in)  :: na, gemm_dim_l, nnzu, ns, ncnt, gemm_dim_m
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -113,7 +113,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp2_dev
-      type(c_ptr), value               :: idx1q_dev, l_col_out_dev
+      integer(kind=c_intptr_t), value  :: idx1q_dev, l_col_out_dev
       integer(kind=c_int), intent(in)  :: l_rqs, l_rqe, l_rows, ncnt, gemm_dim_k, matrixRows, ns
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -129,7 +129,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
-      type(c_ptr), value               :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
+      integer(kind=c_intptr_t), value  :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_int), intent(in)  :: na, np, na1, np_rem
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -144,7 +144,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev
-      type(c_ptr), value               :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_intptr_t), value  :: p_col_out_dev, l_col_out_dev
       integer(kind=c_int), intent(in)  :: na, my_pcol, l_rqs, l_rqe, matrixRows
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -160,7 +160,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: qtmp1_dev, q_dev
-      type(c_ptr), value               :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_intptr_t), value  :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
       integer(kind=c_int), intent(in)  :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -191,7 +191,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp1_dev
-      type(c_ptr), value               :: l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev
+      integer(kind=c_intptr_t), value  :: l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev
       integer(kind=c_int), intent(in)  :: l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -209,7 +209,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp2_dev
-      type(c_ptr), value               :: idxq1_dev, l_col_out_dev
+      integer(kind=c_intptr_t), value  :: idxq1_dev, l_col_out_dev
       integer(kind=c_int), intent(in)  :: l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, &
                                           indx, indx2, na
       integer(kind=c_intptr_t), value  :: my_stream
@@ -221,14 +221,14 @@ module merge_systems_hip
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine hip_fill_ev_float_c(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
+    subroutine hip_fill_ev_float_c(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
                                            idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
                                            ncnt, my_stream) &
                                            bind(C, name="hip_fill_ev_float_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=C_intptr_T), value  :: ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
-      type(c_ptr), value               :: idxq1_dev, idx_dev
+      integer(kind=C_intptr_T), value  :: ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
+      integer(kind=c_intptr_t), value  :: idxq1_dev, idx_dev
       integer(kind=c_int), intent(in)  :: na, gemm_dim_l, nnzu, ns, ncnt, gemm_dim_m
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -245,7 +245,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev, qtmp2_dev
-      type(c_ptr), value               :: idx1q_dev, l_col_out_dev
+      integer(kind=c_intptr_t), value  :: idx1q_dev, l_col_out_dev
       integer(kind=c_int), intent(in)  :: l_rqs, l_rqe, l_rows, ncnt, gemm_dim_k, matrixRows, ns
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -263,7 +263,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
-      type(c_ptr), value               :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
+      integer(kind=c_intptr_t), value  :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_int), intent(in)  :: na, np, na1, np_rem
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -280,7 +280,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: q_dev
-      type(c_ptr), value               :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_intptr_t), value  :: p_col_out_dev, l_col_out_dev
       integer(kind=c_int), intent(in)  :: na, my_pcol, l_rqs, l_rqe, matrixRows
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -298,7 +298,7 @@ module merge_systems_hip
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value  :: qtmp1_dev, q_dev
-      type(c_ptr), value               :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_intptr_t), value  :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
       integer(kind=c_int), intent(in)  :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -329,7 +329,7 @@ module merge_systems_hip
                                            bind(C, name="hip_update_ndef_c_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      type(c_ptr), value               :: ndef_c_dev, idx_dev, p_col_dev, idx2_dev
+      integer(kind=c_intptr_t), value  :: ndef_c_dev, idx_dev, p_col_dev, idx2_dev
       integer(kind=c_int), intent(in)  :: na, na1, np_rem, ndef
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -343,7 +343,7 @@ module merge_systems_hip
                                             bind(C, name="hip_compute_nnzl_nnzu_val_part1_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      type(c_ptr), value               :: p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      integer(kind=c_intptr_t), value  :: p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
       integer(kind=c_int), intent(in)  :: na, na1, np_rem, npc_n, nnzu_start, nnzl_start, np
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -356,7 +356,7 @@ module merge_systems_hip
                                            bind(C, name="hip_compute_nnzl_nnzu_val_part2_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
-      type(c_ptr), value               :: nnzu_val_dev, nnzl_val_dev
+      integer(kind=c_intptr_t), value  :: nnzu_val_dev, nnzl_val_dev
       integer(kind=c_int), intent(in)  ::  na, na1, nnzu_start, nnzl_start, npc_n
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
@@ -372,7 +372,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na
       integer(kind=C_intptr_T)           :: q_dev, qtmp1_dev
-      type(c_ptr)                        :: l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev
+      integer(kind=c_intptr_t)           :: l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -402,7 +402,7 @@ module merge_systems_hip
       integer(kind=C_INT), intent(in)    :: l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, gemm_dim_m, ns, ncnt, indx
       integer(kind=C_INT), intent(in)    :: indx2, na, matrixCols
       integer(kind=C_intptr_T)           :: q_dev, qtmp2_dev
-      type(c_ptr)                        :: idxq1_dev, l_col_out_dev
+      integer(kind=c_intptr_t)           :: idxq1_dev, l_col_out_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -421,25 +421,25 @@ module merge_systems_hip
     end subroutine
 
 
-    subroutine hip_fill_ev_double(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
+    subroutine hip_fill_ev_double(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
                                                idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
                                                ncnt,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in)    :: na, gemm_dim_l, nnzu, ns, ncnt, gemm_dim_m
-      integer(kind=C_intptr_T)           :: ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
-      type(c_ptr)                        :: idxq1_dev, idx_dev
+      integer(kind=C_intptr_T)           :: ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
+      integer(kind=c_intptr_t)           :: idxq1_dev, idx_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_AMD_GPU_VERSION
       if (present(my_stream)) then
-        call hip_fill_ev_double_c(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev,  &
+        call hip_fill_ev_double_c(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev,  &
                                                   idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
                                                   ncnt, my_stream)
       else
-        call hip_fill_ev_double_c(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev,  &
+        call hip_fill_ev_double_c(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev,  &
                                                   idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
                                                   ncnt, my_stream2)
       endif
@@ -455,7 +455,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: l_rqs, l_rqe, l_rows, ncnt, gemm_dim_k, matrixRows, ns
       integer(kind=C_intptr_T)           :: q_dev, qtmp2_dev
-      type(c_ptr)                        :: idx1q_dev, l_col_out_dev
+      integer(kind=c_intptr_t)           :: idx1q_dev, l_col_out_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -480,7 +480,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: na, np, na1, np_rem
       integer(kind=C_intptr_T)           :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
-      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
+      integer(kind=c_intptr_t)           :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -506,7 +506,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: na, my_pcol, l_rqs, l_rqe, matrixRows
       integer(kind=C_intptr_T)           :: q_dev
-      type(c_ptr)                        :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_intptr_t)           :: p_col_out_dev, l_col_out_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -531,7 +531,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
       integer(kind=C_intptr_T)           :: qtmp1_dev, q_dev
-      type(c_ptr)                        :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_intptr_t)           :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -583,7 +583,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na
       integer(kind=C_intptr_T)           :: q_dev, qtmp1_dev
-      type(c_ptr)                        :: l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev
+      integer(kind=c_intptr_t)           :: l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -615,7 +615,7 @@ module merge_systems_hip
       integer(kind=C_INT), intent(in)    :: l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, gemm_dim_m, ns, ncnt, indx
       integer(kind=C_INT), intent(in)    :: indx2, na, matrixCols
       integer(kind=C_intptr_T)           :: q_dev, qtmp2_dev
-      type(c_ptr)                        :: idxq1_dev, l_col_out_dev
+      integer(kind=c_intptr_t)           :: idxq1_dev, l_col_out_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -636,25 +636,25 @@ module merge_systems_hip
 
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine hip_fill_ev_float(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
+    subroutine hip_fill_ev_float(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, &
                                                idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
                                                ncnt,  my_stream)
       use, intrinsic :: iso_c_binding
 
       implicit none
       integer(kind=C_INT), intent(in)    :: na, gemm_dim_l, nnzu, ns, ncnt, gemm_dim_m
-      integer(kind=C_intptr_T)           :: ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
-      type(c_ptr)                        :: idxq1_dev, idx_dev
+      integer(kind=C_intptr_T)           :: ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
+      integer(kind=c_intptr_t)           :: idxq1_dev, idx_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_AMD_GPU_VERSION
       if (present(my_stream)) then
-        call hip_fill_ev_float_c(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev,  &
+        call hip_fill_ev_float_c(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev,  &
                                                   idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
                                                   ncnt, my_stream)
       else
-        call hip_fill_ev_float_c(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev,  &
+        call hip_fill_ev_float_c(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev,  &
                                                   idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, &
                                                   ncnt, my_stream2)
       endif
@@ -672,7 +672,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: l_rqs, l_rqe, l_rows, ncnt, gemm_dim_k, matrixRows, ns
       integer(kind=C_intptr_T)           :: q_dev, qtmp2_dev
-      type(c_ptr)                        :: idx1q_dev, l_col_out_dev
+      integer(kind=c_intptr_t)           :: idx1q_dev, l_col_out_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -699,7 +699,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: na, np, na1, np_rem
       integer(kind=C_intptr_T)           :: d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev
-      type(c_ptr)                        :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
+      integer(kind=c_intptr_t)           :: idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -727,7 +727,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: na, my_pcol, l_rqs, l_rqe, matrixRows
       integer(kind=C_intptr_T)           :: q_dev
-      type(c_ptr)                        :: p_col_out_dev, l_col_out_dev
+      integer(kind=c_intptr_t)           :: p_col_out_dev, l_col_out_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -754,7 +754,7 @@ module merge_systems_hip
       implicit none
       integer(kind=C_INT), intent(in)    :: na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k
       integer(kind=C_intptr_T)           :: qtmp1_dev, q_dev
-      type(c_ptr)                        :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
+      integer(kind=c_intptr_t)           :: ndef_c_dev, l_col_dev, idx2_dev, p_col_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -809,7 +809,7 @@ module merge_systems_hip
 
       implicit none
       integer(kind=C_INT), intent(in)    :: na, na1, np_rem, ndef
-      type(c_ptr)                        :: ndef_c_dev, idx_dev, p_col_dev, idx2_dev
+      integer(kind=c_intptr_t)           :: ndef_c_dev, idx_dev, p_col_dev, idx2_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -835,7 +835,7 @@ module merge_systems_hip
 
       implicit none
       integer(kind=C_INT), intent(in)    :: na, na1, np_rem, npc_n, nnzu_start, nnzl_start, np
-      type(c_ptr)                        :: p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
+      integer(kind=c_intptr_t)           :: p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 
@@ -862,7 +862,7 @@ module merge_systems_hip
 
       implicit none
       integer(kind=C_INT), intent(in)    :: na, na1, nnzu_start, nnzl_start, npc_n
-      type(c_ptr)                        :: nnzu_val_dev, nnzl_val_dev
+      integer(kind=c_intptr_t)           :: nnzu_val_dev, nnzl_val_dev
       integer(kind=c_intptr_t), optional :: my_stream
       integer(kind=c_intptr_t)           :: my_stream2
 

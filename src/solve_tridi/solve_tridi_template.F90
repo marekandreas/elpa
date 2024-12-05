@@ -350,7 +350,7 @@ subroutine solve_tridi_cpu_&
         call gpu_memcpy_async_and_stream_synchronize &
             ("solve_tridi d_dev -> d", d_dev, 0_c_intptr_t, &
                                                  d(1:na), &
-                                  1, num, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
+                                  1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else
         successGPU = gpu_memcpy(int(loc(d(1)),kind=c_intptr_t),  d_dev, &
                               num, gpuMemcpyDeviceToHost)
@@ -362,7 +362,7 @@ subroutine solve_tridi_cpu_&
         call gpu_memcpy_async_and_stream_synchronize &
             ("solve_tridi e_dev -> e", e_dev, 0_c_intptr_t, &
                                                  e(1:na), &
-                                  1, num, gpuMemcpyDeviceToHost, my_stream, .false., .false., .false.)
+                                  1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
 #else
         successGPU = gpu_memcpy(int(loc(e(1)),kind=c_intptr_t),  e_dev, &
                               num, gpuMemcpyDeviceToHost)

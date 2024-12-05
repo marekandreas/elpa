@@ -409,9 +409,11 @@ extern "C" void cuda_copy_q_slice_to_qtmp2_float_FromC(float *q_dev, float *qtmp
   }
 }
 
+//_________________________________________________________________________________________________
 
-
-__global__ void cuda_fill_ev_double_kernel(double *ev, double *tmp, double *d1u, double *dbase, double *ddiff, double *zu, double *ev_scale, int *idxq1, int *idx, const int na, const int gemm_dim_l, const int gemm_dim_m, const int nnzu, const int ns, const int ncnt) {
+template <typename T>
+__global__ void cuda_fill_ev_kernel(T *ev, T *d1u, T *dbase, T *ddiff, T *zu, T *ev_scale, 
+                                    int *idxq1, int *idx, const int na, const int gemm_dim_l, const int gemm_dim_m, const int nnzu, const int ns, const int ncnt) {
     int k = blockIdx.x * blockDim.x + threadIdx.x;
     int i = blockIdx.y * blockDim.y + threadIdx.y + 1;
 
@@ -422,17 +424,18 @@ __global__ void cuda_fill_ev_double_kernel(double *ev, double *tmp, double *d1u,
           int indx = idxq1[idx_2-1] ;
           int j = idx[indx-1];
 
-          tmp[k] = d1u[k] - dbase[j-1];
-          tmp[k] = tmp[k] + ddiff[j-1];
-          ev[k + gemm_dim_l*(i-1)] = zu[k] / tmp[k] * ev_scale[j-1];
+          T tmp = d1u[k] - dbase[j-1];
+          tmp   = tmp    + ddiff[j-1];
+          ev[k + gemm_dim_l*(i-1)] = zu[k] / tmp * ev_scale[j-1];
+        }
       }
     }
-}
 
 }
 
-
-extern "C" void cuda_fill_ev_double_FromC(double *ev_dev, double *tmp_dev, double *d1u_dev, double *dbase_dev, double *ddiff_dev, double *zu_dev, double *ev_scale_dev, int *idxq1_dev, int  *idx_dev, int *na_in, int *gemm_dim_l_in, int *gemm_dim_m_in, int *nnzu_in, int *ns_in, int *ncnt_in, cudaStream_t  my_stream){
+template <typename T>
+void cuda_fill_ev(T *ev_dev, T *d1u_dev, T *dbase_dev, T *ddiff_dev, T *zu_dev, T *ev_scale_dev, 
+                  int *idxq1_dev, int  *idx_dev, int *na_in, int *gemm_dim_l_in, int *gemm_dim_m_in, int *nnzu_in, int *ns_in, int *ncnt_in, cudaStream_t  my_stream){
   int na = *na_in;
   int gemm_dim_l = *gemm_dim_l_in;
   int gemm_dim_m = *gemm_dim_m_in;
@@ -440,73 +443,34 @@ extern "C" void cuda_fill_ev_double_FromC(double *ev_dev, double *tmp_dev, doubl
   int ns = *ns_in;
   int ncnt = *ncnt_in;
 
-
   dim3 threadsPerBlock(32,32);
   dim3 blocks((nnzu + threadsPerBlock.x - 1) / threadsPerBlock.x, (ncnt + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
   if (nnzu >= 1) {
 #ifdef WITH_GPU_STREAMS
-  cuda_fill_ev_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt);
+  cuda_fill_ev_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt);
 #else
-  cuda_fill_ev_double_kernel<<<blocks, threadsPerBlock>>>(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt);
+  cuda_fill_ev_kernel<<<blocks, threadsPerBlock>>>(ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt);
 #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_fill_ev_double_kernel: %s\n",cudaGetErrorString(cuerr));
+  cudaError_t gpuerr = cudaGetLastError();
+  if (gpuerr != cudaSuccess){
+    printf("Error in executing cuda_fill_ev_kernel: %s\n",cudaGetErrorString(gpuerr));
   }
   }
 }
 
-
-
-__global__ void cuda_fill_ev_float_kernel(float *ev, float *tmp, float *d1u, float *dbase, float *ddiff, float *zu, float *ev_scale, int *idxq1, int *idx, const int na, const int gemm_dim_l, const int gemm_dim_m, const int nnzu, const int ns, const int ncnt) {
-    int k = blockIdx.x * blockDim.x + threadIdx.x;
-    int i = blockIdx.y * blockDim.y + threadIdx.y + 1;
-
-    if (k >=0 && k< nnzu && k < na) {
-      if (i>=1 && i < ncnt+1) {
-        if (nnzu >= 1) {
-          int idx_2= i+1+ns-1;
-          int indx = idxq1[idx_2-1] ;
-          int j = idx[indx-1];
-
-          tmp[k] = d1u[k] - dbase[j-1];
-          tmp[k] = tmp[k] + ddiff[j-1];
-          ev[k + gemm_dim_l*(i-1)] = zu[k] / tmp[k] * ev_scale[j-1];
-      }
-    }
+extern "C" void cuda_fill_ev_double_FromC(double *ev_dev, double *d1u_dev, double *dbase_dev, double *ddiff_dev, double *zu_dev, double *ev_scale_dev, 
+                                          int *idxq1_dev, int  *idx_dev, int *na_in, int *gemm_dim_l_in, int *gemm_dim_m_in, int *nnzu_in, int *ns_in, int *ncnt_in, cudaStream_t  my_stream){
+  cuda_fill_ev (ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev,
+                idxq1_dev, idx_dev, na_in, gemm_dim_l_in, gemm_dim_m_in, nnzu_in, ns_in, ncnt_in, my_stream);
 }
-
+extern "C" void cuda_fill_ev_float_FromC (float  *ev_dev, float  *d1u_dev, float  *dbase_dev, float  *ddiff_dev, float  *zu_dev, float  *ev_scale_dev, 
+                                          int *idxq1_dev, int  *idx_dev, int *na_in, int *gemm_dim_l_in, int *gemm_dim_m_in, int *nnzu_in, int *ns_in, int *ncnt_in, cudaStream_t  my_stream){
+  cuda_fill_ev (ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev,
+                idxq1_dev, idx_dev, na_in, gemm_dim_l_in, gemm_dim_m_in, nnzu_in, ns_in, ncnt_in, my_stream);
 }
-
-
-extern "C" void cuda_fill_ev_float_FromC(float *ev_dev, float *tmp_dev, float *d1u_dev, float *dbase_dev, float *ddiff_dev, float *zu_dev, float *ev_scale_dev, int *idxq1_dev, int  *idx_dev, int *na_in, int *gemm_dim_l_in, int *gemm_dim_m_in, int *nnzu_in, int *ns_in, int *ncnt_in, cudaStream_t  my_stream){
-  int na = *na_in;
-  int gemm_dim_l = *gemm_dim_l_in;
-  int gemm_dim_m = *gemm_dim_m_in;
-  int nnzu = *nnzu_in;
-  int ns = *ns_in;
-  int ncnt = *ncnt_in;
-
-
-  dim3 threadsPerBlock(32,32);
-  dim3 blocks((nnzu + threadsPerBlock.x - 1) / threadsPerBlock.x, (ncnt + threadsPerBlock.y - 1) / threadsPerBlock.y);
-
-  if (nnzu >= 1) {
-#ifdef WITH_GPU_STREAMS
-  cuda_fill_ev_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt);
-#else
-  cuda_fill_ev_float_kernel<<<blocks, threadsPerBlock>>>(ev_dev, tmp_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, idx_dev, na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt);
-#endif
-
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_fill_ev_float_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
-  }
-}
-
+//_________________________________________________________________________________________________
 
 
 
