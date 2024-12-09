@@ -66,7 +66,7 @@ module trans_ev_gpu
 
       implicit none
       integer(c_int), intent(in) :: ldq, l_cols
-      integer(kind=C_intptr_T)   :: q_dev, tau_dev
+      integer(kind=c_intptr_t)   :: q_dev, tau_dev
       integer(kind=c_intptr_t)   :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -78,7 +78,6 @@ module trans_ev_gpu
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_scale_qmat_double_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
 #endif
-
     end subroutine
 
 
@@ -87,7 +86,7 @@ module trans_ev_gpu
 
       implicit none
       integer(c_int), intent(in) :: ldq, l_cols
-      integer(kind=C_intptr_T)   :: q_dev, tau_dev
+      integer(kind=c_intptr_t)   :: q_dev, tau_dev
       integer(kind=c_intptr_t)   :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -99,7 +98,58 @@ module trans_ev_gpu
 #ifdef WITH_SYCL_GPU_VERSION
       call sycl_scale_qmat_float_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
 #endif
+    end subroutine
 
+
+    subroutine gpu_copy_hvb_a(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, &
+                              ics, ice, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: hvb_dev, a_dev
+      integer(kind=c_int), intent(in) :: ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_copy_hvb_a(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
+                           nblk, ics, ice, SM_count, debug, my_stream)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_copy_hvb_a (dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
+                           nblk, ics, ice, SM_count, debug, my_stream)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_hvb_a(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
+                           nblk, ics, ice, SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+
+    subroutine gpu_copy_hvm_hvb(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+                                ics, ice, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: hvb_dev, hvm_dev
+      integer(kind=c_int), intent(in) :: ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_copy_hvm_hvb(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+                            ics, ice, SM_count, debug, my_stream)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_copy_hvm_hvb (dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+                            ics, ice, SM_count, debug, my_stream)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_hvm_hvb(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+                            ics, ice, SM_count, debug, my_stream)
+#endif
     end subroutine
 
 end module

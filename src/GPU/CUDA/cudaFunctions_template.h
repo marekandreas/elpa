@@ -632,6 +632,8 @@ extern "C" {
     }
   }
 
+//_________________________________________________________________________________________________
+
   void cublasDgemm_elpa_wrapper_intptr_handle (intptr_t* cudaHandle, char transa, char transb, int m, int n, int k,
                                double alpha, const double *A, int lda,
                                const double *B, int ldb, double beta,
@@ -699,6 +701,7 @@ extern "C" {
   // todo: it provides out-of-place (and apparently more efficient) implementation
   // todo: by passing B twice (in place of C as well), we should fall back to in-place algorithm
 
+//_________________________________________________________________________________________________
 
   void cublasDcopy_elpa_wrapper (cublasHandle_t cudaHandle, int n, double *x, int incx, double *y, int incy){
 
@@ -739,6 +742,8 @@ extern "C" {
        printf("error when calling cublasCcopy\n");
     }
   }
+
+//_________________________________________________________________________________________________
 
   void cublasDtrsm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, const double *A,
@@ -798,6 +803,7 @@ extern "C" {
     }
   }
 
+//_________________________________________________________________________________________________
 
   void cublasDtrmm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, char transa, char diag,
                                int m, int n, double alpha, const double *A,
@@ -856,6 +862,72 @@ extern "C" {
        printf("error when calling cublasCtrmm\n");
     }
   }
+
+//_________________________________________________________________________________________________
+  
+  // PETERDEBUG: Also take care of HIP and SYCL interfaces
+  
+  void cublasDsyrk_elpa_wrapper(cublasHandle_t cublasHandle, char uplo, char trans, 
+                                int n, int k, 
+                                double alpha, const double *A, int lda,
+                                double beta, double *C, int ldc){
+    
+    cublasStatus_t status = cublasDsyrk(cublasHandle, fill_mode_new_api(uplo), operation_new_api(trans),
+                                         n, k, &alpha, A, lda, &beta, C, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasDsyrk\n");
+    }
+  }
+
+  void cublasSsyrk_elpa_wrapper(cublasHandle_t cublasHandle, char uplo, char trans, 
+                                int n, int k, 
+                                float alpha, const float *A, int lda,
+                                float beta, float *C, int ldc){
+
+    cublasStatus_t status = cublasSsyrk(cublasHandle, fill_mode_new_api(uplo), operation_new_api(trans),
+                                        n, k, &alpha, A, lda, &beta, C, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasSsyrk\n");
+    }
+  }
+
+  void cublasZherk_elpa_wrapper(cublasHandle_t cudaHandle, char uplo, char trans, 
+                                int n, int k, 
+                                double _Complex alpha, const double _Complex *A, int lda,
+                                double _Complex beta, double _Complex *C, int ldc){
+
+    double alpha_real = creal(alpha);
+    double beta_real  = creal(beta);
+    
+    const cuDoubleComplex* A_casted = (const cuDoubleComplex*) A;
+    cuDoubleComplex* C_casted = (cuDoubleComplex*) C;
+
+    cublasStatus_t status = cublasZherk(cudaHandle, fill_mode_new_api(uplo), operation_new_api(trans),
+                                        n, k, &alpha_real, A_casted, lda, &beta_real, C_casted, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasZherk\n");
+    }
+  }
+
+  void cublasCherk_elpa_wrapper(cublasHandle_t cudaHandle, char uplo, char trans, 
+                                int n, int k, 
+                                float _Complex alpha, const float _Complex *A, int lda,
+                                float _Complex beta, float _Complex *C, int ldc){
+
+    float alpha_real = creal(alpha);
+    float beta_real  = creal(beta);
+
+    const cuFloatComplex* A_casted = (const cuFloatComplex*) A;
+    cuFloatComplex* C_casted = (cuFloatComplex*) C;
+
+    cublasStatus_t status = cublasCherk(cudaHandle, fill_mode_new_api(uplo), operation_new_api(trans),
+                                        n, k, &alpha_real, A_casted, lda, &beta_real, C_casted, ldc);
+    if (status != CUBLAS_STATUS_SUCCESS) {
+       printf("error when calling cublasCherk\n");
+    }
+  }
+
+//_________________________________________________________________________________________________
 
   // result can be on host or device depending on pointer mode
   void cublasDdot_elpa_wrapper (cublasHandle_t cudaHandle, int length, const double *X, int incx, const double *Y, int incy, double *result) {

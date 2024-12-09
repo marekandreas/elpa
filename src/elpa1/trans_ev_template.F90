@@ -71,7 +71,7 @@
 !>
 !> \param tau(na)     Factors of the Householder vectors
 !>
-!> \param q_mat           On input: Eigenvectors of tridiagonal matrix
+!> \param q_mat       On input: Eigenvectors of tridiagonal matrix
 !>                    On output: Transformed eigenvectors
 !>                    Distribution is like in Scalapack.
 !>
@@ -156,20 +156,13 @@ subroutine trans_ev_cpu_&
   MATH_DATATYPE(kind=rck), allocatable          :: h1(:), h2(:), tmp_debug(:)
   MATH_DATATYPE(kind=rck), pointer              :: tmat(:,:)
   MATH_DATATYPE(kind=rck), pointer              :: hvm1(:)
-  type(c_ptr)                                   :: tmp_host
-  type(c_ptr)                                   :: hvm1_host, tmat_host
-
-  integer(kind=ik)                              :: istat
-  character(200)                                :: errorMessage
   
-  integer(kind=c_intptr_t)                      :: num
-  integer(kind=C_intptr_T)                      :: tmp_dev, hvm_dev, tmat_dev
-#ifdef WITH_CUDA_AWARE_MPI
-  type(c_ptr)                                   :: tmp_mpi_dev
-  MATH_DATATYPE(kind=rck), pointer              :: tmp_mpi(:)
-#endif
-
-  integer(kind=ik)                              :: error
+  type(c_ptr)                                   :: tmp_host, hvm1_host, tmat_host
+  integer(kind=c_intptr_t)                      :: tmp_dev, hvb_dev, hvm_dev, tmat_dev
+  integer(kind=c_intptr_t)                      :: num, num_el
+  
+  character(200)                                :: errorMessage
+  integer(kind=ik)                              :: istat, error
   integer(kind=MPI_KIND)                        :: bcast_request1, allreduce_request1, allreduce_request2
   logical                                       :: useNonBlockingCollectivesCols
   logical                                       :: useNonBlockingCollectivesRows
@@ -182,20 +175,21 @@ subroutine trans_ev_cpu_&
                                                                       &PRECISION&
                                                                       &_&
                                                                       &MATH_DATATYPE
-  integer(kind=c_intptr_t)                      :: gpuHandle, my_stream
+  integer(kind=c_intptr_t)                      :: gpublasHandle, my_stream
   character(20)                                 :: gpuString
 
   logical                                       :: useCCL
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
   integer(kind=c_int)                           :: cclDataType
   integer(kind=ik)                              :: k_datatype
+  integer(kind=ik)                              :: i,j ! PETERDEBUG: only for debugging, cleanup
 
   success = .true.
 
   useGPU = .false.
 #ifdef TRANS_EV_GPU
   useGPU = .true.
-  gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
+  gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -305,7 +299,9 @@ subroutine trans_ev_cpu_&
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
 
-  call obj%get("max_stored_rows",max_stored_rows_fac, error)
+  call obj%get("max_stored_rows",max_stored_rows_fac, error)  ! PETERDEBUG: default 256. 
+                                                              ! check whether for GPU it should be increased
+                                                              ! size for GEMM should be at least 5000 (A100)
 
   totalblocks = (na-1)/nblk + 1
   max_blocks_row = (totalblocks-1)/np_rows + 1
@@ -334,13 +330,13 @@ subroutine trans_ev_cpu_&
   call check_alloc("trans_ev", "h2", istat, errorMessage)
 
   allocate(hvb(max_local_rows*nblk), stat=istat, errmsg=errorMessage)
-  call check_alloc("trans_ev", "hvn", istat, errorMessage)
+  call check_alloc("trans_ev", "hvb", istat, errorMessage)
 
   allocate(hvm(max_local_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
   call check_alloc("trans_ev", "hvm", istat, errorMessage)
 
+  hvb = 0   ! Safety only ! PETERDEBUG: check whether it is really needed
   hvm = 0   ! Must be set to 0 !!!
-  hvb = 0   ! Safety only
   blockStep = nblk
 
   l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q_mat
@@ -402,6 +398,9 @@ subroutine trans_ev_cpu_&
     successGPU = gpu_malloc(tmat_dev, max_stored_rows * max_stored_rows * size_of_datatype)
     check_alloc_gpu("trans_ev", successGPU)
 
+    successGPU = gpu_malloc(hvb_dev, max_local_rows * nblk * size_of_datatype)
+    check_alloc_gpu("trans_ev", successGPU)
+
     successGPU = gpu_malloc(hvm_dev, max_local_rows * max_stored_rows * size_of_datatype)
     check_alloc_gpu("trans_ev", successGPU)
 
@@ -418,82 +417,199 @@ subroutine trans_ev_cpu_&
   do istep = 1, na, blockStep
     NVTX_RANGE_PUSH("main_loop")
 
+    if (istep==35) then
+      print *, "DEBUG: istep=", istep ! PETERDEBUG
+    endif
+
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
     if (ice<ics) cycle
 
     cur_pcol = pcol(istep, nblk, np_cols)
 
-    nb = 0
-    NVTX_RANGE_PUSH("loop: copy hvb <- a_mat")
-    do ic = ics, ice
+    if (useGPU) then
+      NVTX_RANGE_PUSH("gpu_copy_hvb_a")
+      if (my_pcol==cur_pcol) call gpu_copy_hvb_a(PRECISION_CHAR, hvb_dev, a_dev, max_local_rows, lda, my_prow, np_rows, my_pcol, np_cols, &
+                                                 nblk, ics, ice, 0, 1, my_stream) ! PETERDEBUG: for now SM_count=0, debug=1
+      NVTX_RANGE_POP("gpu_copy_hvb_a")
 
-      l_colh = local_index(ic  , my_pcol, np_cols, nblk, -1) ! Column of Householder Vector
-      l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
+      ! dry run to find nb
+      ! do ic = ics, ice
+      !   l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1)
+      !   nb = nb+l_rows
+      ! enddo
+      nb = max_local_rows*nblk ! no compression
+    else ! useGPU
+      NVTX_RANGE_PUSH("loop: copy hvb <- a_mat")
+      nb = 0
+      ! PETERDEBUG: typically, ice-ics = nblk-1, hence nblk steps
+      do ic = ics, ice
+        l_colh = local_index(ic  , my_pcol, np_cols, nblk, -1) ! Column of Householder Vector
+        l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
 
-
-      if (my_pcol == cur_pcol) then
-        hvb(nb+1:nb+l_rows) = a_mat(1:l_rows,l_colh)
-        if (my_prow == prow(ic-1, nblk, np_rows)) then
-          hvb(nb+l_rows) = 1.
+        if (my_pcol == cur_pcol) then
+          hvb(nb+1:nb+l_rows) = a_mat(1:l_rows,l_colh)
+          if (my_prow == prow(ic-1, nblk, np_rows)) then
+            hvb(nb+l_rows) = 1.
+          endif
         endif
-      endif
 
-      nb = nb+l_rows
-    enddo
-    NVTX_RANGE_POP("loop: copy hvb <- a_mat")
+        nb = nb+l_rows
+      enddo
+      NVTX_RANGE_POP("loop: copy hvb <- a_mat")
+    endif
+
+    ! PETERDEBUG: do we need at all this compression-decompression?
+    ! max_local_rows -> "l_rows_max"
+
+    if (useGPU) then
+      num = nb * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      call gpu_memcpy_async_and_stream_synchronize &
+              ("trans_ev hvb_dev -> hvb", hvb_dev, 0_c_intptr_t, &
+              hvb(1:nb), 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+#else
+      successGPU = gpu_memcpy(int(loc(hvb(1)),kind=c_intptr_t), hvb_dev, num, gpuMemcpyDeviceToHost)
+      check_memcpy_gpu("trans_ev", successGPU)
+#endif
+    endif ! useGPU
 
 #ifdef WITH_MPI
     if (nb > 0) then
+      NVTX_RANGE_PUSH("mpi_bcast")
       if (useNonBlockingCollectivesCols) then
         call obj%timer%start("mpi_nbc_communication")
         call mpi_ibcast(hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
-                   int(mpi_comm_cols,kind=MPI_KIND), bcast_request1, mpierr)
+                        int(mpi_comm_cols,kind=MPI_KIND), bcast_request1, mpierr)
         call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
         call obj%timer%stop("mpi_nbc_communication")
-       else
+      else
         call obj%timer%start("mpi_communication")
-        call mpi_bcast(hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
-                   int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+        call mpi_bcast (hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
+                        int(mpi_comm_cols,kind=MPI_KIND), mpierr)
         call obj%timer%stop("mpi_communication")
       endif
+      NVTX_RANGE_POP("mpi_bcast")
     endif
 #endif /* WITH_MPI */
 
-    nb = 0
-    NVTX_RANGE_PUSH("loop: copy hvm <- nvb")
-    do ic = ics, ice
-      l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
-      hvm(1:l_rows,nstor+1) = hvb(nb+1:nb+l_rows)
-      if (useGPU) then
-        hvm_ubnd = l_rows
-      endif
-      nstor = nstor+1
-      nb = nb+l_rows
-    enddo
-    NVTX_RANGE_POP("loop: copy hvm <- nvb")
+    if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+      num_el = max_local_rows*nblk
+      call gpu_memcpy_async_and_stream_synchronize("trans_ev hvb -> hvb_dev", &
+                hvb_dev, 0_c_intptr_t, hvb(1:num_el), 1, &
+                num_el*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
+#else
+      successGPU = gpu_memcpy(hvm_dev, int(loc(hvm1(1)),kind=c_intptr_t), num_el*size_of_datatype, gpuMemcpyHostToDevice)
+      check_memcpy_gpu("trans_ev", successGPU)
+#endif
+    endif ! useGPU
 
+
+    if (useGPU) then
+      NVTX_RANGE_PUSH("gpu_copy_hvm_hvb")
+      call gpu_copy_hvm_hvb(PRECISION_CHAR, hvm_dev, hvb_dev, max_local_rows, max_local_rows, my_prow, np_rows, &
+                            nstor, nblk, ics, ice, 0, 1, my_stream) ! PETERDEBUG: for now SM_count=0, debug=1
+      NVTX_RANGE_POP("gpu_copy_hvm_hvb")
+
+      ! dry run for calculating hvm_ubnd
+      do ic = ics, ice
+        l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
+        !hvm(1:l_rows,nstor+1) = hvb(nb+1:nb+l_rows)
+        if (useGPU) then
+          hvm_ubnd = l_rows ! PETERDEBUG: last l_rows?? then don't need loop then
+        endif
+        nstor = nstor+1 ! nstor += (ice-ics+1) outside the loop instead
+        !nb = nb+l_rows
+      enddo
+    else ! useGPU
+      nb = 0
+      NVTX_RANGE_PUSH("loop: copy hvm <- hvb")
+      do ic = ics, ice
+        l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
+        hvm(1:l_rows,nstor+1) = hvb(nb+1:nb+l_rows)
+        if (useGPU) then
+          hvm_ubnd = l_rows
+        endif
+        nstor = nstor+1
+        nb = nb+l_rows
+      enddo
+      NVTX_RANGE_POP("loop: copy hvm <- hvb")
+    endif ! useGPU
+
+    if (useGPU) then
+      num = max_local_rows * max_stored_rows * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      call gpu_memcpy_async_and_stream_synchronize &
+              ("trans_ev hvm_dev -> hvm", hvm_dev, 0_c_intptr_t, &
+              hvm(1:max_local_rows,1:max_stored_rows), &
+              1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+#else
+      successGPU = gpu_memcpy(int(loc(hvm(1,1)),kind=c_intptr_t), hvm_dev, num, gpuMemcpyDeviceToHost)
+      check_memcpy_gpu("trans_ev hvm_dev -> hvm", successGPU)
+#endif
+    endif ! useGPU
+
+    ! PETERDEBUG: print array
+  !   print *, "istep=", istep, "nstor=", nstor, "max_stored_rows=", max_stored_rows ! PETEDEBUG
+  !   do i = 1, size(hvm, 1)
+  !     do j = 1, MIN(size(hvm, 2), na)
+  !        write(*,'(F8.2)', advance='no') hvm(i,j)
+  !     end do
+  !     write(*,*)  ! move to next line
+  !  end do
+    
+    ! PETERDEBUG: for GPU, and big max_stored_rows, isn't it more efficient to do one MPI_send instead of many?
     ! Please note: for smaller matix sizes (na/np_rows<=256), a value of 32 for nstor is enough!
     if (nstor+nblk > max_stored_rows .or. istep+nblk > na .or. (na/np_rows <= 256 .and. nstor >= 32)) then
 
       ! Calculate scalar products of stored vectors.
       ! This can be done in different ways, we use dsyrk or zherk
 
-      tmat = 0
-      call obj%timer%start("blas")
-      NVTX_RANGE_PUSH("blas_syrk")
       if (l_rows>0) then
+        print *, "ubound(hvm,dim=1)=", ubound(hvm,dim=1), "max_local_rows=", max_local_rows ! PETERDEBUG
+        if (useGPU) then
+          !successGPU = gpu_memset(tmat_dev, 0, max_stored_rows*max_stored_rows*size_of_datatype) ! PETERDEBUG
+          
+          call obj%timer%start("gpublas")
+          NVTX_RANGE_PUSH("gpublas_syrk")
+          call gpublas_PRECISION_SYRK_HERK('U', BLAS_TRANS_OR_CONJ, &
+                                           nstor, l_rows, ONE, &
+                                           hvm_dev, max_local_rows, ZERO, &
+                                           tmat_dev, max_stored_rows, gpublasHandle)
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          NVTX_RANGE_POP("gpublas_syrk")
+          call obj%timer%stop("gpublas")
+        else ! useGPU
+          tmat = 0 ! PETERDEBUG: probably not needed. test and delete
+          call obj%timer%start("blas")
+          NVTX_RANGE_PUSH("blas_syrk")
 #if REALCASE == 1
-        call PRECISION_SYRK('U', 'T',   &
+          call PRECISION_SYRK('U', 'T', &
+#elif COMPLEXCASE == 1
+          call PRECISION_HERK('U', 'C', &
 #endif
-#if COMPLEXCASE == 1
-        call PRECISION_HERK('U', 'C',   &
+                            int(nstor,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
+                            hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), ZERO, &
+                            tmat, int(max_stored_rows,kind=BLAS_KIND))
+          
+          NVTX_RANGE_POP("blas_syrk")
+          call obj%timer%stop("blas")
+        endif ! useGPU
+      endif ! (l_rows>0)
+
+      if (useGPU) then
+        num_el = max_stored_rows*max_stored_rows
+#ifdef WITH_GPU_STREAMS
+        call gpu_memcpy_async_and_stream_synchronize &
+                ("trans_ev tmat_dev -> tmat", tmat_dev, 0_c_intptr_t, &
+                tmat(1:max_stored_rows,1:max_stored_rows), &
+                1, 1, num_el*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+#else              
+        successGPU = gpu_memcpy(int(loc(tmat(1,1)),kind=c_intptr_t), tmat_dev, num_el*size_of_datatype, gpuMemcpyDeviceToHost)
+        check_memcpy_gpu("trans_ev", successGPU)
 #endif
-                         int(nstor,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
-                         hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), ZERO, tmat, int(max_stored_rows,kind=BLAS_KIND))
-      endif
-      NVTX_RANGE_POP("blas_syrk")
-      call obj%timer%stop("blas")
+      endif ! useGPU
 
       nc = 0
       do n = 1, nstor-1
@@ -501,8 +617,8 @@ subroutine trans_ev_cpu_&
         nc = nc+n
       enddo
 
-#ifdef WITH_MPI
       if (nc > 0) then
+#ifdef WITH_MPI
         if (useNonBlockingCollectivesRows) then
           call obj%timer%start("mpi_nbc_communication")
           call mpi_iallreduce( h1, h2, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
@@ -515,13 +631,14 @@ subroutine trans_ev_cpu_&
                                    int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
         endif
-      endif
 #else /* WITH_MPI */
-      if (nc > 0) h2 = h1
+        h2 = h1 ! PETERDEBUG: cleanup h2,  use MPI_IN_PLACE
 #endif /* WITH_MPI */
+      endif ! (nc > 0)
 
       ! Calculate triangular matrix T
 
+      ! PETERDEBUG: we can write a kernel here
       nc = 0
       tmat(1,1) = tau(ice-nstor+1)
       do n = 1, nstor-1
@@ -534,6 +651,7 @@ subroutine trans_ev_cpu_&
         NVTX_RANGE_POP("blas_trmv")
         call obj%timer%stop("blas")
 
+        ! update tmat for next iteration
 #if REALCASE == 1
         tmat(n+1,1:n) = -h2(nc+1:nc+n) *tau(ice-nstor+n+1) 
 #elif COMPLEXCASE == 1
@@ -560,9 +678,9 @@ subroutine trans_ev_cpu_&
         num = max_stored_rows * max_stored_rows * size_of_datatype
         call gpu_memcpy_async_and_stream_synchronize &
             ("trans_ev tmat -> tmat_dev", tmat_dev, 0_c_intptr_t, &
-                                                 tmat(1:max_local_rows,1:max_stored_rows), &
+                                                 tmat(1:max_local_rows,1:max_stored_rows), &  
                                                  1, 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
-
+                                                ! PETERDEBUG: bug here? tmat(max_stored_rows,max_stored_rows)
         if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
 #else
         successGPU = gpu_memcpy(hvm_dev, int(loc(hvm1(1)),kind=c_intptr_t),   &
@@ -584,10 +702,9 @@ subroutine trans_ev_cpu_&
         if (useGPU) then
           call obj%timer%start("gpublas")
           NVTX_RANGE_PUSH("gpublas_gemm")
-          gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
           call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',   &
                                    nstor, l_cols, l_rows, ONE, hvm_dev, hvm_ubnd,  &
-                                   q_dev, ldq, ZERO, tmp_dev, nstor, gpuHandle)
+                                   q_dev, ldq, ZERO, tmp_dev, nstor, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
           NVTX_RANGE_POP("gpublas_gemm")
           call obj%timer%stop("gpublas")
@@ -691,14 +808,14 @@ subroutine trans_ev_cpu_&
           NVTX_RANGE_PUSH("gpublas trmm")
           call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
                                    nstor, l_cols, ONE, tmat_dev, max_stored_rows,  &
-                                   tmp_dev, nstor, gpuHandle)
+                                   tmp_dev, nstor, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
           NVTX_RANGE_POP("gpublas trmm")
 
           NVTX_RANGE_PUSH("gpublas_gemm")
           call gpublas_PRECISION_GEMM('N', 'N' ,l_rows ,l_cols ,nstor,  &
                                    -ONE, hvm_dev, hvm_ubnd, tmp_dev, nstor,   &
-                                   ONE, q_dev, ldq, gpuHandle)
+                                   ONE, q_dev, ldq, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
           NVTX_RANGE_POP("gpublas_gemm")
           call obj%timer%stop("gpublas")
