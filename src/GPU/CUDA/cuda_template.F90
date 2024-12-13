@@ -920,12 +920,12 @@
                               bind(C,name="cublasDtrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(c_double)            , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: cublasHandle
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      real(c_double)           , value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: cublasHandle
     end subroutine
   end interface
 
@@ -935,8 +935,8 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
       real(c_double)           , value        :: alpha
       type(c_ptr), value                      :: a, b
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -953,12 +953,12 @@
                               bind(C,name="cublasStrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(c_float)             , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: cublasHandle
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      real(c_float)            , value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: cublasHandle
     end subroutine
   end interface
 
@@ -968,8 +968,8 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
       real(c_float)            , value        :: alpha
       type(c_ptr), value                      :: a, b
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -986,12 +986,12 @@
                               bind(C,name="cublasZtrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(c_double_complex) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: cublasHandle
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      complex(c_double_complex), value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: cublasHandle
     end subroutine
   end interface
 
@@ -1001,8 +1001,8 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
       complex(c_double_complex), value        :: alpha
       type(c_ptr), value                      :: a, b
       integer(kind=C_intptr_T), value         :: cublasHandle
@@ -1019,12 +1019,12 @@
                               bind(C,name="cublasCtrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(c_float_complex)  , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: cublasHandle
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      complex(c_float_complex) , value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: cublasHandle
     end subroutine
   end interface
 
@@ -1034,11 +1034,128 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
       complex(c_float_complex) , value        :: alpha
       type(c_ptr), value                      :: a, b
       integer(kind=C_intptr_T), value         :: cublasHandle
+    end subroutine
+  end interface
+
+
+  interface cublas_Dtrmv
+    module procedure cublas_Dtrmv_intptr
+    module procedure cublas_Dtrmv_cptr
+  end interface
+
+  interface
+    subroutine cublas_Dtrmv_intptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="cublasDtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine cublas_Dtrmv_cptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="cublasDtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface cublas_Strmv
+    module procedure cublas_Strmv_intptr
+    module procedure cublas_Strmv_cptr
+  end interface
+
+  interface
+    subroutine cublas_Strmv_intptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="cublasStrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine cublas_Strmv_cptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="cublasStrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface cublas_Ztrmv
+    module procedure cublas_Ztrmv_intptr
+    module procedure cublas_Ztrmv_cptr
+  end interface
+
+  interface
+    subroutine cublas_Ztrmv_intptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="cublasZtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine cublas_Ztrmv_cptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="cublasZtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface cublas_Ctrmv
+    module procedure cublas_Ctrmv_intptr
+    module procedure cublas_Ctrmv_cptr
+  end interface
+
+  interface
+    subroutine cublas_Ctrmv_intptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="cublasCtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: cublasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine cublas_Ctrmv_cptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="cublasCtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: cublasHandle
     end subroutine
   end interface
 
@@ -2639,12 +2756,12 @@
     subroutine cublas_Dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(c_double)            , value              :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: cublasHandle
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      real(c_double)           , value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Dtrmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
@@ -2653,12 +2770,12 @@
     subroutine cublas_Dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(c_double)            , value              :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: cublasHandle
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      real(c_double)           , value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Dtrmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
@@ -2667,12 +2784,12 @@
     subroutine cublas_Strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(c_float)             , value              :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: cublasHandle
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      real(c_float)            , value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Strmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
@@ -2681,12 +2798,12 @@
     subroutine cublas_Strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(c_float)             , value              :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: cublasHandle
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      real(c_float)            , value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Strmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
@@ -2695,12 +2812,12 @@
     subroutine cublas_Ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(c_double_complex) , value              :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: cublasHandle
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      complex(c_double_complex), value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Ztrmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
@@ -2709,12 +2826,12 @@
     subroutine cublas_Ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(c_double_complex) , value              :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: cublasHandle
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      complex(c_double_complex), value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Ztrmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
@@ -2723,12 +2840,12 @@
     subroutine cublas_Ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(c_float_complex)  , value              :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: cublasHandle
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      complex(c_float_complex) , value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Ctrmm_intptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
@@ -2737,14 +2854,111 @@
     subroutine cublas_Ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, cublasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(c_float_complex)  , value              :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: cublasHandle
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      complex(c_float_complex) , value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: cublasHandle
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cublas_Ctrmm_cptr_c(cublasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+
+    subroutine cublas_Dtrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Dtrmv_intptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine cublas_Dtrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Dtrmv_cptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine cublas_Strmv_intptr(uplo, trans, diag, n, a, lda, x, incx, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Strmv_intptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine cublas_Strmv_cptr(uplo, trans, diag, n, a, lda, x, incx, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Strmv_cptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine cublas_Ztrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Ztrmv_intptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine cublas_Ztrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Ztrmv_cptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine cublas_Ctrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Ctrmv_intptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine cublas_Ctrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, cublasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: cublasHandle
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cublas_Ctrmv_cptr_c(cublasHandle, uplo, trans, diag, n, a, lda, x, incx)
 #endif
     end subroutine
 

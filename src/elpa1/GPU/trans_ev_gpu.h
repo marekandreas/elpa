@@ -66,27 +66,24 @@ __global__ void gpu_copy_hvb_a_kernel(T *hvb_dev, T *a_dev, int ld_hvb, int lda,
   //   nb = nb+l_rows
   // enddo
 
-  int i0   = threadIdx.x; // 0..l_rows-1
-  int ic_0 = blockIdx.x ; // 0..l_cowl-1
+  int i0   = threadIdx.x; // 0..ld_hvb-1; max(l_rows) = ld_hvb
+  int ic_0 = blockIdx.x ;
 
   T One = elpaDeviceNumber<T>(1.0);
-  //int nb=0; // PETERDEBUG: cleanup
 
-  for (int ic = ics; ic <= ice; ic++) {
+  for (int ic = ic_0 + ics; ic <= ice; ic++) {
     int l_colh = local_index(ic  , my_pcol, np_cols, nblk, -1); // Column of Householder Vector
     int l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1); // Number of rows of Householder Vector
 
     // if (my_pcol == cur_pcol) // already true
-    for (int i = 0; i < l_rows; i++) {
+    for (int i=i0; i < l_rows; i++) {
       hvb_dev[i + ld_hvb*(ic-ics)] = a_dev[i + (l_colh-1)*lda]; // nb -> ld_hvb*(ic-ics), no compression
-      // hvb_dev[i + nb] = a_dev[i + (l_colh-1)*lda];
     }
     
-    if (my_prow == prow(ic-1, nblk, np_rows)) {
+    if (my_prow == prow(ic-1, nblk, np_rows) && threadIdx.x == 0) {
       hvb_dev[(l_rows-1) + ld_hvb*(ic-ics)] = One;
     }
     
-    //nb += l_rows;
   }
 }
 
@@ -102,15 +99,14 @@ void gpu_copy_hvb_a(T *hvb_dev, T *a_dev, int *ld_hvb_in, int *lda_in, int *my_p
   int nblk = *nblk_in;
   int ics = *ics_in;
   int ice = *ice_in;
-  int SM_count = *SM_count_in;
+  int SM_count = *SM_count_in; // PETERDEBUG: SM_count: needed or not? here and below
   int debug = *debug_in;
 
-  //dim3 blocks = dim3(SM_count, 1, 1); // PETERDEBUG
-  //dim3 blocks = dim3(l_cols,1,1);
-  //dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+  dim3 blocks = dim3(SM_count, 1, 1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
 
-  dim3 blocks = dim3(1,1,1);
-  dim3 threadsPerBlock = dim3(1,1,1);
+  //dim3 blocks = dim3(1,1,1); // PETERDEBUG cleanup
+  //dim3 threadsPerBlock = dim3(1,1,1);
 
 #ifdef WITH_GPU_STREAMS
   gpu_copy_hvb_a_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice);
@@ -155,20 +151,19 @@ __global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, T *hvb_dev, int ld_hvm, int 
   //   nb = nb+l_rows
   // enddo
 
-  int i0   = threadIdx.x; // 0..l_rows-1
-  int ic_0 = blockIdx.x ; // 0..l_cowl-1
+  int i0   = threadIdx.x; // 0..ld_hvm-1; max(l_rows) = ld_hvm
+  int ic_0 = blockIdx.x ;
 
   T Zero = elpaDeviceNumber<T>(0.0);
-  //int nb=0; // PETERDEBUG: cleanup
 
-  for (int ic = ics; ic <= ice; ic++) {
+  for (int ic = ic_0 + ics; ic <= ice; ic++) {
     int l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1);
 
-    for (int i=0; i < l_rows; i++) {
+    for (int i=i0; i < l_rows; i++) {
       hvm_dev[i + ld_hvm*(ic-ics+nstor)] = hvb_dev[i + ld_hvb*(ic-ics)]; // nb -> ld_hvb*(ic-ics), no compression
     }
     
-    for (int i=l_rows; i < ld_hvm; i++) {
+    for (int i=l_rows+i0; i < ld_hvm; i++) {
       hvm_dev[i + ld_hvm*(ic-ics+nstor)] = Zero; // since we're not compressing, we need to take extra care to clear from previous iterations
     }
 
@@ -189,12 +184,11 @@ void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, int *ld_hvm_in, int *ld_hvb_in, in
   int SM_count = *SM_count_in;
   int debug = *debug_in;
 
-  //dim3 blocks = dim3(SM_count, 1, 1); // PETERDEBUG
-  //dim3 blocks = dim3(l_cols,1,1);
-  //dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+  dim3 blocks = dim3(SM_count, 1, 1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
 
-  dim3 blocks = dim3(1,1,1);
-  dim3 threadsPerBlock = dim3(1,1,1);
+  // dim3 blocks = dim3(1,1,1); // PETERDEBUG cleanup
+  // dim3 threadsPerBlock = dim3(1,1,1);
 
 #ifdef WITH_GPU_STREAMS
   gpu_copy_hvm_hvb_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(hvm_dev, hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice);
@@ -220,4 +214,74 @@ extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvm_hvb_FromC) (char dataType, intp
   else if (dataType=='S') gpu_copy_hvm_hvb<float> ((float  *) hvm_dev, (float  *) hvb_dev, ld_hvm_in, ld_hvb_in, my_prow_in, np_rows_in, nstor_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
   else if (dataType=='Z') gpu_copy_hvm_hvb<cuDoubleComplex>((gpuDoubleComplex *) hvm_dev, (gpuDoubleComplex *) hvb_dev, ld_hvm_in, ld_hvb_in, my_prow_in, np_rows_in, nstor_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
   else if (dataType=='C') gpu_copy_hvm_hvb<cuFloatComplex> ((gpuFloatComplex  *) hvm_dev, (gpuFloatComplex  *) hvb_dev, ld_hvm_in, ld_hvb_in, my_prow_in, np_rows_in, nstor_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
+}
+
+//_________________________________________________________________________________________________
+
+template <typename T>
+__global__ void gpu_update_tmat_kernel(T *tmat_dev, T *h_dev, T *tau_curr_dev, int max_stored_rows, int nc, int n) {
+
+//    ! update tmat for next iteration
+// #if REALCASE == 1
+//    tmat(n+1,1:n) = -h(nc+1:nc+n) *tau(ice-nstor+n+1)
+// #elif COMPLEXCASE == 1
+//    tmat(n+1,1:n) = -conjg(h(nc+1:nc+n)) *tau(ice-nstor+n+1)
+// #endif    
+//    tmat(n+1,n+1) = tau(ice-nstor+n+1)
+
+  // for (int j=0; j<n; j++) {
+  //   tmat_dev[n + j*max_stored_rows] = elpaDeviceMultiply(elpaDeviceComplexConjugate(h_dev[nc+j]), (*tau_curr_dev));
+  //   tmat_dev[n + j*max_stored_rows] = elpaDeviceMultiply(elpaDeviceNumber<T>(-1.0), tmat_dev[n + j*max_stored_rows]);
+  // }
+
+  // tmat_dev[n + n*max_stored_rows] = *tau_curr_dev; // PETERDEBUG: only one thread does this
+
+  int i0   = threadIdx.x + blockIdx.x*blockDim.x;
+
+  // PETERDEBUG: work directly with the non-transposed matrix --> better data access by threads
+  for (int i=i0; i<n; i++) {
+    tmat_dev[i + n*max_stored_rows] = elpaDeviceMultiply(h_dev[nc+i], (*tau_curr_dev));
+    tmat_dev[i + n*max_stored_rows] = elpaDeviceMultiply(elpaDeviceNumber<T>(-1.0), tmat_dev[i + n*max_stored_rows]);
+  }
+
+  if (i0==0) tmat_dev[n + n*max_stored_rows] = *tau_curr_dev; // PETERDEBUG: only one thread does this
+}
+
+template <typename T>
+void gpu_update_tmat(T *tmat_dev, T *h_dev, T *tau_curr_dev, int *max_stored_rows_in, int *nc_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
+  int max_stored_rows = *max_stored_rows_in;
+  int nc = *nc_in;
+  int n = *n_in;
+  int SM_count = *SM_count_in;
+  int debug = *debug_in;
+
+  // SM_count*MIN_THREADS_PER_BLOCK is the minimal GPU configuration that keeps the GPU busy
+  dim3 blocks = dim3(SM_count, 1, 1);
+  dim3 threadsPerBlock = dim3(MIN_THREADS_PER_BLOCK, 1, 1);
+
+  // dim3 blocks = dim3(1,1,1);  // PETERDEBUG
+  // dim3 threadsPerBlock = dim3(1,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  gpu_update_tmat_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n);
+#else
+  gpu_update_tmat_kernel<<<blocks,threadsPerBlock>>>            (tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n);
+#endif
+
+  if (debug)
+    {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess){
+      printf("Error in executing gpu_update_tmat: %s\n", gpuGetErrorString(gpuerr));
+    }
+  }
+}
+
+extern "C" void CONCATENATE(ELPA_GPU,  _update_tmat_FromC) (char dataType, intptr_t tmat_dev, intptr_t h_dev, intptr_t tau_curr_dev,
+                                      int *max_stored_rows_in, int *nc_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_update_tmat<double>((double *) tmat_dev, (double *) h_dev, (double *) tau_curr_dev, max_stored_rows_in, nc_in, n_in, SM_count_in, debug_in, my_stream);
+  else if (dataType=='S') gpu_update_tmat<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) tau_curr_dev, max_stored_rows_in, nc_in, n_in, SM_count_in, debug_in, my_stream);
+  else if (dataType=='Z') gpu_update_tmat<cuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows_in, nc_in, n_in, SM_count_in, debug_in, my_stream);
+  else if (dataType=='C') gpu_update_tmat<cuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows_in, nc_in, n_in, SM_count_in, debug_in, my_stream);
 }

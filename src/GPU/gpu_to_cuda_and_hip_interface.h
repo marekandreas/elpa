@@ -58,6 +58,7 @@
 #undef make_gpuDoubleComplex
 #undef make_gpuFloatComplex
 #undef MAX_THREADS_PER_BLOCK
+#undef MIN_THREADS_PER_BLOCK
 #undef ELPA_GPU
 
 //_________________________________________________________________________________________________
@@ -74,6 +75,7 @@
 #define make_gpuDoubleComplex make_cuDoubleComplex
 #define make_gpuFloatComplex make_cuFloatComplex
 #define MAX_THREADS_PER_BLOCK 1024
+#define MIN_THREADS_PER_BLOCK 32 /* i.e. wrap size */
 #define ELPA_GPU cuda
 #endif
 
@@ -91,6 +93,7 @@
 #define make_gpuDoubleComplex make_hipDoubleComplex
 #define make_gpuFloatComplex make_hipFloatComplex
 #define MAX_THREADS_PER_BLOCK 1024
+#define MIN_THREADS_PER_BLOCK 64
 #define ELPA_GPU hip
 #endif
 

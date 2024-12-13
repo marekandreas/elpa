@@ -102,6 +102,7 @@
 #undef  gpublas_PRECISION_SYRK_HERK
 #undef  gpublas_PRECISION_GEMV
 #undef  gpublas_PRECISION_SYMV
+#undef  gpublas_PRECISION_TRMV
 #undef  gpublas_PRECISION_COPY
 #undef  gpublas_PRECISION_TRSM
 #undef  gpublas_PRECISION_DOT
@@ -229,6 +230,7 @@
 #define  gpublas_PRECISION_SYRK_HERK gpublas_DSYRK
 #define  gpublas_PRECISION_GEMV gpublas_DGEMV
 #define  gpublas_PRECISION_SYMV gpublas_DSYMV
+#define  gpublas_PRECISION_TRMV gpublas_DTRMV
 #define  gpublas_PRECISION_COPY gpublas_DCOPY
 #define  gpublas_PRECISION_TRSM gpublas_DTRSM
 #define  gpublas_PRECISION_DOT  gpublas_DDOT
@@ -355,6 +357,7 @@
 #define  gpublas_PRECISION_SYRK_HERK gpublas_SSYRK
 #define  gpublas_PRECISION_GEMV gpublas_SGEMV
 #define  gpublas_PRECISION_SYMV gpublas_SSYMV
+#define  gpublas_PRECISION_TRMV gpublas_STRMV
 #define  gpublas_PRECISION_COPY gpublas_SCOPY
 #define  gpublas_PRECISION_TRSM gpublas_STRSM
 #define  gpublas_PRECISION_DOT  gpublas_SDOT
@@ -494,6 +497,7 @@
 #undef  gpublas_PRECISION_SYRK_HERK
 #undef  gpublas_PRECISION_GEMV
 #undef  gpublas_PRECISION_SYMV
+#undef  gpublas_PRECISION_TRMV
 #undef  gpublas_PRECISION_COPY
 #undef  gpublas_PRECISION_TRSM
 #undef  gpublas_PRECISION_DCAL
@@ -612,6 +616,7 @@
 #define  gpublas_PRECISION_SYRK_HERK gpublas_ZHERK
 #define  gpublas_PRECISION_GEMV gpublas_ZGEMV
 #define  gpublas_PRECISION_SYMV gpublas_ZSYMV
+#define  gpublas_PRECISION_TRMV gpublas_ZTRMV
 #define  gpublas_PRECISION_COPY gpublas_ZCOPY
 #define  gpublas_PRECISION_TRSM gpublas_ZTRSM
 #define  gpublas_PRECISION_DOT gpublas_ZDOT
@@ -721,6 +726,7 @@
 #define  gpublas_PRECISION_SYRK_HERK gpublas_CHERK
 #define  gpublas_PRECISION_GEMV gpublas_CGEMV
 #define  gpublas_PRECISION_SYMV gpublas_CSYMV
+#define  gpublas_PRECISION_TRMV gpublas_CTRMV
 #define  gpublas_PRECISION_COPY gpublas_CCOPY
 #define  gpublas_PRECISION_TRSM gpublas_CTRSM
 #define  gpublas_PRECISION_DOT  gpublas_CDOT

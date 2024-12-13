@@ -113,6 +113,26 @@
     module procedure gpublas_Ctrmm_cptr
   end interface
   
+  interface gpublas_Dtrmv
+    module procedure gpublas_Dtrmv_intptr
+    module procedure gpublas_Dtrmv_cptr
+  end interface
+  
+  interface gpublas_Strmv
+    module procedure gpublas_Strmv_intptr
+    module procedure gpublas_Strmv_cptr
+  end interface
+  
+  interface gpublas_Ztrmv
+    module procedure gpublas_Ztrmv_intptr
+    module procedure gpublas_Ztrmv_cptr
+  end interface
+  
+  interface gpublas_Ctrmv
+    module procedure gpublas_Ctrmv_intptr
+    module procedure gpublas_Ctrmv_cptr
+  end interface
+  
   interface gpublas_Dsyrk
     module procedure gpublas_Dsyrk_intptr
     module procedure gpublas_Dsyrk_cptr
@@ -1457,7 +1477,7 @@
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(c_double)                  :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_intptr_t)     :: handle
+      integer(kind=c_intptr_t)        :: handle
 
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_Dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
@@ -1546,7 +1566,7 @@
       integer(kind=C_INT), intent(in) :: lda,ldb
       real(c_float)                   :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_intptr_t)     :: handle
+      integer(kind=c_intptr_t)        :: handle
 
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_Strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
@@ -1635,7 +1655,7 @@
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(c_double_complex)       :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_intptr_t)     :: handle
+      integer(kind=c_intptr_t)        :: handle
 
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_Ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
@@ -1724,7 +1744,7 @@
       integer(kind=C_INT), intent(in) :: lda,ldb
       complex(c_float_complex)        :: alpha
       type(c_ptr)                     :: a, b
-      integer(kind=c_intptr_t)     :: handle
+      integer(kind=c_intptr_t)        :: handle
 
         if (use_gpu_vendor == nvidia_gpu) then
           call cublas_Ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, handle)
@@ -1749,6 +1769,282 @@
 #endif
     end subroutine
 
+    subroutine gpublas_Dtrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+      implicit none
+      character(1,c_char), value      :: uplo, trans, diag
+      integer(kind=c_int), value      :: n, lda, incx
+      integer(kind=c_intptr_t), value :: a, x
+      integer(kind=c_intptr_t), value :: gpublasHandle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Dtrmv_intptr  (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Dtrmv_intptr (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Dtrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+    end subroutine
+
+    subroutine gpublas_Dtrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+      implicit none
+      character(1,c_char), value      :: uplo, trans, diag
+      integer(kind=c_int), value      :: n, lda, incx
+      type(c_ptr)             , value :: a, x
+      integer(kind=c_intptr_t), value :: gpublasHandle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Dtrmv_cptr  (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Dtrmv_cptr (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Dtrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+    end subroutine
+    subroutine gpublas_Strmv_intptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+      implicit none
+      character(1,c_char), value      :: uplo, trans, diag
+      integer(kind=c_int), value      :: n, lda, incx
+      integer(kind=c_intptr_t), value :: a, x
+      integer(kind=c_intptr_t), value :: gpublasHandle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Strmv_intptr  (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Strmv_intptr (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Strmv_intptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+    end subroutine
+
+    subroutine gpublas_Strmv_cptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+      implicit none
+      character(1,c_char), value      :: uplo, trans, diag
+      integer(kind=c_int), value      :: n, lda, incx
+      type(c_ptr)             , value :: a, x
+      integer(kind=c_intptr_t), value :: gpublasHandle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Strmv_cptr  (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Strmv_cptr (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Strmv_cptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+    end subroutine
+    subroutine gpublas_Ztrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+      implicit none
+      character(1,c_char), value      :: uplo, trans, diag
+      integer(kind=c_int), value      :: n, lda, incx
+      integer(kind=c_intptr_t), value :: a, x
+      integer(kind=c_intptr_t), value :: gpublasHandle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Ztrmv_intptr  (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Ztrmv_intptr (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Ztrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+    end subroutine
+
+    subroutine gpublas_Ztrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+      implicit none
+      character(1,c_char), value      :: uplo, trans, diag
+      integer(kind=c_int), value      :: n, lda, incx
+      type(c_ptr)             , value :: a, x
+      integer(kind=c_intptr_t), value :: gpublasHandle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Ztrmv_cptr  (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Ztrmv_cptr (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Ztrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+    end subroutine
+    subroutine gpublas_Ctrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+      implicit none
+      character(1,c_char), value      :: uplo, trans, diag
+      integer(kind=c_int), value      :: n, lda, incx
+      integer(kind=c_intptr_t), value :: a, x
+      integer(kind=c_intptr_t), value :: gpublasHandle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Ctrmv_intptr  (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Ctrmv_intptr (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Ctrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+    end subroutine
+
+    subroutine gpublas_Ctrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      use openmp_offload_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+      implicit none
+      character(1,c_char), value      :: uplo, trans, diag
+      integer(kind=c_int), value      :: n, lda, incx
+      type(c_ptr)             , value :: a, x
+      integer(kind=c_intptr_t), value :: gpublasHandle
+
+        if (use_gpu_vendor == nvidia_gpu) then
+          call cublas_Ctrmv_cptr  (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+
+#ifdef WITH_AMD_GPU_VERSION
+        if (use_gpu_vendor == amd_gpu) then
+          call rocblas_Ctrmv_cptr (uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+        if (use_gpu_vendor == sycl_gpu) then
+          call syclblas_Ctrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, gpublasHandle)
+        endif
+#endif
+    end subroutine
     subroutine gpublas_Dsyrk_intptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, gpublasHandle)
 
       use, intrinsic :: iso_c_binding
