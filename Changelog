@@ -3,7 +3,7 @@ Changelog for next release
 
 - not yet decided
 
-Changelog for ELPA 2024.11.001
+Changelog for ELPA 2025.01.001.rc1
 - port of tridiagonalization step to GPU: ELPA 1stage/2stage solvers achieve
   speedup of up to 40%
 
