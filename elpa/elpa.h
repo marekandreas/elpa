@@ -22,6 +22,9 @@ typedef struct elpa_autotune_struct *elpa_autotune_t;
 #define ELPA_2STAGE_REAL_GPU    ELPA_2STAGE_REAL_NVIDIA_GPU
 #define ELPA_2STAGE_COMPLEX_GPU ELPA_2STAGE_COMPLEX_NVIDIA_GPU
 
+#ifdef __cplusplus
+extern "C"
+#endif
 const char *elpa_strerr(int elpa_error);
 
 #endif
