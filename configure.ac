@@ -3001,7 +3001,7 @@ if test x"$need_nvidia_gpu" = x"yes"; then
     echo ""
     echo ""
     echo ""
-    AC_MSG_NOTICE([If --enable-nvidia-gpu is set, we recommend --enable-gpu-streams-nvidia])
+    AC_MSG_NOTICE([If --enable-nvidia-gpu is set, we recommend --enable-gpu-streams=nvidia])
   fi
 fi
 
@@ -3033,7 +3033,7 @@ if test x"$need_amd_gpu" = x"yes"; then
     echo ""
     echo ""
     echo ""
-    AC_MSG_NOTICE([If --enable-amd-gpu is set, we recommend --enable-gpu-streams-amd])
+    AC_MSG_NOTICE([If --enable-amd-gpu is set, we recommend --enable-gpu-streams=amd])
   fi
 fi
 
