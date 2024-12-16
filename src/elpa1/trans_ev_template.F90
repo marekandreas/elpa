@@ -205,6 +205,7 @@ subroutine trans_ev_cpu_&
     gpuString = ""
   endif
 
+  useCCL = .false.
 #if defined(USE_CCL_TRANS_EV)
   if (useGPU) then
     useCCL = .true.
@@ -429,6 +430,10 @@ subroutine trans_ev_cpu_&
   do istep = 1, na, blockStep
     NVTX_RANGE_PUSH("main_loop")
 
+    ! if (istep==33) then
+    !   print *, "DEBUG: istep=", istep ! PETERDEBUG
+    ! endif
+
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
     if (ice<ics) cycle
@@ -514,7 +519,6 @@ subroutine trans_ev_cpu_&
 #endif
     endif ! useGPU
 
-
     if (useGPU) then
       NVTX_RANGE_PUSH("gpu_copy_hvm_hvb")
       call gpu_copy_hvm_hvb(PRECISION_CHAR, hvm_dev, hvb_dev, max_local_rows, max_local_rows, my_prow, np_rows, &
@@ -564,6 +568,19 @@ subroutine trans_ev_cpu_&
       ! Calculate scalar products of stored vectors.
       ! This can be done in different ways, we use dsyrk or zherk
 
+      if (useGPU) then
+        ! PETERDEBUG: is this really needed for GPU?
+        num_el = max_stored_rows*max_stored_rows
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memset_async(tmat_dev, 0, num_el*size_of_datatype, my_stream)
+#else
+        successGPU = gpu_memset(tmat_dev, 0, num_el*size_of_datatype)
+#endif
+        check_memcpy_gpu("trans_ev: tmat_dev", successGPU)
+      else
+        tmat = 0
+      endif
+
       if (l_rows>0) then
         if (useGPU) then
           !successGPU = gpu_memset(tmat_dev, 0, max_stored_rows*max_stored_rows * size_of_datatype) ! PETERDEBUG
@@ -578,7 +595,6 @@ subroutine trans_ev_cpu_&
           NVTX_RANGE_POP("gpublas_syrk")
           call obj%timer%stop("gpublas")
         else ! useGPU
-          tmat = 0
           call obj%timer%start("blas")
           NVTX_RANGE_PUSH("blas_syrk")
 #if REALCASE == 1
@@ -863,6 +879,18 @@ subroutine trans_ev_cpu_&
       endif  ! l_rows>0
       nstor = 0
     endif  ! (nstor+nblk>max_stored_rows .or. istep+nblk>na .or. (na/np_rows<=256 .and. nstor>=32))
+
+    ! PETERDEBUG q_mat: ldq,matrixCols
+    ! if (my_prow==0 .and. my_pcol==0) then
+    !   print *, "istep=", istep, "nstor=", nstor, "max_stored_rows=", max_stored_rows ! PETEDEBUG
+    !   do i = 1, size(q_mat, 1)
+    !     !do j = 1, MIN(size(q_mat, 2), na)
+    !     do j = 1, size(q_mat, 2)
+    !         write(*,'(F8.2)', advance='no') q_mat(i,j)
+    !     end do
+    !     write(*,*)  ! move to next line
+    !   end do
+    ! endif
 
     NVTX_RANGE_POP("main_loop")
   enddo ! istep = 1, na, blockStep
