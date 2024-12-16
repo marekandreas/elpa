@@ -1234,14 +1234,12 @@
 
             if (useGPU) then
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
-
-
-              call GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION (qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l) ! PETERDEBUG: this and other kernels --> streamed version
+              my_stream = obj%gpu_setup%my_stream
+              call GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION (qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
 
               call obj%timer%start("nccl_communication")
-              my_stream = obj%gpu_setup%my_stream
               ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-              successGPU = ccl_group_start()
+              successGPU = ccl_group_start() ! PETERDEBUG: should this be moved outside of the loop or deleted?
               if (.not.successGPU) then
                 print *,"Error in setting up nccl_group_start!"
                 stop
