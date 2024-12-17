@@ -157,7 +157,8 @@ subroutine trans_ev_cpu_&
   MATH_DATATYPE(kind=rck), pointer              :: hvm1(:)
   
   type(c_ptr)                                   :: tmp_host, hvm1_host, tmat_host
-  integer(kind=c_intptr_t)                      :: tmp_dev, hvb_dev, hvm_dev, tmat_dev, h_dev, shift_dev
+  integer(kind=c_intptr_t)                      :: tmp_dev, hvb_dev, hvm_dev, tmat_dev, h_dev 
+  integer(kind=c_intptr_t)                      :: shift_dev, shift_h_dev
   integer(kind=c_intptr_t)                      :: num, num_el
   
   character(200)                                :: errorMessage
@@ -476,7 +477,7 @@ subroutine trans_ev_cpu_&
     ! PETERDEBUG: do we need at all this compression-decompression?
     ! max_local_rows -> "l_rows_max"
 
-    if (useGPU) then
+    if (useGPU .and. .not. useCCL) then
       num = nb * size_of_datatype
 #ifdef WITH_GPU_STREAMS
       call gpu_memcpy_async_and_stream_synchronize &
@@ -490,24 +491,43 @@ subroutine trans_ev_cpu_&
 
 #ifdef WITH_MPI
     if (nb > 0) then
-      NVTX_RANGE_PUSH("mpi_bcast")
-      if (useNonBlockingCollectivesCols) then
-        call obj%timer%start("mpi_nbc_communication")
-        call mpi_ibcast(hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
-                        int(mpi_comm_cols,kind=MPI_KIND), bcast_request1, mpierr)
-        call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
-        call obj%timer%stop("mpi_nbc_communication")
-      else
-        call obj%timer%start("mpi_communication")
-        call mpi_bcast (hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
-                        int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-        call obj%timer%stop("mpi_communication")
-      endif
+      if (useCCL) then
+        NVTX_RANGE_PUSH("ccl_bcast")
+        call obj%timer%start("ccl_bcast")
+
+        successGPU = ccl_bcast(hvb_dev, hvb_dev, int(k_datatype*nb,kind=c_size_t), cclDatatype, &
+                               int(cur_pcol,kind=c_int), ccl_comm_cols, my_stream)
+
+        if (.not. successGPU) then
+          print *,"Error in ccl_bcast"
+          stop 1
+        endif
+
+        successGPU = gpu_stream_synchronize(my_stream)
+        check_stream_synchronize_gpu("elpa_cholesky: ccl_bcast", successGPU)
+
+        call obj%timer%stop("ccl_bcast")
+        NVTX_RANGE_POP("ccl_bcast")
+      else ! useCCL
+        NVTX_RANGE_PUSH("mpi_bcast")
+        if (useNonBlockingCollectivesCols) then
+          call obj%timer%start("mpi_nbc_communication")
+          call mpi_ibcast(hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
+                          int(mpi_comm_cols,kind=MPI_KIND), bcast_request1, mpierr)
+          call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
+          call obj%timer%stop("mpi_nbc_communication")
+        else
+          call obj%timer%start("mpi_communication")
+          call mpi_bcast (hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
+                          int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+          call obj%timer%stop("mpi_communication")
+        endif
       NVTX_RANGE_POP("mpi_bcast")
-    endif
+      endif ! useCCL
+    endif ! (nb > 0)
 #endif /* WITH_MPI */
 
-    if (useGPU) then
+    if (useGPU .and. .not. useCCL) then
 #ifdef WITH_GPU_STREAMS
       num_el = max_local_rows*nblk
       call gpu_memcpy_async_and_stream_synchronize("trans_ev hvb -> hvb_dev", &
@@ -612,7 +632,7 @@ subroutine trans_ev_cpu_&
         endif ! useGPU
       endif ! (l_rows>0)
 
-      if (useGPU) then
+      if (useGPU .and. .not. useCCL) then
         num_el = max_stored_rows*max_stored_rows
 #ifdef WITH_GPU_STREAMS
         call gpu_memcpy_async_and_stream_synchronize &
@@ -625,43 +645,65 @@ subroutine trans_ev_cpu_&
 #endif
       endif ! useGPU
       
-      ! if (useGPU) then
-      !   ! no compression
-      !   nc = max_stored_rows*max_stored_rows
-      ! else  ! useGPU
+      if (useCCL) then
+        ! no compression
+        !nc = max_stored_rows*max_stored_rows
+        nc = max_stored_rows*nstor
+        if (nc>0) then
+          successGPU = gpu_memcpy(h_dev, tmat_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice)
+          check_memcpy_gpu("elpa_trans_ev: h_dev <- tmat_dev", successGPU)
+        endif
+      else  ! useCCL
         ! compression
         nc = 0
         do n = 1, nstor-1
           h(nc+1:nc+n) = tmat(1:n,n+1)
-          nc = nc+n
+          nc = nc+n ! PETERDEBUG: on GPU: nc += max_stored_rows 
         enddo
-      !endif ! useGPU
+      endif ! useCCL
 
 #ifdef WITH_MPI
       if (nc > 0) then
-        if (useNonBlockingCollectivesRows) then
-          call obj%timer%start("mpi_nbc_communication")
-          call mpi_iallreduce(MPI_IN_PLACE, h, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
-                              int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
-          call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
-          call obj%timer%stop("mpi_nbc_communication")
-        else
-          call obj%timer%start("mpi_communication")
-          call mpi_allreduce (MPI_IN_PLACE, h, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
-                              int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-          call obj%timer%stop("mpi_communication")
-        endif
+        if (useCCL) then
+          NVTX_RANGE_PUSH("ccl_allreduce")
+          call obj%timer%start("ccl_allreduce")
+          successGPU = ccl_allreduce(h_dev, h_dev, int(k_datatype*nc,kind=c_size_t), &
+                                     cclDatatype, cclSum, ccl_comm_rows, my_stream)
+          
+          if (.not. successGPU) then
+            print *,"Error in ccl_allreduce"
+            stop 1
+          endif
+
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("trans_ev", successGPU)
+          call obj%timer%stop("ccl_allreduce")
+          NVTX_RANGE_POP("ccl_allreduce")
+        else ! useCCL
+          if (useNonBlockingCollectivesRows) then
+            call obj%timer%start("mpi_nbc_communication")
+            call mpi_iallreduce(MPI_IN_PLACE, h, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                                int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
+            call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
+            call obj%timer%stop("mpi_nbc_communication")
+          else
+            call obj%timer%start("mpi_communication")
+            call mpi_allreduce (MPI_IN_PLACE, h, int(nc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+                                int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+            call obj%timer%stop("mpi_communication")
+          endif
+        endif ! useCCL
       endif ! (nc > 0)
 #endif /* WITH_MPI */
 
-      if (useGPU) then
+      if (useGPU .and. .not. useCCL) then
         num_el = nc
 #ifdef WITH_GPU_STREAMS
         call gpu_memcpy_async_and_stream_synchronize("trans_ev: h -> h_dev", h_dev, 0_c_intptr_t, &
                                                       h(1:num_el), 1, num_el*size_of_datatype, &
                                                       gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), num_el*size_of_datatype, gpuMemcpyHostToDevice)
+        successGPU = gpu_memcpy(h_dev, int(loc(h(1)),kind=c_intptr_t), num_el*size_of_datatype, gpuMemcpyHostToDevice)
         check_memcpy_gpu("trans_ev", successGPU)
 #endif /* WITH_GPU_STREAMS */
       endif ! useGPU
@@ -675,24 +717,31 @@ subroutine trans_ev_cpu_&
         nc = 0
         n = 0
         shift_dev = (ice-nstor+n)*size_of_datatype
-        call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev, tau_dev + shift_dev, max_stored_rows, nc, n, SM_count, debug, my_stream)
+        call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev, tau_dev + shift_dev, &
+                             max_stored_rows, nc, n, SM_count, debug, my_stream)
         
         NVTX_RANGE_PUSH("gpublas_trmv+gpu_update_tmat loop")
     
         do n = 1, nstor-1
-          shift_dev = nc*size_of_datatype
+          !shift_dev = nc*size_of_datatype
           !h_dev <- tmat_dev*h_dev
           ! call gpublas_PRECISION_TRMV('L', BLAS_TRANS_OR_CONJ, 'N', n, &
           !                             tmat_dev, max_stored_rows, &
           !                             h_dev + shift_dev, 1, gpublasHandle)
 
           ! non-transposed matrix tmat_dev here, transposition later in TRMM
+          if (useCCL) then
+            shift_h_dev = n*max_stored_rows*size_of_datatype
+          else
+            shift_h_dev = nc*size_of_datatype
+          endif
           call gpublas_PRECISION_TRMV('U', 'N', 'N', n, &
                                       tmat_dev, max_stored_rows, &
-                                      h_dev + shift_dev, 1, gpublasHandle)
+                                      h_dev + shift_h_dev, 1, gpublasHandle)
 
           shift_dev = (ice-nstor+n)*size_of_datatype
-          call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev, tau_dev + shift_dev, max_stored_rows, nc, n, SM_count, debug, my_stream)
+          call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, tau_dev+shift_dev, &
+                               max_stored_rows, nc, n, SM_count, debug, my_stream)
           nc = nc+n
         enddo
         NVTX_RANGE_POP("gpublas_trmv+gpu_update_tmat loop")
@@ -702,7 +751,7 @@ subroutine trans_ev_cpu_&
         do n = 1, nstor-1
           ! h = tmat*h
           call obj%timer%start("blas")
-          NVTX_RANGE_PUSH("blas_trmv")
+          NVTX_RANGE_PUSH("blas_trmv") ! PETERDEBUG: transform, similarly to GPU branch, if doesn't lose performance
           call PRECISION_TRMV('L', BLAS_TRANS_OR_CONJ, 'N', int(n,kind=BLAS_KIND), &
                               tmat, int(max_stored_rows,kind=BLAS_KIND), &
                               h(nc+1), 1_BLAS_KIND)
@@ -796,7 +845,7 @@ subroutine trans_ev_cpu_&
                                      cclDataType, cclSum, ccl_comm_rows, my_stream)
 
         if (.not. successGPU) then
-          print *,"Error in nccl_allreduce"
+          print *,"Error in ccl_allreduce"
           stop
         endif
           

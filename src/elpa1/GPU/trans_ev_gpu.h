@@ -218,6 +218,7 @@ extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvm_hvb_FromC) (char dataType, intp
 
 //_________________________________________________________________________________________________
 
+// PETERDEBUG: cleanup parameter nc (not needed anymore, we use shift_h_dev instead)
 template <typename T>
 __global__ void gpu_update_tmat_kernel(T *tmat_dev, T *h_dev, T *tau_curr_dev, int max_stored_rows, int nc, int n) {
 
@@ -240,7 +241,7 @@ __global__ void gpu_update_tmat_kernel(T *tmat_dev, T *h_dev, T *tau_curr_dev, i
 
   // PETERDEBUG: work directly with the non-transposed matrix --> better data access by threads
   for (int i=i0; i<n; i++) {
-    tmat_dev[i + n*max_stored_rows] = elpaDeviceMultiply(h_dev[nc+i], (*tau_curr_dev));
+    tmat_dev[i + n*max_stored_rows] = elpaDeviceMultiply(h_dev[i], (*tau_curr_dev));
     tmat_dev[i + n*max_stored_rows] = elpaDeviceMultiply(elpaDeviceNumber<T>(-1.0), tmat_dev[i + n*max_stored_rows]);
   }
 
