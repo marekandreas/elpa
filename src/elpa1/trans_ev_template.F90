@@ -185,6 +185,8 @@ subroutine trans_ev_cpu_&
   integer(kind=ik)                              :: k_datatype
   integer(kind=ik)                              :: i,j ! PETERDEBUG: only for debugging, cleanup
 
+  print *, "version 0" ! PETERDEBUG: cleanup
+
   success = .true.
 
   debug = 0
@@ -194,6 +196,7 @@ subroutine trans_ev_cpu_&
 #ifdef TRANS_EV_GPU
   useGPU = .true.
   gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
+  SM_count = obj%gpu_setup%gpuSMcount
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -442,13 +445,14 @@ subroutine trans_ev_cpu_&
     cur_pcol = pcol(istep, nblk, np_cols)
 
     if (useGPU) then
-      NVTX_RANGE_PUSH("gpu_copy_hvb_a")
-      SM_count = obj%gpu_setup%gpuSMcount
-      if (my_pcol==cur_pcol) call gpu_copy_hvb_a(PRECISION_CHAR, hvb_dev, a_dev, max_local_rows, lda, my_prow, np_rows, my_pcol, np_cols, &
-                                                 nblk, ics, ice, SM_count, debug, my_stream)
-      NVTX_RANGE_POP("gpu_copy_hvb_a")
+      if (my_pcol==cur_pcol) then
+        NVTX_RANGE_PUSH("gpu_copy_hvb_a")
+        call gpu_copy_hvb_a(PRECISION_CHAR, hvb_dev, a_dev, max_local_rows, lda, my_prow, np_rows, my_pcol, np_cols, &
+                                                  nblk, ics, ice, SM_count, debug, my_stream)
+        NVTX_RANGE_POP("gpu_copy_hvb_a")
+      endif
 
-      ! dry run to find nb
+      !dry run to find nb, number of used elements in hvb_dev
       ! do ic = ics, ice
       !   l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1)
       !   nb = nb+l_rows
@@ -504,7 +508,7 @@ subroutine trans_ev_cpu_&
         endif
 
         successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("elpa_cholesky: ccl_bcast", successGPU)
+        check_stream_synchronize_gpu("trans_ev: ccl_bcast", successGPU)
 
         call obj%timer%stop("ccl_bcast")
         NVTX_RANGE_POP("ccl_bcast")
@@ -559,7 +563,8 @@ subroutine trans_ev_cpu_&
       NVTX_RANGE_POP("loop: copy hvm <- hvb")
     endif ! useGPU
 
-    if (useGPU) then
+    ! PETERDEBUG: this memcopy can be cleaned up?
+    if (useGPU .and. .not. useCCL) then
       num = max_local_rows * max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
       call gpu_memcpy_async_and_stream_synchronize &
@@ -720,7 +725,7 @@ subroutine trans_ev_cpu_&
         call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev, tau_dev + shift_dev, &
                              max_stored_rows, nc, n, SM_count, debug, my_stream)
         
-        NVTX_RANGE_PUSH("gpublas_trmv+gpu_update_tmat loop")
+        !NVTX_RANGE_PUSH("gpublas_trmv+gpu_update_tmat loop")
     
         do n = 1, nstor-1
           !shift_dev = nc*size_of_datatype
@@ -735,16 +740,27 @@ subroutine trans_ev_cpu_&
           else
             shift_h_dev = nc*size_of_datatype
           endif
+          NVTX_RANGE_PUSH("gpublas_trmv")
           call gpublas_PRECISION_TRMV('U', 'N', 'N', n, &
                                       tmat_dev, max_stored_rows, &
                                       h_dev + shift_h_dev, 1, gpublasHandle)
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          NVTX_RANGE_POP("gpublas_trmv")
+
+          ! NVTX_RANGE_PUSH("gpu_update_h_trmv")
+          ! call gpu_update_h_trmv('U', 'N', 'N', n, &
+          !                             tmat_dev, max_stored_rows, &
+          !                             h_dev + shift_h_dev, 1, gpublasHandle)
+          ! NVTX_RANGE_POP("gpu_update_h_trmv")
 
           shift_dev = (ice-nstor+n)*size_of_datatype
+          NVTX_RANGE_PUSH("gpu_update_tmat")
           call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, tau_dev+shift_dev, &
                                max_stored_rows, nc, n, SM_count, debug, my_stream)
+          NVTX_RANGE_POP("gpu_update_tmat")
           nc = nc+n
         enddo
-        NVTX_RANGE_POP("gpublas_trmv+gpu_update_tmat loop")
+        !NVTX_RANGE_POP("gpublas_trmv+gpu_update_tmat loop")
       else ! useGPU
         nc = 0
         tmat(1,1) = tau(ice-nstor+1)

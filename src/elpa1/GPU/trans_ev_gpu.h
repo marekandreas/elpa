@@ -71,12 +71,12 @@ __global__ void gpu_copy_hvb_a_kernel(T *hvb_dev, T *a_dev, int ld_hvb, int lda,
 
   T One = elpaDeviceNumber<T>(1.0);
 
-  for (int ic = ic_0 + ics; ic <= ice; ic++) {
+  for (int ic = ic_0 + ics; ic <= ice; ic+=gridDim.x) {
     int l_colh = local_index(ic  , my_pcol, np_cols, nblk, -1); // Column of Householder Vector
     int l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1); // Number of rows of Householder Vector
 
     // if (my_pcol == cur_pcol) // already true
-    for (int i=i0; i < l_rows; i++) {
+    for (int i=i0; i < l_rows; i+=blockDim.x) {
       hvb_dev[i + ld_hvb*(ic-ics)] = a_dev[i + (l_colh-1)*lda]; // nb -> ld_hvb*(ic-ics), no compression
     }
     
@@ -156,10 +156,10 @@ __global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, T *hvb_dev, int ld_hvm, int 
 
   T Zero = elpaDeviceNumber<T>(0.0);
 
-  for (int ic = ic_0 + ics; ic <= ice; ic++) {
+  for (int ic = ic_0 + ics; ic <= ice; ic+=gridDim.x) {
     int l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1);
-
-    for (int i=i0; i < l_rows; i++) {
+    
+    for (int i=i0; i < l_rows; i+=blockDim.x) {
       hvm_dev[i + ld_hvm*(ic-ics+nstor)] = hvb_dev[i + ld_hvb*(ic-ics)]; // nb -> ld_hvb*(ic-ics), no compression
     }
     
@@ -218,6 +218,20 @@ extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvm_hvb_FromC) (char dataType, intp
 
 //_________________________________________________________________________________________________
 
+// template <typename T>
+// __global__ void gpu_update_h_trmv_kernel(T *tmat_dev, T *h_dev, T *tmp_dev, int n, int ld_tmat) {
+
+//   // h_dev <- tmat_dev*h_dev
+  
+//   int i0 = threadIdx.x;
+//   int j0 = blockIdx.x ;
+
+
+// }
+
+//_________________________________________________________________________________________________
+
+
 // PETERDEBUG: cleanup parameter nc (not needed anymore, we use shift_h_dev instead)
 template <typename T>
 __global__ void gpu_update_tmat_kernel(T *tmat_dev, T *h_dev, T *tau_curr_dev, int max_stored_rows, int nc, int n) {
@@ -240,7 +254,7 @@ __global__ void gpu_update_tmat_kernel(T *tmat_dev, T *h_dev, T *tau_curr_dev, i
   int i0   = threadIdx.x + blockIdx.x*blockDim.x;
 
   // PETERDEBUG: work directly with the non-transposed matrix --> better data access by threads
-  for (int i=i0; i<n; i++) {
+  for (int i=i0; i<n; i+=blockDim.x*gridDim.x) {
     tmat_dev[i + n*max_stored_rows] = elpaDeviceMultiply(h_dev[i], (*tau_curr_dev));
     tmat_dev[i + n*max_stored_rows] = elpaDeviceMultiply(elpaDeviceNumber<T>(-1.0), tmat_dev[i + n*max_stored_rows]);
   }
