@@ -119,13 +119,13 @@ module trans_ev_cuda
   end interface
 
   interface
-    subroutine cuda_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, max_stored_rows, n, &
+    subroutine cuda_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
                           SM_count, debug, my_stream) &
                                 bind(C, name="cuda_trmv_FromC")
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev, tau_curr_dev
       integer(kind=c_int), intent(in) :: max_stored_rows, n, SM_count, debug
       integer(kind=c_intptr_t), value :: my_stream
     end subroutine
@@ -215,17 +215,17 @@ module trans_ev_cuda
 #endif      
     end subroutine
 
-    subroutine cuda_trmv(dataType, tmat_dev, h_dev, result_buffer_dev, max_stored_rows, n, &
+    subroutine cuda_trmv(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
                          SM_count, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev, tau_curr_dev
       integer(kind=c_int), intent(in) :: max_stored_rows, n, SM_count, debug
       integer(kind=c_intptr_t), value :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, max_stored_rows, n, &
+      call cuda_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
                        SM_count, debug, my_stream)
 #endif      
     end subroutine

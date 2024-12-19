@@ -733,7 +733,12 @@ subroutine trans_ev_cpu_&
                              max_stored_rows, nc, n, SM_count, debug, my_stream)
         
         !NVTX_RANGE_PUSH("gpublas_trmv+gpu_update_tmat loop")
-    
+        
+        NVTX_RANGE_PUSH("gpu_trmv")
+        call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, tau_dev+shift_dev, &
+                      max_stored_rows, n, SM_count, debug, my_stream)
+        NVTX_RANGE_POP("gpu_trmv")
+
         do n = 1, nstor-1
           !shift_dev = nc*size_of_datatype
           !h_dev <- tmat_dev*h_dev
@@ -742,6 +747,7 @@ subroutine trans_ev_cpu_&
             shift_h_dev = n*max_stored_rows*size_of_datatype
           else
             shift_h_dev = nc*size_of_datatype
+            nc = nc+n
           endif
 
           ! NVTX_RANGE_PUSH("gpublas_trmv")
@@ -765,18 +771,17 @@ subroutine trans_ev_cpu_&
           !                      max_stored_rows, nc, n, SM_count, debug, my_stream)
           ! NVTX_RANGE_POP("gpu_update_tmat")
 
+          shift_dev = (ice-nstor+n)*size_of_datatype
           NVTX_RANGE_PUSH("gpu_trmv")
-          call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, &
-                                 max_stored_rows, n, SM_count, debug, my_stream)
+          call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, tau_dev+shift_dev, &
+                        max_stored_rows, n, SM_count, debug, my_stream)
           NVTX_RANGE_POP("gpu_trmv")
 
-          shift_dev = (ice-nstor+n)*size_of_datatype
-          NVTX_RANGE_PUSH("gpu_update_tmat")
-          call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h1_buffer_dev, tau_dev+shift_dev, &
-                               max_stored_rows, nc, n, SM_count, debug, my_stream)
-          NVTX_RANGE_POP("gpu_update_tmat")
-
-          nc = nc+n
+          ! shift_dev = (ice-nstor+n)*size_of_datatype
+          ! NVTX_RANGE_PUSH("gpu_update_tmat")
+          ! call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h1_buffer_dev, tau_dev+shift_dev, &
+          !                      max_stored_rows, nc, n, SM_count, debug, my_stream)
+          ! NVTX_RANGE_POP("gpu_update_tmat")
         enddo
         !NVTX_RANGE_POP("gpublas_trmv+gpu_update_tmat loop")
       else ! useGPU

@@ -233,13 +233,17 @@ __global__ void gpu_update_tmat_kernel(T *tmat_dev, T *h_dev, T *tau_curr_dev, i
 
   int j0  = blockIdx.x;
 
-  for (int j=j0; j<n; j+=gridDim.x) {
-    tmat_dev[n + j*max_stored_rows] = elpaDeviceMultiply(elpaDeviceComplexConjugate(h_dev[j]), (*tau_curr_dev));
-    tmat_dev[n + j*max_stored_rows] = elpaDeviceMultiply(elpaDeviceNumber<T>(-1.0), tmat_dev[n + j*max_stored_rows]);
+  // PETERDEBUG: cleanup
+  // for (int j=j0; j<n; j+=gridDim.x) {
+  //   tmat_dev[n + j*max_stored_rows] = h_dev[j];
+  //   tmat_dev[n + j*max_stored_rows] = elpaDeviceMultiply(elpaDeviceComplexConjugate(h_dev[j]), (*tau_curr_dev));
+  //   tmat_dev[n + j*max_stored_rows] = elpaDeviceMultiply(elpaDeviceNumber<T>(-1.0), tmat_dev[n + j*max_stored_rows]);
+  // }
+
+  if (blockIdx.x==0) {
+    tmat_dev[n + n*max_stored_rows] = *tau_curr_dev;
+    //printf("gpu_update_tmat: tau_curr_dev=%f\n", *tau_curr_dev); // PETERDEBUG
   }
-
-  tmat_dev[n + n*max_stored_rows] = *tau_curr_dev; // PETERDEBUG: only one thread does this
-
   
 
   // PETERDEBUG: work directly with the non-transposed matrix --> better data access by threads
@@ -292,9 +296,10 @@ extern "C" void CONCATENATE(ELPA_GPU,  _update_tmat_FromC) (char dataType, intpt
 }
 
 //_________________________________________________________________________________________________
+// PETERDEBUG: delete result_buffer_dev
 
 template <typename T>
-__global__ void gpu_trmv_kernel(T *tmat_dev, T *h_dev, T *result_buffer_dev, int max_stored_rows, int n) {
+__global__ void gpu_trmv_kernel(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int max_stored_rows, int n) {
   //__shared__ T cache[MIN_THREADS_PER_BLOCK*MIN_THREADS_PER_BLOCK]; // extra space of fixed size is reserved for a speedup
   __shared__ T cache[MAX_THREADS_PER_BLOCK];
 
@@ -307,35 +312,55 @@ __global__ void gpu_trmv_kernel(T *tmat_dev, T *h_dev, T *result_buffer_dev, int
 
   T Zero = elpaDeviceNumber<T>(0.0);
 
-  for (int j=j0; j<n; j+=gridDim.x) {
-    if (threadIdx.x==0) result_buffer_dev[j] = Zero;
+  // for (int n=0; n<nstor-1; n++)
+  //   {
+  
+    for (int j=j0; j<n; j+=gridDim.x) {
+      //if (threadIdx.x==0) result_buffer_dev[j] = Zero;
+      if (threadIdx.x==0) tmat_dev[n + j*max_stored_rows] = Zero; // PETERDEBUG: delete, unneeded
 
-    T slice_sum = Zero;
-    for (int i=i0; i<n; i+=blockDim.x) {
-      slice_sum = elpaDeviceAdd(slice_sum, elpaDeviceMultiply(elpaDeviceComplexConjugate(tmat_dev[i + j*max_stored_rows]), h_dev[i]));
-    }
+      T slice_sum = Zero;
+      for (int i=i0; i<n; i+=blockDim.x) {
+        slice_sum = elpaDeviceAdd(slice_sum, elpaDeviceMultiply(elpaDeviceComplexConjugate(tmat_dev[i + j*max_stored_rows]), h_dev[i]));
+      }
 
-    // set the cache values
-    cache[threadIdx.x] = slice_sum;
-    // synchronize threads in this block
-    __syncthreads();
-
-    // for reductions, threadsPerBlock=blockDim.x must be a power of 2
-    int di = blockDim.x/2;
-    while (di > 0) {
-      if (threadIdx.x < di) cache[threadIdx.x] = elpaDeviceAdd(cache[threadIdx.x], cache[threadIdx.x + di]);
+      // set the cache values
+      cache[threadIdx.x] = slice_sum;
+      // synchronize threads in this block
       __syncthreads();
-      di /= 2;
-    }
 
-    if (threadIdx.x==0) atomicAdd(&result_buffer_dev[j], cache[0]);
-  }
+      // for reductions, threadsPerBlock=blockDim.x must be a power of 2
+      int di = blockDim.x/2;
+      while (di > 0) {
+        if (threadIdx.x < di) cache[threadIdx.x] = elpaDeviceAdd(cache[threadIdx.x], cache[threadIdx.x + di]);
+        __syncthreads();
+        di /= 2;
+      }
 
+      // if (threadIdx.x==0) {
+      //   //atomicAdd(&result_buffer_dev[j], cache[0]); // PETERDEBUG: cleanup
+      //   result_buffer_dev[j] = cache[0];
+      //   result_buffer_dev[j] = elpaDeviceMultiply(elpaDeviceComplexConjugate(result_buffer_dev[j]), (*tau_curr_dev));
+      //   result_buffer_dev[j] = elpaDeviceMultiply(elpaDeviceNumber<T>(-1.0), result_buffer_dev[j]);
+      //   printf("gpu_trmv: tau_curr_dev=%f\n", *tau_curr_dev); // PETERDEBUG
+      //   }
+
+      if (threadIdx.x==0) {
+        //atomicAdd(&tmat_dev[n + j*max_stored_rows], cache[0]);
+        int idx = n + j*max_stored_rows;
+        tmat_dev[idx] = cache[0];
+        tmat_dev[idx] = elpaDeviceMultiply(elpaDeviceComplexConjugate(tmat_dev[idx]), (*tau_curr_dev));
+        tmat_dev[idx] = elpaDeviceMultiply(elpaDeviceNumber<T>(-1.0), tmat_dev[idx]);
+        }
+      }
+
+    if (threadIdx.x==0 && blockIdx.x==0) tmat_dev[n + n*max_stored_rows] = *tau_curr_dev;
+    //}
 }
 
 template <typename T>
-void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, int *ld_tmat_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  int ld_tmat = *ld_tmat_in;
+void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int *max_stored_rows_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
+  int max_stored_rows = *max_stored_rows_in;
   int n = *n_in;
   int SM_count = *SM_count_in;
   int debug = *debug_in;
@@ -345,27 +370,30 @@ void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, int *ld_tmat_in, int 
 
   //dim3 blocks = dim3(1,1,1); // PETERDEBUG cleanup
   //dim3 threadsPerBlock = dim3(1,1,1);
+  printf("gpu_trmv: n=%d\n", n);
+  //std::cout << "gpu_trmv: n=" << n << endl << std::flush;
 
 #ifdef WITH_GPU_STREAMS
-  gpu_trmv_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmat_dev, h_dev, result_buffer_dev, ld_tmat, n);
+  gpu_trmv_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n);
 #else
-  gpu_trmv_kernel<<<blocks,threadsPerBlock>>>            (tmat_dev, h_dev, result_buffer_dev, ld_tmat, n);
+  gpu_trmv_kernel<<<blocks,threadsPerBlock>>>            (tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n);
 #endif
-
-  if (debug)
-    {
-    gpuDeviceSynchronize();
-    gpuError_t gpuerr = gpuGetLastError();
-    if (gpuerr != gpuSuccess){
-      printf("Error in executing gpu_trmv: %s\n", gpuGetErrorString(gpuerr));
-    }
-  }
+  
+  // PETERDEBUG: cleanup. too much overhead, if called in tight loop
+  // if (debug)
+  //   {
+  //   gpuDeviceSynchronize();
+  //   gpuError_t gpuerr = gpuGetLastError();
+  //   if (gpuerr != gpuSuccess){
+  //     printf("Error in executing gpu_trmv: %s\n", gpuGetErrorString(gpuerr));
+  //   }
+  // }
 }
 
-extern "C" void CONCATENATE(ELPA_GPU,  _trmv_FromC) (char dataType, intptr_t tmat_dev, intptr_t h_dev, intptr_t result_buffer_dev,
-                                      int *ld_tmat_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_trmv<double>((double *) tmat_dev, (double *) h_dev, (double *) result_buffer_dev, ld_tmat_in, n_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='S') gpu_trmv<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) result_buffer_dev, ld_tmat_in, n_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='Z') gpu_trmv<cuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) result_buffer_dev, ld_tmat_in, n_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='C') gpu_trmv<cuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) result_buffer_dev, ld_tmat_in, n_in, SM_count_in, debug_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU,  _trmv_FromC) (char dataType, intptr_t tmat_dev, intptr_t h_dev, intptr_t result_buffer_dev, intptr_t tau_curr_dev,
+                                      int *max_stored_rows_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_trmv<double>((double *) tmat_dev, (double *) h_dev, (double *) result_buffer_dev, (double *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
+  else if (dataType=='S') gpu_trmv<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) result_buffer_dev, (float  *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
+  else if (dataType=='Z') gpu_trmv<cuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) result_buffer_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
+  else if (dataType=='C') gpu_trmv<cuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) result_buffer_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
 }
