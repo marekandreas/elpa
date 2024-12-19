@@ -178,5 +178,31 @@ module trans_ev_gpu
 #endif
     end subroutine
 
+
+    subroutine gpu_trmv(dataType, tmat_dev, h_dev, result_buffer_dev, max_stored_rows, n, &
+                        SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev
+      integer(kind=c_int), intent(in) :: max_stored_rows, n, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      call cuda_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, max_stored_rows, n, &
+                       SM_count, debug, my_stream)
+#endif
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_trmv_c (dataType, tmat_dev, h_dev, result_buffer_dev, max_stored_rows, n, &
+                       SM_count, debug, my_stream)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, max_stored_rows, n, &
+                       SM_count, debug, my_stream)
+#endif
+    end subroutine
+
 end module
 
