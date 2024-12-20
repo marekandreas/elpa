@@ -163,7 +163,7 @@ __global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, T *hvb_dev, int ld_hvm, int 
       hvm_dev[i + ld_hvm*(ic-ics+nstor)] = hvb_dev[i + ld_hvb*(ic-ics)]; // nb -> ld_hvb*(ic-ics), no compression
     }
     
-    for (int i=l_rows+i0; i < ld_hvm; i++) {
+    for (int i=l_rows+i0; i < ld_hvm; i+=blockDim.x) {
       hvm_dev[i + ld_hvm*(ic-ics+nstor)] = Zero; // since we're not compressing, we need to take extra care to clear from previous iterations
     }
 
@@ -396,4 +396,62 @@ extern "C" void CONCATENATE(ELPA_GPU,  _trmv_FromC) (char dataType, intptr_t tma
   else if (dataType=='S') gpu_trmv<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) result_buffer_dev, (float  *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
   else if (dataType=='Z') gpu_trmv<cuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) result_buffer_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
   else if (dataType=='C') gpu_trmv<cuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) result_buffer_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
+}
+
+template <typename T>
+void gpu_trmv_loop(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int *max_stored_rows_in, int *nstor_in, int *ice_in, int *SM_count_in, int *useCCL_in, int *debug_in, gpuStream_t my_stream){
+  int max_stored_rows = *max_stored_rows_in;
+  int nstor = *nstor_in;
+  int ice = *ice_in;
+  int SM_count = *SM_count_in;
+  int useCCL = *useCCL_in;
+  int debug = *debug_in;
+
+  dim3 blocks = dim3(SM_count, 1, 1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
+
+  //dim3 blocks = dim3(1,1,1); // PETERDEBUG cleanup
+  //dim3 threadsPerBlock = dim3(1,1,1);
+  //printf("gpu_trmv: n=%d\n", n);
+  //std::cout << "gpu_trmv: n=" << n << endl << std::flush;
+  int size_of_datatype = sizeof(T);
+  int shift_h_dev, shift_tau_dev;
+  int nc = 0;
+
+  printf("gpu_trmv_loop: max_stored_rows=%d, nstor=%d, useCCL=%d\n", max_stored_rows, nstor, useCCL); // PETERDEBUG
+
+  for (int n=1; n <= nstor-1; n++)
+    {
+    if (useCCL) {
+      shift_h_dev = n*max_stored_rows; //*size_of_datatype;
+    }
+    else {
+      shift_h_dev = nc;//*size_of_datatype;
+      nc = nc+n;
+    }
+    shift_tau_dev = (ice-nstor+n);//*size_of_datatype;
+
+#ifdef WITH_GPU_STREAMS
+    gpu_trmv_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmat_dev, h_dev+shift_h_dev, result_buffer_dev, tau_curr_dev+shift_tau_dev, max_stored_rows, nstor);
+#else
+    gpu_trmv_kernel<<<blocks,threadsPerBlock>>>            (tmat_dev, h_dev+shift_h_dev, result_buffer_dev, tau_curr_dev+shift_tau_dev, max_stored_rows, nstor);
+#endif
+    }
+
+  if (debug)
+    {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess){
+      printf("Error in executing gpu_trmv_loop: %s\n", gpuGetErrorString(gpuerr));
+    }
+  }
+}
+
+extern "C" void CONCATENATE(ELPA_GPU,  _trmv_loop_FromC) (char dataType, intptr_t tmat_dev, intptr_t h_dev, intptr_t result_buffer_dev, intptr_t tau_curr_dev,
+                                      int *max_stored_rows_in, int *nstor_in, int *ice_in, int *SM_count_in, int *useCCL_in, int *debug_in, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_trmv_loop<double>((double *) tmat_dev, (double *) h_dev, (double *) result_buffer_dev, (double *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
+  else if (dataType=='S') gpu_trmv_loop<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) result_buffer_dev, (float  *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
+  else if (dataType=='Z') gpu_trmv_loop<cuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) result_buffer_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
+  else if (dataType=='C') gpu_trmv_loop<cuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) result_buffer_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
 }

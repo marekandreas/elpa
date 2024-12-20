@@ -177,7 +177,7 @@ subroutine trans_ev_cpu_&
                                                                       &MATH_DATATYPE
   integer(kind=c_intptr_t)                      :: gpublasHandle, my_stream
   character(20)                                 :: gpuString
-  integer(kind=ik)                              :: SM_count, debug
+  integer(kind=ik)                              :: SM_count, debug, useCCL_int
 
   logical                                       :: useCCL
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
@@ -210,9 +210,11 @@ subroutine trans_ev_cpu_&
   endif
 
   useCCL = .false.
+  useCCL_int = 0
 #if defined(USE_CCL_TRANS_EV)
   if (useGPU) then
     useCCL = .true.
+    useCCL_int = 1
   
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
@@ -729,6 +731,7 @@ subroutine trans_ev_cpu_&
         nc = 0
         n = 0
         shift_dev = (ice-nstor+n)*size_of_datatype
+        shift_h_dev = 0
         call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev, tau_dev + shift_dev, &
                              max_stored_rows, nc, n, SM_count, debug, my_stream)
         
@@ -740,16 +743,19 @@ subroutine trans_ev_cpu_&
         NVTX_RANGE_POP("gpu_trmv")
 
         NVTX_RANGE_PUSH("trmv_loop")
+        ! call gpu_trmv_loop(PRECISION_CHAR, tmat_dev, h_dev, h1_buffer_dev, tau_dev, &
+        !                   max_stored_rows, nstor, ice, SM_count, useCCL_int, debug, my_stream)
+
         do n = 1, nstor-1
           !shift_dev = nc*size_of_datatype
           !h_dev <- tmat_dev*h_dev
 
-          if (useCCL) then
-            shift_h_dev = n*max_stored_rows*size_of_datatype
-          else
-            shift_h_dev = nc*size_of_datatype
-            nc = nc+n
-          endif
+         if (useCCL) then
+           shift_h_dev = n*max_stored_rows*size_of_datatype
+         else
+           shift_h_dev = nc*size_of_datatype
+           nc = nc+n
+         endif
 
           ! NVTX_RANGE_PUSH("gpublas_trmv")
           ! call gpublas_PRECISION_TRMV('L', BLAS_TRANS_OR_CONJ, 'N', n, &
