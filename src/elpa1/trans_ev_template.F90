@@ -739,6 +739,7 @@ subroutine trans_ev_cpu_&
                       max_stored_rows, n, SM_count, debug, my_stream)
         NVTX_RANGE_POP("gpu_trmv")
 
+        NVTX_RANGE_PUSH("trmv_loop")
         do n = 1, nstor-1
           !shift_dev = nc*size_of_datatype
           !h_dev <- tmat_dev*h_dev
@@ -783,6 +784,9 @@ subroutine trans_ev_cpu_&
           !                      max_stored_rows, nc, n, SM_count, debug, my_stream)
           ! NVTX_RANGE_POP("gpu_update_tmat")
         enddo
+        if (wantDebug) successGPU = gpu_DeviceSynchronize()
+        NVTX_RANGE_POP("trmv_loop")
+        
         !NVTX_RANGE_POP("gpublas_trmv+gpu_update_tmat loop")
       else ! useGPU
         nc = 0

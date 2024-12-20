@@ -320,7 +320,7 @@ __global__ void gpu_trmv_kernel(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *
       if (threadIdx.x==0) tmat_dev[n + j*max_stored_rows] = Zero; // PETERDEBUG: delete, unneeded
 
       T slice_sum = Zero;
-      for (int i=i0; i<n; i+=blockDim.x) {
+      for (int i=i0 + j; i<n; i+=blockDim.x) { // j because tmat_dev is lower triangular
         slice_sum = elpaDeviceAdd(slice_sum, elpaDeviceMultiply(elpaDeviceComplexConjugate(tmat_dev[i + j*max_stored_rows]), h_dev[i]));
       }
 
@@ -370,7 +370,7 @@ void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int 
 
   //dim3 blocks = dim3(1,1,1); // PETERDEBUG cleanup
   //dim3 threadsPerBlock = dim3(1,1,1);
-  printf("gpu_trmv: n=%d\n", n);
+  //printf("gpu_trmv: n=%d\n", n);
   //std::cout << "gpu_trmv: n=" << n << endl << std::flush;
 
 #ifdef WITH_GPU_STREAMS
@@ -380,14 +380,14 @@ void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int 
 #endif
   
   // PETERDEBUG: cleanup. too much overhead, if called in tight loop
-  // if (debug)
-  //   {
-  //   gpuDeviceSynchronize();
-  //   gpuError_t gpuerr = gpuGetLastError();
-  //   if (gpuerr != gpuSuccess){
-  //     printf("Error in executing gpu_trmv: %s\n", gpuGetErrorString(gpuerr));
-  //   }
-  // }
+  if (debug)
+    {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess){
+      printf("Error in executing gpu_trmv: %s\n", gpuGetErrorString(gpuerr));
+    }
+  }
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _trmv_FromC) (char dataType, intptr_t tmat_dev, intptr_t h_dev, intptr_t result_buffer_dev, intptr_t tau_curr_dev,
