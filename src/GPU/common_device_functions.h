@@ -1,3 +1,52 @@
+//    Copyright 2024, P. Karpov
+//
+//    This file is part of ELPA.
+//
+//    The ELPA library was originally created by the ELPA consortium,
+//    consisting of the following organizations:
+//
+//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+//      Informatik,
+//    - Technische Universität München, Lehrstuhl für Informatik mit
+//      Schwerpunkt Wissenschaftliches Rechnen ,
+//    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+//    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//      and
+//    - IBM Deutschland GmbH
+//
+//    This particular source code file contains additions, changes and
+//    enhancements authored by Intel Corporation which is not part of
+//    the ELPA consortium.
+//
+//    More information can be found here:
+//    http://elpa.mpcdf.mpg.de/
+//
+//    ELPA is free software: you can redistribute it and/or modify
+//    it under the terms of the version 3 of the license of the
+//    GNU Lesser General Public License as published by the Free
+//    Software Foundation.
+//
+//    ELPA is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//    You should have received a copy of the GNU Lesser General Public License
+//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+//
+//    ELPA reflects a substantial effort on the part of the original
+//    ELPA consortium, and we ask you to respect the spirit of the
+//    license that we chose: i.e., please contribute any changes you
+//    may have back to the original ELPA library distribution, and keep
+//    any derivatives of ELPA under the same license that we chose for
+//    the original distribution, the GNU Lesser General Public License.
+//
+//    This file was written by P. Karpov, MPCDF
+
+
 #ifdef WITH_NVIDIA_GPU_VERSION
 #define INLINE_DEVICE __forceinline__ __device__
 #define double_complex cuDoubleComplex
@@ -15,6 +64,32 @@
 #define double_complex std::complex<double>
 #define float_complex  std::complex<float>
 #endif
+
+//_________________________________________________________________________________________________
+// Generic math host functions
+
+// construct a generic double/float/double_complex/float_complex from a double
+template <typename T> inline T elpaHostNumberFromInt(int number);
+template <> inline double elpaHostNumberFromInt<double>(int number) {return (double) number;}
+template <> inline float  elpaHostNumberFromInt<float> (int number) {return (float) number;}
+template <> inline double_complex elpaHostNumberFromInt<double_complex>(int number) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return make_cuDoubleComplex ((double)number, 0.0);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return make_hipDoubleComplex((double)number, 0.0);
+#else
+  return std::complex<double> ((double)number, 0.0);
+#endif
+}
+template <>  inline float_complex elpaHostNumberFromInt<float_complex> (int number) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return make_cuFloatComplex ((float) number, 0.0f);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return make_hipFloatComplex((float) number, 0.0f);
+#else
+  return std::complex<float> ((float) number, 0.0f);
+#endif
+}
 
 //_________________________________________________________________________________________________
 // Generic math device functions

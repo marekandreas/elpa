@@ -23,10 +23,13 @@ module solve_tridi
 
 #undef SOLVE_TRIDI_GPU_BUILD
 #include "./solve_tridi_template.F90"
+#include "./solve_tridi_col_template.F90"
+#include "./solve_tridi_single_problem_template.F90"
 #define SOLVE_TRIDI_GPU_BUILD
 #include "./solve_tridi_template.F90"
-#undef SOLVE_TRIDI_GPU_BUILD
 #include "./solve_tridi_col_template.F90"
+#include "./solve_tridi_single_problem_template.F90"
+#undef SOLVE_TRIDI_GPU_BUILD
 #undef DOUBLE_PRECISION_REAL
 #undef REALCASE
 #undef DOUBLE_PRECISION
@@ -43,10 +46,13 @@ module solve_tridi
 
 #undef SOLVE_TRIDI_GPU_BUILD
 #include "./solve_tridi_template.F90"
+#include "./solve_tridi_col_template.F90"
+#include "./solve_tridi_single_problem_template.F90"
 #define SOLVE_TRIDI_GPU_BUILD
 #include "./solve_tridi_template.F90"
-#undef SOLVE_TRIDI_GPU_BUILD
 #include "./solve_tridi_col_template.F90"
+#include "./solve_tridi_single_problem_template.F90"
+#undef SOLVE_TRIDI_GPU_BUILD
 #undef SINGLE_PRECISION_REAL
 #undef REALCASE
 #undef SINGLE_PRECISION

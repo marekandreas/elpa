@@ -1,0 +1,71 @@
+.TH "elpa_skew_eigenvalues_float" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.ss 12 0
+.SH NAME
+elpa_skew_eigenvalues_float \- computes all eigenvalues \(*l for a real skew-symmetric eigenproblem: A*Q = \(*l*Q
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa_handle
+.br
+
+call elpa_handle%\fBskew_eigenvalues\fP (a, ev, error)
+.sp
+With the definitions of the input and output variables:
+
+.TP
+class(elpa_t) ::\fB elpa_handle\fP
+An instance of the ELPA object.
+.TP
+real(kind=c_float) ::\fB a\fP \t OR \t type(c_ptr) ::\fB a\fP
+The local part of matrix A for which the eigenvalues should be computed.
+The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The global matrix has to be skew-symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
+.TP
+real(kind=c_float) ::\fB ev\fP \t OR \t type(c_ptr) ::\fB ev\fP
+The array where the eigenvalues \(*l will be stored in\fI ascending\fP order.
+In case of a GPU build\fB ev\fP can be a pointer to the device memory.
+.TP
+integer, optional ::\fB error\fP
+The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3).
+
+.br
+.SS C/C++ INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t elpa_handle;
+
+.br
+void\fB elpa_skew_eigenvalues\fP(\fBelpa_t\fP elpa_handle,\fB float\fP *a,\fB float\fP *ev,\fB int\fP *error);
+.sp
+With the definitions of the input and output variables:
+
+.TP
+elpa_t\fB handle\fP;
+The handle to the ELPA object
+.TP
+float \fB *a\fP;
+The local part of matrix A for which the eigenvalues should be computed.
+The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+The global matrix has to be skew-symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
+.TP
+float \fB *ev\fP;
+The array where the eigenvalues \(*l will be stored in\fI ascending\fP order.
+Eigenvalues will be stored in\fI ascending\fP order.
+In case of a GPU build\fB ev\fP can be a pointer to the device memory.
+.TP
+int \fB *error\fP;
+The error code of the function. Should be "ELPA_OK". The error codes can be queried with\fB elpa_strerr\fP(3).
+
+.SH DESCRIPTION
+Computes the eigenvalues of a real skew-symmetric matrix.
+The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_skew_eigenvalues\fP can be called.
+
+.SH SEE ALSO
+\fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_skew_eigenvectors\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)

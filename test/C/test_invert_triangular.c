@@ -81,13 +81,13 @@
 #    define PRINT_MATRIX print_matrix_real_single_f
 #    define PREPARE_MATRIX_RANDOM_TRIANGULAR prepare_matrix_random_triangular_real_single_f
 #    define PREPARE_MATRIX_UNIT prepare_matrix_unit_real_single_f
-#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_single_f
+#    define CHECK_CORRECTNESS_MULTIPLY check_correctness_multiply_real_single_f
 #  else
 #    define MATRIX_TYPE float_complex
 #    define PRINT_MATRIX print_matrix_complex_single_f
 #    define PREPARE_MATRIX_RANDOM_TRIANGULAR prepare_matrix_random_triangular_complex_single_f
 #    define PREPARE_MATRIX_UNIT prepare_matrix_unit_complex_single_f
-#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_complex_single_f
+#    define CHECK_CORRECTNESS_MULTIPLY check_correctness_multiply_complex_single_f
 #  endif
 #else
 #  define EV_TYPE double
@@ -96,14 +96,14 @@
 #    define PRINT_MATRIX print_matrix_real_double_f
 #    define PREPARE_MATRIX_RANDOM_TRIANGULAR prepare_matrix_random_triangular_real_double_f
 #    define PREPARE_MATRIX_UNIT prepare_matrix_unit_real_double_f
-#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_real_double_f
+#    define CHECK_CORRECTNESS_MULTIPLY check_correctness_multiply_real_double_f
 #  else
 //#    define MATRIX_TYPE std::complex<double>
 #    define MATRIX_TYPE double_complex
 #    define PRINT_MATRIX print_matrix_complex_double_f
 #    define PREPARE_MATRIX_RANDOM_TRIANGULAR prepare_matrix_random_triangular_complex_double_f
 #    define PREPARE_MATRIX_UNIT prepare_matrix_unit_complex_double_f
-#    define CHECK_CORRECTNESS_HERMITIAN_MULTIPLY check_correctness_hermitian_multiply_complex_double_f
+#    define CHECK_CORRECTNESS_MULTIPLY check_correctness_multiply_complex_double_f
 #  endif
 #endif
 
@@ -447,7 +447,9 @@ int main(int argc, char** argv) {
    //-----------------------------------------------------------------------------------------------------------------------------
    // Check the results
    
-   status = CHECK_CORRECTNESS_HERMITIAN_MULTIPLY('N', na, a, as, c, na_rows, na_cols, sc_desc, myid);
+   status = CHECK_CORRECTNESS_MULTIPLY('N', 'N', 'F', 'F', uplo_c,
+                                        na, a, b, c, na_rows, na_cols, sc_desc,
+                                        nblk, myid, np_rows, np_cols, my_prow, my_pcol);
    
    if (myid==0) {
       if (status !=0) {

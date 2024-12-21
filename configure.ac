@@ -28,7 +28,7 @@ AM_SILENT_RULES([yes])
 #
 # Note that this number translates into the library file name like this:
 # c:r:a  --->  libelpa.so.(c-a).a.r
-AC_SUBST([ELPA_SO_VERSION], [22:0:3])
+AC_SUBST([ELPA_SO_VERSION], [23:0:4])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -42,17 +42,17 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20241105, "Current ELPA API version")
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20241612, "Current ELPA API version")
 print_current_api_version=20241105
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241105], [Current ELPA autotune version])
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241612], [Current ELPA autotune version])
 print_current_autotune_version=20241105
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241105], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20241105, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241612], [Current ELPA autotune version])
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20241612, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1732082353],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1747401835],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -2698,7 +2698,7 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include "
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   CFLAGS="$CFLAGS -I$CUDA_INSTALL_PATH/include"
-  NVCCFLAGS="$NVCCFLAGS $CUDA_CFLAGS $CUDA_LDFLAGS"
+  NVCCFLAGS="$CUDA_CFLAGS $CUDA_LDFLAGS $NVCCFLAGS"
   NVCC="nvcc"
   AC_SUBST(NVCC)
   AC_SUBST(NVCCFLAGS)
@@ -2732,6 +2732,12 @@ fi
 
 if test x"${need_amd_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
+  HIPCC="hipcc"
+dnl Default value for $HIPCCFLAGS, unless set by the user. This is for backward compatibility.
+  : ${HIPCCFLAGS="$CXXFLAGS"}
+  AC_SUBST(HIPCC)
+  AC_SUBST(HIPCCFLAGS)
+
   dnl check whether hipcc compiler is found
   AC_CHECK_PROG(hipcc_found,hipcc,yes,no)
   if test x"${hipcc_found}" = x"no" ; then
@@ -3392,6 +3398,21 @@ if test x"$use_amd_rccl" = x"yes"; then
 fi
 AM_CONDITIONAL([WITH_AMD_RCCL],[test x"$use_amd_rccl" = x"yes"])
 
+#############################################################################################
+#
+# [Nvidia|AMD] preprocess .cu and .hip sources
+#
+#############################################################################################
+
+if test x"${need_nvidia_gpu}" = x"yes" ; then
+  NVCC="\$(top_srcdir)/manual_cpp $NVCC"
+fi
+
+if test x"${need_amd_gpu}" = x"yes" ; then
+  HIPCC="\$(top_srcdir)/manual_cpp $HIPCC"
+fi
+
+#############################################################################################
 
 LT_INIT
 
@@ -3598,6 +3619,24 @@ AC_MSG_RESULT([${enable_cpp_tests}])
 AM_CONDITIONAL([ENABLE_CPP_TESTS],[test x"$enable_cpp_tests" = x"yes"])
 if test x"${enable_cpp_tests}" = x"yes"; then
  AC_DEFINE([ENABLE_CPP_TESTS], [1], [enable C++ tests])
+fi
+
+AC_MSG_CHECKING(whether Fortran tests should be provided)
+AC_ARG_ENABLE([Fortran-tests],
+              AS_HELP_STRING([--enable-Fortran-tests],
+                             [enables the Fortran tests for elpa, default yes.]),
+			     [
+			      if test x"$enableval" = x"yes"; then
+			        enable_fortran_tests=yes
+		              else
+			        enable_fortran_tests=no
+			      fi
+			      ],
+              [enable_fortran_tests=yes])
+AC_MSG_RESULT([${enable_fortran_tests}])
+AM_CONDITIONAL([ENABLE_FORTRAN_TESTS],[test x"$enable_fortran_tests" = x"yes"])
+if test x"${enable_fortran_tests}" = x"yes"; then
+ AC_DEFINE([ENABLE_FORTRAN_TESTS], [1], [enable Fortran tests])
 fi
 
 ##check for MPI-CXX wrapper
@@ -4037,13 +4076,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2024.05.001.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2024.05.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2025.01.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2025.01.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

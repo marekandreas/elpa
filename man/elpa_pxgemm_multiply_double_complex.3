@@ -1,0 +1,139 @@
+.TH "elpa_pxgemm_multiply_double_complex" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
+.ad l
+.nh
+.ss 12 0
+.SH NAME
+elpa_pxgemm_multiply_double_complex \- performs multiplication of two block-cyclic distributed matrices C = op(A)*op(B)
+.sp
+\fBTHIS IS AN EXPERIMENTAL ROUTINE\fP. FOR NOW ONLY SQUARE MATRICES \fB(ncb=elpa_handle%na)\fP, HAVING THE SAME BLOCK-CYCLIC DISTRIBUTION \fB(nrows_b=nrows_c=elpa_handle%local_nrows, ncols_b=ncols_c=elpa_handle%local_ncols)\fP ARE SUPPORTED. USE WITH CARE.
+
+.SH SYNOPSIS
+.br
+.SS FORTRAN INTERFACE
+use elpa
+.br
+class(elpa_t), pointer :: elpa_handle
+.br
+
+call elpa_handle%\fBpxgemm_multiply_double_complex\fP (trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error)
+.sp
+With the definitions of the input and output variables:
+.TP
+class(elpa_t) ::\fB elpa_handle\fP
+An instance of the ELPA object.
+.TP
+character*1   ::\fB trans_a\fP
+Should be set 
+to 'N' if A is non-transposed: op(A) = A;
+to 'H' if A is conjugate-transposed: op(A) = A^H.
+.TP
+character*1   ::\fB trans_b\fP
+Should be set 
+to 'N' if B is non-transposed: op(B) = B;
+to 'H' if B is conjugate-transposed: op(B) = B^H.
+.TP
+integer       ::\fB ncb\fP
+The number of columns of the global matrices\fB B\fP and\fB C\fP.
+.TP
+real(kind=c_double_complex) ::\fB a\fP \t OR \t type(c_ptr) ::\fB a\fP
+The local part of the host/device matrix A.
+The local dimensions of matrix\fB a\fP (elpa_handle%local_nrows, elpa_handle%local_ncols) as well as the corresponding global dimensions (elpa_handle%na, elpa_handle%na) must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
+.TP
+real(kind=c_double_complex) ::\fB b\fP \t OR \t type(c_ptr) ::\fB b\fP
+The local part of the host/device matrix B.
+The local matrix\fB b\fP. The local dimensions of the matrix are specified by the parameters\fB nrows_b\fP and\fB ncols_b\fP.
+In case of a GPU build\fB b\fP can be a pointer to the device memory.
+.TP
+integer       ::\fB nrows_b\fP
+The local number of rows of matrix\fB b\fP.
+.TP
+integer       ::\fB ncols_b\fP
+The local number of columns of matrix\fB b\fP.
+.TP
+real(kind=c_double_complex) ::\fB c\fP \t OR \t type(c_ptr) ::\fB c\fP
+The local part of the host/device matrix C.
+The local dimensions of the matrix are specified by the parameters\fB nrows_c\fP and\fB ncols_c\fP.
+In case of a GPU build\fB c\fP can be a pointer to the device memory.
+.TP
+integer       ::\fB nrows_c\fP
+The local number of rows of matrix\fB c\fP.
+.TP
+integer       ::\fB ncols_c\fP
+The local number of columns of matrix\fB c\fP.
+.TP
+integer, optional ::\fB error\fP
+The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
+
+.br
+.SS C/C++ INTERFACE
+#include <elpa/elpa.h>
+.br
+elpa_t elpa_handle;
+
+.br
+// C:
+.br
+void\fB elpa_pxgemm_multiply_double_complex\fP(\fBelpa_t\fP elpa_handle,\fB char\fP trans_a,\fB char\fP trans_b,\fB int\fP ncb,\fB double complex\fP *a,\fB double complex\fP *b,\fB int\fP nrows_b,\fB int\fP ncols_b,\fB double complex\fP *c,\fB int\fP nrows_c,\fB int\fP ncols_c,\fB int\fP *error);
+.sp
+// C++:
+.br
+void\fB elpa_pxgemm_multiply_double_complex\fP(\fBelpa_t\fP elpa_handle,\fB char\fP trans_a,\fB char\fP trans_b,\fB int\fP ncb,\fB std::complex<double>\fP *a,\fB std::complex<double>\fP *b,\fB int\fP nrows_b,\fB int\fP ncols_b,\fB std::complex<double>\fP *c,\fB int\fP nrows_c,\fB int\fP ncols_c,\fB int\fP *error);
+.sp
+With the definitions of the input and output variables:
+
+.TP
+elpa_t\fB elpa_handle\fP;
+The handle to the ELPA object
+.TP
+char  \fB trans_a\fP;
+Should be set 
+to 'N' if A is non-transposed: op(A) = A;
+to 'H' if A is conjugate-transposed: op(A) = A^H.
+.TP
+char  \fB trans_b\fP;
+Should be set 
+to 'N' if B is non-transposed: op(B) = B; 
+to 'H' if B is conjugate-transposed: op(B) = B^H.
+.TP
+int   \fB ncb\fP;
+The number of columns of the global matrices\fB B\fP and \fB C\fP.
+.TP
+double complex \fB *a\fP; \t OR \t std::complex<double> \fB *a\fP;
+The local part of the host/device matrix A.
+The local dimensions of matrix\fB a\fP (local_nrows, local_ncols) as well as the corresponding global dimensions (na, na) must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
+.TP
+double complex \fB *b\fP; \t OR \t std::complex<double> \fB *b\fP;
+The local part of the host/device matrix B.
+The local dimensions of the matrix are specified by the parameters\fB nrows_b\fP and\fB ncols_b\fP.
+In case of a GPU build\fB b\fP can be a pointer to the device memory.
+.TP
+int   \fB nrows_b\fP;
+The local number of rows of matrix\fB b\fP.
+.TP
+int   \fB ncols_b\fP;
+The local number of columns of matrix\fB b\fP.
+.TP
+double complex \fB *c\fP; \t OR \t std::complex<double> \fB *c\fP;
+The local part of the host/device matrix C.
+The local dimensions of the matrix are specified by the parameters\fB nrows_c\fP and\fB ncols_c\fP.
+In case of a GPU build\fB c\fP can be a pointer to the device memory.
+.TP
+int   \fB nrows_c\fP;
+The local number of rows of matrix\fB c\fP.
+.TP
+int   \fB ncols_c\fP;
+The local number of columns of matrix\fB c\fP.
+.TP
+int   \fB *error\fP;
+The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
+
+.SH DESCRIPTION
+Performs a matrix multiplication: C = op(A)* op(B) where op(A)=A or op(A)=A^H for double complex matrices.
+Can use either host or device pointers for the matrices\fB a\fP,\fB b\fP, and\fB c\fP.
+The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3),
+and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_pxgemm_multiply_double_complex\fP can be called.
+
+.SH SEE ALSO
+\fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)

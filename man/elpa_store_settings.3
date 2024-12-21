@@ -1,8 +1,9 @@
-.TH "elpa_store_settings" 3 "Fri Feb 9 2024" "ELPA" \" -*- nroff -*-
+.TH "elpa_store_settings" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
-elpa_store_settings \- stores the setting of an elpa object
+elpa_store_settings \- stores the setting of an ELPA object
 .br
 
 .SH SYNOPSIS
@@ -10,34 +11,34 @@ elpa_store_settings \- stores the setting of an elpa object
 .SS FORTRAN INTERFACE
 use elpa
 .br
-class(elpa_t), pointer :: elpa
+class(elpa_t), pointer :: elpa_handle
 .br
 
-call elpa%\fBstore_settings\fP (filename, error)
+call elpa_handle%\fBstore_settings\fP (filename, error)
 .sp
 With the definitions of the input and output variables:
 .TP
-class(elpa_t)      :: \fB elpa\fP      
+class(elpa_t)      ::\fB elpa_handle\fP      
 An instance of the ELPA object
 .TP
-character(*)       :: \fB filename\fP  
+character(*)       ::\fB filename\fP  
 The filename to be used for storing the settings
 .TP
-integer, optional  :: \fB error\fP    
+integer, optional  ::\fB error\fP    
 An error return code
 .br
 
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include <elpa/elpa.h>
 .br
-elpa_t handle;
+elpa_t elpa_handle;
 
 .br
-void\fB elpa_store_settings\fP(\fBelpa_t\fP handle,\fB const char\fP *filename,\fB int\fP *error);
+void\fB elpa_store_settings\fP(\fBelpa_t\fP elpa_handle,\fB const char\fP *filename,\fB int\fP *error);
 .sp
 With the definitions of the input and output variables:
 .TP
-elpa_t \fB handle\fP;          
+elpa_t \fB elpa_handle\fP;          
 The handle to the ELPA object
 .TP
 const char \fB *filename\fP;   
