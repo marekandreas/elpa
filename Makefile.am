@@ -264,10 +264,10 @@ if WITH_NVIDIA_GPU_VERSION
   src/elpa1/GPU/CUDA/tridiag_cuda.cu \
   src/elpa1/GPU/CUDA/trans_ev_cuda.cu \
   src/elpa1/GPU/CUDA/elpa1_cuda.cu \
-  src/solve_tridi/GPU/CUDA/cuda_merge_systems.cu \
-  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_single_problem.cu \
-  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col.cu \
   src/solve_tridi/GPU/CUDA/cuda_distribute_global_column.cu \
+  src/solve_tridi/GPU/CUDA/cuda_merge_systems.cu \
+  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col.cu \
+  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_single_problem.cu \
   src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu \
   src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu \
   src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu \
@@ -294,6 +294,10 @@ if WITH_AMD_GPU_VERSION
   src/elpa1/GPU/ROCm/tridiag_hip.hip \
   src/elpa1/GPU/ROCm/elpa1_hip.hip \
   src/elpa1/GPU/ROCm/trans_ev_hip.hip \
+  src/solve_tridi/GPU/ROCm/rocm_distribute_global_column.cpp \
+  src/solve_tridi/GPU/ROCm/rocm_merge_systems.cpp \
+  src/solve_tridi/GPU/ROCm/rocm_solve_tridi_col.cpp \
+  src/solve_tridi/GPU/ROCm/rocm_solve_tridi_single_problem.cpp \
   src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.hip \
   src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.hip \
   src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.hip \
