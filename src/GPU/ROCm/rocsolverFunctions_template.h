@@ -541,7 +541,7 @@ extern "C" {
 
 
 #ifdef HIPBLAS
-
+    //... PETERDEBUG: TODO
 #else
     d_lwork = n;
     hiperr = hipMalloc((void**) &d_work, sizeof(double) * d_lwork);
@@ -549,7 +549,8 @@ extern "C" {
       errormessage("Error in rocsolver_DnSsyevd d_work: %s\n",hipGetErrorString(hiperr));
     }
 
-    rocblas_evect jobz = rocblas_evect_tridiagonal;
+    //rocblas_evect jobz = rocblas_evect_tridiagonal; PETERDEBUG: <-- use directly rocsolver_stedc instead
+    rocblas_evect jobz = rocblas_evect_original;
     status = rocsolver_dsyevd(rocsolverHandle, jobz, uplo, n, A, lda, eigenvalues, d_work, info_dev);
 #endif
 
@@ -582,7 +583,7 @@ extern "C" {
     //}
 
 #ifdef HIPBLAS
-
+    //... PETERDEBUG: TODO
 #else
     d_lwork = n;
     hiperr = hipMalloc((void**) &d_work, sizeof(double) * d_lwork);
@@ -590,7 +591,8 @@ extern "C" {
       errormessage("Error in rocsolver_DnSsyevd d_work: %s\n",hipGetErrorString(hiperr));
     }
 
-    rocblas_evect jobz = rocblas_evect_tridiagonal;
+    //rocblas_evect jobz = rocblas_evect_tridiagonal; PETERDEBUG: <-- use directly rocsolver_stedc instead
+    rocblas_evect jobz = rocblas_evect_original;
     status = rocsolver_ssyevd(rocsolverHandle, jobz, uplo, n, A, lda, eigenvalues, d_work, info_dev);
 #endif
 
