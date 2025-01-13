@@ -2732,8 +2732,8 @@ fi
 
 if test x"${need_amd_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  HIPCC="hipcc"
-dnl Default value for $HIPCCFLAGS, unless set by the user. This is for backward compatibility.
+  dnl Default values for $HIPCC and $HIPCCFLAGS, unless set by the user. HIPCCFLAGS="$CXXFLAGS for backward compatibility.
+  : ${HIPCC:=hipcc}
   : ${HIPCCFLAGS="$CXXFLAGS"}
   AC_SUBST(HIPCC)
   AC_SUBST(HIPCCFLAGS)
@@ -3408,9 +3408,9 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   NVCC="\$(top_srcdir)/manual_cpp $NVCC"
 fi
 
-if test x"${need_amd_gpu}" = x"yes" ; then
-  HIPCC="\$(top_srcdir)/manual_cpp $HIPCC"
-fi
+#if test x"${need_amd_gpu}" = x"yes" ; then
+#  HIPCC="\$(top_srcdir)/manual_cpp $HIPCC"
+#fi
 
 #############################################################################################
 

@@ -1,3 +1,14 @@
 #!/bin/sh
 
-$HIPCC `echo $@ | sed 's/-fPIC/-Xcompiler -fPIC/; s/-Wl/-Xlinker -Wl/g; '`
+ARGS=()
+for arg in "$@"; do
+    if [ "$arg" = "-fPIC" ]; then
+        ARGS+=("-Xcompiler" "-fPIC")
+    elif [[ "$arg" == -Wl* ]]; then
+        ARGS+=("-Xlinker" "${arg/-Wl,/-Wl,}")
+    else
+        ARGS+=("$arg")
+    fi
+done
+
+$HIPCC -x cu "${ARGS[@]}"
