@@ -120,7 +120,7 @@
       logical, intent(in)           :: wantDebug
       logical                       :: useGPU
       logical, intent(out)          :: success
-      integer(kind=ik)              :: istat
+      integer(kind=ik)              :: istat, debug
       character(200)                :: errorMessage
 
       integer(kind=ik), intent(in)  :: max_threads
@@ -149,14 +149,16 @@
       success = .true.
 
       call obj%timer%start("solve_tridi_col" // PRECISION_SUFFIX)
-
-      useCCL = .false.
+      
+      debug = 0
+      if (wantDebug) debug = 1
 
       useGPU = .false.
 #ifdef SOLVE_TRIDI_GPU_BUILD
       useGPU = .true.
 #endif
 
+      useCCL = .false.
 #if defined(USE_CCL_SOLVE_TRIDI)                
       if (useGPU) then
         useCCL = .true.                          
@@ -263,12 +265,13 @@
 #endif
 
         call GPU_UPDATE_D_PRECISION (limits_dev, d_dev, e_dev, ndiv, na_local, my_stream)
+        if (wantDebug) successGPU = gpu_DeviceSynchronize()
 
         successGPU = gpu_free(limits_dev)
         check_dealloc_gpu("solve_tridi_col: limits_dev", successGPU)
 
 
-      else        
+      else
         do i=1,ndiv-1
           n = limits(i)
           d(n) = d(n)-abs(e(n))

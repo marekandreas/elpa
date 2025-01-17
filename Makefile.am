@@ -298,10 +298,10 @@ if WITH_AMD_GPU_VERSION
   src/elpa1/GPU/ROCm/trans_ev_hip.hip \
   src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.hip \
   src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.hip \
-  src/solve_tridi/GPU/ROCm/rocm_distribute_global_column.cpp \
-  src/solve_tridi/GPU/ROCm/rocm_merge_systems.cpp \
-  src/solve_tridi/GPU/ROCm/rocm_solve_tridi_col.cpp \
-  src/solve_tridi/GPU/ROCm/rocm_solve_tridi_single_problem.cpp \
+  src/solve_tridi/GPU/ROCm/rocm_distribute_global_column.hip \
+  src/solve_tridi/GPU/ROCm/rocm_merge_systems.hip \
+  src/solve_tridi/GPU/ROCm/rocm_solve_tridi_col.hip \
+  src/solve_tridi/GPU/ROCm/rocm_solve_tridi_single_problem.hip \
   src/multiply_a_b/GPU/ROCm/elpa_hermitian_multiply_hip.hip \
   src/multiply_a_b/GPU/ROCm/elpa_pxgemm_multiply_hip.hip
 endif

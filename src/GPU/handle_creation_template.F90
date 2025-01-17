@@ -63,7 +63,7 @@
 #endif /* WITH_GPU_STREAMS */
            
           ! handle creation
-          call OBJECT%timer%start("create_handle")
+          call OBJECT%timer%start("create_gpublas_handle")
           do thread = 0, maxThreads-1
 #ifdef WITH_NVIDIA_GPU_VERSION
             success = cublas_create(OBJECT%gpu_setup%cublasHandleArray(thread))
@@ -107,8 +107,8 @@
               stop 1
             endif
           enddo
-          call OBJECT%timer%stop("create_handle")
-          call OBJECT%timer%start("create_gpusolver")
+          call OBJECT%timer%stop("create_gpublas_handle")
+          call OBJECT%timer%start("create_gpusolve_handle")
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_NVIDIA_CUSOLVER
           do thread=0, maxThreads-1
@@ -124,17 +124,17 @@
 #endif
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_AMD_ROCSOLVER
-          !do thread=0, maxThreads-1
-            !not needed
-            !success = rocsolver_create(handle_tmp)
-            !OBJECT%gpu_setup%rocsolverHandleArray(thread) = handle_tmp
-            !if (.not.(success)) then
-            !  print *,"Cannot create rocsolver handle"
-            !  stop 1
-            !endif
-          !enddo
-          OBJECT%gpu_setup%rocsolverHandleArray(:) = OBJECT%gpu_setup%rocblasHandleArray(:)
-          OBJECT%gpu_setup%gpusolverHandleArray(:) = OBJECT%gpu_setup%rocsolverHandleArray(:)
+          do thread=0, maxThreads-1
+            success = rocsolver_create(handle_tmp)
+            OBJECT%gpu_setup%rocsolverHandleArray(thread) = handle_tmp
+            OBJECT%gpu_setup%gpusolverHandleArray(thread) = handle_tmp
+            if (.not.(success)) then
+             print *,"Cannot create rocsolver handle"
+             stop 1
+            endif
+          enddo
+          !OBJECT%gpu_setup%rocsolverHandleArray(:) = OBJECT%gpu_setup%rocblasHandleArray(:)
+          !OBJECT%gpu_setup%gpusolverHandleArray(:) = OBJECT%gpu_setup%rocsolverHandleArray(:)
 
 #endif
 #endif
@@ -166,7 +166,7 @@
           enddo
 #endif
 #endif
-          call OBJECT%timer%stop("create_gpusolver")
+          call OBJECT%timer%stop("create_gpusolver_handle")
 
 #ifdef WITH_GPU_STREAMS
           ! set stream
@@ -202,14 +202,13 @@
 
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_AMD_ROCSOLVER
-          !not needed
-          !do thread=0, maxThreads-1
-          !  success = rocsolver_set_stream(OBJECT%gpu_setup%rocsolverHandleArray(thread), OBJECT%gpu_setup%my_stream)
-          !  if (.not.(success)) then
-          !    print *,"Cannot create rocsolver stream handle"
-          !    stop 1
-          !  endif
-          !enddo
+          do thread=0, maxThreads-1
+           success = rocsolver_set_stream(OBJECT%gpu_setup%rocsolverHandleArray(thread), OBJECT%gpu_setup%my_stream)
+           if (.not.(success)) then
+             print *,"Cannot create rocsolver stream handle"
+             stop 1
+           endif
+          enddo
 #endif
 #endif
 

@@ -2771,12 +2771,12 @@ if test x"${need_amd_gpu}" = x"yes" ; then
     AC_MSG_CHECKING(whether rocblas API v3 should be used)
     AC_LANG_PUSH([C++])
     AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-      #include "rocblas/rocblas.h"
+      #include "hipblas/hipblas.h"
       int main(int argc, char **argv) {
-       hipblasHandle_t rocblasHandle;
-	 int m, n, lda, ldb; 
-	 float alpha, *A, *B;
-         hipblasStatus_t status = hipblasDtrmm(rocblasHandle, HIPBLAS_SIDE_LEFT, HIPBLAS_FILL_MODE_LOWER, HIPBLAS_OP_N, HIPBLAS_DIAG_UNIT, m, n, &alpha, A, lda, B, ldb, B, ldb);
+        hipblasHandle_t rocblasHandle;
+        int m, n, lda, ldb;
+        double alpha, *A, *B;
+        hipblasStatus_t status = hipblasDtrmm(rocblasHandle, HIPBLAS_SIDE_LEFT, HIPBLAS_FILL_MODE_LOWER, HIPBLAS_OP_N, HIPBLAS_DIAG_UNIT, m, n, &alpha, A, lda, B, ldb, B, ldb);
         return 0;
       }
     ])],

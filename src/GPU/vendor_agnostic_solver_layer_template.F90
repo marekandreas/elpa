@@ -504,11 +504,9 @@
         call cusolver_Dsyevd(n, a_dev, lda, eigenvalues_dev, info_dev, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
-#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Dsyevd(n, a_dev, lda, eigenvalues_dev, info_dev, handle)
       endif
-#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
@@ -547,11 +545,9 @@
         call cusolver_Ssyevd(n, a_dev, lda, eigenvalues_dev, info_dev, handle)
       endif
 #ifdef WITH_AMD_GPU_VERSION
-#ifndef WITH_AMD_HIPSOLVER_API
       if (use_gpu_vendor == amd_gpu) then
         call rocsolver_Ssyevd(n, a_dev, lda, eigenvalues_dev, info_dev, handle)
       endif
-#endif
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION

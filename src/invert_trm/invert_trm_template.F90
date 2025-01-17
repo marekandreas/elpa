@@ -54,10 +54,11 @@
 #if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
 #define INVERT_TRM_GPU_SOLVER
 #endif
+
 #if defined(WITH_AMD_ROCSOLVER)
-#ifndef WITH_AMD_HIPSOLVER_API
+#ifdef WITH_AMD_HIPSOLVER_API
 ! at the moment {X}trtri not available in hipsolver, only in pure rocsolver
-#define INVERT_TRM_GPU_SOLVER
+#undef INVERT_TRM_GPU_SOLVER
 #endif
 #endif
 
