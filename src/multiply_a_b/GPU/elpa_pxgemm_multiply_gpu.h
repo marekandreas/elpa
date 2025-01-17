@@ -421,7 +421,7 @@ void gpu_ccl_copy_buf_send(T *a_dev, T *buf_send_dev, int *l_rows_in, int *l_col
   int debug = *debug_in;
 
   dim3 blocks = dim3(SM_count, 1, 1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2, 1, 1); // divide by 2 due to high register usage
 
 #ifdef WITH_GPU_STREAMS
   gpu_ccl_copy_buf_send_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, buf_send_dev, l_rows, l_cols, lld_buf, nblk,
@@ -534,7 +534,7 @@ void gpu_ccl_copy_buf_recv(T *at_col_dev, T *buf_recv_dev, int *l_rows_in, int *
   int debug = *debug_in;
 
   dim3 blocks = dim3(SM_count, 1, 1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2, 1, 1); // divide by 2 due to high register usage
 
 #ifdef WITH_GPU_STREAMS
   gpu_ccl_copy_buf_recv_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(at_col_dev, buf_recv_dev, l_rows, l_cols, lld_buf, nblk,

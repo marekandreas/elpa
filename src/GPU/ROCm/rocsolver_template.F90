@@ -47,7 +47,7 @@
 
   interface
     function rocsolver_set_stream_c(rocsolverHandle, hipStream) result(istat) &
-            bind(C, name="rocsolverSetStreamFromC")
+              bind(C, name="rocsolverSetStreamFromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -59,7 +59,7 @@
 
   interface
     function rocsolver_create_c(rocsolverHandle) result(istat) &
-            bind(C, name="rocsolverCreateFromC")
+              bind(C, name="rocsolverCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: rocsolverHandle
@@ -69,7 +69,7 @@
 
   interface
     function rocsolver_destroy_c(rocsolverHandle) result(istat) &
-            bind(C, name="rocsolverDestroyFromC")
+              bind(C, name="rocsolverDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value :: rocsolverHandle
@@ -251,43 +251,43 @@
   contains
 
 
-   function rocsolver_set_stream(rocsolverHandle, hipStream) result(success)
-     use, intrinsic :: iso_c_binding
-     implicit none
-     integer(kind=C_intptr_t)                  :: rocsolverHandle
-     integer(kind=C_intptr_t)                  :: hipStream
-     logical                                   :: success
+    function rocsolver_set_stream(rocsolverHandle, hipStream) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: rocsolverHandle
+      integer(kind=C_intptr_t)                  :: hipStream
+      logical                                   :: success
 
 #ifdef WITH_AMD_ROCSOLVER
-     success = rocsolver_set_stream_c(rocsolverHandle, hipStream) /= 0
+      success = rocsolver_set_stream_c(rocsolverHandle, hipStream) /= 0
 #else
-     success = .true.
+      success = .true.
 #endif
-   end function
+    end function
 
-   function rocsolver_create(rocsolverHandle) result(success)
-     use, intrinsic :: iso_c_binding
-     implicit none
-     integer(kind=C_intptr_t)                  :: rocsolverHandle
-     logical                                   :: success
+    function rocsolver_create(rocsolverHandle) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: rocsolverHandle
+      logical                                   :: success
 #ifdef WITH_AMD_ROCSOLVER
-     success = rocsolver_create_c(rocsolverHandle) /= 0
+      success = rocsolver_create_c(rocsolverHandle) /= 0
 #else
-     success = .true.
+      success = .true.
 #endif
-   end function
+    end function
 
-   function rocsolver_destroy(rocsolverHandle) result(success)
-     use, intrinsic :: iso_c_binding
-     implicit none
-     integer(kind=C_intptr_t)                  :: rocsolverHandle
-     logical                                   :: success
+    function rocsolver_destroy(rocsolverHandle) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_t)                  :: rocsolverHandle
+      logical                                   :: success
 #ifdef WITH_AMD_ROCSOLVER
-     success = rocsolver_destroy_c(rocsolverHandle) /= 0
+      success = rocsolver_destroy_c(rocsolverHandle) /= 0
 #else
-     success = .true.
+      success = .true.
 #endif
-   end function
+    end function
 
     ! rocsolver_?trtri
 
@@ -453,7 +453,6 @@
 #endif
     end subroutine
 
-
     subroutine rocsolver_Ssyevd(n, a_dev, lda, eigenvalues_dev, info_dev, rocsolverHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -464,3 +463,4 @@
       call rocsolver_Ssyevd_c(rocsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
 #endif
     end subroutine
+

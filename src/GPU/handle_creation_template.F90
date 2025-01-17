@@ -108,7 +108,7 @@
             endif
           enddo
           call OBJECT%timer%stop("create_gpublas_handle")
-          call OBJECT%timer%start("create_gpusolve_handle")
+          call OBJECT%timer%start("create_gpusolver_handle")
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_NVIDIA_CUSOLVER
           do thread=0, maxThreads-1
