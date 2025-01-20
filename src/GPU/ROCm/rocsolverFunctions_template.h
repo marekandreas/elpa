@@ -52,6 +52,7 @@
 
 extern "C" {
 
+#ifdef WITH_AMD_HIPSOLVER_API
   void elpa_hipsolverPrintError(hipsolverStatus_t status){
     switch (status){
       case HIPSOLVER_STATUS_SUCCESS:
@@ -97,8 +98,9 @@ extern "C" {
           printf("Unknown hipsolverStatus status: %d\n", status);
     }
   }
+#endif
 
-#ifdef HIPBLAS
+#ifdef WITH_AMD_HIPSOLVER_API
 hipsolverFillMode_t hipsolver_fill_mode(char uplo) {
   if (uplo == 'L' || uplo == 'l') {
     return HIPSOLVER_FILL_MODE_LOWER;
