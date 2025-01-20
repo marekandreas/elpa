@@ -1,8 +1,9 @@
 .TH "elpa_generalized_eigenvalues_float" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
-elpa_generalized_eigenvalues_float \- computes all eigenvalues of a generalized eigenvalue problem, A*X=lambda*B*X, for real symmetric matrices A, B.
+elpa_generalized_eigenvalues_float \- computes all eigenvalues of a generalized eigenvalue problem, A*Q = \(*l*B*Q, for real symmetric matrices A, B.
 .br
 
 .SH SYNOPSIS
@@ -18,19 +19,22 @@ call elpa_handle%\fBgeneralized_eigenvalues_float\fP (a, b, ev, is_already_decom
 With the definitions of the input and output variables:
 
 .TP
-class(elpa_t) :: \fB elpa_handle\fP
+class(elpa_t) ::\fB elpa_handle\fP
 An instance of the ELPA object.
 .TP
 real(kind=c_float) ::\fB a\fP \t OR \t type(c_ptr) ::\fB a\fP
 The local matrix\fB a\fP for which the eigenvalues should be computed.
 The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
 real(kind=c_float) ::\fB b\fP  \t OR \t type(c_ptr) ::\fB b\fP
 The local matrix\fB b\fP defining the generalized eigenvalue problem.
 The dimensions of the matrix\fB b\fP has to be the same as for matrix\fB a\fP.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
 real(kind=c_float) ::\fB ev\fP \t OR \t type(c_ptr) ::\fB ev\fP
-The vector\fB ev\fP where the eigenvalues will be stored in\fI ascending\fP order.
+The array where the eigenvalues \(*l will be stored in\fI ascending\fP order.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
 logical ::\fB is_already_decomposed\fP
 Has to be set to .false. for the first call with a given\fB b\fP and .true. for
@@ -59,18 +63,18 @@ The handle to the ELPA object
 float \fB *a\fP;
 The local matrix\fB a\fP for which the eigenvalues should be computed.
 The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The matrix has to be symmetric, this is not checked by the routine.
-In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+The global matrix has to be symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
 float *\fB b\fP;
 The local matrix\fB b\fP defining the generalized eigenvalue problem.
 The dimensions of the matrix\fB b\fP must be the same as matrix a.
-The matrix has to be symmetric, this is not checked by the routine.
-In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+The global matrix has to be symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP   
 float \fB *ev\fP;
-The storage for the computed eigenvalues. Eigenvalues will be stored in\fI ascending\fP order.
-In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+The array where the eigenvalues \(*l will be stored in\fI ascending\fP order.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
 int \fB is_already_decomposed\fP;
 Has to be set to 0 for the first call with a given\fB b\fP and 1 for each subsequent call with the same\fB b\fP, since\fB b\fP then already contains decomposition and thus the decomposing step is skipped.
@@ -80,7 +84,7 @@ The error code of the function. Should be "ELPA_OK". The error codes can be quer
 
 .SH DESCRIPTION
 Computes the generalized eigenvalues for a real symmetric generalized eigenproblem.
-The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_generalized_eigenvalues\fP can be called. Unlike in the case of ordinary eigenvalue problem, the generalized problem calls some external ScaLAPACK routines. The user is responsible for initialization of the BLACS context, which then has to be passed to elpa by\fB elpa_set\fP(3)\fI BEFORE\fP\fB elpa_generalized_eigenvalues_float\fP can be called.
+The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_generalized_eigenvalues_float\fP can be called. Unlike in the case of ordinary eigenvalue problem, the generalized problem calls some external ScaLAPACK routines. The user is responsible for initialization of the BLACS context, which then has to be passed to elpa by\fB elpa_set\fP(3)\fI BEFORE\fP\fB elpa_generalized_eigenvalues_float\fP can be called.
 
 .SH SEE ALSO
 \fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)

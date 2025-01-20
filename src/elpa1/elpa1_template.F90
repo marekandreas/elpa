@@ -1663,15 +1663,14 @@ function elpa_solve_evp_&
 #endif /* DEVICE_POINTER */
 
 
-
-
-
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
-   successGPU = gpu_get_last_error()
-   if (.not.successGPU) then
-    print *,"elpa1_template: GPU error detected via gpu_get_last_error(). Aborting..."
-    print *,"Rerun the program with the debug option e.g. 'export ELPA_DEFAULT_debug=1'"
-    stop 1
+   if (useGPU) then
+    successGPU = gpu_get_last_error()
+    if (.not. successGPU) then
+      write(error_unit,*) "elpa1_template: GPU error detected via gpu_get_last_error(). Aborting..."
+      write(error_unit,*) "Rerun the program with the debug option e.g. 'export ELPA_DEFAULT_debug=1'"
+      stop 1
+    endif
   endif
 #endif
 

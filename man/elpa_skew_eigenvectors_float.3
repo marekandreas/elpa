@@ -1,9 +1,9 @@
-.TH "elpa_skew_eigenvectors" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
+.TH "elpa_skew_eigenvectors_float" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .ss 12 0
 .SH NAME
-elpa_skew_eigenvectors \- computes all eigenvalues \(*l and (part of) the eigenvectors for a real skew-symmetric eigenproblem: A*Q = \(*l*Q
+elpa_skew_eigenvectors_float \- computes all eigenvalues \(*l and (part of) the eigenvectors for a real skew-symmetric eigenproblem: A*Q = \(*l*Q
 .br
 
 .SH SYNOPSIS
@@ -13,32 +13,31 @@ use elpa
 .br
 class(elpa_t), pointer :: elpa_handle
 
-call elpa_handle%\fBskew_eigenvectors\fP (a, ev, q, error)
+call elpa_handle%\fBskew_eigenvectors_float\fP (a, ev, q, error)
 .sp
 With the definitions of the input and output variables:
 .TP
 class(elpa_t) ::\fB elpa \fP
 An instance of the ELPA object
 .TP
-datatype_real ::\fB a \fP
+real(kind=c_float) ::\fB a\fP \t OR \t type(c_ptr) ::\fB a\fP
 The local part of matrix A for which the eigenvalues and eigenvectors should be computed.
 The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype_real\fP of the matrix can be one of "real(kind=c_double)" or "real(kind=c_float)".
 The global matrix has to be skew-symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
-datatype_real ::\fB ev \fP
+real(kind=c_float) ::\fB ev\fP \t OR \t type(c_ptr) ::\fB ev\fP
 The array where the eigenvalues \(*l will be stored in\fI ascending\fP order.
-The\fB datatype_real\fP of\fB ev\fP can be either "real(kind=c_double)" or "real(kind=c_float)", depending of the\fB datatype\fP of the matrix.
-
+In case of a GPU build\fB ev\fP can be a pointer to the device memory.
 .TP
-datatype_real ::\fB q \fP
+real(kind=c_float) ::\fB q\fP \t OR \t type(c_ptr) ::\fB q\fP
 The storage space for the computed eigenvectors Q.
 The number of requested eigenpairs must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
 The number of requested eigenvectors must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype_real\fP can be one of "complex(kind=c_double)" or "complex(kind=c_float)".
 Note, that for a skew-symmetric matrix the eigenvectors are complex.
 The routine returns separately the real and imaginary parts of the complex eigenvectors.
 Thus, the storage space has to be of dimension q(#number_of_rows, 2*#number_of_columns).
+In case of a GPU build\fB q\fP can be a pointer to the device memory.
 .TP
 integer, optional ::\fB error \fP
 The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function \fB elpa_strerr\fP(3)
@@ -50,7 +49,7 @@ The return error code of the function. Should be "ELPA_OK". The error code can b
 elpa_t elpa_handle;
 
 .br
-void\fB elpa_eigenvalues\fP(\fBelpa_t\fP elpa_handle,\fB datatype_real\fP *a,\fB datatype_real\fP *ev,\fB datatype_real\fP *q,\fB int\fP *error);
+void\fB elpa_eigenvalues\fP(\fBelpa_t\fP elpa_handle,\fB float\fP *a,\fB float\fP *ev,\fB float\fP *q,\fB int\fP *error);
 .sp
 With the definitions of the input and output variables:
 
@@ -58,32 +57,30 @@ With the definitions of the input and output variables:
 elpa_t \fB elpa_handle\fP;
 The handle to the ELPA object
 .TP
-datatype_real \fB *a\fP;
+float \fB *a\fP;
 The local part of matrix A for which the eigenvalues and eigenvectors should be computed.
 The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype_real\fP can be "double" or "float".
 The global matrix has to be symmetric or hermitian, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
-datatype_real \fB *ev\fP;
+float \fB *ev\fP;
 The array where the eigenvalues \(*l will be stored in\fI ascending\fP order.
-Eigenvalues will be stored in\fI ascending\fP order.
-The\fB datatype_real\fP can be either "double" or "float".
+In case of a GPU build\fB ev\fP can be a pointer to the device memory.
 .TP
-datatype_real \fB *q\fP;
+float \fB *q\fP;
 The storage space for the computed eigenvectors Q.
 The number of requested eigenvectors must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype_real\fP can "double complex" or "float complex".
 Note, that for a skew-symmetric matrix the eigenvectors are complex.
 The routine returns separately the real and imaginary parts of the complex eigenvectors.
 Thus, the storage space has to be of dimension q(#number_of_rows, 2*#number_of_columns).
-
+In case of a GPU build\fB q\fP can be a pointer to the device memory.
 .TP
 int \fB *error\fP;
 The error code of the function. Should be "ELPA_OK". The error codes can be queried with \fB elpa_strerr\fP(3).
 
 .SH DESCRIPTION
 Computes the eigenvalues and (part of) the eigenvector spectrum of a real skew-symmetric matrix.
-The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_skew_eigenvectors\fP can be called.
+The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_skew_eigenvectors_float\fP can be called.
 In particular, the number of the requested eigenpairs, "nev", must be set with\fB elpa_set\fP(3).
 
 .SH SEE ALSO

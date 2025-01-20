@@ -29,6 +29,17 @@ def check_call_redirect(args, filename=None, **kwargs):
             os.remove(filename)
             raise SystemExit(e.returncode)
 
+def is_nvidia_backend():
+    try:
+        output = subprocess.check_output(["hipcc", "--version"], universal_newlines=True)
+
+        if "nvcc" in output.lower():
+            return True
+        else:
+            return False
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Could not run hipcc --version
+        return False
 
 args = sys.argv[1:]
 cpp_args = list(filter(cpp_arg, args))
@@ -69,12 +80,20 @@ if (ext==".cu"):
     # compile
     check_call(sys.argv[1:])
 elif (ext==".hip"):
-    # preprocess
-    list_preprocess_call_hip = ["hipcc"] + cpp_args + ["-E"] + [file] + ["-o"] + [tmp_filename]
+    compiler="hipcc"
+    hip_on_nvidia_args = []
+    if (is_nvidia_backend()):
+        compiler="nvcc"
+        hip_on_nvidia_args.append("-x")
+        hip_on_nvidia_args.append("cu")
+
+    list_preprocess_call_hip = [compiler] + hip_on_nvidia_args + cpp_args + ["-E"] + [file] + ["-o"] + [tmp_filename]
     check_call(list_preprocess_call_hip)
 
     # compile
     check_call(sys.argv[1:])
+
+
 elif (ext==".F90"):
     # preprocess
     check_call_redirect(["cpp", "-P", "-traditional", "-Wall", "-Werror"] + cpp_args + [file], filename=tmp_filename)

@@ -1,6 +1,7 @@
-.TH "elpa_autotune_deallocate" 3 "Wed Mar 20 2024" "ELPA" \" -*- nroff -*-
+.TH "elpa_autotune_deallocate" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
 elpa_autotune_deallocate \- deallocates an ELPA autotuning instance
 .br
@@ -10,22 +11,23 @@ elpa_autotune_deallocate \- deallocates an ELPA autotuning instance
 .SS FORTRAN INTERFACE
 use elpa
 .br
-class(elpa_t), pointer :: elpa
-class(elpa_autotune_t), pointer :: tune_state
+class(elpa_t), pointer :: elpa_handle
+.br
+class(elpa_autotune_t), pointer :: autotune_handle
 .br
 
-call elpa%\fBautotune_deallocate\fP (tune_state, error)
+call elpa_handle%\fBautotune_deallocate\fP (autotune_handle, error)
 .sp
 With the definitions of the input and output variables:
 
 .TP
-type(elpa_autotune_t) :: \fB tune_state\fP  
+type(elpa_autotune_t) ::\fB autotune_handle\fP  
 The ELPA autotuning object, created with\fB elpa_autotune_setup\fP(3)
 .TP
-integer, optional     :: \fB error\fP
+integer, optional     ::\fB error\fP
 The returned error code
 
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include <elpa/elpa.h>
 .br
 elpa_autotune_t autotune_handle;

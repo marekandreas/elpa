@@ -47,7 +47,7 @@
 
 !  interface
 !    function syclsolver_set_stream_c(syclsolverHandle, syclStream) result(istat) &
-!             bind(C, name="syclsolverSetStreamFromC")
+!              bind(C, name="syclsolverSetStreamFromC")
 !      use, intrinsic :: iso_c_binding
 !      implicit none
 !
@@ -59,7 +59,7 @@
 
   interface
     function syclsolver_create_c(syclsolverHandle) result(istat) &
-             bind(C, name="syclsolverCreateFromC")
+              bind(C, name="syclsolverCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: syclsolverHandle
@@ -69,7 +69,7 @@
 
   interface
     function syclsolver_destroy_c(syclsolverHandle) result(istat) &
-             bind(C, name="syclsolverDestroyFromC")
+              bind(C, name="syclsolverDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: syclsolverHandle

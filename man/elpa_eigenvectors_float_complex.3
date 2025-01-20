@@ -1,8 +1,9 @@
-.TH "elpa_eigenvectors_float_complex" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.TH "elpa_eigenvectors_float_complex" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
-elpa_eigenvectors_float_complex \- computes all eigenvalues and (part of) the eigenvector spectrum for a complex hermitian single-precision matrix
+elpa_eigenvectors_float_complex \- computes all eigenvalues and (part of) the eigenvectors for a complex hermitian eigenproblem: A*Q = \(*l*Q
 .br
 
 .SH SYNOPSIS
@@ -10,78 +11,78 @@ elpa_eigenvectors_float_complex \- computes all eigenvalues and (part of) the ei
 .SS FORTRAN INTERFACE
 use elpa
 .br
-class(elpa_t), pointer :: elpa
+class(elpa_t), pointer :: elpa_handle
 .br
 
-call elpa%\fBeigenvectors_float_complex\fP (a, ev, q, error)
+call elpa_handle%\fBeigenvectors_float_complex\fP (a, ev, q, error)
 .sp
 With the definitions of the input and output variables:
 
 .TP
-class(elpa_t) :: \fB elpa\fP
+class(elpa_t) ::\fB elpa_handle\fP
 An instance of the ELPA object.
 .TP
-datatype :: \fB a\fP ! can also be a device pointer of type(c_ptr)
-The host/device matrix\fB a\fP for which the eigenvalues should be computed.
+real(kind=c_float_complex) ::\fB a\fP \t OR \t type(c_ptr) ::\fB a\fP
+The local part of the host/device matrix A for which all eigenvalues and (part of) eigenvectors should be computed.
 The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype\fP of the matrix must be "complex(kind=c_float_complex)".
-The matrix has to be hermitian, this is not checked by the routine.
-In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+The global matrix has to be symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
-datatype ::\fB ev\fP
+real(kind=c_float) ::\fB ev\fP \t OR \t type(c_ptr) ::\fB ev\fP
 The host/device vector\fB ev\fP where the eigenvalues will be stored in\fI ascending\fP order.
-The\fB datatype\fP of the vector\fB ev\fP must be "real(kind=c_float)".
-In case of a GPU build\fB ev\fP can be a device pointer to the vectors of eigenvalues in the device memory.
+In case of a GPU build\fB ev\fP can be a pointer to the device memory.
+Note that complex hermitian matrices also have real eigenvalues.
 .TP
-datatype :: \fB q\fP
+real(kind=c_float_complex) ::\fB q\fP \t OR \t type(c_ptr) ::\fB q\fP
 The host/device storage space for the computed eigenvectors.
 The number of requested eigenvectors must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype\fP of the matrix must be "complex(kind=c_float_complex)".
-In case of a GPU build \fB q\fP can be a device pointer to a matrix\fB q\fP in the device memory.
+In case of a GPU build\fB q\fP can be a pointer to the device memory.
 .TP
-integer, optional :: \fB error\fP
+integer, optional ::\fB error\fP
 The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
 
 .br
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include <elpa/elpa.h>
 .br
-elpa_t handle;
+elpa_t elpa_handle;
 
 .br
-void\fB elpa_eigenvectors_float_complex\fP(\fBelpa_t\fP handle,\fB datatype\fP *a,\fB datatype\fP *ev,\fB datatype\fP *q,\fB int\fP *error);
+// C:
+.br
+void\fB elpa_eigenvectors_float_complex\fP(\fBelpa_t\fP elpa_handle,\fB float complex\fP *a,\fB float complex\fP *ev,\fB float complex\fP *q,\fB int\fP *error);
+.sp
+// C++:
+.br
+void\fB elpa_eigenvalues_float_complex\fP(\fBelpa_t\fP elpa_handle,\fB std::complex<float>\fP *a,\fB float\fP *ev,\fB std::complex<float>\fP *q,\fB int\fP *error);
 .sp
 With the definitions of the input and output variables:
 
 .TP
-elpa_t \fB handle\fP;
+elpa_t \fB elpa_handle\fP;
 The handle to the ELPA object
 .TP
-datatype \fB *a\fP;
-The matrix\fB a\fP for which the eigenvalues should be computed.
+float complex \fB *a\fP; \t OR \t std::complex<float> \fB *a\fP;
+The local part of the host/device matrix A for which the eigenpairs should be computed.
 The dimensions of the matrix must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype\fP must be "float complex".
-The matrix has to be hermitian, this is not checked by the routine.
-In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+The global matrix has to be symmetric, this is not checked by the routine.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
-datatype \fB *ev\fP;
+float \fB *ev\fP;
 The host/device storage for the computed eigenvalues.
 Eigenvalues will be stored in\fI ascending\fP order.
-The\fB datatype\fP must be "float".
-In case of a GPU build\fB ev\fP can be a device pointer to the vectors of eigenvalues in the device memory.
+In case of a GPU build\fB ev\fP can be a pointer to the device memory.
 .TP
-datatype \fB *q\fP;
+float complex \fB *q\fP; \t OR \t std::complex<float> \fB *q\fP;
 The host/device storage space for the computed eigenvectors.
 The number of requested eigenvectors must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-The\fB datatype\fP must be one of "float complex".
-In case of a GPU build \fB q\fP can be a device pointer to a matrix\fB q\fP in the device memory.
+In case of a GPU build\fB q\fP can be a pointer to the device memory.
 .TP
 int \fB *error\fP;
 The error code of the function. Should be "ELPA_OK". The error codes can be queried with\fB elpa_strerr\fP(3)
 
 .SH DESCRIPTION
-Computes the eigenvalues and (part of) the eigenvector spectrum of a complex hermitian single-precision matrix. The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_eigenvectors_float_complex\fP can be called. In particular, the number of eigenvectors to be computed, "nev", must be set with\fB elpa_set\fP(3).
+Computes the eigenvalues and (part of) the eigenvectors of a complex hermitian matrix. The functions\fB elpa_init\fP(3),\fB elpa_allocate\fP(3),\fB elpa_set\fP(3), and\fB elpa_setup\fP(3) must be called\fI BEFORE\fP\fB elpa_eigenvectors_float_complex\fP can be called. In particular, the number of eigenvectors to be computed, "nev", must be set with\fB elpa_set\fP(3).
 
 .SH SEE ALSO
 \fBelpa2_print_kernels\fP(1)\fB elpa_init\fP(3)\fB elpa_allocate\fP(3)\fB elpa_set\fP(3)\fB elpa_setup\fP(3)\fB elpa_strerr\fP(3)\fB elpa_eigenvalues\fP(3)\fB elpa_skew_eigenvalues\fP(3)\fB elpa_skew_eigenvectors\fP(3)\fB elpa_cholesky\fP(3)\fB elpa_invert_triangular\fP(3)\fB elpa_solve_tridiagonal\fP(3)\fB elpa_hermitian_multiply\fP(3)\fB elpa_uninit\fP(3)\fB elpa_deallocate\fP(3)

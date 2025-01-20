@@ -67,34 +67,29 @@ module tridi_col_gpu
 
     subroutine gpu_update_d_double(limits_dev, d_dev, e_dev, ndiv, na, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: ndiv, na
       integer(kind=c_intptr_t)           :: d_dev, e_dev
       type(c_ptr)                        :: limits_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_update_d_double(limits_dev, d_dev, e_dev, ndiv, na, my_stream)
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_update_d_double(limits_dev, d_dev, e_dev, ndiv, na, my_stream)
-#endif 
-
+      call hip_update_d_double (limits_dev, d_dev, e_dev, ndiv, na, my_stream)
+#endif
     end subroutine
 
 
     subroutine gpu_update_d_float(limits_dev, d_dev, e_dev, ndiv, na, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: ndiv, na
       integer(kind=c_intptr_t)           :: d_dev, e_dev
       type(c_ptr)                        :: limits_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -102,40 +97,35 @@ module tridi_col_gpu
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_update_d_float(limits_dev, d_dev, e_dev, ndiv, na, my_stream)
-#endif 
+      call hip_update_d_float (limits_dev, d_dev, e_dev, ndiv, na, my_stream)
+#endif
 #endif
     end subroutine
 
 
     subroutine gpu_copy_qmat1_to_qmat2_double(qmat1_dev, qmat2_dev, max_size, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: max_size
       integer(kind=c_intptr_t)           :: qmat1_dev, qmat2_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_qmat1_to_qmat2_double(qmat1_dev, qmat2_dev, max_size, my_stream)
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_qmat1_to_qmat2_double(qmat1_dev, qmat2_dev, max_size, my_stream)
-#endif 
-
+      call hip_copy_qmat1_to_qmat2_double (qmat1_dev, qmat2_dev, max_size, my_stream)
+#endif
     end subroutine
 
 
     subroutine gpu_copy_qmat1_to_qmat2_float(qmat1_dev, qmat2_dev, max_size, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: max_size
       integer(kind=c_intptr_t)           :: qmat1_dev, qmat2_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -143,41 +133,35 @@ module tridi_col_gpu
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_qmat1_to_qmat2_float(qmat1_dev, qmat2_dev, max_size, my_stream)
-#endif 
+      call hip_copy_qmat1_to_qmat2_float (qmat1_dev, qmat2_dev, max_size, my_stream)
 #endif
-
+#endif
     end subroutine
 
 
     subroutine gpu_copy_d_to_d_tmp_double(d_dev, d_tmp_dev, na,  my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: na
       integer(kind=c_intptr_t)           :: d_dev, d_tmp_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_copy_d_to_d_tmp_double(d_dev, d_tmp_dev, na, my_stream)
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_d_to_d_tmp_double(d_dev, d_tmp_dev, na, my_stream)
-#endif 
-
+      call hip_copy_d_to_d_tmp_double (d_dev, d_tmp_dev, na, my_stream)
+#endif
     end subroutine
 
 
     subroutine gpu_copy_d_to_d_tmp_float(d_dev, d_tmp_dev, na,  my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: na
       integer(kind=c_intptr_t)           :: d_dev, d_tmp_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -185,7 +169,7 @@ module tridi_col_gpu
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_d_to_d_tmp_float(d_dev, d_tmp_dev, na, my_stream)
+      call hip_copy_d_to_d_tmp_float (d_dev, d_tmp_dev, na, my_stream)
 #endif 
 #endif
     end subroutine

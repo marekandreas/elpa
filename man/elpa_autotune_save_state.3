@@ -1,6 +1,7 @@
-.TH "elpa_autotune_save_state" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.TH "elpa_autotune_save_state" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
 elpa_autotune_save_state \- saves the current state of an ELPA autotuning object
 .br
@@ -10,43 +11,44 @@ elpa_autotune_save_state \- saves the current state of an ELPA autotuning object
 .SS FORTRAN INTERFACE
 use elpa
 .br
-class(elpa_t), pointer :: elpa
-class(elpa_autotune_t), pointer :: autotune
+class(elpa_t), pointer :: elpa_handle
+.br
+class(elpa_autotune_t), pointer :: autotune_handle
 .br
 
-call elpa%\fBautotune_save_state\fP (autotune, filename, error)
+call elpa_handle%\fBautotune_save_state\fP (autotune_handle, filename, error)
 .sp
 With the definitions of the input and output variables:
 .TP
-class(elpa_t)          :: \fB elpa\fP
+class(elpa_t)          ::\fB elpa_handle\fP
 An instance of the ELPA object
 .TP
-class(elpa_autotune_t) :: \fB autotune\fP    
+class(elpa_autotune_t) ::\fB autotune_handle\fP    
 An instance of the ELPA autotune object
 .TP
-character(*)           :: \fB filename\fP    
+character(*)           ::\fB filename\fP    
 The filename to be used for storing the settings
 .TP
-integer, optional      :: \fB error\fP       
+integer, optional      ::\fB error\fP       
 An error return code
 .br
 
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include <elpa/elpa.h>
 .br
-elpa_t handle;
+elpa_t elpa_handle;
 .br
 elpa_autotune_t autotune_handle;
 
 .br
-void\fB elpa_autotune_save_state\fP(\fBelpa_t\fP handle,\fB elpa_autotune_t\fP autotune_handle,\fB char\fP *filename,\fB int\fP *error);
+void\fB elpa_autotune_save_state\fP(\fBelpa_t\fP elpa_handle,\fB elpa_autotune_t\fP autotune_handle,\fB char\fP *filename,\fB int\fP *error);
 .sp
 With the definitions of the input and output variables:
 .TP
-elpa_t \fB handle\fP;            
+elpa_t \fB elpa_handle\fP;            
 The handle to the ELPA object
 .TP
-elpa_autotune_t \fB handle\fP;   
+elpa_autotune_t \fB autotune_handle\fP;   
 The handle to the ELPA autotune object
 .TP
 char \fB *filename\fP;

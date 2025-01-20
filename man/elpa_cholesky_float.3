@@ -1,6 +1,7 @@
 .TH "elpa_cholesky_float" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
 elpa_cholesky_float \- performs a Cholesky factorization of a real symmetric positive-definite matrix: A = U^T*U, where U is an upper triangular matrix.
 
@@ -17,13 +18,13 @@ call elpa_handle%\fBcholesky_float\fP (a, error)
 With the definitions of the input and output variables:
 
 .TP
-real(kind=c_float) :: \fB a\fP \t OR \t type(c_ptr) ::\fB a\fP
+real(kind=c_float) ::\fB a\fP \t OR \t type(c_ptr) ::\fB a\fP
 On input:  the host/device local part of matrix A that should be decomposed.
 On output: the host/device local part of upper triangular matrix U.
 The dimensions of matrix\fB a\fP must be set\fI BEFORE\fP with the methods\fB elpa_set\fP(3) and\fB elpa_setup\fP(3).
-In case of a GPU build\fB a\fP can be a device pointer to a matrix\fB a\fP in the device memory.
+In case of a GPU build\fB a\fP can be a pointer to the device memory.
 .TP
-integer, optional :: \fB error\fP
+integer, optional ::\fB error\fP
 The return error code of the function. Should be "ELPA_OK". The error code can be queried with the function\fB elpa_strerr\fP(3)
 
 .br
