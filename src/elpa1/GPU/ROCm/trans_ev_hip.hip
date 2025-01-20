@@ -158,3 +158,10 @@ extern "C" void hip_scale_qmat_float_complex_FromC(int *ldq_in, int *l_cols_in, 
   }
 }
 
+//_________________________________________________________________________________________________
+
+
+#include "../../../GPU/common_device_functions.h"
+#include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
+
+#include "../trans_ev_gpu.h"
