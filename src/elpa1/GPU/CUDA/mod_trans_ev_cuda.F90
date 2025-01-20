@@ -131,12 +131,12 @@ module trans_ev_cuda
     end subroutine
   end interface
 
+
   contains
 
 
     subroutine cuda_scale_qmat_double_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: ldq, l_cols
       integer(kind=c_intptr_t)           :: q_dev, tau_dev
@@ -154,7 +154,6 @@ module trans_ev_cuda
 
     subroutine cuda_scale_qmat_float_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: ldq, l_cols
       integer(kind=c_intptr_t)           :: q_dev, tau_dev
@@ -212,7 +211,7 @@ module trans_ev_cuda
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_update_tmat_c(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
                               SM_count, debug, my_stream)
-#endif      
+#endif
     end subroutine
 
     subroutine cuda_trmv(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
@@ -227,7 +226,7 @@ module trans_ev_cuda
 #ifdef WITH_NVIDIA_GPU_VERSION
       call cuda_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
                        SM_count, debug, my_stream)
-#endif      
+#endif
     end subroutine
 
 end module
