@@ -185,8 +185,6 @@ subroutine trans_ev_cpu_&
   integer(kind=ik)                              :: k_datatype
   integer(kind=ik)                              :: i,j ! PETERDEBUG: only for debugging, cleanup
 
-  print *, "version 1" ! PETERDEBUG: cleanup
-
   success = .true.
 
   debug = 0
@@ -322,7 +320,7 @@ subroutine trans_ev_cpu_&
 
   max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
   
-  print *, "max_stored_rows=", max_stored_rows ! PETERDEBUG
+  !print *, "max_stored_rows=", max_stored_rows ! PETERDEBUG
 
   if (.not. useGPU) then
     allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
@@ -438,10 +436,6 @@ subroutine trans_ev_cpu_&
 
   do istep = 1, na, blockStep
     NVTX_RANGE_PUSH("main_loop")
-
-    ! if (istep==33) then
-    !   print *, "DEBUG: istep=", istep ! PETERDEBUG
-    ! endif
 
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)

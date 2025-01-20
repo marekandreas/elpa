@@ -99,14 +99,11 @@ void gpu_copy_hvb_a(T *hvb_dev, T *a_dev, int *ld_hvb_in, int *lda_in, int *my_p
   int nblk = *nblk_in;
   int ics = *ics_in;
   int ice = *ice_in;
-  int SM_count = *SM_count_in; // PETERDEBUG: SM_count: needed or not? here and below
+  int SM_count = *SM_count_in;
   int debug = *debug_in;
 
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
-
-  //dim3 blocks = dim3(1,1,1); // PETERDEBUG cleanup
-  //dim3 threadsPerBlock = dim3(1,1,1);
 
 #ifdef WITH_GPU_STREAMS
   gpu_copy_hvb_a_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice);
@@ -187,9 +184,6 @@ void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, int *ld_hvm_in, int *ld_hvb_in, in
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
 
-  // dim3 blocks = dim3(1,1,1); // PETERDEBUG cleanup
-  // dim3 threadsPerBlock = dim3(1,1,1);
-
 #ifdef WITH_GPU_STREAMS
   gpu_copy_hvm_hvb_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(hvm_dev, hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice);
 #else
@@ -267,9 +261,6 @@ void gpu_update_tmat(T *tmat_dev, T *h_dev, T *tau_curr_dev, int *max_stored_row
   // SM_count*MIN_THREADS_PER_BLOCK is the minimal GPU configuration that keeps the GPU busy
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(1, 1, 1);
-
-  // dim3 blocks = dim3(1,1,1);  // PETERDEBUG
-  // dim3 threadsPerBlock = dim3(1,1,1);
  
 #ifdef WITH_GPU_STREAMS
   gpu_update_tmat_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n);
@@ -368,18 +359,13 @@ void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int 
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
 
-  //dim3 blocks = dim3(1,1,1); // PETERDEBUG cleanup
-  //dim3 threadsPerBlock = dim3(1,1,1);
-  //printf("gpu_trmv: n=%d\n", n);
-  //std::cout << "gpu_trmv: n=" << n << endl << std::flush;
-
 #ifdef WITH_GPU_STREAMS
   gpu_trmv_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n);
 #else
   gpu_trmv_kernel<<<blocks,threadsPerBlock>>>            (tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n);
 #endif
   
-  // PETERDEBUG: cleanup. too much overhead, if called in tight loop
+  // PETERDEBUG: cleanup. too much overhead, if called in tight loop?
   if (debug)
     {
     gpuDeviceSynchronize();
@@ -410,26 +396,20 @@ void gpu_trmv_loop(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev,
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
 
-  //dim3 blocks = dim3(1,1,1); // PETERDEBUG cleanup
-  //dim3 threadsPerBlock = dim3(1,1,1);
-  //printf("gpu_trmv: n=%d\n", n);
-  //std::cout << "gpu_trmv: n=" << n << endl << std::flush;
   int size_of_datatype = sizeof(T);
   int shift_h_dev, shift_tau_dev;
   int nc = 0;
 
-  printf("gpu_trmv_loop: max_stored_rows=%d, nstor=%d, useCCL=%d\n", max_stored_rows, nstor, useCCL); // PETERDEBUG
-
   for (int n=1; n <= nstor-1; n++)
     {
     if (useCCL) {
-      shift_h_dev = n*max_stored_rows; //*size_of_datatype;
+      shift_h_dev = n*max_stored_rows;
     }
     else {
-      shift_h_dev = nc;//*size_of_datatype;
+      shift_h_dev = nc;
       nc = nc+n;
     }
-    shift_tau_dev = (ice-nstor+n);//*size_of_datatype;
+    shift_tau_dev = (ice-nstor+n);
 
 #ifdef WITH_GPU_STREAMS
     gpu_trmv_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmat_dev, h_dev+shift_h_dev, result_buffer_dev, tau_curr_dev+shift_tau_dev, max_stored_rows, nstor);

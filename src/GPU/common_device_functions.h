@@ -368,63 +368,8 @@ INLINE_DEVICE void atomicAdd(std::complex<float>* address, std::complex<float> v
 
 //_________________________________________________________________________________________________
 // ELPA-specific device functions
-// PETERDEBUG: cleanup after testing
 
-// INLINE_DEVICE int pcol(int I_gl, int nblk, int np_cols){
-//   // C-style 0-based indexing in assumed
-//   return (I_gl/nblk)%np_cols;
-// }
-
-// // same as pcol; just for naming consistency
-// INLINE_DEVICE int prow(int J_gl, int nblk, int np_rows){
-//   // C-style 0-based indexing in assumed
-//   return (J_gl/nblk)%np_rows;
-// }
-
-// INLINE_DEVICE int local_index(int I_gl, int my_proc, int num_procs, int nblk, int iflag){
-
-// //  local_index: returns the local index for a given global index
-// //               If the global index has no local index on the
-// //               processor my_proc, return next local index after that row/col
-// //               C-style 0-based indexing in assumed
-// //  Parameters
-// //
-// //  I_gl        Global index
-// //  my_proc     Processor row/column for which to calculate the local index
-// //  num_procs   Total number of processors along row/column
-// //  nblk        Blocksize
-// //
-// //  iflag       Controls the behaviour if idx is not on local processor
-// //              iflag< 0 : Return last local index before that row/col
-// //              iflag==0 : Return 0
-// //              iflag> 0 : Return next local index after that row/col
-// //
-// // L_block_gl = I_gl/nblk; // global ordinal number of the nblk-block among other blocks
-// // l_block_loc = L_block_gl/num_procs =  I_gl/(num_procs*nblk); // local ordinal number of the nblk-block among other blocks
-// // x = I_gl%nblk; // local coordinate within the block
-// // local_index = l_block*nblk + x;
-
-//   if ((I_gl/nblk)%num_procs == my_proc) // (L_block_gl%num_procs == my_proc), block is local
-//     {
-//     return I_gl/(num_procs*nblk)* nblk + I_gl%nblk; // local_index = l_block_loc * nblk + x
-//     }
-//   else if ((I_gl/nblk)%num_procs < my_proc) // block is non-local
-//     {
-//     if      (iflag ==  1) return I_gl/(num_procs*nblk)* nblk;
-//     else if (iflag == -1) return I_gl/(num_procs*nblk)* nblk - 1;
-//     else if (iflag ==  0) return 0;
-//     }
-//   else // ((I_gl/nblk)%num_procs > my_proc)
-//     {
-//     if      (iflag ==  1) return (I_gl/(num_procs*nblk) + 1)* nblk;
-//     else if (iflag == -1) return (I_gl/(num_procs*nblk) + 1)* nblk - 1;
-//     else if (iflag ==  0) return 0;
-//     }
-// }
-
-//_________________________________________________________________________________________________
-// ELPA-specific device functions
-
+// Fortran-style 1-based indexing in assumed
 INLINE_DEVICE int pcol(int global_col, int nblk, int np_cols){
   return ((global_col-1)/nblk)%np_cols;
 }
@@ -455,7 +400,8 @@ INLINE_DEVICE int local_index(int idx, int my_proc, int num_procs, int nblk, int
 !              iflag==0 : Return 0
 !              iflag> 0 : Return next local index after that row/col
 
-// Fortran (1-based) to C (0-based) correspondence
+// Fortran-style 1-based indexing in assumed
+// For the reference, here is the Fortran (1-based) to C (0-based) correspondence:
 // L_block_gl = I_gl/nblk; // global ordinal number of the nblk-block among other blocks
 // l_block_loc = L_block_gl/num_procs =  I_gl/(num_procs*nblk); // local ordinal number of the nblk-block among other blocks
 // x = I_gl%nblk; // local coordinate within the block
