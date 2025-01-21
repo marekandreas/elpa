@@ -1474,20 +1474,20 @@
     end subroutine
   end interface
 
-!#ifdef WITH_NVTX
-!  ! NVTX profiling interfaces
-!  interface nvtxRangePushA
-!    subroutine nvtxRangePushA(name) bind(C, name='nvtxRangePushA')
-!      use, intrinsic :: iso_c_binding
-!      character(kind=C_CHAR,len=1) :: name(*)
-!    end subroutine
-!  end interface
+#ifdef WITH_ROCTX
+  ! ROCTX profiling interfaces
+  interface roctxRangePushA
+    subroutine roctxRangePushA(name) bind(C, name='roctxRangePushA')
+      use, intrinsic :: iso_c_binding
+      character(kind=C_CHAR,len=1) :: name(*)
+    end subroutine
+  end interface
 
-!  interface nvtxRangePop
-!    subroutine nvtxRangePop() bind(C, name='nvtxRangePop')
-!    end subroutine
-!  end interface
-!#endif
+  interface roctxRangePop
+    subroutine roctxRangePop() bind(C, name='roctxRangePop')
+    end subroutine
+  end interface
+#endif
 
   interface
     function rocblas_pointerModeDevice_c() result(flag) &
@@ -1967,23 +1967,23 @@
       endif
     end function
 
-!#ifdef WITH_NVTX
-!    ! this wrapper is needed for the string conversion
-!    subroutine nvtxRangePush(range_name)
-!      implicit none
-!      character(len=*), intent(in) :: range_name
-!
-!      character(kind=C_CHAR,len=1), dimension(len(range_name)+1) :: c_name
-!      integer i
-!
-!      do i = 1, len(range_name)
-!        c_name(i) = range_name(i:i)
-!      end do
-!      c_name(len(range_name)+1) = char(0)
-!
-!      call nvtxRangePushA(c_name)
-!    end subroutine
-!#endif
+#ifdef WITH_ROCTX
+    ! this wrapper is needed for the string conversion
+    subroutine roctxRangePush(range_name)
+      implicit none
+      character(len=*), intent(in) :: range_name
+
+      character(kind=C_CHAR,len=1), dimension(len(range_name)+1) :: c_name
+      integer i
+
+      do i = 1, len(range_name)
+        c_name(i) = range_name(i:i)
+      end do
+      c_name(len(range_name)+1) = char(0)
+
+      call roctxRangePushA(c_name)
+    end subroutine
+#endif
 
     function rocblas_create(rocblasHandle) result(success)
       use, intrinsic :: iso_c_binding

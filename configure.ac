@@ -3194,7 +3194,7 @@ if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" 
     AC_LANG_PUSH([C])
     AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
     if test x"${have_nvtoolsext}" = x"no"; then
-      AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable Nvidia GPU support ])
+      AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable nvtx support ])
     fi
     AC_LANG_POP([C])
   fi
@@ -3216,28 +3216,28 @@ if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
   ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=1
   ELPA_2STAGE_REAL_AMD_GPU_COMPILED=1
 
-  #AC_MSG_CHECKING(whether --enable-nvtx is specified)
-  #AC_ARG_ENABLE([nvtx],
-  #              AS_HELP_STRING([--enable-nvtx],
-  #                             [build and install nvtx wrapper for profiling the Nvidia GPU version, default no.]),
-  #              [
-  #               if test x"$enableval" = x"yes"; then
-  #                 enable_nvtx=yes
-  #               else
-  #                 enable_nvtx=no
-  #               fi
-  #               ],
-  #              [enable_nvtx=no])
-  #AC_MSG_RESULT([${enable_nvtx}])
-  #if test x"${enable_nvtx}" = x"yes"; then
-  #  AC_DEFINE([WITH_NVTX],[1],[enable NVTX support])
-  #  AC_LANG_PUSH([C])
-  #  AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
-  #  if test x"${have_nvtoolsext}" = x"no"; then
-  #    AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable Nvidia GPU support ])
-  #  fi
-  #  AC_LANG_POP([C])
-  #fi
+  AC_MSG_CHECKING(whether --enable-roctx is specified)
+  AC_ARG_ENABLE([roctx],
+                AS_HELP_STRING([--enable-roctx],
+                               [build and install roctx wrapper for profiling the AMD GPU version, default no.]),
+                [
+                  if test x"$enableval" = x"yes"; then
+                    enable_roctx=yes
+                  else
+                    enable_roctx=no
+                  fi
+                ],
+                [enable_roctx=no])
+  AC_MSG_RESULT([${enable_roctx}])
+  if test x"${enable_roctx}" = x"yes"; then
+    AC_DEFINE([WITH_ROCTX],[1],[enable ROCTX support])
+    AC_LANG_PUSH([C])
+    AC_SEARCH_LIBS([roctxRangePop],[roctx64],[have_roctx64=yes],[have_roctx64=no])
+    if test x"${have_roctx64}" = x"no"; then
+      AC_MSG_ERROR([Could not link roctx64; try to set the rocm-path or disable roctx support ])
+    fi
+    AC_LANG_POP([C])
+  fi
 else
   AC_DEFINE_SUBST(CURRENT_WITH_AMD_GPU_VERSION, 0, "disable use AMD GPU in C-headers")
   ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=0

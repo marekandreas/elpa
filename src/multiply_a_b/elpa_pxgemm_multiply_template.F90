@@ -74,8 +74,10 @@
 #ifdef WITH_GPU_STREAMS
   use elpa_gpu_util
 #endif
-#ifdef WITH_NVIDIA_GPU_VERSION
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+  use hip_functions  ! for ROCTX labels
 #endif
   use elpa_ccl_gpu
   use multiply_a_b_gpu

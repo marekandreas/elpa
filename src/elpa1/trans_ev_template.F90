@@ -116,6 +116,8 @@ subroutine trans_ev_cpu_&
   use trans_ev_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+  use hip_functions  ! for ROCTX labels
 #endif
   use elpa_ccl_gpu
 
@@ -436,6 +438,7 @@ subroutine trans_ev_cpu_&
 
   do istep = 1, na, blockStep
     NVTX_RANGE_PUSH("main_loop")
+    call obj%timer%start("main_loop")
 
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
@@ -511,7 +514,6 @@ subroutine trans_ev_cpu_&
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev: ccl_bcast", successGPU)
         
-        if (wantDebug) successGPU = gpu_DeviceSynchronize()
         call obj%timer%stop("ccl_bcast")
         NVTX_RANGE_POP("ccl_bcast")
       else ! useCCL
@@ -598,14 +600,17 @@ subroutine trans_ev_cpu_&
       ! This can be done in different ways, we use dsyrk or zherk
 
       if (useGPU) then
+        call obj%timer%start("gpu_memset")
         ! PETERDEBUG: is this really needed for GPU?
         num_el = max_stored_rows*max_stored_rows
 #ifdef WITH_GPU_STREAMS
         successGPU = gpu_memset_async(tmat_dev, 0, num_el*size_of_datatype, my_stream)
+        if (wantDebug) successGPU = gpu_DeviceSynchronize()
 #else
         successGPU = gpu_memset(tmat_dev, 0, num_el*size_of_datatype)
 #endif
         check_memcpy_gpu("trans_ev: tmat_dev", successGPU)
+        call obj%timer%stop("gpu_memset")
       else
         tmat = 0
       endif
@@ -659,8 +664,11 @@ subroutine trans_ev_cpu_&
         !nc = max_stored_rows*max_stored_rows
         nc = max_stored_rows*nstor
         if (nc>0) then
+          if (wantDebug) call obj%timer%start("gpu_memcpy")
+          ! PETERDEBUG: add streamed version
           successGPU = gpu_memcpy(h_dev, tmat_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice)
           check_memcpy_gpu("elpa_trans_ev: h_dev <- tmat_dev", successGPU)
+          if (wantDebug) call obj%timer%stop("gpu_memcpy")
         endif
       else  ! useCCL
         ! compression
@@ -725,7 +733,9 @@ subroutine trans_ev_cpu_&
       if (useGPU) then
 
         ! PETERDEBUG: check whether this can be cleaned up after testing gpu_update_h_trmv_kernel
+        call obj%timer%start("gpu_memset")
         successGPU = gpu_memset(tmat_dev, 0, max_stored_rows*max_stored_rows * size_of_datatype)
+        call obj%timer%stop("gpu_memset")
 
         nc = 0
         n = 0
@@ -854,6 +864,7 @@ subroutine trans_ev_cpu_&
       else ! (l_rows>0)
 
         if (useGPU) then
+          if (wantDebug) call obj%timer%start("gpu_memset")
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           num = l_cols * nstor * size_of_datatype
@@ -861,11 +872,12 @@ subroutine trans_ev_cpu_&
           check_memcpy_gpu("trans_ev: tmp_dev", successGPU)
           !successGPU = gpu_stream_synchronize(my_stream)
           !check_stream_synchronize_gpu("trans_ev", successGPU)
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
 #else
           successGPU = gpu_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
 #endif
           check_memcpy_gpu("trans_ev", successGPU)
-          
+          if (wantDebug) call obj%timer%stop("gpu_memset")
         else
           tmp(1:l_cols*nstor) = 0
         endif
@@ -891,6 +903,7 @@ subroutine trans_ev_cpu_&
       endif ! (useGPU .and. .not. useCCL)
 
       if (useCCL) then
+        call obj%timer%start("ccl_allreduce")
         NVTX_RANGE_PUSH("ccl_allreduce")
         successGPU = ccl_Allreduce(tmp_dev, tmp_dev, int(k_datatype*nstor*l_cols,kind=c_size_t), &
                                      cclDataType, cclSum, ccl_comm_rows, my_stream)
@@ -903,6 +916,7 @@ subroutine trans_ev_cpu_&
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev", successGPU)
         NVTX_RANGE_POP("ccl_allreduce")
+        call obj%timer%stop("ccl_allreduce")
       else ! useCCL
         if (useNonBlockingCollectivesRows) then
           call obj%timer%start("mpi_nbc_communication")
@@ -995,6 +1009,7 @@ subroutine trans_ev_cpu_&
     ! endif
 
     NVTX_RANGE_POP("main_loop")
+    call obj%timer%stop("main_loop")
   enddo ! istep = 1, na, blockStep
 
   deallocate(h, hvb, hvm, stat=istat, errmsg=errorMessage)
