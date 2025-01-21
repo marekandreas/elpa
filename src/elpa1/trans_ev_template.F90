@@ -445,10 +445,12 @@ subroutine trans_ev_cpu_&
 
     if (useGPU) then
       if (my_pcol==cur_pcol) then
+        call obj%timer%start("gpu_copy_hvb_a_kernel")
         NVTX_RANGE_PUSH("gpu_copy_hvb_a")
         call gpu_copy_hvb_a(PRECISION_CHAR, hvb_dev, a_dev, max_local_rows, lda, my_prow, np_rows, my_pcol, np_cols, &
                                                   nblk, ics, ice, SM_count, debug, my_stream)
         NVTX_RANGE_POP("gpu_copy_hvb_a")
+        call obj%timer%stop("gpu_copy_hvb_a_kernel")
       endif
 
       !dry run to find nb, number of used elements in hvb_dev
@@ -508,7 +510,8 @@ subroutine trans_ev_cpu_&
 
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("trans_ev: ccl_bcast", successGPU)
-
+        
+        if (wantDebug) successGPU = gpu_DeviceSynchronize()
         call obj%timer%stop("ccl_bcast")
         NVTX_RANGE_POP("ccl_bcast")
       else ! useCCL
@@ -543,10 +546,12 @@ subroutine trans_ev_cpu_&
     endif ! useGPU
 
     if (useGPU) then
+      call obj%timer%start("gpu_copy_hvm_hvb_kernel")
       NVTX_RANGE_PUSH("gpu_copy_hvm_hvb")
       call gpu_copy_hvm_hvb(PRECISION_CHAR, hvm_dev, hvb_dev, max_local_rows, max_local_rows, my_prow, np_rows, &
                             nstor, nblk, ics, ice, SM_count, debug, my_stream)
       NVTX_RANGE_POP("gpu_copy_hvm_hvb")
+      call obj%timer%stop("gpu_copy_hvm_hvb_kernel")
 
       l_rows = local_index(ice-1, my_prow, np_rows, nblk, -1) ! last l_rows
       nstor =  nstor + (ice-ics+1)
@@ -609,7 +614,7 @@ subroutine trans_ev_cpu_&
         if (useGPU) then
           !successGPU = gpu_memset(tmat_dev, 0, max_stored_rows*max_stored_rows * size_of_datatype) ! PETERDEBUG
 
-          call obj%timer%start("gpublas")
+          call obj%timer%start("gpublas_syrk")
           NVTX_RANGE_PUSH("gpublas_syrk")
           call gpublas_PRECISION_SYRK_HERK('U', BLAS_TRANS_OR_CONJ, &
                                            nstor, l_rows, ONE, &
@@ -617,9 +622,9 @@ subroutine trans_ev_cpu_&
                                            tmat_dev, max_stored_rows, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
           NVTX_RANGE_POP("gpublas_syrk")
-          call obj%timer%stop("gpublas")
+          call obj%timer%stop("gpublas_syrk")
         else ! useGPU
-          call obj%timer%start("blas")
+          call obj%timer%start("blas_syrk")
           NVTX_RANGE_PUSH("blas_syrk")
 #if REALCASE == 1
           call PRECISION_SYRK &
@@ -632,7 +637,7 @@ subroutine trans_ev_cpu_&
                             tmat, int(max_stored_rows,kind=BLAS_KIND))
           
           NVTX_RANGE_POP("blas_syrk")
-          call obj%timer%stop("blas")
+          call obj%timer%stop("blas_syrk")
         endif ! useGPU
       endif ! (l_rows>0)
 
@@ -734,8 +739,10 @@ subroutine trans_ev_cpu_&
         NVTX_RANGE_PUSH("gpu_trmv")
         call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, tau_dev+shift_dev, &
                       max_stored_rows, n, SM_count, debug, my_stream)
+        if (wantDebug) successGPU = gpu_DeviceSynchronize()
         NVTX_RANGE_POP("gpu_trmv")
 
+        call obj%timer%start("gpu_trmv_kernel_loop")
         NVTX_RANGE_PUSH("trmv_loop")
         ! call gpu_trmv_loop(PRECISION_CHAR, tmat_dev, h_dev, h1_buffer_dev, tau_dev, &
         !                   max_stored_rows, nstor, ice, SM_count, useCCL_int, debug, my_stream)
@@ -785,6 +792,7 @@ subroutine trans_ev_cpu_&
           ! NVTX_RANGE_POP("gpu_update_tmat")
         enddo
         if (wantDebug) successGPU = gpu_DeviceSynchronize()
+        call obj%timer%stop("gpu_trmv_kernel_loop")
         NVTX_RANGE_POP("trmv_loop")
         
         !NVTX_RANGE_POP("gpublas_trmv+gpu_update_tmat loop")
@@ -821,7 +829,7 @@ subroutine trans_ev_cpu_&
 
       if (l_rows>0) then
         if (useGPU) then
-          call obj%timer%start("gpublas")
+          call obj%timer%start("gpublas_gemm")
           NVTX_RANGE_PUSH("gpublas_gemm")
           call gpublas_PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',   &
                                       nstor, l_cols, l_rows, ONE, &
@@ -830,7 +838,7 @@ subroutine trans_ev_cpu_&
                                       tmp_dev, nstor, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
           NVTX_RANGE_POP("gpublas_gemm")
-          call obj%timer%stop("gpublas")
+          call obj%timer%stop("gpublas_gemm")
         else ! useGPU
           call obj%timer%start("blas")
           call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N',  &
@@ -929,9 +937,9 @@ subroutine trans_ev_cpu_&
 
       if (l_rows > 0) then
         if (useGPU) then
-          call obj%timer%start("gpublas")
           
           ! tmp_dev = tmat_dev*tmp_dev
+          call obj%timer%start("gpublas_trmm")
           NVTX_RANGE_PUSH("gpublas_trmm")
           call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
           !call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',     &
@@ -939,17 +947,19 @@ subroutine trans_ev_cpu_&
                                       tmat_dev, max_stored_rows,  &
                                       tmp_dev, nstor, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          call obj%timer%stop("gpublas_trmm")
           NVTX_RANGE_POP("gpublas_trmm")
 
           NVTX_RANGE_PUSH("gpublas_gemm")
+          call obj%timer%start("gpublas_gemm")
           call gpublas_PRECISION_GEMM('N', 'N', &
                                       l_rows, l_cols, nstor, -ONE, &
                                       hvm_dev, max_local_rows, &
                                       tmp_dev, nstor, ONE, &
                                       q_dev, ldq, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+          call obj%timer%stop("gpublas_gemm")
           NVTX_RANGE_POP("gpublas_gemm")
-          call obj%timer%stop("gpublas")
         else !useGPU
           call obj%timer%start("blas")
 

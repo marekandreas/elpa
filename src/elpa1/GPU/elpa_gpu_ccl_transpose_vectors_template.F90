@@ -206,12 +206,12 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
       
       message_size = ld_st*nvc
 
-      if (wantDebug) call obj%timer%start("nccl_communication")
+      if (wantDebug) call obj%timer%start("ccl_send_recv")
 
       ccl_comm_all = obj%gpu_setup%ccl_comm_all 
       successGPU = ccl_group_start()
       if (.not. successGPU) then 
-        print *,"Error in setting up nccl_group_start!"
+        print *,"Error in setting up ccl_group_start!"
         success = .false.
         stop 1
       endif
@@ -230,22 +230,22 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
       endif
 
       if (.not. successGPU) then
-        print *,"Error in nccl_Send/nccl_Recv!"
+        print *,"Error in ccl_Send/ccl_Recv!"
         success = .false.
         stop 1
       endif
       
       successGPU = ccl_group_end()
       if (.not. successGPU) then
-        print *,"Error in setting up nccl_group_end!"
+        print *,"Error in setting up ccl_group_end!"
         success = .false.
         stop 1
       endif
 
       successGPU = gpu_stream_synchronize(my_stream)
       if (wantDebug) then
-        check_stream_synchronize_gpu("nccl_Send/nccl_Recv vmat_s_dev/vmat_t_dev", successGPU)
-        call obj%timer%stop("nccl_communication")
+        check_stream_synchronize_gpu("ccl_Send/ccl_Recv vmat_s_dev/vmat_t_dev", successGPU)
+        call obj%timer%stop("ccl_send_recv")
       endif
     endif
 
@@ -318,7 +318,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
         ! int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND),  mpierr)
 
         if (nps>1) then
-          if (wantDebug) call obj%timer%start("nccl_communication")
+          if (wantDebug) call obj%timer%start("ccl_bcast")
 
           aux_size = aux_stride*nvc
           successGPU = ccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(k_datatype*aux_size, kind=c_size_t), &
@@ -330,9 +330,9 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
           endif
 
           successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("nccl_Bcast aux_transpose_dev", successGPU)
+          check_stream_synchronize_gpu("ccl_Bcast aux_transpose_dev", successGPU)
 
-          if (wantDebug) call obj%timer%stop("nccl_communication")
+          if (wantDebug) call obj%timer%stop("ccl_bcast")
         endif ! (nps>1)
         !sm_count = 32
         sm_count = obj%gpu_setup%gpuSMcount

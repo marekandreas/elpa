@@ -293,11 +293,11 @@
       z = z/sqrt(2.0_rk)
       rho = 2.0_rk*beta
       ! Calculate index for merging both systems by ascending eigenvalues
-      call obj%timer%start("lapack")
+      call obj%timer%start("lapack_lamrg")
       call PRECISION_LAMRG( int(nm,kind=BLAS_KIND), int(na-nm,kind=BLAS_KIND), d, &
                             1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
       idx(:) = int(idxBLAS(:),kind=ik)
-      call obj%timer%stop("lapack")
+      call obj%timer%stop("lapack_lamrg")
 
       ! Calculate the allowable deflation tolerance
 
@@ -460,10 +460,10 @@
         if (na1==1) then
           d(1) = d1(1) + rho*z1(1)**2 ! solve secular equation
         else ! na1==2
-          call obj%timer%start("lapack")
+          call obj%timer%start("lapack_laed5_x2")
           call PRECISION_LAED5(1_BLAS_KIND, d1, z1, qtrans(1,1), rho, d(1))
           call PRECISION_LAED5(2_BLAS_KIND, d1, z1, qtrans(1,2), rho, d(2))
-          call obj%timer%stop("lapack")
+          call obj%timer%stop("lapack_laed5_x2")
           call transform_columns_&
           &PRECISION&
           &(obj, idx1(1), idx1(2), na, tmp, l_rqs, l_rqe, q, &
@@ -476,11 +476,11 @@
         d(na1+1:na) = d2(1:na2)
 
         ! Calculate arrangement of all eigenvalues  in output
-        call obj%timer%start("lapack")
+        call obj%timer%start("lapack_lamrg")
         call PRECISION_LAMRG( int(na1,kind=BLAS_KIND), int(na-na1,kind=BLAS_KIND), d, &
                               1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
         idx(:) = int(idxBLAS(:),kind=ik)
-        call obj%timer%stop("lapack")
+        call obj%timer%stop("lapack_lamrg")
         ! Rearrange eigenvalues
 
         tmp = d
@@ -523,11 +523,11 @@
 !!$OMP DO
 !#endif
         DO i = my_proc+1, na1, n_procs ! work distributed over all processors
-          call obj%timer%start("lapack")
+          call obj%timer%start("lapack_laed4")
           call PRECISION_LAED4(int(na1,kind=BLAS_KIND), int(i,kind=BLAS_KIND), d1, z1, delta, &
                                rho, s, infoBLAS) ! s is not used!
           info = int(infoBLAS,kind=ik)
-          call obj%timer%stop("lapack")
+          call obj%timer%stop("lapack_laed4")
           if (info/=0) then
             ! If DLAED4 fails (may happen especially for LAPACK versions before 3.2)
             ! use the more stable bisection algorithm in solve_secular_equation
@@ -644,12 +644,12 @@
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
 
-        call obj%timer%start("lapack")
+        call obj%timer%start("lapack_lamrg")
         ! Calculate arrangement of all eigenvalues  in output
         call PRECISION_LAMRG(int(na1,kind=BLAS_KIND), int(na-na1,kind=BLAS_KIND), d, &
                              1_BLAS_KIND, 1_BLAS_KIND, idxBLAS )
         idx(:) = int(idxBLAS(:),kind=ik)
-        call obj%timer%stop("lapack")
+        call obj%timer%stop("lapack_lamrg")
         ! Rearrange eigenvalues
         tmp = d
         do i=1,na
@@ -1233,7 +1233,7 @@
               my_stream = obj%gpu_setup%my_stream
               call GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION (qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
 
-              call obj%timer%start("nccl_communication")
+              call obj%timer%start("ccl_send_recv")
               ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
               successGPU = ccl_group_start() ! PETERDEBUG: should this be moved outside of the loop or deleted?
               if (.not.successGPU) then
@@ -1263,17 +1263,17 @@
 
 
               if (.not.successGPU) then
-                print *,"Error in nccl_reduce"
+                print *,"Error in ccl_send/ccl_recv"
                 stop
               endif
               successGPU = ccl_group_end()
               if (.not.successGPU) then
-                print *,"Error in setting up nccl_group_end!"
+                print *,"Error in setting up ccl_group_end!"
                 stop
               endif
               successGPU = gpu_stream_synchronize(my_stream)
               check_stream_synchronize_gpu("trans_ev", successGPU)
-              call obj%timer%stop("nccl_communication")
+              call obj%timer%stop("ccl_send_recv")
 
 #else /* defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) */
 
@@ -1471,23 +1471,22 @@
 
             if (l_rnm>0 .and. ncnt>0 .and. nnzu>0) then
               if (useGPU) then
-                call obj%timer%start("gpublas")
+                call obj%timer%start("gpublas_gemm")
                 gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                 call gpublas_PRECISION_GEMM('N', 'N', l_rnm, ncnt, nnzu,   &
                                     1.0_rk, qtmp1_dev, ubound(qtmp1,dim=1),    &
                                     ev_dev, ubound(ev,dim=1), &
                                     1.0_rk, qtmp2_dev, ubound(qtmp2,dim=1), gpuHandle)
-                call obj%timer%stop("gpublas")
+                if (wantDebug) successGPU = gpu_DeviceSynchronize()
+                call obj%timer%stop("gpublas_gemm")
               else ! useGPU
-                call obj%timer%start("blas")
-                call obj%timer%start("gemm")
+                call obj%timer%start("blas_gemm")
                 call PRECISION_GEMM('N', 'N', int(l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND), &
                                     int(nnzu,kind=BLAS_KIND),   &
                                     1.0_rk, qtmp1, int(ubound(qtmp1,dim=1),kind=BLAS_KIND),    &
                                     ev, int(ubound(ev,dim=1),kind=BLAS_KIND), &
                                     1.0_rk, qtmp2(1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
-                call obj%timer%stop("gemm")
-                call obj%timer%stop("blas")
+                call obj%timer%stop("blas_gemm")
               endif ! useGPU
             endif ! (l_rnm>0 .and. ncnt>0 .and. nnzu>0) then
 
@@ -1524,23 +1523,22 @@
 
             if (l_rows-l_rnm>0 .and. ncnt>0 .and. nnzl>0) then
               if (useGPU) then
-                call obj%timer%start("gpublas")
+                call obj%timer%start("gpublas_gemm")
                 gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
                 call gpublas_PRECISION_GEMM('N', 'N', l_rows-l_rnm, ncnt, nnzl,   &
                                     1.0_rk, qtmp1_dev + l_rnm * size_of_datatype, ubound(qtmp1,dim=1),    &
                                     ev_dev, ubound(ev,dim=1), &
                                     1.0_rk, qtmp2_dev + l_rnm * size_of_datatype, ubound(qtmp2,dim=1), gpuHandle)
-                call obj%timer%stop("gpublas")
+                if (wantDebug) successGPU = gpu_DeviceSynchronize()
+                call obj%timer%stop("gpublas_gemm")
               else ! useGPU
-                call obj%timer%start("blas")
-                call obj%timer%start("gemm")
+                call obj%timer%start("blas_gemm")
                 call PRECISION_GEMM('N', 'N', int(l_rows-l_rnm,kind=BLAS_KIND), int(ncnt,kind=BLAS_KIND),  &
                                      int(nnzl,kind=BLAS_KIND),   &
                                      1.0_rk, qtmp1(l_rnm+1,1), int(ubound(qtmp1,dim=1),kind=BLAS_KIND),    &
                                      ev,  int(ubound(ev,dim=1),kind=BLAS_KIND),   &
                                      1.0_rk, qtmp2(l_rnm+1,1), int(ubound(qtmp2,dim=1),kind=BLAS_KIND))
-                call obj%timer%stop("gemm")
-                call obj%timer%stop("blas")
+                call obj%timer%stop("blas_gemm")
               endif ! useGPU
             endif
 
