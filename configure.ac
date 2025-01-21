@@ -2694,12 +2694,15 @@ fi
 #############################################################################################
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
+  AC_ARG_VAR([NVCC],[CUDA compiler command. Default: nvcc])
+  AC_ARG_VAR([NVCCFLAGS],[CUDA compiler flags])
+
   AC_LANG_PUSH([C])
   CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include "
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   CFLAGS="$CFLAGS -I$CUDA_INSTALL_PATH/include"
   NVCCFLAGS="$CUDA_CFLAGS $CUDA_LDFLAGS $NVCCFLAGS"
-  NVCC="nvcc"
+  : ${NVCC:=nvcc}
   AC_SUBST(NVCC)
   AC_SUBST(NVCCFLAGS)
 
@@ -2731,6 +2734,9 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
 fi
 
 if test x"${need_amd_gpu}" = x"yes" ; then
+  AC_ARG_VAR([HIPCC],[HIP compiler command. Default: hipcc])
+  AC_ARG_VAR([HIPCCFLAGS],[HIP compiler flags])
+
   AC_LANG_PUSH([C])
   dnl Default values for $HIPCC and $HIPCCFLAGS, unless set by the user. HIPCCFLAGS="$CXXFLAGS for backward compatibility.
   : ${HIPCC:=hipcc}
