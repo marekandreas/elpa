@@ -2142,6 +2142,17 @@
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+  if (useGPU) then
+    successGPU = gpu_get_last_error()
+    if (.not. successGPU) then
+      write(error_unit,*) "elpa1_template: GPU error detected via gpu_get_last_error(). Aborting..."
+      write(error_unit,*) "Rerun the program with the debug option e.g. 'export ELPA_DEFAULT_debug=1'"
+      stop 1
+    endif
+  endif
+#endif
+
   call obj%timer%stop("elpa_pxgemm_multiply"//trim(tnString)//trim(gpuString))
 
   NVTX_RANGE_POP("elpa_pxgemm_multiply")

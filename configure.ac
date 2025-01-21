@@ -2732,8 +2732,8 @@ fi
 
 if test x"${need_amd_gpu}" = x"yes" ; then
   AC_LANG_PUSH([C])
-  HIPCC="hipcc"
-dnl Default value for $HIPCCFLAGS, unless set by the user. This is for backward compatibility.
+  dnl Default values for $HIPCC and $HIPCCFLAGS, unless set by the user. HIPCCFLAGS="$CXXFLAGS for backward compatibility.
+  : ${HIPCC:=hipcc}
   : ${HIPCCFLAGS="$CXXFLAGS"}
   AC_SUBST(HIPCC)
   AC_SUBST(HIPCCFLAGS)
@@ -2771,12 +2771,12 @@ dnl Default value for $HIPCCFLAGS, unless set by the user. This is for backward 
     AC_MSG_CHECKING(whether rocblas API v3 should be used)
     AC_LANG_PUSH([C++])
     AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-      #include "rocblas/rocblas.h"
+      #include "hipblas/hipblas.h"
       int main(int argc, char **argv) {
-       hipblasHandle_t rocblasHandle;
-	 int m, n, lda, ldb; 
-	 float alpha, *A, *B;
-         hipblasStatus_t status = hipblasDtrmm(rocblasHandle, HIPBLAS_SIDE_LEFT, HIPBLAS_FILL_MODE_LOWER, HIPBLAS_OP_N, HIPBLAS_DIAG_UNIT, m, n, &alpha, A, lda, B, ldb, B, ldb);
+        hipblasHandle_t rocblasHandle;
+        int m, n, lda, ldb;
+        double alpha, *A, *B;
+        hipblasStatus_t status = hipblasDtrmm(rocblasHandle, HIPBLAS_SIDE_LEFT, HIPBLAS_FILL_MODE_LOWER, HIPBLAS_OP_N, HIPBLAS_DIAG_UNIT, m, n, &alpha, A, lda, B, ldb, B, ldb);
         return 0;
       }
     ])],
@@ -3408,9 +3408,9 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   NVCC="\$(top_srcdir)/manual_cpp $NVCC"
 fi
 
-if test x"${need_amd_gpu}" = x"yes" ; then
-  HIPCC="\$(top_srcdir)/manual_cpp $HIPCC"
-fi
+#if test x"${need_amd_gpu}" = x"yes" ; then
+#  HIPCC="\$(top_srcdir)/manual_cpp $HIPCC"
+#fi
 
 #############################################################################################
 

@@ -231,7 +231,7 @@
 #endif
 
          if (info .ne. 0) then
-           write(error_unit,'(a,i8,a)') "Error in gpusolver_dsyevd, info=", info, ", aborting..."
+           write(error_unit,'(a,i8,a)') "Error in gpusolver_PRECISION_syevd, info=", info, ", aborting..."
            stop 1
          endif
        endif ! (.not. useGPUsolver)

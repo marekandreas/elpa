@@ -103,7 +103,7 @@
             success = cusolver_destroy(self%gpu_setup%cusolverHandleArray(thread))
             
             if (.not.(success)) then
-              print *,"Cannotdestroy cusolver handle"
+              print *,"Cannot destroy cusolver handle"
               stop 1
             endif 
           enddo
@@ -112,16 +112,14 @@
 
 #ifdef WITH_AMD_GPU_VERSION
 #ifdef WITH_AMD_ROCSOLVER
-          !do thread=0, maxThreads-1
-            !not needed
-            !success = rocsolver_create(handle_tmp)
-            !self%gpu_setup%rocsolverHandleArray(thread) = handle_tmp
-            !if (.not.(success)) then
-            !  print *,"Cannot create rocsolver handle"
-            !  stop 1
-            !endif
-          !enddo
-          !self%gpu_setup%rocsolverHandleArray(:) = self%gpu_setup%rocblasHandleArray(:)
+          do thread=0, maxThreads-1
+            success = rocsolver_destroy(self%gpu_setup%rocsolverHandleArray(thread))
+            
+            if (.not.(success)) then
+              print *,"Cannot destroy rocsolver handle"
+              stop 1
+            endif 
+          enddo
 #endif
 #endif
 
@@ -131,7 +129,7 @@
             success = openmp_offload_solver_destroy(self%gpu_setup%openmpOffloadsolverHandleArray(thread))
             
             if (.not.(success)) then
-              print *,"Cannotdestroy openmpOffloadsolver handle"
+              print *,"Cannot destroy openmpOffloadsolver handle"
               stop 1
             endif
           enddo
@@ -143,7 +141,7 @@
             success = sycl_solver_destroy(self%gpu_setup%syclsolverHandleArray(thread))
             
             if (.not.(success)) then
-              print *,"Cannotdestroy syclsolver handle"
+              print *,"Cannot destroy syclsolver handle"
               stop 1
             endif 
           enddo
