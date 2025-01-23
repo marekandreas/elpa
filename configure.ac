@@ -3238,9 +3238,9 @@ if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
   if test x"${enable_roctx}" = x"yes"; then
     AC_DEFINE([WITH_ROCTX],[1],[enable ROCTX support])
     AC_LANG_PUSH([C])
-    AC_SEARCH_LIBS([roctxRangePop],[roctx64],[have_roctx64=yes],[have_roctx64=no])
+    AC_SEARCH_LIBS([roctxRangePop],[rocprofiler-sdk-roctx],[have_roctx64=yes],[have_roctx64=no])
     if test x"${have_roctx64}" = x"no"; then
-      AC_MSG_ERROR([Could not link roctx64; try to set the rocm-path or disable roctx support ])
+      AC_MSG_ERROR([Could not link rocprofiler-sdk-roctx; try to set the rocm-path or disable roctx support ])
     fi
     AC_LANG_POP([C])
   fi
