@@ -692,7 +692,7 @@ subroutine tridiag_cpu_&
   do istep = na, nblockEnd ,-1
 
     NVTX_RANGE_PUSH("tridi_cycle")
-    if (wantDebug) call obj%timer%start("main_loop")
+    if (wantDebug) call obj%timer%start("main_loop_tridiag")
 
     ! Calculate number of local rows and columns of the still remaining matrix
     ! on the local processor
@@ -1780,7 +1780,7 @@ subroutine tridiag_cpu_&
     endif ! (my_prow == prow(istep-1, nblk, np_rows) .and. my_pcol == pcol(istep-1, nblk, np_cols))
 
     NVTX_RANGE_POP("tridi_cycle")
-    if (wantDebug) call obj%timer%stop("main_loop")
+    if (wantDebug) call obj%timer%stop("main_loop_tridiag")
   enddo ! main cycle over istep=na,3,-1
 
 #if COMPLEXCASE == 1

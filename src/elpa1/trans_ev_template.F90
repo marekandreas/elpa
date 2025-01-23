@@ -438,7 +438,7 @@ subroutine trans_ev_cpu_&
 
   do istep = 1, na, blockStep
     NVTX_RANGE_PUSH("main_loop")
-    call obj%timer%start("main_loop")
+    call obj%timer%start("main_loop_trans_ev")
 
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
@@ -485,6 +485,7 @@ subroutine trans_ev_cpu_&
     ! PETERDEBUG: do we need at all this compression-decompression?
     ! max_local_rows -> "l_rows_max"
 
+#ifdef WITH_MPI
     if (useGPU .and. .not. useCCL) then
       num = nb * size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -497,7 +498,6 @@ subroutine trans_ev_cpu_&
 #endif
     endif ! useGPU
 
-#ifdef WITH_MPI
     if (nb > 0) then
       if (useCCL) then
         NVTX_RANGE_PUSH("ccl_bcast")
@@ -533,7 +533,6 @@ subroutine trans_ev_cpu_&
       NVTX_RANGE_POP("mpi_bcast")
       endif ! useCCL
     endif ! (nb > 0)
-#endif /* WITH_MPI */
 
     if (useGPU .and. .not. useCCL) then
 #ifdef WITH_GPU_STREAMS
@@ -546,6 +545,7 @@ subroutine trans_ev_cpu_&
       check_memcpy_gpu("trans_ev", successGPU)
 #endif
     endif ! useGPU
+#endif /* WITH_MPI */
 
     if (useGPU) then
       call obj%timer%start("gpu_copy_hvm_hvb_kernel")
@@ -1009,7 +1009,7 @@ subroutine trans_ev_cpu_&
     ! endif
 
     NVTX_RANGE_POP("main_loop")
-    call obj%timer%stop("main_loop")
+    call obj%timer%stop("main_loop_trans_ev")
   enddo ! istep = 1, na, blockStep
 
   deallocate(h, hvb, hvm, stat=istat, errmsg=errorMessage)
