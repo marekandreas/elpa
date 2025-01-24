@@ -131,9 +131,9 @@ subroutine tridiag_cpu_&
   use elpa_gpu
   use elpa_gpu_util
   use tridiag_gpu
-#ifdef WITH_NVTX
+#if defined(WITH_NIVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
-#elif defined(WITH_ROCTX)
+#elif defined(WITH_AMD_GPU_VERSION)   && defined(WITH_ROCTX)
   use hip_functions  ! for ROCTX labels
 #endif
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
@@ -1916,7 +1916,7 @@ subroutine tridiag_cpu_&
   if (useGPU) then
     offset_dev = 1 * size_of_datatype_real
     ! first and last elements of d_vec are treated separately
-    successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), &
+    successGPU = gpu_memcpy(int(loc(d_vec(2)),kind=c_intptr_t), & ! PETERDEBUG: this memcopy is not needed anymore?
                             d_vec_dev + offset_dev, (na-2) * size_of_datatype_real, gpuMemcpyDeviceToHost)
     check_memcpy_gpu("tridiag: d_vec", successGPU)
 

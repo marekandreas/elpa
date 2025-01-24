@@ -210,7 +210,7 @@
 #endif
 
   ! check whether the above setting should be overriden
-  if (obj%is_set("gpu_pxgemm_multiply") == 1) then ! PETERDEBUG: add gpu_pxgemm_multiply keyword to the docs
+  if (obj%is_set("gpu_pxgemm_multiply") == 1) then
     call obj%get("gpu_pxgemm_multiply", gpu_pxgemm_multiply, error)
     if (error .ne. ELPA_OK) then
       print *,"Problem getting option for gpu_hermitian_mutltiply. Aborting..."
@@ -351,6 +351,14 @@
 
     NVTX_RANGE_POP("gpu_memcpy: a->a_dev, b->b_dev")
     call obj%timer%stop("gpu_memcpy")
+
+    ! this is needed to protect from NaNs, until we introduce beta parameter and copy c to c_dev (c = alpha*a*b + beta*c)
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(c_dev, 0, ldc*ldcCols*size_of_datatype, my_stream)
+#else
+    successGPU = gpu_memset(c_dev, 0, ldc*ldcCols*size_of_datatype)
+#endif
+    check_memcpy_gpu("elpa_pxgemm_multiply: memset c_dev", successGPU)
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
@@ -797,7 +805,6 @@
 
       do np = 0, np_rows-1 ! np_rows=np_cols
         NVTX_RANGE_PUSH("np = 0, np_rows-1")
-        if (myid==0) print *, "np = ", np ! PETERDEBUG
 
         ! In this turn, procs of row np assemble the result
         np_bc=np ! np, that posesses the given column of a
