@@ -437,12 +437,12 @@ subroutine trans_ev_cpu_&
 #endif
 
   do istep = 1, na, blockStep
-    NVTX_RANGE_PUSH("main_loop")
-    call obj%timer%start("main_loop_trans_ev")
-
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
     if (ice<ics) cycle
+
+    NVTX_RANGE_PUSH("main_loop")
+    call obj%timer%start("main_loop_trans_ev")
 
     cur_pcol = pcol(istep, nblk, np_cols)
 
@@ -535,8 +535,8 @@ subroutine trans_ev_cpu_&
     endif ! (nb > 0)
 
     if (useGPU .and. .not. useCCL) then
+      num_el = nb ! = max_local_rows*nblk, no compression
 #ifdef WITH_GPU_STREAMS
-      num_el = max_local_rows*nblk
       call gpu_memcpy_async_and_stream_synchronize("trans_ev hvb -> hvb_dev", &
                 hvb_dev, 0_c_intptr_t, hvb(1:num_el), 1, &
                 num_el*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
