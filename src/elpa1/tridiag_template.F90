@@ -131,7 +131,7 @@ subroutine tridiag_cpu_&
   use elpa_gpu
   use elpa_gpu_util
   use tridiag_gpu
-#if defined(WITH_NIVIDIA_GPU_VERSION) && defined(WITH_NVTX)
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
 #elif defined(WITH_AMD_GPU_VERSION)   && defined(WITH_ROCTX)
   use hip_functions  ! for ROCTX labels
