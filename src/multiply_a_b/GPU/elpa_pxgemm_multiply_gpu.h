@@ -1090,19 +1090,19 @@ extern "C" void CONCATENATE(ELPA_GPU, _update_c_tn_nt_FromC) (char dataType,
                                           int *np_dirs_t_in, int *my_pdir_t_in, int *np_fine_in,
                                           int *SM_count_in, int *debug_in, gpuStream_t my_stream) {
 
-  if (dataType == 'D') gpu_update_c_tn_nt<double>(a_transposed_in, 
+  if      (dataType == 'D') gpu_update_c_tn_nt<double>(a_transposed_in, 
                                 (double *)c_dev, (double *)tmp1_full_dev, beta_int_in,
                                 l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
                                 np_rows_in, np_cols_in, np_dirs_fine_in,
                                 np_dirs_t_in, my_pdir_t_in, np_fine_in,
                                 SM_count_in, debug_in, my_stream);
-  if (dataType == 'S') gpu_update_c_tn_nt<float>(a_transposed_in, 
+  else if (dataType == 'S') gpu_update_c_tn_nt<float>(a_transposed_in, 
                                 (float *)c_dev, (float *)tmp1_full_dev, beta_int_in,
                                 l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
                                 np_rows_in, np_cols_in, np_dirs_fine_in,
                                 np_dirs_t_in, my_pdir_t_in, np_fine_in,
                                 SM_count_in, debug_in, my_stream);
-  if (dataType == 'Z') gpu_update_c_tn_nt<gpuDoubleComplex>(a_transposed_in, 
+  else if (dataType == 'Z') gpu_update_c_tn_nt<gpuDoubleComplex>(a_transposed_in, 
                                           (gpuDoubleComplex *)c_dev, (gpuDoubleComplex *)tmp1_full_dev, beta_int_in,
                                           l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
                                           np_rows_in, np_cols_in, np_dirs_fine_in,

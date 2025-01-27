@@ -72,8 +72,10 @@ subroutine elpa_transpose_row_or_col&
   use elpa_gpu
   use elpa_ccl_gpu
   use multiply_a_b_gpu
-#ifdef WITH_NVIDIA_GPU_VERSION
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+  use hip_functions  ! for ROCTX labels
 #endif
   implicit none
 

@@ -68,8 +68,10 @@ subroutine elpa_transform_generalized_a_h_a_&
   use elpa_utilities, only : error_unit
   use mod_query_gpu_usage
   use elpa_gpu
-#if defined (WITH_NVIDIA_GPU_VERSION) && defined (WITH_NVTX)
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+  use hip_functions  ! for ROCTX labels
 #endif
   implicit none
 #include "general/precision_kinds.F90"
@@ -398,8 +400,10 @@ subroutine elpa_transform_back_generalized_a_h_a_&
   use mod_query_gpu_usage
   use elpa_utilities , only : check_alloc, check_allocate_f, error_unit
   use elpa_gpu
-#ifdef WITH_NVIDIA_GPU_VERSION
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+  use hip_functions  ! for ROCTX labels
 #endif
   implicit none
 #include "general/precision_kinds.F90"

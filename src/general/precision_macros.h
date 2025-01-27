@@ -99,8 +99,10 @@
 #undef  PRECISION_GER
 #undef  gpublas_PRECISION_GEMM
 #undef  gpublas_PRECISION_TRMM
+#undef  gpublas_PRECISION_SYRK_HERK
 #undef  gpublas_PRECISION_GEMV
 #undef  gpublas_PRECISION_SYMV
+#undef  gpublas_PRECISION_TRMV
 #undef  gpublas_PRECISION_COPY
 #undef  gpublas_PRECISION_TRSM
 #undef  gpublas_PRECISION_DOT
@@ -225,8 +227,10 @@
 #define  PRECISION_AXPY DAXPY
 #define  gpublas_PRECISION_GEMM gpublas_DGEMM
 #define  gpublas_PRECISION_TRMM gpublas_DTRMM
+#define  gpublas_PRECISION_SYRK_HERK gpublas_DSYRK
 #define  gpublas_PRECISION_GEMV gpublas_DGEMV
 #define  gpublas_PRECISION_SYMV gpublas_DSYMV
+#define  gpublas_PRECISION_TRMV gpublas_DTRMV
 #define  gpublas_PRECISION_COPY gpublas_DCOPY
 #define  gpublas_PRECISION_TRSM gpublas_DTRSM
 #define  gpublas_PRECISION_DOT  gpublas_DDOT
@@ -350,8 +354,10 @@
 #define  PRECISION_AXPY SAXPY
 #define  gpublas_PRECISION_GEMM gpublas_SGEMM
 #define  gpublas_PRECISION_TRMM gpublas_STRMM
+#define  gpublas_PRECISION_SYRK_HERK gpublas_SSYRK
 #define  gpublas_PRECISION_GEMV gpublas_SGEMV
 #define  gpublas_PRECISION_SYMV gpublas_SSYMV
+#define  gpublas_PRECISION_TRMV gpublas_STRMV
 #define  gpublas_PRECISION_COPY gpublas_SCOPY
 #define  gpublas_PRECISION_TRSM gpublas_STRSM
 #define  gpublas_PRECISION_DOT  gpublas_SDOT
@@ -488,8 +494,10 @@
 #undef  PRECISION_AXPY
 #undef  gpublas_PRECISION_GEMM
 #undef  gpublas_PRECISION_TRMM
+#undef  gpublas_PRECISION_SYRK_HERK
 #undef  gpublas_PRECISION_GEMV
 #undef  gpublas_PRECISION_SYMV
+#undef  gpublas_PRECISION_TRMV
 #undef  gpublas_PRECISION_COPY
 #undef  gpublas_PRECISION_TRSM
 #undef  gpublas_PRECISION_DCAL
@@ -605,8 +613,10 @@
 #define  PRECISION_AXPY ZAXPY
 #define  gpublas_PRECISION_GEMM gpublas_ZGEMM
 #define  gpublas_PRECISION_TRMM gpublas_ZTRMM
+#define  gpublas_PRECISION_SYRK_HERK gpublas_ZHERK
 #define  gpublas_PRECISION_GEMV gpublas_ZGEMV
 #define  gpublas_PRECISION_SYMV gpublas_ZSYMV
+#define  gpublas_PRECISION_TRMV gpublas_ZTRMV
 #define  gpublas_PRECISION_COPY gpublas_ZCOPY
 #define  gpublas_PRECISION_TRSM gpublas_ZTRSM
 #define  gpublas_PRECISION_DOT gpublas_ZDOT
@@ -713,8 +723,10 @@
 #define  PRECISION_GER CGER
 #define  gpublas_PRECISION_GEMM gpublas_CGEMM
 #define  gpublas_PRECISION_TRMM gpublas_CTRMM
+#define  gpublas_PRECISION_SYRK_HERK gpublas_CHERK
 #define  gpublas_PRECISION_GEMV gpublas_CGEMV
 #define  gpublas_PRECISION_SYMV gpublas_CSYMV
+#define  gpublas_PRECISION_TRMV gpublas_CTRMV
 #define  gpublas_PRECISION_COPY gpublas_CCOPY
 #define  gpublas_PRECISION_TRSM gpublas_CTRSM
 #define  gpublas_PRECISION_DOT  gpublas_CDOT

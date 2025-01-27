@@ -2694,12 +2694,15 @@ fi
 #############################################################################################
 
 if test x"${need_nvidia_gpu}" = x"yes" ; then
+  AC_ARG_VAR([NVCC],[CUDA compiler command. Default: nvcc])
+  AC_ARG_VAR([NVCCFLAGS],[CUDA compiler flags])
+
   AC_LANG_PUSH([C])
   CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include "
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   CFLAGS="$CFLAGS -I$CUDA_INSTALL_PATH/include"
   NVCCFLAGS="$CUDA_CFLAGS $CUDA_LDFLAGS $NVCCFLAGS"
-  NVCC="nvcc"
+  : ${NVCC:=nvcc}
   AC_SUBST(NVCC)
   AC_SUBST(NVCCFLAGS)
 
@@ -2731,6 +2734,9 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
 fi
 
 if test x"${need_amd_gpu}" = x"yes" ; then
+  AC_ARG_VAR([HIPCC],[HIP compiler command. Default: hipcc])
+  AC_ARG_VAR([HIPCCFLAGS],[HIP compiler flags])
+
   AC_LANG_PUSH([C])
   dnl Default values for $HIPCC and $HIPCCFLAGS, unless set by the user. HIPCCFLAGS="$CXXFLAGS for backward compatibility.
   : ${HIPCC:=hipcc}
@@ -3194,7 +3200,7 @@ if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" 
     AC_LANG_PUSH([C])
     AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
     if test x"${have_nvtoolsext}" = x"no"; then
-      AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable Nvidia GPU support ])
+      AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable nvtx support ])
     fi
     AC_LANG_POP([C])
   fi
@@ -3216,28 +3222,28 @@ if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
   ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=1
   ELPA_2STAGE_REAL_AMD_GPU_COMPILED=1
 
-  #AC_MSG_CHECKING(whether --enable-nvtx is specified)
-  #AC_ARG_ENABLE([nvtx],
-  #              AS_HELP_STRING([--enable-nvtx],
-  #                             [build and install nvtx wrapper for profiling the Nvidia GPU version, default no.]),
-  #              [
-  #               if test x"$enableval" = x"yes"; then
-  #                 enable_nvtx=yes
-  #               else
-  #                 enable_nvtx=no
-  #               fi
-  #               ],
-  #              [enable_nvtx=no])
-  #AC_MSG_RESULT([${enable_nvtx}])
-  #if test x"${enable_nvtx}" = x"yes"; then
-  #  AC_DEFINE([WITH_NVTX],[1],[enable NVTX support])
-  #  AC_LANG_PUSH([C])
-  #  AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
-  #  if test x"${have_nvtoolsext}" = x"no"; then
-  #    AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable Nvidia GPU support ])
-  #  fi
-  #  AC_LANG_POP([C])
-  #fi
+  AC_MSG_CHECKING(whether --enable-roctx is specified)
+  AC_ARG_ENABLE([roctx],
+                AS_HELP_STRING([--enable-roctx],
+                               [build and install roctx wrapper for profiling the AMD GPU version, default no.]),
+                [
+                  if test x"$enableval" = x"yes"; then
+                    enable_roctx=yes
+                  else
+                    enable_roctx=no
+                  fi
+                ],
+                [enable_roctx=no])
+  AC_MSG_RESULT([${enable_roctx}])
+  if test x"${enable_roctx}" = x"yes"; then
+    AC_DEFINE([WITH_ROCTX],[1],[enable ROCTX support])
+    AC_LANG_PUSH([C])
+    AC_SEARCH_LIBS([roctxRangePop],[rocprofiler-sdk-roctx],[have_roctx64=yes],[have_roctx64=no])
+    if test x"${have_roctx64}" = x"no"; then
+      AC_MSG_ERROR([Could not link rocprofiler-sdk-roctx; try to set the rocm-path or disable roctx support ])
+    fi
+    AC_LANG_POP([C])
+  fi
 else
   AC_DEFINE_SUBST(CURRENT_WITH_AMD_GPU_VERSION, 0, "disable use AMD GPU in C-headers")
   ELPA_2STAGE_COMPLEX_AMD_GPU_COMPILED=0

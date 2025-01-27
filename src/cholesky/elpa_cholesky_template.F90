@@ -75,23 +75,25 @@
 #endif
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+  use hip_functions  ! for ROCTX labels
 #endif
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
   integer(kind=ik)                           :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-#ifndef DEVICE_POINTER
-#ifdef USE_ASSUMED_SIZE
-  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,*)
-#else
-  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,obj%local_ncols)
-#endif
-#else /* DEVICE_POINTER */
+#ifdef DEVICE_POINTER
   type(c_ptr)                                :: aDev
   MATH_DATATYPE(kind=rck), allocatable       :: a(:,:) ! dummy variable
 !#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
   MATH_DATATYPE(kind=rck), allocatable       :: a_tmp(:,:)
 !#endif
+#else /* DEVICE_POINTER */
+#ifdef USE_ASSUMED_SIZE
+  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,*)
+#else
+  MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,obj%local_ncols)
+#endif
 #endif /* DEVICE_POINTER */
   integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols, myid
   integer(kind=MPI_KIND)                     :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, myidMPI
@@ -1200,9 +1202,8 @@
         ! column i is on local processor
         l_col1 = local_index(i  , my_pcol, np_cols, nblk, +1) ! local column number
         l_row1 = local_index(i+1, my_prow, np_rows, nblk, +1) ! first row below diagonal
-#ifndef DEVICE_POINTER
+
         a(l_row1:matrixRows,l_col1) = 0
-#endif
       endif ! (my_pcol==pcol(i, nblk, np_cols))
     enddo
   endif ! useGPU

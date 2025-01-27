@@ -196,9 +196,7 @@
 #ifdef WITH_SYCL_GPU_VERSION
       use sycl_functions
 #endif
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
       use elpa_ccl_gpu
-#endif
       implicit none
 
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -240,28 +238,19 @@
       endif
 #endif
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
-#ifdef WITH_NVIDIA_NCCL
-      if (use_gpu_vendor == nvidia_gpu) then
-#endif
-#ifdef WITH_AMD_RCCL
-      if (use_gpu_vendor == amd_gpu) then
-#endif
-        cclSum  = ccl_redOp_cclSum()
-        cclMax  = ccl_redOp_cclMax()
-        cclMin  = ccl_redOp_cclMin()
-        cclAvg  = ccl_redOp_cclAvg()
-        cclProd = ccl_redOp_cclProd()
+      cclSum  = ccl_redOp_cclSum()
+      cclMax  = ccl_redOp_cclMax()
+      cclMin  = ccl_redOp_cclMin()
+      cclAvg  = ccl_redOp_cclAvg()
+      cclProd = ccl_redOp_cclProd()
 
-        cclInt     = ccl_dataType_cclInt()
-        cclInt32   = ccl_dataType_cclInt32()
-        cclInt64   = ccl_dataType_cclInt64()
-        cclFloat   = ccl_dataType_cclFloat()
-        cclFloat32 = ccl_dataType_cclFloat32()
-        cclFloat64 = ccl_dataType_cclFloat64()
-        cclDouble  = ccl_dataType_cclDouble()
-      endif
-#endif
+      cclInt     = ccl_dataType_cclInt()
+      cclInt32   = ccl_dataType_cclInt32()
+      cclInt64   = ccl_dataType_cclInt64()
+      cclFloat   = ccl_dataType_cclFloat()
+      cclFloat32 = ccl_dataType_cclFloat32()
+      cclFloat64 = ccl_dataType_cclFloat64()
+      cclDouble  = ccl_dataType_cclDouble()
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then

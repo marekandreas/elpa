@@ -1263,14 +1263,14 @@ function elpa_solve_evp_&
        &_&
        &PRECISION&
        & (obj, na, nev, a_dev, matrixRows, tau_dev, q_dev, &
-          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, success)
+          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
      else
        call trans_ev_cpu_&
        &MATH_DATATYPE&
        &_&
        &PRECISION&
        & (obj, na, nev, a, matrixRows, tau, q, &
-          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, success)
+          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
      endif
 
      if (success) then
@@ -1316,7 +1316,7 @@ function elpa_solve_evp_&
                &_&
                &PRECISION&
                & (obj, na, nev, a, matrixRows, tau, q(1:matrixRows, matrixCols+1:2*matrixCols), matrixRows, nblk, matrixCols, &
-                  mpi_comm_rows, mpi_comm_cols, success)
+                  mpi_comm_rows, mpi_comm_cols, wantDebug, success)
        else ! do_useGPU_trans_ev
          num = matrixRows*matrixCols*size_of_datatype
          successGPU = gpu_malloc(q_part2_dev, num)
@@ -1336,7 +1336,7 @@ function elpa_solve_evp_&
          &_&
          &PRECISION&
          & (obj, na, nev, a_dev, matrixRows, tau_dev, q_part2_dev, matrixRows, nblk, matrixCols, &
-            mpi_comm_rows, mpi_comm_cols, success)
+            mpi_comm_rows, mpi_comm_cols, wantDebug, success)
        endif ! do_useGPU_trans_ev
        if (success) then
          success_int = 0
