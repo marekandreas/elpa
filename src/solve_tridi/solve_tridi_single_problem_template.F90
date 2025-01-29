@@ -112,8 +112,11 @@
 #ifdef SOLVE_TRIDI_GPU_BUILD
      useGPU =.true.
 
-#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
+#if defined(WITH_NVIDIA_CUSOLVER)
       useGPUsolver =.true.
+#endif
+#if defined(WITH_AMD_ROCSOLVER)
+      useGPUsolver =.false. ! As of ELPA 2025.01 release, rocsolver_?stedc/rocsolver_?syevd showed bad performance (worse than on CPU). Hopefully, this will be fixed by AMD and then we can enable it.
 #endif
 #endif /* SOLVE_TRIDI_GPU_BUILD */
 
