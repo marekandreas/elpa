@@ -42,15 +42,14 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20241612, "Current ELPA API version")
-print_current_api_version=20241105
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20250131, "Current ELPA API version")
+print_current_api_version=20250131
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241612], [Current ELPA autotune version])
-print_current_autotune_version=20241105
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20241612], [Current ELPA autotune version])
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20241612, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20250131], [Current ELPA autotune version])
+print_current_autotune_version=20250131
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20250131, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
 AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1747401835],[old_elpa_version=yes],[old_elpa_version=no])
 
