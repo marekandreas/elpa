@@ -663,118 +663,6 @@
     end subroutine
   end interface
 
-
-  interface syclblas_Dcopy
-    module procedure syclblas_Dcopy_intptr
-    module procedure syclblas_Dcopy_cptr
-  end interface
-
-  interface
-    subroutine syclblas_Dcopy_intptr_c(syclblasHandle, n, x, incx, y, incy) &
-                              bind(C,name="syclblasDcopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Dcopy_cptr_c(syclblasHandle, n, x, incx, y, incy) &
-                              bind(C,name="syclblasDcopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-
-  interface syclblas_Dtrmm
-    module procedure syclblas_Dtrmm_intptr
-    module procedure syclblas_Dtrmm_cptr
-  end interface
-
-  interface
-    subroutine syclblas_Dtrmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasDtrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Dtrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasDtrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-
-  interface syclblas_Dtrsm
-    module procedure syclblas_Dtrsm_intptr
-    module procedure syclblas_Dtrsm_cptr
-  end interface
-
-  interface
-    subroutine syclblas_Dtrsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasDtrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Dtrsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasDtrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Dgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="syclblasDgemv_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: cta
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      real(kind=C_DOUBLE) , value              :: alpha, beta
-      integer(kind=C_intptr_T), value         :: a, x, y
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
   interface syclblas_Sgemm
     module procedure syclblas_Sgemm_intptr
     module procedure syclblas_Sgemm_cptr
@@ -825,118 +713,6 @@
     end subroutine
   end interface
 
-
-  interface syclblas_Scopy
-    module procedure syclblas_Scopy_intptr
-    module procedure syclblas_Scopy_cptr
-  end interface
-
-  interface
-    subroutine syclblas_Scopy_intptr_c(syclblasHandle, n, x, incx, y, incy) &
-                              bind(C,name="syclblasScopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Scopy_cptr_c(syclblasHandle, n, x, incx, y, incy) &
-                              bind(C,name="syclblasScopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-
-  interface syclblas_Strmm
-    module procedure syclblas_Strmm_intptr
-    module procedure syclblas_Strmm_cptr
-  end interface
-
-  interface
-    subroutine syclblas_Strmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasStrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Strmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasStrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-
-  interface syclblas_Strsm
-    module procedure syclblas_Strsm_intptr
-    module procedure syclblas_Strsm_cptr
-  end interface
-
-  interface
-    subroutine syclblas_Strsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasStrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Strsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasStrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Sgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="syclblasSgemv_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: cta
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      real(kind=C_FLOAT) , value              :: alpha, beta
-      integer(kind=C_intptr_T), value         :: a, x, y
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
   interface syclblas_Zgemm
     module procedure syclblas_Zgemm_intptr
     module procedure syclblas_Zgemm_cptr
@@ -983,118 +759,6 @@
       complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, c
       type(c_ptr), value                      :: b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-
-  interface syclblas_Zcopy
-    module procedure syclblas_Zcopy_intptr
-    module procedure syclblas_Zcopy_cptr
-  end interface
-
-  interface
-    subroutine syclblas_Zcopy_intptr_c(syclblasHandle, n, x, incx, y, incy) &
-                              bind(C,name="syclblasZcopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Zcopy_cptr_c(syclblasHandle, n, x, incx, y, incy) &
-                              bind(C,name="syclblasZcopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-
-  interface syclblas_Ztrmm
-    module procedure syclblas_Ztrmm_intptr
-    module procedure syclblas_Ztrmm_cptr
-  end interface
-
-  interface
-    subroutine syclblas_Ztrmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasZtrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Ztrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasZtrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-
-  interface syclblas_Ztrsm
-    module procedure syclblas_Ztrsm_intptr
-    module procedure syclblas_Ztrsm_cptr
-  end interface
-
-  interface
-    subroutine syclblas_Ztrsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasZtrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Ztrsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="syclblasZtrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine syclblas_Zgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="syclblasZgemv_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: cta
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha, beta
-      integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: syclblasHandle
     end subroutine
   end interface
@@ -1150,6 +814,93 @@
   end interface
 
 
+  interface syclblas_Dcopy
+    module procedure syclblas_Dcopy_intptr
+    module procedure syclblas_Dcopy_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Dcopy_intptr_c(syclblasHandle, n, x, incx, y, incy) &
+                              bind(C,name="syclblasDcopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Dcopy_cptr_c(syclblasHandle, n, x, incx, y, incy) &
+                              bind(C,name="syclblasDcopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Scopy
+    module procedure syclblas_Scopy_intptr
+    module procedure syclblas_Scopy_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Scopy_intptr_c(syclblasHandle, n, x, incx, y, incy) &
+                              bind(C,name="syclblasScopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Scopy_cptr_c(syclblasHandle, n, x, incx, y, incy) &
+                              bind(C,name="syclblasScopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Zcopy
+    module procedure syclblas_Zcopy_intptr
+    module procedure syclblas_Zcopy_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Zcopy_intptr_c(syclblasHandle, n, x, incx, y, incy) &
+                              bind(C,name="syclblasZcopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Zcopy_cptr_c(syclblasHandle, n, x, incx, y, incy) &
+                              bind(C,name="syclblasZcopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
   interface syclblas_Ccopy
     module procedure syclblas_Ccopy_intptr
     module procedure syclblas_Ccopy_cptr
@@ -1180,6 +931,105 @@
   end interface
 
 
+  interface syclblas_Dtrmm
+    module procedure syclblas_Dtrmm_intptr
+    module procedure syclblas_Dtrmm_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Dtrmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasDtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      real(c_double)           , value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Dtrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasDtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
+      real(c_double)           , value        :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Strmm
+    module procedure syclblas_Strmm_intptr
+    module procedure syclblas_Strmm_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Strmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasStrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      real(c_float)            , value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Strmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasStrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
+      real(c_float)            , value        :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Ztrmm
+    module procedure syclblas_Ztrmm_intptr
+    module procedure syclblas_Ztrmm_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Ztrmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasZtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      complex(c_double_complex), value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Ztrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasZtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
+      complex(c_double_complex), value        :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
   interface syclblas_Ctrmm
     module procedure syclblas_Ctrmm_intptr
     module procedure syclblas_Ctrmm_cptr
@@ -1190,12 +1040,12 @@
                               bind(C,name="syclblasCtrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: syclblasHandle
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      complex(c_float_complex) , value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
     end subroutine
   end interface
 
@@ -1205,14 +1055,355 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
+      complex(c_float_complex) , value        :: alpha
       type(c_ptr), value                      :: a, b
       integer(kind=C_intptr_T), value         :: syclblasHandle
     end subroutine
   end interface
 
+
+  interface syclblas_Dtrmv
+    module procedure syclblas_Dtrmv_intptr
+    module procedure syclblas_Dtrmv_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Dtrmv_intptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="syclblasDtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Dtrmv_cptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="syclblasDtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Strmv
+    module procedure syclblas_Strmv_intptr
+    module procedure syclblas_Strmv_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Strmv_intptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="syclblasStrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Strmv_cptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="syclblasStrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Ztrmv
+    module procedure syclblas_Ztrmv_intptr
+    module procedure syclblas_Ztrmv_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Ztrmv_intptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="syclblasZtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Ztrmv_cptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="syclblasZtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Ctrmv
+    module procedure syclblas_Ctrmv_intptr
+    module procedure syclblas_Ctrmv_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Ctrmv_intptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="syclblasCtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Ctrmv_cptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="syclblasCtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: syclblasHandle
+    end subroutine
+  end interface
+
+
+  interface syclblas_Dsyrk
+    module procedure syclblas_Dsyrk_intptr
+    module procedure syclblas_Dsyrk_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Dsyrk_intptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="syclblasDsyrk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      real(c_double)           , value        :: alpha, beta
+      integer(kind=c_intptr_t) , value        :: a, c
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Dsyrk_cptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="syclblasDsyrk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      real(c_double)           , value        :: alpha, beta
+      type(c_ptr), value                      :: a, c
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Ssyrk
+    module procedure syclblas_Ssyrk_intptr
+    module procedure syclblas_Ssyrk_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Ssyrk_intptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="syclblasSsyrk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      real(c_float)            , value        :: alpha, beta
+      integer(kind=c_intptr_t) , value        :: a, c
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Ssyrk_cptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="syclblasSsyrk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      real(c_float)            , value        :: alpha, beta
+      type(c_ptr), value                      :: a, c
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Zherk
+    module procedure syclblas_Zherk_intptr
+    module procedure syclblas_Zherk_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Zherk_intptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="syclblasZherk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      complex(c_double_complex), value        :: alpha, beta
+      integer(kind=c_intptr_t) , value        :: a, c
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Zherk_cptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="syclblasZherk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      complex(c_double_complex), value        :: alpha, beta
+      type(c_ptr), value                      :: a, c
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Cherk
+    module procedure syclblas_Cherk_intptr
+    module procedure syclblas_Cherk_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Cherk_intptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="syclblasCherk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      complex(c_float_complex) , value        :: alpha, beta
+      integer(kind=c_intptr_t) , value        :: a, c
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Cherk_cptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="syclblasCherk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      complex(c_float_complex) , value        :: alpha, beta
+      type(c_ptr), value                      :: a, c
+      integer(kind=c_intptr_t) , value        :: syclblasHandle
+    end subroutine
+  end interface
+
+
+  interface syclblas_Dtrsm
+    module procedure syclblas_Dtrsm_intptr
+    module procedure syclblas_Dtrsm_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Dtrsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasDtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Dtrsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasDtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Strsm
+    module procedure syclblas_Strsm_intptr
+    module procedure syclblas_Strsm_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Strsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasStrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_FLOAT) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Strsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasStrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_FLOAT) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface syclblas_Ztrsm
+    module procedure syclblas_Ztrsm_intptr
+    module procedure syclblas_Ztrsm_cptr
+  end interface
+
+  interface
+    subroutine syclblas_Ztrsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasZtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Ztrsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="syclblasZtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
 
   interface syclblas_Ctrsm
     module procedure syclblas_Ctrsm_intptr
@@ -1243,6 +1434,49 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
       type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine syclblas_Dgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="syclblasDgemv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_DOUBLE) , value              :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Sgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="syclblasSgemv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_FLOAT) , value              :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine syclblas_Zgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="syclblasZgemv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: syclblasHandle
     end subroutine
   end interface
@@ -1342,66 +1576,6 @@
 !    end subroutine
 !  end interface
 
-
-  interface syclblas_Dscal
-    module procedure syclblas_Dscal_intptr
-    module procedure syclblas_Dscal_cptr
-  end interface
-
-!  interface
-!    subroutine syclblas_Dscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasDscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine syclblas_Dscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasDscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
-
-
-  interface syclblas_Daxpy
-    module procedure syclblas_Daxpy_intptr
-    module procedure syclblas_Daxpy_cptr
-  end interface
-
-!  interface
-!    subroutine syclblas_Daxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasDaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine syclblas_Daxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasDaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
-!    end subroutine
-!  end interface
-
   interface syclblas_Sdot
     module procedure syclblas_Sdot_intptr
     module procedure syclblas_Sdot_cptr
@@ -1426,66 +1600,6 @@
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
 !      integer(kind=C_INT), value              :: length, incx, incy
 !      type(c_ptr), value                      :: x, y, result
-!    end subroutine
-!  end interface
-
-
-  interface syclblas_Sscal
-    module procedure syclblas_Sscal_intptr
-    module procedure syclblas_Sscal_cptr
-  end interface
-
-!  interface
-!    subroutine syclblas_Sscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasSscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine syclblas_Sscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasSscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
-
-
-  interface syclblas_Saxpy
-    module procedure syclblas_Saxpy_intptr
-    module procedure syclblas_Saxpy_cptr
-  end interface
-
-!  interface
-!    subroutine syclblas_Saxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasSaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine syclblas_Saxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasSaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1515,66 +1629,6 @@
 !      integer(kind=C_intptr_T), value         :: syclblasHandle
 !      integer(kind=C_INT), value              :: length, incx, incy
 !      type(c_ptr), value                      :: x, y, result
-!    end subroutine
-!  end interface
-
-
-  interface syclblas_Zscal
-    module procedure syclblas_Zscal_intptr
-    module procedure syclblas_Zscal_cptr
-  end interface
-
-!  interface
-!    subroutine syclblas_Zscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasZscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine syclblas_Zscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasZscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
-
-
-  interface syclblas_Zaxpy
-    module procedure syclblas_Zaxpy_intptr
-    module procedure syclblas_Zaxpy_cptr
-  end interface
-
-!  interface
-!    subroutine syclblas_Zaxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasZaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine syclblas_Zaxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasZaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1608,6 +1662,93 @@
 !  end interface
 
 
+  interface syclblas_Dscal
+    module procedure syclblas_Dscal_intptr
+    module procedure syclblas_Dscal_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Dscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
+!               bind(C, name="syclblasDscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Dscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
+!               bind(C, name="syclblasDscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface syclblas_Sscal
+    module procedure syclblas_Sscal_intptr
+    module procedure syclblas_Sscal_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Sscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
+!               bind(C, name="syclblasSscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Sscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
+!               bind(C, name="syclblasSscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface syclblas_Zscal
+    module procedure syclblas_Zscal_intptr
+    module procedure syclblas_Zscal_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Zscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
+!               bind(C, name="syclblasZscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Zscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
+!               bind(C, name="syclblasZscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
   interface syclblas_Cscal
     module procedure syclblas_Cscal_intptr
     module procedure syclblas_Cscal_cptr
@@ -1638,6 +1779,90 @@
 !  end interface
 
 
+  interface syclblas_Daxpy
+    module procedure syclblas_Daxpy_intptr
+    module procedure syclblas_Daxpy_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Daxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasDaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Daxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasDaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
+!    end subroutine
+!  end interface
+  interface syclblas_Saxpy
+    module procedure syclblas_Saxpy_intptr
+    module procedure syclblas_Saxpy_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Saxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasSaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Saxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasSaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
+!    end subroutine
+!  end interface
+  interface syclblas_Zaxpy
+    module procedure syclblas_Zaxpy_intptr
+    module procedure syclblas_Zaxpy_cptr
+  end interface
+
+!  interface
+!    subroutine syclblas_Zaxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasZaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine syclblas_Zaxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="syclblasZaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: syclblasHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
+!    end subroutine
+!  end interface
   interface syclblas_Caxpy
     module procedure syclblas_Caxpy_intptr
     module procedure syclblas_Caxpy_cptr
@@ -2298,6 +2523,7 @@
 !#endif
 !    end function
 
+
     subroutine syclblas_Dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclblasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2340,100 +2566,6 @@
 #ifdef WITH_SYCL_GPU_VERSION
       call syclblas_Dgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
                                                  alpha, a, lda, b, ldb, beta, c, ldc)
-#endif
-    end subroutine
-
-    subroutine syclblas_Dcopy_intptr(n, x, incx, y, incy, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Dcopy_intptr_c(syclblasHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine syclblas_Dcopy_cptr(n, x, incx, y, incy, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Dcopy_cptr_c(syclblasHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine syclblas_Dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Dtrmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE) ,value               :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Dtrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Dtrsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE) ,value               :: alpha
-      type(c_ptr)                    :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Dtrsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: cta
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,incx,incy
-      real(kind=C_DOUBLE) ,value               :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Dgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
@@ -2482,100 +2614,6 @@
 #endif
     end subroutine
 
-    subroutine syclblas_Scopy_intptr(n, x, incx, y, incy, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Scopy_intptr_c(syclblasHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine syclblas_Scopy_cptr(n, x, incx, y, incy, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Scopy_cptr_c(syclblasHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine syclblas_Strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Strmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT) ,value               :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Strmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Strsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT) ,value               :: alpha
-      type(c_ptr)                    :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Strsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: cta
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,incx,incy
-      real(kind=C_FLOAT) ,value               :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Sgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
-#endif
-    end subroutine
-
     subroutine syclblas_Zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, syclblasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2618,100 +2656,6 @@
 #ifdef WITH_SYCL_GPU_VERSION
       call syclblas_Zgemm_intptr_cptr_intptr_c(syclblasHandle, cta, ctb, m, n, k, &
                                                  alpha, a, lda, b, ldb, beta, c, ldc)
-#endif
-    end subroutine
-
-    subroutine syclblas_Zcopy_intptr(n, x, incx, y, incy, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Zcopy_intptr_c(syclblasHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine syclblas_Zcopy_cptr(n, x, incx, y, incy, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Zcopy_cptr_c(syclblasHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine syclblas_Ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Ztrmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Ztrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Ztrsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
-      type(c_ptr)                    :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Ztrsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine syclblas_Zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclblasHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: cta
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: syclblasHandle
-#ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Zgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
@@ -2760,6 +2704,79 @@
 #endif
     end subroutine
 
+
+    subroutine syclblas_Dcopy_intptr(n, x, incx, y, incy, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dcopy_intptr_c(syclblasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine syclblas_Dcopy_cptr(n, x, incx, y, incy, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)                     :: x, y
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dcopy_cptr_c(syclblasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine syclblas_Scopy_intptr(n, x, incx, y, incy, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Scopy_intptr_c(syclblasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine syclblas_Scopy_cptr(n, x, incx, y, incy, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)                     :: x, y
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Scopy_cptr_c(syclblasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine syclblas_Zcopy_intptr(n, x, incx, y, incy, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Zcopy_intptr_c(syclblasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine syclblas_Zcopy_cptr(n, x, incx, y, incy, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)                     :: x, y
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Zcopy_cptr_c(syclblasHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
     subroutine syclblas_Ccopy_intptr(n, x, incx, y, incy, syclblasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2784,15 +2801,100 @@
 #endif
     end subroutine
 
+
+    subroutine syclblas_Dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      real(c_double)           , value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dtrmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      real(c_double)           , value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dtrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      real(c_float)            , value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Strmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      real(c_float)            , value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Strmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      complex(c_double_complex), value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ztrmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      complex(c_double_complex), value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ztrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
     subroutine syclblas_Ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: syclblasHandle
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      complex(c_float_complex) , value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
       call syclblas_Ctrmm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
@@ -2801,14 +2903,301 @@
     subroutine syclblas_Ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
       use, intrinsic :: iso_c_binding
       implicit none
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      complex(c_float_complex) , value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ctrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+
+    subroutine syclblas_Dtrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dtrmv_intptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine syclblas_Dtrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dtrmv_cptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine syclblas_Strmv_intptr(uplo, trans, diag, n, a, lda, x, incx, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Strmv_intptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine syclblas_Strmv_cptr(uplo, trans, diag, n, a, lda, x, incx, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Strmv_cptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ztrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ztrmv_intptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ztrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ztrmv_cptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ctrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ctrmv_intptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ctrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ctrmv_cptr_c(syclblasHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+
+    subroutine syclblas_Dsyrk_intptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      real(c_double)           , value :: alpha, beta
+      integer(kind=c_intptr_t) , value :: a, c
+      integer(kind=c_intptr_t) , value :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dsyrk_intptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Dsyrk_cptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      real(c_double)           , value :: alpha, beta
+      type(c_ptr)                      :: a, c
+      integer(kind=c_intptr_t) , value :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dsyrk_cptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ssyrk_intptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      real(c_float)            , value :: alpha, beta
+      integer(kind=c_intptr_t) , value :: a, c
+      integer(kind=c_intptr_t) , value :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ssyrk_intptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ssyrk_cptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      real(c_float)            , value :: alpha, beta
+      type(c_ptr)                      :: a, c
+      integer(kind=c_intptr_t) , value :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ssyrk_cptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Zherk_intptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      complex(c_double_complex), value :: alpha, beta
+      integer(kind=c_intptr_t) , value :: a, c
+      integer(kind=c_intptr_t) , value :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Zherk_intptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Zherk_cptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      complex(c_double_complex), value :: alpha, beta
+      type(c_ptr)                      :: a, c
+      integer(kind=c_intptr_t) , value :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Zherk_cptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Cherk_intptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      complex(c_float_complex) , value :: alpha, beta
+      integer(kind=c_intptr_t) , value :: a, c
+      integer(kind=c_intptr_t) , value :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Cherk_intptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine syclblas_Cherk_cptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      complex(c_float_complex) , value :: alpha, beta
+      type(c_ptr)                      :: a, c
+      integer(kind=c_intptr_t) , value :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Cherk_cptr_c(syclblasHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+
+    subroutine syclblas_Dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
-      type(c_ptr)                     :: a, b
+      real(kind=C_DOUBLE) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
-      call syclblas_Ctrmm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call syclblas_Dtrsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dtrsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_FLOAT) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Strsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_FLOAT) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Strsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ztrsm_intptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine syclblas_Ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Ztrsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
@@ -2837,6 +3226,49 @@
       integer(kind=C_intptr_T)        :: syclblasHandle
 #ifdef WITH_SYCL_GPU_VERSION
       call syclblas_Ctrsm_cptr_c(syclblasHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+
+    subroutine syclblas_Dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Dgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine
+
+    subroutine syclblas_Sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Sgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine
+
+    subroutine syclblas_Zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, syclblasHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+      integer(kind=C_intptr_T)        :: syclblasHandle
+#ifdef WITH_SYCL_GPU_VERSION
+      call syclblas_Zgemv_c(syclblasHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 

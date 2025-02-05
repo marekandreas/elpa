@@ -63,33 +63,29 @@ module solve_single_problem_gpu
   public
 
   contains
+
     subroutine gpu_check_monotony_double(d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: nlen, ldq
       integer(kind=c_intptr_t)           :: d_dev, q_dev, qtmp_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         call cuda_check_monotony_double(d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
 #endif 
 
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_check_monotony_double(d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
-#endif 
-
+        call hip_check_monotony_double (d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
+#endif
     end subroutine
 
     subroutine gpu_check_monotony_float(d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: nlen, ldq
       integer(kind=c_intptr_t)           :: d_dev, q_dev, qtmp_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -97,38 +93,33 @@ module solve_single_problem_gpu
 #endif 
 
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_check_monotony_float(d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
+        call hip_check_monotony_float (d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
 #endif 
 #endif
     end subroutine
 
     subroutine gpu_construct_tridi_matrix_double(q_dev, d_dev, e_dev, nlen, ldq, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: nlen, ldq
       integer(kind=c_intptr_t)           :: q_dev, d_dev,e_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WITH_NVIDIA_GPU_VERSION
         call cuda_construct_tridi_matrix_double(q_dev, d_dev, e_dev, nlen, ldq, my_stream)
 #endif 
 
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_construct_tridi_matrix_double(q_dev, d_dev, e_dev, nlen, ldq, my_stream)
-#endif 
-
+        call hip_construct_tridi_matrix_double (q_dev, d_dev, e_dev, nlen, ldq, my_stream)
+#endif
     end subroutine
 
     subroutine gpu_construct_tridi_matrix_float(q_dev, d_dev, e_dev, nlen, ldq, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: nlen, ldq
       integer(kind=c_intptr_t)           :: q_dev, d_dev,e_dev
-      integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -136,8 +127,9 @@ module solve_single_problem_gpu
 #endif 
 
 #ifdef WITH_AMD_GPU_VERSION
-        call hip_construct_tridi_matrix_float(q_dev, d_dev, e_dev, nlen, ldq, my_stream)
+        call hip_construct_tridi_matrix_float (q_dev, d_dev, e_dev, nlen, ldq, my_stream)
 #endif 
 #endif
     end subroutine
+
 end module

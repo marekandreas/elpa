@@ -58,12 +58,12 @@
        liwork =  3 + 5*nlen
        allocate(work(lwork), iwork(liwork), stat=istat, errmsg=errorMessage)
        check_allocate("solve_tridi_single: work, iwork", istat, errorMessage)
-       call obj%timer%start("lapack")
+       call obj%timer%start("lapack_stedc")
        call PRECISION_STEDC('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND),    &
                             work, int(lwork,kind=BLAS_KIND), int(iwork,kind=BLAS_KIND), int(liwork,kind=BLAS_KIND), &
                             infoBLAS)
        info = int(infoBLAS,kind=ik)
-       call obj%timer%stop("lapack")
+       call obj%timer%stop("lapack_stedc")
 
        if (info /= 0) then
 
@@ -73,10 +73,10 @@
 
          d(:) = ds(:)
          e(:) = es(:)
-         call obj%timer%start("lapack")
+         call obj%timer%start("lapack_steqr")
          call PRECISION_STEQR('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND), work, infoBLAS )
          info = int(infoBLAS,kind=ik)
-         call obj%timer%stop("lapack")
+         call obj%timer%stop("lapack_steqr")
 
          ! If DSTEQR fails also, we don't know what to do further ...
 

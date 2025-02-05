@@ -78,6 +78,7 @@
             success = ccl_group_end()
             if (.not.success) then
               write(error_unit,*) "Error in setting up ccl_group_end 1!"
+              write(error_unit,*) "Check if number of GPUs is equal to number of MPI ranks"
               stop 1
             endif
 

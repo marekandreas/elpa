@@ -261,17 +261,17 @@ if WITH_NVIDIA_GPU_VERSION
   src/GPU/CUDA/elpa_explicit_name_nvidia_gpu.cu \
   src/GPU/CUDA/cudaFunctions.cu \
   src/GPU/CUDA/cuUtils.cu \
+  src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu \
+  src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu \
   src/elpa1/GPU/CUDA/tridiag_cuda.cu \
   src/elpa1/GPU/CUDA/trans_ev_cuda.cu \
   src/elpa1/GPU/CUDA/elpa1_cuda.cu \
-  src/solve_tridi/GPU/CUDA/cuda_merge_systems.cu \
-  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_single_problem.cu \
-  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col.cu \
-  src/solve_tridi/GPU/CUDA/cuda_distribute_global_column.cu \
   src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real.cu \
   src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu \
-  src/invert_trm/GPU/CUDA/elpa_invert_trm_cuda.cu \
-  src/cholesky/GPU/CUDA/elpa_cholesky_cuda.cu \
+  src/solve_tridi/GPU/CUDA/cuda_distribute_global_column.cu \
+  src/solve_tridi/GPU/CUDA/cuda_merge_systems.cu \
+  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col.cu \
+  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_single_problem.cu \
   src/multiply_a_b/GPU/CUDA/elpa_hermitian_multiply_cuda.cu \
   src/multiply_a_b/GPU/CUDA/elpa_pxgemm_multiply_cuda.cu
 endif
@@ -291,13 +291,17 @@ if WITH_AMD_GPU_VERSION
   src/GPU/ROCm/elpa_explicit_name_amd_gpu.hip \
   src/GPU/ROCm/rocmFunctions.hip \
   src/GPU/ROCm/hipUtils.hip \
+  src/cholesky/GPU/ROCm/elpa_cholesky_hip.hip \
+  src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.hip \
   src/elpa1/GPU/ROCm/tridiag_hip.hip \
   src/elpa1/GPU/ROCm/elpa1_hip.hip \
   src/elpa1/GPU/ROCm/trans_ev_hip.hip \
   src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.hip \
   src/elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_complex.hip \
-  src/invert_trm/GPU/ROCm/elpa_invert_trm_hip.hip \
-  src/cholesky/GPU/ROCm/elpa_cholesky_hip.hip \
+  src/solve_tridi/GPU/ROCm/rocm_distribute_global_column.hip \
+  src/solve_tridi/GPU/ROCm/rocm_merge_systems.hip \
+  src/solve_tridi/GPU/ROCm/rocm_solve_tridi_col.hip \
+  src/solve_tridi/GPU/ROCm/rocm_solve_tridi_single_problem.hip \
   src/multiply_a_b/GPU/ROCm/elpa_hermitian_multiply_hip.hip \
   src/multiply_a_b/GPU/ROCm/elpa_pxgemm_multiply_hip.hip
 endif
@@ -1146,6 +1150,7 @@ EXTRA_DIST = \
   src/elpa1/elpa_transpose_vectors_template.F90 \
   src/elpa1/GPU/elpa_gpu_ccl_transpose_vectors_template.F90 \
   src/elpa1/GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90 \
+  src/elpa1/GPU/trans_ev_gpu.h \
   src/elpa2/compute_hh_trafo.F90 \
   src/elpa2/elpa2_bandred_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \

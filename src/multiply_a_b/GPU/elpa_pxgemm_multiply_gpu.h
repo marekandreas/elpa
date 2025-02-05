@@ -421,7 +421,7 @@ void gpu_ccl_copy_buf_send(T *a_dev, T *buf_send_dev, int *l_rows_in, int *l_col
   int debug = *debug_in;
 
   dim3 blocks = dim3(SM_count, 1, 1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2, 1, 1); // divide by 2 due to high register usage
 
 #ifdef WITH_GPU_STREAMS
   gpu_ccl_copy_buf_send_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, buf_send_dev, l_rows, l_cols, lld_buf, nblk,
@@ -534,7 +534,7 @@ void gpu_ccl_copy_buf_recv(T *at_col_dev, T *buf_recv_dev, int *l_rows_in, int *
   int debug = *debug_in;
 
   dim3 blocks = dim3(SM_count, 1, 1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2, 1, 1); // divide by 2 due to high register usage
 
 #ifdef WITH_GPU_STREAMS
   gpu_ccl_copy_buf_recv_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(at_col_dev, buf_recv_dev, l_rows, l_cols, lld_buf, nblk,
@@ -1090,19 +1090,19 @@ extern "C" void CONCATENATE(ELPA_GPU, _update_c_tn_nt_FromC) (char dataType,
                                           int *np_dirs_t_in, int *my_pdir_t_in, int *np_fine_in,
                                           int *SM_count_in, int *debug_in, gpuStream_t my_stream) {
 
-  if (dataType == 'D') gpu_update_c_tn_nt<double>(a_transposed_in, 
+  if      (dataType == 'D') gpu_update_c_tn_nt<double>(a_transposed_in, 
                                 (double *)c_dev, (double *)tmp1_full_dev, beta_int_in,
                                 l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
                                 np_rows_in, np_cols_in, np_dirs_fine_in,
                                 np_dirs_t_in, my_pdir_t_in, np_fine_in,
                                 SM_count_in, debug_in, my_stream);
-  if (dataType == 'S') gpu_update_c_tn_nt<float>(a_transposed_in, 
+  else if (dataType == 'S') gpu_update_c_tn_nt<float>(a_transposed_in, 
                                 (float *)c_dev, (float *)tmp1_full_dev, beta_int_in,
                                 l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
                                 np_rows_in, np_cols_in, np_dirs_fine_in,
                                 np_dirs_t_in, my_pdir_t_in, np_fine_in,
                                 SM_count_in, debug_in, my_stream);
-  if (dataType == 'Z') gpu_update_c_tn_nt<gpuDoubleComplex>(a_transposed_in, 
+  else if (dataType == 'Z') gpu_update_c_tn_nt<gpuDoubleComplex>(a_transposed_in, 
                                           (gpuDoubleComplex *)c_dev, (gpuDoubleComplex *)tmp1_full_dev, beta_int_in,
                                           l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
                                           np_rows_in, np_cols_in, np_dirs_fine_in,

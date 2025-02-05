@@ -102,7 +102,7 @@ subroutine solve_tridi_cpu_&
 #endif /* SOLVE_TRIDI_GPU_BUILD */
 
       logical, intent(in)                        :: wantDebug
-      logical, intent(out)                       :: success
+      logical                                    :: success
 
       integer(kind=ik)                           :: i, j, n, np, nc, nev1, l_cols, l_rows
       integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols

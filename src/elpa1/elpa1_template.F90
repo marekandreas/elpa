@@ -1263,14 +1263,14 @@ function elpa_solve_evp_&
        &_&
        &PRECISION&
        & (obj, na, nev, a_dev, matrixRows, tau_dev, q_dev, &
-          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, success)
+          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
      else
        call trans_ev_cpu_&
        &MATH_DATATYPE&
        &_&
        &PRECISION&
        & (obj, na, nev, a, matrixRows, tau, q, &
-          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, success)
+          matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
      endif
 
      if (success) then
@@ -1316,7 +1316,7 @@ function elpa_solve_evp_&
                &_&
                &PRECISION&
                & (obj, na, nev, a, matrixRows, tau, q(1:matrixRows, matrixCols+1:2*matrixCols), matrixRows, nblk, matrixCols, &
-                  mpi_comm_rows, mpi_comm_cols, success)
+                  mpi_comm_rows, mpi_comm_cols, wantDebug, success)
        else ! do_useGPU_trans_ev
          num = matrixRows*matrixCols*size_of_datatype
          successGPU = gpu_malloc(q_part2_dev, num)
@@ -1336,7 +1336,7 @@ function elpa_solve_evp_&
          &_&
          &PRECISION&
          & (obj, na, nev, a_dev, matrixRows, tau_dev, q_part2_dev, matrixRows, nblk, matrixCols, &
-            mpi_comm_rows, mpi_comm_cols, success)
+            mpi_comm_rows, mpi_comm_cols, wantDebug, success)
        endif ! do_useGPU_trans_ev
        if (success) then
          success_int = 0
@@ -1663,15 +1663,14 @@ function elpa_solve_evp_&
 #endif /* DEVICE_POINTER */
 
 
-
-
-
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
-   successGPU = gpu_get_last_error()
-   if (.not.successGPU) then
-    print *,"elpa1_template: GPU error detected via gpu_get_last_error(). Aborting..."
-    print *,"Rerun the program with the debug option e.g. 'export ELPA_DEFAULT_debug=1'"
-    stop 1
+   if (useGPU) then
+    successGPU = gpu_get_last_error()
+    if (.not. successGPU) then
+      write(error_unit,*) "elpa1_template: GPU error detected via gpu_get_last_error(). Aborting..."
+      write(error_unit,*) "Rerun the program with the debug option e.g. 'export ELPA_DEFAULT_debug=1'"
+      stop 1
+    endif
   endif
 #endif
 

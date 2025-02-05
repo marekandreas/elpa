@@ -117,6 +117,7 @@ extern "C" void cuda_fill_tmp_arrays_double_FromC(int *idx1_dev, int *p_col_dev,
 
   dim3 threadsPerBlock(1024);
   dim3 blocks((na1 + threadsPerBlock.x - 1) / threadsPerBlock.x);
+  if (blocks.x==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_fill_tmp_arrays_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem);
@@ -185,6 +186,7 @@ extern "C" void cuda_fill_tmp_arrays_float_FromC(int *idx1_dev, int *p_col_dev, 
 
   dim3 threadsPerBlock(1024);
   dim3 blocks((na1 + threadsPerBlock.x - 1) / threadsPerBlock.x);
+  if (blocks.x==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_fill_tmp_arrays_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem);
@@ -239,6 +241,7 @@ extern "C" void cuda_copy_qtmp1_slice_to_q_double_FromC(double *q_dev, double *q
 
   dim3 threadsPerBlock(32,32);
   dim3 blocks((l_rows + threadsPerBlock.x - 1) / threadsPerBlock.x,(na + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_copy_qtmp1_slice_to_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
@@ -293,6 +296,7 @@ extern "C" void cuda_copy_qtmp1_slice_to_q_float_FromC(float *q_dev, float *qtmp
 
   dim3 threadsPerBlock(32,32);
   dim3 blocks((l_rows + threadsPerBlock.x - 1) / threadsPerBlock.x,(na + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_copy_qtmp1_slice_to_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k, my_pcol, na1, np_rem, na);
@@ -343,8 +347,9 @@ extern "C" void cuda_copy_q_slice_to_qtmp2_double_FromC(double *q_dev, double *q
   int indx2 = *indx2_in;
   int na = *na_in;
 
-  dim3 threadsPerBlock(1024);
+  dim3 threadsPerBlock(32, 32);
   dim3 blocks((l_rows + threadsPerBlock.x - 1) / threadsPerBlock.x, (ncnt + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_copy_q_slice_to_qtmp2_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
@@ -394,8 +399,9 @@ extern "C" void cuda_copy_q_slice_to_qtmp2_float_FromC(float *q_dev, float *qtmp
   int indx2 = *indx2_in;
   int na = *na_in;
 
-  dim3 threadsPerBlock(1024);
+  dim3 threadsPerBlock(32, 32);
   dim3 blocks((l_rows + threadsPerBlock.x - 1) / threadsPerBlock.x, (ncnt + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_copy_q_slice_to_qtmp2_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idxq1, l_col_out, l_rows, l_rqs, l_rqe, matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, ncnt, indx, indx2, na);
@@ -445,6 +451,8 @@ void cuda_fill_ev(T *ev_dev, T *d1u_dev, T *dbase_dev, T *ddiff_dev, T *zu_dev, 
 
   dim3 threadsPerBlock(32,32);
   dim3 blocks((nnzu + threadsPerBlock.x - 1) / threadsPerBlock.x, (ncnt + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
+
 
   if (nnzu >= 1) {
 #ifdef WITH_GPU_STREAMS
@@ -501,6 +509,7 @@ extern "C" void cuda_copy_qtmp2_slice_to_q_double_FromC(double *q_dev, double *q
 
   dim3 threadsPerBlock(32,32);
   dim3 blocks((ncnt + threadsPerBlock.x - 1) / threadsPerBlock.x, (l_rows + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_copy_qtmp2_slice_to_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idx1q_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, gemm_dim_k, matrixRows, ns);
@@ -543,6 +552,7 @@ extern "C" void cuda_copy_qtmp2_slice_to_q_float_FromC(float *q_dev, float *qtmp
 
   dim3 threadsPerBlock(32,32);
   dim3 blocks((ncnt + threadsPerBlock.x - 1) / threadsPerBlock.x, (l_rows + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_copy_qtmp2_slice_to_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, qtmp2_dev, idx1q_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, gemm_dim_k, matrixRows, ns);
@@ -583,6 +593,7 @@ extern "C" void cuda_zero_q_double_FromC(double *q_dev, int *p_col_out_dev, int 
 
   dim3 threadsPerBlock(32,32);
   dim3 blocks((na + threadsPerBlock.x - 1) / threadsPerBlock.x, ((l_rqe-l_rqs+1) + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_zero_q_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, matrixRows);
@@ -622,6 +633,7 @@ extern "C" void cuda_zero_q_float_FromC(float *q_dev, int *p_col_out_dev, int *l
 
   dim3 threadsPerBlock(32,32);
   dim3 blocks((na + threadsPerBlock.x - 1) / threadsPerBlock.x, ((l_rqe-l_rqs+1) + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_zero_q_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, matrixRows);
@@ -667,6 +679,7 @@ extern "C" void cuda_copy_q_slice_to_qtmp1_double_FromC(double *qtmp1_dev, doubl
 
   dim3 threadsPerBlock(1024);
   dim3 blocks((l_rows + threadsPerBlock.x - 1) / threadsPerBlock.x);
+  if (blocks.x==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_copy_q_slice_to_qtmp1_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na2, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k);
@@ -710,6 +723,7 @@ extern "C" void cuda_copy_q_slice_to_qtmp1_float_FromC(float *qtmp1_dev, float *
 
   dim3 threadsPerBlock(1024);
   dim3 blocks((l_rows + threadsPerBlock.x - 1) / threadsPerBlock.x);
+  if (blocks.x==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_copy_q_slice_to_qtmp1_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na2, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k);
@@ -747,6 +761,7 @@ extern "C" void cuda_copy_qtmp1_to_qtmp1_tmp_double_FromC(double *qtmp1_dev, dou
     
   dim3 threadsPerBlock(32,32);
   dim3 blocks((gemm_dim_k + threadsPerBlock.x - 1) / threadsPerBlock.x, (gemm_dim_l + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
           
 #ifdef WITH_GPU_STREAMS
   cuda_copy_qtmp1_to_qtmp1_tmp_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l);
@@ -783,6 +798,7 @@ extern "C" void cuda_copy_qtmp1_to_qtmp1_tmp_float_FromC(float *qtmp1_dev, float
     
   dim3 threadsPerBlock(32,32);
   dim3 blocks((gemm_dim_k + threadsPerBlock.x - 1) / threadsPerBlock.x, (gemm_dim_l + threadsPerBlock.y - 1) / threadsPerBlock.y);
+  if (blocks.x==0 || blocks.y==0) return;
           
 #ifdef WITH_GPU_STREAMS
   cuda_copy_qtmp1_to_qtmp1_tmp_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l);
@@ -840,6 +856,7 @@ extern "C" void cuda_update_ndef_c_FromC(int *ndef_c_dev, int *idx_dev, int *p_c
 
   dim3 threadsPerBlock(1024);
   dim3 blocks((na + threadsPerBlock.x - 1) / threadsPerBlock.x);
+  if (blocks.x==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_update_ndef_c_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef);
@@ -892,6 +909,7 @@ extern "C" void cuda_compute_nnzl_nnzu_val_part1_FromC(int *p_col_dev, int *idx1
 
   dim3 threadsPerBlock(1024);
   dim3 blocks((na1 + threadsPerBlock.x - 1) / threadsPerBlock.x);
+  if (blocks.x==0) return;
 
 #ifdef WITH_GPU_STREAMS
   cuda_compute_nnzl_nnzu_val_part1_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, na, na1, np_rem, npc_n, nnzu_start, nnzl_start, np);

@@ -79,11 +79,64 @@ module trans_ev_sycl
     end subroutine
   end interface
 
+  interface
+    subroutine sycl_copy_hvb_a_c(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
+                                 nblk, ics, ice, SM_count, debug, my_stream) &
+                                bind(C, name="sycl_copy_hvb_a_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: hvb_dev, a_dev
+      integer(kind=c_int), intent(in) :: ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
+
+  interface
+    subroutine sycl_copy_hvm_hvb_c(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+                                ics, ice, SM_count, debug, my_stream) &
+                                bind(C, name="sycl_copy_hvm_hvb_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: hvb_dev, hvm_dev
+      integer(kind=c_int), intent(in) :: ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
+
+  interface
+    subroutine sycl_update_tmat_c(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
+                                  SM_count, debug, my_stream) &
+                                bind(C, name="sycl_update_tmat_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, tau_curr_dev
+      integer(kind=c_int), intent(in) :: max_stored_rows, nc, n, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
+
+  interface
+    subroutine sycl_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
+                          SM_count, debug, my_stream) &
+                                bind(C, name="sycl_trmv_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev, tau_curr_dev
+      integer(kind=c_int), intent(in) :: max_stored_rows, n, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
+
+
   contains
+
 
     subroutine sycl_scale_qmat_double_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: ldq, l_cols
       integer(kind=c_intptr_t)           :: q_dev, tau_dev
@@ -97,12 +150,10 @@ module trans_ev_sycl
         call sycl_scale_qmat_double_complex_c(ldq, l_cols, q_dev, tau_dev, my_stream2)
       endif
 #endif
-
     end subroutine
 
     subroutine sycl_scale_qmat_float_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
       integer(kind=c_int), intent(in)    :: ldq, l_cols
       integer(kind=c_intptr_t)           :: q_dev, tau_dev
@@ -116,7 +167,66 @@ module trans_ev_sycl
         call sycl_scale_qmat_float_complex_c(ldq, l_cols, q_dev, tau_dev, my_stream2)
       endif
 #endif
+    end subroutine
 
+    subroutine sycl_copy_hvb_a(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
+                               nblk, ics, ice, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: hvb_dev, a_dev
+      integer(kind=c_int), intent(in) :: ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_hvb_a_c(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
+                             nblk, ics, ice, SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+    subroutine sycl_copy_hvm_hvb(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+                                ics, ice, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: hvb_dev, hvm_dev
+      integer(kind=c_int), intent(in) :: ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_copy_hvm_hvb_c(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+                            ics, ice, SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+    subroutine sycl_update_tmat(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
+                                SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, tau_curr_dev
+      integer(kind=c_int), intent(in) :: max_stored_rows, nc, n, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_update_tmat_c(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
+                              SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+    subroutine sycl_trmv(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
+                         SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev, tau_curr_dev
+      integer(kind=c_int), intent(in) :: max_stored_rows, n, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+
+#ifdef WITH_SYCL_GPU_VERSION
+      call sycl_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
+                       SM_count, debug, my_stream)
+#endif
     end subroutine
 
 end module

@@ -47,7 +47,7 @@
 
   interface
     function cusolver_set_stream_c(cusolverHandle, cudaStream) result(istat) &
-             bind(C, name="cusolverSetStreamFromC")
+              bind(C, name="cusolverSetStreamFromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -59,7 +59,7 @@
 
   interface
     function cusolver_create_c(cusolverHandle) result(istat) &
-             bind(C, name="cusolverCreateFromC")
+              bind(C, name="cusolverCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: cusolverHandle
@@ -69,7 +69,7 @@
 
   interface
     function cusolver_destroy_c(cusolverHandle) result(istat) &
-             bind(C, name="cusolverDestroyFromC")
+              bind(C, name="cusolverDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value :: cusolverHandle

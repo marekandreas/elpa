@@ -151,9 +151,16 @@ extern "C" void cuda_scale_qmat_float_complex_FromC(int *ldq_in, int *l_cols_in,
 #else
   cuda_scale_qmat_float_complex_kernel<<<blocks, threadsPerBlock>>>(q_casted, tau_casted, ldq, l_cols);
 #endif
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_scale_qmat_float_complex_kernel: %s\n",cudaGetErrorString(cuerr));
+  cudaError_t gpuerr = cudaGetLastError();
+  if (gpuerr != cudaSuccess){
+    printf("Error in executing cuda_scale_qmat_float_complex_kernel: %s\n",cudaGetErrorString(gpuerr));
   }
 }
 
+//_________________________________________________________________________________________________
+
+
+#include "../../../GPU/common_device_functions.h"
+#include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
+
+#include "../trans_ev_gpu.h"

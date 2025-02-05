@@ -112,8 +112,11 @@
 #ifdef SOLVE_TRIDI_GPU_BUILD
      useGPU =.true.
 
-#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
+#if defined(WITH_NVIDIA_CUSOLVER)
       useGPUsolver =.true.
+#endif
+#if defined(WITH_AMD_ROCSOLVER)
+      useGPUsolver =.false. ! As of ELPA 2025.01 release, rocsolver_?stedc/rocsolver_?syevd showed bad performance (worse than on CPU). Hopefully, this will be fixed by AMD and then we can enable it.
 #endif
 #endif /* SOLVE_TRIDI_GPU_BUILD */
 
@@ -211,9 +214,12 @@
 #endif
 
        else ! (.not. useGPUsolver)
-
+         
+         call obj%timer%start("gpusolver_syevd")
          gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
          call gpusolver_PRECISION_syevd (nlen, q_dev, ldq, d_dev, info_dev, gpusolverHandle)
+         if (wantDebug) successGPU = gpu_DeviceSynchronize()
+         call obj%timer%stop("gpusolver_syevd")
 
          num = 1 * size_of_int
 #ifdef WITH_GPU_STREAMS
@@ -231,7 +237,7 @@
 #endif
 
          if (info .ne. 0) then
-           write(error_unit,'(a,i8,a)') "Error in gpusolver_dsyevd, info=", info, ", aborting..."
+           write(error_unit,'(a,i8,a)') "Error in gpusolver_PRECISION_syevd, info=", info, ", aborting..."
            stop 1
          endif
        endif ! (.not. useGPUsolver)
