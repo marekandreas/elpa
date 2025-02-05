@@ -1072,6 +1072,7 @@ EXTRA_DIST = \
   fdep/fortran_dependencies.pl \
   manual_cpp \
   nvcc_wrap \
+  hipcc_wrap \
   remove_xcompiler \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \

@@ -97,6 +97,12 @@ module mod_check_for_gpu
       integer(kind=ik)                           :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
 #endif
       integer(kind=ik)                           :: attribute, value
+#ifdef WITH_MPI
+      integer(kind=MPI_KIND)                     :: mpi_comm_all_per_nodeMPI
+      integer(kind=MPI_KIND)                     :: mpi_infoMPI, keyMPI, np_total_per_nodeMPI
+      integer(kind=ik)                           :: key
+#endif
+
 #define OBJECT obj
 #define ADDITIONAL_OBJECT_CODE
 #include "./check_for_gpu_template.F90"
