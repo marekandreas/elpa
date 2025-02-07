@@ -3,6 +3,12 @@ Changelog for next release
 
 - not yet decided
 
+Changelog for ELPA 2025.01.001
+- port of tridiagonalization step to GPU: ELPA 1stage/2stage solvers achieve
+  speedup of up to 40%
+- general multiplication routines for distributed matrices on GPUs
+- port of backtransformation in ELPA 1stage: speedup up to four achieved
+
 Changelog for ELPA 2024.05.001
 - support of ROCM 6.x and preparation for AMD Mi300
 - allow internal matrix redistribution if device pointer API is used

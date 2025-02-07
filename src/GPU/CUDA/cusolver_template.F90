@@ -47,7 +47,7 @@
 
   interface
     function cusolver_set_stream_c(cusolverHandle, cudaStream) result(istat) &
-             bind(C, name="cusolverSetStreamFromC")
+              bind(C, name="cusolverSetStreamFromC")
       use, intrinsic :: iso_c_binding
       implicit none
 
@@ -59,7 +59,7 @@
 
   interface
     function cusolver_create_c(cusolverHandle) result(istat) &
-             bind(C, name="cusolverCreateFromC")
+              bind(C, name="cusolverCreateFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T) :: cusolverHandle
@@ -69,7 +69,7 @@
 
   interface
     function cusolver_destroy_c(cusolverHandle) result(istat) &
-             bind(C, name="cusolverDestroyFromC")
+              bind(C, name="cusolverDestroyFromC")
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=C_intptr_T), value :: cusolverHandle
@@ -212,6 +212,30 @@
       integer(kind=c_intptr_t), value          :: a_dev, buffer_dev, info_dev
       integer(kind=c_intptr_t), value          :: buffer_host
       integer(kind=c_size_t)                   :: workspaceInBytesOnDevice, workspaceInBytesOnHost
+    end subroutine
+  end interface
+
+  ! cusolver_?syevd_c
+
+  interface
+    subroutine cusolver_Dsyevd_c(cusolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev) &
+                              bind(C,name="cusolverDsyevd_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a_dev, eigenvalues_dev, info_dev
+      integer(kind=C_intptr_T), value           :: cusolverHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine cusolver_Ssyevd_c(cusolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev) &
+                              bind(C,name="cusolverSsyevd_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), intent(in),value     :: n, lda
+      integer(kind=C_intptr_T), value           :: a_dev, eigenvalues_dev, info_dev
+      integer(kind=C_intptr_T), value           :: cusolverHandle
     end subroutine
   end interface
 
@@ -397,6 +421,30 @@
       call cusolver_Xpotrf_c(cusolverHandle, uplo, n, dataType, a_dev, lda, &
                              buffer_dev , workspaceInBytesOnDevice, &
                              buffer_host, workspaceInBytesOnHost, info_dev)
+#endif
+    end subroutine
+
+    ! cusolver_?syevd
+
+    subroutine cusolver_Dsyevd(n, a_dev, lda, eigenvalues_dev, info_dev, cusolverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a_dev, info_dev, eigenvalues_dev
+      integer(kind=C_intptr_T)        :: cusolverHandle
+#ifdef WITH_NVIDIA_CUSOLVER
+      call cusolver_Dsyevd_c(cusolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
+#endif
+    end subroutine
+
+    subroutine cusolver_Ssyevd(n, a_dev, lda, eigenvalues_dev, info_dev, cusolverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n, lda
+      integer(kind=c_intptr_t)        :: a_dev, info_dev, eigenvalues_dev
+      integer(kind=C_intptr_T)        :: cusolverHandle
+#ifdef WITH_NVIDIA_CUSOLVER
+      call cusolver_Ssyevd_c(cusolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
 #endif
     end subroutine
 

@@ -179,7 +179,7 @@ int main(int argc, char** argv) {
    elpa_t handle_skewsymmetric, handle_complex;
 
    int  value;
-   int is_skewsymmetric;
+   int is_hermitian, is_skewsymmetric;
    long int _elements, _nrows, _ncols, i;
 
 #ifdef WITH_MPI
@@ -292,9 +292,10 @@ int main(int argc, char** argv) {
    for (_elements=0;_elements<na;_elements++){
      ev_skewsymmetric[_elements] = 0.;
    }
-
+   
+   is_hermitian=0;
    is_skewsymmetric=1;
-   PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a_skewsymmetric, z_skewsymmetric_prepare, as_skewsymmetric, is_skewsymmetric);
+   PREPARE_MATRIX_RANDOM(na, myid, na_rows, na_cols, sc_desc, a_skewsymmetric, z_skewsymmetric_prepare, as_skewsymmetric, is_hermitian, is_skewsymmetric);
 
    //copy to z FORTRAN DATA LAYOUT
    for (_nrows=0; _nrows<na_rows; _nrows++) {

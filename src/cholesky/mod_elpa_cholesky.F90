@@ -41,7 +41,9 @@
 !    the original distribution, the GNU Lesser General Public License.
 !
 ! This file was written by A. Marek, MPCDF
+
 #include "config-f90.h"
+#include "../general/nvtx_labels.h"
 
 module elpa_cholesky
   use, intrinsic :: iso_c_binding
@@ -59,8 +61,7 @@ module elpa_cholesky
 #ifdef WANT_SINGLE_PRECISION_REAL
   public :: elpa_cholesky_a_h_a_real_single_impl       !< Cholesky factorization of a single-precision real matrix
   public :: elpa_cholesky_d_ptr_real_single_impl       !< Cholesky factorization of a single-precision real matrix
-
-#endif 
+#endif
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   public :: elpa_cholesky_a_h_a_complex_single_impl    !< Cholesky factorization of a single-precision complex matrix

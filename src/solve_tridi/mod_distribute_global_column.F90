@@ -58,8 +58,10 @@ module distribute_global_column
   private
 
   public :: distribute_global_column_double
+  public :: distribute_global_column_4_double
 #if defined(WANT_SINGLE_PRECISION_REAL) || defined(WANT_SINGLE_PRECISION_COMPLEX)
   public :: distribute_global_column_single
+  public :: distribute_global_column_4_single
 #endif
 
   contains

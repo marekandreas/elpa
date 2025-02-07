@@ -149,26 +149,22 @@ template <typename T>
 void sycl_set_a_lower_to_zero_kernel (T *a_dev, int na, int matrixRows, int my_pcol, int np_cols, int my_prow, int np_rows, int nblk,
                                       const sycl::nd_item<1> &it) {
 
-  int J_gl_0 = it.get_group(0);      // 0..nblk-1
+  int J_gl_0 = it.get_group(0) + 1;
   int di_loc_0 = it.get_local_id(0); // 0..MAX_THREADS_PER_BLOCK-1
 
   T Zero = 0;
 
-  for (int J_gl = J_gl_0; J_gl < na; J_gl += it.get_group_range(0))
+  for (int J_gl = J_gl_0; J_gl <= na; J_gl += gridDim.x)
     {
     if (my_pcol == pcol(J_gl, nblk, np_cols))
       {
       // Calculate local column and row indices of the first element below the diagonal (that has to be set to zero)
-      int l_col1 = local_index(J_gl  , my_pcol, np_cols, nblk);
-      int l_row1 = local_index(J_gl+1, my_prow, np_rows, nblk); // I_gl = J_gl + 1
-
-      // Calculate the offset and number of elements to zero out
-      //int offset = l_row1 + matrixRows*l_col1;
-      //int num = (matrixRows - l_row1);
+      int l_col1 = local_index(J_gl  , my_pcol, np_cols, nblk, 1);
+      int l_row1 = local_index(J_gl+1, my_prow, np_rows, nblk, 1); // I_gl = J_gl + 1
 
       // Set to zero in the GPU memory
-      for (int di_loc=di_loc_0; di_loc < (matrixRows-l_row1); di_loc += it.get_local_range(0))
-        a_dev[(l_row1+di_loc) + matrixRows*l_col1] = Zero;
+      for (int di_loc=di_loc_0; di_loc < (matrixRows-(l_row1-1)); di_loc += blockDim.x)
+        a_dev[((l_row1-1)+di_loc) + matrixRows*(l_col1-1)] = Zero;
       }
     }
 }

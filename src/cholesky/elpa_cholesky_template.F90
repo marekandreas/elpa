@@ -75,22 +75,25 @@
 #endif
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+  use hip_functions  ! for ROCTX labels
 #endif
   implicit none
 #include "../general/precision_kinds.F90"
   class(elpa_abstract_impl_t), intent(inout) :: obj
   integer(kind=ik)                           :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, mpi_comm_all
-#ifndef DEVICE_POINTER
+#ifdef DEVICE_POINTER
+  type(c_ptr)                                :: aDev
+  MATH_DATATYPE(kind=rck), allocatable       :: a(:,:) ! dummy variable
+!#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+  MATH_DATATYPE(kind=rck), allocatable       :: a_tmp(:,:)
+!#endif
+#else /* DEVICE_POINTER */
 #ifdef USE_ASSUMED_SIZE
   MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,*)
 #else
   MATH_DATATYPE(kind=rck)                    :: a(obj%local_nrows,obj%local_ncols)
 #endif
-#else /* DEVICE_POINTER */
-  type(c_ptr)                                :: aDev
-!#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
-  MATH_DATATYPE(kind=rck), allocatable       :: a_tmp(:,:)
-!#endif
 #endif /* DEVICE_POINTER */
   integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols, myid
   integer(kind=MPI_KIND)                     :: mpierr, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, myidMPI
@@ -145,9 +148,7 @@
   integer(kind=c_size_t)                     :: workspaceInBytesOnDevice, workspaceInBytesOnHost
 #endif
 
-#ifdef WITH_NVTX
-  call nvtxRangePush("cholesky")
-#endif
+  NVTX_RANGE_PUSH("cholesky")
 
   success = .true.
   useGPU = .false.
@@ -372,16 +373,17 @@
 #endif
 #else /* DEVICE_POINTER */
     a_dev = transfer(aDev, a_dev)
-!#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
     allocate(a_tmp(obj%local_nrows,obj%local_ncols), stat=istat, errmsg=errorMessage)
     check_allocate("elpa_cholesky: a_tmp", istat, errorMessage)
+
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_host_register(int(loc(a_tmp),kind=c_intptr_t), &
                     matrixRows*matrixCols * size_of_datatype,&
                     gpuHostRegisterDefault)
     check_host_register_gpu("elpa_cholesky: a_tmp", successGPU)
 #endif /* WITH_GPU_STREAMS */
-!#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER) */
+#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER) */
 #endif /* DEVICE_POINTER */
   endif ! useGPU
 
@@ -407,29 +409,26 @@
     endif ! .not. isSquareGridGPU
 #endif /* USE_CCL_CHOLESKY */
 
-#ifdef WITH_NVTX
-  call nvtxRangePush("allocate tmp1, tmp2, tmatr, tmatc")
-#endif
+  if (.not. useCCL) then
+    NVTX_RANGE_PUSH("allocate tmp1, tmp2, tmatr, tmatc")
 
-  allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_cholesky: tmp1", istat, errorMessage)
+    allocate(tmp1(nblk*nblk), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_cholesky: tmp1", istat, errorMessage)
 
-  allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_cholesky: tmp2", istat, errorMessage)
-  
-  allocate(tmatr(matrixRows,nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_cholesky: tmatr", istat, errorMessage)
+    allocate(tmp2(nblk,nblk), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_cholesky: tmp2", istat, errorMessage)
+    
+    allocate(tmatr(matrixRows,nblk), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_cholesky: tmatr", istat, errorMessage)
 
-  allocate(tmatc(matrixCols,nblk), stat=istat, errmsg=errorMessage)
-  check_allocate("elpa_cholesky: tmatc", istat, errorMessage)
+    allocate(tmatc(matrixCols,nblk), stat=istat, errmsg=errorMessage)
+    check_allocate("elpa_cholesky: tmatc", istat, errorMessage)
 
-#ifdef WITH_NVTX
-  call nvtxRangePop() ! allocate tmp1, tmp2, tmatr, tmatc
-#endif
-
+    NVTX_RANGE_POP("allocate tmp1, tmp2, tmatr, tmatc")
+  endif ! (.not. useCCL)
 
 #ifdef WITH_GPU_STREAMS
-  if (useGPU) then
+  if (useGPU .and. .not. useCCL) then
     successGPU = gpu_host_register(int(loc(tmp1),kind=c_intptr_t), &
                     nblk*(nblk+1)/2 * size_of_datatype, gpuHostRegisterDefault)
     check_host_register_gpu("elpa_cholesky: tmp1", successGPU)
@@ -486,9 +485,7 @@
   call obj%timer%start("loop1")
   do n = 1, na, nblk
 
-#ifdef WITH_NVTX
-    call nvtxRangePush("do n = 1, na, nblk")
-#endif
+    NVTX_RANGE_PUSH("do n = 1, na, nblk")
 
     ! Calculate first local row and column of the still remaining matrix
     ! on the local processor
@@ -510,9 +507,7 @@
           call obj%timer%start("gpusolver")
           gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = (l_row1-1 + (l_col1-1)*matrixRows) * size_of_datatype
-#ifdef WITH_NVTX
-          call nvtxRangePush("gpusolver_POTRF last")
-#endif
+          NVTX_RANGE_PUSH("gpusolver_POTRF last")
 
 #if defined(WITH_AMD_ROCSOLVER)
           call gpusolver_PRECISION_POTRF('U', na-n+1, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
@@ -525,13 +520,11 @@
                                 gpusolver_buffer_dev , workspaceInBytesOnDevice, &
                                 gpusolver_buffer_host, workspaceInBytesOnHost, info_dev)
           my_stream = obj%gpu_setup%my_stream
-          !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
+          if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
 
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! gpusolver_POTRF last
-#endif
+          NVTX_RANGE_POP("gpusolver_POTRF last")
           call obj%timer%stop("gpusolver")
 #else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
 
@@ -640,9 +633,7 @@
         endif
       endif ! useGPU
       
-#ifdef WITH_NVTX
-      call nvtxRangePop() ! do n = 1, na, nblk
-#endif      
+      NVTX_RANGE_POP("do n = 1, na, nblk")   
       exit ! Loop
     endif ! (n+nblk > na) 
 
@@ -657,9 +648,7 @@
           call obj%timer%start("gpusolver")
           gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
           a_off = (l_row1-1 + (l_col1-1)*matrixRows) * size_of_datatype
-#ifdef WITH_NVTX
-          call nvtxRangePush("gpusolver_POTRF")
-#endif
+          NVTX_RANGE_PUSH("gpusolver_POTRF")
 
 #if defined(WITH_AMD_ROCSOLVER)
           call gpusolver_PRECISION_POTRF('U', nblk, a_dev+a_off, matrixRows, info_dev, gpusolverHandle)
@@ -672,13 +661,11 @@
                                 gpusolver_buffer_dev , workspaceInBytesOnDevice, &
                                 gpusolver_buffer_host, workspaceInBytesOnHost, info_dev)
           my_stream = obj%gpu_setup%my_stream
-          !if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
+          if (wantDebug) call gpu_check_device_info(info_dev, my_stream)
           call gpu_accumulate_device_info(info_abs_accumulated_dev, info_dev, my_stream)
 #endif
 
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! gpusolver_POTRF
-#endif
+          NVTX_RANGE_POP("gpusolver_POTRF")
 
           call obj%timer%stop("gpusolver")
 #else /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
@@ -686,10 +673,7 @@
 
           num = matrixRows*matrixCols
 #ifndef DEVICE_POINTER
-
-#ifdef WITH_NVTX
-          call nvtxRangePush("memcpy D-H a_dev->a")
-#endif
+          NVTX_RANGE_PUSH("memcpy D-H a_dev->a")
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize &
@@ -699,20 +683,13 @@
           successGPU = gpu_memcpy(int(loc(a(1,1)),kind=c_intptr_t), a_dev, num*size_of_datatype, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("elpa_cholesky: memcpy a_dev-> a", successGPU)
 #endif /* WITH_GPU_STREAMS */
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! memcpy D-H a_dev->a
-#endif
+          NVTX_RANGE_POP("memcpy D-H a_dev->a")
 
-
-#ifdef WITH_NVTX
-          call nvtxRangePush("POTRF")
-#endif
+          NVTX_RANGE_PUSH("POTRF")
           call PRECISION_POTRF('U', int(nblk,kind=BLAS_KIND), a(l_row1,l_col1), &
                                int(matrixRows,kind=BLAS_KIND) , infoBLAS )
           info = int(infoBLAS,kind=ik)
-#ifdef WITH_NVTX
-          call nvtxRangePop() !  POTRF
-#endif
+          NVTX_RANGE_POP("POTRF")
 
           num = matrixRows*matrixCols
 #ifdef WITH_GPU_STREAMS
@@ -805,9 +782,7 @@
         else ! useGPU
           nc = 0
           do i=1,nblk
-#ifndef DEVICE_POINTER
             tmp1(nc+1:nc+i) = a(l_row1:l_row1+i-1,l_col1+i-1)
-#endif
             nc = nc+i
           enddo
         endif ! useGPU
@@ -829,10 +804,8 @@
 
       if (useCCL) then
 #ifdef USE_CCL_CHOLESKY
-#ifdef WITH_NVTX
-        call nvtxRangePush("ccl_bcast tmp1_dev")
-#endif         
         call obj%timer%start("ccl_bcast")
+        NVTX_RANGE_PUSH("ccl_bcast tmp1_dev")
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
        
@@ -846,10 +819,9 @@
 
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("elpa_cholesky: ccl_bcast", successGPU)
+        
+        NVTX_RANGE_POP("ccl_bcast tmp1_dev")
         call obj%timer%stop("ccl_bcast")
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! ccl_bcast tmp1_dev"
-#endif 
 #endif /* USE_CCL_CHOLESKY */
 
       else ! useCCL
@@ -887,32 +859,28 @@
       endif ! useGPU
 
       if (useGPU) then
-        call obj%timer%start("gpublas")
         gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
         if (matrixCols-l_colx+1 > 0) then
           a_off = (l_row1-1 + (l_colx-1)*matrixRows) * size_of_datatype
-#ifdef WITH_NVTX
-          call nvtxRangePush("gpublas trsm")
-#endif          
+          call obj%timer%start("gpublas")
+          NVTX_RANGE_PUSH("gpublas trsm")
+
           call gpublas_PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', nblk, matrixCols-l_colx+1, ONE, &
                             tmp2_dev, nblk, a_dev+a_off, matrixRows, gpublasHandle)
+          
           if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
-#ifdef WITH_NVTX
-          call nvtxRangePop() ! gpublas trsm
-#endif                             
+          NVTX_RANGE_POP("gpublas trsm")
+          call obj%timer%stop("gpublas")
         endif
-        call obj%timer%stop("gpublas")
 
       else ! useGPU
 
         call obj%timer%start("lapack")
-#ifndef DEVICE_POINTER
         if (matrixCols-l_colx+1>0) then
           call PRECISION_TRSM('L', 'U', BLAS_TRANS_OR_CONJ, 'N', int(nblk,kind=BLAS_KIND),  &
                             int(matrixCols-l_colx+1,kind=BLAS_KIND), ONE, tmp2, &
                             int(ubound(tmp2,dim=1),kind=BLAS_KIND), a(l_row1,l_colx), int(matrixRows,kind=BLAS_KIND) )
         endif
-#endif
         call obj%timer%stop("lapack")
       endif ! useGPU
     endif ! (my_prow==prow(n, nblk, np_rows))
@@ -930,14 +898,12 @@
       endif
     else ! useGPU
       do i=1,nblk
-#ifndef DEVICE_POINTER
 #if REALCASE == 1
         if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:matrixCols,i) = a(l_row1+i-1,l_colx:matrixCols)
 #endif
 #if COMPLEXCASE == 1
         if (my_prow==prow(n, nblk, np_rows)) tmatc(l_colx:matrixCols,i) = conjg(a(l_row1+i-1,l_colx:matrixCols))
 #endif
-#endif /* DEVICE_POINTER */
       enddo
     endif ! useGPU
 
@@ -979,10 +945,9 @@
 
       if (useCCL) then
 #ifdef USE_CCL_CHOLESKY
-#ifdef WITH_NVTX
-        call nvtxRangePush("do i=1,nblk ccl_bcast(tmatc_dev+offset_i)")
-#endif 
         call obj%timer%start("ccl_bcast")
+        NVTX_RANGE_PUSH("do i=1,nblk ccl_bcast(tmatc_dev+offset_i)")
+        
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
         successGPU = ccl_group_start()
@@ -1006,34 +971,28 @@
 
         successGPU = ccl_group_end()
         if (.not.successGPU) then
-          print *,"Error in setting up ccl_group_end!"
+          print *,"cholesky: Error in setting up ccl_group_end!"
           stop 1
         endif
 
         successGPU = gpu_stream_synchronize(my_stream)
         check_stream_synchronize_gpu("elpa_cholesky: ccl_bcast", successGPU)
 
+        NVTX_RANGE_POP("do i=1,nblk ccl_bcast(tmatc_dev+offset_i)")
         call obj%timer%stop("ccl_bcast")
-#ifdef WITH_NVTX
-        call nvtxRangePop() !  do i=1,nblk ccl_bcast(tmatc_dev+offset_i)
-#endif 
 #endif /* USE_CCL_CHOLESKY */
       else ! useCCL
 
-#ifdef WITH_NVTX
-        call nvtxRangePush("MPI_Bcast tmatc")
-#endif
         call obj%timer%start("mpi_communication")
+        NVTX_RANGE_PUSH("MPI_Bcast tmatc")
         ! do i=1,nblk
         !   call MPI_Bcast(tmatc(l_colx,i), int(matrixCols-l_colx+1,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
         !                  int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
         ! enddo
         call MPI_Bcast(tmatc(1,1), int(matrixCols*nblk,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                        int(prow(n, nblk, np_rows),kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+        NVTX_RANGE_POP("MPI_Bcast tmatc")
         call obj%timer%stop("mpi_communication")
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! MPI_Bcast tmatc
-#endif
       endif ! useCCL
 
       if (useGPU .and. .not. useCCL) then
@@ -1083,37 +1042,29 @@
 
 
     if (useCCL) then
-#ifdef WITH_NVTX
-      call nvtxRangePush("elpa_gpu_ccl_transpose_vectors tmatc_dev->tmatr_dev")
-#endif
+      NVTX_RANGE_PUSH("elpa_gpu_ccl_transpose_vectors tmatc_dev->tmatr_dev")
 #if defined(USE_CCL_CHOLESKY)
       call elpa_gpu_ccl_transpose_vectors_&
           &MATH_DATATYPE&
           &_&
           &PRECISION &
-                (obj, tmatc_dev, ubound(tmatc,dim=1), ccl_comm_cols, mpi_comm_cols, &
-                      tmatr_dev, ubound(tmatr,dim=1), ccl_comm_rows, mpi_comm_rows, &
+                (obj, tmatc_dev, matrixCols, ccl_comm_cols, mpi_comm_cols, &
+                      tmatr_dev, matrixRows, ccl_comm_rows, mpi_comm_rows, &
                 n, na, nblk, nblk, nrThreads, .false., my_pcol, my_prow, np_cols, np_rows, &
                 aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
 #endif /* USE_CCL_CHOLESKY */
 
-#ifdef WITH_NVTX
-      call nvtxRangePop() !  elpa_gpu_ccl_transpose_vectors tmatc_dev->tmatr_dev
-#endif   
+      NVTX_RANGE_POP("elpa_gpu_ccl_transpose_vectors tmatc_dev->tmatr_dev")
     else ! useCCL
-#ifdef WITH_NVTX
-      call nvtxRangePush("elpa_transpose_vectors")
-#endif
+      NVTX_RANGE_PUSH("elpa_transpose_vectors")
       call elpa_transpose_vectors_&
-      &MATH_DATATYPE&
-      &_&
-      &PRECISION &
-      (obj, tmatc, ubound(tmatc,dim=1), mpi_comm_cols, &
-      tmatr, ubound(tmatr,dim=1), mpi_comm_rows, &
-      n, na, nblk, nblk, nrThreads, .false., success)
-#ifdef WITH_NVTX
-      call nvtxRangePop() ! elpa_transpose_vectors
-#endif
+                &MATH_DATATYPE&
+                &_&
+                &PRECISION &
+                (obj, tmatc, matrixCols, mpi_comm_cols, &
+                      tmatr, matrixRows, mpi_comm_rows, &
+                n, na, nblk, nblk, nrThreads, .false., success)
+      NVTX_RANGE_POP("elpa_transpose_vectors")
     endif ! useCCL
 
     if (useGPU .and. .not. useCCL) then
@@ -1136,21 +1087,19 @@
         lrs = l_rowx
         lre = min(matrixRows,(i+1)*l_rows_tile)
         if (lce  < lcs .or. lre < lrs) cycle
-        call obj%timer%start("gpublas")
         gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
         tmatr_off = (lrs-1 + (1-1)*matrixRows) * size_of_datatype
         tmatc_off = (lcs-1 + (1-1)*matrixCols) * size_of_datatype
         a_off = (lrs-1 + (lcs-1)*matrixRows) * size_of_datatype
-#ifdef WITH_NVTX
-        call nvtxRangePush("gpublas gemm")
-#endif
+        call obj%timer%start("gpublas")
+        NVTX_RANGE_PUSH("gpublas gemm")
+
         call gpublas_PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, lre-lrs+1, lce-lcs+1, nblk, &
                             -ONE, tmatr_dev+tmatr_off, matrixRows, tmatc_dev+tmatc_off, matrixCols, ONE, &
                             a_dev+a_off, matrixRows, gpublasHandle)
+        
         if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
-#ifdef WITH_NVTX
-        call nvtxRangePop() ! gpublas gemm
-#endif
+        NVTX_RANGE_POP("gpublas gemm")
         call obj%timer%stop("gpublas")
       enddo
     else !useGPU
@@ -1161,21 +1110,16 @@
         lre = min(matrixRows,(i+1)*l_rows_tile)
         if (lce<lcs .or. lre<lrs) cycle
         call obj%timer%start("blas")
-#ifndef DEVICE_POINTER
         call PRECISION_GEMM('N', BLAS_TRANS_OR_CONJ, int(lre-lrs+1,kind=BLAS_KIND), int(lce-lcs+1,kind=BLAS_KIND), &
                             int(nblk,kind=BLAS_KIND), -ONE,  &
                             tmatr(lrs,1), int(ubound(tmatr,dim=1),kind=BLAS_KIND), tmatc(lcs,1), &
                             int(ubound(tmatc,dim=1),kind=BLAS_KIND), &
                             ONE, a(lrs,lcs), int(matrixRows,kind=BLAS_KIND))
-#endif
         call obj%timer%stop("blas")
       enddo
     endif ! useGPU
 
-#ifdef WITH_NVTX
-    call nvtxRangePop() ! do n = 1, na, nblk
-#endif
-
+    NVTX_RANGE_POP("do n = 1, na, nblk")
   enddo ! n = 1, na, nblk
 
   call obj%timer%stop("loop1")
@@ -1225,23 +1169,25 @@
   endif
 
 #ifdef WITH_GPU_STREAMS
-  if (useGPU) then
+  if (useGPU .and. .not. useCCL) then
     successGPU = gpu_host_unregister(int(loc(tmp1),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_cholesky: tmp1", successGPU)
 
     successGPU = gpu_host_unregister(int(loc(tmp2),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_cholesky: tmp2", successGPU)
 
-    successGPU = gpu_host_unregister(int(loc(tmatc),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_cholesky: tmatc", successGPU)
-
     successGPU = gpu_host_unregister(int(loc(tmatr),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_cholesky: tmatr", successGPU)
+    
+    successGPU = gpu_host_unregister(int(loc(tmatc),kind=c_intptr_t))
+    check_host_unregister_gpu("elpa_cholesky: tmatc", successGPU)
   endif
 #endif
 
-  deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
-  check_deallocate("elpa_cholesky: tmp1, tmp2, tmatr, tmatc", istat, errorMessage)
+  if (.not. useCCL) then
+    deallocate(tmp1, tmp2, tmatr, tmatc, stat=istat, errmsg=errorMessage)
+    check_deallocate("elpa_cholesky: tmp1, tmp2, tmatr, tmatc", istat, errorMessage)
+  endif
 
   call obj%timer%stop("deallocate")
 
@@ -1256,9 +1202,8 @@
         ! column i is on local processor
         l_col1 = local_index(i  , my_pcol, np_cols, nblk, +1) ! local column number
         l_row1 = local_index(i+1, my_prow, np_rows, nblk, +1) ! first row below diagonal
-#ifndef DEVICE_POINTER
+
         a(l_row1:matrixRows,l_col1) = 0
-#endif
       endif ! (my_pcol==pcol(i, nblk, np_cols))
     enddo
   endif ! useGPU
@@ -1292,16 +1237,18 @@
     successGPU = gpu_host_unregister(int(loc(a),kind=c_intptr_t))
     check_host_unregister_gpu("elpa_cholesky: a", successGPU)
 #endif
+  endif ! useGPU
 
-  endif
 #else /* DEVICE_POINTER */
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
-    check_host_unregister_gpu("elpa_cholesky: a_tmp", successGPU)
-#endif
+#if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
+  deallocate(a_tmp, stat=istat, errmsg=errorMessage)
+  check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
 
-    deallocate(a_tmp, stat=istat, errmsg=errorMessage)
-    check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
+#ifdef WITH_GPU_STREAMS
+  successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
+  check_host_unregister_gpu("elpa_cholesky: a_tmp", successGPU)
+#endif
+#endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER) */
 #endif /* DEVICE_POINTER */
 
   ! restore original OpenMP settings
@@ -1317,6 +1264,5 @@
   &PRECISION&
   &"//gpuString)
 
-#ifdef WITH_NVTX
-    call nvtxRangePop() ! cholesky
-#endif
+  NVTX_RANGE_POP("cholesky")
+

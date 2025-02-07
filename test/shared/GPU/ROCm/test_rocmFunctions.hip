@@ -60,6 +60,7 @@
 #include <alloca.h>
 #include <stdint.h>
 #include <complex.h>
+#include <complex> // for std::real
 
 #include "config-f90.h"
 
@@ -88,6 +89,14 @@
 #undef BLAS_strmm
 #undef BLAS_ztrmm
 #undef BLAS_ctrmm
+#undef BLAS_dtrmv
+#undef BLAS_strmv
+#undef BLAS_ztrmv
+#undef BLAS_ctrmv
+#undef BLAS_dsyrk
+#undef BLAS_ssyrk
+#undef BLAS_zherk
+#undef BLAS_cherk
 #undef BLAS_dcopy
 #undef BLAS_scopy
 #undef BLAS_zcopy
@@ -165,6 +174,14 @@
 #define BLAS_ztrmm hipblasZtrmm
 #define BLAS_dtrmm hipblasDtrmm
 #define BLAS_strmm hipblasStrmm
+#define BLAS_ctrmv hipblasCtrmv
+#define BLAS_ztrmv hipblasZtrmv
+#define BLAS_dtrmv hipblasDtrmv
+#define BLAS_strmv hipblasStrmv
+#define BLAS_dsyrk hipblasDsyrk
+#define BLAS_ssyrk hipblasSsyrk
+#define BLAS_zherk hipblasZherk
+#define BLAS_cherk hipblasCherk
 #define BLAS_ccopy hipblasCcopy
 #define BLAS_zcopy hipblasZcopy
 #define BLAS_dcopy hipblasDcopy
@@ -244,6 +261,14 @@
 #define BLAS_ztrmm rocblas_ztrmm
 #define BLAS_dtrmm rocblas_dtrmm
 #define BLAS_strmm rocblas_strmm
+#define BLAS_ctrmv rocblas_ctrmv
+#define BLAS_ztrmv rocblas_ztrmv
+#define BLAS_dtrmv rocblas_dtrmv
+#define BLAS_strmv rocblas_strmv
+#define BLAS_dsyrk rocblas_dsyrk
+#define BLAS_ssyrk rocblas_ssyrk
+#define BLAS_zherk rocblas_zherk
+#define BLAS_cherk rocblas_cherk
 #define BLAS_ccopy rocblas_ccopy
 #define BLAS_zcopy rocblas_zcopy
 #define BLAS_dcopy rocblas_dcopy
@@ -297,6 +322,7 @@
 #define BLAS_pointer_mode rocblas_pointer_mode
 #endif /* HIPBLAS */
 
+
 #ifdef HIPBLAS
 #include <hipblas/hipblas.h>
 #ifdef WITH_AMD_ROCSOLVER
@@ -305,7 +331,7 @@
 #else /* HIPBLAS */
 #include "rocblas/rocblas.h"
 #ifdef WITH_AMD_ROCSOLVER
-#include <rocsolver/rocsolver.h>
+#include <rocsolver.h>
 #endif
 #endif /* HIPBLAS */
 #include "hip/hip_runtime_api.h"
@@ -320,9 +346,9 @@
 #endif
 
 #ifdef WITH_AMD_GPU_VERSION
-#include "./rocmFunctions_template.h"
+#include "../../../../src/GPU/ROCm/rocmFunctions_template.h"
 #endif
 
 #ifdef WITH_AMD_ROCSOLVER
-#include "./rocsolverFunctions_template.h"
+#include "../../../../src/GPU/ROCm/rocsolverFunctions_template.h"
 #endif

@@ -1,6 +1,7 @@
-.TH "elpa_autotune_set_best" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.TH "elpa_autotune_set_best" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
 elpa_autotune_set_best \- sets the tunable parameters to the up-to-now best solution
 .br
@@ -11,32 +12,32 @@ Before the autotuning options can be set, an autotuning step has to be done\fB e
 .SS FORTRAN INTERFACE
 use elpa
 .br
-class(elpa_t), pointer :: elpa
+class(elpa_t), pointer :: elpa_handle
 .br
-class(elpa_autotune_t), pointer :: tune_state
+class(elpa_autotune_t), pointer :: autotune_handle
 .br
 
-call elpa%\fBautotune_set_best\fP (tune_state)
+call elpa_handle%\fBautotune_set_best\fP (autotune_handle)
 .sp
 With the definitions of the input and output variables:
 .TP
-type(elpa_autotune_t) :: \fB tune_state\fP  
+type(elpa_autotune_t) ::\fB autotune_handle\fP  
 The ELPA autotuning object, created with\fB elpa_autotune_setup\fP(3)
 .br
 
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include <elpa/elpa.h>
 .br
-elpa_t handle;
+elpa_t elpa_handle;
 .br
 elpa_autotune_t autotune_handle;
 
 .br
-void\fB elpa_autotune_set_best\fP (\fBelpa_t\fP handle,\fB elpa_autotune_t\fP autotune_handle);
+void\fB elpa_autotune_set_best\fP (\fBelpa_t\fP elpa_handle,\fB elpa_autotune_t\fP autotune_handle);
 .sp
 With the definitions of the input and output variables:
 .TP
-elpa_t \fB handle\fP;  
+elpa_t \fB elpa_handle\fP;  
 The handle of an ELPA object, obtained before with\fB elpa_allocate\fP(3)
 .TP
 elpa_autotune_t\fB autotune_handle\fP;  

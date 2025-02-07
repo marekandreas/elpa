@@ -77,7 +77,8 @@
 #endif
             success = ccl_group_end()
             if (.not.success) then
-              write(error_unit,*) "Error in setting up ccl_group_end!"
+              write(error_unit,*) "Error in setting up ccl_group_end 1!"
+              write(error_unit,*) "Check if number of GPUs is equal to number of MPI ranks"
               stop 1
             endif
 
@@ -121,7 +122,7 @@
 
             success = ccl_group_end()
             if (.not.success) then
-              write(error_unit,*) "Error in setting up ccl_group_end!"
+              write(error_unit,*) "Error in setting up ccl_group_end 2!"
               stop 1
             endif
 
@@ -167,7 +168,7 @@
 
             success = ccl_group_end()
             if (.not.success) then
-              write(error_unit,*) "Error in setting up ccl_group_end!"
+              write(error_unit,*) "Error in setting up ccl_group_end 3!"
               stop 1
             endif
             OBJECT%gpu_setup%ccl_comm_cols = ccl_comm_cols
@@ -177,4 +178,4 @@
             !  write(error_unit,*) "Error in destroying ccl_comm_all!"
             !  stop 1
             !endif
-#endif
+#endif /* defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) */

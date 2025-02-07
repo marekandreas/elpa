@@ -1,6 +1,7 @@
 .TH "elpa_setup" 3 "Wed Mar 13 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
 elpa_setup \- setup an instance of the ELPA library
 .br
@@ -10,34 +11,34 @@ elpa_setup \- setup an instance of the ELPA library
 .SS FORTRAN INTERFACE
 use elpa
 .br
-class(elpa_t), pointer :: elpa
+class(elpa_t), pointer :: elpa_handle
 .br
 
-status = elpa%\fBsetup\fP()
+status = elpa_handle%\fBsetup\fP()
 .sp
 With the definitions of the input and output variables:
 
 .TP
-class(elpa_t) :: \fB elpa\fP
+class(elpa_t) ::\fB elpa_handle\fP
 An instance of the ELPA object.
 .TP
-integer :: \fB status\fP  
+integer ::\fB status\fP  
 The returned error code. Should normally be ELPA_OK. Can be queried with\fB elpa_strerr\fP(3)
 .br
 
 .br
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include <elpa/elpa.h>
 .br
-elpa_t handle;
+elpa_t elpa_handle;
 
 .br
-\fBint\fP status =\fB elpa_setup\fP (\fBelpa_t\fP handle);
+\fBint\fP status =\fB elpa_setup\fP (\fBelpa_t\fP elpa_handle);
 .sp
 With the definitions of the input and output variables:
 
 .TP
-elpa_t \fB handle\fP;  
+elpa_t \fB elpa_handle\fP;  
 The handle of an ELPA object, obtained before with\fB elpa_allocate\fP(3)
 .TP
 int \fB status\fP;    

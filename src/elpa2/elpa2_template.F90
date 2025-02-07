@@ -334,7 +334,7 @@
     &MATH_DATATYPE&
     &_2stage_&
     &PRECISION&
-    &")
+    &") ! "
 
     call obj%get("debug",debug, error)
     if (error .ne. ELPA_OK) then

@@ -93,10 +93,14 @@
 #endif
 #undef SOLVE_TRIDI_GPU_BUILD 
 #include "../solve_tridi/solve_tridi_template.F90" 
+#include "../solve_tridi/solve_tridi_col_template.F90"
+#include "../solve_tridi/solve_tridi_single_problem_template.F90"
 #define SOLVE_TRIDI_GPU_BUILD 
 #include "../solve_tridi/solve_tridi_template.F90" 
-#undef SOLVE_TRIDI_GPU_BUILD
 #include "../solve_tridi/solve_tridi_col_template.F90"
+#include "../solve_tridi/solve_tridi_single_problem_template.F90"
+#undef SOLVE_TRIDI_GPU_BUILD
+!#include "../solve_tridi/solve_tridi_col_template.F90"
 #undef PRECISION_AND_SUFFIX
 !#include "elpa1_merge_systems_real_template.F90"
 #include "elpa1_tools_template.F90"

@@ -642,118 +642,6 @@
     end subroutine
   end interface
 
-
-  interface mkl_openmp_offload_Dcopy
-    module procedure mkl_openmp_offload_Dcopy_intptr
-    module procedure mkl_openmp_offload_Dcopy_cptr
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Dcopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklOpenmpOffloadDcopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Dcopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklOpenmpOffloadDcopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-
-  interface mkl_openmp_offload_Dtrmm
-    module procedure mkl_openmp_offload_Dtrmm_intptr
-    module procedure mkl_openmp_offload_Dtrmm_cptr
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Dtrmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadDtrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Dtrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadDtrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-
-  interface mkl_openmp_offload_Dtrsm
-    module procedure mkl_openmp_offload_Dtrsm_intptr
-    module procedure mkl_openmp_offload_Dtrsm_cptr
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Dtrsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadDtrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Dtrsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadDtrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_DOUBLE) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Dgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="mklOpenmpOffloadDgemv_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: cta
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      real(kind=C_DOUBLE) , value              :: alpha, beta
-      integer(kind=C_intptr_T), value         :: a, x, y
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
   interface mkl_openmp_offload_Sgemm
     module procedure mkl_openmp_offload_Sgemm_intptr
     module procedure mkl_openmp_offload_Sgemm_cptr
@@ -804,118 +692,6 @@
     end subroutine
   end interface
 
-
-  interface mkl_openmp_offload_Scopy
-    module procedure mkl_openmp_offload_Scopy_intptr
-    module procedure mkl_openmp_offload_Scopy_cptr
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Scopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklOpenmpOffloadScopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Scopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklOpenmpOffloadScopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-
-  interface mkl_openmp_offload_Strmm
-    module procedure mkl_openmp_offload_Strmm_intptr
-    module procedure mkl_openmp_offload_Strmm_cptr
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Strmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadStrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Strmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadStrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-
-  interface mkl_openmp_offload_Strsm
-    module procedure mkl_openmp_offload_Strsm_intptr
-    module procedure mkl_openmp_offload_Strsm_cptr
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Strsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadStrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Strsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadStrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      real(kind=C_FLOAT) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Sgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="mklOpenmpOffloadSgemv_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: cta
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      real(kind=C_FLOAT) , value              :: alpha, beta
-      integer(kind=C_intptr_T), value         :: a, x, y
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
   interface mkl_openmp_offload_Zgemm
     module procedure mkl_openmp_offload_Zgemm_intptr
     module procedure mkl_openmp_offload_Zgemm_cptr
@@ -962,118 +738,6 @@
       complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
       integer(kind=C_intptr_T), value         :: a, c
       type(c_ptr), value                      :: b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-
-  interface mkl_openmp_offload_Zcopy
-    module procedure mkl_openmp_offload_Zcopy_intptr
-    module procedure mkl_openmp_offload_Zcopy_cptr
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Zcopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklOpenmpOffloadZcopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      integer(kind=C_intptr_T), value         :: x, y
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Zcopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
-                              bind(C,name="mklOpenmpOffloadZcopy_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT),value               :: n
-      integer(kind=C_INT), intent(in), value  :: incx,incy
-      type(c_ptr), value                      :: x, y
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-
-  interface mkl_openmp_offload_Ztrmm
-    module procedure mkl_openmp_offload_Ztrmm_intptr
-    module procedure mkl_openmp_offload_Ztrmm_cptr
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Ztrmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadZtrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Ztrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadZtrmm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-
-  interface mkl_openmp_offload_Ztrsm
-    module procedure mkl_openmp_offload_Ztrsm_intptr
-    module procedure mkl_openmp_offload_Ztrsm_cptr
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Ztrsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadZtrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Ztrsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
-                              bind(C,name="mklOpenmpOffloadZtrsm_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
-      type(c_ptr), value                      :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-    end subroutine
-  end interface
-
-  interface
-    subroutine mkl_openmp_offload_Zgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
-                              bind(C,name="mklOpenmpOffloadZgemv_elpa_wrapper")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value               :: cta
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
-      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha, beta
-      integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
     end subroutine
   end interface
@@ -1129,6 +793,93 @@
   end interface
 
 
+  interface mkl_openmp_offload_Dcopy
+    module procedure mkl_openmp_offload_Dcopy_intptr
+    module procedure mkl_openmp_offload_Dcopy_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dcopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklOpenmpOffloadDcopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dcopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklOpenmpOffloadDcopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Scopy
+    module procedure mkl_openmp_offload_Scopy_intptr
+    module procedure mkl_openmp_offload_Scopy_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Scopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklOpenmpOffloadScopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Scopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklOpenmpOffloadScopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Zcopy
+    module procedure mkl_openmp_offload_Zcopy_intptr
+    module procedure mkl_openmp_offload_Zcopy_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Zcopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklOpenmpOffloadZcopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      integer(kind=C_intptr_T), value         :: x, y
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Zcopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy) &
+                              bind(C,name="mklOpenmpOffloadZcopy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT),value               :: n
+      integer(kind=C_INT), intent(in), value  :: incx,incy
+      type(c_ptr), value                      :: x, y
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
   interface mkl_openmp_offload_Ccopy
     module procedure mkl_openmp_offload_Ccopy_intptr
     module procedure mkl_openmp_offload_Ccopy_cptr
@@ -1159,6 +910,105 @@
   end interface
 
 
+  interface mkl_openmp_offload_Dtrmm
+    module procedure mkl_openmp_offload_Dtrmm_intptr
+    module procedure mkl_openmp_offload_Dtrmm_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dtrmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadDtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      real(c_double)           , value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dtrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadDtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
+      real(c_double)           , value        :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Strmm
+    module procedure mkl_openmp_offload_Strmm_intptr
+    module procedure mkl_openmp_offload_Strmm_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Strmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadStrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      real(c_float)            , value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Strmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadStrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
+      real(c_float)            , value        :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Ztrmm
+    module procedure mkl_openmp_offload_Ztrmm_intptr
+    module procedure mkl_openmp_offload_Ztrmm_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ztrmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadZtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      complex(c_double_complex), value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ztrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadZtrmm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
+      complex(c_double_complex), value        :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
   interface mkl_openmp_offload_Ctrmm
     module procedure mkl_openmp_offload_Ctrmm_intptr
     module procedure mkl_openmp_offload_Ctrmm_cptr
@@ -1169,12 +1019,12 @@
                               bind(C,name="mklOpenmpOffloadCtrmm_elpa_wrapper")
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
-      integer(kind=C_intptr_T), value         :: a, b
-      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+      character(1,c_char), value              :: side, uplo, trans, diag
+      integer(kind=c_int), value              :: m, n
+      integer(kind=c_int), intent(in), value  :: lda, ldb
+      complex(c_float_complex) , value        :: alpha
+      integer(kind=c_intptr_t) , value        :: a, b
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
     end subroutine
   end interface
 
@@ -1184,14 +1034,355 @@
       use, intrinsic :: iso_c_binding
       implicit none
       character(1,C_CHAR),value               :: side, uplo, trans, diag
-      integer(kind=C_INT),value               :: m,n
-      integer(kind=C_INT), intent(in), value  :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
+      integer(kind=C_INT),value               :: m, n
+      integer(kind=C_INT), intent(in), value  :: lda, ldb
+      complex(c_float_complex) , value        :: alpha
       type(c_ptr), value                      :: a, b
       integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
     end subroutine
   end interface
 
+
+  interface mkl_openmp_offload_Dtrmv
+    module procedure mkl_openmp_offload_Dtrmv_intptr
+    module procedure mkl_openmp_offload_Dtrmv_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dtrmv_intptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="mklOpenmpOffloadDtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dtrmv_cptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="mklOpenmpOffloadDtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Strmv
+    module procedure mkl_openmp_offload_Strmv_intptr
+    module procedure mkl_openmp_offload_Strmv_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Strmv_intptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="mklOpenmpOffloadStrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Strmv_cptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="mklOpenmpOffloadStrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Ztrmv
+    module procedure mkl_openmp_offload_Ztrmv_intptr
+    module procedure mkl_openmp_offload_Ztrmv_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ztrmv_intptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="mklOpenmpOffloadZtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ztrmv_cptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="mklOpenmpOffloadZtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Ctrmv
+    module procedure mkl_openmp_offload_Ctrmv_intptr
+    module procedure mkl_openmp_offload_Ctrmv_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ctrmv_intptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="mklOpenmpOffloadCtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      integer(kind=c_intptr_t) , value         :: a, x
+      integer(kind=c_intptr_t) , value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ctrmv_cptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx) &
+                              bind(C,name="mklOpenmpOffloadCtrmv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value               :: uplo, trans, diag
+      integer(kind=c_int), value               :: n, lda, incx
+      type(c_ptr), value                       :: a, x
+      integer(kind=c_intptr_t) , value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+
+  interface mkl_openmp_offload_Dsyrk
+    module procedure mkl_openmp_offload_Dsyrk_intptr
+    module procedure mkl_openmp_offload_Dsyrk_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dsyrk_intptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="mklOpenmpOffloadDsyrk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      real(c_double)           , value        :: alpha, beta
+      integer(kind=c_intptr_t) , value        :: a, c
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dsyrk_cptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="mklOpenmpOffloadDsyrk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      real(c_double)           , value        :: alpha, beta
+      type(c_ptr), value                      :: a, c
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Ssyrk
+    module procedure mkl_openmp_offload_Ssyrk_intptr
+    module procedure mkl_openmp_offload_Ssyrk_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ssyrk_intptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="mklOpenmpOffloadSsyrk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      real(c_float)            , value        :: alpha, beta
+      integer(kind=c_intptr_t) , value        :: a, c
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ssyrk_cptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="mklOpenmpOffloadSsyrk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      real(c_float)            , value        :: alpha, beta
+      type(c_ptr), value                      :: a, c
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Zherk
+    module procedure mkl_openmp_offload_Zherk_intptr
+    module procedure mkl_openmp_offload_Zherk_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Zherk_intptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="mklOpenmpOffloadZherk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      complex(c_double_complex), value        :: alpha, beta
+      integer(kind=c_intptr_t) , value        :: a, c
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Zherk_cptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="mklOpenmpOffloadZherk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      complex(c_double_complex), value        :: alpha, beta
+      type(c_ptr), value                      :: a, c
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Cherk
+    module procedure mkl_openmp_offload_Cherk_intptr
+    module procedure mkl_openmp_offload_Cherk_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Cherk_intptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="mklOpenmpOffloadCherk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      complex(c_float_complex) , value        :: alpha, beta
+      integer(kind=c_intptr_t) , value        :: a, c
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Cherk_cptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc) &
+                              bind(C,name="mklOpenmpOffloadCherk_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value              :: uplo, trans
+      integer(kind=c_int), value              :: n, k, lda, ldc
+      complex(c_float_complex) , value        :: alpha, beta
+      type(c_ptr), value                      :: a, c
+      integer(kind=c_intptr_t) , value        :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+
+  interface mkl_openmp_offload_Dtrsm
+    module procedure mkl_openmp_offload_Dtrsm_intptr
+    module procedure mkl_openmp_offload_Dtrsm_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dtrsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadDtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Dtrsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadDtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_DOUBLE) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Strsm
+    module procedure mkl_openmp_offload_Strsm_intptr
+    module procedure mkl_openmp_offload_Strsm_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Strsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadStrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_FLOAT) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Strsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadStrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      real(kind=C_FLOAT) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface mkl_openmp_offload_Ztrsm
+    module procedure mkl_openmp_offload_Ztrsm_intptr
+    module procedure mkl_openmp_offload_Ztrsm_cptr
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ztrsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadZtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
+      integer(kind=C_intptr_T), value         :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Ztrsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb) &
+                              bind(C,name="mklOpenmpOffloadZtrsm_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: side, uplo, trans, diag
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha
+      type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
 
   interface mkl_openmp_offload_Ctrsm
     module procedure mkl_openmp_offload_Ctrsm_intptr
@@ -1222,6 +1413,49 @@
       integer(kind=C_INT), intent(in), value  :: lda,ldb
       complex(kind=C_FLOAT_COMPLEX) , value              :: alpha
       type(c_ptr), value                      :: a, b
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine mkl_openmp_offload_Dgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="mklOpenmpOffloadDgemv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_DOUBLE) , value              :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Sgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="mklOpenmpOffloadSgemv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      real(kind=C_FLOAT) , value              :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, x, y
+      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+    end subroutine
+  end interface
+
+  interface
+    subroutine mkl_openmp_offload_Zgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy) &
+                              bind(C,name="mklOpenmpOffloadZgemv_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: cta
+      integer(kind=C_INT),value               :: m,n
+      integer(kind=C_INT), intent(in), value  :: lda,incx,incy
+      complex(kind=C_DOUBLE_COMPLEX) , value              :: alpha, beta
+      integer(kind=C_intptr_T), value         :: a, x, y
       integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
     end subroutine
   end interface
@@ -1321,66 +1555,6 @@
 !    end subroutine
 !  end interface
 
-
-  interface mkl_openmp_offload_Dscal
-    module procedure mkl_openmp_offload_Dscal_intptr
-    module procedure mkl_openmp_offload_Dscal_cptr
-  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Dscal_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
-!               bind(C, name="mkl_openmp_offloadDscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Dscal_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
-!               bind(C, name="mkl_openmp_offloadDscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
-
-
-  interface mkl_openmp_offload_Daxpy
-    module procedure mkl_openmp_offload_Daxpy_intptr
-    module procedure mkl_openmp_offload_Daxpy_cptr
-  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Daxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="mkl_openmp_offloadDaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Daxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="mkl_openmp_offloadDaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
-!    end subroutine
-!  end interface
-
   interface mkl_openmp_offload_Sdot
     module procedure mkl_openmp_offload_Sdot_intptr
     module procedure mkl_openmp_offload_Sdot_cptr
@@ -1405,66 +1579,6 @@
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
 !      integer(kind=C_INT), value              :: length, incx, incy
 !      type(c_ptr), value                      :: x, y, result
-!    end subroutine
-!  end interface
-
-
-  interface mkl_openmp_offload_Sscal
-    module procedure mkl_openmp_offload_Sscal_intptr
-    module procedure mkl_openmp_offload_Sscal_cptr
-  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Sscal_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
-!               bind(C, name="mkl_openmp_offloadSscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Sscal_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
-!               bind(C, name="mkl_openmp_offloadSscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
-
-
-  interface mkl_openmp_offload_Saxpy
-    module procedure mkl_openmp_offload_Saxpy_intptr
-    module procedure mkl_openmp_offload_Saxpy_cptr
-  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Saxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="mkl_openmp_offloadSaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Saxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="mkl_openmp_offloadSaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1494,66 +1608,6 @@
 !      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
 !      integer(kind=C_INT), value              :: length, incx, incy
 !      type(c_ptr), value                      :: x, y, result
-!    end subroutine
-!  end interface
-
-
-  interface mkl_openmp_offload_Zscal
-    module procedure mkl_openmp_offload_Zscal_intptr
-    module procedure mkl_openmp_offload_Zscal_cptr
-  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Zscal_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
-!               bind(C, name="mkl_openmp_offloadZscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Zscal_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
-!               bind(C, name="mkl_openmp_offloadZscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
-
-
-  interface mkl_openmp_offload_Zaxpy
-    module procedure mkl_openmp_offload_Zaxpy_intptr
-    module procedure mkl_openmp_offload_Zaxpy_cptr
-  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Zaxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="mkl_openmp_offloadZaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
-
-!  interface
-!    subroutine mkl_openmp_offload_Zaxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="mkl_openmp_offloadZaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
 !    end subroutine
 !  end interface
 
@@ -1587,6 +1641,93 @@
 !  end interface
 
 
+  interface mkl_openmp_offload_Dscal
+    module procedure mkl_openmp_offload_Dscal_intptr
+    module procedure mkl_openmp_offload_Dscal_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Dscal_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
+!               bind(C, name="mkl_openmp_offloadDscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Dscal_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
+!               bind(C, name="mkl_openmp_offloadDscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface mkl_openmp_offload_Sscal
+    module procedure mkl_openmp_offload_Sscal_intptr
+    module procedure mkl_openmp_offload_Sscal_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Sscal_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
+!               bind(C, name="mkl_openmp_offloadSscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Sscal_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
+!               bind(C, name="mkl_openmp_offloadSscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
+  interface mkl_openmp_offload_Zscal
+    module procedure mkl_openmp_offload_Zscal_intptr
+    module procedure mkl_openmp_offload_Zscal_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Zscal_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
+!               bind(C, name="mkl_openmp_offloadZscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Zscal_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx) &
+!               bind(C, name="mkl_openmp_offloadZscal_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      type(c_ptr), value                      :: x
+!    end subroutine
+!  end interface
+
   interface mkl_openmp_offload_Cscal
     module procedure mkl_openmp_offload_Cscal_intptr
     module procedure mkl_openmp_offload_Cscal_cptr
@@ -1617,6 +1758,90 @@
 !  end interface
 
 
+  interface mkl_openmp_offload_Daxpy
+    module procedure mkl_openmp_offload_Daxpy_intptr
+    module procedure mkl_openmp_offload_Daxpy_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Daxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadDaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Daxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadDaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_DOUBLE) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
+!    end subroutine
+!  end interface
+  interface mkl_openmp_offload_Saxpy
+    module procedure mkl_openmp_offload_Saxpy_intptr
+    module procedure mkl_openmp_offload_Saxpy_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Saxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadSaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Saxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadSaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      real(kind=C_FLOAT) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
+!    end subroutine
+!  end interface
+  interface mkl_openmp_offload_Zaxpy
+    module procedure mkl_openmp_offload_Zaxpy_intptr
+    module procedure mkl_openmp_offload_Zaxpy_cptr
+  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Zaxpy_intptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadZaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      integer(kind=C_intptr_T), value         :: x, y
+!    end subroutine
+!  end interface
+
+!  interface
+!    subroutine mkl_openmp_offload_Zaxpy_cptr_c(mkl_openmp_offloadHandle, length, alpha, x, incx, y, incy) &
+!               bind(C, name="mkl_openmp_offloadZaxpy_elpa_wrapper")
+!      use, intrinsic :: iso_c_binding
+!      implicit none
+!      integer(kind=C_intptr_T), value         :: mkl_openmp_offloadHandle
+!      integer(kind=C_INT),value               :: length, incx, incy
+!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+!      type(c_ptr), value                      :: x, y
+!    end subroutine
+!  end interface
   interface mkl_openmp_offload_Caxpy
     module procedure mkl_openmp_offload_Caxpy_intptr
     module procedure mkl_openmp_offload_Caxpy_cptr
@@ -2249,6 +2474,7 @@
 !#endif
 !    end function
 
+
     subroutine mkl_openmp_offload_Dgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_openmp_offloadHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2291,100 +2517,6 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       call mkl_openmp_offload_Dgemm_intptr_cptr_intptr_c(mkl_openmp_offloadHandle, cta, ctb, m, n, k, &
                                                  alpha, a, lda, b, ldb, beta, c, ldc)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Dcopy_intptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Dcopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Dcopy_cptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Dcopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Dtrmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE) ,value               :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Dtrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Dtrsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_DOUBLE) ,value               :: alpha
-      type(c_ptr)                    :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Dtrsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: cta
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,incx,incy
-      real(kind=C_DOUBLE) ,value               :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Dgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
@@ -2433,100 +2565,6 @@
 #endif
     end subroutine
 
-    subroutine mkl_openmp_offload_Scopy_intptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Scopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Scopy_cptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Scopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Strmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT) ,value               :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Strmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Strsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      real(kind=C_FLOAT) ,value               :: alpha
-      type(c_ptr)                    :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Strsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: cta
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,incx,incy
-      real(kind=C_FLOAT) ,value               :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Sgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
-#endif
-    end subroutine
-
     subroutine mkl_openmp_offload_Zgemm_intptr(cta, ctb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, mkl_openmp_offloadHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2569,100 +2607,6 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       call mkl_openmp_offload_Zgemm_intptr_cptr_intptr_c(mkl_openmp_offloadHandle, cta, ctb, m, n, k, &
                                                  alpha, a, lda, b, ldb, beta, c, ldc)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Zcopy_intptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      integer(kind=C_intptr_T)        :: x, y
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Zcopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Zcopy_cptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)             :: n
-      integer(kind=C_INT), intent(in) :: incx, incy
-      type(c_ptr)                     :: x, y
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Zcopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Ztrmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
-      type(c_ptr)                     :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Ztrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Ztrsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
-      type(c_ptr)                    :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Ztrsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
-#endif
-    end subroutine
-
-    subroutine mkl_openmp_offload_Zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_openmp_offloadHandle)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1,C_CHAR),value       :: cta
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,incx,incy
-      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
-      integer(kind=C_intptr_T)        :: a, x, y
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Zgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 
@@ -2711,6 +2655,79 @@
 #endif
     end subroutine
 
+
+    subroutine mkl_openmp_offload_Dcopy_intptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dcopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Dcopy_cptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)                     :: x, y
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dcopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Scopy_intptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Scopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Scopy_cptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)                     :: x, y
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Scopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Zcopy_intptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      integer(kind=C_intptr_T)        :: x, y
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Zcopy_intptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Zcopy_cptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT)             :: n
+      integer(kind=C_INT), intent(in) :: incx, incy
+      type(c_ptr)                     :: x, y
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Zcopy_cptr_c(mkl_openmp_offloadHandle, n, x, incx, y, incy)
+#endif
+    end subroutine
+
     subroutine mkl_openmp_offload_Ccopy_intptr(n, x, incx, y, incy, mkl_openmp_offloadHandle)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -2735,15 +2752,100 @@
 #endif
     end subroutine
 
+
+    subroutine mkl_openmp_offload_Dtrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      real(c_double)           , value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dtrmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Dtrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      real(c_double)           , value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dtrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Strmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      real(c_float)            , value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Strmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Strmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      real(c_float)            , value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Strmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ztrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      complex(c_double_complex), value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ztrmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ztrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      complex(c_double_complex), value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ztrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
     subroutine mkl_openmp_offload_Ctrmm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
       use, intrinsic :: iso_c_binding
       implicit none
-      character(1,C_CHAR),value       :: side, uplo, trans, diag
-      integer(kind=C_INT)             :: m,n
-      integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
-      integer(kind=C_intptr_T)        :: a, b
-      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+      character(1,c_char), value       :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda, ldb
+      complex(c_float_complex) , value :: alpha
+      integer(kind=c_intptr_t)         :: a, b
+      integer(kind=c_intptr_t)         :: mkl_openmp_offloadHandle
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       call mkl_openmp_offload_Ctrmm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
@@ -2752,14 +2854,301 @@
     subroutine mkl_openmp_offload_Ctrmm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
       use, intrinsic :: iso_c_binding
       implicit none
+      character(1,c_char),value        :: side, uplo, trans, diag
+      integer(kind=c_int)              :: m, n
+      integer(kind=c_int), intent(in)  :: lda,ldb
+      complex(c_float_complex) , value :: alpha
+      type(c_ptr)                      :: a, b
+      integer(kind=C_intptr_T)         :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ctrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+
+    subroutine mkl_openmp_offload_Dtrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dtrmv_intptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Dtrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dtrmv_cptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Strmv_intptr(uplo, trans, diag, n, a, lda, x, incx, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Strmv_intptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Strmv_cptr(uplo, trans, diag, n, a, lda, x, incx, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Strmv_cptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ztrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ztrmv_intptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ztrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ztrmv_cptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ctrmv_intptr(uplo, trans, diag, n, a, lda, x, incx, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      integer(kind=c_intptr_t), value  :: a, x
+      integer(kind=c_intptr_t), value  :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ctrmv_intptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ctrmv_cptr(uplo, trans, diag, n, a, lda, x, incx, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans, diag
+      integer(kind=c_int), value       :: n, lda, incx
+      type(c_ptr)                      :: a, x
+      integer(kind=c_intptr_t), value  :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ctrmv_cptr_c(mkl_openmp_offloadHandle, uplo, trans, diag, n, a, lda, x, incx)
+#endif
+    end subroutine
+
+
+    subroutine mkl_openmp_offload_Dsyrk_intptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      real(c_double)           , value :: alpha, beta
+      integer(kind=c_intptr_t) , value :: a, c
+      integer(kind=c_intptr_t) , value :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dsyrk_intptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Dsyrk_cptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      real(c_double)           , value :: alpha, beta
+      type(c_ptr)                      :: a, c
+      integer(kind=c_intptr_t) , value :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dsyrk_cptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ssyrk_intptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      real(c_float)            , value :: alpha, beta
+      integer(kind=c_intptr_t) , value :: a, c
+      integer(kind=c_intptr_t) , value :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ssyrk_intptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ssyrk_cptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      real(c_float)            , value :: alpha, beta
+      type(c_ptr)                      :: a, c
+      integer(kind=c_intptr_t) , value :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ssyrk_cptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Zherk_intptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      complex(c_double_complex), value :: alpha, beta
+      integer(kind=c_intptr_t) , value :: a, c
+      integer(kind=c_intptr_t) , value :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Zherk_intptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Zherk_cptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      complex(c_double_complex), value :: alpha, beta
+      type(c_ptr)                      :: a, c
+      integer(kind=c_intptr_t) , value :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Zherk_cptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Cherk_intptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      complex(c_float_complex) , value :: alpha, beta
+      integer(kind=c_intptr_t) , value :: a, c
+      integer(kind=c_intptr_t) , value :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Cherk_intptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Cherk_cptr(uplo, trans, n, k, alpha, a, lda, beta, c, ldc, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,c_char), value       :: uplo, trans
+      integer(kind=c_int), value       :: n, k, lda, ldc
+      complex(c_float_complex) , value :: alpha, beta
+      type(c_ptr)                      :: a, c
+      integer(kind=c_intptr_t) , value :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Cherk_cptr_c(mkl_openmp_offloadHandle, uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
+#endif
+    end subroutine
+
+
+    subroutine mkl_openmp_offload_Dtrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
       character(1,C_CHAR),value       :: side, uplo, trans, diag
       integer(kind=C_INT)             :: m,n
       integer(kind=C_INT), intent(in) :: lda,ldb
-      complex(kind=C_FLOAT_COMPLEX) ,value               :: alpha
-      type(c_ptr)                     :: a, b
+      real(kind=C_DOUBLE) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
       integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      call mkl_openmp_offload_Ctrmm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+      call mkl_openmp_offload_Dtrsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Dtrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_DOUBLE) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dtrsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Strsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_FLOAT) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Strsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Strsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      real(kind=C_FLOAT) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Strsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ztrsm_intptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      integer(kind=C_intptr_T)        :: a, b
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ztrsm_intptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Ztrsm_cptr(side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: side, uplo, trans, diag
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,ldb
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha
+      type(c_ptr)                    :: a, b
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Ztrsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
 #endif
     end subroutine
 
@@ -2788,6 +3177,49 @@
       integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       call mkl_openmp_offload_Ctrsm_cptr_c(mkl_openmp_offloadHandle, side, uplo, trans, diag, m, n, alpha, a, lda, b, ldb)
+#endif
+    end subroutine
+
+
+    subroutine mkl_openmp_offload_Dgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_DOUBLE) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Dgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Sgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      real(kind=C_FLOAT) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Sgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
+#endif
+    end subroutine
+
+    subroutine mkl_openmp_offload_Zgemv(cta, m, n, alpha, a, lda, x, incx, beta, y, incy, mkl_openmp_offloadHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value       :: cta
+      integer(kind=C_INT)             :: m,n
+      integer(kind=C_INT), intent(in) :: lda,incx,incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value               :: alpha,beta
+      integer(kind=C_intptr_T)        :: a, x, y
+      integer(kind=C_intptr_T)        :: mkl_openmp_offloadHandle
+#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
+      call mkl_openmp_offload_Zgemv_c(mkl_openmp_offloadHandle, cta, m, n, alpha, a, lda, x, incx, beta, y, incy)
 #endif
     end subroutine
 

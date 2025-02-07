@@ -58,7 +58,8 @@ module elpa1_auxiliary_impl
   use elpa_utilities
   use elpa_cholesky
   use elpa_invert_trm
-  use elpa_multiply_a_b
+  use elpa_hermitian_multiply
+  use elpa_pxgemm_multiply
 
   implicit none
 

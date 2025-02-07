@@ -58,8 +58,6 @@
 #include <stdint.h>
 #include "config-f90.h"
 
-#define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
-
 __global__ void cuda_copy_double_tmp2_c_kernel(double *tmp2_dev, double *c_dev, const int nr_done, const int nstor, const int lcs, const int lce, const int ldc, const int ldcCols){
 
   //dim3 blocks = dim3(lce-lcs+1,1,1);
@@ -212,7 +210,7 @@ __global__ void cuda_copy_double_a_aux_bc_kernel(double *a_dev, double *aux_bc_d
   //dim3 threadsPerBlock = dim3(1,1,1);
 
   int i_index    = blockIdx.x +1; // range 1..lre-lrs+1
-  int j_index = threadIdx.x + 1; // range 1..1
+  //int j_index = threadIdx.x + 1; // range 1..1
   aux_bc_dev[(n_aux_bc+1-1)+(i_index-1)] = a_dev[(lrs-1)+(i_index-1)+lda*(noff*nblk+n-1)];
 }
 
@@ -533,8 +531,3 @@ extern "C" void cuda_copy_float_complex_aux_bc_aux_mat_FromC(float _Complex *aux
     printf("Error in executing copy_float_complex_aux_bc_aux_mat_kernel: %s\n",cudaGetErrorString(cuerr));
   }
 }
-
-
-
-
-

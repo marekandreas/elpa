@@ -1,3 +1,52 @@
+//    Copyright 2024, P. Karpov
+//
+//    This file is part of ELPA.
+//
+//    The ELPA library was originally created by the ELPA consortium,
+//    consisting of the following organizations:
+//
+//    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+//      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+//    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
+//      Informatik,
+//    - Technische Universität München, Lehrstuhl für Informatik mit
+//      Schwerpunkt Wissenschaftliches Rechnen ,
+//    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
+//    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
+//      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
+//      and
+//    - IBM Deutschland GmbH
+//
+//    This particular source code file contains additions, changes and
+//    enhancements authored by Intel Corporation which is not part of
+//    the ELPA consortium.
+//
+//    More information can be found here:
+//    http://elpa.mpcdf.mpg.de/
+//
+//    ELPA is free software: you can redistribute it and/or modify
+//    it under the terms of the version 3 of the license of the
+//    GNU Lesser General Public License as published by the Free
+//    Software Foundation.
+//
+//    ELPA is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//    You should have received a copy of the GNU Lesser General Public License
+//    along with ELPA.  If not, see <http://www.gnu.org/licenses/>
+//
+//    ELPA reflects a substantial effort on the part of the original
+//    ELPA consortium, and we ask you to respect the spirit of the
+//    license that we chose: i.e., please contribute any changes you
+//    may have back to the original ELPA library distribution, and keep
+//    any derivatives of ELPA under the same license that we chose for
+//    the original distribution, the GNU Lesser General Public License.
+//
+//    This file was written by P. Karpov, MPCDF
+
+
 #ifdef WITH_NVIDIA_GPU_VERSION
 #define INLINE_DEVICE __forceinline__ __device__
 #define double_complex cuDoubleComplex
@@ -15,6 +64,32 @@
 #define double_complex std::complex<double>
 #define float_complex  std::complex<float>
 #endif
+
+//_________________________________________________________________________________________________
+// Generic math host functions
+
+// construct a generic double/float/double_complex/float_complex from a double
+template <typename T> inline T elpaHostNumberFromInt(int number);
+template <> inline double elpaHostNumberFromInt<double>(int number) {return (double) number;}
+template <> inline float  elpaHostNumberFromInt<float> (int number) {return (float) number;}
+template <> inline double_complex elpaHostNumberFromInt<double_complex>(int number) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return make_cuDoubleComplex ((double)number, 0.0);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return make_hipDoubleComplex((double)number, 0.0);
+#else
+  return std::complex<double> ((double)number, 0.0);
+#endif
+}
+template <>  inline float_complex elpaHostNumberFromInt<float_complex> (int number) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return make_cuFloatComplex ((float) number, 0.0f);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return make_hipFloatComplex((float) number, 0.0f);
+#else
+  return std::complex<float> ((float) number, 0.0f);
+#endif
+}
 
 //_________________________________________________________________________________________________
 // Generic math device functions
@@ -294,41 +369,63 @@ INLINE_DEVICE void atomicAdd(std::complex<float>* address, std::complex<float> v
 //_________________________________________________________________________________________________
 // ELPA-specific device functions
 
- INLINE_DEVICE int pcol(int I_gl, int nblk, int np_cols){
-  // C-style 0-based indexing in assumed
-  return (I_gl/nblk)%np_cols;
+// Fortran-style 1-based indexing in assumed
+INLINE_DEVICE int pcol(int global_col, int nblk, int np_cols){
+  return ((global_col-1)/nblk)%np_cols;
 }
 
-INLINE_DEVICE int local_index(int I_gl, int my_proc, int num_procs, int nblk){
+// same as pcol; just for naming consistency
+INLINE_DEVICE int prow(int global_row, int nblk, int np_rows){
+  return ((global_row-1)/nblk)%np_rows;
+}
 
-//  local_index: returns the local index for a given global index
-//               If the global index has no local index on the
-//               processor my_proc, return next local index after that row/col
-//               C-style 0-based indexing in assumed
-//  Parameters
-//
-//  I_gl        Global index
-//  my_proc     Processor row/column for which to calculate the local index
-//  num_procs   Total number of processors along row/column
-//  nblk        Blocksize
-//
-// Behavior corresponds to Fortran's local_index() with iflag> 0 : Return next local index after that row/col
-//
+INLINE_DEVICE int local_index(int idx, int my_proc, int num_procs, int nblk, int iflag){
+/*
+!  local_index: returns the local index for a given global index
+!               If the global index has no local index on the
+!               processor my_proc, behaviour is defined by iflag
+!
+!  Parameters
+!
+!  idx         Global index
+!
+!  my_proc     Processor row/column for which to calculate the local index
+!
+!  num_procs   Total number of processors along row/column
+!
+!  nblk        Blocksize
+!
+!  iflag       Controls the behaviour if idx is not on local processor
+!              iflag< 0 : Return last local index before that row/col
+!              iflag==0 : Return 0
+!              iflag> 0 : Return next local index after that row/col
+
+// Fortran-style 1-based indexing in assumed
+// For the reference, here is the Fortran (1-based) to C (0-based) correspondence:
 // L_block_gl = I_gl/nblk; // global ordinal number of the nblk-block among other blocks
 // l_block_loc = L_block_gl/num_procs =  I_gl/(num_procs*nblk); // local ordinal number of the nblk-block among other blocks
 // x = I_gl%nblk; // local coordinate within the block
 // local_index = l_block*nblk + x;
+*/
 
-  if ((I_gl/nblk)%num_procs == my_proc) // (L_block_gl%num_procs == my_proc), block is local
-    {
-    return I_gl/(num_procs*nblk)* nblk + I_gl%nblk; // local_index = l_block_loc * nblk + x
+  int result;
+
+  int L_block_gl = (idx-1)/nblk; // global block number, 0 based
+
+  if (L_block_gl%num_procs == my_proc) {
+    // block is local, always return local row/col number
+     result = (L_block_gl/num_procs)*nblk + ((idx-1) % nblk) + 1;
+  }
+  else {
+    // non local block
+    if (iflag == 0) result = 0; 
+    else {
+      result = (L_block_gl / num_procs) * nblk;
+
+      if ((L_block_gl % num_procs) > my_proc) result += nblk; 
+      if (iflag > 0) result += 1;
     }
-  else if ((I_gl/nblk)%num_procs < my_proc) // block is non-local
-    {
-    return I_gl/(num_procs*nblk)* nblk;
-    }
-  else // ((I_gl/nblk)%num_procs > my_proc)
-    {
-    return (I_gl/(num_procs*nblk) + 1)* nblk;
-    }
+  }
+
+  return result;
 }

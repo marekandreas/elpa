@@ -71,7 +71,7 @@
     &MATH_DATATYPE&
     &_&
     &PRECISION&
-    & (na, myid, sc_desc, a, z, as, is_skewsymmetric)
+    & (na, myid, sc_desc, a, z, as, is_hermitian, is_skewsymmetric)
 
 
       !use test_util
@@ -81,6 +81,9 @@
 #include "./test_precision_kinds.F90"
       TEST_INT_TYPE, intent(in)                 :: myid, na, sc_desc(:)
       MATH_DATATYPE(kind=rck), intent(inout)    :: z(:,:), a(:,:), as(:,:)
+      integer(kind=c_int), intent(in), optional :: is_hermitian ! default: 1
+      integer(kind=c_int), intent(in), optional :: is_skewsymmetric ! default: 0
+      logical                                   :: hermitian, skewsymmetric
 
 #if COMPLEXCASE == 1
       real(kind=rk)                             :: xr(size(a,dim=1), size(a,dim=2))
@@ -88,8 +91,16 @@
 
       integer(kind=c_int), allocatable          :: iseed(:)
       integer(kind=c_int)                       ::  n
-      integer(kind=c_int), intent(in), optional :: is_skewsymmetric
-      logical                                   :: skewsymmetric
+      
+      if (present(is_hermitian)) then
+        if (is_hermitian .eq. 1) then
+          hermitian = .true.
+        else
+          hermitian = .false.
+        endif      
+      else
+        hermitian = .true.
+      endif
 
       if (present(is_skewsymmetric)) then
         if (is_skewsymmetric .eq. 1) then
@@ -137,8 +148,8 @@
         call p&
              &BLAS_CHAR&
              &tran(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), -ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
-                   ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**T
-      else
+                   ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A - Z**T
+      else if (hermitian) then
         call p&
              &BLAS_CHAR&
              &tran(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
@@ -147,7 +158,7 @@
 #else /* WITH_MPI */
       if (skewsymmetric) then
         a = a - transpose(z)
-      else
+      else if (hermitian) then
         a = a + transpose(z)
       endif
 #endif /* WITH_MPI */
@@ -160,7 +171,7 @@
              &BLAS_CHAR&
              &tranc(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), -ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
                     ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**H
-      else
+      else if (hermitian) then
         call p&
              &BLAS_CHAR&
              &tranc(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
@@ -169,7 +180,7 @@
 #else /* WITH_MPI */
       if (skewsymmetric) then
         a = a - transpose(conjg(z))
-      else
+      else if (hermitian) then
         a = a + transpose(conjg(z))
       endif
 #endif /* WITH_MPI */
@@ -177,7 +188,8 @@
 
 
       if (myid == 0) then
-        print '(a)','| Random matrix block has been symmetrized'
+        if (hermitian) print '(a)','| Random matrix block has been symmetrized'
+        if (skewsymmetric) print '(a)','| Random matrix block has been skewsymmetrized'
       endif
 
       ! save original matrix A for later accuracy checks
@@ -196,11 +208,11 @@
 #ifdef DOUBLE_PRECISION_REAL
     !c> void prepare_matrix_random_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                          TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                          double *a, double *z, double *as, int is_skewsymmetric);
+    !c>                                          double *a, double *z, double *as, int is_hermitian, int is_skewsymmetric);
 #else
     !c> void prepare_matrix_random_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                          TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                          float *a, float *z, float *as, int is_skewsymmetric);
+    !c>                                          float *a, float *z, float *as, int is_hermitian, int is_skewsymmetric);
 #endif
 #endif /* REALCASE */
 
@@ -208,11 +220,11 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> void prepare_matrix_random_complex_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                             TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                             double_complex *a, double_complex *z, double_complex *as, int is_skewsymmetric);
+    !c>                                             double_complex *a, double_complex *z, double_complex *as, int is_hermitian, int is_skewsymmetric);
 #else
     !c> void prepare_matrix_random_complex_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                             TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                             float_complex *a, float_complex *z, float_complex *as, int is_skewsymmetric);
+    !c>                                             float_complex *a, float_complex *z, float_complex *as, int is_hermitian, int is_skewsymmetric);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -220,7 +232,7 @@ subroutine prepare_matrix_random_&
 &MATH_DATATYPE&
 &_wrapper_&
 &PRECISION&
-& (na, myid, na_rows, na_cols, sc_desc, a, z, as, is_skewsymmetric) &
+& (na, myid, na_rows, na_cols, sc_desc, a, z, as, is_hermitian, is_skewsymmetric) &
    bind(C, name="prepare_matrix_random_&
    &MATH_DATATYPE&
    &_&
@@ -232,7 +244,7 @@ subroutine prepare_matrix_random_&
 #include "./test_precision_kinds.F90"
 
       TEST_INT_TYPE , value   :: myid, na, na_rows, na_cols
-      integer, value          :: is_skewsymmetric
+      integer, value          :: is_hermitian, is_skewsymmetric
       TEST_INT_TYPE           :: sc_desc(1:9)
       MATH_DATATYPE(kind=rck) :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                  as(1:na_rows,1:na_cols)
@@ -240,7 +252,7 @@ subroutine prepare_matrix_random_&
       &MATH_DATATYPE&
       &_&
       &PRECISION&
-      & (na, myid, sc_desc, a, z, as, is_skewsymmetric=is_skewsymmetric)
+      & (na, myid, sc_desc, a, z, as, is_hermitian=is_hermitian, is_skewsymmetric=is_skewsymmetric)
     end subroutine
 
 !----------------------------------------------------------------------------------------------------------------

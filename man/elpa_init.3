@@ -1,6 +1,7 @@
-.TH "elpa_init" 3 "Wed Aug 9 2023" "ELPA" \" -*- nroff -*-
+.TH "elpa_init" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
+.ss 12 0
 .SH NAME
 elpa_init \- initializes the ELPA library
 .br
@@ -15,15 +16,15 @@ error =\fB elpa_init\fP (api_version)
 .sp
 With the definitions of the input and output variables:
 .TP
-integer, intent(in) :: \fB api_version\fP  
+integer, intent(in) ::\fB api_version\fP  
 The api version that you want to initialize, currently the version is 20171201
 .TP
-integer             :: \fB error\fP        
+integer             ::\fB error\fP        
 The return code. If the function returns without an error, the error code will be ELPA_OK.
 .br
 
 .br
-.SS C INTERFACE
+.SS C/C++ INTERFACE
 #include <elpa/elpa.h>
 .br
 

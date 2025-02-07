@@ -55,13 +55,13 @@
 #define REALCASE 1
 #undef COMPLEXCASE
 #define DOUBLE_PRECISION_REAL 1
-#include "hipUtils_template.cpp"
+#include "hipUtils_template.h"
 #undef DOUBLE_PRECISION_REAL
 
 #ifdef WANT_SINGLE_PRECISION_REAL
 
 #undef DOUBLE_PRECISION_REAL
-#include "hipUtils_template.cpp"
+#include "hipUtils_template.h"
 
 #endif
 
@@ -69,13 +69,13 @@
 #define COMPLEXCASE 1
 #undef REALCASE
 #define DOUBLE_PRECISION_COMPLEX 1
-#include "hipUtils_template.cpp"
+#include "hipUtils_template.h"
 #undef DOUBLE_PRECISION_COMPLEX
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
 
 #undef DOUBLE_PRECISION_COMPLEX
-#include "hipUtils_template.cpp"
+#include "hipUtils_template.h"
 
 #endif
 

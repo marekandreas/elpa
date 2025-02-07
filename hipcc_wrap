@@ -1,0 +1,14 @@
+#!/bin/sh
+
+ARGS=()
+for arg in "$@"; do
+    if [ "$arg" = "-fPIC" ]; then
+        ARGS+=("-Xcompiler" "-fPIC")
+    elif [[ "$arg" == -Wl* ]]; then
+        ARGS+=("-Xlinker" "${arg/-Wl,/-Wl,}")
+    else
+        ARGS+=("$arg")
+    fi
+done
+
+$HIPCC "${ARGS[@]}"

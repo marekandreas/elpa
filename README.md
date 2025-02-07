@@ -2,9 +2,9 @@
 
 ## Current Release ##
 
-The current release is ELPA 2024.05.001. The current supported API version
-is 20241105. This release supports the earliest API version 20170403.
-The current version for autotuning is also 20241105 and down to version 20170403 ist supported
+The current release is ELPA 2025.01.001 The current supported API version
+is 20250131. This release supports the earliest API version 20170403.
+The current version for autotuning is also 20250131 and down to version 20170403 ist supported
 for autotuning. When the autotune version is set to a value **below** 20211125 the old autotuning
 implementation is used, and for 20211125 and higher the new implementation is used.
 
@@ -133,7 +133,7 @@ Since July 2024 we provide a complete [User Guide](https://elpa.mpcdf.mpg.de/elp
 
 For the older version, please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file and the [PERFORMANCE tuning](./documentation/PERFORMANCE_TUNING.md) document.
 
-We also provide [doxygen online documentation](https://elpa.mpcdf.mpg.de/documentation/doxygen/ELPA_DOXYGEN_PAGES/ELPA-2024.05.001/html/index.html), where you can find the definition of the interfaces.
+We also provide [doxygen online documentation](https://elpa.mpcdf.mpg.de/documentation/doxygen/ELPA_DOXYGEN_PAGES/ELPA-2025.01.001/html/index.html), where you can find the definition of the interfaces.
 
 ## Contributing to *ELPA*
 
