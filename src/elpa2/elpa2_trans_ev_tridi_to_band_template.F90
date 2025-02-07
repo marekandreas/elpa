@@ -293,11 +293,12 @@ subroutine trans_ev_tridi_to_band_&
   gpuString)
 
 
+
 #ifdef WITH_OPENMP_TRADITIONAL
   if (useGPU) then
     max_threads=1
   else
-    max_threads = max_threads_in
+    max_threads = 1!max_threads_in
   endif
     call omp_set_num_threads(max_threads)
 #else

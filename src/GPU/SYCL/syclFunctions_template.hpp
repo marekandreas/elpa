@@ -457,9 +457,9 @@ static oneapi::mkl::side sideFromChar(char c) {
     isFailed = checkPointerValidity(dst, src, direction, queue);
 #endif
     if (!isFailed) {
+      syclDeviceSynchronizeFromC();
       // Note that this operation currently relies on an Intel SYCL extension. This may or may not become part of the next SYCL standard.
       // For now, it is only supported by DPC++ and the Intel C++ Compiler. This should be okay, since there are implementations for the other vendors. 
-      syclDeviceSynchronizeFromC();
       queue.ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height).wait();
       return 1;
     } else {
@@ -476,7 +476,6 @@ static oneapi::mkl::side sideFromChar(char c) {
     if (!isFailed) {
       // Note that this operation currently relies on an Intel SYCL extension. This may or may not become part of the next SYCL standard.
       // For now, it is only supported by DPC++ and the Intel C++ Compiler. This should be okay, since there are implementations for the other vendors.
-      
       queue.ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height);
       return 1;
     } else {

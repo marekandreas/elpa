@@ -257,19 +257,36 @@ void compute_hh_trafo_c_sycl_kernel(T *q, T const *hh, T const *hh_tau, int cons
 
 template <typename T, int sg_size>
 void launch_compute_hh_trafo_c_sycl_kernel_sg(T *q, const T *hh, const T *hh_tau, const int nev, const int nb, const int ldq, const int ncols, QueueData *my_stream) {
-  switch (nb) {
-    case 1024: compute_hh_trafo_c_sycl_kernel<T, 1024, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 512:  compute_hh_trafo_c_sycl_kernel<T, 512, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 256:  compute_hh_trafo_c_sycl_kernel<T, 256, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 128:  compute_hh_trafo_c_sycl_kernel<T, 128, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 64:   compute_hh_trafo_c_sycl_kernel<T, 64, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 32:   compute_hh_trafo_c_sycl_kernel<T, 32, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 16:   compute_hh_trafo_c_sycl_kernel<T, 16, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 8:    compute_hh_trafo_c_sycl_kernel<T, 8, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 4:    compute_hh_trafo_c_sycl_kernel<T, 4, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 2:    compute_hh_trafo_c_sycl_kernel<T, 2, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    case 1:    compute_hh_trafo_c_sycl_kernel<T, 1, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
-    default:   abort();
+  if (nev < sg_size) {
+    switch (nb) {
+      case 1024: compute_hh_trafo_c_sycl_kernel<T, 1024, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 512:  compute_hh_trafo_c_sycl_kernel<T, 512, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 256:  compute_hh_trafo_c_sycl_kernel<T, 256, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 128:  compute_hh_trafo_c_sycl_kernel<T, 128, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 64:   compute_hh_trafo_c_sycl_kernel<T, 64, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 32:   compute_hh_trafo_c_sycl_kernel<T, 32, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 16:   compute_hh_trafo_c_sycl_kernel<T, 16, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 8:    compute_hh_trafo_c_sycl_kernel<T, 8, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 4:    compute_hh_trafo_c_sycl_kernel<T, 4, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 2:    compute_hh_trafo_c_sycl_kernel<T, 2, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 1:    compute_hh_trafo_c_sycl_kernel<T, 1, sg_size, false>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      default:   abort();
+    }
+  } else {
+    switch (nb) {
+      case 1024: compute_hh_trafo_c_sycl_kernel<T, 1024, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 512:  compute_hh_trafo_c_sycl_kernel<T, 512, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 256:  compute_hh_trafo_c_sycl_kernel<T, 256, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 128:  compute_hh_trafo_c_sycl_kernel<T, 128, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 64:   compute_hh_trafo_c_sycl_kernel<T, 64, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 32:   compute_hh_trafo_c_sycl_kernel<T, 32, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 16:   compute_hh_trafo_c_sycl_kernel<T, 16, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 8:    compute_hh_trafo_c_sycl_kernel<T, 8, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 4:    compute_hh_trafo_c_sycl_kernel<T, 4, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 2:    compute_hh_trafo_c_sycl_kernel<T, 2, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      case 1:    compute_hh_trafo_c_sycl_kernel<T, 1, sg_size>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+      default:   abort();
+    }
   }
 }
 
