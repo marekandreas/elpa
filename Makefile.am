@@ -903,6 +903,7 @@ include test_programs.am
 
 #include test_programs_manual.am
 
+if BUILD_EXTRA_TESTS
 noinst_PROGRAMS += validate_double_instance@SUFFIX@
 check_SCRIPTS += validate_double_instance@SUFFIX@_default.sh
 validate_double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
@@ -935,6 +936,8 @@ check_SCRIPTS += validate_single_complex_2stage_banded@SUFFIX@_default.sh
 validate_single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
 validate_single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 validate_single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
+endif
+
 endif
 
 # python wrapper
