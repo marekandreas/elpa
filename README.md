@@ -129,7 +129,7 @@ the possible configure options.
 
 ## Using *ELPA*
 
-Since July 2024 we provide a complete [User Guide](https://elpa.mpcdf.mpg.de/elpa_userguide.pdf) that contains full information about installation, usage, best practices, and troubleshooting of ELPA.
+Since July 2024 we provide a complete [User Guide](https://elpa.mpcdf.mpg.de/userguide/elpa_userguide.pdf) that contains full information about installation, usage, best practices, and troubleshooting of ELPA.
 
 For the older version, please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file and the [PERFORMANCE tuning](./documentation/PERFORMANCE_TUNING.md) document.
 
