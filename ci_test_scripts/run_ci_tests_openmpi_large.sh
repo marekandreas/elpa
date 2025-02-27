@@ -155,8 +155,8 @@ then
     echo "fi" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo " " >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "module purge" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "module load git/2.39 autoconf automake libtool  cuda/11.4 gcc/11 openmpi_gpu/4 mkl/2022.1" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
-    echo "module load anaconda/3/2021.11 mpi4py/3.0.3" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
+    echo "module load git/2.39 autoconf automake libtool  cuda/12.1 gcc/12 openmpi_gpu/5.0 mkl/2025.0" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
+    echo "module load anaconda/3/2023.03 mpi4py/3.1.5" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "export LD_LIBRARY_PATH=\$MKL_HOME/lib/intel64:\$LD_LIBRARY_PATH" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "export OMPI_MCA_coll=^hcoll" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
     echo "unset SLURM_MPI_TYPE I_MPI_SLURM_EXT I_MPI_PMI_LIBRARY I_MPI_PMI2 I_MPI_HYDRA_BOOTSTRAP" >> ./run_${CLUSTER}_1node_openmpi_large_2GPU.sh
