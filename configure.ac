@@ -3163,6 +3163,9 @@ m4_foreach_w([elpa_m4_kernel],elpa_m4_all_kernels,[
   AC_SUBST([ELPA_2STAGE_]m4_toupper(elpa_m4_kernel)[_COMPILED])
 ])
 
+if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" ; then
+  use_gpu=yes
+fi
 AM_CONDITIONAL([WITH_NVIDIA_GPU_VERSION],[test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes"])
 if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" ; then
   AC_DEFINE([WITH_NVIDIA_GPU_VERSION],[1],[enable Nvidia GPU support])
@@ -3212,6 +3215,11 @@ AC_SUBST([ELPA_2STAGE_COMPLEX_NVIDIA_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_NVIDIA_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_COMPLEX_NVIDIA_SM80_GPU_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_NVIDIA_SM80_GPU_COMPILED])
+
+
+if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
+  use_gpu=yes
+fi
 
 AM_CONDITIONAL([WITH_AMD_GPU_VERSION],[test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes"])
 if test x"$use_real_amd_gpu" = x"yes" -o x"$use_complex_amd_gpu" = x"yes" ; then
@@ -3295,6 +3303,10 @@ fi
 AC_SUBST([ELPA_2STAGE_COMPLEX_INTEL_GPU_SYCL_COMPILED])
 AC_SUBST([ELPA_2STAGE_REAL_INTEL_GPU_SYCL_COMPILED])
 
+
+if test x"$use_sycl_gpu_backend" = x"yes" -o x"$use_openmp_gpu_backend" = x"yes" ; then
+  use_gpu=yes
+fi
 
 #############################################################
 #
@@ -3988,33 +4000,43 @@ fi
 
 AC_MSG_CHECKING(whether which test programms should be build) 
 AC_ARG_WITH([test-programs],
-              [AS_HELP_STRING([--with-test-programs=[[all|gpu|cpu]]],
-                               [build the test programs for cpu, gpu or all (default all)])],
+              [AS_HELP_STRING([--with-test-programs=[[all|gpu|cpu|no]]],
+                               [build the test programs for cpu, gpu or all or none (default cpu builds: cpu, gpu builds: gpu)])],
                                [if test x"$withval" = x"all"; then
 				  build_cpu_tests=yes
 				  build_gpu_tests=yes
+				  build_extra_tests=yes
 				fi
 				if test x"$withval" = x"cpu"; then
 				  build_cpu_tests=yes
 				  build_gpu_tests=no
+				  build_extra_tests=no
 				fi
 				if test x"$withval" = x"gpu"; then
 				  build_cpu_tests=no
 				  build_gpu_tests=yes
+				  build_extra_tests=no
                                 fi
 				if test x"$withval" = x"yes"; then
 				  build_cpu_tests=yes
 				  build_gpu_tests=yes
+				  build_extra_tests=yes
                                 fi
 				if test x"$withval" = x"no"; then
 				  build_cpu_tests=no
 				  build_gpu_tests=no
+				  build_extra_tests=no
                                 fi],
-              [build_cpu_tests=yes
-	       build_gpu_tests=yes])
+				[if test x"$use_gpu" = x"yes"; then
+		                   build_gpu_tests=yes
+		                 else
+		                   build_cpu_tests=yes
+				 fi
+				 ])
 AC_MSG_RESULT([${withval}])
 AM_CONDITIONAL([BUILD_CPU_TESTS],[test x"$build_cpu_tests" = x"yes"])
 AM_CONDITIONAL([BUILD_GPU_TESTS],[test x"$build_gpu_tests" = x"yes"])
+AM_CONDITIONAL([BUILD_EXTRA_TESTS],[test x"$build_extra_tests" = x"yes"])
 
 
 

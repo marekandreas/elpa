@@ -158,7 +158,7 @@
 
   success = .true.
   useGPU = .false.
-  useCCL = .false.
+  useCCL = obj%gpu_setup%useCCL
 
 #if !defined(DEVICE_POINTER)
 
@@ -220,8 +220,6 @@
 
 #if defined(USE_CCL_INVERT)
   if (useGPU) then
-    useCCL = .true.
-  
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
   

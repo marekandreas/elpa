@@ -142,8 +142,8 @@
       integer(kind=c_intptr_t)      :: num, my_stream, offset1, offset2
 
       logical                        :: useCCL
-      integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all
-      integer(kind=c_int)                        :: cclDataType
+      integer(kind=c_intptr_t)       :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all
+      integer(kind=c_int)            :: cclDataType
 
 
       success = .true.
@@ -161,8 +161,7 @@
       useCCL = .false.
 #if defined(USE_CCL_SOLVE_TRIDI)                
       if (useGPU) then
-        useCCL = .true.                          
-  
+        useCCL = obj%gpu_setup%useCCL
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows 
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols 
 

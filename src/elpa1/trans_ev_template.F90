@@ -209,12 +209,15 @@ subroutine trans_ev_cpu_&
     gpuString = ""
   endif
 
-  useCCL = .false.
   useCCL_int = 0
+  useCCL = obj%gpu_setup%useCCL
+
+
 #if defined(USE_CCL_TRANS_EV)
   if (useGPU) then
-    useCCL = .true.
-    useCCL_int = 1
+    if (useCCL) then
+      useCCL_int = 1
+    endif
   
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols

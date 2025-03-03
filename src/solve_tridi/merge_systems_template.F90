@@ -169,8 +169,9 @@
       !real(kind=REAL_DATATYPE), allocatable       :: qtmp11(:,:)
       integer(kind=ik) :: ii,jj, indx, ind_ex, ind_ex2, p_col_tmp, index2, counter1, counter2
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
-      integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
+      integer(kind=c_intptr_t)                     :: ccl_comm_rows, ccl_comm_cols
 #endif
+      logical                                      :: useCCL
 #ifdef WITH_OPENMP_TRADITIONAL
       integer(kind=ik)                            :: my_thread
 
@@ -195,6 +196,7 @@
       call obj%timer%stop("mpi_communication")
 
 
+      useCCL = obj%gpu_setup%useCCL
       ! If my processor column isn't in the requested set, do nothing
 
       if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
@@ -1230,17 +1232,18 @@
 
             if (useGPU) then
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
-              my_stream = obj%gpu_setup%my_stream
-              call GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION (qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
+              if (useCCL) then
+                my_stream = obj%gpu_setup%my_stream
+                call GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION (qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
 
-              call obj%timer%start("ccl_send_recv")
-              ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
-              successGPU = ccl_group_start() ! PETERDEBUG: should this be moved outside of the loop or deleted?
-              if (.not.successGPU) then
-                print *,"Error in setting up nccl_group_start!"
-                stop
-              endif
-              successGPU = ccl_send(qtmp1_tmp_dev, int(l_rows*max_local_cols,kind=c_size_t), &
+                call obj%timer%start("ccl_send_recv")
+                ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+                successGPU = ccl_group_start() ! PETERDEBUG: should this be moved outside of the loop or deleted?
+                if (.not.successGPU) then
+                  print *,"Error in setting up nccl_group_start!"
+                  stop
+                endif
+                successGPU = ccl_send(qtmp1_tmp_dev, int(l_rows*max_local_cols,kind=c_size_t), &
 #ifdef DOUBLE_PRECISION
                                    cclDouble, &
 #endif
@@ -1248,11 +1251,11 @@
                                    cclFloat, &
 #endif
                                    np_next, ccl_comm_cols, my_stream)
-              if (.not.successGPU) then
-                print *,"Error in nccl_send"
-                stop
-              endif
-              successGPU = ccl_recv(qtmp1_dev, int(l_rows*max_local_cols,kind=c_size_t), &
+                if (.not.successGPU) then
+                  print *,"Error in nccl_send"
+                  stop
+                endif
+                successGPU = ccl_recv(qtmp1_dev, int(l_rows*max_local_cols,kind=c_size_t), &
 #ifdef DOUBLE_PRECISION
                                    cclDouble, &
 #endif
@@ -1262,73 +1265,75 @@
                                    np_prev, ccl_comm_cols, my_stream)
 
 
-              if (.not.successGPU) then
-                print *,"Error in ccl_send/ccl_recv"
-                stop
-              endif
-              successGPU = ccl_group_end()
-              if (.not.successGPU) then
-                print *,"Error in setting up ccl_group_end!"
-                stop
-              endif
-              successGPU = gpu_stream_synchronize(my_stream)
-              check_stream_synchronize_gpu("trans_ev", successGPU)
-              call obj%timer%stop("ccl_send_recv")
+                if (.not.successGPU) then
+                  print *,"Error in ccl_send/ccl_recv"
+                  stop
+                endif
+                successGPU = ccl_group_end()
+                if (.not.successGPU) then
+                  print *,"Error in setting up ccl_group_end!"
+                  stop
+                endif
+                successGPU = gpu_stream_synchronize(my_stream)
+                check_stream_synchronize_gpu("trans_ev", successGPU)
+                call obj%timer%stop("ccl_send_recv")
+              else ! useCCL
+#endif /* defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) */
 
-#else /* defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) */
 
 #ifdef WITH_MPI
-              call obj%timer%start("mpi_communication")
+                call obj%timer%start("mpi_communication")
 #ifdef WITH_GPU_STREAMS
-              my_stream = obj%gpu_setup%my_stream
-              successGPU = gpu_stream_synchronize(my_stream)
-              check_stream_synchronize_gpu("merge_systems qtmp1_dev", successGPU)
+                my_stream = obj%gpu_setup%my_stream
+                successGPU = gpu_stream_synchronize(my_stream)
+                check_stream_synchronize_gpu("merge_systems qtmp1_dev", successGPU)
 
-              successGPU = gpu_memcpy_async(int(loc(qtmp1(1,1)),kind=c_intptr_t), qtmp1_dev, &
-                   gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
-              check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
+                successGPU = gpu_memcpy_async(int(loc(qtmp1(1,1)),kind=c_intptr_t), qtmp1_dev, &
+                     gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+                check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
 
-              my_stream = obj%gpu_setup%my_stream
-              successGPU = gpu_stream_synchronize(my_stream)
-              check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
-              ! synchronize streamsPerThread; maybe not neccessary
-              successGPU = gpu_stream_synchronize()
-              check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+                my_stream = obj%gpu_setup%my_stream
+                successGPU = gpu_stream_synchronize(my_stream)
+                check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+                ! synchronize streamsPerThread; maybe not neccessary
+                successGPU = gpu_stream_synchronize()
+                check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
               
 #else
-              successGPU = gpu_memcpy(int(loc(qtmp1(1,1)),kind=c_intptr_t), qtmp1_dev, &
-                   gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyDeviceToHost)
-              check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
+                successGPU = gpu_memcpy(int(loc(qtmp1(1,1)),kind=c_intptr_t), qtmp1_dev, &
+                     gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyDeviceToHost)
+                check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
 #endif
 
 
-              call MPI_Sendrecv_replace(qtmp1, int(l_rows*max_local_cols,kind=MPI_KIND), MPI_REAL_PRECISION,     &
+                call MPI_Sendrecv_replace(qtmp1, int(l_rows*max_local_cols,kind=MPI_KIND), MPI_REAL_PRECISION,     &
                                           int(np_next,kind=MPI_KIND), 1111_MPI_KIND, int(np_prev,kind=MPI_KIND), &
                                           1111_MPI_KIND, int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
 #ifdef WITH_GPU_STREAMS 
-              my_stream = obj%gpu_setup%my_stream
-              successGPU = gpu_stream_synchronize(my_stream)
-              check_stream_synchronize_gpu("merge_systems qtmp1_dev", successGPU)
+                my_stream = obj%gpu_setup%my_stream
+                successGPU = gpu_stream_synchronize(my_stream)
+                check_stream_synchronize_gpu("merge_systems qtmp1_dev", successGPU)
       
-              successGPU = gpu_memcpy_async(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
-                   gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
-              check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
+                successGPU = gpu_memcpy_async(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
+                     gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+                check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
       
-              my_stream = obj%gpu_setup%my_stream
-              successGPU = gpu_stream_synchronize(my_stream)
-              check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
-              ! synchronize streamsPerThread; maybe not neccessary
-              successGPU = gpu_stream_synchronize()
-              check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+                my_stream = obj%gpu_setup%my_stream
+                successGPU = gpu_stream_synchronize(my_stream)
+                check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
+                ! synchronize streamsPerThread; maybe not neccessary
+                successGPU = gpu_stream_synchronize()
+                check_stream_synchronize_gpu("merge_systems: qtmp1_dev", successGPU)
             
 #else 
-              successGPU = gpu_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
-                   gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice)
-              check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
+                successGPU = gpu_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
+                     gemm_dim_k * gemm_dim_l  * size_of_datatype, gpuMemcpyHostToDevice)
+                check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
 #endif
-              call obj%timer%stop("mpi_communication")
+                call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
-
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+              endif ! useCCL
 #endif /* defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) */
             else ! useGPU
 #ifdef WITH_MPI

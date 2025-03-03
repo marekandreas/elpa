@@ -225,7 +225,7 @@
             write(error_unit,*) "Problem you did not set which gpu id this task should use"
           endif
  
-          ! check whether gpu ud has been set for each proces
+          ! check whether gpu id has been set for each proces
 #ifdef WITH_MPI
           call mpi_allreduce(use_gpu_id, min_use_gpu_id, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
 
@@ -255,9 +255,11 @@
           OBJECT%gpu_setup%gpuIsAssigned =.true.
           !gpuIsInitialized = .true.
 
+          if (OBJECT%gpu_setup%useCCL) then
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #include "./ccl_communicators_template.F90"
 #endif
+          endif
         endif ! .not.(OBJECT%gpu_setup%gpuAlreadySet)) 
       else ! useGPUid not set (by user)
 
@@ -349,7 +351,7 @@
           call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
 
           if (maxNumberOfDevices .ne. numberOfDevices) then
-            write(error_unit,*) "Different number of GPU devices on MPI tasks!"
+            write(error_unit,*) "Different number of GPU devices for some MPI tasks!"
             write(error_unit,*) "GPUs will NOT be used!"
             gpuAvailable = .false.
             return
@@ -370,6 +372,41 @@
             fmt = '(I5.5)'
 
             write (gpu_string,fmt) numberOfDevices
+
+
+#ifdef WITH_MPI
+            ! one MPI task per GPU ?
+            ! use MPI_COMM_SPLIT_TYPE with MPI_COMM_TYPE_SHARED
+
+
+            !keyMPI = 0
+            !key = 0
+            !call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), keyMPI, mpierr)
+            !key = int(keyMPI,kind=ik)
+
+
+            !print *,"Before info_create "
+            !call mpi_info_create(mpi_infoMPI, mpierr)
+            !print *,"After info_create "
+            !print *,"Before split_type ",MPI_COMM_TYPE_SHARED
+
+            call mpi_comm_split_type(int(mpi_comm_all,kind=MPI_KIND), MPI_COMM_TYPE_SHARED, keyMPI, MPI_INFO_NULL, & !mpi_infoMPI, &
+                                     mpi_comm_all_per_nodeMPI, mpierr)
+            !print *,"After split_type "
+            call mpi_comm_size(mpi_comm_all_per_nodeMPI, np_total_per_nodeMPI, mpierr)
+            OBJECT%mpi_setup%nRanks_comm_parent_per_node = int(np_total_per_nodeMPI, kind=ik)
+
+
+            print *,"GPUs per node",OBJECT%gpu_setup%gpusPerNode,"Ranks per node",OBJECT%mpi_setup%nRanks_comm_parent_per_node
+            if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node .eq. 1) then
+              OBJECT%gpu_setup%useCCL=.true.
+
+            else
+              OBJECT%gpu_setup%useCCL=.false.
+            endif
+
+            print *,"Using ccl:",OBJECT%gpu_setup%useCCL
+#endif
 
 #ifdef ADDITIONAL_OBJECT_CODE
             call OBJECT%timer%start("check_gpu_"//gpu_string)
@@ -397,9 +434,12 @@
             OBJECT%gpu_setup%gpuAlreadySet = .true.
 
 
+            
+            if (OBJECT%gpu_setup%useCCL) then
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
 #include "./ccl_communicators_template.F90"
 #endif
+            endif
 
 #ifdef ADDITIONAL_OBJECT_CODE
             call OBJECT%timer%stop("check_gpu_"//gpu_string)
