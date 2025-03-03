@@ -78,6 +78,11 @@
      use ELPA_utilities
      use elpa_gpu
      use solve_single_problem_gpu
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
+     use cuda_functions ! for NVTX labels
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+     use hip_functions  ! for ROCTX labels
+#endif
      implicit none
      class(elpa_abstract_impl_t), intent(inout) :: obj
      logical                                    :: useGPU, useGPUsolver

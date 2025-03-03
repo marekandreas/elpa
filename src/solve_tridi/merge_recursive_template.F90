@@ -1,93 +1,135 @@
-
-recursive subroutine merge_recursive_&
+#ifdef SOLVE_TRIDI_GPU_BUILD
+recursive subroutine merge_recursive_gpu_&
+          &PRECISION &
+   (obj, np_off, nprocs, ldq, matrixCols, nblk, &
+   l_col, p_col, l_col_bc, p_col_bc, limits, &
+   np_cols, na, q_dev, d, e, &
+   mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
+   useGPU, wantDebug, success, max_threads)
+#else
+recursive subroutine merge_recursive_cpu_&
           &PRECISION &
    (obj, np_off, nprocs, ldq, matrixCols, nblk, &
    l_col, p_col, l_col_bc, p_col_bc, limits, &
    np_cols, na, q, d, e, &
    mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
    useGPU, wantDebug, success, max_threads)
+#endif
 
-   use precision
-   use elpa_abstract_impl
+  use precision
+  use elpa_abstract_impl
 !#ifdef WITH_OPENMP_TRADITIONAL
 !   use elpa_omp
 !#endif
-   use elpa_mpi
-   use merge_systems
-   use ELPA_utilities
+  use elpa_mpi
+  use merge_systems
+  use ELPA_utilities
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
-   use cuda_functions ! for NVTX labels
+  use cuda_functions ! for NVTX labels
 #elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
-   use hip_functions  ! for ROCTX labels
+  use hip_functions  ! for ROCTX labels
 #endif   
-   implicit none
+  implicit none
 
    ! noff is always a multiple of nblk_ev
    ! nlen-noff is always > nblk_ev
 
 
-   class(elpa_abstract_impl_t), intent(inout) :: obj
-   integer(kind=ik), intent(in)               :: max_threads
-   integer(kind=ik), intent(in)               :: mpi_comm_all, mpi_comm_rows, mpi_comm_cols
-   integer(kind=ik), intent(in)               :: ldq, matrixCols, nblk, na, np_cols
-   integer(kind=ik), intent(in)               :: l_col_bc(na), p_col_bc(na), l_col(na), p_col(na), &
-                                                 limits(0:np_cols)
+  class(elpa_abstract_impl_t), intent(inout)  :: obj
+  integer(kind=ik), intent(in)                :: max_threads
+  integer(kind=ik), intent(in)                :: mpi_comm_all, mpi_comm_rows, mpi_comm_cols
+  integer(kind=ik), intent(in)                :: ldq, matrixCols, nblk, na, np_cols
+  integer(kind=ik), intent(in)                :: l_col_bc(na), p_col_bc(na), l_col(na), p_col(na), &
+                                                limits(0:np_cols)
+
+  integer(kind=c_intptr_t)                    :: q_dev
 #ifdef USE_ASSUMED_SIZE
-   real(kind=REAL_DATATYPE), intent(inout)    :: q(ldq,*)
+#ifdef SOLVE_TRIDI_GPU_BUILD
+  real(kind=REAL_DATATYPE)                    :: q(ldq,matrixCols)
 #else
-   real(kind=REAL_DATATYPE), intent(inout)    :: q(ldq,matrixCols)
+  real(kind=REAL_DATATYPE)                    :: q(ldq,*)
 #endif
-#ifdef WITH_MPI
-   integer(kind=MPI_KIND)                     :: mpierr, my_pcolMPI
+#else
+  real(kind=REAL_DATATYPE)                    :: q(ldq,matrixCols)
 #endif
-   integer(kind=ik)                           :: my_pcol
-   real(kind=REAL_DATATYPE), intent(inout)    :: d(na), e(na)           
-   integer(kind=ik)                           :: np_off, nprocs
-   integer(kind=ik)                           :: np1, np2, noff, nlen, nmid, n
-   logical, intent(in)                        :: useGPU, wantDebug
-   logical, intent(out)                       :: success
-
-   success = .true.
 
 #ifdef WITH_MPI
-   call obj%timer%start("mpi_communication")
-   call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+  integer(kind=MPI_KIND)                      :: mpierr, my_pcolMPI
+#endif
+  integer(kind=ik)                            :: my_pcol
+  real(kind=REAL_DATATYPE), intent(inout)     :: d(na), e(na)           
+  integer(kind=ik)                            :: np_off, nprocs
+  integer(kind=ik)                            :: np1, np2, noff, nlen, nmid, n
+  logical, intent(in)                         :: useGPU, wantDebug
+  logical, intent(out)                        :: success
 
-   my_pcol = int(my_pcolMPI,kind=c_int)
-   call obj%timer%stop("mpi_communication")
+  success = .true.
 
+#ifdef WITH_MPI
+  call obj%timer%start("mpi_communication")
+  call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+
+  my_pcol = int(my_pcolMPI,kind=c_int)
+  call obj%timer%stop("mpi_communication")
 #endif
 
-   if (nprocs<=1) then
-     ! Safety check only
-     if (wantDebug) write(error_unit,*) "ELPA1_merge_recursive: INTERNAL error merge_recursive: nprocs=",nprocs
-     success = .false.
-     return
-   endif
-   ! Split problem into 2 subproblems of size np1 / np2
+  if (nprocs<=1) then
+    ! Safety check only
+    if (wantDebug) write(error_unit,*) "ELPA1_merge_recursive: INTERNAL error merge_recursive: nprocs=",nprocs
+    success = .false.
+    return
+  endif
 
-   np1 = nprocs/2
-   np2 = nprocs-np1
+  ! Split problem into 2 subproblems of size np1 / np2
 
-   if (np1 > 1) call merge_recursive_&
-                &PRECISION &
-   (obj, np_off, np1, ldq, matrixCols, nblk, &
-   l_col, p_col, l_col_bc, p_col_bc, limits, &
-   np_cols, na, q, d, e, &
-   mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
-   useGPU, wantDebug, success, max_threads)
-   if (.not.(success)) then
-     write(error_unit,*) "Error in merge_recursice. Aborting..."
-     return
-   endif
+  np1 = nprocs/2
+  np2 = nprocs-np1
 
-   if (np2 > 1) call merge_recursive_&
-                &PRECISION &
-   (obj, np_off+np1, np2, ldq, matrixCols, nblk, &
-   l_col, p_col, l_col_bc, p_col_bc, limits, &
-   np_cols, na, q, d, e, &
-   mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
-   useGPU, wantDebug, success, max_threads)
+  if (np1 > 1) then
+    if (useGPU) then
+      call merge_recursive_gpu_&
+                  &PRECISION &
+            (obj, np_off, np1, ldq, matrixCols, nblk, &
+            l_col, p_col, l_col_bc, p_col_bc, limits, &
+            np_cols, na, q_dev, d, e, &
+            mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
+            useGPU, wantDebug, success, max_threads)
+    else
+      call merge_recursive_cpu_&
+                    &PRECISION &
+            (obj, np_off, np1, ldq, matrixCols, nblk, &
+            l_col, p_col, l_col_bc, p_col_bc, limits, &
+            np_cols, na, q, d, e, &
+            mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
+            useGPU, wantDebug, success, max_threads)
+    endif ! useGPU
+  endif ! (np1 > 1)
+
+  if (.not.(success)) then
+    write(error_unit,*) "Error in merge_recursive. Aborting..."
+    return
+  endif
+
+  if (np2 > 1) then
+    if (useGPU) then
+      call merge_recursive_gpu_&
+                  &PRECISION &
+            (obj, np_off+np1, np2, ldq, matrixCols, nblk, &
+            l_col, p_col, l_col_bc, p_col_bc, limits, &
+            np_cols, na, q_dev, d, e, &
+            mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
+            useGPU, wantDebug, success, max_threads)
+    else
+      call merge_recursive_cpu_&
+                    &PRECISION &
+            (obj, np_off+np1, np2, ldq, matrixCols, nblk, &
+            l_col, p_col, l_col_bc, p_col_bc, limits, &
+            np_cols, na, q, d, e, &
+            mpi_comm_all, mpi_comm_rows, mpi_comm_cols, &
+            useGPU, wantDebug, success, max_threads)
+    endif ! useGPU
+  endif ! (np2 > 1)
+
    if (.not.(success)) then
      write(error_unit,*) "Error in merge_recursice. Aborting..."
      return
@@ -151,7 +193,7 @@ recursive subroutine merge_recursive_&
        NVTX_RANGE_PUSH("merge_systems_gpu")
        call merge_systems_gpu_&
             &PRECISION &
-                           (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
+                           (obj, nlen, nmid, d(noff+1), e(noff+nmid), q_dev, ldq, noff, &
                            nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
                            l_col, p_col, &
                            l_col_bc, p_col_bc, np_off, nprocs, useGPU, wantDebug, success, max_threads)
@@ -175,7 +217,7 @@ recursive subroutine merge_recursive_&
        NVTX_RANGE_PUSH("merge_systems_gpu")
        call merge_systems_gpu_&
             &PRECISION &
-                          (obj, nlen, nmid, d(noff+1), e(noff+nmid), q, ldq, noff, &
+                          (obj, nlen, nmid, d(noff+1), e(noff+nmid), q_dev, ldq, noff, &
                            nblk, matrixCols, int(mpi_comm_rows,kind=ik), int(mpi_comm_cols,kind=ik), &
                            l_col(noff+1), p_col(noff+1), &
                            l_col(noff+1), p_col(noff+1), np_off, nprocs, useGPU, wantDebug, success, &
@@ -195,6 +237,6 @@ recursive subroutine merge_recursive_&
        return
      endif             
    endif
-end subroutine merge_recursive_&
-           &PRECISION
+
+end
 

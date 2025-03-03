@@ -58,12 +58,14 @@
 #ifdef SOLVE_TRIDI_GPU_BUILD
     subroutine merge_systems_gpu_&
     &PRECISION &
-                         (obj, na, nm, d, e, q, matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                         (obj, na, nm, d, e, q_dev, &
+                          matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success, max_threads)
 #else
     subroutine merge_systems_cpu_&
     &PRECISION &
-                         (obj, na, nm, d, e, q, matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                         (obj, na, nm, d, e, q, &
+                          matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success, max_threads)
 #endif
 
@@ -95,14 +97,28 @@
       implicit none
 #include "../general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout)  :: obj
-      integer(kind=ik), intent(in)                :: na, nm, matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, &
+      integer(kind=ik), intent(in)                :: na ! this is rather na_local, not global na
+      integer(kind=ik), intent(in)                :: nm, matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, &
                                                      mpi_comm_cols, npc_0, npc_n
       integer(kind=ik), intent(in)                :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
+
+#ifdef SOLVE_TRIDI_GPU_BUILD
+      integer(kind=c_intptr_t)                    :: d_dev, e_dev ! shifted; for e_dev only one element is used
+      integer(kind=c_intptr_t)                    :: q_dev
+#else
+      integer(kind=c_intptr_t)                    :: d_dev, e_dev ! dummy variables
+      integer(kind=c_intptr_t)                    :: q_dev
+#endif
+
       real(kind=REAL_DATATYPE), intent(inout)     :: d(na), e
 #ifdef USE_ASSUMED_SIZE
-      real(kind=REAL_DATATYPE), intent(inout)     :: q(matrixRows,*)
+#ifdef SOLVE_TRIDI_GPU_BUILD
+      real(kind=REAL_DATATYPE)                    :: q(matrixRows,matrixCols)
 #else
-      real(kind=REAL_DATATYPE), intent(inout)     :: q(matrixRows,matrixCols)
+      real(kind=REAL_DATATYPE)                    :: q(matrixRows,*)
+#endif
+#else
+      real(kind=REAL_DATATYPE)                    :: q(matrixRows,matrixCols)
 #endif
       logical, intent(in)                         :: useGPU, wantDebug
 
@@ -143,7 +159,7 @@
       integer(kind=ik)                            :: gemm_dim_k, gemm_dim_l, gemm_dim_m
 
       integer(kind=c_intptr_t)                    :: num
-      integer(kind=C_intptr_T)                    :: qtmp1_dev, qtmp1_tmp_dev, qtmp2_dev, ev_dev, q_dev
+      integer(kind=C_intptr_T)                    :: qtmp1_dev, qtmp1_tmp_dev, qtmp2_dev, ev_dev
       integer(kind=c_intptr_t)                    :: d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
       integer(kind=c_intptr_t)                    :: d1l_dev, zl_dev, z_dev, d1_dev
       integer(kind=c_intptr_t)                    :: idx1_dev, p_col_dev, coltyp_dev, p_col_out_dev, ndef_c_dev
@@ -173,7 +189,7 @@
 #endif
       logical                                      :: useCCL
 #ifdef WITH_OPENMP_TRADITIONAL
-      integer(kind=ik)                            :: my_thread
+      integer(kind=ik)                             :: my_thread
 
       allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
       check_allocate("merge_systems: z_p",istat, errorMessage)
@@ -195,16 +211,45 @@
 
       call obj%timer%stop("mpi_communication")
 
-
       useCCL = obj%gpu_setup%useCCL
-      ! If my processor column isn't in the requested set, do nothing
 
+      if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
+#endif
+
+        num = matrixRows*matrixCols*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(int(loc(q(1,1)),kind=c_intptr_t), q_dev, num, gpuMemcpyDeviceToHost, my_stream)
+#else
+        successGPU = gpu_memcpy      (int(loc(q(1,1)),kind=c_intptr_t), q_dev, num, gpuMemcpyHostToDevice)
+#endif
+        check_memcpy_gpu("merge_systems: q_dev", successGPU)
+
+!         num = WHAT*size_of_datatype
+! #ifdef WITH_GPU_STREAMS
+!         successGPU = gpu_memcpy_async(int(loc(d(1)),kind=c_intptr_t), d_dev, num, gpuMemcpyDeviceToHost, my_stream)
+! #else
+!         successGPU = gpu_memcpy      (int(loc(d(1)),kind=c_intptr_t), d_dev, num, gpuMemcpyHostToDevice)
+! #endif
+!         check_memcpy_gpu("merge_systems: d_dev", successGPU)   
+
+!         num = 1*size_of_datatype
+! #ifdef WITH_GPU_STREAMS
+!         successGPU = gpu_memcpy_async(int(loc(e),kind=c_intptr_t), e_dev, num, gpuMemcpyDeviceToHost, my_stream)
+! #else
+!         successGPU = gpu_memcpy      (int(loc(e),kind=c_intptr_t), e_dev, num, gpuMemcpyHostToDevice)
+! #endif
+!         check_memcpy_gpu("merge_systems: e_dev", successGPU)        
+      endif ! useGPU
+
+      ! If my processor column isn't in the requested set, do nothing
       if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
         call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
       endif
-      ! Determine number of "next" and "prev" column for ring sends
 
+      ! Determine number of "next" and "prev" column for ring sends
       if (my_pcol == npc_0+npc_n-1) then
         np_next = npc_0
       else
@@ -216,6 +261,7 @@
       else
         np_prev = my_pcol - 1
       endif
+
       call check_monotony_&
       &PRECISION&
       &(obj, nm,d,'Input1',wantDebug, success)
@@ -223,6 +269,7 @@
         call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
         return
       endif
+
       call check_monotony_&
       &PRECISION&
       &(obj,na-nm,d(nm+1),'Input2',wantDebug, success)
@@ -823,10 +870,11 @@
           num = (na) * size_of_datatype
           successGPU = gpu_malloc(zl_dev, num)
           check_alloc_gpu("merge_systems: zl_dev", successGPU)
-
-          num = (matrixRows*matrixCols) * size_of_datatype
-          successGPU = gpu_malloc(q_dev, num)
-          check_alloc_gpu("merge_systems: q_dev", successGPU)
+          
+          ! PETERDEBUG: cleanup
+          ! num = (matrixRows*matrixCols) * size_of_datatype
+          ! successGPU = gpu_malloc(q_dev, num)
+          ! check_alloc_gpu("merge_systems: q_dev", successGPU)
 
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -905,14 +953,12 @@
           num = matrixRows*matrixCols*size_of_datatype
 #ifdef WITH_GPU_STREAMS
           successGPU = gpu_memcpy_async(q_dev, int(loc(q(1,1)),kind=c_intptr_t), &
-               num, gpuMemcpyHostToDevice, my_stream)
-          check_memcpy_gpu("merge_systems: q_dev", successGPU)
+                                        num, gpuMemcpyHostToDevice, my_stream)
 #else
           successGPU = gpu_memcpy(q_dev, int(loc(q(1,1)),kind=c_intptr_t), &
-             num, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("merge_systems: q_dev", successGPU)
+                                  num, gpuMemcpyHostToDevice)
 #endif
-
+          check_memcpy_gpu("merge_systems: q_dev", successGPU)
 
 
           num = na * size_of_int
@@ -1572,21 +1618,6 @@
 
 
           if (useGPU) then
-
-            num = matrixRows*matrixCols*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-            successGPU = gpu_memcpy_async(int(loc(q(1,1)),kind=c_intptr_t), q_dev, &
-                 num, gpuMemcpyDeviceToHost, my_stream)
-            check_memcpy_gpu("merge_systems: q_dev", successGPU)
-
-            my_stream = obj%gpu_setup%my_stream
-            successGPU = gpu_stream_synchronize(my_stream)
-            check_stream_synchronize_gpu("merge_systems: q_dev", successGPU)
-#else
-            successGPU = gpu_memcpy(int(loc(q(1,1)),kind=c_intptr_t), q_dev, &
-                 num, gpuMemcpyDeviceToHost)
-            check_memcpy_gpu("merge_systems: q_dev", successGPU)
-#endif
 #ifdef WITH_GPU_STREAMS
             successGPU = gpu_memcpy_async(int(loc(ev(1,1)),kind=c_intptr_t), ev_dev, &
                                gemm_dim_l * gemm_dim_m * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
@@ -1647,9 +1678,6 @@
 
           successGPU = gpu_free(idxq1_dev)
           check_dealloc_gpu("merge_systems: ", successGPU)
-
-          successGPU = gpu_free(q_dev)
-          check_dealloc_gpu("merge_systems: q_dev", successGPU)
 
           successGPU = gpu_free(d1_dev)
           check_dealloc_gpu("merge_systems: d1_dev", successGPU)
