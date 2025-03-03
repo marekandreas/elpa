@@ -258,11 +258,13 @@ subroutine solve_tridi_cpu_&
 
 
       if (useGPU) then
+        !NVTX_RANGE_PUSH("solve_tridi_col_gpu")
         call solve_tridi_col_gpu_&
              &PRECISION_AND_SUFFIX &
                (obj, l_cols, nev1, nc, d_dev +(nc+1-1)*size_of_datatype_real, &
                           e_dev + (nc+1-1)*size_of_datatype_real, q_dev, ldq, nblk,  &
                           matrixCols, mpi_comm_rows, wantDebug, success, max_threads)
+        !NVTX_RANGE_POP("solve_tridi_col_gpu")
 
         num = ldq*matrixCols * size_of_datatype_real
 #ifdef WITH_GPU_STREAMS
@@ -373,6 +375,7 @@ subroutine solve_tridi_cpu_&
 
 
       ! Recursively merge sub problems
+      !NVTX_RANGE_PUSH("merge_recursive")
       call merge_recursive_&
            &PRECISION &
            (obj, 0, np_cols, ldq, matrixCols, nblk, &
@@ -380,6 +383,7 @@ subroutine solve_tridi_cpu_&
            np_cols, na, q, d, e, &
            mpi_comm_all, mpi_comm_rows, mpi_comm_cols,&
            useGPU, wantDebug, success, max_threads)
+      !NVTX_RANGE_POP("merge_recursive")
 
       if (.not.(success)) then
         call obj%timer%stop("solve_tridi" // PRECISION_SUFFIX // gpuString)

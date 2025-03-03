@@ -216,9 +216,11 @@
        else ! (.not. useGPUsolver)
          
          call obj%timer%start("gpusolver_syevd")
+         NVTX_RANGE_PUSH("gpusolver_syevd")
          gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
          call gpusolver_PRECISION_syevd (nlen, q_dev, ldq, d_dev, info_dev, gpusolverHandle)
          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+         NVTX_RANGE_POP("gpusolver_syevd")
          call obj%timer%stop("gpusolver_syevd")
 
          num = 1 * size_of_int

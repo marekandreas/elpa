@@ -1,5 +1,6 @@
-
 #include "config-f90.h"
+#include "../general/nvtx_labels.h"
+
 module merge_recursive
   use precision
   implicit none

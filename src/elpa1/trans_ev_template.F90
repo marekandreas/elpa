@@ -299,7 +299,7 @@ subroutine trans_ev_cpu_&
 
   max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
   
-  !print *, "max_stored_rows=", max_stored_rows ! PETERDEBUG
+  print *, "max_stored_rows=", max_stored_rows ! PETERDEBUG
 
   if (.not. useGPU) then
     allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
