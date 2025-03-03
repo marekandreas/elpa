@@ -397,15 +397,18 @@
             OBJECT%mpi_setup%nRanks_comm_parent_per_node = int(np_total_per_nodeMPI, kind=ik)
 
 
-            print *,"GPUs per node",OBJECT%gpu_setup%gpusPerNode,"Ranks per node",OBJECT%mpi_setup%nRanks_comm_parent_per_node
+            OBJECT%gpu_setup%useCCL=.false.            
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)            
             if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node .eq. 1) then
               OBJECT%gpu_setup%useCCL=.true.
-
-            else
-              OBJECT%gpu_setup%useCCL=.false.
             endif
+#endif
 
-            print *,"Using ccl:",OBJECT%gpu_setup%useCCL
+            if (myid == 0 .and. wantDebugMessage) then
+              write(error_unit,*) "GPUs per node", OBJECT%gpu_setup%gpusPerNode, &
+                                  "Ranks per node", OBJECT%mpi_setup%nRanks_comm_parent_per_node
+              write(error_unit,*) "Using ccl:", OBJECT%gpu_setup%useCCL
+            endif
 #endif
 
 #ifdef ADDITIONAL_OBJECT_CODE
