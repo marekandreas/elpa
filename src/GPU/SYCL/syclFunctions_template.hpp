@@ -41,15 +41,16 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-// This file was written by A. Marek, MPCDF (2022)
-// it is based on a prototype implementation developed for MPCDF
-// by A. Poeppl, Intel Corporation (2022)
+// This file was written by A. Marek, MPCDF (2022) 
+// and A. Poeppl, Intel Corporation (2024)
 */
 
+#pragma once
+
 #include <sycl/sycl.hpp>
+#include <oneapi/mkl.hpp>
 
 #include <complex>
-#include <oneapi/mkl.hpp>
 
 #include <iostream>
 #include <cstdint>
@@ -549,7 +550,6 @@ static oneapi::mkl::side sideFromChar(char c) {
 
 
   void syclblasDgemm_elpa_wrapper(QueueData *handle, char cta, char ctb, int m, int n, int k, double alpha, void *a, int lda, void *b, int ldb, double beta, void *c, int ldc) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, k_, lda_, ldb_, ldc_;
@@ -619,7 +619,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   // implemented in mkl???
   //
   void syclblasDtrtri_elpa_wrapper(QueueData *handle, char uplo, char diag, int n, void *a, int lda, int info) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     //using oneapi::mkl::blas::column_major::gemm;
@@ -632,7 +631,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasStrtri_elpa_wrapper(QueueData *handle, char uplo, char diag, int n, void *a, int lda, int info) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     //using oneapi::mkl::blas::column_major::gemm;
@@ -645,7 +643,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasZtrtri_elpa_wrapper(QueueData *handle, char uplo, char diag, int n, void *a, int lda, int info) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     //using oneapi::mkl::blas::column_major::gemm;
@@ -658,7 +655,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasCtrtri_elpa_wrapper(QueueData *handle, char uplo, char diag, int n, void *a, int lda, int info) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     //using oneapi::mkl::blas::column_major::gemm;
@@ -671,7 +667,6 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   // different API!!
   void syclblasDpotrf_elpa_wrapper(QueueData *handle, char uplo, int n, void *a, int lda, int info) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     using oneapi::mkl::lapack::potrf;
@@ -682,7 +677,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasSpotrf_elpa_wrapper(QueueData *handle, char uplo, int n, void *a, int lda, int info) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     using oneapi::mkl::lapack::potrf;
@@ -693,7 +687,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasZpotrf_elpa_wrapper(QueueData *handle, char uplo, int n, void *a, int lda, int info) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     using oneapi::mkl::lapack::potrf;
@@ -704,7 +697,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasCpotrf_elpa_wrapper(QueueData *handle, char uplo, int n, void *a, int lda, int info) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     using oneapi::mkl::lapack::potrf;
@@ -715,7 +707,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasDcopy_elpa_wrapper(QueueData *handle, int n, void *x, int incx, void *y, int incy) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t n_, incx_, incy_;
@@ -727,7 +718,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasScopy_elpa_wrapper(QueueData *handle, int n, void *x, int incx, void *y, int incy) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t n_, incx_, incy_;
@@ -739,7 +729,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasZcopy_elpa_wrapper(QueueData *handle, int n, void *x, int incx, void *y, int incy) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t n_, incx_, incy_;
@@ -751,7 +740,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasCcopy_elpa_wrapper(QueueData *handle, int n, void *x, int incx, void *y, int incy) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t n_, incx_, incy_;
@@ -763,7 +751,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasDtrmm_elpa_wrapper(QueueData *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, ldb_;
@@ -780,7 +767,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasStrmm_elpa_wrapper(QueueData *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, ldb_;
@@ -797,7 +783,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasZtrmm_elpa_wrapper(QueueData *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<double> alpha, void *a, int lda, void *b, int ldb) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, ldb_;
@@ -814,7 +799,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasCtrmm_elpa_wrapper(QueueData *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<float> alpha, void *a, int lda, void *b, int ldb) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, ldb_;
@@ -830,8 +814,98 @@ static oneapi::mkl::side sideFromChar(char c) {
     trmm(queue, sd, up, ta, di, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(b), ldb_);
   }
 
+  void syclblasDtrmv_elpa_wrapper(QueueData *handle, char uplo, char trans, char diag, int n, const double *A, int lda, double *x, int incx){
+    using oneapi::mkl::blas::column_major::trmv;
+    QueueData *qHandle = getQueueDataOrDefault(handle);
+    sycl::queue queue = qHandle->queue;
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trmv(queue, up, ta, di, n, A, lda, x, incx);
+  }
+
+  void syclblasStrmv_elpa_wrapper(QueueData *handle, char uplo, char trans, char diag, int n, const float *A, int lda, float *x, int incx){
+    using oneapi::mkl::blas::column_major::trmv;
+    QueueData *qHandle = getQueueDataOrDefault(handle);
+    sycl::queue queue = qHandle->queue;
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trmv(queue, up, ta, di, n, A, lda, x, incx);
+  }
+
+  void syclblasZtrmv_elpa_wrapper(QueueData *handle, char uplo, char trans, char diag, int n, std::complex<double> const *A, int lda, std::complex<double> *x, int incx){
+    using oneapi::mkl::blas::column_major::trmv;
+    QueueData *qHandle = getQueueDataOrDefault(handle);
+    sycl::queue queue = qHandle->queue;
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trmv(queue, up, ta, di, n, A, lda, x, incx);
+  }
+
+  void syclblasCtrmv_elpa_wrapper(QueueData *handle, char uplo, char trans, char diag, int n, std::complex<float> const *A, int lda, std::complex<float> *x, int incx){
+    using oneapi::mkl::blas::column_major::trmv;
+    QueueData *qHandle = getQueueDataOrDefault(handle);
+    sycl::queue queue = qHandle->queue;
+    auto up = uploFromChar(uplo);
+    auto ta = transposeFromChar(trans);
+    auto di = diagFromChar(diag);
+    trmv(queue, up, ta, di, n, A, lda, x, incx);
+  }
+
+  
+void syclblasDsyrk_elpa_wrapper(QueueData *handle, char uplo, char trans, 
+                              int n, int k, 
+                              double alpha, const double *A, int lda,
+                              double beta, double *C, int ldc){
+  using oneapi::mkl::blas::column_major::syrk;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  auto up = uploFromChar(uplo);
+  auto ta = transposeFromChar(trans);
+  syrk(queue, up, ta, n, k, &alpha, A, lda, &beta, C, ldc);
+}
+
+void syclblasSsyrk_elpa_wrapper(QueueData *handle, char uplo, char trans, 
+                              int n, int k, 
+                              float alpha, const float *A, int lda,
+                              float beta, float *C, int ldc){
+  using oneapi::mkl::blas::column_major::syrk;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  auto up = uploFromChar(uplo);
+  auto ta = transposeFromChar(trans);
+  syrk(queue, up, ta, n, k, &alpha, A, lda, &beta, C, ldc);
+}
+
+void syclblasZherk_elpa_wrapper(QueueData *handle, char uplo, char trans, int n, int k, 
+                              std::complex<double> alpha, std::complex<double> const *A, int lda,
+                              std::complex<double> beta, std::complex<double> *C, int ldc) {
+  using oneapi::mkl::blas::column_major::herk;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  double alpha_real = alpha.real();
+  double beta_real  = beta.real();
+  auto up = uploFromChar(uplo);
+  auto ta = transposeFromChar(trans);
+  herk(queue, up, ta, n, k, &alpha_real, A, lda, &beta_real, C, ldc);
+}
+
+void syclblasCherk_elpa_wrapper(QueueData *handle, char uplo, char trans, int n, int k, 
+                              std::complex<float> alpha, std::complex<float> const *A, int lda,
+                              std::complex<float> beta, std::complex<float> *C, int ldc){
+  using oneapi::mkl::blas::column_major::herk;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  float alpha_real = alpha.real();
+  float beta_real  = beta.real();
+  auto up = uploFromChar(uplo);
+  auto ta = transposeFromChar(trans);
+  herk(queue, up, ta, n, k, &alpha_real, A, lda, &beta_real, C, ldc);
+}
+
   void syclblasDtrsm_elpa_wrapper(QueueData *handle, char side, char uplo, char trans, char diag, int m, int n, double alpha, void *a, int lda, void *b, int ldb) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, ldb_;
@@ -848,7 +922,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasStrsm_elpa_wrapper(QueueData *handle, char side, char uplo, char trans, char diag, int m, int n, float alpha, void *a, int lda, void *b, int ldb) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, ldb_;
@@ -865,7 +938,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasZtrsm_elpa_wrapper(QueueData *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<double> alpha, void *a, int lda, void *b, int ldb) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, ldb_;
@@ -882,7 +954,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasCtrsm_elpa_wrapper(QueueData *handle, char side, char uplo, char trans, char diag, int m, int n, std::complex<float> alpha, void *a, int lda, void *b, int ldb) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, ldb_;
@@ -899,7 +970,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasDgemv_elpa_wrapper(QueueData *handle, char cta, int m, int n, double alpha, void *a, int lda, void *x, int incx, double beta, void *y, int incy) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, incx_, incy_;
@@ -914,7 +984,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasSgemv_elpa_wrapper(QueueData *handle, char cta, int m, int n, float alpha, void *a, int lda, void *x, int incx, float beta, void *y, int incy) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, incx_, incy_;
@@ -929,7 +998,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasZgemv_elpa_wrapper(QueueData *handle, char cta, int m, int n, std::complex<double> alpha, void *a, int lda, void *x, int incx, std::complex<double> beta, void *y, int incy) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, incx_, incy_;
@@ -944,7 +1012,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   void syclblasCgemv_elpa_wrapper(QueueData *handle, char cta, int m, int n, std::complex<float> alpha, void *a, int lda, void *x, int incx, std::complex<float> beta, void *y, int incy) {
-    //handle not needed
     QueueData *qHandle = getQueueDataOrDefault(handle);
     sycl::queue queue = qHandle->queue;
     std::int64_t m_, n_, lda_, incx_, incy_;
@@ -957,5 +1024,100 @@ static oneapi::mkl::side sideFromChar(char c) {
     auto ta = transposeFromChar(cta);
     gemv(queue, ta, m_, n_, alpha, reinterpret_cast<std::complex<float> *>(a), lda_, reinterpret_cast<std::complex<float> *>(x), incx_, beta, reinterpret_cast<std::complex<float> *>(y), incy_);
   }
+
+void syclblasDdot_elpa_wrapper (QueueData *handle, int length, const double *X, int incx, const double *Y, int incy, double *result) {
+    using oneapi::mkl::blas::column_major::dot;
+    QueueData *qHandle = getQueueDataOrDefault(handle);
+    sycl::queue queue = qHandle->queue;
+    dot(queue, length, X, incx, X, incy, result);
+}
+
+void syclblasSdot_elpa_wrapper (QueueData *handle, int length, const float *X, int incx, const float *Y, int incy, float *result) {
+    using oneapi::mkl::blas::column_major::dot;
+    QueueData *qHandle = getQueueDataOrDefault(handle);
+    sycl::queue queue = qHandle->queue;
+    dot(queue, length, X, incx, X, incy, result);
+}
+
+void syclblasZdot_elpa_wrapper (char conju, QueueData *handle, int length, std::complex<double> const *X, int incx, std::complex<double> const *Y, int incy, std::complex<double> *result) {
+  using oneapi::mkl::blas::column_major::dotu;
+  using oneapi::mkl::blas::column_major::dotc;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  if (conju == 'C' || conju == 'c') {
+    dotc(queue, length, X, incx, Y, incy, result);
+  } else if (conju == 'U' || conju == 'u') {
+    dotu(queue, length, X, incx, Y, incy, result);
+  }
+}
+
+void syclblasCdot_elpa_wrapper (char conju, QueueData *handle, int length, std::complex<float> const *X, int incx, std::complex<float> const *Y, int incy, std::complex<float> *result) {
+  using oneapi::mkl::blas::column_major::dotu;
+  using oneapi::mkl::blas::column_major::dotc;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  if (conju == 'C' || conju == 'c') {
+    dotc(queue, length, X, incx, Y, incy, result);
+  } else if (conju == 'U' || conju == 'u') {
+    dotu(queue, length, X, incx, Y, incy, result);
+  }
+}
+
+void syclblasDscal_elpa_wrapper (QueueData *handle, int n, double alpha, double *x, int incx){
+  using oneapi::mkl::blas::column_major::scal;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  scal(queue, n, &alpha, x, incx);
+}
+
+void syclblasSscal_elpa_wrapper (QueueData *handle, int n, float alpha, float *x, int incx){
+  using oneapi::mkl::blas::column_major::scal;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  scal(queue, n, &alpha, x, incx);
+}
+
+void syclblasZscal_elpa_wrapper (QueueData *handle, int n, std::complex<double> alpha, std::complex<double> *x, int incx){
+  using oneapi::mkl::blas::column_major::scal;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  scal(queue, n, &alpha, x, incx);
+}
+
+void syclblasCscal_elpa_wrapper (QueueData *handle, int n, std::complex<float> alpha, std::complex<float> *x, int incx){
+  using oneapi::mkl::blas::column_major::scal;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  scal(queue, n, &alpha, x, incx);
+}
+
+void syclblasDaxpy_elpa_wrapper (QueueData *handle, int n, double alpha, double *x, int incx, double *y, int incy){
+  using oneapi::mkl::blas::column_major::axpy;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  axpy(queue, n, &alpha, x, incx, y, incy);
+}
+
+void syclblasSaxpy_elpa_wrapper (QueueData *handle, int n, float alpha, float *x, int incx, float *y, int incy){
+  using oneapi::mkl::blas::column_major::axpy;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  axpy(queue, n, &alpha, x, incx, y, incy);
+}
+
+void syclblasZaxpy_elpa_wrapper (QueueData *handle, int n, std::complex<double> alpha, std::complex<double> *x, int incx, std::complex<double> *y, int incy){
+  using oneapi::mkl::blas::column_major::axpy;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  axpy(queue, n, &alpha, x, incx, y, incy);
+}
+
+void syclblasCaxpy_elpa_wrapper (QueueData *handle, int n, std::complex<float> alpha, std::complex<float> *x, int incx, std::complex<float> *y, int incy){
+  using oneapi::mkl::blas::column_major::axpy;
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  axpy(queue, n, &alpha, x, incx, y, incy);
+}
+
 } // extern C
 #endif /* WITH_SYCL_GPU_VERSION */

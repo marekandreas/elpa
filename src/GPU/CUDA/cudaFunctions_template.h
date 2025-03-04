@@ -1132,4 +1132,3 @@ void cublasCaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, float _Complex 
 #ifdef __cplusplus
 }    
 #endif
-

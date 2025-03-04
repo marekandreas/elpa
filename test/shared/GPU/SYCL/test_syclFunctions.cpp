@@ -46,7 +46,7 @@
 // by A. Poeppl, Intel Corporation (2022)
 */
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 
 #include <complex>
 #include <oneapi/mkl.hpp>

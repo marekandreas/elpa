@@ -1555,112 +1555,112 @@
     module procedure syclblas_Ddot_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Ddot_intptr_c(syclblasHandle, length, x, incx, y, incy, result) &
-!               bind(C, name="syclblasDdot_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT), value              :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, result
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Ddot_intptr_c(syclblasHandle, length, x, incx, y, incy, result) &
+               bind(C, name="syclblasDdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT), value              :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, result
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Ddot_cptr_c(syclblasHandle, length, x, incx, y, incy, result) &
-!               bind(C, name="syclblasDdot_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT), value              :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, result
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Ddot_cptr_c(syclblasHandle, length, x, incx, y, incy, result) &
+               bind(C, name="syclblasDdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+     implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT), value              :: length, incx, incy
+      type(c_ptr), value                      :: x, y, result
+    end subroutine
+  end interface
 
   interface syclblas_Sdot
     module procedure syclblas_Sdot_intptr
     module procedure syclblas_Sdot_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Sdot_intptr_c(syclblasHandle, length, x, incx, y, incy, result) &
-!               bind(C, name="syclblasSdot_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT), value              :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, result
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Sdot_intptr_c(syclblasHandle, length, x, incx, y, incy, result) &
+               bind(C, name="syclblasSdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT), value              :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, result
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Sdot_cptr_c(syclblasHandle, length, x, incx, y, incy, result) &
-!               bind(C, name="syclblasSdot_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT), value              :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, result
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Sdot_cptr_c(syclblasHandle, length, x, incx, y, incy, result) &
+               bind(C, name="syclblasSdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT), value              :: length, incx, incy
+      type(c_ptr), value                      :: x, y, result
+    end subroutine
+  end interface
 
   interface syclblas_Zdot
     module procedure syclblas_Zdot_intptr
     module procedure syclblas_Zdot_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Zdot_intptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
-!               bind(C, name="syclblasZdot_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      character(1,C_CHAR),value               :: conj
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT), value              :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, result
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Zdot_intptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
+               bind(C, name="syclblasZdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: conj
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT), value              :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, result
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Zdot_cptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
-!               bind(C, name="syclblasZdot_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      character(1,C_CHAR),value               :: conj
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT), value              :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, result
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Zdot_cptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
+               bind(C, name="syclblasZdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: conj
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT), value              :: length, incx, incy
+      type(c_ptr), value                      :: x, y, result
+    end subroutine
+  end interface
 
   interface syclblas_Cdot
     module procedure syclblas_Cdot_intptr
     module procedure syclblas_Cdot_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Cdot_intptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
-!               bind(C, name="syclblasCdot_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      character(1,C_CHAR),value               :: conj
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT), value              :: length, incx, incy
-!      integer(kind=C_intptr_T), value         :: x, y, result
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Cdot_intptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
+               bind(C, name="syclblasCdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1,C_CHAR),value               :: conj
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT), value              :: length, incx, incy
+      integer(kind=C_intptr_T), value         :: x, y, result
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Cdot_cptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
-!               bind(C, name="syclblasCdot_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      character(1,C_CHAR),value               :: conj
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT), value              :: length, incx, incy
-!      type(c_ptr), value                      :: x, y, result
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Cdot_cptr_c(conj, syclblasHandle, length, x, incx, y, incy, result) &
+               bind(C, name="syclblasCdot_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+     character(1,C_CHAR),value               :: conj
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT), value              :: length, incx, incy
+      type(c_ptr), value                      :: x, y, result
+    end subroutine
+  end interface
 
 
   interface syclblas_Dscal
@@ -1668,116 +1668,116 @@
     module procedure syclblas_Dscal_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Dscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasDscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Dscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
+               bind(C, name="syclblasDscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      real(kind=C_DOUBLE) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Dscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasDscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Dscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
+               bind(C, name="syclblasDscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      real(kind=C_DOUBLE) ,value                :: alpha
+      type(c_ptr), value                      :: x
+    end subroutine
+  end interface
 
   interface syclblas_Sscal
     module procedure syclblas_Sscal_intptr
     module procedure syclblas_Sscal_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Sscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasSscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Sscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
+               bind(C, name="syclblasSscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      real(kind=C_FLOAT) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Sscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasSscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Sscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
+               bind(C, name="syclblasSscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      real(kind=C_FLOAT) ,value                :: alpha
+      type(c_ptr), value                      :: x
+    end subroutine
+  end interface
 
   interface syclblas_Zscal
     module procedure syclblas_Zscal_intptr
     module procedure syclblas_Zscal_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Zscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasZscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Zscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
+               bind(C, name="syclblasZscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Zscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasZscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Zscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
+               bind(C, name="syclblasZscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+      type(c_ptr), value                      :: x
+    end subroutine
+  end interface
 
   interface syclblas_Cscal
     module procedure syclblas_Cscal_intptr
     module procedure syclblas_Cscal_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Cscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasCscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Cscal_intptr_c(syclblasHandle, length, alpha, x, incx) &
+               bind(C, name="syclblasCscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Cscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
-!               bind(C, name="syclblasCscal_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx
-!      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
-!      type(c_ptr), value                      :: x
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Cscal_cptr_c(syclblasHandle, length, alpha, x, incx) &
+               bind(C, name="syclblasCscal_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx
+      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+      type(c_ptr), value                      :: x
+    end subroutine
+  end interface
 
 
   interface syclblas_Daxpy
@@ -1785,113 +1785,116 @@
     module procedure syclblas_Daxpy_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Daxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasDaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Daxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="syclblasDaxpy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_DOUBLE) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x, y
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Daxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasDaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_DOUBLE) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Daxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="syclblasDaxpy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_DOUBLE) ,value                :: alpha
+      type(c_ptr), value                      :: x, y
+    end subroutine
+  end interface
+
   interface syclblas_Saxpy
     module procedure syclblas_Saxpy_intptr
     module procedure syclblas_Saxpy_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Saxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasSaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Saxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="syclblasSaxpy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_FLOAT) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x, y
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Saxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasSaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      real(kind=C_FLOAT) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Saxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="syclblasSaxpy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      real(kind=C_FLOAT) ,value                :: alpha
+      type(c_ptr), value                      :: x, y
+    end subroutine
+  end interface
+
   interface syclblas_Zaxpy
     module procedure syclblas_Zaxpy_intptr
     module procedure syclblas_Zaxpy_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Zaxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasZaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Zaxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="syclblasZaxpy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x, y
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Zaxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasZaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Zaxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="syclblasZaxpy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      complex(kind=C_DOUBLE_COMPLEX) ,value                :: alpha
+      type(c_ptr), value                      :: x, y
+    end subroutine
+  end interface
+
   interface syclblas_Caxpy
     module procedure syclblas_Caxpy_intptr
     module procedure syclblas_Caxpy_cptr
   end interface
 
-!  interface
-!    subroutine syclblas_Caxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasCaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
-!      integer(kind=C_intptr_T), value         :: x, y
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Caxpy_intptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="syclblasCaxpy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+      integer(kind=C_intptr_T), value         :: x, y
+    end subroutine
+  end interface
 
-!  interface
-!    subroutine syclblas_Caxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
-!               bind(C, name="syclblasCaxpy_elpa_wrapper")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!      integer(kind=C_intptr_T), value         :: syclblasHandle
-!      integer(kind=C_INT),value               :: length, incx, incy
-!      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
-!      type(c_ptr), value                      :: x, y
-!    end subroutine
-!  end interface
+  interface
+    subroutine syclblas_Caxpy_cptr_c(syclblasHandle, length, alpha, x, incx, y, incy) &
+               bind(C, name="syclblasCaxpy_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_intptr_T), value         :: syclblasHandle
+      integer(kind=C_INT),value               :: length, incx, incy
+      complex(kind=C_FLOAT_COMPLEX) ,value                :: alpha
+      type(c_ptr), value                      :: x, y
+    end subroutine
+  end interface
 
   contains
 

@@ -58,7 +58,7 @@
 #include <type_traits>
 #include "config-f90.h"
 
-#include <CL/sycl.hpp>
+#include <sycl.hpp>
 #include "src/GPU/SYCL/syclCommon.hpp"
 
 #include "../../../GPU/common_device_functions.h"
@@ -151,22 +151,22 @@ void sycl_set_a_lower_to_zero_kernel (T *a_dev, int na, int matrixRows, int my_p
 
   int J_gl_0 = it.get_group(0) + 1;
   int di_loc_0 = it.get_local_id(0); // 0..MAX_THREADS_PER_BLOCK-1
+  int wgSize = it.get_local_range(0);
 
   T Zero = 0;
 
-  for (int J_gl = J_gl_0; J_gl <= na; J_gl += gridDim.x)
-    {
-    if (my_pcol == pcol(J_gl, nblk, np_cols))
-      {
+  for (int J_gl = J_gl_0; J_gl <= na; J_gl += nblk) {
+    if (my_pcol == pcol(J_gl, nblk, np_cols)) {
       // Calculate local column and row indices of the first element below the diagonal (that has to be set to zero)
       int l_col1 = local_index(J_gl  , my_pcol, np_cols, nblk, 1);
       int l_row1 = local_index(J_gl+1, my_prow, np_rows, nblk, 1); // I_gl = J_gl + 1
 
       // Set to zero in the GPU memory
-      for (int di_loc=di_loc_0; di_loc < (matrixRows-(l_row1-1)); di_loc += blockDim.x)
+      for (int di_loc=di_loc_0; di_loc < (matrixRows-(l_row1-1)); di_loc += wgSize) {
         a_dev[((l_row1-1)+di_loc) + matrixRows*(l_col1-1)] = Zero;
       }
     }
+  }
 }
 
 template <typename T>
@@ -188,13 +188,11 @@ void sycl_set_a_lower_to_zero(T *a_dev, int *na_in, int *matrixRows_in,
 
   auto queue = getQueueOrDefault(my_stream);
 
-  queue.parallel_for(
-    sycl::nd_range<1>(global_range, local_range),
-    [=](sycl::nd_item<1> it) {
-      sycl_set_a_lower_to_zero_kernel(a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk, it);
-    });
-  queue.wait_and_throw();
+  queue.parallel_for(sycl::nd_range<1>(global_range, local_range), [=](sycl::nd_item<1> it) {
+    sycl_set_a_lower_to_zero_kernel(a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk, it);
+  });
 
+  queue.wait_and_throw();
 }
 
 extern "C" void sycl_set_a_lower_to_zero_FromC(char dataType, intptr_t a_dev, int *na_in, int *matrixRows_in,

@@ -90,3 +90,9 @@ extern "C" void sycl_scale_qmat_double_complex_FromC(int *ldq_in, int *l_cols_in
 extern "C" void sycl_scale_qmat_float_complex_FromC(int *ldq_in, int *l_cols_in, std::complex<float> *q_dev, std::complex<float> *tau_dev, QueueData *my_stream) {
   sycl_scale_qmat_complex<float>(ldq_in, l_cols_in, q_dev, tau_dev, my_stream);
 }
+
+
+#include "../../../GPU/common_device_functions.h"
+#include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
+
+#include "../trans_ev_gpu.h"

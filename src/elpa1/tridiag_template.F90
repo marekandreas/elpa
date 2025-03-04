@@ -274,6 +274,7 @@ subroutine tridiag_cpu_&
 
   integer(kind=ik)                              :: string_length, sm_count
 
+  
   useGPU = .false.
 #ifdef TRIDIAG_GPU_BUILD
   useGPU = .true.

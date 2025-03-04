@@ -1294,7 +1294,7 @@ function elpa_solve_evp_&
        write(error_unit,*) "Error in trans_ev (real). Aborting..."
        return
      endif
-
+     do_useGPU_trans_ev = .false.
      if (do_useGPU .and. .not. do_useGPU_trans_ev) then
        num = (matrixRows* matrixCols) * size_of_datatype
        successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
