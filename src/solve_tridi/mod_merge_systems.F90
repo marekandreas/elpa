@@ -9,7 +9,7 @@ module merge_systems
 
   public :: merge_systems_cpu_double
   public :: merge_systems_gpu_double
-#if defined(WANT_SINGLE_PRECISION_REAL) || defined(WANT_SINGLE_PRECISION_COMPLEX)
+#if defined(WANT_SINGLE_PRECISION_REAL)
   public :: merge_systems_cpu_single
   public :: merge_systems_gpu_single
 #endif

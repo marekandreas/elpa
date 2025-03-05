@@ -654,16 +654,16 @@ extern "C" void cuda_zero_q_float_FromC(float *q_dev, int *p_col_out_dev, int *l
 __global__ void cuda_copy_q_slice_to_qtmp1_double_kernel(double *qtmp1, double *q, int *ndef_c,int *l_col, int *idx2, int *p_col, const int na2, const int na, const int my_pcol, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int gemm_dim_k) {
     int j = blockIdx.x * blockDim.x + threadIdx.x; // l_rows
 
-
-    if (j>=0 && j<l_rows) {
-      for (int i=1; i<na2+1; i++){
-         int l_idx = l_col[idx2[i-1]-1];
-         if (p_col[idx2[i-1]-1] == my_pcol) {
-	   ndef_c[j] = ndef_c[j]+1;
-	   qtmp1[j+gemm_dim_k*(ndef_c[j]-1)] = q[j+l_rqs-1 + matrixRows*(l_idx-1)];      
-         }
+  if (j>=0 && j<l_rows) {
+    for (int i=1; i<na2+1; i++){
+      int l_idx = l_col[idx2[i-1]-1];
+      if (p_col[idx2[i-1]-1] == my_pcol) {
+        ndef_c[j] = ndef_c[j]+1;
+        qtmp1[j+gemm_dim_k*(ndef_c[j]-1)] = q[j+l_rqs-1 + matrixRows*(l_idx-1)];      
       }
     }
+  }
+
 }
 
 extern "C" void cuda_copy_q_slice_to_qtmp1_double_FromC(double *qtmp1_dev, double *q_dev, int *ndef_c_dev, int *l_col_dev, int *idx2_dev, int *p_col_dev, int *na2_in, int *na_in, int *my_pcol_in, int *l_rows_in, int *l_rqs_in, int *l_rqe_in, int *matrixRows_in, int *gemm_dim_k_in, cudaStream_t  my_stream){
@@ -698,16 +698,16 @@ extern "C" void cuda_copy_q_slice_to_qtmp1_double_FromC(double *qtmp1_dev, doubl
 __global__ void cuda_copy_q_slice_to_qtmp1_float_kernel(float *qtmp1, float *q, int *ndef_c,int *l_col, int *idx2, int *p_col, const int na2, const int na, const int my_pcol, const int l_rows, const int l_rqs, const int l_rqe, const int matrixRows, const int gemm_dim_k) {
     int j = blockIdx.x * blockDim.x + threadIdx.x; // l_rows
 
-
-    if (j>=0 && j<l_rows) {
-      for (int i=1; i<na2+1; i++){
-         int l_idx = l_col[idx2[i-1]-1];
-         if (p_col[idx2[i-1]-1] == my_pcol) {
-	   ndef_c[j] = ndef_c[j]+1;
-	   qtmp1[j+gemm_dim_k*(ndef_c[j]-1)] = q[j+l_rqs-1 + matrixRows*(l_idx-1)];      
-         }
+  if (j>=0 && j<l_rows) {
+    for (int i=1; i<na2+1; i++){
+      int l_idx = l_col[idx2[i-1]-1];
+      if (p_col[idx2[i-1]-1] == my_pcol) {
+        ndef_c[j] = ndef_c[j]+1;
+        qtmp1[j+gemm_dim_k*(ndef_c[j]-1)] = q[j+l_rqs-1 + matrixRows*(l_idx-1)];      
       }
     }
+  }
+
 }
 
 extern "C" void cuda_copy_q_slice_to_qtmp1_float_FromC(float *qtmp1_dev, float *q_dev, int *ndef_c_dev, int *l_col_dev, int *idx2_dev, int *p_col_dev, int *na2_in, int *na_in, int *my_pcol_in, int *l_rows_in, int *l_rqs_in, int *l_rqe_in, int *matrixRows_in, int *gemm_dim_k_in, cudaStream_t  my_stream){

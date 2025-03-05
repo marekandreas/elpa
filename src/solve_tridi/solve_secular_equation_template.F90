@@ -51,8 +51,8 @@
 #endif
 
 subroutine solve_secular_equation_&
-&PRECISION&
-&(obj, n, i, d, z, delta, rho, dlam)
+                        &PRECISION&
+                        &(obj, n, i, d, z, delta, rho, dlam)
 !-------------------------------------------------------------------------------
 ! This routine solves the secular equation of a symmetric rank 1 modified
 ! diagonal matrix:

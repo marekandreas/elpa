@@ -66,6 +66,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/GPU/ROCm/mod_elpa1_hip.F90 \
   src/elpa1/GPU/SYCL/mod_elpa1_sycl.F90 \
   src/solve_tridi/GPU/mod_merge_systems_gpu.F90 \
+  src/solve_tridi/GPU/mod_merge_systems_gpu_new.F90 \
   src/solve_tridi/GPU/mod_solve_single_problem_gpu.F90 \
   src/solve_tridi/GPU/mod_solve_tridi_col_gpu.F90 \
   src/solve_tridi/GPU/mod_distribute_global_column_gpu.F90 \
@@ -270,6 +271,7 @@ if WITH_NVIDIA_GPU_VERSION
   src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu \
   src/solve_tridi/GPU/CUDA/cuda_distribute_global_column.cu \
   src/solve_tridi/GPU/CUDA/cuda_merge_systems.cu \
+  src/solve_tridi/GPU/CUDA/cuda_merge_systems_new.cu \
   src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col.cu \
   src/solve_tridi/GPU/CUDA/cuda_solve_tridi_single_problem.cu \
   src/multiply_a_b/GPU/CUDA/elpa_hermitian_multiply_cuda.cu \
@@ -1137,6 +1139,7 @@ EXTRA_DIST = \
   src/solve_tridi/merge_recursive_template.F90 \
   src/solve_tridi/solve_tridi_template.F90 \
   src/solve_tridi/solve_tridi_col_template.F90 \
+  src/solve_tridi/gpu_merge_systems_new.h \
   src/elpa1/elpa1_template.F90 \
   src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
