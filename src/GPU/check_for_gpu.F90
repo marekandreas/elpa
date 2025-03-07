@@ -102,6 +102,7 @@ module mod_check_for_gpu
       integer(kind=MPI_KIND)                     :: mpi_infoMPI, keyMPI, np_total_per_nodeMPI
       integer(kind=ik)                           :: key
 #endif
+      integer(kind=ik)                    :: useCCLCOMM 
 
 #define OBJECT obj
 #define ADDITIONAL_OBJECT_CODE
