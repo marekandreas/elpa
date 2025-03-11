@@ -70,6 +70,7 @@ try:
 except ValueError:
     pass
 
+tmp_filename = tmp_filename.replace("-", "_")
 tmp_filename = tmp_filename[-250:]
 
 if (ext==".cu"):
