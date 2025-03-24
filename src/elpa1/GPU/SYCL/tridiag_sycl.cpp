@@ -273,7 +273,7 @@ void sycl_dot_product_FromC(int *n_in, T *x_dev, int *incx_in, T *y_dev,
 
 
   queue.submit([&](sycl::handler &cgh) {
-    local_buffer<T> cache_acc_ct1(sycl::range<1>(1024), cgh);
+    local_buffer<T> cache_acc_ct1(sycl::range<1>(maxWgSize), cgh);
 
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
@@ -411,7 +411,7 @@ work-group size if needed.
 */
 
   queue.submit([&](sycl::handler &cgh) {
-    local_buffer<T> cache_acc_ct1(sycl::range<1>(1024), cgh);
+    local_buffer<T> cache_acc_ct1(sycl::range<1>(maxWgSize), cgh);
 
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
@@ -919,7 +919,7 @@ void sycl_update_matrix_element_add_FromC(
   sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
 
   queue.submit([&](sycl::handler &cgh) {
-    local_buffer<T> cache_acc_ct1(sycl::range<1>(1024 /*1024*/), cgh);
+    local_buffer<T> cache_acc_ct1(sycl::range<1>(maxWgSize /*1024*/), cgh);
 
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
