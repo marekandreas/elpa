@@ -192,7 +192,6 @@ subroutine trans_ev_cpu_&
   debug = 0
   if (wantDebug) debug = 1
 
-  useGPU = .false.
 #ifdef TRANS_EV_GPU
   useGPU = .true.
   gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
