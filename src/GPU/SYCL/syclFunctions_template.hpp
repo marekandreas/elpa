@@ -529,8 +529,8 @@ static oneapi::mkl::side sideFromChar(char c) {
   int syclHostRegisterFromC(void *ptr, size_t length, int flags) {
 #if defined(SYCL_EXT_ONEAPI_COPY_OPTIMIZE) && SYCL_EXT_ONEAPI_COPY_OPTIMIZE == 1
     // oneAPI SYCL extension is available, may not always be the case, especially with other implementations, such as AdaptiveCpp
-    DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
-    sycl::ext::oneapi::experimental::prepare_for_device_copy(ptr, length, devSel.context);
+    //DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
+    //sycl::ext::oneapi::experimental::prepare_for_device_copy(ptr, length, devSel.context);
 #else
     // Do nothing, as SYCL standard does not support the operation, it only affects performance.
 #endif
@@ -540,8 +540,8 @@ static oneapi::mkl::side sideFromChar(char c) {
   int syclHostUnregisterFromC(void *ptr) {
     #if defined(SYCL_EXT_ONEAPI_COPY_OPTIMIZE) && SYCL_EXT_ONEAPI_COPY_OPTIMIZE == 1
     // oneAPI SYCL extension is available, may not always be the case, especially with other implementations, such as AdaptiveCpp
-    DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
-    sycl::ext::oneapi::experimental::release_from_device_copy(ptr, devSel.context);
+    //DeviceSelection &devSel = SyclState::defaultState().getDefaultDeviceHandle();
+    //sycl::ext::oneapi::experimental::release_from_device_copy(ptr, devSel.context);
 #else
     // Do nothing, as SYCL standard does not support the operation, it only affects performance.
 #endif

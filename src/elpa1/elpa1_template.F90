@@ -275,7 +275,7 @@ function elpa_solve_evp_&
    do_tridiag  = .true.
    do_solve    = .true.
    do_trans_ev = .true.
-   ! to implement a possibiltiy to set this                             
+   ! to implement a possibiltiy to set this
    useNonBlockingCollectivesAll = .false.
 
    ! routine preperation
@@ -290,15 +290,15 @@ function elpa_solve_evp_&
    if (error .ne. ELPA_OK) then
      write(error_unit,*) "ELPA1: Problem getting option for non blocking collectives. Aborting..."
 #include "./elpa1_aborting_template.F90"
-   endif                                                                
+   endif
 
-   if (non_blocking_collectives_all .eq. 1) then                     
+   if (non_blocking_collectives_all .eq. 1) then
      useNonBlockingCollectivesAll = .true.
    else
      useNonBlockingCollectivesAll = .false.
    endif
 
-   ! skew?  
+   ! skew?
 #ifdef ACTIVATE_SKEW
    isSkewsymmetric = .true.
 #else
@@ -360,11 +360,11 @@ function elpa_solve_evp_&
       &")
 #endif
       write(error_unit,*) "ELPA1: Problem getting options for GPU. Aborting..."
-#include "./elpa1_aborting_template.F90"      
+#include "./elpa1_aborting_template.F90"
     endif
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) ... */
 
-    do_useGPU = .false.     
+    do_useGPU = .false.
 
    call obj%get("mpi_comm_parent", mpi_comm_all, error)
    if (error .ne. ELPA_OK) then
@@ -380,7 +380,7 @@ function elpa_solve_evp_&
    if (useGPU) then
      my_pe = obj%mpi_setup%myRank_comm_parent
      call obj%timer%start("check_for_gpu")
-     
+
      ! Count actual number of the available GPU devices
      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
        do_useGPU = .true.
@@ -608,7 +608,7 @@ function elpa_solve_evp_&
      if (present(qExtern)) then
        q_dev = transfer(q_devIntern, q_dev)
      endif
-     
+
      ! allocate dummy q_devIntern, if eigenvectors should not be commputed and thus q is NOT present
      if (.not.(obj%eigenvalues_only)) then
        q_dev_actual = transfer(q_dev, q_dev_actual)
@@ -620,7 +620,7 @@ function elpa_solve_evp_&
      endif
 
 #if COMPLEXCASE == 1
-     num = (l_rows* l_cols) * size_of_real_datatype 
+     num = (l_rows* l_cols) * size_of_real_datatype
      successGPU = gpu_malloc(q_dev_real, num)
      check_alloc_gpu("elpa1_template q_dev_real", successGPU)
 #endif /* COMPLEXCASE */
@@ -680,7 +680,7 @@ function elpa_solve_evp_&
      if (present(qExtern)) then
        q_dev = transfer(q_devIntern, q_dev)
      endif
-     
+
      ! allocate dummy q_devIntern, if eigenvectors should not be commputed and thus q is NOT present
      if (.not.(obj%eigenvalues_only)) then
        q_dev_actual = transfer(q_dev, q_dev_actual)
@@ -692,7 +692,7 @@ function elpa_solve_evp_&
      endif
 
 #if COMPLEXCASE == 1
-     num = (l_rows* l_cols) * size_of_real_datatype 
+     num = (l_rows* l_cols) * size_of_real_datatype
      successGPU = gpu_malloc(q_dev_real, num)
      check_alloc_gpu("elpa1_template q_dev_real", successGPU)
 #endif /* COMPLEXCASE */
@@ -729,7 +729,7 @@ function elpa_solve_evp_&
      if (present(qExtern)) then
        q_dev = transfer(q_devIntern, q_dev)
      endif
-     
+
      ! allocate dummy q_devIntern, if eigenvectors should not be commputed and thus q is NOT present
      if (.not.(obj%eigenvalues_only)) then
        q_dev_actual = transfer(q_dev, q_dev_actual)
@@ -741,7 +741,7 @@ function elpa_solve_evp_&
      endif
 
 #if COMPLEXCASE == 1
-     num = (l_rows* l_cols) * size_of_real_datatype 
+     num = (l_rows* l_cols) * size_of_real_datatype
      successGPU = gpu_malloc(q_dev_real, num)
      check_alloc_gpu("elpa1_template q_dev_real", successGPU)
 #endif /* COMPLEXCASE */
@@ -787,7 +787,7 @@ function elpa_solve_evp_&
      endif
 
 #if COMPLEXCASE == 1
-     num = (l_rows* l_cols) * size_of_real_datatype 
+     num = (l_rows* l_cols) * size_of_real_datatype
      successGPU = gpu_malloc(q_dev_real, num)
      check_alloc_gpu("elpa1_template q_dev_real", successGPU)
 #endif /* COMPLEXCASE */
@@ -814,7 +814,7 @@ function elpa_solve_evp_&
        endif
 
 #if COMPLEXCASE == 1
-       num = (l_rows* l_cols) * size_of_real_datatype 
+       num = (l_rows* l_cols) * size_of_real_datatype
        successGPU = gpu_malloc(q_dev_real, num)
        check_alloc_gpu("elpa1_template q_dev_real", successGPU)
 #endif /* COMPLEXCASE */
@@ -841,7 +841,7 @@ function elpa_solve_evp_&
        endif
 
 #if COMPLEXCASE == 1
-       num = (l_rows* l_cols) * size_of_real_datatype 
+       num = (l_rows* l_cols) * size_of_real_datatype
        successGPU = gpu_malloc(q_dev_real, num)
        check_alloc_gpu("elpa1_template q_dev_real", successGPU)
 #endif /* COMPLEXCASE */
@@ -864,7 +864,7 @@ function elpa_solve_evp_&
 #include "./elpa1_aborting_template.F90"
    endif
 
-#ifdef HAVE_AFFINITY_CHECKING  
+#ifdef HAVE_AFFINITY_CHECKING
    if (pinningInfo .eq. 1) then
      call init_thread_affinity(nrThreads)
 
@@ -919,7 +919,7 @@ function elpa_solve_evp_&
 #ifdef WITH_NVTX
      call nvtxRangePush("tridi")
 #endif
-     
+
      ! it's possible to switch on/off GPU branches for each of ELPA1 steps (do_useGPU_tridiag, do_useGPU_solve_tridi, do_useGPU_trans_ev)
      ! (only for debugging purposes, gpu_memcpy's are not optimized)
      if (do_useGPU .and. .not. do_useGPU_tridiag) then
@@ -978,11 +978,11 @@ function elpa_solve_evp_&
       num = (matrixRows* matrixCols) * size_of_datatype
       successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
       check_memcpy_gpu("elpa1_template: a -> a_dev", successGPU)
- 
+
       num = (na) * size_of_real_datatype
       successGPU = gpu_memcpy(ev_dev, int(loc(ev),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
       check_memcpy_gpu("elpa1_template: ev -> ev_dev", successGPU)
- 
+
       num = (na) * size_of_real_datatype
       successGPU = gpu_memcpy(e_dev, int(loc(e),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
       check_memcpy_gpu("elpa1_template: e -> e_dev", successGPU)
@@ -1017,13 +1017,13 @@ function elpa_solve_evp_&
      if (do_useGPU .and. .not. do_useGPU_solve_tridi) then
        num = (na) * size_of_real_datatype
        successGPU = gpu_memcpy(int(loc(ev),kind=c_intptr_t), ev_dev, num, gpuMemcpyDeviceToHost)
-       check_memcpy_gpu("elpa1_template: ev_dev -> ev", successGPU) 
+       check_memcpy_gpu("elpa1_template: ev_dev -> ev", successGPU)
 
        num = (na) * size_of_real_datatype
        successGPU = gpu_memcpy(int(loc(e),kind=c_intptr_t), e_dev, num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("elpa1_template: e_dev -> e", successGPU)
 
-#if REALCASE == 1       
+#if REALCASE == 1
        num = (matrixRows* matrixCols) * size_of_datatype
        successGPU = gpu_memcpy(int(loc(q_actual(1,1)),kind=c_intptr_t), q_dev_actual, num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("elpa1_template: q_dev_actual -> q_actual", successGPU)
@@ -1032,7 +1032,7 @@ function elpa_solve_evp_&
         num = (l_rows* l_cols) * size_of_real_datatype
         successGPU = gpu_memcpy(int(loc(q_real(1,1)),kind=c_intptr_t), q_dev_real, num, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("elpa1_template: q_dev_real -> q_real", successGPU)
-#endif       
+#endif
      endif ! (do_useGPU .and. .not. do_useGPU_solve_tridi)
 
      if (do_useGPU_solve_tridi) then
@@ -1065,7 +1065,7 @@ function elpa_solve_evp_&
        num = (na) * size_of_real_datatype
        successGPU = gpu_memcpy(ev_dev, int(loc(ev),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
        check_memcpy_gpu("elpa1_template: ev -> ev_dev", successGPU)
-  
+
        num = (na) * size_of_real_datatype
        successGPU = gpu_memcpy(e_dev, int(loc(e),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
        check_memcpy_gpu("elpa1_template: e -> e_dev", successGPU)
@@ -1253,7 +1253,7 @@ function elpa_solve_evp_&
        num = (na) * size_of_datatype
        successGPU = gpu_memcpy(int(loc(tau),kind=c_intptr_t), tau_dev, num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("elpa1_template: tau_dev -> tau", successGPU)
-       
+
        num = (matrixRows* matrixCols) * size_of_datatype
        successGPU = gpu_memcpy(int(loc(q(1,1)),kind=c_intptr_t), q_dev, num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("elpa1_template: q_dev -> q", successGPU)
@@ -1294,7 +1294,6 @@ function elpa_solve_evp_&
        write(error_unit,*) "Error in trans_ev (real). Aborting..."
        return
      endif
-     do_useGPU_trans_ev = .false.
      if (do_useGPU .and. .not. do_useGPU_trans_ev) then
        num = (matrixRows* matrixCols) * size_of_datatype
        successGPU = gpu_memcpy(a_dev, int(loc(a),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
@@ -1303,7 +1302,7 @@ function elpa_solve_evp_&
        num = (na) * size_of_datatype
        successGPU = gpu_memcpy(tau_dev, int(loc(tau),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
        check_memcpy_gpu("elpa1_template: tau -> tau_dev", successGPU)
-      
+
        num = (matrixRows* matrixCols) * size_of_datatype
        successGPU = gpu_memcpy(q_dev, int(loc(q(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
        check_memcpy_gpu("elpa1_template: q -> q_dev", successGPU)
@@ -1585,7 +1584,7 @@ function elpa_solve_evp_&
        check_dealloc_gpu("elpa1_template q_devIntern 2", successGPU)
      endif
 
-     
+
      ! allocate dummy q_devIntern, if eigenvectors should not be commputed and thus q is NOT present
      if (.not.(obj%eigenvalues_only)) then
      else
