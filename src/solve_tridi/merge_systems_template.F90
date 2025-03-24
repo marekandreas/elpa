@@ -139,6 +139,7 @@
                                                      dbase(na), ddiff(na), ev_scale(na), tmp(na)
       real(kind=REAL_DATATYPE)                    :: d1u(na), zu(na), d1l(na), zl(na)
       real(kind=REAL_DATATYPE), allocatable       :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
+      !real(kind=REAL_DATATYPE), allocatable       :: z_extended(:) ! PETERDEBUG111 new, delete if multiply on GPU
 #ifdef WITH_OPENMP_TRADITIONAL
       real(kind=REAL_DATATYPE), allocatable       :: z_p(:,:)
 #endif
@@ -164,9 +165,9 @@
 
       integer(kind=c_intptr_t)                    :: num
       integer(kind=C_intptr_t)                    :: qtmp1_dev, qtmp1_tmp_dev, qtmp2_dev, ev_dev
-      integer(kind=c_intptr_t)                    :: z1_dev, delta_dev, rho_dev, s_dev
+      integer(kind=c_intptr_t)                    :: z1_dev, delta_dev, rho_dev
       integer(kind=c_intptr_t)                    :: d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
-      integer(kind=c_intptr_t)                    :: d1l_dev, zl_dev, z_dev, d1_dev
+      integer(kind=c_intptr_t)                    :: d1l_dev, zl_dev, z_dev, d1_dev, z_extended_dev
       integer(kind=c_intptr_t)                    :: idx1_dev, p_col_dev, coltyp_dev, p_col_out_dev, ndef_c_dev
       integer(kind=c_intptr_t)                    :: idxq1_dev, l_col_out_dev, idx_dev, idx2_dev, l_col_dev
       integer(kind=c_intptr_t)                    :: nnzul_dev
@@ -378,18 +379,10 @@
         num = (na) * size_of_datatype
         successGPU = gpu_malloc(d1_dev, num)
         check_alloc_gpu("merge_systems: d1_dev", successGPU)
-        
-        num = (na) * size_of_datatype
-        successGPU = gpu_malloc(delta_dev, num)
-        check_alloc_gpu("merge_systems: delta_dev", successGPU)
 
         num = 1 * size_of_datatype
         successGPU = gpu_malloc(rho_dev, num)
         check_alloc_gpu("merge_systems: rho_dev", successGPU)
-
-        num = 1 * size_of_datatype
-        successGPU = gpu_malloc(s_dev, num)
-        check_alloc_gpu("merge_systems: s_dev", successGPU)
 
         num = (na) * size_of_datatype
         successGPU = gpu_malloc(d1u_dev, num)
@@ -447,7 +440,7 @@
       &PRECISION&
       &(obj, z, na, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, success)
       if (.not.(success)) then
-        write(error_unit,*) "Error in global_gather. ABorting"
+        write(error_unit,*) "Error in global_gather. Aborting"
         success = .false.
         return
       endif
@@ -690,7 +683,7 @@
 !!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,infoBLAS,j)
 !        my_thread = omp_get_thread_num()
 !!$OMP DO
-!#endif 
+!#endif
 
         print *, "lapack_laed4_loop: na1 = ", na1 ! PETERDEBUG
         NVTX_RANGE_PUSH("lapack_laed4_loop")
@@ -705,8 +698,8 @@
           successGPU = gpu_memcpy(z1_dev, int(loc(z1(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: z1_dev", successGPU)
 
-          successGPU = gpu_memcpy(delta_dev, int(loc(delta(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("merge_systems: delta_dev", successGPU)
+          !successGPU = gpu_memcpy(delta_dev, int(loc(delta(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          !check_memcpy_gpu("merge_systems: delta_dev", successGPU)
 
           successGPU = gpu_memcpy(z_dev, int(loc(z(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: z_dev", successGPU)
@@ -721,11 +714,25 @@
           successGPU = gpu_memcpy(rho_dev, int(loc(rho),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: rho_dev", successGPU)
 
-          successGPU = gpu_memcpy(s_dev, int(loc(s),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("merge_systems: s_dev", successGPU)
-          
-          call gpu_solve_secular_equation_loop (PRECISION_CHAR, d1_dev, z1_dev, delta_dev, rho_dev, s_dev, &
-                                                z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, SM_count, debug, my_stream)
+          ! this is a buffer, not used afterwards
+          num = (na1*SM_count) * size_of_datatype
+          successGPU = gpu_malloc(delta_dev, num)
+          check_alloc_gpu("merge_systems: delta_dev", successGPU)
+
+          num = (na1*SM_count) * size_of_datatype
+          successGPU = gpu_malloc(z_extended_dev, num)
+          check_alloc_gpu("merge_systems: delta_dev", successGPU)
+
+          call gpu_solve_secular_equation_loop (PRECISION_CHAR, d1_dev, z1_dev, delta_dev, rho_dev, &
+                  z_extended_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, obj%mpi_setup%myRank_comm_parent, &
+                  SM_count, debug, my_stream)
+                  ! obj%mpi_setup%myRank_comm_parent ! PETERDEBUG111 -- cleanup after debugging
+
+          ! PETERDEBUG111
+          call gpu_local_product(PRECISION_CHAR, z_dev, z_extended_dev, na1, SM_count, debug, my_stream)
+
+          ! allocate(z_extended(na*SM_count), stat=istat, errmsg=errorMessage)
+          ! check_allocate("merge_systems: z_extended",istat, errorMessage)
 
           ! data transfer to CPU
           num = na * size_of_datatype
@@ -735,11 +742,8 @@
           successGPU = gpu_memcpy(int(loc(z1(1)),kind=c_intptr_t), z1_dev, num, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("merge_systems: z1_dev", successGPU)
 
-          successGPU = gpu_memcpy(int(loc(delta(1)),kind=c_intptr_t), delta_dev, num, gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("merge_systems: delta_dev", successGPU)
-
-          successGPU = gpu_memcpy(int(loc(z(1)),kind=c_intptr_t), z_dev, num, gpuMemcpyDeviceToHost)
-          check_memcpy_gpu("merge_systems: z_dev", successGPU)
+          ! successGPU = gpu_memcpy(int(loc(delta(1)),kind=c_intptr_t), delta_dev, num, gpuMemcpyDeviceToHost)
+          ! check_memcpy_gpu("merge_systems: delta_dev", successGPU)
 
           successGPU = gpu_memcpy(int(loc(dbase(1)),kind=c_intptr_t), dbase_dev, num, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("merge_systems: dbase_dev", successGPU)
@@ -749,7 +753,30 @@
 
           num = 1 * size_of_datatype
           successGPU = gpu_memcpy(int(loc(rho),kind=c_intptr_t), rho_dev, num, gpuMemcpyDeviceToHost)
-          successGPU = gpu_memcpy(int(loc(s),kind=c_intptr_t), s_dev, num, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("merge_systems: rho_dev", successGPU)
+
+          num = na * size_of_datatype
+          successGPU = gpu_memcpy(int(loc(z(1)),kind=c_intptr_t), z_dev, num, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("merge_systems: z_dev", successGPU)
+
+          ! num = na1 *SM_count * size_of_datatype
+          ! successGPU = gpu_memcpy(int(loc(z_extended(1)),kind=c_intptr_t), z_extended_dev, num, gpuMemcpyDeviceToHost)
+          ! check_memcpy_gpu("merge_systems: z_extended_dev", successGPU)
+
+          successGPU = gpu_free(delta_dev)
+          check_dealloc_gpu("merge_systems: delta_dev", successGPU)
+
+          successGPU = gpu_free(z_extended_dev)
+          check_dealloc_gpu("merge_systems: z_extended_dev", successGPU)
+
+          ! NVTX_RANGE_PUSH("z_extended to z")
+          ! do i=1,na1
+          !   do j=1,SM_count
+          !     z(i) = z(i) * z_extended(i+na1*(j-1))
+          !   enddo
+          ! enddo
+          ! NVTX_RANGE_POP("z_extended to z")
+
 
         else
           do i = my_proc+1, na1, n_procs ! work distributed over all processors
@@ -766,7 +793,7 @@
               ! print *,'ERROR DLAED4 n=',na1,'i=',i,' Using Bisection'
               call solve_secular_equation_&
                                 &PRECISION&
-                                &(obj, na1, i, d1, z1, delta, rho, s)
+                                &(obj, na1, i, d1, z1, delta, rho, s) ! s is not used!
             endif
 
             ! Compute updated z
@@ -914,6 +941,7 @@
 
         if (.not.(success)) then
           call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
+          write(error_unit,*) "Error in check_monotony. Aborting..."
           return
         endif
         ! Eigenvector calculations
@@ -1825,14 +1853,8 @@
           successGPU = gpu_free(z1_dev)
           check_dealloc_gpu("merge_systems: z1_dev", successGPU)
 
-          successGPU = gpu_free(delta_dev)
-          check_dealloc_gpu("merge_systems: delta_dev", successGPU)
-
           successGPU = gpu_free(rho_dev)
           check_dealloc_gpu("merge_systems: rho_dev", successGPU)
-
-          successGPU = gpu_free(s_dev)
-          check_dealloc_gpu("merge_systems: s_dev", successGPU)
 
           successGPU = gpu_free(d1u_dev)
           check_dealloc_gpu("merge_systems: d1u_dev", successGPU)

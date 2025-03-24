@@ -1,4 +1,4 @@
-//    Copyright 2024, P. Karpov
+//    Copyright 2025, P. Karpov
 //
 //    This file is part of ELPA.
 //
@@ -46,89 +46,200 @@
 //
 //    This file was written by P. Karpov, MPCDF
 
+// PETERDEBUG111
+#undef MAX_THREADS_PER_BLOCK
+#define MAX_THREADS_PER_BLOCK 1024
+
 //________________________________________________________________
 
-// Device function that implements the bisection algorithm as in solve_secular_equation.
+
+// PETERDEBUG111: cleanup if unneeded
+__device__ double atomicMultiply(double* address, double val)
+{
+    unsigned long long int* address_as_ull =
+                              (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val *
+                               __longlong_as_double(assumed)));
+
+    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+    } while (assumed != old);
+
+    return __longlong_as_double(old);
+}
+
+// PETERDEBUG111: create a separate Fortran function for this
 template <typename T>
-__device__ void device_solve_secular_equation(int n, int i_f, const T* d1, const T* z1, T* delta, T* rho, T* dlam) {
-    // i_f is the Fortran index (1-indexed); convert to C index:
-    int i = i_f - 1;
-    T dshift, a, b, x, y;
-    const int maxIter = 200;
-    // Use a tolerance value (for simplicity we use one value; in practice you might choose different ones for float/double)
-    T tol = (sizeof(T) == sizeof(double)) ? (T)1e-200 : (T)1e-20;
+__global__ void elpa_fill_ones_kernel(T* array, int n) {
+  int i0 = threadIdx.x + blockIdx.x*blockDim.x;
 
-    if(i_f == n) { 
-         // Special case: last eigenvalue.
-         dshift = d1[n-1];
-         // delta[j] = d1[j] - dshift for all j.
-         for (int j = 0; j < n; j++) {
-              delta[j] = d1[j] - dshift;
-         }
-         // a = 0; b = rho*SUM(z1^2) + 1.
-         a = 0;
-         T sum_zsq = 0;
-         for (int j = 0; j < n; j++) {
-              sum_zsq += z1[j]*z1[j];
-         }
-         b = rho[0] * sum_zsq + 1;
-    } else {
-         // Other eigenvalues: lower bound is d1[i] and upper bound is d1[i+1]
-         x = 0.5 * (d1[i] + d1[i+1]);
-         T sum_term = 0;
-         for (int j = 0; j < n; j++) {
-              // Avoid division by zero (assume d1[j] != x)
-              sum_term += z1[j]*z1[j] / (d1[j] - x);
-         }
-         y = 1.0 + rho[0] * sum_term;
-         if (y > 0)
-             dshift = d1[i];
-         else
-             dshift = d1[i+1];
-         for (int j = 0; j < n; j++) {
-              delta[j] = d1[j] - dshift;
-         }
-         a = delta[i];
-         b = delta[i+1];
-    }
+  for (int i=i0; i<n; i+=blockDim.x*gridDim.x) {
+    array[i] = 1.0;
+  }
+}
 
-    // Bisection loop
-    for (int iter = 0; iter < maxIter; iter++) {
-         x = 0.5 * (a + b);
-         if (x == a || x == b)
-             break;  // no further subdivision possible
-         if (fabs(x) < tol)
-             break;  // x is too close to zero (i.e. near a pole)
-         T sum_term = 0;
-         for (int j = 0; j < n; j++) {
-              sum_term += z1[j]*z1[j] / (delta[j] - x);
-         }
-         y = 1.0 + rho[0] * sum_term;
-         if (y == 0)
-             break;  // exact solution found
-         else if (y > 0)
-             b = x;
-         else
-             a = x;
-    }
-    // dlam = x + dshift would be the computed eigenvalue (not stored here).
+//________________________________________________________________
+
+// Generic reduction ("SUM") function within one block
+template <typename T, typename Func>
+__device__ T elpa_sum(int n, int tid, int threads_total, int my_proc, T* cache, Func func) {
+
+  T sum = 0;
+  for (int j = tid; j < n; j += threads_total) {
+    sum += func(j);
+  }
     
+  cache[tid] = sum;
+  __syncthreads();
 
-    // Update delta: delta[j] = delta[j] - x for all j.
-    for (int j = 0; j < n; j++) {
-         delta[j] = delta[j] - x;
+
+  for (int stride = threads_total/2; stride > 0; stride /= 2) 
+    {
+    if (tid < stride) cache[tid] += cache[tid + stride];
+    __syncthreads();
+    }
+
+  return cache[0];
+
+}
+
+
+template <typename T>
+__forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T* d1, T* z1, T* delta, T* rho, T* cache,
+                                                              int tid, int threads_total, int myid) {
+  // i_f is the Fortran index (1-indexed); convert to C index:
+  int i = i_f - 1;
+  //T dshift;
+  __shared__ T dshift_sh, a_sh, b_sh, x_sh, y_sh;
+  
+  __shared__ int break_flag_sh;
+  if (tid==0) break_flag_sh=0;
+  __syncthreads();
+
+  const int maxIter = 200;
+  T eps = (sizeof(T) == sizeof(double)) ? (T)1e-200 : (T)1e-20;
+
+  if(i_f == n) 
+    {
+    // Special case: last eigenvalue.
+    
+    if (tid==0)
+      {
+      dshift_sh = d1[n-1];
+      }
+    __syncthreads();
+
+    for (int j = tid; j < n; j+=threads_total) 
+      {
+      delta[j] = d1[j] - dshift_sh;
+      }
+    
+    T sum_zsq = elpa_sum<T>(n, tid, threads_total, myid, cache, [=] __device__ (int j) -> T {
+      return z1[j]*z1[j];
+    });
+
+    if (tid==0)
+      {
+      a_sh = 0;
+      b_sh = rho[0] * sum_zsq + 1;
+      }
+    __syncthreads();
+    } 
+  
+  else 
+    {
+    // Other eigenvalues: lower bound is d1[i] and upper bound is d1[i+1]
+
+    if (tid==0)
+      {
+      x_sh = 0.5 * (d1[i] + d1[i+1]);
+      }
+    __syncthreads();
+
+    T sum_term = elpa_sum<T>(n, tid, threads_total, myid, cache, [=] __device__ (int j) -> T {
+      return z1[j]*z1[j] / (d1[j] - x_sh);
+    });
+
+    if (tid==0)
+      {
+      y_sh = 1.0 + rho[0]*sum_term;
+      if (y_sh > 0)
+        dshift_sh = d1[i];
+      else
+        dshift_sh = d1[i+1];
+      }
+    __syncthreads();
+
+    for (int j = tid; j < n; j += threads_total) 
+      {
+      delta[j] = d1[j] - dshift_sh;
+      }
+
+    __syncthreads(); // so all threads agree on delta and hence a and b
+
+    if (tid==0)
+      {
+      a_sh = delta[i];
+      b_sh = delta[i+1];
+      }
+    __syncthreads();
+  }
+
+  // Bisection
+  for (int iter = 0; iter < maxIter; iter++) 
+    {
+    if (tid==0)
+      {
+      x_sh = 0.5 * (a_sh + b_sh);
+      if (x_sh == a_sh || x_sh == b_sh)
+          break_flag_sh=1;  // no further subdivision possible
+      if (fabs(x_sh) < eps)
+          break_flag_sh;  // x is too close to zero (i.e. near a pole)
+      }
+    __syncthreads(); // so all threads agree on x and break_flag
+    if (break_flag_sh) break;
+    
+    T sum_term = elpa_sum<T>(n, tid, threads_total, myid, cache, [=] __device__ (int j) -> T {
+      return z1[j]*z1[j] / (delta[j] - x_sh);
+    });
+
+    if (tid==0)
+      {
+      y_sh = 1.0 + rho[0] * sum_term;
+      if (y_sh == 0)
+          break_flag_sh=1;  // exact solution found
+      else if (y_sh > 0)
+          b_sh = x_sh;
+      else
+          a_sh = x_sh;
+      }
+    __syncthreads();
+    if (break_flag_sh) break;
+    }
+
+  // Update delta: delta[j] = delta[j] - x for all j.
+  for (int j = tid; j < n; j+=threads_total) 
+    {
+    delta[j] = delta[j] - x_sh;
     }
 }
 
 //________________________________________________________________
 
 template <typename T>
-__global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *delta_dev, T *rho_dev, T *s_dev, 
-                                      T *z_dev, T *dbase_dev, T *ddiff_dev, 
-                                      int my_proc, int na1, int n_procs, int SM_count, int debug){
+__global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *delta_extended_dev, T *rho_dev,
+                                                       T *z_extended_dev, T *dbase_dev, T *ddiff_dev, 
+                                                       int my_proc, int na1, int n_procs, int myid){
+  __shared__ T cache[MAX_THREADS_PER_BLOCK]; 
+  //int tid = threadIdx.x + blockIdx.x*blockDim.x;
+  int tid = threadIdx.x;
 
-  int i_loc = threadIdx.x;
-  int j_loc = blockIdx.x ;
+  //int i_loc = threadIdx.x;
+  //int j_loc = blockIdx.x ;
 
   // do i = my_procs+1, na1, n_procs
   //   call solve_secular_equation_&
@@ -158,54 +269,85 @@ __global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *
   //   endif
   // enddo
 
-  for (int i=my_proc + n_procs*blockIdx.x; i<na1; i += n_procs*gridDim.x)
-    {
-    //int i = i_f - 1;
-    int i_f = i + 1;
+  // T dshift, a, b, x, y;
+  // const int maxIter = 200;
+  // T eps = (sizeof(T) == sizeof(double)) ? (T)1e-200 : (T)1e-20;
 
-    device_solve_secular_equation(na1, i_f, d1_dev, z1_dev, delta_dev, rho_dev, s_dev);
+  for (int i=my_proc + n_procs*blockIdx.x; i<na1; i += n_procs*gridDim.x)
+  //for (int i=my_proc; i<na1; i += n_procs)
+    {
+    int i_f = i + 1; // i_f is the Fortran index (1-based)
+
+    //_______________________________________________
+    // PETERDEBUG111 my_proc, myid -- for debugging. delete it from device_solve_secular_equation
+    device_solve_secular_equation(na1, i_f, d1_dev, z1_dev, delta_extended_dev+na1*blockIdx.x, rho_dev, cache, tid, blockDim.x, myid);
+    __syncthreads(); // so all threads agree on delta_dev
+
+  //_______________________________________________  
+
+    // Compute updated z. PETERDEBUG111: this part can't be easily parallelized over index i! But it can with MPI!
+    // z is multiplicative!
+    // but then we need an independent delta_dev for each block (that's the only output of device_solve_secular_equation)
     
-    // Compute updated z. PETERDEBUG111: this part can't be parallelized! But it can with MPI!
-    for (int j = 0; j < na1; j++)
+    // This part as a separate independent kernel? Use delta_extended_dev as a buffer for z_extended_dev
+    T d1_i = d1_dev[i];                     
+    int index;                                                 
+    for (int j = tid; j < na1; j+=blockDim.x)
       {
-      if (j != i) z_dev[j] = z_dev[j] * ( delta_dev[j] / (d1_dev[j] - d1_dev[i]) );  
+      index = j+na1*blockIdx.x;
+      if (j != i) z_extended_dev[index] = z_extended_dev[index] * ( delta_extended_dev[index] / (d1_dev[j] - d1_i) );
+      else z_extended_dev[index] = z_extended_dev[index] * delta_extended_dev[index];
       }
 
-    z_dev[i] = z_dev[i] * delta_dev[i];
-
     // Store dbase/ddiff
-
-    if (i_f < na1) 
+    if (tid==0)
       {
-      if (fabs(delta_dev[i+1]) < fabs(delta_dev[i])) 
+      if (i_f < na1) 
         {
-        dbase_dev[i] = d1_dev[i+1];
-        ddiff_dev[i] = delta_dev[i+1];
-        }
+        if (fabs(delta_extended_dev[i+1 + na1*blockIdx.x]) < fabs(delta_extended_dev[i + na1*blockIdx.x])) 
+          {
+          dbase_dev[i] = d1_dev[i+1];
+          ddiff_dev[i] = delta_extended_dev[i+1 + na1*blockIdx.x];
+          }
+        else 
+          {
+          dbase_dev[i] = d1_dev[i];
+          ddiff_dev[i] = delta_extended_dev[i + na1*blockIdx.x];
+          }
+        } 
       else 
         {
         dbase_dev[i] = d1_dev[i];
-        ddiff_dev[i] = delta_dev[i];
+        ddiff_dev[i] = delta_extended_dev[i + na1*blockIdx.x];
         }
-      } 
-    else 
-      {
-      dbase_dev[i] = d1_dev[i];
-      ddiff_dev[i] = delta_dev[i];
       }
     }
 }
 
 template <typename T>
-void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho_dev, T *s_dev, 
+void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho_dev,
                                       T *z_dev, T *dbase_dev, T *ddiff_dev, 
-                                      int my_proc, int na1, int n_procs, int SM_count, int debug, gpuStream_t my_stream){
+                                      int my_proc, int na1, int n_procs, int myid, int SM_count, int debug, gpuStream_t my_stream){
+  
+  dim3 blocks = dim3(SM_count,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2,1,1);
 
-  //dim3 blocks = dim3(SM_count,1,1);
-  //dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // PETERDEBUG111
-
-  dim3 blocks = dim3(1,1,1);
-  dim3 threadsPerBlock = dim3(1,1,1);
+  //if (na1<SM_count) // PETERDEBUG111
+    {
+#ifdef WITH_GPU_STREAMS
+    elpa_fill_ones_kernel<T><<<blocks,threadsPerBlock,0,my_stream>>>(z_dev, na1*SM_count);
+#else
+    elpa_fill_ones_kernel<T><<<blocks,threadsPerBlock>>>(z_dev, na1*SM_count);
+#endif
+    
+    //if (debug) // PETERDEBUG111
+      {
+      gpuDeviceSynchronize();
+      gpuError_t gpuerr = gpuGetLastError();
+      if (gpuerr != gpuSuccess)
+        printf("Error in executing elpa_fill_ones_kernel: %s\n",gpuGetErrorString(gpuerr));
+      }
+    }
 
   if (debug) // PETERDEBUG111
     {
@@ -213,11 +355,11 @@ void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho
     }
 
 #ifdef WITH_GPU_STREAMS
-  gpu_solve_secular_equation_loop_kernel<<<blocks,threadsPerBlock,0,my_stream>>> (d1_dev, z1_dev, delta_dev, rho_dev, s_dev, 
-                                                                                  z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, SM_count, debug);
+  gpu_solve_secular_equation_loop_kernel<<<blocks,threadsPerBlock,0,my_stream>>> (d1_dev, z1_dev, delta_dev, rho_dev,
+                                                                                  z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, myid);
 #else
-  gpu_solve_secular_equation_loop_kernel<<<blocks,threadsPerBlock>>>             (d1_dev, z1_dev, delta_dev, rho_dev, s_dev, 
-                                                                                  z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, SM_count, debug);
+  gpu_solve_secular_equation_loop_kernel<<<blocks,threadsPerBlock>>>             (d1_dev, z1_dev, delta_dev, rho_dev,
+                                                                                  z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, myid);
 #endif
 
   if (debug)
@@ -230,17 +372,62 @@ void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho
   }
 }
 
-extern "C" void CONCATENATE(ELPA_GPU,  _solve_secular_equation_loop_FromC) (char dataType, intptr_t d1_dev, intptr_t z1_dev, intptr_t delta_dev, intptr_t rho_dev, intptr_t s_dev,
+extern "C" void CONCATENATE(ELPA_GPU,  _solve_secular_equation_loop_FromC) (char dataType, intptr_t d1_dev, intptr_t z1_dev, intptr_t delta_dev, intptr_t rho_dev,
                                                                             intptr_t z_dev, intptr_t dbase_dev, intptr_t ddiff_dev, 
-                                                                            int my_proc, int na1, int n_procs, int SM_count, int debug, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_solve_secular_equation_loop<double>((double *) d1_dev, (double *) z1_dev, (double *) delta_dev, (double *) rho_dev, (double *) s_dev,
+                                                                            int my_proc, int na1, int n_procs, int myid, int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_solve_secular_equation_loop<double>((double *) d1_dev, (double *) z1_dev, (double *) delta_dev, (double *) rho_dev,
                                                                   (double *) z_dev, (double *) dbase_dev, (double *) ddiff_dev,
-                                                                  my_proc, na1, n_procs, SM_count, debug, my_stream);
-  else if (dataType=='S') gpu_solve_secular_equation_loop<float> ((float  *) d1_dev, (float  *) z1_dev, (float  *) delta_dev, (float  *) rho_dev, (float  *) s_dev,
+                                                                  my_proc, na1, n_procs, myid, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_solve_secular_equation_loop<float> ((float  *) d1_dev, (float  *) z1_dev, (float  *) delta_dev, (float  *) rho_dev,
                                                                   (float  *) z_dev, (float  *) dbase_dev, (float  *) ddiff_dev,
-                                                                  my_proc, na1, n_procs, SM_count, debug, my_stream);
+                                                                  my_proc, na1, n_procs, myid, SM_count, debug, my_stream);
   else {
     printf("Error in gpu_solve_secular_equation_loop: Unsupported data type\n");
+  }
+}
+
+//________________________________________________________________
+
+template <typename T>
+__global__ void gpu_local_product_kernel(T *z_dev, T *z_extended_dev, int na1, int SM_count){
+  
+  int i0 = threadIdx.x;
+  //int j0 = blockIdx.x;
+
+  for (int j=j0; j<SM_count; j+=1)
+    for (int i=i0; i<na1; i+=blockDim.x)
+      z_dev[i] = z_dev[i] * z_extended_dev[i + na1*j];
+  
+}
+
+template <typename T>
+void gpu_local_product(T *z_dev, T *z_extended_dev, int na1, int SM_count, int debug, gpuStream_t my_stream){
+
+  dim3 blocks = dim3(1,1,1); // one block, so we don't need atomic_multiply
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  gpu_local_product_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(z_dev, z_extended_dev, na1, SM_count);
+#else
+  gpu_local_product_kernel<<<blocks,threadsPerBlock>>>            (z_dev, z_extended_dev, na1, SM_count);
+#endif
+
+  if (debug)
+    {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess){
+      printf("Error in executing gpu_local_product: %s\n",gpuGetErrorString(gpuerr));
+    }
+  }
+}
+
+extern "C" void CONCATENATE(ELPA_GPU,  _local_product_FromC) (char dataType, intptr_t z_dev, intptr_t z_extended_dev, 
+                                                                            int na1, int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_local_product<double>((double *) z_dev, (double *) z_extended_dev, na1, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_local_product<float> ((float  *) z_dev, (float  *) z_extended_dev, na1, SM_count, debug, my_stream);
+  else {
+    printf("Error in elpa_local_product: Unsupported data type\n");
   }
 }
 

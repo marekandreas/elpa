@@ -58,8 +58,8 @@ module merge_systems_gpu_new
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
 
   interface
-  subroutine gpu_solve_secular_equation_loop_c (dataType, d1_dev, z1_dev, delta_dev, rho_dev, s_dev, &
-                                                z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, SM_count, debug, my_stream) &
+  subroutine gpu_solve_secular_equation_loop_c (dataType, d1_dev, z1_dev, delta_dev, rho_dev, &
+                                            z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, myid, SM_count, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                      bind(C, name="cuda_solve_secular_equation_loop_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
@@ -68,32 +68,61 @@ module merge_systems_gpu_new
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
-      integer(kind=c_intptr_t), value    :: d1_dev, z1_dev, delta_dev, z_dev, rho_dev, s_dev, dbase_dev, ddiff_dev
-      integer(kind=c_int), value         :: my_proc, na1, n_procs, debug, SM_count
+      integer(kind=c_intptr_t), value    :: d1_dev, z1_dev, delta_dev, z_dev, rho_dev, dbase_dev, ddiff_dev
+      integer(kind=c_int), value         :: my_proc, na1, n_procs, debug, SM_count, myid
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
+  end interface
+
+  interface
+  subroutine gpu_local_product_c (dataType, z_dev, z_extended_dev, na1, SM_count, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                     bind(C, name="cuda_local_product_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                     bind(C, name="hip_local_product_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: z_dev, z_extended_dev
+      integer(kind=c_int), value         :: na1, SM_count, debug
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
 
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) */
 
+
   contains
 
 
-    subroutine gpu_solve_secular_equation_loop (dataType, d1_dev, z1_dev, delta_dev, rho_dev, s_dev, &
-                                                z_dev, dbase_dev, ddiff_dev,  my_proc, na1, n_procs, SM_count, debug, my_stream)
+    subroutine gpu_solve_secular_equation_loop (dataType, d1_dev, z1_dev, delta_dev, rho_dev, &
+                                            z_dev, dbase_dev, ddiff_dev,  my_proc, na1, n_procs, myid, SM_count, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
-      integer(kind=c_intptr_t), value    :: d1_dev, z1_dev, delta_dev, z_dev, rho_dev, s_dev, dbase_dev, ddiff_dev
-      integer(kind=c_int), value         :: my_proc, na1, n_procs, debug, SM_count
+      integer(kind=c_intptr_t), value    :: d1_dev, z1_dev, delta_dev, z_dev, rho_dev, dbase_dev, ddiff_dev
+      integer(kind=c_int), value         :: my_proc, na1, n_procs, debug, SM_count, myid
       integer(kind=c_intptr_t), value    :: my_stream
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
-      call gpu_solve_secular_equation_loop_c (dataType, d1_dev, z1_dev, delta_dev, rho_dev, s_dev, &
-                                              z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, SM_count, debug, my_stream)
+      call gpu_solve_secular_equation_loop_c (dataType, d1_dev, z1_dev, delta_dev, rho_dev, &
+                                              z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, myid, SM_count, debug, my_stream)
 #endif
     end subroutine
 
 
+    subroutine gpu_local_product (dataType, z_dev, z_extended_dev, na1, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: z_dev, z_extended_dev
+      integer(kind=c_int), value         :: na1, SM_count, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+      call gpu_local_product_c (dataType, z_dev, z_extended_dev, na1, SM_count, debug, my_stream)
+#endif
+    end subroutine
 
 end module

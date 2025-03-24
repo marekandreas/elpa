@@ -180,7 +180,7 @@ subroutine solve_secular_equation_&
 
   ! Solution:
 
-  dlam = x + dshift
+  dlam = x + dshift ! not used
   delta(:) = delta(:) - x
   call  obj%timer%stop("solve_secular_equation" // PRECISION_SUFFIX)
 
