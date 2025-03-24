@@ -47,7 +47,7 @@
 //
 
 #include <cstdio>
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include "syclCommon.hpp"
 
 
@@ -58,7 +58,7 @@ extern "C" {
 #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
 #define DEFAULT_SELECTOR cl::sycl::default_selector()
 #else
-#define DEFAULT_SELECTOR cl::sycl::default_selector_v
+#define DEFAULT_SELECTOR sycl::default_selector_v
 #endif
     sycl::queue q{DEFAULT_SELECTOR};
     sycl::usm::alloc a_void_ptr_alloc = sycl::get_pointer_type(a_void_ptr, q.get_context());

@@ -648,8 +648,108 @@
 
 #endif /* WITH_AMD_GPU_VERSION */
 
+#ifdef WITH_SYCL_GPU_VERSION
+      ! ThreadsPerBlock
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxThreadsPerBlock
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL maxThreadsPerBlock: ", value
+      endif
+      OBJECT%gpu_setup%syclMaxThreadsPerBlock = value
+      OBJECT%gpu_setup%gpuMaxThreadsPerBlock = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimX
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxBLockDimX: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxBlockDimX = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimX = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimY
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxBLockDimY: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxBlockDimY = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimY = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimZ
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxBLockDimZ: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxBlockDimZ = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimZ = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimX
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxGridDimX: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxGridDimX = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimX    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimY
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxGridDimY: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxGridDimY = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimY = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimZ
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxGridDimZ: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxGridDimZ = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimZ  = value
+
+      
+      attribute = OBJECT%gpu_setup%gpuDevAttrMultiProcessorCount
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL SM count: ", value
+      endif
+      OBJECT%gpu_setup%syclSMcount  = value
+      OBJECT%gpu_setup%gpuSMcount     = value
+#endif /* WITH_SYCL_GPU_VERSION */
+
       if (gpuAvailable) then
-        ! print warning if NVIDIA or AMD without streams
+        ! print warning if NVIDIA or AMD or SYCL without streams
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifndef WITH_GPU_STREAMS
 #ifdef ADDITIONAL_OBJECT_CODE
