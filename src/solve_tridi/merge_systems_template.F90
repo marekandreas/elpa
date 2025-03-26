@@ -167,7 +167,7 @@
       integer(kind=C_intptr_t)                    :: qtmp1_dev, qtmp1_tmp_dev, qtmp2_dev, ev_dev
       integer(kind=c_intptr_t)                    :: z1_dev, delta_dev, rho_dev
       integer(kind=c_intptr_t)                    :: d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev
-      integer(kind=c_intptr_t)                    :: d1l_dev, zl_dev, z_dev, d1_dev, z_extended_dev
+      integer(kind=c_intptr_t)                    :: d1l_dev, zl_dev, z_dev, d1_dev, ztmp_extended_dev
       integer(kind=c_intptr_t)                    :: idx1_dev, p_col_dev, coltyp_dev, p_col_out_dev, ndef_c_dev
       integer(kind=c_intptr_t)                    :: idxq1_dev, l_col_out_dev, idx_dev, idx2_dev, l_col_dev
       integer(kind=c_intptr_t)                    :: nnzul_dev
@@ -698,9 +698,6 @@
           successGPU = gpu_memcpy(z1_dev, int(loc(z1(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: z1_dev", successGPU)
 
-          !successGPU = gpu_memcpy(delta_dev, int(loc(delta(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-          !check_memcpy_gpu("merge_systems: delta_dev", successGPU)
-
           successGPU = gpu_memcpy(z_dev, int(loc(z(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: z_dev", successGPU)
 
@@ -720,19 +717,14 @@
           check_alloc_gpu("merge_systems: delta_dev", successGPU)
 
           num = (na1*SM_count) * size_of_datatype
-          successGPU = gpu_malloc(z_extended_dev, num)
+          successGPU = gpu_malloc(ztmp_extended_dev, num)
           check_alloc_gpu("merge_systems: delta_dev", successGPU)
 
           call gpu_solve_secular_equation_loop (PRECISION_CHAR, d1_dev, z1_dev, delta_dev, rho_dev, &
-                  z_extended_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, obj%mpi_setup%myRank_comm_parent, &
+                  ztmp_extended_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, obj%mpi_setup%myRank_comm_parent, &
                   SM_count, debug, my_stream)
-                  ! obj%mpi_setup%myRank_comm_parent ! PETERDEBUG111 -- cleanup after debugging
 
-          ! PETERDEBUG111
-          call gpu_local_product(PRECISION_CHAR, z_dev, z_extended_dev, na1, SM_count, debug, my_stream)
-
-          ! allocate(z_extended(na*SM_count), stat=istat, errmsg=errorMessage)
-          ! check_allocate("merge_systems: z_extended",istat, errorMessage)
+          call gpu_local_product(PRECISION_CHAR, z_dev, ztmp_extended_dev, na1, SM_count, debug, my_stream)
 
           ! data transfer to CPU
           num = na * size_of_datatype
@@ -741,9 +733,6 @@
 
           successGPU = gpu_memcpy(int(loc(z1(1)),kind=c_intptr_t), z1_dev, num, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("merge_systems: z1_dev", successGPU)
-
-          ! successGPU = gpu_memcpy(int(loc(delta(1)),kind=c_intptr_t), delta_dev, num, gpuMemcpyDeviceToHost)
-          ! check_memcpy_gpu("merge_systems: delta_dev", successGPU)
 
           successGPU = gpu_memcpy(int(loc(dbase(1)),kind=c_intptr_t), dbase_dev, num, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("merge_systems: dbase_dev", successGPU)
@@ -759,24 +748,8 @@
           successGPU = gpu_memcpy(int(loc(z(1)),kind=c_intptr_t), z_dev, num, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("merge_systems: z_dev", successGPU)
 
-          ! num = na1 *SM_count * size_of_datatype
-          ! successGPU = gpu_memcpy(int(loc(z_extended(1)),kind=c_intptr_t), z_extended_dev, num, gpuMemcpyDeviceToHost)
-          ! check_memcpy_gpu("merge_systems: z_extended_dev", successGPU)
-
           successGPU = gpu_free(delta_dev)
           check_dealloc_gpu("merge_systems: delta_dev", successGPU)
-
-          successGPU = gpu_free(z_extended_dev)
-          check_dealloc_gpu("merge_systems: z_extended_dev", successGPU)
-
-          ! NVTX_RANGE_PUSH("z_extended to z")
-          ! do i=1,na1
-          !   do j=1,SM_count
-          !     z(i) = z(i) * z_extended(i+na1*(j-1))
-          !   enddo
-          ! enddo
-          ! NVTX_RANGE_POP("z_extended to z")
-
 
         else
           do i = my_proc+1, na1, n_procs ! work distributed over all processors
@@ -869,7 +842,17 @@
         d(1:na1) = dbase(1:na1) - ddiff(1:na1)
 
         ! Calculate scale factors for eigenvectors
-        ev_scale(:) = 0.0_rk
+        if (useGPU) then
+          num = na * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memset_async(ev_scale_dev, 0, num, my_stream)
+#else
+          successGPU = gpu_memset      (ev_scale_dev, 0, num)
+#endif
+          check_memcpy_gpu("merge_systems: memset ev_scale_dev", successGPU)
+        else  ! useGPU
+          ev_scale(:) = 0.0_rk
+        endif ! useGPU
 
 #ifdef WITH_OPENMP_TRADITIONAL
 
@@ -885,19 +868,63 @@
         
         NVTX_RANGE_PUSH("add_tmp_loop")
         if (wantDebug) call obj%timer%start("add_tmp_loop")
-        DO i = my_proc+1, na1, n_procs ! work distributed over all processors
 
-          ! tmp(1:na1) = z(1:na1) / delta(1:na1,i)  ! original code
-          ! tmp(1:na1) = z(1:na1) / (d1(1:na1)-d(i))! bad results
+        if (useGPU) then
+          ! data transfer to GPU
+          ! PETERDEBUG111 add non-streamed version
+          num = na * size_of_datatype
+          successGPU = gpu_memcpy(d1_dev, int(loc(d1(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("merge_systems: d1_dev", successGPU)
 
-          ! All we want to calculate is tmp = (d1(1:na1)-dbase(i))+ddiff(i)
-          ! in exactly this order, but we want to prevent compiler optimization
-!         ev_scale_val = ev_scale(i)
-          call add_tmp_&
-          &PRECISION&
-          &(obj, d1, dbase, ddiff, z, ev_scale(i), na1, i)
-!         ev_scale(i) = ev_scale_val
-        enddo
+          successGPU = gpu_memcpy(dbase_dev, int(loc(dbase(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("merge_systems: dbase_dev", successGPU)
+
+          successGPU = gpu_memcpy(ddiff_dev, int(loc(ddiff(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("merge_systems: ddiff_dev", successGPU)
+          
+          successGPU = gpu_memcpy(z_dev, int(loc(z(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("merge_systems: z_dev", successGPU)
+
+          call gpu_add_tmp_loop(PRECISION_CHAR, d1_dev, dbase_dev, ddiff_dev, z_dev, ev_scale_dev, ztmp_extended_dev, &
+                                na1, my_proc, n_procs, SM_count, debug, my_stream)
+
+          successGPU = gpu_free(ztmp_extended_dev)
+          check_dealloc_gpu("merge_systems: ztmp_extended_dev", successGPU)
+
+          ! data transfer to CPU
+          num = na * size_of_datatype
+          successGPU = gpu_memcpy(int(loc(d1(1)),kind=c_intptr_t), d1_dev, num, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("merge_systems: d1_dev", successGPU)
+
+          successGPU = gpu_memcpy(int(loc(dbase(1)),kind=c_intptr_t), dbase_dev, num, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("merge_systems: dbase_dev", successGPU)
+
+          successGPU = gpu_memcpy(int(loc(ddiff(1)),kind=c_intptr_t), ddiff_dev, num, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("merge_systems: ddiff_dev", successGPU)
+
+          successGPU = gpu_memcpy(int(loc(z1(1)),kind=c_intptr_t), z1_dev, num, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("merge_systems: z1_dev", successGPU)
+
+          successGPU = gpu_memcpy(int(loc(ev_scale(1)),kind=c_intptr_t), ev_scale_dev, num, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("merge_systems: ev_scale_dev", successGPU)
+        else
+          do i = my_proc+1, na1, n_procs ! work distributed over all processors
+
+            ! tmp(1:na1) = z(1:na1) / delta(1:na1,i)  ! original code
+            ! tmp(1:na1) = z(1:na1) / (d1(1:na1)-d(i))! bad results
+
+            ! All we want to calculate is tmp = (d1(1:na1)-dbase(i))+ddiff(i)
+            ! in exactly this order, but we want to prevent compiler optimization
+  !         ev_scale_val = ev_scale(i)
+            call add_tmp_&
+            &PRECISION&
+            &(obj, d1, dbase, ddiff, z, ev_scale(i), na1, i)
+  !         ev_scale(i) = ev_scale_val
+          enddo
+        endif ! useGPU
+
+        !print *, "ev_scale = ", ev_scale(1:na) ! PETERDEBUG111
+
         if (wantDebug) call obj%timer%stop("add_tmp_loop")
         NVTX_RANGE_POP("add_tmp_loop")
 

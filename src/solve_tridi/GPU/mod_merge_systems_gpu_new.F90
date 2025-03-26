@@ -90,6 +90,23 @@ module merge_systems_gpu_new
     end subroutine
   end interface
 
+
+  interface
+  subroutine gpu_add_tmp_loop_c (dataType, d1_dev, dbase_dev, ddiff_dev, z_dev, ev_scale_dev, tmp_extended_dev, &
+                                 na1, my_proc, n_procs, SM_count, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                     bind(C, name="cuda_add_tmp_loop_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                     bind(C, name="hip_add_tmp_loop_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: d1_dev, dbase_dev, ddiff_dev, z_dev, ev_scale_dev, tmp_extended_dev
+      integer(kind=c_int), value         :: na1, my_proc, n_procs, SM_count, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
+  end interface
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) */
 
 
@@ -122,6 +139,22 @@ module merge_systems_gpu_new
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
       call gpu_local_product_c (dataType, z_dev, z_extended_dev, na1, SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+
+    subroutine gpu_add_tmp_loop (dataType, d1_dev, dbase_dev, ddiff_dev, z_dev, ev_scale_dev, tmp_extended_dev, &
+                                 na1, my_proc, n_procs, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: d1_dev, dbase_dev, ddiff_dev, z_dev, ev_scale_dev, tmp_extended_dev
+      integer(kind=c_int), value         :: na1, my_proc, n_procs, SM_count, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+      call gpu_add_tmp_loop_c (dataType, d1_dev, dbase_dev, ddiff_dev, z_dev, ev_scale_dev, tmp_extended_dev, &
+                               na1, my_proc, n_procs, SM_count, debug, my_stream)
 #endif
     end subroutine
 

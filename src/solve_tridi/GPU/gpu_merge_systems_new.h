@@ -46,10 +46,6 @@
 //
 //    This file was written by P. Karpov, MPCDF
 
-// PETERDEBUG111
-#undef MAX_THREADS_PER_BLOCK
-#define MAX_THREADS_PER_BLOCK 1024
-
 //________________________________________________________________
 
 
@@ -86,7 +82,7 @@ __global__ void elpa_fill_ones_kernel(T* array, int n) {
 
 // Generic reduction ("SUM") function within one block
 template <typename T, typename Func>
-__device__ T elpa_sum(int n, int tid, int threads_total, int my_proc, T* cache, Func func) {
+__device__ T elpa_sum(int n, int tid, int threads_total, T* cache, Func func) {
 
   T sum = 0;
   for (int j = tid; j < n; j += threads_total) {
@@ -138,7 +134,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
       delta[j] = d1[j] - dshift_sh;
       }
     
-    T sum_zsq = elpa_sum<T>(n, tid, threads_total, myid, cache, [=] __device__ (int j) -> T {
+    T sum_zsq = elpa_sum<T>(n, tid, threads_total, cache, [=] __device__ (int j) -> T {
       return z1[j]*z1[j];
     });
 
@@ -160,7 +156,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
       }
     __syncthreads();
 
-    T sum_term = elpa_sum<T>(n, tid, threads_total, myid, cache, [=] __device__ (int j) -> T {
+    T sum_term = elpa_sum<T>(n, tid, threads_total, cache, [=] __device__ (int j) -> T {
       return z1[j]*z1[j] / (d1[j] - x_sh);
     });
 
@@ -203,7 +199,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
     __syncthreads(); // so all threads agree on x and break_flag
     if (break_flag_sh) break;
     
-    T sum_term = elpa_sum<T>(n, tid, threads_total, myid, cache, [=] __device__ (int j) -> T {
+    T sum_term = elpa_sum<T>(n, tid, threads_total, cache, [=] __device__ (int j) -> T {
       return z1[j]*z1[j] / (delta[j] - x_sh);
     });
 
@@ -334,6 +330,7 @@ void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho
 
   //if (na1<SM_count) // PETERDEBUG111
     {
+      // PETERDEBUG111: extract to a separate kernel
 #ifdef WITH_GPU_STREAMS
     elpa_fill_ones_kernel<T><<<blocks,threadsPerBlock,0,my_stream>>>(z_dev, na1*SM_count);
 #else
@@ -394,7 +391,7 @@ __global__ void gpu_local_product_kernel(T *z_dev, T *z_extended_dev, int na1, i
   int i0 = threadIdx.x;
   //int j0 = blockIdx.x;
 
-  for (int j=j0; j<SM_count; j+=1)
+  for (int j=0; j<SM_count; j+=1)
     for (int i=i0; i<na1; i+=blockDim.x)
       z_dev[i] = z_dev[i] * z_extended_dev[i + na1*j];
   
@@ -432,3 +429,82 @@ extern "C" void CONCATENATE(ELPA_GPU,  _local_product_FromC) (char dataType, int
 }
 
 //________________________________________________________________
+
+template <typename T>
+__global__ void gpu_add_tmp_loop_kernel (T *d1_dev, T *dbase_dev, T *ddiff_dev, T *z_dev, T *ev_scale_dev, T *tmp_extended_dev, 
+                                         int na1, int my_proc, int n_procs){
+  
+  // do i = my_proc+1, na1, n_procs ! work distributed over all processors
+
+  //   tmp(1:na1) = d1(1:na1)  - dbase(i)
+  //   tmp(1:na1) = tmp(1:na1) + ddiff(i)
+  //   tmp(1:na1) = z(1:na1) / tmp(1:na1)
+  //   ev_scale(i) = 1.0_rk/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
+  // enddo
+
+  __shared__ T cache[MAX_THREADS_PER_BLOCK];
+  int tid = threadIdx.x;
+
+  int index;
+  T dbase_or_diff_i;
+  for (int i=my_proc + n_procs*blockIdx.x; i<na1; i += n_procs*gridDim.x)
+    {
+    dbase_or_diff_i = dbase_dev[i];
+
+    for (int j=tid; j<na1; j+=blockDim.x) 
+      {
+      index = j + na1*blockIdx.x;
+      tmp_extended_dev[index] = d1_dev[j] - dbase_or_diff_i;
+      }
+    
+    // separate loop to prevent compiler from optimization
+    dbase_or_diff_i = ddiff_dev[i];
+    for (int j=tid; j<na1; j+=blockDim.x)
+      {
+      index = j + na1*blockIdx.x;
+      tmp_extended_dev[index] = tmp_extended_dev[index] + dbase_or_diff_i;
+      tmp_extended_dev[index] = z_dev[j] / tmp_extended_dev[index];
+      }
+    
+    T dot_product = elpa_sum<T>(na1, tid, blockDim.x, cache, [=] __device__ (int j) -> T {
+      return tmp_extended_dev[j+na1*blockIdx.x]*tmp_extended_dev[j+na1*blockIdx.x];
+    });
+    ev_scale_dev[i] = 1.0/sqrt(dot_product);
+    }
+  
+}
+
+template <typename T>
+void gpu_add_tmp_loop(T *d1_dev, T *dbase_dev, T *ddiff_dev, T *z_dev, T *ev_scale_dev, T *tmp_extended_dev, 
+                      int na1, int my_proc, int n_procs, int SM_count, int debug, gpuStream_t my_stream){
+
+  dim3 blocks = dim3(SM_count,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+  
+#ifdef WITH_GPU_STREAMS
+  gpu_add_tmp_loop_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(d1_dev, dbase_dev, ddiff_dev, z_dev, ev_scale_dev, tmp_extended_dev,
+                                                                  na1, my_proc, n_procs);
+#else
+  gpu_add_tmp_loop_kernel<<<blocks,threadsPerBlock>>>            (d1_dev, dbase_dev, ddiff_dev, z_dev, ev_scale_dev, tmp_extended_dev,
+                                                                  na1, my_proc, n_procs);
+#endif
+
+  if (debug)
+    {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess){
+      printf("Error in executing gpu_add_tmp_loop: %s\n",gpuGetErrorString(gpuerr));
+    }
+  }
+}
+
+extern "C" void CONCATENATE(ELPA_GPU,  _add_tmp_loop_FromC)(char dataType, intptr_t d1_dev, intptr_t dbase_dev, 
+                                                            intptr_t ddiff_dev, intptr_t z_dev, intptr_t ev_scale_dev, intptr_t tmp_extended_dev,  
+                                                            int na1, int my_proc, int n_procs, int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_add_tmp_loop<double>((double *) d1_dev, (double *) dbase_dev, (double *) ddiff_dev, (double *) z_dev, (double *) ev_scale_dev, (double *) tmp_extended_dev, na1, my_proc, n_procs, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_add_tmp_loop<float> ((float  *) d1_dev, (float  *) dbase_dev, (float  *) ddiff_dev, (float  *) z_dev, (float  *) ev_scale_dev, (float  *) tmp_extended_dev, na1, my_proc, n_procs, SM_count, debug, my_stream);
+  else {
+    printf("Error in elpa_add_tmp_loop: Unsupported data type\n");
+  }
+}
