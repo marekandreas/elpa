@@ -435,7 +435,6 @@ __global__ void gpu_add_tmp_loop_kernel (T *d1_dev, T *dbase_dev, T *ddiff_dev, 
                                          int na1, int my_proc, int n_procs){
   
   // do i = my_proc+1, na1, n_procs ! work distributed over all processors
-
   //   tmp(1:na1) = d1(1:na1)  - dbase(i)
   //   tmp(1:na1) = tmp(1:na1) + ddiff(i)
   //   tmp(1:na1) = z(1:na1) / tmp(1:na1)
@@ -506,5 +505,105 @@ extern "C" void CONCATENATE(ELPA_GPU,  _add_tmp_loop_FromC)(char dataType, intpt
   else if (dataType=='S') gpu_add_tmp_loop<float> ((float  *) d1_dev, (float  *) dbase_dev, (float  *) ddiff_dev, (float  *) z_dev, (float  *) ev_scale_dev, (float  *) tmp_extended_dev, na1, my_proc, n_procs, SM_count, debug, my_stream);
   else {
     printf("Error in elpa_add_tmp_loop: Unsupported data type\n");
+  }
+}
+
+//________________________________________________________________
+
+template <typename T>
+__global__ void gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel(T *qtmp1_dev, T *q_dev, int *p_col_dev, int *l_col_dev, int *idx1_dev, int *coltyp_dev, int *nnzul_dev,
+                                               int na1, int l_rnm, int l_rqs, int l_rqm, int l_rows, int my_pcol, int ldq_tmp1, int ldq){
+  
+  // do i = 1, na1
+  //   if (p_col(idx1(i))==my_pcol) then
+  //     l_idx = l_col(idx1(i))
+  //     if (coltyp(idx1(i))==1 .or. coltyp(idx1(i))==2) then
+  //       nnzu = nnzu+1
+  //       qtmp1(1:l_rnm,nnzu) = q(l_rqs:l_rqm,l_idx)
+  //     endif
+
+  //     if (coltyp(idx1(i))==3 .or. coltyp(idx1(i))==2) then
+  //       nnzl = nnzl+1
+  //       qtmp1(l_rnm+1:l_rows,nnzl) = q(l_rqm+1:l_rqe,l_idx)
+  //     endif
+  //   endif
+  // enddo
+  
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
+
+  int nnzu = 0;
+  int nnzl = 0;
+  for (int i=0; i<na1; i++)
+    {
+    int idx = idx1_dev[i]-1;
+    if (p_col_dev[idx] == my_pcol)
+      {
+      int l_idx = l_col_dev[idx];
+      if (coltyp_dev[idx] == 1 || coltyp_dev[idx] == 2)
+        {
+        nnzu += 1;
+
+        for (int j=tid; j<l_rnm; j+=blockDim.x)
+          qtmp1_dev[     j + (nnzu-1)*ldq_tmp1] = q_dev[l_rqs-1+j + (l_idx-1)*ldq];
+        }
+      if (coltyp_dev[idx] == 3 || coltyp_dev[idx] == 2)
+        {
+        nnzl += 1;
+
+        for (int j=tid; j<l_rows-l_rnm; j+=blockDim.x)
+          qtmp1_dev[l_rnm+j + (nnzl-1)*ldq_tmp1] = q_dev[l_rqm +j + (l_idx-1)*ldq];
+        }
+      }
+    }
+
+  if (tid==0)
+    {
+    nnzul_dev[0] = nnzu;
+    nnzul_dev[1] = nnzl;
+    // calculate and return only ndef = max(nnzu,nnzl) // PETERDEBUG111
+    }
+}
+
+template <typename T>
+void gpu_copy_qtmp1_q_compute_nnzu_nnzl(T *qtmp1_dev, T *q_dev, int *p_col_dev, int *l_col_dev, int *idx1_dev, int *coltyp_dev, int *nnzul_dev,
+                                        int na1, int l_rnm, int l_rqs, int l_rqm, int l_rows, int my_pcol, int ldq_tmp1, int ldq, int SM_count,
+                                        int debug, gpuStream_t my_stream){
+
+  dim3 blocks = dim3(SM_count,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+
+  printf("gpu_copy_qtmp1_q_compute_nnzu_nnzl: blocks.x=%d, threadsPerBlock.x=%d\n",blocks.x,threadsPerBlock.x); //PETERDEBUG111
+
+#ifdef WITH_GPU_STREAMS
+  gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(qtmp1_dev, q_dev, p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev,
+                                                                                    na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq);
+#else
+  gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel<<<blocks,threadsPerBlock>>>            (qtmp1_dev, q_dev, p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev,
+                                                                                    na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq);
+#endif
+
+  if (debug)
+    {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess){
+      printf("Error in executing gpu_copy_qtmp1_q_compute_nnzu_nnzl: %s\n",gpuGetErrorString(gpuerr));
+    }
+  }
+}   
+
+extern "C" void CONCATENATE(ELPA_GPU,  _copy_qtmp1_q_compute_nnzu_nnzl_FromC)(char dataType, intptr_t qtmp1_dev, intptr_t q_dev, 
+                                                                              intptr_t p_col_dev, intptr_t l_col_dev, intptr_t idx1_dev, intptr_t coltyp_dev, intptr_t nnzul_dev,
+                                                                              int na1, int l_rnm, int l_rqs, int l_rqm, int l_rows, int my_pcol, int ldq_tmp1, int ldq, 
+                                                                              int SM_count, int debug, gpuStream_t my_stream){
+
+  if      (dataType=='D') gpu_copy_qtmp1_q_compute_nnzu_nnzl<double>((double *) qtmp1_dev, (double *) q_dev, (int *) p_col_dev, (int *) l_col_dev, (int *) idx1_dev, (int *) coltyp_dev, (int *) nnzul_dev, 
+                                                                      na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq, 
+                                                                      SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_copy_qtmp1_q_compute_nnzu_nnzl<float> ((float  *) qtmp1_dev, (float  *) q_dev, (int *) p_col_dev, (int *) l_col_dev, (int *) idx1_dev, (int *) coltyp_dev, (int *) nnzul_dev, 
+                                                                      na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq, 
+                                                                      SM_count, debug, my_stream);
+  else {
+    printf("Error in elpa_copy_qtmp1_q_compute_nnzu_nnzl: Unsupported data type\n");
   }
 }

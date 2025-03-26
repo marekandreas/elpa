@@ -974,7 +974,7 @@
         ! Eigenvector calculations
         if (useGPU) then
           num = 2 * size_of_int     
-          successGPU = gpu_malloc(nnzul_dev, num)
+          successGPU = gpu_malloc(nnzul_dev, num) ! packs together nnzu and nnzl
           check_alloc_gpu("merge_systems: ", successGPU)
 
           num = na * size_of_int     
@@ -1112,41 +1112,79 @@
         ! which are needed for multiplication with new eigenvectors
 
         ! kernel compute nnzu on device
-        nnzu = 0
-        nnzl = 0
-        NVTX_RANGE_PUSH("loop_compute_nnzu")
-        if (wantDebug) call obj%timer%start("loop_compute_nnzu")
-        do i = 1, na1
-          l_idx = l_col(idx1(i))
-          if (p_col(idx1(i))==my_pcol) then
-            if (coltyp(idx1(i))==1 .or. coltyp(idx1(i))==2) then
-              nnzu = nnzu+1
-              qtmp1(1:l_rnm,nnzu) = q(l_rqs:l_rqm,l_idx)
+        if (useGPU) then
+          
+          num = na * size_of_int
+          successGPU = gpu_malloc(l_col_dev, num)
+          check_alloc_gpu("merge_systems: l_col_dev", successGPU)
+
+          ! data transfer to GPU
+          ! PETERDEBUG111 add non-streamed version
+          num = gemm_dim_k * gemm_dim_l * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memset_async(qtmp1_dev, 0, num, my_stream)
+#else
+          successGPU = gpu_memset      (qtmp1_dev, 0, num)
+#endif
+          check_memcpy_gpu("merge_systems: memset qtmp1_dev", successGPU)
+
+          num = na * size_of_int
+          successGPU = gpu_memcpy(p_col_dev, int(loc(p_col(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("merge_systems: p_col_dev", successGPU)
+
+          successGPU = gpu_memcpy(l_col_dev, int(loc(l_col(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("merge_systems: l_col_dev", successGPU)
+
+          successGPU = gpu_memcpy(idx1_dev, int(loc(idx1(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("merge_systems: idx1_dev", successGPU)
+
+          successGPU = gpu_memcpy(coltyp_dev, int(loc(coltyp(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("merge_systems: coltyp_dev", successGPU)
+
+!           num = 2 * size_of_int
+! #ifdef WITH_GPU_STREAMS
+!           successGPU = gpu_memset_async(nnzul_dev, 0, num, my_stream)
+! #else
+!           successGPU = gpu_memset      (nnzul_dev, 0, num)
+! #endif
+!           check_memcpy_gpu("merge_systems: memset nnzul_dev", successGPU)
+
+          call gpu_copy_qtmp1_q_compute_nnzu_nnzl(PRECISION_CHAR, qtmp1_dev, q_dev, &
+                                                  p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev, &
+                                                  na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, gemm_dim_k, matrixRows, &
+                                                  SM_count, debug, my_stream)
+
+          num = 2 * size_of_int
+          successGPU = gpu_memcpy(int(loc(nnzul(1)),kind=c_intptr_t), nnzul_dev, num, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("merge_systems: nnzul_dev", successGPU)
+          nnzu = nnzul(1)
+          nnzl = nnzul(2)
+        else ! useGPU
+          NVTX_RANGE_PUSH("loop_compute_nnzu")
+          if (wantDebug) call obj%timer%start("loop_compute_nnzu")
+          nnzu = 0
+          nnzl = 0
+          do i = 1, na1
+            if (p_col(idx1(i))==my_pcol) then
+              l_idx = l_col(idx1(i))
+            
+              if (coltyp(idx1(i))==1 .or. coltyp(idx1(i))==2) then
+                nnzu = nnzu+1
+                qtmp1(1:l_rnm,nnzu) = q(l_rqs:l_rqm,l_idx)
+              endif
+
+              if (coltyp(idx1(i))==3 .or. coltyp(idx1(i))==2) then
+                nnzl = nnzl+1
+                qtmp1(l_rnm+1:l_rows,nnzl) = q(l_rqm+1:l_rqe,l_idx)
+              endif
             endif
-            if (coltyp(idx1(i))==3 .or. coltyp(idx1(i))==2) then
-              nnzl = nnzl+1
-              qtmp1(l_rnm+1:l_rows,nnzl) = q(l_rqm+1:l_rqe,l_idx)
-            endif
-          endif
-        enddo
-        if (wantDebug) call obj%timer%stop("loop_compute_nnzu")
-        NVTX_RANGE_POP("loop_compute_nnzu")
+          enddo
+          if (wantDebug) call obj%timer%stop("loop_compute_nnzu")
+          NVTX_RANGE_POP("loop_compute_nnzu")
+        endif ! useGPU
 
         if (useGPU) then
           call obj%timer%start("gpu_memcpy")
-        
-          num = gemm_dim_k * gemm_dim_l * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
-          successGPU = gpu_memcpy_async(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
-               num, gpuMemcpyHostToDevice, my_stream)
-          check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
-#else       
-          successGPU = gpu_memcpy(qtmp1_dev, int(loc(qtmp1(1,1)),kind=c_intptr_t), &
-              num, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("merge_systems: qtmp1_dev", successGPU)
-#endif
-
 
           num = matrixRows*matrixCols*size_of_datatype
           NVTX_RANGE_PUSH("gpu_memcpy_q_to_q_dev")
@@ -1161,9 +1199,6 @@
           check_memcpy_gpu("merge_systems: q_dev", successGPU)
           NVTX_RANGE_POP("gpu_memcpy_q_to_q_dev")
 
-          num = na * size_of_int
-          successGPU = gpu_malloc(l_col_dev, num)
-          check_alloc_gpu("merge_systems: l_col_dev", successGPU)
 
           num = na * size_of_int
 #ifdef WITH_GPU_STREAMS
@@ -1228,8 +1263,8 @@
           check_memcpy_gpu("merge_systems: ndef_c_dev", successGPU)
 #endif
 
-          call GPU_COPY_Q_SLICE_TO_QTMP1_PRECISION (qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, na2, na, &
-                                                    my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
+          call GPU_COPY_Q_SLICE_TO_QTMP1_PRECISION (qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, &
+                                                    na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
         else
           do i = 1, na2
             l_idx = l_col(idx2(i))

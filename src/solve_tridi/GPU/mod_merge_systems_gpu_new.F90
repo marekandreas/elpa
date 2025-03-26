@@ -107,6 +107,26 @@ module merge_systems_gpu_new
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
+
+  interface
+  subroutine gpu_copy_qtmp1_q_compute_nnzu_nnzl_c(dataType, qtmp1_dev, q_dev, &
+                                                  p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev, &
+                                                  na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq, &
+                                                  SM_count, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_copy_qtmp1_q_compute_nnzu_nnzl_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name="hip_copy_qtmp1_q_compute_nnzu_nnzl_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: qtmp1_dev, q_dev, p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev
+      integer(kind=c_int), value         :: na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq, SM_count, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
+  end interface
+
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) */
 
 
@@ -155,6 +175,26 @@ module merge_systems_gpu_new
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
       call gpu_add_tmp_loop_c (dataType, d1_dev, dbase_dev, ddiff_dev, z_dev, ev_scale_dev, tmp_extended_dev, &
                                na1, my_proc, n_procs, SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+
+    subroutine gpu_copy_qtmp1_q_compute_nnzu_nnzl (dataType, qtmp1_dev, q_dev, &
+                                                  p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev, &
+                                                  na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq, &
+                                                  SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: qtmp1_dev, q_dev, p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev
+      integer(kind=c_int), value         :: na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq, SM_count, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+      call gpu_copy_qtmp1_q_compute_nnzu_nnzl_c(dataType, qtmp1_dev, q_dev, &
+                                                p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev, &
+                                                na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq, &
+                                                SM_count, debug, my_stream)
 #endif
     end subroutine
 
