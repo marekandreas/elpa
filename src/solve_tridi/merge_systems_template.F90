@@ -1060,12 +1060,14 @@
         allocate(qtmp2(gemm_dim_k, gemm_dim_m), stat=istat, errmsg=errorMessage)
         check_allocate("merge_systems: qtmp2",istat, errorMessage)
 
-        NVTX_RANGE_PUSH("set_qtmp1_qtmp2_0")
-        call obj%timer%start("set_qtmp1_qtmp2_0")
-        qtmp1 = 0 ! May contain empty (unset) parts
-        qtmp2 = 0 ! Not really needed ! PETERDEBUG111: then cleanup? also check for qtmp1
-        call obj%timer%stop("set_qtmp1_qtmp2_0")
-        NVTX_RANGE_POP("set_qtmp1_qtmp2_0")
+        if (.not. useGPU) then
+          NVTX_RANGE_PUSH("set_qtmp1_qtmp2_0")
+          call obj%timer%start("set_qtmp1_qtmp2_0")
+          qtmp1 = 0 ! May contain empty (unset) parts
+          qtmp2 = 0 ! Not really needed ! PETERDEBUG111: then cleanup? also check for qtmp1
+          call obj%timer%stop("set_qtmp1_qtmp2_0")
+          NVTX_RANGE_POP("set_qtmp1_qtmp2_0")
+        endif
 
         if (useGPU) then
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
@@ -1086,13 +1088,15 @@
   
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
             if (wantDebug) call obj%timer%start("gpu_host_register")
-        
-            num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
-            NVTX_RANGE_PUSH("gpu_host_register_qtmp1")
-            successGPU = gpu_host_register(int(loc(qtmp1),kind=c_intptr_t), num, gpuHostRegisterDefault)
-            check_host_register_gpu("merge_systems: qtmp1", successGPU)
-            NVTX_RANGE_POP("gpu_host_register_qtmp1")
             
+            if (.not. useCCL) then
+              num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
+              NVTX_RANGE_PUSH("gpu_host_register_qtmp1")
+              successGPU = gpu_host_register(int(loc(qtmp1),kind=c_intptr_t), num, gpuHostRegisterDefault)
+              check_host_register_gpu("merge_systems: qtmp1", successGPU)
+              NVTX_RANGE_POP("gpu_host_register_qtmp1")
+            endif
+
             num = (gemm_dim_l * gemm_dim_m) * size_of_datatype
             successGPU = gpu_host_register(int(loc(ev),kind=c_intptr_t), num, gpuHostRegisterDefault)
             check_host_register_gpu("merge_systems: ev", successGPU)
@@ -1148,11 +1152,16 @@
 !           successGPU = gpu_memset      (nnzul_dev, 0, num)
 ! #endif
 !           check_memcpy_gpu("merge_systems: memset nnzul_dev", successGPU)
+          NVTX_RANGE_PUSH("gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel")
+          if (wantDebug) call obj%timer%start("gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel")
 
           call gpu_copy_qtmp1_q_compute_nnzu_nnzl(PRECISION_CHAR, qtmp1_dev, q_dev, &
                                                   p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev, &
                                                   na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, gemm_dim_k, matrixRows, &
                                                   SM_count, debug, my_stream)
+
+          if (wantDebug) call obj%timer%stop("gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel")
+          NVTX_RANGE_POP("gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel")
 
           num = 2 * size_of_int
           successGPU = gpu_memcpy(int(loc(nnzul(1)),kind=c_intptr_t), nnzul_dev, num, gpuMemcpyDeviceToHost)
@@ -1953,9 +1962,11 @@
           
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
             if (wantDebug) call obj%timer%start("gpu_host_register")
-            successGPU = gpu_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
-            check_host_unregister_gpu("merge_systems: qtmp1", successGPU)
-
+            if (.not. useCCL) then
+              successGPU = gpu_host_unregister(int(loc(qtmp1),kind=c_intptr_t))
+              check_host_unregister_gpu("merge_systems: qtmp1", successGPU)
+            endif
+            
             successGPU = gpu_host_unregister(int(loc(qtmp2),kind=c_intptr_t))
             check_host_unregister_gpu("merge_systems: qtmp2", successGPU)
 
