@@ -607,3 +607,67 @@ extern "C" void CONCATENATE(ELPA_GPU,  _copy_qtmp1_q_compute_nnzu_nnzl_FromC)(ch
     printf("Error in elpa_copy_qtmp1_q_compute_nnzu_nnzl: Unsupported data type\n");
   }
 }
+
+//________________________________________________________________
+
+template <typename T>
+__global__ void gpu_fill_z_kernel (T *z_dev, T *q_dev, int *p_col_dev, int *l_col_dev, 
+                        int sig_int, int na, int my_pcol, int row_q, int ldq){
+  
+  // do i = 1, na
+  //   if (p_col(i)==my_pcol) z(i) = z(i) + sig*q(l_rqm+1,l_col(i))
+  // enddo
+
+  //int tid = threadIdx.x + blockIdx.x*blockDim.x;
+  int i0 = blockIdx.x;
+
+  for (int i=i0; i<na; i+=gridDim.x)
+    {
+    if (p_col_dev[i] == my_pcol) // uncoalesced access here
+      {
+      z_dev[i] = z_dev[i] + T(sig_int)*q_dev[row_q-1 + (l_col_dev[i]-1)*ldq];
+      }
+    }
+}
+
+template <typename T>
+void gpu_fill_z(T *z_dev, T *q_dev, int *p_col_dev, int *l_col_dev, int sig_int, int na, int my_pcol, int row_q, int ldq, 
+                int SM_count, int debug, gpuStream_t my_stream){
+
+  dim3 blocks = dim3(SM_count,1,1); // PETERDEBUG111
+  dim3 threadsPerBlock = dim3(1,1,1);
+
+  // dim3 blocks = dim3(SM_count,1,1);
+  // dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  gpu_fill_z_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(z_dev, q_dev, p_col_dev, l_col_dev, sig_int, na, my_pcol, row_q, ldq);
+#else
+  gpu_fill_z_kernel<<<blocks,threadsPerBlock>>>            (z_dev, q_dev, p_col_dev, l_col_dev, sig_int, na, my_pcol, row_q, ldq);
+#endif
+  
+  if (debug)
+    {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess){
+      printf("Error in executing gpu_fill_z: %s\n",gpuGetErrorString(gpuerr));
+    }
+  }
+}
+
+extern "C" void CONCATENATE(ELPA_GPU,  _fill_z_FromC)(char dataType, intptr_t z_dev, intptr_t q_dev, 
+                                                      intptr_t p_col_dev, intptr_t l_col_dev,
+                                                      int sig_int, int na, int my_pcol, int row_q, int ldq, 
+                                                      int SM_count, int debug, gpuStream_t my_stream){
+
+  if      (dataType=='D') gpu_fill_z<double>((double *) z_dev, (double *) q_dev, (int *) p_col_dev, (int *) l_col_dev, 
+                                             sig_int, na, my_pcol, row_q, ldq, 
+                                             SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_fill_z<float> ((float  *) z_dev, (float  *) q_dev, (int *) p_col_dev, (int *) l_col_dev, 
+                                             sig_int, na, my_pcol, row_q, ldq, 
+                                             SM_count, debug, my_stream);
+  else {
+    printf("Error in elpa_fill_z: Unsupported data type\n");
+  }
+}

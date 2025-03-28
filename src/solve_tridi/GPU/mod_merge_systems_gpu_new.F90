@@ -127,6 +127,24 @@ module merge_systems_gpu_new
     end subroutine
   end interface
 
+
+  interface
+  subroutine gpu_fill_z_c(dataType, z_dev, q_dev, p_col_dev, l_col_dev, &
+                          sig_int, na, my_pcol, row_q, ldq, SM_cout, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_fill_z_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name="hip_fill_z_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: z_dev, q_dev, p_col_dev, l_col_dev
+      integer(kind=c_int), value         :: sig_int, na, my_pcol, row_q, ldq, SM_cout, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
+  end interface
+
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) */
 
 
@@ -195,6 +213,22 @@ module merge_systems_gpu_new
                                                 p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev, &
                                                 na1, l_rnm, l_rqs, l_rqm, l_rows, my_pcol, ldq_tmp1, ldq, &
                                                 SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+
+    subroutine gpu_fill_z(dataType, z_dev, q_dev, p_col_dev, l_col_dev, &
+                          sig_int, na, my_pcol, row_q, ldq, SM_cout, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: z_dev, q_dev, p_col_dev, l_col_dev
+      integer(kind=c_int), value         :: sig_int, na, my_pcol, row_q, ldq, SM_cout, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+      call gpu_fill_z_c(dataType, z_dev, q_dev, p_col_dev, l_col_dev, &
+                        sig_int, na, my_pcol, row_q, ldq, SM_cout, debug, my_stream)
 #endif
     end subroutine
 
