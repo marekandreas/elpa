@@ -643,19 +643,21 @@ void cusolverDsyevd_elpa_wrapper (cusolverDnHandle_t cudaHandle, int n, double *
 
   cuerr = cudaMalloc((void**) &d_work, sizeof(double) * d_lwork);
   if (cuerr != cudaSuccess) {
-    errormessage("Error in cusolver_DnSsyevd d_work: %s\n",cudaGetErrorString(cuerr));
+    errormessage("Error in cudaMalloc d_work: %s\n",cudaGetErrorString(cuerr));
   }
 #ifdef DEBUG_CUDA
   printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );
 #endif
 
+  NVTX_RANGE_PUSH("cusolverDnDsyevd");
   status = cusolverDnDsyevd(cudaHandle, jobz, uplo, n, A, lda, eigenvalues, d_work, d_lwork, info_dev);
+  NVTX_RANGE_POP("cusolverDnDsyevd");
 
   if (status != CUSOLVER_STATUS_SUCCESS) elpa_cusolverPrintError(status);
 
   cuerr = cudaFree(d_work);
   if (cuerr != cudaSuccess) {
-    errormessage("Error in cusolver_DnDsyevd cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
+    errormessage("Error in cusolverDnDsyevd cuda_free(d_work): %s\n",cudaGetErrorString(cuerr));
   }
 }
 
@@ -676,7 +678,7 @@ void cusolverSsyevd_elpa_wrapper (cusolverDnHandle_t cudaHandle, int n, float *A
 
   cuerr = cudaMalloc((void**) &d_work, sizeof(float) * d_lwork);
   if (cuerr != cudaSuccess) {
-    errormessage("Error in cusolver_Ssyevd d_work: %s\n",cudaGetErrorString(cuerr));
+    errormessage("Error in cudaMalloc d_work: %s\n",cudaGetErrorString(cuerr));
   }
 #ifdef DEBUG_CUDA
   printf("CUDA Malloc,  pointer address: %p, size: %d \n", *d_work );

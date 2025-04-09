@@ -325,8 +325,10 @@
         allocate(qmat2(max_size,max_size), stat=istat, errmsg=errorMessage)
         check_deallocate("solve_tridi_col: qmat2", istat, errorMessage)
 
-        qmat1 = 0 ! Make sure that all elements are defined
-
+        if (.not. useGPU) then
+          qmat1 = 0 ! Make sure that all elements are defined
+        endif
+        
         if (useGPU) then
           num = max_size*max_size * size_of_datatype_real
           successGPU = gpu_malloc(qmat1_dev, num)

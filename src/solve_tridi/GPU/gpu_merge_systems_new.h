@@ -543,14 +543,14 @@ __global__ void gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel(T *qtmp1_dev, T *q_dev
         {
         nnzu += 1;
 
-        for (int j=tid; j<l_rnm; j+=blockDim.x)
+        for (int j=tid; j<l_rnm; j+=blockDim.x*gridDim.x)
           qtmp1_dev[     j + (nnzu-1)*ldq_tmp1] = q_dev[l_rqs-1+j + (l_idx-1)*ldq];
         }
       if (coltyp_dev[idx] == 3 || coltyp_dev[idx] == 2)
         {
         nnzl += 1;
 
-        for (int j=tid; j<l_rows-l_rnm; j+=blockDim.x)
+        for (int j=tid; j<l_rows-l_rnm; j+=blockDim.x*gridDim.x)
           qtmp1_dev[l_rnm+j + (nnzl-1)*ldq_tmp1] = q_dev[l_rqm +j + (l_idx-1)*ldq];
         }
       }
@@ -634,11 +634,8 @@ template <typename T>
 void gpu_fill_z(T *z_dev, T *q_dev, int *p_col_dev, int *l_col_dev, int sig_int, int na, int my_pcol, int row_q, int ldq, 
                 int SM_count, int debug, gpuStream_t my_stream){
 
-  dim3 blocks = dim3(SM_count,1,1); // PETERDEBUG111
-  dim3 threadsPerBlock = dim3(1,1,1);
-
-  // dim3 blocks = dim3(SM_count,1,1);
-  // dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+  dim3 blocks = dim3(SM_count,1,1);
+  dim3 threadsPerBlock = dim3(1,1,1); // uncoalesced access, so only one thread per block
 
 #ifdef WITH_GPU_STREAMS
   gpu_fill_z_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(z_dev, q_dev, p_col_dev, l_col_dev, sig_int, na, my_pcol, row_q, ldq);
