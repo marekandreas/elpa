@@ -322,7 +322,7 @@ int main(int argc, char** argv) {
    assert_elpa_ok(error_elpa);
 #endif
 
-   set_gpu_parameters();
+   set_gpu_parameters_tests();
 
 #if TEST_INTEL_GPU_SYCL == 1 /* temporary fix for SYCL on CPU */
    successGPU = syclGetCpuCount(numberOfDevices); 

@@ -568,7 +568,7 @@ int main(int argc, char** argv) {
 #endif
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
-  set_gpu_parameters();
+  set_gpu_parameters_tests();
 
 #if TEST_INTEL_GPU_SYCL == 1 /* temporary fix for SYCL on CPU */
   int numberOfDevices=0;

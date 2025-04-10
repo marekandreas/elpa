@@ -73,7 +73,7 @@
 #endif
 
 
-void set_gpu_parameters(){
+void set_gpu_parameters_tests(){
 #ifdef WITH_NVIDIA_GPU_VERSION
    gpuMemcpyHostToDevice = cudaMemcpyHostToDeviceFromC();
    gpuMemcpyDeviceToHost = cudaMemcpyDeviceToHostFromC();

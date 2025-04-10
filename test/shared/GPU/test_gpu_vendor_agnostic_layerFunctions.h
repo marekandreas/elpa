@@ -56,7 +56,7 @@ extern int gpuMemcpyDeviceToHost;
 extern "C" {    
 #endif
     
-void set_gpu_parameters();
+void set_gpu_parameters_tests();
 
 int gpuGetDeviceCount(int *count);
 int gpuSetDevice(int n); 
