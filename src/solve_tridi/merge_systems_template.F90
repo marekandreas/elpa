@@ -511,6 +511,7 @@
       ! except to reorganize D and Q
 
       IF ( RHO*zmax <= TOL ) THEN
+        if (my_proc==0) print *, "RESORT_EV RHO*zmax <= TOL" ! PETERDEBUG111. Cleanup after testing
 
         ! Rearrange eigenvalues
 
@@ -519,45 +520,22 @@
           d(i) = tmp(idx(i))
         enddo
         
-        if (useGPU) then
-          NVTX_RANGE_PUSH("gpu_memcpy_q_dev_to_q")
-          call obj%timer%start("gpu_memcpy")
-          num = matrixRows*matrixCols*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-          successGPU = gpu_memcpy_async(int(loc(q(1,1)),kind=c_intptr_t), q_dev, num, gpuMemcpyDeviceToHost, my_stream)
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
-#else
-          successGPU = gpu_memcpy      (int(loc(q(1,1)),kind=c_intptr_t), q_dev, num, gpuMemcpyDeviceToHost)
-#endif
-          check_memcpy_gpu("merge_systems: q_dev", successGPU)
-          call obj%timer%stop("gpu_memcpy")
-          NVTX_RANGE_POP("gpu_memcpy_q_dev_to_q")
-        endif
-        
-        if (my_proc==0 .and. wantDebug) print *, "RESORT_EV RHO*zmax <= TOL" ! PETERDEBUG111
         ! Rearrange eigenvectors
-        ! PETERDEBUG111: port resort_ev to GPU and exclude the memcopies
-        call resort_ev_&
-        &PRECISION &
-                       (obj, idx, na, na, p_col_out, q, matrixRows, matrixCols, l_rows, l_rqe, &
-                        l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
-
         if (useGPU) then
-          num = matrixRows*matrixCols*size_of_datatype
-#ifdef WITH_GPU_STREAMS
-          successGPU = gpu_memcpy_async(q_dev, int(loc(q(1,1)),kind=c_intptr_t), &
-                                        num, gpuMemcpyHostToDevice, my_stream)
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
-#else
-          successGPU = gpu_memcpy      (q_dev, int(loc(q(1,1)),kind=c_intptr_t), &
-                                        num, gpuMemcpyHostToDevice)
-#endif
-          check_memcpy_gpu("merge_systems: q_dev", successGPU)      
+          call resort_ev_gpu_&
+                             &PRECISION&
+                             (obj, idx, na, na, p_col_out, q_dev, matrixRows, matrixCols, l_rows, l_rqe, &
+                              l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
+        else
+          call resort_ev_cpu_&
+                             &PRECISION&
+                             (obj, idx, na, na, p_col_out, q,     matrixRows, matrixCols, l_rows, l_rqe, &
+                              l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
         endif
 
         call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
 
-        write(error_unit,*) "Returing early from merge_systems (RHO*zmax <= TOL in deflation)"
+        if (wantDebug) write(error_unit,*) "Returing early from merge_systems (RHO*zmax <= TOL in deflation)"
 
         return
       ENDIF
@@ -866,7 +844,7 @@
 
           if (my_proc==0 .and. wantDebug) print *, "RESORT_EV" ! PETERDEBUG111
 
-          call resort_ev_&
+          call resort_ev_cpu_&
                          &PRECISION&
                          &(obj, idxq1, na, na, p_col_out, q, matrixRows, matrixCols, l_rows, l_rqe, &
                            l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
@@ -888,7 +866,7 @@
           call obj%timer%stop("gpu_memcpy")
 
         else
-          call resort_ev_&
+          call resort_ev_cpu_&
                          &PRECISION&
                          &(obj, idxq1, na, na, p_col_out, q, matrixRows, matrixCols, l_rows, l_rqe, &
                            l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)

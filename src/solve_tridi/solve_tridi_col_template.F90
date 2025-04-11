@@ -61,17 +61,21 @@
 #endif
 
 #ifdef SOLVE_TRIDI_GPU_BUILD
-    subroutine solve_tridi_col_gpu_&
-    &PRECISION_AND_SUFFIX &
-      ( obj, na_local, nev, nqoff, d_dev, e_dev, q_dev, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success, max_threads )
+  subroutine solve_tridi_col_gpu_&
+                                 &PRECISION_AND_SUFFIX &
+                                ( obj, na_local, nev, nqoff, &
+                                  d_dev, e_dev, q_dev, &
+                                  ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success, max_threads )
 
 !    subroutine solve_tridi_col_gpu_&
 !    &PRECISION_AND_SUFFIX &
 !      ( obj, na, nev, nqoff, d_dev, e, q_dev, ldq, nblk, matrixCols, mpi_comm_rows, useGPU, wantDebug, success, max_threads )
 #else
-    subroutine solve_tridi_col_cpu_&
-    &PRECISION_AND_SUFFIX &
-      ( obj, na_local, nev, nqoff, d, e, q, ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success, max_threads )
+  subroutine solve_tridi_col_cpu_&
+                                 &PRECISION_AND_SUFFIX &
+                                ( obj, na_local, nev, nqoff, &
+                                  d, e, q, &
+                                  ldq, nblk, matrixCols, mpi_comm_rows, wantDebug, success, max_threads )
 #endif
 
    ! Solves the symmetric, tridiagonal eigenvalue problem on one processor column
@@ -151,6 +155,7 @@
       integer(kind=c_intptr_t)       :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all
       integer(kind=c_int)            :: cclDataType
 
+      print *, "version-1" ! PETERDEBUG111: cleanup after debugging mpi_comm_self
 
       success = .true.
 
@@ -642,6 +647,7 @@
       endif
 
       ! Merge subproblems
+      print *, "ndiv=", ndiv ! PETERDEBUG111: cleanup after debugging mpi_comm_self
 
       n = 1
       do while(n<ndiv) ! if ndiv==1, the problem was solved by single call to solve_tridi_single
@@ -680,6 +686,7 @@
                                  l_col(noff+1), p_col_o(noff+1), 0, 1, useGPU, wantDebug, success, max_threads)
           endif
 
+          print * , "using mpi_comm_self" ! PETERDEBUG111: cleanup after debugging mpi_comm_self
           if (.not.(success)) then
             print *,"returning early from merge_systems"
             call obj%timer%stop("solve_tridi_col" // PRECISION_SUFFIX)

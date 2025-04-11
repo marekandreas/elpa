@@ -1,9 +1,16 @@
 #include "../general/error_checking.inc"
 
-subroutine resort_ev_&
-&PRECISION&
-  &(obj, idx_ev, nLength, na, p_col_out, q, ldq, matrixCols, l_rows, l_rqe, l_rqs, &
-    mpi_comm_cols, p_col, l_col, l_col_out)
+#ifdef SOLVE_TRIDI_GPU_BUILD
+  subroutine resort_ev_gpu_&
+                           &PRECISION&
+                           &(obj, idx_ev, nLength, na, p_col_out, q_dev, ldq, matrixCols, l_rows, l_rqe, l_rqs, &
+                           mpi_comm_cols, p_col, l_col, l_col_out)
+#else
+  subroutine resort_ev_cpu_&
+                           &PRECISION&
+                           &(obj, idx_ev, nLength, na, p_col_out, q,     ldq, matrixCols, l_rows, l_rqe, l_rqs, &
+                           mpi_comm_cols, p_col, l_col, l_col_out)
+#endif
     use precision
 #ifdef WITH_OPENMP_TRADITIONAL
     use elpa_omp
@@ -22,11 +29,15 @@ subroutine resort_ev_&
     integer(kind=ik)                           :: mpierr
 #endif
     integer(kind=ik)                           :: my_pcol
-#ifdef USE_ASSUMED_SIZE
-    real(kind=REAL_DATATYPE), intent(inout)    :: q(ldq,*)
+
+    integer(kind=c_intptr_t)                   :: q_dev, qtmp_dev
+
+#if defined(USE_ASSUMED_SIZE) && !defined(SOLVE_TRIDI_GPU_BUILD)
+    real(kind=REAL_DATATYPE)                   :: q(ldq,*)
 #else
-    real(kind=REAL_DATATYPE), intent(inout)    :: q(ldq,matrixCols)
+    real(kind=REAL_DATATYPE)                   :: q(ldq,matrixCols)
 #endif
+
     integer(kind=ik), intent(in)               :: p_col_out(na)
     integer(kind=ik)                           :: idx_ev(nLength)
     integer(kind=ik)                           :: i, nc, pc1, pc2, lc1, lc2, l_cols_out
@@ -38,7 +49,7 @@ subroutine resort_ev_&
     if (l_rows==0) return ! My processor column has no work to do
 
 #ifdef WITH_MPI
-    call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+    call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
     my_pcol = int(my_pcolMPI,kind=c_int)
 #endif
 
@@ -103,6 +114,5 @@ subroutine resort_ev_&
 
      deallocate(qtmp, stat=istat, errmsg=errorMessage)
      check_deallocate("resort_ev: qtmp",istat, errorMessage)
-   end subroutine resort_ev_&
-        &PRECISION
+   end subroutine
 

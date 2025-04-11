@@ -5,9 +5,11 @@ module resort_ev
   implicit none
   private
 
-  public :: resort_ev_double
+  public :: resort_ev_cpu_double
+  public :: resort_ev_gpu_double
 #if defined(WANT_SINGLE_PRECISION_REAL) || defined(WANT_SINGLE_PRECISION_COMPLEX)
-  public :: resort_ev_single
+  public :: resort_ev_cpu_single
+  public :: resort_ev_gpu_single
 #endif
 
   contains
@@ -17,7 +19,11 @@ module resort_ev
 #define REALCASE
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
+#undef SOLVE_TRIDI_GPU_BUILD
 #include "./resort_ev_template.F90"
+#define SOLVE_TRIDI_GPU_BUILD
+#include "./resort_ev_template.F90"
+#undef SOLVE_TRIDI_GPU_BUILD
 #undef REALCASE
 #undef DOUBLE_PRECISION
 
@@ -27,7 +33,11 @@ module resort_ev
 #define REALCASE
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
+#undef SOLVE_TRIDI_GPU_BUILD
 #include "./resort_ev_template.F90"
+#define SOLVE_TRIDI_GPU_BUILD
+#include "./resort_ev_template.F90"
+#undef SOLVE_TRIDI_GPU_BUILD
 #undef REALCASE
 #undef SINGLE_PRECISION
 #endif
