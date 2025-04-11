@@ -70,7 +70,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/GPU/mod_solve_single_problem_gpu.F90 \
   src/solve_tridi/GPU/mod_solve_tridi_col_gpu.F90 \
   src/solve_tridi/GPU/mod_distribute_global_column_gpu.F90 \
-  src/solve_tridi/GPU/mod_transform_columns_gpu.F90 \
   src/solve_tridi/GPU/CUDA/mod_merge_systems_cuda.F90 \
   src/solve_tridi/GPU/CUDA/mod_solve_tridi_single_problem_cuda.F90 \
   src/solve_tridi/GPU/CUDA/mod_solve_tridi_col_cuda.F90 \
@@ -275,7 +274,6 @@ if WITH_NVIDIA_GPU_VERSION
   src/solve_tridi/GPU/CUDA/cuda_merge_systems_new.cu \
   src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col.cu \
   src/solve_tridi/GPU/CUDA/cuda_solve_tridi_single_problem.cu \
-  src/solve_tridi/GPU/CUDA/cuda_transform_columns.cu \
   src/multiply_a_b/GPU/CUDA/elpa_hermitian_multiply_cuda.cu \
   src/multiply_a_b/GPU/CUDA/elpa_pxgemm_multiply_cuda.cu
 endif
@@ -1142,7 +1140,6 @@ EXTRA_DIST = \
   src/solve_tridi/solve_tridi_template.F90 \
   src/solve_tridi/solve_tridi_col_template.F90 \
   src/solve_tridi/gpu_merge_systems_new.h \
-  src/solve_tridi/gpu_transform_columns.h \
   src/elpa1/elpa1_template.F90 \
   src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
