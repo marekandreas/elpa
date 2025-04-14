@@ -58,14 +58,14 @@ extern "C" {
     
 void set_gpu_parameters_tests();
 
-int gpuGetDeviceCount(int *count);
-int gpuSetDevice(int n); 
+int gpuGetDeviceCount_tests(int *count);
+int gpuSetDevice_tests(int n); 
    
-int gpuMalloc(intptr_t *a, size_t width_height);
+int gpuMalloc_tests(intptr_t *a, size_t width_height);
 
-int gpuFree(intptr_t *a);
+int gpuFree_tests(intptr_t *a);
    
-int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir);
+int gpuMemcpy_tests(intptr_t *dest, intptr_t *src, size_t count, int dir);
 
 int syclGetCpuCount(int numberOfDevices);
 

@@ -314,7 +314,7 @@ int main(int argc, char** argv) {
 #if (TEST_GPU == 1)
 
 #if (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
-   gpuGetDeviceCount(&numberOfDevices);
+   gpuGetDeviceCount_tests(&numberOfDevices);
    printf("Number of Devices found: %d\n\n", numberOfDevices);
    gpuID = myid%numberOfDevices; 
    printf("gpuID: %i\n", gpuID);
@@ -332,7 +332,7 @@ int main(int argc, char** argv) {
       }
 #endif
 
-   successGPU = gpuSetDevice(gpuID);
+   successGPU = gpuSetDevice_tests(gpuID);
    if (!successGPU){    
       printf("Error in gpuSetDevice\n");
       exit(1);
@@ -348,14 +348,14 @@ int main(int argc, char** argv) {
 #if TEST_GPU == 1
 
    // malloc
-   successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+   successGPU = gpuMalloc_tests((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
    if (!successGPU){    
       fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
       exit(1);
       }
       
    // copy
-   successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+   successGPU = gpuMemcpy_tests((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
    if (!successGPU){    
       fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
       exit(1);
@@ -430,14 +430,14 @@ int main(int argc, char** argv) {
    // TEST_GPU == 1: copy for testing from device to host, deallocate device pointers
 #if TEST_GPU == 1
    // copy for testing
-   successGPU = gpuMemcpy((intptr_t *) a , (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+   successGPU = gpuMemcpy_tests((intptr_t *) a , (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
    if (!successGPU){    
       fprintf(stderr, "Error in gpuMemcpy(a, a_dev)\n");
       exit(1);
       }
 
    // and deallocate device pointer
-   successGPU = gpuFree((intptr_t *) a_dev);
+   successGPU = gpuFree_tests((intptr_t *) a_dev);
    if (!successGPU){    
       fprintf(stderr, "Error in gpuFree(a_dev)\n");
       exit(1);
