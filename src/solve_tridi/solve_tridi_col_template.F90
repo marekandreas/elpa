@@ -128,7 +128,7 @@
       integer(kind=ik), allocatable :: limits(:), l_col(:), p_col_i(:), p_col_o(:)
       logical, intent(in)           :: wantDebug
       logical                       :: useGPU
-      logical, intent(out)          :: success
+      logical                       :: success
       integer(kind=ik)              :: istat, debug
       character(200)                :: errorMessage
 
@@ -153,9 +153,9 @@
 
       logical                        :: useCCL
       integer(kind=c_intptr_t)       :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all
-      integer(kind=c_int)            :: cclDataType
+      integer(kind=c_int)            :: cclDataType_real
 
-      print *, "version-1" ! PETERDEBUG111: cleanup after debugging mpi_comm_self
+      print *, "solve_tridi_col version-2" ! PETERDEBUG111: cleanup after debugging mpi_comm_self
 
       success = .true.
 
@@ -177,9 +177,9 @@
         ccl_comm_cols = obj%gpu_setup%ccl_comm_cols 
 
 #if defined(DOUBLE_PRECISION)
-       cclDataType = cclDouble                  
+       cclDataType_real = cclDouble                  
 #elif defined(SINGLE_PRECISION)
-       cclDataType = cclFloat
+       cclDataType_real = cclFloat
 #endif
       endif
 #endif
@@ -196,7 +196,7 @@
       if (useGPU) then
         num = na_local * size_of_datatype_real
         successGPU = gpu_malloc(qtmp_dev, num)
-        check_alloc_gpu("solve_tridi_col d_dev: ", successGPU)
+        check_alloc_gpu("solve_tridi_col (qtmp_dev: ", successGPU)
       endif
 
 
@@ -416,23 +416,26 @@
           nlen = limits(np+1)-noff
 
 #ifdef WITH_MPI
-          if (useCCL) then
-            my_stream = obj%gpu_setup%my_stream
-            call GPU_COPY_D_TO_D_TMP_PRECISION (d_dev, d_tmp_dev, na_local, my_stream)
+          if (useCCL) then ! PETERDEBUG111: refactor to: copy, MPI/CCL, copy back
+            !my_stream = obj%gpu_setup%my_stream
+            !call GPU_COPY_D_TO_D_TMP_PRECISION (d_dev, d_tmp_dev, na_local, my_stream) ! PETERDEBUG111 is d_tmp_dev really needed?
 
             my_stream = obj%gpu_setup%my_stream
             ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
             !successGPU = ccl_bcast(d_dev + (noff+1-1) * size_of_datatype_real,   &
 #if defined(USE_CCL_SOLVE_TRIDI)                
-            successGPU = ccl_bcast(d_tmp_dev + (noff+1-1) * size_of_datatype_real,   &
+            successGPU = ccl_bcast(d_dev + (noff+1-1) * size_of_datatype_real,   &
                                    d_dev + (noff+1-1) * size_of_datatype_real,  & 
-                                  int(nlen,kind=c_size_t), cclDataType, &
+                                  int(nlen,kind=c_size_t), cclDataType_real, &
                                   int(np,kind=c_int), ccl_comm_rows, my_stream)
 
             if (.not.successGPU) then
               print *,"Error in ccl_bcast"
               stop 1
             endif
+
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("solve_tridi_col: ccl_bcast", successGPU)
 #endif
             call GPU_COPY_QMAT1_TO_QMAT2_PRECISION (qmat1_dev, qmat2_dev, max_size, my_stream)
 
@@ -440,13 +443,16 @@
             ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
 #if defined(USE_CCL_SOLVE_TRIDI)                
             successGPU = ccl_bcast(qmat1_dev, qmat2_dev,  & 
-                                  int(max_size*max_size,kind=c_size_t), cclDataType, &
+                                  int(max_size*max_size,kind=c_size_t), cclDataType_real, &
                                   int(np,kind=c_int), ccl_comm_rows, my_stream)
 
             if (.not.successGPU) then
               print *,"Error in ccl_bcast"
               stop 1
             endif
+
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("solve_tridi_col: ccl_bcast", successGPU)
 #endif
           else ! useCCL
             if (useGPU) then
@@ -477,7 +483,8 @@
               successGPU = gpu_stream_synchronize(my_stream)
               check_stream_synchronize_gpu("solve_tridi_col: d_dev -> d", successGPU)
 #endif
-            endif
+            endif ! useGPU
+
             if (useNonBlockingCollectivesRows) then
               call obj%timer%start("mpi_nbc_communication")
               call mpi_ibcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &

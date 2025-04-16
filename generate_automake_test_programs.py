@@ -41,10 +41,11 @@ device_pointer_flag = {
 
 
 matrix_flag = {
-    "random":   "-DTEST_MATRIX_RANDOM",
-    "analytic": "-DTEST_MATRIX_ANALYTIC",
-    "toeplitz": "-DTEST_MATRIX_TOEPLITZ",
-    "frank":    "-DTEST_MATRIX_FRANK",
+    "random":      "-DTEST_MATRIX_RANDOM",
+    "analytic":    "-DTEST_MATRIX_ANALYTIC",
+    "toeplitz":    "-DTEST_MATRIX_TOEPLITZ",
+    "frank":       "-DTEST_MATRIX_FRANK",
+    "blocktridi": "-DTEST_MATRIX_BLOCKTRIDI",
 }
 
 qr_flag = {
@@ -167,10 +168,14 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if(s in ["scalapack_all", "scalapack_part"] and (p == "single")):
         continue
 
-    # solve tridiagonal only for real toeplitz matrix in 1stage
-    if (t == "solve_tridiagonal" and (s != "1stage" or d != "real" or m != "toeplitz")):
+    # solve tridiagonal only for real toeplitz or blocktridi matrix in 1stage
+    if (t == "solve_tridiagonal" and (s != "1stage" or d != "real" or (m != "toeplitz" and m != "blocktridi"))):
         continue
-
+    
+    # blocktridi matrix used only for solve_tridiagonal
+    if (t != "solve_tridiagonal" and m == "blocktridi"):
+        continue
+    
     # solve generalized only for random matrix in 1stage
     if (t == "generalized" and (m != "random" or s == "2stage")):
         continue
@@ -191,12 +196,16 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if (lang != "Fortran" and t == "eigenvalues" and m != "analytic"):
         continue
     
-    # "solve_tridiagonal" in C/C++ are tested only for toeplitz matrix
+    # toeplitz matrix in C/C++ is used only for "solve_tridiagonal" test 
     # validate_c_version_real_[double/single]_solve_tridiagonal_1stage_toeplitz_default
     # validate_c_version_real_[double/single]_solve_tridiagonal_1stage_gpu_toeplitz_default
-    if (lang != "Fortran" and ((t=="solve_tridiagonal" and m!="toeplitz") or (t!="solve_tridiagonal" and m=="toeplitz"))): 
+    if (lang != "Fortran" and  m=="toeplitz" and t!="solve_tridiagonal"): 
         continue
-        
+    
+    # blocktridi matrix is used only for "solve_tridiagonal" test and only in Fortran
+    if (m=="blocktridi" and (t!="solve_tridiagonal" or lang!="Fortran")):
+        continue
+
     if (("multiply" in t) and (s == "2stage")):
         continue
 

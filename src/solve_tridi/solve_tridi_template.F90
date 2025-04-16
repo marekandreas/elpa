@@ -57,19 +57,19 @@
 
 #ifdef SOLVE_TRIDI_GPU_BUILD
 subroutine solve_tridi_gpu_&
-&PRECISION_AND_SUFFIX &
+                            &PRECISION_AND_SUFFIX &
+                            ( obj, na, nev, &
+                            d_dev, e_dev, q_dev, &
+                            ldq, nblk, matrixCols, mpi_comm_all, mpi_comm_rows, &
+                            mpi_comm_cols, wantDebug, success, max_threads )
 #else
 subroutine solve_tridi_cpu_&
-&PRECISION_AND_SUFFIX &
+                            &PRECISION_AND_SUFFIX &
+                            ( obj, na, nev, &
+                            d, e, q, &
+                            ldq, nblk, matrixCols, mpi_comm_all, mpi_comm_rows, &
+                            mpi_comm_cols, wantDebug, success, max_threads )
 #endif
-    ( obj, na, nev, &
-#ifdef SOLVE_TRIDI_GPU_BUILD
-      d_dev, e_dev, q_dev, &
-#else
-      d, e, q, &
-#endif
-      ldq, nblk, matrixCols, mpi_comm_all, mpi_comm_rows, &
-                                           mpi_comm_cols, wantDebug, success, max_threads )
 
       use precision
       use elpa_abstract_impl

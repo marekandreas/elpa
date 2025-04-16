@@ -511,7 +511,7 @@
       ! except to reorganize D and Q
 
       IF ( RHO*zmax <= TOL ) THEN
-        if (my_proc==0) print *, "RESORT_EV RHO*zmax <= TOL" ! PETERDEBUG111. Cleanup after testing
+        if (my_proc==0) print *, "RESORT_EV RHO*zmax <= TOL 1" ! PETERDEBUG111. Cleanup after testing
 
         ! Rearrange eigenvalues
 
