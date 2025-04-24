@@ -2,9 +2,13 @@ Changelog for next release
 
 
 - not yet decided
+Changelog for ELPA 2025.01.002
+- fixes a performance degradation in solve_tridi in the CPU version
+- allows to switch NCCL/RCCL usage off, even if compiled with this
+  support
 
 Changelog for ELPA 2025.01.001
-- port of tridiagonalization step to GPU: ELPA 1stage/2stage solvers achieve
+- port of solve_tridi step to GPU: ELPA 1stage/2stage solvers achieve
   speedup of up to 40%
 - general multiplication routines for distributed matrices on GPUs
 - port of backtransformation in ELPA 1stage: speedup up to four achieved

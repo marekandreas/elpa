@@ -555,7 +555,7 @@ int main(int argc, char** argv) {
 
 #if (TEST_GPU_SET_ID == 1) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
   int numberOfDevices;
-  gpuGetDeviceCount(&numberOfDevices);
+  gpuGetDeviceCount_tests(&numberOfDevices);
   printf("Number of Devices found: %d\n\n", numberOfDevices);
   gpuID = myid%numberOfDevices;
   printf("gpuID: %i\n", gpuID);
@@ -568,7 +568,7 @@ int main(int argc, char** argv) {
 #endif
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
-  set_gpu_parameters();
+  set_gpu_parameters_tests();
 
 #if TEST_INTEL_GPU_SYCL == 1 /* temporary fix for SYCL on CPU */
   int numberOfDevices=0;
@@ -580,7 +580,7 @@ int main(int argc, char** argv) {
 #endif
 
   // Set device
-  successGPU = gpuSetDevice(gpuID);
+  successGPU = gpuSetDevice_tests(gpuID);
   if (!successGPU){
     printf("Error in gpuSetDevice\n");
     exit(1);
@@ -588,26 +588,26 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_EIGENVECTORS)
   // malloc
-  successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMalloc((intptr_t *) &q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(q_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMalloc((intptr_t *) &ev_dev, na*sizeof(EV_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &ev_dev, na*sizeof(EV_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(ev_dev)\n");
     exit(1);
   }
 
   // copy
-  successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  successGPU = gpuMemcpy_tests((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
     exit(1);
@@ -615,20 +615,20 @@ int main(int argc, char** argv) {
 #endif /* TEST_EIGENVECTORS */
 
 #if defined(TEST_EIGENVALUES)
-  successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMalloc((intptr_t *) &ev_dev, na*sizeof(EV_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &ev_dev, na*sizeof(EV_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(ev_dev)\n");
     exit(1);
   }
 
   // copy
-  successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  successGPU = gpuMemcpy_tests((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
     exit(1);
@@ -637,38 +637,38 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
   // malloc
-  successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMalloc((intptr_t *) &b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(b_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMalloc((intptr_t *) &q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(q_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMalloc((intptr_t *) &ev_dev, na*sizeof(EV_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &ev_dev, na*sizeof(EV_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(ev_dev)\n");
     exit(1);
   }
 
    // copy
-  successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  successGPU = gpuMemcpy_tests((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
     exit(1);
   }
 
-  successGPU = gpuMemcpy((intptr_t *) b_dev, (intptr_t *) b, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  successGPU = gpuMemcpy_tests((intptr_t *) b_dev, (intptr_t *) b, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(b_dev, b)\n");
     exit(1);
@@ -679,14 +679,14 @@ int main(int argc, char** argv) {
   elpa_set(handle, "gpu_cholesky", 1, &error_elpa);
   assert_elpa_ok(error_elpa);
 
-  successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
     exit(1);
   }
 
   // copy
-  successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  successGPU = gpuMemcpy_tests((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
   if (!successGPU)
     {
     fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
@@ -698,38 +698,38 @@ int main(int argc, char** argv) {
   elpa_set(handle, "gpu_hermitian_multiply", 1, &error_elpa);
   assert_elpa_ok(error_elpa);
 
-  successGPU = gpuMalloc((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMalloc((intptr_t *) &b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(b_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMalloc((intptr_t *) &c_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
+  successGPU = gpuMalloc_tests((intptr_t *) &c_dev , na_rows*na_cols*sizeof(MATRIX_TYPE));
   if (!successGPU){
     fprintf(stderr, "Error in gpuMalloc(c_dev)\n");
     exit(1);
   }
 
   // copy
-  successGPU = gpuMemcpy((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  successGPU = gpuMemcpy_tests((intptr_t *) a_dev, (intptr_t *) a, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(a_dev, a)\n");
     exit(1);
   }
 
-  successGPU = gpuMemcpy((intptr_t *) b_dev, (intptr_t *) b, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  successGPU = gpuMemcpy_tests((intptr_t *) b_dev, (intptr_t *) b, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(b_dev, b)\n");
     exit(1);
   }
 
-  successGPU = gpuMemcpy((intptr_t *) c_dev, (intptr_t *) c, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
+  successGPU = gpuMemcpy_tests((intptr_t *) c_dev, (intptr_t *) c, na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyHostToDevice);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(c_dev, c)\n");
     exit(1);
@@ -1111,32 +1111,32 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_EIGENVECTORS)
   // copy for testing
-  successGPU = gpuMemcpy((intptr_t *) q , (intptr_t *) q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy_tests((intptr_t *) q , (intptr_t *) q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(q, q_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMemcpy((intptr_t *) ev, (intptr_t *) ev_dev, na*sizeof(EV_TYPE)    , gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy_tests((intptr_t *) ev, (intptr_t *) ev_dev, na*sizeof(EV_TYPE)    , gpuMemcpyDeviceToHost);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(ev, ev_dev)\n");
     exit(1);
   }
 
   // and deallocate device pointer
-  successGPU = gpuFree((intptr_t *) a_dev);
+  successGPU = gpuFree_tests((intptr_t *) a_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuFree((intptr_t *) q_dev);
+  successGPU = gpuFree_tests((intptr_t *) q_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(q_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuFree((intptr_t *) ev_dev);
+  successGPU = gpuFree_tests((intptr_t *) ev_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(ev_dev)\n");
     exit(1);
@@ -1145,20 +1145,20 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_EIGENVALUES)
   // copy for testing
-  successGPU = gpuMemcpy((intptr_t *) ev, (intptr_t *) ev_dev, na*sizeof(EV_TYPE)    , gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy_tests((intptr_t *) ev, (intptr_t *) ev_dev, na*sizeof(EV_TYPE)    , gpuMemcpyDeviceToHost);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(ev, ev_dev)\n");
     exit(1);
   }
 
   // and deallocate device pointer
-  successGPU = gpuFree((intptr_t *) a_dev);
+  successGPU = gpuFree_tests((intptr_t *) a_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuFree((intptr_t *) ev_dev);
+  successGPU = gpuFree_tests((intptr_t *) ev_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(ev_dev)\n");
     exit(1);
@@ -1167,38 +1167,38 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM)
   // copy for testing
-  successGPU = gpuMemcpy((intptr_t *) q , (intptr_t *) q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy_tests((intptr_t *) q , (intptr_t *) q_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(q, q_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMemcpy((intptr_t *) ev, (intptr_t *) ev_dev, na*sizeof(EV_TYPE)    , gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy_tests((intptr_t *) ev, (intptr_t *) ev_dev, na*sizeof(EV_TYPE)    , gpuMemcpyDeviceToHost);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(ev, ev_dev)\n");
     exit(1);
   }
 
   // and deallocate device pointers
-  successGPU = gpuFree((intptr_t *) a_dev);
+  successGPU = gpuFree_tests((intptr_t *) a_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuFree((intptr_t *) b_dev);
+  successGPU = gpuFree_tests((intptr_t *) b_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(b_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuFree((intptr_t *) q_dev);
+  successGPU = gpuFree_tests((intptr_t *) q_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(q_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuFree((intptr_t *) ev_dev);
+  successGPU = gpuFree_tests((intptr_t *) ev_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(ev_dev)\n");
     exit(1);
@@ -1207,14 +1207,14 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_CHOLESKY)
   // copy for testing
-  successGPU = gpuMemcpy((intptr_t *) a , (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy_tests((intptr_t *) a , (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(a, a_dev)\n");
     exit(1);
   }
 
   // and deallocate device pointer
-  successGPU = gpuFree((intptr_t *) a_dev);
+  successGPU = gpuFree_tests((intptr_t *) a_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(a_dev)\n");
     exit(1);
@@ -1223,38 +1223,38 @@ int main(int argc, char** argv) {
 
 #if defined(TEST_MULTIPLY)
   // copy for testing
-  successGPU = gpuMemcpy((intptr_t *) a, (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy_tests((intptr_t *) a, (intptr_t *) a_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(a, a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMemcpy((intptr_t *) b, (intptr_t *) b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy_tests((intptr_t *) b, (intptr_t *) b_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(b, b_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuMemcpy((intptr_t *) c, (intptr_t *) c_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
+  successGPU = gpuMemcpy_tests((intptr_t *) c, (intptr_t *) c_dev , na_rows*na_cols*sizeof(MATRIX_TYPE), gpuMemcpyDeviceToHost);
   if (!successGPU){
     fprintf(stderr, "Error in gpuMemcpy(c, c_dev)\n");
     exit(1);
   }
 
   // and deallocate device pointers
-  successGPU = gpuFree((intptr_t *) a_dev);
+  successGPU = gpuFree_tests((intptr_t *) a_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(a_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuFree((intptr_t *) b_dev);
+  successGPU = gpuFree_tests((intptr_t *) b_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(b_dev)\n");
     exit(1);
   }
 
-  successGPU = gpuFree((intptr_t *) c_dev);
+  successGPU = gpuFree_tests((intptr_t *) c_dev);
   if (!successGPU){
     fprintf(stderr, "Error in gpuFree(c_dev)\n");
     exit(1);
