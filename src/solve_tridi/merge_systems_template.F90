@@ -139,6 +139,7 @@
       real(kind=REAL_DATATYPE), allocatable       :: qtmp1(:,:), qtmp2(:,:), ev(:,:)
 #ifdef WITH_OPENMP_TRADITIONAL
       real(kind=REAL_DATATYPE), allocatable       :: z_p(:,:)
+      integer(kind=ik)                            :: my_thread
 #endif
 
       integer(kind=ik)                            :: i, j, k, na1, na2, l_rows, l_cols, l_rqs, l_rqe, &
@@ -189,19 +190,14 @@
 
       integer(kind=ik) :: ii,jj, indx, ind_ex, ind_ex2, p_col_tmp, index2, counter1, counter2
 
-      logical                                      :: useCCL
-      integer(kind=c_intptr_t)                     :: ccl_comm_rows, ccl_comm_cols
-      integer(kind=c_int)                          :: cclDataType
-
-#ifdef WITH_OPENMP_TRADITIONAL
-      integer(kind=ik)                             :: my_thread
-
-      allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
-      check_allocate("merge_systems: z_p",istat, errorMessage)
-#endif
+      logical                                     :: useCCL
+      integer(kind=c_intptr_t)                    :: ccl_comm_rows, ccl_comm_cols
+      integer(kind=c_int)                         :: cclDataType
 
       call obj%timer%start("merge_systems" // PRECISION_SUFFIX)
       success = .true.
+
+      print *, "merge_systems_template version-1" ! PETERDEBUG111
 
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
@@ -250,6 +246,10 @@
         endif ! useCCL
       endif ! useGPU
 
+#ifdef WITH_OPENMP_TRADITIONAL
+      allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
+      check_allocate("merge_systems: z_p",istat, errorMessage)
+#endif
 
       ! If my processor column isn't in the requested set, do nothing
       if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
@@ -313,8 +313,6 @@
       do np = npc_0, npc_0+npc_n-1
         max_local_cols = MAX(max_local_cols,COUNT(p_col(1:na)==np))
       enddo
-
-
 
 
       if (useGPU) then
@@ -522,20 +520,24 @@
         
         ! Rearrange eigenvectors
         if (useGPU) then
+          NVTX_RANGE_PUSH("resort_ev_gpu")
+          call obj%timer%start("resort_ev_gpu")
           call resort_ev_gpu_&
-                             &PRECISION&
-                             (obj, idx, na, na, p_col_out, q_dev, matrixRows, matrixCols, l_rows, l_rqe, &
+                              &PRECISION&
+                              (obj, idx, na, na, p_col_out, q_dev, matrixRows, matrixCols, l_rows, l_rqe, &
                               l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
-        else
+          call obj%timer%stop("resort_ev_gpu")
+          NVTX_RANGE_POP("resort_ev_gpu")
+        else ! useGPU
           call resort_ev_cpu_&
                              &PRECISION&
                              (obj, idx, na, na, p_col_out, q,     matrixRows, matrixCols, l_rows, l_rqe, &
                               l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
-        endif
+        endif ! useGPU
 
         call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
 
-        if (wantDebug) write(error_unit,*) "Returing early from merge_systems (RHO*zmax <= TOL in deflation)"
+        if (wantDebug) write(error_unit,*) "Returing early from merge_systems (RHO*zmax <= TOL): matrix is block-diagonal"
 
         return
       ENDIF

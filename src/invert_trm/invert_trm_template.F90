@@ -734,7 +734,7 @@
 
         successGPU = ccl_group_start()
         if (.not. successGPU) then
-          print *, "Error in setting up ccl_group_start!"
+          print *, "invert_trm: Error in setting up ccl_group_start!"
           stop 1
         endif
 
