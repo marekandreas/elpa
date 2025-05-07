@@ -59,13 +59,13 @@
     subroutine merge_systems_gpu_&
     &PRECISION &
                          (obj, na, nm, d, e, q_dev, &
-                          matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                          matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols_self, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success, max_threads)
 #else
     subroutine merge_systems_cpu_&
     &PRECISION &
                          (obj, na, nm, d, e, q, &
-                          matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, &
+                          matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols_self, &
                           l_col, p_col, l_col_out, p_col_out, npc_0, npc_n, useGPU, wantDebug, success, max_threads)
 #endif
 
@@ -102,7 +102,7 @@
       class(elpa_abstract_impl_t), intent(inout)  :: obj
       integer(kind=ik), intent(in)                :: na ! this is rather na_local, not global na
       integer(kind=ik), intent(in)                :: nm, matrixRows, nqoff, nblk, matrixCols, mpi_comm_rows, &
-                                                     mpi_comm_cols, npc_0, npc_n
+                                                     mpi_comm_cols_self, npc_0, npc_n
       integer(kind=ik), intent(in)                :: l_col(na), p_col(na), l_col_out(na), p_col_out(na)
 
 #ifdef SOLVE_TRIDI_GPU_BUILD
@@ -202,8 +202,8 @@
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
       call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND) ,np_rowsMPI, mpierr)
-      call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND) ,my_pcolMPI, mpierr)
-      call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND) ,np_colsMPI, mpierr)
+      call mpi_comm_rank(int(mpi_comm_cols_self,kind=MPI_KIND) ,my_pcolMPI, mpierr)
+      call mpi_comm_size(int(mpi_comm_cols_self,kind=MPI_KIND) ,np_colsMPI, mpierr)
 
       my_prow = int(my_prowMPI,kind=c_int)
       np_rows = int(np_rowsMPI,kind=c_int)
@@ -505,7 +505,7 @@
       
       call global_gather_&
       &PRECISION&
-      &(obj, z, na, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, success)
+      &(obj, z, na, mpi_comm_rows, mpi_comm_cols_self, npc_n, np_prev, np_next, success)
       if (.not.(success)) then
         write(error_unit,*) "Error in global_gather. Aborting"
         success = .false.
@@ -552,14 +552,14 @@
           call resort_ev_gpu_&
                               &PRECISION&
                               (obj, idx, na, na, p_col_out, q_dev, matrixRows, matrixCols, l_rows, l_rqe, &
-                              l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
+                              l_rqs, mpi_comm_cols_self, p_col, l_col, l_col_out)
           call obj%timer%stop("resort_ev_gpu")
           NVTX_RANGE_POP("resort_ev_gpu")
         else ! useGPU
           call resort_ev_cpu_&
                              &PRECISION&
                              (obj, idx, na, na, p_col_out, q    , matrixRows, matrixCols, l_rows, l_rqe, &
-                              l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
+                              l_rqs, mpi_comm_cols_self, p_col, l_col, l_col_out)
         endif ! useGPU
 
         call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
@@ -602,7 +602,7 @@
           S = Z(idx(i))
           C = Z1(na1)
 
-          ! Find sqrt(a**2+b**2) without overflow or
+          ! Find TAU = sqrt(a**2+b**2) without overflow or
           ! destructive underflow.
           TAU = PRECISION_LAPY2( C, S )
           T = D1(na1) - D(idx(i))
@@ -673,14 +673,14 @@
               call transform_columns_gpu_&
                                          &PRECISION &
                                         (obj, idx(i), idx1(na1), na, tmp, l_rqs, l_rqe, &
-                                          q_dev, matrixRows, matrixCols, l_rows, mpi_comm_cols, &
+                                          q_dev, matrixRows, matrixCols, l_rows, mpi_comm_cols_self, &
                                           p_col, l_col, qtrans_dev, &
                                           tmp_dev, zero_dev, one_dev, debug, my_stream)
             else
               call transform_columns_cpu_&
                                         &PRECISION &
                                         (obj, idx(i), idx1(na1), na, tmp, l_rqs, l_rqe, &
-                                          q    , matrixRows, matrixCols, l_rows, mpi_comm_cols, &
+                                          q    , matrixRows, matrixCols, l_rows, mpi_comm_cols_self, &
                                           p_col, l_col, qtrans)
             endif
             NVTX_RANGE_POP("transform_columns")
@@ -750,14 +750,14 @@
             call transform_columns_gpu_&
                                         &PRECISION &
                                       (obj, idx1(1), idx1(2), na, tmp, l_rqs, l_rqe, &
-                                        q_dev, matrixRows, matrixCols, l_rows, mpi_comm_cols, &
+                                        q_dev, matrixRows, matrixCols, l_rows, mpi_comm_cols_self, &
                                         p_col, l_col, qtrans_dev, &
                                         tmp_dev, zero_dev, one_dev, debug, my_stream)
           else
             call transform_columns_cpu_&
                                        &PRECISION&
                                        & (obj, idx1(1), idx1(2), na, tmp, l_rqs, l_rqe, q, &
-                                          matrixRows, matrixCols, l_rows, mpi_comm_cols, &
+                                          matrixRows, matrixCols, l_rows, mpi_comm_cols_self, &
                                           p_col, l_col, qtrans)
           endif
         endif
@@ -794,7 +794,7 @@
           call resort_ev_gpu_&
                          &PRECISION&
                          &(obj, idxq1, na, na, p_col_out, q_dev, matrixRows, matrixCols, l_rows, l_rqe, &
-                           l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
+                           l_rqs, mpi_comm_cols_self, p_col, l_col, l_col_out)
 
 ! PETERDEBUG111 cleanup
 !           NVTX_RANGE_PUSH("gpu_memcpy_q_dev_to_q")
@@ -815,7 +815,7 @@
 !           call resort_ev_cpu_&
 !                          &PRECISION&
 !                          &(obj, idxq1, na, na, p_col_out, q    , matrixRows, matrixCols, l_rows, l_rqe, &
-!                            l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
+!                            l_rqs, mpi_comm_cols_self, p_col, l_col, l_col_out)
 
 
 !           call obj%timer%start("gpu_memcpy")
@@ -837,7 +837,7 @@
           call resort_ev_cpu_&
                          &PRECISION&
                          &(obj, idxq1, na, na, p_col_out, q    , matrixRows, matrixCols, l_rows, l_rqe, &
-                           l_rqs, mpi_comm_cols, p_col, l_col, l_col_out)
+                           l_rqs, mpi_comm_cols_self, p_col, l_col, l_col_out)
         endif
 
         write(error_unit,*) "Returing early from merge_systems (na1==1 .or. na1==2)"
@@ -849,7 +849,7 @@
 #ifdef WITH_OPENMP_TRADITIONAL
         z_p(1:na1,:) = 1
 #endif
-        dbase(1:na1) = 0
+        dbase(1:na1) = 0 ! PETERDEBUG111: not needed on GPU? directly set dbase_dev=0
         ddiff(1:na1) = 0
 
         info = 0
@@ -1032,7 +1032,7 @@
         NVTX_RANGE_PUSH("global_product")
         call global_product_&
                   &PRECISION&
-                  (obj, z, na1, mpi_comm_rows, mpi_comm_cols, npc_0, npc_n, success)
+                  (obj, z, na1, mpi_comm_rows, mpi_comm_cols_self, npc_0, npc_n, success)
         if (.not.(success)) then
           write(error_unit,*) "Error in global_product. Aborting..."
           return
@@ -1044,14 +1044,14 @@
         NVTX_RANGE_PUSH("global_gather_x2")
         call global_gather_&
         &PRECISION&
-        &(obj, dbase, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, success)
+        &(obj, dbase, na1, mpi_comm_rows, mpi_comm_cols_self, npc_n, np_prev, np_next, success)
         if (.not.(success)) then
           write(error_unit,*) "Error in global_gather. Aborting..."
           return
         endif
         call global_gather_&
         &PRECISION&
-        &(obj, ddiff, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, success)
+        &(obj, ddiff, na1, mpi_comm_rows, mpi_comm_cols_self, npc_n, np_prev, np_next, success)
         if (.not.(success)) then
           write(error_unit,*) "Error in global_gather. Aborting..."
           return
@@ -1187,7 +1187,7 @@
         NVTX_RANGE_PUSH("global_gather")
         call global_gather_&
                   &PRECISION&
-                  &(obj, ev_scale, na1, mpi_comm_rows, mpi_comm_cols, npc_n, np_prev, np_next, success)
+                  &(obj, ev_scale, na1, mpi_comm_rows, mpi_comm_cols_self, npc_n, np_prev, np_next, success)
         if (.not.(success)) then
           write(error_unit,*) "Error in global_gather. Aborting..."
           return
@@ -1743,7 +1743,7 @@
 
                 call MPI_Sendrecv_replace(qtmp1, int(l_rows*max_local_cols,kind=MPI_KIND), MPI_REAL_PRECISION,     &
                                           int(np_next,kind=MPI_KIND), 1111_MPI_KIND, int(np_prev,kind=MPI_KIND), &
-                                          1111_MPI_KIND, int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+                                          1111_MPI_KIND, int(mpi_comm_cols_self,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
 #ifdef WITH_GPU_STREAMS 
                 my_stream = obj%gpu_setup%my_stream
                 successGPU = gpu_stream_synchronize(my_stream)
@@ -1775,7 +1775,7 @@
               call obj%timer%start("mpi_communication")
               call MPI_Sendrecv_replace(qtmp1, int(l_rows*max_local_cols,kind=MPI_KIND), MPI_REAL_PRECISION,     &
                                           int(np_next,kind=MPI_KIND), 1111_MPI_KIND, int(np_prev,kind=MPI_KIND), &
-                                          1111_MPI_KIND, int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+                                          1111_MPI_KIND, int(mpi_comm_cols_self,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
               call obj%timer%stop("mpi_communication")
 #endif /* WITH_MPI */
 

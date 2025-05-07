@@ -1,4 +1,4 @@
-//    Copyright 2024, P. Karpov
+//    Copyright 2025, P. Karpov
 //
 //    This file is part of ELPA.
 //

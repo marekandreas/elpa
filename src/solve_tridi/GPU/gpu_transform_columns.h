@@ -63,13 +63,13 @@ __global__ void gpu_transform_one_column_kernel (T *a_dev, T *b_dev, T *c_dev, T
 
 template <typename T>
 void gpu_transform_one_column(T *a_dev, T *b_dev, T *c_dev, T *alpha_dev, T *beta_dev, 
-                          int n_elements, int debug, gpuStream_t my_stream){
+                              int n_elements, int SM_count, int debug, gpuStream_t my_stream){
 
-  dim3 blocks = dim3(1,1,1); // PETERDEBUG111
-  dim3 threadsPerBlock = dim3(1,1,1);
+  // dim3 blocks = dim3(1,1,1); // PETERDEBUG111
+  // dim3 threadsPerBlock = dim3(1,1,1);
 
-  // dim3 blocks = dim3(SM_count,1,1);
-  // dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+  dim3 blocks = dim3(SM_count,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
 #ifdef WITH_GPU_STREAMS
   gpu_transform_one_column_kernel<<<blocks,threadsPerBlock,0,my_stream>>>((T *) a_dev, (T *) b_dev, (T *) c_dev, 
@@ -92,14 +92,14 @@ void gpu_transform_one_column(T *a_dev, T *b_dev, T *c_dev, T *alpha_dev, T *bet
 
 extern "C" void CONCATENATE(ELPA_GPU,  _transform_one_column_FromC)(char dataType, intptr_t a_dev, intptr_t b_dev, intptr_t c_dev, 
                                                       intptr_t alpha_dev, intptr_t beta_dev, 
-                                                      int n_elements, int debug, gpuStream_t my_stream){
+                                                      int n_elements, int SM_count, int debug, gpuStream_t my_stream){
 
   if      (dataType=='D') gpu_transform_one_column<double>((double *) a_dev, (double *) b_dev, (double *) c_dev, 
                                              (double *) alpha_dev, (double *) beta_dev, 
-                                             n_elements, debug, my_stream);
+                                             n_elements, SM_count, debug, my_stream);
   else if (dataType=='S') gpu_transform_one_column<float> ((float  *) a_dev, (float  *) b_dev, (float  *) c_dev, 
                                              (float  *) alpha_dev, (float  *) beta_dev, 
-                                             n_elements, debug, my_stream);
+                                             n_elements, SM_count, debug, my_stream);
   else {
     printf("Error in elpa_transform_one_column: Unsupported data type\n");
   }
@@ -132,13 +132,10 @@ __global__ void gpu_transform_two_columns_kernel (T *q_dev, T *qtrans_dev, T *tm
 
 template <typename T>
 void gpu_transform_two_columns(T *q_dev, T *qtrans_dev, T *tmp_dev, int ldq, int l_rows, int l_rqs, int l_rqe, int lc1, int lc2, 
-                               int debug, gpuStream_t my_stream){
+                               int SM_count, int debug, gpuStream_t my_stream){
 
-  dim3 blocks = dim3(1,1,1); // PETERDEBUG111
-  dim3 threadsPerBlock = dim3(1,1,1);
-
-  // dim3 blocks = dim3(SM_count,1,1);
-  // dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+  dim3 blocks = dim3(SM_count,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
 #ifdef WITH_GPU_STREAMS
   gpu_transform_two_columns_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(q_dev, qtrans_dev, tmp_dev, ldq, l_rows, l_rqs, l_rqe, lc1, lc2);
@@ -158,12 +155,12 @@ void gpu_transform_two_columns(T *q_dev, T *qtrans_dev, T *tmp_dev, int ldq, int
 
 extern "C" void CONCATENATE(ELPA_GPU,  _transform_two_columns_FromC)(char dataType, intptr_t q_dev, intptr_t qtrans_dev, intptr_t tmp_dev,
                                                                      int ldq, int l_rows, int l_rqs, int l_rqe, int lc1, int lc2, 
-                                                                     int debug, gpuStream_t my_stream){
+                                                                     int SM_count, int debug, gpuStream_t my_stream){
 
   if      (dataType=='D') gpu_transform_two_columns<double>((double *) q_dev, (double *) qtrans_dev, (double *) tmp_dev, 
-                                             ldq, l_rows, l_rqs, l_rqe, lc1, lc2, debug, my_stream);
+                                             ldq, l_rows, l_rqs, l_rqe, lc1, lc2, SM_count, debug, my_stream);
   else if (dataType=='S') gpu_transform_two_columns<float> ((float  *) q_dev, (float  *) qtrans_dev, (float  *) tmp_dev,
-                                             ldq, l_rows, l_rqs, l_rqe, lc1, lc2, debug, my_stream);
+                                             ldq, l_rows, l_rqs, l_rqe, lc1, lc2, SM_count, debug, my_stream);
   else {
     printf("Error in elpa_transform_two_columns: Unsupported data type\n");
   }

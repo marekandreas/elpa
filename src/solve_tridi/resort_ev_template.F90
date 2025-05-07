@@ -4,12 +4,12 @@
   subroutine resort_ev_gpu_&
                            &PRECISION&
                            &(obj, idx_ev, nLength, na, p_col_out, q_dev, ldq, matrixCols, l_rows, l_rqe, l_rqs, &
-                           mpi_comm_cols, p_col, l_col, l_col_out)
+                           mpi_comm_cols_self, p_col, l_col, l_col_out)
 #else
   subroutine resort_ev_cpu_&
                            &PRECISION&
                            &(obj, idx_ev, nLength, na, p_col_out, q,     ldq, matrixCols, l_rows, l_rqe, l_rqs, &
-                           mpi_comm_cols, p_col, l_col, l_col_out)
+                           mpi_comm_cols_self, p_col, l_col, l_col_out)
 #endif
     use precision
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -24,7 +24,7 @@
     class(elpa_abstract_impl_t), intent(inout) :: obj
     integer(kind=ik), intent(in)               :: nLength, na
     integer(kind=ik), intent(in)               :: ldq, matrixCols, l_rows, l_rqe, l_rqs
-    integer(kind=ik), intent(in)               :: mpi_comm_cols
+    integer(kind=ik), intent(in)               :: mpi_comm_cols_self
     integer(kind=ik), intent(in)               :: p_col(na), l_col(na), l_col_out(na)
 #ifdef WITH_MPI
     integer(kind=MPI_KIND)                     :: mpierrMPI, my_pcolMPI
@@ -50,7 +50,7 @@
 
     logical                                    :: useGPU, useCCL
     logical                                    :: successGPU
-    integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols
+    integer(kind=c_intptr_t)                   :: ccl_comm_rows, ccl_comm_cols_self
     integer(kind=c_int)                        :: cclDataType
     integer(kind=c_intptr_t)                   :: my_stream
     integer(kind=c_intptr_t)                   :: num
@@ -60,7 +60,7 @@
     if (l_rows==0) return ! My processor column has no work to do
 
 #ifdef WITH_MPI
-    call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
+    call mpi_comm_rank(int(mpi_comm_cols_self,kind=MPI_KIND), my_pcolMPI, mpierr)
     my_pcol = int(my_pcolMPI,kind=c_int)
 #endif
 
@@ -80,7 +80,11 @@
       if (useCCL) then
         my_stream = obj%gpu_setup%my_stream
         ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
-        ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
+        ccl_comm_cols_self = obj%gpu_setup%ccl_comm_cols
+        if (mpi_comm_cols_self==mpi_comm_self) then
+          ccl_comm_cols_self = obj%gpu_setup%ccl_comm_self
+        endif
+
 #if defined(DOUBLE_PRECISION)
         cclDataType = cclDouble
 #endif      
@@ -164,11 +168,11 @@
 
           if (useCCL) then
             successGPU = ccl_Send(q_dev+(l_rqs-1+(lc1-1)*ldq)*size_of_datatype, int(l_rows,kind=c_size_t), &
-                                  cclDataType, pc2, ccl_comm_cols, my_stream)
+                                  cclDataType, pc2, ccl_comm_cols_self, my_stream)
           else
             call obj%timer%start("mpi_communication")
             call mpi_send(q(l_rqs,lc1), int(l_rows,kind=MPI_KIND), MPI_REAL_PRECISION, pc2, int(mod(i,4096),kind=MPI_KIND), &
-                                int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+                                int(mpi_comm_cols_self,kind=MPI_KIND), mpierr)
             call obj%timer%stop("mpi_communication")
           endif
 #else /* WITH_MPI */
@@ -178,11 +182,11 @@
 #ifdef WITH_MPI
         if (useCCL) then
           successGPU = ccl_Recv(qtmp_dev+(nc-1)*l_rows*size_of_datatype, int(l_rows,kind=c_size_t), &
-                                cclDataType, pc1, ccl_comm_cols, my_stream)
+                                cclDataType, pc1, ccl_comm_cols_self, my_stream)
         else
           call obj%timer%start("mpi_communication")
           call mpi_recv(qtmp(1,nc), int(l_rows,kind=MPI_KIND), MPI_REAL_PRECISION, pc1, int(mod(i,4096),kind=MPI_KIND), &
-                        int(mpi_comm_cols,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
+                        int(mpi_comm_cols_self,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
           call obj%timer%stop("mpi_communication")
         endif
 
