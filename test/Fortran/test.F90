@@ -424,10 +424,10 @@ program test
 
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_ALL_LAYOUTS)
-! #ifdef WITH_MPI
-!      call mpi_finalize(mpierr) ! PETERDEBUG: comment out for testing
-! #endif
-!      stop 77
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
 #endif
 
   call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
@@ -598,12 +598,12 @@ program test
 #endif /* TEST_CHOLESKY */
 
    ! check first whether to abort
-  if (na < 10) then
-#ifdef WITH_MPI
-    call mpi_finalize(mpierr)
-#endif
-    stop 77
-  endif
+!   if (na < 10) then ! PETERDEBUG111 commented out. delete?
+! #ifdef WITH_MPI
+!     call mpi_finalize(mpierr)
+! #endif
+!     stop 77
+!   endif
 
   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                               d, sd, ds, sds, a, as, nblk, np_rows, &

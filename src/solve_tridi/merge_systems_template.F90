@@ -170,7 +170,7 @@
       integer(kind=c_intptr_t)                    :: idx1_dev, p_col_dev, coltyp_dev, p_col_out_dev, ndef_c_dev
       integer(kind=c_intptr_t)                    :: idxq1_dev, l_col_out_dev, idx_dev, idx2_dev, l_col_dev
       integer(kind=c_intptr_t)                    :: nnzul_dev
-      integer(kind=c_intptr_t)                    :: tmp_dev, zero_dev, one_dev, shift_dev, qtrans_dev ! PETERDEBUG111: new. All needed?
+      integer(kind=c_intptr_t)                    :: tmp_dev, zero_dev, one_dev, qtrans_dev ! for transform_columns_gpu
 
       integer(kind=c_intptr_t)                    :: nnzu_val_dev, nnzl_val_dev
       logical                                     :: successGPU
@@ -196,8 +196,6 @@
 
       call obj%timer%start("merge_systems" // PRECISION_SUFFIX)
       success = .true.
-
-      print *, "merge_systems_template version-2" ! PETERDEBUG111
 
       call obj%timer%start("mpi_communication")
       call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND) ,my_prowMPI, mpierr)
@@ -424,16 +422,23 @@
 #endif
         check_memcpy_gpu("merge_systems: l_col_dev", successGPU)
 
-        ! PETERDEBUG111 add streamed version
         num = 1 * size_of_datatype
         beta = 0.0_rk
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(zero_dev, int(loc(beta),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
         successGPU = gpu_memcpy(zero_dev, int(loc(beta),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
         check_memcpy_gpu("merge_systems: zero_dev", successGPU)
 
+        num = 1 * size_of_datatype
         beta = 1.0_rk
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(one_dev, int(loc(beta),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
         successGPU = gpu_memcpy(one_dev, int(loc(beta),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
         check_memcpy_gpu("merge_systems: one_dev", successGPU)
-
 
       endif ! useGPU
 
@@ -536,10 +541,7 @@
       ! except to reorganize D and Q
 
       IF ( RHO*zmax <= TOL ) THEN
-        if (my_proc==0) print *, "RESORT_EV RHO*zmax <= TOL 1" ! PETERDEBUG111. Cleanup after testing
-
         ! Rearrange eigenvalues
-
         tmp = d
         do i=1,na
           d(i) = tmp(idx(i))
@@ -565,7 +567,8 @@
         call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
 
         if (wantDebug) write(error_unit,*) "Returing early from merge_systems (RHO*zmax <= TOL): matrix is block-diagonal"
-
+        ! tested by validate_real_double_solve_tridiagonal_1stage_blocktridi
+ 
         return
       ENDIF
 
@@ -668,8 +671,6 @@
 #endif
               check_memcpy_gpu("transform_columns: q_dev", successGPU)
 
-              print *, "transform_columns_gpu, i=", i ! PETERDEBUG111
-
               call transform_columns_gpu_&
                                          &PRECISION &
                                         (obj, idx(i), idx1(na1), na, tmp, l_rqs, l_rqe, &
@@ -745,8 +746,6 @@
 #endif
             check_memcpy_gpu("transform_columns: q_dev", successGPU)
 
-            print *, "transform_columns_gpu, na1=2" ! PETERDEBUG111
-
             call transform_columns_gpu_&
                                         &PRECISION &
                                       (obj, idx1(1), idx1(2), na, tmp, l_rqs, l_rqe, &
@@ -760,7 +759,7 @@
                                           matrixRows, matrixCols, l_rows, mpi_comm_cols_self, &
                                           p_col, l_col, qtrans)
           endif
-        endif
+        endif ! na1==2
 
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
@@ -795,44 +794,6 @@
                          &PRECISION&
                          &(obj, idxq1, na, na, p_col_out, q_dev, matrixRows, matrixCols, l_rows, l_rqe, &
                            l_rqs, mpi_comm_cols_self, p_col, l_col, l_col_out)
-
-! PETERDEBUG111 cleanup
-!           NVTX_RANGE_PUSH("gpu_memcpy_q_dev_to_q")
-!           call obj%timer%start("gpu_memcpy")
-!           num = matrixRows*matrixCols*size_of_datatype
-! #ifdef WITH_GPU_STREAMS
-!           successGPU = gpu_memcpy_async(int(loc(q(1,1)),kind=c_intptr_t), q_dev, num, gpuMemcpyDeviceToHost, my_stream)
-!           if (wantDebug) successGPU = gpu_DeviceSynchronize()
-! #else
-!           successGPU = gpu_memcpy      (int(loc(q(1,1)),kind=c_intptr_t), q_dev, num, gpuMemcpyDeviceToHost)
-! #endif
-!           check_memcpy_gpu("merge_systems: q_dev", successGPU)
-!           call obj%timer%stop("gpu_memcpy")
-!           NVTX_RANGE_POP("gpu_memcpy_q_dev_to_q")
-
-!           if (my_proc==0 .and. wantDebug) print *, "RESORT_EV" ! PETERDEBUG111
-
-!           call resort_ev_cpu_&
-!                          &PRECISION&
-!                          &(obj, idxq1, na, na, p_col_out, q    , matrixRows, matrixCols, l_rows, l_rqe, &
-!                            l_rqs, mpi_comm_cols_self, p_col, l_col, l_col_out)
-
-
-!           call obj%timer%start("gpu_memcpy")
-!           num = matrixRows*matrixCols*size_of_datatype
-!           NVTX_RANGE_PUSH("gpu_memcpy_q_to_q_dev")
-! #ifdef WITH_GPU_STREAMS
-!           successGPU = gpu_memcpy_async(q_dev, int(loc(q(1,1)),kind=c_intptr_t), &
-!                                         num, gpuMemcpyHostToDevice, my_stream)
-!           if (wantDebug) successGPU = gpu_DeviceSynchronize()
-! #else
-!           successGPU = gpu_memcpy      (q_dev, int(loc(q(1,1)),kind=c_intptr_t), &
-!                                         num, gpuMemcpyHostToDevice)
-! #endif
-!           check_memcpy_gpu("merge_systems: q_dev", successGPU)
-!           NVTX_RANGE_POP("gpu_memcpy_q_to_q_dev")
-!           call obj%timer%stop("gpu_memcpy")
-
         else
           call resort_ev_cpu_&
                          &PRECISION&
@@ -841,15 +802,17 @@
         endif
 
         write(error_unit,*) "Returing early from merge_systems (na1==1 .or. na1==2)"
+        ! na=1 can be tested with "mpirun -n 4 ./validate_real_double_solve_tridiagonal_1stage_gpu_blocktridi 3 3 1"
+        ! na=2 can be tested with "mpirun -n 4 ./validate_real_double_solve_tridiagonal_1stage_gpu_toeplitz 4 4 2"
       else if (na1>2) then
 
         ! Solve secular equation
 
-        z(1:na1) = 1
+        z(1:na1) = 1 ! PETERDEBUG_optimize: here a kernel should be extracted from gpu_merge_systems_new.h
 #ifdef WITH_OPENMP_TRADITIONAL
         z_p(1:na1,:) = 1
 #endif
-        dbase(1:na1) = 0 ! PETERDEBUG111: not needed on GPU? directly set dbase_dev=0
+        dbase(1:na1) = 0 ! PETERDEBUG_optimize: not needed on GPU? directly set dbase_dev=0
         ddiff(1:na1) = 0
 
         info = 0
@@ -862,7 +825,6 @@
 !!$OMP DO
 !#endif
 
-        print *, "lapack_laed4_loop: na1 = ", na1 ! PETERDEBUG
         NVTX_RANGE_PUSH("lapack_laed4_loop")
         
         if (useGPU) then
@@ -1172,8 +1134,6 @@
           enddo
         endif ! useGPU
 
-        !print *, "ev_scale = ", ev_scale(1:na) ! PETERDEBUG111
-
         if (wantDebug) call obj%timer%stop("add_tmp_loop")
         NVTX_RANGE_POP("add_tmp_loop")
 
@@ -1366,7 +1326,7 @@
           NVTX_RANGE_PUSH("set_qtmp1_qtmp2_0")
           call obj%timer%start("set_qtmp1_qtmp2_0")
           qtmp1 = 0 ! May contain empty (unset) parts
-          qtmp2 = 0 ! Not really needed ! PETERDEBUG111: then cleanup? also check for qtmp1
+          qtmp2 = 0 ! Not really needed ! PETERDEBUG_optimize cpu: then cleanup? also check for qtmp1
           call obj%timer%stop("set_qtmp1_qtmp2_0")
           NVTX_RANGE_POP("set_qtmp1_qtmp2_0")
         endif
@@ -1828,7 +1788,7 @@
 
           ndef = MAX(nnzu,nnzl) ! Remote counter in input matrix
           if (useGPU) then
-            ! PETERDEBUG: idx2_dev, problem with garbage values
+            ! PETERDEBUG: idx2_dev, potential problem with garbage values?
             call GPU_UPDATE_NDEF_C(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, my_stream)
 
           endif ! useGPU

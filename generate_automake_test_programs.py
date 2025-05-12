@@ -45,7 +45,7 @@ matrix_flag = {
     "analytic":    "-DTEST_MATRIX_ANALYTIC",
     "toeplitz":    "-DTEST_MATRIX_TOEPLITZ",
     "frank":       "-DTEST_MATRIX_FRANK",
-    "blocktridi": "-DTEST_MATRIX_BLOCKTRIDI",
+    "blocktridi":  "-DTEST_MATRIX_BLOCKTRIDI",
 }
 
 qr_flag = {

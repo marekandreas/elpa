@@ -49,25 +49,6 @@
 //________________________________________________________________
 
 
-// PETERDEBUG111: cleanup if unneeded
-__device__ double atomicMultiply(double* address, double val)
-{
-    unsigned long long int* address_as_ull =
-                              (unsigned long long int*)address;
-    unsigned long long int old = *address_as_ull, assumed;
-
-    do {
-        assumed = old;
-        old = atomicCAS(address_as_ull, assumed,
-                        __double_as_longlong(val *
-                               __longlong_as_double(assumed)));
-
-    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
-    } while (assumed != old);
-
-    return __longlong_as_double(old);
-}
-
 // PETERDEBUG111: create a separate Fortran function for this
 template <typename T>
 __global__ void elpa_fill_ones_kernel(T* array, int n) {
@@ -80,7 +61,7 @@ __global__ void elpa_fill_ones_kernel(T* array, int n) {
 
 //________________________________________________________________
 
-// Generic reduction ("SUM") function within one block
+// Generic reduction ("sum") function within one thread block
 template <typename T, typename Func>
 __device__ T elpa_sum(int n, int tid, int threads_total, T* cache, Func func) {
 
@@ -106,7 +87,7 @@ __device__ T elpa_sum(int n, int tid, int threads_total, T* cache, Func func) {
 
 template <typename T>
 __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T* d1, T* z1, T* delta, T* rho, T* cache,
-                                                              int tid, int threads_total, int myid) {
+                                                              int tid, int threads_total) {
   // i_f is the Fortran index (1-indexed); convert to C index:
   int i = i_f - 1;
   //T dshift;
@@ -152,7 +133,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
 
     if (tid==0)
       {
-      x_sh = 0.5 * (d1[i] + d1[i+1]);
+      x_sh = 0.5*(d1[i] + d1[i+1]);
       }
     __syncthreads();
 
@@ -190,7 +171,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
     {
     if (tid==0)
       {
-      x_sh = 0.5 * (a_sh + b_sh);
+      x_sh = 0.5*(a_sh + b_sh);
       if (x_sh == a_sh || x_sh == b_sh)
           break_flag_sh=1;  // no further subdivision possible
       if (fabs(x_sh) < eps)
@@ -205,7 +186,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
 
     if (tid==0)
       {
-      y_sh = 1.0 + rho[0] * sum_term;
+      y_sh = 1.0 + rho[0]*sum_term;
       if (y_sh == 0)
           break_flag_sh=1;  // exact solution found
       else if (y_sh > 0)
@@ -231,7 +212,6 @@ __global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *
                                                        T *z_extended_dev, T *dbase_dev, T *ddiff_dev, 
                                                        int my_proc, int na1, int n_procs, int myid){
   __shared__ T cache[MAX_THREADS_PER_BLOCK]; 
-  //int tid = threadIdx.x + blockIdx.x*blockDim.x;
   int tid = threadIdx.x;
 
   //int i_loc = threadIdx.x;
@@ -270,22 +250,13 @@ __global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *
   // T eps = (sizeof(T) == sizeof(double)) ? (T)1e-200 : (T)1e-20;
 
   for (int i=my_proc + n_procs*blockIdx.x; i<na1; i += n_procs*gridDim.x)
-  //for (int i=my_proc; i<na1; i += n_procs)
     {
     int i_f = i + 1; // i_f is the Fortran index (1-based)
 
-    //_______________________________________________
-    // PETERDEBUG111 my_proc, myid -- for debugging. delete it from device_solve_secular_equation
-    device_solve_secular_equation(na1, i_f, d1_dev, z1_dev, delta_extended_dev+na1*blockIdx.x, rho_dev, cache, tid, blockDim.x, myid);
+    device_solve_secular_equation(na1, i_f, d1_dev, z1_dev, delta_extended_dev+na1*blockIdx.x, rho_dev, cache, tid, blockDim.x);
     __syncthreads(); // so all threads agree on delta_dev
 
-  //_______________________________________________  
-
-    // Compute updated z. PETERDEBUG111: this part can't be easily parallelized over index i! But it can with MPI!
-    // z is multiplicative!
-    // but then we need an independent delta_dev for each block (that's the only output of device_solve_secular_equation)
-    
-    // This part as a separate independent kernel? Use delta_extended_dev as a buffer for z_extended_dev
+    // Compute updated z (z_extended_dev)
     T d1_i = d1_dev[i];                     
     int index;                                                 
     for (int j = tid; j < na1; j+=blockDim.x)
@@ -328,8 +299,7 @@ void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho
   dim3 blocks = dim3(SM_count,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2,1,1);
 
-  //if (na1<SM_count) // PETERDEBUG111
-    {
+
       // PETERDEBUG111: extract to a separate kernel
 #ifdef WITH_GPU_STREAMS
     elpa_fill_ones_kernel<T><<<blocks,threadsPerBlock,0,my_stream>>>(z_dev, na1*SM_count);
@@ -337,7 +307,7 @@ void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho
     elpa_fill_ones_kernel<T><<<blocks,threadsPerBlock>>>(z_dev, na1*SM_count);
 #endif
     
-    //if (debug) // PETERDEBUG111
+    if (debug) // PETERDEBUG111
       {
       gpuDeviceSynchronize();
       gpuError_t gpuerr = gpuGetLastError();
@@ -346,10 +316,6 @@ void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho
       }
     }
 
-  if (debug) // PETERDEBUG111
-    {
-    printf("gpu_solve_secular_equation_loop: blocks.x=%d, threadsPerBlock.x=%d\n",blocks.x,threadsPerBlock.x); //PETERDEBUG111
-    }
 
 #ifdef WITH_GPU_STREAMS
   gpu_solve_secular_equation_loop_kernel<<<blocks,threadsPerBlock,0,my_stream>>> (d1_dev, z1_dev, delta_dev, rho_dev,
@@ -560,7 +526,6 @@ __global__ void gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel(T *qtmp1_dev, T *q_dev
     {
     nnzul_dev[0] = nnzu;
     nnzul_dev[1] = nnzl;
-    // calculate and return only ndef = max(nnzu,nnzl) // PETERDEBUG111
     }
 }
 
@@ -571,8 +536,6 @@ void gpu_copy_qtmp1_q_compute_nnzu_nnzl(T *qtmp1_dev, T *q_dev, int *p_col_dev, 
 
   dim3 blocks = dim3(SM_count,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
-
-  printf("gpu_copy_qtmp1_q_compute_nnzu_nnzl: blocks.x=%d, threadsPerBlock.x=%d\n",blocks.x,threadsPerBlock.x); //PETERDEBUG111
 
 #ifdef WITH_GPU_STREAMS
   gpu_copy_qtmp1_q_compute_nnzu_nnzl_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(qtmp1_dev, q_dev, p_col_dev, l_col_dev, idx1_dev, coltyp_dev, nnzul_dev,

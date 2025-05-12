@@ -93,13 +93,15 @@ subroutine transform_columns_cpu_&
 #endif
 
   real(kind=REAL_DATATYPE)                   :: qtrans(2,2)
+  
+  real(kind=REAL_DATATYPE)                   :: tmp(na) ! only l_rows <= na elements are used
+
 #ifdef WITH_MPI
   integer(kind=MPI_KIND)                     :: mpierrMPI, my_pcolMPI
   integer(kind=ik)                           :: mpierr
 #endif
   integer(kind=ik)                           :: my_pcol
   integer(kind=ik)                           :: col1, col2
-  real(kind=REAL_DATATYPE)                   :: tmp(na) ! PETERDEBUG111 why na, not l_rows? 
   integer(kind=ik)                           :: pc1, pc2, lc1, lc2
 
   logical                                    :: useGPU, successGPU
@@ -149,10 +151,8 @@ subroutine transform_columns_cpu_&
 #ifdef WITH_MPI
   call obj%timer%start("mpi_communication")
   call mpi_comm_rank(int(mpi_comm_cols_self,kind=MPI_KIND) ,my_pcolMPI, mpierr)
-  !call mpi_comm_size(int(mpi_comm_cols_self,kind=MPI_KIND) ,np_colsMPI, mpierr)
 
   my_pcol = int(my_pcolMPI,kind=c_int)
-  !np_cols = int(np_colsMPI,kind=c_int)
 
   call obj%timer%stop("mpi_communication")
 #else
@@ -179,9 +179,13 @@ subroutine transform_columns_cpu_&
       
       if (useGPU .and. .not. useCCL) then
         ! memcopy GPU->CPU
-        ! PETERDEBUG111 streamed version
-        successGPU = gpu_memcpy(int(loc(q(l_rqs,lc1)),kind=c_intptr_t), q_dev + shift_dev, &
-                                l_rows*size_of_datatype, gpuMemcpyDeviceToHost)
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(int(loc(q(l_rqs,lc1)),kind=c_intptr_t), q_dev + shift_dev, &
+                                      l_rows*size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+#else
+        successGPU = gpu_memcpy      (int(loc(q(l_rqs,lc1)),kind=c_intptr_t), q_dev + shift_dev, &
+                                      l_rows*size_of_datatype, gpuMemcpyDeviceToHost)
+#endif
         check_memcpy_gpu("transform_columns: q_dev, lc1", successGPU)
       endif
 
@@ -215,10 +219,13 @@ subroutine transform_columns_cpu_&
 
       if (useGPU .and. .not. useCCL) then
         ! memcopy CPU->GPU
-        ! PETERDEBUG111 streamed version
-        !shift_dev = (l_rqs-1 + (lc1-1)*ldq)*size_of_datatype
-        successGPU = gpu_memcpy(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), &
-                                l_rows*size_of_datatype, gpuMemcpyHostToDevice)
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), &
+                                      l_rows*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+#else
+        successGPU = gpu_memcpy      (tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), &
+                                      l_rows*size_of_datatype, gpuMemcpyHostToDevice)
+#endif
         check_memcpy_gpu("transform_columns: tmp_dev", successGPU)
       endif
 #else /* WITH_MPI */
@@ -237,9 +244,13 @@ subroutine transform_columns_cpu_&
     shift_dev = (l_rqs-1 + (lc2-1)*ldq)*size_of_datatype
       
     if (useGPU .and. .not. useCCL) then
-      ! PETERDEBUG111 streamed version
-      successGPU = gpu_memcpy(int(loc(q(l_rqs,lc2)),kind=c_intptr_t), q_dev + shift_dev, &
-                              l_rows*size_of_datatype, gpuMemcpyDeviceToHost)
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(q(l_rqs,lc2)),kind=c_intptr_t), q_dev + shift_dev, &
+                                    l_rows*size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+#else
+      successGPU = gpu_memcpy      (int(loc(q(l_rqs,lc2)),kind=c_intptr_t), q_dev + shift_dev, &
+                                    l_rows*size_of_datatype, gpuMemcpyDeviceToHost)
+#endif
       check_memcpy_gpu("transform_columns: q_dev, lc2", successGPU)
     endif
 
@@ -271,10 +282,13 @@ subroutine transform_columns_cpu_&
     endif ! useCCL
 
     if (useGPU .and. .not. useCCL) then
-      ! PETERDEBUG111 streamed version
-      !shift_dev = (l_rqs-1 + (lc2-1)*ldq)*size_of_datatype
-      successGPU = gpu_memcpy(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), &
-                              l_rows*size_of_datatype, gpuMemcpyHostToDevice)
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), &
+                                    l_rows*size_of_datatype, gpuMemcpyHostToDevice, my_stream)
+#else
+      successGPU = gpu_memcpy      (tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), &
+                                    l_rows*size_of_datatype, gpuMemcpyHostToDevice)
+#endif
       check_memcpy_gpu("transform_columns: tmp_dev", successGPU)
     endif
 #else /* WITH_MPI */
