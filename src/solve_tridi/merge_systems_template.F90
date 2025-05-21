@@ -814,16 +814,14 @@
 #endif
         dbase(1:na1) = 0 ! PETERDEBUG_optimize: not needed on GPU? directly set dbase_dev=0
         ddiff(1:na1) = 0
+        
+        if (useGPU) then
+          num = (na1*SM_count) * size_of_datatype
+          successGPU = gpu_malloc(ztmp_extended_dev, num)
+          check_alloc_gpu("merge_systems: delta_dev", successGPU)
 
-        info = 0
-        infoBLAS = int(info,kind=BLAS_KIND)
-!#ifdef WITH_OPENMP_TRADITIONAL
-!
-!        call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
-!!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,infoBLAS,j)
-!        my_thread = omp_get_thread_num()
-!!$OMP DO
-!#endif
+          call gpu_fill_array(PRECISION_CHAR, ztmp_extended_dev, one_dev, na1*SM_count, SM_count, debug, my_stream)
+        endif
 
         NVTX_RANGE_PUSH("lapack_laed4_loop")
         
@@ -875,10 +873,6 @@
           ! delta_dev is a temporary buffer, not used afterwards
           num = (na1*SM_count) * size_of_datatype
           successGPU = gpu_malloc(delta_dev, num)
-          check_alloc_gpu("merge_systems: delta_dev", successGPU)
-
-          num = (na1*SM_count) * size_of_datatype
-          successGPU = gpu_malloc(ztmp_extended_dev, num)
           check_alloc_gpu("merge_systems: delta_dev", successGPU)
 
           call gpu_solve_secular_equation_loop (PRECISION_CHAR, d1_dev, z1_dev, delta_dev, rho_dev, &
@@ -933,6 +927,15 @@
           check_memcpy_gpu("merge_systems: rho_dev", successGPU)
 #endif
         else
+!        info = 0
+!        infoBLAS = int(info,kind=BLAS_KIND)
+!#ifdef WITH_OPENMP_TRADITIONAL
+!
+!        call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+!!$OMP PARALLEL PRIVATE(i,my_thread,delta,s,info,infoBLAS,j)
+!        my_thread = omp_get_thread_num()
+!!$OMP DO
+!#endif          
           do i = my_proc+1, na1, n_procs ! work distributed over all processors
             call obj%timer%start("lapack_laed4")
             NVTX_RANGE_PUSH("lapack_laed4")

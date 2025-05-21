@@ -48,14 +48,41 @@
 
 //________________________________________________________________
 
-
-// PETERDEBUG111: create a separate Fortran function for this
 template <typename T>
-__global__ void elpa_fill_ones_kernel(T* array, int n) {
+__global__ void gpu_fill_array_kernel(T* array_dev, T* value_dev, int n) {
   int i0 = threadIdx.x + blockIdx.x*blockDim.x;
 
   for (int i=i0; i<n; i+=blockDim.x*gridDim.x) {
-    array[i] = 1.0;
+    array_dev[i] = *value_dev;
+  }
+}
+
+template <typename T>
+void gpu_fill_array (T *array_dev, T* value_dev, int n, int SM_count, int debug, gpuStream_t my_stream){
+  
+  dim3 blocks = dim3(SM_count,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
+
+#ifdef WITH_GPU_STREAMS
+    gpu_fill_array_kernel<T><<<blocks,threadsPerBlock,0,my_stream>>>(array_dev, value_dev, n);
+#else
+    gpu_fill_array_kernel<T><<<blocks,threadsPerBlock>>>            (array_dev, value_dev, n);
+#endif
+    
+  if (debug)
+    {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess)
+      printf("Error in executing gpu_fill_array_kernel: %s\n",gpuGetErrorString(gpuerr));
+    }
+}
+
+extern "C" void CONCATENATE(ELPA_GPU,  _fill_array_FromC) (char dataType, intptr_t array_dev, intptr_t value_dev, int n, int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_fill_array<double>((double *) array_dev, (double *) value_dev, n, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_fill_array<float> ((float  *) array_dev, (float  *) value_dev, n, SM_count, debug, my_stream);
+  else {
+    printf("Error in gpu_fill_array: Unsupported data type\n");
   }
 }
 
@@ -291,6 +318,7 @@ __global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *
     }
 }
 
+// PETERDEBUG111 cleanup myid from gpu_solve_secular_equation_loop
 template <typename T>
 void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho_dev,
                                       T *z_dev, T *dbase_dev, T *ddiff_dev, 
@@ -298,24 +326,6 @@ void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho
   
   dim3 blocks = dim3(SM_count,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2,1,1);
-
-
-      // PETERDEBUG111: extract to a separate kernel
-#ifdef WITH_GPU_STREAMS
-    elpa_fill_ones_kernel<T><<<blocks,threadsPerBlock,0,my_stream>>>(z_dev, na1*SM_count);
-#else
-    elpa_fill_ones_kernel<T><<<blocks,threadsPerBlock>>>(z_dev, na1*SM_count);
-#endif
-    
-    if (debug) // PETERDEBUG111
-      {
-      gpuDeviceSynchronize();
-      gpuError_t gpuerr = gpuGetLastError();
-      if (gpuerr != gpuSuccess)
-        printf("Error in executing elpa_fill_ones_kernel: %s\n",gpuGetErrorString(gpuerr));
-      }
-    }
-
 
 #ifdef WITH_GPU_STREAMS
   gpu_solve_secular_equation_loop_kernel<<<blocks,threadsPerBlock,0,my_stream>>> (d1_dev, z1_dev, delta_dev, rho_dev,

@@ -58,6 +58,22 @@ module merge_systems_gpu_new
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
 
   interface
+  subroutine gpu_fill_array_c (dataType, array_dev, value_dev, n, SM_count, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_fill_array_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name="hip_fill_array_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: array_dev, value_dev
+      integer(kind=c_int), value         :: n, SM_count, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
+  end interface
+
+  interface
   subroutine gpu_solve_secular_equation_loop_c (dataType, d1_dev, z1_dev, delta_dev, rho_dev, &
                                             z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, myid, SM_count, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
@@ -69,7 +85,7 @@ module merge_systems_gpu_new
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: d1_dev, z1_dev, delta_dev, z_dev, rho_dev, dbase_dev, ddiff_dev
-      integer(kind=c_int), value         :: my_proc, na1, n_procs, debug, SM_count, myid
+      integer(kind=c_int), value         :: my_proc, na1, n_procs, SM_count, debug, myid
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
@@ -151,13 +167,27 @@ module merge_systems_gpu_new
   contains
 
 
+    subroutine gpu_fill_array (dataType, array_dev, value_dev, n, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: array_dev, value_dev
+      integer(kind=c_int), value         :: n, SM_count, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+      call gpu_fill_array_c (dataType, array_dev, value_dev, n, SM_count, debug, my_stream)
+#endif
+    end subroutine
+    
+    
     subroutine gpu_solve_secular_equation_loop (dataType, d1_dev, z1_dev, delta_dev, rho_dev, &
                                             z_dev, dbase_dev, ddiff_dev,  my_proc, na1, n_procs, myid, SM_count, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: d1_dev, z1_dev, delta_dev, z_dev, rho_dev, dbase_dev, ddiff_dev
-      integer(kind=c_int), value         :: my_proc, na1, n_procs, debug, SM_count, myid
+      integer(kind=c_int), value         :: my_proc, na1, n_procs, SM_count, debug, myid
       integer(kind=c_intptr_t), value    :: my_stream
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
