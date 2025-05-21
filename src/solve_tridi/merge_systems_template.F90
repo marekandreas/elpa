@@ -807,20 +807,38 @@
       else if (na1>2) then
 
         ! Solve secular equation
-
-        z(1:na1) = 1 ! PETERDEBUG_optimize: here a kernel should be extracted from gpu_merge_systems_new.h
-#ifdef WITH_OPENMP_TRADITIONAL
-        z_p(1:na1,:) = 1
-#endif
-        dbase(1:na1) = 0 ! PETERDEBUG_optimize: not needed on GPU? directly set dbase_dev=0
-        ddiff(1:na1) = 0
-        
+       
         if (useGPU) then
           num = (na1*SM_count) * size_of_datatype
           successGPU = gpu_malloc(ztmp_extended_dev, num)
           check_alloc_gpu("merge_systems: delta_dev", successGPU)
 
           call gpu_fill_array(PRECISION_CHAR, ztmp_extended_dev, one_dev, na1*SM_count, SM_count, debug, my_stream)
+
+          call gpu_fill_array(PRECISION_CHAR, z_dev, one_dev, na1, SM_count, debug, my_stream)
+
+          num = na1 * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memset_async(dbase_dev, 0, num, my_stream)
+#else
+          successGPU = gpu_memset      (dbase_dev, 0, num)
+#endif
+          check_memcpy_gpu("merge_systems: memset dbase_dev", successGPU)
+
+          num = na1 * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memset_async(ddiff_dev, 0, num, my_stream)
+#else
+          successGPU = gpu_memset      (ddiff_dev, 0, num)
+#endif
+          check_memcpy_gpu("merge_systems: memset ddiff_dev", successGPU)
+        else
+          z(1:na1) = 1
+#ifdef WITH_OPENMP_TRADITIONAL
+          z_p(1:na1,:) = 1
+#endif
+          dbase(1:na1) = 0 ! PETERDEBUG_optimize: not needed on GPU? directly set dbase_dev=0
+          ddiff(1:na1) = 0
         endif
 
         NVTX_RANGE_PUSH("lapack_laed4_loop")
@@ -835,15 +853,6 @@
           successGPU = gpu_memcpy_async(z1_dev, int(loc(z1(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
           check_memcpy_gpu("merge_systems: z1_dev", successGPU)
 
-          successGPU = gpu_memcpy_async(z_dev, int(loc(z(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
-          check_memcpy_gpu("merge_systems: z_dev", successGPU)
-
-          successGPU = gpu_memcpy_async(dbase_dev, int(loc(dbase(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
-          check_memcpy_gpu("merge_systems: dbase_dev", successGPU)
-
-          successGPU = gpu_memcpy_async(ddiff_dev, int(loc(ddiff(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
-          check_memcpy_gpu("merge_systems: ddiff_dev", successGPU)
-
           num = 1 * size_of_datatype
           successGPU = gpu_memcpy_async(rho_dev, int(loc(rho),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
           check_memcpy_gpu("merge_systems: rho_dev", successGPU)
@@ -855,15 +864,6 @@
 
           successGPU = gpu_memcpy(z1_dev, int(loc(z1(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("merge_systems: z1_dev", successGPU)
-
-          successGPU = gpu_memcpy(z_dev, int(loc(z(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("merge_systems: z_dev", successGPU)
-
-          successGPU = gpu_memcpy(dbase_dev, int(loc(dbase(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("merge_systems: dbase_dev", successGPU)
-
-          successGPU = gpu_memcpy(ddiff_dev, int(loc(ddiff(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-          check_memcpy_gpu("merge_systems: ddiff_dev", successGPU)
 
           num = 1 * size_of_datatype
           successGPU = gpu_memcpy(rho_dev, int(loc(rho),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
