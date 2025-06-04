@@ -119,7 +119,7 @@
 
       integer(kind=ik), parameter   :: min_submatrix_size = 16 ! Minimum size of the submatrices to be used
 
-      real(kind=REAL_DATATYPE), allocatable    :: qmat1(:,:), qmat2(:,:)
+      real(kind=REAL_DATATYPE), allocatable    :: qmat1(:,:), qmat2(:,:) ! qmat2 is needed since for ndiv>1, so qmat1 stays intact  
       integer(kind=ik)              :: i, n, np
       integer(kind=ik)              :: ndiv, noff, nmid, nlen, max_size
       integer(kind=ik)              :: my_prow, np_rows

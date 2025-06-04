@@ -244,10 +244,10 @@
         endif ! useCCL
       endif ! useGPU
 
-#ifdef WITH_OPENMP_TRADITIONAL
-      allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
-      check_allocate("merge_systems: z_p",istat, errorMessage)
-#endif
+! #ifdef WITH_OPENMP_TRADITIONAL
+!       allocate(z_p(na,0:max_threads-1), stat=istat, errmsg=errorMessage)
+!       check_allocate("merge_systems: z_p",istat, errorMessage)
+! #endif
 
       ! If my processor column isn't in the requested set, do nothing
       if (my_pcol<npc_0 .or. my_pcol>=npc_0+npc_n) then
@@ -834,10 +834,10 @@
           check_memcpy_gpu("merge_systems: memset ddiff_dev", successGPU)
         else
           z(1:na1) = 1
-#ifdef WITH_OPENMP_TRADITIONAL
-          z_p(1:na1,:) = 1
-#endif
-          dbase(1:na1) = 0 ! PETERDEBUG_optimize: not needed on GPU? directly set dbase_dev=0
+! #ifdef WITH_OPENMP_TRADITIONAL
+!           z_p(1:na1,:) = 1
+! #endif
+          dbase(1:na1) = 0
           ddiff(1:na1) = 0
         endif
 
@@ -1329,7 +1329,7 @@
           NVTX_RANGE_PUSH("set_qtmp1_qtmp2_0")
           call obj%timer%start("set_qtmp1_qtmp2_0")
           qtmp1 = 0 ! May contain empty (unset) parts
-          qtmp2 = 0 ! Not really needed ! PETERDEBUG_optimize cpu: then cleanup? also check for qtmp1
+          qtmp2 = 0 ! Not really needed
           call obj%timer%stop("set_qtmp1_qtmp2_0")
           NVTX_RANGE_POP("set_qtmp1_qtmp2_0")
         endif
@@ -2103,10 +2103,10 @@
         endif
       endif !very outer test if (na1==1 .or. na1==2) else (na1>2)
 
-#ifdef WITH_OPENMP_TRADITIONAL
-      deallocate(z_p, stat=istat, errmsg=errorMessage)
-      check_deallocate("merge_systems: z_p",istat, errorMessage)
-#endif
+! #ifdef WITH_OPENMP_TRADITIONAL
+!       deallocate(z_p, stat=istat, errmsg=errorMessage)
+!       check_deallocate("merge_systems: z_p",istat, errorMessage)
+! #endif
 
       call obj%timer%stop("merge_systems" // PRECISION_SUFFIX)
 
