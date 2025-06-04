@@ -237,7 +237,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
 template <typename T>
 __global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *delta_extended_dev, T *rho_dev,
                                                        T *z_extended_dev, T *dbase_dev, T *ddiff_dev, 
-                                                       int my_proc, int na1, int n_procs, int myid){
+                                                       int my_proc, int na1, int n_procs){
   __shared__ T cache[MAX_THREADS_PER_BLOCK]; 
   int tid = threadIdx.x;
 
@@ -318,21 +318,21 @@ __global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *
     }
 }
 
-// PETERDEBUG111 cleanup myid from gpu_solve_secular_equation_loop
+
 template <typename T>
 void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho_dev,
                                       T *z_dev, T *dbase_dev, T *ddiff_dev, 
-                                      int my_proc, int na1, int n_procs, int myid, int SM_count, int debug, gpuStream_t my_stream){
+                                      int my_proc, int na1, int n_procs, int SM_count, int debug, gpuStream_t my_stream){
   
   dim3 blocks = dim3(SM_count,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2,1,1);
 
 #ifdef WITH_GPU_STREAMS
   gpu_solve_secular_equation_loop_kernel<<<blocks,threadsPerBlock,0,my_stream>>> (d1_dev, z1_dev, delta_dev, rho_dev,
-                                                                                  z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, myid);
+                                                                                  z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs);
 #else
   gpu_solve_secular_equation_loop_kernel<<<blocks,threadsPerBlock>>>             (d1_dev, z1_dev, delta_dev, rho_dev,
-                                                                                  z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, myid);
+                                                                                  z_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs);
 #endif
 
   if (debug)
@@ -347,13 +347,13 @@ void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho
 
 extern "C" void CONCATENATE(ELPA_GPU,  _solve_secular_equation_loop_FromC) (char dataType, intptr_t d1_dev, intptr_t z1_dev, intptr_t delta_dev, intptr_t rho_dev,
                                                                             intptr_t z_dev, intptr_t dbase_dev, intptr_t ddiff_dev, 
-                                                                            int my_proc, int na1, int n_procs, int myid, int SM_count, int debug, gpuStream_t my_stream){
+                                                                            int my_proc, int na1, int n_procs, int SM_count, int debug, gpuStream_t my_stream){
   if      (dataType=='D') gpu_solve_secular_equation_loop<double>((double *) d1_dev, (double *) z1_dev, (double *) delta_dev, (double *) rho_dev,
                                                                   (double *) z_dev, (double *) dbase_dev, (double *) ddiff_dev,
-                                                                  my_proc, na1, n_procs, myid, SM_count, debug, my_stream);
+                                                                  my_proc, na1, n_procs, SM_count, debug, my_stream);
   else if (dataType=='S') gpu_solve_secular_equation_loop<float> ((float  *) d1_dev, (float  *) z1_dev, (float  *) delta_dev, (float  *) rho_dev,
                                                                   (float  *) z_dev, (float  *) dbase_dev, (float  *) ddiff_dev,
-                                                                  my_proc, na1, n_procs, myid, SM_count, debug, my_stream);
+                                                                  my_proc, na1, n_procs, SM_count, debug, my_stream);
   else {
     printf("Error in gpu_solve_secular_equation_loop: Unsupported data type\n");
   }

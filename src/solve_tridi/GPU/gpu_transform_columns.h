@@ -65,9 +65,6 @@ template <typename T>
 void gpu_transform_one_column(T *a_dev, T *b_dev, T *c_dev, T *alpha_dev, T *beta_dev, 
                               int n_elements, int SM_count, int debug, gpuStream_t my_stream){
 
-  // dim3 blocks = dim3(1,1,1); // PETERDEBUG111
-  // dim3 threadsPerBlock = dim3(1,1,1);
-
   dim3 blocks = dim3(SM_count,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 

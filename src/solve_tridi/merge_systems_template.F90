@@ -876,8 +876,7 @@
           check_alloc_gpu("merge_systems: delta_dev", successGPU)
 
           call gpu_solve_secular_equation_loop (PRECISION_CHAR, d1_dev, z1_dev, delta_dev, rho_dev, &
-                  ztmp_extended_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, obj%mpi_setup%myRank_comm_parent, &
-                  SM_count, debug, my_stream)
+                  ztmp_extended_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, SM_count, debug, my_stream)
 
           call gpu_local_product(PRECISION_CHAR, z_dev, ztmp_extended_dev, na1, SM_count, debug, my_stream)
 
