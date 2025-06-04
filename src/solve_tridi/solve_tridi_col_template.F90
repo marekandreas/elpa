@@ -388,105 +388,98 @@
           nlen = limits(np+1)-noff
 
 #ifdef WITH_MPI
-          if (useCCL) then ! PETERDEBUG_optimize: refactor to: copy, MPI/CCL, copy back
-                           ! see PETERDEBUG_optimize below first (eliminate qmat2_dev)
-            !successGPU = ccl_bcast(d_dev + (noff+1-1) * size_of_datatype_real,   &
-#if defined(USE_CCL_SOLVE_TRIDI)                
+          if (useGPU .and. .not. useCCL) then
+            num = (na_local) * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(int(loc(d(1)),kind=c_intptr_t), d_dev, num, gpuMemcpyDeviceToHost, my_stream)
+#else
+            successGPU = gpu_memcpy      (int(loc(d(1)),kind=c_intptr_t), d_dev, num, gpuMemcpyDeviceToHost)
+#endif
+            check_memcpy_gpu("solve_tridi_col: d_dev", successGPU)
+
+            num = (max_size*max_size) * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(int(loc(qmat1(1,1)),kind=c_intptr_t), qmat1_dev, num, gpuMemcpyDeviceToHost, my_stream)
+#else
+            successGPU = gpu_memcpy      (int(loc(qmat1(1,1)),kind=c_intptr_t), qmat1_dev, num, gpuMemcpyDeviceToHost)
+#endif
+            check_memcpy_gpu("solve_tridi_col: qmat1_dev", successGPU)
+
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("solve_tridi_col: d_dev -> d", successGPU)
+#endif
+          endif ! (useGPU .and. .not. useCCL)
+
+          if (useCCL) then
+#if defined(USE_CCL_SOLVE_TRIDI)
             successGPU = ccl_bcast(d_dev + (noff+1-1) * size_of_datatype_real,   &
-                                   d_dev + (noff+1-1) * size_of_datatype_real,  & 
+                                  d_dev + (noff+1-1) * size_of_datatype_real,  & 
                                   int(nlen,kind=c_size_t), cclDataType_real, &
                                   int(np,kind=c_int), ccl_comm_rows, my_stream)
 
-            if (.not.successGPU) then
+            if (.not. successGPU) then
               print *,"Error in ccl_bcast"
               stop 1
             endif
 
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("solve_tridi_col: ccl_bcast", successGPU)
-#endif
-            call GPU_COPY_QMAT1_TO_QMAT2_PRECISION (qmat1_dev, qmat2_dev, max_size, my_stream)
 
-#if defined(USE_CCL_SOLVE_TRIDI)                
-            successGPU = ccl_bcast(qmat1_dev, qmat2_dev,  & 
-                                  int(max_size*max_size,kind=c_size_t), cclDataType_real, &
+            call GPU_COPY_QMAT1_TO_QMAT2_PRECISION (qmat1_dev, qmat2_dev, max_size, my_stream)
+      
+            successGPU = ccl_bcast(qmat1_dev, qmat2_dev, int(max_size*max_size,kind=c_size_t), cclDataType_real, &
                                   int(np,kind=c_int), ccl_comm_rows, my_stream)
 
-            if (.not.successGPU) then
+            if (.not. successGPU) then
               print *,"Error in ccl_bcast"
               stop 1
             endif
 
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("solve_tridi_col: ccl_bcast", successGPU)
-#endif
+#endif /* defined(USE_CCL_SOLVE_TRIDI) */
           else ! useCCL
-            if (useGPU) then
-              num = (na_local) * size_of_datatype_real
-#ifdef WITH_GPU_STREAMS
-              successGPU = gpu_memcpy_async(int(loc(d(1)),kind=c_intptr_t), d_dev, num, gpuMemcpyDeviceToHost, my_stream)
-#else
-              successGPU = gpu_memcpy      (int(loc(d(1)),kind=c_intptr_t), d_dev, num, gpuMemcpyDeviceToHost)
-#endif
-              check_memcpy_gpu("solve_tridi_col: d_dev", successGPU)
-
-              num = (max_size*max_size) * size_of_datatype_real
-#ifdef WITH_GPU_STREAMS
-              successGPU = gpu_memcpy_async(int(loc(qmat1(1,1)),kind=c_intptr_t), qmat1_dev, num, gpuMemcpyDeviceToHost, my_stream)
-#else
-              successGPU = gpu_memcpy      (int(loc(qmat1(1,1)),kind=c_intptr_t), qmat1_dev, num, gpuMemcpyDeviceToHost)
-#endif
-              check_memcpy_gpu("solve_tridi_col: qmat1_dev", successGPU)
-
-#ifdef WITH_GPU_STREAMS
-              successGPU = gpu_stream_synchronize(my_stream)
-              check_stream_synchronize_gpu("solve_tridi_col: d_dev -> d", successGPU)
-#endif
-            endif ! useGPU
-
             if (useNonBlockingCollectivesRows) then
               call obj%timer%start("mpi_nbc_communication")
               call mpi_ibcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
-                           int(mpi_comm_rows,kind=MPI_KIND), bcast_request1, mpierr)
+                          int(mpi_comm_rows,kind=MPI_KIND), bcast_request1, mpierr)
               call mpi_wait(bcast_request1, MPI_STATUS_IGNORE, mpierr)
 
               qmat2 = qmat1
               call mpi_ibcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
-                           int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
+                          int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
               call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
               call obj%timer%stop("mpi_nbc_communication")
             else
               call obj%timer%start("mpi_communication")
               call mpi_bcast(d(noff+1), int(nlen,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
-                           int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 
               qmat2 = qmat1
               call mpi_bcast(qmat2, int(max_size*max_size,kind=MPI_KIND), MPI_REAL_PRECISION, int(np,kind=MPI_KIND), &
-                           int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+                          int(mpi_comm_rows,kind=MPI_KIND), mpierr)
               call obj%timer%stop("mpi_communication")
             endif
-
-            if (useGPU) then
-              num = (na_local) * size_of_datatype_real
-#ifdef WITH_GPU_STREAMS
-              successGPU = gpu_memcpy_async(d_dev, int(loc(d(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
-#else
-              successGPU = gpu_memcpy      (d_dev, int(loc(d(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-#endif
-              check_memcpy_gpu("solve_tridi_col: d_dev", successGPU)
-
-              ! PETERDEBUG_optimize: check whether we can use one buffer on device: qmat1_dev (not qmat2_dev)
-              ! and also on host: qmat1 (not qmat2)
-              ! This will save memory and eliminate branching below at GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION 
-              num = (max_size*max_size) * size_of_datatype_real
-#ifdef WITH_GPU_STREAMS
-              successGPU = gpu_memcpy_async(qmat2_dev, int(loc(qmat2(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
-#else
-              successGPU = gpu_memcpy      (qmat2_dev, int(loc(qmat2(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-#endif
-              check_memcpy_gpu("solve_tridi_col: qmat2_dev", successGPU)
-            endif
           endif ! useCCL
+
+          if (useGPU .and. .not. useCCL) then
+            num = (na_local) * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(d_dev, int(loc(d(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+            successGPU = gpu_memcpy      (d_dev, int(loc(d(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+            check_memcpy_gpu("solve_tridi_col: d_dev", successGPU)
+
+            num = (max_size*max_size) * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(qmat2_dev, int(loc(qmat2(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+            successGPU = gpu_memcpy      (qmat2_dev, int(loc(qmat2(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+            check_memcpy_gpu("solve_tridi_col: qmat2_dev", successGPU)
+          endif ! (useGPU .and. .not. useCCL)
 
 #else /* WITH_MPI */
 
