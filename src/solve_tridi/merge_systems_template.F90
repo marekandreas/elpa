@@ -86,7 +86,6 @@
       use elpa_mpi
       use solve_secular_equation
       use elpa_ccl_gpu
-      use merge_systems_gpu
       use merge_systems_gpu_new
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
       use cuda_functions ! for NVTX labels
@@ -1440,7 +1439,6 @@
         endif
 
 
-
         if (useGPU) then
           ndef_c(:) = ndef
 
@@ -1453,8 +1451,8 @@
           check_memcpy_gpu("merge_systems: ndef_c_dev", successGPU)
 #endif
 
-          call GPU_COPY_Q_SLICE_TO_QTMP1_PRECISION (qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, &
-                                                    na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, my_stream)
+          call gpu_copy_q_slice_to_qtmp1 (PRECISION_CHAR, qtmp1_dev, q_dev, ndef_c_dev, l_col_dev, idx2_dev, p_col_dev, &
+                                          na2, na, my_pcol, l_rows, l_rqs, l_rqe, matrixRows, gemm_dim_k, debug, my_stream)
         else
           do i = 1, na2
             l_idx = l_col(idx2(i))
@@ -1490,7 +1488,8 @@
 
 
         if (useGPU) then
-          call GPU_ZERO_Q_PRECISION (q_dev, p_col_out_dev, l_col_out_dev, na, my_pcol, l_rqs, l_rqe, matrixRows, my_stream)
+          call gpu_zero_q(PRECISION_CHAR, q_dev, p_col_out_dev, l_col_out_dev, &
+                          na, my_pcol, l_rqs, l_rqe, matrixRows, debug, my_stream)
         else
           DO i = 1, na
             if(p_col_out(i)==my_pcol) q(l_rqs:l_rqe,l_col_out(i)) = 0
@@ -1585,16 +1584,16 @@
             nnzu = 0
             nnzl = 0
 
-            call GPU_COMPUTE_NNZL_NNZU_VAL_PART1 (p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, &
-                                                  na, na1, np_rem, npc_n, nnzu_save, nnzl_save, np, my_stream)
+            call gpu_compute_nnzl_nnzu_val_part1 (p_col_dev, idx1_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, &
+                                                  na, na1, np_rem, npc_n, nnzu_save, nnzl_save, np, debug, my_stream)
 
           enddo ! np = 1, npc_n
-
 
           nnzu_start = 0
           nnzl_start = 0
 
-          call GPU_COMPUTE_NNZL_NNZU_VAL_PART2 (nnzu_val_dev, nnzl_val_dev, na, na1, nnzu_start, nnzl_start, npc_n, my_stream)              
+          call gpu_compute_nnzl_nnzu_val_part2 (nnzu_val_dev, nnzl_val_dev, na, na1, nnzu_start, nnzl_start, npc_n, &
+                                                debug, my_stream)
         else
           ! precompute nnzu_val, nnzl_val
           do np = 1, npc_n
@@ -1642,7 +1641,8 @@
             if (useGPU) then
               if (useCCL) then
                 my_stream = obj%gpu_setup%my_stream
-                call GPU_COPY_QTMP1_TO_QTMP1_TMP_PRECISION (qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, my_stream)
+                call gpu_copy_qtmp1_to_qtmp1_tmp (PRECISION_CHAR, qtmp1_dev, qtmp1_tmp_dev, gemm_dim_k, gemm_dim_l, &
+                                                  debug, my_stream)
 
                 call obj%timer%start("ccl_send_recv")
                 successGPU = ccl_group_start()
@@ -1751,9 +1751,10 @@
           nnzl = 0
           if (useGPU) then
 
-            NVTX_RANGE_PUSH("gpu_fill_tmp_arrays")
-            call GPU_FILL_TMP_ARRAYS_PRECISION (idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
-                                                d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev, na, np, na1, np_rem, my_stream)
+            NVTX_RANGE_PUSH("gpu_fill_tmp_arrays") 
+            call gpu_fill_tmp_arrays (PRECISION_CHAR, d1u_dev, d1_dev, zu_dev, z_dev, d1l_dev, zl_dev, &
+                                      idx1_dev, p_col_dev, coltyp_dev, nnzu_val_dev, nnzl_val_dev, nnzul_dev, &
+                                      na, np, na1, np_rem, debug, my_stream)
             if (wantDebug) successGPU = gpu_DeviceSynchronize()
             NVTX_RANGE_POP("gpu_fill_tmp_arrays")
 
@@ -1791,15 +1792,16 @@
           ndef = MAX(nnzu,nnzl) ! Remote counter in input matrix
           if (useGPU) then
             ! PETERDEBUG: idx2_dev, potential problem with garbage values?
-            call GPU_UPDATE_NDEF_C(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, my_stream)
+            call gpu_update_ndef_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, debug, my_stream)
 
           endif ! useGPU
 
           ndef = MAX(nnzu,nnzl) ! Remote counter in input matrix
           if (useGPU) then
-            call GPU_COPY_QTMP1_SLICE_TO_Q_PRECISION (q_dev, qtmp1_dev, l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, &
-                                                      idx2_dev, idx_dev, l_rqs, l_rqe, l_rows, matrixRows, &
-                                                      gemm_dim_k,  my_pcol, na1, np_rem,  na, my_stream)
+            call gpu_copy_qtmp1_slice_to_q (PRECISION_CHAR, q_dev, qtmp1_dev, &
+                                            l_col_out_dev, p_col_out_dev, ndef_c_dev, p_col_dev, idx2_dev, idx_dev, &
+                                            l_rqs, l_rqe, l_rows, matrixRows, gemm_dim_k,  my_pcol, na1, np_rem,  na, &
+                                            debug, my_stream)
           else ! ! useGPU
             ndef = MAX(nnzu,nnzl) ! Remote counter in input matrix
             do i = 1, na
@@ -1823,9 +1825,9 @@
 
             ! Get partial result from (output) Q
             if (useGPU) then
-              call GPU_COPY_Q_SLICE_TO_QTMP2_PRECISION (q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rows, l_rqs, l_rqe, &
-                                                        matrixRows, matrixCols, gemm_dim_k, gemm_dim_m, ns, &
-                                                        ncnt, ind_ex, ind_ex2, na, my_stream)
+              call gpu_copy_q_slice_to_qtmp2 (PRECISION_CHAR, q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, & 
+                                              l_rows, l_rqs, l_rqe, matrixRows, matrixCols, & 
+                                              gemm_dim_k, gemm_dim_m, ns, ncnt, ind_ex, ind_ex2, na, debug, my_stream)
             else ! useGPU
 !$omp PARALLEL DO &
 !$omp default(none) &
@@ -1845,8 +1847,8 @@
               if (nnzu .ge. 1) then
                 ! Calculate the j-th eigenvector of the deflated system
                 ! See above why we are doing it this way!
-                call GPU_FILL_EV_PRECISION (ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, idx_dev, &
-                                            na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt, my_stream) 
+                call gpu_fill_ev (PRECISION_CHAR, ev_dev, d1u_dev, dbase_dev, ddiff_dev, zu_dev, ev_scale_dev, idxq1_dev, idx_dev,&
+                                  na, gemm_dim_l, gemm_dim_m, nnzu, ns, ncnt, debug, my_stream) 
               endif ! nnzu
 
             else ! useGPU
@@ -1904,8 +1906,8 @@
 
             if (useGPU) then
               if (nnzl .ge. 1) then
-                call GPU_FILL_EV_PRECISION (ev_dev, d1l_dev, dbase_dev, ddiff_dev, zl_dev, ev_scale_dev, idxq1_dev, idx_dev, &
-                                            na, gemm_dim_l, gemm_dim_m, nnzl, ns, ncnt, my_stream) 
+                call gpu_fill_ev (PRECISION_CHAR, ev_dev, d1l_dev, dbase_dev, ddiff_dev, zl_dev, ev_scale_dev, idxq1_dev, idx_dev, &
+                                            na, gemm_dim_l, gemm_dim_m, nnzl, ns, ncnt, debug, my_stream) 
               endif
             else ! useGPU
 !$omp PARALLEL DO &
@@ -1952,8 +1954,8 @@
 
             ! Put partial result into (output) Q
             if (useGPU) then
-              call GPU_COPY_QTMP2_SLICE_TO_Q_PRECISION(q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, l_rqs, l_rqe, l_rows, ncnt, &
-                                                       gemm_dim_k, matrixRows, ns, my_stream)
+              call gpu_copy_qtmp2_slice_to_q (PRECISION_CHAR, q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, &
+                                              l_rqs, l_rqe, l_rows, ncnt, gemm_dim_k, matrixRows, ns, debug, my_stream)
             else ! useGPU
 !$omp PARALLEL DO &
 !$omp default(none) &

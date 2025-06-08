@@ -230,9 +230,7 @@
       ! so that merge_systems is called once and only the needed
       ! eigenvectors are calculated for the final problem.
       
-      ! PETERDEBUG: investigate the goal of the condtition below
-      ! In the current implementation it leads to fail (GPU codebranch doesn't have special handling for np_rows=1)
-      ! if (np_rows==1 .and. nev<na_local .and. na_local>2*min_submatrix_size) ndiv = 2
+      ! In the current implementation, GPU codebranch doesn't have special handling for np_rows=1. So we switch it off here
       if (.not. useGPU .and. np_rows==1 .and. nev<na_local .and. na_local>2*min_submatrix_size) ndiv = 2
 
       allocate(limits(0:ndiv), stat=istat, errmsg=errorMessage)
@@ -559,7 +557,6 @@
 #endif
         check_memcpy_gpu("solve_tridi_col: e_dev2", successGPU)
         
-        ! PETERDEBUG: investigate whether we can reduce number of gpu_memcpy's of d
         num = na_local * size_of_datatype_real
 #ifdef WITH_GPU_STREAMS
         successGPU = gpu_memcpy_async(int(loc(d(1)),kind=c_intptr_t), d_dev, num, gpuMemcpyDeviceToHost, my_stream)

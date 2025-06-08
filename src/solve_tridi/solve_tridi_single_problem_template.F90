@@ -65,7 +65,7 @@
     &PRECISION_AND_SUFFIX &
     (obj, nlen, d, e, q, ldq, wantDebug, success)
 #endif
-    ! PETERDEBUG: calling from solve_trodi_col: q_dev=qmat1_dev, ldq=max_size
+    ! solve_tridi_single_problem is called from solve_trodi_col: with parameters q_dev=qmat1_dev, ldq=max_size
     ! qmat1(max_size, max_size) -> q(ldq, ldq), and not q(ldq,nlen)!! same for q_dev
     ! but that's fine if nlen<=ldq, then not the whole matrix is used. otherwise can lead to errors
     ! Now: called from two places differently: with np_rows==1 and np_rows>1 and should be treated with care  
@@ -110,8 +110,6 @@
 
      integer(kind=c_intptr_t)                    :: gpusolverHandle
 
-     ! print *, "solve_tridi_single_problem_gpu: nlen=", nlen, " ldq=", ldq ! PETERDEBUG
-
      useGPU =.false.
      useGPUsolver =.false.
 #ifdef SOLVE_TRIDI_GPU_BUILD
@@ -121,7 +119,9 @@
       useGPUsolver =.true.
 #endif
 #if defined(WITH_AMD_ROCSOLVER)
-      useGPUsolver =.false. ! As of ELPA 2025.01 release, rocsolver_?stedc/rocsolver_?syevd showed bad performance (worse than on CPU). Hopefully, this will be fixed by AMD and then we can enable it.
+      ! As of ELPA 2025.01 release, rocsolver_?stedc/rocsolver_?syevd showed bad performance (worse than on CPU).
+      ! Hopefully, this will be fixed by AMD and then we can enable it.
+      useGPUsolver =.false.
 #endif
 #endif /* SOLVE_TRIDI_GPU_BUILD */
 
