@@ -89,9 +89,8 @@
       use distribute_global_column
       use elpa_gpu
       !use single_problem
-      use tridi_col_gpu
 
-      use solve_tridi_col_cuda
+      ! use solve_tridi_col_cuda ! PETERDEBUG111: cleanup
 
 #if defined(USE_CCL_SOLVE_TRIDI)
       use elpa_ccl_gpu
@@ -101,7 +100,9 @@
 #elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
       use hip_functions  ! for ROCTX labels
 #endif
-      use distribute_global_column_gpu
+      !use tridi_col_gpu ! PETERDEBUG111: cleanup, rename
+      use solve_tridi_col_gpu_new
+      !use distribute_global_column_gpu ! PETERDEBUG111: cleanup, rename
       use distribute_global_column_gpu_new
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -130,7 +131,8 @@
       logical, intent(in)           :: wantDebug
       logical                       :: useGPU
       logical                       :: success
-      integer(kind=ik)              :: istat, debug
+      integer(kind=ik)              :: istat
+      integer(kind=c_int)           :: debug
       character(200)                :: errorMessage
 
       integer(kind=ik), intent(in)  :: max_threads
@@ -142,7 +144,7 @@
       integer(kind=c_intptr_t)      :: d_dev, e_dev ! shifted
       integer(kind=c_intptr_t)      :: q_dev, qtmp_dev, qmat1_dev, qmat2_dev
                                        
-      type(c_ptr)                   :: limits_dev
+      integer(kind=c_intptr_t)      :: limits_dev
 
       logical                       :: successGPU
       integer(kind=c_intptr_t), parameter        :: size_of_datatype_real = size_of_&
@@ -271,9 +273,8 @@
 #endif
         check_memcpy_gpu("solve_tridi_col: limits_dev", successGPU)
         
-        call GPU_UPDATE_D_PRECISION (limits_dev, d_dev, e_dev, ndiv, na_local, my_stream)
-        if (wantDebug) successGPU = gpu_DeviceSynchronize()
-
+        call gpu_update_d (PRECISION_CHAR, d_dev, e_dev, limits_dev, ndiv, na_local, debug, my_stream)
+        
         successGPU = gpu_free(limits_dev)
         check_dealloc_gpu("solve_tridi_col: limits_dev", successGPU)
 
@@ -425,7 +426,7 @@
             successGPU = gpu_stream_synchronize(my_stream)
             check_stream_synchronize_gpu("solve_tridi_col: ccl_bcast", successGPU)
 
-            call GPU_COPY_QMAT1_TO_QMAT2_PRECISION (qmat1_dev, qmat2_dev, max_size, my_stream)
+            call gpu_copy_qmat1_to_qmat2(PRECISION_CHAR, qmat1_dev, qmat2_dev, max_size, debug, my_stream)
       
             successGPU = ccl_bcast(qmat1_dev, qmat2_dev, int(max_size*max_size,kind=c_size_t), cclDataType_real, &
                                   int(np,kind=c_int), ccl_comm_rows, my_stream)

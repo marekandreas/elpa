@@ -63,7 +63,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_update_ndef_c_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_update_ndef_c_FromC")
+                                                  bind(C, name= "hip_update_ndef_c_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -80,7 +80,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_compute_nnzl_nnzu_val_part1_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_compute_nnzl_nnzu_val_part1_FromC")
+                                                  bind(C, name= "hip_compute_nnzl_nnzu_val_part1_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -97,7 +97,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_compute_nnzl_nnzu_val_part2_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_compute_nnzl_nnzu_val_part2_FromC")
+                                                  bind(C, name= "hip_compute_nnzl_nnzu_val_part2_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -116,7 +116,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_qtmp1_slice_to_q_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_copy_qtmp1_slice_to_q_FromC")
+                                                  bind(C, name= "hip_copy_qtmp1_slice_to_q_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -136,7 +136,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_q_slice_to_qtmp2_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_copy_q_slice_to_qtmp2_FromC")
+                                                  bind(C, name= "hip_copy_q_slice_to_qtmp2_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -156,7 +156,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_qtmp2_slice_to_q_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_copy_qtmp2_slice_to_q_FromC")
+                                                  bind(C, name= "hip_copy_qtmp2_slice_to_q_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -175,7 +175,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_fill_ev_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_fill_ev_FromC")
+                                                  bind(C, name= "hip_fill_ev_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -195,7 +195,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_fill_tmp_arrays_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_fill_tmp_arrays_FromC")
+                                                  bind(C, name= "hip_fill_tmp_arrays_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -214,7 +214,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_zero_q_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_zero_q_FromC")
+                                                  bind(C, name= "hip_zero_q_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -234,7 +234,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_q_slice_to_qtmp1_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_copy_q_slice_to_qtmp1_FromC")
+                                                  bind(C, name= "hip_copy_q_slice_to_qtmp1_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -252,7 +252,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_qtmp1_to_qtmp1_tmp_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_copy_qtmp1_to_qtmp1_tmp_FromC")
+                                                  bind(C, name= "hip_copy_qtmp1_to_qtmp1_tmp_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -269,7 +269,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_fill_array_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_fill_array_FromC")
+                                                  bind(C, name= "hip_fill_array_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -287,7 +287,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                      bind(C, name="cuda_solve_secular_equation_loop_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                     bind(C, name="hip_solve_secular_equation_loop_FromC")
+                                                     bind(C, name= "hip_solve_secular_equation_loop_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -304,7 +304,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                      bind(C, name="cuda_local_product_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                     bind(C, name="hip_local_product_FromC")
+                                                     bind(C, name= "hip_local_product_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -322,7 +322,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                      bind(C, name="cuda_add_tmp_loop_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                     bind(C, name="hip_add_tmp_loop_FromC")
+                                                     bind(C, name= "hip_add_tmp_loop_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -341,7 +341,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_qtmp1_q_compute_nnzu_nnzl_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_copy_qtmp1_q_compute_nnzu_nnzl_FromC")
+                                                  bind(C, name= "hip_copy_qtmp1_q_compute_nnzu_nnzl_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -359,7 +359,7 @@ module merge_systems_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_fill_z_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_fill_z_FromC")
+                                                  bind(C, name= "hip_fill_z_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none

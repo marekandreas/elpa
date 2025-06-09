@@ -157,10 +157,6 @@
 #undef  GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION
 #undef  GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION
 
-#undef GPU_COPY_QMAT1_TO_QMAT2_PRECISION
-#undef GPU_UPDATE_D_PRECISION
-#undef GPU_COPY_D_TO_D_TMP_PRECISION
-
 #undef  gpusolver_PRECISION_syevd 
 #undef GPU_CONSTRUCT_TRIDI_MATRIX_PRECISION
 #undef GPU_CHECK_MONOTONY_PRECISION
@@ -277,10 +273,6 @@
 #define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_get_skewsymmetric_second_half_q_double
 #define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_put_skewsymmetric_second_half_q_double
 
-#define GPU_COPY_QMAT1_TO_QMAT2_PRECISION gpu_copy_qmat1_to_qmat2_double
-#define GPU_UPDATE_D_PRECISION gpu_update_d_double
-#define GPU_COPY_D_TO_D_TMP_PRECISION gpu_copy_d_to_d_tmp_double
-
 #define  gpusolver_PRECISION_syevd gpusolver_dsyevd
 #define GPU_CONSTRUCT_TRIDI_MATRIX_PRECISION gpu_construct_tridi_matrix_double
 
@@ -394,11 +386,7 @@
 #define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_get_skewsymmetric_second_half_q_float
 #define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_put_skewsymmetric_second_half_q_float
 
-#define GPU_COPY_QMAT1_TO_QMAT2_PRECISION gpu_copy_qmat1_to_qmat2_float
-#define GPU_UPDATE_D_PRECISION gpu_update_d_float
-#define GPU_COPY_D_TO_D_TMP_PRECISION gpu_copy_d_to_d_tmp_float
-
-#define  gpusolver_PRECISION_syevd gpusolver_ssyevd
+#define gpusolver_PRECISION_syevd gpusolver_ssyevd
 #define GPU_CONSTRUCT_TRIDI_MATRIX_PRECISION gpu_construct_tridi_matrix_float
 
 #define GPU_CHECK_MONOTONY_PRECISION gpu_check_monotony_float

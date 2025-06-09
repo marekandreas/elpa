@@ -64,7 +64,7 @@ module distribute_global_column_gpu_new
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_distribute_global_column_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name="hip_distribute_global_columnc_FromC")
+                                                  bind(C, name= "hip_distribute_global_column_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none

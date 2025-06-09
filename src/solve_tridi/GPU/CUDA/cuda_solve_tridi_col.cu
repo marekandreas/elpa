@@ -77,130 +77,130 @@ __global__ void cuda_update_d_double_kernel(int *limits, double *d, double *e, c
 
 
 
-extern "C" void cuda_update_d_double_FromC(int *limits_dev, double *d_dev, double *e_dev, int *ndiv_in, int *na_in, cudaStream_t  my_stream){
-  int na = *na_in;
-  int ndiv = *ndiv_in;
+// extern "C" void cuda_update_d_double_FromC(int *limits_dev, double *d_dev, double *e_dev, int *ndiv_in, int *na_in, cudaStream_t  my_stream){
+//   int na = *na_in;
+//   int ndiv = *ndiv_in;
 
-  //dim3 threadsPerBlock(1024);
-  //dim3 blocks((na1 + threadsPerBlock.x - 1) / threadsPerBlock.x);
+//   //dim3 threadsPerBlock(1024);
+//   //dim3 blocks((na1 + threadsPerBlock.x - 1) / threadsPerBlock.x);
 
-  dim3 threadsPerBlock(1);
-  dim3 blocks(1);
+//   dim3 threadsPerBlock(1);
+//   dim3 blocks(1);
 
-#ifdef WITH_GPU_STREAMS
-  cuda_update_d_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(limits_dev, d_dev, e_dev, ndiv, na);
-#else
-  cuda_update_d_double_kernel<<<blocks, threadsPerBlock>>>              (limits_dev, d_dev, e_dev, ndiv, na);
-#endif
+// #ifdef WITH_GPU_STREAMS
+//   cuda_update_d_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>( d_dev, e_dev, limits_dev, ndiv, na);
+// #else
+//   cuda_update_d_double_kernel<<<blocks, threadsPerBlock>>>              (limits_dev, d_dev, e_dev, ndiv, na);
+// #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_update_d_double_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
-}
-
-
-__global__ void cuda_update_d_float_kernel(int *limits, float *d, float *e, const int ndiv, const int na) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
+//   cudaError_t cuerr = cudaGetLastError();
+//   if (cuerr != cudaSuccess){
+//     printf("Error in executing cuda_update_d_double_kernel: %s\n",cudaGetErrorString(cuerr));
+//   }
+// }
 
 
-    for (int ii=0;ii<ndiv-1;ii++) {
-      int n = limits[ii]-1;
-      d[n]   = d[n]   - fabsf(e[n]);
-      d[n+1] = d[n+1] - fabsf(e[n]);
-
-    }
-}
+// __global__ void cuda_update_d_float_kernel(int *limits, float *d, float *e, const int ndiv, const int na) {
+//     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
 
+//     for (int ii=0;ii<ndiv-1;ii++) {
+//       int n = limits[ii]-1;
+//       d[n]   = d[n]   - fabsf(e[n]);
+//       d[n+1] = d[n+1] - fabsf(e[n]);
 
-extern "C" void cuda_update_d_float_FromC(int *limits_dev, float *d_dev, float *e_dev, int *ndiv_in, int *na_in, cudaStream_t  my_stream){
-  int na = *na_in;
-  int ndiv = *ndiv_in;
-
-  //dim3 threadsPerBlock(1024);
-  //dim3 blocks((na1 + threadsPerBlock.x - 1) / threadsPerBlock.x);
-
-  dim3 threadsPerBlock(1);
-  dim3 blocks(1);
-
-#ifdef WITH_GPU_STREAMS
-  cuda_update_d_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(limits_dev, d_dev, e_dev, ndiv, na);
-#else
-  cuda_update_d_float_kernel<<<blocks, threadsPerBlock>>>              (limits_dev, d_dev, e_dev, ndiv, na);
-#endif
-
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_update_d_float_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
-}
+//     }
+// }
 
 
 
-__global__ void cuda_copy_qmat1_to_qmat2_double_kernel(double *qmat1, double *qmat2, const int max_size) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int j = blockIdx.x * blockDim.x + threadIdx.x;
+// extern "C" void cuda_update_d_float_FromC(int *limits_dev, float *d_dev, float *e_dev, int *ndiv_in, int *na_in, cudaStream_t  my_stream){
+//   int na = *na_in;
+//   int ndiv = *ndiv_in;
 
-    if (i >= 0 && i < max_size) {
-      if ( j>=0 && j < max_size) {
-        qmat2[i + max_size*j] = qmat1[i + max_size*j];
-      }
-    }
-}
+//   //dim3 threadsPerBlock(1024);
+//   //dim3 blocks((na1 + threadsPerBlock.x - 1) / threadsPerBlock.x);
 
+//   dim3 threadsPerBlock(1);
+//   dim3 blocks(1);
 
+// #ifdef WITH_GPU_STREAMS
+//   cuda_update_d_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(limits_dev, d_dev, e_dev, ndiv, na);
+// #else
+//   cuda_update_d_float_kernel<<<blocks, threadsPerBlock>>>              (limits_dev, d_dev, e_dev, ndiv, na);
+// #endif
 
-extern "C" void cuda_copy_qmat1_to_qmat2_double_FromC(double *qmat1_dev, double *qmat2_dev, int *max_size_in, cudaStream_t  my_stream){
-  int max_size = *max_size_in;
-
-  dim3 threadsPerBlock(32,32);
-  dim3 blocks((max_size + threadsPerBlock.x - 1) / threadsPerBlock.x, (max_size + threadsPerBlock.y - 1) / threadsPerBlock.y);
-
-#ifdef WITH_GPU_STREAMS
-  cuda_copy_qmat1_to_qmat2_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qmat1_dev, qmat2_dev, max_size);
-#else
-  cuda_copy_qmat1_to_qmat2_double_kernel<<<blocks, threadsPerBlock>>>              (qmat1_dev, qmat2_dev, max_size);
-#endif
-
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_copy_qmat1_qmat2_double_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
-}
+//   cudaError_t cuerr = cudaGetLastError();
+//   if (cuerr != cudaSuccess){
+//     printf("Error in executing cuda_update_d_float_kernel: %s\n",cudaGetErrorString(cuerr));
+//   }
+// }
 
 
 
-__global__ void cuda_copy_qmat1_to_qmat2_float_kernel(float *qmat1, float *qmat2, const int max_size) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int j = blockIdx.x * blockDim.x + threadIdx.x;
+// __global__ void cuda_copy_qmat1_to_qmat2_double_kernel(double *qmat1, double *qmat2, const int max_size) {
+//     int i = blockIdx.x * blockDim.x + threadIdx.x;
+//     int j = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (i >= 0 && i < max_size) {
-      if ( j>=0 && j < max_size) {
-        qmat2[i + max_size*j] = qmat1[i + max_size*j];
-      }
-    }
-}
+//     if (i >= 0 && i < max_size) {
+//       if ( j>=0 && j < max_size) {
+//         qmat2[i + max_size*j] = qmat1[i + max_size*j];
+//       }
+//     }
+// }
 
 
 
-extern "C" void cuda_copy_qmat1_to_qmat2_float_FromC(float *qmat1_dev, float *qmat2_dev, int *max_size_in, cudaStream_t  my_stream){
-  int max_size = *max_size_in;
+// extern "C" void cuda_copy_qmat1_to_qmat2_double_FromC(double *qmat1_dev, double *qmat2_dev, int *max_size_in, cudaStream_t  my_stream){
+//   int max_size = *max_size_in;
 
-  dim3 threadsPerBlock(32,32);
-  dim3 blocks((max_size + threadsPerBlock.x - 1) / threadsPerBlock.x, (max_size + threadsPerBlock.y - 1) / threadsPerBlock.y);
+//   dim3 threadsPerBlock(32,32);
+//   dim3 blocks((max_size + threadsPerBlock.x - 1) / threadsPerBlock.x, (max_size + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
-#ifdef WITH_GPU_STREAMS
-  cuda_copy_qmat1_to_qmat2_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qmat1_dev, qmat2_dev, max_size);
-#else
-  cuda_copy_qmat1_to_qmat2_float_kernel<<<blocks, threadsPerBlock>>>              (qmat1_dev, qmat2_dev, max_size);
-#endif
+// #ifdef WITH_GPU_STREAMS
+//   cuda_copy_qmat1_to_qmat2_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qmat1_dev, qmat2_dev, max_size);
+// #else
+//   cuda_copy_qmat1_to_qmat2_double_kernel<<<blocks, threadsPerBlock>>>              (qmat1_dev, qmat2_dev, max_size);
+// #endif
 
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_copy_qmat1_qmat2_float_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
-}
+//   cudaError_t cuerr = cudaGetLastError();
+//   if (cuerr != cudaSuccess){
+//     printf("Error in executing cuda_copy_qmat1_qmat2_double_kernel: %s\n",cudaGetErrorString(cuerr));
+//   }
+// }
+
+
+
+// __global__ void cuda_copy_qmat1_to_qmat2_float_kernel(float *qmat1, float *qmat2, const int max_size) {
+//     int i = blockIdx.x * blockDim.x + threadIdx.x;
+//     int j = blockIdx.x * blockDim.x + threadIdx.x;
+
+//     if (i >= 0 && i < max_size) {
+//       if ( j>=0 && j < max_size) {
+//         qmat2[i + max_size*j] = qmat1[i + max_size*j];
+//       }
+//     }
+// }
+
+
+
+// extern "C" void cuda_copy_qmat1_to_qmat2_float_FromC(float *qmat1_dev, float *qmat2_dev, int *max_size_in, cudaStream_t  my_stream){
+//   int max_size = *max_size_in;
+
+//   dim3 threadsPerBlock(32,32);
+//   dim3 blocks((max_size + threadsPerBlock.x - 1) / threadsPerBlock.x, (max_size + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
+// #ifdef WITH_GPU_STREAMS
+//   cuda_copy_qmat1_to_qmat2_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(qmat1_dev, qmat2_dev, max_size);
+// #else
+//   cuda_copy_qmat1_to_qmat2_float_kernel<<<blocks, threadsPerBlock>>>              (qmat1_dev, qmat2_dev, max_size);
+// #endif
+
+//   cudaError_t cuerr = cudaGetLastError();
+//   if (cuerr != cudaSuccess){
+//     printf("Error in executing cuda_copy_qmat1_qmat2_float_kernel: %s\n",cudaGetErrorString(cuerr));
+//   }
+// }
 
 
 

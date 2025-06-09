@@ -81,7 +81,8 @@ subroutine solve_tridi_cpu_&
       use elpa_mpi
       use elpa_gpu
       use elpa_gpu_util
-      use tridi_col_gpu
+      !use tridi_col_gpu ! PETERDEBUG111 cleanup
+      use solve_tridi_col_gpu_new
       implicit none
 #include "../../src/general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj
@@ -103,6 +104,7 @@ subroutine solve_tridi_cpu_&
 
       logical, intent(in)                        :: wantDebug
       logical                                    :: success
+      integer(kind=c_int)                        :: debug
 
       integer(kind=ik)                           :: i, j, n, np, nc, nev1, l_cols, l_rows
       integer(kind=ik)                           :: my_prow, my_pcol, np_rows, np_cols
@@ -123,8 +125,11 @@ subroutine solve_tridi_cpu_&
                                                                       &PRECISION&
                                                                       &_real
       integer(kind=c_intptr_t)                   :: gpuHandle, my_stream
-      type(c_ptr)                                :: limits_dev
+      integer(kind=c_intptr_t)                   :: limits_dev
       logical                                    :: successGPU
+
+      debug = 0
+      if (wantDebug) debug = 1
 
       useGPU = .false.
 #ifdef SOLVE_TRIDI_GPU_BUILD
@@ -232,8 +237,8 @@ subroutine solve_tridi_cpu_&
 
 
         my_stream = obj%gpu_setup%my_stream
-        call GPU_UPDATE_D_PRECISION (limits_dev, d_dev, e_dev, np_cols, na, my_stream)
-
+        call gpu_update_d (PRECISION_CHAR, d_dev, e_dev, limits_dev, np_cols, na, debug, my_stream)
+        
         successGPU = gpu_free(limits_dev)
         check_dealloc_gpu("solve_tridi: limits_dev", successGPU)
 

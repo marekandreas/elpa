@@ -48,9 +48,6 @@
 
 //________________________________________________________________
 
-
-//________________________________________________________________
-
 template <typename T>
 __global__ void gpu_distribute_global_column_kernel(T *g_col, T *l_col, 
                                                     const int g_col_dim1, const int g_col_dim2, const int ldq, const int matrixCols, 
