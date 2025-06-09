@@ -102,6 +102,7 @@
       use hip_functions  ! for ROCTX labels
 #endif
       use distribute_global_column_gpu
+      use distribute_global_column_gpu_new
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
 
@@ -491,25 +492,25 @@
 
 #ifdef WITH_MPI
           if (useGPU) then
-            call GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION (qmat2_dev, max_size, max_size, q_dev, ldq, matrixCols, &
-                                                noff, nqoff+noff, nlen, my_prow, np_rows, nblk, my_stream)
+            call gpu_distribute_global_column(PRECISION_CHAR, qmat2_dev, q_dev, max_size, max_size, ldq, matrixCols, &
+                                              noff, nqoff+noff, nlen, my_prow, np_rows, nblk, debug, my_stream)
           else
             do i=1,nlen
               call distribute_global_column_4_&
               &PRECISION &
-                    (obj, qmat2(1:max_size,1:max_size), max_size, max_size, q(1:ldq,1:matrixCols), ldq, matrixCols, &
+                    (obj, qmat2(1:max_size,1:max_size), q(1:ldq,1:matrixCols), max_size, max_size, ldq, matrixCols, &
                       noff, nqoff+noff, nlen, my_prow, np_rows, nblk)
             enddo ! i=1,nlen
           endif
 #else /* WITH_MPI */
           if (useGPU) then
-            call GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION (qmat1_dev, max_size, max_size, q_dev, ldq, matrixCols, &
-                                              noff, nqoff+noff, nlen, my_prow, np_rows, nblk, my_stream)
+            call gpu_distribute_global_column(PRECISION_CHAR, qmat1_dev, q_dev, max_size, max_size, ldq, matrixCols, &
+                                              noff, nqoff+noff, nlen, my_prow, np_rows, nblk, debug, my_stream)
           else
             do i=1,nlen
                   call distribute_global_column_4_&
                   &PRECISION &
-                      (obj, qmat1(1:max_size,1:max_size), max_size, max_size, q(1:ldq,1:matrixCols), ldq, matrixCols, &
+                      (obj, qmat1(1:max_size,1:max_size), q(1:ldq,1:matrixCols), max_size, max_size, ldq, matrixCols, &
                         noff, nqoff+noff, nlen, my_prow, np_rows, nblk)
 
             enddo ! i=1,nlen

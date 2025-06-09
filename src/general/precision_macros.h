@@ -157,7 +157,6 @@
 #undef  GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION
 #undef  GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION
 
-#undef GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION
 #undef GPU_COPY_QMAT1_TO_QMAT2_PRECISION
 #undef GPU_UPDATE_D_PRECISION
 #undef GPU_COPY_D_TO_D_TMP_PRECISION
@@ -278,7 +277,6 @@
 #define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_get_skewsymmetric_second_half_q_double
 #define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_put_skewsymmetric_second_half_q_double
 
-#define GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION gpu_distribute_global_column_double
 #define GPU_COPY_QMAT1_TO_QMAT2_PRECISION gpu_copy_qmat1_to_qmat2_double
 #define GPU_UPDATE_D_PRECISION gpu_update_d_double
 #define GPU_COPY_D_TO_D_TMP_PRECISION gpu_copy_d_to_d_tmp_double
@@ -396,7 +394,6 @@
 #define GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_get_skewsymmetric_second_half_q_float
 #define GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION gpu_put_skewsymmetric_second_half_q_float
 
-#define GPU_DISTRIBUTE_GLOBAL_COLUMN_PRECISION gpu_distribute_global_column_float
 #define GPU_COPY_QMAT1_TO_QMAT2_PRECISION gpu_copy_qmat1_to_qmat2_float
 #define GPU_UPDATE_D_PRECISION gpu_update_d_float
 #define GPU_COPY_D_TO_D_TMP_PRECISION gpu_copy_d_to_d_tmp_float
