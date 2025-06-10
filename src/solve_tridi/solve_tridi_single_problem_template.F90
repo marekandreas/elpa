@@ -99,6 +99,7 @@
 
      logical, intent(in)                        :: wantDebug
      logical, intent(out)                       :: success
+     integer(kind=c_int)                        :: debug
      integer(kind=ik)                           :: istat
      character(200)                             :: errorMessage
      integer(kind=c_intptr_t)                   :: num, my_stream
@@ -110,6 +111,9 @@
 
      integer(kind=c_intptr_t)                    :: gpusolverHandle
 
+     debug = 0
+     if (wantDebug) debug = 1
+     
      useGPU =.false.
      useGPUsolver =.false.
 #ifdef SOLVE_TRIDI_GPU_BUILD
@@ -137,7 +141,7 @@
        check_alloc_gpu("solve_tridi_single info_dev: ", successGPU)
        
        my_stream = obj%gpu_setup%my_stream
-       call GPU_CONSTRUCT_TRIDI_MATRIX_PRECISION (q_dev, d_dev, e_dev, nlen, ldq, my_stream)
+       call gpu_construct_tridi_matrix(PRECISION_CHAR, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
      endif
 
      ! Save d and e for the case that dstedc fails
@@ -336,7 +340,7 @@
 
      if (useGPU) then
        my_stream = obj%gpu_setup%my_stream
-       call GPU_CHECK_MONOTONY_PRECISION (d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
+       call gpu_check_monotony(PRECISION_CHAR, d_dev, q_dev, qtmp_dev, nlen, ldq, debug, my_stream)
      else
        do i=1,nlen-1
          if (d(i+1)<d(i)) then

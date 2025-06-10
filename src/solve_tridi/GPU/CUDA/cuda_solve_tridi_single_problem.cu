@@ -1,4 +1,4 @@
-//    Copyright 2024, A. Marek
+//    Copyright 2025, P. Karpov
 //
 //    This file is part of ELPA.
 //
@@ -10,7 +10,7 @@
 //    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 //      Informatik,
 //    - Technische Universität München, Lehrstuhl für Informatik mit
-//      Schwerpunkt Wissenschaftliches Rechnen ,
+//      Schwerpunkt Wissenschaftliches Rechnen,
 //    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
 //    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 //      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
@@ -44,9 +44,7 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//    This file was written by A. Marek, MPCDF
-
-#include "config-f90.h"
+//    This file was written by P. Karpov, MPCDF
 
 #include <stdio.h>
 #include <math.h>
@@ -59,210 +57,7 @@
 #include <cuComplex.h>
 #include <stdint.h>
 #include "config-f90.h"
+#include "../../../GPU/common_device_functions.h"
+#include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
 
-#define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
-
-
-__global__ void cuda_check_monotony_double_kernel(double *d, double *q, double *qtmp, const int nlen, const int ldq) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    //int j = blockIdx.y * blockDim.y + threadIdx.y;
-  
-    int j;
-  
-    //if (i>=0 && i<gemm_dim_k) {
-    //  if (j>=0 && j<gemm_dim_l) {
-    //    qtmp1_tmp[i+gemm_dim_k*j] = qtmp1[i+gemm_dim_k*j];
-    //  }    
-    //}
-    for (int i=0; i<nlen-1;i++) {
-      if (d[i+1] < d[i]) {
-        double dtmp = d[i+1];
-        for (j=0; j<nlen; j++) {
-          qtmp[j] = q[j+ldq*(i+1)];
-        }
-        for (j=i; j>=0; j--){
-          if (dtmp < d[j]) {
-            d[j+1] = d[j];
-            for (int k=0;k<nlen;k++) {
-              q[k+ldq*(j+1)] = q[k+ldq*j];
-            }
-          } else {
-            break;
-          }
-        }
-        d[j+1] = dtmp;
-        for (int k=0;k<nlen;k++) {
-          q[k+ldq*(j+1)] = qtmp[k];
-        }
-      }
-    }
-}
-
-
-extern "C" void cuda_check_monotony_double_FromC(double *d_dev, double *q_dev, double *qtmp_dev, int *nlen_in, int *ldq_in, cudaStream_t  my_stream){
-
-  int nlen = *nlen_in;
-  int ldq  = *ldq_in;
-
-  dim3 threadsPerBlock(1);
-  //dim3 blocks((gemm_dim_k + threadsPerBlock.x - 1) / threadsPerBlock.x, (gemm_dim_l + threadsPerBlock.y - 1) / threadsPerBlock.y);
-  dim3 blocks(1);
-
-#ifdef WITH_GPU_STREAMS
-  cuda_check_monotony_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(d_dev, q_dev, qtmp_dev, nlen, ldq);
-#else
-  cuda_check_monotony_double_kernel<<<blocks, threadsPerBlock>>>(d_dev, q_dev, qtmp_dev, nlen, ldq);
-#endif
-
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_check_monotony_double_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
-}
-
-
-__global__ void cuda_check_monotony_float_kernel(float *d, float *q, float *qtmp, const int nlen, const int ldq) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    //int j = blockIdx.y * blockDim.y + threadIdx.y;
-  
-    int j;
-  
-    //if (i>=0 && i<gemm_dim_k) {
-    //  if (j>=0 && j<gemm_dim_l) {
-    //    qtmp1_tmp[i+gemm_dim_k*j] = qtmp1[i+gemm_dim_k*j];
-    //  }    
-    //}
-    for (int i=0; i<nlen-1;i++) {
-      if (d[i+1] < d[i]) {
-        float dtmp = d[i+1];
-        for (j=0; j<nlen; j++) {
-          qtmp[j] = q[j+ldq*(i+1)];
-        }
-        for (j=i; j>=0; j--){
-          if (dtmp < d[j]) {
-            d[j+1] = d[j];
-            for (int k=0;k<nlen;k++) {
-              q[k+ldq*(j+1)] = q[k+ldq*j];
-            }
-          } else {
-            break;
-          }
-        }
-        d[j+1] = dtmp;
-        for (int k=0;k<nlen;k++) {
-          q[k+ldq*(j+1)] = qtmp[k];
-        }
-      }
-    }
-}
-
-
-extern "C" void cuda_check_monotony_float_FromC(float *d_dev, float *q_dev, float *qtmp_dev, int *nlen_in, int *ldq_in, cudaStream_t  my_stream){
-
-  int nlen = *nlen_in;
-  int ldq  = *ldq_in;
-
-  dim3 threadsPerBlock(1);
-  //dim3 blocks((gemm_dim_k + threadsPerBlock.x - 1) / threadsPerBlock.x, (gemm_dim_l + threadsPerBlock.y - 1) / threadsPerBlock.y);
-  dim3 blocks(1);
-
-#ifdef WITH_GPU_STREAMS
-  cuda_check_monotony_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(d_dev, q_dev, qtmp_dev, nlen, ldq);
-#else
-  cuda_check_monotony_float_kernel<<<blocks, threadsPerBlock>>>(d_dev, q_dev, qtmp_dev, nlen, ldq);
-#endif
-
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_check_monotony_float_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
-}
-
-
-
-
-__global__ void cuda_construct_tridi_matrix_double_kernel(double *q, double *d, double *e, const int nlen, const int ldq) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-  
-    // q has been zeroed outside of kernel
-    if (i>=0 && i<nlen) {
-      // diagonal
-      q[i+ldq*i] = d[i];
-    }
-
-    // sub-diagonal
-    if (i>=0 && i<nlen-1) {
-      q[i+1 + ldq * i] = e[i];
-      q[i + ldq * (i+1)] = e[i];
-    }
-
-}
-
-
-extern "C" void cuda_construct_tridi_matrix_double_FromC(double *q_dev, double *d_dev, double *e_dev, int *nlen_in, int *ldq_in, cudaStream_t  my_stream){
-
-  int nlen = *nlen_in;
-  int ldq  = *ldq_in;
-
-  dim3 threadsPerBlock(1024);
-  dim3 blocks((nlen + threadsPerBlock.x - 1) / threadsPerBlock.x);
-  //dim3 threadsPerBlock(1);
-  //dim3 blocks(1);
-
-#ifdef WITH_GPU_STREAMS
-  cuda_construct_tridi_matrix_double_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, d_dev, e_dev, nlen, ldq);
-#else
-  cuda_construct_tridi_matrix_double_kernel<<<blocks, threadsPerBlock>>>(q_dev, d_dev, e_dev, nlen, ldq);
-#endif
-
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_construct_tridi_matrix_double_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
-}
-
-
-
-
-__global__ void cuda_construct_tridi_matrix_float_kernel(float *q, float *d, float *e, const int nlen, const int ldq) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-  
-    // q has been zeroed outside of kernel
-    if (i>=0 && i<nlen) {
-      // diagonal
-      q[i+ldq*i] = d[i];
-    }
-
-    // sub-diagonal
-    if (i>=0 && i<nlen-1) {
-      q[i+1 + ldq * i] = e[i];
-      q[i + ldq * (i+1)] = e[i];
-    }
-
-}
-
-
-extern "C" void cuda_construct_tridi_matrix_float_FromC(float *q_dev, float *d_dev, float *e_dev, int *nlen_in, int *ldq_in, cudaStream_t  my_stream){
-
-  int nlen = *nlen_in;
-  int ldq  = *ldq_in;
-
-  dim3 threadsPerBlock(1024);
-  dim3 blocks((nlen + threadsPerBlock.x - 1) / threadsPerBlock.x);
-  //dim3 threadsPerBlock(1);
-  //dim3 blocks(1);
-
-#ifdef WITH_GPU_STREAMS
-  cuda_construct_tridi_matrix_float_kernel<<<blocks, threadsPerBlock, 0, my_stream>>>(q_dev, d_dev, e_dev, nlen, ldq);
-#else
-  cuda_construct_tridi_matrix_float_kernel<<<blocks, threadsPerBlock>>>(q_dev, d_dev, e_dev, nlen, ldq);
-#endif
-
-  cudaError_t cuerr = cudaGetLastError();
-  if (cuerr != cudaSuccess){
-    printf("Error in executing cuda_construct_tridi_matrix_float_kernel: %s\n",cudaGetErrorString(cuerr));
-  }
-}
-
-
-
+#include "../gpu_solve_tridi_single_problem.h"

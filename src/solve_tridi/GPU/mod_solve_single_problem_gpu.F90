@@ -1,5 +1,5 @@
 #if 0
-!    Copyright 2024, A. Marek, MPCDF
+!    Copyright 2025, P. Karpov, MPCDF
 !
 !    This file is part of ELPA.
 !
@@ -11,7 +11,7 @@
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
-!      Schwerpunkt Wissenschaftliches Rechnen ,
+!      Schwerpunkt Wissenschaftliches Rechnen,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
 !    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
@@ -41,7 +41,7 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 
-!    This file was written by A.Marek, MPCDF
+!    This file was written by P. Karpov, MPCDF
 #endif
 
 
@@ -50,86 +50,75 @@
 
 module solve_single_problem_gpu
   use, intrinsic :: iso_c_binding
-#ifdef WITH_NVIDIA_GPU_VERSION
-  use solve_single_problem_cuda
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-  use solve_single_problem_hip
-#endif
   use precision
-
   implicit none
 
   public
 
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+
+  interface
+    subroutine gpu_check_monotony_c(dataType, d_dev, q_dev, qtmp_dev, nlen, ldq, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_check_monotony_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name= "hip_check_monotony_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: d_dev, q_dev, qtmp_dev
+      integer(kind=c_int), value         :: nlen, ldq, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine gpu_construct_tridi_matrix_c(dataType, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_construct_tridi_matrix_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name= "hip_construct_tridi_matrix_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: q_dev, d_dev,e_dev
+      integer(kind=c_int), value         :: nlen, ldq, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
+  end interface
+
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) */
+
+
   contains
 
-    subroutine gpu_check_monotony_double(d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
+
+    subroutine gpu_check_monotony(dataType, d_dev, q_dev, qtmp_dev, nlen, ldq, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int), intent(in)    :: nlen, ldq
-      integer(kind=c_intptr_t)           :: d_dev, q_dev, qtmp_dev
-      integer(kind=c_intptr_t)           :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_check_monotony_double(d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
-#endif 
-
-#ifdef WITH_AMD_GPU_VERSION
-        call hip_check_monotony_double (d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: d_dev, q_dev, qtmp_dev
+      integer(kind=c_int), value         :: nlen, ldq, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+      call gpu_check_monotony_c(dataType, d_dev, q_dev, qtmp_dev, nlen, ldq, debug, my_stream)
 #endif
     end subroutine
 
-    subroutine gpu_check_monotony_float(d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
+
+    subroutine gpu_construct_tridi_matrix(dataType, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
-      integer(kind=c_int), intent(in)    :: nlen, ldq
-      integer(kind=c_intptr_t)           :: d_dev, q_dev, qtmp_dev
-      integer(kind=c_intptr_t)           :: my_stream
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-#ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_check_monotony_float(d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
-#endif 
-
-#ifdef WITH_AMD_GPU_VERSION
-        call hip_check_monotony_float (d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
-#endif 
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: q_dev, d_dev,e_dev
+      integer(kind=c_int), value         :: nlen, ldq, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+      call gpu_construct_tridi_matrix_c(dataType, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
 #endif
     end subroutine
-
-    subroutine gpu_construct_tridi_matrix_double(q_dev, d_dev, e_dev, nlen, ldq, my_stream)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=c_int), intent(in)    :: nlen, ldq
-      integer(kind=c_intptr_t)           :: q_dev, d_dev,e_dev
-      integer(kind=c_intptr_t)           :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_construct_tridi_matrix_double(q_dev, d_dev, e_dev, nlen, ldq, my_stream)
-#endif 
-
-#ifdef WITH_AMD_GPU_VERSION
-        call hip_construct_tridi_matrix_double (q_dev, d_dev, e_dev, nlen, ldq, my_stream)
-#endif
-    end subroutine
-
-    subroutine gpu_construct_tridi_matrix_float(q_dev, d_dev, e_dev, nlen, ldq, my_stream)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=c_int), intent(in)    :: nlen, ldq
-      integer(kind=c_intptr_t)           :: q_dev, d_dev,e_dev
-      integer(kind=c_intptr_t)           :: my_stream
-
-#ifdef WANT_SINGLE_PRECISION_REAL
-#ifdef WITH_NVIDIA_GPU_VERSION
-        call cuda_construct_tridi_matrix_float(q_dev, d_dev, e_dev, nlen, ldq, my_stream)
-#endif 
-
-#ifdef WITH_AMD_GPU_VERSION
-        call hip_construct_tridi_matrix_float (q_dev, d_dev, e_dev, nlen, ldq, my_stream)
-#endif 
-#endif
-    end subroutine
-
+  
 end module

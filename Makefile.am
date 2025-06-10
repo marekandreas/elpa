@@ -70,7 +70,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/GPU/mod_solve_tridi_col_gpu_new.F90 \
   src/solve_tridi/GPU/mod_distribute_global_column_gpu_new.F90 \
   src/solve_tridi/GPU/mod_transform_columns_gpu.F90 \
-  src/solve_tridi/GPU/CUDA/mod_solve_tridi_single_problem_cuda.F90 \
   src/solve_tridi/GPU/ROCm/mod_merge_systems_hip.F90 \
   src/solve_tridi/GPU/ROCm/mod_solve_tridi_single_problem_hip.F90 \
   src/solve_tridi/GPU/ROCm/mod_solve_tridi_col_hip.F90 \
@@ -268,7 +267,6 @@ if WITH_NVIDIA_GPU_VERSION
   src/elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_complex.cu \
   src/solve_tridi/GPU/CUDA/cuda_distribute_global_column_new.cu \
   src/solve_tridi/GPU/CUDA/cuda_merge_systems_new.cu \
-  src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col.cu \
   src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col_new.cu \
   src/solve_tridi/GPU/CUDA/cuda_solve_tridi_single_problem.cu \
   src/solve_tridi/GPU/CUDA/cuda_transform_columns.cu \
