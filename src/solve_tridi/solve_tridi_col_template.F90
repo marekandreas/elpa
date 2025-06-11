@@ -90,8 +90,6 @@
       use elpa_gpu
       !use single_problem
 
-      ! use solve_tridi_col_cuda ! PETERDEBUG111: cleanup
-
 #if defined(USE_CCL_SOLVE_TRIDI)
       use elpa_ccl_gpu
 #endif
@@ -100,10 +98,8 @@
 #elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
       use hip_functions  ! for ROCTX labels
 #endif
-      !use tridi_col_gpu ! PETERDEBUG111: cleanup, rename
-      use solve_tridi_col_gpu_new
-      !use distribute_global_column_gpu ! PETERDEBUG111: cleanup, rename
-      use distribute_global_column_gpu_new
+      use solve_tridi_col_gpu
+      use distribute_global_column_gpu
       implicit none
       class(elpa_abstract_impl_t), intent(inout) :: obj
 

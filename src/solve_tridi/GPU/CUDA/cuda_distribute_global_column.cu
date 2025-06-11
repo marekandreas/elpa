@@ -60,4 +60,4 @@
 #include "../../../GPU/common_device_functions.h"
 #include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
 
-#include "../gpu_distribute_global_column_new.h"
+#include "../gpu_distribute_global_column.h"

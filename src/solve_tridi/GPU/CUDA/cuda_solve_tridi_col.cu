@@ -60,4 +60,4 @@
 #include "../../../GPU/common_device_functions.h"
 #include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
 
-#include "../gpu_merge_systems_new.h"
+#include "../gpu_solve_tridi_col.h"

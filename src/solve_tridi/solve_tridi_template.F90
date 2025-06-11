@@ -81,8 +81,7 @@ subroutine solve_tridi_cpu_&
       use elpa_mpi
       use elpa_gpu
       use elpa_gpu_util
-      !use tridi_col_gpu ! PETERDEBUG111 cleanup
-      use solve_tridi_col_gpu_new
+      use solve_tridi_col_gpu
       implicit none
 #include "../../src/general/precision_kinds.F90"
       class(elpa_abstract_impl_t), intent(inout) :: obj

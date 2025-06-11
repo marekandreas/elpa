@@ -48,7 +48,7 @@
 #include "config-f90.h"
 
 
-module distribute_global_column_gpu_new
+module solve_tridi_col_gpu
   use, intrinsic :: iso_c_binding
   use precision
   implicit none
@@ -58,20 +58,35 @@ module distribute_global_column_gpu_new
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
 
   interface
-    subroutine gpu_distribute_global_column_c(dataType, g_col_dev, l_col_dev, &
-                                              g_col_dim1, g_col_dim2, ldq, matrixCols, &
-                                              noff_in, noff, nlen, my_prow, np_rows, nblk, debug, my_stream) &
+    subroutine gpu_update_d_c(dataType, d_dev, e_dev, limits_dev, ndiv, na, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
-                                                  bind(C, name="cuda_distribute_global_column_FromC")
+                                                  bind(C, name="cuda_update_d_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name= "hip_distribute_global_column_FromC")
+                                                  bind(C, name= "hip_update_d_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
-      integer(kind=c_intptr_t), value    :: g_col_dev, l_col_dev
-      integer(kind=c_int), value         :: g_col_dim1, g_col_dim2, ldq, matrixCols, noff_in, noff, nlen, &
-                                            my_prow, np_rows, nblk, debug
+      integer(kind=c_intptr_t), value    :: d_dev, e_dev
+      integer(kind=c_intptr_t), value    :: limits_dev
+      integer(kind=c_int), value         :: ndiv, na, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
+  end interface
+
+
+  interface
+    subroutine gpu_copy_qmat1_to_qmat2_c(dataType, qmat1_dev, qmat2_dev, max_size, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_copy_qmat1_to_qmat2_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name= "hip_copy_qmat1_to_qmat2_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: qmat1_dev, qmat2_dev
+      integer(kind=c_int), value         :: max_size, debug
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
@@ -83,21 +98,31 @@ module distribute_global_column_gpu_new
   contains
 
 
-    subroutine gpu_distribute_global_column(dataType, g_col_dev, l_col_dev, &
-                                            g_col_dim1, g_col_dim2, ldq, matrixCols, &
-                                            noff_in, noff, nlen, my_prow, np_rows, nblk, debug, my_stream)
+    subroutine gpu_update_d(dataType, d_dev, e_dev, limits_dev, ndiv, na, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
-      integer(kind=c_intptr_t), value    :: g_col_dev, l_col_dev
-      integer(kind=c_int), value         :: g_col_dim1, g_col_dim2, ldq, matrixCols, noff_in, noff, nlen, &
-                                            my_prow, np_rows, nblk, debug
+      integer(kind=c_intptr_t), value    :: d_dev, e_dev
+      integer(kind=c_intptr_t), value    :: limits_dev
+      integer(kind=c_int), value         :: ndiv, na, debug
       integer(kind=c_intptr_t), value    :: my_stream
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
-      call gpu_distribute_global_column_c(dataType, g_col_dev, l_col_dev, &
-                                          g_col_dim1, g_col_dim2, ldq, matrixCols, &
-                                          noff_in, noff, nlen, my_prow, np_rows, nblk, debug, my_stream)
+      call gpu_update_d_c(dataType, d_dev, e_dev, limits_dev, ndiv, na, debug, my_stream)
 #endif
     end subroutine
 
+
+    subroutine gpu_copy_qmat1_to_qmat2(dataType, qmat1_dev, qmat2_dev, max_size, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: qmat1_dev, qmat2_dev
+      integer(kind=c_int), value         :: max_size, debug
+      integer(kind=c_intptr_t), value    :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+      call gpu_copy_qmat1_to_qmat2_c(dataType, qmat1_dev, qmat2_dev, max_size, debug, my_stream)
+#endif
+    end subroutine
+
+  
 end module
