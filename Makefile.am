@@ -70,10 +70,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/GPU/mod_solve_tridi_col_gpu.F90 \
   src/solve_tridi/GPU/mod_distribute_global_column_gpu.F90 \
   src/solve_tridi/GPU/mod_transform_columns_gpu.F90 \
-  src/solve_tridi/GPU/ROCm/mod_merge_systems_hip.F90 \
-  src/solve_tridi/GPU/ROCm/mod_solve_tridi_single_problem_hip.F90 \
-  src/solve_tridi/GPU/ROCm/mod_solve_tridi_col_hip.F90 \
-  src/solve_tridi/GPU/ROCm/mod_distribute_global_column_hip.F90 \
   src/elpa2/elpa2_determine_workload.F90 \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
@@ -300,6 +296,7 @@ if WITH_AMD_GPU_VERSION
   src/solve_tridi/GPU/ROCm/rocm_merge_systems.hip \
   src/solve_tridi/GPU/ROCm/rocm_solve_tridi_col.hip \
   src/solve_tridi/GPU/ROCm/rocm_solve_tridi_single_problem.hip \
+  src/solve_tridi/GPU/ROCm/rocm_transform_columns.hip \
   src/multiply_a_b/GPU/ROCm/elpa_hermitian_multiply_hip.hip \
   src/multiply_a_b/GPU/ROCm/elpa_pxgemm_multiply_hip.hip
 endif
