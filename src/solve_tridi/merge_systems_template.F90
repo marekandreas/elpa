@@ -1036,17 +1036,6 @@
           ev_scale(:) = 0.0_rk
         endif ! useGPU
 
-#ifdef WITH_OPENMP_TRADITIONAL
-
-        call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
-
-!$omp PARALLEL DO &
-!$omp default(none) &
-!$omp private(i) &
-!$omp SHARED(na1, my_proc, n_procs,  &
-!$OMP d1, dbase, ddiff, z, ev_scale, obj)
-
-#endif
         
         NVTX_RANGE_PUSH("add_tmp_loop")
         if (wantDebug) call obj%timer%start("add_tmp_loop")
@@ -1120,6 +1109,15 @@
           check_memcpy_gpu("merge_systems: ev_scale_dev", successGPU)
 #endif    
         else
+#ifdef WITH_OPENMP_TRADITIONAL
+          call obj%timer%start("OpenMP parallel" // PRECISION_SUFFIX)
+
+!$omp PARALLEL DO &
+!$omp default(none) &
+!$omp private(i) &
+!$omp SHARED(na1, my_proc, n_procs,  &
+!$OMP d1, dbase, ddiff, z, ev_scale, obj)
+#endif
           do i = my_proc+1, na1, n_procs ! work distributed over all processors
 
             ! tmp(1:na1) = z(1:na1) / delta(1:na1,i)  ! original code
@@ -1133,17 +1131,16 @@
             &(obj, d1, dbase, ddiff, z, ev_scale(i), na1, i)
   !         ev_scale(i) = ev_scale_val
           enddo
+#ifdef WITH_OPENMP_TRADITIONAL
+!$OMP END PARALLEL DO
+
+          call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
+#endif
         endif ! useGPU
 
         if (wantDebug) call obj%timer%stop("add_tmp_loop")
         NVTX_RANGE_POP("add_tmp_loop")
 
-#ifdef WITH_OPENMP_TRADITIONAL
-!$OMP END PARALLEL DO
-
-        call obj%timer%stop("OpenMP parallel" // PRECISION_SUFFIX)
-
-#endif
         
         NVTX_RANGE_PUSH("global_gather")
         call global_gather_&

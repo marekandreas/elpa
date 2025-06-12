@@ -216,7 +216,7 @@
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("resort_ev: qtmp_dev <- q_dev", successGPU)
 #else
-          successGPU = gpu_memcpy(qtmp(1:nl_rows,nc), q(l_rqs:l_rqe,lc1), num, gpuMemcpyDeviceToHost)
+          successGPU = gpu_memcpy(qtmp(1:l_rows,nc), q(l_rqs:l_rqe,lc1), num, gpuMemcpyDeviceToHost)
           check_memcpy_gpu("resort_ev: qtmp_dev <- q_dev", successGPU)
 #endif
         else
