@@ -79,9 +79,7 @@ module elpa_gpu_setup
     integer(kind=c_int), allocatable      :: openmpOffloadDeviceArray(:)
 
     logical                               :: gpuAlreadySet
-#ifdef WITH_SYCL_GPU_VERSION
-    logical                               :: syclCPU
-#endif
+
     integer(kind=c_int)        :: gpuDevAttrMaxThreadsPerBlock  = 0
     integer(kind=c_int)        :: gpuDevAttrMaxBlockDimX        = 1
     integer(kind=c_int)        :: gpuDevAttrMaxBlockDimY        = 2
@@ -91,7 +89,6 @@ module elpa_gpu_setup
     integer(kind=c_int)        :: gpuDevAttrMaxGridDimZ         = 6
     integer(kind=c_int)        :: gpuDevAttrWarpSize            = 7
     integer(kind=c_int)        :: gpuDevAttrMultiProcessorCount = 8
-
 
     integer(kind=c_int)                   :: gpublasVersion
     integer(kind=c_int)                   :: rocblasVersion

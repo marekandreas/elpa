@@ -745,7 +745,7 @@
         write(error_unit,*) "SYCL SM count: ", value
       endif
       OBJECT%gpu_setup%syclSMcount  = value
-      OBJECT%gpu_setup%gpuSMcount     = value
+      OBJECT%gpu_setup%gpuSMcount   = value
 #endif /* WITH_SYCL_GPU_VERSION */
 
       if (gpuAvailable) then
