@@ -198,8 +198,8 @@
                                         int(loc(qtmp(1,nc)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
           check_memcpy_gpu("resort_ev: qtmp_dev <- qtmp", successGPU)
 #else
-          successGPU = gpu_memcpy(qtmp_dev+(nc-1)*l_rows*size_of_datatype, &
-                                  int(loc(qtmp(1,nc)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+          successGPU = gpu_memcpy      (qtmp_dev+(nc-1)*l_rows*size_of_datatype, &
+                                        int(loc(qtmp(1,nc)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
           check_memcpy_gpu("resort_ev: qtmp_dev <- qtmp", successGPU)
 #endif
         endif ! (useGPU .and. .not. useCCL)
@@ -216,7 +216,8 @@
           successGPU = gpu_stream_synchronize(my_stream)
           check_stream_synchronize_gpu("resort_ev: qtmp_dev <- q_dev", successGPU)
 #else
-          successGPU = gpu_memcpy(qtmp(1:l_rows,nc), q(l_rqs:l_rqe,lc1), num, gpuMemcpyDeviceToHost)
+          successGPU = gpu_memcpy      (qtmp_dev+(nc-1)*l_rows*size_of_datatype, &
+                                        q_dev+(l_rqs-1+(lc1-1)*ldq)*size_of_datatype, num, gpuMemcpyDeviceToDevice)
           check_memcpy_gpu("resort_ev: qtmp_dev <- q_dev", successGPU)
 #endif
         else

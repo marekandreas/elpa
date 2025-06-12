@@ -1,4 +1,3 @@
-
 #include "config-f90.h"
 module resort_ev
   use precision
