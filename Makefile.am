@@ -1132,10 +1132,11 @@ EXTRA_DIST = \
   src/solve_tridi/merge_recursive_template.F90 \
   src/solve_tridi/solve_tridi_template.F90 \
   src/solve_tridi/solve_tridi_col_template.F90 \
-  src/solve_tridi/gpu_distribute_global_column.h \
-  src/solve_tridi/gpu_merge_systems.h \
-  src/solve_tridi/gpu_solve_tridi_col.h \
-  src/solve_tridi/gpu_transform_columns.h \
+  src/solve_tridi/GPU/gpu_distribute_global_column.h \
+  src/solve_tridi/GPU/gpu_merge_systems.h \
+  src/solve_tridi/GPU/gpu_solve_tridi_col.h \
+  src/solve_tridi/GPU/gpu_solve_tridi_single_problem.h \
+  src/solve_tridi/GPU/gpu_transform_columns.h \
   src/elpa1/elpa1_template.F90 \
   src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \
