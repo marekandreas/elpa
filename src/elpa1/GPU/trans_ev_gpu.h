@@ -48,6 +48,9 @@
 
 //_________________________________________________________________________________________________
 
+#ifdef WITH_NVIDIA_GPU_KERNEL
+#include "trans_ev_gpu_cu.h"
+#else
 
 #include "../../GPU/SYCL/syclCommon.hpp"
 #include <sycl/sycl.hpp>
@@ -398,3 +401,5 @@ extern "C" void CONCATENATE(ELPA_GPU,  _trmv_loop_FromC) (char dataType, intptr_
   else if (dataType=='Z') gpu_trmv_loop<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) result_buffer_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
   else if (dataType=='C') gpu_trmv_loop<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) result_buffer_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
 }
+
+#endif // WITH_NVIDIA_GPU_KERNEL

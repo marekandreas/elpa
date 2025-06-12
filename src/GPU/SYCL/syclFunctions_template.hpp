@@ -191,17 +191,38 @@ static oneapi::mkl::side sideFromChar(char c) {
     auto sgSizes = dev.get_info<sid::sub_group_sizes>();
     auto maxSgSize = *std::max_element(sgSizes.begin(), sgSizes.end());
     switch(attribute) {
-      case 0: return dev.get_info<sid::max_work_group_size>();
-      case 1: return maxWgDim[2];
-      case 2: return maxWgDim[1];
-      case 3: return maxWgDim[0];
-      case 4: return UINT32_MAX / maxWgDim[2];
-      case 5: return UINT32_MAX / maxWgDim[1];
-      case 6: return UINT32_MAX / maxWgDim[0];
-      case 7: return maxSgSize;        
-      case 8: return dev.get_info<sid::max_compute_units>();
-      default: return 0;
+      case 0: 
+        *value =  dev.get_info<sid::max_work_group_size>();
+        break;
+      case 1: 
+        *value =  maxWgDim[2];
+        break;
+      case 2: 
+        *value =  maxWgDim[1];
+        break;
+      case 3: 
+        *value =  maxWgDim[0];
+        break;
+      case 4: 
+        *value =  UINT32_MAX / maxWgDim[2];
+        break;
+      case 5: 
+        *value =  UINT32_MAX / maxWgDim[1];
+        break;
+      case 6: 
+        *value =  UINT32_MAX / maxWgDim[0];
+        break;
+      case 7: 
+        *value =  maxSgSize;
+        break;
+      case 8: 
+        *value =  dev.get_info<sid::max_compute_units>();
+        break;
+      default: 
+        *value =  0;
+        break;
     }
+    return 1;
   }
 
   int syclblasGetVersionFromC(QueueData *blasHandle, int *version) {
@@ -237,23 +258,19 @@ static oneapi::mkl::side sideFromChar(char c) {
 
   int syclDeviceSynchronizeFromC() {
     DeviceSelection &ds = SyclState::defaultState().getDefaultDeviceHandle();
+#ifdef SYCL_EXT_ONEAPI_ENQUEUE_BARRIER
+    ds.defaultQueueHandle.queue.ext_oneapi_submit_barrier();
+#endif
+    ds.defaultQueueHandle.queue.wait();
     for (auto &qd : ds.queueHandles) {
+#ifdef SYCL_EXT_ONEAPI_ENQUEUE_BARRIER
+      qd.queue.ext_oneapi_submit_barrier();
+#endif
       qd.queue.wait();
+
     }
     return 1;
   }
-
-/*
-    interface
-    function sycl_devicesynchronize_c() result(istat) &
-             bind(C,name="syclDeviceSynchronizeFromC")
-
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT)                       :: istat
-    end function
-  end interface
-*/
 
 
   int syclblasSetStreamFromC(QueueData *syclBlasHandle, QueueData *syclStream) {
@@ -354,7 +371,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
     };
     syclDeviceSynchronizeFromC();
-    auto allocT = sycl::get_pointer_type(a, devSel.context);
+    // auto allocT = sycl::get_pointer_type(a, devSel.context);
     // queue.wait();
     // std::cerr << "FREE |" << "syclFree" << "| ~> void **: " << ((size_t) a) << " -> " << allocStr(allocT) << "\n";
     sycl::free(a, devSel.context);
@@ -430,6 +447,7 @@ static oneapi::mkl::side sideFromChar(char c) {
     if (!isFailed) {
       syclDeviceSynchronizeFromC();
       queue.memcpy(dst, src, size).wait();
+      syclDeviceSynchronizeFromC();
       return 1;
     } else {
       return 0;
@@ -437,13 +455,17 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
 
   int syclMemcpyAsyncFromC(void *dst, void *src, size_t size, int direction, QueueData *queue_handle) {
-    auto queue = queue_handle->queue;
+    QueueData *qHandle = getQueueDataOrDefault(queue_handle);
+    auto queue = qHandle->queue;
     bool isFailed = false;
 #ifndef NDEBUG
     isFailed = checkPointerValidity(dst, src, direction, queue);
 #endif
     if (!isFailed) {
-      queue.memcpy(dst, src, size);
+      syclDeviceSynchronizeFromC();
+      queue.memcpy(dst, src, size).wait();
+      syclDeviceSynchronizeFromC();
+
       return 1;
     } else {
       return 0;
@@ -462,6 +484,7 @@ static oneapi::mkl::side sideFromChar(char c) {
       // Note that this operation currently relies on an Intel SYCL extension. This may or may not become part of the next SYCL standard.
       // For now, it is only supported by DPC++ and the Intel C++ Compiler. This should be okay, since there are implementations for the other vendors. 
       queue.ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height).wait();
+      syclDeviceSynchronizeFromC();
       return 1;
     } else {
       return 0;
@@ -477,7 +500,10 @@ static oneapi::mkl::side sideFromChar(char c) {
     if (!isFailed) {
       // Note that this operation currently relies on an Intel SYCL extension. This may or may not become part of the next SYCL standard.
       // For now, it is only supported by DPC++ and the Intel C++ Compiler. This should be okay, since there are implementations for the other vendors.
-      queue.ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height);
+      syclDeviceSynchronizeFromC();
+      queue.ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height).wait();
+      syclDeviceSynchronizeFromC();
+
       return 1;
     } else {
       return 0;
@@ -504,11 +530,13 @@ static oneapi::mkl::side sideFromChar(char c) {
 #endif
     syclDeviceSynchronizeFromC();
     queue.memset(mem, val, size).wait();
+    syclDeviceSynchronizeFromC();
     return 1;
   }
 
   int syclMemsetAsyncFromC(void *mem, int32_t val, size_t size, QueueData *queue_handle) {
-    sycl::queue queue = queue_handle->queue;
+    QueueData *qHandle = getQueueDataOrDefault(queue_handle);
+    sycl::queue queue = qHandle->queue;
 #ifndef NDEBUG
     if (isCPU == 1) {
       if (sycl::get_pointer_type(mem, queue.get_context()) != sycl::usm::alloc::host) {
@@ -522,7 +550,9 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
     }
 #endif
-    queue.memset(mem, val, size);
+    syclDeviceSynchronizeFromC();
+    queue.memset(mem, val, size).wait();
+    syclDeviceSynchronizeFromC();
     return 1;
   }
 
