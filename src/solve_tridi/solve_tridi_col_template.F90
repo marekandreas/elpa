@@ -485,18 +485,16 @@
 #endif /* WITH_MPI */
 
 
-
-
+          call obj%timer%start("distribute_global_column")
 #ifdef WITH_MPI
           if (useGPU) then
             call gpu_distribute_global_column(PRECISION_CHAR, qmat2_dev, q_dev, max_size, max_size, ldq, matrixCols, &
                                               noff, nqoff+noff, nlen, my_prow, np_rows, nblk, debug, my_stream)
           else
             do i=1,nlen
-              call distribute_global_column_4_&
+              call distribute_global_column_&
               &PRECISION &
-                    (obj, qmat2(1:max_size,1:max_size), q(1:ldq,1:matrixCols), max_size, max_size, ldq, matrixCols, &
-                      noff, nqoff+noff, nlen, my_prow, np_rows, nblk)
+                       (obj, qmat2(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)  
             enddo ! i=1,nlen
           endif
 #else /* WITH_MPI */
@@ -505,18 +503,17 @@
                                               noff, nqoff+noff, nlen, my_prow, np_rows, nblk, debug, my_stream)
           else
             do i=1,nlen
-                  call distribute_global_column_4_&
-                  &PRECISION &
-                      (obj, qmat1(1:max_size,1:max_size), q(1:ldq,1:matrixCols), max_size, max_size, ldq, matrixCols, &
-                        noff, nqoff+noff, nlen, my_prow, np_rows, nblk)
-
+              call distribute_global_column_&
+              &PRECISION &
+                       (obj, qmat1(1,i), q(1,noff+i), nqoff+noff, nlen, my_prow, np_rows, nblk)
             enddo ! i=1,nlen
           endif
 #endif /* WITH_MPI */
+        call obj%timer%stop("distribute_global_column")
 
           ! assume d is on the host
         enddo ! np = 0, ndiv-1
-
+        
         if (useGPU) then
           successGPU = gpu_free(qmat1_dev)
           check_dealloc_gpu("solve_tridi_col: qmat1_dev", successGPU)

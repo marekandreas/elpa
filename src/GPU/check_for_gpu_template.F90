@@ -400,7 +400,16 @@
             OBJECT%gpu_setup%useCCL=.false.            
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)            
             if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node .eq. 1) then
-              OBJECT%gpu_setup%useCCL=.true.
+              call OBJECT%get("use_ccl", useCCLCOMM, error)
+              if (error .ne. ELPA_OK) then
+                write(error_unit,*) "Problem getting option for 'ccl-communication'. Aborting..."
+                stop 1
+              endif
+              if (useCCLCOMM .eq. 1) then
+                OBJECT%gpu_setup%useCCL=.true.
+              else
+                OBJECT%gpu_setup%useCCL=.false.
+              endif
             endif
 #endif
 

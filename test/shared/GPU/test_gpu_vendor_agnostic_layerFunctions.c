@@ -73,7 +73,7 @@
 #endif
 
 
-void set_gpu_parameters(){
+void set_gpu_parameters_tests(){
 #ifdef WITH_NVIDIA_GPU_VERSION
    gpuMemcpyHostToDevice = cudaMemcpyHostToDeviceFromC();
    gpuMemcpyDeviceToHost = cudaMemcpyDeviceToHostFromC();
@@ -91,7 +91,7 @@ void set_gpu_parameters(){
 #endif
 }
 
-int gpuGetDeviceCount(int *count){
+int gpuGetDeviceCount_tests(int *count){
 #ifdef WITH_NVIDIA_GPU_VERSION
    return cudaGetDeviceCountFromC(count);
 #endif 
@@ -107,7 +107,7 @@ int gpuGetDeviceCount(int *count){
    return -1;
 }
 
-int gpuSetDevice(int n){
+int gpuSetDevice_tests(int n){
 #ifdef WITH_NVIDIA_GPU_VERSION
    return cudaSetDeviceFromC(n);
 #endif   
@@ -122,7 +122,7 @@ int gpuSetDevice(int n){
 #endif
 }
 
-int gpuMalloc(intptr_t *a, size_t width_height) {
+int gpuMalloc_tests(intptr_t *a, size_t width_height) {
 #ifdef WITH_NVIDIA_GPU_VERSION
    return cudaMallocFromC(a, width_height);
 #endif   
@@ -137,7 +137,7 @@ int gpuMalloc(intptr_t *a, size_t width_height) {
 #endif   
 }
 
-int gpuFree(intptr_t *a) {
+int gpuFree_tests(intptr_t *a) {
 #ifdef WITH_NVIDIA_GPU_VERSION
    return cudaFreeFromC(a);
 #endif   
@@ -153,7 +153,7 @@ int gpuFree(intptr_t *a) {
 #endif   
 }
 
-int gpuMemcpy(intptr_t *dest, intptr_t *src, size_t count, int dir){
+int gpuMemcpy_tests(intptr_t *dest, intptr_t *src, size_t count, int dir){
 #ifdef WITH_NVIDIA_GPU_VERSION
    return cudaMemcpyFromC(dest, src, count, dir);
 #endif  

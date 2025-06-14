@@ -729,6 +729,7 @@ module elpa_impl
       integer(kind=MPI_KIND)              :: mpi_infoMPI, keyMPI, np_total_per_nodeMPI
       integer(kind=ik)                    :: key
 #endif
+      integer(kind=ik)                    :: useCCLCOMM
       error = ELPA_ERROR_SETUP
       self%gpu_setup%useCCL = .false.
       gpu = 0
