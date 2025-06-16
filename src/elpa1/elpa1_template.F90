@@ -1281,7 +1281,6 @@ function elpa_solve_evp_&
      else
        success_int = 1
      endif
-     successGPU = gpu_DeviceSynchronize()
 #ifdef WITH_MPI
      if (useNonBlockingCollectivesAll) then
        call mpi_iallreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), &
@@ -1291,7 +1290,6 @@ function elpa_solve_evp_&
        call mpi_allreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
      endif
 #endif
-successGPU = gpu_DeviceSynchronize()
      if (success_int .eq. 1) then
        write(error_unit,*) "Error in trans_ev (real). Aborting..."
        return
@@ -1325,7 +1323,6 @@ successGPU = gpu_DeviceSynchronize()
          num = matrixRows*matrixCols*size_of_datatype
          successGPU = gpu_malloc(q_part2_dev, num)
          check_alloc_gpu("elpa1_template q_dev", successGPU)
-         successGPU = gpu_DeviceSynchronize()
          ! copy q_part2(1:matrixRows,1:matrixCols) = q(1:matrixRows, matrixCols+1:2*matrixCols)
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
@@ -1334,7 +1331,6 @@ successGPU = gpu_DeviceSynchronize()
 #else
          call GPU_GET_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, q_part2_dev, matrixRows, matrixCols)
 #endif
-        successGPU = gpu_DeviceSynchronize()
          call trans_ev_gpu_&
          &MATH_DATATYPE&
          &_&
@@ -1347,9 +1343,7 @@ successGPU = gpu_DeviceSynchronize()
        else
          success_int = 1
        endif
-       successGPU = gpu_DeviceSynchronize()
 #ifdef WITH_MPI
-successGPU = gpu_DeviceSynchronize()
        if (useNonBlockingCollectivesAll) then
          call mpi_iallreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), &
          allreduce_request4, mpierr)
@@ -1357,7 +1351,6 @@ successGPU = gpu_DeviceSynchronize()
        else
          call mpi_allreduce(mpi_in_place, success_int, 1_MPI_KIND, MPI_INTEGER, MPI_MAX, int(mpi_comm_all,kind=MPI_KIND), mpierr)
        endif
-       successGPU = gpu_DeviceSynchronize()
 #endif
        if (success_int .eq. 1) then
          write(error_unit,*) "Error in trans_ev (imag). Aborting..."
@@ -1365,7 +1358,6 @@ successGPU = gpu_DeviceSynchronize()
        endif
 
        if (do_useGPU_trans_ev) then
-        successGPU = gpu_DeviceSynchronize()
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
          call GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, q_part2_dev, matrixRows, matrixCols, &
@@ -1373,7 +1365,6 @@ successGPU = gpu_DeviceSynchronize()
 #else
          call GPU_PUT_SKEWSYMMETRIC_SECOND_HALF_Q_PRECISION(q_dev, q_part2_dev, matrixRows, matrixCols)
 #endif
-successGPU = gpu_DeviceSynchronize()
        endif
      endif ! isSkewsymmetric
 
@@ -1385,19 +1376,15 @@ successGPU = gpu_DeviceSynchronize()
        else
          num = (matrixRows* matrixCols) * size_of_datatype
        endif
-       successGPU = gpu_DeviceSynchronize()
        successGPU = gpu_memcpy(int(loc(q(1,1)),kind=c_intptr_t), q_dev, &
                     num, gpuMemcpyDeviceToHost)
-                    successGPU = gpu_DeviceSynchronize()
        check_memcpy_gpu("elpa1_template q_dev -> q", successGPU)
      endif
 #endif /* DEVICE_POINTER */
 
      if (isSkewsymmetric) then
        if (do_useGPU_trans_ev) then
-        successGPU = gpu_DeviceSynchronize()
          successGPU = gpu_free(q_part2_dev)
-         successGPU = gpu_DeviceSynchronize()
          check_dealloc_gpu("elpa1_template q_part2_dev", successGPU)
        endif
      endif
@@ -1417,13 +1404,11 @@ successGPU = gpu_DeviceSynchronize()
 #ifndef DEVICE_POINTER
      if (do_useGPU) then
        ! copy back always
-      successGPU = gpu_DeviceSynchronize()
        num = (na) * size_of_real_datatype
        successGPU = gpu_memcpy(int(loc(ev(1)),kind=c_intptr_t), ev_dev, &
                  num, gpuMemcpyDeviceToHost)
        check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
      endif
-     successGPU = gpu_DeviceSynchronize()
 #endif /* DEVICE_POINTER */
 
 
@@ -1561,7 +1546,6 @@ successGPU = gpu_DeviceSynchronize()
 
 
    if (doRedistributeMatrix) then
-    successGPU = gpu_DeviceSynchronize()
      successGPU = gpu_free(ev_devIntern)
      check_dealloc_gpu("elpa1_template ev_devIntern", successGPU)
 
@@ -1579,7 +1563,6 @@ successGPU = gpu_DeviceSynchronize()
        successGPU = gpu_free(q_dev_dummy)
        check_dealloc_gpu("elpa1_template q_dev_dummy", successGPU)
      endif
-     successGPU = gpu_DeviceSynchronize()
 #if COMPLEXCASE == 1
      successGPU = gpu_free(q_dev_real)
      check_dealloc_gpu("elpa1_template q_dev_real", successGPU)
@@ -1596,7 +1579,6 @@ successGPU = gpu_DeviceSynchronize()
        successGPU = gpu_free(q_devIntern)
        check_dealloc_gpu("elpa1_template q_devIntern 2", successGPU)
      endif
-     successGPU = gpu_DeviceSynchronize()
 
      ! allocate dummy q_devIntern, if eigenvectors should not be commputed and thus q is NOT present
      if (.not.(obj%eigenvalues_only)) then
@@ -1604,7 +1586,6 @@ successGPU = gpu_DeviceSynchronize()
        successGPU = gpu_free(q_dev_dummy)
        check_dealloc_gpu("elpa1_template q_dev_dummy", successGPU)
      endif
-     successGPU = gpu_DeviceSynchronize()
 
 #if COMPLEXCASE == 1
      successGPU = gpu_free(q_dev_real)
