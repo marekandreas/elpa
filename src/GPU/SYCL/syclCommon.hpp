@@ -96,6 +96,7 @@ struct DeviceSelection {
   bool destroyQueue(QueueData *handle);
   QueueData* getQueue(int id);
   QueueData* getDefaultQueueRef();
+  bool isCpuDevice();
 };
 
 

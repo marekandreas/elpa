@@ -254,6 +254,10 @@ QueueData* DeviceSelection::getDefaultQueueRef() {
   return &(this->defaultQueueHandle);
 }
 
+bool DeviceSelection::isCpuDevice() {
+  return (device.get_info<sycl::info::device::device_type>() == sycl::info::device_type::cpu);
+}
+
 //--------------------------------------------------------------------------------------------
 // QueueData
 //--------------------------------------------------------------------------------------------
