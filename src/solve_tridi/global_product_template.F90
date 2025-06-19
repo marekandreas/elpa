@@ -133,6 +133,7 @@ subroutine global_product_&
 #endif  /* WITH_MPI */
       z(1:n) = z(1:n)*tmp(1:n)
     enddo
+    
     do np = npc_0+1, npc_0+npc_n-1
 #ifdef WITH_MPI
       call obj%timer%start("mpi_communication")

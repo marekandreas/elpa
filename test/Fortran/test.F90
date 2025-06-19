@@ -215,7 +215,7 @@ program test
 
   logical                             :: check_all_evals, skip_check_correctness
 
-#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
+#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK) || defined(TEST_MATRIX_BLOCKTRIDI)
   EV_TYPE, allocatable                :: d(:), sd(:), ds(:), sds(:)
   EV_TYPE                             :: diagonalElement, subdiagonalElement
 #endif
@@ -424,10 +424,10 @@ program test
 
 
 #if defined(TEST_GENERALIZED_EIGENPROBLEM) && defined(TEST_ALL_LAYOUTS)
-! #ifdef WITH_MPI
-!      call mpi_finalize(mpierr) ! PETERDEBUG: comment out for testing
-! #endif
-!      stop 77
+#ifdef WITH_MPI
+     call mpi_finalize(mpierr)
+#endif
+     stop 77
 #endif
 
   call set_up_blacs_descriptor(na, nblk, my_prow, my_pcol, &
@@ -473,7 +473,7 @@ program test
   allocate(c (na_rows,na_cols))
 #endif
 
-#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
+#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK) || defined(TEST_MATRIX_BLOCKTRIDI)
   allocate(d (na), ds(na))
   allocate(sd (na), sds(na))
 #endif
@@ -579,11 +579,11 @@ program test
 #if defined(TEST_MATRIX_TOEPLITZ)
   ! The Toeplitz matrix works in each test
 #ifdef TEST_SINGLE
-  diagonalElement = 0.45_c_float
-  subdiagonalElement =  0.78_c_float
+  diagonalElement    = 0.45_c_float
+  subdiagonalElement = 0.78_c_float
 #else
-  diagonalElement = 0.45_c_double
-  subdiagonalElement =  0.78_c_double
+  diagonalElement    = 0.45_c_double
+  subdiagonalElement = 0.78_c_double
 #endif
 
 ! actually we test cholesky for diagonal matrix only
@@ -598,12 +598,12 @@ program test
 #endif /* TEST_CHOLESKY */
 
    ! check first whether to abort
-  if (na < 10) then
-#ifdef WITH_MPI
-    call mpi_finalize(mpierr)
-#endif
-    stop 77
-  endif
+!   if (na < 10) then ! PETERDEBUG111 commented out. delete?
+! #ifdef WITH_MPI
+!     call mpi_finalize(mpierr)
+! #endif
+!     stop 77
+!   endif
 
   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                               d, sd, ds, sds, a, as, nblk, np_rows, &
@@ -629,6 +629,33 @@ program test
 
 #endif /* TEST_MATRIX_TOEPLITZ */
 
+#if defined(TEST_MATRIX_BLOCKTRIDI)
+#ifdef TEST_SINGLE
+  diagonalElement    = 1.0_c_float
+  subdiagonalElement = 1.0_c_float
+#else
+  diagonalElement    = 1.0_c_double
+  subdiagonalElement = 1.0_c_double
+#endif
+
+  call prepare_matrix_blocktridi(na, diagonalElement, subdiagonalElement, &
+                                  d, sd, ds, sds, a, as, nblk, np_rows, &
+                                  np_cols, my_prow, my_pcol)
+
+  do_test_numeric_residual = .false.
+!#if defined(TEST_EIGENVECTORS)
+  if (nev .ge. 1) then
+    do_test_numeric_residual = .true.
+  else
+    do_test_numeric_residual = .false.
+  endif
+!#endif
+
+  do_test_analytic_eigenvalues = .false.
+  do_test_analytic_eigenvalues_eigenvectors = .false.
+  do_test_frank_eigenvalues = .false.
+  do_test_toeplitz_eigenvalues = .false.
+#endif /* TEST_MATRIX_BLOCKTRIDI */
 
 #if defined(TEST_MATRIX_FRANK) && !defined(TEST_SOLVE_TRIDIAGONAL) && !defined(TEST_CHOLESKY)
   ! the random matrix can be used in allmost all tests; but for some no
@@ -1664,7 +1691,7 @@ program test
 
 #ifdef TEST_ALL_KERNELS
   a(:,:) = as(:,:)
-#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
+#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK) || defined(TEST_MATRIX_BLOCKTRIDI)
   d = ds
   sd = sds
 #endif
@@ -1781,7 +1808,7 @@ end do ! kernels
   deallocate(c)
 #endif
 
-#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK)
+#if defined(TEST_MATRIX_TOEPLITZ) || defined(TEST_MATRIX_FRANK) || defined(TEST_MATRIX_BLOCKTRIDI)
   deallocate(d, ds)
   deallocate(sd, sds)
 #endif

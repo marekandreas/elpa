@@ -2697,7 +2697,7 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_ARG_VAR([NVCCFLAGS],[CUDA compiler flags])
 
   AC_LANG_PUSH([C])
-  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include "
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 --extended-lambda -I$CUDA_INSTALL_PATH/include "
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   CFLAGS="$CFLAGS -I$CUDA_INSTALL_PATH/include"
   NVCCFLAGS="$CUDA_CFLAGS $CUDA_LDFLAGS $NVCCFLAGS"

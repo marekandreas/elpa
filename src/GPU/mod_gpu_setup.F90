@@ -136,7 +136,7 @@ module elpa_gpu_setup
     integer(kind=c_int)                   :: amdDevWarpSize
     integer(kind=c_int)                   :: gpuDevWarpSize
 
-    integer(kind=c_intptr_t)              :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all
+    integer(kind=c_intptr_t)              :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols, ccl_comm_self
   end type
 
 end module

@@ -93,8 +93,9 @@ module mod_check_for_gpu
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
       TYPE(ncclUniqueId)                         :: ncclId
       integer(kind=c_int)                        :: nprocs
-      integer(kind=c_intptr_t)                   :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols
-      integer(kind=ik)                           :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
+      integer(kind=c_intptr_t)                   :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols, ccl_comm_self
+      integer(kind=ik)                           :: mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)                           :: myid_rows, myid_cols, myid_self, nprows, npcols, npself
 #endif
       integer(kind=ik)                           :: attribute, value
 #ifdef WITH_MPI
