@@ -157,6 +157,11 @@ static oneapi::mkl::side sideFromChar(char c) {
     return 1;
   }
 
+  int syclGetIsCpuDeviceFromC(int *isCpuDevice) {
+    *isCpuDevice = SyclState::defaultState().getDefaultDeviceHandle().isCpuDevice() ? 1 : 0;
+    return 1;
+  }
+
   int syclSetDeviceFromC(int targetDeviceId) {
     try {
       SyclState::defaultState().selectGpuDevice(targetDeviceId);

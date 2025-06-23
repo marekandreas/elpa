@@ -200,6 +200,15 @@
     end function
   end interface
 
+  interface
+    function sycl_getiscpudevice_c(is_cpu) result(istat) &
+             bind(C, name="syclGetIsCpuDeviceFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=C_INT), intent(out)         :: is_cpu
+      integer(kind=C_INT)                      :: istat
+    end function
+  end interface
 
   interface
     function sycl_printdevices_c() result(n) &
@@ -2074,6 +2083,21 @@
 #else
       success = .true.
       n = 0
+#endif
+    end function
+
+    function sycl_getiscpudevice(isCpu) result(success)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      logical, intent(out) :: isCpu
+      integer(kind=c_int)  :: isCpuInt
+      logical              :: success
+#ifdef WITH_SYCL_GPU_VERSION
+      success = sycl_getdevicecount_c(isCpuInt) /=0
+      isCpu = isCpuInt == 1
+#else
+      success = .true.
+      isCpu = .false.
 #endif
     end function
 
