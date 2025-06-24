@@ -148,7 +148,7 @@ subroutine tridiag_cpu_&
   logical, intent(in)                           :: wantDebug
   logical, intent(in)                           :: isSkewsymmetric
 
-  logical                                       :: useCCL=.false.
+  logical                                       :: useCCL
 
   ! input/output GPU pointers
   integer(kind=C_intptr_T)                      :: tau_dev, a_dev, d_vec_dev, e_vec_dev 
@@ -276,13 +276,14 @@ subroutine tridiag_cpu_&
 
   
   useGPU = .false.
+
+  useCCL = obj%gpu_setup%useCCL
 #ifdef TRIDIAG_GPU_BUILD
   useGPU = .true.
 #endif
 
 #if defined(USE_CCL_TRIDIAG)
   if (useGPU) then
-    useCCL = .true.
   
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols

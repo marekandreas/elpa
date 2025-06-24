@@ -172,16 +172,17 @@ extern "C" void cuda_copy_and_set_zeros_float_complex_FromC(cuComplex *v_row_dev
 //________________________________________________________________
 // device syncronization is needed afterwards, e.g. gpu_memcpy
 // the kernel used only in NCCL codepath
+
 // result_dev[0] must be initialized to zero before calling the kernel
+// Initializing result_dev[0]=0 inside the kernel can be unsafe: 
+// if block-0 is already finished, but block-1 (or block-n) is just starting, it will overwrite the result of block-0
 
 template <typename T>
 __global__ void cuda_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev){
   __shared__ T cache[MAX_THREADS_PER_BLOCK]; // extra space of fixed size is reserved for a speedup
   int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-  // T DeviceZero = elpaDeviceNumber<T>(0.0);
-  //if (threadIdx.x==0) result_dev[0] = DeviceZero; // clear old value; it's safe because we perform __syncthreads() before atomicAdd
-                                                  // TODO_23_11: actually can be unsafe: merge to the previous kernel
+  //if (threadIdx.x==0) result_dev[0] = elpaDeviceNumber<T>(0.0); // clear old value; it's unsafe, see above
 
   T temp = elpaDeviceNumber<T>(0.0);
   int i = tid;

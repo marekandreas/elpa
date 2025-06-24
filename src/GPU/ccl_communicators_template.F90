@@ -173,9 +173,44 @@
             endif
             OBJECT%gpu_setup%ccl_comm_cols = ccl_comm_cols
 
-            !success = ccl_comm_destroy(ccl_comm_all)
-            !if (.not.success) then
-            !  write(error_unit,*) "Error in destroying ccl_comm_all!"
-            !  stop 1
-            !endif
+
+            ! mpi_comm_self
+            call mpi_comm_rank(mpi_comm_self, myid_self, mpierr)
+            if (myid_self .eq. 0) then
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+              success = ccl_get_unique_id(ncclId)
+              if (.not.success) then
+                write(error_unit,*) "Error in setting up unique nccl id for self!"
+                stop 1
+              endif
+#endif
+            endif
+            call mpi_comm_size(mpi_comm_self, npself, mpierr)
+            call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_self, mpierr)
+            if (mpierr .ne. MPI_SUCCESS) then
+              write(error_unit,*) "Error when sending unique id for self"
+              stop 1
+            endif
+
+            success = ccl_group_start()
+            if (.not.success) then
+              write(error_unit,*) "Error in setting up ccl_group_start!"
+              stop 1
+            endif
+
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+            success = ccl_comm_init_rank(ccl_comm_self, npself, ncclId, myid_self)
+            if (.not.success) then
+              write(error_unit,*) "Error in setting up communicator nccl_comm_self id!"
+              stop 1
+            endif
+#endif
+
+            success = ccl_group_end()
+            if (.not.success) then
+              write(error_unit,*) "Error in setting up ccl_group_end 3!"
+              stop 1
+            endif
+            OBJECT%gpu_setup%ccl_comm_self = ccl_comm_self
+
 #endif /* defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) */

@@ -1109,7 +1109,7 @@ function check_correctness_multiply_&
 #include "./test_precision_kinds.F90"
 
   TEST_INT_TYPE                                                   :: status
-  character*1, value                                              :: trans_a, trans_b, uplo_a, uplo_c
+  character*1, intent(in)                                         :: trans_a, trans_b, uplo_a, uplo_c
   TEST_INT_TYPE, intent(in)                                       :: na, na_rows, na_cols
   TEST_INT_TYPE, intent(in)                                       :: nblk, myid, np_rows, np_cols, my_prow, my_pcol
   MATH_DATATYPE(kind=rck)                                         :: a(:,:), c(:,:)

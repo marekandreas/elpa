@@ -54,7 +54,7 @@ module test_prepare_matrix
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     module procedure prepare_matrix_random_complex_single
 #endif
-   end interface
+  end interface
 
 
   interface prepare_matrix_random_spd
@@ -66,7 +66,7 @@ module test_prepare_matrix
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     module procedure prepare_matrix_random_spd_complex_single
 #endif
-   end interface
+  end interface
 
   interface prepare_matrix_random_triangular
     module procedure prepare_matrix_random_triangular_complex_double
@@ -77,7 +77,7 @@ module test_prepare_matrix
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     module procedure prepare_matrix_random_triangular_complex_single
 #endif
-   end interface
+  end interface
 
   interface prepare_matrix_toeplitz
     module procedure prepare_matrix_toeplitz_complex_double
@@ -90,7 +90,7 @@ module test_prepare_matrix
     module procedure prepare_matrix_toeplitz_complex_single
     module procedure prepare_matrix_toeplitz_mixed_complex_complex_single
 #endif
-   end interface
+  end interface
 
   interface prepare_matrix_frank
     module procedure prepare_matrix_frank_complex_double
@@ -101,7 +101,18 @@ module test_prepare_matrix
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     module procedure prepare_matrix_frank_complex_single
 #endif
-   end interface
+  end interface
+
+  interface prepare_matrix_blocktridi
+    module procedure prepare_matrix_blocktridi_complex_double
+    module procedure prepare_matrix_blocktridi_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_matrix_blocktridi_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_matrix_blocktridi_complex_single
+#endif
+  end interface
 
   interface prepare_matrix_unit
     module procedure prepare_matrix_unit_complex_double
@@ -112,9 +123,9 @@ module test_prepare_matrix
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     module procedure prepare_matrix_unit_complex_single
 #endif
-   end interface
+  end interface
 
-   private prows, pcols, map_global_array_index_to_local_index
+  private prows, pcols, map_global_array_index_to_local_index
 
   contains
 

@@ -716,15 +716,22 @@ module elpa_impl
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
       TYPE(ncclUniqueId)                  :: ncclId
       integer(kind=c_int)                 :: nprocs
-      integer(kind=c_intptr_t)            :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols
-      integer(kind=ik)                    :: myid_rows, myid_cols, mpi_comm_rows, mpi_comm_cols, nprows, npcols
+      integer(kind=c_intptr_t)            :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols, ccl_comm_self
+      integer(kind=ik)                    :: mpi_comm_rows, mpi_comm_cols
+      integer(kind=ik)                    :: myid_rows, myid_cols, myid_self, nprows, npcols, npself
 #endif
 #endif
       integer(kind=ik)                    :: attribute, value
       integer(kind=ik)                    :: debug, gpu
       logical                             :: wantDebugMessage
+#ifdef WITH_MPI
+      integer(kind=MPI_KIND)              :: mpi_comm_all_per_nodeMPI
+      integer(kind=MPI_KIND)              :: mpi_infoMPI, keyMPI, np_total_per_nodeMPI
+      integer(kind=ik)                    :: key
+#endif
+      integer(kind=ik)                    :: useCCLCOMM
       error = ELPA_ERROR_SETUP
-
+      self%gpu_setup%useCCL = .false.
       gpu = 0
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 
@@ -824,7 +831,6 @@ module elpa_impl
       integer(kind=c_int)                 :: info, na, nblk, na_rows, my_pcol, my_prow, numroc_result
       character(*), parameter             :: MPI_CONSISTENCY_MSG = &
         "Provide mpi_comm_parent and EITHER process_row and process_col OR mpi_comm_rows and mpi_comm_cols. Aborting..."
-
 #endif
 
 #ifdef HAVE_LIKWID
@@ -846,6 +852,8 @@ module elpa_impl
         endif
       endif
 #endif
+
+      self%gpu_setup%useCCL = .false.
 
       self%mpi_setup%useMPI = .false.
 #ifdef WITH_MPI

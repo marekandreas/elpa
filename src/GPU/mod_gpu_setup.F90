@@ -55,6 +55,7 @@ module elpa_gpu_setup
   type :: elpa_gpu_setup_t
     integer(kind=c_int)            :: use_gpu_vendor
     logical                        :: gpuIsAssigned
+    logical                        :: useCCL
 
     ! per task information should be stored elsewhere
     integer(kind=C_intptr_T), allocatable :: gpublasHandleArray(:)
@@ -142,7 +143,7 @@ module elpa_gpu_setup
     integer(kind=c_int)                   :: syclDevWarpSize
     integer(kind=c_int)                   :: gpuDevWarpSize
 
-    integer(kind=c_intptr_t)              :: ccl_comm_rows, ccl_comm_cols, ccl_comm_all
+    integer(kind=c_intptr_t)              :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols, ccl_comm_self
   end type
 
 end module

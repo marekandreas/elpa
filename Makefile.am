@@ -69,14 +69,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/solve_tridi/GPU/mod_solve_single_problem_gpu.F90 \
   src/solve_tridi/GPU/mod_solve_tridi_col_gpu.F90 \
   src/solve_tridi/GPU/mod_distribute_global_column_gpu.F90 \
-  src/solve_tridi/GPU/CUDA/mod_merge_systems_cuda.F90 \
-  src/solve_tridi/GPU/CUDA/mod_solve_tridi_single_problem_cuda.F90 \
-  src/solve_tridi/GPU/CUDA/mod_solve_tridi_col_cuda.F90 \
-  src/solve_tridi/GPU/CUDA/mod_distribute_global_column_cuda.F90 \
-  src/solve_tridi/GPU/ROCm/mod_merge_systems_hip.F90 \
-  src/solve_tridi/GPU/ROCm/mod_solve_tridi_single_problem_hip.F90 \
-  src/solve_tridi/GPU/ROCm/mod_solve_tridi_col_hip.F90 \
-  src/solve_tridi/GPU/ROCm/mod_distribute_global_column_hip.F90 \
+  src/solve_tridi/GPU/mod_transform_columns_gpu.F90 \
   src/elpa2/elpa2_determine_workload.F90 \
   src/elpa2/elpa2_compute.F90 \
   src/elpa2/kernels/mod_single_hh_trafo_real.F90 \
@@ -272,6 +265,7 @@ if WITH_NVIDIA_GPU_VERSION
   src/solve_tridi/GPU/CUDA/cuda_merge_systems.cu \
   src/solve_tridi/GPU/CUDA/cuda_solve_tridi_col.cu \
   src/solve_tridi/GPU/CUDA/cuda_solve_tridi_single_problem.cu \
+  src/solve_tridi/GPU/CUDA/cuda_transform_columns.cu \
   src/multiply_a_b/GPU/CUDA/elpa_hermitian_multiply_cuda.cu \
   src/multiply_a_b/GPU/CUDA/elpa_pxgemm_multiply_cuda.cu
 endif
@@ -302,6 +296,7 @@ if WITH_AMD_GPU_VERSION
   src/solve_tridi/GPU/ROCm/rocm_merge_systems.hip \
   src/solve_tridi/GPU/ROCm/rocm_solve_tridi_col.hip \
   src/solve_tridi/GPU/ROCm/rocm_solve_tridi_single_problem.hip \
+  src/solve_tridi/GPU/ROCm/rocm_transform_columns.hip \
   src/multiply_a_b/GPU/ROCm/elpa_hermitian_multiply_hip.hip \
   src/multiply_a_b/GPU/ROCm/elpa_pxgemm_multiply_hip.hip
 endif
@@ -905,6 +900,7 @@ include test_programs.am
 
 #include test_programs_manual.am
 
+if BUILD_EXTRA_TESTS
 noinst_PROGRAMS += validate_double_instance@SUFFIX@
 check_SCRIPTS += validate_double_instance@SUFFIX@_default.sh
 validate_double_instance@SUFFIX@_SOURCES = test/Fortran/elpa2/double_instance.F90
@@ -937,6 +933,8 @@ check_SCRIPTS += validate_single_complex_2stage_banded@SUFFIX@_default.sh
 validate_single_complex_2stage_banded@SUFFIX@_SOURCES = test/Fortran/elpa2/single_complex_2stage_banded.F90
 validate_single_complex_2stage_banded@SUFFIX@_LDADD = $(test_program_ldadd)
 validate_single_complex_2stage_banded@SUFFIX@_FCFLAGS = $(AM_FCFLAGS) $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
+endif
+
 endif
 
 # python wrapper
@@ -1074,6 +1072,7 @@ EXTRA_DIST = \
   fdep/fortran_dependencies.pl \
   manual_cpp \
   nvcc_wrap \
+  hipcc_wrap \
   remove_xcompiler \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
@@ -1135,6 +1134,11 @@ EXTRA_DIST = \
   src/solve_tridi/merge_recursive_template.F90 \
   src/solve_tridi/solve_tridi_template.F90 \
   src/solve_tridi/solve_tridi_col_template.F90 \
+  src/solve_tridi/GPU/gpu_distribute_global_column.h \
+  src/solve_tridi/GPU/gpu_merge_systems.h \
+  src/solve_tridi/GPU/gpu_solve_tridi_col.h \
+  src/solve_tridi/GPU/gpu_solve_tridi_single_problem.h \
+  src/solve_tridi/GPU/gpu_transform_columns.h \
   src/elpa1/elpa1_template.F90 \
   src/elpa1/elpa1_aborting_template.F90 \
   src/elpa1/elpa1_tools_template.F90 \

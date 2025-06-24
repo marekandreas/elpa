@@ -365,7 +365,6 @@ void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int 
   gpu_trmv_kernel<<<blocks,threadsPerBlock>>>            (tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n);
 #endif
   
-  // PETERDEBUG: cleanup. too much overhead, if called in tight loop?
   if (debug)
     {
     gpuDeviceSynchronize();
