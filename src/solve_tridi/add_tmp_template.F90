@@ -20,8 +20,8 @@ subroutine add_tmp_&
 
   tmp(1:na1) = d1(1:na1) -dbase(i)
   call v_add_s_&
-  &PRECISION&
-  &(obj, tmp(1:na1),na1,ddiff(i))
+               &PRECISION&
+               &(obj, tmp(1:na1),na1,ddiff(i))
   tmp(1:na1) = z(1:na1) / tmp(1:na1)
   ev_scale_value = 1.0_rk/sqrt(dot_product(tmp(1:na1),tmp(1:na1)))
 

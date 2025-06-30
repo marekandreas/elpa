@@ -1,13 +1,16 @@
-
 #include "config-f90.h"
+#include "../general/nvtx_labels.h"
+
 module merge_recursive
   use precision
   implicit none
   private
 
-  public :: merge_recursive_double
+  public :: merge_recursive_cpu_double
+  public :: merge_recursive_gpu_double
 #if defined(WANT_SINGLE_PRECISION_REAL) || defined(WANT_SINGLE_PRECISION_COMPLEX)
-  public :: merge_recursive_single
+  public :: merge_recursive_cpu_single
+  public :: merge_recursive_gpu_single
 #endif
 
   contains
@@ -17,7 +20,11 @@ module merge_recursive
 #define REALCASE
 #define DOUBLE_PRECISION
 #include "../general/precision_macros.h"
+#undef SOLVE_TRIDI_GPU_BUILD
 #include "./merge_recursive_template.F90"
+#define SOLVE_TRIDI_GPU_BUILD
+#include "./merge_recursive_template.F90"
+#undef SOLVE_TRIDI_GPU_BUILD
 #undef DOUBLE_PRECISION_REAL
 #undef REALCASE
 #undef DOUBLE_PRECISION
@@ -28,7 +35,11 @@ module merge_recursive
 #define REALCASE
 #define SINGLE_PRECISION
 #include "../general/precision_macros.h"
+#undef SOLVE_TRIDI_GPU_BUILD
 #include "./merge_recursive_template.F90"
+#define SOLVE_TRIDI_GPU_BUILD
+#include "./merge_recursive_template.F90"
+#undef SOLVE_TRIDI_GPU_BUILD
 #undef SINGLE_PRECISION_REAL
 #undef REALCASE
 #undef SINGLE_PRECISION

@@ -69,6 +69,16 @@
 #include <cublas_api.h>
 #include <cublasLt.h>
 
+#ifdef WITH_NVTX
+#include <nvToolsExt.h>
+#define NVTX_RANGE_PUSH(msg) nvtxRangePushA(msg)
+#define NVTX_RANGE_POP(msg) nvtxRangePop()
+#else
+// Do nothing if WITH_NVTX is not defined
+#define NVTX_RANGE_PUSH(msg) ((void)0)
+#define NVTX_RANGE_POP(msg) ((void)0)
+#endif
+
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 #ifdef DEBUG_CUDA

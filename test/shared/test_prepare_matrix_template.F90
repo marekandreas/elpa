@@ -692,7 +692,67 @@ subroutine prepare_matrix_random_spd_&
     end subroutine
     
 !----------------------------------------------------------------------------------------------------------------
+! Same as prepare_matrix_toeplitz, but with a zero subdiagonal element in the middle,
+! so the matrix is block-diagonal.
+! This tests "IF ( RHO*zmax <= TOL ) THEN" case in merge_systems_template.F90
 
+   subroutine prepare_matrix_blocktridi_&
+   &MATH_DATATYPE&
+   &_&
+   &PRECISION&
+   & (na, diagonalElement, subdiagonalElement, d, sd, ds, sds, a, as, &
+      nblk, np_rows, np_cols, my_prow, my_pcol)
+     !use test_util
+     use precision_for_tests
+     implicit none
+#include "./test_precision_kinds.F90"
+
+     TEST_INT_TYPE, intent(in) :: na, nblk, np_rows, np_cols, my_prow, my_pcol
+     MATH_DATATYPE(kind=rck)   :: diagonalElement, subdiagonalElement
+     MATH_DATATYPE(kind=rck)   :: d(:), sd(:), ds(:), sds(:)
+     
+     MATH_DATATYPE(kind=rck)   :: a(:,:), as(:,:)
+
+     TEST_INT_TYPE             :: ii
+     integer(kind=c_int)       :: rowLocal, colLocal
+
+     d(:) = diagonalElement
+
+     sd(:) = subdiagonalElement
+     sd (na/2) = ZERO
+     
+     a(:,:) = ZERO
+
+     ! set up the diagonal and subdiagonals
+     do ii=1, na ! for diagonal elements
+       if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(ii,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                 int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                 int(my_pcol,kind=c_int) ) ) then
+         a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = d(ii)
+       endif
+     enddo
+
+     do ii=1, na-1
+       if (map_global_array_index_to_local_index(int(ii,kind=c_int), int(ii+1,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                 int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                 int(my_pcol,kind=c_int) ) ) then
+         a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = sd(ii)
+       endif
+       
+       if (map_global_array_index_to_local_index(int(ii+1,kind=c_int), int(ii,kind=c_int), rowLocal, &
+                                                 colLocal, int(nblk,kind=c_int), int(np_rows,kind=c_int), &
+                                                 int(np_cols,kind=c_int), int(my_prow,kind=c_int), &
+                                                 int(my_pcol,kind=c_int) ) ) then
+         a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = sd(ii)
+       endif
+     enddo
+
+     ds = d
+     sds = sd
+     as = a
+   end subroutine
 !----------------------------------------------------------------------------------------------------------------
 
    subroutine prepare_matrix_frank_&

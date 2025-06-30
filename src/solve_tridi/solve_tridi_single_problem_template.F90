@@ -65,7 +65,7 @@
     &PRECISION_AND_SUFFIX &
     (obj, nlen, d, e, q, ldq, wantDebug, success)
 #endif
-    ! PETERDEBUG: calling from solve_trodi_col: q_dev=qmat1_dev, ldq=max_size
+    ! solve_tridi_single_problem is called from solve_trodi_col: with parameters q_dev=qmat1_dev, ldq=max_size
     ! qmat1(max_size, max_size) -> q(ldq, ldq), and not q(ldq,nlen)!! same for q_dev
     ! but that's fine if nlen<=ldq, then not the whole matrix is used. otherwise can lead to errors
     ! Now: called from two places differently: with np_rows==1 and np_rows>1 and should be treated with care  
@@ -78,6 +78,11 @@
      use ELPA_utilities
      use elpa_gpu
      use solve_single_problem_gpu
+#if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
+     use cuda_functions ! for NVTX labels
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+     use hip_functions  ! for ROCTX labels
+#endif
      implicit none
      class(elpa_abstract_impl_t), intent(inout) :: obj
      logical                                    :: useGPU, useGPUsolver
@@ -94,6 +99,7 @@
 
      logical, intent(in)                        :: wantDebug
      logical, intent(out)                       :: success
+     integer(kind=c_int)                        :: debug
      integer(kind=ik)                           :: istat
      character(200)                             :: errorMessage
      integer(kind=c_intptr_t)                   :: num, my_stream
@@ -105,8 +111,9 @@
 
      integer(kind=c_intptr_t)                    :: gpusolverHandle
 
-     ! print *, "solve_tridi_single_problem_gpu: nlen=", nlen, " ldq=", ldq ! PETERDEBUG
-
+     debug = 0
+     if (wantDebug) debug = 1
+     
      useGPU =.false.
      useGPUsolver =.false.
 #ifdef SOLVE_TRIDI_GPU_BUILD
@@ -116,7 +123,9 @@
       useGPUsolver =.true.
 #endif
 #if defined(WITH_AMD_ROCSOLVER)
-      useGPUsolver =.false. ! As of ELPA 2025.01 release, rocsolver_?stedc/rocsolver_?syevd showed bad performance (worse than on CPU). Hopefully, this will be fixed by AMD and then we can enable it.
+      ! As of ELPA 2025.01 release, rocsolver_?stedc/rocsolver_?syevd showed bad performance (worse than on CPU).
+      ! Hopefully, this will be fixed by AMD and then we can enable it.
+      useGPUsolver =.false.
 #endif
 #endif /* SOLVE_TRIDI_GPU_BUILD */
 
@@ -132,7 +141,7 @@
        check_alloc_gpu("solve_tridi_single info_dev: ", successGPU)
        
        my_stream = obj%gpu_setup%my_stream
-       call GPU_CONSTRUCT_TRIDI_MATRIX_PRECISION (q_dev, d_dev, e_dev, nlen, ldq, my_stream)
+       call gpu_construct_tridi_matrix(PRECISION_CHAR, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
      endif
 
      ! Save d and e for the case that dstedc fails
@@ -216,9 +225,11 @@
        else ! (.not. useGPUsolver)
          
          call obj%timer%start("gpusolver_syevd")
+         NVTX_RANGE_PUSH("gpusolver_syevd")
          gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
          call gpusolver_PRECISION_syevd (nlen, q_dev, ldq, d_dev, info_dev, gpusolverHandle)
          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+         NVTX_RANGE_POP("gpusolver_syevd")
          call obj%timer%stop("gpusolver_syevd")
 
          num = 1 * size_of_int
@@ -329,7 +340,7 @@
 
      if (useGPU) then
        my_stream = obj%gpu_setup%my_stream
-       call GPU_CHECK_MONOTONY_PRECISION (d_dev, q_dev, qtmp_dev, nlen, ldq, my_stream)
+       call gpu_check_monotony(PRECISION_CHAR, d_dev, q_dev, qtmp_dev, nlen, ldq, debug, my_stream)
      else
        do i=1,nlen-1
          if (d(i+1)<d(i)) then

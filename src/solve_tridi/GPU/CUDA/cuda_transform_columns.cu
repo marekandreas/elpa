@@ -1,4 +1,4 @@
-//    Copyright 2024, A. Marek
+//    Copyright 2025, P. Karpov
 //
 //    This file is part of ELPA.
 //
@@ -44,10 +44,8 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//    This file was written by A. Marek, MPCDF
-  
-#include "config-f90.h"
-  
+//    This file was written by P. Karpov, MPCDF
+
 #include <stdio.h>
 #include <math.h>
 #include <stdio.h>
@@ -56,11 +54,10 @@
 #include <time.h>
 #include <alloca.h>
 #include <complex.h>
-#include "hip/hip_runtime.h"
-#include <hip/hip_complex.h>
-#include <stdint.h> 
+#include <cuComplex.h>
+#include <stdint.h>
 #include "config-f90.h"
 #include "../../../GPU/common_device_functions.h"
 #include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
 
-#include "../gpu_solve_tridi_col.h"
+#include "../gpu_transform_columns.h"

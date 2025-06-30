@@ -36,7 +36,7 @@ end subroutine distribute_global_column_&
 
 subroutine distribute_global_column_4_&
 &PRECISION&
-&(obj, g_col, g_col_dim1, g_col_dim2, l_col, ldq, matrixCols, &
+&(obj, g_col, l_col, g_col_dim1, g_col_dim2, ldq, matrixCols, &
   noff_in, noff, nlen, my_prow, np_rows, nblk)
   use precision
   use mod_local_to_global

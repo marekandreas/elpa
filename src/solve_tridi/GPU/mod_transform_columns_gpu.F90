@@ -11,7 +11,7 @@
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
-!      Schwerpunkt Wissenschaftliches Rechnen,
+!      Schwerpunkt Wissenschaftliches Rechnen ,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
 !    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
@@ -48,7 +48,7 @@
 #include "config-f90.h"
 
 
-module solve_tridi_col_gpu
+module transform_columns_gpu
   use, intrinsic :: iso_c_binding
   use precision
   implicit none
@@ -58,39 +58,39 @@ module solve_tridi_col_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
 
   interface
-    subroutine gpu_update_d_c(dataType, d_dev, e_dev, limits_dev, ndiv, na, debug, my_stream) &
+  subroutine gpu_transform_one_column_c(dataType, a_dev, b_dev, c_dev, alpha_dev, beta_dev, &
+                                        n_elements, SM_count, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
-                                                  bind(C, name="cuda_update_d_FromC")
+                                                  bind(C, name="cuda_transform_one_column_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name= "hip_update_d_FromC")
+                                                  bind(C, name="hip_transform_one_column_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
-      integer(kind=c_intptr_t), value    :: d_dev, e_dev
-      integer(kind=c_intptr_t), value    :: limits_dev
-      integer(kind=c_int), value         :: ndiv, na, debug
+      integer(kind=c_intptr_t), value    :: a_dev, b_dev, c_dev, alpha_dev, beta_dev
+      integer(kind=c_int), value         :: n_elements, SM_count, debug
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
 
 
   interface
-    subroutine gpu_copy_qmat1_to_qmat2_c(dataType, qmat1_dev, qmat2_dev, max_size, debug, my_stream) &
+  subroutine gpu_transform_two_columns_c (dataType, q_dev, qtrans_dev, tmp_dev, &
+                                          ldq, l_rows, l_rqs, l_rqe, lc1, lc2, SM_count, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
-                                                  bind(C, name="cuda_copy_qmat1_to_qmat2_FromC")
+                                                  bind(C, name="cuda_transform_two_columns_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name= "hip_copy_qmat1_to_qmat2_FromC")
+                                                  bind(C, name="hip_transform_two_columns_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
-      integer(kind=c_intptr_t), value    :: qmat1_dev, qmat2_dev
-      integer(kind=c_int), value         :: max_size, debug
+      integer(kind=c_intptr_t), value    :: q_dev, qtrans_dev, tmp_dev
+      integer(kind=c_int), value         :: ldq, l_rows, l_rqs, l_rqe, lc1, lc2, SM_count, debug
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
-
 
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) */
 
@@ -98,31 +98,35 @@ module solve_tridi_col_gpu
   contains
 
 
-    subroutine gpu_update_d(dataType, d_dev, e_dev, limits_dev, ndiv, na, debug, my_stream)
+    subroutine gpu_transform_one_column(dataType, a_dev, b_dev, c_dev, alpha_dev, beta_dev, &
+                                        n_elements, SM_count, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
-      integer(kind=c_intptr_t), value    :: d_dev, e_dev
-      integer(kind=c_intptr_t), value    :: limits_dev
-      integer(kind=c_int), value         :: ndiv, na, debug
+      integer(kind=c_intptr_t), value    :: a_dev, b_dev, c_dev, alpha_dev, beta_dev
+      integer(kind=c_int), value         :: n_elements, SM_count, debug
       integer(kind=c_intptr_t), value    :: my_stream
+
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
-      call gpu_update_d_c(dataType, d_dev, e_dev, limits_dev, ndiv, na, debug, my_stream)
+      call gpu_transform_one_column_c(dataType, a_dev, b_dev, c_dev, alpha_dev, beta_dev, &
+                                      n_elements, SM_count, debug, my_stream)
 #endif
     end subroutine
 
 
-    subroutine gpu_copy_qmat1_to_qmat2(dataType, qmat1_dev, qmat2_dev, max_size, debug, my_stream)
+    subroutine gpu_transform_two_columns (dataType, q_dev, qtrans_dev, tmp_dev, &
+                                          ldq, l_rows, l_rqs, l_rqe, lc1, lc2, SM_count, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
-      integer(kind=c_intptr_t), value    :: qmat1_dev, qmat2_dev
-      integer(kind=c_int), value         :: max_size, debug
+      integer(kind=c_intptr_t), value    :: q_dev, qtrans_dev, tmp_dev
+      integer(kind=c_int), value         :: ldq, l_rows, l_rqs, l_rqe, lc1, lc2, SM_count, debug
       integer(kind=c_intptr_t), value    :: my_stream
+
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
-      call gpu_copy_qmat1_to_qmat2_c(dataType, qmat1_dev, qmat2_dev, max_size, debug, my_stream)
+      call gpu_transform_two_columns_c (dataType, q_dev, qtrans_dev, tmp_dev, &
+                                        ldq, l_rows, l_rqs, l_rqe, lc1, lc2, SM_count, debug, my_stream)
 #endif
     end subroutine
 
-  
 end module

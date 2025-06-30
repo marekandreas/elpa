@@ -28,7 +28,7 @@ AM_SILENT_RULES([yes])
 #
 # Note that this number translates into the library file name like this:
 # c:r:a  --->  libelpa.so.(c-a).a.r
-AC_SUBST([ELPA_SO_VERSION], [23:0:4])
+AC_SUBST([ELPA_SO_VERSION], [23:1:4])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -2697,7 +2697,7 @@ if test x"${need_nvidia_gpu}" = x"yes" ; then
   AC_ARG_VAR([NVCCFLAGS],[CUDA compiler flags])
 
   AC_LANG_PUSH([C])
-  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 -I$CUDA_INSTALL_PATH/include "
+  CUDA_CFLAGS="$CUDA_CFLAGS -arch $cuda_compute_capability -O2 --extended-lambda -I$CUDA_INSTALL_PATH/include "
   LDFLAGS="$LDFLAGS -L$CUDA_INSTALL_PATH/lib64"
   CFLAGS="$CFLAGS -I$CUDA_INSTALL_PATH/include"
   NVCCFLAGS="$CUDA_CFLAGS $CUDA_LDFLAGS $NVCCFLAGS"
@@ -4103,13 +4103,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2025.01.001.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2025.01.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2025.06.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2025.06.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

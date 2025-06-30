@@ -3,14 +3,17 @@
 For more details and recent updates please visit the online [issue system](https://gitlab.mpcdf.mpg.de/elpa/elpa/issues)
 Issues which are not mentioned in a newer release are (considered as) solved.
 
+### ELPA 2025.06.001.rc1 release ###
+As in 2024.05.001 release
+
 ### ELPA 2025.01.002 release ###
-- fixes a performance regression erroneously introduced in ELPA 2025.01.001
+Fixes a performance regression erroneously introduced in ELPA 2025.01.001
 
 ### ELPA 2025.01.001 release ###
-- PERFORMANCE REGRESSION in solve_tridi: in the CPU version an performance problem
+PERFORMANCE REGRESSION in solve_tridi: in the CPU version an performance problem
   has been erroneously introduced. Normally performance degradation is of order 1%-2%,
   but can be in rare cases be a factor of 10 and more.
-- as in 2024.05.001 release
+As in 2024.05.001 release
 
 ### ELPA 2024.05.001 release ###
 - internal matrix redististribution does not (yet) work for ELPA 2stage

@@ -1,5 +1,6 @@
-
 #include "config-f90.h"
+#include "../general/nvtx_labels.h"
+
 module solve_tridi
   use precision
   implicit none
