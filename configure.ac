@@ -891,8 +891,8 @@ user_sets_nvidia_gpu_compute_capability="no"
 AC_MSG_CHECKING(whether a Nvidia GPU compute capability is specified)
 AC_ARG_WITH([NVIDIA-GPU-compute-capability],
             [AS_HELP_STRING([--with-NVIDIA-GPU-compute-capability=VALUE],
-                            [use compute capability VALUE for NVIDIA GPU version, default: "sm_35"])],
-            [user_sets_nvidia_gpu_compute_capability="yes"],[cuda_compute_capability="sm_35"])
+                            [use compute capability VALUE for NVIDIA GPU version, default: "sm_60"])],
+            [user_sets_nvidia_gpu_compute_capability="yes"],[cuda_compute_capability="sm_60"])
 AC_MSG_RESULT([${user_sets_nvidia_gpu_compute_capability}])
 
 
