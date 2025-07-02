@@ -212,7 +212,7 @@
 
 #if defined(USE_CCL_CHOLESKY)
   if (useGPU) then
-    useCCL = .true.
+    useCCL = obj%gpu_setup%useCCL
   
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols

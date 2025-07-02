@@ -286,7 +286,7 @@
 #endif
 
 #if defined(USE_CCL_PXGEMM)
-    useCCL = .true.
+    useCCL = obj%gpu_setup%useCCL
 
     my_stream = obj%gpu_setup%my_stream
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
