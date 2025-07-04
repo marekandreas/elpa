@@ -140,13 +140,14 @@ void SyclState::printGpuInfo() {
         default: return "Other/Unknown/Error";
       }
     };
-  #ifdef WITH_MPI
-    int mpiRank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    if (mpiRank > 0) {
-      return;
-    }
-  #endif
+
+    #ifdef WITH_MPI
+      int mpiRank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+      if (mpiRank > 0) {
+        return;
+      }
+    #endif
 
     std::cout << "~~~~~~~~~~~~~~~~~~~ ELPA SYCL Backend Info ~~~~~~~~~~~~~~~~~~~~" << std::endl;
     std::cout << "GPU Backend:       Intel oneAPI SYCL" << std::endl;
@@ -194,15 +195,23 @@ DeviceSelection& SyclState::getDefaultDeviceHandle() {
 }
 
 #ifdef WITH_ONEAPI_ONECCL
-std::optional<egs::cclKvsHandle> SyclState::retrieveKvs(void *kvsAddress) {
+std::optional<cclKvsHandle> SyclState::retrieveKvs(void *kvsAddress) {
   if (kvsMap.find(kvsAddress) != kvsMap.end()) {
     return kvsMap[kvsAddress];
   }
   return std::nullopt;
 }
 
-void SyclState::registerKvs(void *kvsAddr, egs::cclKvsHandle kvs) {
+void SyclState::registerKvs(void *kvsAddr, cclKvsHandle kvs) {
   kvsMap.insert({kvsAddr, kvs});
+}
+
+void SyclState::teardownCclStack() {
+  for (auto &deviceData : this->deviceData) {
+    for (auto &queueData : deviceData.second.queueHandles) {
+    }
+  }
+  kvsMap.clear();
 }
 #endif
 
@@ -220,6 +229,8 @@ DeviceSelection::DeviceSelection(int deviceId, sycl::device device)
 #endif
 #ifdef WITH_ONEAPI_ONECCL
     cclDevice(ccl::create_device(this->device)),
+    cclContext(ccl::create_context(this->context)),
+    cclComm(std::nullopt),
 #endif
     defaultQueueHandle(device, context) {
   queueHandles.push_back(defaultQueueHandle);
@@ -257,6 +268,13 @@ QueueData* DeviceSelection::getDefaultQueueRef() {
 bool DeviceSelection::isCpuDevice() {
   return (device.get_info<sycl::info::device::device_type>() == sycl::info::device_type::cpu);
 }
+
+#ifdef WITH_ONEAPI_ONECCL
+ccl::communicator* DeviceSelection::initCclCommunicator(int nRanks, int myRank, cclKvsHandle kvs) {
+  this->cclComm = std::make_optional(ccl::create_communicator(nRanks, myRank, this->cclDevice, this->cclContext, kvs));
+  return &(*cclComm);
+}
+#endif
 
 //--------------------------------------------------------------------------------------------
 // QueueData

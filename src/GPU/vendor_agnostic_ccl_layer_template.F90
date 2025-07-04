@@ -176,9 +176,7 @@
 #endif
 
 #ifdef WITH_ONEAPI_ONECCL
-      print *,"Not yet implemented"
-      flag = -1
-      stop
+      flag = oneccl_redOp_onecclAvg()
 #endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION

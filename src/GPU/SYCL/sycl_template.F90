@@ -2063,7 +2063,15 @@
       logical, optional    :: wantDebug
       integer(kind=c_int)  :: wantDebugInt
 #ifdef WITH_SYCL_GPU_VERSION
-      wantDebugInt = merge(1, 0, wantDebug)
+      if (present(wantDebug)) then
+        if (wantDebug) then
+          wantDebugInt = 1
+        else
+          wantDebugInt = 0
+        end if
+      else
+        wantDebugInt = 0
+      end if
       success = sycl_state_initialize_c(onlyL0Gpus, wantDebugInt) /=0
 #else
       success = .true.

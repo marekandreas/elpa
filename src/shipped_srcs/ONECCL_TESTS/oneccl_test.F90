@@ -19,7 +19,7 @@ contains
     real(kind=c_double), dimension(:), allocatable :: host_buffer
 
     init_time = t_end - t_begin
-    ok = sycl_getdevicecount(n_gpu, 0)
+    ok = sycl_getdevicecount(n_gpu)
 
     if(ok == 0) then
       write(*,"(2X,A)") "Error: gpu_getdevicecount"
@@ -63,17 +63,38 @@ contains
     use mpi
     implicit none
     integer(kind=c_int), intent(out) :: ierr
-    integer(kind=c_int) :: n_local_ranks, n_ranks, mpi_local_comm
+    integer(kind=c_int), intent(out) :: n_local_ranks
+    integer(kind=c_int) :: n_ranks, mpi_local_comm
 
     call mpi_comm_size(mpi_comm_world, n_ranks, ierr)
+    if (ierr /= MPI_SUCCESS) then
+      print *, "Error getting MPI size"
+      n_local_ranks = -1
+      return
+    end if 
     call mpi_comm_split_type(mpi_comm_world, mpi_comm_type_shared, 0, mpi_info_null, mpi_local_comm, ierr)
+    if (ierr /= MPI_SUCCESS) then
+      print *, "Error splitting MPI communicator"
+      n_local_ranks = -1
+      return
+    end if
     call mpi_comm_size(mpi_local_comm, n_local_ranks, ierr)
+    if (ierr /= MPI_SUCCESS) then
+      print *, "Error getting local MPI size"
+      n_local_ranks = -1
+      return
+    end if
     call mpi_comm_free(mpi_local_comm, ierr)
+    if (ierr /= MPI_SUCCESS) then
+      print *, "Error freeing local MPI communicator"
+      n_local_ranks = -1
+      return
+    end if
   end subroutine get_mpi_local_ranks
 
 
 
-  subroutine test_ccl_setup(ccl_unique_id_val, ccl_comm)
+  subroutine test_ccl_setup(ccl_unique_id_val, ccl_comm, my_stream)
     use, intrinsic :: iso_c_binding
     use mpi
     use elpa_gpu
@@ -82,6 +103,8 @@ contains
     implicit none
 
     integer(kind=c_intptr_t), intent(out) :: ccl_comm
+    integer(kind=c_intptr_t), intent(out) :: my_stream
+    
     type(onecclUniqueId), intent(inout) :: ccl_unique_id_val
     integer(kind=c_int) :: my_rank, my_gpu
     integer(kind=c_int) :: n_local_ranks, n_ranks, n_local_gpus, ierr, ok
@@ -89,25 +112,46 @@ contains
 
     call mpi_comm_rank(mpi_comm_world, my_rank, ierr)
     call mpi_comm_size(mpi_comm_world, n_ranks, ierr)
+
+    print *, "Rank ", my_rank, " of ", n_ranks, " is starting the CCL test"
+
     call get_mpi_local_ranks(ierr, n_local_ranks)
+
+    ok = sycl_state_initialize(0)
+    if (n_local_ranks < 0) then
+      write(*,"(2X,A)") "Error getting local ranks"
+      stop
+    else if (my_rank == 0) then
+      print *, "found nLocalRanks: ", n_local_ranks
+    end if
     ok = gpu_vendor_internal()
+    if (ok == 0) then
+      write(*,"(2X,A)") "Error: gpu_vendor_internal"
+      stop
+    end if
+
     call set_gpu_parameters()
-    ok = sycl_getdevicecount(n_local_gpus, 0)
+    ok = sycl_getdevicecount(n_local_gpus)
     if (ok == 0 .or. n_local_gpus == 0) then
       write(*,"(2X,A)") "Issue with the GPUs. Ok:", ok, "nGpus:", n_local_gpus
       stop
     end if
+
+    print *, "Found nLocalGpus: ", n_local_gpus
     my_gpu = mod(mod(my_rank, n_local_ranks), n_local_gpus)
     ok = gpu_setdevice(my_gpu)
     if (ok == 0) then
       write(*,"(2X,A)") "Error: gpu_setdevice"
       stop
     end if
-    
+    print *, "Rank", my_rank, "using GPU: ", my_gpu
+    ok = sycl_stream_create(my_stream)
     if (ok == 0) then
-      write(*,"(2X,A)") "Error: gpu_setdevice"
+      write(*,"(2X,A)") "Error: sycl_stream_create"
       stop
     end if
+    print *, "Rank", my_rank, "created SYCL stream: ", my_stream
+
     print *, "Rank", my_rank, "Found nGpus: ", n_local_gpus, "Chose GPU: ", my_gpu
 
     if (my_rank == 0) then
@@ -134,12 +178,33 @@ contains
 
 
 
+  subroutine test_ccl_cleanup(ccl_comm, my_stream)
+    use, intrinsic :: iso_c_binding
+    use elpa_gpu
+    use elpa_ccl_gpu
+    use sycl_functions
+    implicit none
+
+    integer(kind=c_intptr_t), intent(in) :: ccl_comm
+    integer(kind=c_intptr_t), intent(in) :: my_stream
+    integer(kind=c_int) :: ok
+
+    ok = ccl_comm_destroy(ccl_comm)
+    if  (ok == 0) then
+      write(*,"(2X,A)") "Error: CCL_comm_destroy"
+      stop
+    else 
+      print *, "CCL communicator destroyed successfully"
+    end if
+  end subroutine test_ccl_cleanup
+
+
   subroutine verify_allreduce_result(result_data, n_ranks, reduction_operation, is_correct)
     use, intrinsic :: iso_c_binding
     use elpa_ccl_gpu
     use elpa_gpu
     implicit none
-    
+
     real(kind=c_double), intent(inout) :: result_data(:)
     integer(kind=c_int), intent(in), value :: n_ranks, reduction_operation
     logical, intent(out) :: is_correct
@@ -163,7 +228,7 @@ contains
     else if (reduction_operation == ccl_redOp_cclMin()) then
       expected_value = 1000.0
     end if
-    
+
     do i = 1, size(result_data)
       if (result_data(i) /= expected_value) then
         print *, "expected value: ", expected_value, "got", result_data(i)
@@ -175,7 +240,7 @@ contains
 
 
 
-  subroutine test_ccl_allreduce(ccl_comm, num_elements)
+  subroutine test_ccl_allreduce(ccl_comm, num_elements, onecclStream)
     use, intrinsic :: iso_c_binding
     use elpa_gpu
     use elpa_ccl_gpu
@@ -185,12 +250,12 @@ contains
     implicit none
 
     integer(kind=c_intptr_t), intent(in) :: ccl_comm
+    integer(kind=c_intptr_t), intent(in) :: onecclStream
     integer(kind=c_intptr_t), intent(in), value :: num_elements
 
     integer(kind=c_size_t) :: num_ccl_elements
     integer(kind=c_int) :: n_ranks, my_rank, ierr
     integer(kind=c_int) :: i
-    integer(kind=c_intptr_t) :: onecclStream
     logical :: ok, is_correct
 
     real(kind=c_double) :: original_data(num_elements), result_data(num_elements)
@@ -201,13 +266,11 @@ contains
     call mpi_comm_size(mpi_comm_world, n_ranks, ierr)
 
     num_ccl_elements = num_elements
-    ok = oneccl_stream_get(onecclStream)
-    NOT_OK_OUCH
 
     do i = 1, num_elements
       original_data(i) = 1000.0 + my_rank
     end do
-    
+
     block
       character(len=20), dimension(4) :: reduction_names = &
           ['ccl_redOp_cclSum()', 'ccl_redOp_cclProd()', 'ccl_redOp_cclMax()', 'ccl_redOp_cclMin()']
@@ -215,7 +278,7 @@ contains
       integer(kind=c_int) :: j
 
       reduction_operations = [ccl_redOp_cclSum(), ccl_redOp_cclProd(), ccl_redOp_cclMax(), ccl_redOp_cclMin()]
-      
+
       ok = sycl_malloc(original_data_gpu, num_elements * c_double)
       NOT_OK_OUCH
       ok = gpu_malloc(result_data_gpu, num_elements * c_double)
@@ -251,8 +314,8 @@ contains
   end subroutine test_ccl_allreduce
 
 
-  
-  subroutine test_ccl_reduce(ccl_comm, num_elements)
+
+  subroutine test_ccl_reduce(ccl_comm, num_elements, onecclStream)
     use, intrinsic :: iso_c_binding
     use elpa_gpu
     use elpa_ccl_gpu
@@ -263,11 +326,11 @@ contains
 
     integer(kind=c_intptr_t), intent(in) :: ccl_comm
     integer(kind=c_intptr_t), intent(in), value :: num_elements
+    integer(kind=c_intptr_t), intent(in) :: onecclStream
 
     integer(kind=c_size_t) :: num_ccl_elements
     integer(kind=c_int) :: n_ranks, my_rank, ierr
     integer(kind=c_int) :: i
-    integer(kind=c_intptr_t) :: onecclStream
     logical :: ok, is_correct
 
     real(kind=c_double) :: original_data(num_elements), result_data(num_elements)
@@ -278,12 +341,11 @@ contains
     call mpi_comm_size(mpi_comm_world, n_ranks, ierr)
 
     num_ccl_elements = num_elements
-    ok = oneccl_stream_get(onecclStream); NOT_OK_OUCH
 
     do i = 1, num_elements
       original_data(i) = 1000.0 + my_rank
     end do
-    
+
     block
       character(len=20), dimension(4) :: reduction_names = &
           ['ccl_redOp_cclSum()', 'ccl_redOp_cclProd()', 'ccl_redOp_cclMax()', 'ccl_redOp_cclMin()']
@@ -293,7 +355,7 @@ contains
 
       reduction_operations = [ccl_redOp_cclSum(), ccl_redOp_cclProd(), ccl_redOp_cclMax(), ccl_redOp_cclMin()]
       destination_rank = 0
-      
+
       ok = sycl_malloc(original_data_gpu, num_elements * c_double); NOT_OK_OUCH
       ok = gpu_malloc(result_data_gpu, num_elements * c_double); NOT_OK_OUCH
       ok = gpu_memcpy(original_data_gpu, int(loc(original_data),c_intptr_t), num_elements * c_double, gpuMemcpyHostToDevice)
@@ -327,7 +389,7 @@ contains
 
 
 
-  subroutine test_ccl_broadcast(ccl_comm, num_elements)
+  subroutine test_ccl_broadcast(ccl_comm, num_elements, onecclStream)
     use, intrinsic :: iso_c_binding
     use elpa_gpu
     use elpa_ccl_gpu
@@ -338,11 +400,11 @@ contains
 
     integer(kind=c_intptr_t), intent(in) :: ccl_comm
     integer(kind=c_intptr_t), intent(in), value :: num_elements
+    integer(kind=c_intptr_t), intent(in) :: onecclStream
 
     integer(kind=c_size_t) :: num_ccl_elements
     integer(kind=c_int) :: n_ranks, my_rank, ierr
     integer(kind=c_int) :: i
-    integer(kind=c_intptr_t) :: onecclStream
     integer(kind=c_int) :: destination_rank
     logical :: ok, is_correct
 
@@ -354,14 +416,13 @@ contains
     call mpi_comm_size(mpi_comm_world, n_ranks, ierr)
 
     num_ccl_elements = num_elements
-    ok = oneccl_stream_get(onecclStream); NOT_OK_OUCH
 
     do i = 1, num_elements
       original_data(i) = 1000.0 + my_rank
     end do
-    
+
     destination_rank = 0
-    
+
     ok = gpu_malloc(original_data_gpu, num_elements * c_double); NOT_OK_OUCH
     ok = gpu_malloc(result_data_gpu, num_elements * c_double); NOT_OK_OUCH
     ok = gpu_memcpy(original_data_gpu, int(loc(original_data),c_intptr_t), num_elements * c_double, gpuMemcpyHostToDevice)
@@ -373,9 +434,9 @@ contains
         print *, " - test Broadcast to rank ", destination_rank
       end if
       call mpi_barrier(mpi_comm_world, ierr)
-      ! ccl_bcast_intptr(sendbuff, recvbuff, nrElements, cclDatatype, root, cclComm, gpuStream) 
+      ! ccl_bcast_intptr(sendbuff, recvbuff, nrElements, cclDatatype, root, cclComm, gpuStream)
       ok = ccl_bcast(original_data_gpu, result_data_gpu, num_ccl_elements, &
-                ccl_dataType_cclDouble(), destination_rank, ccl_comm, oneCCLStream)
+                ccl_dataType_cclDouble(), destination_rank, ccl_comm, onecclStream)
       NOT_OK_OUCH
 
       ok = gpu_memcpy(loc(result_data), result_data_gpu, num_elements * c_double, gpuMemcpyDeviceToHost); NOT_OK_OUCH
@@ -384,7 +445,7 @@ contains
         print *, "  -> Result correct on rank 0? -", is_correct
       elseif (.not. is_correct) then
         print *, "  -> Result INCORRECT on rank ", my_rank, "? -", "expected", (1000.0 + destination_rank), "got", result_data(1)
-        
+
       endif
       call mpi_barrier(mpi_comm_world, ierr)
     enddo
@@ -397,7 +458,7 @@ contains
 
 
 
-  subroutine test_ccl_sendrecv(ccl_comm, num_elements)
+  subroutine test_ccl_sendrecv(ccl_comm, num_elements, oneccl_stream)
     use, intrinsic :: iso_c_binding
     use elpa_gpu
     use elpa_ccl_gpu
@@ -408,11 +469,11 @@ contains
 
     integer(kind=c_intptr_t), intent(in) :: ccl_comm
     integer(kind=c_intptr_t), intent(in), value :: num_elements
+    integer(kind=c_intptr_t), intent(in) :: oneccl_stream
 
     integer(kind=c_size_t) :: num_ccl_elements
     integer(kind=c_int) :: n_ranks, my_rank, ierr, send_partner, recv_partner
     integer(kind=c_int) :: i, is_correct
-    integer(kind=c_intptr_t) :: oneccl_stream
     logical :: ok
 
     real(kind=c_double) :: original_data(num_elements), result_data(num_elements)
@@ -420,17 +481,16 @@ contains
 
     call MPI_comm_rank(MPI_COMM_WORLD, my_rank, ierr)
     call MPI_comm_size(MPI_COMM_WORLD, n_ranks, ierr)
-    ok = oneccl_stream_get(oneccl_stream); NOT_OK_OUCH
 
     send_partner = mod(my_rank + n_ranks + 1, n_ranks)
     recv_partner = mod(my_rank + n_ranks - 1, n_ranks)
-   
+
     num_ccl_elements = num_elements
 
     do i = 1, num_elements
       original_data(i) = 1000.0 + my_rank
     end do
-    
+
     ok = gpu_malloc(original_data_gpu, num_elements * c_double); NOT_OK_OUCH
     ok = gpu_malloc(result_data_gpu, num_elements * c_double); NOT_OK_OUCH
     ok = gpu_memcpy(original_data_gpu, int(loc(original_data),c_intptr_t), num_elements * c_double, gpuMemcpyHostToDevice)
@@ -453,7 +513,7 @@ contains
       endif
     endif
     ! ok = oneccl_stream_synchronize(oneccl_stream); NOT_OK_OUCH
-    
+
     ok = gpu_memcpy(loc(result_data), result_data_gpu, num_elements * c_double, gpuMemcpyDeviceToHost); NOT_OK_OUCH
     is_correct = 1
     if (result_data(1) /= 1000.0 + recv_partner) then
@@ -462,7 +522,7 @@ contains
     endif
 
     call MPI_Allreduce(MPI_IN_PLACE, is_correct, 1, MPI_INTEGER, MPI_LAND, MPI_COMM_WORLD, ierr)
-    
+
     if (my_rank == 0 .and. is_correct == 1) then
       print *, "  -> Result CORRECT on all ranks"
     endif

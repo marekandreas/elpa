@@ -10,33 +10,49 @@
 #include "syclCommon.hpp"
 
 
+#define WITH_ONEAPI_ONECCL
 #ifdef WITH_ONEAPI_ONECCL
 
 #include <oneapi/ccl.hpp>
+#include <oneapi/ccl/environment.hpp>
+#include <mpi.h>
+
+using namespace sycl_be;
 
 extern "C" {
 
-  int onecclStreamGetFromC(ccl::stream **stream) {
-    *stream = elpa::gpu::sycl::getCclStreamRef();
-    return 1;
-  }
-
   int onecclGroupStartFromC() {
-    // No such thing in oneCCL. Therefore, we do nothing.
+    ccl::group_start();
     return 1;
   }
 
   int onecclGroupEndFromC() {
-    // No such thing in oneCCL. Therefore, we do nothing.
+    ccl::group_end();
     return 1;
   }
 
-  /** 
+  void mpi_finalize() {
+    int is_finalized = 0;
+    MPI_Finalized(&is_finalized);
+
+    if (!is_finalized) {
+        MPI_Finalize();
+    }
+  }
+
+
+  /**
    * Create a main Key-Value Store to create a oneCCL communicator.
    * Only call from Rank 0!
-   * This will probably throw exceptions if/when it fails.
    */
   int onecclGetUniqueIdFromC(void *kvsAddress) {
+    #ifdef WITH_MPI
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return 1;
+      }
+    #endif
     ccl::shared_ptr_class<ccl::kvs> kvs;
     ccl::kvs::address_type tmpAddr;
     kvs = ccl::create_main_kvs();
@@ -44,37 +60,36 @@ extern "C" {
     tmpAddr = kvs->get_address();
     std::memcpy(kvsAddress, tmpAddr.data(), tmpAddr.max_size());
     // So that we can retrieve the KVS later and it doesn't get deconstructed.
-    elpa::gpu::sycl::registerKvs(kvsAddress, kvs);
+    SyclState::defaultState().registerKvs(kvsAddress, kvs);
     return 1;
   }
 
 
   int onecclCommInitRankFromC(ccl::communicator **onecclComm, int nRanks, void *kvsAddress, int myRank) {
-    namespace egs = elpa::gpu::sycl;
-    std::optional<egs::cclKvsHandle> kvsOpt = egs::retrieveKvs(kvsAddress);
-    egs::cclKvsHandle kvs;
+    SyclState &ss = SyclState::defaultState();
+    std::optional<cclKvsHandle> kvsOpt = ss.retrieveKvs(kvsAddress);
+    cclKvsHandle kvs;
     if (!kvsOpt.has_value()) {
       kvs = ccl::create_kvs(*static_cast<ccl::kvs::address_type *>(kvsAddress));
-      egs::registerKvs(kvsAddress, kvs);
+      ss.registerKvs(kvsAddress, kvs);
     } else {
       kvs = kvsOpt.value();
     }
-    // oneCCL doesn't return an opaque pointer to the communicator, but an interface object instead. 
-    // I don't want to save it somewhere in the library implicitly, so I'll put it on the heap,
-    // and let ELPA manage its lifetime.
-    ccl::device  &cclDevice  = egs::getCclDevice();
-    ccl::context &cclContext = egs::getCclContext();
-    *onecclComm = new ccl::communicator(ccl::create_communicator(nRanks, myRank, cclDevice, cclContext, kvs));
+    // oneCCL doesn't return an opaque pointer to the communicator, but an interface object instead.
+    *onecclComm = ss.getDefaultDeviceHandle().initCclCommunicator(nRanks, myRank, kvs);
+
+    atexit(mpi_finalize);
     return 1;
   }
 
-  int onecclCommDestroyFromC(ccl::communicator *onecclComm) {
-    delete onecclComm;
+  int onecclCommDestroyFromC(ccl::communicator *onecclComm, QueueData *qd) {
+    QueueData *qData = getQueueDataOrDefault(qd);
+    ccl::barrier(*onecclComm, qData->cclStream).wait();
     return 1;
   }
 
-  int onecclStreamSynchronizeFromC(ccl::stream *stream) {
-    sycl::queue &q = stream->get_native();
+  int onecclStreamSynchronizeFromC(QueueData *qd) {
+    sycl::queue q = getQueueOrDefault(qd);
     q.wait();
     return 1;
   }
@@ -96,8 +111,7 @@ extern "C" {
   }
 
   int onecclRedOpAvgFromC(void) {
-    // Average is not currently supported in oneCCL. This case will need to be supported separately.
-    return static_cast<int>(ccl::reduction::custom);
+    return static_cast<int>(ccl::reduction::avg);
   }
 
   int onecclDataTypeOnecclIntFromC(void) {
@@ -148,16 +162,16 @@ extern "C" {
     }
   }
 
-  int onecclAllReduceFromC(const void *sendbuff, void *recvbuff, size_t count, ccl::datatype onecclDatatype, ccl::reduction onecclOp, ccl::communicator *onecclComm, ccl::stream stream) {
+  int onecclAllReduceFromC(const void *sendbuff, void *recvbuff, size_t count, ccl::datatype onecclDatatype, ccl::reduction onecclOp, ccl::communicator *onecclComm, QueueData *qd) {
+    QueueData *qData = getQueueDataOrDefault(qd);
     if (onecclOp == ccl::reduction::custom) {
-      errormessage("%s\n", "Error in onecclAllReduce: ccl::reduction::custom is not supported in ELPA. (Likely you wanted avg, which oneCCL doesn't have)");
-      
+      errormessage("%s\n", "Error in onecclAllReduce: ccl::reduction::custom is not supported in ELPA.");
       return 0;
     }
 
     try {
       auto attributes = ccl::create_operation_attr<ccl::allreduce_attr>();
-      ccl::allreduce(sendbuff, recvbuff, count, onecclDatatype, onecclOp, *onecclComm, stream, attributes).wait();
+      ccl::allreduce(sendbuff, recvbuff, count, onecclDatatype, onecclOp, *onecclComm, qData->cclStream, attributes).wait();
     } catch (const ccl::exception &e) {
       errormessage("Error in onecclAllReduce: %s\n", e.what());
       return 0;
@@ -165,7 +179,8 @@ extern "C" {
     return 1;
   }
 
-  int onecclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, ccl::datatype onecclDatatype, ccl::reduction onecclOp, int root, ccl::communicator *onecclComm, ccl::stream stream) {
+  int onecclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, ccl::datatype onecclDatatype, ccl::reduction onecclOp, int root, ccl::communicator *onecclComm, QueueData *qd) {
+    QueueData *qData = getQueueDataOrDefault(qd);
     if (onecclOp == ccl::reduction::custom) {
       errormessage("%s\n", "Error in onecclReduce: ccl::reduction::custom is not supported in ELPA. (Likely you wanted avg, which oneCCL doesn't have)");
       return 0;
@@ -173,7 +188,7 @@ extern "C" {
 
     try {
       auto attributes = ccl::create_operation_attr<ccl::reduce_attr>();
-      ccl::reduce(sendbuff, recvbuff, count, onecclDatatype, onecclOp, root, *onecclComm, stream, attributes).wait();
+      ccl::reduce(sendbuff, recvbuff, count, onecclDatatype, onecclOp, root, *onecclComm, qData->cclStream, attributes).wait();
     } catch (const ccl::exception &e) {
       errormessage("Error in onecclReduce: %s\n", e.what());
       return 0;
@@ -181,14 +196,15 @@ extern "C" {
     return 1;
   }
 
-  int onecclBroadcastFromC(const void* sendbuff, void* recvbuff, size_t count, ccl::datatype onecclDatatype, int root, ccl::communicator *onecclComm, ccl::stream stream) {
+  int onecclBroadcastFromC(const void* sendbuff, void* recvbuff, size_t count, ccl::datatype onecclDatatype, int root, ccl::communicator *onecclComm, QueueData *qd) {
+    QueueData *qData = getQueueDataOrDefault(qd);
     try {
       std::vector<ccl::event> deps;
       if (sendbuff != recvbuff && root == onecclComm->rank()) {
-        auto q = elpa::gpu::sycl::getQueue();
+        auto q = qData->queue;
         auto e = q.memcpy(recvbuff, sendbuff, count * onecclSizeForDatatypeFromC(onecclDatatype));
         deps.push_back(ccl::create_event(e));
-      } 
+      }
       auto attr = ccl::create_operation_attr<ccl::broadcast_attr>();
       ccl::broadcast(recvbuff, count, onecclDatatype, root, *onecclComm, attr, deps).wait();
     } catch (const ccl::exception &e) {
@@ -198,9 +214,11 @@ extern "C" {
     return 1;
   }
 
-  int onecclSendFromC(void* sendbuff, size_t count, ccl::datatype onecclDatatype, int peer, ccl::communicator *onecclComm, ccl::stream stream) {
+  int onecclSendFromC(void* sendbuff, size_t count, ccl::datatype onecclDatatype, int peer, ccl::communicator *onecclComm, QueueData *qd) {
     try {
-      ccl::send(sendbuff, count, onecclDatatype, peer, *onecclComm, stream);
+      QueueData *qData = getQueueDataOrDefault(qd);
+      ccl::stream &stream = qData->cclStream;
+      ccl::send(sendbuff, count, onecclDatatype, peer, *onecclComm, stream).wait();
     } catch (const ccl::exception &e) {
       errormessage("Error in onecclSend: %s\n", e.what());
       return 0;
@@ -208,9 +226,10 @@ extern "C" {
     return 1;
   }
 
-  int onecclRecvFromC(void* recvbuff, size_t count, ccl::datatype onecclDatatype, int peer, ccl::communicator *onecclComm, ccl::stream stream) {
+  int onecclRecvFromC(void* recvbuff, size_t count, ccl::datatype onecclDatatype, int peer, ccl::communicator *onecclComm, QueueData *qd) {
     try {
-      ccl::recv(recvbuff, count, onecclDatatype, peer, *onecclComm, stream).wait();
+      QueueData *qData = getQueueDataOrDefault(qd);
+      ccl::recv(recvbuff, count, onecclDatatype, peer, *onecclComm, qData->cclStream).wait();
     } catch (const ccl::exception &e) {
       errormessage("Error in onecclRecv: %s\n", e.what());
       return 0;

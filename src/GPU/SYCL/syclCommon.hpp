@@ -57,8 +57,10 @@
 
 namespace sycl_be {
 
+using cclKvsHandle = ccl::shared_ptr_class<ccl::kvs>;
+
 struct QueueData {
-  friend class DeviceSelection;
+  friend struct DeviceSelection;
   private:
   void *oneMklScratchpad; 
   
@@ -68,7 +70,6 @@ struct QueueData {
   ccl::stream cclStream;
 #endif  
   size_t oneMklScratchpadSize;
-
 
   QueueData(sycl::device device, sycl::context context);
   ~QueueData();
@@ -87,6 +88,8 @@ struct DeviceSelection {
   sycl::context context;
 #ifdef WITH_ONEAPI_ONECCL
   ccl::device cclDevice;
+  ccl::context cclContext;
+  std::optional<ccl::communicator> cclComm;
 #endif  
   QueueData defaultQueueHandle;
   std::vector<QueueData> queueHandles;
@@ -97,12 +100,18 @@ struct DeviceSelection {
   QueueData* getQueue(int id);
   QueueData* getDefaultQueueRef();
   bool isCpuDevice();
+#ifdef WITH_ONEAPI_ONECCL
+  ccl::communicator* initCclCommunicator(int nRanks, int myRank, cclKvsHandle kvs);
+#endif
 };
 
 
 class SyclState {
   static std::optional<SyclState> _staticState;
 
+#ifdef WITH_ONEAPI_ONECCL
+  std::unordered_map<void *, cclKvsHandle> kvsMap;
+#endif
   bool isManagingOnlyL0Gpus;
   public:
   bool isDebugEnabled;
@@ -111,11 +120,6 @@ class SyclState {
   std::unordered_map<int, DeviceSelection> deviceData;
   int defaultDevice;
 
-#ifdef WITH_ONEAPI_ONECCL
-  using cclKvsHandle = ccl::shared_ptr_class<ccl::kvs>;
-  ccl::context cclContext;
-  std::unordered_map<void *, egs::cclKvsHandle> kvsMap;
-#endif
   
   SyclState(bool onlyL0Gpus = false, bool isDebugEnabled = false);
   DeviceSelection& getDeviceHandle(int deviceNum);
@@ -134,6 +138,7 @@ class SyclState {
 #ifdef WITH_ONEAPI_ONECCL
   void registerKvs(void *kvsAddr, cclKvsHandle kvs);
   std::optional<cclKvsHandle> retrieveKvs(void *kvsAddress);
+  void teardownCclStack();
 #endif
 };
   

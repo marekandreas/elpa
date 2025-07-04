@@ -8,7 +8,7 @@ find_package(oneCCL REQUIRED)
 find_package(MKL CONFIG REQUIRED PATHS $ENV{MKLROOT})
 
 # Add the executable
-add_executable(ccltest 
+add_executable(ccltest
   oneccl_test.F90
   oneccl_test_main.F90
 
@@ -51,9 +51,9 @@ target_include_directories(ccltest PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${MPI_CXX_IN
 target_include_directories(ccltest PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:${MPI_Fortran_INCLUDE_DIRS}>)
 target_include_directories(ccltest PUBLIC $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
 target_compile_options(ccltest     PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-Wall -Wextra>
-                                          $<$<COMPILE_LANGUAGE:CXX>:-fsycl -Wall -Wextra>
+                                          $<$<COMPILE_LANGUAGE:CXX>:-g -fsycl -Wall -Wextra>
                                           $<$<COMPILE_LANGUAGE:CXX>:$<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>>
-                                          $<$<COMPILE_LANGUAGE:Fortran>:-fpp>)
+                                          $<$<COMPILE_LANGUAGE:Fortran>:-g -fpp>)
 
 target_link_libraries(ccltest      PUBLIC -fsycl)
 target_link_libraries(ccltest      PUBLIC MPI::MPI_CXX)
@@ -67,6 +67,7 @@ target_link_libraries(ccltest      PUBLIC $<LINK_ONLY:MKL::MKL_SYCL>)
 # Make sure the oneCCL wrapper is used
 target_compile_definitions(ccltest PRIVATE WITH_ONEAPI_ONECCL)
 target_compile_definitions(ccltest PRIVATE WITH_SYCL_GPU_VERSION)
+target_compile_definitions(ccltest PRIVATE WITH_GPU_STREAMS)
 
 # fix broken mpi link in oneccl
 set_target_properties(oneCCL PROPERTIES INTERFACE_LINK_LIBRARIES "")
