@@ -102,13 +102,13 @@ int cudaDeviceGetAttributeFromC(int *value, int attribute) {
 int cublasGetVersionFromC(cublasHandle_t cudaHandle, int *version) {
   cublasStatus_t status = cublasGetVersion(cudaHandle, version);
   if (status == CUBLAS_STATUS_SUCCESS) {
-    if (*version >= 111103 && *version < 120304)
+    if (*version >= 111103)
       {
       // https://docs.nvidia.com/cuda/archive//11.8.0/cuda-toolkit-release-notes/index.html
       // https://docs.nvidia.com/cuda/archive//12.3.1/cuda-toolkit-release-notes/index.html
       // Heuristics caching for the repeated CUBLAS operations was introduced in CUDA 11.8.0 and improved in CUDA 12.3.1
       // Between these versions, the caching significantly decreases the performance of cublas Gemm, Gemv
-      // so we switch the caching off for these versions
+      // More recent CUDA versions still suffer from the slowdown for the small matrices, so we switch it off completely
 #if defined(CUBLAS_VERSION) && CUBLAS_VERSION >= 111103
       cublasLtHeuristicsCacheSetCapacity(0);
 #endif

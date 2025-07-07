@@ -83,8 +83,8 @@ int hipDeviceGetAttributeFromC(int *value, int attribute) {
       attr = hipDeviceAttributeWarpSize;
       break;
     case 8:
-      //only for ROCm 6.x fix this
-      //attr = hipDeviceAttributeMultiProcessorCount;
+      // only for ROCm >= 5.0.0
+      attr = hipDeviceAttributeMultiprocessorCount;
       break;
   }
   hipError_t status = hipDeviceGetAttribute(value, attr, 0);

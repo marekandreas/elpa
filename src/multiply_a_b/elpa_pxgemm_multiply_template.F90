@@ -268,7 +268,7 @@
   useCCL = .false.
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(obj, myid, numGPU)) then
+    if (check_for_gpu(obj, myid, numGPU, wantDebug)) then
       ! set the neccessary parameters
       call set_gpu_parameters()
     else
@@ -286,7 +286,7 @@
 #endif
 
 #if defined(USE_CCL_PXGEMM)
-    useCCL = .true.
+    useCCL = obj%gpu_setup%useCCL
 
     my_stream = obj%gpu_setup%my_stream
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows

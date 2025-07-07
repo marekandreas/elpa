@@ -179,7 +179,7 @@ subroutine elpa_transpose_row_or_col&
   LCM = least_common_multiple(np_rows, np_cols)*nblk
 
 #if defined(USE_CCL_PXGEMM)
-  useCCL = .true.
+  useCCL = obj%gpu_setup%useCCL
 
   my_stream = obj%gpu_setup%my_stream
   ccl_comm_all  = obj%gpu_setup%ccl_comm_all
