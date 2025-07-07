@@ -624,21 +624,16 @@
       OBJECT%gpu_setup%amdDevMaxGridDimZ = value
       OBJECT%gpu_setup%gpuDevMaxGridDimZ = value
 
-      ! only for ROCm 6.x fix this
+      ! only for ROCm >= 5.0.0
 
-      !attribute = OBJECT%gpu_setup%gpuDevAttrMultiProcessorCount
-      !success = hip_device_get_attributes(value, attribute)
-      !if (.not.(success)) then
-      !  write(error_unit,*) "error in hip_device_get_attributes"
-      !  stop 1
-      !endif
-      !if (myid == 0 .and. wantDebugMessage) then
-      !  write(error_unit,*) "HIP SM count: ", value
-      !endif
-      !OBJECT%gpu_setup%amdSMcount  = value
-      !OBJECT%gpu_setup%gpuSMcount  = value
-      OBJECT%gpu_setup%amdSMcount  = 32
-      OBJECT%gpu_setup%gpuSMcount  = 32
+      attribute = OBJECT%gpu_setup%gpuDevAttrMultiProcessorCount
+      success = hip_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+       write(error_unit,*) "error in hip_device_get_attributes"
+       stop 1
+      endif
+      OBJECT%gpu_setup%amdSMcount  = value
+      OBJECT%gpu_setup%gpuSMcount  = value
 
 #endif /* WITH_AMD_GPU_VERSION */
 
