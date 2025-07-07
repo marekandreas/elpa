@@ -268,7 +268,7 @@
   useCCL = .false.
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(obj, myid, numGPU)) then
+    if (check_for_gpu(obj, myid, numGPU, wantDebug)) then
       ! set the neccessary parameters
       call set_gpu_parameters()
     else

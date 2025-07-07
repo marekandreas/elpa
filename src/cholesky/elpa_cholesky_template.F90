@@ -154,6 +154,18 @@
   useGPU = .false.
   useCCL = .false.
 
+  call obj%get("debug",debug,error)
+  if (error .ne. ELPA_OK) then
+    write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for debug settings. Aborting..."
+    success = .false.
+    return
+  endif
+  if (debug == 1) then
+    wantDebug = .true.
+  else
+    wantDebug = .false.
+  endif
+
 #if !defined(DEVICE_POINTER)
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -198,7 +210,7 @@
   
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(obj, myid, numGPU)) then
+    if (check_for_gpu(obj, myid, numGPU, wantDebug)) then
       ! set the neccessary parameters
       call set_gpu_parameters()
     else
@@ -282,18 +294,6 @@
   matrixRows = obj%local_nrows
   matrixCols = obj%local_ncols
   nblk       = obj%nblk
-
-  call obj%get("debug",debug,error)
-  if (error .ne. ELPA_OK) then
-    write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for debug settings. Aborting..."
-    success = .false.
-    return
-  endif
-  if (debug == 1) then
-    wantDebug = .true.
-  else
-    wantDebug = .false.
-  endif
 
   mpi_comm_all    = obj%mpi_setup%mpi_comm_parent
   mpi_comm_cols   = obj%mpi_setup%mpi_comm_cols

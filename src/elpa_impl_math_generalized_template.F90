@@ -327,7 +327,7 @@ subroutine elpa_generalized_eigenvectors_d_ptr_&
     myid = self%mpi_setup%myRank_comm_parent
     call self%timer%start("check_for_gpu")
 
-    if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug=wantDebug)) then
+    if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug)) then
       call set_gpu_parameters()
     else
       write(error_unit, *) "GPUs are requested but not detected! Aborting..."
@@ -746,7 +746,7 @@ subroutine elpa_generalized_eigenvalues_d_ptr_&
     myid = self%mpi_setup%myRank_comm_parent
     call self%timer%start("check_for_gpu")
 
-    if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug=wantDebug)) then
+    if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug)) then
       call set_gpu_parameters()
     else
       write(error_unit, *) "GPUs are requested but not detected! Aborting..."

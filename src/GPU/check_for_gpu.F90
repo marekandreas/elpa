@@ -73,7 +73,7 @@ module mod_check_for_gpu
 
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=c_int), intent(in)            :: myid
-      logical, optional, intent(in)              :: wantDebug
+      logical, intent(in)                        :: wantDebug
       logical                                    :: success, wantDebugMessage
       integer(kind=ik), intent(out)              :: numberOfDevices
       integer(kind=ik)                           :: deviceNumber, mpierr, maxNumberOfDevices
