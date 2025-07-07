@@ -58,7 +58,7 @@
 #include <type_traits>
 #include "config-f90.h"
 
-#include <sycl.hpp>
+#include <sycl/sycl.hpp>
 #include "src/GPU/SYCL/syclCommon.hpp"
 
 #include "../../../GPU/common_device_functions.h"

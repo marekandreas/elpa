@@ -57,7 +57,9 @@
 
 namespace sycl_be {
 
+#ifdef WITH_ONEAPI_ONECCL
 using cclKvsHandle = ccl::shared_ptr_class<ccl::kvs>;
+#endif
 
 struct QueueData {
   friend struct DeviceSelection;
