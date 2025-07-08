@@ -1,1 +1,1 @@
-../../../../elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.cpp
+../../../../elpa2/GPU/ROCm/ev_tridi_band_amd_gpu_real.hip
