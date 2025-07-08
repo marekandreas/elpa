@@ -49,6 +49,8 @@
 
 #pragma once
 
+#include "config-f90.h"
+
 #include <sycl/sycl.hpp>
 
 #ifdef WITH_ONEAPI_ONECCL

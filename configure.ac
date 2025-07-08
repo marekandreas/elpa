@@ -3396,16 +3396,17 @@ fi
 
 #############################################################
 #
-# nccl
+# CCL (nvidia NCCL, AMD RCCL, oneCCL)
 #
 ############################################################
 use_gpu_ccl=no
 use_nvidia_nccl=no
 use_amd_rccl=no
+use_oneccl=no
 AC_MSG_CHECKING(whether GPU collective communications library should be used)
 AC_ARG_ENABLE([gpu-ccl],
-               [AS_HELP_STRING([--enable-gpu-ccl=[[nccl|rccl]]],
-                               [do use Nvidia NCCL or AMD RCCL communications library, respectively])],
+               [AS_HELP_STRING([--enable-gpu-ccl=[[nccl|rccl|oneccl]]],
+                               [do use Nvidia NCCL, AMD RCCL or oneCCL communications library, respectively])],
                                [if test x"$enableval" = x"nccl"; then
                                   use_nvidia_nccl=yes
                                   use_gpu_ccl=yes
@@ -3414,12 +3415,17 @@ AC_ARG_ENABLE([gpu-ccl],
                                   use_amd_rccl=yes
                                   use_gpu_ccl=yes
                                 fi
+                                if test x"$enableval" = x"oneccl"; then
+                                  use_oneccl=yes
+                                  use_gpu_ccl=yes
+                                fi
                                 if test x"$enableval" = x"yes"; then
-                                  AC_MSG_ERROR([Wrong value! Must be either "nccl" or "rccl" ])
+                                  AC_MSG_ERROR([Wrong value! Must be either "nccl", "rccl" or "oneccl" ])
                                 fi
                                 if test x"$enableval" = x"no"; then
                                   use_cuda_nccl=no
                                   use_amd_rccl=no
+                                  use_oneccl=no
                                   use_gpu_ccl=no
                                 fi
                                 ],
@@ -3432,6 +3438,9 @@ if test x"$use_nvidia_nccl" = x"yes"; then
   fi
   if test x"$need_amd_gpu" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-ccl=nccl is set, you cannot set --enable-amd-gpu])
+  fi
+  if test x"$need_sycl_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=nccl is set, you cannot set --enable-sycl-gpu])
   fi
   if test x"${enable_openmp}" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-ccl=nccl currently not supported in combination with --enable-openmp])
@@ -3458,7 +3467,7 @@ if test x"$use_nvidia_nccl" = x"yes"; then
   AC_LANG_POP([C])
 
   if test x"$with_mpi" = x"no"; then
-    AC_MSG_ERROR([Since --enable-gpu-ccl=nccl is set you must also specify --with-mpi=yes"])
+    AC_MSG_ERROR([Since --enable-gpu-ccl=oneccl is set you must also specify --with-mpi=yes"])
   fi
 
 fi
@@ -3470,6 +3479,9 @@ if test x"$use_amd_rccl" = x"yes"; then
   fi
   if test x"$need_nvidia_gpu" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-ccl=rccl is set, you cannot set --enable-nvidia-gpu])
+  fi
+  if test x"$need_sycl_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=rccl is set, you cannot set --enable-sycl-gpu])
   fi
   if test x"${enable_openmp}" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-ccl=rccl currently not supported in combination with --enable-openmp])
@@ -3501,6 +3513,58 @@ if test x"$use_amd_rccl" = x"yes"; then
 fi
 AM_CONDITIONAL([WITH_AMD_RCCL],[test x"$use_amd_rccl" = x"yes"])
 
+if test x"$use_oneccl" = x"yes"; then
+  if test x"$use_sycl_streams" = x"no"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=oneccl is set, you must also use --enable-gpu-streams=sycl])
+  fi
+  if test x"$need_amd_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=oneccl is set, you cannot set --enable-amd-gpu])
+  fi
+    if test x"$need_nvidia_gpu" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=oneccl is set, you cannot set --enable-nvidia-gpu])
+  fi
+  if test x"${enable_openmp}" = x"yes"; then
+    AC_MSG_ERROR([If --enable-gpu-ccl=oneccl currently not supported in combination with --enable-openmp])
+  fi
+  if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
+    AC_MSG_ERROR([The combination --enable-cuda-aware-mpi and --enable-gpu-ccl=oneccl is not supported"])
+  fi
+  AC_DEFINE([WITH_ONEAPI_ONECCL],[1],[enable usage of oneAPI oneCCL])
+
+  AC_ARG_WITH([oneccl-path],[AS_HELP_STRING([--with-oneccl-path=PATH],[prefix where oneCCL is installed @<:@default=auto@:>@])],
+              [ONECCL_INSTALL_PATH=$withval],
+              [if test -n "$CCL_ROOT"; then
+                 ONECCL_INSTALL_PATH="$CCL_ROOT"
+               else
+                 ONECCL_INSTALL_PATH=""
+               fi])
+
+  AC_LANG_PUSH([C++])
+  CXXFLAGS="$CXXFLAGS -I$ONECCL_INSTALL_PATH/include"
+  CFLAGS="$CFLAGS -I$ONECCL_INSTALL_PATH/include"
+  LDFLAGS="$LDFLAGS -L$ONECCL_INSTALL_PATH/lib"
+  LIBS="$LIBS -lccl"
+  dnl check whether we find oneCCL
+  # AC_SEARCH_LIBS([ccl::init],[ccl],[have_oneccl=yes],[have_oneccl=no])
+  AC_MSG_CHECKING([for oneCCL C++ API])
+  AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([#include <oneapi/ccl.hpp>],
+                     [ccl::library_version v = ccl::get_library_version();])],
+    [have_oneccl=yes],
+    [have_oneccl=no]
+  )
+  
+  if test x"${have_oneccl}" = x"no"; then
+    AC_MSG_ERROR([Could not link oneCCL; either set --disable-gpu-ccl=oneccl or set the oneCCL installation path with --with-oneccl-path=])
+  fi
+  AC_LANG_POP([C++])
+
+  if test x"$with_mpi" = x"no"; then
+    AC_MSG_ERROR([Since --enable-gpu-ccl=oneccl is set you must also specify --with-mpi=yes"])
+  fi
+
+fi
+AM_CONDITIONAL([WITH_ONEAPI_ONECCL],[test x"$use_oneccl" = x"yes"])
 #############################################################################################
 #
 # [Nvidia|AMD] preprocess .cu and .hip sources
