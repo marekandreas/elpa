@@ -93,7 +93,7 @@ struct DeviceSelection {
 #ifdef WITH_ONEAPI_ONECCL
   ccl::device cclDevice;
   ccl::context cclContext;
-  std::optional<ccl::communicator> cclComm;
+  std::vector<ccl::communicator> cclComms;
 #endif  
   QueueData defaultQueueHandle;
   std::vector<QueueData> queueHandles;
@@ -123,7 +123,6 @@ class SyclState {
   std::vector<sycl::device> devices;
   std::unordered_map<int, DeviceSelection> deviceData;
   int defaultDevice;
-
   
   SyclState(bool onlyL0Gpus = false, bool isDebugEnabled = false);
   DeviceSelection& getDeviceHandle(int deviceNum);
@@ -146,14 +145,16 @@ class SyclState {
 #endif
 };
   
-  sycl::queue getQueueOrDefault(QueueData *my_stream);
-  QueueData* getQueueDataOrDefault(QueueData *my_stream);
-  template<int numDims> sycl::range<numDims> maxWorkgroupSize(sycl::queue d);
-}
+
+sycl::queue getQueueOrDefault(QueueData *my_stream);
+QueueData* getQueueDataOrDefault(QueueData *my_stream);
+template<int numDims> sycl::range<numDims> maxWorkgroupSize(sycl::queue d);
+
+} // end namespace sycl_be
 
 template <typename T>
 inline T* sycl_be::QueueData::getScratchpadFor(size_t numElements) {
-  if (numElements > oneMklScratchpadSize * sizeof(T)) {
+  if (numElements > oneMklScratchpadSize / numElements) {
     if (oneMklScratchpad != nullptr) {
       sycl::free(oneMklScratchpad, queue);
     }

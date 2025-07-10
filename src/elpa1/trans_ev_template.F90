@@ -89,7 +89,7 @@
 !>
 
 #undef USE_CCL_TRANS_EV
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
 #define USE_CCL_TRANS_EV
 #endif
 
@@ -109,7 +109,6 @@ subroutine trans_ev_cpu_&
 
   use, intrinsic :: iso_c_binding
   use precision
-  use ifport
   use elpa_abstract_impl
   use elpa_blas_interfaces
   use elpa_gpu
@@ -117,7 +116,7 @@ subroutine trans_ev_cpu_&
   use trans_ev_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
-#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX) 
   use hip_functions  ! for ROCTX labels
 #endif
   use elpa_ccl_gpu
@@ -604,7 +603,6 @@ subroutine trans_ev_cpu_&
         tmat = 0
       endif
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Issue is somewhere here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (l_rows>0) then
         if (useGPU) then
           call obj%timer%start("gpublas_syrk")
@@ -614,7 +612,6 @@ subroutine trans_ev_cpu_&
                                            hvm_dev, max_local_rows, ZERO, &
                                            tmat_dev, max_stored_rows, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Issue is somewhere here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           NVTX_RANGE_POP("gpublas_syrk")
           call obj%timer%stop("gpublas_syrk")
         else ! useGPU

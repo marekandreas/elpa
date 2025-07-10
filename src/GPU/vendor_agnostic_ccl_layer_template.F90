@@ -423,13 +423,11 @@
       use rccl_functions, only : ncclUniqueId
 #endif
 #ifdef WITH_ONEAPI_ONECCL
-      use oneccl_functions, only : onecclUniqueId
+      use oneccl_functions, only : ncclUniqueId
 #endif
       implicit none
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
       type(ncclUniqueId)  :: cclId
-#elif defined(WITH_ONEAPI_ONECCL)
-      type(onecclUniqueId)  :: cclId
 #else
       ! dummy argument
       integer(kind=c_intptr_t) :: cclId
@@ -462,15 +460,13 @@
       use rccl_functions, only : ncclUniqueId
 #endif
 #ifdef WITH_ONEAPI_ONECCL
-      use oneccl_functions, only : onecclUniqueId
+      use oneccl_functions, only : ncclUniqueId
 #endif
       implicit none
       integer(kind=C_intptr_T)                  :: cclComm
       integer(kind=c_int)                       :: nRanks
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
       type(ncclUniqueId)                        :: cclId
-#elif defined(WITH_ONEAPI_ONECCL)
-      type(onecclUniqueId)                      :: cclId
 #else
       ! dummy argument
       integer(kind=c_intptr_t) :: cclId

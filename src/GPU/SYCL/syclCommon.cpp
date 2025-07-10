@@ -230,7 +230,6 @@ DeviceSelection::DeviceSelection(int deviceId, sycl::device device)
 #ifdef WITH_ONEAPI_ONECCL
     cclDevice(ccl::create_device(this->device)),
     cclContext(ccl::create_context(this->context)),
-    cclComm(std::nullopt),
 #endif
     defaultQueueHandle(device, context) {
   queueHandles.push_back(defaultQueueHandle);
@@ -271,8 +270,8 @@ bool DeviceSelection::isCpuDevice() {
 
 #ifdef WITH_ONEAPI_ONECCL
 ccl::communicator* DeviceSelection::initCclCommunicator(int nRanks, int myRank, cclKvsHandle kvs) {
-  this->cclComm = std::make_optional(ccl::create_communicator(nRanks, myRank, this->cclDevice, this->cclContext, kvs));
-  return &(*cclComm);
+  this->cclComms.emplace_back(ccl::create_communicator(nRanks, myRank, this->cclDevice, this->cclContext, kvs));
+  return &(cclComms.back());
 }
 #endif
 

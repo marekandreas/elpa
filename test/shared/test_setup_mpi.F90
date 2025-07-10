@@ -71,7 +71,7 @@ module test_setup_mpi
 
       TEST_INT_TYPE, intent(out)     :: myid, nprocs
       TEST_INT_MPI_TYPE              :: myidMPI, nprocsMPI
-#ifdef WITH_OPENMP_TRADITIONAL
+#if defined(WITH_OPENMP_TRADITIONAL) || defined(WITH_ONEAPI_ONECCL)
       TEST_INT_MPI_TYPE              :: required_mpi_thread_level, &
                                         provided_mpi_thread_level
 #endif
@@ -79,7 +79,7 @@ module test_setup_mpi
 
 #ifdef WITH_MPI
 
-#ifndef WITH_OPENMP_TRADITIONAL
+#if !defined(WITH_OPENMP_TRADITIONAL) && !defined(WITH_ONEAPI_ONECCL)
       call mpi_init(mpierr)
 #else
       required_mpi_thread_level = MPI_THREAD_MULTIPLE

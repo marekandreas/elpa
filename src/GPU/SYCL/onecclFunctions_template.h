@@ -9,12 +9,9 @@
 
 #include "syclCommon.hpp"
 
-
-#define WITH_ONEAPI_ONECCL
 #ifdef WITH_ONEAPI_ONECCL
 
 #include <oneapi/ccl.hpp>
-#include <oneapi/ccl/environment.hpp>
 #include <mpi.h>
 
 using namespace sycl_be;
@@ -31,15 +28,10 @@ extern "C" {
     return 1;
   }
 
-  void mpi_finalize() {
-    int is_finalized = 0;
-    MPI_Finalized(&is_finalized);
-
-    if (!is_finalized) {
-        MPI_Finalize();
-    }
+  int onecclInitFromC() {
+    ccl::init();
+    return 1;
   }
-
 
   /**
    * Create a main Key-Value Store to create a oneCCL communicator.
@@ -78,13 +70,11 @@ extern "C" {
     // oneCCL doesn't return an opaque pointer to the communicator, but an interface object instead.
     *onecclComm = ss.getDefaultDeviceHandle().initCclCommunicator(nRanks, myRank, kvs);
 
-    atexit(mpi_finalize);
     return 1;
   }
 
   int onecclCommDestroyFromC(ccl::communicator *onecclComm, QueueData *qd) {
     QueueData *qData = getQueueDataOrDefault(qd);
-    ccl::barrier(*onecclComm, qData->cclStream).wait();
     return 1;
   }
 

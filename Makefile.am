@@ -92,6 +92,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/OpenMP/mod_openmp_offload_solver.F90 \
   src/GPU/SYCL/mod_sycl.F90 \
   src/GPU/SYCL/mod_syclsolver.F90 \
+  src/GPU/SYCL/mod_oneccl.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa2/mod_elpa2_utils.F90 \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
@@ -188,6 +189,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/SYCL/sycl_template.F90 \
   src/GPU/SYCL/syclsolver_template.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
+  src/GPU/SYCL/oneccl_template.F90 \
+  src/GPU/SYCL/onecclFunctions_template.h \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
@@ -321,6 +324,10 @@ if WITH_SYCL_GPU_VERSION
   src/invert_trm/GPU/SYCL/elpa_invert_trm_sycl.cpp \
   src/cholesky/GPU/SYCL/elpa_cholesky_sycl.cpp \
   src/multiply_a_b/GPU/SYCL/elpa_multiply_a_b_sycl.cpp
+endif
+
+if WITH_ONEAPI_ONECCL
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/onecclFunctions.cpp
 endif
 
 
@@ -1109,6 +1116,8 @@ EXTRA_DIST = \
   src/GPU/SYCL/syclUtils.cpp \
   src/GPU/SYCL/syclCommon.cpp \
   src/GPU/SYCL/syclFunctions.cpp \
+  src/GPU/SYCL/oneccl_template.F90 \
+  src/GPU/SYCL/onecclFunctions_template.h \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \

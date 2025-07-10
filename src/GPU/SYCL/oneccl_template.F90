@@ -60,7 +60,7 @@
   !integer(kind=c_int) :: onecclFloat64
   !integer(kind=c_int) :: onecclDouble
 
-  type, BIND(C) ::onecclUniqueId
+  type, BIND(C) ::ncclUniqueId
     CHARACTER(KIND=C_CHAR) :: str(256)
   end type
 
@@ -196,11 +196,11 @@
     function oneccl_get_unique_id_c(onecclId) result(istat) &
              bind(C, name="onecclGetUniqueIdFromC")
       use, intrinsic :: iso_c_binding
-      import :: onecclUniqueId
+      import :: ncclUniqueId
       implicit none
       !integer(kind=C_intptr_T) :: onecclId(16)
       !integer(kind=C_intptr_T) :: onecclId
-      type(onecclUniqueId)            :: onecclId
+      type(ncclUniqueId)            :: onecclId
       !character(len=128)        :: onecclId
       integer(kind=C_INT)      :: istat
     end function
@@ -210,7 +210,7 @@
     function oneccl_comm_init_rank_c(onecclComm, nRanks, onecclId, myRank) result(istat) &
              bind(C, name="onecclCommInitRankFromC")
       use, intrinsic :: iso_c_binding
-      import :: onecclUniqueId
+      import :: ncclUniqueId
       implicit none
       integer(kind=C_intptr_T)        :: onecclComm
       integer(kind=c_int), value      :: nRanks
@@ -218,7 +218,7 @@
       !integer(kind=c_intptr_t), value :: onecclId(16)
       !integer(kind=c_intptr_t)        :: onecclId(16)
       !integer(kind=c_intptr_t), value :: onecclId
-      type(onecclUniqueId)            :: onecclId
+      type(ncclUniqueId)            :: onecclId
       integer(kind=c_int), value      :: myRank
       integer(kind=C_INT)             :: istat
     end function
@@ -604,7 +604,7 @@
     function oneccl_get_unique_id(onecclId) result(success)
       use, intrinsic :: iso_c_binding
       implicit none
-      type(onecclUniqueId)                        :: onecclId
+      type(ncclUniqueId)                        :: onecclId
       logical                                   :: success
       integer :: i
 #ifdef WITH_ONEAPI_ONECCL
@@ -620,7 +620,7 @@
       implicit none
       integer(kind=C_intptr_T)                  :: onecclComm
       integer(kind=c_int)                       :: nRanks
-      type(onecclUniqueId)                      :: onecclId
+      type(ncclUniqueId)                      :: onecclId
       integer(kind=c_int)                       :: myRank
       logical                                   :: success
 
