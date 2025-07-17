@@ -135,6 +135,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/multiply_a_b/mod_elpa_pxgemm_transpose.F90 \
   src/multiply_a_b/mod_elpa_pxgemm_helpers.F90 \
   src/multiply_a_b/GPU/mod_multiply_a_b_gpu.F90 \
+  src/multiply_a_b/GPU/mod_pxgemm_multiply_gpu.F90 \
   src/multiply_a_b/GPU/CUDA/mod_multiply_a_b_cuda.F90 \
   src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
   src/multiply_a_b/GPU/SYCL/mod_multiply_a_b_sycl.F90 \

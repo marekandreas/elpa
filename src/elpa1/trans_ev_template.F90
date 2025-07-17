@@ -1002,24 +1002,26 @@ subroutine trans_ev_cpu_&
     !  check_host_unregister_gpu("trans_ev: q_mat", successGPU)
     !endif
 
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
-      successGPU = gpu_free_host(hvm1_host)
-      check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
-      nullify(hvm1)
+    if (.not. useCCL) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        successGPU = gpu_free_host(hvm1_host)
+        check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
+        nullify(hvm1)
 
-      successGPU = gpu_free_host(tmat_host)
-      check_host_dealloc_gpu("trans_ev: tmat_host", successGPU)
-      nullify(tmat)
+        successGPU = gpu_free_host(tmat_host)
+        check_host_dealloc_gpu("trans_ev: tmat_host", successGPU)
+        nullify(tmat)
 
-      successGPU = gpu_free_host(tmp_host)
-      check_host_dealloc_gpu("trans_ev: tmp_host", successGPU)
-      nullify(tmp)
+        successGPU = gpu_free_host(tmp_host)
+        check_host_dealloc_gpu("trans_ev: tmp_host", successGPU)
+        nullify(tmp)
 
-    else
-      deallocate(hvm1)
-      deallocate(tmat)
-      deallocate(tmp)
-    endif
+      else
+        deallocate(hvm1)
+        deallocate(tmat)
+        deallocate(tmp)
+      endif
+    endif ! (.not. useCCL)
 #endif
     !deallocate(hvm1, stat=istat, errmsg=errorMessage)
     !if (istat .ne. 0) then

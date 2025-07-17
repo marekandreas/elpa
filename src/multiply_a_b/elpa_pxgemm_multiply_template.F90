@@ -81,6 +81,7 @@
 #endif
   use elpa_ccl_gpu
   use multiply_a_b_gpu
+  use pxgemm_multiply_gpu
   implicit none
 
 #include "../../src/general/precision_kinds.F90"
