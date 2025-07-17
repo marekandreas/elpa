@@ -598,7 +598,7 @@ program test
 #endif /* TEST_CHOLESKY */
 
    ! check first whether to abort
-!   if (na < 10) then ! PETERDEBUG111 commented out. delete?
+!   if (na < 10) then
 ! #ifdef WITH_MPI
 !     call mpi_finalize(mpierr)
 ! #endif

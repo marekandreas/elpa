@@ -155,11 +155,15 @@ void gpu_copy_hvb_a(T *hvb_dev, T *a_dev, int *ld_hvb_in, int *lda_in, int *my_p
   int ice = *ice_in;
   int SM_count = *SM_count_in;
   int debug = *debug_in;
+  
+  if (SM_count <= 0) {
+    errormessage("gpu_copy_hvb_a: SM_count must be greater than 0, but is %d\n", SM_count);
+    return;
+  }
 
   sycl::queue q = getQueueOrDefault(my_stream);
   sycl::range<1> threadsPerBlock = maxWorkgroupSize<1>(q);
   sycl::range<1> blocks(SM_count);
-
   q.parallel_for(sycl::nd_range<1>(blocks * threadsPerBlock, threadsPerBlock), [=](sycl::nd_item<1> it) {
         gpu_copy_hvb_a_kernel(hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows,my_pcol, np_cols, nblk, ics, ice, it);
   });

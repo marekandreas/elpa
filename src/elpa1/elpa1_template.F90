@@ -423,18 +423,8 @@ function elpa_solve_evp_&
        write(error_unit, *) "ELPA1: Problem getting option for gpu_trans_ev. Aborting..."
 #include "./elpa1_aborting_template.F90"
      endif
-#ifdef WITH_SYCL_GPU_VERSION
-     block
-       logical :: is_sycl_cpu
-       is_sycl_cpu = .false.
-       success = sycl_getiscpudevice(is_sycl_cpu)
-       ! SOpenCL CPU has an 
-       do_useGPU_trans_ev = (gpu == 1) .and. .not. is_sycl_cpu
-     end block
-#else
-        do_useGPU_trans_ev = (gpu == 1)
-#endif
-   endif
+      do_useGPU_trans_ev = (gpu == 1)
+   endif ! do_useGPU
    ! for elpa1 the easy thing is, that the individual phases of the algorithm
    ! do not share any data on the GPU.
 
