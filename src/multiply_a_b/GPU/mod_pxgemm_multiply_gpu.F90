@@ -97,7 +97,7 @@ module pxgemm_multiply_gpu
 
 
   interface
-    subroutine gpu_copy_and_set_zeros_aux_a_full_c (dataType, mat_dev, aux_mat_full_dev, l_rows, l_cols, &
+    subroutine gpu_copy_and_set_zeros_aux_a_full_c (dataType, mat_dev, aux_mat_full_dev, l_rows, &
                                                     nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_and_set_zeros_aux_a_full_FromC")
@@ -110,7 +110,7 @@ module pxgemm_multiply_gpu
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: mat_dev, aux_mat_full_dev
-      integer(kind=c_int), value         :: l_rows, l_cols, nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug
+      integer(kind=c_int), value         :: l_rows, nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
@@ -269,16 +269,16 @@ module pxgemm_multiply_gpu
     end subroutine
 
 
-    subroutine gpu_copy_and_set_zeros_aux_a_full (dataType, mat_dev, aux_mat_full_dev, l_rows, l_cols, &
+    subroutine gpu_copy_and_set_zeros_aux_a_full (dataType, mat_dev, aux_mat_full_dev, l_rows, &
                                                   nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: mat_dev, aux_mat_full_dev
-      integer(kind=c_int), value         :: l_rows, l_cols, nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug
+      integer(kind=c_int), value         :: l_rows, nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug
       integer(kind=c_intptr_t), value    :: my_stream
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      call gpu_copy_and_set_zeros_aux_a_full_c (dataType, mat_dev, aux_mat_full_dev, l_rows, l_cols, &
+      call gpu_copy_and_set_zeros_aux_a_full_c (dataType, mat_dev, aux_mat_full_dev, l_rows, &
                                                 nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
 #endif
     end subroutine

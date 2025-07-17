@@ -1294,10 +1294,10 @@
 #endif
               endif ! (.not. useCCL)
 
-              call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, at_col_dev, aux_a_full_dev, l_rows, l_cols, &
+              call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, at_col_dev, aux_a_full_dev, l_rows, &
                                                     nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
             else ! (a_transposed .and. b_transposed)
-              call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, a_dev     , aux_a_full_dev, l_rows, l_cols, &
+              call gpu_copy_and_set_zeros_aux_a_full(PRECISION_CHAR, a_dev     , aux_a_full_dev, l_rows, &
                                                     nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream)
             endif ! a_transposed
           else ! useGPU

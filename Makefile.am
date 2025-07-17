@@ -325,6 +325,7 @@ if WITH_SYCL_GPU_VERSION
   src/invert_trm/GPU/SYCL/elpa_invert_trm_sycl.cpp \
   src/cholesky/GPU/SYCL/elpa_cholesky_sycl.cpp \
   src/multiply_a_b/GPU/SYCL/elpa_multiply_a_b_sycl.cpp \
+  src/multiply_a_b/GPU/SYCL/elpa_pxgemm_multiply_sycl.cpp \
   src/solve_tridi/GPU/SYCL/sycl_distribute_global_column.cpp \
   src/solve_tridi/GPU/SYCL/sycl_merge_systems.cpp \
   src/solve_tridi/GPU/SYCL/sycl_solve_tridi_col.cpp \
