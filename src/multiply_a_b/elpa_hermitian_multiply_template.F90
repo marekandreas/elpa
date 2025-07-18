@@ -475,7 +475,7 @@
           nvals = lre-lrs+1
           if (useGPU) then
             if (my_pcol == np_bc) call gpu_copy_a_aux_bc (PRECISION_CHAR, a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, &
-                                                          nblk, n, l_rows, obj%local_nrows, obj%local_ncols, my_stream)
+                                                          nblk, n, l_rows, obj%local_nrows, obj%local_ncols, debug, my_stream)
           else ! useGPU
             if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
           endif ! useGPU
@@ -566,7 +566,7 @@
           if (lrs <= lre) then
             nvals = lre-lrs+1
             call gpu_copy_aux_bc_aux_mat (PRECISION_CHAR, aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, &
-                                          nvals, l_rows, nblk, nblk_mult, my_stream)
+                                          nvals, l_rows, nblk, nblk_mult, debug, my_stream)
 
             n_aux_bc = n_aux_bc + nvals
           endif
@@ -733,7 +733,7 @@
 
           if (useGPU) then
             if (my_prow==np) call gpu_copy_tmp2_c(PRECISION_CHAR, tmp2_dev, &
-                                                  c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
+                                                  c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, debug, my_stream)
           else ! useGPU
 #ifdef WITH_MPI
             ! Put the result into C

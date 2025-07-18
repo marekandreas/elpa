@@ -52,8 +52,8 @@ template <typename T>
 __global__ void gpu_copy_tmp2_c_kernel(T *tmp2_dev, T *c_dev, 
                                        const int nr_done, const int nstor, const int lcs, const int lce, const int ldc, const int ldcCols){
 
-  int idex    = threadIdx.x +1; // range 1..nstor
-  int jdex = blockIdx.x + 1; // range 1..lce-lse+1
+  int idex = threadIdx.x + 1; // range 1..nstor
+  int jdex = blockIdx.x  + 1; // range 1..lce-lse+1
 
   //base 1 index
   c_dev[nr_done+(idex-1) + ldc*(lcs-1+jdex-1)] = tmp2_dev[0+(idex-1)+nstor*(jdex-1)];
@@ -139,8 +139,8 @@ __global__ void gpu_copy_aux_bc_aux_mat_kernel(T *aux_bc_dev, T *aux_mat_dev,
 	
   //aux_mat(lrs:lre,nstor) = aux_bc(n_aux_bc+1:n_aux_bc+nvals)
 
-  int idex    = threadIdx.x +1; // range 1..lre-lrs+1
-  int jdex = blockIdx.x + 1; // range 1..lre-lrs+1
+  int idex = threadIdx.x + 1; // range 1..1
+  int jdex = blockIdx.x  + 1; // range 1..lre-lrs+1
   aux_mat_dev[lrs-1+(jdex-1)+l_rows*(nstor-1)] = aux_bc_dev[n_aux_bc+(jdex-1)];
 
 }

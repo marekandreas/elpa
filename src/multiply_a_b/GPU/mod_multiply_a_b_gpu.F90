@@ -58,7 +58,7 @@ module multiply_a_b_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 
   interface
-    subroutine gpu_copy_tmp2_c_c (dataType, tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream) &
+    subroutine gpu_copy_tmp2_c_c (dataType, tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_tmp2_c_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
@@ -70,7 +70,7 @@ module multiply_a_b_gpu
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: tmp2_dev, c_dev
-      integer(kind=c_int), value         :: nr_done, nstor, lcs, lce, ldc, ldcCols
+      integer(kind=c_int), value         :: nr_done, nstor, lcs, lce, ldc, ldcCols, debug
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
@@ -78,7 +78,7 @@ module multiply_a_b_gpu
 
   interface
     subroutine gpu_copy_a_aux_bc_c (dataType, a_dev, aux_bc_dev, &
-                                    n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, my_stream) &
+                                    n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_a_aux_bc_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
@@ -90,7 +90,7 @@ module multiply_a_b_gpu
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: a_dev, aux_bc_dev
-      integer(kind=c_int), value         :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
+      integer(kind=c_int), value         :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, debug
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
@@ -98,7 +98,7 @@ module multiply_a_b_gpu
 
   interface
     subroutine gpu_copy_aux_bc_aux_mat_c (dataType, aux_bc_dev, aux_mat_dev, &
-                                          lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, my_stream) &
+                                          lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_aux_bc_aux_mat_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
@@ -110,7 +110,7 @@ module multiply_a_b_gpu
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: aux_bc_dev, aux_mat_dev
-      integer(kind=c_int), value         :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult
+      integer(kind=c_int), value         :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, debug
       integer(kind=c_intptr_t), value    :: my_stream
     end subroutine
   end interface
@@ -122,45 +122,45 @@ module multiply_a_b_gpu
 
 
     subroutine gpu_copy_tmp2_c (dataType, tmp2_dev, c_dev, nr_done, nstor, lcs, lce, &
-                                ldc, ldcCols, my_stream)
+                                ldc, ldcCols, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: tmp2_dev, c_dev
-      integer(kind=c_int), value         :: nr_done, nstor, lcs, lce, ldc, ldcCols
+      integer(kind=c_int), value         :: nr_done, nstor, lcs, lce, ldc, ldcCols, debug
       integer(kind=c_intptr_t), value    :: my_stream
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      call gpu_copy_tmp2_c_c(dataType, tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
+      call gpu_copy_tmp2_c_c(dataType, tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, debug, my_stream)
 #endif
     end subroutine
 
 
     subroutine gpu_copy_a_aux_bc (dataType, a_dev, aux_bc_dev, &
-                                  n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, my_stream)
+                                  n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: a_dev, aux_bc_dev
-      integer(kind=c_int), value         :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
+      integer(kind=c_int), value         :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, debug
       integer(kind=c_intptr_t), value    :: my_stream
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       call gpu_copy_a_aux_bc_c (dataType, a_dev, aux_bc_dev, &
-                                n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, my_stream)
+                                n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, debug, my_stream)
 #endif
     end subroutine
 
 
     subroutine gpu_copy_aux_bc_aux_mat (dataType, aux_bc_dev, aux_mat_dev, &
-                                        lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, my_stream)
+                                        lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: aux_bc_dev, aux_mat_dev
-      integer(kind=c_int), value         :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult
+      integer(kind=c_int), value         :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, debug
       integer(kind=c_intptr_t), value    :: my_stream
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       call gpu_copy_aux_bc_aux_mat_c (dataType, aux_bc_dev, aux_mat_dev, &
-                                      lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, my_stream)
+                                      lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, debug, my_stream)
 #endif
     end subroutine
 
