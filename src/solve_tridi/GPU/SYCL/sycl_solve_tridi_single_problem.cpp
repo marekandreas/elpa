@@ -64,7 +64,7 @@ extern "C" int syclDeviceSynchronizeFromC();
 template <typename T>
 void gpu_check_monotony_kernel (T *d, T *q, T *qtmp, const int nlen, const int ldq, 
                                 const sycl::nd_item<1> &it) {
-  int i = it.get_group(0) * it.get_local_range(0) + it.get_local_id(0);
+  //int i = it.get_group(0) * it.get_local_range(0) + it.get_local_id(0);
   //int j = blockIdx.y * blockDim.y + threadIdx.y;
 
   int j;

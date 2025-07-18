@@ -66,7 +66,7 @@ extern "C" int syclDeviceSynchronizeFromC();
 template <typename T>
 void gpu_update_d_kernel (T *d, T *e, int *limits, const int ndiv, const int na, 
                           const sycl::nd_item<1> &it) {
-  int i = it.get_group(0) * it.get_local_range(0) + it.get_local_id(0);
+  //int i = it.get_group(0) * it.get_local_range(0) + it.get_local_id(0);
 
   for (int ii=0; ii<ndiv-1; ii++) {
     int n = limits[ii]-1;

@@ -136,9 +136,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/multiply_a_b/mod_elpa_pxgemm_helpers.F90 \
   src/multiply_a_b/GPU/mod_multiply_a_b_gpu.F90 \
   src/multiply_a_b/GPU/mod_pxgemm_multiply_gpu.F90 \
-  src/multiply_a_b/GPU/CUDA/mod_multiply_a_b_cuda.F90 \
-  src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
-  src/multiply_a_b/GPU/SYCL/mod_multiply_a_b_sycl.F90 \
   src/multiply_a_b/GPU/OpenMP/mod_multiply_a_b_openmp_offload.F90 \
   src/solve_tridi/mod_distribute_global_column.F90 \
   src/solve_tridi/mod_v_add_s.F90 \
@@ -1165,6 +1162,7 @@ EXTRA_DIST = \
   src/multiply_a_b/elpa_pxgemm_multiply_template.F90 \
   src/multiply_a_b/elpa_pxgemm_transpose_template.F90 \
   src/multiply_a_b/elpa_pxgemm_helpers_template.F90 \
+  src/multiply_a_b/GPU/elpa_hermitian_multiply_gpu.h \
   src/multiply_a_b/GPU/elpa_pxgemm_multiply_gpu.h \
   src/invert_trm/invert_trm_template.F90 \
   src/elpa1/elpa_reduce_add_vectors_template.F90 \

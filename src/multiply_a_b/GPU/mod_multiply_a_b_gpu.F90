@@ -1,5 +1,5 @@
 #if 0
-!    Copyright 2021, A. Marek, MPCDF
+!    Copyright 2025, P. Karpov, MPCDF
 !
 !    This file is part of ELPA.
 !
@@ -11,16 +11,12 @@
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
-!      Schwerpunkt Wissenschaftliches Rechnen ,
+!      Schwerpunkt Wissenschaftliches Rechnen,
 !    - Fritz-Haber-Institut, Berlin, Abt. Theorie,
 !    - Max-Plack-Institut für Mathematik in den Naturwissenschaften,
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
-!
-!    This particular source code file contains additions, changes and
-!    enhancements authored by Intel Corporation which is not part of
-!    the ELPA consortium.
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -45,647 +41,126 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 
-!    This file was written by A. Marek, MPCDF
+!    This file was written by P. Karpov, MPCDF
 #endif
 
 
 #include "config-f90.h"
+
+
 module multiply_a_b_gpu
   use, intrinsic :: iso_c_binding
   use precision
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-  use multiply_a_b_cuda
-
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-  use multiply_a_b_hip
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-  use multiply_a_b_sycl
-#endif
-
   implicit none
 
   public
-  !This file is auto-generated do NOT edit!
 
-  interface gpu_copy_double_a_aux_bc
-    module procedure gpu_copy_double_a_aux_bc_intptr
-    module procedure gpu_copy_double_a_aux_bc_cptr
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+
+  interface
+    subroutine gpu_copy_tmp2_c_c (dataType, tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_copy_tmp2_c_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name= "hip_copy_tmp2_c_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                                  bind(C, name="sycl_copy_tmp2_c_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: tmp2_dev, c_dev
+      integer(kind=c_int), value         :: nr_done, nstor, lcs, lce, ldc, ldcCols
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
   end interface
 
-  interface gpu_copy_double_tmp2_c
-    module procedure gpu_copy_double_tmp2_c_intptr
-    module procedure gpu_copy_double_tmp2_c_cptr
+
+  interface
+    subroutine gpu_copy_a_aux_bc_c (dataType, a_dev, aux_bc_dev, &
+                                    n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_copy_a_aux_bc_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name= "hip_copy_a_aux_bc_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                                  bind(C, name="sycl_copy_a_aux_bc_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: a_dev, aux_bc_dev
+      integer(kind=c_int), value         :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
   end interface
 
-  interface gpu_copy_float_a_aux_bc
-    module procedure gpu_copy_float_a_aux_bc_intptr
-    module procedure gpu_copy_float_a_aux_bc_cptr
-  end interface
 
-  interface gpu_copy_float_tmp2_c
-    module procedure gpu_copy_float_tmp2_c_intptr
-    module procedure gpu_copy_float_tmp2_c_cptr
+  interface
+    subroutine gpu_copy_aux_bc_aux_mat_c (dataType, aux_bc_dev, aux_mat_dev, &
+                                          lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_copy_aux_bc_aux_mat_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name= "hip_copy_aux_bc_aux_mat_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                                  bind(C, name="sycl_copy_aux_bc_aux_mat_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: aux_bc_dev, aux_mat_dev
+      integer(kind=c_int), value         :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult
+      integer(kind=c_intptr_t), value    :: my_stream
+    end subroutine
   end interface
-
-  interface gpu_copy_double_complex_a_aux_bc
-    module procedure gpu_copy_double_complex_a_aux_bc_intptr
-    module procedure gpu_copy_double_complex_a_aux_bc_cptr
-  end interface
-
-  interface gpu_copy_double_complex_tmp2_c
-    module procedure gpu_copy_double_complex_tmp2_c_intptr
-    module procedure gpu_copy_double_complex_tmp2_c_cptr
-  end interface
-
-  interface gpu_copy_float_complex_a_aux_bc
-    module procedure gpu_copy_float_complex_a_aux_bc_intptr
-    module procedure gpu_copy_float_complex_a_aux_bc_cptr
-  end interface
-
-  interface gpu_copy_float_complex_tmp2_c
-    module procedure gpu_copy_float_complex_tmp2_c_intptr
-    module procedure gpu_copy_float_complex_tmp2_c_cptr
-  end interface
+  
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
 
 
   contains
 
-    subroutine gpu_copy_double_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
+
+    subroutine gpu_copy_tmp2_c (dataType, tmp2_dev, c_dev, nr_done, nstor, lcs, lce, &
+                                ldc, ldcCols, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(kind=C_INT), intent(in) :: nr_done, nstor, lcs, lce, ldc, ldcCols
-      integer(kind=C_intptr_T)        :: tmp2_dev, c_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: tmp2_dev, c_dev
+      integer(kind=c_int), value         :: nr_done, nstor, lcs, lce, ldc, ldcCols
+      integer(kind=c_intptr_t), value    :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_copy_tmp2_c_c(dataType, tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
 #endif
     end subroutine
 
-    subroutine gpu_copy_double_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
+
+    subroutine gpu_copy_a_aux_bc (dataType, a_dev, aux_bc_dev, &
+                                  n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(kind=C_INT), intent(in) :: nr_done, nstor, lcs, lce, ldc, ldcCols
-      integer(kind=C_intptr_T)        :: tmp2_dev
-      type(c_ptr)                     :: c_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: a_dev, aux_bc_dev
+      integer(kind=c_int), value         :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
+      integer(kind=c_intptr_t), value    :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_copy_a_aux_bc_c (dataType, a_dev, aux_bc_dev, &
+                                n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols, my_stream)
 #endif
     end subroutine
 
-    subroutine gpu_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                        lda, ldaCols, my_stream)
+
+    subroutine gpu_copy_aux_bc_aux_mat (dataType, aux_bc_dev, aux_mat_dev, &
+                                        lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, my_stream)
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(kind=C_INT), intent(in) :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
-      integer(kind=C_intptr_T)        :: a_dev, aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                        lda, ldaCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
-      type(c_ptr)                     :: a_dev
-      integer(kind=C_intptr_T)        :: aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_double_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
-                                        l_rows, nblk, nblk_mult, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult
-      integer(kind=C_intptr_T)        :: aux_mat_dev, aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: nr_done, nstor, lcs, lce, ldc, ldcCols
-      integer(kind=C_intptr_T)        :: tmp2_dev, c_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: nr_done, nstor, lcs, lce, ldc, ldcCols
-      integer(kind=C_intptr_T)        :: tmp2_dev
-      type(c_ptr)                     :: c_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                        lda, ldaCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
-      integer(kind=C_intptr_T)        :: a_dev, aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                        lda, ldaCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
-      type(c_ptr)                     :: a_dev
-      integer(kind=C_intptr_T)        :: aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
-                                        l_rows, nblk, nblk_mult, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult
-      integer(kind=C_intptr_T)        :: aux_mat_dev, aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_double_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: nr_done, nstor, lcs, lce, ldc, ldcCols
-      integer(kind=C_intptr_T)        :: tmp2_dev, c_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_double_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: nr_done, nstor, lcs, lce, ldc, ldcCols
-      integer(kind=C_intptr_T)        :: tmp2_dev
-      type(c_ptr)                     :: c_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                        lda, ldaCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
-      integer(kind=C_intptr_T)        :: a_dev, aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                        lda, ldaCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
-      type(c_ptr)                     :: a_dev
-      integer(kind=C_intptr_T)        :: aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_double_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
-                                        l_rows, nblk, nblk_mult, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult
-      integer(kind=C_intptr_T)        :: aux_mat_dev, aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_double_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_double_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_double_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: nr_done, nstor, lcs, lce, ldc, ldcCols
-      integer(kind=C_intptr_T)        :: tmp2_dev, c_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_complex_tmp2_c_intptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: nr_done, nstor, lcs, lce, ldc, ldcCols
-      integer(kind=C_intptr_T)        :: tmp2_dev
-      type(c_ptr)                     :: c_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_complex_tmp2_c_cptr(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                        lda, ldaCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
-      integer(kind=C_intptr_T)        :: a_dev, aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_complex_a_aux_bc_intptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                        lda, ldaCols, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, lda, ldaCols
-      type(c_ptr)                     :: a_dev
-      integer(kind=C_intptr_T)        :: aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_complex_a_aux_bc_cptr(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, nblk, n, l_rows, &
-                                                       lda, ldaCols, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
-#endif
-    end subroutine
-
-    subroutine gpu_copy_float_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, &
-                                        l_rows, nblk, nblk_mult, my_stream)
-      use, intrinsic :: iso_c_binding
-
-      implicit none
-      integer(kind=C_INT), intent(in) :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult
-      integer(kind=C_intptr_T)        :: aux_mat_dev, aux_bc_dev
-      integer(kind=C_intptr_T)        :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_float_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_float_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_float_complex_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, nvals, l_rows, &
-                                                      nblk, nblk_mult, my_stream)
-#endif
-
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-      print * "NOT implemented yet"
-      stop 1
+      character(1, c_char), value        :: dataType
+      integer(kind=c_intptr_t), value    :: aux_bc_dev, aux_mat_dev
+      integer(kind=c_int), value         :: lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult
+      integer(kind=c_intptr_t), value    :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_copy_aux_bc_aux_mat_c (dataType, aux_bc_dev, aux_mat_dev, &
+                                      lrs, lre, nstor, n_aux_bc, nvals, l_rows, nblk, nblk_mult, my_stream)
 #endif
     end subroutine
 
