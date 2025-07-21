@@ -120,6 +120,9 @@ subroutine trans_ev_cpu_&
   use hip_functions  ! for ROCTX labels
 #endif
   use elpa_ccl_gpu
+#ifdef WITH_SYCL_GPU_VERSION
+  use sycl_functions ! for sycl_getiscpudevice
+#endif
 
   implicit none
 #include "../general/precision_kinds.F90"
@@ -186,6 +189,13 @@ subroutine trans_ev_cpu_&
   integer(kind=c_int)                           :: cclDataType
   integer(kind=ik)                              :: k_datatype
   integer(kind=ik)                              :: i,j ! PETERDEBUG: only for debugging, cleanup
+
+  ! workaround for SYCL CPU devices: SYRK/HERK produces wrong results
+  logical :: is_sycl_cpu
+  is_sycl_cpu = .false.
+#if defined(WITH_SYCL_GPU_VERSION)
+  success = sycl_getiscpudevice(is_sycl_cpu)
+#endif
 
   success = .true.
 
@@ -297,7 +307,7 @@ subroutine trans_ev_cpu_&
   max_local_cols = max_blocks_col*nblk
 
   max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
-  
+
   ! print *, "max_stored_rows=", max_stored_rows ! PETERDEBUG
 
   if (.not. useGPU) then
@@ -560,7 +570,7 @@ subroutine trans_ev_cpu_&
 
     ! PETERDEBUG: this memcopy can be cleaned up?
     if (useGPU .and. .not. useCCL) then
-      num = max_local_rows * max_stored_rows * size_of_datatype
+      num = max_local_rows*max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
       call gpu_memcpy_async_and_stream_synchronize &
               ("trans_ev hvm_dev -> hvm", hvm_dev, 0_c_intptr_t, &
@@ -604,17 +614,27 @@ subroutine trans_ev_cpu_&
       endif
 
       if (l_rows>0) then
-        if (useGPU) then
+        if (useGPU .and. .not. is_sycl_cpu) then
           call obj%timer%start("gpublas_syrk")
-          NVTX_RANGE_PUSH("gpublas_syrk") 
+          NVTX_RANGE_PUSH("gpublas_syrk")
+
           call gpublas_PRECISION_SYRK_HERK('U', BLAS_TRANS_OR_CONJ, &
                                            nstor, l_rows, ONE, &
                                            hvm_dev, max_local_rows, ZERO, &
                                            tmat_dev, max_stored_rows, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+
           NVTX_RANGE_POP("gpublas_syrk")
           call obj%timer%stop("gpublas_syrk")
         else ! useGPU
+          if(is_sycl_cpu) then
+            num = max_local_rows*max_stored_rows * size_of_datatype
+            successGPU = gpu_memcpy(int(loc(hvm(1,1)),kind=c_intptr_t), hvm_dev, num, gpuMemcpyDeviceToHost)
+            check_memcpy_gpu("trans_ev hvm_dev -> hvm", successGPU)
+            
+            tmat = 0
+          endif ! is_sycl_cpu
+
           call obj%timer%start("blas_syrk")
           NVTX_RANGE_PUSH("blas_syrk")
 #if REALCASE == 1
@@ -629,8 +649,15 @@ subroutine trans_ev_cpu_&
           
           NVTX_RANGE_POP("blas_syrk")
           call obj%timer%stop("blas_syrk")
+
+          if(is_sycl_cpu) then
+            num_el = max_stored_rows*max_stored_rows
+            successGPU = gpu_memcpy(tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t), num_el*size_of_datatype, gpuMemcpyHostToDevice)
+            check_memcpy_gpu("trans_ev", successGPU)
+          endif
         endif ! useGPU
       endif ! (l_rows>0)
+
       if (useGPU .and. .not. useCCL) then
         num_el = max_stored_rows*max_stored_rows
 #ifdef WITH_GPU_STREAMS
@@ -710,6 +737,8 @@ subroutine trans_ev_cpu_&
         check_memcpy_gpu("trans_ev", successGPU)
 #endif /* WITH_GPU_STREAMS */
       endif ! useGPU
+
+
       ! Calculate triangular matrix T. 
       ! What was previously stored in (upper part of) tmat is now stored in h, old values of tmat are not needed anymore
 
@@ -782,7 +811,7 @@ subroutine trans_ev_cpu_&
           ! call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h1_buffer_dev, tau_dev+shift_dev, &
           !                      max_stored_rows, nc, n, SM_count, debug, my_stream)
           ! NVTX_RANGE_POP("gpu_update_tmat")
-        enddo
+        enddo !   n = 1, nstor-1
         if (wantDebug) successGPU = gpu_DeviceSynchronize()
         call obj%timer%stop("gpu_trmv_kernel_loop")
         NVTX_RANGE_POP("trmv_loop")

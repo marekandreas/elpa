@@ -513,7 +513,6 @@ void gpu_fill_tmp_arrays_kernel(T *d1u, T *d1, T *zu, T *z, T *d1l, T *zl,
     }
 
   it.barrier();
-  //it.barrier(sycl::access::fence_space::local_space); // PETERDEBUG111 try this instead of it.barrier() ???
 
   if (i == 0) 
     {
@@ -905,7 +904,7 @@ void device_solve_secular_equation (int n, int i_f, T* d1, T* z1, T* delta, T* r
     if (break_flag_sh[0]) break;
     }
 
-  it.barrier(); // PETERDEBUG111: needed, but why?
+  it.barrier(); // PETERDEBUG: needed, but why?
 
   // Update delta: delta[j] = delta[j] - x for all j.
   for (int j = tid; j < n; j += threads_total)

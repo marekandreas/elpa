@@ -133,7 +133,7 @@ void gpu_copy_hvb_a_kernel(T *hvb_dev, T *a_dev, int ld_hvb, int lda, int my_pro
     it.barrier();
 
     if (my_prow == prow(ic - 1, nblk, np_rows) && i0 == 0) {
-    //if (my_prow == prow(ic - 1, nblk, np_rows) && i0 == (l_rows-1)%it.get_local_range(0)) { // PETERDEBUG111: this should fix the race condition without a barrier but it doesn't. Why?
+    //if (my_prow == prow(ic - 1, nblk, np_rows) && i0 == (l_rows-1)%it.get_local_range(0)) { // PETERDEBUG: this should fix the race condition without a barrier but it doesn't. Why?
       hvb_dev[(l_rows-1) + ld_hvb*(ic-ics)] = One;
     }
   }
@@ -314,38 +314,35 @@ void gpu_trmv_kernel(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_de
   // uncoalesced memory access in gpu_update_tmat_kernel, coalesced access here.
   // tmat_dev is lower triangular
 
-  int i0 = it.get_local_id();
+  int const threadIdx = it.get_local_id();
+  int i0 = threadIdx;
   int j0 = it.get_group(0);
 
   T constexpr Zero = static_cast<T>(0.0);
 
   for (int j = j0; j < n; j += it.get_group_range(0)) {
-    //if (threadIdx.x==0) result_buffer_dev[j] = Zero;
-    if (it.get_local_id() == 0) {
-      tmat_dev[n + j * max_stored_rows] = Zero; // PETERDEBUG: delete, unneeded
-    } 
+
+    if (it.get_local_id()==0) tmat_dev[n + j*max_stored_rows] = Zero; // PETERDEBUG: delete, unneeded.
 
     T slice_sum = Zero;
-    // j because tmat_dev is lower triangular
-    for (int i = i0 + j; i < n; i += it.get_local_range(0)) { 
+    for (int i = i0 + j; i < n; i += it.get_local_range(0)) { // j because tmat_dev is lower triangular
       slice_sum = elpaDeviceAdd(slice_sum, elpaDeviceMultiply(elpaDeviceComplexConjugate(tmat_dev[i + j*max_stored_rows]), h_dev[i]));
     }
+
     cache[i0] = slice_sum;
-    
     it.barrier();
 
     // for reductions, threadsPerBlock=blockDim.x must be a power of 2
     int di = it.get_local_range(0) / 2;
-    int const lId = it.get_local_id();
     while (di > 0) {
-      if (lId < di) {
-        cache[lId] = cache[lId] + cache[lId + di];
+      if (threadIdx < di) {
+        cache[threadIdx] = cache[threadIdx] + cache[threadIdx + di];
       }
       it.barrier();
       di /= 2;
     }
 
-    if (it.get_local_id() == 0) {
+    if (threadIdx == 0) {
       //atomicAdd(&tmat_dev[n + j*max_stored_rows], cache[0]);
       int idx = n + j*max_stored_rows;
       tmat_dev[idx] = cache[0];
@@ -355,7 +352,7 @@ void gpu_trmv_kernel(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_de
   }
 
   if (i0 == 0 && j0 == 0) {
-    tmat_dev[n + n * max_stored_rows] = *tau_curr_dev;
+    tmat_dev[n + n*max_stored_rows] = *tau_curr_dev;
   }
 }
 
