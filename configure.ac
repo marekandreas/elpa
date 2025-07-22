@@ -28,7 +28,7 @@ AM_SILENT_RULES([yes])
 #
 # Note that this number translates into the library file name like this:
 # c:r:a  --->  libelpa.so.(c-a).a.r
-AC_SUBST([ELPA_SO_VERSION], [23:0:4])
+AC_SUBST([ELPA_SO_VERSION], [23:1:4])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -891,8 +891,8 @@ user_sets_nvidia_gpu_compute_capability="no"
 AC_MSG_CHECKING(whether a Nvidia GPU compute capability is specified)
 AC_ARG_WITH([NVIDIA-GPU-compute-capability],
             [AS_HELP_STRING([--with-NVIDIA-GPU-compute-capability=VALUE],
-                            [use compute capability VALUE for NVIDIA GPU version, default: "sm_35"])],
-            [user_sets_nvidia_gpu_compute_capability="yes"],[cuda_compute_capability="sm_35"])
+                            [use compute capability VALUE for NVIDIA GPU version, default: "sm_60"])],
+            [user_sets_nvidia_gpu_compute_capability="yes"],[cuda_compute_capability="sm_60"])
 AC_MSG_RESULT([${user_sets_nvidia_gpu_compute_capability}])
 
 
@@ -4253,13 +4253,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2025.01.001.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2025.01.001                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2025.06.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2025.06.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "

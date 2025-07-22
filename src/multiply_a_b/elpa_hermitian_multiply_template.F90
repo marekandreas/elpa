@@ -271,7 +271,7 @@
   useCCL = .false.
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(obj, myid, numGPU)) then
+    if (check_for_gpu(obj, myid, numGPU, wantDebug)) then
       ! set the neccessary parameters
       call set_gpu_parameters()
     else
@@ -282,7 +282,7 @@
     call obj%timer%stop("check_for_gpu")
     
 #if defined(USE_CCL_HERMITIAN_MULTIPLY)
-    useCCL = .true.
+    useCCL = obj%gpu_setup%useCCL
 
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
