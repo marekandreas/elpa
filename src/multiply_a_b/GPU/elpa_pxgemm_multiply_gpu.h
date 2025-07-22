@@ -893,10 +893,11 @@ extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_aux_ab_full_tn_nt_Fro
 //________________________________________________________________
 
 template <typename T>
-__global__ void gpu_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_full_dev, T beta,
+__global__ void gpu_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_full_dev, int beta_int,
                                           int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
                                           int np_rows, int np_cols, int np_dirs_fine, 
-                                          int np_dirs_t, int my_pdir_t, int np_fine) {
+                                          int np_dirs_t, int my_pdir_t, int np_fine,
+                                          T beta) {
   int di0 = threadIdx.x;
   int dj0 = blockIdx.x;
 
@@ -919,8 +920,13 @@ __global__ void gpu_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_fu
             for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x) {
               for (di = di0; di < nblk_rows_cut; di += blockDim.x) {
                   c_idx = di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows;
-                  c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]), 
-                                  tmp1_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult]);
+                  if (beta_int==0) {
+                    c_dev[c_idx] = tmp1_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult];
+                  } 
+                  else {
+                    c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]), 
+                                    tmp1_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult]);
+                  }
               }
             }
           }
@@ -942,8 +948,13 @@ __global__ void gpu_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_fu
             for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x) {
               for (di = di0; di < nblk_rows_cut; di += blockDim.x) {
                 int c_idx = di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows;
-                c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]),
-                                tmp1_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*ld_tmp1]);
+                if (beta_int==0) {
+                  c_dev[c_idx] = tmp1_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*ld_tmp1];
+                }
+                else {
+                  c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]),
+                                 tmp1_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*ld_tmp1]);
+                }
               }
             }
           }
@@ -967,16 +978,18 @@ void gpu_update_c_tn_nt(int a_transposed,
 
 #ifdef WITH_GPU_STREAMS
     gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
-          a_transposed, c_dev, tmp1_full_dev, beta,
+          a_transposed, c_dev, tmp1_full_dev, beta_int,
           l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
           np_rows, np_cols, np_dirs_fine,
-          np_dirs_t, my_pdir_t, np_fine);
+          np_dirs_t, my_pdir_t, np_fine,
+          beta);
 #else
     gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock>>>(
-          a_transposed, c_dev, tmp1_full_dev, beta,
+          a_transposed, c_dev, tmp1_full_dev, beta_int,
           l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
           np_rows, np_cols, np_dirs_fine,
-          np_dirs_t, my_pdir_t, np_fine);
+          np_dirs_t, my_pdir_t, np_fine,
+          beta);
 #endif
 
     if (debug) {
