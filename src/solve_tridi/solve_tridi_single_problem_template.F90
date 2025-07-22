@@ -99,6 +99,7 @@
 
     logical, intent(in)                        :: wantDebug
     logical, intent(out)                       :: success
+    logical                                    :: has_nans
     integer(kind=c_int)                        :: debug
     integer(kind=ik)                           :: istat
     character(200)                             :: errorMessage
