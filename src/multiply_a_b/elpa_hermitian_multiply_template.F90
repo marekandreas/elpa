@@ -474,7 +474,8 @@
         if (lrs <= lre) then
           nvals = lre-lrs+1
           if (useGPU) then
-            if (my_pcol == np_bc) call gpu_copy_a_aux_bc (PRECISION_CHAR, a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, &
+            if (my_pcol == np_bc) call gpu_copy_a_aux_bc (PRECISION_CHAR, a_dev, aux_bc_dev, &
+                                                          n_aux_bc, nvals, lrs, lre, noff, &
                                                           nblk, n, l_rows, obj%local_nrows, obj%local_ncols, debug, my_stream)
           else ! useGPU
             if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
