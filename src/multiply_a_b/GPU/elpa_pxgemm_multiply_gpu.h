@@ -75,8 +75,7 @@ void gpu_copy_aux_full(T *lhs_dev, T *rhs_dev, int l_rows, int l_cols, int lld_l
   gpu_copy_aux_full_kernel<<<blocks,threadsPerBlock>>>            (lhs_dev, rhs_dev, l_rows, l_cols, lld_lhs, lld_rhs);
 #endif
 
-  if (debug)
-    {
+  if (debug) {
     gpuDeviceSynchronize();
     gpuError_t gpuerr = gpuGetLastError();
     if (gpuerr != gpuSuccess){
@@ -129,8 +128,7 @@ void gpu_copy_and_set_zeros_aux_full(T *mat_dev, T *aux_mat_full_dev, int l_rows
   gpu_copy_and_set_zeros_aux_full_kernel<<<blocks,threadsPerBlock>>>(mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult);
 #endif
 
-  if (debug)
-    {
+  if (debug) {
     gpuDeviceSynchronize();
     gpuError_t gpuerr = gpuGetLastError();
     if (gpuerr != gpuSuccess){
@@ -214,8 +212,7 @@ void gpu_copy_and_set_zeros_aux_a_full(T *mat_dev, T *aux_mat_full_dev, int l_ro
                                                                                     nblk, np_bc_fine, np_cols_fine, np_cols);
 #endif
 
-  if (debug)
-    {
+  if (debug) {
     gpuDeviceSynchronize();
     gpuError_t gpuerr = gpuGetLastError();
     if (gpuerr != gpuSuccess){
@@ -297,8 +294,7 @@ void gpu_copy_and_set_zeros_aux_b_full(T *mat_dev, T *aux_mat_full_dev, int l_ro
                                                                                     nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows);
 #endif
   
-    if (debug)
-      {
+    if (debug){
       gpuDeviceSynchronize();
       gpuError_t gpuerr = gpuGetLastError();
       if (gpuerr != gpuSuccess){
@@ -388,8 +384,7 @@ void gpu_ccl_copy_buf_send(T *a_dev, T *buf_send_dev, int l_rows, int l_cols, in
                                                             np_rows_fine, np_cols_fine, np_rows, np_cols);
 #endif
 
-  if (debug)
-    {
+  if (debug) {
     gpuDeviceSynchronize();
     gpuError_t gpuerr = gpuGetLastError();
     if (gpuerr != gpuSuccess){
@@ -487,8 +482,7 @@ void gpu_ccl_copy_buf_recv(T *at_col_dev, T *buf_recv_dev, int l_rows, int l_col
                                                            np_rows_fine, np_cols_fine, np_rows, np_cols);
 #endif
   
-    if (debug)
-      {
+    if (debug) {
       gpuDeviceSynchronize();
       gpuError_t gpuerr = gpuGetLastError();
       if (gpuerr != gpuSuccess){
@@ -807,54 +801,54 @@ void gpu_copy_and_set_zeros_aux_ab_full_tn_nt(int a_transoposed, T *a_dev, T *b_
                                             int np_dirs_fine,int SM_count,
                                             int debug, gpuStream_t my_stream){
 
-    dim3 blocksPerGrid(SM_count, 1, 1); 
-    dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1); // use only half of the max threads due to high register usage
+  dim3 blocksPerGrid(SM_count, 1, 1); 
+  dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1); // use only half of the max threads due to high register usage
 
-    if (a_transoposed)
-      {
-#ifdef WITH_GPU_STREAMS
-      gpu_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
-          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_ab_fine, np_rows, my_prow,
-          np_t_fine, np_cols, my_pcol,
-          np_dirs_fine);
-#else
-      gpu_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock>>>(
-          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_ab_fine, np_rows, my_prow,
-          np_t_fine, np_cols, my_pcol,
-          np_dirs_fine);
-#endif
-      }
-    else 
-      {
-#ifdef WITH_GPU_STREAMS
-      gpu_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
-          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_ab_fine, np_rows, my_prow,
-          np_t_fine, np_cols, my_pcol,
-          np_dirs_fine);
-#else
-      gpu_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock>>>(
-          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_ab_fine, np_rows, my_prow,
-          np_t_fine, np_cols, my_pcol,
-          np_dirs_fine);
-#endif
-      }
-    if (debug)
+  if (a_transoposed)
     {
-        gpuDeviceSynchronize();
-        gpuError_t gpuerr = gpuGetLastError();
-        if (gpuerr != gpuSuccess)
-        {
-            printf("Error in executing gpu_copy_and_set_zeros_aux_ab_full_tn: %s\n", gpuGetErrorString(gpuerr));
-        }
+#ifdef WITH_GPU_STREAMS
+    gpu_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
+        a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_ab_fine, np_rows, my_prow,
+        np_t_fine, np_cols, my_pcol,
+        np_dirs_fine);
+#else
+    gpu_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock>>>(
+        a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_ab_fine, np_rows, my_prow,
+        np_t_fine, np_cols, my_pcol,
+        np_dirs_fine);
+#endif
     }
+  else 
+    {
+#ifdef WITH_GPU_STREAMS
+    gpu_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
+        a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_ab_fine, np_rows, my_prow,
+        np_t_fine, np_cols, my_pcol,
+        np_dirs_fine);
+#else
+    gpu_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock>>>(
+        a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_ab_fine, np_rows, my_prow,
+        np_t_fine, np_cols, my_pcol,
+        np_dirs_fine);
+#endif
+    }
+
+  if (debug) {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess)
+    {
+        printf("Error in executing gpu_copy_and_set_zeros_aux_ab_full_tn: %s\n", gpuGetErrorString(gpuerr));
+    }
+  }
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_aux_ab_full_tn_nt_FromC) (char dataType, int a_transoposed, intptr_t a_dev, intptr_t b_dev, intptr_t aux_a_full_dev, intptr_t aux_b_full_dev,
@@ -971,34 +965,34 @@ void gpu_update_c_tn_nt(int a_transposed,
                          int np_rows, int np_cols, int np_dirs_fine,
                          int np_dirs_t, int my_pdir_t, int np_fine,
                          int SM_count, int debug, gpuStream_t my_stream) {
-    T beta = elpaHostNumberFromInt<T>(beta_int);
+  T beta = elpaHostNumberFromInt<T>(beta_int);
 
-    dim3 blocksPerGrid(SM_count, 1, 1);
-    dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1);
+  dim3 blocksPerGrid(SM_count, 1, 1);
+  dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-    gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
-          a_transposed, c_dev, tmp1_full_dev, beta_int,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_rows, np_cols, np_dirs_fine,
-          np_dirs_t, my_pdir_t, np_fine,
-          beta);
+  gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
+        a_transposed, c_dev, tmp1_full_dev, beta_int,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_rows, np_cols, np_dirs_fine,
+        np_dirs_t, my_pdir_t, np_fine,
+        beta);
 #else
-    gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock>>>(
-          a_transposed, c_dev, tmp1_full_dev, beta_int,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_rows, np_cols, np_dirs_fine,
-          np_dirs_t, my_pdir_t, np_fine,
-          beta);
+  gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock>>>(
+        a_transposed, c_dev, tmp1_full_dev, beta_int,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_rows, np_cols, np_dirs_fine,
+        np_dirs_t, my_pdir_t, np_fine,
+        beta);
 #endif
 
-    if (debug) {
-        gpuDeviceSynchronize();
-        gpuError_t gpuerr = gpuGetLastError();
-        if (gpuerr != gpuSuccess) {
-            printf("Error in executing gpu_update_c_tn_nt_kernel: %s\n", gpuGetErrorString(gpuerr));
-        }
+  if (debug) {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess) {
+        printf("Error in executing gpu_update_c_tn_nt_kernel: %s\n", gpuGetErrorString(gpuerr));
     }
+  }
 }
 
 extern "C" void CONCATENATE(ELPA_GPU, _update_c_tn_nt_FromC) (char dataType,
