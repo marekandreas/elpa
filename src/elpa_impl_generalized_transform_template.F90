@@ -527,14 +527,18 @@ subroutine elpa_transform_back_generalized_a_h_a_&
     if(error .NE. ELPA_OK) return
 
     ! q <- tmp
-    call self%timer_start("copy")
+    
 #ifdef DEVICE_POINTER
+    call self%timer_start("gpu_copy_dev_dev")
     successGPU = gpu_memcpy(qDev, tmpDev, self%local_nrows*self%local_ncols*size_of_datatype, gpuMemcpyDeviceToDevice)
     check_memcpy_gpu("tridiag qDev<-tmpDev", successGPU)
+    call self%timer_stop("gpu_copy_dev_dev")
 #else
+    call self%timer_start("copy")
     q(1:self%local_nrows, 1:self%local_ncols) = tmp(1:self%local_nrows, 1:self%local_ncols)
-#endif
     call self%timer_stop("copy")
+#endif
+    
 
   else if (cannon_for_generalized == 1) then
     call self%timer_start("cannons_triang_rectangular")
