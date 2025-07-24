@@ -765,14 +765,14 @@ module elpa_impl
     endif
 #endif
 
-      !if (self%is_set("debug") == 1) then !PETERDEBUG111
+      if (self%is_set("debug") == 1) then
          call self%get("debug",debug, error)
          print *,"debug ",debug
          if (check_elpa_get(error, ELPA_ERROR_SETUP)) return
          if (debug .eq. 1) then
            wantDebugMessage = .true.
          endif
-      !endif
+      endif
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 #undef OBJECT
 #define OBJECT self
