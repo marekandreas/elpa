@@ -81,8 +81,7 @@
           if (.not.(allocated(OBJECT%gpu_setup%syclDeviceArray))) then
             allocate(OBJECT%gpu_setup%syclDeviceArray(0:maxThreads-1))
             allocate(OBJECT%gpu_setup%gpuDeviceArray(0:maxThreads-1))
-            !success = sycl_setdevice(deviceNumber)
-            success = sycl_setdevice(0)
+            success = sycl_setdevice(deviceNumber)
             do thread=0,maxThreads-1
               OBJECT%gpu_setup%syclDeviceArray(thread) = deviceNumber
               OBJECT%gpu_setup%gpuDeviceArray(thread) = deviceNumber

@@ -92,6 +92,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/OpenMP/mod_openmp_offload_solver.F90 \
   src/GPU/SYCL/mod_sycl.F90 \
   src/GPU/SYCL/mod_syclsolver.F90 \
+  src/GPU/SYCL/mod_oneccl.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
   src/elpa2/mod_elpa2_utils.F90 \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
@@ -134,9 +135,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/multiply_a_b/mod_elpa_pxgemm_transpose.F90 \
   src/multiply_a_b/mod_elpa_pxgemm_helpers.F90 \
   src/multiply_a_b/GPU/mod_multiply_a_b_gpu.F90 \
-  src/multiply_a_b/GPU/CUDA/mod_multiply_a_b_cuda.F90 \
-  src/multiply_a_b/GPU/ROCm/mod_multiply_a_b_hip.F90 \
-  src/multiply_a_b/GPU/SYCL/mod_multiply_a_b_sycl.F90 \
+  src/multiply_a_b/GPU/mod_pxgemm_multiply_gpu.F90 \
   src/multiply_a_b/GPU/OpenMP/mod_multiply_a_b_openmp_offload.F90 \
   src/solve_tridi/mod_distribute_global_column.F90 \
   src/solve_tridi/mod_v_add_s.F90 \
@@ -188,6 +187,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/SYCL/sycl_template.F90 \
   src/GPU/SYCL/syclsolver_template.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
+  src/GPU/SYCL/oneccl_template.F90 \
+  src/GPU/SYCL/onecclFunctions_template.h \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
@@ -315,10 +316,22 @@ if WITH_SYCL_GPU_VERSION
   src/GPU/SYCL/syclFunctions.cpp \
   src/GPU/SYCL/syclUtils.cpp \
   src/elpa1/GPU/SYCL/tridiag_sycl.cpp \
+  src/elpa1/GPU/SYCL/elpa1_sycl.cpp \
+  src/elpa1/GPU/SYCL/trans_ev_sycl.cpp \
   src/elpa2/GPU/SYCL/ev_tridi_band_sycl_gpu_real.cpp \
   src/invert_trm/GPU/SYCL/elpa_invert_trm_sycl.cpp \
   src/cholesky/GPU/SYCL/elpa_cholesky_sycl.cpp \
-  src/multiply_a_b/GPU/SYCL/elpa_multiply_a_b_sycl.cpp
+  src/multiply_a_b/GPU/SYCL/elpa_multiply_a_b_sycl.cpp \
+  src/multiply_a_b/GPU/SYCL/elpa_pxgemm_multiply_sycl.cpp \
+  src/solve_tridi/GPU/SYCL/sycl_distribute_global_column.cpp \
+  src/solve_tridi/GPU/SYCL/sycl_merge_systems.cpp \
+  src/solve_tridi/GPU/SYCL/sycl_solve_tridi_col.cpp \
+  src/solve_tridi/GPU/SYCL/sycl_solve_tridi_single_problem.cpp \
+  src/solve_tridi/GPU/SYCL/sycl_transform_columns.cpp
+endif
+
+if WITH_ONEAPI_ONECCL
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/onecclFunctions.cpp
 endif
 
 
@@ -1107,6 +1120,8 @@ EXTRA_DIST = \
   src/GPU/SYCL/syclUtils.cpp \
   src/GPU/SYCL/syclCommon.cpp \
   src/GPU/SYCL/syclFunctions.cpp \
+  src/GPU/SYCL/oneccl_template.F90 \
+  src/GPU/SYCL/onecclFunctions_template.h \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \
@@ -1147,6 +1162,7 @@ EXTRA_DIST = \
   src/multiply_a_b/elpa_pxgemm_multiply_template.F90 \
   src/multiply_a_b/elpa_pxgemm_transpose_template.F90 \
   src/multiply_a_b/elpa_pxgemm_helpers_template.F90 \
+  src/multiply_a_b/GPU/elpa_hermitian_multiply_gpu.h \
   src/multiply_a_b/GPU/elpa_pxgemm_multiply_gpu.h \
   src/invert_trm/invert_trm_template.F90 \
   src/elpa1/elpa_reduce_add_vectors_template.F90 \

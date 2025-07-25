@@ -46,7 +46,7 @@
 // by A. Poeppl, Intel Corporation (2022)
 */
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 
 #include <complex>
 #include <oneapi/mkl.hpp>
@@ -64,8 +64,9 @@
 
 extern "C" {
     int syclFreeVoidPtr(void *ptr) {
-    auto &queue = elpa::gpu::sycl::getQueue();
-    sycl::free(ptr, queue);
-    return 1;
+        QueueData *qh = getQueueDataOrDefault(nullptr);
+        auto queue = qh->queue;
+        sycl::free(ptr, queue);
+        return 1;
     }
 }

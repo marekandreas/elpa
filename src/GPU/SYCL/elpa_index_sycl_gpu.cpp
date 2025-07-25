@@ -45,18 +45,17 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 
 #include "syclCommon.hpp"
 
 extern "C" {
   int sycl_gpu_count(int show_all_sycl_devices) {
-    using namespace elpa::gpu::sycl;
+    using namespace sycl_be;
     int count = -1000;
-    //
     bool all = static_cast<bool>(show_all_sycl_devices);
-    collectGpuDevices(all);
-    count = getNumDevices();
+    SyclState::initialize(!all);
+    count = SyclState::defaultState().getNumDevices();
     return count;
   }
 }

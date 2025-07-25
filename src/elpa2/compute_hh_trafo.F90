@@ -111,7 +111,7 @@ last_stripe_width, kernel, my_stream, success)
   !use hip_functions
   use gpu_c_kernel
   use elpa_gpu, only: gpu_stream_synchronize, &
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
           gpu_vendor, OPENMP_OFFLOAD_GPU, &
 #endif
 #ifdef WANT_SINGLE_PRECISION_REAL
@@ -253,7 +253,7 @@ last_stripe_width, kernel, my_stream, success)
 #endif /* WITH_SYCL_GPU_VERSION */
   !endif ! wantDebug
 
-#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
   if (useGPU) then
     if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
       write(error_unit,'(a)') "no offlad kernels yet implemented"
@@ -3831,3 +3831,4 @@ last_stripe_width, kernel, my_stream, success)
 end subroutine
 
 ! vim: syntax=fortran
+#

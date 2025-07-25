@@ -44,35 +44,41 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//    This file was written by P. Karpov, MPCDF
+//    This file was written by P. Karpov, MPCDF and A. Poeppl, Intel Corporation
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include "src/GPU/SYCL/syclCommon.hpp"
-#include <stdio.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <alloca.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <cstdint>
+#include <cstdbool>
 #include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <type_traits>
-#include "config-f90.h"
 #include <complex>
 #include <atomic>
 
+#include "config-f90.h"
+
 #include "../../../GPU/common_device_functions.h"
 
-#define MAX_THREADS_PER_BLOCK 1024
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
+using namespace sycl_be;
+
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
+template <typename T> using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
+#else
+template <typename T> using local_buffer = sycl::local_accessor<T>;
+#endif
 
 // Define a helper struct to determine if a type is a pointer
 template <typename T>
@@ -82,7 +88,7 @@ template <typename T>
 struct is_pointer<T*> { static const bool value = true; };
 
 //________________________________________________________________
- 
+
 template <typename T, typename T_real>
 void sycl_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int matrixRows, int istep,
                                          T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
@@ -95,7 +101,7 @@ void sycl_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, in
     {
     // copy v_row to a_dev
     int i_row = tid;
-    while (i_row < l_rows) 
+    while (i_row < l_rows)
       {
       v_row_dev[i_row] = a_dev[i_row + matrixRows*l_cols];
       i_row += item_ct1.get_local_range(0) * item_ct1.get_group_range(0);
@@ -110,9 +116,9 @@ void sycl_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, in
 
     if (isOurProcessRow && isOurProcessCol)
       {
-      if (isSkewsymmetric) 
+      if (isSkewsymmetric)
         d_vec_dev[istep-1-1] = 0.0;
-      else 
+      else
         d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]);
       }
     }
@@ -126,7 +132,7 @@ void sycl_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in,
                                    int *isOurProcessCol_in,
                                    int *isOurProcessCol_prev_in,
                                    int *isSkewsymmetric_in, int *useCCL_in,
-                                   int *wantDebug_in, intptr_t my_stream) {
+                                   int *wantDebug_in, QueueData *my_stream) {
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;   
   int matrixRows = *matrixRows_in;
@@ -138,19 +144,13 @@ void sycl_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in,
   int useCCL = *useCCL_in;
   int wantDebug = *wantDebug_in;
 
-  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
+  auto queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+  int blocks = std::max((l_rows+maxWgSize-1)/maxWgSize, 1);
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // TODO_23_11: change to NB?
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11: change to NB?
 
-  /*
-DPCT1049:0: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
-
-  queue.submit([&](sycl::handler &cgh) 
+  queue.submit([&](sycl::handler &cgh)
     {
     cgh.parallel_for(
       sycl::nd_range<1>(sycl::range<1>(blocks) * threadsPerBlock, threadsPerBlock),
@@ -170,7 +170,7 @@ extern "C" void sycl_copy_and_set_zeros_double_FromC(
     int *matrixRows_in, int *istep_in, double *aux1_dev, double *vav_dev,
     double *d_vec_dev, int *isOurProcessRow_in, int *isOurProcessCol_in,
     int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in,
-    int *wantDebug_in, intptr_t my_stream) {
+    int *wantDebug_in, QueueData *my_stream) {
   sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -179,7 +179,7 @@ extern "C" void sycl_copy_and_set_zeros_float_FromC(
     int *matrixRows_in, int *istep_in, float *aux1_dev, float *vav_dev,
     float *d_vec_dev, int *isOurProcessRow_in, int *isOurProcessCol_in,
     int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in,
-    int *wantDebug_in, intptr_t my_stream) {
+    int *wantDebug_in, QueueData *my_stream) {
   sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -189,7 +189,7 @@ extern "C" void sycl_copy_and_set_zeros_double_complex_FromC(
     std::complex<double> *vav_dev, double *d_vec_dev, int *isOurProcessRow_in,
     int *isOurProcessCol_in, int *isOurProcessCol_prev_in,
     int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in,
-    intptr_t my_stream) {
+    QueueData *my_stream) {
   sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -199,7 +199,7 @@ extern "C" void sycl_copy_and_set_zeros_float_complex_FromC(
     std::complex<float> *vav_dev, float *d_vec_dev, int *isOurProcessRow_in,
     int *isOurProcessCol_in, int *isOurProcessCol_prev_in,
     int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in,
-    intptr_t my_stream) {
+    QueueData *my_stream) {
   sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -208,7 +208,7 @@ extern "C" void sycl_copy_and_set_zeros_float_complex_FromC(
 
 template <typename T>
 void sycl_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev,
-                             sycl::nd_item<1> it, sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>  cache){
+                             sycl::nd_item<1> it, local_buffer<T>  cache){
    // extra space of fixed size is reserved for a speedup
   int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
 
@@ -240,12 +240,12 @@ performance if there is no access to global memory.
 DPCT1065:1: Consider replacing sycl::nd_item::barrier() with
 sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better
 performance if there is no access to global memory.
-*/
+    */
     it.barrier();
     i /= 2;
   }
 
-  if (it.get_local_id(0) == 0) 
+  if (it.get_local_id(0) == 0)
     {
     atomicAdd(&result_dev[0], cache[0]);
     }
@@ -254,8 +254,8 @@ performance if there is no access to global memory.
 template <typename T>
 void sycl_dot_product_FromC(int *n_in, T *x_dev, int *incx_in, T *y_dev,
                             int *incy_in, T *result_dev, int *wantDebug_in,
-                            int *SM_count_in, intptr_t my_stream) {
-  int n = *n_in;   
+                            int *SM_count_in, QueueData *my_stream) {
+  int n = *n_in;
   int incx = *incx_in;
   int incy = *incy_in;
   int wantDebug = *wantDebug_in;
@@ -264,21 +264,16 @@ void sycl_dot_product_FromC(int *n_in, T *x_dev, int *incx_in, T *y_dev,
   //int SM_count=32;
   //syclDeviceGetAttribute(&SM_count, syclDevAttrMultiProcessorCount, 0); // TODO_23_11 move this outside, to set_gpu, claim the number only once during GPU setup
 
+  sycl::queue queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
   int blocks = SM_count;
   sycl::range<1> blocksPerGrid   = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // TODO_23_11: or NB?
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11: or NB?
 
 
-  /*
-DPCT1049:2: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
 
   queue.submit([&](sycl::handler &cgh) {
-    sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local> cache_acc_ct1(sycl::range<1>(1024), cgh);
+    local_buffer<T> cache_acc_ct1(sycl::range<1>(maxWgSize), cgh);
 
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
@@ -294,7 +289,7 @@ extern "C" void sycl_dot_product_double_FromC(int *n_in, double *x_dev,
                                               int *incx_in, double *y_dev,
                                               int *incy_in, double *result_dev,
                                               int *wantDebug_in,
-                                              int *SM_count_in, intptr_t my_stream) {
+                                              int *SM_count_in, QueueData *my_stream) {
   sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
@@ -302,21 +297,21 @@ extern "C" void sycl_dot_product_float_FromC(int *n_in, float *x_dev,
                                              int *incx_in, float *y_dev,
                                              int *incy_in, float *result_dev,
                                              int *wantDebug_in,
-                                             int *SM_count_in, intptr_t my_stream) {
+                                             int *SM_count_in, QueueData *my_stream) {
   sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_double_complex_FromC(
     int *n_in, std::complex<double> *x_dev, int *incx_in, std::complex<double> *y_dev,
     int *incy_in, std::complex<double> *result_dev, int *wantDebug_in,
-    int *SM_count_in, intptr_t my_stream) {
+    int *SM_count_in, QueueData *my_stream) {
   sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_float_complex_FromC(
     int *n_in, std::complex<float> *x_dev, int *incx_in, std::complex<float> *y_dev,
     int *incy_in, std::complex<float> *result_dev, int *wantDebug_in,
-    int *SM_count_in, intptr_t my_stream) {
+    int *SM_count_in, QueueData *my_stream) {
   sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
 }
 
@@ -324,11 +319,10 @@ extern "C" void sycl_dot_product_float_complex_FromC(
 
 template <typename T>
 void sycl_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev,
-                                        sycl::nd_item<1> it, sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>  cache){
-  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
+                                        sycl::nd_item<1> it, local_buffer<T>  cache){
+  const int threadsPerBlock = it.get_local_range(0);
 
-  int tid = it.get_local_id(0) +
-            it.get_group(0) * it.get_local_range(0);
+  int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
 
 /*
   if (isOurProcessRow) {
@@ -377,7 +371,7 @@ performance if there is no access to global memory.
 
   if (tid==0)
     {
-    if (isOurProcessRow) 
+    if (isOurProcessRow)
       {
       aux1_dev[1] = v_row_dev[l_rows-1];
       }
@@ -393,22 +387,22 @@ template <typename T>
 void sycl_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in,
                                        int *isOurProcessRow_in, T *aux1_dev,
                                        int *wantDebug_in,
-                                       intptr_t my_stream) {
-  int l_rows = *l_rows_in;   
+                                       QueueData *my_stream) {
+  int l_rows = *l_rows_in;
   int isOurProcessRow = *isOurProcessRow_in;
   int wantDebug = *wantDebug_in;
 
   //int numSMs;
   //syclDeviceGetAttribute(&numSMs, syclDevAttrMultiProcessorCount, 0);
-  
-  //int blocks = (l_rows+1023)/MAX_THREADS_PER_BLOCK;
-  int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
-  
-  sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+  //int blocks = (l_rows+1023)/maxWgSize;
+  int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
+  sycl::queue queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+
+
+  sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
 
   /*
 DPCT1049:7: The work-group size passed to the SYCL kernel may exceed the limit.
@@ -417,7 +411,7 @@ work-group size if needed.
 */
 
   queue.submit([&](sycl::handler &cgh) {
-    sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local> cache_acc_ct1(sycl::range<1>(1024), cgh);
+    local_buffer<T> cache_acc_ct1(sycl::range<1>(maxWgSize), cgh);
 
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
@@ -432,25 +426,25 @@ work-group size if needed.
 
 extern "C" void sycl_dot_product_and_assign_double_FromC(
     double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in,
-    double *aux1_dev, int *wantDebug_in, intptr_t my_stream) {
+    double *aux1_dev, int *wantDebug_in, QueueData *my_stream) {
   sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_and_assign_float_FromC(
     float *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, float *aux1_dev,
-    int *wantDebug_in, intptr_t my_stream) {
+    int *wantDebug_in, QueueData *my_stream) {
   sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_and_assign_double_complex_FromC(
     std::complex<double> *v_row_dev, int *l_rows_in, int *isOurProcessRow_in,
-    std::complex<double> *aux1_dev, int *wantDebug_in, intptr_t my_stream) {
+    std::complex<double> *aux1_dev, int *wantDebug_in, QueueData *my_stream) {
   sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_dot_product_and_assign_float_complex_FromC(
     std::complex<float> *v_row_dev, int *l_rows_in, int *isOurProcessRow_in,
-    std::complex<float> *aux1_dev, int *wantDebug_in, intptr_t my_stream) {
+    std::complex<float> *aux1_dev, int *wantDebug_in, QueueData *my_stream) {
  sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
 }
 
@@ -514,7 +508,7 @@ void sycl_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_d
     {
     v_row_dev[l_rows-1] = elpaDeviceNumber<T>(1.0);
     }
-    
+
   int i_row = tid;
   while (i_row < l_rows) {
     a_dev[i_row + matrixRows*l_cols] = v_row_dev[i_row];
@@ -528,37 +522,30 @@ void sycl_set_e_vec_scale_set_one_store_v_row_FromC(
     T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev,
     T *xf_host_or_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in,
     int *istep_in, int *isOurProcessRow_in, int *useCCL_in,
-    int *wantDebug_in, intptr_t my_stream) {
+    int *wantDebug_in, QueueData *my_stream) {
 
-  int l_rows = *l_rows_in;   
-  int l_cols = *l_cols_in;   
+  int l_rows = *l_rows_in;
+  int l_cols = *l_cols_in;
   int matrixRows = *matrixRows_in;
   int istep = *istep_in;
   int isOurProcessRow = *isOurProcessRow_in;
   int useCCL = *useCCL_in;
   int wantDebug = *wantDebug_in;
 
-  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
+  sycl::queue queue = getQueueOrDefault(my_stream);
+
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+  int blocks = std::max((l_rows+maxWgSize-1)/maxWgSize, 1);
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK); // TODO_23_11 change to NB
-  
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11 change to NB
 
   //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)xf_host_or_dev, queue.get_context());
   sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
 
-  if (memoryType == sycl::usm::alloc::host) 
-    {
+  if (memoryType == sycl::usm::alloc::host) {
     T xf_host_value = *xf_host_or_dev;
 
-    /*
-DPCT1049:10: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/  
-    
-    queue.submit([&](sycl::handler &cgh) 
+    queue.submit([&](sycl::handler &cgh)
       {
       cgh.parallel_for(
           sycl::nd_range<1> ( blocksPerGrid * threadsPerBlock, threadsPerBlock),
@@ -570,7 +557,7 @@ work-group size if needed.
       });
     queue.wait_and_throw();
   }
- else if (memoryType == sycl::usm::alloc::device) 
+ else if (memoryType == sycl::usm::alloc::device)
    {
     // CCL is not supported for Intel GPUs yet
 /*
@@ -585,14 +572,14 @@ work-group size if needed.
         });
 */
    }
-    
+
 }
 
 extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_double_FromC(
     double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev,
     double *tau_dev, double *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
-    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
+    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
   sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -600,7 +587,7 @@ extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_float_FromC(
     float *e_vec_dev, float *vrl_dev, float *a_dev, float *v_row_dev,
     float *tau_dev, float *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
-    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
+    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
   sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -609,7 +596,7 @@ extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_double_complex_FromC(
     std::complex<double> *v_row_dev, std::complex<double> *tau_dev,
     std::complex<double> *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
-    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
+    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
   sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -618,7 +605,7 @@ extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(
     std::complex<float> *v_row_dev, std::complex<float> *tau_dev,
     std::complex<float> *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
-    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
+    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
   sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -634,7 +621,7 @@ void sycl_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev
 
   T conjg_tau = convert_to_device(tau_host_or_dev, typename std::conditional<std::is_pointer<T_value_or_pointer>::value, std::true_type, std::false_type>::type());
   conjg_tau = elpaDeviceComplexConjugate(conjg_tau);
-  
+
   T conjg_tau_v_row_dev, conjg_tau_v_col_dev;
 
   // recover tau_dev(istep) after broadcasting
@@ -696,10 +683,10 @@ void sycl_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev
       aux_complex_dev[j] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*j]);
       j += it.get_local_range(0) * it.get_group_range(0);
       }
-    
+
     // two last elements should be treated by the respective threads inorder to avoid sync problems
     i_col -= it.get_local_range(0) * it.get_group_range(0);
-    if (i_col == l_cols-1) 
+    if (i_col == l_cols-1)
       {
       aux_complex_dev[2*n_stored_vecs+0] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*(2*n_stored_vecs+0)]);
       aux_complex_dev[2*n_stored_vecs+1] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*(2*n_stored_vecs+1)]);
@@ -713,10 +700,10 @@ void sycl_store_u_v_in_uv_vu_FromC(
     T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
     T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T *vav_host_or_dev, T *tau_host_or_dev, 
     int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, 
-    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
+    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
 
-  int l_rows = *l_rows_in;   
-  int l_cols = *l_cols_in;   
+  int l_rows = *l_rows_in;
+  int l_cols = *l_cols_in;
   int n_stored_vecs  = *n_stored_vecs_in;
   int max_local_rows = *max_local_rows_in;   
   int max_local_cols = *max_local_cols_in;   
@@ -724,28 +711,23 @@ void sycl_store_u_v_in_uv_vu_FromC(
   int useCCL = *useCCL_in;
   int wantDebug = *wantDebug_in;
   
-  int threads = MAX_THREADS_PER_BLOCK/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
+  sycl::queue queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+  int threads = maxWgSize/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
   int blocks = std::max({(l_rows+threads-1)/threads, (l_cols+threads-1)/threads, 1});
+
 
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
   sycl::range<1> threadsPerBlock = sycl::range<1>(threads);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
-
   //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)vav_host_or_dev, queue.get_context());
   sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
 
-  if (memoryType == sycl::usm::alloc::host) 
+  if (memoryType == sycl::usm::alloc::host)
     {
     T vav_host_value = *vav_host_or_dev;
     T tau_host_value = *tau_host_or_dev;
 
-    /*
-DPCT1049:16: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
     queue.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
         [=](sycl::nd_item<1> it) {
@@ -756,9 +738,9 @@ work-group size if needed.
               max_local_cols, istep, useCCL, it);
         });
     queue.wait_and_throw();
-   } 
-  
-  else if (memoryType == sycl::usm::alloc::device) 
+   }
+
+  else if (memoryType == sycl::usm::alloc::device)
     {
     // CCL is not supported for Intel GPUs yet
     /*
@@ -774,7 +756,7 @@ work-group size if needed.
               max_local_cols, istep, useCCL, it);
         });
     */
-    } 
+    }
 
 }
 
@@ -784,7 +766,7 @@ extern "C" void sycl_store_u_v_in_uv_vu_double_FromC(
     double *aux_complex_dev, double *vav_host_or_dev, double *tau_host_or_dev,
     int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in,
     int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
+    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
   sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
                                 l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
@@ -795,7 +777,7 @@ extern "C" void sycl_store_u_v_in_uv_vu_float_FromC(
     float *aux_complex_dev, float *vav_host_or_dev, float *tau_host_or_dev,
     int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in,
     int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    int *useCCL_in, int *wantDebug_in, intptr_t my_stream) {
+    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
   sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -807,7 +789,7 @@ extern "C" void sycl_store_u_v_in_uv_vu_double_complex_FromC(
     std::complex<double> *tau_host_or_dev, int *l_rows_in, int *l_cols_in,
     int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in,
     int *istep_in, int *useCCL_in, int *wantDebug_in,
-    intptr_t my_stream) {
+    QueueData *my_stream) {
   sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -819,7 +801,7 @@ extern "C" void sycl_store_u_v_in_uv_vu_float_complex_FromC(
     std::complex<float> *tau_host_or_dev, int *l_rows_in, int *l_cols_in,
     int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in,
     int *istep_in, int *useCCL_in, int *wantDebug_in,
-    intptr_t my_stream) {
+    QueueData *my_stream) {
   sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
 }
 
@@ -828,9 +810,9 @@ extern "C" void sycl_store_u_v_in_uv_vu_float_complex_FromC(
 template <typename T, typename T_real>
 void sycl_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
                                                       int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric,
-                                                      sycl::nd_item<1> it, sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>  cache){
+                                                      sycl::nd_item<1> it, local_buffer<T>  cache){
   
-  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
+  const int threadsPerBlock = it.get_local_range(0);
 
   int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
 
@@ -853,10 +835,10 @@ void sycl_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_c
 */
 
   // if (it.get_local_id(0) == 0)
-  //   { 
-  //   if (isSkewsymmetric) 
+  //   {
+  //   if (isSkewsymmetric)
   //     d_vec_dev[istep-1-1] = 0.0;
-  //   else 
+  //   else
   //     d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to other kernel for thread safety
   //   }
   if (n_stored_vecs > 0)
@@ -864,7 +846,7 @@ void sycl_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_c
 
     T temp =  elpaDeviceNumber<T>(0.0);
     int index_n = tid;
-    while (index_n < 2*n_stored_vecs) 
+    while (index_n < 2*n_stored_vecs)
       {
       temp = elpaDeviceAdd(temp, elpaDeviceMultiply(elpaDeviceComplexConjugate(vu_stored_rows_dev[(l_rows-1)+max_local_rows*index_n]), uv_stored_cols_dev[(l_cols-1)+max_local_cols*index_n]) ); // temp += vu_stored_rows_dev[(l_rows-1)+max_local_rows*index_n] * uv_stored_cols_dev[(l_cols-1)+max_local_cols*index_n]
       index_n += it.get_local_range(0) * it.get_group_range(0);
@@ -882,7 +864,7 @@ performance if there is no access to global memory.
 
     // for reductions, threadsPerBlock must be a power of 2
     int i = it.get_local_range(0) / 2;
-    while (i > 0) 
+    while (i > 0)
       {
       if (it.get_local_id(0) < i) cache[it.get_local_id(0)] =
           elpaDeviceAdd( cache[it.get_local_id(0)], cache[it.get_local_id(0) + i]); // cache[threadIdx.x] += cache[threadIdx.x + i];
@@ -901,7 +883,7 @@ performance if there is no access to global memory.
       //sycl::atomic_ref<T, sycl::memory_order::relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum (a_dev[(l_rows-1) + matrixRows*(l_cols-1)]);
       //atomic_sum += cache[0];
 
-      if (!isSkewsymmetric) 
+      if (!isSkewsymmetric)
         {
         atomicAdd( &d_vec_dev[istep-1-1] , elpaDeviceRealPart(cache[0]) );
         //sycl::atomic_ref<T_real, sycl::memory_order::relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum_real (d_vec_dev[istep-1-1]);
@@ -916,7 +898,7 @@ void sycl_update_matrix_element_add_FromC(
     T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev,
     int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in,
     int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in,
-    int *isSkewsymmetric_in, int *wantDebug_in, intptr_t my_stream) {
+    int *isSkewsymmetric_in, int *wantDebug_in, QueueData *my_stream) {
   int l_rows = *l_rows_in;   
   int l_cols = *l_cols_in;
   int matrixRows = *matrixRows_in;
@@ -926,24 +908,18 @@ void sycl_update_matrix_element_add_FromC(
   int n_stored_vecs = *n_stored_vecs_in; 
   int isSkewsymmetric = *isSkewsymmetric_in;   
   int wantDebug = *wantDebug_in;
-  
-  int blocks = std::min((2*n_stored_vecs+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 32);
+
+  sycl::queue queue = getQueueOrDefault(my_stream);
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+  int blocks = std::min((2*n_stored_vecs+maxWgSize-1)/maxWgSize, 32);
   if (n_stored_vecs==0) blocks=1;
 
+
   sycl::range<1> blocksPerGrid   = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(MAX_THREADS_PER_BLOCK);
-
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
-
-  /*
-DPCT1049:24: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
 
   queue.submit([&](sycl::handler &cgh) {
-    sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local> cache_acc_ct1(sycl::range<1>(1024 /*1024*/), cgh);
+    local_buffer<T> cache_acc_ct1(sycl::range<1>(maxWgSize /*1024*/), cgh);
 
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
@@ -955,7 +931,7 @@ work-group size if needed.
         });
   });
   queue.wait_and_throw();
-  
+
   // queue.parallel_for(
   //     sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
   //     [=](sycl::nd_item<1> it) {
@@ -972,7 +948,7 @@ extern "C" void sycl_update_matrix_element_add_double_FromC(
     double *d_vec_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in,
     int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
     int *n_stored_vecs_in, int *isSkewsymmetric_in, int *wantDebug_in,
-    intptr_t my_stream) {
+    QueueData *my_stream) {
   sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
@@ -981,7 +957,7 @@ extern "C" void sycl_update_matrix_element_add_float_FromC(
     float *d_vec_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in,
     int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
     int *n_stored_vecs_in, int *isSkewsymmetric_in, int *wantDebug_in,
-    intptr_t my_stream) {
+    QueueData *my_stream) {
   sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
@@ -990,7 +966,7 @@ extern "C" void sycl_update_matrix_element_add_double_complex_FromC(
     std::complex<double> *a_dev, double *d_vec_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in,
     int *istep_in, int *n_stored_vecs_in, int *isSkewsymmetric_in,
-    int *wantDebug_in, intptr_t my_stream) {
+    int *wantDebug_in, QueueData *my_stream) {
  sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
@@ -999,7 +975,7 @@ extern "C" void sycl_update_matrix_element_add_float_complex_FromC(
     std::complex<float> *a_dev, float *d_vec_dev, int *l_rows_in, int *l_cols_in,
     int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in,
     int *istep_in, int *n_stored_vecs_in, int *isSkewsymmetric_in,
-    int *wantDebug_in, intptr_t my_stream) {
+    int *wantDebug_in, QueueData *my_stream) {
  sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
 }
 
@@ -1014,23 +990,14 @@ void sycl_update_array_element_kernel(T *array_dev, const int index, T value){
 
 template <typename T>
 void sycl_update_array_element_FromC(T *array_dev, int *index_in, T *value_in,
-                                     intptr_t my_stream) {
-  int index = *index_in;   
+                                     QueueData *my_stream) {
+  int index = *index_in;
   T value = *value_in;
 
-  sycl::range<1> blocksPerGrid   = sycl::range<1>(1);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(1);
+  sycl::queue queue = getQueueOrDefault(my_stream);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
-
-  /*
-DPCT1049:27: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
   queue.parallel_for(
-      sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
+      sycl::nd_range<1>(1, 1),
       [=](sycl::nd_item<1> it) {
         sycl_update_array_element_kernel(array_dev, index, value);
       });
@@ -1040,26 +1007,26 @@ work-group size if needed.
 extern "C" void sycl_update_array_element_double_FromC(double *array_dev,
                                                        int *index_in,
                                                        double *value_in,
-                                                       intptr_t my_stream) {
+                                                       QueueData *my_stream) {
   sycl_update_array_element_FromC(array_dev, index_in, value_in, my_stream);
 }
 
 extern "C" void sycl_update_array_element_float_FromC(float *array_dev,
                                                       int *index_in,
                                                       float *value_in,
-                                                      intptr_t my_stream) {
+                                                      QueueData *my_stream) {
   sycl_update_array_element_FromC(array_dev, index_in, value_in, my_stream);
 }
 
 extern "C" void sycl_update_array_element_double_complex_FromC(
     std::complex<double> *array_dev, int *index_in, std::complex<double> *value_in,
-    intptr_t my_stream) {
+    QueueData *my_stream) {
   sycl_update_array_element_FromC(array_dev, index_in, value_in, my_stream);
 }
 
 extern "C" void sycl_update_array_element_float_complex_FromC(
     std::complex<float> *array_dev, int *index_in, std::complex<float> *value_in,
-    intptr_t my_stream) {
+    QueueData *my_stream) {
   sycl_update_array_element_FromC(array_dev, index_in, value_in, my_stream);
 }
 
@@ -1140,7 +1107,7 @@ void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_d
       *tau_dev = elpaDeviceNumber<T>(2.0);
       *alpha_dev = elpaDeviceMultiply(*alpha_dev, elpaDeviceNumber<T>(-1.0)); // (*alpha_dev) *= -1
       }
-    
+
     *xf_dev = elpaDeviceNumber<T>(0.0);
     }
 
@@ -1150,7 +1117,7 @@ void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_d
                                           elpaDeviceRealPart(*xnorm_sq_dev) ), elpaDeviceRealPart(*alpha_dev) ));
 
     *alpha_dev = elpaDeviceAdd(*alpha_dev, beta);
-    
+
     if (elpaDeviceRealPart(beta)<0)
       {
       *tau_dev  = elpaDeviceDivide(*alpha_dev, beta);
@@ -1174,21 +1141,15 @@ void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_d
 template <typename T>
 void sycl_hh_transform_FromC(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev,
                              T *tau_dev, int *index_in, int *wantDebug_in,
-                             intptr_t my_stream) {
+                             QueueData *my_stream) {
   int wantDebug = *wantDebug_in;
+
+  sycl::queue queue = getQueueOrDefault(my_stream);
 
   sycl::range<1> blocksPerGrid   = sycl::range<1>(1);
   sycl::range<1> threadsPerBlock = sycl::range<1>(1);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
-
   // trivial single-thread kernel, streams can't be used here
-  /*
-DPCT1049:30: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
   queue.parallel_for(
       sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
         [=](sycl::nd_item<1> it) {
@@ -1201,7 +1162,7 @@ work-group size if needed.
 extern "C" void
 sycl_hh_transform_double_FromC(double *alpha_dev, double *xnorm_sq_dev,
                                double *xf_dev, double *tau_dev, int *index_in,
-                               int *wantDebug_in, intptr_t my_stream) {
+                               int *wantDebug_in, QueueData *my_stream) {
   sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
@@ -1209,21 +1170,21 @@ extern "C" void sycl_hh_transform_float_FromC(float *alpha_dev,
                                               float *xnorm_sq_dev,
                                               float *xf_dev, float *tau_dev,
                                               int *index_in, int *wantDebug_in,
-                                              intptr_t my_stream) {
+                                              QueueData *my_stream) {
   sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_hh_transform_double_complex_FromC(
     std::complex<double> *alpha_dev, std::complex<double> *xnorm_sq_dev,
     std::complex<double> *xf_dev, std::complex<double> *tau_dev, int *index_in,
-    int *wantDebug_in, intptr_t my_stream) {
+    int *wantDebug_in, QueueData *my_stream) {
   sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
 extern "C" void sycl_hh_transform_float_complex_FromC(
     std::complex<float> *alpha_dev, std::complex<float> *xnorm_sq_dev, std::complex<float> *xf_dev,
     std::complex<float> *tau_dev, int *index_in, int *wantDebug_in,
-    intptr_t my_stream) {
+    QueueData *my_stream) {
   sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
 }
 
@@ -1291,10 +1252,10 @@ void sycl_transpose_reduceadd_vectors_copy_block_FromC(
     int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, int *lcm_s_t_in,
     int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in,
     int *direction_in, int *isSkewsymmetric_in, int *isReduceadd_in,
-    int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
 
-  int nvc = *nvc_in;   
-  int nvr = *nvr_in;   
+  int nvc = *nvc_in;
+  int nvr = *nvr_in;
   int n_block = *n_block_in;
   int nblks_skip = *nblks_skip_in;
   int nblks_tot = *nblks_tot_in;
@@ -1313,17 +1274,11 @@ void sycl_transpose_reduceadd_vectors_copy_block_FromC(
   //int SM_count=32; // TODO_23_11 count and move outside
   int blocks = SM_count;
 
+  sycl::queue queue = getQueueOrDefault(my_stream);
+
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
   sycl::range<1> threadsPerBlock = sycl::range<1>(nblk);
 
-  auto device = elpa::gpu::sycl::getDevice();
-  auto &queue = elpa::gpu::sycl::getQueue();
-
-  /*
-DPCT1049:33: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
   queue.parallel_for(
     sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
       [=](sycl::nd_item<1> it) {
@@ -1333,7 +1288,6 @@ work-group size if needed.
           isSkewsymmetric, isReduceadd, it);
     });
   queue.wait_and_throw();
-
 }
 
 extern "C" void sycl_transpose_reduceadd_vectors_copy_block_double_FromC(
@@ -1341,7 +1295,7 @@ extern "C" void sycl_transpose_reduceadd_vectors_copy_block_double_FromC(
     int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, int *lcm_s_t_in,
     int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in,
     int *direction_in, int *isSkewsymmetric_in, int *isReduceadd_in,
-    int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
   sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
@@ -1350,7 +1304,7 @@ extern "C" void sycl_transpose_reduceadd_vectors_copy_block_float_FromC(
     int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, int *lcm_s_t_in,
     int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in,
     int *direction_in, int *isSkewsymmetric_in, int *isReduceadd_in,
-    int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
   sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
@@ -1360,7 +1314,7 @@ sycl_transpose_reduceadd_vectors_copy_block_double_complex_FromC(
     int *nvr_in, int *n_block_in, int *nblks_skip_in, int *nblks_tot_in,
     int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in,
     int *ld_st_in, int *direction_in, int *isSkewsymmetric_in,
-    int *isReduceadd_in, int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *isReduceadd_in, int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
   sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
 
@@ -1369,8 +1323,6 @@ extern "C" void sycl_transpose_reduceadd_vectors_copy_block_float_complex_FromC(
     int *nvr_in, int *n_block_in, int *nblks_skip_in, int *nblks_tot_in,
     int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in,
     int *ld_st_in, int *direction_in, int *isSkewsymmetric_in,
-    int *isReduceadd_in, int *wantDebug_in, int *SM_count_in, intptr_t my_stream) {
+    int *isReduceadd_in, int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
   sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
 }
-
-//________________________________________________________________

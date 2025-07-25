@@ -47,7 +47,7 @@
 //
 
 #include <cstdio>
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include "syclCommon.hpp"
 
 
@@ -55,7 +55,12 @@ extern "C" {
 
   int is_device_ptr(void *a_void_ptr) {
 
-    sycl::queue q{sycl::default_selector()};
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
+#define DEFAULT_SELECTOR cl::sycl::default_selector()
+#else
+#define DEFAULT_SELECTOR sycl::default_selector_v
+#endif
+    sycl::queue q{DEFAULT_SELECTOR};
     sycl::usm::alloc a_void_ptr_alloc = sycl::get_pointer_type(a_void_ptr, q.get_context());
 
     if (a_void_ptr_alloc==sycl::usm::alloc::host)

@@ -147,9 +147,6 @@
 #ifdef WITH_AMD_GPU_VERSION
       vendor = amd_gpu
 #endif
-!#ifdef WITH_INTEL_GPU_VERSION
-!      vendor = intel_gpu
-!#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       vendor = openmp_offload_gpu
 #endif
@@ -172,13 +169,13 @@
       if (set_vendor == amd_gpu) then
         vendor = amd_gpu
       endif
+      if (set_vendor == sycl_gpu) then
+        vendor = sycl_gpu
+      endif
       if (vendor == no_gpu) then
         print *,"setting gpu vendor in tests does not work"
         stop 1
       endif
-!#if TEST_INTEL_GPU == 1
-!      vendor = intel_gpu
-!#endif
       use_gpu_vendor = vendor
       return
     end function
@@ -277,12 +274,12 @@
         gpuMemcpyDeviceToHost    = syclMemcpyDeviceToHost
         syclMemcpyDeviceToDevice = sycl_MemcpyDeviceToDevice()
         gpuMemcpyDeviceToDevice  = syclMemcpyDeviceToDevice
-        !openmpOffloadHostRegisterPortable = openmp_offload_hostRegisterPortable()
-        !gpuHostRegisterPortable           = openmpOffloadHostRegisterPortable
-        !openmpOffloadHostRegisterMapped   = openmp_offload_hostRegisterMapped()
-        !gpuHostRegisterMapped             = openmpOffloadHostRegisterMapped
-        !openmpOffloadHostRegisterDefault  = openmp_offload_hostRegisterDefault()
-        !gpuHostRegisterDefault            = openmpOffloadHostRegisterDefault
+        syclHostRegisterPortable = sycl_hostRegisterPortable()
+        gpuHostRegisterPortable  = syclHostRegisterPortable
+        syclHostRegisterMapped   = sycl_hostRegisterMapped()
+        gpuHostRegisterMapped    = syclHostRegisterMapped
+        syclHostRegisterDefault  = sycl_hostRegisterDefault()
+        gpuHostRegisterDefault   = syclHostRegisterDefault
       endif
 #endif
     end subroutine
@@ -371,6 +368,13 @@
         endif
 #endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
+        if (use_gpu_vendor == sycl_gpu) then
+          success = sycl_stream_synchronize(stream)
+        endif
+#endif
+#endif
       else
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_GPU_STREAMS
@@ -386,6 +390,13 @@
         endif
 #endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+#ifdef WITH_GPU_STREAMS
+        if (use_gpu_vendor == sycl_gpu) then
+          success = sycl_stream_synchronize()
+        endif
+#endif
+#endif
       endif
 
 
@@ -395,13 +406,6 @@
         stop 1
       endif
 #endif
-#ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"gpu_stream_synchronize not implemented for sycl"
-        stop 1
-      endif
-#endif
-
     end function
 
     function gpu_getdevicecount(n) result(success)
@@ -436,10 +440,8 @@
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        !obj%gpu_setup%syclCPU=.false.
-        !success = sycl_getdevicecount(numberOfDevices)
+        success = sycl_getdevicecount(n)
         success = .true.
-        n=0
       endif
 #endif
 
@@ -510,6 +512,9 @@
 #ifdef WITH_AMD_GPU_VERSION
       use hip_functions
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
       implicit none
       logical                              :: success
 
@@ -525,19 +530,18 @@
         success = hip_devicesynchronize()
       endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (use_gpu_vendor == sycl_gpu) then
+        success = sycl_devicesynchronize()
+      endif
+#endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
         print *,"not yet implemented: device synchronize"
         stop 1
       endif
 #endif
-#ifdef WITH_SYCL_GPU_VERSION
-      if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: device synchronize"
-        stop 1
-      endif
-#endif
-    end function
+end function
 
     function gpu_malloc_host_intptr(array, elements) result(success)
       use, intrinsic :: iso_c_binding
@@ -578,8 +582,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: malloc_host"
-        stop 1
+        success = sycl_malloc_host_intptr(array, elements)
       endif
 #endif
 
@@ -624,8 +627,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: malloc_host"
-        stop 1
+        success = sycl_malloc_host_cptr(array, elements)
       endif
 #endif
 
@@ -756,8 +758,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_register"
-        stop 1
+        success = sycl_host_register(array, elements, flag)
       endif
 #endif
 
@@ -991,9 +992,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        stop 1
-        !success = sycl_memcpy_intptr(dst, src, size, dir)
+        success = sycl_memcpy_async_intptr(dst, src, size, dir, stream)
       endif
 #endif
       return
@@ -1042,9 +1041,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        stop 1
-        !success = sycl_memcpy_cptr(dst, src, size, dir)
+        success = sycl_memcpy_async_cptr(dst, src, size, dir, stream)
       endif
 #endif
       return
@@ -1094,9 +1091,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        stop 1
-        !success = sycl_memcpy_mixed_to_device(dst, src, size, dir)
+        success = sycl_memcpy_async_mixed_to_device(dst, src, size, dir, stream)
       endif
 #endif
     
@@ -1145,8 +1140,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"MemcpyAsync not implemented for sycl"
-        !success = sycl_memcpy_mixed_to_host(dst, src, size, dir)
+        success = sycl_memcpy_async_mixed_to_host(dst, src, size, dir, stream)
       endif
 #endif
     
@@ -1243,9 +1237,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        !success = sycl_memset(a, int(val,kind=c_int32_t), size)
-        print *,"Sycl memset_async not yet implemented"
-        stop 1
+        success = sycl_memset_async(a, val, size, stream)
       endif
 #endif
 
@@ -1377,7 +1369,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        success = sycl_free_intptr(a)
+        success = sycl_free_host_intptr(a)
       endif
 #endif
 
@@ -1422,8 +1414,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_free"
-        stop 1
+        success = sycl_free_host_cptr(a)
       endif
 #endif
     end function
@@ -1467,8 +1458,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: host_unregister"
-        stop 1
+        success = sycl_host_unregister(a)
       endif
 #endif
 
@@ -1520,8 +1510,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_intptr"
-        stop 1
+        success = sycl_memcpy2d_intptr(dst, dpitch, src, spitch, width, height , dir)
       endif
 #endif
     end function
@@ -1572,8 +1561,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_cptr"
-        stop 1
+        success = sycl_memcpy2d_cptr(dst, dpitch, src, spitch, width, height , dir)
       endif
 #endif
     end function
@@ -1625,8 +1613,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_async_intptr"
-        stop 1
+        success = sycl_memcpy2d_async_intptr(dst, dpitch, src, spitch, width, height, dir, stream)
       endif
 #endif
     end function
@@ -1678,10 +1665,7 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
       if (use_gpu_vendor == sycl_gpu) then
-        print *,"not yet implemented: memcpy2d_async-cptr"
-        stop 1
+        success = sycl_memcpy2d_async_cptr(dst, dpitch, src, spitch, width, height, dir, stream)
       endif
 #endif
     end function
-
-

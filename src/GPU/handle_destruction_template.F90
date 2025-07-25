@@ -52,6 +52,9 @@
 #ifdef WITH_AMD_GPU_VERSION
           success = hip_stream_destroy(self%gpu_setup%my_stream)
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+            success = sycl_stream_destroy(self%gpu_setup%syclHandleArray(thread))
+#endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
             print *,"Cannot destroy cuda stream handle"

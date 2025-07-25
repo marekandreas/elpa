@@ -54,7 +54,6 @@
 
 #include "../general/sanity.F90"
 #include "../general/error_checking.inc"
-
 #ifdef SOLVE_TRIDI_GPU_BUILD
 subroutine solve_tridi_gpu_&
                             &PRECISION_AND_SUFFIX &
@@ -391,7 +390,6 @@ subroutine solve_tridi_cpu_&
 
       deallocate(limits,l_col,p_col,l_col_bc,p_col_bc, stat=istat, errmsg=errorMessage)
       check_deallocate("solve_tridi: limits, l_col, p_col, l_col_bc, p_col_bc", istat, errorMessage)
-
 
       if (useGPU) then
         ! dirty hack

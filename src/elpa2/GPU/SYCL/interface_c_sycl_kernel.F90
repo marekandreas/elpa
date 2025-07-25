@@ -48,12 +48,13 @@ module sycl_c_kernel
   implicit none
 
   interface
-    subroutine launch_compute_hh_trafo_c_sycl_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols) bind(c)
+    subroutine launch_compute_hh_trafo_c_sycl_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t), value :: q
       integer(c_intptr_t), value :: hh_tau ,hh
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 
@@ -70,13 +71,14 @@ module sycl_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_compute_hh_trafo_c_sycl_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
+    subroutine launch_compute_hh_trafo_c_sycl_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t), value :: q
       integer(c_intptr_t), value :: hh_tau ,hh
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 !
@@ -94,13 +96,14 @@ module sycl_c_kernel
 #endif /* WANT_SINGLE_PRECISION_REAL */
 
   interface
-    subroutine launch_compute_hh_trafo_c_sycl_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols) &
+    subroutine launch_compute_hh_trafo_c_sycl_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t), value :: q
       integer(kind=c_intptr_t), value :: hh_tau ,hh
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 
@@ -117,13 +120,14 @@ module sycl_c_kernel
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-    subroutine launch_compute_hh_trafo_c_sycl_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols) &
+    subroutine launch_compute_hh_trafo_c_sycl_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t), value :: q
       integer(kind=c_intptr_t), value :: hh_tau ,hh
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 
@@ -142,54 +146,58 @@ module sycl_c_kernel
 
   interface
     subroutine launch_my_unpack_c_sycl_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-               l_nev,row_group_dev, a_dev) bind(c)
+               l_nev,row_group_dev, a_dev, my_stream) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: row_count
       integer(kind=c_int), value :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t), value :: a_dev, row_group_dev
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
     subroutine launch_my_unpack_c_sycl_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-               l_nev,row_group_dev, a_dev) bind(c)
+               l_nev,row_group_dev, a_dev, my_stream) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: row_count
       integer(kind=c_int), value :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t), value :: a_dev, row_group_dev
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 #endif
 
   interface
     subroutine launch_my_pack_c_sycl_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
-               stripe_count, l_nev, a_dev, row_group_dev) bind(c)
+               stripe_count, l_nev, a_dev, row_group_dev, my_stream) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t), value :: a_dev
       integer(kind=c_intptr_t), value :: row_group_dev
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
     subroutine launch_my_pack_c_sycl_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-               l_nev, a_dev, row_group_dev) bind(c)
+               l_nev, a_dev, row_group_dev, my_stream) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t), value :: a_dev
       integer(kind=c_intptr_t), value :: row_group_dev
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 #endif
 
   interface
-    subroutine launch_extract_hh_tau_c_sycl_kernel_real_double(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_sycl_kernel_real_double(hh, hh_tau, nb, n, is_zero, my_stream) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -197,12 +205,13 @@ module sycl_c_kernel
       integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value :: nb, n
       integer(kind=c_int), value :: is_zero
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_REAL
   interface
-    subroutine launch_extract_hh_tau_c_sycl_kernel_real_single(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_sycl_kernel_real_single(hh, hh_tau, nb, n, is_zero, my_stream) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -210,60 +219,65 @@ module sycl_c_kernel
       integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value :: nb, n
       integer(kind=c_int), value :: is_zero
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 #endif
 
   interface
     subroutine launch_my_unpack_c_sycl_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, &
-               stripe_count, l_nev, row_group_dev, a_dev) bind(c)
+               stripe_count, l_nev, row_group_dev, a_dev, my_stream) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: row_count
       integer(kind=c_int), value :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t), value :: a_dev, row_group_dev
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
  interface
     subroutine launch_my_unpack_c_sycl_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, &
-               l_nev, row_group_dev, a_dev) bind(c)
+               l_nev, row_group_dev, a_dev, my_stream) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: row_count
       integer(kind=c_int), value :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t), value :: a_dev, row_group_dev
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 #endif
 
   interface
     subroutine launch_my_pack_c_sycl_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
-               stripe_count, l_nev, a_dev, row_group_dev) bind(c)
+               stripe_count, l_nev, a_dev, row_group_dev, my_stream) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
       integer(kind=c_intptr_t), value :: a_dev
       integer(kind=c_intptr_t), value :: row_group_dev
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
     subroutine launch_my_pack_c_sycl_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
-               stripe_count, l_nev, a_dev, row_group_dev) bind(c)
+               stripe_count, l_nev, a_dev, row_group_dev, my_stream) bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int), value :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
       integer(kind=c_intptr_t), value :: a_dev
       integer(kind=c_intptr_t), value :: row_group_dev
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 #endif
 
   interface
-    subroutine launch_extract_hh_tau_c_sycl_kernel_complex_double(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_sycl_kernel_complex_double(hh, hh_tau, nb, n, is_zero, my_stream) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -271,12 +285,13 @@ module sycl_c_kernel
       integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value :: nb, n
       integer(kind=c_int), value :: is_zero
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
   interface
-    subroutine launch_extract_hh_tau_c_sycl_kernel_complex_single(hh, hh_tau, nb, n, is_zero) &
+    subroutine launch_extract_hh_tau_c_sycl_kernel_complex_single(hh, hh_tau, nb, n, is_zero, my_stream) &
                bind(c)
       use, intrinsic :: iso_c_binding
       implicit none
@@ -284,220 +299,237 @@ module sycl_c_kernel
       integer(kind=c_intptr_t), value :: hh_tau
       integer(kind=c_int), value :: nb, n
       integer(kind=c_int), value :: is_zero
+      integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
 #endif
 
   contains
 
-    subroutine launch_compute_hh_trafo_sycl_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_sycl_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
-      call launch_compute_hh_trafo_c_sycl_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_sycl_kernel_real_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_compute_hh_trafo_sycl_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_sycl_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
-      call launch_compute_hh_trafo_c_sycl_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_sycl_kernel_real_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_compute_hh_trafo_sycl_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_sycl_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
-      call launch_compute_hh_trafo_c_sycl_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_sycl_kernel_complex_double(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_compute_hh_trafo_sycl_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+    subroutine launch_compute_hh_trafo_sycl_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: nev, nb, ldq, ncols
       integer(kind=c_intptr_t) :: q
       integer(kind=c_intptr_t) :: hh_tau ,hh
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
-      call launch_compute_hh_trafo_c_sycl_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols)
+      call launch_compute_hh_trafo_c_sycl_kernel_complex_single(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream)
 #endif
     end subroutine
 #endif
 
     subroutine launch_my_unpack_sycl_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-               l_nev,row_group_dev, a_dev)
+               l_nev,row_group_dev, a_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count
       integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
       call launch_my_unpack_c_sycl_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-           l_nev,row_group_dev, a_dev)
+           l_nev,row_group_dev, a_dev, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine launch_my_unpack_sycl_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-               l_nev,row_group_dev, a_dev)
+               l_nev,row_group_dev, a_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count
       integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
       call launch_my_unpack_c_sycl_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, &
-           l_nev,row_group_dev, a_dev)
+           l_nev,row_group_dev, a_dev, my_stream)
 #endif
     end subroutine
 #endif
 
     subroutine launch_my_pack_sycl_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, &
-               stripe_count, l_nev, a_dev, row_group_dev)
+               stripe_count, l_nev, a_dev, row_group_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
       call launch_my_pack_c_sycl_kernel_real_double(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+           row_group_dev, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
     subroutine launch_my_pack_sycl_kernel_real_single(row_count, n_offset, max_idx,stripe_width, &
-               a_dim2, stripe_count, l_nev, a_dev, row_group_dev)
+               a_dim2, stripe_count, l_nev, a_dev, row_group_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
       call launch_my_pack_c_sycl_kernel_real_single(row_count, n_offset, max_idx,stripe_width, a_dim2, stripe_count, l_nev, a_dev, &
-           row_group_dev)
+           row_group_dev, my_stream)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_extract_hh_tau_sycl_kernel_real_double(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_sycl_kernel_real_double(hh, hh_tau, nb, n, is_zero, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int) :: nb, n
       integer(kind=c_int) :: is_zero
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
-      call launch_extract_hh_tau_c_sycl_kernel_real_double(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_sycl_kernel_real_double(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_REAL
-    subroutine launch_extract_hh_tau_sycl_kernel_real_single(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_sycl_kernel_real_single(hh, hh_tau, nb, n, is_zero, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int) :: nb, n
       integer(kind=c_int) :: is_zero
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
-      call launch_extract_hh_tau_c_sycl_kernel_real_single(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_sycl_kernel_real_single(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
     end subroutine
 #endif
 
     subroutine launch_my_unpack_sycl_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, &
-               a_dim2, stripe_count, l_nev, row_group_dev, a_dev)
+               a_dim2, stripe_count, l_nev, row_group_dev, a_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count
       integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
       call launch_my_unpack_c_sycl_kernel_complex_double(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-           row_group_dev, a_dev)
+           row_group_dev, a_dev, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     subroutine launch_my_unpack_sycl_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, &
-               a_dim2, stripe_count, l_nev, row_group_dev, a_dev)
+               a_dim2, stripe_count, l_nev, row_group_dev, a_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count
       integer(kind=c_int) :: n_offset, max_idx,stripe_width, a_dim2, stripe_count,l_nev
       integer(kind=c_intptr_t) :: a_dev, row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
       call launch_my_unpack_c_sycl_kernel_complex_single(row_count, n_offset, max_idx, stripe_width, a_dim2, stripe_count, l_nev, &
-           row_group_dev, a_dev)
+           row_group_dev, a_dev, my_stream)
 #endif
     end subroutine
 #endif
 
     subroutine launch_my_pack_sycl_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, &
-               stripe_count, l_nev, a_dev, row_group_dev)
+               stripe_count, l_nev, a_dev, row_group_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
       call launch_my_pack_c_sycl_kernel_complex_double(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
-                                                       a_dev, row_group_dev)
+                                                       a_dev, row_group_dev, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
     subroutine launch_my_pack_sycl_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, &
-               stripe_count, l_nev, a_dev, row_group_dev)
+               stripe_count, l_nev, a_dev, row_group_dev, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: row_count, n_offset, max_idx, stripe_width, a_dim2,stripe_count, l_nev
       integer(kind=c_intptr_t) :: a_dev
       integer(kind=c_intptr_t) :: row_group_dev
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
       call launch_my_pack_c_sycl_kernel_complex_single(row_count, n_offset, max_idx,stripe_width,a_dim2, stripe_count, l_nev, &
-                                                       a_dev, row_group_dev)
+                                                       a_dev, row_group_dev, my_stream)
 #endif
     end subroutine
 #endif
 
-    subroutine launch_extract_hh_tau_sycl_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_sycl_kernel_complex_double(hh, hh_tau, nb, n, is_zero, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int) :: nb, n
       integer(kind=c_int) :: is_zero
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
-      call launch_extract_hh_tau_c_sycl_kernel_complex_double(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_sycl_kernel_complex_double(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
     end subroutine
 
 #ifdef WANT_SINGLE_PRECISION_COMPLEX
-    subroutine launch_extract_hh_tau_sycl_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
+    subroutine launch_extract_hh_tau_sycl_kernel_complex_single(hh, hh_tau, nb, n, is_zero, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_intptr_t) :: hh
       integer(kind=c_intptr_t) :: hh_tau
       integer(kind=c_int) :: nb, n
       integer(kind=c_int) :: is_zero
+      integer(kind=c_intptr_t) :: my_stream
 #ifdef WITH_SYCL_GPU_VERSION
-      call launch_extract_hh_tau_c_sycl_kernel_complex_single(hh, hh_tau, nb, n, is_zero)
+      call launch_extract_hh_tau_c_sycl_kernel_complex_single(hh, hh_tau, nb, n, is_zero, my_stream)
 #endif
     end subroutine
 #endif

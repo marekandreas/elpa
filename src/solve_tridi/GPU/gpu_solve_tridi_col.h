@@ -50,7 +50,7 @@
 
 template <typename T>
 __global__ void gpu_update_d_kernel(T *d, T *e, int *limits, const int ndiv, const int na) {
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  //int i = blockIdx.x * blockDim.x + threadIdx.x;
 
   for (int ii=0; ii<ndiv-1; ii++) {
     int n = limits[ii]-1;

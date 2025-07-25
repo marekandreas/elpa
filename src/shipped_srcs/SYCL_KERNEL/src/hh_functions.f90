@@ -1,8 +1,37 @@
+
+#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+#define USE_COMPUTE_HH_WRAPPER_CUDA use compute_hh_wrapper_cuda
+#define COMPUTE_HH_CUDA_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) \
+   call compute_hh_cuda_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#define COMPUTE_HH_CUDA_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) \
+   call compute_hh_cuda_gpu(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#else
+#define USE_COMPUTE_HH_WRAPPER_CUDA
+#define COMPUTE_HH_CUDA_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) stop
+#define COMPUTE_HH_CUDA_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) stop
+#endif
+
+#ifdef ENABLE_REFERENCE_ROCM_IMPLEMENTATION
+#define COMPUTE_HH_ROCM_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) \
+   call compute_hh_rocm_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#define COMPUTE_HH_ROCM_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) \
+   call compute_hh_rocm_gpu(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+#else
+#define COMPUTE_HH_ROCM_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) stop
+#define COMPUTE_HH_ROCM_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc) stop
+#endif
+
 module hh_functions
   implicit none
 contains
-  subroutine perform_hh_test_complex(nbw, nn, nr, nc)
+  subroutine perform_hh_test_complex(nbw, nn, nr, nc, backend)
     use compute_hh_wrapper
+#ifdef ENABLE_REFERENCE_ROCM_IMPLEMENTATION
+    use compute_hh_wrapper_rocm
+#endif
+#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+    use compute_hh_wrapper_cuda
+#endif
     use omp_lib, only: omp_get_wtime
     use iso_c_binding, only: c_double,c_intptr_t
     implicit none
@@ -11,6 +40,9 @@ contains
     integer, intent(in), value :: nn
     integer, intent(in), value :: nr
     integer, intent(in), value :: nc
+    integer, intent(in), value :: backend
+
+    integer, parameter :: syclBe = 1, cudaBe = 2, rocmBe = 3
 
     integer :: n_rand
     integer :: i
@@ -38,13 +70,19 @@ contains
     seed(:) = 20191015
 
     print *, "warm up GPU"
-    call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)
+    if (backend == cudaBe) then
+      COMPUTE_HH_CUDA_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+    elseif (backend == rocmBe) then
+      COMPUTE_HH_ROCM_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+    else
+      call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+    endif
     print *, "...done."
 
 
     call random_seed(put=seed)
-    call random_number_complex(hh, nc, nr)
-    call random_number_complex(evec1, nbw, nn)
+    call random_number_complex(evec1, nc, nr)
+    call random_number_complex(hh, nbw, nn)
 
 
     ! Normalize
@@ -80,7 +118,13 @@ contains
       double precision :: gpu_start, gpu_finish, init_time, transfer_time, compute_time
 
       gpu_start = omp_get_wtime()
-      call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      if (backend == cudaBe) then
+        COMPUTE_HH_CUDA_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      elseif (backend == rocmBe) then
+        COMPUTE_HH_ROCM_GPU_COMPLEX(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      else
+        call compute_hh_gpu_complex(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      endif
       gpu_finish = omp_get_wtime()
 
       write(*,"(2X,A)") "GPU version finished"
@@ -90,7 +134,6 @@ contains
       print '("---------------------------------------------")'
       print '("Total Time GPU = ",f8.4," seconds.")', gpu_finish - gpu_start
     end block
-
 
     ! Compare results
     err = maxval(abs(evec1-evec2))
@@ -102,11 +145,17 @@ contains
     deallocate(evec2)
     deallocate(hh)
     deallocate(tau)
-
   end subroutine perform_hh_test_complex
 
-  subroutine perform_hh_test_real(nbw, nn, nr, nc)
+
+  subroutine perform_hh_test_real(nbw, nn, nr, nc, backend)
     use compute_hh_wrapper
+#ifdef ENABLE_REFERENCE_ROCM_IMPLEMENTATION
+    use compute_hh_wrapper_rocm
+#endif
+#ifdef ENABLE_REFERENCE_CUDA_IMPLEMENTATION
+    use compute_hh_wrapper_cuda
+#endif
     use omp_lib, only: omp_get_wtime
     use iso_c_binding, only: c_double,c_intptr_t
     implicit none
@@ -115,6 +164,9 @@ contains
     integer, intent(in), value :: nn
     integer, intent(in), value :: nr
     integer, intent(in), value :: nc
+    integer, intent(in), value :: backend
+
+    integer, parameter :: syclBe = 1, cudaBe = 2, rocmBe = 3
 
     integer :: n_rand
     integer :: i
@@ -145,20 +197,25 @@ contains
     call random_number(hh)
     call random_number(evec1)
 
-
     print *, "start gpu test"
-    call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)
+    if (backend == cudaBe) then
+      COMPUTE_HH_CUDA_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+    elseif (backend == rocmBe) then
+      COMPUTE_HH_ROCM_GPU(nn, nc, nbw, evec2, hh, tau, wa, wb, wc)
+    else
+      call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, wa,wb,wc)
+    endif
     print *, "end gpu test"
 
     ! Normalize
     do i = 1,nc
-    dotp = dot_product(evec1(i,:),evec1(i,:))
-    evec1(i,:) = evec1(i,:)/sqrt(abs(dotp))
+      dotp = dot_product(evec1(i,:),evec1(i,:))
+      evec1(i,:) = evec1(i,:)/sqrt(abs(dotp))
     end do
 
     do i = 1,nn
-    dotp = dot_product(hh(:,i),hh(:,i))
-    hh(:,i) = hh(:,i)/sqrt(abs(dotp))
+      dotp = dot_product(hh(:,i),hh(:,i))
+      hh(:,i) = hh(:,i)/sqrt(abs(dotp))
     end do
 
     evec2(:,:) = evec1
@@ -183,7 +240,13 @@ contains
       double precision :: gpu_start, gpu_finish, init_time, transfer_time, compute_time
 
       gpu_start = omp_get_wtime()
-      call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      if (backend == cudaBe) then
+        COMPUTE_HH_CUDA_GPU(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      elseif (backend == rocmBe) then
+        COMPUTE_HH_ROCM_GPU(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      else
+        call compute_hh_gpu(nn, nc, nbw, evec2, hh, tau, init_time, transfer_time, compute_time)
+      endif
       gpu_finish = omp_get_wtime()
 
       write(*,"(2X,A)") "GPU version finished"
@@ -205,26 +268,27 @@ contains
     deallocate(evec2)
     deallocate(hh)
     deallocate(tau)
-
   end subroutine perform_hh_test_real
+
 
   subroutine random_number_complex(array, dim1, dim2)
     use iso_c_binding, only: c_double
     implicit none
 
     complex (kind=c_double), intent(inout) :: array(:,:)
+    complex (kind=c_double) :: tmp
     integer, intent(in), value :: dim1, dim2
     real (kind=c_double) :: realc, imagc
     integer :: i, j
 
     do i = 1, dim1
-    do j = 1, dim2
-    call random_number(realc)
-    call random_number(imagc)
-    array(i,j) = cmplx(realc, imagc, c_double)
+      do j = 1, dim2
+        call random_number(realc)
+        call random_number(imagc)
+        tmp = cmplx(realc, imagc, c_double)
+        array(i, j) = tmp
+      end do
     end do
-    end do
-
   end subroutine random_number_complex
 
 end module

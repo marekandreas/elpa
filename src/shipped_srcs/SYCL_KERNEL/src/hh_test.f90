@@ -8,14 +8,15 @@ program hh_test
   implicit none
 
   character(10) :: arg
-
+  integer            :: backend, numberType
+  integer, parameter :: syclBe = 1, cudaBe = 2, rocmBe = 3, realNt = 4, complexNt = 5, invalidConfig = 6
   integer            :: nbw       ! Length of Householder vectors (b==nbw)
   integer            :: nn        ! Length of eigenvectors (n)
   integer            :: nr        ! (N_R==n+b-1)
   integer, parameter :: nc = 1024 ! Number of eigenvectors (N_C)
 
   ! Read command line arguments
-  if(command_argument_count() == 3) then
+  if(command_argument_count() == 4) then
     call get_command_argument(1,arg)
 
     read(arg,*) nbw
@@ -54,7 +55,32 @@ program hh_test
     nr = nn+nbw-1
 
     call get_command_argument(3, arg)
+    if (index(arg, "R") > 0) then
+      numberType = realNt
+    else if (index(arg, "C") > 0) then
+      numberType = complexNt
+    else
+      write(*,"(2X,A)") "################################################"
+      write(*,"(2X,A)") "##  Incorrect Datatype for Arg #3             ##"
+      write(*,"(2X,A)") "##  Arg#3: Datatype: R -> Real C -> Complex   ##"
+      write(*,"(2X,A)") "################################################"
+      stop
+    endif
 
+    call get_command_argument(4, arg)
+    if (index(arg, "N") > 0) then
+      backend = cudaBe
+    else if (index(arg, "S") > 0) then
+      backend = syclBe
+    else if (index(arg, "R") > 0) then
+      backend = rocmBe
+    else
+      write(*,"(2X,A)") "################################################"
+      write(*,"(2X,A)") "##  Incorrect Backend (BE) for Arg #4         ##"
+      write(*,"(2X,A)") "##  Arg#4: BE: N -> CUDA, R -> ROCm S -> SYCL ##"
+      write(*,"(2X,A)") "################################################"
+      stop
+    endif
 
     write(*,"(2X,A)") "Test parameters:"
     write(*,"(2X,A,I10)") "| b  : ",nbw
@@ -63,16 +89,18 @@ program hh_test
     write(*,"(2X,A,I10)") "| nc : ",nc
     write(*,"(2X,A,A10)") "| DT : ",arg
 
-    if (index(arg, "R") > 0) then
-      call perform_hh_test_real(nbw, nn, nr, nc)
-    else if (index(arg, "C") > 0) then
-      call perform_hh_test_complex(nbw, nn, nr, nc)
-    else
-      write(*,"(2X,A)") "################################################"
-      write(*,"(2X,A)") "##  Incorrect Datatype for Arg #3             ##"
-      write(*,"(2X,A)") "##  Arg#3: Datatype: R -> Real C -> Complex   ##"
-      write(*,"(2X,A)") "################################################"
-      stop
+    if (backend == syclBe .and. numberType == realNt) then
+      call perform_hh_test_real(nbw, nn, nr, nc, syclBe)
+    else if (backend == syclBe .and. numberType == complexNt) then
+      call perform_hh_test_complex(nbw, nn, nr, nc, syclBe)
+    else if (backend == cudaBe .and. numberType == realNt) then
+      call perform_hh_test_real(nbw, nn, nr, nc, cudaBe)
+    else if (backend == cudaBe .and. numberType == complexNt) then
+      call perform_hh_test_complex(nbw, nn, nr, nc, cudaBe)
+    else if (backend == rocmBe .and. numberType == realNt) then
+      call perform_hh_test_real(nbw, nn, nr, nc, rocmBe)
+    else if (backend == rocmBe .and. numberType == complexNt) then
+      call perform_hh_test_complex(nbw, nn, nr, nc, rocmBe)
     endif
 
   else
@@ -82,6 +110,9 @@ program hh_test
     write(*,"(2X,A)") "##         (must be 2^n, n = 1,2,...,10)      ##"
     write(*,"(2X,A)") "##  Arg#2: Length of eigenvectors             ##"
     write(*,"(2X,A)") "##  Arg#3: Datatype: R -> Real C -> Complex   ##"
+    write(*,"(2X,A)") "##  Arg#4: Backend: S -> SYCL (all GPUs)      ##"
+    write(*,"(2X,A)") "##                  N -> CUDA (NVIDIA GPUs)   ##"
+    write(*,"(2X,A)") "##                  R -> ROCm (AMD GPUs)      ##"
     write(*,"(2X,A)") "################################################"
     stop
   end if
