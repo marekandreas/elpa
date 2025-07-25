@@ -87,6 +87,25 @@
 #endif /* ADDITIONAL_OBJECT_CODE */
 #endif /* WITH_GPU_STREAMS */
 #endif /* WITH_AMD_GPU_VERSION */
+
+#ifdef WITH_SYCL_GPU_VERSION
+#ifndef WITH_GPU_STREAMS
+#ifdef ADDITIONAL_OBJECT_CODE
+        write(error_unit,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+        write(error_unit,*) "This does mean reduced performace!"
+        write(*,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+        write(*,*) "This does mean reduced performace!"
+#else /* ADDITIONAL_OBJECT_CODE */
+        ! myid is given as argument
+        if (myid .eq. 0) then
+          write(error_unit,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+          write(error_unit,*) "This does mean reduced performace!"
+          write(*,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+          write(*,*) "This does mean reduced performace!"
+        endif
+#endif /* ADDITIONAL_OBJECT_CODE */
+#endif /* WITH_GPU_STREAMS */
+#endif /* WITH_SYCL_GPU_VERSION */
         return
       endif ! (OBJECT%gpu_setup%gpuIsAssigned)
 
@@ -205,6 +224,25 @@
       endif
 #endif
 #endif
+#ifdef WITH_SYCL_GPU_VERSION
+      if (.not. (OBJECT%gpu_setup%gpuAlreadySet)) then
+        call OBJECT%get("sycl_show_all_devices", syclShowAllDevices, error)
+        if (error .ne. ELPA_OK) then
+          write(error_unit,*) "Problem getting option for sycl_show_all_devices. Aborting..."
+          stop 1
+        endif
+        if (syclShowAllDevices == 1) then
+          syclShowOnlyIntelGpus = 0
+        else
+          syclShowOnlyIntelGpus = 1
+        endif
+        success = sycl_state_initialize(syclShowOnlyIntelGpus, wantDebugMessage)
+        if (.not. success) then
+          write(error_unit, *) "sycl_state_initialize: inconsistent SYCL setup. Aborting..."
+          stop 1
+        endif
+      endif
+#endif
       if (OBJECT%is_set("use_gpu_id") == 1) then ! useGPUid
         if (.not.(OBJECT%gpu_setup%gpuAlreadySet)) then
           call OBJECT%get("use_gpu_id", use_gpu_id, error)
@@ -247,7 +285,7 @@
           !gpuIsInitialized = .true.
 
           if (OBJECT%gpu_setup%useCCL) then
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
 #include "./ccl_communicators_template.F90"
 #endif
           endif
@@ -274,35 +312,17 @@
 
 
           success = .true.
-#ifndef WITH_SYCL_GPU_VERSION
           success = gpu_getdevicecount(numberOfDevices)
-#endif
 #ifdef WITH_SYCL_GPU_VERSION
-          call OBJECT%get("sycl_show_all_devices", syclShowAllDevices, error)
-          if (error .ne. ELPA_OK) then
-            write(error_unit,*) "Problem getting option for sycl_show_all_devices. Aborting..."
-            stop 1
-          endif
-
-          if (syclShowAllDevices == 1) then
-            syclShowOnlyIntelGpus = 0
-            OBJECT%gpu_setup%syclCPU = 1
-          else
-            syclShowOnlyIntelGpus = 1
-            OBJECT%gpu_setup%syclCPU = 0
-          endif
           if (myid == 0 .and. wantDebugMessage) then
             write(error_unit,*) "SYCL: syclShowOnlyIntelGpus =  ", syclShowOnlyIntelGpus
-          endif
-          success = sycl_getdevicecount(numberOfDevices, syclShowOnlyIntelGpus)
-          if (myid == 0 .and. wantDebugMessage) then
             write(error_unit,*) "SYCL: numberOfDevices =  ", numberOfDevices
-          endif
-          if (wantDebugMessage) then
             call sycl_printdevices()
           endif
-          !OBJECT%gpu_setup%syclCPU=.false.
-          !success = sycl_getdevicecount(numberOfDevices)
+          !TODO  I'd also like to check that all the chosen devices have the same platform, 
+          !TODO  as mixing platforms and thus also different devices will probably performace
+          !TODO  extremely poorly. This will need another Function in syclCommon, and the
+          !TODO  interfaces that that brings with it.
 #endif
           if (.not.(success)) then
 #ifdef WITH_NVIDIA_GPU_VERSION
@@ -319,22 +339,6 @@
 #endif
             stop 1
           endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-        ! special case: maybe we want to run the sycl code path on cpu ?
-        if (numberOfDevices .eq. 0) then
-          success = sycl_getcpucount(numberOfDevices)
-          if (.not.(success)) then
-#ifdef WITH_SYCL_GPU_VERSION
-            write(error_unit,*) "error in sycl_getdevicecount"
-#endif
-            stop 1
-          endif
-          if (numberOfDevices .ge. 0) then
-            OBJECT%gpu_setup%syclCPU=.true.
-          endif
-        endif
-#endif
 
           ! make sure that all nodes have the same number of GPU's, otherwise
           ! we run into loadbalancing trouble
@@ -389,7 +393,7 @@
 
 
             OBJECT%gpu_setup%useCCL=.false.            
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)            
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
             if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node .eq. 1) then
               call OBJECT%get("use_ccl", useCCLCOMM, error)
               if (error .ne. ELPA_OK) then
@@ -439,7 +443,7 @@
 
             
             if (OBJECT%gpu_setup%useCCL) then
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
 #include "./ccl_communicators_template.F90"
 #endif
             endif
@@ -637,21 +641,121 @@
 
 #endif /* WITH_AMD_GPU_VERSION */
 
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+#ifdef WITH_SYCL_GPU_VERSION
+      ! ThreadsPerBlock
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxThreadsPerBlock
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL maxThreadsPerBlock: ", value
+      endif
+      OBJECT%gpu_setup%syclMaxThreadsPerBlock = value
+      OBJECT%gpu_setup%gpuMaxThreadsPerBlock = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimX
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxBLockDimX: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxBlockDimX = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimX = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimY
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxBLockDimY: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxBlockDimY = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimY = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxBlockDimZ
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxBLockDimZ: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxBlockDimZ = value
+      OBJECT%gpu_setup%gpuDevMaxBlockDimZ = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimX
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxGridDimX: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxGridDimX = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimX    = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimY
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxGridDimY: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxGridDimY = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimY = value
+
+      attribute = OBJECT%gpu_setup%gpuDevAttrMaxGridDimZ
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL MaxGridDimZ: ", value
+      endif
+      OBJECT%gpu_setup%syclDevMaxGridDimZ = value
+      OBJECT%gpu_setup%gpuDevMaxGridDimZ  = value
+
+      
+      attribute = OBJECT%gpu_setup%gpuDevAttrMultiProcessorCount
+      success = sycl_device_get_attributes(value, attribute)
+      if (.not.(success)) then
+        write(error_unit,*) "error in sycl_device_get_attributes"
+        stop 1
+      endif
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "SYCL SM count: ", value
+      endif
+      OBJECT%gpu_setup%syclSMcount  = value
+      OBJECT%gpu_setup%gpuSMcount   = value
+#endif /* WITH_SYCL_GPU_VERSION */
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       if (wantDebugMessage .and. myid == 0) then
-        write(error_unit,*) "gpuMaxThreadsPerBlock: ", OBJECT%gpu_setup%gpuMaxThreadsPerBlock
-        write(error_unit,*) "gpuDevMaxBlockDimX: ", OBJECT%gpu_setup%gpuDevMaxBlockDimX
-        write(error_unit,*) "gpuDevMaxBlockDimY: ", OBJECT%gpu_setup%gpuDevMaxBlockDimY
-        write(error_unit,*) "gpuDevMaxBlockDimZ: ", OBJECT%gpu_setup%gpuDevMaxBlockDimZ
-        write(error_unit,*) "gpuDevMaxGridDimX : ", OBJECT%gpu_setup%gpuDevMaxGridDimX
-        write(error_unit,*) "gpuDevMaxGridDimY : ", OBJECT%gpu_setup%gpuDevMaxGridDimY
-        write(error_unit,*) "gpuDevMaxGridDimZ : ", OBJECT%gpu_setup%gpuDevMaxGridDimZ
-        write(error_unit,*) "gpuSMcount: ", OBJECT%gpu_setup%gpuSMcount   
+        write(error_unit,*) "gpuMaxThreadsPerBlock: ",OBJECT%gpu_setup%gpuMaxThreadsPerBlock
+        write(error_unit,*) "gpuDevMaxBlockDimX: ",   OBJECT%gpu_setup%gpuDevMaxBlockDimX
+        write(error_unit,*) "gpuDevMaxBlockDimY: ",   OBJECT%gpu_setup%gpuDevMaxBlockDimY
+        write(error_unit,*) "gpuDevMaxBlockDimZ: ",   OBJECT%gpu_setup%gpuDevMaxBlockDimZ
+        write(error_unit,*) "gpuDevMaxGridDimX : ",   OBJECT%gpu_setup%gpuDevMaxGridDimX
+        write(error_unit,*) "gpuDevMaxGridDimY : ",   OBJECT%gpu_setup%gpuDevMaxGridDimY
+        write(error_unit,*) "gpuDevMaxGridDimZ : ",   OBJECT%gpu_setup%gpuDevMaxGridDimZ
+        write(error_unit,*) "gpuSMcount: ",           OBJECT%gpu_setup%gpuSMcount   
       endif
 #endif /* WITH_NVIDIA_GPU_VERSION || WITH_AMD_GPU_VERSION */
 
       if (gpuAvailable) then
-        ! print warning if NVIDIA or AMD without streams
+        ! print warning if NVIDIA or AMD or SYCL without streams
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifndef WITH_GPU_STREAMS
 #ifdef ADDITIONAL_OBJECT_CODE
@@ -689,4 +793,24 @@
 #endif /* ADDITIONAL_OBJECT_CODE */
 #endif /* WITH_GPU_STREAMS */
 #endif /* WITH_AMD_GPU_VERSION */
+
+#ifdef WITH_SYCL_GPU_VERSION
+#ifndef WITH_GPU_STREAMS
+#ifdef ADDITIONAL_OBJECT_CODE
+        write(error_unit,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+        write(error_unit,*) "This does mean reduced performace!"
+        write(*,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+        write(*,*) "This does mean reduced performace!"
+#else /* ADDITIONAL_OBJECT_CODE */
+        ! myid is given as argument
+        if (myid .eq. 0) then
+          write(error_unit,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+          write(error_unit,*) "This does mean reduced performace!"
+          write(*,*) "You use the SYCL-GPUs without enabling sycl-gpu streams at build time!"
+          write(*,*) "This does mean reduced performace!"
+        endif
+#endif /* ADDITIONAL_OBJECT_CODE */
+#endif /* WITH_GPU_STREAMS */
+#endif /* WITH_SYCL_GPU_VERSION */
+
       endif

@@ -50,7 +50,7 @@
 
 template <typename T>
 __global__ void gpu_check_monotony_kernel(T *d, T *q, T *qtmp, const int nlen, const int ldq) {
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  //int i = blockIdx.x * blockDim.x + threadIdx.x;
   //int j = blockIdx.y * blockDim.y + threadIdx.y;
 
   int j;

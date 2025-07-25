@@ -121,7 +121,8 @@ int elpa::gpu::sycl::selectGpuDevice(int deviceId) {
   chosenQueue = std::make_optional<cl::sycl::queue>(devices[deviceId], props);
   auto platform = chosenQueue->get_device().get_platform().get_info<cl::sycl::info::platform::name>();
   auto deviceName = chosenQueue->get_device().get_info<cl::sycl::info::device::name>();
-  std::cout << "Selected device: (" << platform << ") " << deviceName << std::endl;
+  auto numCus = chosenQueue->get_device().get_info<cl::sycl::info::device::max_compute_units>();
+  std::cout << "Selected device: (" << platform << ") " << deviceName << " (" << numCus << " CUs)" << std::endl;
   return 1;
 }
 

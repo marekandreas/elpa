@@ -45,17 +45,17 @@
 ! This file is the generated version. Do NOT edit
 
 
-!  interface
-!    function syclsolver_set_stream_c(syclsolverHandle, syclStream) result(istat) &
-!              bind(C, name="syclsolverSetStreamFromC")
-!      use, intrinsic :: iso_c_binding
-!      implicit none
-!
-!      integer(kind=C_intptr_T), value  :: syclsolverHandle
-!      integer(kind=C_intptr_T), value  :: syclStream
-!      integer(kind=C_INT)              :: istat
-!    end function
-!  end interface
+  interface
+    function syclsolver_set_stream_c(syclsolverHandle, syclStream) result(istat) &
+             bind(C, name="syclsolverSetStreamFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=C_intptr_T), value  :: syclsolverHandle
+      integer(kind=C_intptr_T), value  :: syclStream
+      integer(kind=C_INT)              :: istat
+    end function
+  end interface
 
   interface
     function syclsolver_create_c(syclsolverHandle) result(istat) &

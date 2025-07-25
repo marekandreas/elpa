@@ -1243,13 +1243,12 @@
 
 #else /* DEVICE_POINTER */
 #if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
-  deallocate(a_tmp, stat=istat, errmsg=errorMessage)
-  check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
-
 #ifdef WITH_GPU_STREAMS
   successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
   check_host_unregister_gpu("elpa_cholesky: a_tmp", successGPU)
 #endif
+  deallocate(a_tmp, stat=istat, errmsg=errorMessage)
+  check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
 #endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER) */
 #endif /* DEVICE_POINTER */
 

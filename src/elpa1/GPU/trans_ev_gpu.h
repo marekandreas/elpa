@@ -315,9 +315,7 @@ __global__ void gpu_trmv_kernel(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *
         slice_sum = elpaDeviceAdd(slice_sum, elpaDeviceMultiply(elpaDeviceComplexConjugate(tmat_dev[i + j*max_stored_rows]), h_dev[i]));
       }
 
-      // set the cache values
       cache[threadIdx.x] = slice_sum;
-      // synchronize threads in this block
       __syncthreads();
 
       // for reductions, threadsPerBlock=blockDim.x must be a power of 2

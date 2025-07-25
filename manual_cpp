@@ -102,5 +102,5 @@ elif (ext==".F90"):
     # compile
     check_call(args + [tmp_filename])
 
-# cleanup (may be commented out for better debuggability
+# cleanup (may be commented out for better debuggability)
 os.remove(tmp_filename)

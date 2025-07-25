@@ -58,18 +58,13 @@ __global__ void gpu_copy_aux_full_kernel(T *lhs_dev, T *rhs_dev, int l_rows, int
 
   for (; j_loc < l_cols; j_loc += gridDim.x) {
     for (; i_loc < l_rows; i_loc += blockDim.x) {
-      lhs_dev[i_loc+j_loc*lld_lhs] = rhs_dev[i_loc+j_loc*lld_rhs];
+      lhs_dev[i_loc + j_loc*lld_lhs] = rhs_dev[i_loc + j_loc*lld_rhs];
     }
   }
 }
 
 template <typename T>
-void gpu_copy_aux_full(T *lhs_dev, T *rhs_dev, int *l_rows_in, int *l_cols_in, int *lld_lhs_in, int *lld_rhs_in, int *debug_in, gpuStream_t my_stream){
-  int l_rows = *l_rows_in;
-  int l_cols = *l_cols_in;
-  int lld_lhs = *lld_lhs_in;
-  int lld_rhs = *lld_rhs_in;
-  int debug = *debug_in;
+void gpu_copy_aux_full(T *lhs_dev, T *rhs_dev, int l_rows, int l_cols, int lld_lhs, int lld_rhs, int debug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(l_cols,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
@@ -80,8 +75,7 @@ void gpu_copy_aux_full(T *lhs_dev, T *rhs_dev, int *l_rows_in, int *l_cols_in, i
   gpu_copy_aux_full_kernel<<<blocks,threadsPerBlock>>>            (lhs_dev, rhs_dev, l_rows, l_cols, lld_lhs, lld_rhs);
 #endif
 
-  if (debug)
-    {
+  if (debug) {
     gpuDeviceSynchronize();
     gpuError_t gpuerr = gpuGetLastError();
     if (gpuerr != gpuSuccess){
@@ -91,11 +85,12 @@ void gpu_copy_aux_full(T *lhs_dev, T *rhs_dev, int *l_rows_in, int *l_cols_in, i
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_aux_full_FromC) (char dataType, intptr_t lhs_dev, intptr_t rhs_dev,
-                                         int *l_rows_in, int *l_cols_in, int *lld_lhs_in, int *lld_rhs_in, int *debug_in, gpuStream_t my_stream){
-  if (dataType=='D') gpu_copy_aux_full<double>((double *) lhs_dev, (double *) rhs_dev, l_rows_in, l_cols_in, lld_lhs_in, lld_rhs_in, debug_in, my_stream);
-  if (dataType=='S') gpu_copy_aux_full<float> ((float  *) lhs_dev, (float  *) rhs_dev, l_rows_in, l_cols_in, lld_lhs_in, lld_rhs_in, debug_in, my_stream);
-  if (dataType=='Z') gpu_copy_aux_full<gpuDoubleComplex>((gpuDoubleComplex *) lhs_dev, (gpuDoubleComplex *) rhs_dev, l_rows_in, l_cols_in, lld_lhs_in, lld_rhs_in, debug_in, my_stream);
-  if (dataType=='C') gpu_copy_aux_full<gpuFloatComplex> ((gpuFloatComplex  *) lhs_dev, (gpuFloatComplex  *) rhs_dev, l_rows_in, l_cols_in, lld_lhs_in, lld_rhs_in, debug_in, my_stream);
+                                         int l_rows, int l_cols, int lld_lhs, int lld_rhs, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_copy_aux_full<double>((double *) lhs_dev, (double *) rhs_dev, l_rows, l_cols, lld_lhs, lld_rhs, debug, my_stream);
+  else if (dataType=='S') gpu_copy_aux_full<float> ((float  *) lhs_dev, (float  *) rhs_dev, l_rows, l_cols, lld_lhs, lld_rhs, debug, my_stream);
+  else if (dataType=='Z') gpu_copy_aux_full<gpuDoubleComplex>((gpuDoubleComplex *) lhs_dev, (gpuDoubleComplex *) rhs_dev, l_rows, l_cols, lld_lhs, lld_rhs, debug, my_stream);
+  else if (dataType=='C') gpu_copy_aux_full<gpuFloatComplex> ((gpuFloatComplex  *) lhs_dev, (gpuFloatComplex  *) rhs_dev, l_rows, l_cols, lld_lhs, lld_rhs, debug, my_stream);
+  else printf("Error in gpu_copy_aux_full: Unsupported data type\n");
 }
 
 //________________________________________________________________
@@ -122,11 +117,7 @@ __global__ void gpu_copy_and_set_zeros_aux_full_kernel(T *a_dev, T *aux_mat_full
 }
 
 template <typename T>
-void gpu_copy_and_set_zeros_aux_full(T *mat_dev, T *aux_mat_full_dev, int *l_rows_in, int *l_cols_in, int *nblk_mult_in, int *debug_in, gpuStream_t my_stream){
-  int l_rows = *l_rows_in;
-  int l_cols = *l_cols_in;
-  int nblk_mult = *nblk_mult_in;
-  int debug = *debug_in;
+void gpu_copy_and_set_zeros_aux_full(T *mat_dev, T *aux_mat_full_dev, int l_rows, int l_cols, int nblk_mult, int debug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(nblk_mult,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
@@ -137,8 +128,7 @@ void gpu_copy_and_set_zeros_aux_full(T *mat_dev, T *aux_mat_full_dev, int *l_row
   gpu_copy_and_set_zeros_aux_full_kernel<<<blocks,threadsPerBlock>>>(mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult);
 #endif
 
-  if (debug)
-    {
+  if (debug) {
     gpuDeviceSynchronize();
     gpuError_t gpuerr = gpuGetLastError();
     if (gpuerr != gpuSuccess){
@@ -148,19 +138,18 @@ void gpu_copy_and_set_zeros_aux_full(T *mat_dev, T *aux_mat_full_dev, int *l_row
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_aux_full_FromC) (char dataType, intptr_t mat_dev, intptr_t aux_mat_full_dev,
-                                                       int *l_rows_in, int *l_cols_in, int *nblk_mult_in, int *debug_in, gpuStream_t my_stream){
-  if (dataType=='D') gpu_copy_and_set_zeros_aux_full<double>((double *) mat_dev, (double *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, debug_in, my_stream);
-  if (dataType=='S') gpu_copy_and_set_zeros_aux_full<float> ((float  *) mat_dev, (float  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, debug_in, my_stream);
-  if (dataType=='Z') gpu_copy_and_set_zeros_aux_full<gpuDoubleComplex>((gpuDoubleComplex *) mat_dev, (gpuDoubleComplex *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, debug_in, my_stream);
-  if (dataType=='C') gpu_copy_and_set_zeros_aux_full<gpuFloatComplex> ((gpuFloatComplex  *) mat_dev, (gpuFloatComplex  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, debug_in, my_stream);
+                                                       int l_rows, int l_cols, int nblk_mult, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_copy_and_set_zeros_aux_full<double>((double *) mat_dev, (double *) aux_mat_full_dev, l_rows, l_cols, nblk_mult, debug, my_stream);
+  else if (dataType=='S') gpu_copy_and_set_zeros_aux_full<float> ((float  *) mat_dev, (float  *) aux_mat_full_dev, l_rows, l_cols, nblk_mult, debug, my_stream);
+  else if (dataType=='Z') gpu_copy_and_set_zeros_aux_full<gpuDoubleComplex>((gpuDoubleComplex *) mat_dev, (gpuDoubleComplex *) aux_mat_full_dev, l_rows, l_cols, nblk_mult, debug, my_stream);
+  else if (dataType=='C') gpu_copy_and_set_zeros_aux_full<gpuFloatComplex> ((gpuFloatComplex  *) mat_dev, (gpuFloatComplex  *) aux_mat_full_dev, l_rows, l_cols, nblk_mult, debug, my_stream);
+  else printf("Error in gpu_copy_and_set_zeros_aux_full: Unsupported data type\n");
 }
 
 //________________________________________________________________
 
-// PETERDEBUG:  l_cols is unused, delete it
-// also "variable "threadsPerBlock" was declared but never referenced" in this source file
 template <typename T>
-__global__ void gpu_copy_and_set_zeros_aux_a_full_kernel(T *a_dev, T *aux_a_full_dev, int l_rows, int l_cols, int nblk_mult_cols,
+__global__ void gpu_copy_and_set_zeros_aux_a_full_kernel(T *a_dev, T *aux_a_full_dev, int l_rows, int nblk_mult_cols,
                                                           int nblk, int np_bc_fine, int np_cols_fine, int np_cols) {
 
   // do j_block_loc_fine = 0, nblk_mult_cols/nblk-1
@@ -207,32 +196,23 @@ __global__ void gpu_copy_and_set_zeros_aux_a_full_kernel(T *a_dev, T *aux_a_full
 }
 
 
-
 template <typename T>
-void gpu_copy_and_set_zeros_aux_a_full(T *mat_dev, T *aux_mat_full_dev, int *l_rows_in, int *l_cols_in, int *nblk_mult_cols_in, 
-                                        int *nblk_in, int *np_bc_fine_in, int *np_cols_fine_in, int *np_cols_in, int *debug_in, gpuStream_t my_stream){
-  int l_rows = *l_rows_in;
-  int l_cols = *l_cols_in;
-  int nblk_mult_cols = *nblk_mult_cols_in;
-  int nblk = *nblk_in;
-  int np_bc_fine = *np_bc_fine_in;
-  int np_cols_fine = *np_cols_fine_in;
-  int np_cols = *np_cols_in;
-  int debug = *debug_in;
+void gpu_copy_and_set_zeros_aux_a_full(T *mat_dev, T *aux_mat_full_dev, int l_rows, int nblk_mult_cols, 
+                                        int nblk, int np_bc_fine, int np_cols_fine, int np_cols, 
+                                        int debug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(nblk, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  gpu_copy_and_set_zeros_aux_a_full_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult_cols,
+  gpu_copy_and_set_zeros_aux_a_full_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(mat_dev, aux_mat_full_dev, l_rows, nblk_mult_cols,
                                                                                     nblk, np_bc_fine, np_cols_fine, np_cols);
 #else
-  gpu_copy_and_set_zeros_aux_a_full_kernel<<<blocks,threadsPerBlock>>>            (mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult_cols,
+  gpu_copy_and_set_zeros_aux_a_full_kernel<<<blocks,threadsPerBlock>>>            (mat_dev, aux_mat_full_dev, l_rows, nblk_mult_cols,
                                                                                     nblk, np_bc_fine, np_cols_fine, np_cols);
 #endif
 
-  if (debug)
-    {
+  if (debug) {
     gpuDeviceSynchronize();
     gpuError_t gpuerr = gpuGetLastError();
     if (gpuerr != gpuSuccess){
@@ -242,11 +222,12 @@ void gpu_copy_and_set_zeros_aux_a_full(T *mat_dev, T *aux_mat_full_dev, int *l_r
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_aux_a_full_FromC) (char dataType, intptr_t mat_dev, intptr_t aux_mat_full_dev,
-                                                       int *l_rows_in, int *l_cols_in, int *nblk_mult_cols_in, int *nblk_in, int *np_bc_fine_in, int *np_cols_fine_in, int *np_cols_in, int *debug_in, gpuStream_t my_stream){
-  if (dataType=='D') gpu_copy_and_set_zeros_aux_a_full<double>((double *) mat_dev, (double *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, nblk_in, np_bc_fine_in, np_cols_fine_in, np_cols_in, debug_in, my_stream);
-  if (dataType=='S') gpu_copy_and_set_zeros_aux_a_full<float> ((float  *) mat_dev, (float  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, nblk_in, np_bc_fine_in, np_cols_fine_in, np_cols_in, debug_in, my_stream);
-  if (dataType=='Z') gpu_copy_and_set_zeros_aux_a_full<gpuDoubleComplex>((gpuDoubleComplex *) mat_dev, (gpuDoubleComplex *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, nblk_in, np_bc_fine_in, np_cols_fine_in, np_cols_in, debug_in, my_stream);
-  if (dataType=='C') gpu_copy_and_set_zeros_aux_a_full<gpuFloatComplex> ((gpuFloatComplex  *) mat_dev, (gpuFloatComplex  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_cols_in, nblk_in, np_bc_fine_in, np_cols_fine_in, np_cols_in, debug_in, my_stream);
+                                                       int l_rows, int nblk_mult_cols, int nblk, int np_bc_fine, int np_cols_fine, int np_cols, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_copy_and_set_zeros_aux_a_full<double>((double *) mat_dev, (double *) aux_mat_full_dev, l_rows, nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream);
+  else if (dataType=='S') gpu_copy_and_set_zeros_aux_a_full<float> ((float  *) mat_dev, (float  *) aux_mat_full_dev, l_rows, nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream);
+  else if (dataType=='Z') gpu_copy_and_set_zeros_aux_a_full<gpuDoubleComplex>((gpuDoubleComplex *) mat_dev, (gpuDoubleComplex *) aux_mat_full_dev, l_rows, nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream);
+  else if (dataType=='C') gpu_copy_and_set_zeros_aux_a_full<gpuFloatComplex> ((gpuFloatComplex  *) mat_dev, (gpuFloatComplex  *) aux_mat_full_dev, l_rows, nblk_mult_cols, nblk, np_bc_fine, np_cols_fine, np_cols, debug, my_stream);
+  else printf("Error in gpu_copy_and_set_zeros_aux_a_full: Unsupported data type\n");
 }
 
 //________________________________________________________________
@@ -298,26 +279,12 @@ __global__ void gpu_copy_and_set_zeros_aux_b_full_kernel(T *b_dev, T *aux_b_full
 }
 
 template <typename T>
-void gpu_copy_and_set_zeros_aux_b_full(T *mat_dev, T *aux_mat_full_dev, int *l_rows_in, int *l_cols_in, int *nblk_mult_in, 
-                                        int *nblk_mult_rows_in, int *nblk_in, int *np_fine_in, int *np_rows_fine_in, int *np_rows_in,
-                                        int *SM_count_in, int *debug_in, gpuStream_t my_stream){
+void gpu_copy_and_set_zeros_aux_b_full(T *mat_dev, T *aux_mat_full_dev, int l_rows, int l_cols, int nblk_mult, 
+                                        int nblk_mult_rows, int nblk, int np_fine, int np_rows_fine, int np_rows,
+                                        int SM_count, int debug, gpuStream_t my_stream){
 
-  int l_rows = *l_rows_in;
-  int l_cols = *l_cols_in;
-  int nblk_mult = *nblk_mult_in;
-  int nblk_mult_rows = *nblk_mult_rows_in;
-  int nblk = *nblk_in;
-  int np_fine = *np_fine_in;
-  int np_rows_fine = *np_rows_fine_in;
-  int np_rows = *np_rows_in;
-  int SM_count = *SM_count_in;
-  int debug = *debug_in;
-
-  dim3 blocks = dim3(SM_count, 1, 1); // PETERDEBUG what happens in the analogous Intel-GPU case? Here and in other analogous places
+  dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
-
-  // dim3 blocks = dim3(1,1,1);
-  // dim3 threadsPerBlock = dim3(1,1,1);
 
 #ifdef WITH_GPU_STREAMS
   gpu_copy_and_set_zeros_aux_b_full_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(mat_dev, aux_mat_full_dev, l_rows, l_cols, nblk_mult, 
@@ -327,8 +294,7 @@ void gpu_copy_and_set_zeros_aux_b_full(T *mat_dev, T *aux_mat_full_dev, int *l_r
                                                                                     nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows);
 #endif
   
-    if (debug)
-      {
+    if (debug){
       gpuDeviceSynchronize();
       gpuError_t gpuerr = gpuGetLastError();
       if (gpuerr != gpuSuccess){
@@ -338,13 +304,14 @@ void gpu_copy_and_set_zeros_aux_b_full(T *mat_dev, T *aux_mat_full_dev, int *l_r
   }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_aux_b_full_FromC) (char dataType, intptr_t mat_dev, intptr_t aux_mat_full_dev,
-                                                       int *l_rows_in, int *l_cols_in, int *nblk_mult_in, 
-                                                       int *nblk_mult_rows_in, int *nblk_in, int *np_fine_in, int *np_rows_fine_in, int *np_rows_in,
-                                                       int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  if (dataType=='D') gpu_copy_and_set_zeros_aux_b_full<double>((double *) mat_dev, (double *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, nblk_mult_rows_in, nblk_in, np_fine_in, np_rows_fine_in, np_rows_in, SM_count_in, debug_in, my_stream);
-  if (dataType=='S') gpu_copy_and_set_zeros_aux_b_full<float> ((float  *) mat_dev, (float  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, nblk_mult_rows_in, nblk_in, np_fine_in, np_rows_fine_in, np_rows_in, SM_count_in, debug_in, my_stream);
-  if (dataType=='Z') gpu_copy_and_set_zeros_aux_b_full<gpuDoubleComplex>((gpuDoubleComplex *) mat_dev, (gpuDoubleComplex *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, nblk_mult_rows_in, nblk_in, np_fine_in, np_rows_fine_in, np_rows_in, SM_count_in, debug_in, my_stream);
-  if (dataType=='C') gpu_copy_and_set_zeros_aux_b_full<gpuFloatComplex> ((gpuFloatComplex  *) mat_dev, (gpuFloatComplex  *) aux_mat_full_dev, l_rows_in, l_cols_in, nblk_mult_in, nblk_mult_rows_in, nblk_in, np_fine_in, np_rows_fine_in, np_rows_in, SM_count_in, debug_in, my_stream);
+                                                       int l_rows, int l_cols, int nblk_mult, 
+                                                       int nblk_mult_rows, int nblk, int np_fine, int np_rows_fine, int np_rows,
+                                                       int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_copy_and_set_zeros_aux_b_full<double>((double *) mat_dev, (double *) aux_mat_full_dev, l_rows, l_cols, nblk_mult, nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_copy_and_set_zeros_aux_b_full<float> ((float  *) mat_dev, (float  *) aux_mat_full_dev, l_rows, l_cols, nblk_mult, nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, SM_count, debug, my_stream);
+  else if (dataType=='Z') gpu_copy_and_set_zeros_aux_b_full<gpuDoubleComplex>((gpuDoubleComplex *) mat_dev, (gpuDoubleComplex *) aux_mat_full_dev, l_rows, l_cols, nblk_mult, nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, SM_count, debug, my_stream);
+  else if (dataType=='C') gpu_copy_and_set_zeros_aux_b_full<gpuFloatComplex> ((gpuFloatComplex  *) mat_dev, (gpuFloatComplex  *) aux_mat_full_dev, l_rows, l_cols, nblk_mult, nblk_mult_rows, nblk, np_fine, np_rows_fine, np_rows, SM_count, debug, my_stream);
+  else printf("Error in gpu_copy_and_set_zeros_aux_b_full: Unsupported data type\n");
 }
 
 //________________________________________________________________
@@ -378,7 +345,6 @@ __global__ void gpu_ccl_copy_buf_send_kernel(T *a_dev, T *buf_send_dev, int l_ro
   int j_block_loc_fine = 0;
   for (; j_block_loc_fine <= j_block_loc_fine_max; j_block_loc_fine++) 
     {
-    // printf("j_block_loc_fine = %d\n", j_block_loc_fine); // PETERDEBUG
     j_block_loc = (np_bc_fine + j_block_loc_fine*np_cols_fine)/np_cols;
     nblk_cut_col = min(nblk, l_cols-j_block_loc*nblk);
 
@@ -401,24 +367,9 @@ __global__ void gpu_ccl_copy_buf_send_kernel(T *a_dev, T *buf_send_dev, int l_ro
 }
 
 template <typename T>
-void gpu_ccl_copy_buf_send(T *a_dev, T *buf_send_dev, int *l_rows_in, int *l_cols_in, int *lld_buf_in, int *nblk_in,
-                            int *i_block_loc_fine_max_in, int *j_block_loc_fine_max_in, int *np_fine_in, int *np_bc_fine_in, 
-                            int *np_rows_fine_in, int *np_cols_fine_in, int *np_rows_in, int *np_cols_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-
-  int l_rows = *l_rows_in;
-  int l_cols = *l_cols_in;
-  int lld_buf = *lld_buf_in;
-  int nblk = *nblk_in;
-  int i_block_loc_fine_max = *i_block_loc_fine_max_in;
-  int j_block_loc_fine_max = *j_block_loc_fine_max_in;
-  int np_fine = *np_fine_in;
-  int np_bc_fine = *np_bc_fine_in;
-  int np_rows_fine = *np_rows_fine_in;
-  int np_cols_fine = *np_cols_fine_in;
-  int np_rows = *np_rows_in;
-  int np_cols = *np_cols_in;
-  int SM_count = *SM_count_in;
-  int debug = *debug_in;
+void gpu_ccl_copy_buf_send(T *a_dev, T *buf_send_dev, int l_rows, int l_cols, int lld_buf, int nblk,
+                            int i_block_loc_fine_max, int j_block_loc_fine_max, int np_fine, int np_bc_fine, 
+                            int np_rows_fine, int np_cols_fine, int np_rows, int np_cols, int SM_count, int debug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2, 1, 1); // divide by 2 due to high register usage
@@ -433,8 +384,7 @@ void gpu_ccl_copy_buf_send(T *a_dev, T *buf_send_dev, int *l_rows_in, int *l_col
                                                             np_rows_fine, np_cols_fine, np_rows, np_cols);
 #endif
 
-  if (debug)
-    {
+  if (debug) {
     gpuDeviceSynchronize();
     gpuError_t gpuerr = gpuGetLastError();
     if (gpuerr != gpuSuccess){
@@ -444,21 +394,22 @@ void gpu_ccl_copy_buf_send(T *a_dev, T *buf_send_dev, int *l_rows_in, int *l_col
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _ccl_copy_buf_send_FromC) (char dataType, intptr_t a_dev, intptr_t buf_send_dev, 
-                                             int *l_rows_in, int *l_cols_in, int *lld_buf_in, int *nblk_in,
-                                             int *i_block_loc_fine_in, int *j_block_loc_fine_in, int *np_fine_in, int *np_bc_fine_in, 
-                                             int *np_rows_fine_in, int *np_cols_fine_in, int *np_rows_in, int *np_cols_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  if (dataType=='D') gpu_ccl_copy_buf_send<double>((double *) a_dev, (double *) buf_send_dev, l_rows_in, l_cols_in, lld_buf_in, nblk_in,
-                                                    i_block_loc_fine_in, j_block_loc_fine_in, np_fine_in, np_bc_fine_in, 
-                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, SM_count_in, debug_in, my_stream);
-  if (dataType=='S') gpu_ccl_copy_buf_send<float> ((float  *) a_dev, (float  *) buf_send_dev, l_rows_in, l_cols_in, lld_buf_in, nblk_in,
-                                                    i_block_loc_fine_in, j_block_loc_fine_in, np_fine_in, np_bc_fine_in, 
-                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, SM_count_in, debug_in, my_stream);
-  if (dataType=='Z') gpu_ccl_copy_buf_send<gpuDoubleComplex>((gpuDoubleComplex *) a_dev, (gpuDoubleComplex *) buf_send_dev, l_rows_in, l_cols_in, lld_buf_in, nblk_in,
-                                                    i_block_loc_fine_in, j_block_loc_fine_in, np_fine_in, np_bc_fine_in, 
-                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, SM_count_in, debug_in, my_stream);
-  if (dataType=='C') gpu_ccl_copy_buf_send<gpuFloatComplex> ((gpuFloatComplex  *) a_dev, (gpuFloatComplex  *) buf_send_dev, l_rows_in, l_cols_in, lld_buf_in, nblk_in,
-                                                    i_block_loc_fine_in, j_block_loc_fine_in, np_fine_in, np_bc_fine_in,
-                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, SM_count_in, debug_in, my_stream);
+                                             int l_rows, int l_cols, int lld_buf, int nblk,
+                                             int i_block_loc_fine, int j_block_loc_fine, int np_fine, int np_bc_fine, 
+                                             int np_rows_fine, int np_cols_fine, int np_rows, int np_cols, int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_ccl_copy_buf_send<double>((double *) a_dev, (double *) buf_send_dev, l_rows, l_cols, lld_buf, nblk,
+                                                    i_block_loc_fine, j_block_loc_fine, np_fine, np_bc_fine, 
+                                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_ccl_copy_buf_send<float> ((float  *) a_dev, (float  *) buf_send_dev, l_rows, l_cols, lld_buf, nblk,
+                                                    i_block_loc_fine, j_block_loc_fine, np_fine, np_bc_fine, 
+                                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream);
+  else if (dataType=='Z') gpu_ccl_copy_buf_send<gpuDoubleComplex>((gpuDoubleComplex *) a_dev, (gpuDoubleComplex *) buf_send_dev, l_rows, l_cols, lld_buf, nblk,
+                                                    i_block_loc_fine, j_block_loc_fine, np_fine, np_bc_fine, 
+                                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream);
+  else if (dataType=='C') gpu_ccl_copy_buf_send<gpuFloatComplex> ((gpuFloatComplex  *) a_dev, (gpuFloatComplex  *) buf_send_dev, l_rows, l_cols, lld_buf, nblk,
+                                                    i_block_loc_fine, j_block_loc_fine, np_fine, np_bc_fine,
+                                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream);
+  else printf("Error in gpu_ccl_copy_buf_send: Unsupported data type\n");
 }
 
 //________________________________________________________________
@@ -514,24 +465,9 @@ __global__ void gpu_ccl_copy_buf_recv_kernel(T *at_col_dev, T *buf_recv_dev, int
 }
 
 template <typename T>
-void gpu_ccl_copy_buf_recv(T *at_col_dev, T *buf_recv_dev, int *l_rows_in, int *l_cols_in, int *lld_buf_in, int *nblk_in,
-                            int *i_block_loc_fine_max_in, int *j_block_loc_fine_max_in, int *np_fine_in, int *np_bc_fine_in, 
-                            int *np_rows_fine_in, int *np_cols_fine_in, int *np_rows_in, int *np_cols_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-
-  int l_rows = *l_rows_in;
-  int l_cols = *l_cols_in;
-  int lld_buf = *lld_buf_in;
-  int nblk = *nblk_in;
-  int i_block_loc_fine_max = *i_block_loc_fine_max_in;
-  int j_block_loc_fine_max = *j_block_loc_fine_max_in;
-  int np_fine = *np_fine_in;
-  int np_bc_fine = *np_bc_fine_in;
-  int np_rows_fine = *np_rows_fine_in;
-  int np_cols_fine = *np_cols_fine_in;
-  int np_rows = *np_rows_in;
-  int np_cols = *np_cols_in;
-  int SM_count = *SM_count_in;
-  int debug = *debug_in;
+void gpu_ccl_copy_buf_recv(T *at_col_dev, T *buf_recv_dev, int l_rows, int l_cols, int lld_buf, int nblk,
+                            int i_block_loc_fine_max, int j_block_loc_fine_max, int np_fine, int np_bc_fine, 
+                            int np_rows_fine, int np_cols_fine, int np_rows, int np_cols, int SM_count, int debug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK/2, 1, 1); // divide by 2 due to high register usage
@@ -546,8 +482,7 @@ void gpu_ccl_copy_buf_recv(T *at_col_dev, T *buf_recv_dev, int *l_rows_in, int *
                                                            np_rows_fine, np_cols_fine, np_rows, np_cols);
 #endif
   
-    if (debug)
-      {
+    if (debug) {
       gpuDeviceSynchronize();
       gpuError_t gpuerr = gpuGetLastError();
       if (gpuerr != gpuSuccess){
@@ -557,21 +492,22 @@ void gpu_ccl_copy_buf_recv(T *at_col_dev, T *buf_recv_dev, int *l_rows_in, int *
   }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _ccl_copy_buf_recv_FromC) (char dataType, intptr_t at_col_dev, intptr_t buf_recv_dev, 
-                                             int *l_rows_in, int *l_cols_in, int *lld_buf_in, int *nblk_in,
-                                             int *i_block_loc_fine_max_in, int *j_block_loc_fine_max_in, int *np_fine_in, int *np_bc_fine_in, 
-                                             int *np_rows_fine_in, int *np_cols_fine_in, int *np_rows_in, int *np_cols_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  if (dataType=='D') gpu_ccl_copy_buf_recv<double>((double *) at_col_dev, (double *) buf_recv_dev, l_rows_in, l_cols_in, lld_buf_in, nblk_in,
-                                                    i_block_loc_fine_max_in, j_block_loc_fine_max_in, np_fine_in, np_bc_fine_in, 
-                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, SM_count_in, debug_in, my_stream);
-  if (dataType=='S') gpu_ccl_copy_buf_recv<float> ((float  *) at_col_dev, (float  *) buf_recv_dev, l_rows_in, l_cols_in, lld_buf_in, nblk_in,
-                                                    i_block_loc_fine_max_in, j_block_loc_fine_max_in, np_fine_in, np_bc_fine_in, 
-                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, SM_count_in, debug_in, my_stream);
-  if (dataType=='Z') gpu_ccl_copy_buf_recv<gpuDoubleComplex>((gpuDoubleComplex *) at_col_dev, (gpuDoubleComplex *) buf_recv_dev, l_rows_in, l_cols_in, lld_buf_in, nblk_in,
-                                                    i_block_loc_fine_max_in, j_block_loc_fine_max_in, np_fine_in, np_bc_fine_in, 
-                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, SM_count_in, debug_in, my_stream);
-  if (dataType=='C') gpu_ccl_copy_buf_recv<gpuFloatComplex> ((gpuFloatComplex  *) at_col_dev, (gpuFloatComplex  *) buf_recv_dev, l_rows_in, l_cols_in, lld_buf_in, nblk_in,
-                                                    i_block_loc_fine_max_in, j_block_loc_fine_max_in, np_fine_in, np_bc_fine_in,
-                                                    np_rows_fine_in, np_cols_fine_in, np_rows_in, np_cols_in, SM_count_in, debug_in, my_stream);
+                                             int l_rows, int l_cols, int lld_buf, int nblk,
+                                             int i_block_loc_fine_max, int j_block_loc_fine_max, int np_fine, int np_bc_fine, 
+                                             int np_rows_fine, int np_cols_fine, int np_rows, int np_cols, int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_ccl_copy_buf_recv<double>((double *) at_col_dev, (double *) buf_recv_dev, l_rows, l_cols, lld_buf, nblk,
+                                                    i_block_loc_fine_max, j_block_loc_fine_max, np_fine, np_bc_fine, 
+                                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_ccl_copy_buf_recv<float> ((float  *) at_col_dev, (float  *) buf_recv_dev, l_rows, l_cols, lld_buf, nblk,
+                                                    i_block_loc_fine_max, j_block_loc_fine_max, np_fine, np_bc_fine, 
+                                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream);
+  else if (dataType=='Z') gpu_ccl_copy_buf_recv<gpuDoubleComplex>((gpuDoubleComplex *) at_col_dev, (gpuDoubleComplex *) buf_recv_dev, l_rows, l_cols, lld_buf, nblk,
+                                                    i_block_loc_fine_max, j_block_loc_fine_max, np_fine, np_bc_fine, 
+                                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream);
+  else if (dataType=='C') gpu_ccl_copy_buf_recv<gpuFloatComplex> ((gpuFloatComplex  *) at_col_dev, (gpuFloatComplex  *) buf_recv_dev, l_rows, l_cols, lld_buf, nblk,
+                                                    i_block_loc_fine_max, j_block_loc_fine_max, np_fine, np_bc_fine,
+                                                    np_rows_fine, np_cols_fine, np_rows, np_cols, SM_count, debug, my_stream);
+  else printf("Error in gpu_ccl_copy_buf_recv: Unsupported data type\n");
 }
 
 //_________________________________________________________________________________________________
@@ -600,7 +536,7 @@ __global__ void gpu_copy_and_set_zeros_aux_ab_full_tn_kernel(T *a_dev, T *b_dev,
   //                    1+j_block_loc*nblk      : nblk_cols_cut+j_block_loc*nblk)
   //       endif
   //
-  //       call set_zeros_in_unused_block_part_&
+  //       call set_zeros_unused_block_part_&
   //                     &MATH_DATATYPE&
   //                     &_&
   //                     &PRECISION &
@@ -684,7 +620,7 @@ __global__ void gpu_copy_and_set_zeros_aux_ab_full_tn_kernel(T *a_dev, T *b_dev,
     //                    1+j_block_loc*nblk      :nblk_cols_cut+j_block_loc*nblk)
     //       endif
 
-    //       call set_zeros_in_unused_block_part_&
+    //       call set_zeros_unused_block_part_&
     //                     &MATH_DATATYPE&
     //                     &_&
     //                     &PRECISION &
@@ -858,119 +794,104 @@ __global__ void gpu_copy_and_set_zeros_aux_ab_full_nt_kernel(T *a_dev, T *b_dev,
 }
 
 template <typename T>
-void gpu_copy_and_set_zeros_aux_ab_full_tn_nt(int *a_transoposed_in, T *a_dev, T *b_dev, T *aux_a_full_dev, T *aux_b_full_dev,
-                                            int *l_rows_in, int *l_cols_in, int *nblk_mult_max_in, int *nblk_mult_in, int *nblk_in,
-                                            int *np_ab_fine_in, int *np_rows_in, int *my_prow_in,
-                                            int *np_t_fine_in, int *np_cols_in, int *my_pcol_in,
-                                            int *np_dirs_fine_in,int *SM_count_in,
-                                            int *debug_in, gpuStream_t my_stream){
-    
-    int a_transoposed = *a_transoposed_in;
-    int l_rows = *l_rows_in;
-    int l_cols = *l_cols_in;
-    int nblk_mult_max = *nblk_mult_max_in;
-    int nblk_mult = *nblk_mult_in;
-    int nblk = *nblk_in;
-    int np_ab_fine = *np_ab_fine_in;
-    int np_rows = *np_rows_in;
-    int my_prow = *my_prow_in;
-    int np_t_fine = *np_t_fine_in;
-    int np_cols = *np_cols_in;
-    int my_pcol = *my_pcol_in;
-    int np_dirs_fine = *np_dirs_fine_in;
-    int SM_count = *SM_count_in;
-    int debug = *debug_in;
+void gpu_copy_and_set_zeros_aux_ab_full_tn_nt(int a_transoposed, T *a_dev, T *b_dev, T *aux_a_full_dev, T *aux_b_full_dev,
+                                            int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
+                                            int np_ab_fine, int np_rows, int my_prow,
+                                            int np_t_fine, int np_cols, int my_pcol,
+                                            int np_dirs_fine,int SM_count,
+                                            int debug, gpuStream_t my_stream){
 
-    dim3 blocksPerGrid(SM_count, 1, 1); 
-    dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1); // use only half of the max threads due to high register usage
+  dim3 blocksPerGrid(SM_count, 1, 1); 
+  dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1); // use only half of the max threads due to high register usage
 
-    if (a_transoposed)
-      {
-#ifdef WITH_GPU_STREAMS
-      gpu_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
-          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_ab_fine, np_rows, my_prow,
-          np_t_fine, np_cols, my_pcol,
-          np_dirs_fine);
-#else
-      gpu_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock>>>(
-          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_ab_fine, np_rows, my_prow,
-          np_t_fine, np_cols, my_pcol,
-          np_dirs_fine);
-#endif
-      }
-    else 
-      {
-#ifdef WITH_GPU_STREAMS
-      gpu_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
-          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_ab_fine, np_rows, my_prow,
-          np_t_fine, np_cols, my_pcol,
-          np_dirs_fine);
-#else
-      gpu_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock>>>(
-          a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
-          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-          np_ab_fine, np_rows, my_prow,
-          np_t_fine, np_cols, my_pcol,
-          np_dirs_fine);
-#endif
-      }
-    if (debug)
+  if (a_transoposed)
     {
-        gpuDeviceSynchronize();
-        gpuError_t gpuerr = gpuGetLastError();
-        if (gpuerr != gpuSuccess)
-        {
-            printf("Error in executing gpu_copy_and_set_zeros_aux_ab_full_tn: %s\n", gpuGetErrorString(gpuerr));
-        }
+#ifdef WITH_GPU_STREAMS
+    gpu_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
+        a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_ab_fine, np_rows, my_prow,
+        np_t_fine, np_cols, my_pcol,
+        np_dirs_fine);
+#else
+    gpu_copy_and_set_zeros_aux_ab_full_tn_kernel<<<blocksPerGrid, threadsPerBlock>>>(
+        a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_ab_fine, np_rows, my_prow,
+        np_t_fine, np_cols, my_pcol,
+        np_dirs_fine);
+#endif
     }
+  else 
+    {
+#ifdef WITH_GPU_STREAMS
+    gpu_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
+        a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_ab_fine, np_rows, my_prow,
+        np_t_fine, np_cols, my_pcol,
+        np_dirs_fine);
+#else
+    gpu_copy_and_set_zeros_aux_ab_full_nt_kernel<<<blocksPerGrid, threadsPerBlock>>>(
+        a_dev, b_dev, aux_a_full_dev, aux_b_full_dev,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_ab_fine, np_rows, my_prow,
+        np_t_fine, np_cols, my_pcol,
+        np_dirs_fine);
+#endif
+    }
+
+  if (debug) {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess)
+    {
+        printf("Error in executing gpu_copy_and_set_zeros_aux_ab_full_tn: %s\n", gpuGetErrorString(gpuerr));
+    }
+  }
 }
 
-extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_aux_ab_full_tn_nt_FromC) (char dataType, int *a_transoposed_in, intptr_t a_dev, intptr_t b_dev, intptr_t aux_a_full_dev, intptr_t aux_b_full_dev,
-                                                             int *l_rows_in, int *l_cols_in, int *nblk_mult_max_in, int *nblk_mult_in, int *nblk_in,
-                                                             int *np_ab_fine_in, int *np_rows_in, int *my_prow_in,
-                                                             int *np_t_fine_in , int *np_cols_in, int *my_pcol_in,
-                                                             int *np_dirs_fine_in,
-                                                             int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  if (dataType == 'D') gpu_copy_and_set_zeros_aux_ab_full_tn_nt<double>(a_transoposed_in, (double *)a_dev, (double *)b_dev, (double *)aux_a_full_dev, (double *)aux_b_full_dev,
-                                                       l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                                       np_ab_fine_in, np_rows_in, my_prow_in,
-                                                       np_t_fine_in , np_cols_in, my_pcol_in,
-                                                       np_dirs_fine_in,
-                                                       SM_count_in, debug_in, my_stream);
-  if (dataType == 'S') gpu_copy_and_set_zeros_aux_ab_full_tn_nt<float>(a_transoposed_in, (float *)a_dev, (float *)b_dev, (float *)aux_a_full_dev, (float *)aux_b_full_dev,
-                                                      l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                                      np_ab_fine_in, np_rows_in, my_prow_in,
-                                                      np_t_fine_in , np_cols_in, my_pcol_in,
-                                                      np_dirs_fine_in,
-                                                      SM_count_in, debug_in, my_stream);
-  if (dataType == 'Z') gpu_copy_and_set_zeros_aux_ab_full_tn_nt<gpuDoubleComplex>(a_transoposed_in, (gpuDoubleComplex *)a_dev, (gpuDoubleComplex *)b_dev, (gpuDoubleComplex *)aux_a_full_dev, (gpuDoubleComplex *)aux_b_full_dev,
-                                                                l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                                                np_ab_fine_in, np_rows_in, my_prow_in,
-                                                                np_t_fine_in , np_cols_in, my_pcol_in,
-                                                                np_dirs_fine_in,
-                                                                SM_count_in, debug_in, my_stream);
-  if (dataType == 'C') gpu_copy_and_set_zeros_aux_ab_full_tn_nt<gpuFloatComplex>(a_transoposed_in, (gpuFloatComplex *)a_dev, (gpuFloatComplex *)b_dev, (gpuFloatComplex *)aux_a_full_dev, (gpuFloatComplex *)aux_b_full_dev,
-                                                               l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                                               np_ab_fine_in, np_rows_in, my_prow_in,
-                                                               np_t_fine_in , np_cols_in, my_pcol_in,
-                                                               np_dirs_fine_in,
-                                                               SM_count_in, debug_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_aux_ab_full_tn_nt_FromC) (char dataType, int a_transoposed, intptr_t a_dev, intptr_t b_dev, intptr_t aux_a_full_dev, intptr_t aux_b_full_dev,
+                                                             int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
+                                                             int np_ab_fine, int np_rows, int my_prow,
+                                                             int np_t_fine , int np_cols, int my_pcol,
+                                                             int np_dirs_fine,
+                                                             int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType == 'D') gpu_copy_and_set_zeros_aux_ab_full_tn_nt<double>(a_transoposed, (double *)a_dev, (double *)b_dev, (double *)aux_a_full_dev, (double *)aux_b_full_dev,
+                                                       l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+                                                       np_ab_fine, np_rows, my_prow,
+                                                       np_t_fine , np_cols, my_pcol,
+                                                       np_dirs_fine,
+                                                       SM_count, debug, my_stream);
+  else if (dataType == 'S') gpu_copy_and_set_zeros_aux_ab_full_tn_nt<float>(a_transoposed, (float *)a_dev, (float *)b_dev, (float *)aux_a_full_dev, (float *)aux_b_full_dev,
+                                                      l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+                                                      np_ab_fine, np_rows, my_prow,
+                                                      np_t_fine , np_cols, my_pcol,
+                                                      np_dirs_fine,
+                                                      SM_count, debug, my_stream);
+  else if (dataType == 'Z') gpu_copy_and_set_zeros_aux_ab_full_tn_nt<gpuDoubleComplex>(a_transoposed, (gpuDoubleComplex *)a_dev, (gpuDoubleComplex *)b_dev, (gpuDoubleComplex *)aux_a_full_dev, (gpuDoubleComplex *)aux_b_full_dev,
+                                                                l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+                                                                np_ab_fine, np_rows, my_prow,
+                                                                np_t_fine , np_cols, my_pcol,
+                                                                np_dirs_fine,
+                                                                SM_count, debug, my_stream);
+  else if (dataType == 'C') gpu_copy_and_set_zeros_aux_ab_full_tn_nt<gpuFloatComplex>(a_transoposed, (gpuFloatComplex *)a_dev, (gpuFloatComplex *)b_dev, (gpuFloatComplex *)aux_a_full_dev, (gpuFloatComplex *)aux_b_full_dev,
+                                                               l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+                                                               np_ab_fine, np_rows, my_prow,
+                                                               np_t_fine , np_cols, my_pcol,
+                                                               np_dirs_fine,
+                                                               SM_count, debug, my_stream);
+  else printf("Error in gpu_copy_and_set_zeros_aux_ab_full_tn_nt: Unsupported data type\n");
 }
 
 //________________________________________________________________
 
 template <typename T>
-__global__ void gpu_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_full_dev, T beta,
+__global__ void gpu_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_full_dev, int beta_int,
                                           int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
                                           int np_rows, int np_cols, int np_dirs_fine, 
                                           int np_dirs_t, int my_pdir_t, int np_fine,
-                                          int debug) {
+                                          T beta) {
   int di0 = threadIdx.x;
   int dj0 = blockIdx.x;
 
@@ -993,8 +914,13 @@ __global__ void gpu_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_fu
             for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x) {
               for (di = di0; di < nblk_rows_cut; di += blockDim.x) {
                   c_idx = di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows;
-                  c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]), 
-                                  tmp1_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult]);
+                  if (beta_int==0) {
+                    c_dev[c_idx] = tmp1_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult];
+                  } 
+                  else {
+                    c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]), 
+                                    tmp1_full_dev[di + i_block_loc_fine*nblk + (dj + j_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max)*nblk_mult]);
+                  }
               }
             }
           }
@@ -1016,8 +942,13 @@ __global__ void gpu_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_fu
             for (dj = dj0; dj < nblk_cols_cut; dj += gridDim.x) {
               for (di = di0; di < nblk_rows_cut; di += blockDim.x) {
                 int c_idx = di + i_block_loc*nblk + (dj + j_block_loc*nblk)*l_rows;
-                c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]),
-                                tmp1_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*ld_tmp1]);
+                if (beta_int==0) {
+                  c_dev[c_idx] = tmp1_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*ld_tmp1];
+                }
+                else {
+                  c_dev[c_idx] = elpaDeviceAdd(elpaDeviceMultiply(beta, c_dev[c_idx]),
+                                 tmp1_full_dev[di + i_block_loc_fine*nblk + dnp_ab_t*nblk_mult_max + (dj + j_block_loc_fine*nblk)*ld_tmp1]);
+                }
               }
             }
           }
@@ -1028,91 +959,74 @@ __global__ void gpu_update_c_tn_nt_kernel(int a_transposed, T *c_dev, T *tmp1_fu
 }
 
 template <typename T>
-void gpu_update_c_tn_nt(int *a_transposed_in, 
-                         T *c_dev, T *tmp1_full_dev, int *beta_int_in,
-                         int *l_rows_in, int *l_cols_in, int *nblk_mult_max_in, int *nblk_mult_in, int *nblk_in,
-                         int *np_rows_in, int *np_cols_in, int *np_dirs_fine_in,
-                         int *np_dirs_t_in, int *my_pdir_t_in, int *np_fine_in,
-                         int *SM_count_in, int *debug_in, gpuStream_t my_stream) {
+void gpu_update_c_tn_nt(int a_transposed, 
+                         T *c_dev, T *tmp1_full_dev, int beta_int,
+                         int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
+                         int np_rows, int np_cols, int np_dirs_fine,
+                         int np_dirs_t, int my_pdir_t, int np_fine,
+                         int SM_count, int debug, gpuStream_t my_stream) {
+  T beta = elpaHostNumberFromInt<T>(beta_int);
 
-    int a_transposed = *a_transposed_in;
-    T beta = elpaHostNumberFromInt<T>(*beta_int_in);
-    int l_rows = *l_rows_in;
-    int l_cols = *l_cols_in;
-    int nblk_mult_max = *nblk_mult_max_in;
-    int nblk_mult = *nblk_mult_in;
-    int nblk = *nblk_in;
-    int np_rows = *np_rows_in;
-    int np_cols = *np_cols_in;
-    int np_dirs_fine = *np_dirs_fine_in;
-    int np_dirs_t = *np_dirs_t_in;
-    int my_pdir_t = *my_pdir_t_in;
-    int np_fine = *np_fine_in;
-    int SM_count = *SM_count_in;
-    int debug = *debug_in;
-
-    dim3 blocksPerGrid(SM_count, 1, 1);
-    dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1);
+  dim3 blocksPerGrid(SM_count, 1, 1);
+  dim3 threadsPerBlock(min(nblk, MAX_THREADS_PER_BLOCK/2), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-    gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
-        a_transposed, c_dev, tmp1_full_dev, beta,
-        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
-        np_rows, 
-        np_cols, 
-        np_dirs_fine,
-        np_dirs_t, my_pdir_t,
-        np_fine,
-        debug);
-#else
-    gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock>>>(
-        a_transposed, c_dev, tmp1_full_dev, beta,
+  gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock, 0, my_stream>>>(
+        a_transposed, c_dev, tmp1_full_dev, beta_int,
         l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
         np_rows, np_cols, np_dirs_fine,
         np_dirs_t, my_pdir_t, np_fine,
-        debug);
+        beta);
+#else
+  gpu_update_c_tn_nt_kernel<T><<<blocksPerGrid, threadsPerBlock>>>(
+        a_transposed, c_dev, tmp1_full_dev, beta_int,
+        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+        np_rows, np_cols, np_dirs_fine,
+        np_dirs_t, my_pdir_t, np_fine,
+        beta);
 #endif
 
-    if (debug) {
-        gpuDeviceSynchronize();
-        gpuError_t gpuerr = gpuGetLastError();
-        if (gpuerr != gpuSuccess) {
-            printf("Error in executing gpu_update_c_tn_nt_kernel: %s\n", gpuGetErrorString(gpuerr));
-        }
+  if (debug) {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess) {
+        printf("Error in executing gpu_update_c_tn_nt_kernel: %s\n", gpuGetErrorString(gpuerr));
     }
+  }
 }
 
 extern "C" void CONCATENATE(ELPA_GPU, _update_c_tn_nt_FromC) (char dataType,
-                                          int *a_transposed_in, 
-                                          intptr_t c_dev, intptr_t tmp1_full_dev, int *beta_int_in,
-                                          int *l_rows_in, int *l_cols_in, int *nblk_mult_max_in, int *nblk_mult_in, int *nblk_in,
-                                          int *np_rows_in, int *np_cols_in, int *np_dirs_fine_in,
-                                          int *np_dirs_t_in, int *my_pdir_t_in, int *np_fine_in,
-                                          int *SM_count_in, int *debug_in, gpuStream_t my_stream) {
+                                          int a_transposed, 
+                                          intptr_t c_dev, intptr_t tmp1_full_dev, int beta_int,
+                                          int l_rows, int l_cols, int nblk_mult_max, int nblk_mult, int nblk,
+                                          int np_rows, int np_cols, int np_dirs_fine,
+                                          int np_dirs_t, int my_pdir_t, int np_fine,
+                                          int SM_count, int debug, gpuStream_t my_stream) {
 
-  if      (dataType == 'D') gpu_update_c_tn_nt<double>(a_transposed_in, 
-                                (double *)c_dev, (double *)tmp1_full_dev, beta_int_in,
-                                l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                np_rows_in, np_cols_in, np_dirs_fine_in,
-                                np_dirs_t_in, my_pdir_t_in, np_fine_in,
-                                SM_count_in, debug_in, my_stream);
-  else if (dataType == 'S') gpu_update_c_tn_nt<float>(a_transposed_in, 
-                                (float *)c_dev, (float *)tmp1_full_dev, beta_int_in,
-                                l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                np_rows_in, np_cols_in, np_dirs_fine_in,
-                                np_dirs_t_in, my_pdir_t_in, np_fine_in,
-                                SM_count_in, debug_in, my_stream);
-  else if (dataType == 'Z') gpu_update_c_tn_nt<gpuDoubleComplex>(a_transposed_in, 
-                                          (gpuDoubleComplex *)c_dev, (gpuDoubleComplex *)tmp1_full_dev, beta_int_in,
-                                          l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                          np_rows_in, np_cols_in, np_dirs_fine_in,
-                                          np_dirs_t_in, my_pdir_t_in, np_fine_in,
-                                          SM_count_in, debug_in, my_stream);
-  else if (dataType == 'C') gpu_update_c_tn_nt<gpuFloatComplex>(a_transposed_in, 
-                                        (gpuFloatComplex *)c_dev, (gpuFloatComplex *)tmp1_full_dev, beta_int_in,
-                                        l_rows_in, l_cols_in, nblk_mult_max_in, nblk_mult_in, nblk_in,
-                                        np_rows_in, np_cols_in, np_dirs_fine_in,
-                                        np_dirs_t_in, my_pdir_t_in, np_fine_in,
-                                        SM_count_in, debug_in, my_stream);
+  if      (dataType == 'D') gpu_update_c_tn_nt<double>(a_transposed, 
+                                (double *)c_dev, (double *)tmp1_full_dev, beta_int,
+                                l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+                                np_rows, np_cols, np_dirs_fine,
+                                np_dirs_t, my_pdir_t, np_fine,
+                                SM_count, debug, my_stream);
+  else if (dataType == 'S') gpu_update_c_tn_nt<float>(a_transposed, 
+                                (float *)c_dev, (float *)tmp1_full_dev, beta_int,
+                                l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+                                np_rows, np_cols, np_dirs_fine,
+                                np_dirs_t, my_pdir_t, np_fine,
+                                SM_count, debug, my_stream);
+  else if (dataType == 'Z') gpu_update_c_tn_nt<gpuDoubleComplex>(a_transposed, 
+                                          (gpuDoubleComplex *)c_dev, (gpuDoubleComplex *)tmp1_full_dev, beta_int,
+                                          l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+                                          np_rows, np_cols, np_dirs_fine,
+                                          np_dirs_t, my_pdir_t, np_fine,
+                                          SM_count, debug, my_stream);
+  else if (dataType == 'C') gpu_update_c_tn_nt<gpuFloatComplex>(a_transposed, 
+                                        (gpuFloatComplex *)c_dev, (gpuFloatComplex *)tmp1_full_dev, beta_int,
+                                        l_rows, l_cols, nblk_mult_max, nblk_mult, nblk,
+                                        np_rows, np_cols, np_dirs_fine,
+                                        np_dirs_t, my_pdir_t, np_fine,
+                                        SM_count, debug, my_stream);
+  else printf("Error in gpu_update_c_tn_nt: Unsupported data type\n");
 }
 

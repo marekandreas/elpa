@@ -810,7 +810,7 @@
         if (useGPU) then
           num = (na1*SM_count) * size_of_datatype
           successGPU = gpu_malloc(ztmp_extended_dev, num)
-          check_alloc_gpu("merge_systems: delta_dev", successGPU)
+          check_alloc_gpu("merge_systems: ztmp_extended_dev", successGPU)
 
           call gpu_fill_array(PRECISION_CHAR, ztmp_extended_dev, one_dev, na1*SM_count, SM_count, debug, my_stream)
 
@@ -840,8 +840,8 @@
           ddiff(1:na1) = 0
         endif
 
+
         NVTX_RANGE_PUSH("lapack_laed4_loop")
-        
         if (useGPU) then
           ! data transfer to GPU
 #ifdef WITH_GPU_STREAMS
@@ -855,7 +855,6 @@
           num = 1 * size_of_datatype
           successGPU = gpu_memcpy_async(rho_dev, int(loc(rho),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
           check_memcpy_gpu("merge_systems: rho_dev", successGPU)
-
 #else
           num = na * size_of_datatype
           successGPU = gpu_memcpy(d1_dev, int(loc(d1(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
@@ -1036,7 +1035,7 @@
           ev_scale(:) = 0.0_rk
         endif ! useGPU
 
-        
+    
         NVTX_RANGE_PUSH("add_tmp_loop")
         if (wantDebug) call obj%timer%start("add_tmp_loop")
 
@@ -1273,19 +1272,19 @@
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
           successGPU = gpu_malloc(qtmp1_dev, num)
           check_alloc_gpu("merge_systems: qtmp1_dev", successGPU)
-          
+
           num = (gemm_dim_k * gemm_dim_l) * size_of_datatype
           successGPU = gpu_malloc(qtmp1_tmp_dev, num)
           check_alloc_gpu("merge_systems: qtmp1_tmp_dev", successGPU)
-  
+
           num = (gemm_dim_l * gemm_dim_m) * size_of_datatype
           successGPU = gpu_malloc(ev_dev, num)
           check_alloc_gpu("merge_systems: ev_dev", successGPU)
-  
+
           num = (gemm_dim_k * gemm_dim_m) * size_of_datatype
           successGPU = gpu_malloc(qtmp2_dev, num)
           check_alloc_gpu("merge_systems: qtmp2_dev", successGPU)
-  
+
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
             if (wantDebug) call obj%timer%start("gpu_host_register")
             
@@ -1788,7 +1787,6 @@
 
           ndef = MAX(nnzu,nnzl) ! Remote counter in input matrix
           if (useGPU) then
-            ! PETERDEBUG: idx2_dev, potential problem with garbage values?
             call gpu_update_ndef_c(ndef_c_dev, idx_dev, p_col_dev, idx2_dev, na, na1, np_rem, ndef, debug, my_stream)
 
           endif ! useGPU
@@ -1856,6 +1854,7 @@
               do i = 1, ncnt
                 do k = 1, nnzu
                   j = idx(idxq1(i+ns))
+
                   ! Calculate the j-th eigenvector of the deflated system
                   ! See above why we are doing it this way!
 
@@ -1867,7 +1866,6 @@
               enddo
 !$OMP END PARALLEL DO
             endif ! useGPU
-
 
             ! Multiply old Q with eigenvectors (upper half)
 
@@ -1895,11 +1893,8 @@
             endif ! (l_rnm>0 .and. ncnt>0 .and. nnzu>0) then
 
 
-
-
             ! Compute eigenvectors of the rank-1 modified matrix.
             ! Parts for multiplying with lower half of Q:
-
 
             if (useGPU) then
               if (nnzl .ge. 1) then
@@ -1948,11 +1943,11 @@
               endif ! useGPU
             endif
 
-
             ! Put partial result into (output) Q
             if (useGPU) then
               call gpu_copy_qtmp2_slice_to_q (PRECISION_CHAR, q_dev, qtmp2_dev, idxq1_dev, l_col_out_dev, &
                                               l_rqs, l_rqe, l_rows, ncnt, gemm_dim_k, matrixRows, ns, debug, my_stream)
+
             else ! useGPU
 !$omp PARALLEL DO &
 !$omp default(none) &

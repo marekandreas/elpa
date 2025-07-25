@@ -89,7 +89,7 @@
 !>
 
 #undef USE_CCL_TRANS_EV
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
 #define USE_CCL_TRANS_EV
 #endif
 
@@ -116,10 +116,13 @@ subroutine trans_ev_cpu_&
   use trans_ev_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
-#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX) 
   use hip_functions  ! for ROCTX labels
 #endif
   use elpa_ccl_gpu
+#ifdef WITH_SYCL_GPU_VERSION
+  use sycl_functions ! for sycl_getiscpudevice
+#endif
 
   implicit none
 #include "../general/precision_kinds.F90"
@@ -186,6 +189,13 @@ subroutine trans_ev_cpu_&
   integer(kind=c_int)                           :: cclDataType
   integer(kind=ik)                              :: k_datatype
   integer(kind=ik)                              :: i,j ! PETERDEBUG: only for debugging, cleanup
+
+  ! workaround for SYCL CPU devices: SYRK/HERK produces wrong results
+  logical :: is_sycl_cpu
+  is_sycl_cpu = .false.
+#if defined(WITH_SYCL_GPU_VERSION)
+  success = sycl_getiscpudevice(is_sycl_cpu)
+#endif
 
   success = .true.
 
@@ -298,7 +308,7 @@ subroutine trans_ev_cpu_&
   max_local_cols = max_blocks_col*nblk
 
   max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
-  
+
   ! print *, "max_stored_rows=", max_stored_rows ! PETERDEBUG
 
   if (.not. useGPU) then
@@ -328,7 +338,7 @@ subroutine trans_ev_cpu_&
     !&", "hvm1", istat, errorMessage)
 
     if (.not. useCCL) then
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
         num = (max_local_rows*max_stored_rows) * size_of_datatype
         successGPU = gpu_malloc_host(hvm1_host,num)
         check_alloc_gpu("trans_ev: hvm1_host", successGPU)
@@ -337,7 +347,7 @@ subroutine trans_ev_cpu_&
         allocate(hvm1(max_local_rows*max_stored_rows))
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
         num = (max_stored_rows*max_stored_rows) * size_of_datatype
         successGPU = gpu_malloc_host(tmat_host,num)
         check_alloc_gpu("trans_ev: tmat_host", successGPU)
@@ -346,7 +356,7 @@ subroutine trans_ev_cpu_&
         allocate(tmat(max_stored_rows,max_stored_rows))
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
         num = (max_local_cols*max_stored_rows) * size_of_datatype
         successGPU = gpu_malloc_host(tmp_host,num)
         check_alloc_gpu("trans_ev: tmp_host", successGPU)
@@ -397,6 +407,17 @@ subroutine trans_ev_cpu_&
     successGPU = gpu_memset(hvm_dev, 0, num)
 #endif
   endif
+  ! PETERDEBUG: check whether it is really needed
+  if (useGPU) then
+    num = max_local_rows * nblk * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+    successGPU = gpu_memset_async(hvb_dev, 0, num, my_stream)
+    check_memcpy_gpu("trans_ev: hvb_dev", successGPU)
+#else
+    successGPU = gpu_memset(hvb_dev, 0, num)
+#endif
+  endif
 
   blockStep = nblk
   l_cols = local_index(nqc, my_pcol, np_cols, nblk, -1) ! Local columns of q_mat
@@ -416,7 +437,6 @@ subroutine trans_ev_cpu_&
     endif
   endif
 #endif
-
   do istep = 1, na, blockStep
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
@@ -426,7 +446,6 @@ subroutine trans_ev_cpu_&
     call obj%timer%start("main_loop_trans_ev")
 
     cur_pcol = pcol(istep, nblk, np_cols)
-
     if (useGPU) then
       if (my_pcol==cur_pcol) then
         call obj%timer%start("gpu_copy_hvb_a_kernel")
@@ -508,7 +527,7 @@ subroutine trans_ev_cpu_&
         else
           call obj%timer%start("mpi_communication")
           call mpi_bcast (hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
-                          int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+          int(mpi_comm_cols,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
         endif
       NVTX_RANGE_POP("mpi_bcast")
@@ -552,7 +571,7 @@ subroutine trans_ev_cpu_&
 
     ! PETERDEBUG: this memcopy can be cleaned up?
     if (useGPU .and. .not. useCCL) then
-      num = max_local_rows * max_stored_rows * size_of_datatype
+      num = max_local_rows*max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
       call gpu_memcpy_async_and_stream_synchronize &
               ("trans_ev hvm_dev -> hvm", hvm_dev, 0_c_intptr_t, &
@@ -579,7 +598,6 @@ subroutine trans_ev_cpu_&
 
       ! Calculate scalar products of stored vectors.
       ! This can be done in different ways, we use dsyrk or zherk
-
       if (useGPU) then
         call obj%timer%start("gpu_memset")
         ! PETERDEBUG: is this really needed for GPU?
@@ -597,19 +615,27 @@ subroutine trans_ev_cpu_&
       endif
 
       if (l_rows>0) then
-        if (useGPU) then
-          !successGPU = gpu_memset(tmat_dev, 0, max_stored_rows*max_stored_rows * size_of_datatype) ! PETERDEBUG
-
+        if (useGPU .and. .not. is_sycl_cpu) then
           call obj%timer%start("gpublas_syrk")
           NVTX_RANGE_PUSH("gpublas_syrk")
+
           call gpublas_PRECISION_SYRK_HERK('U', BLAS_TRANS_OR_CONJ, &
                                            nstor, l_rows, ONE, &
                                            hvm_dev, max_local_rows, ZERO, &
                                            tmat_dev, max_stored_rows, gpublasHandle)
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+
           NVTX_RANGE_POP("gpublas_syrk")
           call obj%timer%stop("gpublas_syrk")
         else ! useGPU
+          if(is_sycl_cpu) then
+            num = max_local_rows*max_stored_rows * size_of_datatype
+            successGPU = gpu_memcpy(int(loc(hvm(1,1)),kind=c_intptr_t), hvm_dev, num, gpuMemcpyDeviceToHost)
+            check_memcpy_gpu("trans_ev hvm_dev -> hvm", successGPU)
+            
+            tmat = 0
+          endif ! is_sycl_cpu
+
           call obj%timer%start("blas_syrk")
           NVTX_RANGE_PUSH("blas_syrk")
 #if REALCASE == 1
@@ -624,6 +650,12 @@ subroutine trans_ev_cpu_&
           
           NVTX_RANGE_POP("blas_syrk")
           call obj%timer%stop("blas_syrk")
+
+          if(is_sycl_cpu) then
+            num_el = max_stored_rows*max_stored_rows
+            successGPU = gpu_memcpy(tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t), num_el*size_of_datatype, gpuMemcpyHostToDevice)
+            check_memcpy_gpu("trans_ev", successGPU)
+          endif
         endif ! useGPU
       endif ! (l_rows>0)
 
@@ -639,7 +671,8 @@ subroutine trans_ev_cpu_&
         check_memcpy_gpu("trans_ev", successGPU)
 #endif
       endif ! useGPU
-      
+
+
       if (useCCL) then
         ! no compression
         !nc = max_stored_rows*max_stored_rows
@@ -706,13 +739,13 @@ subroutine trans_ev_cpu_&
 #endif /* WITH_GPU_STREAMS */
       endif ! useGPU
 
+
       ! Calculate triangular matrix T. 
       ! What was previously stored in (upper part of) tmat is now stored in h, old values of tmat are not needed anymore
 
       ! PETERDEBUG: we can write a kernel here
       ! Also, we can use another stream for this, which can be completely hidden by other operations
       if (useGPU) then
-
         ! PETERDEBUG: check whether this can be cleaned up after testing gpu_update_h_trmv_kernel
         call obj%timer%start("gpu_memset")
         successGPU = gpu_memset(tmat_dev, 0, max_stored_rows*max_stored_rows * size_of_datatype)
@@ -724,9 +757,7 @@ subroutine trans_ev_cpu_&
         shift_h_dev = 0
         call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev, tau_dev + shift_dev, &
                              max_stored_rows, nc, n, SM_count, debug, my_stream)
-        
         !NVTX_RANGE_PUSH("gpublas_trmv+gpu_update_tmat loop")
-        
         NVTX_RANGE_PUSH("gpu_trmv")
         call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, tau_dev+shift_dev, &
                       max_stored_rows, n, SM_count, debug, my_stream)
@@ -781,7 +812,7 @@ subroutine trans_ev_cpu_&
           ! call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h1_buffer_dev, tau_dev+shift_dev, &
           !                      max_stored_rows, nc, n, SM_count, debug, my_stream)
           ! NVTX_RANGE_POP("gpu_update_tmat")
-        enddo
+        enddo !   n = 1, nstor-1
         if (wantDebug) successGPU = gpu_DeviceSynchronize()
         call obj%timer%stop("gpu_trmv_kernel_loop")
         NVTX_RANGE_POP("trmv_loop")
@@ -815,7 +846,6 @@ subroutine trans_ev_cpu_&
 #if !defined(WITH_GPU_STREAMS)
       if (useGPU) successGPU = gpu_DeviceSynchronize()
 #endif
-
       ! Q = Q - V * T * V**T * Q
 
       if (l_rows>0) then
@@ -912,7 +942,6 @@ subroutine trans_ev_cpu_&
           call obj%timer%stop("mpi_communication")
         endif ! useNonBlockingCollectivesRows
       endif ! useCCL
-
       ! copy back to tmp -> tmp_dev if needed
       if (useGPU .and. .not. useCCL) then
 #ifdef WITH_GPU_STREAMS
@@ -932,7 +961,6 @@ subroutine trans_ev_cpu_&
 
       if (l_rows > 0) then
         if (useGPU) then
-          
           ! tmp_dev = tmat_dev*tmp_dev
           call obj%timer%start("gpublas_trmm")
           NVTX_RANGE_PUSH("gpublas_trmm")
@@ -944,7 +972,6 @@ subroutine trans_ev_cpu_&
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
           call obj%timer%stop("gpublas_trmm")
           NVTX_RANGE_POP("gpublas_trmm")
-
           NVTX_RANGE_PUSH("gpublas_gemm")
           call obj%timer%start("gpublas_gemm")
           call gpublas_PRECISION_GEMM('N', 'N', &
@@ -1006,7 +1033,7 @@ subroutine trans_ev_cpu_&
     !endif
 
     if (.not. useCCL) then
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
         successGPU = gpu_free_host(hvm1_host)
         check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
         nullify(hvm1)
@@ -1033,7 +1060,6 @@ subroutine trans_ev_cpu_&
     !  &: error when deallocating hvm1 "//errorMessage
     !  stop 1
     !endif
-
     successGPU = gpu_free(tmp_dev)
     check_dealloc_gpu("trans_ev", successGPU)
 

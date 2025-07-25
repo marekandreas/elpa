@@ -52,7 +52,7 @@
 #include "../../general/error_checking.inc"
 
 #undef USE_CCL_TRANSPOSE
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
 #define USE_CCL_TRANSPOSE
 #endif
 
@@ -96,7 +96,7 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 #elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
   use hip_functions  ! for ROCTX labels
 #endif
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
   use elpa_ccl_gpu
 #endif
   implicit none

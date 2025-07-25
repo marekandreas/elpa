@@ -854,9 +854,7 @@ __device__ T elpa_sum(int n, int tid, int threads_total, T* cache, Func func) {
 template <typename T>
 __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T* d1, T* z1, T* delta, T* rho, T* cache,
                                                               int tid, int threads_total) {
-  // i_f is the Fortran index (1-indexed); convert to C index:
-  int i = i_f - 1;
-  //T dshift;
+  int i = i_f - 1; // i_f is the Fortran index (1-indexed); convert to C index i
   __shared__ T dshift_sh, a_sh, b_sh, x_sh, y_sh;
   
   __shared__ int break_flag_sh;
@@ -866,7 +864,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
   const int maxIter = 200;
   T eps = (sizeof(T) == sizeof(double)) ? (T)1e-200 : (T)1e-20;
 
-  if(i_f == n) 
+  if (i_f == n)
     {
     // Special case: last eigenvalue.
     
@@ -876,7 +874,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
       }
     __syncthreads();
 
-    for (int j = tid; j < n; j+=threads_total) 
+    for (int j = tid; j < n; j += threads_total)
       {
       delta[j] = d1[j] - dshift_sh;
       }
@@ -888,7 +886,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
     if (tid==0)
       {
       a_sh = 0;
-      b_sh = rho[0] * sum_zsq + 1;
+      b_sh = rho[0]*sum_zsq + 1;
       }
     __syncthreads();
     } 
@@ -917,7 +915,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
       }
     __syncthreads();
 
-    for (int j = tid; j < n; j += threads_total) 
+    for (int j = tid; j < n; j += threads_total)
       {
       delta[j] = d1[j] - dshift_sh;
       }
@@ -941,7 +939,7 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
       if (x_sh == a_sh || x_sh == b_sh)
           break_flag_sh=1;  // no further subdivision possible
       if (fabs(x_sh) < eps)
-          break_flag_sh;  // x is too close to zero (i.e. near a pole)
+          break_flag_sh=1;  // x is too close to zero (i.e. near a pole)
       }
     __syncthreads(); // so all threads agree on x and break_flag
     if (break_flag_sh) break;
@@ -954,21 +952,22 @@ __forceinline__ __device__ void device_solve_secular_equation(int n, int i_f, T*
       {
       y_sh = 1.0 + rho[0]*sum_term;
       if (y_sh == 0)
-          break_flag_sh=1;  // exact solution found
+        break_flag_sh=1; // exact solution found
       else if (y_sh > 0)
-          b_sh = x_sh;
+        b_sh = x_sh;
       else
-          a_sh = x_sh;
+        a_sh = x_sh;
       }
     __syncthreads();
     if (break_flag_sh) break;
     }
 
   // Update delta: delta[j] = delta[j] - x for all j.
-  for (int j = tid; j < n; j+=threads_total) 
+  for (int j = tid; j < n; j += threads_total)
     {
     delta[j] = delta[j] - x_sh;
     }
+
 }
 
 //________________________________________________________________
@@ -978,10 +977,8 @@ __global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *
                                                        T *z_extended_dev, T *dbase_dev, T *ddiff_dev, 
                                                        int my_proc, int na1, int n_procs){
   __shared__ T cache[MAX_THREADS_PER_BLOCK]; 
-  int tid = threadIdx.x;
-
-  //int i_loc = threadIdx.x;
-  //int j_loc = blockIdx.x ;
+  int thread = threadIdx.x;
+  int block  = blockIdx.x;
 
   // do i = my_procs+1, na1, n_procs
   //   call solve_secular_equation_&
@@ -1015,43 +1012,42 @@ __global__ void gpu_solve_secular_equation_loop_kernel(T *d1_dev, T *z1_dev, T *
   // const int maxIter = 200;
   // T eps = (sizeof(T) == sizeof(double)) ? (T)1e-200 : (T)1e-20;
 
-  for (int i=my_proc + n_procs*blockIdx.x; i<na1; i += n_procs*gridDim.x)
+  for (int i=my_proc + n_procs*block; i<na1; i += n_procs*gridDim.x)
     {
     int i_f = i + 1; // i_f is the Fortran index (1-based)
 
-    device_solve_secular_equation(na1, i_f, d1_dev, z1_dev, delta_extended_dev+na1*blockIdx.x, rho_dev, cache, tid, blockDim.x);
+    device_solve_secular_equation(na1, i_f, d1_dev, z1_dev, delta_extended_dev+na1*block, rho_dev, cache, thread, blockDim.x);
     __syncthreads(); // so all threads agree on delta_dev
 
     // Compute updated z (z_extended_dev)
     T d1_i = d1_dev[i];                     
-    int index;                                                 
-    for (int j = tid; j < na1; j+=blockDim.x)
+    int index;
+    for (int j = thread; j < na1; j += blockDim.x)
       {
-      index = j+na1*blockIdx.x;
-      if (j != i) z_extended_dev[index] = z_extended_dev[index] * ( delta_extended_dev[index] / (d1_dev[j] - d1_i) );
-      else z_extended_dev[index] = z_extended_dev[index] * delta_extended_dev[index];
+      index = j+na1*block;
+      z_extended_dev[index] *= (j != i) ? (delta_extended_dev[index] / (d1_dev[j] - d1_i)) : delta_extended_dev[index];
       }
 
     // Store dbase/ddiff
-    if (tid==0)
+    if (thread==0)
       {
       if (i_f < na1) 
         {
-        if (fabs(delta_extended_dev[i+1 + na1*blockIdx.x]) < fabs(delta_extended_dev[i + na1*blockIdx.x])) 
+        if (fabs(delta_extended_dev[i+1 + na1*block]) < fabs(delta_extended_dev[i + na1*block])) 
           {
           dbase_dev[i] = d1_dev[i+1];
-          ddiff_dev[i] = delta_extended_dev[i+1 + na1*blockIdx.x];
+          ddiff_dev[i] = delta_extended_dev[i+1 + na1*block];
           }
         else 
           {
           dbase_dev[i] = d1_dev[i];
-          ddiff_dev[i] = delta_extended_dev[i + na1*blockIdx.x];
+          ddiff_dev[i] = delta_extended_dev[i + na1*block];
           }
         } 
       else 
         {
         dbase_dev[i] = d1_dev[i];
-        ddiff_dev[i] = delta_extended_dev[i + na1*blockIdx.x];
+        ddiff_dev[i] = delta_extended_dev[i + na1*block];
         }
       }
     }
@@ -1157,7 +1153,7 @@ __global__ void gpu_add_tmp_loop_kernel (T *d1_dev, T *dbase_dev, T *ddiff_dev, 
   // enddo
 
   __shared__ T cache[MAX_THREADS_PER_BLOCK];
-  int tid = threadIdx.x;
+  int thread = threadIdx.x;
 
   int index;
   T dbase_or_diff_i;
@@ -1165,7 +1161,7 @@ __global__ void gpu_add_tmp_loop_kernel (T *d1_dev, T *dbase_dev, T *ddiff_dev, 
     {
     dbase_or_diff_i = dbase_dev[i];
 
-    for (int j=tid; j<na1; j+=blockDim.x) 
+    for (int j=thread; j<na1; j+=blockDim.x)
       {
       index = j + na1*blockIdx.x;
       tmp_extended_dev[index] = d1_dev[j] - dbase_or_diff_i;
@@ -1173,17 +1169,21 @@ __global__ void gpu_add_tmp_loop_kernel (T *d1_dev, T *dbase_dev, T *ddiff_dev, 
     
     // separate loop to prevent compiler from optimization
     dbase_or_diff_i = ddiff_dev[i];
-    for (int j=tid; j<na1; j+=blockDim.x)
+    for (int j=thread; j<na1; j+=blockDim.x)
       {
       index = j + na1*blockIdx.x;
       tmp_extended_dev[index] = tmp_extended_dev[index] + dbase_or_diff_i;
       tmp_extended_dev[index] = z_dev[j] / tmp_extended_dev[index];
       }
     
-    T dot_product = elpa_sum<T>(na1, tid, blockDim.x, cache, [=] __device__ (int j) -> T {
+    T dot_product = elpa_sum<T>(na1, thread, blockDim.x, cache, [=] __device__ (int j) -> T {
       return tmp_extended_dev[j+na1*blockIdx.x]*tmp_extended_dev[j+na1*blockIdx.x];
     });
-    ev_scale_dev[i] = 1.0/sqrt(dot_product);
+
+    if (thread == 0)
+      {
+      ev_scale_dev[i] = T(1.0)/sqrt(dot_product);
+      }
     }
   
 }

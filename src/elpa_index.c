@@ -278,10 +278,10 @@ static const elpa_index_int_entry_t int_entries[] = {
         INT_ENTRY("cannon_buffer_size", "Increasing the buffer size might make it faster, but costs memory", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY,  ELPA_AUTOTUNE_PART_NONE, \
                         cannon_buffer_size_cardinality, cannon_buffer_size_enumerate, cannon_buffer_size_is_valid, NULL, PRINT_YES),
         // tunables
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
-        BOOL_ENTRY("use_ccl", "Use NVIDIA's nccl or AMD's rccl communication libraries", 1, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, PRINT_YES), 
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+        BOOL_ENTRY("use_ccl", "Use NVIDIA's nccl, AMD's rccl or Intel's oneCCL communication libraries", 1, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, PRINT_YES), 
 #else
-        BOOL_ENTRY("use_ccl", "Use NVIDIA's nccl or AMD's rccl communication libraries", 0, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, PRINT_YES), 
+        BOOL_ENTRY("use_ccl", "Use NVIDIA's nccl, AMD's rccl or Intel's oneCCL communication libraries", 0, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, PRINT_YES), 
 #endif
 	// 1. non-blocking MPI
         INT_ENTRY("nbc_row_global_gather", "Use non blocking collectives for rows in global_gather", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_SOLVE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
