@@ -80,7 +80,7 @@ __global__ void gpu_copy_hvb_a_kernel(T *hvb_dev, T *a_dev, int ld_hvb, int lda,
       hvb_dev[i + ld_hvb*(ic-ics)] = a_dev[i + (l_colh-1)*lda]; // nb -> ld_hvb*(ic-ics), no compression
     }
     
-    if (my_prow == prow(ic-1, nblk, np_rows) && threadIdx.x == 0) {
+    if (my_prow == prow(ic-1, nblk, np_rows) && threadIdx.x == (l_rows-1)%blockDim.x) {
       hvb_dev[(l_rows-1) + ld_hvb*(ic-ics)] = One;
     }
     
