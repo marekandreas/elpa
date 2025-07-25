@@ -160,16 +160,16 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
 
   
   if (useGPU) then
-    successGPU = gpu_malloc(aDev, size(a,dim=1)*size(a,dim=2)*size_of_datatype)
+    successGPU = gpu_malloc(aDev, self%local_nrows*self%local_ncols * size_of_datatype)
     check_alloc_gpu("elpa_generalized_eigenvectors_a_h_a: aDev", successGPU)
 
-    successGPU = gpu_malloc(bDev, size(b,dim=1)*size(b,dim=2)*size_of_datatype)
+    successGPU = gpu_malloc(bDev, self%local_nrows*self%local_ncols * size_of_datatype)
     check_alloc_gpu("elpa_generalized_eigenvectors_a_h_a: bDev", successGPU)
 
     successGPU = gpu_malloc(evDev, self%na*size_of_real_datatype)
     check_alloc_gpu("elpa_generalized_eigenvectors_a_h_a: evDev", successGPU)
 
-    successGPU = gpu_malloc(qDev, size(q,dim=1)*size(q,dim=2)*size_of_datatype)
+    successGPU = gpu_malloc(qDev, self%local_nrows*self%local_ncols * size_of_datatype)
     check_alloc_gpu("elpa_generalized_eigenvectors_a_h_a: qDev", successGPU)
 
 #ifdef WITH_GPU_STREAMS
@@ -177,7 +177,7 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
 #endif
 
     call self%timer%start("gpu_memcpy_host_to_dev")
-    num = size(a,dim=1)*size(a,dim=2) * size_of_datatype
+    num = self%local_nrows*self%local_ncols * size_of_datatype
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_memcpy_async(aDev, int(loc(a(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
 #else
@@ -185,7 +185,7 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
 #endif
     check_memcpy_gpu("elpa_generalized_eigenvectors_a_h_a: aDev", successGPU)
 
-    num = size(b,dim=1)*size(b,dim=2) * size_of_datatype
+    num = self%local_nrows*self%local_ncols * size_of_datatype
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_memcpy_async(bDev, int(loc(b(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
 #else
@@ -206,7 +206,7 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
     endif
 
     call self%timer%start("gpu_memcpy_dev_to_host")
-    num = size(q,dim=1)*size(q,dim=2) * size_of_datatype
+    num = self%local_nrows*self%local_ncols * size_of_datatype
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_memcpy_async(int(loc(q(1,1)),kind=c_intptr_t), qDev, num, gpuMemcpyDeviceToHost, my_stream)
 #else
@@ -223,7 +223,7 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
     check_memcpy_gpu ("elpa_generalized_eigenvectors_a_h_a: evDev", successGPU)
 
     if (.not. is_already_decomposed) then
-      num = size(b,dim=1)*size(b,dim=2) * size_of_datatype
+      num = self%local_nrows*self%local_ncols * size_of_datatype
 #ifdef WITH_GPU_STREAMS
       successGPU = gpu_memcpy_async(int(loc(b(1,1)),kind=c_intptr_t), bDev, num, gpuMemcpyDeviceToHost, my_stream)
 #else
@@ -731,10 +731,10 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
 
      
     if (useGPU) then
-      successGPU = gpu_malloc(aDev, size(a,dim=1)*size(a,dim=2)*size_of_datatype)
+      successGPU = gpu_malloc(aDev, self%local_nrows*self%local_ncols * size_of_datatype)
       check_alloc_gpu("elpa_generalized_eigenvalues_a_h_a: aDev", successGPU)
 
-      successGPU = gpu_malloc(bDev, size(b,dim=1)*size(b,dim=2)*size_of_datatype)
+      successGPU = gpu_malloc(bDev, self%local_nrows*self%local_ncols * size_of_datatype)
       check_alloc_gpu("elpa_generalized_eigenvalues_a_h_a: bDev", successGPU)
 
       successGPU = gpu_malloc(evDev, self%na*size_of_real_datatype)
@@ -745,7 +745,7 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
 #endif
 
     call self%timer%start("gpu_memcpy_host_to_dev")
-    num = size(a,dim=1)*size(a,dim=2) * size_of_datatype
+    num = self%local_nrows*self%local_ncols * size_of_datatype
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_memcpy_async(aDev, int(loc(a(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
 #else
@@ -753,7 +753,7 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
 #endif
     check_memcpy_gpu("elpa_generalized_eigenvectors_a_h_a: aDev", successGPU)
 
-    num = size(b,dim=1)*size(b,dim=2) * size_of_datatype
+    num = self%local_nrows*self%local_ncols * size_of_datatype
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_memcpy_async(bDev, int(loc(b(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
 #else
@@ -783,7 +783,7 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
     check_memcpy_gpu ("elpa_generalized_eigenvectors_a_h_a: evDev", successGPU)
 
     if (.not. is_already_decomposed) then
-      num = size(b,dim=1)*size(b,dim=2) * size_of_datatype
+      num = self%local_nrows*self%local_ncols * size_of_datatype
 #ifdef WITH_GPU_STREAMS
       successGPU = gpu_memcpy_async(int(loc(b(1,1)),kind=c_intptr_t), bDev, num, gpuMemcpyDeviceToHost, my_stream)
 #else
