@@ -531,12 +531,12 @@
 #endif
 #endif /* USE_CCL_HERMITIAN_MULTIPLY */
       else ! useCCL
-        call obj%timer%start("mpi_communication")
+        call obj%timer%start("mpi_bcast")
 
         call MPI_Bcast(aux_bc, int(n_aux_bc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                       int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
-        call obj%timer%stop("mpi_communication")
+        call obj%timer%stop("mpi_bcast")
       endif ! useCCL
 
       ! copy data back to device, if needed
@@ -700,10 +700,10 @@
 #endif
 #endif /* USE_CCL_HERMITIAN_MULTIPLY */
           else ! useCCL
-            call obj%timer%start("mpi_communication")
+            call obj%timer%start("mpi_reduce")
             call mpi_reduce(tmp1, tmp2, int(nstor*(lce-lcs+1),kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                           MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-            call obj%timer%stop("mpi_communication")
+            call obj%timer%stop("mpi_reduce")
           endif ! useCCL
 
           ! copy data back to device, if needed

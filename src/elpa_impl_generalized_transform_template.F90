@@ -100,6 +100,7 @@ subroutine elpa_transform_generalized_a_h_a_&
   integer(kind=MPI_KIND)   :: my_pMPI, my_prowMPI, my_pcolMPI, np_rowsMPI, np_colsMPI, mpierr
   integer(kind=ik)         :: cannon_buffer_size
   integer(kind=c_int)      :: cannon_for_generalized, pxgemm_for_generalized, pxtrmm_for_generalized, debug, gpu_cannon
+  integer(kind=c_int)      :: pxgemm_for_generalized_with_hermitian_multipy
 
   logical                  :: useGPU, do_useGPU_cannon, successGPU
   integer(kind=c_intptr_t) :: gpublasHandle
@@ -239,18 +240,39 @@ endif
 
   if (pxgemm_for_generalized == 1) then
     ! tmp <- B^T * A = inv(U^T) * A (we have to use temporary variable)
+
+    ! for now hermitian_multiply(U,F) performs better than pxgemm(T,N), so we use it. May be changed in the future
+    pxgemm_for_generalized_with_hermitian_multipy = 1
+
+    if (pxgemm_for_generalized_with_hermitian_multipy==1) then
 #ifdef DEVICE_POINTER
-    call self%elpa_pxgemm_multiply_d_ptr_&
-          &ELPA_IMPL_SUFFIX&
-          &(BLAS_TRANS_OR_CONJ,'N', self%na, bDev, aDev, self%local_nrows, self%local_ncols, tmpDev, &
-                                    self%local_nrows, self%local_ncols, error)
+      call self%elpa_hermitian_multiply_d_ptr_&
+            &ELPA_IMPL_SUFFIX&
+            &('U','F', self%na, bDev, aDev, self%local_nrows, self%local_ncols, tmpDev, &
+                                  self%local_nrows, self%local_ncols, error)
 #else
-    call self%elpa_pxgemm_multiply_a_h_a_&
-          &ELPA_IMPL_SUFFIX&
-          &(BLAS_TRANS_OR_CONJ,'N', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
-                                    self%local_nrows, self%local_ncols, error)
+      call self%elpa_hermitian_multiply_a_h_a_&
+            &ELPA_IMPL_SUFFIX&
+            &('U','F', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
+                                  self%local_nrows, self%local_ncols, error)
 #endif
-    if(error .NE. ELPA_OK) return
+      if(error .NE. ELPA_OK) return
+
+    else
+
+#ifdef DEVICE_POINTER
+      call self%elpa_pxgemm_multiply_d_ptr_&
+            &ELPA_IMPL_SUFFIX&
+            &(BLAS_TRANS_OR_CONJ,'N', self%na, bDev, aDev, self%local_nrows, self%local_ncols, tmpDev, &
+                                      self%local_nrows, self%local_ncols, error)
+#else
+      call self%elpa_pxgemm_multiply_a_h_a_&
+            &ELPA_IMPL_SUFFIX&
+            &(BLAS_TRANS_OR_CONJ,'N', self%na, b, a, self%local_nrows, self%local_ncols, tmp, &
+                                      self%local_nrows, self%local_ncols, error)
+#endif
+      if(error .NE. ELPA_OK) return
+    endif ! pxgemm_for_generalized_with_hermitian_multipy
 
     ! A <- tmp * inv(U) = inv(U)^T * A * inv(U)
 #ifdef DEVICE_POINTER

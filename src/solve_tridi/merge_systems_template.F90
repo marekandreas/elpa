@@ -220,7 +220,7 @@
       else
         max_strip=128
       endif
-      if (wantDebug) print *, "max_strip = ", max_strip
+      if (wantDebug .and. my_prow==0 .and. my_pcol==0) print *, "max_strip = ", max_strip
 
       useCCL = obj%gpu_setup%useCCL
 

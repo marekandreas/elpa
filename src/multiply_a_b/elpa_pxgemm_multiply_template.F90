@@ -165,7 +165,6 @@
   integer(kind=c_int)                          :: cclDataType
   integer(kind=ik)                             :: k_datatype
 
-  ! PETERDEBUG111: check test.F90 and generate_automake_test_programs.py
   NVTX_RANGE_PUSH("elpa_pxgemm_multiply")
 
   success = .true.
