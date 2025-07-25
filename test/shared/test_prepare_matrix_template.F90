@@ -86,12 +86,12 @@
       logical                                   :: hermitian, skewsymmetric
 
 #if COMPLEXCASE == 1
-      real(kind=rk)                             :: xr(size(a,dim=1), size(a,dim=2))
-#endif /* COMPLEXCASE */
+      real(kind=rk), allocatable                :: xr(:,:)
+#endif
 
       integer(kind=c_int), allocatable          :: iseed(:)
       integer(kind=c_int)                       ::  n
-      
+
       if (present(is_hermitian)) then
         if (is_hermitian .eq. 1) then
           hermitian = .true.
@@ -118,6 +118,10 @@
 
       ! we want different random numbers on every process
       ! (otherwise A might get rank deficient):
+
+#if COMPLEXCASE == 1
+      allocate(xr(size(a,dim=1), size(a,dim=2)))
+#endif
 
       call random_seed(size=n)
       allocate(iseed(n))
@@ -197,7 +201,9 @@
       as = a
 
       deallocate(iseed)
-
+#if COMPLEXCASE == 1
+      deallocate(xr)
+#endif
     end subroutine
 
     !c> #ifdef __cplusplus
@@ -255,7 +261,7 @@ subroutine prepare_matrix_random_&
       & (na, myid, sc_desc, a, z, as, is_hermitian=is_hermitian, is_skewsymmetric=is_skewsymmetric)
     end subroutine
 
-!----------------------------------------------------------------------------------------------------------------
+!__________________________________________________________________________________________________
 
     subroutine prepare_matrix_random_spd_&
     &MATH_DATATYPE&
@@ -357,7 +363,7 @@ subroutine prepare_matrix_random_spd_&
     end subroutine
 
 
-!----------------------------------------------------------------------------------------------------------------
+!__________________________________________________________________________________________________
 ! a(i,j) = random(0,1) for i<j
 !        = i for i=j (important for matrix was well-conditioned)
 !        = 0 for i>j
@@ -374,9 +380,10 @@ subroutine prepare_matrix_random_spd_&
       MATH_DATATYPE(kind=rck), intent(inout)    :: a(:,:)
     
       TEST_INT_TYPE                             :: l_1, l_2, x_1, x_2, I_glob, J_glob, i_loc, j_loc
+
 #if COMPLEXCASE == 1
-      real(kind=rk)                             :: xr(size(a,dim=1), size(a,dim=2))
-#endif /* COMPLEXCASE */
+      real(kind=rk), allocatable                :: xr(:,:)
+#endif
 
       integer(kind=c_int), allocatable          :: iseed(:)
       integer(kind=c_int)                       :: n
@@ -384,12 +391,15 @@ subroutine prepare_matrix_random_spd_&
       
       ! we want different random numbers on every process
       ! (otherwise A might get rank deficient):
+#if COMPLEXCASE == 1
+      allocate(xr(size(a,dim=1), size(a,dim=2)))
+#endif
 
       call random_seed(size=n)
       allocate(iseed(n))
       iseed(:) = myid+1
       call random_seed(put=iseed)
-      
+
 #if REALCASE == 1
       call random_number(a)
 #endif /* REALCASE */
@@ -434,7 +444,9 @@ subroutine prepare_matrix_random_spd_&
 
 
       deallocate(iseed)
-
+#if COMPLEXCASE == 1
+      deallocate(xr)
+#endif
     end subroutine
 
 #if REALCASE == 1
@@ -490,7 +502,7 @@ subroutine prepare_matrix_random_spd_&
       & (na, a, nblk, myid, na_rows, na_cols, np_rows, np_cols, my_prow, my_pcol)
     end subroutine
     
-!----------------------------------------------------------------------------------------------------------------
+!__________________________________________________________________________________________________
 
    subroutine prepare_matrix_toeplitz_&
    &MATH_DATATYPE&
@@ -691,7 +703,7 @@ subroutine prepare_matrix_random_spd_&
       nblk, np_rows, np_cols, my_prow, my_pcol)
     end subroutine
     
-!----------------------------------------------------------------------------------------------------------------
+!__________________________________________________________________________________________________
 ! Same as prepare_matrix_toeplitz, but with a zero subdiagonal element in the middle,
 ! so the matrix is block-diagonal.
 ! This tests "IF ( RHO*zmax <= TOL ) THEN" case in merge_systems_template.F90
@@ -753,7 +765,8 @@ subroutine prepare_matrix_random_spd_&
      sds = sd
      as = a
    end subroutine
-!----------------------------------------------------------------------------------------------------------------
+
+!__________________________________________________________________________________________________
 
    subroutine prepare_matrix_frank_&
    &MATH_DATATYPE&
@@ -798,7 +811,7 @@ subroutine prepare_matrix_random_spd_&
 
    end subroutine
 
-!----------------------------------------------------------------------------------------------------------------
+!__________________________________________________________________________________________________
 
     subroutine prepare_matrix_unit_&
     &MATH_DATATYPE&
