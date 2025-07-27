@@ -189,7 +189,7 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
 #ifdef WITH_GPU_STREAMS
     successGPU = gpu_memcpy_async(bDev, int(loc(b(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
 #else
-    successGPU = gpu_memcpy      (bDev, int(loc(a(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+    successGPU = gpu_memcpy      (bDev, int(loc(b(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
 #endif
     check_memcpy_gpu("elpa_generalized_eigenvectors_a_h_a: bDev", successGPU)
 
