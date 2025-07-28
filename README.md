@@ -83,7 +83,7 @@ Nonetheless, we are grateful if you cite the following publications:
   T.; Heinecke, A.; Bungartz, H.-J.; Lederer, H.
   "The ELPA library: scalable parallel eigenvalue solutions for electronic
   structure theory and computational science",
-  Journal of Physics Condensed Matter 26, 213201 (2014)
+  Journal of Physics Condensed Matter, 26, 213201 (2014)
   doi:10.1088/0953-8984/26/21/213201
   
   If you use the GPU version of ELPA:
@@ -96,7 +96,7 @@ Nonetheless, we are grateful if you cite the following publications:
   
   Yu, V.; Moussa, J.; Kus, P.; Marek, A.; Messmer, P.; Yoon, M.; Lederer, H.; Blum, V.
   "GPU-Acceleration of the ELPA2 Distributed Eigensolver for Dense Symmetric and Hermitian Eigenproblems",
-  Computer Physics Communications 262, 107808 (2021)
+  Computer Physics Communications, 262, 107808 (2021)
   doi:10.1016/j.cpc.2020.107808
 
   If you use the new API and/or autotuning:
