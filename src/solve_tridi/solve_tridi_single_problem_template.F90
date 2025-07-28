@@ -111,6 +111,7 @@
                                                                     &_real
 
     integer(kind=c_intptr_t)                    :: gpusolverHandle
+    integer(kind=c_int)                         :: gpusolver_version
 
     debug = 0
     if (wantDebug) debug = 1
@@ -119,228 +120,134 @@
     useGPUsolver =.false.
 #ifdef SOLVE_TRIDI_GPU_BUILD
     useGPU =.true.
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+#endif
 
 #if defined(WITH_NVIDIA_CUSOLVER)
     useGPUsolver =.true.
 #endif
 #if defined(WITH_AMD_ROCSOLVER)
-    ! As of ELPA 2025.01 release, rocsolver_?stedc/rocsolver_?syevd showed bad performance (worse than on CPU).
-    ! Hopefully, this will be fixed by AMD and then we can enable it.
     useGPUsolver =.false.
+    gpusolver_version = gpusolver_get_version()
+    if (gpusolver_version<=0 .or. gpusolver_version>999999) write(error_unit,'(a)') 'Error in get_gpusolver_version(gpusolver_version) call'
+    if (gpusolver_version >= 32802) useGPUsolver =.true. ! rocSOLVER 3.28.2 for ROCm 6.4.2 introduced improved stedc
+    if (wantDebug) print *, "gpusolver_version=", gpusolver_version, "useGPUsolver=", useGPUsolver
 #endif
 #endif /* SOLVE_TRIDI_GPU_BUILD */
 
     call obj%timer%start("solve_tridi_single" // PRECISION_SUFFIX)
-
-    success = .true.
-    allocate(ds(nlen), es(nlen), stat=istat, errmsg=errorMessage)
-    check_allocate("solve_tridi_single: ds, es", istat, errorMessage)
+    success = .false.
 
     if (useGPUsolver) then
+      gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
+      
+#if defined(WITH_NVIDIA_CUSOLVER)
+      call gpu_construct_full_from_tridi_matrix(PRECISION_CHAR, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
+#endif
+
       num = 1 * size_of_int
       successGPU = gpu_malloc(info_dev, num)
       check_alloc_gpu("solve_tridi_single info_dev: ", successGPU)
-      
-      my_stream = obj%gpu_setup%my_stream
-      call gpu_construct_tridi_matrix(PRECISION_CHAR, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
-    endif
 
-     ! Save d and e for the case that dstedc fails
-#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
-    if (.not.useGPU) then
-      ds(:) = d(:)
-      es(:) = e(:)
-    endif
+#if defined(WITH_NVIDIA_CUSOLVER)
+      call obj%timer%start("gpusolver_syevd")
+      NVTX_RANGE_PUSH("gpusolver_syevd")
+      ! as of ELPA release 2025.06, cuSOLVER still lacks stedc. Hopefully, this gets resolved by NVIDIA
+      call gpusolver_PRECISION_syevd (nlen, q_dev, ldq, d_dev, info_dev, gpusolverHandle)
+      if (wantDebug) successGPU = gpu_DeviceSynchronize()
+      NVTX_RANGE_POP("gpusolver_syevd")
+      call obj%timer%stop("gpusolver_syevd")
+#endif
+#if defined(WITH_AMD_ROCSOLVER)
+      call obj%timer%start("gpusolver_stedc")
+      NVTX_RANGE_PUSH("gpusolver_stedc")
+      call gpusolver_stedc (PRECISION_CHAR, nlen, d_dev, e_dev, q_dev, ldq, info_dev, gpusolverHandle)
+      if (wantDebug) successGPU = gpu_DeviceSynchronize()
+      NVTX_RANGE_POP("gpusolver_stedc")
+      call obj%timer%stop("gpusolver_stedc")
 #endif
 
-    if (useGPU) then
-      if (.not. useGPUsolver) then
-        ! use CPU solver
+      num = 1 * size_of_int
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(info),kind=c_intptr_t), info_dev, num, gpuMemcpyDeviceToHost, my_stream)
+      check_memcpy_gpu("solve_tridi_single: ", successGPU)
 
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("solve_tridi_single: info_dev -> info", successGPU)
+#else
+      successGPU = gpu_memcpy      (int(loc(info),kind=c_intptr_t), info_dev, num, gpuMemcpyDeviceToHost)
+      check_memcpy_gpu("solve_tridi_single: info_dev", successGPU)
+#endif
+
+      if (info .ne. 0) then
+        write(error_unit,'(a,i8,a)') "Error in gpusolver_PRECISION_syevd, info=", info, ", aborting..."
+        stop 1
+      endif
+
+      successGPU = gpu_free(info_dev)
+      check_dealloc_gpu("solve_tridi_single: info_dev", successGPU)
+
+    else ! useGPUsolver
+      if (useGPU) then
         ! copy to host
         num = nlen * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_memcpy_async(int(loc(d(1)),kind=c_intptr_t), d_dev, &
-                        num, gpuMemcpyDeviceToHost, my_stream)
+        successGPU = gpu_memcpy_async(int(loc(d(1)),kind=c_intptr_t), d_dev, num, gpuMemcpyDeviceToHost, my_stream)
         check_memcpy_gpu("solve_tridi_single: d_dev ", successGPU)
 #else
-        successGPU = gpu_memcpy(int(loc(d(1)),kind=c_intptr_t), d_dev, &
-                            num, gpuMemcpyDeviceToHost)
+        successGPU = gpu_memcpy      (int(loc(d(1)),kind=c_intptr_t), d_dev, num, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("solve_tridi_single: d_dev", successGPU)
 #endif
+
         num = nlen * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_memcpy_async(int(loc(e(1)),kind=c_intptr_t), e_dev, &
-                        num, gpuMemcpyDeviceToHost, my_stream)
+        successGPU = gpu_memcpy_async(int(loc(e(1)),kind=c_intptr_t), e_dev, num, gpuMemcpyDeviceToHost, my_stream)
         check_memcpy_gpu("solve_tridi_single: e_dev ", successGPU)
 #else
-        successGPU = gpu_memcpy(int(loc(e(1)),kind=c_intptr_t), e_dev, &
-                            num, gpuMemcpyDeviceToHost)
+        successGPU = gpu_memcpy      (int(loc(e(1)),kind=c_intptr_t), e_dev, num, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("solve_tridi_single: e_dev", successGPU)
 #endif
-
-        ds(:) = d(:)
-        es(:) = e(:)
+      endif ! uesGPU
 
 #include "./solve_tridi_single_problem_include.F90"
 
+      if (useGPU) then
         ! copy back
         num = nlen * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_memcpy_async(d_dev, int(loc(d(1)),kind=c_intptr_t),  &
-                        num, gpuMemcpyHostToDevice, my_stream)
+        successGPU = gpu_memcpy_async(d_dev, int(loc(d(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("solve_tridi_single: d_dev ", successGPU)
 #else
-        successGPU = gpu_memcpy(d_dev, int(loc(d(1)),kind=c_intptr_t),  &
-                            num, gpuMemcpyHostToDevice)
+        successGPU = gpu_memcpy      (d_dev, int(loc(d(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
         check_memcpy_gpu("solve_tridi_single: d_dev", successGPU)
 #endif
+
         num = nlen * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_memcpy_async(e_dev, int(loc(e(1)),kind=c_intptr_t), &
-                        num, gpuMemcpyHostToDevice, my_stream)
+        successGPU = gpu_memcpy_async(e_dev, int(loc(e(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("solve_tridi_single: e_dev ", successGPU)
 #else
-        successGPU = gpu_memcpy(e_dev, int(loc(e(1)),kind=c_intptr_t),  &
-                            num, gpuMemcpyHostToDevice)
+        successGPU = gpu_memcpy      (e_dev, int(loc(e(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
         check_memcpy_gpu("solve_tridi_single: e_dev", successGPU)
 #endif
 
-! fails
         num = ldq*nlen * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_memcpy_async(q_dev, int(loc(q(1,1)),kind=c_intptr_t), &
-                        num, gpuMemcpyHostToDevice, my_stream)
+        successGPU = gpu_memcpy_async(q_dev, int(loc(q(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
         check_memcpy_gpu("solve_tridi_single: q_dev1 ", successGPU)
 #else
-        successGPU = gpu_memcpy(q_dev, int(loc(q(1,1)),kind=c_intptr_t),  &
-                            num, gpuMemcpyHostToDevice)
+        successGPU = gpu_memcpy      (q_dev, int(loc(q(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
         check_memcpy_gpu("solve_tridi_single: q_dev1", successGPU)
 #endif
+      endif ! useGPU
+    endif ! useGPUsolver
 
-      else ! (.not. useGPUsolver)
-        
-        call obj%timer%start("gpusolver_syevd")
-        NVTX_RANGE_PUSH("gpusolver_syevd")
-        gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
-        call gpusolver_PRECISION_syevd (nlen, q_dev, ldq, d_dev, info_dev, gpusolverHandle)
-        if (wantDebug) successGPU = gpu_DeviceSynchronize()
-        NVTX_RANGE_POP("gpusolver_syevd")
-        call obj%timer%stop("gpusolver_syevd")
-
-        num = 1 * size_of_int
-#ifdef WITH_GPU_STREAMS
-        my_stream = obj%gpu_setup%my_stream
-        successGPU = gpu_memcpy_async(int(loc(info),kind=c_intptr_t), info_dev, &
-                        num, gpuMemcpyDeviceToHost, my_stream)
-        check_memcpy_gpu("solve_tridi_single: ", successGPU)
-
-        successGPU = gpu_stream_synchronize(my_stream)
-        check_stream_synchronize_gpu("solve_tridi_single: info_dev -> info", successGPU)
-#else
-        successGPU = gpu_memcpy(int(loc(info),kind=c_intptr_t), info_dev, &
-                            num, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("solve_tridi_single: info_dev", successGPU)
-#endif
-
-        if (info .ne. 0) then
-          write(error_unit,'(a,i8,a)') "Error in gpusolver_PRECISION_syevd, info=", info, ", aborting..."
-          stop 1
-        endif
-      endif ! (.not. useGPUsolver)
-!!
-!!       else
-!         !copy to host
-!         num = nlen * size_of_datatype
-!#ifdef WITH_GPU_STREAMS
-!         my_stream = obj%gpu_setup%my_stream
-!         successGPU = gpu_memcpy_async(int(loc(d(1)),kind=c_intptr_t), d_dev, &
-!                          num, gpuMemcpyDeviceToHost, my_stream)
-!         check_memcpy_gpu("solve_tridi_single: d_dev ", successGPU)
-!#else
-!         successGPU = gpu_memcpy(int(loc(d(1)),kind=c_intptr_t), d_dev, &
-!                             num, gpuMemcpyDeviceToHost)
-!         check_memcpy_gpu("solve_tridi_single: d_dev", successGPU)
-!#endif
-!         num = nlen * size_of_datatype
-!#ifdef WITH_GPU_STREAMS
-!         my_stream = obj%gpu_setup%my_stream
-!         successGPU = gpu_memcpy_async(int(loc(e(1)),kind=c_intptr_t), e_dev, &
-!                          num, gpuMemcpyDeviceToHost, my_stream)
-!         check_memcpy_gpu("solve_tridi_single: e_dev ", successGPU)
-!#else
-!         successGPU = gpu_memcpy(int(loc(e(1)),kind=c_intptr_t), e_dev, &
-!                             num, gpuMemcpyDeviceToHost)
-!         check_memcpy_gpu("solve_tridi_single: e_dev", successGPU)
-!#endif
-!
-!         ds(:) = d(:)
-!         es(:) = e(:)
-!
-!#endif /* defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER) */
-!
-!#include "./solve_tridi_single_problem_include.F90"
-!
-!
-!#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_AMD_ROCSOLVER)
-!         !copy back
-!         num = nlen * size_of_datatype
-!#ifdef WITH_GPU_STREAMS
-!         my_stream = obj%gpu_setup%my_stream
-!         successGPU = gpu_memcpy_async(d_dev, int(loc(d(1)),kind=c_intptr_t),  &
-!                          num, gpuMemcpyHostToDevice, my_stream)
-!         check_memcpy_gpu("solve_tridi_single: d_dev ", successGPU)
-!#else
-!         successGPU = gpu_memcpy(d_dev, int(loc(d(1)),kind=c_intptr_t),  &
-!                             num, gpuMemcpyHostToDevice)
-!         check_memcpy_gpu("solve_tridi_single: d_dev", successGPU)
-!#endif
-!         num = nlen * size_of_datatype
-!#ifdef WITH_GPU_STREAMS
-!         my_stream = obj%gpu_setup%my_stream
-!         successGPU = gpu_memcpy_async(e_dev, int(loc(e(1)),kind=c_intptr_t), &
-!                          num, gpuMemcpyHostToDevice, my_stream)
-!         check_memcpy_gpu("solve_tridi_single: e_dev ", successGPU)
-!#else
-!         successGPU = gpu_memcpy(e_dev, int(loc(e(1)),kind=c_intptr_t),  &
-!                             num, gpuMemcpyHostToDevice)
-!         check_memcpy_gpu("solve_tridi_single: e_dev", successGPU)
-!#endif
-!
-!! fails
-!         num = ldq*nlen * size_of_datatype
-!#ifdef WITH_GPU_STREAMS
-!         my_stream = obj%gpu_setup%my_stream
-!         successGPU = gpu_memcpy_async(q_dev, int(loc(q(1,1)),kind=c_intptr_t), &
-!                          num, gpuMemcpyHostToDevice, my_stream)
-!         check_memcpy_gpu("solve_tridi_single: q_dev1 ", successGPU)
-!#else
-!         successGPU = gpu_memcpy(q_dev, int(loc(q(1,1)),kind=c_intptr_t),  &
-!                             num, gpuMemcpyHostToDevice)
-!         check_memcpy_gpu("solve_tridi_single: q_dev1", successGPU)
-!#endif
-!!       endif ! nlen
-
-
-    else ! useGPU
-#include "./solve_tridi_single_problem_include.F90"
-    endif ! useGPU
-
-    if (useGPUsolver) then
-      successGPU = gpu_free(info_dev)
-      check_dealloc_gpu("solve_tridi_single: info_dev", successGPU)
-    endif
 
     ! Check if eigenvalues are monotonically increasing
     ! This seems to be not always the case  (in the IBM implementation of dstedc ???)
 
     if (useGPU) then
-      my_stream = obj%gpu_setup%my_stream
       call gpu_check_monotony(PRECISION_CHAR, d_dev, q_dev, qtmp_dev, nlen, ldq, debug, my_stream)
     else
       do i=1,nlen-1
@@ -378,12 +285,7 @@
       enddo
     endif ! useGPU
 
+    success = .true.
     call obj%timer%stop("solve_tridi_single" // PRECISION_SUFFIX)
 
-#ifdef SOLVE_TRIDI_GPU_BUILD
-  end subroutine solve_tridi_single_problem_gpu_&
-  &PRECISION_AND_SUFFIX
-#else
-  end subroutine solve_tridi_single_problem_cpu_&
-  &PRECISION_AND_SUFFIX
-#endif
+  end subroutine

@@ -54,6 +54,13 @@
 
       ! First try dstedc, this is normally faster but it may fail sometimes (why???)
       
+      ! allocate(ds(nlen), es(nlen), stat=istat, errmsg=errorMessage)
+      ! check_allocate("solve_tridi_single: ds, es", istat, errorMessage)
+
+      ! Save d and e for the case that dstedc fails
+      ! ds(:) = d(:)
+      ! es(:) = e(:)
+
       if (wantDebug) then
         call obj%timer%start("check_nans")
         has_nans = .false.
@@ -113,7 +120,9 @@
       endif
 
 
-      deallocate(work,iwork,ds,es, stat=istat, errmsg=errorMessage)
-      check_deallocate("solve_tridi_single: work, iwork, ds, es", istat, errorMessage)
+      deallocate(work,iwork, stat=istat, errmsg=errorMessage)
+      check_deallocate("solve_tridi_single: work, iwork", istat, errorMessage)
 
+      !deallocate(ds,es, stat=istat, errmsg=errorMessage)
+      !check_deallocate("solve_tridi_single: ds, es", istat, errorMessage)
 

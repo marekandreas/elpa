@@ -44,6 +44,15 @@
 ! Author: Peter Karpov, MPCDF
 ! This file is the generated version. Do NOT edit
 
+  interface
+    function rocsolver_get_version_c() result(version) &
+            bind(C, name="rocsolverGetVersionFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=c_int)              :: version
+    end function
+  end interface
 
   interface
     function rocsolver_set_stream_c(rocsolverHandle, hipStream) result(istat) &
@@ -247,9 +256,30 @@
     end subroutine
   end interface
 
+  interface
+    subroutine rocsolver_stedc_c(dataType, rocsolverHandle, n, d_dev, e_dev, q_dev, ldq, info_dev) &
+                              bind(C,name="rocsolver_stedc_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_int), value      :: n, ldq
+      integer(kind=c_intptr_t), value :: d_dev, e_dev, q_dev, info_dev
+      integer(kind=c_intptr_t), value :: rocsolverHandle
+    end subroutine
+  end interface
+
 
   contains
 
+
+    function rocsolver_get_version() result(version)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int)                       :: version
+#ifdef WITH_AMD_ROCSOLVER
+      version = rocsolver_get_version_c()
+#endif
+    end function
 
     function rocsolver_set_stream(rocsolverHandle, hipStream) result(success)
       use, intrinsic :: iso_c_binding
@@ -464,3 +494,15 @@
 #endif
     end subroutine
 
+
+    subroutine rocsolver_stedc(dataType, n, d_dev, e_dev, q_dev, ldq, info_dev, rocsolverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_int)             :: n, ldq
+      integer(kind=c_intptr_t)        :: d_dev, e_dev, q_dev, info_dev
+      integer(kind=c_intptr_t)        :: rocsolverHandle
+#ifdef WITH_AMD_ROCSOLVER
+      call rocsolver_stedc_c(dataType, rocsolverHandle, n, d_dev, e_dev, q_dev, ldq, info_dev)
+#endif
+    end subroutine

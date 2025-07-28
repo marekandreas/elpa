@@ -51,6 +51,32 @@
 
   contains
 
+  function gpusolver_get_version() result(version)
+    use, intrinsic :: iso_c_binding
+#ifdef WITH_NVIDIA_GPU_VERSION
+    use cuda_functions
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    use hip_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+    use sycl_functions
+#endif
+    implicit none
+
+    integer(kind=c_int)                  :: version
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+    version = cusolver_get_version()
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+    version = rocsolver_get_version()
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+    print *, "mkl_sycl_solver_version is not implemented yet. Skipping"
+#endif
+  end function
+
     subroutine gpusolver_Dtrtri(uplo, diag, n, a, lda, info, handle)
       use, intrinsic :: iso_c_binding
       use cuda_functions
@@ -564,3 +590,33 @@
 #endif
     end subroutine
 
+
+    subroutine gpusolver_stedc(dataType, n, d_dev, e_dev, q_dev, ldq, info_dev, handle)
+      use, intrinsic :: iso_c_binding
+      use cuda_functions
+#ifdef WITH_AMD_GPU_VERSION
+      use hip_functions
+#endif
+#ifdef WITH_SYCL_GPU_VERSION
+      use sycl_functions
+#endif
+
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_int)             :: n, ldq
+      integer(kind=c_intptr_t)        :: d_dev, e_dev, q_dev, info_dev
+      integer(kind=c_intptr_t)        :: handle
+
+#ifdef WITH_NVIDIA_GPU_VERSION
+      ! call cusolver_stedc(datatype, n, d_dev, e_dev, q_dev, ldq, info_dev, handle)
+      print *, "cusolver_stedc doesn't exist yet. Exiting"
+      stop 1
+#endif
+#ifdef WITH_AMD_GPU_VERSION
+      call rocsolver_stedc(datatype, n, d_dev, e_dev, q_dev, ldq, info_dev, handle)
+#endif
+
+#ifdef WITH_SYCL_GPU_VERSION
+! not yet available in mkl ?
+#endif
+    end subroutine
