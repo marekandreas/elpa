@@ -878,10 +878,12 @@
           num = (na1*SM_count) * size_of_datatype
           successGPU = gpu_malloc(delta_dev, num)
           check_alloc_gpu("merge_systems: delta_dev", successGPU)
-
+          
+          if (wantDebug) call obj%timer%start("gpu_solve_secular_equation_loop")
           call gpu_solve_secular_equation_loop (PRECISION_CHAR, d1_dev, z1_dev, delta_dev, rho_dev, &
                   ztmp_extended_dev, dbase_dev, ddiff_dev, my_proc, na1, n_procs, SM_count, debug, my_stream)
-          
+          if (wantDebug) call obj%timer%stop("gpu_solve_secular_equation_loop")
+
           call gpu_local_product(PRECISION_CHAR, z_dev, ztmp_extended_dev, na1, SM_count, debug, my_stream)
           
           successGPU = gpu_free(delta_dev)
@@ -2067,7 +2069,7 @@
             successGPU = gpu_free(tmp_dev)
             check_dealloc_gpu("merge_systems: tmp_dev", successGPU)
           endif
-          
+
           successGPU = gpu_free(zero_dev)
           check_dealloc_gpu("merge_systems: zero_dev", successGPU)
 
