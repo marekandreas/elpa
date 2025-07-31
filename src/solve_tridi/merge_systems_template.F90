@@ -390,8 +390,10 @@
         check_alloc_gpu("merge_systems: zl_dev", successGPU)
 
         num = (l_rows) * size_of_datatype
-        successGPU = gpu_malloc(tmp_dev, num)
-        check_alloc_gpu("merge_systems: tmp_dev", successGPU)
+        if (l_rows>0) then
+          successGPU = gpu_malloc(tmp_dev, num)
+          check_alloc_gpu("merge_systems: tmp_dev", successGPU)
+        endif
 
         num = 1 * size_of_datatype
         successGPU = gpu_malloc(zero_dev, num)
@@ -2061,9 +2063,11 @@
           successGPU = gpu_free(ev_dev)
           check_dealloc_gpu("merge_systems: ev_dev", successGPU)
 
-          successGPU = gpu_free(tmp_dev)
-          check_dealloc_gpu("merge_systems: tmp_dev", successGPU)
-
+          if (l_rows>0) then
+            successGPU = gpu_free(tmp_dev)
+            check_dealloc_gpu("merge_systems: tmp_dev", successGPU)
+          endif
+          
           successGPU = gpu_free(zero_dev)
           check_dealloc_gpu("merge_systems: zero_dev", successGPU)
 
