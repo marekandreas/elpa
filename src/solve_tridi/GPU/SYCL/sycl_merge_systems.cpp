@@ -1011,11 +1011,11 @@ void gpu_solve_secular_equation_loop (T *d1_dev, T *z1_dev, T *delta_dev, T *rho
                                       int my_proc, int na1, int n_procs, int SM_count, int debug, gpuStream_t my_stream){
   
   sycl::queue q = getQueueOrDefault(my_stream);
-  sycl::range<1> threadsPerBlock = MAX_THREADS_PER_BLOCK;
+  sycl::range<1> threadsPerBlock = 32;
   sycl::range<1> blocks(SM_count);
 
   q.submit([&](sycl::handler& h) {
-    sycl::local_accessor<T, 1> cache(MAX_THREADS_PER_BLOCK, h);
+    sycl::local_accessor<T, 1> cache(threadsPerBlock.get(0), h);
     sycl::local_accessor<T, 1> dshift_sh(1, h);
     sycl::local_accessor<T, 1> a_sh(1, h);
     sycl::local_accessor<T, 1> b_sh(1, h);

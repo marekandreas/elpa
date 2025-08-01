@@ -85,6 +85,12 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
   use elpa1_impl
   use elpa2_impl
   use elpa_utilities, only : error_unit
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+  use elpa_gpu
+  use elpa_gpu_util
+  use mod_query_gpu_usage
+  use mod_check_for_gpu
+#endif
   use, intrinsic :: iso_c_binding
   class(elpa_impl_t)  :: self
 
@@ -92,7 +98,7 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
   MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, *), b(self%local_nrows, *), q(self%local_nrows, *)
 #else
   MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols), &
-                          q(self%local_nrows, self%local_ncols)
+                                         q(self%local_nrows, self%local_ncols)
 #endif
   real(kind=C_REAL_DATATYPE) :: ev(self%na)
 
@@ -100,16 +106,155 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
   integer, optional          :: error
   integer                    :: error_l
 
-  logical                    :: success_l
-  integer(kind=c_int)        :: solver
+  logical                    :: success_l, wantDebug
+  integer(kind=c_int)        :: solver, debug
+
+  logical                    :: useGPU, successGPU
+  integer(kind=c_int)        :: myid, numberOfGPUDevices
+  type(c_ptr)                :: aDev, bDev, evDev, qDev
+  integer(kind=c_intptr_t)   :: my_stream
+  integer(kind=c_intptr_t)   :: num
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+  integer(kind=c_intptr_t), parameter  :: size_of_datatype      = size_of_&
+                                                                &PRECISION&
+                                                                &_&
+                                                                &MATH_DATATYPE
+  integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_&
+                                                                &PRECISION&
+                                                                &_&
+                                                                &real
+#endif
 
   error_l   = -10
   success_l = .false.
+  if (present(error)) then
+    error = error_l
+  endif
+
+  call self%get("debug", debug, error_l)
+  if (error_l .ne. ELPA_OK) then
+    write(error_unit,*) "elpa_generalized_eigenvectors_a_h_a: Problem getting option for debug settings. Aborting..."
+  endif
+  wantDebug = (debug == 1)
+
+  useGPU = .false.
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+  if (.not.(query_gpu_usage(self, "elpa_generalized_eigenvectors_a_h_a", useGPU))) then
+    write(error_unit,*) "elpa_generalized_eigenvectors_a_h_a: Problem getting options for GPU. Aborting..."
+    return
+  endif
+
+  if (useGPU) then
+    myid = self%mpi_setup%myRank_comm_parent
+    call self%timer%start("check_for_gpu")
+
+    if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug)) then
+      call set_gpu_parameters()
+    else
+      write(error_unit, *) "GPUs are requested but not detected! Aborting..."
+      call self%timer%stop("check_for_gpu")
+      return
+    endif
+    call self%timer%stop("check_for_gpu")
+  endif ! useGPU
+
+  
+  if (useGPU) then
+    successGPU = gpu_malloc(aDev, self%local_nrows*self%local_ncols * size_of_datatype)
+    check_alloc_gpu("elpa_generalized_eigenvectors_a_h_a: aDev", successGPU)
+
+    successGPU = gpu_malloc(bDev, self%local_nrows*self%local_ncols * size_of_datatype)
+    check_alloc_gpu("elpa_generalized_eigenvectors_a_h_a: bDev", successGPU)
+
+    successGPU = gpu_malloc(evDev, self%na*size_of_real_datatype)
+    check_alloc_gpu("elpa_generalized_eigenvectors_a_h_a: evDev", successGPU)
+
+    successGPU = gpu_malloc(qDev, self%local_nrows*self%local_ncols * size_of_datatype)
+    check_alloc_gpu("elpa_generalized_eigenvectors_a_h_a: qDev", successGPU)
+
+#ifdef WITH_GPU_STREAMS
+    my_stream = self%gpu_setup%my_stream
+#endif
+
+    call self%timer%start("gpu_memcpy_host_to_dev")
+    num = self%local_nrows*self%local_ncols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(aDev, int(loc(a(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+    successGPU = gpu_memcpy      (aDev, int(loc(a(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+    check_memcpy_gpu("elpa_generalized_eigenvectors_a_h_a: aDev", successGPU)
+
+    num = self%local_nrows*self%local_ncols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(bDev, int(loc(b(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+    successGPU = gpu_memcpy      (bDev, int(loc(b(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+    check_memcpy_gpu("elpa_generalized_eigenvectors_a_h_a: bDev", successGPU)
+
+    if (wantDebug) successGPU = gpu_DeviceSynchronize()
+    call self%timer%stop("gpu_memcpy_host_to_dev")
+
+    call elpa_generalized_eigenvectors_d_ptr_&
+                            &ELPA_IMPL_SUFFIX&
+                            & (self, aDev, bDev, evDev, qDev, is_already_decomposed, error_l)
+    if (present(error)) then
+        error = error_l
+    else if (error_l .ne. ELPA_OK) then
+      write(error_unit,'(a)') "ELPA: Error in elpa_generalized_eigenvectors_d_ptr() and you did not check for errors!"
+    endif
+
+    call self%timer%start("gpu_memcpy_dev_to_host")
+    num = self%local_nrows*self%local_ncols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(int(loc(q(1,1)),kind=c_intptr_t), qDev, num, gpuMemcpyDeviceToHost, my_stream)
+#else
+    successGPU = gpu_memcpy      (int(loc(q(1,1)),kind=c_intptr_t), qDev, num, gpuMemcpyDeviceToHost)
+#endif
+    check_memcpy_gpu ("elpa_generalized_eigenvectors_a_h_a: qDev", successGPU)
+    
+    num = self%na * size_of_real_datatype
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(int(loc(ev(1)),kind=c_intptr_t), evDev, num, gpuMemcpyDeviceToHost, my_stream)
+#else
+    successGPU = gpu_memcpy      (int(loc(ev(1)),kind=c_intptr_t), evDev, num, gpuMemcpyDeviceToHost)
+#endif
+    check_memcpy_gpu ("elpa_generalized_eigenvectors_a_h_a: evDev", successGPU)
+
+    if (.not. is_already_decomposed) then
+      num = self%local_nrows*self%local_ncols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(b(1,1)),kind=c_intptr_t), bDev, num, gpuMemcpyDeviceToHost, my_stream)
+#else
+      successGPU = gpu_memcpy      (int(loc(b(1,1)),kind=c_intptr_t), bDev, num, gpuMemcpyDeviceToHost)
+#endif
+      check_memcpy_gpu ("elpa_generalized_eigenvectors_a_h_a: bDev", successGPU)
+    endif
+
+    if (wantDebug) successGPU = gpu_DeviceSynchronize()
+    call self%timer%stop("gpu_memcpy_dev_to_host")
+
+    successGPU = gpu_free(aDev)
+    check_dealloc_gpu("elpa_generalized_eigenvectors_a_h_a: aDev", successGPU)
+
+    successGPU = gpu_free(bDev)
+    check_dealloc_gpu("elpa_generalized_eigenvectors_a_h_a: bDev", successGPU)
+
+    successGPU = gpu_free(evDev)
+    check_dealloc_gpu("elpa_generalized_eigenvectors_a_h_a: evDev", successGPU)
+
+    successGPU = gpu_free(qDev)
+    check_dealloc_gpu("elpa_generalized_eigenvectors_a_h_a: qDev", successGPU)
+
+    return
+  endif
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
 
 #if defined(INCLUDE_ROUTINES)
-    call self%elpa_transform_generalized_a_h_a_&
-            &ELPA_IMPL_SUFFIX&
-            & (a, b, q, is_already_decomposed, error_l)
+  call self%elpa_transform_generalized_a_h_a_&
+          &ELPA_IMPL_SUFFIX&
+          & (a, b, q, is_already_decomposed, error_l)
 #endif
 
   if (present(error)) then
@@ -474,64 +619,197 @@ end subroutine
 
 !__________________________________________________________________________________________________    
 
-    !>  \brief elpa_generalized_eigenvalues_a_h_a: class method to solve the eigenvalue problem, using host arrays
-    !>
-    !>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
-    !>  blocksize, the number of eigenvectors
-    !>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
-    !>  with the class method "setup"
-    !>
-    !>  It is possible to change the behaviour of the method by setting tunable parameters with the
-    !>  class method "set"
-    !>
-    !>  Parameters
-    !>
-    !>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
-    !>                                              Distribution is like in Scalapack.
-    !>                                              The full matrix must be set (not only one half like in scalapack).
-    !>                                              Destroyed on exit (upper and lower half).
-    !>
-    !>  \param b                                    Distributed matrix, part of the generalized eigenvector problem, or the
-    !>                                              product of a previous call to this function (see is_already_decomposed).
-    !>                                              Distribution is like in Scalapack.
-    !>                                              If is_already_decomposed is false, on exit replaced by the decomposition
-    !>
-    !>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
-    !>
-    !>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
-    !>                                              each subsequent call with the same b, since b then already contains
-    !>                                              decomposition and thus the decomposing step is skipped
-    !>
-    !>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
-    subroutine elpa_generalized_eigenvalues_a_h_a_&
-                    &ELPA_IMPL_SUFFIX&
-                    & (self, a, b, ev, is_already_decomposed, error)
-      use elpa1_impl
-      use elpa2_impl
-      use elpa_utilities, only : error_unit, check_alloc, check_allocate_f
-
-      use, intrinsic :: iso_c_binding
-      class(elpa_impl_t)  :: self
+!>  \brief elpa_generalized_eigenvalues_a_h_a: class method to solve the eigenvalue problem, using host arrays
+!>
+!>  The dimensions of the matrix a (locally ditributed and global), the block-cyclic distribution
+!>  blocksize, the number of eigenvectors
+!>  to be computed and the MPI communicators are already known to the object and MUST be set BEFORE
+!>  with the class method "setup"
+!>
+!>  It is possible to change the behaviour of the method by setting tunable parameters with the
+!>  class method "set"
+!>
+!>  Parameters
+!>
+!>  \param a                                    Distributed matrix for which eigenvalues are to be computed.
+!>                                              Distribution is like in Scalapack.
+!>                                              The full matrix must be set (not only one half like in scalapack).
+!>                                              Destroyed on exit (upper and lower half).
+!>
+!>  \param b                                    Distributed matrix, part of the generalized eigenvector problem, or the
+!>                                              product of a previous call to this function (see is_already_decomposed).
+!>                                              Distribution is like in Scalapack.
+!>                                              If is_already_decomposed is false, on exit replaced by the decomposition
+!>
+!>  \param ev                                   On output: eigenvalues of a, every processor gets the complete set
+!>
+!>  \param is_already_decomposed                has to be set to .false. for the first call with a given b and .true. for
+!>                                              each subsequent call with the same b, since b then already contains
+!>                                              decomposition and thus the decomposing step is skipped
+!>
+!>  \param error                                integer, optional: returns an error code, which can be queried with elpa_strerr
+subroutine elpa_generalized_eigenvalues_a_h_a_&
+                &ELPA_IMPL_SUFFIX&
+                & (self, a, b, ev, is_already_decomposed, error)
+  use elpa1_impl
+  use elpa2_impl
+  use elpa_utilities, only : error_unit, check_alloc, check_allocate_f
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+  use elpa_gpu
+  use elpa_gpu_util
+  use mod_query_gpu_usage
+  use mod_check_for_gpu
+#endif
+  use, intrinsic :: iso_c_binding
+  class(elpa_impl_t)  :: self
 
 #ifdef USE_ASSUMED_SIZE
-      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, *), b(self%local_nrows, *)
+  MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, *), b(self%local_nrows, *)
 #else
-      MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols)
+  MATH_DATATYPE(kind=C_DATATYPE_KIND) :: a(self%local_nrows, self%local_ncols), b(self%local_nrows, self%local_ncols)
 #endif
-      real(kind=C_REAL_DATATYPE) :: ev(self%na)
-      logical             :: is_already_decomposed
+  real(kind=C_REAL_DATATYPE) :: ev(self%na)
+  logical             :: is_already_decomposed
 
-      integer, optional   :: error
-      integer             :: error_l
-      integer(kind=c_int) :: solver
-      logical             :: success_l
+  integer, optional   :: error
+  integer             :: error_l
+  integer(kind=c_int) :: solver, debug
+  logical             :: success_l, wantDebug
 
-      integer(kind=ik)    :: istat
-      character(200)      :: errorMessage
-      MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable :: tmp(:,:)
+  integer(kind=ik)    :: istat
+  character(200)      :: errorMessage
+  MATH_DATATYPE(kind=C_DATATYPE_KIND), allocatable :: tmp(:,:)
 
-      error_l = -10
-      success_l = .false.
+  logical                    :: useGPU, successGPU
+  integer(kind=c_int)        :: myid, numberOfGPUDevices
+  type(c_ptr)                :: aDev, bDev, evDev, qDev
+  integer(kind=c_intptr_t)   :: my_stream
+  integer(kind=c_intptr_t)   :: num
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+  integer(kind=c_intptr_t), parameter  :: size_of_datatype      = size_of_&
+                                                                &PRECISION&
+                                                                &_&
+                                                                &MATH_DATATYPE
+  integer(kind=c_intptr_t), parameter :: size_of_real_datatype = size_of_&
+                                                                &PRECISION&
+                                                                &_&
+                                                                &real
+#endif
+
+  error_l = -10
+  success_l = .false.
+  if (present(error)) then
+    error = error_l
+  endif
+  
+  call self%get("debug", debug, error_l)
+  if (error_l .ne. ELPA_OK) then
+    write(error_unit,*) "elpa_generalized_eigenvectors_a_h_a: Problem getting option for debug settings. Aborting..."
+  endif
+  wantDebug = (debug == 1)
+
+  useGPU = .false.
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+    if (.not.(query_gpu_usage(self, "elpa_generalized_eigenvectors_d_ptr", useGPU))) then
+      write(error_unit,*) "elpa_generalized_eigenvectors_d_ptr: Problem getting options for GPU. Aborting..."
+      return
+    endif
+  
+    if (useGPU) then
+      myid = self%mpi_setup%myRank_comm_parent
+      call self%timer%start("check_for_gpu")
+  
+      if (check_for_gpu(self, myid, numberOfGPUDevices, wantDebug)) then
+        call set_gpu_parameters()
+      else
+        write(error_unit, *) "GPUs are requested but not detected! Aborting..."
+        call self%timer%stop("check_for_gpu")
+        return
+      endif
+      call self%timer%stop("check_for_gpu")
+    endif ! useGPU
+
+     
+    if (useGPU) then
+      successGPU = gpu_malloc(aDev, self%local_nrows*self%local_ncols * size_of_datatype)
+      check_alloc_gpu("elpa_generalized_eigenvalues_a_h_a: aDev", successGPU)
+
+      successGPU = gpu_malloc(bDev, self%local_nrows*self%local_ncols * size_of_datatype)
+      check_alloc_gpu("elpa_generalized_eigenvalues_a_h_a: bDev", successGPU)
+
+      successGPU = gpu_malloc(evDev, self%na*size_of_real_datatype)
+      check_alloc_gpu("elpa_generalized_eigenvalues_a_h_a: evDev", successGPU)
+
+#ifdef WITH_GPU_STREAMS
+    my_stream = self%gpu_setup%my_stream
+#endif
+
+    call self%timer%start("gpu_memcpy_host_to_dev")
+    num = self%local_nrows*self%local_ncols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(aDev, int(loc(a(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+    successGPU = gpu_memcpy      (aDev, int(loc(a(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+    check_memcpy_gpu("elpa_generalized_eigenvectors_a_h_a: aDev", successGPU)
+
+    num = self%local_nrows*self%local_ncols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(bDev, int(loc(b(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+    successGPU = gpu_memcpy      (bDev, int(loc(a(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+    check_memcpy_gpu("elpa_generalized_eigenvectors_a_h_a: bDev", successGPU)
+
+    if (wantDebug) successGPU = gpu_DeviceSynchronize()
+    call self%timer%stop("gpu_memcpy_host_to_dev")
+          
+    call elpa_generalized_eigenvalues_d_ptr_&
+                            &ELPA_IMPL_SUFFIX&
+                            & (self, aDev, bDev, evDev, is_already_decomposed, error_l)
+    if (present(error)) then
+        error = error_l
+    else if (error_l .ne. ELPA_OK) then
+      write(error_unit,'(a)') "ELPA: Error in elpa_generalized_eigenvalues_d_ptr() and you did not check for errors!"
+    endif
+
+    call self%timer%start("gpu_memcpy_dev_to_host")
+    num = self%na * size_of_real_datatype
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(int(loc(ev(1)),kind=c_intptr_t), evDev, num, gpuMemcpyDeviceToHost, my_stream)
+#else
+    successGPU = gpu_memcpy      (int(loc(ev(1)),kind=c_intptr_t), evDev, num, gpuMemcpyDeviceToHost)
+#endif
+    check_memcpy_gpu ("elpa_generalized_eigenvectors_a_h_a: evDev", successGPU)
+
+    if (.not. is_already_decomposed) then
+      num = self%local_nrows*self%local_ncols * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(int(loc(b(1,1)),kind=c_intptr_t), bDev, num, gpuMemcpyDeviceToHost, my_stream)
+#else
+      successGPU = gpu_memcpy      (int(loc(b(1,1)),kind=c_intptr_t), bDev, num, gpuMemcpyDeviceToHost)
+#endif
+      check_memcpy_gpu ("elpa_generalized_eigenvectors_a_h_a: bDev", successGPU)
+    endif
+
+    if (wantDebug) successGPU = gpu_DeviceSynchronize()
+    call self%timer%stop("gpu_memcpy_dev_to_host")
+
+    successGPU = gpu_free(aDev)
+    check_dealloc_gpu("elpa_generalized_eigenvalues_a_h_a: aDev", successGPU)
+
+    successGPU = gpu_free(bDev)
+    check_dealloc_gpu("elpa_generalized_eigenvalues_a_h_a: bDev", successGPU)
+
+    successGPU = gpu_free(evDev)
+    check_dealloc_gpu("elpa_generalized_eigenvalues_a_h_a: evDev", successGPU)
+
+    successGPU = gpu_free(qDev)
+    check_dealloc_gpu("elpa_generalized_eigenvalues_a_h_a: qDev", successGPU)
+
+    return
+  endif
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
 
       allocate(tmp(self%local_nrows, self%local_ncols), stat=istat, errmsg=errorMessage)
       check_allocate("elpa_generalized_eigenvalues_a_h_a: tmp", istat, errorMessage)

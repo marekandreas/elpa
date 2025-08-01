@@ -537,7 +537,7 @@
           NVTX_RANGE_POP("ccl_bcast aux_a/b_full")
           call obj%timer%stop("ccl_bcast")
         else ! useCCL
-          call obj%timer%start("mpi_communication")
+          call obj%timer%start("mpi_bcast")
           NVTX_RANGE_PUSH("MPI_Bcast(aux_a/b_full)")
 
           if (a_transposed) then
@@ -549,7 +549,7 @@
           endif
 
           NVTX_RANGE_POP("MPI_Bcast(aux_a/b_full)")
-          call obj%timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_bcast")
         endif ! useCCL
 
         ! copy data back to device, if needed
@@ -638,7 +638,7 @@
           NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
           call obj%timer%stop("ccl_reduce")    
         else ! useCCL
-          call obj%timer%start("mpi_communication")
+          call obj%timer%start("mpi_reduce")
           if (my_pdir==np) then
             call MPI_Reduce(MPI_IN_PLACE, tmp1_full, int(num,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                             MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_dirs,kind=MPI_KIND), mpierr)
@@ -646,7 +646,7 @@
             call MPI_Reduce(tmp1_full   , tmp1_full, int(num,kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                             MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_dirs,kind=MPI_KIND), mpierr)
           endif
-          call obj%timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_reduce")
         endif ! useCCL
 
         if (useGPU .and. .not. useCCL) then
@@ -955,7 +955,7 @@
           NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
           call obj%timer%stop("ccl_bcast")
         else ! useCCL
-          call obj%timer%start("mpi_communication")
+          call obj%timer%start("mpi_bcast")
           NVTX_RANGE_PUSH("MPI_Bcast: aux_a_full, aux_b_full")
 
           call MPI_Bcast(aux_a_full, int(l_rows*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
@@ -964,10 +964,10 @@
                         int(np   ,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 
           NVTX_RANGE_POP("MPI_Bcast: aux_a_full, aux_b_full")
-          call obj%timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_bcast")
         endif ! useCCL
 
-        call obj%timer%start("mpi_communication")
+        call obj%timer%start("mpi_bcast")
         NVTX_RANGE_PUSH("MPI_Bcast: l_cols_source, l_rows_source")
         l_cols_source = l_cols
         l_rows_source = l_rows
@@ -979,7 +979,7 @@
 
         nblk_mult_min = min(l_rows_source, l_cols_source)
         NVTX_RANGE_POP("MPI_Bcast: l_cols_source, l_rows_source")
-        call obj%timer%stop("mpi_communication")
+        call obj%timer%stop("mpi_bcast")
 
         ! copy data back to device, if needed
         if (useGPU .and. .not. useCCL) then
@@ -1400,7 +1400,7 @@
           NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
           call obj%timer%stop("ccl_bcast")
         else ! useCCL
-          call obj%timer%start("mpi_communication")
+          call obj%timer%start("mpi_bcast")
           NVTX_RANGE_PUSH("MPI_Bcast: aux_a_full, aux_b_full")
 
           call MPI_Bcast(aux_a_full, int(l_rows*nblk_mult,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
@@ -1412,7 +1412,7 @@
                         int(np   ,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 
           NVTX_RANGE_POP("MPI_Bcast: aux_a_full, aux_b_full")
-          call obj%timer%stop("mpi_communication")
+          call obj%timer%stop("mpi_bcast")
         endif ! useCCL
 
 
@@ -1871,17 +1871,22 @@
             call obj%timer%stop("gpu_memcpy")
           endif ! (useGPU .and. .not. useCCL)
 #endif /* WITH_MPI */
-   
+          
+          beta = ZERO
+          dnp_ab = np_ab_fine/np_dirs
+          if (dnp_ab > 0) beta = ONE
+
           if (useGPU) then
             call obj%timer%start("gpublas")
             NVTX_RANGE_PUSH("gpublas")
+            
             if (a_transposed) then
               call gpublas_PRECISION_GEMM(trans_a_cchar, trans_b_cchar, &
                                           nblk_mult, &
                                           nblk_mult_max*(np_dirs_fine/np_dirs_t), &
                                           nblk_mult, ONE, &
                                           aux_a_full_dev, nblk_mult, &
-                                          aux_b_full_dev, nblk_mult, ZERO, &
+                                          aux_b_full_dev, nblk_mult, beta, &
                                           tmp1_full_dev , nblk_mult, gpuHandle)
             else if (b_transposed) then
               call gpublas_PRECISION_GEMM(trans_a_cchar, trans_b_cchar, &
@@ -1889,7 +1894,7 @@
                                           nblk_mult, &
                                           nblk_mult, ONE, &
                                           aux_a_full_dev, nblk_mult_max*(np_dirs_fine/np_dirs_t), &
-                                          aux_b_full_dev, nblk_mult, ZERO, &
+                                          aux_b_full_dev, nblk_mult, beta, &
                                           tmp1_full_dev , nblk_mult_max*(np_dirs_fine/np_dirs_t), gpuHandle)
             endif ! b_transposed
             if (wantDebug) successGPU = gpu_DeviceSynchronize()
@@ -1904,7 +1909,7 @@
                                   int(nblk_mult, kind=BLAS_KIND), ONE, &
                                   aux_a_full(1:nblk_mult,1:nblk_mult), int(nblk_mult, kind=BLAS_KIND), &
                                   aux_b_full(1:nblk_mult,1:nblk_mult_max*(np_dirs_fine/np_dirs_t)), &
-                                  int(nblk_mult, kind=BLAS_KIND), ZERO, &
+                                  int(nblk_mult, kind=BLAS_KIND), beta, &
                                   tmp1_full (1:nblk_mult,1:nblk_mult_max*(np_dirs_fine/np_dirs_t)), &
                                   int(nblk_mult, kind=BLAS_KIND))
             else if (b_transposed) then
@@ -1914,180 +1919,179 @@
                                   int(nblk_mult, kind=BLAS_KIND), ONE, &
                                   aux_a_full(1:nblk_mult_max*(np_dirs_fine/np_dirs_t),1:nblk_mult),&
                                   int(nblk_mult_max*(np_dirs_fine/np_dirs_t), kind=BLAS_KIND), &
-                                  aux_b_full(1:nblk_mult,1:nblk_mult), int(nblk_mult, kind=BLAS_KIND), ZERO, &
+                                  aux_b_full(1:nblk_mult,1:nblk_mult), int(nblk_mult, kind=BLAS_KIND), beta, &
                                   tmp1_full (1:nblk_mult_max*(np_dirs_fine/np_dirs_t),1:nblk_mult), &
                                   int(nblk_mult_max*(np_dirs_fine/np_dirs_t), kind=BLAS_KIND))
             endif ! b_transposed
             call obj%timer%stop("blas")
           endif ! useGPU
 
+        enddo ! np_ab_fine = 0, np_dirs_fine-1
+
+
 #ifdef WITH_MPI
-          if (a_transposed) then
-            num_r = nblk_mult
-            num_c = nblk_mult_max*(np_dirs_fine/np_dirs_t)
-          else if (b_transposed) then
-            num_r = nblk_mult_max*(np_dirs_fine/np_dirs_t)
-            num_c = nblk_mult
+        if (a_transposed) then
+          num_r = nblk_mult
+          num_c = nblk_mult_max*(np_dirs_fine/np_dirs_t)
+        else if (b_transposed) then
+          num_r = nblk_mult_max*(np_dirs_fine/np_dirs_t)
+          num_c = nblk_mult
+        endif
+
+        num = nblk_mult*nblk_mult_max*(np_dirs_fine/np_dirs_t)
+
+        if (useGPU .and. .not. useCCL) then
+          call obj%timer%start("gpu_memcpy")
+#ifdef WITH_GPU_STREAMS
+          call gpu_memcpy_async_and_stream_synchronize &
+              ("elpa_pxgemm_multiply: tmp1_full_dev -> tmp1_full", tmp1_full_dev, 0_c_intptr_t, &
+                tmp1_full(1:num_r,1:num_c), &
+                1, 1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+#else
+          successGPU = gpu_memcpy(int(loc(tmp1_full),kind=c_intptr_t), tmp1_full_dev, &
+                                  num*size_of_datatype, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("elpa_pxgemm_multiply: tmp1_full_dev -> tmp1_full", successGPU)
+#endif
+          call obj%timer%stop("gpu_memcpy")
+        endif ! (useGPU .and. .not. useCCL) 
+        
+        ! MPI/ccl_Reduce becomes a bottleneck if num ~ np_dirs_fine/np_dirs_t = lcm(np_rows,np_cols)/np_dirs_t is large
+        if (useCCL) then
+          call obj%timer%start("ccl_reduce")
+          NVTX_RANGE_PUSH("ccl_reduce tmp1_full_dev")
+
+          successGPU  = ccl_reduce(tmp1_full_dev, tmp1_full_dev, int(k_datatype*num, kind=c_size_t), &
+                                    cclDatatype, cclSum, int(np, kind=c_int), ccl_comm_dirs, my_stream)
+        
+          if (.not. successGPU) then
+            print *,"Error in ccl_reduce"
+            stop 1
           endif
 
-          num = nblk_mult*nblk_mult_max*(np_dirs_fine/np_dirs_t)
-          
-          if (useGPU .and. .not. useCCL) then
-            call obj%timer%start("gpu_memcpy")
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("elpa_pxgemm_multiply: ccl_bcast", successGPU)
+
+          NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
+          call obj%timer%stop("ccl_reduce")
+        else ! useCCL
+          call obj%timer%start("mpi_reduce")
+          if (my_pdir==np) then
+            call MPI_Reduce(MPI_IN_PLACE, tmp1_full, int(num, kind=MPI_KIND), & 
+                            MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_dirs,kind=MPI_KIND), mpierr)
+          else
+            call MPI_Reduce(tmp1_full   , tmp1_full, int(num, kind=MPI_KIND), &
+                            MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_dirs,kind=MPI_KIND), mpierr)
+          endif
+          call obj%timer%stop("mpi_reduce")
+        endif ! useCCL
+
+        if (useGPU .and. .not. useCCL) then
+          call obj%timer%start("gpu_memcpy")
 #ifdef WITH_GPU_STREAMS
-            call gpu_memcpy_async_and_stream_synchronize &
-                ("elpa_pxgemm_multiply: tmp1_full_dev -> tmp1_full", tmp1_full_dev, 0_c_intptr_t, &
-                  tmp1_full(1:num_r,1:num_c), &
-                  1, 1, num*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+          call gpu_memcpy_async_and_stream_synchronize &
+              ("elpa_pxgemm_multiply: tmp1_full -> tmp1_full_dev", 0_c_intptr_t, tmp1_full_dev, &
+                tmp1_full(1:num_r,1:num_c), &
+                1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
 #else
-            successGPU = gpu_memcpy(int(loc(tmp1_full),kind=c_intptr_t), tmp1_full_dev, &
-                                    num*size_of_datatype, gpuMemcpyDeviceToHost)
-            check_memcpy_gpu("elpa_pxgemm_multiply: tmp1_full_dev -> tmp1_full", successGPU)
+          successGPU = gpu_memcpy(tmp1_full_dev, int(loc(tmp1_full),kind=c_intptr_t), &
+                                  num*size_of_datatype, gpuMemcpyHostToDevice)
+          check_memcpy_gpu("elpa_pxgemm_multiply: tmp1_full -> tmp1_full_dev", successGPU)
 #endif
-            call obj%timer%stop("gpu_memcpy")
-          endif ! (useGPU .and. .not. useCCL) 
-          
-          if (useCCL) then
-            call obj%timer%start("ccl_reduce")
-            NVTX_RANGE_PUSH("ccl_reduce tmp1_full_dev")
-
-            successGPU  = ccl_reduce(tmp1_full_dev, tmp1_full_dev, int(k_datatype*num, kind=c_size_t), &
-                                     cclDatatype, cclSum, int(np, kind=c_int), ccl_comm_dirs, my_stream)
-          
-            if (.not. successGPU) then
-              print *,"Error in ccl_reduce"
-              stop 1
-            endif
-
-            successGPU = gpu_stream_synchronize(my_stream)
-            check_stream_synchronize_gpu("elpa_pxgemm_multiply: ccl_bcast", successGPU)
-
-            NVTX_RANGE_POP("ccl_bcast aux_a_full_dev, aux_b_full_dev")
-            call obj%timer%stop("ccl_reduce")
-          else ! useCCL
-            call obj%timer%start("mpi_reduce")
-            if (my_pdir==np) then
-              call MPI_Reduce(MPI_IN_PLACE, tmp1_full, int(num, kind=MPI_KIND), & 
-                              MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_dirs,kind=MPI_KIND), mpierr)
-            else
-              call MPI_Reduce(tmp1_full   , tmp1_full, int(num, kind=MPI_KIND), &
-                              MPI_MATH_DATATYPE_PRECISION, MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_dirs,kind=MPI_KIND), mpierr)
-            endif
-            call obj%timer%stop("mpi_reduce")
-          endif ! useCCL
-
-          if (useGPU .and. .not. useCCL) then
-            call obj%timer%start("gpu_memcpy")
-#ifdef WITH_GPU_STREAMS
-            call gpu_memcpy_async_and_stream_synchronize &
-                ("elpa_pxgemm_multiply: tmp1_full -> tmp1_full_dev", 0_c_intptr_t, tmp1_full_dev, &
-                  tmp1_full(1:num_r,1:num_c), &
-                  1, 1, num*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
-#else
-            successGPU = gpu_memcpy(tmp1_full_dev, int(loc(tmp1_full),kind=c_intptr_t), &
-                                    num*size_of_datatype, gpuMemcpyHostToDevice)
-            check_memcpy_gpu("elpa_pxgemm_multiply: tmp1_full -> tmp1_full_dev", successGPU)
-#endif
-            call obj%timer%stop("gpu_memcpy")
-          endif ! (useGPU .and. .not. useCCL)
+          call obj%timer%stop("gpu_memcpy")
+        endif ! (useGPU .and. .not. useCCL)
 #endif /* WITH_MPI */
 
+        if (my_pdir==np) then
+          if (useGPU) then
+            call obj%timer%start("gpu_update_c_tn_nt")
+            beta_int = 0
+            
+            ! Peter: for ELPA: ldc=l_rows (i.e. ld of c_dev and ld of tmp1_full_dev are same)
+            ! but generally it's possible that ldc is not equal to l_rows --> extra parameter in
+            ! kernel is needed
+            call gpu_update_c_tn_nt(PRECISION_CHAR, a_transposed_int, &
+                                    c_dev, tmp1_full_dev, beta_int, &
+                                    l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
+                                    np_rows, np_cols, np_dirs_fine, &
+                                    np_dirs_t, my_pdir_t, np_fine, &
+                                    SM_count, debug, my_stream)
+            call obj%timer%stop("gpu_update_c_tn_nt")
+          else
+            ! Put the result into C
+            call obj%timer%start("update_c_tn_nt")
+            first_call = .true. ! for now not needed. We'll need it if for C=A*B+beta*C
+            
+            do dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
+              np_ab_t_fine = dnp_ab_t*np_dirs_t + my_pdir_t
 
-          if (my_pdir==np) then
-            if (useGPU) then
-              call obj%timer%start("gpu_update_c_tn_nt")
-              beta_int = 1
-              dnp_ab = np_ab_fine/np_dirs
-              if (dnp_ab == 0) beta_int = 0
-              ! Peter: for ELPA: ldc=l_rows (i.e. ld of c_dev and ld of tmp1_full_dev are same)
-              ! but generally it's possible that ldc is not equal to l_rows --> extra parameter in
-              ! kernel is needed
-              call gpu_update_c_tn_nt(PRECISION_CHAR, a_transposed_int, &
-                                      c_dev, tmp1_full_dev, beta_int, &
-                                      l_rows, l_cols, nblk_mult_max, nblk_mult, nblk, &
-                                      np_rows, np_cols, np_dirs_fine, &
-                                      np_dirs_t, my_pdir_t, np_fine, &
-                                      SM_count, debug, my_stream)
-              call obj%timer%stop("gpu_update_c_tn_nt")
-            else
-              ! Put the result into C
-              call obj%timer%start("update_c_tn_nt")
-              first_call = .false.
-              dnp_ab = np_ab_fine/np_dirs
-              if (dnp_ab == 0) first_call = .true.
 
-              do dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
-                np_ab_t_fine = dnp_ab_t*np_dirs_t + my_pdir_t
-                
-                if (a_transposed) then
-                  do j_block_loc_fine = 0, nblk_mult_max/nblk-1
-                    j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_cols_fine)/np_cols
+              if (a_transposed) then
+                do j_block_loc_fine = 0, nblk_mult_max/nblk-1
+                  j_block_loc = (np_ab_t_fine + j_block_loc_fine*np_cols_fine)/np_cols
+                  
+                  do i_block_loc_fine = 0, nblk_mult/nblk-1
+                    i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
+
+                    nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
+                    nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
                     
-                    do i_block_loc_fine = 0, nblk_mult/nblk-1
-                      i_block_loc = (np_fine + i_block_loc_fine*np_rows_fine)/np_rows
-
-                      nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
-                      nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
-                      
-                      if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
-                        if (first_call) then
-                          c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
-                            1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) = &
-                          tmp1_full(1+i_block_loc_fine*nblk :nblk_rows_cut+i_block_loc_fine*nblk, &
-                                    1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                    nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max)
-                        else
-                          c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
-                            1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) = &
-                          c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
-                            1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) + &
-                          tmp1_full(1+i_block_loc_fine*nblk :nblk_rows_cut+i_block_loc_fine*nblk, &
-                                    1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                    nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max)
-                        endif
-                      endif                    
-                    enddo ! i_block_loc_fine
-                  enddo ! j_block_loc_fine
-                else if (b_transposed) then
-                  do i_block_loc_fine = 0, nblk_mult_max/nblk-1
-                    i_block_loc = (np_ab_t_fine + i_block_loc_fine*np_rows_fine)/np_rows
-            
-                    do j_block_loc_fine = 0, nblk_mult/nblk-1
-                      j_block_loc = (np_fine + j_block_loc_fine*np_cols_fine)/np_cols
-            
-                      nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
-                      nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
-                      
-                      if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
-                        if (first_call) then
-                          c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
-                            1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) = &
-                          tmp1_full(1            +i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                    nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
-                                    1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk)
-                        else
-                          c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
-                            1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) = &
-                          c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
-                            1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) + &
-                          tmp1_full(1            +i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
-                                    nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
-                                    1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk)
-                        endif
+                    if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
+                      if (first_call) then
+                        c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
+                          1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) = &
+                        tmp1_full(1+i_block_loc_fine*nblk :nblk_rows_cut+i_block_loc_fine*nblk, &
+                                  1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                  nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max)
+                      else
+                        c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
+                          1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) = &
+                        c(1+i_block_loc*nblk:nblk_rows_cut+i_block_loc*nblk, &
+                          1+j_block_loc*nblk:nblk_cols_cut+j_block_loc*nblk) + &
+                        tmp1_full(1+i_block_loc_fine*nblk :nblk_rows_cut+i_block_loc_fine*nblk, &
+                                  1            +j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                  nblk_cols_cut+j_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max)
                       endif
-                    enddo ! j_block_loc_fine
+                    endif                    
                   enddo ! i_block_loc_fine
-                endif
-              enddo ! dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
-              call obj%timer%stop("update_c_tn_nt")
-            endif ! useGPU
-          endif ! (my_pdir==np)
+                enddo ! j_block_loc_fine
+              else if (b_transposed) then
+                do i_block_loc_fine = 0, nblk_mult_max/nblk-1
+                  i_block_loc = (np_ab_t_fine + i_block_loc_fine*np_rows_fine)/np_rows
           
-
-        enddo ! do np_ab_fine = 0, np_dirs_fine-1
-        
-        NVTX_RANGE_POP("do np = 0, np_dirs-1")
-      enddo ! np = 0, np_dirs-1
+                  do j_block_loc_fine = 0, nblk_mult/nblk-1
+                    j_block_loc = (np_fine + j_block_loc_fine*np_cols_fine)/np_cols
+          
+                    nblk_rows_cut = min(nblk, l_rows - i_block_loc*nblk)
+                    nblk_cols_cut = min(nblk, l_cols - j_block_loc*nblk)
+                    
+                    if (nblk_rows_cut>0 .and. nblk_cols_cut>0) then
+                      if (first_call) then
+                        c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
+                          1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) = &
+                        tmp1_full(1            +i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                  nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
+                                  1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk)
+                      else
+                        c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
+                          1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) = &
+                        c(1+i_block_loc*nblk : nblk_rows_cut+i_block_loc*nblk, &
+                          1+j_block_loc*nblk : nblk_cols_cut+j_block_loc*nblk) + &
+                        tmp1_full(1            +i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max : &
+                                  nblk_rows_cut+i_block_loc_fine*nblk+dnp_ab_t*nblk_mult_max, &
+                                  1+j_block_loc_fine*nblk : nblk_cols_cut+j_block_loc_fine*nblk)
+                      endif
+                    endif
+                  enddo ! j_block_loc_fine
+                enddo ! i_block_loc_fine
+              endif
+            
+              enddo ! dnp_ab_t = 0, np_dirs_fine/np_dirs_t-1
+            call obj%timer%stop("update_c_tn_nt")
+          endif ! useGPU
+        endif ! (my_pdir==np)
+      
+        NVTX_RANGE_POP("do np_fine")
+      enddo ! np_fine = 0, np_dirs_fine-1
       call obj%timer%stop("main_loop_tn_nt")
 
 #if !defined(DEVICE_POINTER)

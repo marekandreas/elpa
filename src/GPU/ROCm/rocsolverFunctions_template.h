@@ -116,6 +116,48 @@ hipsolverFillMode_t hipsolver_fill_mode(char uplo) {
 } 
 #endif
 
+int rocsolverGetVersionFromC() {
+#ifdef WITH_AMD_HIPSOLVER_API
+  errormessage("Error in rocsolverGetVersionFromC: %s\n", "is not supported by HIPSOLVER");
+  return 0;
+#else
+
+  //return 310000;
+
+  size_t len;
+  BLAS_status status;
+
+  status = rocsolver_get_version_string_size(&len);
+  if (status != BLAS_status_success) {
+    errormessage("Error in rocsolver_get_version_string_size: %s\n", "unknown error");
+    return 0;
+  }
+
+  char *buf = (char*)malloc(len);
+
+  status = rocsolver_get_version_string(buf, len);
+  if (status != BLAS_status_success) {
+    errormessage("Error in rocsolver_get_version_string: %s\n", "unknown error");
+    return 0;
+  }
+
+  int major, minor, patch;
+
+  if (sscanf(buf, "%d.%d.%d", &major, &minor, &patch) == 3) {
+    //printf("Major: %d, Minor: %d, Patch: %d\n", major, minor, patch);
+    int version = major*10000 + minor*100 + patch;
+    free(buf);
+    return version;
+  } 
+  else {
+    printf("Error parsing version string.\n");
+    free(buf);
+    return 0;
+  }
+
+#endif
+}
+
 // not needed for rocsolver (it uses rocblas handle), but needed for hipsolver
 // gpusolver_handle = rocsolver_handle (=rocblas_handle) or hipsolver_handle
 int rocsolverSetStreamFromC(SOLVER_handle gpusolver_handle, hipStream_t stream) {
@@ -665,6 +707,48 @@ void rocsolverSsyevd_elpa_wrapper (SOLVER_handle gpusolverHandle, int n, float *
   if (hiperr != hipSuccess) {
     errormessage("Error in rocsolver_Ssyevd hip_free(d_work): %s\n",hipGetErrorString(hiperr));
   }
+}
+
+
+void rocsolver_stedc_elpa_wrapper(char dataType, SOLVER_handle gpusolverHandle, int n,
+                                  intptr_t *d_dev, intptr_t *e_dev, intptr_t *q_dev,
+                                  int ldq, intptr_t *info_dev) {
+#ifdef WITH_AMD_HIPSOLVER_API
+  printf("hipsolver_stedc doesn't exist yet, aborting...");
+  exit(1);
+#else
+SOLVER_status status;
+
+if      (dataType=='D') status = rocsolver_dstedc(gpusolverHandle, rocblas_evect_tridiagonal, n,
+                                                  (double *) d_dev, (double *) e_dev, (double *) q_dev,
+                                                  ldq, (int *) info_dev);
+else if (dataType=='S') status = rocsolver_sstedc(gpusolverHandle, rocblas_evect_tridiagonal, n,
+                                                  (float  *) d_dev, (float  *) e_dev, (float  *) q_dev,
+                                                  ldq, (int *) info_dev);
+
+else printf("Error in rocsolver_stedc_elpa_wrapper: Unsupported data type\n");
+
+if (status != SOLVER_status_success)
+  {
+  errormessage("Error in rocsolver_stedc_elpa_wrapper: %s, %d\n", __FILE__, __LINE__);
+  
+  if (status==rocblas_status_invalid_handle) printf("rocblas_status_invalid_handle\n");
+  if (status==rocblas_status_not_implemented) printf("rocblas_status_not_implemented\n");
+  if (status==rocblas_status_invalid_pointer) printf("rocblas_status_invalid_pointer\n");
+  if (status==rocblas_status_invalid_size) printf("rocblas_status_invalid_size\n");
+  if (status==rocblas_status_memory_error) printf("rocblas_status_memory_error\n");
+  if (status==rocblas_status_internal_error) printf("rocblas_status_internal_error\n");
+  if (status==rocblas_status_perf_degraded) printf("rocblas_status_perf_degraded\n");
+  if (status==rocblas_status_size_query_mismatch) printf("rocblas_status_size_query_mismatch\n");
+  if (status==rocblas_status_size_increased) printf("rocblas_status_size_increased\n");
+  if (status==rocblas_status_size_unchanged) printf("rocblas_status_size_unchanged\n");
+  if (status==rocblas_status_invalid_value) printf("rocblas_status_invalid_value\n");
+  if (status==rocblas_status_continue) printf("rocblas_status_continue\n");
+  if (status==rocblas_status_check_numerics_fail) printf("rocblas_status_check_numerics_fail\n");
+  if (status==rocblas_status_excluded_from_build) printf("rocblas_status_excluded_from_build\n");
+  if (status==rocblas_status_arch_mismatch) printf("rocblas_status_arch_mismatch\n");
+  }
+#endif
 }
 
 } // extern "C"

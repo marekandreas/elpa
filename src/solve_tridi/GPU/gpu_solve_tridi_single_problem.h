@@ -120,7 +120,7 @@ extern "C" void CONCATENATE(ELPA_GPU,  _check_monotony_FromC)(char dataType, int
 //________________________________________________________________
 
 template <typename T>
-__global__ void gpu_construct_tridi_matrix_kernel(T *q, T *d, T *e, const int nlen, const int ldq) {
+__global__ void gpu_construct_full_from_tridi_matrix_kernel(T *q, T *d, T *e, const int nlen, const int ldq) {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
 
   // q has been zeroed outside of kernel
@@ -139,15 +139,15 @@ __global__ void gpu_construct_tridi_matrix_kernel(T *q, T *d, T *e, const int nl
 
 
 template <typename T>
-void gpu_construct_tridi_matrix(T *q_dev, T *d_dev, T *e_dev, int nlen, int ldq, int debug, gpuStream_t my_stream) {
+void gpu_construct_full_from_tridi_matrix(T *q_dev, T *d_dev, T *e_dev, int nlen, int ldq, int debug, gpuStream_t my_stream) {
 
   dim3 threadsPerBlock(1024);
   dim3 blocks((nlen + threadsPerBlock.x - 1) / threadsPerBlock.x);
 
 #ifdef WITH_GPU_STREAMS
-  gpu_construct_tridi_matrix_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(q_dev, d_dev, e_dev, nlen, ldq);
+  gpu_construct_full_from_tridi_matrix_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(q_dev, d_dev, e_dev, nlen, ldq);
 #else
-  gpu_construct_tridi_matrix_kernel<<<blocks,threadsPerBlock>>>            (q_dev, d_dev, e_dev, nlen, ldq);
+  gpu_construct_full_from_tridi_matrix_kernel<<<blocks,threadsPerBlock>>>            (q_dev, d_dev, e_dev, nlen, ldq);
 #endif
   
   if (debug)
@@ -155,16 +155,16 @@ void gpu_construct_tridi_matrix(T *q_dev, T *d_dev, T *e_dev, int nlen, int ldq,
     gpuDeviceSynchronize();
     gpuError_t gpuerr = gpuGetLastError();
     if (gpuerr != gpuSuccess){
-      printf("Error in executing gpu_construct_tridi_matrix: %s\n",gpuGetErrorString(gpuerr));
+      printf("Error in executing gpu_construct_full_from_tridi_matrix: %s\n",gpuGetErrorString(gpuerr));
     }
   }
 }
 
-extern "C" void CONCATENATE(ELPA_GPU,  _construct_tridi_matrix_FromC)(char dataType, intptr_t q_dev, intptr_t d_dev, intptr_t e_dev,
+extern "C" void CONCATENATE(ELPA_GPU,  _construct_full_from_tridi_matrix_FromC)(char dataType, intptr_t q_dev, intptr_t d_dev, intptr_t e_dev,
                                                               int nlen, int ldq, int debug, gpuStream_t my_stream) {
-  if      (dataType=='D') gpu_construct_tridi_matrix<double>((double *) q_dev, (double *) d_dev, (double *) e_dev, nlen, ldq, debug, my_stream);
-  else if (dataType=='S') gpu_construct_tridi_matrix<float> ((float  *) q_dev, (float  *) d_dev, (float  *) e_dev, nlen, ldq, debug, my_stream);
+  if      (dataType=='D') gpu_construct_full_from_tridi_matrix<double>((double *) q_dev, (double *) d_dev, (double *) e_dev, nlen, ldq, debug, my_stream);
+  else if (dataType=='S') gpu_construct_full_from_tridi_matrix<float> ((float  *) q_dev, (float  *) d_dev, (float  *) e_dev, nlen, ldq, debug, my_stream);
   else {
-    printf("Error in elpa_construct_tridi_matrix: Unsupported data type\n");
+    printf("Error in elpa_construct_full_from_tridi_matrix: Unsupported data type\n");
   }
 }

@@ -2,7 +2,12 @@
 #define ELPA_H
 
 #include <limits.h>
+
+#ifdef __cplusplus
+#include <complex>
+#else
 #include <complex.h>
+#endif
 
 #include <elpa/elpa_version.h>
 

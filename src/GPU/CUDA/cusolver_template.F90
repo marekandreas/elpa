@@ -44,6 +44,15 @@
 ! Author: Peter Karpov, MPCDF
 ! This file is the generated version. Do NOT edit
 
+  interface
+    function cusolver_get_version_c() result(version) &
+            bind(C, name="cusolverGetVersionFromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+
+      integer(kind=c_int)              :: version
+    end function
+  end interface
 
   interface
     function cusolver_set_stream_c(cusolverHandle, cudaStream) result(istat) &
@@ -242,6 +251,15 @@
 
   contains
 
+
+    function cusolver_get_version() result(version)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int)                       :: version
+#ifdef WITH_NVIDIA_CUSOLVER
+      version = cusolver_get_version_c()
+#endif
+    end function
 
     function cusolver_set_stream(cusolverHandle, cudaStream) result(success)
       use, intrinsic :: iso_c_binding

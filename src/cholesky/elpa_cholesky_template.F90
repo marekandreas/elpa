@@ -451,6 +451,7 @@
 
 #ifndef DEVICE_POINTER
   if (useGPU) then
+    call obj%timer%start("gpu_memcpy")
     num = matrixRows*matrixCols
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
@@ -462,6 +463,7 @@
                             num*size_of_datatype, gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_cholesky 1: memcpy a-> a_dev", successGPU)
 #endif
+    call obj%timer%stop("gpu_memcpy")
   endif
 #endif /* DEVICE_POINTER */
 
