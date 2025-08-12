@@ -597,14 +597,6 @@ program test
 #endif
 #endif /* TEST_CHOLESKY */
 
-   ! check first whether to abort
-!   if (na < 10) then ! PETERDEBUG111 commented out. delete?
-! #ifdef WITH_MPI
-!     call mpi_finalize(mpierr)
-! #endif
-!     stop 77
-!   endif
-
   call prepare_matrix_toeplitz(na, diagonalElement, subdiagonalElement, &
                               d, sd, ds, sds, a, as, nblk, np_rows, &
                               np_cols, my_prow, my_pcol)
@@ -836,6 +828,7 @@ program test
   call e%set("timings", 1_ik, error_elpa)
   assert_elpa_ok(error_elpa)
 
+
   ! Setup
   assert_elpa_ok(e%setup())
 
@@ -903,11 +896,11 @@ program test
   ! Set device
   successGPU = .true.
 #if TEST_INTEL_GPU_SYCL == 1
-  successGPU = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
-  if (.not.(successGPU)) then
-    print *,"Error in sycl_getcpucount. Aborting..."
-    stop 1
-  endif
+!   successGPU = sycl_getcpucount(numberOfDevices) ! temporary fix for SYCL on CPU
+!   if (.not.(successGPU)) then
+!      print *,"Error in sycl_getcpucount. Aborting..."
+!      stop 1
+!    endif
 #endif
   successGPU = gpu_setdevice(gpuID)
   if (.not.(successGPU)) then

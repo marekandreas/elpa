@@ -154,6 +154,18 @@
   useGPU = .false.
   useCCL = .false.
 
+  call obj%get("debug",debug,error)
+  if (error .ne. ELPA_OK) then
+    write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for debug settings. Aborting..."
+    success = .false.
+    return
+  endif
+  if (debug == 1) then
+    wantDebug = .true.
+  else
+    wantDebug = .false.
+  endif
+
 #if !defined(DEVICE_POINTER)
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
@@ -198,7 +210,7 @@
   
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(obj, myid, numGPU)) then
+    if (check_for_gpu(obj, myid, numGPU, wantDebug)) then
       ! set the neccessary parameters
       call set_gpu_parameters()
     else
@@ -212,7 +224,7 @@
 
 #if defined(USE_CCL_CHOLESKY)
   if (useGPU) then
-    useCCL = .true.
+    useCCL = obj%gpu_setup%useCCL
   
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
@@ -282,18 +294,6 @@
   matrixRows = obj%local_nrows
   matrixCols = obj%local_ncols
   nblk       = obj%nblk
-
-  call obj%get("debug",debug,error)
-  if (error .ne. ELPA_OK) then
-    write(error_unit,*) "ELPA_CHOLESKY: Problem getting option for debug settings. Aborting..."
-    success = .false.
-    return
-  endif
-  if (debug == 1) then
-    wantDebug = .true.
-  else
-    wantDebug = .false.
-  endif
 
   mpi_comm_all    = obj%mpi_setup%mpi_comm_parent
   mpi_comm_cols   = obj%mpi_setup%mpi_comm_cols
@@ -451,6 +451,7 @@
 
 #ifndef DEVICE_POINTER
   if (useGPU) then
+    call obj%timer%start("gpu_memcpy")
     num = matrixRows*matrixCols
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
@@ -462,6 +463,7 @@
                             num*size_of_datatype, gpuMemcpyHostToDevice)
     check_memcpy_gpu("elpa_cholesky 1: memcpy a-> a_dev", successGPU)
 #endif
+    call obj%timer%stop("gpu_memcpy")
   endif
 #endif /* DEVICE_POINTER */
 
@@ -1241,13 +1243,12 @@
 
 #else /* DEVICE_POINTER */
 #if !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER)
-  deallocate(a_tmp, stat=istat, errmsg=errorMessage)
-  check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
-
 #ifdef WITH_GPU_STREAMS
   successGPU = gpu_host_unregister(int(loc(a_tmp),kind=c_intptr_t))
   check_host_unregister_gpu("elpa_cholesky: a_tmp", successGPU)
 #endif
+  deallocate(a_tmp, stat=istat, errmsg=errorMessage)
+  check_deallocate("elpa_cholesky: a_tmp", istat, errorMessage)
 #endif /* !defined(WITH_NVIDIA_CUSOLVER) && !defined(WITH_AMD_ROCSOLVER) */
 #endif /* DEVICE_POINTER */
 

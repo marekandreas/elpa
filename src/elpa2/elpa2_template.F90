@@ -453,7 +453,7 @@
 
     if (useGPU) then
       call obj%timer%start("check_for_gpu")
-      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug=wantDebug)) then
+      if (check_for_gpu(obj, my_pe, numberOfGPUDevices, wantDebug)) then
         do_useGPU = .true.
         ! set the neccessary parameters
         call set_gpu_parameters()
@@ -1473,20 +1473,9 @@
          end do
        endif
 
-#ifdef WITH_SYCL_GPU_VERSION
-     if (obj%gpu_setup%syclCPU) then
-       print *,"Switching of the GPU trans_ev_tridi due to SYCL CPU",obj%gpu_setup%syclCPU
-       do_useGPU_trans_ev_tridi_to_band =.false.
-       kernel = DEFAULT_KERNEL
-       do_useGPU_trans_ev_band_to_full =.false.
-     endif
-#endif
-       ! Backtransform stage 1
+     ! Backtransform stage 1
      if (do_trans_to_band) then
 
-       !debug
-!#if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-       !if (gpu_vendor() == OPENMP_OFFLOAD_GPU .or. gpu_vendor() == SYCL_GPU) then
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
        if (gpu_vendor() == OPENMP_OFFLOAD_GPU) then
          if (do_useGPU_trans_ev_tridi_to_band) then

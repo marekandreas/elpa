@@ -159,16 +159,16 @@ subroutine solve_secular_equation_&
     x = 0.5_rk*(a+b)
     if (x==a .or. x==b) exit   ! No further interval subdivisions possible
 #ifdef DOUBLE_PRECISION_REAL
-    if (abs(x) < 1.e-200_rk8) exit ! x next to pole
+    if (abs(x) < 1.e-200_rk8) exit ! x is too close to zero (i.e. near a pole)
 #else
-    if (abs(x) < 1.e-20_rk4) exit ! x next to pole
+    if (abs(x) < 1.e-20_rk4)  exit ! x is too close to zero (i.e. near a pole)
 #endif
     ! evaluate value at x
 
     y = 1. + rho*SUM(z(:)**2/(delta(:)-x))
 
     if (y==0) then
-      ! found exact solution
+      ! exact solution found
       exit
     elseif (y>0) then
       b = x

@@ -271,7 +271,7 @@
   useCCL = .false.
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
-    if (check_for_gpu(obj, myid, numGPU)) then
+    if (check_for_gpu(obj, myid, numGPU, wantDebug)) then
       ! set the neccessary parameters
       call set_gpu_parameters()
     else
@@ -282,7 +282,7 @@
     call obj%timer%stop("check_for_gpu")
     
 #if defined(USE_CCL_HERMITIAN_MULTIPLY)
-    useCCL = .true.
+    useCCL = obj%gpu_setup%useCCL
 
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
@@ -474,8 +474,9 @@
         if (lrs <= lre) then
           nvals = lre-lrs+1
           if (useGPU) then
-            if (my_pcol == np_bc) call gpu_copy_PRECISION_a_aux_bc(a_dev, aux_bc_dev, n_aux_bc, nvals, lrs, lre, noff, &
-                                                                    nblk, n, l_rows, obj%local_nrows, obj%local_ncols, my_stream)
+            if (my_pcol == np_bc) call gpu_copy_a_aux_bc (PRECISION_CHAR, a_dev, aux_bc_dev, &
+                                                          n_aux_bc, nvals, lrs, lre, noff, &
+                                                          nblk, n, l_rows, obj%local_nrows, obj%local_ncols, debug, my_stream)
           else ! useGPU
             if (my_pcol == np_bc) aux_bc(n_aux_bc+1:n_aux_bc+nvals) = a(lrs:lre,noff*nblk+n)
           endif ! useGPU
@@ -531,12 +532,12 @@
 #endif
 #endif /* USE_CCL_HERMITIAN_MULTIPLY */
       else ! useCCL
-        call obj%timer%start("mpi_communication")
+        call obj%timer%start("mpi_bcast")
 
         call MPI_Bcast(aux_bc, int(n_aux_bc,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                       int(np_bc,kind=MPI_KIND), int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
-        call obj%timer%stop("mpi_communication")
+        call obj%timer%stop("mpi_bcast")
       endif ! useCCL
 
       ! copy data back to device, if needed
@@ -565,8 +566,8 @@
           lre = lre_save(n)
           if (lrs <= lre) then
             nvals = lre-lrs+1
-            call gpu_copy_PRECISION_aux_bc_aux_mat(aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, &
-                                                  nvals, l_rows, nblk, nblk_mult, my_stream)
+            call gpu_copy_aux_bc_aux_mat (PRECISION_CHAR, aux_bc_dev, aux_mat_dev, lrs, lre, nstor, n_aux_bc, &
+                                          nvals, l_rows, nblk, nblk_mult, debug, my_stream)
 
             n_aux_bc = n_aux_bc + nvals
           endif
@@ -700,10 +701,10 @@
 #endif
 #endif /* USE_CCL_HERMITIAN_MULTIPLY */
           else ! useCCL
-            call obj%timer%start("mpi_communication")
+            call obj%timer%start("mpi_reduce")
             call mpi_reduce(tmp1, tmp2, int(nstor*(lce-lcs+1),kind=MPI_KIND),  MPI_MATH_DATATYPE_PRECISION, &
                           MPI_SUM, int(np,kind=MPI_KIND), int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-            call obj%timer%stop("mpi_communication")
+            call obj%timer%stop("mpi_reduce")
           endif ! useCCL
 
           ! copy data back to device, if needed
@@ -732,8 +733,8 @@
 
 
           if (useGPU) then
-            if (my_prow==np) call gpu_copy_PRECISION_tmp2_c(tmp2_dev, c_dev, nr_done, nstor, &
-                                                            lcs, lce, ldc, ldcCols, my_stream)
+            if (my_prow==np) call gpu_copy_tmp2_c(PRECISION_CHAR, tmp2_dev, &
+                                                  c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, debug, my_stream)
           else ! useGPU
 #ifdef WITH_MPI
             ! Put the result into C

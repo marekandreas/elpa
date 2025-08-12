@@ -55,7 +55,7 @@
 #include "../general/sanity.F90"
 
 #undef USE_CCL_TRIDIAG
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
 #define USE_CCL_TRIDIAG
 #endif
 
@@ -136,7 +136,7 @@ subroutine tridiag_cpu_&
 #elif defined(WITH_AMD_GPU_VERSION)   && defined(WITH_ROCTX)
   use hip_functions  ! for ROCTX labels
 #endif
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
   use elpa_ccl_gpu
 #endif
 
@@ -274,6 +274,7 @@ subroutine tridiag_cpu_&
 
   integer(kind=ik)                              :: string_length, sm_count
 
+  
   useGPU = .false.
 
   useCCL = obj%gpu_setup%useCCL
@@ -305,7 +306,7 @@ subroutine tridiag_cpu_&
 #endif /* defined(USE_CCL_TRIDIAG) */
 
   allocate(aux(2*max_stored_uv), stat=istat, errmsg=errorMessage)
-
+  
   success = .true.
 
   if(useGPU) then
@@ -467,7 +468,7 @@ subroutine tridiag_cpu_&
 #endif
 
     ! allocate v_row 1 element longer to allow store and broadcast tau together with it
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       num = (max_local_rows+1) * size_of_datatype
       successGPU = gpu_malloc_host(v_row_host, num)
       check_host_alloc_gpu("tridiag: v_row_host", successGPU)
@@ -476,7 +477,7 @@ subroutine tridiag_cpu_&
       allocate(v_row(max_local_rows+1))
     endif
 
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       num = (max_local_cols) * size_of_datatype
       successGPU = gpu_malloc_host(v_col_host,num)
       check_host_alloc_gpu("tridiag: v_col_host", successGPU)
@@ -485,7 +486,7 @@ subroutine tridiag_cpu_&
       allocate(v_col(max_local_cols))
     endif
 
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       num = (max_local_cols) * size_of_datatype
       successGPU = gpu_malloc_host(u_col_host,num)
       check_host_alloc_gpu("tridiag: u_col_host", successGPU)
@@ -494,7 +495,7 @@ subroutine tridiag_cpu_&
       allocate(u_col(max_local_cols))
     endif
 
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       num = (max_local_rows) * size_of_datatype
       successGPU = gpu_malloc_host(u_row_host,num)
       check_host_alloc_gpu("tridiag: u_row_host", successGPU)
@@ -504,7 +505,7 @@ subroutine tridiag_cpu_&
     endif
 
     
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       num = (max_local_rows * 2*max_stored_uv) * size_of_datatype
       successGPU = gpu_host_register(int(loc(vu_stored_rows),kind=c_intptr_t), num, gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: vu_stored_rows", successGPU)
@@ -544,7 +545,7 @@ subroutine tridiag_cpu_&
       num = 1 * size_of_datatype
       successGPU = gpu_host_register(int(loc(xf),kind=c_intptr_t), num, gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: xf", successGPU)
-    endif ! gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU
+    endif ! gpu_vendor() /= OPENMP_OFFLOAD_GPU
   else ! useGPU
 
     allocate(v_row(max_local_rows+1), stat=istat, errmsg=errorMessage)
@@ -716,7 +717,7 @@ subroutine tridiag_cpu_&
                                             aux1_dev, vav_dev, d_vec_dev, &
                                             isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
                                             isSkewsymmetric, useCCL, wantDebug, my_stream)
-      if (gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+      successGPU = gpu_DeviceSynchronize()
       NVTX_RANGE_POP("")
       call obj%timer%stop("gpu_copy_and_set_zeros_kernel")
     endif ! useGPU
@@ -767,7 +768,7 @@ subroutine tridiag_cpu_&
 #endif
                                     ONE, v_row_dev, 1, gpuHandle)
 
-          if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
           NVTX_RANGE_POP("gpublas gemv skinny  v_row_dev+=vu_stored_rows_dev*uv_stored_cols_dev")
           if (wantDebug) call obj%timer%stop("gpublas_gemv_skinny")
 
@@ -1041,7 +1042,7 @@ subroutine tridiag_cpu_&
                 (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
                 1, istep-1, 1, nblk, max_threads, .true., success)
       
-      if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+      if (wantDebug) successGPU = gpu_DeviceSynchronize()
       NVTX_RANGE_POP("elpa_transpose_vectors v_row -> v_col")
 
       if (.not.(success)) then
@@ -1251,7 +1252,7 @@ subroutine tridiag_cpu_&
                                     v_row_dev , 1,                          &
                                     ZERO, u_col_dev, 1, gpuHandle)
               
-          if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
           NVTX_RANGE_POP("gpublas_gemv: u_col_dev=a_dev^T*v_row_dev")
           if (wantDebug) call obj%timer%stop("gpublas_gemv")
        ! todo: try with non transposed!!!
@@ -1374,8 +1375,7 @@ subroutine tridiag_cpu_&
           call gpublas_PRECISION_GEMV('N', l_cols, 2*n_stored_vecs, &
                                       ONE, uv_stored_cols_dev, max_local_cols,   &
                                       aux_dev, 1, ONE, u_col_dev, 1, gpuHandle)
-
-          if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
           NVTX_RANGE_POP("gpublas gemv_x2 skinny aux_dev=vu_stored_rows_dev^T*v_row_dev,u_col_dev+=uv_stored_cols_dev*aux_dev")
           if (wantDebug) call obj%timer%stop("gpublas_gemv_skinny_x2")  
         endif ! .not. useGPU
@@ -1696,7 +1696,7 @@ subroutine tridiag_cpu_&
                                       size_of_datatype,  &
                                       max_local_cols, ONE, a_dev + ((l_row_beg - 1) + (l_col_beg - 1) * matrixRows) *     &
                                       size_of_datatype , matrixRows, gpuHandle)
-              if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+              if (wantDebug) successGPU = gpu_DeviceSynchronize()
               if (wantDebug) call obj%timer%stop("gpublas_gemm")
             endif ! .not. mat_vec_as_one_block
           else ! useGPU
@@ -1730,7 +1730,7 @@ subroutine tridiag_cpu_&
                                   uv_stored_cols_dev, max_local_cols,  &
                                   ONE, a_dev, matrixRows, gpuHandle)                        
         
-        if (wantDebug .and. gpu_vendor() /= SYCL_GPU) successGPU = gpu_DeviceSynchronize()
+        if (wantDebug) successGPU = gpu_DeviceSynchronize()
         NVTX_RANGE_POP("gpublas_gemm a_dev+=vu_stored_rows_dev*uv_stored_cols_dev")
         if (wantDebug) call obj%timer%stop("gpublas_gemm")
         
@@ -1998,22 +1998,22 @@ subroutine tridiag_cpu_&
   check_allocate("tridiag: tmp_real", istat, errorMessage)
 
 #ifdef WITH_MPI
-  if (useNonBlockingCollectivesRows) then
-    if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+if (useNonBlockingCollectivesRows) then
+  if (wantDebug) call obj%timer%start("mpi_nbc_communication")
     tmp_real = d_vec
     call mpi_iallreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), allreduce_request4, mpierr)
+    int(mpi_comm_rows,kind=MPI_KIND), allreduce_request4, mpierr)
     call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
     tmp_real = e_vec
     call mpi_iallreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6,mpierr)
+    int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6,mpierr)
     call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
     if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
   else
     if (wantDebug) call obj%timer%start("mpi_communication")
     tmp_real = d_vec
     call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+    int(mpi_comm_rows,kind=MPI_KIND), mpierr)
     tmp_real = e_vec
     call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
                        int(mpi_comm_rows,kind=MPI_KIND), mpierr) ! TODO_23_11: change to MPI_IN_PLACE, get rid of tmp_real
@@ -2023,19 +2023,19 @@ subroutine tridiag_cpu_&
     if (wantDebug) call obj%timer%start("mpi_nbc_communication")
     tmp_real = d_vec
     call mpi_iallreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_cols,kind=MPI_KIND), allreduce_request5, mpierr)
+    int(mpi_comm_cols,kind=MPI_KIND), allreduce_request5, mpierr)
     call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
-
+    
     tmp_real = e_vec
     call mpi_iallreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_cols,kind=MPI_KIND), allreduce_request7, mpierr)
+    int(mpi_comm_cols,kind=MPI_KIND), allreduce_request7, mpierr)
     call mpi_wait(allreduce_request7, MPI_STATUS_IGNORE, mpierr)
     if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
   else
     if (wantDebug) call obj%timer%start("mpi_communication")
     tmp_real = d_vec
     call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+    int(mpi_comm_cols,kind=MPI_KIND), mpierr)
     tmp_real = e_vec
     call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
                        int(mpi_comm_cols,kind=MPI_KIND), mpierr)
@@ -2055,7 +2055,7 @@ subroutine tridiag_cpu_&
 #endif
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_free_host(v_row_host)
       check_host_dealloc_gpu("tridiag: v_row_host", successGPU)
       nullify(v_row)
@@ -2078,7 +2078,7 @@ subroutine tridiag_cpu_&
       deallocate(u_col)
     endif
 
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
       successGPU = gpu_host_unregister(int(loc(uv_stored_cols),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: uv_stored_cols", successGPU)
 

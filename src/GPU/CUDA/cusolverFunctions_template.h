@@ -103,6 +103,15 @@ void elpa_cusolverPrintError(cusolverStatus_t status){
   }
 }
 
+int cusolverGetVersionFromC() {
+
+  int major=0, minor=0, patch=0;
+  cusolverGetProperty(MAJOR_VERSION, &major);
+  cusolverGetProperty(MINOR_VERSION, &minor);
+  cusolverGetProperty(PATCH_LEVEL,   &patch);
+
+  return major*10000 + minor*100 + patch;
+}
 
 int cusolverSetStreamFromC(cusolverDnHandle_t cusolver_handle, cudaStream_t stream) {
   //cusolverStatus_t status = cusolverDnSetStream(*((cusolverDnHandle_t*)cusolver_handle), *((cudaStream_t*)stream));

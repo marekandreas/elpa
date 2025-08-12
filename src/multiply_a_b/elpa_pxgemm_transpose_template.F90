@@ -71,7 +71,7 @@ subroutine elpa_transpose_row_or_col&
   use elpa_pxgemm_helpers, only : find_nblk_mult_dirs
   use elpa_gpu
   use elpa_ccl_gpu
-  use multiply_a_b_gpu
+  use pxgemm_multiply_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
 #elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
@@ -179,7 +179,7 @@ subroutine elpa_transpose_row_or_col&
   LCM = least_common_multiple(np_rows, np_cols)*nblk
 
 #if defined(USE_CCL_PXGEMM)
-  useCCL = .true.
+  useCCL = obj%gpu_setup%useCCL
 
   my_stream = obj%gpu_setup%my_stream
   ccl_comm_all  = obj%gpu_setup%ccl_comm_all

@@ -56,7 +56,11 @@ module elpa_ccl_gpu
 #ifdef WITH_AMD_RCCL
   use rccl_functions
 #endif
- 
+#ifdef WITH_ONEAPI_ONECCL
+  use oneccl_functions
+#endif
+
+
   public
 #include "./vendor_agnostic_ccl_layer_template.F90"
 

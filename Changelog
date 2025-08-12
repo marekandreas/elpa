@@ -4,7 +4,11 @@ Changelog for next release
 - not yet decided
 
 Changelog for ELPA 2025.06.001
-- improved GPU version of solve_tridi
+- improved GPU version of solve_tridi (up to 3x faster), overall 
+  eigenproblem improvement up to 15%
+- significantly improved AMD GPU version (up to 5x) for ROCm >= 6.4.2
+- Sycl backend: experimental support for Intel Toolkit >= 2024.01. Older
+  Intel Toolkits are not supported anymore
 
 Changelog for ELPA 2025.01.002
 - fixes a performance degradation in solve_tridi in the CPU version

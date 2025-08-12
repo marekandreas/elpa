@@ -55,7 +55,7 @@ module solve_single_problem_gpu
 
   public
 
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 
   interface
     subroutine gpu_check_monotony_c(dataType, d_dev, q_dev, qtmp_dev, nlen, ldq, debug, my_stream) &
@@ -63,6 +63,8 @@ module solve_single_problem_gpu
                                                   bind(C, name="cuda_check_monotony_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
                                                   bind(C, name= "hip_check_monotony_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                                  bind(C, name= "sycl_check_monotony_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -75,11 +77,13 @@ module solve_single_problem_gpu
 
 
   interface
-    subroutine gpu_construct_tridi_matrix_c(dataType, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream) &
+    subroutine gpu_construct_full_from_tridi_matrix_c(dataType, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
-                                                  bind(C, name="cuda_construct_tridi_matrix_FromC")
+                                                  bind(C, name="cuda_construct_full_from_tridi_matrix_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
-                                                  bind(C, name= "hip_construct_tridi_matrix_FromC")
+                                                  bind(C, name= "hip_construct_full_from_tridi_matrix_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                                  bind(C, name= "sycl_construct_full_from_tridi_matrix_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
@@ -90,7 +94,7 @@ module solve_single_problem_gpu
     end subroutine
   end interface
 
-#endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) */
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
 
 
   contains
@@ -103,21 +107,21 @@ module solve_single_problem_gpu
       integer(kind=c_intptr_t), value    :: d_dev, q_dev, qtmp_dev
       integer(kind=c_int), value         :: nlen, ldq, debug
       integer(kind=c_intptr_t), value    :: my_stream
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       call gpu_check_monotony_c(dataType, d_dev, q_dev, qtmp_dev, nlen, ldq, debug, my_stream)
 #endif
     end subroutine
 
 
-    subroutine gpu_construct_tridi_matrix(dataType, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
+    subroutine gpu_construct_full_from_tridi_matrix(dataType, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value        :: dataType
       integer(kind=c_intptr_t), value    :: q_dev, d_dev,e_dev
       integer(kind=c_int), value         :: nlen, ldq, debug
       integer(kind=c_intptr_t), value    :: my_stream
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
-      call gpu_construct_tridi_matrix_c(dataType, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_construct_full_from_tridi_matrix_c(dataType, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
 #endif
     end subroutine
   

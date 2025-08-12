@@ -64,7 +64,7 @@ module mod_check_for_gpu
       use elpa_mpi
       use elpa_omp
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
       use elpa_ccl_gpu
 #endif
       use elpa_abstract_impl
@@ -73,7 +73,7 @@ module mod_check_for_gpu
 
       class(elpa_abstract_impl_t), intent(inout) :: obj
       integer(kind=c_int), intent(in)            :: myid
-      logical, optional, intent(in)              :: wantDebug
+      logical, intent(in)                        :: wantDebug
       logical                                    :: success, wantDebugMessage
       integer(kind=ik), intent(out)              :: numberOfDevices
       integer(kind=ik)                           :: deviceNumber, mpierr, maxNumberOfDevices
@@ -90,7 +90,7 @@ module mod_check_for_gpu
       !character(len=1024)           :: envname
       character(len=8)                           :: fmt
       character(len=12)                          :: gpu_string
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
       TYPE(ncclUniqueId)                         :: ncclId
       integer(kind=c_int)                        :: nprocs
       integer(kind=c_intptr_t)                   :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols, ccl_comm_self

@@ -209,6 +209,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_copy_real_part_to_q_double_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
       else
@@ -228,6 +229,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_copy_real_part_to_q_float_complex_c(q_dev, q_real_dev, matrixRows, l_rows, l_cols_nev, my_stream)
       else
@@ -247,6 +249,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_zero_skewsymmetric_q_double_c(q_dev, matrixRows, matrixCols, my_stream)
       else
@@ -267,6 +270,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_copy_skewsymmetric_second_half_q_double_c(q_dev, i, matrixRows, matrixCols, &
                                        negative_or_positive, my_stream)
@@ -289,6 +293,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_copy_skewsymmetric_first_half_q_double_c(q_dev, i, matrixRows, matrixCols, &
                                        negative_or_positive, my_stream)
@@ -311,6 +316,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_get_skewsymmetric_second_half_q_double_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                        my_stream)
@@ -333,6 +339,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_put_skewsymmetric_second_half_q_double_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                        my_stream)
@@ -354,6 +361,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_zero_skewsymmetric_q_float_c(q_dev, matrixRows, matrixCols, my_stream)
       else
@@ -374,6 +382,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_copy_skewsymmetric_second_half_q_float_c(q_dev, i, matrixRows, matrixCols, &
                                        negative_or_positive, my_stream)
@@ -396,6 +405,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_copy_skewsymmetric_first_half_q_float_c(q_dev, i, matrixRows, matrixCols, &
                                        negative_or_positive, my_stream)
@@ -418,6 +428,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_get_skewsymmetric_second_half_q_float_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                        my_stream)
@@ -440,6 +451,7 @@ module elpa1_sycl
       integer(kind=c_intptr_t)           :: my_stream2
 
 #ifdef WITH_SYCL_GPU_VERSION
+      my_stream2 = 0
       if (present(my_stream)) then
         call sycl_put_skewsymmetric_second_half_q_float_c(q_dev, q2nd_dev, matrixRows, matrixCols, &
                                        my_stream)

@@ -52,44 +52,77 @@
 ! distributed along with the original code in the file "COPYING".
 #endif  
 
-       ! First try dstedc, this is normally faster but it may fail sometimes (why???)
+      ! First try dstedc, this is normally faster but it may fail sometimes (why???)
+      
+      ! allocate(ds(nlen), es(nlen), stat=istat, errmsg=errorMessage)
+      ! check_allocate("solve_tridi_single: ds, es", istat, errorMessage)
 
-       lwork = 1 + 4*nlen + nlen**2
-       liwork =  3 + 5*nlen
-       allocate(work(lwork), iwork(liwork), stat=istat, errmsg=errorMessage)
-       check_allocate("solve_tridi_single: work, iwork", istat, errorMessage)
-       call obj%timer%start("lapack_stedc")
-       call PRECISION_STEDC('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND),    &
-                            work, int(lwork,kind=BLAS_KIND), int(iwork,kind=BLAS_KIND), int(liwork,kind=BLAS_KIND), &
-                            infoBLAS)
-       info = int(infoBLAS,kind=ik)
-       call obj%timer%stop("lapack_stedc")
+      ! Save d and e for the case that dstedc fails
+      ! ds(:) = d(:)
+      ! es(:) = e(:)
 
-       if (info /= 0) then
+      if (wantDebug) then
+        call obj%timer%start("check_nans")
+        has_nans = .false.
 
-         ! DSTEDC failed, try DSTEQR. The workspace is enough for DSTEQR.
+        do i = 1, nlen-1
+          if (d(i) /= d(i) .or. e(i) /= e(i)) then
+            has_nans = .true.
+            exit
+          endif
+        enddo
+        if (d(nlen) /= d(nlen)) has_nans = .true.
 
-         write(error_unit,'(a,i8,a)') 'Warning: Lapack routine DSTEDC failed, info= ',info,', Trying DSTEQR!'
+        if (has_nans) then
+          write(error_unit,'(a)') 'ELPA1_solve_tridi_single: ERROR: NaNs found in input arrays d or e of STEDC. Aborting!'
+          write(error_unit,'(a)') 'Check correctness of ELPA input!'
+          stop 1
+        endif
+        
+        call obj%timer%stop("check_nans")
+      endif ! wantDebug
 
-         d(:) = ds(:)
-         e(:) = es(:)
-         call obj%timer%start("lapack_steqr")
-         call PRECISION_STEQR('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND), work, infoBLAS )
-         info = int(infoBLAS,kind=ik)
-         call obj%timer%stop("lapack_steqr")
+      lwork = 1 + 4*nlen + nlen**2
+      liwork =  3 + 5*nlen
+      allocate(work(lwork), iwork(liwork), stat=istat, errmsg=errorMessage)
+      check_allocate("solve_tridi_single: work, iwork", istat, errorMessage)
+      call obj%timer%start("lapack_stedc")
+      call PRECISION_STEDC('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND),    &
+                          work, int(lwork,kind=BLAS_KIND), int(iwork,kind=BLAS_KIND), int(liwork,kind=BLAS_KIND), &
+                          infoBLAS)
+      info = int(infoBLAS,kind=ik)
+      call obj%timer%stop("lapack_stedc")
 
-         ! If DSTEQR fails also, we don't know what to do further ...
+      ! STEDC can affect the input arrays d and e, so we need to copy them if we want to use STEQR
 
-         if (info /= 0) then
-           if (wantDebug) then
-             write(error_unit,'(a,i8,a)') 'ELPA1_solve_tridi_single: ERROR: Lapack routine DSTEQR failed, info= ',info,', Aborting!'
-           endif
-           success = .false.
-           return
-         endif
-       end if
+      ! if (info /= 0) then
+      !   ! DSTEDC failed, try DSTEQR. The workspace is enough for DSTEQR.
+      !   write(error_unit,'(a,i8,a)') 'Warning: Lapack routine DSTEDC failed, info= ',info,', Trying DSTEQR!'
 
-       deallocate(work,iwork,ds,es, stat=istat, errmsg=errorMessage)
-       check_deallocate("solve_tridi_single: work, iwork, ds, es", istat, errorMessage)
+      !   d(:) = ds(:)
+      !   e(:) = es(:)
+      !   call obj%timer%start("lapack_steqr")
+      !   call PRECISION_STEQR('I', int(nlen,kind=BLAS_KIND), d, e, q, int(ldq,kind=BLAS_KIND), work, infoBLAS )
+      !   info = int(infoBLAS,kind=ik)
+      !   call obj%timer%stop("lapack_steqr")
+      ! end if
 
+      ! If DSTEQR fails also, we don't know what to do further ...
+
+      if (info /= 0) then
+        if (wantDebug) then
+          write(error_unit,'(a,i8,a)') 'ELPA1_solve_tridi_single: ERROR: Lapack routine STEDC failed, info= ',info,', Aborting!'
+          write(error_unit,'(a)') 'Try to run ELPA in a debug mode, e.g. with export ELPA_DEFAULT_debug=1'
+        endif
+        !success = .false.
+        !return ! this hangs
+        stop 1
+      endif
+
+
+      deallocate(work,iwork, stat=istat, errmsg=errorMessage)
+      check_deallocate("solve_tridi_single: work, iwork", istat, errorMessage)
+
+      !deallocate(ds,es, stat=istat, errmsg=errorMessage)
+      !check_deallocate("solve_tridi_single: ds, es", istat, errorMessage)
 

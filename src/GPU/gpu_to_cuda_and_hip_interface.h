@@ -97,5 +97,21 @@
 #define ELPA_GPU hip
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+#define gpuDeviceSynchronize syclDeviceSynchronize
+#define gpuStream_t QueueData*
+#define gpuGetLastError XXXERRORXXX
+#define gpuGetErrorString XXXERRORXXX
+#define gpuError_t XXXERRORXXX
+#define gpuSuccess XXXERRORXXX
+#define gpuDoubleComplex std::complex<double>
+#define gpuFloatComplex std::complex<float>
+#define make_gpuDoubleComplex std::complex<double>
+#define make_gpuFloatComplex std::complex<float>
+#define MAX_THREADS_PER_BLOCK 1024
+#define MIN_THREADS_PER_BLOCK 16
+#define ELPA_GPU sycl
+#endif
+
 #define CONCATENATE_WITHOUT_EVALUATION(prefix, name) prefix##name
 #define CONCATENATE(prefix, name) CONCATENATE_WITHOUT_EVALUATION(prefix, name)
