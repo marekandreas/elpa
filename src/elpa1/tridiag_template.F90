@@ -151,7 +151,7 @@ subroutine tridiag_cpu_&
   logical                                       :: useCCL
 
   ! input/output GPU pointers
-  integer(kind=C_intptr_T)                      :: tau_dev, a_dev, d_vec_dev, e_vec_dev 
+  integer(kind=c_intptr_t)                      :: tau_dev, a_dev, d_vec_dev, e_vec_dev 
 #ifndef TRIDIAG_GPU_BUILD
   MATH_DATATYPE(kind=rck), intent(out)          :: tau(na)
 #ifdef USE_ASSUMED_SIZE
@@ -184,7 +184,7 @@ subroutine tridiag_cpu_&
   integer(kind=ik)                              :: n_stored_vecs
   logical                                       :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
 
-  integer(kind=C_intptr_T)                      :: v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
+  integer(kind=c_intptr_t)                      :: v_row_dev, v_col_dev, u_row_dev, u_col_dev, vu_stored_rows_dev, &
                                                    uv_stored_cols_dev
   logical                                       :: successGPU
 
@@ -717,8 +717,8 @@ else
     ! owning column istep
 
     if (useGPU) then
-      call obj%timer%start("gpu_copy_and_set_zeros_kernel")
-      NVTX_RANGE_PUSH("kernel: gpu_copy_and_set_zeros a_dev(:,l_cols+1)->v_row_dev, aux1_dev=0,vav_dev=0")
+      call obj%timer%start("gpu_copy_and_set_zeros")
+      NVTX_RANGE_PUSH("gpu_copy_and_set_zeros")
 
       ! copy l_cols + 1 column of a_dev to v_row_dev
       isOurProcessRow      = (my_prow == prow(istep-1, nblk, np_rows))
@@ -726,13 +726,12 @@ else
       isOurProcessCol_prev = (my_pcol == pcol(istep  , nblk, np_cols)) ! isOurProcessCol from the previous step
 
       my_stream = obj%gpu_setup%my_stream
-      call gpu_copy_and_set_zeros_PRECISION(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                            aux1_dev, vav_dev, d_vec_dev, &
-                                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                            isSkewsymmetric, useCCL, wantDebug, my_stream)
-      successGPU = gpu_DeviceSynchronize()
-      NVTX_RANGE_POP("")
-      call obj%timer%stop("gpu_copy_and_set_zeros_kernel")
+      call gpu_copy_and_set_zeros(PRECISION_CHAR, v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
+                                  aux1_dev, vav_dev, d_vec_dev, &
+                                  isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
+                                  isSkewsymmetric, useCCL, wantDebug, my_stream)
+      NVTX_RANGE_POP("gpu_copy_and_set_zeros")
+      call obj%timer%stop("gpu_copy_and_set_zeros")
     endif ! useGPU
 
 
@@ -813,9 +812,9 @@ else
 
         my_stream = obj%gpu_setup%my_stream
         if (wantDebug) call obj%timer%start("gpu_dot_product_and_assign_kernel")
-        NVTX_RANGE_PUSH("kernel: gpu_dot_product_and_assign v_row_dev*v_row_dev,aux1_dev")
-        call gpu_dot_product_and_assign_PRECISION(v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
-        NVTX_RANGE_POP("kernel: gpu_dot_product_and_assign v_row_dev*v_row_dev,aux1_dev")
+        NVTX_RANGE_PUSH("gpu_dot_product_and_assign_kernel")
+        call gpu_dot_product_and_assign(PRECISION_CHAR, v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+        NVTX_RANGE_POP("kernel: gpu_dot_product_and_assign_kernel")
         if (wantDebug) call obj%timer%stop("gpu_dot_product_and_assign_kernel")
 
         if (.not. useCCL) then
@@ -903,8 +902,8 @@ else
 #if defined(USE_CCL_TRIDIAG)
         NVTX_RANGE_PUSH("gpu_hh_transform")
 
-        call gpu_hh_transform_PRECISION(obj, vrl_dev, vnorm2_dev, xf_dev, tau_dev+(istep-1)*size_of_datatype, & 
-                                        wantDebug, my_stream)
+        call gpu_hh_transform(PRECISION_CHAR, vrl_dev, vnorm2_dev, xf_dev, tau_dev+(istep-1)*size_of_datatype, & 
+                              wantDebug, my_stream)
         NVTX_RANGE_POP("gpu_hh_transform")
 #endif /* defined(USE_CCL_TRIDIAG) */
       else ! useCCL
@@ -966,8 +965,8 @@ else
         NVTX_RANGE_PUSH("gpu_set_e_vec_scale_set_one_store_v_row_kernel")
 
         isOurProcessRow = (my_prow == prow(istep-1, nblk, np_rows))
-        call gpu_set_e_vec_scale_set_one_store_v_row_PRECISION(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
-                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
+        call gpu_set_e_vec_scale_set_one_store_v_row (PRECISION_CHAR, e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
+                                                      l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
         NVTX_RANGE_POP("gpu_set_e_vec_scale_set_one_store_v_row_kernel ")
         if (wantDebug) call obj%timer%stop("gpu_set_e_vec_scale_set_one_store_v_row_kernel")
       endif ! useGPU  
@@ -1549,7 +1548,7 @@ else
       call obj%timer%start("gpu_dot_product_kernel")
       NVTX_RANGE_PUSH("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
       sm_count = obj%gpu_setup%gpuSMcount
-      call gpu_dot_product_PRECISION(l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, sm_count, my_stream)
+      call gpu_dot_product(PRECISION_CHAR, l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, sm_count, my_stream)
       NVTX_RANGE_POP("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
       call obj%timer%stop("gpu_dot_product_kernel")
     endif ! useGPU .and. useCCL
@@ -1665,13 +1664,13 @@ else
       endif ! useCCL
 
       if (wantDebug) call obj%timer%start("gpu_store_u_v_in_uv_vu_kernel")
-      NVTX_RANGE_PUSH("kernel gpu_store_u_v_in_uv_vu")
-      call gpu_store_u_v_in_uv_vu_PRECISION(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
-                                          v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
-                                          vav_host_or_dev, tau_istep_host_or_dev, &
-                                          l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, istep, &
-                                          useCCL, wantDebug, my_stream)
-      NVTX_RANGE_POP("kernel gpu_store_u_v_in_uv_vu")
+      NVTX_RANGE_PUSH("gpu_store_u_v_in_uv_vu_kernel")
+      call gpu_store_u_v_in_uv_vu(PRECISION_CHAR, vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, &
+                                  v_col_dev, u_col_dev, tau_dev, aux_complex_dev, &
+                                  vav_host_or_dev, tau_istep_host_or_dev, &
+                                  l_rows, l_cols, n_stored_vecs,  max_local_rows, max_local_cols, istep, &
+                                  useCCL, wantDebug, my_stream)
+      NVTX_RANGE_POP("gpu_store_u_v_in_uv_vu_kernel")
       if (wantDebug) call obj%timer%stop("gpu_store_u_v_in_uv_vu_kernel")
     endif ! useGPU
 
@@ -1773,11 +1772,11 @@ else
       if (useGPU) then
         my_stream = obj%gpu_setup%my_stream
         if (wantDebug) call obj%timer%start("gpu_update_matrix_element_add_kernel")
-        NVTX_RANGE_PUSH("kernel: gpu_update_matrix_element_add")
-        call gpu_update_matrix_element_add_PRECISION(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
+        NVTX_RANGE_PUSH("gpu_update_matrix_element_add_kernel")
+        call gpu_update_matrix_element_add (PRECISION_CHAR, vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                             l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
                                             isSkewsymmetric, wantDebug, my_stream)
-        NVTX_RANGE_POP("kernel: gpu_update_matrix_element_add")
+        NVTX_RANGE_POP("gpu_update_matrix_element_add_kernel")
         if (wantDebug) call obj%timer%stop("gpu_update_matrix_element_add_kernel")
 
       else ! useGPU

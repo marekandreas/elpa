@@ -57,6 +57,10 @@
 #undef gpuFloatComplex
 #undef make_gpuDoubleComplex
 #undef make_gpuFloatComplex
+#undef gpuPointerAttributes
+#undef gpuPointerGetAttributes
+#undef gpuMemoryTypeHost
+#undef gpuMemoryTypeDevice
 #undef MAX_THREADS_PER_BLOCK
 #undef MIN_THREADS_PER_BLOCK
 #undef ELPA_GPU
@@ -74,6 +78,10 @@
 #define gpuFloatComplex  cuFloatComplex
 #define make_gpuDoubleComplex make_cuDoubleComplex
 #define make_gpuFloatComplex make_cuFloatComplex
+#define gpuPointerAttributes cudaPointerAttributes
+#define gpuPointerGetAttributes cudaPointerGetAttributes
+#define gpuMemoryTypeHost cudaMemoryTypeHost
+#define gpuMemoryTypeDevice cudaMemoryTypeDevice
 #define MAX_THREADS_PER_BLOCK 1024
 #define MIN_THREADS_PER_BLOCK 32 /* i.e. wrap size */
 #define ELPA_GPU cuda
@@ -92,6 +100,10 @@
 #define gpuFloatComplex  hipFloatComplex
 #define make_gpuDoubleComplex make_hipDoubleComplex
 #define make_gpuFloatComplex make_hipFloatComplex
+#define gpuPointerAttributes hipPointerAttribute_t
+#define gpuPointerGetAttributes hipPointerGetAttributes
+#define gpuMemoryTypeHost hipMemoryTypeHost
+#define gpuMemoryTypeDevice hipMemoryTypeDevice
 #define MAX_THREADS_PER_BLOCK 1024
 #define MIN_THREADS_PER_BLOCK 64
 #define ELPA_GPU hip

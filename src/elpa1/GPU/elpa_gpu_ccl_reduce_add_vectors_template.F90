@@ -211,9 +211,9 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
 ! !          k = k+nblk
 !         enddo
 !       enddo
-      !sm_count = 32
+
       sm_count = obj%gpu_setup%gpuSMcount
-      call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux1_reduceadd_dev, vmat_s_dev, & 
+      call gpu_transpose_reduceadd_vectors_copy_block (PRECISION_CHAR, aux1_reduceadd_dev, vmat_s_dev, & 
                                                 nvc, nvr, n, 0, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
                                                 1, isSkewsymmetric, .true., wantDebug, sm_count, my_stream)
 
@@ -255,10 +255,9 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
 
       
       if (mypt == ipt) then
-              !sm_count = 32
 #if REALCASE == 1
           sm_count = obj%gpu_setup%gpuSMcount
-          call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux2_reduceadd_dev, vmat_t_dev, & 
+          call gpu_transpose_reduceadd_vectors_copy_block (PRECISION_CHAR, aux2_reduceadd_dev, vmat_t_dev, & 
                                                 nvc, nvr, n, 0, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_t, &
                                                 2, isSkewsymmetric, .true., wantDebug, sm_count, my_stream)
 #endif

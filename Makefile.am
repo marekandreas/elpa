@@ -56,9 +56,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/GPU/mod_tridiag_gpu.F90 \
   src/elpa1/GPU/mod_trans_ev_gpu.F90 \
   src/elpa1/GPU/mod_elpa1_gpu.F90 \
-  src/elpa1/GPU/CUDA/mod_tridiag_cuda.F90 \
-  src/elpa1/GPU/ROCm/mod_tridiag_hip.F90 \
-  src/elpa1/GPU/SYCL/mod_tridiag_sycl.F90 \
   src/elpa1/GPU/CUDA/mod_trans_ev_cuda.F90 \
   src/elpa1/GPU/ROCm/mod_trans_ev_hip.F90 \
   src/elpa1/GPU/SYCL/mod_trans_ev_sycl.F90 \
@@ -1171,6 +1168,7 @@ EXTRA_DIST = \
   src/elpa1/GPU/elpa_gpu_ccl_transpose_vectors_template.F90 \
   src/elpa1/GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90 \
   src/elpa1/GPU/trans_ev_gpu.h \
+  src/elpa1/GPU/tridiag_gpu.h \
   src/elpa2/compute_hh_trafo.F90 \
   src/elpa2/elpa2_bandred_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \

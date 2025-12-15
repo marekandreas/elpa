@@ -50,6 +50,7 @@
 #include "config-f90.h"
 #include "../../general/sanity.F90"
 #include "../../general/error_checking.inc"
+#include "../../general/nvtx_labels.h"
 
 #undef USE_CCL_TRANSPOSE
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
@@ -184,13 +185,9 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
     
     if (myps==mypt) then
       ! vmat_t(1:ld_st,1:nvc) = vmat_s(1:ld_st,1:nvc)
-#ifdef WITH_NVTX
-      call nvtxRangePush("memcpy new D-D vmat_s_dev->vmat_t_dev")
-#endif
+      NVTX_RANGE_PUSH("memcpy D-D vmat_s_dev->vmat_t_dev")
       successGPU = gpu_memcpy(vmat_t_dev, vmat_s_dev, (ld_st*nvc)* size_of_datatype, gpuMemcpyDeviceToDevice)
-#ifdef WITH_NVTX
-      call nvtxRangePop()
-#endif
+      NVTX_RANGE_POP("memcpy D-D vmat_s_dev->vmat_t_dev")
     else
       call obj%get("matrix_order", matrix_order, error)
 
@@ -309,11 +306,12 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
-          !sm_count = 32
           sm_count = obj%gpu_setup%gpuSMcount
-          call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_s_dev, & 
+          call obj%timer%start("gpu_transpose_reduceadd_vectors_copy_block")
+          call gpu_transpose_reduceadd_vectors_copy_block (PRECISION_CHAR, aux_transpose_dev, vmat_s_dev, & 
                                                 nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
                                                 1, isSkewsymmetric, .false., wantDebug, sm_count, my_stream)
+          call obj%timer%stop("gpu_transpose_reduceadd_vectors_copy_block")
         endif ! (myps == ips)
 
         ! call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),  MPI_REAL_PRECISION,    &
@@ -336,11 +334,13 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
           if (wantDebug) call obj%timer%stop("ccl_bcast")
         endif ! (nps>1)
-        !sm_count = 32
+
         sm_count = obj%gpu_setup%gpuSMcount
-        call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_t_dev, &
+        call obj%timer%start("gpu_transpose_reduceadd_vectors_copy_block")
+        call gpu_transpose_reduceadd_vectors_copy_block (PRECISION_CHAR, aux_transpose_dev, vmat_t_dev, &
                                               nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, npt, ld_t, & 
                                               2, isSkewsymmetric, .false., wantDebug, sm_count, my_stream)
+        call obj%timer%stop("gpu_transpose_reduceadd_vectors_copy_block")
       endif ! (nblks_comm .ne. 0)
     endif ! (mypt == ipt)
 
