@@ -867,7 +867,7 @@ template <typename T>
 __global__ void gpu_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *vmat_st_dev, 
                                               int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
                                               int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, int isSkewsymmetric, int isReduceadd){
-  int tid_x = threadIdx.x + blockIdx.x*blockDim.x;
+  //int tid_x = threadIdx.x; + blockIdx.x*blockDim.x;
 
 /*
   ! direction = 1
@@ -899,22 +899,25 @@ __global__ void gpu_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpo
   if (isSkewsymmetric) sign = elpaDeviceNumber<T>(-1.0);
 
   int k, ns, nl;
-  for (int lc=1; lc <= nvc; lc += 1)
-    {
-    for (int i = nblks_skip+n_block; i <= nblks_tot-1; i += lcm_s_t)
-      {
-      k = (i - nblks_skip - n_block)/lcm_s_t * nblk + (lc - 1) * auxstride;
-      ns = (i/np_st)*nblk; // local start of block i
-      nl = MIN(nvr-i*nblk, nblk); // length
-      for (int j=tid_x; j<nl; j+=blockDim.x*gridDim.x) 
-        {
-        if (direction==1)                 aux_transpose_dev[k+1+j-1]            = vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st];
-        if (direction==2 && !isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st]  = elpaDeviceMultiply(sign, aux_transpose_dev[k+1+j-1]);
-        if (direction==2 &&  isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st]  = elpaDeviceAdd(vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st] , aux_transpose_dev[k+1+j-1]);
-        }
-      }
-    }
+  //for (int lc=1; lc <= nvc; lc += 1)
+  int lc = blockIdx.y + 1; // 1-based index
 
+  //for (int i = nblks_skip+n_block; i <= nblks_tot-1; i += lcm_s_t)
+  int i = nblks_skip+n_block + blockIdx.z * lcm_s_t; // 1-based index
+  if (i > nblks_tot-1) return;
+
+  k = (i - nblks_skip - n_block)/lcm_s_t * nblk + (lc - 1) * auxstride;
+  ns = (i/np_st)*nblk; // local start of block i
+  nl = MIN(nvr-i*nblk, nblk); // length
+
+  //for (int j=tid_x; j<nl; j+=blockDim.x) 
+  int j = threadIdx.x + blockIdx.x*blockDim.x; // 0-based index
+  if (j >= nl) return;
+
+  if (direction==1)                 aux_transpose_dev[k+1+j-1]            = vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st];
+  if (direction==2 && !isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st]  = elpaDeviceMultiply(sign, aux_transpose_dev[k+1+j-1]);
+  if (direction==2 &&  isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st]  = elpaDeviceAdd(vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st] , aux_transpose_dev[k+1+j-1]);
+    
 }
 
 template <typename T>
@@ -923,9 +926,16 @@ void gpu_transpose_reduceadd_vectors_copy_block(T *aux_transpose_dev, T *vmat_st
                                                 int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, 
                                                 int direction, int isSkewsymmetric, int isReduceadd, 
                                                 int wantDebug, int SM_count, gpuStream_t my_stream){
+  
+  int i0    = nblks_skip + n_block;
+  if (nblks_tot-1-i0 < 0) return;
+  
+  int num_i = (nblks_tot-1 - i0) / lcm_s_t + 1;
 
-  dim3 blocksPerGrid = dim3(SM_count,1,1);
-  dim3 threadsPerBlock = dim3(nblk,1,1);
+  dim3 blocksPerGrid = dim3((nblk+MIN_THREADS_PER_BLOCK-1)/MIN_THREADS_PER_BLOCK, nvc, num_i);
+  dim3 threadsPerBlock = dim3(MIN_THREADS_PER_BLOCK,1,1);
+  
+  //printf("gpu_transpose_reduceadd_vectors_copy_block: SM_count=%d, nvc=%d, i_steps=%d", SM_count, nvc, (nblks_tot-(nblks_skip+n_block))/lcm_s_t); // PETERDEBUG111
   
 #ifdef WITH_GPU_STREAMS
   gpu_transpose_reduceadd_vectors_copy_block_kernel<<<blocksPerGrid,threadsPerBlock,0,my_stream>>>(aux_transpose_dev, vmat_st_dev, 
