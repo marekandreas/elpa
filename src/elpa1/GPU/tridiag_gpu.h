@@ -97,11 +97,12 @@ template <typename T, typename T_real>
 void gpu_copy_and_set_zeros(T *v_row_dev, T *a_dev, 
                             int l_rows, int l_cols, int matrixRows, int istep, 
                             T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
-                            int isOurProcessRow,  int isOurProcessCol, int isOurProcessCol_prev, int isSkewsymmetric, int useCCL, int wantDebug, gpuStream_t my_stream){
+                            int isOurProcessRow,  int isOurProcessCol, int isOurProcessCol_prev, 
+                            int isSkewsymmetric, int useCCL, int wantDebug, gpuStream_t my_stream){
 
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   dim3 blocksPerGrid = dim3(blocks,1,1);
-  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // TODO_23_11: change to NB?
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
 #ifdef WITH_GPU_STREAMS
   gpu_copy_and_set_zeros_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL);
@@ -172,7 +173,8 @@ __global__ void gpu_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int 
 }
 
 template <typename T>
-void gpu_dot_product(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev, int wantDebug, int SM_count, gpuStream_t my_stream){
+void gpu_dot_product (int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev, 
+                      int wantDebug, int SM_count, gpuStream_t my_stream){
 
   int blocks = SM_count;
   dim3 blocksPerGrid = dim3(blocks,1,1);
@@ -259,7 +261,8 @@ __global__ void gpu_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int 
 }
 
 template <typename T>
-void gpu_dot_product_and_assign(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev, int wantDebug, gpuStream_t my_stream){
+void gpu_dot_product_and_assign(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev, 
+                                int wantDebug, gpuStream_t my_stream){
   
   // PETERDEBUG111: add SM_count
   int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
@@ -361,8 +364,10 @@ __global__ void gpu_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev
 }
 
 template <typename T, typename T_real>
-void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T *xf_host_or_dev, 
-                                              int l_rows, int l_cols,  int matrixRows, int istep, int isOurProcessRow, int useCCL, int wantDebug, gpuStream_t my_stream){
+void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *a_dev, 
+                                              T *v_row_dev, T *tau_dev, T *xf_host_or_dev, 
+                                              int l_rows, int l_cols,  int matrixRows, int istep, 
+                                              int isOurProcessRow, int useCCL, int wantDebug, gpuStream_t my_stream){
 
   int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
   dim3 blocksPerGrid = dim3(blocks,1,1);
@@ -382,10 +387,10 @@ void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *
       T xf_host_value = *xf_host_or_dev;
 #ifdef WITH_GPU_STREAMS
       gpu_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
-                                                                                                 l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
+                                                                                             l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
 #else 
-      gpu_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
-                                                                                    l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
+      gpu_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock>>>            (e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
+                                                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
 #endif
       if (wantDebug)
         {
@@ -520,7 +525,8 @@ __global__ void gpu_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_store
 template <typename T>
 void gpu_store_u_v_in_uv_vu(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
                             T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T *vav_host_or_dev, T *tau_host_or_dev,
-                            int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, int useCCL, int wantDebug, gpuStream_t my_stream){
+                            int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, 
+                            int istep, int useCCL, int wantDebug, gpuStream_t my_stream){
   
   int threads = MAX_THREADS_PER_BLOCK/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
   int blocks = std::max({(l_rows+threads-1)/threads, (l_cols+threads-1)/threads, 1});
@@ -826,7 +832,8 @@ __global__ void gpu_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev
 }
 
 template <typename T>
-void gpu_hh_transform(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, int wantDebug, gpuStream_t my_stream){
+void gpu_hh_transform(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, 
+                      int wantDebug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(1,1,1);
   dim3 threadsPerBlock = dim3(1,1,1);
@@ -914,11 +921,11 @@ template <typename T>
 void gpu_transpose_reduceadd_vectors_copy_block(T *aux_transpose_dev, T *vmat_st_dev, 
                                                 int nvc, int nvr,  int n_block, int nblks_skip, int nblks_tot, 
                                                 int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, 
-                                                int direction, int isSkewsymmetric, int isReduceadd, int wantDebug, int SM_count, gpuStream_t my_stream){
+                                                int direction, int isSkewsymmetric, int isReduceadd, 
+                                                int wantDebug, int SM_count, gpuStream_t my_stream){
 
   dim3 blocksPerGrid = dim3(SM_count,1,1);
-  dim3 threadsPerBlock = dim3(nblk,1,1); 
-
+  dim3 threadsPerBlock = dim3(nblk,1,1);
   
 #ifdef WITH_GPU_STREAMS
   gpu_transpose_reduceadd_vectors_copy_block_kernel<<<blocksPerGrid,threadsPerBlock,0,my_stream>>>(aux_transpose_dev, vmat_st_dev, 

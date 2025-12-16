@@ -965,8 +965,10 @@ else
         NVTX_RANGE_PUSH("gpu_set_e_vec_scale_set_one_store_v_row_kernel")
 
         isOurProcessRow = (my_prow == prow(istep-1, nblk, np_rows))
-        call gpu_set_e_vec_scale_set_one_store_v_row (PRECISION_CHAR, e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, & 
-                                                      l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream)
+        call gpu_set_e_vec_scale_set_one_store_v_row (PRECISION_CHAR, e_vec_dev, vrl_dev, a_dev, & 
+                                                      v_row_dev, tau_dev, xf_host_or_dev, &
+                                                      l_rows, l_cols, matrixRows, istep, &
+                                                      isOurProcessRow, useCCL, wantDebug, my_stream)
         NVTX_RANGE_POP("gpu_set_e_vec_scale_set_one_store_v_row_kernel ")
         if (wantDebug) call obj%timer%stop("gpu_set_e_vec_scale_set_one_store_v_row_kernel")
       endif ! useGPU  

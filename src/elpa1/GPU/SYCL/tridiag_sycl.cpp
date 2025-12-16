@@ -66,7 +66,7 @@
 #include "config-f90.h"
 
 #include "../../../GPU/common_device_functions.h"
-
+#include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
@@ -90,7 +90,7 @@ struct is_pointer<T*> { static const bool value = true; };
 //________________________________________________________________
 
 template <typename T, typename T_real>
-void sycl_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int matrixRows, int istep,
+void gpu_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int matrixRows, int istep,
                                          T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
                                          int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, int isSkewsymmetric, int useCCL,
                                          sycl::nd_item<1> item_ct1){
@@ -125,37 +125,24 @@ void sycl_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, in
 }
 
 template <typename T, typename T_real>
-void sycl_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in,
-                                   int *l_cols_in, int *matrixRows_in,
-                                   int *istep_in, T *aux1_dev, T *vav_dev,
-                                   T_real *d_vec_dev, int *isOurProcessRow_in,
-                                   int *isOurProcessCol_in,
-                                   int *isOurProcessCol_prev_in,
-                                   int *isSkewsymmetric_in, int *useCCL_in,
-                                   int *wantDebug_in, QueueData *my_stream) {
-  int l_rows = *l_rows_in;   
-  int l_cols = *l_cols_in;   
-  int matrixRows = *matrixRows_in;
-  int istep = *istep_in;
-  int isOurProcessRow = *isOurProcessRow_in;
-  int isOurProcessCol = *isOurProcessCol_in;
-  int isOurProcessCol_prev = *isOurProcessCol_prev_in;
-  int isSkewsymmetric = *isSkewsymmetric_in;
-  int useCCL = *useCCL_in;
-  int wantDebug = *wantDebug_in;
+void gpu_copy_and_set_zeros(T *v_row_dev, T *a_dev, 
+                            int l_rows, int l_cols, int matrixRows, int istep, 
+                            T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
+                            int isOurProcessRow,  int isOurProcessCol, int isOurProcessCol_prev, 
+                            int isSkewsymmetric, int useCCL, int wantDebug, gpuStream_t my_stream){
 
   auto queue = getQueueOrDefault(my_stream);
   int maxWgSize = maxWorkgroupSize<1>(queue)[0];
   int blocks = std::max((l_rows+maxWgSize-1)/maxWgSize, 1);
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11: change to NB?
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
 
   queue.submit([&](sycl::handler &cgh)
     {
     cgh.parallel_for(
       sycl::nd_range<1>(sycl::range<1>(blocks) * threadsPerBlock, threadsPerBlock),
       [=](sycl::nd_item<1> item_ct1) {
-        sycl_copy_and_set_zeros(
+        gpu_copy_and_set_zeros(
             v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev,
             vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol,
             isOurProcessCol_prev, isSkewsymmetric, useCCL, item_ct1);
@@ -165,49 +152,28 @@ void sycl_copy_and_set_zeros_FromC(T *v_row_dev, T *a_dev, int *l_rows_in,
 
 }
 
-extern "C" void sycl_copy_and_set_zeros_double_FromC(
-    double *v_row_dev, double *a_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, double *aux1_dev, double *vav_dev,
-    double *d_vec_dev, int *isOurProcessRow_in, int *isOurProcessCol_in,
-    int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in,
-    int *wantDebug_in, QueueData *my_stream) {
-  sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_copy_and_set_zeros_float_FromC(
-    float *v_row_dev, float *a_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, float *aux1_dev, float *vav_dev,
-    float *d_vec_dev, int *isOurProcessRow_in, int *isOurProcessCol_in,
-    int *isOurProcessCol_prev_in, int *isSkewsymmetric_in, int *useCCL_in,
-    int *wantDebug_in, QueueData *my_stream) {
-  sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_copy_and_set_zeros_double_complex_FromC(
-    std::complex<double> *v_row_dev, std::complex<double> *a_dev, int *l_rows_in,
-    int *l_cols_in, int *matrixRows_in, int *istep_in, std::complex<double> *aux1_dev,
-    std::complex<double> *vav_dev, double *d_vec_dev, int *isOurProcessRow_in,
-    int *isOurProcessCol_in, int *isOurProcessCol_prev_in,
-    int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in,
-    QueueData *my_stream) {
-  sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_copy_and_set_zeros_float_complex_FromC(
-    std::complex<float> *v_row_dev, std::complex<float> *a_dev, int *l_rows_in,
-    int *l_cols_in, int *matrixRows_in, int *istep_in, std::complex<float> *aux1_dev,
-    std::complex<float> *vav_dev, float *d_vec_dev, int *isOurProcessRow_in,
-    int *isOurProcessCol_in, int *isOurProcessCol_prev_in,
-    int *isSkewsymmetric_in, int *useCCL_in, int *wantDebug_in,
-    QueueData *my_stream) {
-  sycl_copy_and_set_zeros_FromC(v_row_dev, a_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, aux1_dev, vav_dev, d_vec_dev, isOurProcessRow_in, isOurProcessCol_in, isOurProcessCol_prev_in, isSkewsymmetric_in, useCCL_in, wantDebug_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_FromC)(char dataType, intptr_t v_row_dev, intptr_t a_dev, int l_rows, int l_cols, int matrixRows, int istep,
+                                                      double *aux1_dev, double *vav_dev, double *d_vec_dev, 
+                                                      int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, 
+                                                      int isSkewsymmetric, int useCCL, int wantDebug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_copy_and_set_zeros<double, double> ((double *)v_row_dev, (double *)a_dev, l_rows, l_cols, matrixRows, istep, 
+                                                      (double *)aux1_dev, (double *)vav_dev, (double *)d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, my_stream);
+  else if (dataType=='S') gpu_copy_and_set_zeros<float, float> ((float  *)v_row_dev, (float  *)a_dev, l_rows, l_cols, matrixRows, istep,
+                                                      (float  *)aux1_dev, (float  *)vav_dev, (float  *)d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, my_stream);
+  else if (dataType=='Z') gpu_copy_and_set_zeros<gpuDoubleComplex, double> ((gpuDoubleComplex *)v_row_dev, (gpuDoubleComplex *)a_dev, l_rows, l_cols, matrixRows, istep,
+                                                      (gpuDoubleComplex *)aux1_dev, (gpuDoubleComplex *)vav_dev, (double *)d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, my_stream);
+  else if (dataType=='C') gpu_copy_and_set_zeros<gpuFloatComplex, float> ((gpuFloatComplex *)v_row_dev, (gpuFloatComplex *)a_dev, l_rows, l_cols, matrixRows, istep,
+                                                      (gpuFloatComplex *)aux1_dev, (gpuFloatComplex *)vav_dev, (float *)d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, my_stream);
+  else {
+    printf("Error in gpu_copy_and_set_zeros_FromC: Unsupported data type\n");
+  }
 }
 
 //________________________________________________________________
 // device syncronization is needed afterwards, e.g. gpu_memcpy
 
 template <typename T>
-void sycl_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev,
+void gpu_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev,
                              sycl::nd_item<1> it, local_buffer<T>  cache){
    // extra space of fixed size is reserved for a speedup
   int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
@@ -252,23 +218,14 @@ performance if there is no access to global memory.
 }
 
 template <typename T>
-void sycl_dot_product_FromC(int *n_in, T *x_dev, int *incx_in, T *y_dev,
-                            int *incy_in, T *result_dev, int *wantDebug_in,
-                            int *SM_count_in, QueueData *my_stream) {
-  int n = *n_in;
-  int incx = *incx_in;
-  int incy = *incy_in;
-  int wantDebug = *wantDebug_in;
-  int SM_count = *SM_count_in;
-
-  //int SM_count=32;
-  //syclDeviceGetAttribute(&SM_count, syclDevAttrMultiProcessorCount, 0); // TODO_23_11 move this outside, to set_gpu, claim the number only once during GPU setup
+void gpu_dot_product (int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev, 
+                      int wantDebug, int SM_count, gpuStream_t my_stream){
 
   sycl::queue queue = getQueueOrDefault(my_stream);
   int maxWgSize = maxWorkgroupSize<1>(queue)[0];
   int blocks = SM_count;
   sycl::range<1> blocksPerGrid   = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11: or NB?
+  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
 
 
 
@@ -278,47 +235,28 @@ void sycl_dot_product_FromC(int *n_in, T *x_dev, int *incx_in, T *y_dev,
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
           [=](sycl::nd_item<1> item_ct1) {
-          sycl_dot_product_kernel(n, x_dev, incx, y_dev, incy, result_dev,
+          gpu_dot_product_kernel(n, x_dev, incx, y_dev, incy, result_dev,
                                   item_ct1, cache_acc_ct1);
         });
   });
   queue.wait_and_throw();
 }
 
-extern "C" void sycl_dot_product_double_FromC(int *n_in, double *x_dev,
-                                              int *incx_in, double *y_dev,
-                                              int *incy_in, double *result_dev,
-                                              int *wantDebug_in,
-                                              int *SM_count_in, QueueData *my_stream) {
-  sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
-}
-
-extern "C" void sycl_dot_product_float_FromC(int *n_in, float *x_dev,
-                                             int *incx_in, float *y_dev,
-                                             int *incy_in, float *result_dev,
-                                             int *wantDebug_in,
-                                             int *SM_count_in, QueueData *my_stream) {
-  sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
-}
-
-extern "C" void sycl_dot_product_double_complex_FromC(
-    int *n_in, std::complex<double> *x_dev, int *incx_in, std::complex<double> *y_dev,
-    int *incy_in, std::complex<double> *result_dev, int *wantDebug_in,
-    int *SM_count_in, QueueData *my_stream) {
-  sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
-}
-
-extern "C" void sycl_dot_product_float_complex_FromC(
-    int *n_in, std::complex<float> *x_dev, int *incx_in, std::complex<float> *y_dev,
-    int *incy_in, std::complex<float> *result_dev, int *wantDebug_in,
-    int *SM_count_in, QueueData *my_stream) {
-  sycl_dot_product_FromC(n_in, x_dev, incx_in, y_dev, incy_in, result_dev, wantDebug_in, SM_count_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU, _dot_product_FromC)(char dataType, int n, intptr_t x_dev, int incx, intptr_t y_dev, int incy, intptr_t result_dev, 
+                                                          int wantDebug, int SM_count, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_dot_product<double>(n, (double *)x_dev, incx, (double *)y_dev, incy, (double *)result_dev, wantDebug, SM_count, my_stream);
+  else if (dataType=='S') gpu_dot_product<float> (n, (float  *)x_dev, incx, (float  *)y_dev, incy, (float  *)result_dev, wantDebug, SM_count, my_stream);
+  else if (dataType=='Z') gpu_dot_product<gpuDoubleComplex>(n, (gpuDoubleComplex *)x_dev, incx, (gpuDoubleComplex *)y_dev, incy, (gpuDoubleComplex *)result_dev, wantDebug, SM_count, my_stream);
+  else if (dataType=='C') gpu_dot_product<gpuFloatComplex> (n, (gpuFloatComplex  *)x_dev, incx, (gpuFloatComplex  *)y_dev, incy, (gpuFloatComplex  *)result_dev, wantDebug, SM_count, my_stream);
+  else {
+    printf("Error in gpu_dot_product_FromC: Unsupported data type\n");
+  }
 }
 
 //________________________________________________________________
 
 template <typename T>
-void sycl_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev,
+void gpu_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev,
                                         sycl::nd_item<1> it, local_buffer<T>  cache){
   const int threadsPerBlock = it.get_local_range(0);
 
@@ -384,18 +322,10 @@ performance if there is no access to global memory.
 }
 
 template <typename T>
-void sycl_dot_product_and_assign_FromC(T *v_row_dev, int *l_rows_in,
-                                       int *isOurProcessRow_in, T *aux1_dev,
-                                       int *wantDebug_in,
-                                       QueueData *my_stream) {
-  int l_rows = *l_rows_in;
-  int isOurProcessRow = *isOurProcessRow_in;
-  int wantDebug = *wantDebug_in;
+void gpu_dot_product_and_assign(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev, 
+                                int wantDebug, gpuStream_t my_stream){
 
-  //int numSMs;
-  //syclDeviceGetAttribute(&numSMs, syclDevAttrMultiProcessorCount, 0);
-
-  //int blocks = (l_rows+1023)/maxWgSize;
+  // PETERDEBUG111: add SM_count
   int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
   sycl::queue queue = getQueueOrDefault(my_stream);
   int maxWgSize = maxWorkgroupSize<1>(queue)[0];
@@ -416,7 +346,7 @@ work-group size if needed.
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
           [=](sycl::nd_item<1> item_ct1) {
-          sycl_dot_product_and_assign_kernel(v_row_dev, l_rows, isOurProcessRow, aux1_dev,
+          gpu_dot_product_and_assign_kernel(v_row_dev, l_rows, isOurProcessRow, aux1_dev,
                                   item_ct1, cache_acc_ct1);
         });
   });
@@ -424,34 +354,20 @@ work-group size if needed.
 
 }
 
-extern "C" void sycl_dot_product_and_assign_double_FromC(
-    double *v_row_dev, int *l_rows_in, int *isOurProcessRow_in,
-    double *aux1_dev, int *wantDebug_in, QueueData *my_stream) {
-  sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_dot_product_and_assign_float_FromC(
-    float *v_row_dev, int *l_rows_in, int *isOurProcessRow_in, float *aux1_dev,
-    int *wantDebug_in, QueueData *my_stream) {
-  sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_dot_product_and_assign_double_complex_FromC(
-    std::complex<double> *v_row_dev, int *l_rows_in, int *isOurProcessRow_in,
-    std::complex<double> *aux1_dev, int *wantDebug_in, QueueData *my_stream) {
-  sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_dot_product_and_assign_float_complex_FromC(
-    std::complex<float> *v_row_dev, int *l_rows_in, int *isOurProcessRow_in,
-    std::complex<float> *aux1_dev, int *wantDebug_in, QueueData *my_stream) {
- sycl_dot_product_and_assign_FromC(v_row_dev, l_rows_in, isOurProcessRow_in, aux1_dev, wantDebug_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU, _dot_product_and_assign_FromC)(char dataType, intptr_t v_row_dev, int l_rows, int isOurProcessRow, intptr_t aux1_dev, int wantDebug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_dot_product_and_assign<double>((double *)v_row_dev, l_rows, isOurProcessRow, (double *)aux1_dev, wantDebug, my_stream);
+  else if (dataType=='S') gpu_dot_product_and_assign<float> ((float  *)v_row_dev, l_rows, isOurProcessRow, (float  *)aux1_dev, wantDebug, my_stream);
+  else if (dataType=='Z') gpu_dot_product_and_assign<gpuDoubleComplex>((gpuDoubleComplex *)v_row_dev, l_rows, isOurProcessRow, (gpuDoubleComplex *)aux1_dev, wantDebug, my_stream);
+  else if (dataType=='C') gpu_dot_product_and_assign<gpuFloatComplex> ((gpuFloatComplex  *)v_row_dev, l_rows, isOurProcessRow, (gpuFloatComplex  *)aux1_dev, wantDebug, my_stream);
+  else {
+    printf("Error in gpu_dot_product_and_assign_FromC: Unsupported data type\n");
+  }
 }
 
 //________________________________________________________________
 
 template <typename T, typename T_real, typename T_value_or_pointer>
-void sycl_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T_value_or_pointer xf_host_or_dev, 
+void gpu_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T_value_or_pointer xf_host_or_dev, 
                                                       int l_rows, int l_cols,  int matrixRows, int istep, int isOurProcessRow, int useCCL,
                                                       sycl::nd_item<1> it){
   int tid = it.get_local_id(0) +
@@ -518,19 +434,10 @@ void sycl_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_d
 }
 
 template <typename T, typename T_real>
-void sycl_set_e_vec_scale_set_one_store_v_row_FromC(
-    T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev,
-    T *xf_host_or_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in,
-    int *istep_in, int *isOurProcessRow_in, int *useCCL_in,
-    int *wantDebug_in, QueueData *my_stream) {
-
-  int l_rows = *l_rows_in;
-  int l_cols = *l_cols_in;
-  int matrixRows = *matrixRows_in;
-  int istep = *istep_in;
-  int isOurProcessRow = *isOurProcessRow_in;
-  int useCCL = *useCCL_in;
-  int wantDebug = *wantDebug_in;
+void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *a_dev, 
+                                              T *v_row_dev, T *tau_dev, T *xf_host_or_dev, 
+                                              int l_rows, int l_cols,  int matrixRows, int istep, 
+                                              int isOurProcessRow, int useCCL, int wantDebug, gpuStream_t my_stream){
 
   sycl::queue queue = getQueueOrDefault(my_stream);
 
@@ -550,7 +457,7 @@ void sycl_set_e_vec_scale_set_one_store_v_row_FromC(
       cgh.parallel_for(
           sycl::nd_range<1> ( blocksPerGrid * threadsPerBlock, threadsPerBlock),
                 [=](sycl::nd_item<1> it) {
-            sycl_set_e_vec_scale_set_one_store_v_row_kernel(
+            gpu_set_e_vec_scale_set_one_store_v_row_kernel(
                 e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
                 l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, it);
           });
@@ -559,61 +466,41 @@ void sycl_set_e_vec_scale_set_one_store_v_row_FromC(
   }
  else if (memoryType == sycl::usm::alloc::device)
    {
-    // CCL is not supported for Intel GPUs yet
-/*
-    q_ct1.parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(blocks) * threadsPerBlock,
-                          threadsPerBlock),
-        [=](sycl::nd_item<1> it) {
-          sycl_set_e_vec_scale_set_one_store_v_row_kernel(
-              e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
-              l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL,
-              it);
+    queue.submit([&](sycl::handler &cgh)
+        {
+        cgh.parallel_for(
+            sycl::nd_range<1> ( blocksPerGrid * threadsPerBlock, threadsPerBlock),
+                  [=](sycl::nd_item<1> it) {
+              gpu_set_e_vec_scale_set_one_store_v_row_kernel(
+                  e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
+                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, it);
+            });
         });
-*/
-   }
+      queue.wait_and_throw();
 
+    }
+  else 
+    {
+    printf("Error: Pointer type is unknown\n");
+    }
 }
 
-extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_double_FromC(
-    double *e_vec_dev, double *vrl_dev, double *a_dev, double *v_row_dev,
-    double *tau_dev, double *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
-    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
-  sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_float_FromC(
-    float *e_vec_dev, float *vrl_dev, float *a_dev, float *v_row_dev,
-    float *tau_dev, float *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
-    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
-  sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_double_complex_FromC(
-    double *e_vec_dev, std::complex<double> *vrl_dev, std::complex<double> *a_dev,
-    std::complex<double> *v_row_dev, std::complex<double> *tau_dev,
-    std::complex<double> *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
-    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
-  sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_set_e_vec_scale_set_one_store_v_row_float_complex_FromC(
-    float *e_vec_dev, std::complex<float> *vrl_dev, std::complex<float> *a_dev,
-    std::complex<float> *v_row_dev, std::complex<float> *tau_dev,
-    std::complex<float> *xf_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *istep_in, int *isOurProcessRow_in,
-    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
-  sycl_set_e_vec_scale_set_one_store_v_row_FromC(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev, l_rows_in, l_cols_in, matrixRows_in, istep_in, isOurProcessRow_in, useCCL_in, wantDebug_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU, _set_e_vec_scale_set_one_store_v_row_FromC) (char dataType, intptr_t e_vec_dev, intptr_t vrl_dev, intptr_t a_dev, intptr_t v_row_dev, intptr_t tau_dev, intptr_t xf_host_or_dev, 
+                                                                      int l_rows, int l_cols,  int matrixRows, int istep, int isOurProcessRow, int useCCL, int wantDebug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_set_e_vec_scale_set_one_store_v_row<double,double>((double *)e_vec_dev, (double *)vrl_dev, (double *)a_dev, (double *)v_row_dev, (double *)tau_dev, (double *)xf_host_or_dev, l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream);
+  else if (dataType=='S') gpu_set_e_vec_scale_set_one_store_v_row<float, float> ((float  *)e_vec_dev, (float  *)vrl_dev, (float  *)a_dev, (float  *)v_row_dev, (float  *)tau_dev, (float  *)xf_host_or_dev, l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream);
+  else if (dataType=='Z') gpu_set_e_vec_scale_set_one_store_v_row<gpuDoubleComplex, double>((double *)e_vec_dev, (gpuDoubleComplex *)vrl_dev, (gpuDoubleComplex *)a_dev, (gpuDoubleComplex *)v_row_dev, (gpuDoubleComplex *)tau_dev, (gpuDoubleComplex *)xf_host_or_dev, l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream);
+  else if (dataType=='C') gpu_set_e_vec_scale_set_one_store_v_row<gpuFloatComplex , float> ((float  *)e_vec_dev, (gpuFloatComplex  *)vrl_dev, (gpuFloatComplex  *)a_dev, (gpuFloatComplex  *)v_row_dev, (gpuFloatComplex  *)tau_dev, (gpuFloatComplex  *)xf_host_or_dev, l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, wantDebug, my_stream);
+  else {
+    printf("Error in gpu_set_e_vec_scale_set_one_store_v_row_FromC: Unsupported data type\n");
+  }
 }
 
 //________________________________________________________________
 
 
 template <typename T, typename T_value_or_pointer>
-void sycl_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
+void gpu_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
                 T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T_value_or_pointer vav_host_or_dev, T_value_or_pointer tau_host_or_dev,
                 int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, int useCCL,
                 sycl::nd_item<1> it){
@@ -696,20 +583,10 @@ void sycl_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev
 }
 
 template <typename T>
-void sycl_store_u_v_in_uv_vu_FromC(
-    T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
-    T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T *vav_host_or_dev, T *tau_host_or_dev, 
-    int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in, int *istep_in, 
-    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
-
-  int l_rows = *l_rows_in;
-  int l_cols = *l_cols_in;
-  int n_stored_vecs  = *n_stored_vecs_in;
-  int max_local_rows = *max_local_rows_in;   
-  int max_local_cols = *max_local_cols_in;   
-  int istep = *istep_in;   
-  int useCCL = *useCCL_in;
-  int wantDebug = *wantDebug_in;
+void gpu_store_u_v_in_uv_vu(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
+                            T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T *vav_host_or_dev, T *tau_host_or_dev,
+                            int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, 
+                            int istep, int useCCL, int wantDebug, gpuStream_t my_stream){
   
   sycl::queue queue = getQueueOrDefault(my_stream);
   int maxWgSize = maxWorkgroupSize<1>(queue)[0];
@@ -731,10 +608,11 @@ void sycl_store_u_v_in_uv_vu_FromC(
     queue.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
         [=](sycl::nd_item<1> it) {
-          sycl_store_u_v_in_uv_vu_kernel(
+          gpu_store_u_v_in_uv_vu_kernel(
               vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev,
-              v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_value,
-              tau_host_value, l_rows, l_cols, n_stored_vecs, max_local_rows,
+              v_col_dev, u_col_dev, tau_dev, aux_complex_dev, 
+              vav_host_value, tau_host_value, 
+              l_rows, l_cols, n_stored_vecs, max_local_rows,
               max_local_cols, istep, useCCL, it);
         });
     queue.wait_and_throw();
@@ -742,73 +620,45 @@ void sycl_store_u_v_in_uv_vu_FromC(
 
   else if (memoryType == sycl::usm::alloc::device)
     {
-    // CCL is not supported for Intel GPUs yet
-    /*
-
-    q_ct1.parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(blocks) * threadsPerBlock,
-                          threadsPerBlock),
+    queue.parallel_for(
+        sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
         [=](sycl::nd_item<1> it) {
-          sycl_store_u_v_in_uv_vu_kernel(
+          gpu_store_u_v_in_uv_vu_kernel(
               vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev,
-              v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev,
-              tau_host_or_dev, l_rows, l_cols, n_stored_vecs, max_local_rows,
+              v_col_dev, u_col_dev, tau_dev, aux_complex_dev, 
+              vav_host_or_dev, tau_host_or_dev,
+              l_rows, l_cols, n_stored_vecs, max_local_rows,
               max_local_cols, istep, useCCL, it);
         });
-    */
+    queue.wait_and_throw();
     }
-
+  else 
+    {
+    printf("Error: Pointer type is unknown\n");
+    }
 }
 
-extern "C" void sycl_store_u_v_in_uv_vu_double_FromC(
-    double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *v_row_dev,
-    double *u_row_dev, double *v_col_dev, double *u_col_dev, double *tau_dev,
-    double *aux_complex_dev, double *vav_host_or_dev, double *tau_host_or_dev,
-    int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in,
-    int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
-  sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
-                                l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
-}
 
-extern "C" void sycl_store_u_v_in_uv_vu_float_FromC(
-    float *vu_stored_rows_dev, float *uv_stored_cols_dev, float *v_row_dev,
-    float *u_row_dev, float *v_col_dev, float *u_col_dev, float *tau_dev,
-    float *aux_complex_dev, float *vav_host_or_dev, float *tau_host_or_dev,
-    int *l_rows_in, int *l_cols_in, int *n_stored_vecs_in,
-    int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    int *useCCL_in, int *wantDebug_in, QueueData *my_stream) {
-  sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_store_u_v_in_uv_vu_double_complex_FromC(
-    std::complex<double> *vu_stored_rows_dev, std::complex<double> *uv_stored_cols_dev,
-    std::complex<double> *v_row_dev, std::complex<double> *u_row_dev,
-    std::complex<double> *v_col_dev, std::complex<double> *u_col_dev, std::complex<double> *tau_dev,
-    std::complex<double> *aux_complex_dev, std::complex<double> *vav_host_or_dev,
-    std::complex<double> *tau_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in,
-    int *istep_in, int *useCCL_in, int *wantDebug_in,
-    QueueData *my_stream) {
-  sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_store_u_v_in_uv_vu_float_complex_FromC(
-    std::complex<float> *vu_stored_rows_dev, std::complex<float> *uv_stored_cols_dev,
-    std::complex<float> *v_row_dev, std::complex<float> *u_row_dev, std::complex<float> *v_col_dev,
-    std::complex<float> *u_col_dev, std::complex<float> *tau_dev,
-    std::complex<float> *aux_complex_dev, std::complex<float> *vav_host_or_dev,
-    std::complex<float> *tau_host_or_dev, int *l_rows_in, int *l_cols_in,
-    int *n_stored_vecs_in, int *max_local_rows_in, int *max_local_cols_in,
-    int *istep_in, int *useCCL_in, int *wantDebug_in,
-    QueueData *my_stream) {
-  sycl_store_u_v_in_uv_vu_FromC(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, l_rows_in, l_cols_in, n_stored_vecs_in, max_local_rows_in, max_local_cols_in, istep_in, useCCL_in, wantDebug_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU, _store_u_v_in_uv_vu_FromC) (char dataType, intptr_t vu_stored_rows_dev, intptr_t uv_stored_cols_dev, intptr_t v_row_dev, intptr_t u_row_dev,
+                                                      intptr_t v_col_dev, intptr_t u_col_dev, intptr_t tau_dev, intptr_t aux_complex_dev, intptr_t vav_host_or_dev, intptr_t tau_host_or_dev,
+                                                      int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, int useCCL, int wantDebug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_store_u_v_in_uv_vu<double>((double *)vu_stored_rows_dev, (double *)uv_stored_cols_dev, (double *)v_row_dev, (double *)u_row_dev, (double *)v_col_dev, (double *)u_col_dev, (double *)tau_dev, (double *)aux_complex_dev, (double *)vav_host_or_dev, (double *)tau_host_or_dev, 
+                                                                l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL, wantDebug, my_stream);
+  else if (dataType=='S') gpu_store_u_v_in_uv_vu<float> ((float  *)vu_stored_rows_dev, (float  *)uv_stored_cols_dev, (float  *)v_row_dev, (float  *)u_row_dev, (float  *)v_col_dev, (float  *)u_col_dev, (float  *)tau_dev, (float  *)aux_complex_dev, (float  *)vav_host_or_dev, (float  *)tau_host_or_dev,
+                                                                l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL, wantDebug, my_stream);
+  else if (dataType=='Z') gpu_store_u_v_in_uv_vu<gpuDoubleComplex>((gpuDoubleComplex *)vu_stored_rows_dev, (gpuDoubleComplex *)uv_stored_cols_dev, (gpuDoubleComplex *)v_row_dev, (gpuDoubleComplex *)u_row_dev, (gpuDoubleComplex *)v_col_dev, (gpuDoubleComplex *)u_col_dev, (gpuDoubleComplex *)tau_dev, (gpuDoubleComplex *)aux_complex_dev, (gpuDoubleComplex *)vav_host_or_dev, (gpuDoubleComplex *)tau_host_or_dev,
+                                                                l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL, wantDebug, my_stream);
+  else if (dataType=='C') gpu_store_u_v_in_uv_vu<gpuFloatComplex> ((gpuFloatComplex  *)vu_stored_rows_dev, (gpuFloatComplex  *)uv_stored_cols_dev, (gpuFloatComplex  *)v_row_dev, (gpuFloatComplex  *)u_row_dev, (gpuFloatComplex  *)v_col_dev, (gpuFloatComplex  *)u_col_dev, (gpuFloatComplex  *)tau_dev, (gpuFloatComplex  *)aux_complex_dev, (gpuFloatComplex  *)vav_host_or_dev, (gpuFloatComplex  *)tau_host_or_dev,
+                                                                l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL, wantDebug, my_stream);
+  else {
+    printf("Error in gpu_store_u_v_in_uv_vu_double_FromC: Unsupported data type\n");
+  }
 }
 
 //________________________________________________________________
 
 template <typename T, typename T_real>
-void sycl_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
+void gpu_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
                                                       int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric,
                                                       sycl::nd_item<1> it, local_buffer<T>  cache){
   
@@ -894,20 +744,9 @@ performance if there is no access to global memory.
 }
 
 template <typename T, typename T_real>
-void sycl_update_matrix_element_add_FromC(
-    T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev,
-    int *l_rows_in, int *l_cols_in, int *matrixRows_in, int *max_local_rows_in,
-    int *max_local_cols_in, int *istep_in, int *n_stored_vecs_in,
-    int *isSkewsymmetric_in, int *wantDebug_in, QueueData *my_stream) {
-  int l_rows = *l_rows_in;   
-  int l_cols = *l_cols_in;
-  int matrixRows = *matrixRows_in;
-  int max_local_rows = *max_local_rows_in;
-  int max_local_cols = *max_local_cols_in;
-  int istep = *istep_in;   
-  int n_stored_vecs = *n_stored_vecs_in; 
-  int isSkewsymmetric = *isSkewsymmetric_in;   
-  int wantDebug = *wantDebug_in;
+void gpu_update_matrix_element_add (T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
+                                    int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, 
+                                    int isSkewsymmetric, int wantDebug, gpuStream_t my_stream){
 
   sycl::queue queue = getQueueOrDefault(my_stream);
   int maxWgSize = maxWorkgroupSize<1>(queue)[0];
@@ -924,7 +763,7 @@ void sycl_update_matrix_element_add_FromC(
     cgh.parallel_for(
         sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
           [=](sycl::nd_item<1> item_ct1) {
-          sycl_update_matrix_element_add_kernel(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows,
+          gpu_update_matrix_element_add_kernel(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows,
                                   l_cols, matrixRows, max_local_rows, max_local_cols, istep,
                                   n_stored_vecs, isSkewsymmetric,
                                   item_ct1, cache_acc_ct1);
@@ -932,108 +771,27 @@ void sycl_update_matrix_element_add_FromC(
   });
   queue.wait_and_throw();
 
-  // queue.parallel_for(
-  //     sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-  //     [=](sycl::nd_item<1> it) {
-  //       sycl_update_matrix_element_add_kernel(
-  //           vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows,
-  //           l_cols, matrixRows, max_local_rows, max_local_cols, istep,
-  //           n_stored_vecs, isSkewsymmetric, it);
-  //     });
-  // queue.wait_and_throw();
 }
 
-extern "C" void sycl_update_matrix_element_add_double_FromC(
-    double *vu_stored_rows_dev, double *uv_stored_cols_dev, double *a_dev,
-    double *d_vec_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in,
-    int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    int *n_stored_vecs_in, int *isSkewsymmetric_in, int *wantDebug_in,
-    QueueData *my_stream) {
-  sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU, _update_matrix_element_add_FromC) (char dataType, intptr_t vu_stored_rows_dev, intptr_t uv_stored_cols_dev, intptr_t a_dev, intptr_t d_vec_dev, 
+                                                            int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, 
+                                                            int isSkewsymmetric, int wantDebug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_update_matrix_element_add<double, double>((double *)vu_stored_rows_dev, (double *)uv_stored_cols_dev, (double *)a_dev, (double *)d_vec_dev, 
+                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, my_stream);
+  else if (dataType=='S') gpu_update_matrix_element_add<float,  float> ((float  *)vu_stored_rows_dev, (float  *)uv_stored_cols_dev, (float  *)a_dev, (float  *)d_vec_dev,
+                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, my_stream);
+  else if (dataType=='Z') gpu_update_matrix_element_add<gpuDoubleComplex, double>((gpuDoubleComplex *)vu_stored_rows_dev, (gpuDoubleComplex *)uv_stored_cols_dev, (gpuDoubleComplex *)a_dev, (double *)d_vec_dev, 
+                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, my_stream);
+  else if (dataType=='C') gpu_update_matrix_element_add<gpuFloatComplex , float> ((gpuFloatComplex  *)vu_stored_rows_dev, (gpuFloatComplex  *)uv_stored_cols_dev, (gpuFloatComplex  *)a_dev, (float  *)d_vec_dev, 
+                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, my_stream);
+  else {
+    printf("Error in gpu_update_matrix_element_add_FromC: Unsupported data type\n");
+  }
 }
-
-extern "C" void sycl_update_matrix_element_add_float_FromC(
-    float *vu_stored_rows_dev, float *uv_stored_cols_dev, float *a_dev,
-    float *d_vec_dev, int *l_rows_in, int *l_cols_in, int *matrixRows_in,
-    int *max_local_rows_in, int *max_local_cols_in, int *istep_in,
-    int *n_stored_vecs_in, int *isSkewsymmetric_in, int *wantDebug_in,
-    QueueData *my_stream) {
-  sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_update_matrix_element_add_double_complex_FromC(
-    std::complex<double> *vu_stored_rows_dev, std::complex<double> *uv_stored_cols_dev,
-    std::complex<double> *a_dev, double *d_vec_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in,
-    int *istep_in, int *n_stored_vecs_in, int *isSkewsymmetric_in,
-    int *wantDebug_in, QueueData *my_stream) {
- sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_update_matrix_element_add_float_complex_FromC(
-    std::complex<float> *vu_stored_rows_dev, std::complex<float> *uv_stored_cols_dev,
-    std::complex<float> *a_dev, float *d_vec_dev, int *l_rows_in, int *l_cols_in,
-    int *matrixRows_in, int *max_local_rows_in, int *max_local_cols_in,
-    int *istep_in, int *n_stored_vecs_in, int *isSkewsymmetric_in,
-    int *wantDebug_in, QueueData *my_stream) {
- sycl_update_matrix_element_add_FromC(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows_in, l_cols_in, matrixRows_in, max_local_rows_in, max_local_cols_in, istep_in, n_stored_vecs_in, isSkewsymmetric_in, wantDebug_in, my_stream);
-}
-
 //________________________________________________________________
 
 template <typename T>
-void sycl_update_array_element_kernel(T *array_dev, const int index, T value){
-
-  array_dev[index-1] = value;
-
-}
-
-template <typename T>
-void sycl_update_array_element_FromC(T *array_dev, int *index_in, T *value_in,
-                                     QueueData *my_stream) {
-  int index = *index_in;
-  T value = *value_in;
-
-  sycl::queue queue = getQueueOrDefault(my_stream);
-
-  queue.parallel_for(
-      sycl::nd_range<1>(1, 1),
-      [=](sycl::nd_item<1> it) {
-        sycl_update_array_element_kernel(array_dev, index, value);
-      });
-  queue.wait_and_throw();
-}
-
-extern "C" void sycl_update_array_element_double_FromC(double *array_dev,
-                                                       int *index_in,
-                                                       double *value_in,
-                                                       QueueData *my_stream) {
-  sycl_update_array_element_FromC(array_dev, index_in, value_in, my_stream);
-}
-
-extern "C" void sycl_update_array_element_float_FromC(float *array_dev,
-                                                      int *index_in,
-                                                      float *value_in,
-                                                      QueueData *my_stream) {
-  sycl_update_array_element_FromC(array_dev, index_in, value_in, my_stream);
-}
-
-extern "C" void sycl_update_array_element_double_complex_FromC(
-    std::complex<double> *array_dev, int *index_in, std::complex<double> *value_in,
-    QueueData *my_stream) {
-  sycl_update_array_element_FromC(array_dev, index_in, value_in, my_stream);
-}
-
-extern "C" void sycl_update_array_element_float_complex_FromC(
-    std::complex<float> *array_dev, int *index_in, std::complex<float> *value_in,
-    QueueData *my_stream) {
-  sycl_update_array_element_FromC(array_dev, index_in, value_in, my_stream);
-}
-
-//________________________________________________________________
-
-template <typename T>
-void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, int wantDebug_in){
+void gpu_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, int wantDebug_in){
 
 /*
 #if complexcase == 1
@@ -1139,10 +897,9 @@ void sycl_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_d
 }
 
 template <typename T>
-void sycl_hh_transform_FromC(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev,
-                             T *tau_dev, int *index_in, int *wantDebug_in,
-                             QueueData *my_stream) {
-  int wantDebug = *wantDebug_in;
+void gpu_hh_transform(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, 
+                      int wantDebug, gpuStream_t my_stream){
+
 
   sycl::queue queue = getQueueOrDefault(my_stream);
 
@@ -1153,45 +910,26 @@ void sycl_hh_transform_FromC(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev,
   queue.parallel_for(
       sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
         [=](sycl::nd_item<1> it) {
-        sycl_hh_transform_kernel(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug);
+        gpu_hh_transform_kernel(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug);
       });
   queue.wait_and_throw();
 
 }
 
-extern "C" void
-sycl_hh_transform_double_FromC(double *alpha_dev, double *xnorm_sq_dev,
-                               double *xf_dev, double *tau_dev, int *index_in,
-                               int *wantDebug_in, QueueData *my_stream) {
-  sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_hh_transform_float_FromC(float *alpha_dev,
-                                              float *xnorm_sq_dev,
-                                              float *xf_dev, float *tau_dev,
-                                              int *index_in, int *wantDebug_in,
-                                              QueueData *my_stream) {
-  sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_hh_transform_double_complex_FromC(
-    std::complex<double> *alpha_dev, std::complex<double> *xnorm_sq_dev,
-    std::complex<double> *xf_dev, std::complex<double> *tau_dev, int *index_in,
-    int *wantDebug_in, QueueData *my_stream) {
-  sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
-}
-
-extern "C" void sycl_hh_transform_float_complex_FromC(
-    std::complex<float> *alpha_dev, std::complex<float> *xnorm_sq_dev, std::complex<float> *xf_dev,
-    std::complex<float> *tau_dev, int *index_in, int *wantDebug_in,
-    QueueData *my_stream) {
-  sycl_hh_transform_FromC(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, index_in, wantDebug_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU, _hh_transform_FromC) (char dataType, intptr_t alpha_dev, intptr_t xnorm_sq_dev, intptr_t xf_dev, intptr_t tau_dev, int wantDebug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_hh_transform<double>((double *)alpha_dev, (double *)xnorm_sq_dev, (double *)xf_dev, (double *)tau_dev, wantDebug, my_stream);
+  else if (dataType=='S') gpu_hh_transform<float> ((float  *)alpha_dev, (float  *)xnorm_sq_dev, (float  *)xf_dev, (float  *)tau_dev, wantDebug, my_stream);
+  else if (dataType=='Z') gpu_hh_transform<gpuDoubleComplex>((gpuDoubleComplex *)alpha_dev, (gpuDoubleComplex *)xnorm_sq_dev, (gpuDoubleComplex *)xf_dev, (gpuDoubleComplex *)tau_dev, wantDebug, my_stream);
+  else if (dataType=='C') gpu_hh_transform<gpuFloatComplex> ((gpuFloatComplex  *)alpha_dev, (gpuFloatComplex  *)xnorm_sq_dev, (gpuFloatComplex  *)xf_dev, (gpuFloatComplex  *)tau_dev, wantDebug, my_stream);
+  else {
+    printf("Error in gpu_hh_transform_FromC: Unsupported data type\n");
+  }
 }
 
 //________________________________________________________________
 
 template <typename T>
-void sycl_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *vmat_st_dev, 
+void gpu_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *vmat_st_dev, 
                                               int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
                                               int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, int isSkewsymmetric, int isReduceadd,
                                               sycl::nd_item<1> it){
@@ -1247,42 +985,21 @@ void sycl_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T 
 }
 
 template <typename T>
-void sycl_transpose_reduceadd_vectors_copy_block_FromC(
-    T *aux_transpose_dev, T *vmat_st_dev, int *nvc_in, int *nvr_in,
-    int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, int *lcm_s_t_in,
-    int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in,
-    int *direction_in, int *isSkewsymmetric_in, int *isReduceadd_in,
-    int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
-
-  int nvc = *nvc_in;
-  int nvr = *nvr_in;
-  int n_block = *n_block_in;
-  int nblks_skip = *nblks_skip_in;
-  int nblks_tot = *nblks_tot_in;
-  int lcm_s_t = *lcm_s_t_in;
-  int nblk = *nblk_in;
-  int auxstride = *auxstride_in;
-  int np_st = *np_st_in;
-  int ld_st = *ld_st_in;
-  int direction = *direction_in;
-  int isSkewsymmetric = *isSkewsymmetric_in;
-  int isReduceadd = *isReduceadd_in;
-  int wantDebug = *wantDebug_in;
-
-  int SM_count = *SM_count_in;
-
-  //int SM_count=32; // TODO_23_11 count and move outside
-  int blocks = SM_count;
+void gpu_transpose_reduceadd_vectors_copy_block(T *aux_transpose_dev, T *vmat_st_dev, 
+                                                int nvc, int nvr,  int n_block, int nblks_skip, int nblks_tot, 
+                                                int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, 
+                                                int direction, int isSkewsymmetric, int isReduceadd, 
+                                                int wantDebug, int SM_count, gpuStream_t my_stream){
 
   sycl::queue queue = getQueueOrDefault(my_stream);
 
-  sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
+  sycl::range<1> blocksPerGrid = sycl::range<1>(SM_count);
   sycl::range<1> threadsPerBlock = sycl::range<1>(nblk);
 
   queue.parallel_for(
     sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
       [=](sycl::nd_item<1> it) {
-      sycl_transpose_reduceadd_vectors_copy_block_kernel(
+      gpu_transpose_reduceadd_vectors_copy_block_kernel(
           aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip,
           nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction,
           isSkewsymmetric, isReduceadd, it);
@@ -1290,39 +1007,15 @@ void sycl_transpose_reduceadd_vectors_copy_block_FromC(
   queue.wait_and_throw();
 }
 
-extern "C" void sycl_transpose_reduceadd_vectors_copy_block_double_FromC(
-    double *aux_transpose_dev, double *vmat_st_dev, int *nvc_in, int *nvr_in,
-    int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, int *lcm_s_t_in,
-    int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in,
-    int *direction_in, int *isSkewsymmetric_in, int *isReduceadd_in,
-    int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
-  sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
-}
-
-extern "C" void sycl_transpose_reduceadd_vectors_copy_block_float_FromC(
-    float *aux_transpose_dev, float *vmat_st_dev, int *nvc_in, int *nvr_in,
-    int *n_block_in, int *nblks_skip_in, int *nblks_tot_in, int *lcm_s_t_in,
-    int *nblk_in, int *auxstride_in, int *np_st_in, int *ld_st_in,
-    int *direction_in, int *isSkewsymmetric_in, int *isReduceadd_in,
-    int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
-  sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
-}
-
-extern "C" void
-sycl_transpose_reduceadd_vectors_copy_block_double_complex_FromC(
-    std::complex<double> *aux_transpose_dev, std::complex<double> *vmat_st_dev, int *nvc_in,
-    int *nvr_in, int *n_block_in, int *nblks_skip_in, int *nblks_tot_in,
-    int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in,
-    int *ld_st_in, int *direction_in, int *isSkewsymmetric_in,
-    int *isReduceadd_in, int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
-  sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
-}
-
-extern "C" void sycl_transpose_reduceadd_vectors_copy_block_float_complex_FromC(
-    std::complex<float> *aux_transpose_dev, std::complex<float> *vmat_st_dev, int *nvc_in,
-    int *nvr_in, int *n_block_in, int *nblks_skip_in, int *nblks_tot_in,
-    int *lcm_s_t_in, int *nblk_in, int *auxstride_in, int *np_st_in,
-    int *ld_st_in, int *direction_in, int *isSkewsymmetric_in,
-    int *isReduceadd_in, int *wantDebug_in, int *SM_count_in, QueueData *my_stream) {
-  sycl_transpose_reduceadd_vectors_copy_block_FromC(aux_transpose_dev, vmat_st_dev, nvc_in, nvr_in, n_block_in, nblks_skip_in, nblks_tot_in, lcm_s_t_in, nblk_in, auxstride_in, np_st_in, ld_st_in, direction_in, isSkewsymmetric_in, isReduceadd_in, wantDebug_in, SM_count_in, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU, _transpose_reduceadd_vectors_copy_block_FromC)(char dataType, intptr_t aux_transpose_dev, intptr_t vmat_st_dev, 
+                                                                        int nvc, int nvr,  int n_block, int nblks_skip, int nblks_tot, 
+                                                                        int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, 
+                                                                        int direction, int isSkewsymmetric, int isReduceadd, int wantDebug, int SM_count, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_transpose_reduceadd_vectors_copy_block<double>((double *)aux_transpose_dev, (double *)vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric, isReduceadd, wantDebug, SM_count, my_stream);
+  else if (dataType=='S') gpu_transpose_reduceadd_vectors_copy_block<float> ((float  *)aux_transpose_dev, (float  *)vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric, isReduceadd, wantDebug, SM_count, my_stream);
+  else if (dataType=='Z') gpu_transpose_reduceadd_vectors_copy_block<gpuDoubleComplex>((gpuDoubleComplex *)aux_transpose_dev, (gpuDoubleComplex *)vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric, isReduceadd, wantDebug, SM_count, my_stream);
+  else if (dataType=='C') gpu_transpose_reduceadd_vectors_copy_block<gpuFloatComplex> ((gpuFloatComplex  *)aux_transpose_dev, (gpuFloatComplex  *)vmat_st_dev, nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric, isReduceadd, wantDebug, SM_count, my_stream);
+  else {
+    printf("Error in gpu_transpose_reduceadd_vectors_copy_block_FromC: Unsupported data type\n");
+  }
 }
