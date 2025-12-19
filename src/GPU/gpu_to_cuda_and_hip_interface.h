@@ -48,6 +48,7 @@
 
 
 #undef gpuDeviceSynchronize
+#undef gpuStreamSynchronize
 #undef gpuStream_t
 #undef gpuGetLastError
 #undef gpuGetErrorString
@@ -69,6 +70,7 @@
 
 #ifdef WITH_NVIDIA_GPU_VERSION
 #define gpuDeviceSynchronize cudaDeviceSynchronize
+#define gpuStreamSynchronize cudaStreamSynchronize
 #define gpuStream_t cudaStream_t
 #define gpuGetLastError cudaGetLastError
 #define gpuGetErrorString cudaGetErrorString
@@ -91,6 +93,7 @@
 
 #ifdef WITH_AMD_GPU_VERSION
 #define gpuDeviceSynchronize hipDeviceSynchronize
+#define gpuStreamSynchronize hipStreamSynchronize
 #define gpuStream_t hipStream_t
 #define gpuGetLastError hipGetLastError
 #define gpuGetErrorString hipGetErrorString

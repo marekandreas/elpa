@@ -59,11 +59,10 @@ module tridiag_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 
   interface
-    subroutine gpu_copy_and_set_zeros_c(dataType, v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                        aux1_dev, vav_dev, d_vec_dev, &
+    subroutine gpu_copy_and_set_zeros_c(dataType, v_row_dev, u_col_dev, aux1_dev, vav_dev, d_vec_dev, &
+                                        a_dev, l_rows, l_cols, matrixRows, istep, &
                                         isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
-                                        isSkewsymmetric_int, useCCL_int, wantDebug_int, &
-                                        my_stream) &
+                                        isSkewsymmetric_int, useCCL_int, wantDebug_int, SM_count, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_copy_and_set_zeros_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
@@ -74,8 +73,8 @@ module tridiag_gpu
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value      :: dataType
-      integer(kind=c_intptr_t), value  :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
-      integer(kind=c_int), value       :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_intptr_t), value  :: v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_int), value       :: l_rows, l_cols, matrixRows, istep, SM_count
       integer(kind=c_int), value       :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
       integer(kind=c_int), value       :: isSkewsymmetric_int, useCCL_int, wantDebug_int
       integer(kind=c_intptr_t), value  :: my_stream
@@ -242,16 +241,16 @@ module tridiag_gpu
   contains
 
 
-    subroutine gpu_copy_and_set_zeros(dataType, v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep,  &
-                                                 aux1_dev, vav_dev, d_vec_dev, &
-                                                 isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
-                                                 isSkewsymmetric, useCCL, wantDebug, my_stream) 
+    subroutine gpu_copy_and_set_zeros(dataType, v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev, &
+                                      l_rows, l_cols, matrixRows, istep, &
+                                      isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, &
+                                      isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream) 
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: v_row_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
+      integer(kind=c_intptr_t), value :: v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev
       integer(kind=c_intptr_t), value :: my_stream
-      integer(kind=c_int), value      :: l_rows, l_cols, matrixRows, istep
+      integer(kind=c_int), value      :: l_rows, l_cols, matrixRows, istep, SM_count
       logical, intent(in)             :: isOurProcessRow, isOurProcessCol, isOurProcessCol_prev
       logical, intent(in)             :: isSkewsymmetric, useCCL, wantDebug
       integer(kind=c_int)             :: isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int
@@ -271,10 +270,10 @@ module tridiag_gpu
       if (wantDebug) wantDebug_int = 1
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      call gpu_copy_and_set_zeros_c(dataType, v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, &
-                                    aux1_dev, vav_dev, d_vec_dev, &
+      call gpu_copy_and_set_zeros_c(dataType, v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev, &
+                                    l_rows, l_cols, matrixRows, istep, &
                                     isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
-                                    isSkewsymmetric_int, useCCL_int, wantDebug_int, my_stream)
+                                    isSkewsymmetric_int, useCCL_int, wantDebug_int, SM_count, my_stream)
 #endif
     end subroutine
 
