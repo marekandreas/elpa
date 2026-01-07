@@ -1935,6 +1935,8 @@ else
   endif ! (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols))
 #endif /* REALCASE */
 
+  ! distribute the arrays d_vec and e_vec to all processors
+  
   if (useGPU) then
     offset_dev = 1 * size_of_datatype_real
     ! first and last elements of d_vec are treated separately
@@ -1943,92 +1945,31 @@ else
                                   d_vec_dev + offset_dev, (na-2) * size_of_datatype_real, gpuMemcpyDeviceToHost, my_stream)
     successGPU = gpu_stream_synchronize(my_stream)
 #else    
-    successGPU = gpu_memcpy      (int(loc(d_vec(2)),kind=c_intptr_t), & ! PETERDEBUG: this memcopy is not needed anymore?
+    successGPU = gpu_memcpy      (int(loc(d_vec(2)),kind=c_intptr_t), &
                                   d_vec_dev + offset_dev, (na-2) * size_of_datatype_real, gpuMemcpyDeviceToHost)
 #endif
     check_memcpy_gpu("tridiag: d_vec", successGPU)
-
-    if (useCCL) then
-      ! e_vec(1) is treated separately
-      offset_dev = 1 * size_of_datatype_real
-#ifdef WITH_GPU_STREAMS
-      successGPU = gpu_memcpy_async(int(loc(e_vec(2)),kind=c_intptr_t), &
-                                    e_vec_dev + offset_dev, (na-1) * size_of_datatype_real, gpuMemcpyDeviceToHost, my_stream)
-#else     
-      successGPU = gpu_memcpy      (int(loc(e_vec(2)),kind=c_intptr_t), &
-                                    e_vec_dev + offset_dev, (na-1) * size_of_datatype_real, gpuMemcpyDeviceToHost)
-#endif
-      check_memcpy_gpu("tridiag: e_vec", successGPU)
-
-      ! tau(2) is treated separately, tau(1) is not used
-      offset_dev = 2 * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-      successGPU = gpu_memcpy_async(int(loc(tau(3)),kind=c_intptr_t), &
-                                    tau_dev + offset_dev, (na-2) * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
-      successGPU = gpu_stream_synchronize(my_stream)
-#else
-      successGPU = gpu_memcpy      (int(loc(tau(3)),kind=c_intptr_t), &
-                                    tau_dev + offset_dev, (na-2) * size_of_datatype, gpuMemcpyDeviceToHost)
-#endif
-      check_memcpy_gpu("tridiag: tau", successGPU)
-    endif
-
-    ! todo: should we leave a_mat on the device for further use?
-    !successGPU = gpu_free(a_dev)
-    !check_dealloc_gpu("tridiag: a_dev 9", successGPU)
-
-    successGPU = gpu_free(v_row_dev)
-    check_dealloc_gpu("tridiag: v_row_dev", successGPU)
-
-    successGPU = gpu_free(u_row_dev)
-    check_dealloc_gpu("tridiag: (u_row_dev", successGPU)
-
-    successGPU = gpu_free(v_col_dev)
-    check_dealloc_gpu("tridiag: v_col_dev", successGPU)
-
-    successGPU = gpu_free(u_col_dev)
-    check_dealloc_gpu("tridiag: u_col_dev ", successGPU)
-
-    successGPU = gpu_free(vu_stored_rows_dev)
-    check_dealloc_gpu("tridiag: vu_stored_rows_dev ", successGPU)
-
-    successGPU = gpu_free(uv_stored_cols_dev)
-    check_dealloc_gpu("tridiag:uv_stored_cols_dev ", successGPU)
-
-    successGPU = gpu_free(aux_dev)
-    check_dealloc_gpu("tridiag: aux_dev", successGPU)
-
-    successGPU = gpu_free(aux1_dev)
-    check_dealloc_gpu("tridiag: aux1_dev", successGPU)
-
-    successGPU = gpu_free(aux_complex_dev)
-    check_dealloc_gpu("tridiag: aux_complex_dev", successGPU)
-
-    successGPU = gpu_free(vav_dev)
-    check_dealloc_gpu("tridiag: vav_dev", successGPU)
-
-    successGPU = gpu_free(dot_prod_dev)
-    check_dealloc_gpu("tridiag: dot_prod_dev", successGPU)
-
-    successGPU = gpu_free(xf_dev)
-    check_dealloc_gpu("tridiag: xf_dev", successGPU)
-
-#ifdef USE_CCL_TRIDIAG
-    if (.not. isSquareGridGPU) then
-      successGPU = gpu_free(aux_transpose_dev)
-      check_dealloc_gpu("tridiag: aux_transpose_dev", successGPU)
-    endif
-#endif
   endif ! useGPU
 
-  ! distribute the arrays d_vec and e_vec to all processors
+
+  if (useCCL) then
+    ! e_vec(1) is treated separately
+    offset_dev = 1 * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(int(loc(e_vec(2)),kind=c_intptr_t), &
+                                  e_vec_dev + offset_dev, (na-1) * size_of_datatype_real, gpuMemcpyDeviceToHost, my_stream)
+#else
+    successGPU = gpu_memcpy      (int(loc(e_vec(2)),kind=c_intptr_t), &
+                                  e_vec_dev + offset_dev, (na-1) * size_of_datatype_real, gpuMemcpyDeviceToHost)
+#endif
+    check_memcpy_gpu("tridiag: e_vec", successGPU)
+  endif ! useCCL
 
 #ifdef WITH_GPU_STREAMS
   if (useGPU) successGPU = gpu_stream_synchronize(my_stream)
 #endif
 
-! PETERDEBUG: port to CCL; cleanup memcopies e_vec -> e_vec_dev, d_vec -> d_vec_dev below
-! also for tau: useCCL above?
+! can be ported to CCL, but is tedious due to d_vec(1), d_vec(na), e_vec(1) treated separately
 #ifdef WITH_MPI
   if (useNonBlockingCollectivesRows) then
     if (wantDebug) call obj%timer%start("mpi_nbc_communication")
@@ -2078,6 +2019,93 @@ else
     check_host_unregister_gpu("tridiag: aux3", successGPU)
 #endif
 #endif
+
+  ! copy to device
+
+  if (useGPU) then
+    num = na * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(d_vec_dev, int(loc(d_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+    successGPU = gpu_memcpy      (d_vec_dev, int(loc(d_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+    check_memcpy_gpu("tridiag: d_vec_dev", successGPU)
+
+    num = na * size_of_datatype_real
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(e_vec_dev, int(loc(e_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+    successGPU = gpu_memcpy      (e_vec_dev, int(loc(e_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+    check_memcpy_gpu("tridiag: e_vec_dev(1)", successGPU)
+
+    ! copy tau(2) which is treated separately; tau(1) is actually not used
+    num = 2 * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memcpy_async(tau_dev, int(loc(tau(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+    successGPU = gpu_memcpy      (tau_dev, int(loc(tau(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+    check_memcpy_gpu("tridiag: tau_dev(1)", successGPU)
+    
+    if (.not. useCCL) then ! (for useCCL case: tau_dev(3:) is already on device)
+      num = (na-2) * size_of_datatype
+      offset_dev = 2 * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(tau_dev+offset_dev, int(loc(tau(3)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+      successGPU = gpu_memcpy      (tau_dev+offset_dev, int(loc(tau(3)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+      check_memcpy_gpu("tridiag: tau_dev", successGPU)
+    endif
+  endif ! useGPU
+
+  ! free memory
+
+  if (useGPU) then
+    successGPU = gpu_free(v_row_dev)
+    check_dealloc_gpu("tridiag: v_row_dev", successGPU)
+
+    successGPU = gpu_free(u_row_dev)
+    check_dealloc_gpu("tridiag: (u_row_dev", successGPU)
+
+    successGPU = gpu_free(v_col_dev)
+    check_dealloc_gpu("tridiag: v_col_dev", successGPU)
+
+    successGPU = gpu_free(u_col_dev)
+    check_dealloc_gpu("tridiag: u_col_dev ", successGPU)
+
+    successGPU = gpu_free(vu_stored_rows_dev)
+    check_dealloc_gpu("tridiag: vu_stored_rows_dev ", successGPU)
+
+    successGPU = gpu_free(uv_stored_cols_dev)
+    check_dealloc_gpu("tridiag:uv_stored_cols_dev ", successGPU)
+
+    successGPU = gpu_free(aux_dev)
+    check_dealloc_gpu("tridiag: aux_dev", successGPU)
+
+    successGPU = gpu_free(aux1_dev)
+    check_dealloc_gpu("tridiag: aux1_dev", successGPU)
+
+    successGPU = gpu_free(aux_complex_dev)
+    check_dealloc_gpu("tridiag: aux_complex_dev", successGPU)
+
+    successGPU = gpu_free(vav_dev)
+    check_dealloc_gpu("tridiag: vav_dev", successGPU)
+
+    successGPU = gpu_free(dot_prod_dev)
+    check_dealloc_gpu("tridiag: dot_prod_dev", successGPU)
+
+    successGPU = gpu_free(xf_dev)
+    check_dealloc_gpu("tridiag: xf_dev", successGPU)
+
+#ifdef USE_CCL_TRIDIAG
+    if (.not. isSquareGridGPU) then
+      successGPU = gpu_free(aux_transpose_dev)
+      check_dealloc_gpu("tridiag: aux_transpose_dev", successGPU)
+    endif
+#endif
+  endif ! useGPU
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
@@ -2145,36 +2173,6 @@ else
 
   deallocate(aux, stat=istat, errmsg=errorMessage)
   check_deallocate("tridiag: aux", istat, errorMessage)
-
-
-! copy to device
-  if (useGPU) then
-    num = na * size_of_datatype_real
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_memcpy_async(e_vec_dev, int(loc(e_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
-#else
-    successGPU = gpu_memcpy      (e_vec_dev, int(loc(e_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-#endif
-    check_memcpy_gpu("tridiag: e_vec_dev", successGPU)
-
-    num = na * size_of_datatype_real
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_memcpy_async(d_vec_dev, int(loc(d_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
-#else
-    successGPU = gpu_memcpy      (d_vec_dev, int(loc(d_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-#endif
-    check_memcpy_gpu("tridiag: d_vec_dev", successGPU)
-
-    num = na * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_memcpy_async(tau_dev, int(loc(tau(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
-#else
-    successGPU = gpu_memcpy      (tau_dev, int(loc(tau(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
-#endif
-    check_memcpy_gpu("tridiag: tau_dev", successGPU)
-
-  endif ! useGPU
-
 
   call obj%timer%stop("tridiag_&
        &MATH_DATATYPE&
