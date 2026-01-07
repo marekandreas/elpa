@@ -234,7 +234,6 @@ subroutine tridiag_cpu_&
   type(c_ptr)                                   :: v_row_host, v_col_host
   type(c_ptr)                                   :: u_row_host, u_col_host
   !type(c_ptr)                                   :: vu_stored_rows_host, uv_stored_cols_host
-  real(kind=rk), allocatable                    :: tmp_real(:)
   integer(kind=ik)                              :: min_tile_size, error
   integer(kind=ik)                              :: istat
   character(200)                                :: errorMessage
@@ -1851,13 +1850,13 @@ else
     if (useNonBlockingCollectivesRows) then
       if (wantDebug) call obj%timer%start("mpi_nbc_communication")
       call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
-                  int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
+                      int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
       call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
       if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
     else
       if (wantDebug) call obj%timer%start("mpi_communication")
       call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
-                  int(mpi_comm_rows,kind=MPI_KIND),  mpierr)
+                     int(mpi_comm_rows,kind=MPI_KIND),  mpierr)
       if (wantDebug) call obj%timer%stop("mpi_communication")
     endif
 #endif /* WITH_MPI */
@@ -1868,13 +1867,13 @@ else
   if (useNonBlockingCollectivesCols) then
     if (wantDebug) call obj%timer%start("mpi_nbc_communication")
     call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
-                int(mpi_comm_cols,kind=MPI_KIND), bcast_request3, mpierr)
+                    int(mpi_comm_cols,kind=MPI_KIND), bcast_request3, mpierr)
     call mpi_wait(bcast_request3, MPI_STATUS_IGNORE, mpierr)
     if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
   else
     if (wantDebug) call obj%timer%start("mpi_communication")
     call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
-                int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+                   int(mpi_comm_cols,kind=MPI_KIND), mpierr)
     if (wantDebug) call obj%timer%stop("mpi_communication")
   endif
 #endif /* WITH_MPI */
@@ -1905,10 +1904,10 @@ else
 #ifdef WITH_GPU_STREAMS
       successGPU = gpu_memcpy_async(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
                                     1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
-#else /* WITH_GPU_STREAMS */
+#else
       successGPU = gpu_memcpy      (int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
                                     1 * size_of_datatype, gpuMemcpyDeviceToHost)
-#endif /* WITH_GPU_STREAMS */
+#endif
       check_memcpy_gpu("tridiag: a_dev 7", successGPU)
     else !useGPU
       e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
@@ -1922,9 +1921,9 @@ else
 #ifdef WITH_GPU_STREAMS
       successGPU = gpu_memcpy_async(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost, my_stream)
       successGPU = gpu_stream_synchronize(my_stream)
-#else /* WITH_GPU_STREAMS */
+#else
       successGPU = gpu_memcpy      (int(loc(d_vec(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
-#endif /* WITH_GPU_STREAMS */
+#endif
       check_memcpy_gpu("tridiag: a_dev 8", successGPU)
     else !useGPU
       if (isSkewsymmetric) then
@@ -2024,63 +2023,53 @@ else
 
   ! distribute the arrays d_vec and e_vec to all processors
 
-  allocate(tmp_real(na), stat=istat, errmsg=errorMessage)
-  check_allocate("tridiag: tmp_real", istat, errorMessage)
-
 #ifdef WITH_GPU_STREAMS
   if (useGPU) successGPU = gpu_stream_synchronize(my_stream)
 #endif
 
-! PETERDEBUG: port to CCL, use MPI_IN_PLACE; cleanup memcopies e_vec -> e_vec_dev, d_vec -> d_vec_dev below
+! PETERDEBUG: port to CCL; cleanup memcopies e_vec -> e_vec_dev, d_vec -> d_vec_dev below
 ! also for tau: useCCL above?
 #ifdef WITH_MPI
-if (useNonBlockingCollectivesRows) then
-  if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-    tmp_real = d_vec
-    call mpi_iallreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-    int(mpi_comm_rows,kind=MPI_KIND), allreduce_request4, mpierr)
+  if (useNonBlockingCollectivesRows) then
+    if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+    call mpi_iallreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                        int(mpi_comm_rows,kind=MPI_KIND), allreduce_request4, mpierr)
     call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
-    tmp_real = e_vec
-    call mpi_iallreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-    int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6,mpierr)
+
+    call mpi_iallreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                        int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6,mpierr)
     call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
     if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
   else
     if (wantDebug) call obj%timer%start("mpi_communication")
-    tmp_real = d_vec
-    call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-    int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-    tmp_real = e_vec
-    call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr) ! TODO_23_11: change to MPI_IN_PLACE, get rid of tmp_real
+    call mpi_allreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+
+    call mpi_allreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
     if (wantDebug) call obj%timer%stop("mpi_communication")
   endif
+
   if (useNonBlockingCollectivesCols) then
     if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-    tmp_real = d_vec
-    call mpi_iallreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-    int(mpi_comm_cols,kind=MPI_KIND), allreduce_request5, mpierr)
+    call mpi_iallreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                        int(mpi_comm_cols,kind=MPI_KIND), allreduce_request5, mpierr)
     call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
     
-    tmp_real = e_vec
-    call mpi_iallreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-    int(mpi_comm_cols,kind=MPI_KIND), allreduce_request7, mpierr)
+    call mpi_iallreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                        int(mpi_comm_cols,kind=MPI_KIND), allreduce_request7, mpierr)
     call mpi_wait(allreduce_request7, MPI_STATUS_IGNORE, mpierr)
     if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
   else
     if (wantDebug) call obj%timer%start("mpi_communication")
-    tmp_real = d_vec
-    call mpi_allreduce(tmp_real, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-    int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-    tmp_real = e_vec
-    call mpi_allreduce(tmp_real, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+    call mpi_allreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+
+    call mpi_allreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
                        int(mpi_comm_cols,kind=MPI_KIND), mpierr)
     if (wantDebug) call obj%timer%stop("mpi_communication")
   endif
 #endif /* WITH_MPI */
-
-  deallocate(tmp_real, stat=istat, errmsg=errorMessage)
-  check_deallocate("tridiag: tmp_real", istat, errorMessage)
 
   if (useGPU) then
 #ifdef WITH_GPU_STREAMS
