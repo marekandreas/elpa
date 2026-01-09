@@ -106,16 +106,6 @@ void gpu_copy_and_set_zeros(T *v_row_dev, T *u_col_dev, T *a_dev,
 
   int threads, blocks;
 
-  // PETERDEBUG111: cleanup
-  // if (isOurProcessCol_prev){
-  //   threads = MIN_THREADS_PER_BLOCK;
-  //   blocks = std::max((l_rows+threads-1)/threads, 1);
-  // }
-  // else{
-  //   threads = 1;
-  //   blocks = 1;
-  // }
-
   threads = MIN_THREADS_PER_BLOCK;
   blocks = SM_count;
 
@@ -302,17 +292,15 @@ __global__ void gpu_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int 
 
 template <typename T>
 void gpu_dot_product_and_assign(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev, 
-                                int wantDebug, gpuStream_t my_stream){
+                                int wantDebug, int SM_count, gpuStream_t my_stream){
   
-  // PETERDEBUG111: add SM_count
-  int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
-  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 blocksPerGrid = dim3(SM_count,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
 #ifdef WITH_GPU_STREAMS
-  gpu_dot_product_and_assign_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev);
+  gpu_dot_product_and_assign_kernel<<<blocksPerGrid,threadsPerBlock,0,my_stream>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev);
 #else
-  gpu_dot_product_and_assign_kernel<<<blocks,threadsPerBlock>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev);
+  gpu_dot_product_and_assign_kernel<<<blocksPerGrid,threadsPerBlock>>>            (v_row_dev, l_rows, isOurProcessRow, aux1_dev);
 #endif
 
   if (wantDebug){
@@ -329,11 +317,11 @@ void gpu_dot_product_and_assign(T *v_row_dev, int l_rows, int isOurProcessRow, T
 
 }
 
-extern "C" void CONCATENATE(ELPA_GPU, _dot_product_and_assign_FromC)(char dataType, intptr_t v_row_dev, int l_rows, int isOurProcessRow, intptr_t aux1_dev, int wantDebug, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_dot_product_and_assign<double>((double *)v_row_dev, l_rows, isOurProcessRow, (double *)aux1_dev, wantDebug, my_stream);
-  else if (dataType=='S') gpu_dot_product_and_assign<float> ((float  *)v_row_dev, l_rows, isOurProcessRow, (float  *)aux1_dev, wantDebug, my_stream);
-  else if (dataType=='Z') gpu_dot_product_and_assign<gpuDoubleComplex>((gpuDoubleComplex *)v_row_dev, l_rows, isOurProcessRow, (gpuDoubleComplex *)aux1_dev, wantDebug, my_stream);
-  else if (dataType=='C') gpu_dot_product_and_assign<gpuFloatComplex> ((gpuFloatComplex  *)v_row_dev, l_rows, isOurProcessRow, (gpuFloatComplex  *)aux1_dev, wantDebug, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU, _dot_product_and_assign_FromC)(char dataType, intptr_t v_row_dev, int l_rows, int isOurProcessRow, intptr_t aux1_dev, int wantDebug, int SM_count, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_dot_product_and_assign<double>((double *)v_row_dev, l_rows, isOurProcessRow, (double *)aux1_dev, wantDebug, SM_count, my_stream);
+  else if (dataType=='S') gpu_dot_product_and_assign<float> ((float  *)v_row_dev, l_rows, isOurProcessRow, (float  *)aux1_dev, wantDebug, SM_count, my_stream);
+  else if (dataType=='Z') gpu_dot_product_and_assign<gpuDoubleComplex>((gpuDoubleComplex *)v_row_dev, l_rows, isOurProcessRow, (gpuDoubleComplex *)aux1_dev, wantDebug, SM_count, my_stream);
+  else if (dataType=='C') gpu_dot_product_and_assign<gpuFloatComplex> ((gpuFloatComplex  *)v_row_dev, l_rows, isOurProcessRow, (gpuFloatComplex  *)aux1_dev, wantDebug, SM_count, my_stream);
   else {
     printf("Error in gpu_dot_product_and_assign_FromC: Unsupported data type\n");
   }
@@ -895,9 +883,11 @@ void gpu_hh_transform(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev,
   dim3 blocks = dim3(1,1,1);
   dim3 threadsPerBlock = dim3(1,1,1);
 
-  // trivial single-thread kernel, streams can't be used here
-  // PETERDEBUG111: the above is not true. add streamed version
-  gpu_hh_transform_kernel<<<blocks,threadsPerBlock>>>(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev);
+#ifdef WITH_GPU_STREAMS
+  gpu_hh_transform_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev);
+#else  
+  gpu_hh_transform_kernel<<<blocks,threadsPerBlock>>>            (alpha_dev, xnorm_sq_dev, xf_dev, tau_dev);
+#endif
 
   if (wantDebug){
 #ifdef WITH_GPU_STREAMS
@@ -969,7 +959,6 @@ __global__ void gpu_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpo
   int k = (i - nblks_skip - n_block)/lcm_s_t * nblk + lc0*auxstride;
   int ns_plus_lc0_ld_st = (i/np_st)*nblk + lc0*ld_st; // ns(local start of block i) + lc0*ld_st
 
-  //int tid_x = threadIdx.x + blockIdx.x*blockDim.x;
   //for (int j=tid_x; j<nl; j+=blockDim.x*gridDim.x){
   int j = threadIdx.x + blockIdx.x*blockDim.x; // 0-based index
   if (j >= nl) return;
@@ -1000,7 +989,6 @@ void gpu_transpose_reduceadd_vectors_copy_block(T *aux_transpose_dev, T *vmat_st
   int threads = MIN_THREADS_PER_BLOCK;
 
   dim3 blocksPerGrid = dim3((nblk+threads-1)/threads, nvc, num_i);
-  //dim3 blocksPerGrid = dim3(SM_count, nvc, num_i); // PETERDEBUG111 cleanup
   dim3 threadsPerBlock = dim3(threads,1,1);
   
 #ifdef WITH_GPU_STREAMS

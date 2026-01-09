@@ -104,7 +104,7 @@ subroutine trans_ev_cpu_&
         &MATH_DATATYPE&
         &_&
         &PRECISION &
-        (obj, na, nqc, a_mat, lda, tau, q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
+        (obj, na, nqc, a_mat, lda, tau,     q_mat, ldq, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols, wantDebug, success)
 #endif
 
   use, intrinsic :: iso_c_binding

@@ -323,15 +323,13 @@ performance if there is no access to global memory.
 
 template <typename T>
 void gpu_dot_product_and_assign(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev, 
-                                int wantDebug, gpuStream_t my_stream){
+                                int wantDebug, int SM_count, gpuStream_t my_stream){
 
-  // PETERDEBUG111: add SM_count
-  int blocks = 32; // TODO_23_11: change blocksPerGrid to number of SM's (108 fo A100) and threadsPerBlock to max threads per block. claim the number only once during GPU setup
   sycl::queue queue = getQueueOrDefault(my_stream);
   int maxWgSize = maxWorkgroupSize<1>(queue)[0];
 
 
-  sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
+  sycl::range<1> blocksPerGrid = sycl::range<1>(SM_count);
   sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
 
   /*
@@ -354,11 +352,11 @@ work-group size if needed.
 
 }
 
-extern "C" void CONCATENATE(ELPA_GPU, _dot_product_and_assign_FromC)(char dataType, intptr_t v_row_dev, int l_rows, int isOurProcessRow, intptr_t aux1_dev, int wantDebug, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_dot_product_and_assign<double>((double *)v_row_dev, l_rows, isOurProcessRow, (double *)aux1_dev, wantDebug, my_stream);
-  else if (dataType=='S') gpu_dot_product_and_assign<float> ((float  *)v_row_dev, l_rows, isOurProcessRow, (float  *)aux1_dev, wantDebug, my_stream);
-  else if (dataType=='Z') gpu_dot_product_and_assign<gpuDoubleComplex>((gpuDoubleComplex *)v_row_dev, l_rows, isOurProcessRow, (gpuDoubleComplex *)aux1_dev, wantDebug, my_stream);
-  else if (dataType=='C') gpu_dot_product_and_assign<gpuFloatComplex> ((gpuFloatComplex  *)v_row_dev, l_rows, isOurProcessRow, (gpuFloatComplex  *)aux1_dev, wantDebug, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU, _dot_product_and_assign_FromC)(char dataType, intptr_t v_row_dev, int l_rows, int isOurProcessRow, intptr_t aux1_dev, int wantDebug, int SM_count, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_dot_product_and_assign<double>((double *)v_row_dev, l_rows, isOurProcessRow, (double *)aux1_dev, wantDebug, SM_count, my_stream);
+  else if (dataType=='S') gpu_dot_product_and_assign<float> ((float  *)v_row_dev, l_rows, isOurProcessRow, (float  *)aux1_dev, wantDebug, SM_count, my_stream);
+  else if (dataType=='Z') gpu_dot_product_and_assign<gpuDoubleComplex>((gpuDoubleComplex *)v_row_dev, l_rows, isOurProcessRow, (gpuDoubleComplex *)aux1_dev, wantDebug, SM_count, my_stream);
+  else if (dataType=='C') gpu_dot_product_and_assign<gpuFloatComplex> ((gpuFloatComplex  *)v_row_dev, l_rows, isOurProcessRow, (gpuFloatComplex  *)aux1_dev, wantDebug, SM_count, my_stream);
   else {
     printf("Error in gpu_dot_product_and_assign_FromC: Unsupported data type\n");
   }

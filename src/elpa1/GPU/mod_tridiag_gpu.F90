@@ -103,7 +103,8 @@ module tridiag_gpu
 
 
   interface
-    subroutine gpu_dot_product_and_assign_c(dataType, v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, wantDebug_int, my_stream) &
+    subroutine gpu_dot_product_and_assign_c(dataType, v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, &
+                                            wantDebug_int, SM_count, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                                   bind(C, name="cuda_dot_product_and_assign_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
@@ -116,7 +117,7 @@ module tridiag_gpu
       character(1, c_char), value       :: dataType
       integer(kind=c_intptr_t), value   :: v_row_dev, aux1_dev
       integer(kind=c_int), value        :: l_rows
-      integer(kind=c_int), value        :: isOurProcessRow_int, wantDebug_int
+      integer(kind=c_int), value        :: isOurProcessRow_int, wantDebug_int, SM_count
       integer(kind=c_intptr_t), value   :: my_stream
     end subroutine
   end interface
@@ -297,7 +298,7 @@ module tridiag_gpu
     end subroutine
 
 
-    subroutine gpu_dot_product_and_assign(dataType, v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, my_stream)
+    subroutine gpu_dot_product_and_assign(dataType, v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, SM_count, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
@@ -305,7 +306,7 @@ module tridiag_gpu
       logical, intent(in)             :: isOurProcessRow, wantDebug
       integer(kind=c_intptr_t), value :: v_row_dev, aux1_dev
       integer(kind=c_intptr_t), value :: my_stream
-      integer(kind=c_int)             :: isOurProcessRow_int, wantDebug_int
+      integer(kind=c_int)             :: isOurProcessRow_int, wantDebug_int, SM_count
 
       isOurProcessRow_int = 0
       wantDebug_int = 0
@@ -313,7 +314,7 @@ module tridiag_gpu
       if (wantDebug) wantDebug_int = 1
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      call gpu_dot_product_and_assign_c(dataType, v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, wantDebug_int, my_stream)
+      call gpu_dot_product_and_assign_c(dataType, v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, wantDebug_int, SM_count, my_stream)
 #endif
     end subroutine
 
