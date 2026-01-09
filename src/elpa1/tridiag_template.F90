@@ -169,7 +169,7 @@ subroutine tridiag_cpu_&
   real(kind=rk)                                 :: e_vec(na)
 #endif /* TRIDIAG_GPU_BUILD */
 
-  integer(kind=ik)                              :: max_stored_uv = 32 ! TODO_23_11 - make it tunable instead of hard-coded
+  integer(kind=ik)                              :: max_stored_uv
   logical,          parameter                   :: mat_vec_as_one_block = .true.
 
   ! id in processor row and column and total numbers of processor rows and columns
@@ -312,10 +312,7 @@ else
   endif 
 #endif /* defined(USE_CCL_TRIDIAG) */
 
-  allocate(aux(2*max_stored_uv), stat=istat, errmsg=errorMessage)
-  
   success = .true.
-
 
   call obj%timer%start("tridiag_&
        &MATH_DATATYPE&
@@ -328,10 +325,10 @@ else
     write(error_unit,*) "Problem setting option for non blocking collectives for rows in elpa1_tridiag. Aborting..."
     success = .false.
     call obj%timer%stop("tridiag_&
-    &MATH_DATATYPE&
-    &" // &
-    PRECISION_SUFFIX // &
-    gpuString )
+                        &MATH_DATATYPE&
+                        &" // &
+                        PRECISION_SUFFIX // &
+                        gpuString)
     return
   endif
 
@@ -340,12 +337,26 @@ else
     write(error_unit,*) "Problem setting option for non blocking collectives for cols in elpa1_tridiag. Aborting..."
     success = .false.
     call obj%timer%stop("tridiag_&
-    &MATH_DATATYPE&
-    &" // &
-    PRECISION_SUFFIX // &
-    gpuString )
+                        &MATH_DATATYPE&
+                        &" // &
+                        PRECISION_SUFFIX // &
+                        gpuString)
     return
   endif
+
+  call obj%get("blocking_in_tridi", max_stored_uv, error)
+  if (error .ne. ELPA_OK) then
+    write(error_unit,*) "Problem setting blocking_in_tridi option elpa1_tridiag. Aborting..."
+    success = .false.
+    call obj%timer%stop("tridiag_&
+                        &MATH_DATATYPE&
+                        &" // &
+                        PRECISION_SUFFIX // &
+                        gpuString)
+    return
+  endif
+
+  print *, "ELPA tridiagonalization: using blocking_in_tridi = ", max_stored_uv ! PETERDEBUG111
 
   if (non_blocking_collectives_rows .eq. 1) then
     useNonBlockingCollectivesRows = .true.
@@ -359,6 +370,7 @@ else
     useNonBlockingCollectivesCols = .false.
   endif
 
+  allocate(aux(2*max_stored_uv), stat=istat, errmsg=errorMessage)
 
   !mpi_comm_all    = obj%mpi_setup%mpi_comm_parent
   !mpi_comm_cols   = obj%mpi_setup%mpi_comm_cols
