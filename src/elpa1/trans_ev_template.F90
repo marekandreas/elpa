@@ -483,7 +483,6 @@ subroutine trans_ev_cpu_&
     endif
 
     ! PETERDEBUG: do we need at all this compression-decompression?
-    ! max_local_rows -> "l_rows_max"
 
 #ifdef WITH_MPI
     if (useGPU .and. .not. useCCL) then

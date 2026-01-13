@@ -424,8 +424,8 @@ static const elpa_index_int_entry_t int_entries[] = {
 	// 1. BAND_TO_FULL_BLOCKING
         INT_ENTRY("blocking_in_band_to_full", "Loop blocking, default 3", 3, ELPA_AUTOTUNE_EXTENSIVE, ELPA2_AUTOTUNE_BAND_TO_FULL_BLOCKING, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ELPA2, \
                         band_to_full_cardinality, band_to_full_enumerate, band_to_full_is_valid, NULL, PRINT_YES),
-	// 2. blocking_in_tridi
-        INT_ENTRY("blocking_in_tridi", "Blocking used in ELPA 1 tridiagonalization (blocked Householder transformation), default", 32, ELPA_AUTOTUNE_EXTENSIVE, ELPA1_AUTOTUNE_BLOCKING_IN_TRIDI, ELPA_AUTOTUNE_DOMAIN_ANY,  ELPA_AUTOTUNE_PART_ELPA1, \
+	// 2. blocking_in_tridi (max_stored_uv)
+        INT_ENTRY("blocking_in_tridi", "Blocking used in ELPA 1 tridiagonalization (blocked Householder transformation), default", 48, ELPA_AUTOTUNE_EXTENSIVE, ELPA1_AUTOTUNE_BLOCKING_IN_TRIDI, ELPA_AUTOTUNE_DOMAIN_ANY,  ELPA_AUTOTUNE_PART_ELPA1, \
                         blocking_in_tridi_cardinality, blocking_in_tridi_enumerate, blocking_in_tridi_is_valid, NULL, PRINT_YES),
   // 3. max_stored_rows
         INT_ENTRY("max_stored_rows", "Maximum number of stored rows used in ELPA 1 backtransformation", default_max_stored_rows, ELPA_AUTOTUNE_EXTENSIVE, ELPA1_AUTOTUNE_MAX_STORED_ROWS, ELPA_AUTOTUNE_DOMAIN_ANY,  ELPA_AUTOTUNE_PART_ELPA1, \

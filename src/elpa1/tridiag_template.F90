@@ -1036,12 +1036,7 @@ else
           &PRECISION &
                 (obj, v_row, ubound(v_row,dim=1), mpi_comm_rows, v_col, ubound(v_col,dim=1), mpi_comm_cols, &
                 1, istep-1, 1, nblk, max_threads, .true., success)
-      
-#ifdef WITH_GPU_STREAMS
-          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else                                    
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
-#endif
+
       NVTX_RANGE_POP("elpa_transpose_vectors v_row -> v_col")
 
       if (.not.(success)) then
@@ -1323,24 +1318,7 @@ else
 
       ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
       if (n_stored_vecs > 0) then
-        if (.not. useGPU) then
-          if (wantDebug) call obj%timer%start("blas")
-
-          NVTX_RANGE_PUSH("cpu gemv_x2 aux=vu_stored_rows^T*v_row,u_col+=uv_stored_cols*aux")
-      
-          ! aux = vu_stored_rows^T*v_row
-          call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,     &
-                              int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
-                              ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
-                              v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
-              
-          ! u_col = uv_stored_cols*aux + u_col
-          call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
-                              ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
-                              aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
-          NVTX_RANGE_POP("cpu gemv_x2 aux=vu_stored_rows^T*v_row,u_col+=uv_stored_cols*aux")
-          if (wantDebug) call obj%timer%stop("blas")
-        else ! .not. useGPU
+        if (useGPU) then
           if (wantDebug) call obj%timer%start("gpublas_gemv_skinny_x2")
           NVTX_RANGE_PUSH("gpublas gemv_x2 skinny aux_dev=vu_stored_rows_dev^T*v_row_dev,u_col_dev+=uv_stored_cols_dev*aux_dev")
           
@@ -1359,8 +1337,25 @@ else
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
 #endif
           NVTX_RANGE_POP("gpublas gemv_x2 skinny aux_dev=vu_stored_rows_dev^T*v_row_dev,u_col_dev+=uv_stored_cols_dev*aux_dev")
-          if (wantDebug) call obj%timer%stop("gpublas_gemv_skinny_x2")  
-        endif ! .not. useGPU
+          if (wantDebug) call obj%timer%stop("gpublas_gemv_skinny_x2")
+        else ! useGPU
+          if (wantDebug) call obj%timer%start("blas")
+          NVTX_RANGE_PUSH("cpu gemv_x2 aux=vu_stored_rows^T*v_row,u_col+=uv_stored_cols*aux")
+      
+          ! aux = vu_stored_rows^T*v_row
+          call PRECISION_GEMV(BLAS_TRANS_OR_CONJ,     &
+                              int(l_rows,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                              ONE, vu_stored_rows, int(ubound(vu_stored_rows,dim=1),kind=BLAS_KIND),   &
+                              v_row,  1_BLAS_KIND, ZERO, aux, 1_BLAS_KIND)
+              
+          ! u_col = uv_stored_cols*aux + u_col
+          call PRECISION_GEMV('N', int(l_cols,kind=BLAS_KIND), int(2*n_stored_vecs,kind=BLAS_KIND),   &
+                              ONE, uv_stored_cols, int(ubound(uv_stored_cols,dim=1),kind=BLAS_KIND),   &
+                              aux, 1_BLAS_KIND, ONE, u_col,  1_BLAS_KIND)
+
+          NVTX_RANGE_POP("cpu gemv_x2 aux=vu_stored_rows^T*v_row,u_col+=uv_stored_cols*aux")
+          if (wantDebug) call obj%timer%stop("blas")
+        endif ! useGPU
       endif ! n_stored_vecs > 0
 
     endif  ! (l_rows>0 .and. l_cols>0)
