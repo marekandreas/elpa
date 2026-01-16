@@ -189,13 +189,26 @@ subroutine trans_ev_cpu_&
   integer(kind=c_int)                           :: cclDataType
   integer(kind=ik)                              :: k_datatype
   integer(kind=ik)                              :: i,j ! PETERDEBUG: only for debugging, cleanup
-
   ! workaround for SYCL CPU devices: SYRK/HERK produces wrong results
   logical :: is_sycl_cpu
   is_sycl_cpu = .false.
 #if defined(WITH_SYCL_GPU_VERSION)
   success = sycl_getiscpudevice(is_sycl_cpu)
 #endif
+
+!PETERDEBUG111-printmat cleanup
+print *, "q_mat:"
+do i = 1, size(q_mat,1)
+  print '(*(g0,1x))', q_mat(i,:)
+end do
+
+print *, "a_mat"
+do i = 1, size(a_mat,1)
+  print '(*(g0,1x))', a_mat(i,:)
+end do
+
+print *, "tau"
+print '(*(g0,1x))', tau(:)
 
   success = .true.
 
@@ -309,7 +322,7 @@ subroutine trans_ev_cpu_&
 
   max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
 
-  ! print *, "max_stored_rows=", max_stored_rows ! PETERDEBUG
+  print *, "max_stored_rows=", max_stored_rows ! PETERDEBUG111 cleanup
 
   if (.not. useGPU) then
     allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
@@ -424,7 +437,6 @@ subroutine trans_ev_cpu_&
 
   nstor = 0
 
-
 #if COMPLEXCASE == 1
   ! In the complex case tau(2) /= 0
   if (useGPU) then
@@ -526,7 +538,7 @@ subroutine trans_ev_cpu_&
         else
           call obj%timer%start("mpi_communication")
           call mpi_bcast (hvb, int(nb,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION , int(cur_pcol,kind=MPI_KIND), &
-          int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+                          int(mpi_comm_cols,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
         endif
         NVTX_RANGE_POP("mpi_bcast")
@@ -610,7 +622,7 @@ subroutine trans_ev_cpu_&
         check_memcpy_gpu("trans_ev: tmat_dev", successGPU)
         call obj%timer%stop("gpu_memset")
       else
-        tmat = 0
+        tmat = 0 ! PETERDEBUG111: not needed or overkill? needed once? same for GPU
       endif
 
       if (l_rows>0) then
@@ -642,7 +654,11 @@ subroutine trans_ev_cpu_&
 #elif COMPLEXCASE == 1
           call PRECISION_HERK &
 #endif
+#ifdef DEBUG_CUDA
                             ('U', BLAS_TRANS_OR_CONJ, &
+#else
+                            ('L', BLAS_TRANS_OR_CONJ, &
+#endif
                             int(nstor,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
                             hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), ZERO, &
                             tmat, int(max_stored_rows,kind=BLAS_KIND))
@@ -686,10 +702,17 @@ subroutine trans_ev_cpu_&
       else  ! useCCL
         ! compression
         nc = 0
+#ifdef DEBUG_CUDA
         do n = 1, nstor-1
-          h(nc+1:nc+n) = tmat(1:n,n+1)
+          h(nc+1:nc+n) = tmat(1:n,n+1) ! upper triangular part, ignores diagonal
+          nc = nc+n
+        enddo
+#else
+        do n = 1, nstor
+          h(nc+1:nc+n) = tmat(n,1:n) ! lower triangular part, takes into account diagonal
           nc = nc+n ! PETERDEBUG: on GPU: nc += max_stored_rows 
         enddo
+#endif
       endif ! useCCL
 
 #ifdef WITH_MPI
@@ -742,8 +765,9 @@ subroutine trans_ev_cpu_&
       ! Calculate triangular matrix T. 
       ! What was previously stored in (upper part of) tmat is now stored in h, old values of tmat are not needed anymore
 
-      ! PETERDEBUG: we can write a kernel here
-      ! Also, we can use another stream for this, which can be completely hidden by other operations
+#ifdef DEBUG_CUDA      
+!       ! PETERDEBUG: we can write a kernel here
+!       ! Also, we can use another stream for this, which can be completely hidden by other operations
       if (useGPU) then
         ! PETERDEBUG: check whether this can be cleaned up after testing gpu_update_h_trmv_kernel
         call obj%timer%start("gpu_memset")
@@ -841,7 +865,40 @@ subroutine trans_ev_cpu_&
           nc = nc+n
         enddo
       endif ! useGPU
+      
+      print *, "DEBUG_CUDA codepath"
+#else /* DEBUG_CUDA */      
+      ! Set ones on the diagonal of T matrix
+      if (useGPU) then
+        print *, "triangular T matrix calculation on GPU not implemented yet"
+      else ! useGPU
+        ! decompression
+        nc = 0
+        ! do n = 1, nstor-1          
+        !   tmat(1:n,n+1) = h(nc+1:nc+n)
+        !   nc = nc+n
+        ! enddo
 
+        do n = 1, nstor
+          tmat(n,1:n) = h(nc+1:nc+n)
+          nc = nc+n
+        enddo
+
+        do n = 1, nstor
+          !tmat(n,n) = ONE
+          tmat(n,n) = tmat(n,n)/2 
+        enddo
+      endif ! useGPU
+#endif  /* DEBUG_CUDA */ 
+      print *, "nstor=", nstor ! PETERDEBUG111: cleanup
+
+      !PETERDEBUG111-printmat cleanup
+      print *, "tmat:"
+      do i = 1, size(tmat,1)
+        print '(*(g0,1x))', tmat(i,:)
+      end do
+
+! PETERDEBUG111: clean the sync up
 #if !defined(WITH_GPU_STREAMS)
       if (useGPU) successGPU = gpu_DeviceSynchronize()
 #endif
@@ -984,11 +1041,32 @@ subroutine trans_ev_cpu_&
         else !useGPU
           call obj%timer%start("blas")
 
+          ! PETERDEBUG111-printmat cleanup
+          print *, "tmp (before applyting tmat):"
+          do i = 1, 4
+            print '(*(g0,1x))', tmp(i), tmp(i+4), tmp(i+8), tmp(i+12)
+          end do
+
+#ifdef DEBUG_CUDA          
           ! tmp = tmat * tmp
           call PRECISION_TRMM('L', 'L', 'N', 'N', &
                               int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, &
                               tmat, int(max_stored_rows,kind=BLAS_KIND), &
                               tmp, int(nstor,kind=BLAS_KIND))
+#else          
+          ! tmp = tmat^{-1} * tmp
+          call PRECISION_TRSM('L', 'L', 'N', 'N', &
+                              int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, &
+                              tmat, int(max_stored_rows,kind=BLAS_KIND), &
+                              tmp, int(nstor,kind=BLAS_KIND))
+#endif
+
+          ! PETERDEBUG111-printmat cleanup
+          print *, "tmp (after applyting tmat):"
+          do i = 1, 4
+            print '(*(g0,1x))', tmp(i), tmp(i+4), tmp(i+8), tmp(i+12)
+          end do
+
           !q_mat = q_mat - hvm*tmp
           call PRECISION_GEMM('N', 'N', &
                               int(l_rows,kind=BLAS_KIND), &
@@ -1018,6 +1096,12 @@ subroutine trans_ev_cpu_&
     NVTX_RANGE_POP("main_loop")
     call obj%timer%stop("main_loop_trans_ev")
   enddo ! istep = 1, na, blockStep
+
+  !PETERDEBUG111-printmat cleanup
+  print *, "q_mat (transformed):"
+  do i = 1, size(q_mat,1)
+    print '(*(g0,1x))', q_mat(i,:)
+  end do
 
   if (.not. useCCL) then
     deallocate(h, hvb, hvm, stat=istat, errmsg=errorMessage)

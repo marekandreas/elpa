@@ -839,8 +839,10 @@ else
       if (useCCL) then
         call obj%timer%start("ccl_allreduce")
         NVTX_RANGE_PUSH("ccl_allreduce")
+#ifdef USE_CCL_TRIDIAG
         successGPU = ccl_Allreduce(aux1_dev, aux1_dev, int(k_datatype*2, kind=c_size_t), &
                                     cclDataType, cclSum, ccl_comm_rows, my_stream)
+#endif
         if (.not. successGPU) then
           print *,"Error in ccl_Allreduce"
           stop 1
@@ -1546,8 +1548,10 @@ else
     if (useCCL) then
       call obj%timer%start("ccl_allreduce")
       NVTX_RANGE_PUSH("ccl_allreduce")
+#ifdef USE_CCL_TRIDIAG
       successGPU = ccl_Allreduce(vav_dev, vav_dev, int(k_datatype*1, kind=c_size_t), &
                                  cclDataType, cclSum, ccl_comm_cols, my_stream)
+#endif
       if (.not. successGPU) then
         print *,"Error in ccl_allreduce"
         stop 1

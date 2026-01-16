@@ -275,6 +275,12 @@ function elpa_solve_evp_&
    real(kind=REAL_DATATYPE)                         :: sum_debug
 #endif
 
+! !PETERDEBUG111-printmat cleanup
+! print *, "aExtern (initial):"
+! do i = 1, size(aExtern,1)
+!   print '(*(g0,1x))', aExtern(i,:)
+! end do
+
    useGPU = .false.
 
    ! as default do all three steps (this might change at some point)

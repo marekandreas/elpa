@@ -314,7 +314,8 @@ module tridiag_gpu
       if (wantDebug) wantDebug_int = 1
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      call gpu_dot_product_and_assign_c(dataType, v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, wantDebug_int, SM_count, my_stream)
+      call gpu_dot_product_and_assign_c(dataType, v_row_dev, l_rows, isOurProcessRow_int, aux1_dev, &
+                                        wantDebug_int, SM_count, my_stream)
 #endif
     end subroutine
 
