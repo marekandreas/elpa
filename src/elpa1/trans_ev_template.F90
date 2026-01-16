@@ -196,19 +196,19 @@ subroutine trans_ev_cpu_&
   success = sycl_getiscpudevice(is_sycl_cpu)
 #endif
 
-!PETERDEBUG111-printmat cleanup
-print *, "q_mat:"
-do i = 1, size(q_mat,1)
-  print '(*(g0,1x))', q_mat(i,:)
-end do
+! PETERDEBUG111-printmat cleanup
+! print *, "q_mat:"
+! do i = 1, size(q_mat,1)
+!   print '(*(g0,1x))', q_mat(i,:)
+! end do
 
-print *, "a_mat"
-do i = 1, size(a_mat,1)
-  print '(*(g0,1x))', a_mat(i,:)
-end do
+! print *, "a_mat"
+! do i = 1, size(a_mat,1)
+!   print '(*(g0,1x))', a_mat(i,:)
+! end do
 
-print *, "tau"
-print '(*(g0,1x))', tau(:)
+! print *, "tau"
+! print '(*(g0,1x))', tau(:)
 
   success = .true.
 
@@ -629,8 +629,11 @@ print '(*(g0,1x))', tau(:)
         if (useGPU .and. .not. is_sycl_cpu) then
           call obj%timer%start("gpublas_syrk")
           NVTX_RANGE_PUSH("gpublas_syrk")
-
+#ifdef DEBUG_CUDA
           call gpublas_PRECISION_SYRK_HERK('U', BLAS_TRANS_OR_CONJ, &
+#else
+          call gpublas_PRECISION_SYRK_HERK('L', BLAS_TRANS_OR_CONJ, &
+#endif
                                            nstor, l_rows, ONE, &
                                            hvm_dev, max_local_rows, ZERO, &
                                            tmat_dev, max_stored_rows, gpublasHandle)
@@ -694,7 +697,7 @@ print '(*(g0,1x))', tau(:)
         nc = max_stored_rows*nstor
         if (nc>0) then
           if (wantDebug) call obj%timer%start("gpu_memcpy")
-          ! PETERDEBUG: add streamed version
+          ! PETERDEBUG111: add streamed version
           successGPU = gpu_memcpy(h_dev, tmat_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice)
           check_memcpy_gpu("elpa_trans_ev: h_dev <- tmat_dev", successGPU)
           if (wantDebug) call obj%timer%stop("gpu_memcpy")
@@ -796,45 +799,18 @@ print '(*(g0,1x))', tau(:)
           !shift_dev = nc*size_of_datatype
           !h_dev <- tmat_dev*h_dev
 
-         if (useCCL) then
-           shift_h_dev = n*max_stored_rows*size_of_datatype
-         else
-           shift_h_dev = nc*size_of_datatype
-           nc = nc+n
-         endif
-
-          ! NVTX_RANGE_PUSH("gpublas_trmv")
-          ! call gpublas_PRECISION_TRMV('L', BLAS_TRANS_OR_CONJ, 'N', n, &
-          !                             tmat_dev, max_stored_rows, &
-          !                             h_dev + shift_h_dev, 1, gpublasHandle)
-          ! if (wantDebug) successGPU = gpu_DeviceSynchronize()
-          ! NVTX_RANGE_POP("gpublas_trmv")
-
-          ! non-transposed matrix tmat_dev here, transposition later in TRMM
-          ! NVTX_RANGE_PUSH("gpublas_trmv")
-          ! call gpublas_PRECISION_TRMV('U', 'N', 'N', n, &
-          !                             tmat_dev, max_stored_rows, &
-          !                             h_dev + shift_h_dev, 1, gpublasHandle)
-          ! if (wantDebug) successGPU = gpu_DeviceSynchronize()
-          ! NVTX_RANGE_POP("gpublas_trmv")
-
-          ! shift_dev = (ice-nstor+n)*size_of_datatype
-          ! NVTX_RANGE_PUSH("gpu_update_tmat")
-          ! call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, tau_dev+shift_dev, &
-          !                      max_stored_rows, nc, n, SM_count, debug, my_stream)
-          ! NVTX_RANGE_POP("gpu_update_tmat")
+          if (useCCL) then
+            shift_h_dev = n*max_stored_rows*size_of_datatype
+          else
+            shift_h_dev = nc*size_of_datatype
+            nc = nc+n
+          endif
 
           shift_dev = (ice-nstor+n)*size_of_datatype
           NVTX_RANGE_PUSH("gpu_trmv")
           call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, tau_dev+shift_dev, &
                         max_stored_rows, n, SM_count, debug, my_stream)
           NVTX_RANGE_POP("gpu_trmv")
-
-          ! shift_dev = (ice-nstor+n)*size_of_datatype
-          ! NVTX_RANGE_PUSH("gpu_update_tmat")
-          ! call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h1_buffer_dev, tau_dev+shift_dev, &
-          !                      max_stored_rows, nc, n, SM_count, debug, my_stream)
-          ! NVTX_RANGE_POP("gpu_update_tmat")
         enddo !   n = 1, nstor-1
         if (wantDebug) successGPU = gpu_DeviceSynchronize()
         call obj%timer%stop("gpu_trmv_kernel_loop")
@@ -869,12 +845,20 @@ print '(*(g0,1x))', tau(:)
       print *, "DEBUG_CUDA codepath"
 #else /* DEBUG_CUDA */      
       ! Set ones on the diagonal of T matrix
-      if (useGPU) then
-        print *, "triangular T matrix calculation on GPU not implemented yet"
-      else ! useGPU
+      if (useCCL) then ! PETERDEBUG111: TODO: take special care about (useGPU .and. .not. useCCL) case 
+        ! no compression
+        nc = max_stored_rows*nstor
+        if (nc>0) then
+          if (wantDebug) call obj%timer%start("gpu_memcpy")
+          ! PETERDEBUG111: add streamed version
+          successGPU = gpu_memcpy(tmat_dev, h_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice)
+          check_memcpy_gpu("elpa_trans_ev: tmat_dev <- h_dev", successGPU)
+          if (wantDebug) call obj%timer%stop("gpu_memcpy")
+        endif
+      else ! useCCL
         ! decompression
         nc = 0
-        ! do n = 1, nstor-1          
+        ! do n = 1, nstor-1  ! PETERDEBUG111: cleanup        
         !   tmat(1:n,n+1) = h(nc+1:nc+n)
         !   nc = nc+n
         ! enddo
@@ -884,6 +868,20 @@ print '(*(g0,1x))', tau(:)
           nc = nc+n
         enddo
 
+        if (useGPU) then
+          num = max_stored_rows*nstor*size_of_datatype
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+#else
+          successGPU = gpu_memcpy      (tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+#endif
+        endif
+      endif ! useCCL
+
+      if (useGPU) then
+        ! HALF = ONE/(ONE+ONE)
+        call gpublas_PRECISION_SCAL(gpublasHandle, nstor, ONE/2, tmat_dev, max_stored_rows+1)
+      else ! useGPU
         do n = 1, nstor
           !tmat(n,n) = ONE
           tmat(n,n) = tmat(n,n)/2 
@@ -893,10 +891,12 @@ print '(*(g0,1x))', tau(:)
       print *, "nstor=", nstor ! PETERDEBUG111: cleanup
 
       !PETERDEBUG111-printmat cleanup
-      print *, "tmat:"
-      do i = 1, size(tmat,1)
-        print '(*(g0,1x))', tmat(i,:)
-      end do
+      ! if (.not. useGPU) then
+      !   print *, "tmat:"
+      !   do i = 1, size(tmat,1)
+      !     print '(*(g0,1x))', tmat(i,:)
+      !   end do
+      ! endif
 
 ! PETERDEBUG111: clean the sync up
 #if !defined(WITH_GPU_STREAMS)
@@ -1020,8 +1020,13 @@ print '(*(g0,1x))', tau(:)
           ! tmp_dev = tmat_dev*tmp_dev
           call obj%timer%start("gpublas_trmm")
           NVTX_RANGE_PUSH("gpublas_trmm")
-          call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N',     &
+
+#ifdef DEBUG_CUDA          
+          call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N', &
           !call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',     &
+#else
+          call gpublas_PRECISION_TRSM('L', 'L', 'N', 'N', &
+#endif
                                       nstor, l_cols, ONE, &
                                       tmat_dev, max_stored_rows,  &
                                       tmp_dev, nstor, gpublasHandle)
@@ -1042,12 +1047,14 @@ print '(*(g0,1x))', tau(:)
           call obj%timer%start("blas")
 
           ! PETERDEBUG111-printmat cleanup
-          print *, "tmp (before applyting tmat):"
-          do i = 1, 4
-            print '(*(g0,1x))', tmp(i), tmp(i+4), tmp(i+8), tmp(i+12)
-          end do
+          ! if (.not. useGPU) then
+          !   print *, "tmp (before applyting tmat):"
+          !   do i = 1, 4
+          !     print '(*(g0,1x))', tmp(i), tmp(i+4), tmp(i+8), tmp(i+12)
+          !   end do
+          ! endif
 
-#ifdef DEBUG_CUDA          
+#ifdef DEBUG_CUDA
           ! tmp = tmat * tmp
           call PRECISION_TRMM('L', 'L', 'N', 'N', &
                               int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, &
@@ -1062,10 +1069,10 @@ print '(*(g0,1x))', tau(:)
 #endif
 
           ! PETERDEBUG111-printmat cleanup
-          print *, "tmp (after applyting tmat):"
-          do i = 1, 4
-            print '(*(g0,1x))', tmp(i), tmp(i+4), tmp(i+8), tmp(i+12)
-          end do
+          ! print *, "tmp (after applyting tmat):"
+          ! do i = 1, 4
+          !   print '(*(g0,1x))', tmp(i), tmp(i+4), tmp(i+8), tmp(i+12)
+          ! end do
 
           !q_mat = q_mat - hvm*tmp
           call PRECISION_GEMM('N', 'N', &
@@ -1097,11 +1104,11 @@ print '(*(g0,1x))', tau(:)
     call obj%timer%stop("main_loop_trans_ev")
   enddo ! istep = 1, na, blockStep
 
-  !PETERDEBUG111-printmat cleanup
-  print *, "q_mat (transformed):"
-  do i = 1, size(q_mat,1)
-    print '(*(g0,1x))', q_mat(i,:)
-  end do
+  ! PETERDEBUG111-printmat cleanup
+  ! print *, "q_mat (transformed):"
+  ! do i = 1, size(q_mat,1)
+  !   print '(*(g0,1x))', q_mat(i,:)
+  ! end do
 
   if (.not. useCCL) then
     deallocate(h, hvb, hvm, stat=istat, errmsg=errorMessage)
