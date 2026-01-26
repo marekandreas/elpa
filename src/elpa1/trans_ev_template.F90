@@ -883,8 +883,11 @@ subroutine trans_ev_cpu_&
         call gpublas_PRECISION_SCAL(gpublasHandle, nstor, ONE/2, tmat_dev, max_stored_rows+1)
       else ! useGPU
         do n = 1, nstor
-          !tmat(n,n) = ONE
-          tmat(n,n) = tmat(n,n)/2 
+#ifdef REALCASE
+          tmat(n,n) = tmat(n,n)/2
+#elif COMPLEXCASE
+          tmat(n,n) = ONE / tau(ice-nstor+n)
+#endif
         enddo
       endif ! useGPU
 #endif  /* DEBUG_CUDA */ 
