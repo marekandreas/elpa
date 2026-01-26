@@ -119,6 +119,19 @@ module trans_ev_hip
   end interface
 
   interface
+    subroutine hip_set_tmat_diag_from_tau_c(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
+                                            SM_count, debug, my_stream) &
+                                bind(C, name="hip_set_tmat_diag_from_tau_FromC")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, tau_dev
+      integer(kind=c_int), intent(in) :: max_stored_rows, nstor, tau_offset, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
+
+  interface
     subroutine hip_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
                           SM_count, debug, my_stream) &
                                 bind(C, name="hip_trmv_FromC")
@@ -211,6 +224,21 @@ module trans_ev_hip
 #ifdef WITH_AMD_GPU_VERSION
       call hip_update_tmat_c(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
                               SM_count, debug, my_stream)
+#endif
+    end subroutine
+
+    subroutine hip_set_tmat_diag_from_tau(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
+                                          SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, tau_dev
+      integer(kind=c_int), intent(in) :: max_stored_rows, nstor, tau_offset, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+
+#ifdef WITH_AMD_GPU_VERSION
+      call hip_set_tmat_diag_from_tau_c(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
+                                        SM_count, debug, my_stream)
 #endif
     end subroutine
 

@@ -287,6 +287,55 @@ extern "C" void CONCATENATE(ELPA_GPU,  _update_tmat_FromC) (char dataType, intpt
 }
 
 //_________________________________________________________________________________________________
+
+template <typename T>
+__global__ void gpu_set_tmat_diag_from_tau_kernel(T *tmat_dev, T *tau_dev, int max_stored_rows, int nstor, int tau_offset) {
+  int i = threadIdx.x + blockIdx.x*blockDim.x;
+  if (i < nstor) { // PETERDEBUG111: grid-stride loop instead?
+    T One = elpaDeviceNumber<T>(1.0);
+    tmat_dev[i + i*max_stored_rows] = elpaDeviceDivide(One, tau_dev[tau_offset + i]);
+  }
+}
+
+template <typename T>
+void gpu_set_tmat_diag_from_tau(T *tmat_dev, T *tau_dev, int *max_stored_rows_in, int *nstor_in, int *tau_offset_in,
+                                int *SM_count_in, int *debug_in, gpuStream_t my_stream) {
+  int max_stored_rows = *max_stored_rows_in;
+  int nstor = *nstor_in;
+  int tau_offset = *tau_offset_in;
+  int debug = *debug_in;
+
+  int threads = MAX_THREADS_PER_BLOCK;
+  int blocks = (nstor + threads - 1) / threads;
+  if (blocks < 1) { // PETERDEBUG111: or just return instead?
+    blocks = 1;
+  }
+
+#ifdef WITH_GPU_STREAMS
+  gpu_set_tmat_diag_from_tau_kernel<<<blocks,threads,0,my_stream>>>(tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset);
+#else
+  gpu_set_tmat_diag_from_tau_kernel<<<blocks,threads>>>            (tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset);
+#endif
+
+  if (debug) {
+    gpuDeviceSynchronize();
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess){
+      printf("Error in executing gpu_set_tmat_diag_from_tau: %s\n", gpuGetErrorString(gpuerr));
+    }
+  }
+}
+
+extern "C" void CONCATENATE(ELPA_GPU,  _set_tmat_diag_from_tau_FromC) (char dataType, intptr_t tmat_dev, intptr_t tau_dev,
+                                      int *max_stored_rows_in, int *nstor_in, int *tau_offset_in, int *SM_count_in,
+                                      int *debug_in, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_set_tmat_diag_from_tau<double>((double *) tmat_dev, (double *) tau_dev, max_stored_rows_in, nstor_in, tau_offset_in, SM_count_in, debug_in, my_stream);
+  else if (dataType=='S') gpu_set_tmat_diag_from_tau<float> ((float  *) tmat_dev, (float  *) tau_dev, max_stored_rows_in, nstor_in, tau_offset_in, SM_count_in, debug_in, my_stream);
+  else if (dataType=='Z') gpu_set_tmat_diag_from_tau<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) tau_dev, max_stored_rows_in, nstor_in, tau_offset_in, SM_count_in, debug_in, my_stream);
+  else if (dataType=='C') gpu_set_tmat_diag_from_tau<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) tau_dev, max_stored_rows_in, nstor_in, tau_offset_in, SM_count_in, debug_in, my_stream);
+}
+
+//_________________________________________________________________________________________________
 // PETERDEBUG: delete result_buffer_dev
 
 template <typename T>
