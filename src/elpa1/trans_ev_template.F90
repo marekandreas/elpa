@@ -884,13 +884,9 @@ subroutine trans_ev_cpu_&
         ! HALF = ONE/(ONE+ONE)
         call gpublas_PRECISION_SCAL(gpublasHandle, nstor, ONE/2, tmat_dev, max_stored_rows+1)
 #elif COMPLEXCASE == 1
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION)
         call gpu_set_tmat_diag_from_tau(PRECISION_CHAR, tmat_dev, tau_dev, int(max_stored_rows,kind=c_int), &
                                         int(nstor,kind=c_int), int(ice-nstor,kind=c_int), int(SM_count,kind=c_int), &
                                         int(debug,kind=c_int), my_stream)
-#else
-        call gpublas_PRECISION_SCAL(gpublasHandle, nstor, ONE/2, tmat_dev, max_stored_rows+1)
-#endif
 #endif
       else ! useGPU
         do n = 1, nstor
