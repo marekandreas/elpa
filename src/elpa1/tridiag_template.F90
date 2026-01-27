@@ -147,6 +147,7 @@ subroutine tridiag_cpu_&
   integer(kind=ik), intent(in)                  :: na, matrixRows, nblk, matrixCols, mpi_comm_rows, mpi_comm_cols
   logical, intent(in)                           :: wantDebug
   logical, intent(in)                           :: isSkewsymmetric
+  logical                                       :: isSkewsymmetric_tmp
 
   logical                                       :: useCCL
 
@@ -1018,6 +1019,7 @@ else
 
     ! Transpose Householder Vector v_row -> v_col
     if (useCCL) then
+      isSkewsymmetric_tmp = .false. ! analogous to CPU call of elpa_transpose_vectors
       NVTX_RANGE_PUSH("elpa_gpu_ccl_transpose_vectors v_row_dev->v_col_dev")
 #if defined(USE_CCL_TRIDIAG)
       call elpa_gpu_ccl_transpose_vectors_&
@@ -1026,7 +1028,7 @@ else
           &PRECISION &
                 (obj, v_row_dev, max_local_rows+1, ccl_comm_rows, mpi_comm_rows, v_col_dev, max_local_cols, &
                 ccl_comm_cols, mpi_comm_cols, 1, istep-1, 1, nblk, max_threads, .true., my_prow, my_pcol, np_rows, np_cols, &
-                aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
+                aux_transpose_dev, isSkewsymmetric_tmp, isSquareGridGPU, wantDebug, my_stream, success)
 #endif /* USE_CCL_TRIDIAG */
       NVTX_RANGE_POP("elpa_gpu_ccl_transpose_vectors v_row_dev->v_col_dev")
     else ! useCCL
@@ -1443,6 +1445,7 @@ else
     ! Transpose Householder Vector u_col -> u_row
     if (useCCL) then
 #if defined(USE_CCL_TRIDIAG)
+      isSkewsymmetric_tmp = isSkewsymmetric ! analogous to CPU call of elpa_transpose_vectors_ss
       NVTX_RANGE_PUSH("elpa_gpu_ccl_transpose_vectors u_col_dev->u_row_dev")
       call elpa_gpu_ccl_transpose_vectors_&
           &MATH_DATATYPE&
@@ -1450,7 +1453,7 @@ else
           &PRECISION &
                 (obj, u_col_dev, max_local_cols, ccl_comm_cols, mpi_comm_cols, u_row_dev, max_local_rows+1, &
                 ccl_comm_rows, mpi_comm_rows, 1, istep-1, 1, nblk, max_threads, .false., my_pcol, my_prow, np_cols, np_rows, &
-                aux_transpose_dev, isSkewsymmetric, isSquareGridGPU, wantDebug, my_stream, success)
+                aux_transpose_dev, isSkewsymmetric_tmp, isSquareGridGPU, wantDebug, my_stream, success)
       NVTX_RANGE_POP("elpa_gpu_ccl_transpose_vectors u_col_dev->u_row_dev")
 #endif /* USE_CCL_TRIDIAG */
     else ! useCCL
