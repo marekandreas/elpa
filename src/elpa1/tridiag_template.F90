@@ -284,7 +284,7 @@ subroutine tridiag_cpu_&
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
 #endif
-else
+  else
     gpuString = ""
     max_threads=max_threads_in
   endif
