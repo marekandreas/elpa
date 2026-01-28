@@ -509,6 +509,8 @@ subroutine trans_ev_cpu_&
 #endif
     endif ! useGPU
 
+    print *, "myid=", obj%mpi_setup%nRanks_comm_parent, " before bcast", "nb=", nb ! PETERDEBUG111: cleanup
+
     if (nb > 0) then
       if (useCCL) then
         NVTX_RANGE_PUSH("ccl_bcast")
@@ -573,7 +575,14 @@ subroutine trans_ev_cpu_&
       NVTX_RANGE_PUSH("loop: copy hvm <- hvb")
       do ic = ics, ice
         l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
-        hvm(1:l_rows,nstor+1) = hvb(nb+1:nb+l_rows)
+        
+        ! if tau==0, reflector is identity => make this column inactive
+        if (tau(ic) == ZERO) then
+          hvm(1:l_rows, nstor+1) = 0 ! PETERDEBUG111: cleanup, it's already zero?
+        else
+          hvm(1:l_rows, nstor+1) = hvb(nb+1:nb+l_rows)
+        endif
+        
         nstor = nstor+1
         nb = nb+l_rows
       enddo
@@ -890,11 +899,16 @@ subroutine trans_ev_cpu_&
 #endif
       else ! useGPU
         do n = 1, nstor
+          ic = ice-nstor+n ! PETERDEBUG111: here and below: same as ic = ics + n - 1?
+          if (tau(ic) == ZERO) then
+            tmat(n,n) = ONE
+          else
 #ifdef REALCASE
-          tmat(n,n) = tmat(n,n)/2
+            tmat(n,n) = tmat(n,n)/2
 #elif COMPLEXCASE
-          tmat(n,n) = ONE / tau(ice-nstor+n)
+            tmat(n,n) = ONE / tau(ice-nstor+n)
 #endif
+          endif ! (tau(ic) == ZERO)
         enddo
       endif ! useGPU
 #endif  /* DEBUG_CUDA */ 
@@ -978,6 +992,8 @@ subroutine trans_ev_cpu_&
         check_memcpy_gpu("trans_ev", successGPU)
 #endif
       endif ! (useGPU .and. .not. useCCL)
+      
+      print *, "myid=", obj%mpi_setup%nRanks_comm_parent, " before allreduce" ! PETERDEBUG111: cleanup
 
       if (useCCL) then
         call obj%timer%start("ccl_allreduce")
@@ -1008,6 +1024,10 @@ subroutine trans_ev_cpu_&
           call obj%timer%stop("mpi_communication")
         endif ! useNonBlockingCollectivesRows
       endif ! useCCL
+
+      !print *, "myid=", obj%mpi_setup%nRanks_comm_parent, ", after allreduce" ! PETERDEBUG111: cleanup
+
+
       ! copy back to tmp -> tmp_dev if needed
       if (useGPU .and. .not. useCCL) then
 #ifdef WITH_GPU_STREAMS
@@ -1113,6 +1133,8 @@ subroutine trans_ev_cpu_&
     NVTX_RANGE_POP("main_loop")
     call obj%timer%stop("main_loop_trans_ev")
   enddo ! istep = 1, na, blockStep
+
+  print *, "trans_ev: finished main loop over istep, myid=", obj%mpi_setup%nRanks_comm_parent ! PETERDEBUG111: cleanup
 
   ! PETERDEBUG111-printmat cleanup
   ! print *, "q_mat (transformed):"
